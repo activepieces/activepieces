@@ -82,14 +82,7 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
             {mode === 'app' ? <AppNav /> : <PlatformNav />}
           </SidebarContent>
           <SidebarFooter className="gap-1 overflow-hidden">
-            {mode === 'app' ? (
-              <AppFooterExtras />
-            ) : (
-              <>
-                <EnterprisePlanIndicator />
-                <SidebarSeparator className="mx-2 my-1" />
-              </>
-            )}
+            {mode === 'app' ? <AppFooterExtras /> : <PlatformFooterExtras />}
             <SidebarUser />
           </SidebarFooter>
         </Sidebar>
@@ -289,6 +282,15 @@ function AppFooterExtras() {
         </div>
       </div>
       <PlatformAdminNavItem />
+    </>
+  );
+}
+
+function PlatformFooterExtras() {
+  return (
+    <>
+      <SidebarSeparator className="mx-2 my-1" />
+      <EnterprisePlanIndicator />
     </>
   );
 }

@@ -35,6 +35,7 @@ import {
   EnterpriseTrialBillingStatus,
   useCancelSubscriptionGuard,
   billingDialogHooks,
+  enterpriseTrialHooks,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -115,6 +116,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
   const { openDialog } = billingDialogHooks.useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
+  const trial = enterpriseTrialHooks.useTrial();
   const { mutate: redirectToPortalSession, isPending: isOpeningPortal } =
     billingMutations.usePortalLink();
   const [isKeepPlanOpen, setIsKeepPlanOpen] = useState(false);
@@ -166,9 +168,17 @@ function PlanTab({ platform, info }: PlanTabProps) {
             description={
               <div className="flex flex-col gap-2">
                 <span>
-                  {t('Your current plan is {plan}.', {
-                    plan: info.autumnPlanName ?? t('Free'),
-                  })}{' '}
+                  {trial.state === 'active' && !isNil(trial.endsAt)
+                    ? t(
+                        'You are trying the Enterprise plan until {date}. Your {plan} plan continues after that.',
+                        {
+                          date: dayjs(trial.endsAt).format('MMM D'),
+                          plan: info.autumnPlanName ?? t('Free'),
+                        },
+                      )
+                    : t('Your current plan is {plan}.', {
+                        plan: info.autumnPlanName ?? t('Free'),
+                      })}{' '}
                   {t(
                     'Upgrade anytime to get more credits and unlock features.',
                   )}

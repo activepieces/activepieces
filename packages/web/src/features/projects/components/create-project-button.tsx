@@ -108,7 +108,6 @@ export function CreateProjectButton({
         onOpenChange={setCreateOpen}
         onCreate={onCreate}
       />
-      {projectsGate.dialog}
     </>
   );
 

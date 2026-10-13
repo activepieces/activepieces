@@ -30,7 +30,7 @@ export {
 } from './components/plan-selector-utils';
 export { billingDialogHooks } from './hooks/billing-dialog-hooks';
 export { AutomaticTrialActivation } from './components/automatic-trial-activation';
-export { useFeatureGate, UpgradeFeatureDialog } from './hooks/use-feature-gate';
+export { useFeatureGate } from './hooks/use-feature-gate';
 export { useUpgradeClick } from './hooks/use-upgrade-click';
 export type { PlatformFeature } from './hooks/use-feature-gate';
 export type { FeatureKey } from './components/request-trial';
@@ -52,6 +52,7 @@ export {
   enterpriseTrialKey,
 } from './hooks/enterprise-trial-hooks';
 export { LockedGem } from './components/locked-gem';
+export { PlanBadge } from './components/plan-badge';
 export { EnterpriseTrialSalesLink } from './components/enterprise-trial-sales-link';
 export { EnterpriseLockedCard } from './components/enterprise-locked-card';
 export { EnterpriseUsageMeter } from './components/enterprise-usage-meter';

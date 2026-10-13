@@ -125,6 +125,7 @@ vi.mock('@/app/routes/platform/setup/general/color-preview', () => ({
 
 vi.mock('@/features/billing', () => ({
   LockedGem: () => null,
+  PlanBadge: () => null,
   EnterpriseTrialSalesLink: () => null,
   PLATFORM_FEATURES: { branding: { featureKey: 'BRANDING', title: '' } },
   useFeatureGate: () => ({

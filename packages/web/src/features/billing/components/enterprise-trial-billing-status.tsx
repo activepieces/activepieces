@@ -6,6 +6,7 @@ import { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
@@ -37,11 +38,11 @@ export function EnterpriseTrialBillingStatus() {
           'Single sign-on, audit logs, your own AI providers and more, for everyone on your platform. No credit card, nothing to cancel.',
         )}
         action={
-          <Button onClick={() => openDialog({})}>
-            <Gem />
-            {t('Start free {days}-day Enterprise plan trial', {
-              days: ENTERPRISE_TRIAL_DAYS,
-            })}
+          <Button
+            {...adminControl(AdminControl.TRIAL_START_OPEN)}
+            onClick={() => openDialog({})}
+          >
+            {t('Start free trial')}
           </Button>
         }
       />

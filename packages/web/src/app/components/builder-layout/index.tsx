@@ -61,7 +61,7 @@ function BuilderLayoutInner({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-          {edition !== ApEdition.COMMUNITY && <EnterpriseTrialDialog />}
+          <EnterpriseTrialDialog />
         </SidebarInset>
       </SidebarProvider>
     </div>

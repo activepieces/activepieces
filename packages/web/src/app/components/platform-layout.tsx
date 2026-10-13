@@ -49,7 +49,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
           <Navigate to="/" />
         )}
         {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-        {edition !== ApEdition.COMMUNITY && <EnterpriseTrialDialog />}
+        <EnterpriseTrialDialog />
       </GlobalSearchProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
