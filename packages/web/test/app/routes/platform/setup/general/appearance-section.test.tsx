@@ -517,6 +517,27 @@ describe('AppearanceSection on a plan without branding', () => {
     expect(sentFields().primaryColor).toBe('#123456');
   });
 
+  it('does not save an unfinished colour once Enterprise is on', async () => {
+    await render();
+    await type({ selector: 'input[aria-label="colour"]', value: '#12' });
+    await act(async () => {
+      buttonNamed({ name: 'Save branding' }).click();
+    });
+    const [resume] = state.gateRun.mock.calls[0];
+    state.customAppearanceEnabled = true;
+    await act(async () => {
+      root.render(<AppearanceSection />);
+    });
+    let failed = false;
+    await act(async () => {
+      await resume().catch(() => {
+        failed = true;
+      });
+    });
+    expect(failed).toBe(true);
+    expect(state.update).not.toHaveBeenCalled();
+  });
+
   it('saves the name even when a previewed status colour is incomplete', async () => {
     await render();
     const statusColour = colourInputs()[1];
