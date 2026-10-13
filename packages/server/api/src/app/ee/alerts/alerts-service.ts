@@ -7,7 +7,7 @@ import timezone from 'dayjs/plugin/timezone'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
-import { redisConnections } from '../../database/redis-connections'
+import { distributedStore } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { domainHelper } from '../../helper/domain-helper'
@@ -23,7 +23,7 @@ dayjs.extend(timezone)
 
 const repo = repoFactory(AlertEntity)
 const DAY_IN_SECONDS = apDayjsDuration(1, 'day').asSeconds()
-const alertEventKey = (flowVersionId: string) => `flow_fail_count:${flowVersionId}`
+const alertEventKey = (flowVersionId: string) => `flow_failure_alert:${flowVersionId}`
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 
 export const alertsService = (log: FastifyBaseLogger) => ({
@@ -40,12 +40,9 @@ export const alertsService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const redisConnection = await redisConnections.useExisting()
-        const failureKey = alertEventKey(issueToAlert.flowVersionId)
-        const numberOfFailures = await redisConnection.incrby(failureKey, 1)
-        await redisConnection.expire(failureKey, DAY_IN_SECONDS)
+        const claimed = await distributedStore.putIfAbsent(alertEventKey(issueToAlert.flowVersionId), 1, DAY_IN_SECONDS)
 
-        if (numberOfFailures > 1) {
+        if (!claimed) {
             return
         }
 
