@@ -6,7 +6,7 @@ export const mcpClient = createPiece({
   displayName: 'MCP Client',
   description: 'Call tools on an external MCP server deterministically, without an LLM.',
   auth: mcpAuth,
-  minimumSupportedRelease: '0.92.3',
+  minimumSupportedRelease: '0.92.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/mcp.svg',
   authors: ['sanket-a11y'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.UNIVERSAL_AI],
