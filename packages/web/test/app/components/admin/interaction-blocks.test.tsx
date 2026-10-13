@@ -14,7 +14,7 @@ import {
 } from '@testing-library/react';
 import { AxiosError, AxiosHeaders } from 'axios';
 import * as React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const toast = vi.hoisted(() => ({
   success: vi.fn(),
@@ -35,7 +35,7 @@ import {
   adminBulk,
   useAdminAction,
 } from '@/app/components/admin/use-admin-action';
-import { PLAN_LIMIT_EVENT } from '@/lib/mutation-feedback';
+import { mutationFeedback, PLAN_LIMIT_EVENT } from '@/lib/mutation-feedback';
 
 function serverError(message: string) {
   return new AxiosError(message, 'ERR_BAD_REQUEST', undefined, undefined, {
@@ -63,6 +63,10 @@ function wrapper({ children }: { children: React.ReactNode }) {
   });
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
+
+afterEach(async () => {
+  await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+});
 
 beforeEach(() => {
   toast.success.mockReset();
@@ -100,7 +104,7 @@ describe('useAdminAction', () => {
       { wrapper },
     );
     await act(() => result.current.mutateAsync().catch(() => undefined));
-    expect(toast.error).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
     expect(toast.error).toHaveBeenCalledWith(
       "Couldn't delete Marketing",
       expect.objectContaining({ description: 'Project has enabled flows' }),
@@ -180,6 +184,77 @@ describe('ConfirmDialog', () => {
     window.removeEventListener(PLAN_LIMIT_EVENT, planDialog);
   });
 
+  it('keeps errors with their own confirm when two confirms overlap', async () => {
+    let finishSaml: () => void = () => undefined;
+    let failEmail: (error: unknown) => void = () => undefined;
+    function Harness() {
+      const saml = useAdminAction({
+        verb: 'save',
+        name: 'SAML',
+        run: () =>
+          new Promise<void>((resolve) => {
+            finishSaml = resolve;
+          }),
+      });
+      const email = useAdminAction({
+        verb: 'turnOff',
+        name: 'Email sign-in',
+        run: () =>
+          new Promise<void>((_, reject) => {
+            failEmail = reject;
+          }),
+      });
+      return (
+        <>
+          <ConfirmDialog
+            open
+            title="Save SAML?"
+            confirmLabel="Save SAML"
+            onConfirm={() => saml.mutateAsync()}
+          />
+          <ConfirmDialog
+            open
+            title="Turn off email?"
+            confirmLabel="Turn off email"
+            onConfirm={() => email.mutateAsync()}
+          />
+        </>
+      );
+    }
+    render(<Harness />, { wrapper });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Save SAML', hidden: true }),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Turn off email', hidden: true }),
+    );
+
+    await act(async () => finishSaml());
+    await act(async () => failEmail(serverError('Email is the last way in')));
+
+    await waitFor(() =>
+      expect(
+        within(screen.getAllByRole('dialog', { hidden: true })[1]).getByText(
+          'Email is the last way in',
+        ),
+      ).toBeTruthy(),
+    );
+    expect(screen.getAllByText('Email is the last way in')).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
+
+    act(() => {
+      mutationFeedback.error({
+        error: serverError('Unrelated failure'),
+        title: 'Something else failed',
+      });
+    });
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith('Something else failed', {
+        description: 'Unrelated failure',
+      }),
+    );
+  });
+
   it('closes once the action succeeds', async () => {
     const onOpenChange = vi.fn();
     render(
@@ -234,6 +309,7 @@ describe('InstantSwitch', () => {
     fireEvent.click(toggle);
     expect(toggle.getAttribute('aria-checked')).toBe('true');
     await act(async () => fail(serverError('Keep one sign-in method')));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(toggle.getAttribute('aria-checked')).toBe('false');
     expect(toast.error).toHaveBeenCalledTimes(1);
   });
@@ -466,7 +542,7 @@ describe('adminBulk.runEach', () => {
     expect(run).toHaveBeenCalledTimes(3);
     expect(adminBulk.isPartialFailure(error)).toBe(true);
     expect(adminBulk.failedItems({ error, items })).toEqual([2]);
-    expect(toast.error).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
     expect(toast.error).toHaveBeenCalledWith(
       "Couldn't delete 1 items",
       expect.objectContaining({ description: 'In use' }),

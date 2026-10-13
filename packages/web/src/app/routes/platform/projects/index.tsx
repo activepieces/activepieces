@@ -128,6 +128,9 @@ export default function ProjectsPage() {
   });
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(
+    null,
+  );
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
   const editDialogProject = allProjects.find(
@@ -296,75 +299,33 @@ export default function ProjectsPage() {
           const deletableProjects = selectedRows.filter(
             (row) => row.id !== currentProject?.id,
           );
+          if (selectedRows.length === 0) {
+            return null;
+          }
           return (
-            <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmDialog
-                title={t('Delete {name}?', {
-                  name: projectsLabel(deletableProjects),
-                })}
-                description={
-                  deletableProjects.length === 1
-                    ? t(
-                        'This project and all its data will be permanently deleted.',
-                      )
-                    : t(
-                        'The selected projects and all their data will be permanently deleted.',
-                      )
-                }
-                consequence={
-                  deletableProjects.length < selectedRows.length
-                    ? t(
-                        "The project you're in stays. Switch to another project to delete it.",
-                      )
-                    : undefined
-                }
-                confirmLabel={t('Delete')}
-                typeToConfirm={projectsLabel(deletableProjects)}
-                controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
-                onConfirm={async () => {
-                  const outcome = await deleteProjects
-                    .mutateAsync(deletableProjects)
-                    .catch((error: unknown) => {
-                      if (!adminBulk.isPartialFailure(error)) {
-                        throw error;
-                      }
-                      setSelectedRows([
-                        ...selectedRows.filter(
-                          (row) => !deletableProjects.includes(row),
-                        ),
-                        ...adminBulk.failedItems({
-                          error,
-                          items: deletableProjects,
-                        }),
-                      ]);
-                      return 'partial';
-                    });
-                  if (outcome === 'partial') {
-                    return;
-                  }
-                  resetSelection();
-                  setSelectedRows([]);
-                }}
-              >
-                {selectedRows.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-danger-11 hover:text-danger-11"
-                    disabled={deletableProjects.length === 0}
-                    {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
-                  >
-                    <Trash className="mr-1 w-4" />
-                    {`${t('Delete')} (${deletableProjects.length})`}
-                  </Button>
-                )}
-              </ConfirmDialog>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-danger-11 hover:text-danger-11"
+              disabled={deletableProjects.length === 0}
+              onClick={(event) => {
+                event.stopPropagation();
+                setPendingDelete({
+                  projects: deletableProjects,
+                  keepsCurrent: deletableProjects.length < selectedRows.length,
+                  resetSelection,
+                });
+              }}
+              {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
+            >
+              <Trash className="mr-1 w-4" />
+              {`${t('Delete')} (${deletableProjects.length})`}
+            </Button>
           );
         },
       },
     ],
-    [selectedRows, currentProject, deleteProjects],
+    [selectedRows, currentProject],
   );
 
   const actions = [
@@ -473,6 +434,57 @@ export default function ProjectsPage() {
         bulkActions={bulkActions}
         actions={actions}
       />
+      {pendingDelete !== null && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingDelete(null);
+            }
+          }}
+          title={t('Delete {name}?', {
+            name: projectsLabel(pendingDelete.projects),
+          })}
+          description={
+            pendingDelete.projects.length === 1
+              ? t('This project and all its data will be permanently deleted.')
+              : t(
+                  'The selected projects and all their data will be permanently deleted.',
+                )
+          }
+          consequence={
+            pendingDelete.keepsCurrent
+              ? t(
+                  "The project you're in stays. Switch to another project to delete it.",
+                )
+              : undefined
+          }
+          confirmLabel={t('Delete')}
+          typeToConfirm={projectsLabel(pendingDelete.projects)}
+          controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
+          onConfirm={async () => {
+            const targets = pendingDelete.projects;
+            const outcome = await deleteProjects
+              .mutateAsync(targets)
+              .catch((error: unknown) => {
+                if (!adminBulk.isPartialFailure(error)) {
+                  throw error;
+                }
+                const failed = adminBulk.failedItems({ error, items: targets });
+                setSelectedRows((current) => [
+                  ...current.filter((row) => !targets.includes(row)),
+                  ...failed,
+                ]);
+                return 'partial';
+              });
+            if (outcome === 'partial') {
+              return;
+            }
+            pendingDelete.resetSelection();
+            setSelectedRows([]);
+          }}
+        />
+      )}
       <EditProjectDialog
         open={editDialogOpen}
         onClose={() => {
@@ -514,3 +526,9 @@ function deleteErrorMessage(error: unknown): string | undefined {
       return undefined;
   }
 }
+
+type PendingDelete = {
+  projects: ProjectWithLimits[];
+  keepsCurrent: boolean;
+  resetSelection: () => void;
+};

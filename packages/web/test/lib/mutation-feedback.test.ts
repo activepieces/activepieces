@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { AxiosError, AxiosHeaders } from 'axios';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const toast = vi.hoisted(() => ({
   success: vi.fn(),
@@ -67,18 +67,25 @@ beforeEach(() => {
   toast.error.mockReset();
 });
 
+function flushReports(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+afterEach(() => flushReports());
+
 describe('mutationFeedback.error', () => {
-  it('shows the server message under the shared toast id', () => {
+  it('shows the server message under the shared toast id', async () => {
     const error = serverError({ status: 409, message: 'Name is taken' });
 
     mutationFeedback.error({ error, title: "Couldn't save changes" });
 
+    await flushReports();
     expect(toast.error).toHaveBeenCalledWith("Couldn't save changes", {
       description: 'Name is taken',
     });
   });
 
-  it('keeps raw validation text out of the toast', () => {
+  it('keeps raw validation text out of the toast', async () => {
     const config = { headers: new AxiosHeaders() };
     const error = new AxiosError(
       'Request failed',
@@ -101,12 +108,13 @@ describe('mutationFeedback.error', () => {
 
     mutationFeedback.error({ error, title: "Couldn't save changes" });
 
+    await flushReports();
     expect(toast.error).toHaveBeenCalledWith("Couldn't save changes", {
       description: VALIDATION_ERROR_MESSAGE,
     });
   });
 
-  it('keeps the generic message for a server error with a top-level message', () => {
+  it('keeps the generic message for a server error with a top-level message', async () => {
     const config = { headers: new AxiosHeaders() };
     const error = new AxiosError(
       'Request failed',
@@ -125,41 +133,45 @@ describe('mutationFeedback.error', () => {
     expect(mutationFeedback.message(error)).toBe(INTERNAL_ERROR_MESSAGE);
   });
 
-  it('falls back to a generic title and message', () => {
+  it('falls back to a generic title and message', async () => {
     mutationFeedback.error({ error: serverError({ status: 500 }) });
 
+    await flushReports();
     expect(toast.error).toHaveBeenCalledWith('Something went wrong', {
       description: INTERNAL_ERROR_MESSAGE,
     });
   });
 
-  it('says when the server could not be reached', () => {
+  it('says when the server could not be reached', async () => {
     mutationFeedback.error({ error: networkError() });
 
+    await flushReports();
     expect(toast.error.mock.calls[0][1].description).toBe(
       NETWORK_ERROR_MESSAGE,
     );
   });
 
-  it('keeps the text of a plain Error out of the toast', () => {
+  it('keeps the text of a plain Error out of the toast', async () => {
     mutationFeedback.error({ error: new Error('Disk full') });
 
+    await flushReports();
     expect(toast.error.mock.calls[0][1].description).toBe(
       INTERNAL_ERROR_MESSAGE,
     );
   });
 
-  it('shows the message of an error meant for the admin', () => {
+  it('shows the message of an error meant for the admin', async () => {
     mutationFeedback.error({
       error: mutationFeedback.userError('Flow import returned no flow.'),
     });
 
+    await flushReports();
     expect(toast.error.mock.calls[0][1].description).toBe(
       'Flow import returned no flow.',
     );
   });
 
-  it('records the error so later layers can stay quiet', () => {
+  it('records the error so later layers can stay quiet', async () => {
     const shown = new Error('shown');
     const other = new Error('other');
 
@@ -169,10 +181,11 @@ describe('mutationFeedback.error', () => {
     expect(mutationFeedback.wasShown(other)).toBe(false);
   });
 
-  it('tolerates errors that are not objects', () => {
+  it('tolerates errors that are not objects', async () => {
     mutationFeedback.error({ error: 'boom' });
 
     expect(mutationFeedback.wasShown('boom')).toBe(false);
+    await flushReports();
     expect(toast.error).toHaveBeenCalledTimes(1);
   });
 });

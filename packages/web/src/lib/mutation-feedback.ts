@@ -109,12 +109,20 @@ function wasShown(error: unknown): boolean {
 }
 
 function error(params: MutationErrorParams): void {
-  const { error, title, description } = params;
+  const { error } = params;
   markShown(error);
-  if (confirmErrors !== null) {
-    confirmErrors.push(params);
+  if (typeof error !== 'object' || error === null) {
+    report(params);
     return;
   }
+  const timer = setTimeout(() => {
+    pendingReports.delete(error);
+    report(params);
+  }, 0);
+  pendingReports.set(error, { params, timer });
+}
+
+function report({ error, title, description }: MutationErrorParams): void {
   if (isQuotaExceeded(error)) {
     openPlanDialog();
     return;
@@ -122,6 +130,19 @@ function error(params: MutationErrorParams): void {
   toast.error(title ?? t('Something went wrong'), {
     description: description ?? message(error),
   });
+}
+
+function claimReport(error: unknown): MutationErrorParams | undefined {
+  if (typeof error !== 'object' || error === null) {
+    return undefined;
+  }
+  const pending = pendingReports.get(error);
+  if (pending === undefined) {
+    return undefined;
+  }
+  clearTimeout(pending.timer);
+  pendingReports.delete(error);
+  return pending.params;
 }
 
 function success(message: ReactNode, description?: string): void {
@@ -171,33 +192,24 @@ async function runUndo({
 async function runConfirm(
   run: () => Promise<unknown> | unknown,
 ): Promise<ConfirmFailure | null> {
-  const outer = confirmErrors;
-  const collected: MutationErrorParams[] = [];
-  confirmErrors = collected;
-  let failure: ConfirmFailure | null = null;
   try {
     await run();
+    return null;
   } catch (caught) {
-    const own =
-      collected.find((entry) => entry.error === caught) ??
-      (wasShown(caught) ? collected[0] : undefined);
-    const source = own === undefined ? caught : own.error;
-    markShown(source);
-    failure = {
-      error: source,
-      title: own?.title,
-      description: own?.description ?? message(source),
+    const claimed = claimReport(caught);
+    markShown(caught);
+    return {
+      error: caught,
+      title: claimed?.title,
+      description: claimed?.description ?? message(caught),
     };
-  } finally {
-    confirmErrors = outer;
   }
-  collected
-    .filter((entry) => entry.error !== failure?.error)
-    .forEach((entry) => error(entry));
-  return failure;
 }
 
-let confirmErrors: MutationErrorParams[] | null = null;
+const pendingReports = new WeakMap<
+  object,
+  { params: MutationErrorParams; timer: ReturnType<typeof setTimeout> }
+>();
 
 const shownErrors = new WeakSet<object>();
 

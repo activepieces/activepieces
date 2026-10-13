@@ -137,8 +137,8 @@ export const platformModelTierMutations = {
           message: t('{name} updated', { name: updated.name }),
         });
       },
-      onError: (error, { id }, context) => {
-        restoreTier({ queryClient, previous: context?.previous, id });
+      onError: (error, { id, request }, context) => {
+        restoreTier({ queryClient, previous: context?.previous, id, request });
         reportError({
           feedback,
           error,
@@ -301,18 +301,35 @@ function restoreTier({
   queryClient,
   previous,
   id,
+  request,
 }: {
   queryClient: QueryClient;
   previous: PlatformModelTier[] | undefined;
   id: string;
+  request: UpdatePlatformModelTierRequest;
 }): void {
   const before = previous?.find((tier) => tier.id === id);
-  if (before === undefined) {
+  if (previous === undefined || before === undefined) {
     return;
   }
+  const savedById = new Map(previous.map((tier) => [tier.id, tier]));
   queryClient.setQueryData<PlatformModelTier[]>(
     platformModelTierKeys.admin,
-    (old) => old?.map((tier) => (tier.id === id ? before : tier)),
+    (old) =>
+      old?.map((tier) => {
+        if (tier.id === id) {
+          return before;
+        }
+        const saved = savedById.get(tier.id);
+        if (saved === undefined) {
+          return tier;
+        }
+        return {
+          ...tier,
+          ...(request.isDefault === true ? { isDefault: saved.isDefault } : {}),
+          ...(request.isFast === true ? { isFast: saved.isFast } : {}),
+        };
+      }),
   );
 }
 
