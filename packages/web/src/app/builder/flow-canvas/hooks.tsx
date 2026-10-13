@@ -2,6 +2,7 @@ import { Permission, isNil } from '@activepieces/core-utils';
 import {
   FlowDraftUpdatedEvent,
   FlowRunStatus,
+  FlowVersionState,
   WebsocketClientEvent,
   RunEnvironment,
   isFlowRunStateTerminal,
@@ -9,7 +10,7 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useLocation, usePrevious } from 'react-use';
 import { toast } from 'sonner';
 import { useDebouncedCallback } from 'use-debounce';
@@ -22,7 +23,7 @@ import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { editorSession } from '@/lib/editor-session';
 
-import { useBuilderStateContext } from '../builder-hooks';
+import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
@@ -117,13 +118,32 @@ const useFlushPendingEditsOnLeave = () => {
   }, [flushPendingEdits]);
 };
 
+const useRefreshDraftAndMakeNewDraftEditable = () => {
+  const store = useBuilderStore();
+  const { checkAccess } = useAuthorization();
+  const canEditFlow = checkAccess(Permission.WRITE_FLOW);
+  return useCallback(async () => {
+    const { flowVersion: versionBeforeRefresh, refreshDraft } =
+      store.getState();
+    const applied = await refreshDraft();
+    const { flowVersion: versionAfterRefresh, setReadOnly } = store.getState();
+    if (
+      applied &&
+      versionBeforeRefresh.state === FlowVersionState.LOCKED &&
+      versionAfterRefresh.state === FlowVersionState.DRAFT
+    ) {
+      setReadOnly(!canEditFlow);
+    }
+    return applied;
+  }, [store, canEditFlow]);
+};
+
 const useRefreshDraftOnPush = () => {
   const socket = useSocket();
-  const [flowId, refreshDraft] = useBuilderStateContext((state) => [
-    state.flow.id,
-    state.refreshDraft,
-  ]);
+  const flowId = useBuilderStateContext((state) => state.flow.id);
+  const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
   useEffect(() => {
+    let listening = true;
     const refreshOnPush = (event: FlowDraftUpdatedEvent) => {
       if (
         event.flowId !== flowId ||
@@ -132,7 +152,10 @@ const useRefreshDraftOnPush = () => {
         return;
       }
       refreshDraft()
-        .then(() => {
+        .then((applied) => {
+          if (!applied || !listening) {
+            return;
+          }
           toast.info(
             t(
               'This flow was changed in a different tab or by a different editor. You see the newest version.',
@@ -144,6 +167,7 @@ const useRefreshDraftOnPush = () => {
     };
     socket.on(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
     return () => {
+      listening = false;
       socket.off(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
     };
   }, [socket, flowId, refreshDraft]);
@@ -151,7 +175,7 @@ const useRefreshDraftOnPush = () => {
 
 const useRefreshDraftOnReconnectAndReturn = () => {
   const socket = useSocket();
-  const refreshDraft = useBuilderStateContext((state) => state.refreshDraft);
+  const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
   useEffect(() => {
     let socketHasConnected = socket.connected;
     const refreshOnReconnect = () => {
