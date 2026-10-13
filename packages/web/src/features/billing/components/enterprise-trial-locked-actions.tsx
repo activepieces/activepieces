@@ -12,6 +12,7 @@ import { ENTERPRISE_TRIAL_DAYS } from '../hooks/enterprise-trial-hooks';
 import { useEnterpriseAccess } from '../hooks/use-enterprise-gate';
 import { usePlanTier } from '../hooks/use-plan-tier';
 import { useUpgradeClick } from '../hooks/use-upgrade-click';
+import { enterpriseDocs } from '../utils/enterprise-docs';
 import { planTiers } from '../utils/plan-tiers';
 
 import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
@@ -24,6 +25,7 @@ export function EnterpriseTrialLockedActions({
   primaryLast = false,
   compact = false,
   finePrintBelow = false,
+  showContactSales = true,
 }: EnterpriseTrialLockedActionsProps) {
   const size = compact ? 'sm' : 'default';
   const access = useEnterpriseAccess({ unlocked: false });
@@ -99,7 +101,7 @@ export function EnterpriseTrialLockedActions({
 
   const salesLink = (variant: 'default' | 'link') => (
     <EnterpriseTrialSalesLink
-      surface="enterprise_locked"
+      surface="locked_feature"
       variant={variant}
       size={size}
       className={variant === 'link' ? 'h-auto p-0' : undefined}
@@ -110,7 +112,22 @@ export function EnterpriseTrialLockedActions({
   );
 
   if (plan.isCommunity) {
-    return salesLink('default');
+    if (!showContactSales) {
+      return null;
+    }
+    return (
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <a
+          href={enterpriseDocs.switchToEnterpriseUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-medium text-accent-11 hover:underline"
+        >
+          {t('How to switch to the Enterprise edition')}
+        </a>
+        {salesLink('default')}
+      </div>
+    );
   }
 
   if (plan.tier !== 'enterprise') {
@@ -141,4 +158,5 @@ type EnterpriseTrialLockedActionsProps = {
   primaryLast?: boolean;
   compact?: boolean;
   finePrintBelow?: boolean;
+  showContactSales?: boolean;
 };

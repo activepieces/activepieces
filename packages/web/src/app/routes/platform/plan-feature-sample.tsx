@@ -1,4 +1,5 @@
 import { PlatformWithoutSensitiveData } from '@activepieces/shared';
+import { t } from 'i18next';
 import React from 'react';
 
 import { FeatureSample } from '@/app/components/feature-sample';
@@ -37,6 +38,11 @@ export function PlanFeatureGuard({
       featureKey={teaser.featureKey}
       lockTitle={teaser.title}
       lockDescription={teaser.description}
+      guide={
+        teaser.documentationUrl
+          ? { url: teaser.documentationUrl, label: t('Read the docs') }
+          : undefined
+      }
     >
       {children}
     </LockedFeatureGuard>
@@ -119,6 +125,8 @@ const PLAN_FEATURE_SAMPLES: Record<PlanFeature, PlanFeatureSampleSpec> = {
       title: 'Unlock Event Streaming',
       description:
         'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
+      documentationUrl:
+        'https://www.activepieces.com/docs/admin-guide/guides/event-streaming',
     },
   },
   pieces: {
@@ -163,6 +171,7 @@ type PlanFeatureTeaser = {
   featureKey: FeatureKey;
   title: string;
   description: string;
+  documentationUrl?: string;
 };
 
 type PlanFeatureSampleProps = {

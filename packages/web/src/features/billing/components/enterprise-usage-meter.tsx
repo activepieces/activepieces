@@ -26,7 +26,7 @@ export function EnterpriseUsageMeter({
   }
   const atLimit = used >= limit;
   const usage = t('{used} of {limit} {label}', { used, limit, label });
-  const ring = <UsageRing used={used} limit={limit} atLimit={atLimit} />;
+  const meter = <UsageBar used={used} limit={limit} atLimit={atLimit} />;
 
   if (gate.access === 'ask_admin' || gate.access === 'community') {
     return (
@@ -37,7 +37,7 @@ export function EnterpriseUsageMeter({
           className,
         )}
       >
-        {ring}
+        {meter}
         {usage}
       </span>
     );
@@ -56,7 +56,7 @@ export function EnterpriseUsageMeter({
           )}
           onClick={gate.explain}
         >
-          {ring}
+          {meter}
           {usage}
           <LockedGem className="text-accent-11" />
           <span className="sr-only">
@@ -71,7 +71,7 @@ export function EnterpriseUsageMeter({
   );
 }
 
-function UsageRing({
+function UsageBar({
   used,
   limit,
   atLimit,
@@ -80,29 +80,20 @@ function UsageRing({
   limit: number;
   atLimit: boolean;
 }) {
-  const circumference = 2 * Math.PI * 6;
-  const filled = Math.min(1, used / limit) * circumference;
+  const percent = Math.round(Math.min(1, used / limit) * 100);
   return (
-    <svg viewBox="0 0 16 16" className="size-4 shrink-0 -rotate-90" aria-hidden>
-      <circle
-        cx="8"
-        cy="8"
-        r="6"
-        fill="none"
-        strokeWidth="2.5"
-        className="stroke-gray-5"
+    <span
+      aria-hidden
+      className="relative h-1.5 w-10 shrink-0 overflow-hidden rounded-full bg-gray-5"
+    >
+      <span
+        className={cn(
+          'absolute inset-y-0 left-0 rounded-full',
+          atLimit ? 'bg-warning-9' : 'bg-accent-9',
+        )}
+        style={{ width: `${Math.max(percent, 8)}%` }}
       />
-      <circle
-        cx="8"
-        cy="8"
-        r="6"
-        fill="none"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeDasharray={`${filled} ${circumference}`}
-        className={atLimit ? 'stroke-warning-9' : 'stroke-accent-9'}
-      />
-    </svg>
+    </span>
   );
 }
 

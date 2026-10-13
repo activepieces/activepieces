@@ -47,7 +47,7 @@ import { PlanBadge } from './plan-badge';
 import { FeatureKey } from './request-trial';
 
 export function EnterpriseTrialDialog() {
-  const { payload, closeDialog } =
+  const { payload, returnFocus, closeDialog } =
     billingDialogHooks.useEnterpriseTrialDialogStore();
   const queryClient = useQueryClient();
   enterpriseTrialHooks.useStatus();
@@ -88,6 +88,12 @@ export function EnterpriseTrialDialog() {
       <Dialog open={open} onOpenChange={(next) => !next && close()}>
         <DialogContent
           onOpenAutoFocus={focusDialogItself}
+          onCloseAutoFocus={(event) => {
+            if (returnFocus?.isConnected) {
+              event.preventDefault();
+              returnFocus.focus();
+            }
+          }}
           className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[60rem] sm:rounded-2xl"
         >
           {open && (
@@ -542,8 +548,17 @@ function TrialStarted({
           />
         )
       }
-      mainTitle={t('Good first steps')}
+      mainTitle={t('Your trial')}
       main={
+        <TrialTimeline
+          basePlanName={trial.basePlanName}
+          started={true}
+          startedAt={isNil(startedAt) ? undefined : new Date(startedAt)}
+          endsAt={isNil(endsAt) ? undefined : new Date(endsAt)}
+        />
+      }
+      asideTitle={t('Good first steps')}
+      aside={
         <div className="flex flex-col divide-y border-y">
           {shortcuts.map((shortcut) => (
             <Link
@@ -557,15 +572,6 @@ function TrialStarted({
             </Link>
           ))}
         </div>
-      }
-      asideTitle={t('Your trial')}
-      aside={
-        <TrialTimeline
-          basePlanName={trial.basePlanName}
-          started={true}
-          startedAt={isNil(startedAt) ? undefined : new Date(startedAt)}
-          endsAt={isNil(endsAt) ? undefined : new Date(endsAt)}
-        />
       }
       actions={
         <Button size="lg" onClick={onClose}>
