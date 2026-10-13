@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-value -- @testing-library/jest-dom is not a dependency of packages/web */
+/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-value, jest-dom/prefer-to-have-attribute -- @testing-library/jest-dom is not a dependency of packages/web */
 import { PlatformRole } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -72,6 +72,21 @@ function externalIdInput(): HTMLInputElement {
 }
 
 describe('UpdateUserDialog', () => {
+  it('stays open while a save is running', async () => {
+    state.update = vi.fn(() => new Promise(() => undefined));
+    render(<Harness />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit user' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(state.update).toHaveBeenCalledTimes(1));
+
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    expect(cancel.hasAttribute('disabled')).toBe(true);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeTruthy();
+  });
+
   it('drops cancelled edits when it opens again', async () => {
     state.update = vi.fn().mockResolvedValue({
       platformRole: PlatformRole.MEMBER,
