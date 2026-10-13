@@ -10,6 +10,7 @@ import {
   adminPageResources,
 } from '@/app/components/admin';
 import { McpToolTierList } from '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tier-list';
+import { mcpToolTiers } from '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tiers';
 import { ActivityFeed } from '@/app/routes/mcp-server/activity/activity-feed';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -90,7 +91,7 @@ function AccessContent() {
                 onSettled,
                 onSuccess: () =>
                   mutationFeedback.undo({
-                    message: t('Changes saved'),
+                    message: toolsChangeMessage({ disabled, enabled }),
                     onUndo: async () => {
                       if (
                         undoing.current ||
@@ -144,6 +145,32 @@ function ActivityContent() {
       />
     </div>
   );
+}
+
+function toolsChangeMessage({
+  disabled,
+  enabled,
+}: {
+  disabled: string[];
+  enabled: string[];
+}): string {
+  const changed = disabled.length > 0 ? disabled : enabled;
+  if (changed.length === 0 || (disabled.length > 0 && enabled.length > 0)) {
+    return t('Changes saved');
+  }
+  const tiers = new Set(
+    changed.map((name) => mcpToolTiers.tierOf({ name, locked: false })),
+  );
+  if (changed.length > 1 && tiers.size > 1) {
+    return t('Changes saved');
+  }
+  const name =
+    changed.length === 1
+      ? mcpToolTiers.titleOf(changed[0])
+      : mcpToolTiers.copyOf([...tiers][0]).label;
+  return disabled.length > 0
+    ? t('{name} turned off', { name })
+    : t('{name} turned on', { name });
 }
 
 const MCP_TOOLS_SCOPE = 'platform-mcp-server-tools';

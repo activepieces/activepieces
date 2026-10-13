@@ -11,6 +11,7 @@ import {
   AdminPage,
   AdminPageHeader,
   ConfirmDialog,
+  RowActionTooltip,
   adminBulk,
   adminPageResources,
   useAdminAction,
@@ -22,11 +23,6 @@ import { FormattedDate } from '@/components/custom/formatted-date';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { PieceIconList } from '@/features/pieces';
 import { templatesApi } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -266,25 +262,18 @@ const PlatformTemplatesPage = () => {
           (row) => {
             return (
               <div className="flex items-end justify-end">
-                <Tooltip>
-                  <TooltipTrigger>
-                    <UpdateTemplateDialog
-                      onDone={() => refetch()}
-                      template={row}
+                <UpdateTemplateDialog onDone={() => refetch()} template={row}>
+                  <RowActionTooltip label={t('Edit template')} side="bottom">
+                    <Button
+                      {...adminControl(AdminControl.TEMPLATES_EDIT_OPEN)}
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={t('Edit {name}', { name: row.name })}
                     >
-                      <Button
-                        {...adminControl(AdminControl.TEMPLATES_EDIT_OPEN)}
-                        variant="ghost"
-                        size="icon-sm"
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                    </UpdateTemplateDialog>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {t('Edit template')}
-                  </TooltipContent>
-                </Tooltip>
+                      <Pencil className="size-4" />
+                    </Button>
+                  </RowActionTooltip>
+                </UpdateTemplateDialog>
               </div>
             );
           },

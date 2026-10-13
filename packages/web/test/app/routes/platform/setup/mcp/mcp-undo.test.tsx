@@ -13,9 +13,15 @@ const state = vi.hoisted(() => ({
   serverTools: [] as string[],
   updateAsync: vi.fn(),
   onUndo: undefined as (() => Promise<unknown>) | undefined,
+  message: undefined as string | undefined,
+  nextTools: ['flows_write', 'flows_delete'],
+  initialTools: [] as string[],
 }));
 
-vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('i18next', () => ({
+  t: (key: string, values?: Record<string, string>) =>
+    key.replace(/\{(\w+)\}/g, (_, name: string) => values?.[name] ?? ''),
+}));
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
     useCurrentPlatform: () => ({
@@ -31,7 +37,14 @@ vi.mock('@/lib/mutation-feedback', async (importOriginal) => {
     ...actual,
     mutationFeedback: {
       ...actual.mutationFeedback,
-      undo: ({ onUndo }: { onUndo: () => Promise<unknown> }) => {
+      undo: ({
+        message,
+        onUndo,
+      }: {
+        message: string;
+        onUndo: () => Promise<unknown>;
+      }) => {
+        state.message = message;
         state.onUndo = onUndo;
       },
     },
@@ -45,7 +58,7 @@ vi.mock('@/app/routes/platform/setup/mcp/platform-mcp-api', () => ({
 vi.mock('@/app/routes/platform/setup/mcp/platform-mcp-hooks', () => ({
   platformMcpHooks: {
     usePlatformMcpServer: () => ({
-      data: { disabledTools: [] },
+      data: { disabledTools: state.initialTools },
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
@@ -72,7 +85,7 @@ vi.mock(
         type="button"
         onClick={() =>
           onUpdateDisabledTools({
-            tools: ['flows_write', 'flows_delete'],
+            tools: state.nextTools,
             onSettled: () => undefined,
           })
         }
@@ -89,7 +102,21 @@ vi.mock('@/app/routes/mcp-server/activity/activity-feed', () => ({
 beforeEach(() => {
   state.updateAsync = vi.fn().mockResolvedValue(undefined);
   state.onUndo = undefined;
+  state.message = undefined;
+  state.nextTools = ['flows_write', 'flows_delete'];
+  state.initialTools = [];
 });
+
+function renderAccessPage() {
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <PlatformMcpPage section="access" />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Turn off flow writes' }));
+}
 
 describe('Platform MCP undo', () => {
   it('turns back on only the tools that action turned off', async () => {
@@ -134,5 +161,28 @@ describe('Platform MCP undo', () => {
     await first;
 
     expect(state.updateAsync).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Platform MCP saved toast', () => {
+  it('names the tool group that was turned off', async () => {
+    renderAccessPage();
+    await waitFor(() =>
+      expect(state.message).toBe('Publish and run turned off'),
+    );
+  });
+
+  it('names a single tool that was turned on', async () => {
+    state.initialTools = ['ap_delete_flow'];
+    state.nextTools = [];
+    renderAccessPage();
+    await waitFor(() => expect(state.message).toBe('Delete flow turned on'));
+  });
+
+  it('falls back to a generic message for mixed changes', async () => {
+    state.initialTools = ['ap_delete_flow'];
+    state.nextTools = ['ap_create_flow'];
+    renderAccessPage();
+    await waitFor(() => expect(state.message).toBe('Changes saved'));
   });
 });

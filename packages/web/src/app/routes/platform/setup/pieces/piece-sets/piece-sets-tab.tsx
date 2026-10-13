@@ -20,6 +20,7 @@ import {
   AdminPage,
   AdminPageHeader,
   ConfirmDialog,
+  RowActionTooltip,
   StatusDot,
   adminPageResources,
   useAdminAction,
@@ -32,11 +33,6 @@ import {
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   pieceSetCacheUtils,
   pieceSetQueries,
@@ -139,32 +135,28 @@ export const PieceSetsTab = () => {
         notClickable: true,
         cell: ({ row }) => (
           <div className="flex justify-end gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  {...adminControl(AdminControl.PIECE_SETS_EDIT_OPEN)}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingSet(row.original)}
-                >
-                  <Settings2 className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Edit Details')}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_OPEN)}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setDuplicatingSet(row.original)}
-                >
-                  <Copy className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Duplicate')}</TooltipContent>
-            </Tooltip>
+            <RowActionTooltip label={t('Edit Details')}>
+              <Button
+                {...adminControl(AdminControl.PIECE_SETS_EDIT_OPEN)}
+                variant="ghost"
+                size="sm"
+                aria-label={t('Edit {name}', { name: row.original.name })}
+                onClick={() => setEditingSet(row.original)}
+              >
+                <Settings2 className="size-4" />
+              </Button>
+            </RowActionTooltip>
+            <RowActionTooltip label={t('Duplicate')}>
+              <Button
+                {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_OPEN)}
+                variant="ghost"
+                size="sm"
+                aria-label={t('Duplicate {name}', { name: row.original.name })}
+                onClick={() => setDuplicatingSet(row.original)}
+              >
+                <Copy className="size-4" />
+              </Button>
+            </RowActionTooltip>
             <ConfirmDialog
               title={t('Delete {name}?', { name: row.original.name })}
               description={t(

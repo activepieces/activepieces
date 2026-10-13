@@ -21,7 +21,10 @@ const { toastMock, collectionUtilsMock } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('i18next', () => ({
+  t: (key: string, params?: Record<string, string>) =>
+    key.replace(/\{(\w+)\}/g, (match, param) => params?.[param] ?? match),
+}));
 
 vi.mock('sonner', () => ({ toast: toastMock }));
 
@@ -175,7 +178,9 @@ beforeEach(() => {
 
 describe('EventDestinationActions delete', () => {
   function confirmDelete() {
-    mount(<EventDestinationActions destination={destination} />);
+    mount(
+      <EventDestinationActions destination={destination} name="Orders hook" />,
+    );
     const deleteItem = screen
       .getAllByRole('menuitem')
       .find((item) => item.textContent === 'Delete');
@@ -197,6 +202,21 @@ describe('EventDestinationActions delete', () => {
       within(dialogs()[0]).getAllByText("Couldn't delete the destination"),
     ).toHaveLength(1);
     expect(screen.getAllByText('Destination not reachable')).toHaveLength(1);
+  });
+
+  it('names the destination in the confirmation', () => {
+    mount(
+      <EventDestinationActions destination={destination} name="Orders hook" />,
+    );
+    const deleteItem = screen
+      .getAllByRole('menuitem')
+      .find((item) => item.textContent === 'Delete');
+    click(deleteItem);
+
+    expect(
+      within(dialogs()[0]).getAllByText('Delete Orders hook?'),
+    ).toHaveLength(1);
+    expect(within(dialogs()[0]).getAllByText(destination.url)).toHaveLength(1);
   });
 
   it('shows success and closes the confirmation only after deleting succeeds', async () => {

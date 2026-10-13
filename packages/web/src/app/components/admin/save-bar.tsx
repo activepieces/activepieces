@@ -7,6 +7,7 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
   useSyncExternalStore,
 } from 'react';
 import { UNSAFE_DataRouterContext } from 'react-router-dom';
@@ -48,6 +49,7 @@ export function SaveBar({
   children,
 }: SaveBarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const [holdingNavigation, setHoldingNavigation] = useState(false);
   const showSave = saveVisible && (!locked || locked.canSaveRest === true);
   const saveNow = () => {
     if (onSave) {
@@ -121,10 +123,13 @@ export function SaveBar({
         )}
         {locked?.action}
       </div>
-      {guardNavigation && dirty && (
+      {guardNavigation && (dirty || saving || holdingNavigation) && (
         <NavigationGuard
           standDown={standDown}
           guardSearchChanges={guardSearchChanges}
+          dirty={dirty}
+          saving={saving}
+          onHoldChange={setHoldingNavigation}
         />
       )}
     </div>
@@ -247,16 +252,30 @@ function createGuardOwners() {
   };
 }
 
-function LeaveGuard({ standDown, guardSearchChanges }: NavigationGuardProps) {
+function LeaveGuard({
+  standDown,
+  guardSearchChanges,
+  dirty,
+  saving,
+  onHoldChange,
+}: NavigationGuardProps) {
   const fallbackStandDown = useRef(false);
   const leaveBlocker = useWarnBeforeLosingChanges({
-    hasChanges: true,
+    hasChanges: dirty || saving,
     standDown: standDown ?? fallbackStandDown,
     blockSearchChanges: guardSearchChanges,
   });
+  const blocked = leaveBlocker.state === 'blocked';
+  useEffect(() => {
+    onHoldChange(blocked);
+    if (blocked && !saving && !dirty) {
+      leaveBlocker.proceed?.();
+    }
+  }, [blocked, saving, dirty, leaveBlocker, onHoldChange]);
+  useEffect(() => () => onHoldChange(false), [onHoldChange]);
   return (
     <LeaveWithoutSavingDialog
-      open={leaveBlocker.state === 'blocked'}
+      open={blocked && !saving && dirty}
       onKeepEditing={() => leaveBlocker.reset?.()}
       onDiscard={() => leaveBlocker.proceed?.()}
     />
@@ -285,14 +304,14 @@ function renderStatus({
   }
   if (locked) {
     return (
-      <StatusDot tone="accent" className="text-gray-11">
+      <StatusDot tone="accent" wrap className="text-gray-11">
         {locked.message}
       </StatusDot>
     );
   }
   if (dirty) {
     return (
-      <StatusDot tone="warning" className="text-gray-11">
+      <StatusDot tone="warning" wrap className="text-gray-11">
         {t('You have unsaved changes')}
       </StatusDot>
     );
@@ -329,6 +348,9 @@ type SaveBarProps = {
 type NavigationGuardProps = {
   standDown?: RefObject<boolean>;
   guardSearchChanges: boolean;
+  dirty: boolean;
+  saving: boolean;
+  onHoldChange: (holding: boolean) => void;
 };
 
 export type SaveBarLock = {

@@ -22,6 +22,7 @@ const dotVariants = cva('size-2 shrink-0 rounded-full', {
 export function StatusDot({
   tone,
   pulse = false,
+  wrap = false,
   className,
   children,
 }: StatusDotProps) {
@@ -30,14 +31,23 @@ export function StatusDot({
       data-slot="status-dot"
       className={cn(
         'inline-flex min-w-0 items-center gap-2 text-sm text-gray-12',
+        wrap && 'items-start',
         className,
       )}
     >
       <span
         aria-hidden
-        className={cn(dotVariants({ tone }), pulse && 'animate-pulse')}
+        className={cn(
+          dotVariants({ tone }),
+          pulse && 'animate-pulse',
+          wrap && 'mt-1.5',
+        )}
       />
-      {typeof children === 'string' ? (
+      {wrap ? (
+        children !== undefined && (
+          <span className="break-words">{children}</span>
+        )
+      ) : typeof children === 'string' ? (
         <TextWithTooltip tooltipMessage={children}>
           <span className="truncate">{children}</span>
         </TextWithTooltip>
@@ -58,6 +68,7 @@ export type StatusTone =
 type StatusDotProps = {
   tone: StatusTone;
   pulse?: boolean;
+  wrap?: boolean;
   className?: string;
   children?: ReactNode;
 };
