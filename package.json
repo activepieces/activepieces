@@ -19,6 +19,7 @@
     "serve:engine": "turbo run serve --filter=@activepieces/engine",
     "serve:worker": "turbo run serve --filter=worker",
     "chat:logs": "node scripts/chat-logs.mjs",
+    "ai-devtools": "bunx @ai-sdk/devtools@1.0.9",
     "push": "turbo run lint && git push",
     "dev": "node tools/scripts/install-bun.js && turbo run serve --filter=web --filter=api --filter=@activepieces/engine --filter=worker --ui stream",
     "dev:backend": "turbo run serve --filter=api --filter=@activepieces/engine --ui stream",
