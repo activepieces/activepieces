@@ -117,7 +117,7 @@ export const OwnerCell = ({
   );
 };
 
-const ProjectNames = ({
+export const ProjectNames = ({
   names,
   children,
 }: {

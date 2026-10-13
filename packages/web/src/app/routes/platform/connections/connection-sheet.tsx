@@ -26,6 +26,7 @@ import { EditGlobalConnectionDialog } from '@/features/connections';
 import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
 import { getProjectName } from '@/features/projects';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { listUtils } from '@/lib/list-utils';
 import { cn } from '@/lib/utils';
 
 import {
@@ -35,6 +36,7 @@ import {
 import {
   ConnectionStatus,
   OwnerCell,
+  ProjectNames,
   connectionCellsUtils,
 } from './connection-cells';
 
@@ -107,11 +109,15 @@ const ConnectionDetails = ({
         <Fact label={isGlobal ? t('Shared with') : t('Project')}>
           {isGlobal ? (
             <span className="flex flex-wrap items-center justify-end gap-2">
-              {connection.projects.length === 0
-                ? t('No projects')
-                : connection.projects
-                    .map((sharedWith) => getProjectName(sharedWith))
-                    .join(', ')}
+              {connection.projects.length === 0 ? (
+                t('No projects')
+              ) : (
+                <SharedWithNames
+                  names={connection.projects.map((sharedWith) =>
+                    getProjectName(sharedWith),
+                  )}
+                />
+              )}
               {connection.preSelectForNewProjects && <DefaultTag />}
               {!locked && (
                 <EditGlobalConnectionDialog
@@ -208,6 +214,39 @@ const ConnectionDetails = ({
   );
 };
 
+const SharedWithNames = ({ names }: { names: string[] }) => {
+  const { visible, hiddenCount } = listUtils.cap({
+    items: names,
+    limit: SHARED_WITH_NAMES_SHOWN,
+    expanded: false,
+  });
+  return (
+    <span className="flex min-w-0 flex-col items-end gap-0.5">
+      <span>
+        {t('{count, plural, =1 {1 project} other {# projects}}', {
+          count: names.length,
+        })}
+      </span>
+      <span className="text-xs text-gray-11">
+        {visible.join(', ')}
+        {hiddenCount > 0 && (
+          <>
+            {' '}
+            <ProjectNames names={names.slice(visible.length)}>
+              <button
+                type="button"
+                className="rounded-sm font-medium text-gray-12 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-accent-8"
+              >
+                {t('+{count} more', { count: hiddenCount })}
+              </button>
+            </ProjectNames>
+          </>
+        )}
+      </span>
+    </span>
+  );
+};
+
 const Fact = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className="flex min-h-12 items-center justify-between gap-4 py-3 text-sm">
     <dt className="shrink-0 text-gray-11">{label}</dt>
@@ -216,6 +255,8 @@ const Fact = ({ label, children }: { label: string; children: ReactNode }) => (
     </dd>
   </div>
 );
+
+const SHARED_WITH_NAMES_SHOWN = 4;
 
 type ConnectionSheetProps = {
   connection: PlatformAppConnectionsListItem | null;
