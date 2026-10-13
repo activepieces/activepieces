@@ -22,7 +22,9 @@ export function EnterpriseTrialLockedActions({
   surface,
   onAction,
   primaryLast = false,
+  compact = false,
 }: EnterpriseTrialLockedActionsProps) {
+  const size = compact ? 'sm' : 'default';
   const access = useEnterpriseAccess({ unlocked: false });
   const plan = usePlanTier(featureKey);
   const { openDialog } = billingDialogHooks.useEnterpriseTrialDialogStore();
@@ -37,10 +39,12 @@ export function EnterpriseTrialLockedActions({
       });
     }
   };
-  const explorePlans = (variant: 'default' | 'outline') => (
+  const explorePlans = (variant: 'default' | 'outline' | 'link') => (
     <Button
       {...adminControl(AdminControl.TRIAL_PLANS_OPEN)}
       variant={variant}
+      size={size}
+      className={variant === 'link' ? 'h-auto p-0' : undefined}
       onClick={() => {
         onAction?.();
         upgradeClick({ feature: featureKey, tier: plan.tier, surface });
@@ -65,6 +69,7 @@ export function EnterpriseTrialLockedActions({
         <div className="flex flex-wrap items-center gap-2">
           <Button
             {...adminControl(AdminControl.TRIAL_START_OPEN)}
+            size={size}
             onClick={() => {
               onAction?.();
               openDialog({ featureKey });
@@ -72,13 +77,15 @@ export function EnterpriseTrialLockedActions({
           >
             {t('Start free trial')}
           </Button>
-          {explorePlans('outline')}
+          {explorePlans(compact ? 'link' : 'outline')}
         </div>
-        <span className="text-xs text-gray-11">
-          {t('{days}-day Enterprise plan trial. No credit card.', {
-            days: ENTERPRISE_TRIAL_DAYS,
-          })}
-        </span>
+        {!compact && (
+          <span className="text-xs text-gray-11">
+            {t('{days}-day Enterprise plan trial. No credit card.', {
+              days: ENTERPRISE_TRIAL_DAYS,
+            })}
+          </span>
+        )}
       </div>
     );
   }
@@ -87,6 +94,7 @@ export function EnterpriseTrialLockedActions({
     <EnterpriseTrialSalesLink
       surface="enterprise_locked"
       variant={variant}
+      size={size}
       className={variant === 'link' ? 'h-auto p-0' : undefined}
       label={t('Talk to sales')}
       featureKey={featureKey}
@@ -120,7 +128,7 @@ export function EnterpriseTrialLockedActions({
       )}
     >
       {salesLink('default')}
-      {explorePlans('outline')}
+      {explorePlans(compact ? 'link' : 'outline')}
     </div>
   );
 }
@@ -130,4 +138,5 @@ type EnterpriseTrialLockedActionsProps = {
   surface: PlatformAdminSurface;
   onAction?: () => void;
   primaryLast?: boolean;
+  compact?: boolean;
 };

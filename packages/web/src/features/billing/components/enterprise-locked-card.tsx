@@ -16,20 +16,16 @@ export function EnterpriseLockedCard({
   fallbackHeadline,
   fallbackDescription,
   fallbackBenefits,
-  headline: headlineOverride,
-  description: descriptionOverride,
   showBenefits = false,
   surface,
   className,
 }: EnterpriseLockedCardProps) {
   const copy = enterpriseTrialFeatures.lockedCopy(featureKey);
   const headline =
-    headlineOverride ??
     copy?.headline ??
     fallbackHeadline ??
     enterpriseTrialFeatures.name(featureKey);
-  const description =
-    descriptionOverride ?? copy?.description ?? fallbackDescription;
+  const description = copy?.description ?? fallbackDescription;
   const benefits = showBenefits ? copy?.benefits ?? fallbackBenefits ?? [] : [];
 
   return (
@@ -78,8 +74,6 @@ type EnterpriseLockedCardProps = {
   fallbackHeadline?: string;
   fallbackDescription?: string;
   fallbackBenefits?: string[];
-  headline?: string;
-  description?: string;
   showBenefits?: boolean;
   surface: PlatformAdminSurface;
   className?: string;

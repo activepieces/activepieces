@@ -100,6 +100,7 @@ vi.mock('@/features/billing/components/enterprise-trial-sales-link', () => ({
 }));
 
 import { EnterpriseLockedCard } from '@/features/billing/components/enterprise-locked-card';
+import { EnterpriseLockedRow } from '@/features/billing/components/enterprise-locked-row';
 import { EnterpriseTrialBillingStatus } from '@/features/billing/components/enterprise-trial-billing-status';
 import { EnterpriseTrialEndedDialog } from '@/features/billing/components/enterprise-trial-ended-dialog';
 import type { EnterpriseAccess } from '@/features/billing/hooks/use-enterprise-gate';
@@ -167,10 +168,7 @@ describe('locked card actions', () => {
   it('offers the Enterprise plan trial first and Explore plans second', () => {
     renderCard('SSO');
     const buttons = screen.getAllByRole('button').map((b) => b.textContent);
-    expect(buttons).toEqual([
-      'Start free trial',
-      'Explore plans',
-    ]);
+    expect(buttons).toEqual(['Start free trial', 'Explore plans']);
     expect(
       screen.getByText('7-day Enterprise plan trial. No credit card.'),
     ).toBeDefined();
@@ -216,6 +214,36 @@ describe('locked card actions', () => {
     expect(
       screen.getByText('Ask your admin to upgrade to the Team plan or above.'),
     ).toBeDefined();
+  });
+});
+
+describe('lean locked row for partly locked pages', () => {
+  const renderRow = () =>
+    render(
+      <EnterpriseLockedRow
+        featureKey="PIECES"
+        line="Hiding pieces from your users is locked."
+        surface={PlatformAdminSurface.TEASER}
+      />,
+    );
+
+  it('names the plan and what is locked on one line', () => {
+    edition = ApEdition.ENTERPRISE;
+    renderRow();
+    expect(screen.getByText('Enterprise plan')).toBeDefined();
+    expect(
+      screen.getByText('Hiding pieces from your users is locked.'),
+    ).toBeDefined();
+  });
+
+  it('keeps the trial and plans actions without the fine print', () => {
+    renderRow();
+    expect(
+      screen.getAllByRole('button').map((button) => button.textContent),
+    ).toEqual(['Start free trial', 'Explore plans']);
+    expect(
+      screen.queryByText('7-day Enterprise plan trial. No credit card.'),
+    ).toBeNull();
   });
 });
 

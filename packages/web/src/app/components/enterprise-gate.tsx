@@ -10,6 +10,7 @@ import {
 
 import {
   EnterpriseLockedCard,
+  EnterpriseLockedRow,
   EnterpriseUsageMeter,
   FeatureKey,
   useEnterpriseGate,
@@ -66,8 +67,7 @@ export function EnterpriseGate(props: EnterpriseGateProps) {
 export function EnterpriseLockedSection({
   unlocked,
   featureKey,
-  title,
-  description,
+  line,
   className,
 }: EnterpriseLockedSectionProps) {
   const gate = useEnterpriseGate({ unlocked, featureKey });
@@ -75,10 +75,9 @@ export function EnterpriseLockedSection({
     return null;
   }
   return (
-    <EnterpriseLockedCard
+    <EnterpriseLockedRow
       featureKey={featureKey}
-      headline={title}
-      description={description}
+      line={line}
       surface={PlatformAdminSurface.TEASER}
       className={className}
     />
@@ -160,7 +159,6 @@ type EnterpriseGateBaseProps = {
 type EnterpriseLockedSectionProps = {
   unlocked: boolean;
   featureKey: FeatureKey;
-  title?: string;
-  description?: string;
+  line: string;
   className?: string;
 };

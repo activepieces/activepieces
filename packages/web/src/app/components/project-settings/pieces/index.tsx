@@ -105,6 +105,7 @@ const PiecesSettings = () => {
       <EnterpriseLockedSection
         unlocked={platform.plan.managePiecesEnabled}
         featureKey="PIECES"
+        line={t('Choosing which pieces this project can use is locked.')}
       />
       {platform.plan.managePiecesEnabled && (
         <Alert variant="primary">

@@ -3358,7 +3358,6 @@
   "Build an agent once, use it in any flow": "Build an agent once, use it in any flow",
   "Build and test in a development project, then promote flows to production when they are ready.": "Build and test in a development project, then promote flows to production when they are ready.",
   "Choose exactly which pieces your users see": "Choose exactly which pieces your users see",
-  "Choose which pieces connected clients can reach": "Choose which pieces connected clients can reach",
   "Connect a secret manager": "Connect a secret manager",
   "Connect an app once and share it with every project.": "Connect an app once and share it with every project.",
   "Connect an app once, use it in every project": "Connect an app once, use it in every project",
@@ -3453,7 +3452,6 @@
   "Single sign-on, audit logs, your own AI providers and more, for everyone on your platform.": "Single sign-on, audit logs, your own AI providers and more, for everyone on your platform.",
   "Single sign-on, audit logs, your own AI providers and more, for everyone on your platform. No credit card, nothing to cancel.": "Single sign-on, audit logs, your own AI providers and more, for everyone on your platform. No credit card, nothing to cancel.",
   "Spot the teams and flows that save the most time": "Spot the teams and flows that save the most time",
-  "Start every automation faster on your own workers": "Start every automation faster on your own workers",
   "Start trial and save": "Start trial and save",
   "Stream audit and run events to your SIEM or data warehouse as they happen.": "Stream audit and run events to your SIEM or data warehouse as they happen.",
   "Stream events to your own security tools": "Stream events to your own security tools",
@@ -3512,7 +3510,6 @@
   "Unlock branding": "Unlock branding",
   "You can still delete the keys below. Adding or changing keys needs that plan.": "You can still delete the keys below. Adding or changing keys needs that plan.",
   "Your Enterprise plan trial was extended until {date}.": "Your Enterprise plan trial was extended until {date}.",
-  "Your automations run on shared workers today. Dedicated workers stay warm and ready, so every flow starts faster.": "Your automations run on shared workers today. Dedicated workers stay warm and ready, so every flow starts faster.",
   "Ends today at {time}": "Ends today at {time}",
   "Ends tomorrow at {time}": "Ends tomorrow at {time}",
   "Ends {date}, then you are back on the {plan} plan. Your credits are not affected.": "Ends {date}, then you are back on the {plan} plan. Your credits are not affected.",
@@ -3527,5 +3524,9 @@
   "You've reached your plan's {count, plural, =1 {1 team project} other {# team projects}}": "You've reached your plan's {count, plural, =1 {1 team project} other {# team projects}}",
   "Your Enterprise plan trial was already used. Our team can extend it or set you up on a plan.": "Your Enterprise plan trial was already used. Our team can extend it or set you up on a plan.",
   "{count, plural, =1 {1 day left} other {# days left}}, ends {date}": "{count, plural, =1 {1 day left} other {# days left}}, ends {date}",
-  "{days}-day Enterprise plan trial. No credit card.": "{days}-day Enterprise plan trial. No credit card."
+  "{days}-day Enterprise plan trial. No credit card.": "{days}-day Enterprise plan trial. No credit card.",
+  "Choosing which pieces connected clients can reach is locked.": "Choosing which pieces connected clients can reach is locked.",
+  "Choosing which pieces this project can use is locked.": "Choosing which pieces this project can use is locked.",
+  "Hiding pieces from your users is locked.": "Hiding pieces from your users is locked.",
+  "Your automations run on shared workers. Dedicated workers start every flow faster.": "Your automations run on shared workers. Dedicated workers start every flow faster."
 }

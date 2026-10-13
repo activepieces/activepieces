@@ -197,7 +197,11 @@ export const PiecesListTab = () => {
           scope={PieceScope.PLATFORM}
         />
       </AdminPageHeader>
-      <EnterpriseLockedSection unlocked={isEnabled} featureKey="PIECES" />
+      <EnterpriseLockedSection
+        unlocked={isEnabled}
+        featureKey="PIECES"
+        line={t('Hiding pieces from your users is locked.')}
+      />
       <AdminDataTable
         emptyStateTextTitle={t('No pieces found')}
         emptyStateTextDescription={t(
