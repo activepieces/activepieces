@@ -23,7 +23,7 @@ export function ConnectPage({
   serverUrl: string;
 }) {
   const { websiteName, logos } = flagsHooks.useWebsiteBranding();
-  const { pieces } = piecesHooks.usePieces({});
+  const { pieces } = piecesHooks.usePieces({ skipProjectFilter: true });
   const nav = useMcpNav();
   const isConnected = home.grants.length > 0;
   const appLogos = useMemo(() => pickWallLogos(pieces ?? []), [pieces]);
