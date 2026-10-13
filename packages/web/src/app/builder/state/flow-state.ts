@@ -50,6 +50,7 @@ export type FlowState = {
   flushPendingEdits: () => void;
   setFlow: (flow: PopulatedFlow) => void;
   applyDraftRefresh: (flow: PopulatedFlow) => void;
+  refreshDraft: () => Promise<void>;
   draftRefreshCount: number;
   setSampleDataLocally: (params: {
     stepName: string;
@@ -268,7 +269,9 @@ export const createFlowState = (
           } catch (error) {
             console.error(error);
             showFailedSaveToast(error);
-            addToFlowUpdatesQueueAfterPendingEdits(() => refetchDraft(get));
+            get()
+              .refreshDraft()
+              .catch(() => undefined);
             throw error;
           }
         };
@@ -328,6 +331,8 @@ export const createFlowState = (
     flushPendingEdits: () => {
       flowUpdatesDebounce.flush();
     },
+    refreshDraft: () =>
+      saveThenRefreshDraft({ get, flowUpdatesQueue, flowUpdatesDebounce }),
     setVersion: (
       flowVersion: FlowVersion,
       shouldReselectInitialStep: boolean = true,
@@ -491,8 +496,17 @@ export const createFlowState = (
   };
 };
 
-async function refetchDraft(get: StoreApi<BuilderState>['getState']) {
-  const { flow, setFlow, setVersion } = get();
+async function saveThenRefreshDraft({
+  get,
+  flowUpdatesQueue,
+  flowUpdatesDebounce,
+}: {
+  get: StoreApi<BuilderState>['getState'];
+  flowUpdatesQueue: PromiseQueue;
+  flowUpdatesDebounce: KeyedDebounce;
+}): Promise<void> {
+  await tryCatch(() => get().savePendingEdits());
+  const { flow, flowVersion: versionAtRequest } = get();
   const { data: serverFlow, error } = await tryCatch(() =>
     failAfterTimeout(() => flowsApi.get(flow.id)),
   );
@@ -500,8 +514,15 @@ async function refetchDraft(get: StoreApi<BuilderState>['getState']) {
     internalErrorToast();
     throw error;
   }
-  setFlow(serverFlow);
-  setVersion(serverFlow.version);
+  const { flowVersion, applyDraftRefresh } = get();
+  if (
+    flowVersion !== versionAtRequest ||
+    !flowUpdatesDebounce.isEmpty() ||
+    !flowUpdatesQueue.isIdle()
+  ) {
+    return saveThenRefreshDraft({ get, flowUpdatesQueue, flowUpdatesDebounce });
+  }
+  applyDraftRefresh(serverFlow);
 }
 
 function saveOperation({
