@@ -12,7 +12,7 @@ export const getRunId = createAction({
   props: {},
   outputSchema: getRunIdActionOutputSchema,
   async run(context) {
-    const publicUrlWithoutApi = context.server.publicUrl.replace('/api', '');
+    const publicUrlWithoutApi = context.server.publicUrl.replace(/api\/$/, '');
     return {
       id: context.run.id,
       url: `${publicUrlWithoutApi}projects/${context.project.id}/runs/${context.run.id}`
