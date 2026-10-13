@@ -121,10 +121,9 @@ export const projectsTableColumns = ({
   if (platform.plan.managePiecesEnabled) {
     const pieceSetColumn: ColumnDef<
       RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
-    > & { notClickable: boolean } = {
+    > = {
       id: 'pieceSet',
-      size: 220,
-      notClickable: true,
+      size: 180,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -147,7 +146,7 @@ export const projectsTableColumns = ({
             <span className="text-sm text-gray-11">{t("Couldn't load")}</span>
           );
         }
-        return <Skeleton className="h-8 w-44" />;
+        return <Skeleton className="h-4 w-28" />;
       },
     };
     columns.push(pieceSetColumn);

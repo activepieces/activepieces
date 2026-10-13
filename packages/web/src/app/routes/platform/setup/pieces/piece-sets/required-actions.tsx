@@ -76,10 +76,10 @@ export function PublishingRuleSentence({
             <button
               type="button"
               aria-label={t('Publishing rule: {rule}', { rule: marked })}
-              className="mx-0.5 inline-flex h-6 items-center gap-0.5 rounded-md border px-1.5 align-baseline font-medium text-gray-12 hover:bg-gray-3 focus-visible:outline-2 focus-visible:outline-accent-8"
+              className="mx-0.5 inline-flex h-6 cursor-pointer items-center gap-0.5 rounded-md border border-accent-6 bg-accent-2 px-1.5 align-baseline font-medium text-accent-11 transition-colors hover:border-accent-8 hover:bg-accent-3 focus-visible:outline-2 focus-visible:outline-accent-8"
             >
               {marked}
-              <ChevronDown className="size-3.5 text-gray-11" />
+              <ChevronDown className="size-3.5 text-accent-11" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-72">
