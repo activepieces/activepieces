@@ -354,10 +354,10 @@ function SecretInput({
       <Button
         type="button"
         variant="ghost"
-        size="icon"
+        size="icon-xs"
         tabIndex={-1}
         onClick={() => setVisible(!visible)}
-        className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-gray-11 hover:text-gray-12"
+        className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
       >
         {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </Button>

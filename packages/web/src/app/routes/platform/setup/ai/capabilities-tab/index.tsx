@@ -134,9 +134,9 @@ function CapabilityCard({
     : `${status} · ${chosenModelId}`;
 
   return (
-    <div className="group flex flex-col rounded-lg border bg-panel">
+    <div className="group flex flex-col rounded-xl border bg-panel">
       <div className="flex items-start gap-3 p-4 pb-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-gray-1">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-gray-1">
           <Icon className="size-4 text-gray-11" />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">

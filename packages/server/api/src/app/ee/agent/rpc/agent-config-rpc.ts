@@ -126,7 +126,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         if (lock === 'busy') {
             log.warn({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Concurrent run rejected (conversation already STREAMING)')
             throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
+                code: ErrorCode.AGENT_RUN_BUSY,
                 params: { message: 'An agent is already running for this conversation' },
             })
         }

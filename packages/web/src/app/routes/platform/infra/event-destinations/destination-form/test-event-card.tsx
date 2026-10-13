@@ -86,7 +86,7 @@ export const TestEventCard = ({
     !isNil(headerBlocker);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border p-4">
+    <div className="flex flex-col gap-3 rounded-xl border p-4">
       <div className="flex flex-col gap-0.5">
         <span className="text-sm font-medium">{t('Send test event')}</span>
         <span className="text-sm text-gray-11">{description}</span>
@@ -140,7 +140,7 @@ export const TestEventCard = ({
 
       {isCurrent && !isNil(testError) && (
         <div className="flex flex-col gap-2 border-t pt-3">
-          <Badge className="self-start rounded-md" variant="destructive">
+          <Badge className="self-start" variant="destructive">
             {t('Failed')}
           </Badge>
           <p className="text-xs text-danger-11">
@@ -154,7 +154,6 @@ export const TestEventCard = ({
           <div className="flex items-center gap-2.5">
             {!isNil(testResult.status) && (
               <Badge
-                className="rounded-md"
                 variant={
                   testResult.status < SUCCESS_STATUS_CEILING
                     ? 'success'
@@ -166,9 +165,7 @@ export const TestEventCard = ({
               </Badge>
             )}
             {!isNil(testResult.errorCode) && (
-              <Badge className="rounded-md" variant="destructive">
-                {t('Failed')}
-              </Badge>
+              <Badge variant="destructive">{t('Failed')}</Badge>
             )}
             <span className="text-sm text-gray-11">
               {t('{duration} ms', { duration: testResult.durationMs })}

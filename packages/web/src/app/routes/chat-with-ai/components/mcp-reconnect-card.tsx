@@ -126,12 +126,12 @@ function ConnectorIcon({ logoUrl }: { logoUrl?: string }) {
         src={logoUrl}
         alt=""
         border
-        className="size-10 rounded-lg p-1.5"
+        className="size-10 rounded-xl p-1.5"
       />
     );
   }
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-gray-3/40">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-gray-3/40">
       <Plug className="h-5 w-5 text-gray-11" />
     </div>
   );

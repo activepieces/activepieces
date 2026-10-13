@@ -235,7 +235,7 @@ export const FlowStepInputOutput = () => {
           className="w-full"
         >
           <div className="flex items-center justify-between gap-2 shrink-0 mb-2">
-            <TabsList className="h-9">
+            <TabsList>
               {!isTrigger && (
                 <TabsTrigger value="input">{t('Input')}</TabsTrigger>
               )}

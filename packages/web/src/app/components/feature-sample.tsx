@@ -50,7 +50,7 @@ export function FeatureSample({
       </div>
 
       <div className="absolute inset-0 grid place-items-center overflow-auto p-6">
-        <div className="pointer-events-auto flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border bg-gray-1 px-8 py-9 text-center shadow-xl">
+        <div className="pointer-events-auto flex w-full max-w-md flex-col items-center gap-5 rounded-xl border bg-gray-1 px-8 py-9 text-center shadow-xl">
           <div className="grid size-12 place-items-center rounded-xl bg-accent-3">
             <Lock className="size-5.5 text-accent-11" />
           </div>

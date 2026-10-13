@@ -70,7 +70,7 @@ function FileChip({ file }: { file: FileProducedEvent }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3">
         <FileIcon className="size-4 text-gray-11" />
       </div>
       <div className="min-w-0 flex-1">

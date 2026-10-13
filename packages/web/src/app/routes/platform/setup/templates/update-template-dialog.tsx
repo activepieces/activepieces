@@ -133,7 +133,6 @@ export const UpdateTemplateDialog = ({
                     required
                     id="name"
                     placeholder={t('Template Name')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -148,7 +147,6 @@ export const UpdateTemplateDialog = ({
                     {...field}
                     id="summary"
                     placeholder={t('Template Summary')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -164,7 +162,6 @@ export const UpdateTemplateDialog = ({
                     {...field}
                     required
                     id="description"
-                    className="rounded-sm"
                     placeholder={t('Template Description')}
                   />
 
@@ -182,7 +179,6 @@ export const UpdateTemplateDialog = ({
                     required
                     id="blogUrl"
                     placeholder={t('Template Blog URL')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>
@@ -211,7 +207,6 @@ export const UpdateTemplateDialog = ({
                     }}
                     id="template"
                     placeholder={t('Template')}
-                    className="rounded-sm"
                   />
                   <FormMessage />
                 </FormItem>

@@ -262,7 +262,7 @@ function KeyGroup({
           {isLoading &&
             [0, 1, 2].map((row) => (
               <div key={row} className="flex items-center gap-3 py-2.5">
-                <Skeleton className="size-8 rounded-lg" />
+                <Skeleton className="size-8 rounded-xl" />
                 <div className="flex flex-1 flex-col gap-1.5">
                   <Skeleton className="h-3.5 w-40" />
                   <Skeleton className="h-3 w-24" />
