@@ -9,7 +9,11 @@
     "snowflake-sdk": "2.3.4",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
-    "zod": "4.3.6"
+    "zod": "4.3.6",
+    "deepmerge-ts": "8.0.2",
+    "form-data": "4.0.6",
+    "ipaddr.js": "2.3.0",
+    "nanoid": "3.3.18"
   },
   "devDependencies": {
     "tslib": "2.6.2",
