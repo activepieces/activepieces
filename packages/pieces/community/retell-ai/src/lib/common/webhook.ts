@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'crypto';
-import { Property } from '@activepieces/pieces-framework';
+import { DEDUPE_KEY_PROPERTY, Property } from '@activepieces/pieces-framework';
 import { isRecord } from './client';
 
 export function verifyRetellSignature({
@@ -59,14 +59,14 @@ export async function handleRetellWebhook({
   if (typeof callId !== 'string' || callId.length === 0) {
     return [];
   }
-  // One store entry per call and event, so deliveries for different calls never overwrite each other.
-  // The piece store has no compare-and-set; at-most-once by design (see PR thread).
-  const deliveryKey = `retell_${event}_${callId}`.slice(0, MAX_STORE_KEY_LENGTH);
-  if ((await store.get<boolean>(deliveryKey)) !== null) {
+  const deliveryKey = `${event}:${callId}`;
+  const storeKey = `retell_${event}_deliveries`;
+  const seen = (await store.get<string[]>(storeKey)) ?? [];
+  if (seen.includes(deliveryKey)) {
     return [];
   }
-  await store.put(deliveryKey, true);
-  return [{ event, call: body['call'] }];
+  await store.put(storeKey, [...seen, deliveryKey].slice(-MAX_REMEMBERED_DELIVERIES));
+  return [{ event, call: body['call'], [DEDUPE_KEY_PROPERTY]: deliveryKey }];
 }
 
 export function webhookInstructions(eventName: RetellCallEvent) {
@@ -109,7 +109,7 @@ function parseBody(body: unknown): Record<string, unknown> | undefined {
   return undefined;
 }
 
-const MAX_STORE_KEY_LENGTH = 128;
+const MAX_REMEMBERED_DELIVERIES = 500;
 const REPLAY_WINDOW_MS = 15 * 60 * 1000;
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
 

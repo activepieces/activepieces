@@ -1,3 +1,4 @@
+import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
 import { createHmac } from 'crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -350,7 +351,7 @@ describe('webhook triggers', () => {
     const store = makeStore();
     const own = signedPayload({ event });
     const first = await runTrigger({ trigger, context: triggerContext({ payload: own, store }) });
-    expect(first).toEqual([{ event, call: own.body.call }]);
+    expect(first).toEqual([{ event, call: own.body.call, [DEDUPE_KEY_PROPERTY]: `${event}:call_1` }]);
     expect(await runTrigger({ trigger, context: triggerContext({ payload: own, store }) })).toEqual([]);
     const other = signedPayload({ event: event === 'call_started' ? 'call_ended' : 'call_started' });
     expect(await runTrigger({ trigger, context: triggerContext({ payload: other, store }) })).toEqual([]);
@@ -366,12 +367,16 @@ describe('webhook triggers', () => {
     expect(await runTrigger({ trigger: callAnalyzedTrigger, context: triggerContext({ payload: unsigned }) })).toEqual([]);
   });
 
-  it('stores one dedupe entry per call, so different calls never overwrite each other', async () => {
+  it('tags each event with the platform dedupe key and keeps the fallback list bounded', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(now);
     const store = makeStore();
-    await runTrigger({ trigger: callEndedTrigger, context: triggerContext({ payload: signedPayload({ event: 'call_ended' }), store }) });
-    expect(store.data.get('retell_call_ended_call_1')).toBe(true);
-    expect(store.data.has('retell_call_ended_deliveries')).toBe(false);
+    store.data.set('retell_call_ended_deliveries', Array.from({ length: 500 }, (_, i) => `call_ended:old_${i}`));
+    const out = await runTrigger({ trigger: callEndedTrigger, context: triggerContext({ payload: signedPayload({ event: 'call_ended' }), store }) });
+    expect(out[0]).toMatchObject({ event: 'call_ended', [DEDUPE_KEY_PROPERTY]: 'call_ended:call_1' });
+    const kept = store.data.get('retell_call_ended_deliveries');
+    expect(Array.isArray(kept) && kept.length).toBe(500);
+    expect(Array.isArray(kept) && kept[kept.length - 1]).toBe('call_ended:call_1');
+    expect(store.data.has('retell_call_ended_call_1')).toBe(false);
   });
 
   it('sample data matches the real {event, call} shape', () => {
