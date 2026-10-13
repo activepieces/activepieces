@@ -2,11 +2,6 @@ import { createHash } from 'node:crypto';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Store, StoreScope } from '@activepieces/pieces-framework';
 
-export const BETTERMODE_REGIONS = [
-  { label: 'US Region', value: 'https://api.bettermode.com' },
-  { label: 'EU Region', value: 'https://api.bettermode.de' },
-];
-
 export class BettermodeApiError extends Error {
   readonly status: number;
   readonly code: string | null;
@@ -545,3 +540,8 @@ export type BettermodeSession = {
 type GraphqlVariables = Record<string, unknown>;
 
 export type BettermodeTokenStore = Pick<Store, 'get' | 'put' | 'delete'>;
+
+export const BETTERMODE_REGIONS = [
+  { label: 'US Region', value: 'https://api.bettermode.com' },
+  { label: 'EU Region', value: 'https://api.bettermode.de' },
+];

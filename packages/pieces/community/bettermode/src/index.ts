@@ -64,6 +64,17 @@ import { newMemberTrigger } from './lib/triggers/new-member';
 import { newPostTrigger } from './lib/triggers/new-post';
 import { newReplyTrigger } from './lib/triggers/new-reply';
 
+function withTokenStore<T extends { run: unknown; test: unknown }>(action: T & { run: StoreRunner; test: StoreRunner }): T {
+  return Object.assign(action, { run: bindingStore(action.run), test: bindingStore(action.test) });
+}
+
+function bindingStore<C extends StoreContext, R>(run: (context: C) => Promise<R>): (context: C) => Promise<R> {
+  return async (context) => {
+    bindTokenStore({ credentials: context.auth.props, store: context.store });
+    return run(context);
+  };
+}
+
 export const bettermode = createPiece({
   displayName: 'Bettermode',
   description:
@@ -128,17 +139,6 @@ export const bettermode = createPiece({
   ],
   triggers: [newPostTrigger, newMemberTrigger, newReplyTrigger],
 });
-
-function withTokenStore<T extends { run: unknown; test: unknown }>(action: T & { run: StoreRunner; test: StoreRunner }): T {
-  return Object.assign(action, { run: bindingStore(action.run), test: bindingStore(action.test) });
-}
-
-function bindingStore<C extends StoreContext, R>(run: (context: C) => Promise<R>): (context: C) => Promise<R> {
-  return async (context) => {
-    bindTokenStore({ credentials: context.auth.props, store: context.store });
-    return run(context);
-  };
-}
 
 type StoreContext = { auth: { props: BettermodeCredentials }; store: BettermodeTokenStore };
 type StoreRunner = (context: never) => Promise<unknown>;

@@ -66,7 +66,7 @@ async function collectNewItems<T extends PolledItem>({
       unique.set(item.id, item);
     }
   }
-  const fresh = [...unique.values()]
+  const sorted = [...unique.values()]
     .filter((item) => {
       const time = parseTime(timeOf(item));
       if (time === null || item.id === null) {
@@ -74,18 +74,20 @@ async function collectNewItems<T extends PolledItem>({
       }
       return time > checkpointTime || (time === checkpointTime && !seenAtLast.has(item.id));
     })
-    .sort((left, right) => compareItems({ left, right, timeField }))
-    .slice(0, MAX_EMIT_PER_POLL);
+    .sort((left, right) => compareItems({ left, right, timeField }));
+  const truncated = sorted.length > MAX_EMIT_PER_POLL;
+  const fresh = sorted.slice(0, MAX_EMIT_PER_POLL);
   if (fresh.length === 0) {
     return { items: [], checkpoint: base };
   }
+  const resumeCursor = truncated && checkpoint.resumeCursor ? { resumeCursor: checkpoint.resumeCursor } : {};
   const next = newestCheckpoint({ items: fresh, fallback: checkpoint.lastCreatedAt, timeField });
   const sameTime = parseTime(next.lastCreatedAt) === checkpointTime;
   return {
     items: fresh,
     checkpoint: sameTime
-      ? { lastCreatedAt: next.lastCreatedAt, idsAtLast: [...checkpoint.idsAtLast, ...next.idsAtLast].slice(-MAX_IDS_AT_LAST) }
-      : next,
+      ? { lastCreatedAt: next.lastCreatedAt, idsAtLast: [...checkpoint.idsAtLast, ...next.idsAtLast].slice(-MAX_IDS_AT_LAST), ...resumeCursor }
+      : { ...next, ...resumeCursor },
   };
 }
 

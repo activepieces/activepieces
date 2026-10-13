@@ -618,6 +618,39 @@ describe('polling triggers', () => {
     expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: at(500), idsAtLast: ['p500'] });
   });
 
+  it('keeps reading the resumed window until it is drained before going back to the newest page', async () => {
+    const base = Date.UTC(2026, 9, 13, 12, 0, 0);
+    const at = (index: number) => new Date(base - index * 1000).toISOString();
+    const pageAt = (pageIndex: number) => ({
+      body: {
+        data: {
+          posts: pageOf({
+            nodes: Array.from({ length: 50 }, (_, offset) => postNode({ id: `p${pageIndex * 50 + offset}`, createdAt: at(pageIndex * 50 + offset) })),
+            hasNextPage: true,
+            endCursor: `c${pageIndex + 1}`,
+          }),
+        },
+      },
+    });
+    const calls = stubGraphql({
+      PollPosts: [
+        ...Array.from({ length: 10 }, (_, index) => pageAt(index)),
+        ...[10, 11, 12, 13].map(pageAt),
+        ...[10, 11, 12, 13].map(pageAt),
+      ],
+    });
+    const store = makeStore();
+    store.data.set(bettermodePolling.CHECKPOINT_KEY, { lastCreatedAt: at(650), idsAtLast: ['p650'] });
+    await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
+    const second = await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
+    expect(Array.isArray(second) ? [second.length, second[0].id, second[99].id] : second).toEqual([100, 'p649', 'p550']);
+    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: at(550), idsAtLast: ['p550'], resumeCursor: 'c10' });
+    const third = await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
+    expect(Array.isArray(third) ? [third.length, third[0].id, third[49].id] : third).toEqual([50, 'p549', 'p500']);
+    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: at(500), idsAtLast: ['p500'] });
+    expect(businessCalls(calls)[14].variables).toMatchObject({ after: 'c10' });
+  });
+
   it('new_post on an empty community starts from now', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-13T00:00:00.000Z'));
