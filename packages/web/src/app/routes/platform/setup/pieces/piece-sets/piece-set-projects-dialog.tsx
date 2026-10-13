@@ -31,6 +31,7 @@ import {
 import { projectHooks } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { listUtils } from '@/lib/list-utils';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { SkeletonRows } from './policy-ui';
@@ -229,7 +230,17 @@ const AssignProjectsForm = ({
             {t('No projects found')}
           </p>
         ) : (
-          <div className="h-72 rounded-xl border p-1">
+          <div
+            className="rounded-xl border p-1"
+            style={{
+              height: listUtils.cappedHeight({
+                count: visibleProjects.length,
+                rowHeight: PROJECT_ROW_HEIGHT,
+                padding: 10,
+                max: PROJECT_LIST_MAX_HEIGHT,
+              }),
+            }}
+          >
             <VirtualizedScrollArea
               items={visibleProjects}
               estimateSize={() => PROJECT_ROW_HEIGHT}
@@ -335,6 +346,7 @@ function saveKey(pieceSetId: string) {
 }
 
 const PROJECT_ROW_HEIGHT = 40;
+const PROJECT_LIST_MAX_HEIGHT = 288;
 
 type PieceSetProjectsDialogProps = {
   pieceSet: PieceSet;

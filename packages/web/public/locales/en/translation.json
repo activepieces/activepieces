@@ -3688,5 +3688,6 @@
   "To move it out, assign it from another {term}.": "To move it out, assign it from another {term}.",
   "Check what builders, MCP and agents can use.": "Check what builders, MCP and agents can use.",
   "Search actions": "Search actions",
-  "· {count, plural, =1 {1 action} other {# actions}}": "· {count, plural, =1 {1 action} other {# actions}}"
+  "· {count, plural, =1 {1 action} other {# actions}}": "· {count, plural, =1 {1 action} other {# actions}}",
+  "Leaves this view": "Leaves this view"
 }
