@@ -1,28 +1,21 @@
 import {
+  AI_PIECE_NAME,
   ApEnvironment,
   FlowActionType,
   FlowTriggerType,
+  PieceCategory,
   PieceSelectorConfig,
+  PieceSelectorTabConfig,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { PieceSelectorTabType } from '@/features/pieces/stores/piece-selector-tabs-provider';
 import {
   CategorizedStepMetadataWithSuggestions,
+  PieceStepMetadataWithSuggestions,
+  StepMetadata,
   StepMetadataWithSuggestions,
 } from '@/features/pieces/types';
-import { pieceSearchUtils } from '@/features/pieces/utils/piece-search-utils';
-import { pieceSelectorCustomization } from '@/features/pieces/utils/piece-selector-customization';
-
-const {
-  getPinnedPieces,
-  getPopularPieces,
-  getAiAndAgentsPieces,
-  isUtilityPiece,
-  isAppPiece,
-  getHighlightedPieces,
-  isFlowController,
-} = pieceSearchUtils;
 
 export function legacyPieceSelectorGrouping({
   metadata,
@@ -95,7 +88,7 @@ export function legacyPieceSelectorGrouping({
     case PieceSelectorTabType.APPROVALS:
       return [];
     case PieceSelectorTabType.CUSTOM: {
-      const customTab = pieceSelectorCustomization.getCustomTab({
+      const customTab = getCustomTab({
         config: platform.pieceSelectorConfig,
         customTabId: selectedCustomTabId,
       });
@@ -235,6 +228,188 @@ const getExploreTabContent = (
   }
 
   return [popularCategory, hightlightedPiecesCategory];
+};
+
+const isFlowController = (stepMetadata: StepMetadata) => {
+  if (
+    stepMetadata.type === FlowActionType.PIECE ||
+    stepMetadata.type === FlowTriggerType.PIECE
+  ) {
+    return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL);
+  }
+  return (
+    stepMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
+    stepMetadata.type === FlowActionType.ROUTER ||
+    stepMetadata.type === FlowActionType.AI_ROUTER
+  );
+};
+
+const getAiAndAgentsPieces = (queryResult: StepMetadataWithSuggestions[]) => {
+  const res: CategorizedStepMetadataWithSuggestions[] = [];
+  const pieces = filterResultByPieceType(queryResult);
+  const aiAndAgentsPieces = pieces.filter(isAiAndAgentPiece);
+  const recommendedCategory: CategorizedStepMetadataWithSuggestions = {
+    title: t('Recommended'),
+    metadata: [],
+  };
+  const othersCategory: CategorizedStepMetadataWithSuggestions = {
+    title: t('Others'),
+    metadata: [],
+  };
+  const recommendedPieces = aiAndAgentsPieces.filter((piece) =>
+    piece.categories.includes(PieceCategory.UNIVERSAL_AI),
+  );
+  if (recommendedPieces.length > 0) {
+    recommendedCategory.metadata = recommendedPieces;
+    res.push(recommendedCategory);
+  }
+  const otherPieces = aiAndAgentsPieces.filter(
+    (piece) => !recommendedPieces.includes(piece),
+  );
+  if (otherPieces.length > 0) {
+    othersCategory.metadata = otherPieces;
+    res.push(othersCategory);
+  }
+  return res;
+};
+
+const isAiAndAgentPiece = (stepMetadata: StepMetadata) => {
+  if (
+    stepMetadata.type === FlowActionType.PIECE ||
+    stepMetadata.type === FlowTriggerType.PIECE
+  ) {
+    return stepMetadata.categories.some((category) =>
+      [
+        PieceCategory.UNIVERSAL_AI,
+        PieceCategory.ARTIFICIAL_INTELLIGENCE,
+      ].includes(category as PieceCategory),
+    );
+  }
+  return false;
+};
+
+const isUtilityPiece = (metadata: StepMetadata) =>
+  metadata.type !== FlowTriggerType.PIECE &&
+  metadata.type !== FlowActionType.PIECE
+    ? !isFlowController(metadata)
+    : metadata.categories.includes(PieceCategory.CORE) &&
+      !isFlowController(metadata);
+
+const isAppPiece = (metadata: StepMetadata) => {
+  return (
+    !isUtilityPiece(metadata) &&
+    !isAiAndAgentPiece(metadata) &&
+    !isFlowController(metadata)
+  );
+};
+
+const getPinnedPieces = (
+  queryResult: StepMetadataWithSuggestions[],
+  pinnedPiecesNames: string[],
+) => {
+  const pieces = filterResultByPieceType(queryResult);
+  const pinnedPieces = pieces.filter((piece) =>
+    pinnedPiecesNames.includes(piece.pieceName),
+  );
+  return sortByPieceNameOrder(pinnedPieces, pinnedPiecesNames);
+};
+
+const POPULAR_PIECES_NAMES = [
+  '@activepieces/piece-google-sheets',
+  '@activepieces/piece-slack',
+  '@activepieces/piece-notion',
+  '@activepieces/piece-gmail',
+  '@activepieces/piece-hubspot',
+  '@activepieces/piece-openai',
+  '@activepieces/piece-google-forms',
+  '@activepieces/piece-google-drive',
+  '@activepieces/piece-google-docs',
+];
+const getPopularPieces = (
+  queryResult: StepMetadataWithSuggestions[],
+  pinnedPiecesNames: string[],
+) => {
+  const pieces = filterResultByPieceType(queryResult);
+  const popularPieces = pieces.filter(
+    (piece) =>
+      POPULAR_PIECES_NAMES.includes(piece.pieceName) &&
+      !pinnedPiecesNames.includes(piece.pieceName),
+  );
+  return sortByPieceNameOrder(popularPieces, POPULAR_PIECES_NAMES);
+};
+
+const filterResultByPieceType = (
+  queryResult: StepMetadataWithSuggestions[],
+) => {
+  return queryResult.filter(
+    (piece): piece is PieceStepMetadataWithSuggestions =>
+      piece.type === FlowActionType.PIECE ||
+      piece.type === FlowTriggerType.PIECE,
+  );
+};
+
+const getHighlightedPieces = (
+  queryResult: StepMetadataWithSuggestions[],
+  type: 'action' | 'trigger',
+) => {
+  const pieces = filterResultByPieceType(queryResult);
+  const highlightedPiecesNames =
+    type === 'action'
+      ? HIGHLIGHTED_PIECES_NAMES_FOR_ACTIONS
+      : HIGHLIGHTED_PIECES_NAMES_FOR_TRIGGERS;
+  const highlightedPieces = pieces.filter((piece) =>
+    highlightedPiecesNames.includes(piece.pieceName),
+  );
+  return sortByPieceNameOrder(
+    highlightedPieces,
+    type === 'action'
+      ? HIGHLIGHTED_PIECES_NAMES_FOR_ACTIONS
+      : HIGHLIGHTED_PIECES_NAMES_FOR_TRIGGERS,
+  );
+};
+const sortByPieceNameOrder = (
+  searchResult: StepMetadataWithSuggestions[],
+  orderNames: string[],
+): StepMetadataWithSuggestions[] => {
+  const pieces = filterResultByPieceType(searchResult);
+  return pieces.sort((a, b) => {
+    return orderNames.indexOf(a.pieceName) - orderNames.indexOf(b.pieceName);
+  });
+};
+const HIGHLIGHTED_PIECES_NAMES_FOR_TRIGGERS = [
+  '@activepieces/piece-webhook',
+  '@activepieces/piece-schedule',
+  '@activepieces/piece-manual-trigger',
+  '@activepieces/piece-forms',
+  '@activepieces/piece-tables',
+];
+
+const HIGHLIGHTED_PIECES_NAMES_FOR_ACTIONS = [
+  AI_PIECE_NAME,
+  '@activepieces/piece-http',
+  '@activepieces/piece-tables',
+  '@activepieces/piece-forms',
+  '@activepieces/piece-webhook',
+  '@activepieces/piece-text-helper',
+  '@activepieces/piece-date-helper',
+];
+
+const getCustomTab = ({
+  config,
+  customTabId,
+}: {
+  config: PieceSelectorConfig | null | undefined;
+  customTabId: string | null;
+}): PieceSelectorTabConfig | null => {
+  if (!config || !customTabId) {
+    return null;
+  }
+  return (
+    config.tabs.find(
+      (candidate) =>
+        candidate.id === customTabId && candidate.kind === 'CUSTOM',
+    ) ?? null
+  );
 };
 
 export type LegacyGroupingInput = {

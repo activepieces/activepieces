@@ -47,7 +47,7 @@ export function PieceSelectorPreview({
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const [activeId, setActiveId] = useState<string | null>(null);
   const { steps, actionCounts, isLoading, isError, refetch } =
-    usePreviewSteps();
+    usePieceMenuPreviewSteps();
   const aiAndAgentsAvailable = useAiAndAgentsAvailable();
   const resolved = pieceSelectorCustomization.buildResolvedTabs({
     availableBuiltinTabs: pieceSelectorCustomization.getBuiltinTabs({
@@ -65,7 +65,7 @@ export function PieceSelectorPreview({
     () =>
       groupForPreview({
         steps,
-        query: debouncedQuery,
+        query: searching ? debouncedQuery : '',
         pins,
         tabs,
         selectedTab: searching ? PieceSelectorTabType.NONE : selectedType,
@@ -109,7 +109,7 @@ export function PieceSelectorPreview({
   })();
 
   const body = (() => {
-    if (isError && steps.length === 0) {
+    if (isError) {
       return (
         <div className="p-5">
           <AdminFetchErrorState entity={t('pieces')} onRetry={refetch} />
@@ -411,7 +411,7 @@ function useAiAndAgentsAvailable(): boolean {
   return !isNil(aiProviders) && aiProviders.length > 0 && !unavailable;
 }
 
-function usePreviewSteps() {
+export function usePieceMenuPreviewSteps() {
   const {
     pieces,
     isLoading,
@@ -422,6 +422,7 @@ function usePreviewSteps() {
     data: pieceSet,
     isLoading: isLoadingPieceSet,
     isError: isPieceSetError,
+    refetch: refetchPieceSet,
   } = pieceSetQueries.useProjectPieceSet(authenticationSession.getProjectId());
   const { data: aiProviders } = aiProviderQueries.useProjectAiProviders();
   const aiRouterEnabled = stepUtils.hasAiRouterProvider(aiProviders);
@@ -443,8 +444,10 @@ function usePreviewSteps() {
     steps,
     actionCounts,
     isLoading: isLoading || isLoadingPieceSet,
-    isError: isPiecesError || isPieceSetError,
-    refetch,
+    isError:
+      (isPiecesError && pieces === undefined) ||
+      (isPieceSetError && pieceSet === undefined),
+    refetch: () => Promise.all([refetch(), refetchPieceSet()]),
   };
 }
 
