@@ -16,7 +16,7 @@ function dereference(value) {
 function field(schemaInput) {
   const schema = dereference(schemaInput) ?? {};
   const types = Array.isArray(schema.type) ? schema.type.filter((type) => type !== 'null') : [schema.type];
-  const type = schema.oneOf || schema.anyOf || schema.allOf ? 'json' : types[0] ?? (schema.properties ? 'object' : 'json');
+  const type = types[0] ?? (schema.oneOf || schema.anyOf || schema.allOf ? 'json' : schema.properties ? 'object' : 'json');
   return Object.fromEntries(Object.entries({
     type, description: schema.description, format: schema.format, enum: schema.enum,
     minimum: schema.minimum, maximum: schema.maximum, minLength: schema.minLength,
@@ -33,12 +33,21 @@ function bodyFields(input) {
   }));
 }
 
+function requestBodyFor(operation) {
+  const published = dereference(operation.requestBody);
+  if (published || !['createAutomation', 'createAutomationConnection', 'updateAutomation', 'updateAutomationConnection'].includes(operation.operationId)) return published;
+  return {
+    required: true,
+    content: { 'application/json': { schema: { type: 'object', description: 'JSON object with the documented automation or connection fields.' } } },
+  };
+}
+
 const operations = Object.entries(spec.paths).flatMap(([path, pathItem]) =>
   ['get', 'post', 'put', 'patch', 'delete'].filter((method) => pathItem[method]).map((method) => {
     const operation = pathItem[method];
     if (typeof operation.operationId !== 'string' || !/^[a-z][a-zA-Z0-9]*$/.test(operation.operationId)) throw new Error(`Invalid operationId: ${method} ${path}. Use a camelCase identifier containing only letters and numbers.`);
     if (new Set(['await', 'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield', 'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 'public']).has(operation.operationId)) throw new Error('Operation IDs must not be reserved JavaScript identifiers.');
-    const requestBody = dereference(operation.requestBody);
+    const requestBody = requestBodyFor(operation);
     const jsonSchema = requestBody?.content?.['application/json']?.schema;
     const responseFormats = Object.entries(operation.responses ?? {}).filter(([status]) => /^2/.test(status)).flatMap(([, response]) => Object.keys(dereference(response).content ?? {}));
     return {

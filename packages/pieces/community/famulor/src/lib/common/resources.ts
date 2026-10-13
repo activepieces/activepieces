@@ -7,7 +7,10 @@ import { operations } from '../generated/catalog';
 
 function resourceFor({ field, operation }: { field: ApiField; operation: ApiOperation }): Resource | undefined {
   if (field.name === 'id' && field.in === 'path') return resources.find((resource) => operation.path.startsWith(`${resource.path}/{id}`));
-  return resources.find((resource) => resource.fields.includes(field.name));
+  const resource = resources.find((resource) => resource.fields.includes(field.name));
+  if (resource?.path === '/calls' && operation.id !== 'createAssistantTestFromCall') return undefined;
+  if (resource?.path === '/phone-numbers' && field.format !== 'uuid') return undefined;
+  return resource;
 }
 
 function resourceLabel(record: Record<string, unknown>): string {

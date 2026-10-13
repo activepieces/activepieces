@@ -28,7 +28,7 @@ function createNativeAction({ id, name }: { id: string; name?: string }) {
     classification: read ? (/^(list|search|lookup)/i.test(id) ? 'SEARCH' : 'READ') : operation.method === 'DELETE' || id === 'transferWorkspaceOwnership' || /^(cancel|revoke|release|reset|clear|purge|stop|remove|disable|delete|logout|disconnect|erase|rotate|archive)/i.test(id) ? 'DESTRUCTIVE' : 'WRITE',
     aiMetadata: { description: operation.description, idempotent: read },
     props: famulorProperties.operationProps(operation),
-    outputSchema: { fields: [{ key: 'data', label: 'Data' }, { key: 'meta', label: 'Metadata' }] },
+    outputSchema: { fields: operation.binary ? [{ key: 'file', label: 'File' }] : [{ key: 'data', label: 'Data' }, { key: 'meta', label: 'Metadata' }] },
     async run(context) {
       return actionResult({ value: await famulorApi.execute({ token: context.auth.secret_text, operation, values: context.propsValue }), files: context.files, operation });
     },

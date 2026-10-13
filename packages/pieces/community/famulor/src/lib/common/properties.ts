@@ -21,7 +21,7 @@ function property({ field, operation }: { field: ApiField; operation: ApiOperati
   if (field.type === 'boolean') return field.required ? Property.Checkbox(options) : Property.StaticDropdown({ ...options, options: { options: [{ label: 'True', value: true }, { label: 'False', value: false }] } });
   if (field.type === 'number' || field.type === 'integer') return Property.Number(options);
   if (field.format === 'date-time') return Property.DateTime(options);
-  if (['array', 'object', 'json'].includes(field.type)) return field.required ? Property.Json({ ...options, ...(field.type === 'array' ? { defaultValue: [] } : {}) }) : Property.LongText({ ...options, description: `${options.description} Enter valid JSON or map a value from a previous step.`, defaultValue: '' });
+  if (['array', 'object', 'json'].includes(field.type)) return field.required && field.type !== 'json' ? Property.Json({ ...options, ...(field.type === 'array' ? { defaultValue: [] } : {}) }) : Property.LongText({ ...options, description: `${options.description} Enter valid JSON, including quotes around a JSON string.`, defaultValue: '' });
   if (field.writeOnly) return Property.ShortText({ ...options, description: `${options.description} Keep this value private.` });
   return Property.ShortText(options);
 }
