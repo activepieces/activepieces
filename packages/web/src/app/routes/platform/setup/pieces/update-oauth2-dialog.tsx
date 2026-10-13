@@ -49,12 +49,6 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
   const form = useForm<OAuth2FormValues>({
     resolver: zodResolver(OAuth2FormValues),
   });
-  const changeOpen = (next: boolean) => {
-    if (!next) {
-      form.reset();
-    }
-    setOpen(next);
-  };
 
   const { oauth2App, refetch } =
     oauthAppsQueries.useOAuthAppConfigured(pieceName);
@@ -79,9 +73,20 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
       feedback: 'inline',
       onSuccess: () => {
         onConfigurationDone();
-        changeOpen(false);
+        close();
       },
     });
+  const close = () => {
+    form.reset();
+    setOpen(false);
+  };
+  const changeOpen = (next: boolean) => {
+    if (next) {
+      setOpen(true);
+    } else if (!isUpserting) {
+      close();
+    }
+  };
 
   return (
     <>
@@ -132,7 +137,10 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
             </Button>
           </RowActionTooltip>
         </DialogTrigger>
-        <DialogContent className={adminLayout.dialog.md}>
+        <DialogContent
+          className={adminLayout.dialog.md}
+          showCloseButton={!isUpserting}
+        >
           <DialogTitle>{t('Configure OAuth2 App')}</DialogTitle>
 
           <Form {...form}>
@@ -196,6 +204,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                   type="button"
                   variant="outline"
                   onClick={() => changeOpen(false)}
+                  disabled={isUpserting}
                 >
                   {t('Cancel')}
                 </Button>

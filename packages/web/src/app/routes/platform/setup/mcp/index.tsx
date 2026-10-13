@@ -1,4 +1,8 @@
-import { useQueryClient } from '@tanstack/react-query';
+import {
+  useIsMutating,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -65,8 +69,30 @@ function AccessContent() {
   } = platformMcpHooks.usePlatformMcpServer();
   const queryClient = useQueryClient();
   const undoing = useRef(false);
-  const { mutate: updateTools, mutateAsync: updateToolsAsync } =
-    platformMcpHooks.useUpdatePlatformMcpTools();
+  const { mutate: updateTools } = platformMcpHooks.useUpdatePlatformMcpTools();
+  const { mutateAsync: undoToolsChange } = useMutation({
+    mutationKey: MCP_UNDO_KEY,
+    scope: { id: MCP_TOOLS_SCOPE },
+    mutationFn: async ({
+      disabled,
+      enabled,
+    }: {
+      disabled: string[];
+      enabled: string[];
+    }) => {
+      const current = await platformMcpApi.get();
+      const currentTools = current.disabledTools ?? [];
+      await platformMcpApi.update({
+        disabledTools: [
+          ...currentTools.filter((tool) => !disabled.includes(tool)),
+          ...enabled.filter((tool) => !currentTools.includes(tool)),
+        ],
+      });
+    },
+    onSuccess: () => refetch(),
+    onError: (error) => mutationFeedback.markShown(error),
+  });
+  const undoingChange = useIsMutating({ mutationKey: MCP_UNDO_KEY }) > 0;
 
   return (
     <AdminQueryState
@@ -81,6 +107,7 @@ function AccessContent() {
         <McpToolTierList
           disabledTools={mcpServer.disabledTools}
           scope="platform"
+          locked={undoingChange}
           onUpdateDisabledTools={({ tools, onSettled }) => {
             const previous = mcpServer.disabledTools ?? [];
             const disabled = tools.filter((tool) => !previous.includes(tool));
@@ -108,18 +135,7 @@ function AccessContent() {
                       }
                       undoing.current = true;
                       try {
-                        const current = await platformMcpApi.get();
-                        const currentTools = current.disabledTools ?? [];
-                        await updateToolsAsync({
-                          disabledTools: [
-                            ...currentTools.filter(
-                              (tool) => !disabled.includes(tool),
-                            ),
-                            ...enabled.filter(
-                              (tool) => !currentTools.includes(tool),
-                            ),
-                          ],
-                        });
+                        await undoToolsChange({ disabled, enabled });
                       } finally {
                         undoing.current = false;
                       }
@@ -174,6 +190,7 @@ function toolsChangeMessage({
 }
 
 const MCP_TOOLS_SCOPE = 'platform-mcp-server-tools';
+const MCP_UNDO_KEY = ['platform-mcp-server-tools', 'undo'];
 
 type PlatformMcpSection = 'access' | 'activity';
 
