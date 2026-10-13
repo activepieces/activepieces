@@ -47,8 +47,27 @@ export const jumpcloud = createPiece({
             auth: jumpcloudAuth,
             description: 'Call any JumpCloud API endpoint with this connection. Use a path such as /systemusers for the v1 API or /v2/usergroups for the v2 API.',
             baseUrl: (auth) => (auth === undefined ? '' : jumpcloudApi.resolveBaseUrl(auth.props)),
-            authMapping: async (auth) => jumpcloudApi.authHeaders(auth.props),
+            authMapping: async (auth, propsValue) => {
+                assertJumpcloudUrl({ baseUrl: jumpcloudApi.resolveBaseUrl(auth.props), url: readUrl(propsValue) });
+                return jumpcloudApi.authHeaders(auth.props);
+            },
         }),
     ],
     triggers: [newObjectTrigger],
 });
+
+// The admin key must only reach the connection's JumpCloud host, never a full URL pointing elsewhere.
+function assertJumpcloudUrl({ baseUrl, url }: { baseUrl: string; url: string }): void {
+    const isAbsolute = url.startsWith('http://') || url.startsWith('https://');
+    if (isAbsolute && new URL(url).origin !== new URL(baseUrl).origin) {
+        throw new Error(`Custom API Call only sends this connection to ${new URL(baseUrl).origin}. Use a path such as /systemusers.`);
+    }
+}
+
+function readUrl(propsValue: Record<string, unknown>): string {
+    const url = propsValue['url'];
+    if (url !== null && typeof url === 'object' && 'url' in url && typeof url.url === 'string') {
+        return url.url;
+    }
+    return '';
+}

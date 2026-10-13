@@ -3,7 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { jumpcloudAuth } from '../auth';
 import { COMMAND_MAX_WAIT_SECONDS, COMMAND_POLL_SECONDS, jumpcloudApi } from '../common/client';
 import { jumpcloudOutput } from '../common/output';
-import { ConnectionProps, FlatObject } from '../common/types';
+import { ApiRecord, ConnectionProps, FlatObject } from '../common/types';
 import { runCommandOutputSchema } from '../output-schemas';
 
 export const runTriggerCommandAction = createAction({
@@ -70,9 +70,10 @@ export const runTriggerCommandAction = createAction({
         if (context.propsValue.waitForResults !== true) {
             return { trigger_name: triggerName, command_ids: commandIds, waited: false, completed: false, results: [] };
         }
+        const earlier = new Set((await Promise.all(commandIds.map((commandId) => fetchRecords({ auth, commandId })))).flat().map(resultKey));
         const targets = await Promise.all(commandIds.map(async (commandId) => ({ commandId, systemIds: await fetchTargetSystems({ auth, commandId, skip: 0 }) })));
         const deadline = Date.now() + waitMs;
-        const results = await waitForResults({ auth, targets, launchedAt, deadline });
+        const results = await waitForResults({ auth, targets, launchedAt, earlier, deadline });
         return {
             trigger_name: triggerName,
             command_ids: commandIds,
@@ -83,14 +84,14 @@ export const runTriggerCommandAction = createAction({
     },
 });
 
-async function waitForResults({ auth, targets, launchedAt, deadline }: WaitParams): Promise<FlatObject[]> {
-    const lists = await Promise.all(targets.map(({ commandId }) => fetchResults({ auth, commandId, launchedAt })));
+async function waitForResults({ auth, targets, launchedAt, earlier, deadline }: WaitParams): Promise<FlatObject[]> {
+    const lists = await Promise.all(targets.map(({ commandId }) => fetchResults({ auth, commandId, launchedAt, earlier })));
     const results = lists.flat();
     if (allReported({ targets, results }) || Date.now() + COMMAND_POLL_SECONDS * 1000 > deadline) {
         return results;
     }
     await sleep(COMMAND_POLL_SECONDS * 1000);
-    return waitForResults({ auth, targets, launchedAt, deadline });
+    return waitForResults({ auth, targets, launchedAt, earlier, deadline });
 }
 
 function allReported({ targets, results }: { targets: CommandTargets[]; results: FlatObject[] }): boolean {
@@ -116,19 +117,29 @@ async function fetchTargetSystems({ auth, commandId, skip }: { auth: ConnectionP
     return [...ids, ...(await fetchTargetSystems({ auth, commandId, skip: skip + page.length }))];
 }
 
-async function fetchResults({ auth, commandId, launchedAt }: { auth: ConnectionProps; commandId: string; launchedAt: number }): Promise<FlatObject[]> {
+async function fetchRecords({ auth, commandId }: { auth: ConnectionProps; commandId: string }): Promise<ApiRecord[]> {
     const body = await jumpcloudApi.send<unknown>({
         auth,
         method: HttpMethod.GET,
         path: `/commands/${encodeURIComponent(commandId)}/results`,
     });
-    const records = Array.isArray(body) ? body.filter(jumpcloudApi.isRecord) : [];
+    return Array.isArray(body) ? body.filter(jumpcloudApi.isRecord) : [];
+}
+
+async function fetchResults({ auth, commandId, launchedAt, earlier }: { auth: ConnectionProps; commandId: string; launchedAt: number; earlier: Set<string> }): Promise<FlatObject[]> {
+    const records = await fetchRecords({ auth, commandId });
     return records
         .filter((record) => {
             const requested = typeof record['requestTime'] === 'string' ? Date.parse(record['requestTime']) : Number.NaN;
-            return Number.isFinite(requested) && requested >= launchedAt;
+            return Number.isFinite(requested) && requested >= launchedAt && !earlier.has(resultKey(record));
         })
         .map((record) => jumpcloudOutput.flattenCommandResult({ commandId, record }));
+}
+
+// Results already listed right after the launch belong to an earlier run, even inside the clock skew window.
+function resultKey(record: ApiRecord): string {
+    const id = record['_id'] ?? record['id'];
+    return typeof id === 'string' && id.length > 0 ? id : `${String(record['systemId'])}|${String(record['requestTime'])}`;
 }
 
 function readTriggered(body: unknown): string[] {
@@ -162,5 +173,6 @@ type WaitParams = {
     auth: ConnectionProps;
     targets: CommandTargets[];
     launchedAt: number;
+    earlier: Set<string>;
     deadline: number;
 };

@@ -34,6 +34,25 @@ afterEach(() => {
 });
 
 describe('piece definition', () => {
+    it.each([
+        ['https://evil.example.com/collect', true],
+        ['https://console.jumpcloud.com.evil.example.com/x', true],
+        ['https://console.jumpcloud.com/api/systemusers', false],
+        ['/systemusers', false],
+    ])('custom API call only sends the key to JumpCloud (%s)', async (url, rejected) => {
+        sendRequest.mockResolvedValue({ status: 200, body: {} });
+        const action = jumpcloud.actions()['custom_api_call'];
+        const pending = action.run(context<InputPropertyMap>({ url: { url }, method: HttpMethod.GET, headers: {}, queryParams: {}, body_type: 'none', body: {} }));
+
+        if (rejected) {
+            await expect(pending).rejects.toThrow('Custom API Call only sends this connection to https://console.jumpcloud.com');
+            expect(sendRequest).not.toHaveBeenCalled();
+        } else {
+            await pending;
+            expect(sendRequest.mock.calls[0][0].headers['x-api-key']).toBeDefined();
+        }
+    });
+
     it('registers every action and the custom API call', () => {
         expect(Object.keys(jumpcloud.actions())).toEqual([
             'create_object',
