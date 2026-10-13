@@ -86,6 +86,15 @@ export function TierCard({
   const writing = useIsMutating(tierWrites) > 0;
   const [mainPickerOpen, setMainPickerOpen] = useState(false);
   const [fallbackPickerOpen, setFallbackPickerOpen] = useState(false);
+  const [wasWriting, setWasWriting] = useState(writing);
+  if (writing !== wasWriting) {
+    setWasWriting(writing);
+    if (writing) {
+      setMainPickerOpen(false);
+      setFallbackPickerOpen(false);
+    }
+  }
+  const undoing = useRef(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
   const save = (request: UpdatePlatformModelTierRequest) =>
@@ -111,34 +120,41 @@ export function TierCard({
             tier: tier.name,
           }),
           onUndo: async () => {
-            if (queryClient.isMutating(tierWrites) > 0) {
+            if (undoing.current || queryClient.isMutating(tierWrites) > 0) {
               throw mutationFeedback.userError(
                 t('Wait for the current change to finish, then undo.'),
               );
             }
-            const fresh = (await platformModelTierApi.listAdmin()).find(
-              (candidate) => candidate.id === tier.id,
-            );
-            if (fresh === undefined) {
-              throw mutationFeedback.userError(
-                t('It no longer exists. Refresh the page and try again.'),
+            undoing.current = true;
+            try {
+              const fresh = (await platformModelTierApi.listAdmin()).find(
+                (candidate) => candidate.id === tier.id,
               );
+              if (fresh === undefined) {
+                throw mutationFeedback.userError(
+                  t('It no longer exists. Refresh the page and try again.'),
+                );
+              }
+              const current = fresh.entries;
+              if (
+                current.some((entry) => modelMeta.sameEntry(entry, removed))
+              ) {
+                return;
+              }
+              const at = Math.min(position, current.length);
+              await undoAsync({
+                id: tier.id,
+                request: {
+                  entries: [
+                    ...current.slice(0, at),
+                    removed,
+                    ...current.slice(at),
+                  ],
+                },
+              });
+            } finally {
+              undoing.current = false;
             }
-            const current = fresh.entries;
-            if (current.some((entry) => modelMeta.sameEntry(entry, removed))) {
-              return;
-            }
-            const at = Math.min(position, current.length);
-            await undoAsync({
-              id: tier.id,
-              request: {
-                entries: [
-                  ...current.slice(0, at),
-                  removed,
-                  ...current.slice(at),
-                ],
-              },
-            });
           },
         }),
       )

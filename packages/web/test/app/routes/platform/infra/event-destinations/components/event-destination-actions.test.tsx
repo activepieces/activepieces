@@ -2,7 +2,13 @@
  * @vitest-environment jsdom
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { AxiosError, AxiosHeaders } from 'axios';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -181,16 +187,16 @@ describe('EventDestinationActions delete', () => {
     collectionUtilsMock.delete.mockRejectedValue(serverError);
 
     confirmDelete();
-    await settle();
+    await screen.findByText('Destination not reachable');
 
     expect(collectionUtilsMock.delete).toHaveBeenCalledWith([destination.id]);
-    expect(toastMock.error).toHaveBeenCalledTimes(1);
-    expect(toastMock.error).toHaveBeenCalledWith(
-      "Couldn't delete the destination",
-      expect.objectContaining({ description: 'Destination not reachable' }),
-    );
+    expect(toastMock.error).not.toHaveBeenCalled();
     expect(toastMock.success).not.toHaveBeenCalled();
     expect(dialogs()).toHaveLength(1);
+    expect(
+      within(dialogs()[0]).getAllByText("Couldn't delete the destination"),
+    ).toHaveLength(1);
+    expect(screen.getAllByText('Destination not reachable')).toHaveLength(1);
   });
 
   it('shows success and closes the confirmation only after deleting succeeds', async () => {

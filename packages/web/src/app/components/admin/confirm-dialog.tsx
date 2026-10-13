@@ -4,7 +4,7 @@ import { CircleAlert, TriangleAlert } from 'lucide-react';
 import { ReactNode, useId, useState } from 'react';
 import { toast } from 'sonner';
 
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { mutationFeedback } from '@/lib/mutation-feedback';
+import { ConfirmFailure, mutationFeedback } from '@/lib/mutation-feedback';
 
 import { adminLayout } from './admin-layout';
 
@@ -87,27 +87,28 @@ function ConfirmDialogBody({
 }: ConfirmDialogBodyProps) {
   const inputId = useId();
   const [typed, setTyped] = useState('');
-  const [failure, setFailure] = useState<string | null>(null);
+  const [failure, setFailure] = useState<ConfirmFailure | null>(null);
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       setFailure(null);
       onPendingChange?.(true);
-      await onConfirm();
+      const failed = await mutationFeedback.runConfirm(onConfirm);
+      if (failed === null) {
+        return;
+      }
+      if (mutationFeedback.isQuotaExceeded(failed.error)) {
+        onDone();
+        mutationFeedback.error({ error: failed.error });
+      } else {
+        setFailure(failed);
+      }
+      throw failed.error;
     },
     onSettled: () => onPendingChange?.(false),
     onSuccess: () => {
       onDone();
       if (successMessage) {
         toast.success(successMessage);
-      }
-    },
-    onError: (error) => {
-      setFailure(mutationFeedback.message(error));
-      if (
-        mutationFeedback.isQuotaExceeded(error) &&
-        !mutationFeedback.wasShown(error)
-      ) {
-        mutationFeedback.error({ error });
       }
     },
   });
@@ -159,7 +160,10 @@ function ConfirmDialogBody({
       {failure !== null && (
         <Alert variant="destructive">
           <CircleAlert className="size-4" />
-          <AlertDescription>{failure}</AlertDescription>
+          {failure.title !== undefined && (
+            <AlertTitle>{failure.title}</AlertTitle>
+          )}
+          <AlertDescription>{failure.description}</AlertDescription>
         </Alert>
       )}
       <DialogFooter className="mt-2">

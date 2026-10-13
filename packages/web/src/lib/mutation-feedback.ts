@@ -108,8 +108,13 @@ function wasShown(error: unknown): boolean {
   return typeof error === 'object' && error !== null && shownErrors.has(error);
 }
 
-function error({ error, title, description }: MutationErrorParams): void {
+function error(params: MutationErrorParams): void {
+  const { error, title, description } = params;
   markShown(error);
+  if (confirmErrors !== null) {
+    confirmErrors.push(params);
+    return;
+  }
   if (isQuotaExceeded(error)) {
     openPlanDialog();
     return;
@@ -163,6 +168,37 @@ async function runUndo({
   }
 }
 
+async function runConfirm(
+  run: () => Promise<unknown> | unknown,
+): Promise<ConfirmFailure | null> {
+  const outer = confirmErrors;
+  const collected: MutationErrorParams[] = [];
+  confirmErrors = collected;
+  let failure: ConfirmFailure | null = null;
+  try {
+    await run();
+  } catch (caught) {
+    const own =
+      collected.find((entry) => entry.error === caught) ??
+      (wasShown(caught) ? collected[0] : undefined);
+    const source = own === undefined ? caught : own.error;
+    markShown(source);
+    failure = {
+      error: source,
+      title: own?.title,
+      description: own?.description ?? message(source),
+    };
+  } finally {
+    confirmErrors = outer;
+  }
+  collected
+    .filter((entry) => entry.error !== failure?.error)
+    .forEach((entry) => error(entry));
+  return failure;
+}
+
+let confirmErrors: MutationErrorParams[] | null = null;
+
 const shownErrors = new WeakSet<object>();
 
 function isQuotaExceeded(error: unknown): boolean {
@@ -196,8 +232,15 @@ export const mutationFeedback = {
   message,
   messageOr,
   userError,
+  runConfirm,
   isNetworkError,
   undo,
+};
+
+export type ConfirmFailure = {
+  error: unknown;
+  title?: string;
+  description: string;
 };
 
 export type MutationErrorParams = {

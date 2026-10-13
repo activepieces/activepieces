@@ -11,6 +11,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HostnameStep } from '@/app/routes/platform/security/embed/steps/hostname-step';
@@ -74,5 +75,7 @@ describe('Embed hostname change', () => {
     await waitFor(() =>
       expect(within(confirm).getByText('Hostname is taken')).toBeDefined(),
     );
+    expect(screen.getAllByText('Hostname is taken')).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

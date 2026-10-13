@@ -13,6 +13,7 @@ import {
   within,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConfigDetail } from '@/app/routes/platform/setup/ai/providers-tab/config-detail';
@@ -132,5 +133,7 @@ describe('Provider key save confirm', () => {
         within(confirm).getByText('That name is already taken'),
       ).toBeDefined(),
     );
+    expect(screen.getAllByText('That name is already taken')).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

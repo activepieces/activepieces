@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -62,6 +63,7 @@ function AccessContent() {
     refetch,
   } = platformMcpHooks.usePlatformMcpServer();
   const queryClient = useQueryClient();
+  const undoing = useRef(false);
   const { mutate: updateTools, mutateAsync: updateToolsAsync } =
     platformMcpHooks.useUpdatePlatformMcpTools();
 
@@ -91,6 +93,7 @@ function AccessContent() {
                     message: t('Changes saved'),
                     onUndo: async () => {
                       if (
+                        undoing.current ||
                         queryClient.isMutating({
                           predicate: (mutation) =>
                             mutation.options.scope?.id === MCP_TOOLS_SCOPE,
@@ -102,18 +105,23 @@ function AccessContent() {
                           ),
                         );
                       }
-                      const current = await platformMcpApi.get();
-                      const currentTools = current.disabledTools ?? [];
-                      return updateToolsAsync({
-                        disabledTools: [
-                          ...currentTools.filter(
-                            (tool) => !disabled.includes(tool),
-                          ),
-                          ...enabled.filter(
-                            (tool) => !currentTools.includes(tool),
-                          ),
-                        ],
-                      });
+                      undoing.current = true;
+                      try {
+                        const current = await platformMcpApi.get();
+                        const currentTools = current.disabledTools ?? [];
+                        await updateToolsAsync({
+                          disabledTools: [
+                            ...currentTools.filter(
+                              (tool) => !disabled.includes(tool),
+                            ),
+                            ...enabled.filter(
+                              (tool) => !currentTools.includes(tool),
+                            ),
+                          ],
+                        });
+                      } finally {
+                        undoing.current = false;
+                      }
                     },
                   }),
               },

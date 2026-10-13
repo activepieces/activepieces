@@ -15,6 +15,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
@@ -101,5 +102,7 @@ describe('New SAML settings confirm', () => {
         within(confirm).getByText('The IdP metadata is invalid'),
       ).toBeDefined(),
     );
+    expect(screen.getAllByText('The IdP metadata is invalid')).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

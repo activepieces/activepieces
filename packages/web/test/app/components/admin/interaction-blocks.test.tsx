@@ -10,6 +10,7 @@ import {
   renderHook,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import { AxiosError, AxiosHeaders } from 'axios';
 import * as React from 'react';
@@ -34,6 +35,7 @@ import {
   adminBulk,
   useAdminAction,
 } from '@/app/components/admin/use-admin-action';
+import { PLAN_LIMIT_EVENT } from '@/lib/mutation-feedback';
 
 function serverError(message: string) {
   return new AxiosError(message, 'ERR_BAD_REQUEST', undefined, undefined, {
@@ -42,6 +44,16 @@ function serverError(message: string) {
     headers: {},
     config: { headers: new AxiosHeaders() },
     data: { params: { message } },
+  });
+}
+
+function quotaError() {
+  return new AxiosError('Limit', 'ERR_BAD_REQUEST', undefined, undefined, {
+    status: 402,
+    statusText: 'Payment Required',
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+    data: { code: 'QUOTA_EXCEEDED', params: { message: 'Limit reached' } },
   });
 }
 
@@ -135,8 +147,37 @@ describe('ConfirmDialog', () => {
     }
     render(<Harness />, { wrapper });
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
-    expect(screen.getByRole('dialog')).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('dialog')).getByText('Still in use'),
+      ).toBeTruthy(),
+    );
+    expect(screen.getAllByText('Still in use')).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('closes and opens the plan dialog when the action hits a plan limit', async () => {
+    const onOpenChange = vi.fn();
+    const planDialog = vi.fn();
+    window.addEventListener(PLAN_LIMIT_EVENT, planDialog);
+    render(
+      <ConfirmDialog
+        open
+        onOpenChange={onOpenChange}
+        title="Invite Ana?"
+        confirmLabel="Invite"
+        onConfirm={async () => {
+          throw quotaError();
+        }}
+      />,
+      { wrapper },
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(planDialog).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(toast.error).not.toHaveBeenCalled();
+    window.removeEventListener(PLAN_LIMIT_EVENT, planDialog);
   });
 
   it('closes once the action succeeds', async () => {
@@ -303,6 +344,36 @@ describe('InstantSwitch', () => {
     expect(toast.success).toHaveBeenCalledTimes(1);
     expect(toast.error).not.toHaveBeenCalled();
     expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a failed confirmed save once, inside the confirm', async () => {
+    const save = vi.fn(async () => {
+      throw serverError('Sign-in would be lost');
+    });
+    render(
+      <InstantSwitch
+        aria-label="Email sign-in"
+        checked
+        onCheckedChange={save}
+        confirmBefore={(next) =>
+          next
+            ? null
+            : { title: 'Turn off email sign-in?', confirmLabel: 'Turn off' }
+        }
+      />,
+      { wrapper },
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Email sign-in' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Turn off' }));
+    await waitFor(() =>
+      expect(
+        within(
+          screen.getByRole('dialog', { name: 'Turn off email sign-in?' }),
+        ).getByText('Sign-in would be lost'),
+      ).toBeTruthy(),
+    );
+    expect(screen.getAllByText('Sign-in would be lost')).toHaveLength(1);
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it('asks first when turning it off could lock people out', async () => {

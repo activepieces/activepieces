@@ -109,7 +109,6 @@ const EmbedHostnameForm = () => {
 
 const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { mutateAsync, isPending } = useSaveHostname();
 
   const form = useForm<GenerateEmbedSubdomainRequest>({
@@ -121,15 +120,7 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
   const hostnameValue = form.watch('hostname');
   const isDirty = hostnameValue.trim() !== subdomain.hostname;
 
-  const handleConfirm = async () => {
-    setErrorMessage(null);
-    try {
-      await mutateAsync({ hostname: hostnameValue.trim() });
-    } catch (error) {
-      setErrorMessage(mutationFeedback.message(error));
-      throw error;
-    }
-  };
+  const handleConfirm = () => mutateAsync({ hostname: hostnameValue.trim() });
 
   return (
     <Form {...form}>
@@ -150,9 +141,6 @@ const EmbedHostnameSummary = ({ subdomain }: { subdomain: EmbedSubdomain }) => {
             </FormItem>
           )}
         />
-        {errorMessage && (
-          <p className="text-sm text-danger-11">{errorMessage}</p>
-        )}
         <div className="flex justify-end mt-6">
           <Button
             {...adminControl(AdminControl.EMBEDDING_HOSTNAME_UPDATE_OPEN)}

@@ -224,6 +224,44 @@ describe('TierCard while the tier has a pending write', () => {
     expect(state.updateAsync).not.toHaveBeenCalled();
   });
 
+  it('keeps a picker closed once the pending write finishes', async () => {
+    const queryClient = new QueryClient();
+    let finish: () => void = () => undefined;
+    renderCard(queryClient);
+    fireEvent.click(screen.getByRole('button', { name: 'Add fallback' }));
+
+    act(() => {
+      queryClient
+        .getMutationCache()
+        .build(queryClient, {
+          mutationKey: ['platform-model-tiers', 'admin'],
+          mutationFn: () =>
+            new Promise<void>((resolve) => {
+              finish = resolve;
+            }),
+        })
+        .execute({ id: 'expert', request: { entries: [] } })
+        .catch(() => undefined);
+    });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: 'Pick fallback model' }),
+      ).toBeNull(),
+    );
+    await act(async () => finish());
+
+    await waitFor(() =>
+      expect(
+        screen
+          .getAllByRole('button', { name: 'Model actions' })[0]
+          .hasAttribute('disabled'),
+      ).toBe(false),
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Pick fallback model' }),
+    ).toBeNull();
+  });
+
   it('refuses Undo until the pending write finishes', async () => {
     const queryClient = new QueryClient();
     renderCard(queryClient);
@@ -240,6 +278,22 @@ describe('TierCard while the tier has a pending write', () => {
 });
 
 describe('TierCard Undo', () => {
+  it('refuses a second Undo while the first is still running', async () => {
+    const queryClient = new QueryClient();
+    renderCard(queryClient);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Remove' }));
+    await waitFor(() => expect(state.onUndo).toBeDefined());
+    state.serverTiers = [tier([SONNET])];
+
+    const first = state.onUndo?.();
+    await expect(state.onUndo?.()).rejects.toThrow(
+      'Wait for the current change to finish, then undo.',
+    );
+    await first;
+
+    expect(state.undoAsync).toHaveBeenCalledTimes(1);
+  });
+
   it('puts the removed model back into the tier as the server has it now', async () => {
     const queryClient = new QueryClient();
     renderCard(queryClient);
