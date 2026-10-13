@@ -112,7 +112,7 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 
 ## Database Migrations
 
-- Before creating or modifying a database migration, **always read the [Database Migrations Playbook](https://www.activepieces.com/docs/handbook/engineering/playbooks/database-migration#database-migrations)** first. Follow its instructions for generating and structuring migrations.
+- Before creating or modifying a database migration, **always read `brain/knowledge/data-storage-observability/database.md`** first. It covers the two-track model (blocking + background), constraint recipes, the CIC helper, and cross-track dependency guards. The external [Database Migrations Playbook](https://www.activepieces.com/docs/handbook/engineering/playbooks/database-migration#database-migrations) covers general TypeORM mechanics.
 
 ## Verification
 

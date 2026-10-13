@@ -19,6 +19,22 @@ export const updateMessage = createAction({
   },
   auth: slackAuth,
   outputSchema: chatUpdateOutputSchema,
+  propertyGroups: [
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channel'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['ts', 'text', 'blocks'],
+    },
+  ],
   props: {
     info: singleSelectChannelInfo,
     onlyBotChannels,

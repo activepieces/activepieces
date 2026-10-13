@@ -2,6 +2,7 @@ import { ActionBase, PieceAuth, TriggerBase } from '@activepieces/pieces-framewo
 import { apId, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
 import { encryptUtils } from '../../../../src/app/helper/encryption'
 import { system } from '../../../../src/app/helper/system/system'
@@ -11,10 +12,10 @@ import { toolSearchService } from '../../../../src/app/tool-search/tool-search.s
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 
-// Boots only the database (migrations run automatically on a POSTGRES DataSource via
-// migrationsRun:true) — deliberately NOT the full server, whose app-event-routing module statically
-// imports individual pieces that vite can't resolve in this test context. The engine only needs the
-// schema + seeded piece_metadata rows; no fastify/HTTP layer is involved.
+// Boots only the database and runs migrations via initializeDatabase (which routes through
+// runMigrationsWithCatchup) — deliberately NOT the full server, whose app-event-routing module
+// statically imports individual pieces that vite can't resolve in this test context. The engine
+// only needs the schema + seeded piece_metadata rows; no fastify/HTTP layer is involved.
 const log: FastifyBaseLogger = system.globalLogger()
 
 // A deterministic bag-of-words embedder over a fixed vocabulary, L2-normalized with the real
@@ -110,7 +111,7 @@ async function getIndexRow(pieceName: string, objectName: string): Promise<Index
 
 beforeAll(async () => {
     resetDatabaseConnection()
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: true })
 }, 300_000)
 
 afterAll(async () => {

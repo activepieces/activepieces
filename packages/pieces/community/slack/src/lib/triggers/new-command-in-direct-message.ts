@@ -20,6 +20,29 @@ export const newCommandInDirectMessageTrigger = createTrigger({
     description:
       'Fires when a direct message (im channel) addressed to the bot contains one of the configured commands (e.g., "@bot help" or "@bot remind"). Only messages in DM channels matching the listed commands fire; bot messages and the user\'s own messages can be optionally ignored. The event payload includes the original message plus a parsed_command object with the recognized command and its arguments.',
   },
+  propertyGroups: [
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['info', 'user'],
+    },
+    {
+      key: 'command',
+      display: 'section',
+      label: 'Command',
+      icon: 'code',
+      props: ['commands'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['ignoreBots', 'ignoreSelfMessages'],
+    },
+  ],
   props: {
     info: appWebhookSetupInfo,
     user: userId(true),

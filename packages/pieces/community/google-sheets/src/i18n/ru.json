@@ -128,5 +128,6 @@
   "Triggers when a worksheet is created in a spreadsheet.": "Включает при создании таблицы в электронном формате.",
   "Trigger Column": "Столбец триггера",
   "Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.": "Пожалуйста, обратите внимание, что может возникнуть задержка до 3 минут, чтобы срабатывать срабатывание в связи с задержкой от Google.",
-  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "Включать только изменения ячеек в этом столбце. выберите **Все колонки**, если хотите, чтобы потоки срабатывали изменения в любой ячейке в строке."
+  "Trigger on changes to cells in this column only.Select **All Columns** if you want the flow to trigger on changes to any cell within the row.": "Включать только изменения ячеек в этом столбце. выберите **Все колонки**, если хотите, чтобы потоки срабатывали изменения в любой ячейке в строке.",
+  "Empty fields keep their current value.": "Пустые поля сохраняют текущее значение."
 }

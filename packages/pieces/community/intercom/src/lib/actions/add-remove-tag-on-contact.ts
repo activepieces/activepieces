@@ -2,6 +2,7 @@ import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { contactIdProp, tagIdProp } from '../common/props';
 import { intercomClient } from '../common';
+import { tagOutputSchema } from '../output-schemas';
 
 export const addOrRemoveTagOnContactAction = createAction({
 	auth: intercomAuth,
@@ -9,8 +10,8 @@ export const addOrRemoveTagOnContactAction = createAction({
 	classification: 'WRITE',
 	displayName: 'Add/Remove Tag on Contact',
 	description: 'Attach or remove a tag from a specific contact.',
-	audience: 'both',
-	aiMetadata: { description: 'Tag or untag a contact by contact ID and tag ID; set the Untag flag to remove rather than add. Mutates the contact, so it is not idempotent. Requires an existing tag ID (use List Tags to discover one).', idempotent: false },
+	audience: 'human',
+	aiMetadata: { description: 'Tag or untag a contact by contact ID and tag ID; set the Untag flag to remove rather than add. Adding a tag that is already there changes nothing; removing a tag that is gone can fail, so it is not marked idempotent. Requires an existing tag ID (use List Tags to discover one).', idempotent: false },
 	props: {
 		contactId: contactIdProp('Contact ID','user', true),
 		tagId: tagIdProp('Tag Name', true),
@@ -20,8 +21,9 @@ export const addOrRemoveTagOnContactAction = createAction({
 			defaultValue: false,
 		}),
 	},
+	outputSchema: tagOutputSchema,
 	async run(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		if (context.propsValue.untag) {
 			const response = await client.tags.untagContact({

@@ -2,6 +2,7 @@ import {
   ApFile,
   createAction,
   DynamicPropsValue,
+  MarkdownVariant,
   Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -25,7 +26,7 @@ export const telegramSendMediaAction = createAction({
   displayName: 'Send Media',
   propertyGroups: [
     { key: 'send_to', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id'] },
-    { key: 'media_card', display: 'section', label: 'Media', icon: 'file', props: ['media_type', 'media'] },
+    { key: 'media_card', display: 'section', label: 'Media', icon: 'file', props: ['media_type', 'file_info', 'media'] },
     { key: 'caption', display: 'section', label: 'Caption', icon: 'text', props: ['format', 'message', 'instructions_format'] },
   ],
   props: {
@@ -45,6 +46,10 @@ export const telegramSendMediaAction = createAction({
           { label: 'GIF', value: 'animation' },
         ],
       },
+    }),
+    file_info: Property.MarkDown({
+      value: 'Upload a file or enter a file ID. If both are set, the upload is sent.',
+      variant: MarkdownVariant.INFO,
     }),
     media: Property.DynamicProperties({
       auth: telegramBotAuth,
