@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Retell AI 0.3.0: New Call fires only when a call starts, and webhooks must be signed
+
+The **New Call** trigger used to run the flow on every Retell webhook event for a call (started, ended and analyzed), so one call could start the flow three times. From Retell AI 0.3.0 it runs once per call, on the `call_started` event. Deliveries are also checked against Retell's `X-Retell-Signature` header (signed with your API key), and unsigned, forged, stale or repeated deliveries are ignored.
+
+#### What you need to do
+
+To react to a finished call or its analysis, use the new **Call Ended** or **Call Analyzed** trigger. Make sure the API key in your connection is the one with the webhook badge in Retell, or deliveries will not pass the signature check. Steps keep running on the version they were built with until you upgrade them.
+
 #### Brevo 0.5.0: an unticked unsubscribe toggle no longer re-subscribes the contact
 
 On Create or Update Contact, the two blacklist toggles (now labelled **Unsubscribe From Email** and **Unsubscribe From SMS**) promised that leaving them untouched kept the contact's current setting. A fresh step saves an untouched toggle as `false`, so every run sent `emailBlacklisted: false` and `smsBlacklisted: false` and silently re-subscribed contacts who had opted out. Unsubscribe Contact did the same when one of its toggles was unticked. From 0.5.0 an unticked toggle sends nothing and the contact's setting is left as it is; a ticked toggle still unsubscribes. Unsubscribe Contact now fails with a clear message when nothing is ticked and no list is picked, instead of sending an empty update.
