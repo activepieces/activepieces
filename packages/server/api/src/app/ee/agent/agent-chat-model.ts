@@ -35,6 +35,13 @@ export const agentChatModel = (log: FastifyBaseLogger) => ({
             : { modelTierId: null, providerConfigId: defaultChoice.providerConfigId, modelName: defaultChoice.modelId }
     },
 
+    async needsDefaultPick({ platformId, conversation, scope }: { platformId: string, conversation: ChatPick, scope: ProviderScope }): Promise<boolean> {
+        if (!isNil(conversation.modelTierId) || !isNil(conversation.providerConfigId)) {
+            return false
+        }
+        return isNil(conversation.modelName) || isNil(await aiProviderService(log).getChatKey({ platformId, scope }))
+    },
+
     async pinnedConfig({ platformId, configId, modelName, scope }: { platformId: string, configId: string, modelName: string | null, scope: ProviderScope }): Promise<PinnedConfig> {
         const config = await aiProviderService(log).findKeyConfig({ platformId, configId, scope })
         const modelId = isNil(config) || isNil(modelName)
@@ -64,7 +71,7 @@ export const agentChatModel = (log: FastifyBaseLogger) => ({
             await this.pinnedConfig({ platformId, configId: conversation.providerConfigId, modelName: conversation.modelName ?? null, scope })
             return
         }
-        if (isNil(conversation.modelName) && !isNil(await this.defaultPick({ platformId, projectId: scope.projectId }))) {
+        if (await this.needsDefaultPick({ platformId, conversation, scope }) && !isNil(await this.defaultPick({ platformId, projectId: scope.projectId }))) {
             return
         }
         await agentHelpers.assertRunProviderConfigured({ platformId, scope, log })

@@ -71,6 +71,16 @@ describe('a chat pinned to a key', () => {
         await expect(getConfig({ ctx, conversationId: conversation.id })).rejects.toMatchObject({ error: { code: ErrorCode.VALIDATION } })
     })
 
+    it('runs the model stored on the conversation, not an older one the queued job carried', async () => {
+        const ctx = await context()
+        const key = await customKey({ ctx, name: 'Team', models: ['team-model'] })
+        const conversation = await createConversation({ ctx, body: { projectId: ctx.project.id, providerConfigId: key.id, modelName: 'team-model' } })
+
+        const config = await getConfig({ ctx, conversationId: conversation.id, modelName: 'model-from-before-the-switch' })
+
+        expect(config.modelId).toBe('team-model')
+    })
+
     it('keeps its model when the worker saves the turn with a tier name', async () => {
         const ctx = await context()
         const key = await customKey({ ctx, name: 'Team', models: ['team-model'] })
@@ -133,6 +143,18 @@ describe('a legacy chat that stores only a model name', () => {
         const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
         expect(stored.modelName).toBe(first.modelId)
         expect(second.modelId).toBe(first.modelId)
+    })
+
+    it('moves to the Default tier when the platform no longer has a Default AI key', async () => {
+        const ctx = await context()
+        const key = await customKey({ ctx, name: 'Team', models: ['team-model'] })
+        await createTier({ ctx, entries: [{ configId: key.id, modelId: 'team-model' }] })
+        const conversation = await createConversation({ ctx, body: { modelName: 'a-model-from-the-deleted-key' } })
+
+        const config = await getConfig({ ctx, conversationId: conversation.id })
+
+        expect(config.providerConfigId).toBe(key.id)
+        expect(config.modelId).toBe('team-model')
     })
 
     it('still falls back when its model is unknown, so an upgrade never breaks it', async () => {
@@ -260,13 +282,13 @@ async function createConversation({ ctx, body }: { ctx: TestContext, body: Recor
     return response.json()
 }
 
-async function getConfig({ ctx, conversationId, dryRun = true }: { ctx: TestContext, conversationId: string, dryRun?: boolean }): ReturnType<ReturnType<typeof agentRpcHandlers>['getAgentConfig']> {
+async function getConfig({ ctx, conversationId, dryRun = true, modelName = null }: { ctx: TestContext, conversationId: string, dryRun?: boolean, modelName?: string | null }): ReturnType<ReturnType<typeof agentRpcHandlers>['getAgentConfig']> {
     return agentRpcHandlers(app.log).getAgentConfig({
         conversationId,
         platformId: ctx.platform.id,
         userId: ctx.user.id,
         userMessage: 'hello',
-        modelName: null,
+        modelName,
         dryRun,
     })
 }

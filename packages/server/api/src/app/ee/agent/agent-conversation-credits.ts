@@ -1,7 +1,7 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { AIProviderName, isNil, unique } from '@activepieces/core-utils'
 import { AgentConversation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { In, IsNull } from 'typeorm'
 import { aiKeyScope } from '../../ai/ai-key-scope'
 import { AIProviderSchema } from '../../ai/ai-provider-entity'
 import { AddConversationCreditsParams, AiUsageHooks, UnpinConversationsFromKeyParams } from '../../ai/ai-usage-hooks'
@@ -29,10 +29,13 @@ export const agentConversationCreditsHooks = (_log: FastifyBaseLogger): AiUsageH
             select: { id: true, projectId: true, modelName: true },
         })
         const stale = isNil(key) ? pinned : pinned.filter((conversation) => !keyStillServes({ key, conversation }))
-        if (stale.length === 0) {
-            return
+        for (const modelName of unique(stale.map((conversation) => conversation.modelName ?? null))) {
+            const ids = stale.filter((conversation) => (conversation.modelName ?? null) === modelName).map((conversation) => conversation.id)
+            await repo.update(
+                { platformId, providerConfigId: configId, modelName: isNil(modelName) ? IsNull() : modelName, id: In(ids) },
+                { providerConfigId: null },
+            )
         }
-        await repo.update({ platformId, id: In(stale.map((conversation) => conversation.id)) }, { providerConfigId: null })
     },
 })
 

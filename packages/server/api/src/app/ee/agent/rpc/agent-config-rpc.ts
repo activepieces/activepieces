@@ -90,10 +90,10 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
         const surface = agentHelpers.surfaceOf({ source: requestedSource })
         const choiceLivesOnConversation = pickLivesOnConversation({ conversation })
-        const needsDefaultPick = choiceLivesOnConversation && isNil(conversation.modelTierId) && isNil(conversation.providerConfigId) && isNil(conversation.modelName) && isNil(modelName)
+        const needsDefaultPick = choiceLivesOnConversation && await agentChatModel(log).needsDefaultPick({ platformId, conversation, scope: runScope })
         const defaultPick = needsDefaultPick ? await agentChatModel(log).defaultPick({ platformId, projectId: runScope.projectId }) : null
         const picked = isNil(defaultPick) ? conversation : { ...conversation, ...defaultPick }
-        const selectedModel = modelName ?? picked.modelName ?? null
+        const selectedModel = choiceLivesOnConversation ? picked.modelName ?? null : modelName ?? picked.modelName ?? null
         const modelTierId = tierIdForRun({ conversation: picked, requestedTierId: input.modelTierId ?? null })
         const tierRun = isNil(modelTierId) ? null : await agentModelTier(log).resolveRun({ platformId, tierId: modelTierId, surface, scope: runScope })
         const pinnedConfigId = choiceLivesOnConversation && isNil(tierRun) ? picked.providerConfigId ?? null : null
