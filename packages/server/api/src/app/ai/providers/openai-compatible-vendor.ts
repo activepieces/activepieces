@@ -9,6 +9,8 @@ export async function fetchOpenAiModelIds({ url, headers }: { url: string, heade
         method: 'GET',
         url,
         timeout: REQUEST_TIMEOUT_MS,
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        maxContentLength: MAX_MODELS_RESPONSE_BYTES,
         headers,
     })
     return (response.data.data ?? []).map((model) => model.id)
@@ -100,6 +102,8 @@ function vendorHeaders({ authConfig }: { authConfig: BaseAIProviderAuthConfig })
 }
 
 const REQUEST_TIMEOUT_MS = 15_000
+
+const MAX_MODELS_RESPONSE_BYTES = 5 * 1024 * 1024
 
 const TEXT_OUTPUT_MODALITY = 'text'
 

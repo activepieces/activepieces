@@ -22,7 +22,7 @@ export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProvid
     },
     async suggestModels(authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig): Promise<string[]> {
         const modelIds = await fetchOpenAiModelIds({
-            url: `${config.baseUrl.replace(/\/+$/, '')}/models`,
+            url: `${config.baseUrl.replace(/\/$/, '')}/models`,
             headers: { ...(config.defaultHeaders ?? {}), [config.apiKeyHeader]: authConfig.apiKey },
         })
         return modelIds.filter((modelId) => aiProviderUtils.isChatModelId({ modelId }))
