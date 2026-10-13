@@ -1,8 +1,9 @@
 import { apId } from '@activepieces/core-utils'
-import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, PlatformRole, PrincipalType, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, Platform, PlatformRole, PrincipalType, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { FastifyInstance } from 'fastify'
+import { FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { EntityManager } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { system } from '../../../../src/app/helper/system/system'
 import { systemJobsQueue } from '../../../../src/app/helper/system-jobs/system-job'
@@ -12,6 +13,24 @@ import { checkIfSolutionExistsInDb, createMockApiKey, createMockConnection, crea
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
+
+const hooks = vi.hoisted(() => ({
+    beforeTransaction: undefined as (() => Promise<void>) | undefined,
+}))
+
+vi.mock('../../../../src/app/core/db/transaction', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../../src/app/core/db/transaction')>()
+    return {
+        transaction: async <T>(operation: (entityManager: EntityManager) => Promise<T>): Promise<T> => {
+            const beforeTransaction = hooks.beforeTransaction
+            hooks.beforeTransaction = undefined
+            if (beforeTransaction !== undefined) {
+                await beforeTransaction()
+            }
+            return actual.transaction(operation)
+        },
+    }
+})
 
 async function waitForDeletionJobs(jobIds: string[], timeoutMs = 60000) {
     const start = Date.now()
@@ -48,6 +67,7 @@ afterAll(async () => {
 })
 
 afterEach(() => {
+    hooks.beforeTransaction = undefined
     delete process.env.AP_GOOGLE_CLIENT_ID
     delete process.env.AP_GOOGLE_CLIENT_SECRET
 })
@@ -55,6 +75,62 @@ afterEach(() => {
 function configureGoogleSignIn(): void {
     process.env.AP_GOOGLE_CLIENT_ID = 'test-google-client-id'
     process.env.AP_GOOGLE_CLIENT_SECRET = 'test-google-client-secret'
+}
+
+async function mockAndSaveSamlSetup(): ReturnType<typeof mockAndSaveBasicSetup> {
+    const ssoDomain = `${faker.string.alphanumeric(10).toLowerCase()}.example.com`
+    return mockAndSaveBasicSetup({
+        plan: {
+            ssoEnabled: true,
+        },
+        platform: {
+            emailAuthEnabled: true,
+            googleAuthEnabled: false,
+            ssoDomain,
+            ssoDomainVerification: {
+                status: SsoDomainVerificationStatus.VERIFIED,
+                record: {
+                    type: SsoDomainVerificationRecordType.TXT,
+                    name: `_activepieces-verify.${ssoDomain}`,
+                    value: 'activepieces-verify=test-token',
+                },
+                createdAt: new Date().toISOString(),
+            },
+            federatedAuthProviders: {
+                saml: {
+                    idpCertificate: faker.internet.password(),
+                    idpMetadata: faker.internet.password(),
+                },
+            },
+        },
+    })
+}
+
+async function ownerToken({ ownerId, platformId }: { ownerId: string, platformId: string }): Promise<string> {
+    return generateMockToken({
+        type: PrincipalType.USER,
+        id: ownerId,
+        platform: { id: platformId },
+    })
+}
+
+async function updatePlatform({ platformId, token, body }: { platformId: string, token: string, body: UpdatePlatformRequestBody }): Promise<LightMyRequestResponse | undefined> {
+    return app?.inject({
+        method: 'POST',
+        url: `/api/v1/platforms/${platformId}`,
+        headers: {
+            authorization: `Bearer ${token}`,
+        },
+        body,
+    })
+}
+
+async function readPlatform(platformId: string): Promise<Platform> {
+    return databaseConnection().getRepository<Platform>('platform')
+        .createQueryBuilder('platform')
+        .addSelect('platform.federatedAuthProviders')
+        .where({ id: platformId })
+        .getOneOrFail()
 }
 describe('Platform API', () => {
     describe('update platform endpoint', () => {
@@ -189,57 +265,53 @@ describe('Platform API', () => {
             expect(response?.json().params.message).toContain('no way to sign in')
         })
 
-        it('keeps one sign-in method when email and SAML are turned off at the same time', async () => {
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                plan: {
-                    ssoEnabled: true,
-                },
-                platform: {
-                    emailAuthEnabled: true,
-                    googleAuthEnabled: false,
-                    ssoDomain: 'race-test.example.com',
-                    ssoDomainVerification: {
-                        status: SsoDomainVerificationStatus.VERIFIED,
-                        record: {
-                            type: SsoDomainVerificationRecordType.TXT,
-                            name: '_activepieces-verify.race-test.example.com',
-                            value: 'activepieces-verify=test-token',
-                        },
-                        createdAt: new Date().toISOString(),
-                    },
-                    federatedAuthProviders: {
-                        saml: {
-                            idpCertificate: faker.internet.password(),
-                            idpMetadata: faker.internet.password(),
-                        },
-                    },
-                },
+        it('keeps a sign-in change made while a name update is in flight', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
+            const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+            hooks.beforeTransaction = async () => {
+                await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { emailAuthEnabled: false })
+            }
+
+            const response = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { name: 'Renamed' } })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const saved = await readPlatform(mockPlatform.id)
+            expect(saved.name).toBe('Renamed')
+            expect(saved.emailAuthEnabled).toBe(false)
+            expect(saved.federatedAuthProviders?.saml).toBeTruthy()
+        })
+
+        it('rejects turning off email after a concurrent change removed SAML', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
+            const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+            hooks.beforeTransaction = async () => {
+                const removeSaml = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { federatedAuthProviders: { saml: null } } })
+                expect(removeSaml?.statusCode).toBe(StatusCodes.OK)
+            }
+
+            const response = await updatePlatform({ platformId: mockPlatform.id, token: testToken, body: { emailAuthEnabled: false } })
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            const saved = await readPlatform(mockPlatform.id)
+            expect(saved.emailAuthEnabled).toBe(true)
+            expect(saved.federatedAuthProviders?.saml).toBeFalsy()
+        })
+
+        it('rejects new SAML settings when the domain stopped being verified while the request was in flight', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveSamlSetup()
+            const testToken = await ownerToken({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+            hooks.beforeTransaction = async () => {
+                await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { ssoDomainVerification: null })
+            }
+
+            const response = await updatePlatform({
+                platformId: mockPlatform.id,
+                token: testToken,
+                body: { federatedAuthProviders: { saml: { idpCertificate: 'new-cert', idpMetadata: 'new-metadata' } } },
             })
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-            const update = (body: UpdatePlatformRequestBody) => app?.inject({
-                method: 'POST',
-                url: `/api/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-                body,
-            })
-            const responses = await Promise.all([
-                update({ emailAuthEnabled: false }),
-                update({ federatedAuthProviders: { saml: null } }),
-            ])
-            const statusCodes = responses.map((response) => response?.statusCode).sort()
-            expect(statusCodes).toEqual([StatusCodes.OK, StatusCodes.CONFLICT].sort())
-            const saved = await databaseConnection().getRepository('platform')
-                .createQueryBuilder('platform')
-                .addSelect('platform.federatedAuthProviders')
-                .where({ id: mockPlatform.id })
-                .getOneOrFail()
-            expect(saved.emailAuthEnabled || saved.federatedAuthProviders?.saml).toBeTruthy()
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(response?.json().params.message).toContain('SSO domain must be verified')
         })
 
         it('updates the platform logo icons', async () => {
