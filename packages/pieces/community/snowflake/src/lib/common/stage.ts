@@ -1,7 +1,5 @@
 import { qualifiedName, sqlString } from './sql';
 
-const STAGE_PATH_CHARS = /^[A-Za-z0-9_\-./=+%~ ]*$/;
-
 export function stageReference({
   stage: rawStage,
   path: rawPath,
@@ -45,20 +43,6 @@ function findPathStart(stage: string): number {
   }
   return -1;
 }
-
-export const FILE_FORMAT_TYPES = [
-  'CSV',
-  'JSON',
-  'PARQUET',
-  'AVRO',
-  'ORC',
-  'XML',
-] as const;
-export const ON_ERROR_VALUES = [
-  'ABORT_STATEMENT',
-  'CONTINUE',
-  'SKIP_FILE',
-] as const;
 
 export function buildCopyInto({
   table,
@@ -122,3 +106,19 @@ export function buildCopyInto({
   sql += ` ON_ERROR = '${errorMode}'`;
   return sql;
 }
+
+export const FILE_FORMAT_TYPES = [
+  'CSV',
+  'JSON',
+  'PARQUET',
+  'AVRO',
+  'ORC',
+  'XML',
+] as const;
+export const ON_ERROR_VALUES = [
+  'ABORT_STATEMENT',
+  'CONTINUE',
+  'SKIP_FILE',
+] as const;
+
+const STAGE_PATH_CHARS = /^[A-Za-z0-9_\-./=+%~ ]*$/;

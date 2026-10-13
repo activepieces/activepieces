@@ -10,6 +10,10 @@ import {
   withConnectionOptions,
 } from './common/client';
 
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
+}
+
 export const snowflakeOAuth2Auth = PieceAuth.OAuth2({
   displayName: 'OAuth',
   description: `Connect via Snowflake OAuth using a custom security integration.
@@ -230,7 +234,3 @@ ALTER USER <your_username>
 });
 
 export const snowflakeAuth = [snowflakeOAuth2Auth, snowflakeCustomAuth];
-
-function optionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim() !== '' ? value : undefined;
-}
