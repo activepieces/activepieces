@@ -1,3 +1,4 @@
+import { tryCatch } from '@activepieces/core-utils';
 import { PlatformAppConnectionsListItem } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -15,6 +16,8 @@ export const DeleteConnectionsDialog = ({
   open,
   onOpenChange,
   onDeleted,
+  onFinished,
+  onPartialFailure,
 }: DeleteConnectionsDialogProps) => {
   const deleteConnections = useAdminAction<PlatformAppConnectionsListItem[]>({
     verb: 'delete',
@@ -57,7 +60,20 @@ export const DeleteConnectionsDialog = ({
       consequence={<DeleteConnectionWarning />}
       confirmLabel={t('Delete')}
       controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}
-      onConfirm={() => deleteConnections.mutateAsync(connections)}
+      onConfirm={async () => {
+        const { error } = await tryCatch(() =>
+          deleteConnections.mutateAsync(connections),
+        );
+        if (error) {
+          if (adminBulk.isPartialFailure(error)) {
+            onPartialFailure(
+              adminBulk.failedItems({ error, items: connections }),
+            );
+          }
+          throw error;
+        }
+        onFinished();
+      }}
     />
   );
 };
@@ -73,4 +89,6 @@ type DeleteConnectionsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleted: () => void;
+  onFinished: () => void;
+  onPartialFailure: (failed: PlatformAppConnectionsListItem[]) => void;
 };

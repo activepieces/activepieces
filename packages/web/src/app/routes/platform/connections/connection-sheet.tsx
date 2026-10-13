@@ -122,6 +122,7 @@ const ConnectionDetails = ({
                     connection.preSelectForNewProjects ?? false
                   }
                   userHasPermissionToEdit
+                  adminFeedback
                   onEdit={onChanged}
                 />
               )}
@@ -167,7 +168,6 @@ const ConnectionDetails = ({
                 : AdminControl.CONNECTIONS_CONNECTION_RECONNECT_OPEN,
             )}
             variant="outline"
-            disabled={!locked && connection.projects.length === 0}
             onClick={guarded(() => setReconnecting(true))}
           >
             {locked ? <LockedGem className="text-accent-11" /> : <Cable />}

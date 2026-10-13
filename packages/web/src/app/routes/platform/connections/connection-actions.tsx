@@ -6,9 +6,17 @@ import { t } from 'i18next';
 import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { AdminFetchErrorState, adminLayout } from '@/app/components/admin';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { SkeletonList } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -73,6 +81,7 @@ export const ConnectionRowActions = ({
         projectIds={connection.projectIds}
         preSelectForNewProjects={connection.preSelectForNewProjects ?? false}
         userHasPermissionToEdit
+        adminFeedback
         onEdit={onChanged}
       />
       <ReconnectButtonDialog
@@ -90,13 +99,29 @@ export const ReconnectConnectionDialog = ({
   onOpenChange,
   onReconnected,
 }: ReconnectConnectionDialogProps) => {
-  const { pieceModel, isLoading } = piecesHooks.usePiece({
+  const { pieceModel, isError, refetch } = piecesHooks.usePiece({
     name: connection.pieceName,
     version: connection.pieceVersion,
     enabled: open,
   });
-  if (!open || isLoading || !pieceModel) {
+  if (!open) {
     return null;
+  }
+  if (!pieceModel) {
+    return (
+      <Dialog open onOpenChange={onOpenChange}>
+        <DialogContent className={adminLayout.dialog.md}>
+          <DialogHeader>
+            <DialogTitle>{t('Reconnect')}</DialogTitle>
+          </DialogHeader>
+          {isError ? (
+            <AdminFetchErrorState entity={t('this piece')} onRetry={refetch} />
+          ) : (
+            <SkeletonList numberOfItems={3} className="h-10" />
+          )}
+        </DialogContent>
+      </Dialog>
+    );
   }
   return (
     <CreateOrEditConnectionDialog
