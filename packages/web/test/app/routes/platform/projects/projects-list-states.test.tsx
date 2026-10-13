@@ -4,6 +4,7 @@
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -36,6 +37,9 @@ vi.mock(
 );
 vi.mock('@/app/routes/platform/projects/columns', () => ({
   projectsTableColumns: () => [],
+}));
+vi.mock('@/app/components/enterprise-gate', () => ({
+  EnterpriseGate: ({ children }: { children: ReactNode }) => children,
 }));
 vi.mock('@/features/projects', () => ({
   CreateProjectButton: () => null,
