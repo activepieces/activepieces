@@ -5,7 +5,10 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 import { enterpriseMotion } from '../utils/enterprise-motion';
-import { enterpriseTrialFeatures } from '../utils/enterprise-trial-features';
+import {
+  enterpriseTrialFeatures,
+  LockedFeatureCopy,
+} from '../utils/enterprise-trial-features';
 
 import { EnterpriseTrialLockedActions } from './enterprise-trial-locked-actions';
 import { PlanBadge } from './plan-badge';
@@ -13,6 +16,7 @@ import { FeatureKey } from './request-trial';
 
 export function EnterpriseLockedCard({
   featureKey,
+  copyOverride,
   fallbackHeadline,
   fallbackDescription,
   fallbackBenefits,
@@ -21,7 +25,7 @@ export function EnterpriseLockedCard({
   surface,
   className,
 }: EnterpriseLockedCardProps) {
-  const copy = enterpriseTrialFeatures.lockedCopy(featureKey);
+  const copy = copyOverride ?? enterpriseTrialFeatures.lockedCopy(featureKey);
   const headline =
     copy?.headline ??
     fallbackHeadline ??
@@ -84,6 +88,7 @@ export function EnterpriseLockedCard({
 
 type EnterpriseLockedCardProps = {
   featureKey: FeatureKey;
+  copyOverride?: LockedFeatureCopy;
   fallbackHeadline?: string;
   fallbackDescription?: string;
   fallbackBenefits?: string[];

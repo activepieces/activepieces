@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   AppConnectionScope,
   AppConnectionStatus,
@@ -41,6 +42,7 @@ import { LockedGem, useEnterpriseGate } from '@/features/billing';
 import { piecesHooks } from '@/features/pieces';
 import { platformAppConnectionsQueries } from '@/features/platform-admin/hooks/platform-app-connections-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -86,6 +88,9 @@ export default function PlatformConnectionsPage() {
   const { pieces } = piecesHooks.usePlatformCatalog();
   const [viewingId, setViewingId] = useState<string | null>(null);
   const resetBulkSelection = useRef<(() => void) | null>(null);
+  const narrowBulkSelection = useRef<((rowIds: string[]) => void) | null>(null);
+  const { checkAccess } = useAuthorization();
+  const canWriteConnections = checkAccess(Permission.WRITE_APP_CONNECTION);
   const [deleting, setDeleting] = useState<PlatformAppConnectionsListItem[]>(
     [],
   );
@@ -248,15 +253,17 @@ export default function PlatformConnectionsPage() {
 
   const bulkActions: BulkAction<PlatformAppConnectionsListItem>[] = [
     {
-      render: (selected, resetSelection) =>
+      render: (selected, resetSelection, selectOnly) =>
         selected.length > 0 && (
           <Button
             {...adminControl(AdminControl.CONNECTIONS_CONNECTION_DELETE_OPEN)}
             variant="ghost"
             size="sm"
             className="text-danger-11 hover:text-danger-11"
+            disabled={!canWriteConnections}
             onClick={() => {
               resetBulkSelection.current = resetSelection;
+              narrowBulkSelection.current = selectOnly;
               setDeleting(selected);
             }}
           >
@@ -368,6 +375,9 @@ export default function PlatformConnectionsPage() {
           if (viewingDeleted) {
             setViewingId(null);
           }
+          narrowBulkSelection.current?.(
+            failed.map((connection) => connection.id),
+          );
           setDeleting(failed);
         }}
       />

@@ -12,6 +12,7 @@ import { StatusDot, StatusTone } from '@/app/components/admin';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import { DefaultTag } from '@/components/custom/global-connection-utils';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -64,37 +65,52 @@ export const WhereCell = ({
   const { projects } = connection;
   if (connection.scope !== AppConnectionScope.PLATFORM) {
     const project = projects[0];
-    if (!project) {
-      return <span className="text-gray-11">—</span>;
-    }
-    const name = getProjectName(project);
     return (
-      <Link
-        to={connectionCellsUtils.projectConnectionsPath(project.id)}
-        onClick={(event) => event.stopPropagation()}
-        className="block w-fit max-w-full min-w-0"
-      >
-        <TextWithTooltip tooltipMessage={name}>
-          <span className="block max-w-48 truncate text-gray-12 hover:underline">
-            {name}
-          </span>
-        </TextWithTooltip>
-      </Link>
+      <span className="flex min-w-0 items-center gap-2">
+        <Badge variant="outline" className="shrink-0">
+          {t('Project')}
+        </Badge>
+        {project ? (
+          <Link
+            to={connectionCellsUtils.projectConnectionsPath(project.id)}
+            onClick={(event) => event.stopPropagation()}
+            className="block w-fit max-w-full min-w-0"
+          >
+            <TextWithTooltip tooltipMessage={getProjectName(project)}>
+              <span className="block max-w-48 truncate text-accent-11 hover:underline">
+                {getProjectName(project)}
+              </span>
+            </TextWithTooltip>
+          </Link>
+        ) : (
+          <span className="text-gray-11">—</span>
+        )}
+      </span>
     );
   }
   return (
     <span className="flex min-w-0 items-center gap-2">
-      <ProjectNames names={projects.map((project) => getProjectName(project))}>
-        <span className="flex min-w-0 items-center gap-1.5 text-gray-11">
-          <Globe className="size-3.5 shrink-0" />
-          <span className="truncate">
-            {t(
-              '{count, plural, =0 {Global · no projects} =1 {Global · 1 project} other {Global · # projects}}',
-              { count: projects.length },
-            )}
+      <Badge variant="secondary" className="shrink-0">
+        <Globe />
+        {t('Global')}
+      </Badge>
+      {projects.length === 0 ? (
+        <span className="text-gray-11">{t('No projects')}</span>
+      ) : (
+        <ProjectNames
+          names={projects.map((project) => getProjectName(project))}
+        >
+          <span
+            tabIndex={0}
+            onClick={(event) => event.stopPropagation()}
+            className="cursor-default truncate rounded-sm text-gray-12 underline decoration-dashed underline-offset-2 focus-visible:outline-2 focus-visible:outline-accent-8"
+          >
+            {t('{count, plural, =1 {1 project} other {# projects}}', {
+              count: projects.length,
+            })}
           </span>
-        </span>
-      </ProjectNames>
+        </ProjectNames>
+      )}
       {connection.preSelectForNewProjects && <DefaultTag />}
     </span>
   );
