@@ -76,6 +76,10 @@ const AppConnectionsPage = lazyWithRetry(
     import('./connections').then((m) => ({ default: m.AppConnectionsPage })),
   'connections',
 );
+const SettingsPage = lazyWithRetry(
+  () => import('./settings').then((m) => ({ default: m.SettingsPage })),
+  'settings-page',
+);
 const VariablesPage = lazyWithRetry(
   () => import('./variables').then((m) => ({ default: m.VariablesPage })),
   'variables',
@@ -354,10 +358,12 @@ export const projectRoutes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.settings,
+    path: `${routesThatRequireProjectId.settings}/:section?/:sub?`,
     element: (
       <ProjectDashboardLayout>
-        <SettingsRerouter></SettingsRerouter>
+        <SuspenseWrapper>
+          <SettingsPage />
+        </SuspenseWrapper>
       </ProjectDashboardLayout>
     ),
   }),

@@ -76,6 +76,7 @@ export function ProjectDashboardLayout({
   ];
 
   const hideHeader =
+    true ||
     hasNoProject ||
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
     isPlatformPage;

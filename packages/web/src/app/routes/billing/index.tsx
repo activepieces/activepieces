@@ -153,7 +153,7 @@ export function BillingManagePage() {
                 {t('Cancel')}
               </Button>
             )}
-            <Button onClick={() => navigate('../checkout')}>
+            <Button onClick={() => navigate('checkout')}>
               {sub.tier === 'free' ? t('Upgrade') : t('Change plan')}
               <ArrowUpRight className="ml-1 h-4 w-4" />
             </Button>
