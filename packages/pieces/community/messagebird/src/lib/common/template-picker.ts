@@ -19,7 +19,11 @@ export async function templatePicker({
     description:
       "Choose an active template, or switch to a dynamic value to enter or map a template ID. To use a slug, choose Enter a template slug under Content. The list shows up to 300 templates.",
     required: true,
-    options: await loadOptions(),
+    options: await loadOptions().catch(() => ({
+      options: [],
+      placeholder:
+        "Templates could not be loaded. Switch to a dynamic value to enter or map a template ID.",
+    })),
   });
   async function loadOptions() {
     if (!auth)

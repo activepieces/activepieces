@@ -34,7 +34,10 @@ function readNode(
   const override =
     node.kind === "dictionary" && !forcedMode ? values[`${key}__json`] : raw;
   if (mode === "json") return empty(override) ? undefined : override;
-  if (node.kind === "dictionary" && values[`${key}__enabled`] === true)
+  if (
+    node.kind === "dictionary" &&
+    (mode === "fields" || values[`${key}__enabled`] === true)
+  )
     return empty(raw) ? undefined : raw;
   if (!mode && !structuredEmpty(raw)) return raw;
   if (
