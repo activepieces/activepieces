@@ -86,43 +86,45 @@ const CreatePieceSetForm = ({
         className="flex flex-col gap-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Name')}</FormLabel>
-              <FormControl>
-                <Input {...field} autoFocus placeholder={t('e.g. Sales')} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <fieldset disabled={isPending} className="contents">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Name')}</FormLabel>
+                <FormControl>
+                  <Input {...field} autoFocus placeholder={t('e.g. Sales')} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="key"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Embed key (optional)')}</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder={t('e.g. sales')} />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'The embed SDK passes this key to put a project on this {term}. Leave it empty to make one from the name.',
+                    pieceSetTerms.get(),
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {form.formState.errors.root?.serverError && (
+            <FormMessage>
+              {form.formState.errors.root.serverError.message}
+            </FormMessage>
           )}
-        />
-        <FormField
-          control={form.control}
-          name="key"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Embed key (optional)')}</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder={t('e.g. sales')} />
-              </FormControl>
-              <FormDescription>
-                {t(
-                  'The embed SDK passes this key to put a project on this {term}. Leave it empty to make one from the name.',
-                  pieceSetTerms.get(),
-                )}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {form.formState.errors.root?.serverError && (
-          <FormMessage>
-            {form.formState.errors.root.serverError.message}
-          </FormMessage>
-        )}
+        </fieldset>
         <DialogFooter>
           <Button
             type="button"

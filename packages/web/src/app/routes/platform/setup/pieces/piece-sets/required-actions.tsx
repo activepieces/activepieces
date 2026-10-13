@@ -351,6 +351,7 @@ function RequiredActionsEditor({
     <>
       <PolicySheet
         open
+        busy={saving}
         onRequestClose={requestClose}
         title={t('Publishing rule')}
         description={t(
