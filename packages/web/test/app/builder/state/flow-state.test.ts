@@ -13,7 +13,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { toast } from 'sonner';
 import { io } from 'socket.io-client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BuilderStore, createBuilderStore } from '@/app/builder/builder-hooks';
 
@@ -131,6 +131,40 @@ describe('flow state save path', () => {
   });
 });
 
+describe('flow state step edits', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.update.mockResolvedValue(draftFlow('Order lookup'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('saves a long typing burst in one step at least every 5 s', async () => {
+    const store = createStore(draftFlow('Order lookup'));
+
+    for (let elapsed = 0; elapsed < 12_000; elapsed += 200) {
+      store.getState().applyOperation(renameTrigger(`New order ${elapsed}`));
+      await vi.advanceTimersByTimeAsync(200);
+    }
+
+    expect(flowsApiMock.update.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('saves an edit 1 s after it when no keystroke follows', async () => {
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(renameTrigger('New order'));
+    await vi.advanceTimersByTimeAsync(999);
+    expect(sentOperations()).toEqual([]);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(sentOperations()).toEqual([renameTrigger('New order')]);
+  });
+});
+
 function serverError(message: string) {
   return new AxiosError(
     'Request failed with status code 400',
@@ -151,6 +185,19 @@ function changeName(displayName: string): FlowOperationRequest {
   return {
     type: FlowOperationType.CHANGE_NAME,
     request: { displayName },
+  };
+}
+
+function renameTrigger(displayName: string): FlowOperationRequest {
+  return {
+    type: FlowOperationType.UPDATE_TRIGGER,
+    request: {
+      name: 'trigger',
+      valid: false,
+      displayName,
+      type: FlowTriggerType.EMPTY,
+      settings: {},
+    },
   };
 }
 
