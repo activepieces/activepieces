@@ -6,14 +6,8 @@ function track({ model }: { model: LanguageModel }): CostTrackedModel {
     if (typeof model === 'string') {
         return { model, costUsd: () => null }
     }
-    const ledger = { calls: 0, reported: 0, totalUsd: 0 }
-    const record = (providerMetadata: SharedV4ProviderMetadata | undefined): void => {
-        const cost = activepiecesAiCost.openRouterCostOf(providerMetadata)
-        if (cost !== undefined) {
-            ledger.reported += 1
-            ledger.totalUsd += cost
-        }
-    }
+    const ledger = createLedger()
+    const record = (providerMetadata: SharedV4ProviderMetadata | undefined): void => ledger.record(activepiecesAiCost.openRouterCostOf(providerMetadata))
     const wrapped = wrapLanguageModel({
         model,
         middleware: {
@@ -25,14 +19,14 @@ function track({ model }: { model: LanguageModel }): CostTrackedModel {
                 },
             }),
             wrapGenerate: async ({ doGenerate }) => {
-                ledger.calls += 1
                 const result = await doGenerate()
+                ledger.countCall()
                 record(result.providerMetadata)
                 return result
             },
             wrapStream: async ({ doStream }) => {
-                ledger.calls += 1
                 const { stream, ...rest } = await doStream()
+                ledger.countCall()
                 return {
                     ...rest,
                     stream: stream.pipeThrough(new TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart>({
@@ -49,15 +43,40 @@ function track({ model }: { model: LanguageModel }): CostTrackedModel {
     })
     return {
         model: wrapped,
-        costUsd: () => ledger.reported === ledger.calls ? ledger.totalUsd : null,
+        costUsd: ledger.costUsd,
+    }
+}
+
+function createLedger(): CostLedger {
+    let calls = 0
+    let reported = 0
+    let totalUsd = 0
+    return {
+        countCall: () => {
+            calls += 1
+        },
+        record: (cost) => {
+            if (cost !== undefined) {
+                reported += 1
+                totalUsd += cost
+            }
+        },
+        costUsd: () => reported === calls ? totalUsd : null,
     }
 }
 
 export const costCapture = {
     track,
+    createLedger,
 }
 
 export type CostTrackedModel = {
     model: LanguageModel
+    costUsd: () => number | null
+}
+
+export type CostLedger = {
+    countCall: () => void
+    record: (costUsd: number | undefined) => void
     costUsd: () => number | null
 }
