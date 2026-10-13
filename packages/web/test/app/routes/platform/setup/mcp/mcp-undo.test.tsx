@@ -3,7 +3,13 @@
  */
 /* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-enabled-disabled, jest-dom/prefer-to-have-attribute -- @testing-library/jest-dom is not a dependency of packages/web */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,6 +22,7 @@ const state = vi.hoisted(() => ({
   message: undefined as string | undefined,
   nextTools: ['flows_write', 'flows_delete'],
   initialTools: [] as string[],
+  get: undefined as (() => Promise<{ disabledTools: string[] }>) | undefined,
 }));
 
 vi.mock('i18next', () => ({
@@ -52,7 +59,9 @@ vi.mock('@/lib/mutation-feedback', async (importOriginal) => {
 });
 vi.mock('@/app/routes/platform/setup/mcp/platform-mcp-api', () => ({
   platformMcpApi: {
-    get: () => Promise.resolve({ disabledTools: state.serverTools }),
+    get: () =>
+      state.get?.() ?? Promise.resolve({ disabledTools: state.serverTools }),
+    update: (...args: unknown[]) => state.updateAsync(...args),
   },
 }));
 vi.mock('@/app/routes/platform/setup/mcp/platform-mcp-hooks', () => ({
@@ -66,7 +75,6 @@ vi.mock('@/app/routes/platform/setup/mcp/platform-mcp-hooks', () => ({
     useUpdatePlatformMcpTools: () => ({
       mutate: (_: unknown, options: { onSuccess: () => void }) =>
         options.onSuccess(),
-      mutateAsync: state.updateAsync,
     }),
   },
 }));
@@ -74,8 +82,10 @@ vi.mock(
   '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tier-list',
   () => ({
     McpToolTierList: ({
+      locked,
       onUpdateDisabledTools,
     }: {
+      locked?: boolean;
       onUpdateDisabledTools: (change: {
         tools: string[];
         onSettled: () => void;
@@ -83,6 +93,7 @@ vi.mock(
     }) => (
       <button
         type="button"
+        disabled={locked}
         onClick={() =>
           onUpdateDisabledTools({
             tools: state.nextTools,
@@ -105,6 +116,7 @@ beforeEach(() => {
   state.message = undefined;
   state.nextTools = ['flows_write', 'flows_delete'];
   state.initialTools = [];
+  state.get = undefined;
 });
 
 function renderAccessPage() {
@@ -161,6 +173,44 @@ describe('Platform MCP undo', () => {
     await first;
 
     expect(state.updateAsync).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Platform MCP undo locking', () => {
+  it('locks the tool switches while Undo reads and saves', async () => {
+    let answer: (server: { disabledTools: string[] }) => void = () => undefined;
+    renderAccessPage();
+    await waitFor(() => expect(state.onUndo).toBeDefined());
+    state.get = () =>
+      new Promise((resolve) => {
+        answer = resolve;
+      });
+
+    let undone: Promise<unknown> | undefined;
+    act(() => {
+      undone = state.onUndo?.();
+    });
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole('button', { name: 'Turn off flow writes' })
+          .hasAttribute('disabled'),
+      ).toBe(true),
+    );
+    expect(state.updateAsync).not.toHaveBeenCalled();
+
+    await act(async () => {
+      answer({ disabledTools: ['flows_write', 'flows_delete'] });
+      await undone;
+    });
+    expect(state.updateAsync).toHaveBeenCalledWith({ disabledTools: [] });
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole('button', { name: 'Turn off flow writes' })
+          .hasAttribute('disabled'),
+      ).toBe(false),
+    );
   });
 });
 

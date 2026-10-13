@@ -1,4 +1,5 @@
 import {
+  MutationKey,
   QueryKey,
   useMutation,
   useQueryClient,
@@ -19,6 +20,7 @@ export function useAdminAction<TVars = void, TData = unknown>({
   feedback = 'toast',
   handleError,
   messages,
+  mutationKey,
 }: AdminActionConfig<TVars, TData>): UseMutationResult<TData, Error, TVars> {
   const queryClient = useQueryClient();
   const nameOf = (vars: TVars) =>
@@ -31,6 +33,7 @@ export function useAdminAction<TVars = void, TData = unknown>({
     );
 
   return useMutation<TData, Error, TVars>({
+    mutationKey,
     mutationFn: run,
     onSuccess: (data, vars) => {
       refresh().catch(() => undefined);
@@ -276,4 +279,5 @@ export type AdminActionConfig<TVars, TData> = {
   feedback?: 'toast' | 'inline' | 'none';
   handleError?: (error: Error, vars: TVars) => boolean;
   messages?: { done?: string; failed?: string };
+  mutationKey?: MutationKey;
 };

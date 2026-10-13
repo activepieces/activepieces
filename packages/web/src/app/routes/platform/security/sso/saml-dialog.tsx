@@ -7,7 +7,7 @@ import {
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useIsMutating, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -56,9 +56,18 @@ export const ConfigureSamlDialog = ({
   refetch,
 }: ConfigureSamlDialogProps) => {
   const [open, setOpen] = useState(false);
+  const saving = useIsMutating({ mutationKey: SAML_SAVES }) > 0;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && saving) {
+          return;
+        }
+        setOpen(next);
+      }}
+    >
       <DialogTrigger asChild>
         <Button
           {...adminControl(AdminControl.SSO_SAML_OPEN)}
@@ -69,7 +78,10 @@ export const ConfigureSamlDialog = ({
           {connected ? t('Edit') : t('Enable')}
         </Button>
       </DialogTrigger>
-      <DialogContent className={adminLayout.dialog.md}>
+      <DialogContent
+        className={adminLayout.dialog.md}
+        showCloseButton={!saving}
+      >
         {open && (
           <SamlWizard
             key={open ? 'open' : 'closed'}
@@ -239,6 +251,7 @@ const DomainStep = ({
       await refetch();
     },
     feedback: 'inline',
+    mutationKey: SAML_SAVES,
     handleError: (error) => {
       if (!showUpdateWarning) {
         form.setError('root.serverError', {
@@ -401,6 +414,7 @@ const SamlStep = ({
       await refetch();
     },
     feedback: 'inline',
+    mutationKey: SAML_SAVES,
     onSuccess: onClose,
   });
   const saveSettings = (data: Saml2FormValues) =>
@@ -676,6 +690,8 @@ const Saml2FormValues = z.object({
   idpCertificate: z.string().min(1),
 });
 type Saml2FormValues = z.infer<typeof Saml2FormValues>;
+
+const SAML_SAVES = ['sso', 'saml-dialog', 'save'];
 
 type WizardStep = 'domain' | 'saml';
 
