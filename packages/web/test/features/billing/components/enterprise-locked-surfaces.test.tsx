@@ -165,10 +165,10 @@ describe('limit reached on the plan that includes the feature', () => {
 });
 
 describe('locked card actions', () => {
-  it('offers the Enterprise plan trial first and Explore plans second', () => {
+  it('ends with the Enterprise plan trial as the primary action', () => {
     renderCard('SSO');
     const buttons = screen.getAllByRole('button').map((b) => b.textContent);
-    expect(buttons).toEqual(['Start free trial', 'Explore plans']);
+    expect(buttons).toEqual(['Explore plans', 'Start free trial']);
     expect(
       screen.getByText('7-day Enterprise plan trial. No credit card.'),
     ).toBeDefined();
@@ -179,7 +179,7 @@ describe('locked card actions', () => {
     const controls = screen
       .getAllByRole('button')
       .map((button) => button.dataset.apControl);
-    expect(controls).toEqual(['trial.start.open', 'trial.plans.open']);
+    expect(controls).toEqual(['trial.plans.open', 'trial.start.open']);
   });
 
   it('reports Explore plans with the tier the lock names', () => {
@@ -192,12 +192,12 @@ describe('locked card actions', () => {
     });
   });
 
-  it('leads with Explore plans on Cloud when no trial is offered for a Team feature', () => {
+  it('makes Explore plans the primary action on Cloud when no trial is offered for a Team feature', () => {
     access = 'trial_used';
     renderCard('SSO');
-    expect(screen.getAllByRole('button')[0]).toBe(
-      screen.getByRole('button', { name: 'Explore plans' }),
-    );
+    const plans = screen.getByRole('button', { name: 'Explore plans' });
+    expect(plans.dataset.variant ?? plans.className).not.toContain('outline');
+    expect(screen.getByText('Talk to sales')).toBeDefined();
   });
 
   it('only offers Talk to sales on Community', () => {

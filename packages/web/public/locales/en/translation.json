@@ -3528,5 +3528,7 @@
   "Choosing which pieces connected clients can reach is locked.": "Choosing which pieces connected clients can reach is locked.",
   "Choosing which pieces this project can use is locked.": "Choosing which pieces this project can use is locked.",
   "Hiding pieces from your users is locked.": "Hiding pieces from your users is locked.",
-  "Your automations run on shared workers. Dedicated workers start every flow faster.": "Your automations run on shared workers. Dedicated workers start every flow faster."
+  "Your automations run on shared workers. Dedicated workers start every flow faster.": "Your automations run on shared workers. Dedicated workers start every flow faster.",
+  "Today · {date}": "Today · {date}",
+  "Your Enterprise plan trial started. Everything is unlocked for {days} days.": "Your Enterprise plan trial started. Everything is unlocked for {days} days."
 }
