@@ -75,6 +75,7 @@ const BuilderPage = () => {
     };
   }, [removeAllStepTestsListeners]);
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
+  flowCanvasHooks.useFlushPendingEditsOnLeave();
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
