@@ -10,11 +10,18 @@ import { describe, expect, it, vi } from 'vitest';
 type WithChildren = { children?: React.ReactNode };
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
-vi.mock('@/components/ui/dropdown-menu', () => ({
-  DropdownMenu: ({ children }: WithChildren) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children }: WithChildren) => <div>{children}</div>,
-  DropdownMenuContent: ({ children }: WithChildren) => <div>{children}</div>,
-  DropdownMenuItem: ({ children }: WithChildren) => (
+vi.mock('@/components/ui/popover', () => ({
+  Popover: ({ children }: WithChildren) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: WithChildren) => <div>{children}</div>,
+  PopoverContent: ({ children }: WithChildren) => <div>{children}</div>,
+}));
+vi.mock('@/components/ui/command', () => ({
+  Command: ({ children }: WithChildren) => <div>{children}</div>,
+  CommandInput: () => null,
+  CommandList: ({ children }: WithChildren) => <div>{children}</div>,
+  CommandEmpty: () => null,
+  CommandGroup: ({ children }: WithChildren) => <div>{children}</div>,
+  CommandItem: ({ children }: WithChildren) => (
     <div data-project-item="true">{children}</div>
   ),
 }));
@@ -42,7 +49,9 @@ declare global {
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
-function offeredProjects(allowedProjectIds: string[] | null): Array<string | null> {
+function offeredProjects(
+  allowedProjectIds: string[] | null,
+): Array<string | null> {
   const container = document.createElement('div');
   const root = createRoot(container);
   act(() => {
