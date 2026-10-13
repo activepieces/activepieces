@@ -25,6 +25,7 @@ import {
   pieceSelectorContent,
   pieceSelectorCustomization,
   piecesHooks,
+  stepsHooks,
   stepUtils,
 } from '@/features/pieces';
 import {
@@ -62,13 +63,22 @@ export function PieceSelectorPreview({
   const selected =
     resolved.find((tab) => tab.key === selectedKey) ?? resolved[0] ?? null;
   const searching = searchQuery.trim() !== '';
+  const serverQuery = searching ? debouncedQuery.trim() : '';
+  const { metadata: searchMatches } = stepsHooks.useAllStepsMetadata({
+    searchQuery: serverQuery,
+    type: 'action',
+    enabled: serverQuery !== '',
+  });
   const selectedType = selected?.type ?? null;
   const selectedCustomTabId = selected?.customTabId ?? null;
   const categories = useMemo(
     () =>
       groupForPreview({
-        steps,
-        query: searching ? debouncedQuery : '',
+        steps: previewSteps({
+          steps,
+          query: serverQuery,
+          searchMatches: serverQuery === '' ? undefined : searchMatches,
+        }),
         pins,
         tabs,
         selectedTab: searching ? PieceSelectorTabType.NONE : selectedType,
@@ -76,7 +86,8 @@ export function PieceSelectorPreview({
       }),
     [
       steps,
-      debouncedQuery,
+      serverQuery,
+      searchMatches,
       pins,
       tabs,
       searching,
@@ -531,14 +542,12 @@ function toPreviewSteps({
 
 function groupForPreview({
   steps,
-  query,
   pins,
   tabs,
   selectedTab,
   selectedCustomTabId,
 }: {
   steps: StepMetadataWithSuggestions[];
-  query: string;
   pins: string[];
   tabs: PieceSelectorTabConfig[];
   selectedTab: PieceSelectorTabType | null;
@@ -549,7 +558,7 @@ function groupForPreview({
   }
   return pieceSelectorContent
     .group({
-      metadata: filterBySearch({ steps, query }),
+      metadata: steps,
       platform: { pinnedPieces: pins, pieceSelectorConfig: { tabs } },
       selectedTab,
       selectedCustomTabId,
@@ -557,6 +566,21 @@ function groupForPreview({
       environment: null,
     })
     .filter((category) => category.metadata.length > 0);
+}
+
+function previewSteps({
+  steps,
+  query,
+  searchMatches,
+}: {
+  steps: StepMetadataWithSuggestions[];
+  query: string;
+  searchMatches: StepMetadataWithSuggestions[] | undefined;
+}): StepMetadataWithSuggestions[] {
+  if (query === '') {
+    return steps;
+  }
+  return searchMatches ?? filterBySearch({ steps, query });
 }
 
 function filterBySearch({
@@ -626,6 +650,7 @@ export const pieceSelectorPreviewUtils = {
   tabKey,
   toPreviewSteps,
   groupForPreview,
+  previewSteps,
 };
 
 type PreviewRow =
