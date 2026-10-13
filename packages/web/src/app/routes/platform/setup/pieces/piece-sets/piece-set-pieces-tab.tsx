@@ -45,6 +45,7 @@ import {
 } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { FrozenRows, listUtils } from '@/lib/list-utils';
 import { cn } from '@/lib/utils';
 
 import {
@@ -100,16 +101,35 @@ export const PieceSetPiecesTab = ({
       blocked: values.filter((access) => access === 'blocked').length,
     };
   }, [pieces, accessByName]);
-  const visiblePieces = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return allPieces.filter(
-      (piece) =>
-        (segment === 'all' || accessByName.get(piece.name) === segment) &&
-        (query === '' ||
-          piece.displayName.toLowerCase().includes(query) ||
-          piece.name.toLowerCase().includes(query)),
-    );
-  }, [allPieces, accessByName, search, segment]);
+  const [frozenRows, setFrozenRows] = useState<FrozenRows<
+    PieceMetadataModelSummary[]
+  > | null>(null);
+  const rows = listUtils.freezeRows({
+    previous: frozenRows,
+    filterKey: `${segment}|${search.trim().toLowerCase()}`,
+    source: allPieces,
+    computeNames: () =>
+      filterPieceNames({
+        pieces: allPieces,
+        accessByName,
+        segment,
+        search,
+      }),
+  });
+  if (rows !== frozenRows) {
+    setFrozenRows(rows);
+  }
+  const piecesByName = useMemo(
+    () => new Map(allPieces.map((piece) => [piece.name, piece])),
+    [allPieces],
+  );
+  const visiblePieces = useMemo(
+    () =>
+      rows.names
+        .map((name) => piecesByName.get(name))
+        .filter((piece) => piece !== undefined),
+    [rows, piecesByName],
+  );
 
   const selectedPieces = visiblePieces.filter((piece) =>
     selected.has(piece.name),
@@ -554,6 +574,29 @@ function PieceRowsSkeleton() {
       ))}
     </div>
   );
+}
+
+function filterPieceNames({
+  pieces,
+  accessByName,
+  segment,
+  search,
+}: {
+  pieces: PieceMetadataModelSummary[];
+  accessByName: Map<string, PieceAccess>;
+  segment: Segment;
+  search: string;
+}): string[] {
+  const query = search.trim().toLowerCase();
+  return pieces
+    .filter(
+      (piece) =>
+        (segment === 'all' || accessByName.get(piece.name) === segment) &&
+        (query === '' ||
+          piece.displayName.toLowerCase().includes(query) ||
+          piece.name.toLowerCase().includes(query)),
+    )
+    .map((piece) => piece.name);
 }
 
 function visibilityChange({

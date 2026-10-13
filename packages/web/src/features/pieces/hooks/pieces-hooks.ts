@@ -123,7 +123,13 @@ export const piecesHooks = {
   }: UsePieceProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
-      queryKey: ['piece', name, version, i18n.language, projectId, audience],
+      queryKey: pieceQueryKey({
+        name,
+        version,
+        language: i18n.language,
+        projectId,
+        audience,
+      }),
       queryFn: () =>
         piecesApi.get({
           name,
@@ -683,7 +689,7 @@ function latestPieceQueryOptions({
   language: string;
 }) {
   return {
-    queryKey: ['piece', name, undefined, language],
+    queryKey: pieceQueryKey({ name, version: undefined, language }),
     queryFn: () =>
       piecesApi.get({
         name,
@@ -694,6 +700,25 @@ function latestPieceQueryOptions({
       }),
     staleTime: Infinity,
   };
+}
+
+function pieceQueryKey({
+  name,
+  version,
+  language,
+  projectId,
+  audience,
+}: {
+  name: string;
+  version: string | undefined;
+  language: string;
+  projectId?: string;
+  audience?: PieceAudienceFilter;
+}): QueryKey {
+  const base = ['piece', name, version, language];
+  return projectId === undefined && audience === undefined
+    ? base
+    : [...base, projectId, audience];
 }
 
 function piecesByNameFromResults(
@@ -809,4 +834,7 @@ const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
 const PIECE_PROJECT_ID_KEY_INDEX = 4;
 
-export const pieceQueryOptions = { latest: latestPieceQueryOptions };
+export const pieceQueryOptions = {
+  latest: latestPieceQueryOptions,
+  key: pieceQueryKey,
+};

@@ -246,30 +246,10 @@ function PieceActionsAndTriggersSheetContent({
         title={t('Actions and triggers for {name}', {
           name: pieceDisplayName,
         })}
-        description={
-          pieceModel
-            ? buildersSeeSummary({
-                pieceDisplayName,
-                everything: buildersSeeEverything,
-                checkedActions: checkedActionCount,
-                totalActions: regularActions.length,
-                checkedAiTools: checkedAiToolCount,
-                totalAiTools: aiTools.length,
-                checkedTriggers: checkedTriggerCount,
-                totalTriggers: allTriggers.length,
-              })
-            : undefined
-        }
+        description={t('Check what builders, MCP and agents can use.')}
         toolbar={
           totalCount > 0 ? (
             <>
-              {!allChecked && (
-                <p className="text-xs text-gray-11">
-                  {t(
-                    'Hidden from the builder. Flows already using it keep running.',
-                  )}
-                </p>
-              )}
               <SearchInput
                 placeholder={t('Search actions and triggers')}
                 value={search}
@@ -301,14 +281,61 @@ function PieceActionsAndTriggersSheetContent({
           ) : undefined
         }
         footer={
-          <SaveBar
-            dirty={isDirty}
-            saving={saving}
-            disabled={!pieceModel}
-            onSave={handleSave}
-            onDiscard={discard}
-            saveControl={AdminControl.PIECE_SETS_COMPONENTS_SUBMIT}
-          />
+          <div className="flex w-full flex-col">
+            <div
+              aria-live="polite"
+              className="flex h-32 shrink-0 flex-col gap-1 overflow-y-auto border-t px-6 py-3"
+            >
+              {pieceModel && totalCount > 0 && (
+                <>
+                  <p className="text-sm text-gray-12">
+                    {buildersSeeSummary({
+                      pieceDisplayName,
+                      everything: buildersSeeEverything,
+                      checkedActions: checkedActionCount,
+                      totalActions: regularActions.length,
+                      checkedAiTools: checkedAiToolCount,
+                      totalAiTools: aiTools.length,
+                      checkedTriggers: checkedTriggerCount,
+                      totalTriggers: allTriggers.length,
+                    })}
+                  </p>
+                  {noneChecked ? (
+                    <p className="text-xs text-gray-11">
+                      {t(
+                        "Builders won't see this piece's actions or triggers.",
+                      )}{' '}
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto p-0 text-xs"
+                        disabled={saving}
+                        onClick={hideWholePiece}
+                      >
+                        {t('Hide the whole piece instead')}
+                      </Button>
+                    </p>
+                  ) : (
+                    !allChecked && (
+                      <p className="text-xs text-gray-11">
+                        {t(
+                          'Hidden from the builder. Flows already using it keep running.',
+                        )}
+                      </p>
+                    )
+                  )}
+                </>
+              )}
+            </div>
+            <SaveBar
+              dirty={isDirty}
+              saving={saving}
+              disabled={!pieceModel}
+              onSave={handleSave}
+              onDiscard={discard}
+              saveControl={AdminControl.PIECE_SETS_COMPONENTS_SUBMIT}
+            />
+          </div>
         }
       >
         {isLoading ? (
@@ -324,20 +351,6 @@ function PieceActionsAndTriggersSheetContent({
           </p>
         ) : (
           <>
-            {noneChecked && (
-              <p className="text-sm text-gray-11">
-                {t("Builders won't see this piece's actions or triggers.")}{' '}
-                <Button
-                  type="button"
-                  variant="link"
-                  className="h-auto p-0"
-                  disabled={saving}
-                  onClick={hideWholePiece}
-                >
-                  {t('Hide the whole piece instead')}
-                </Button>
-              </p>
-            )}
             {regularActions.length > 0 && (
               <ComponentGroup
                 label={t('Actions')}

@@ -3685,5 +3685,8 @@
   "MCP and agents get {checked} of {total} AI tools.": "MCP and agents get {checked} of {total} AI tools.",
   "Only MCP and agents can use these. They never appear in the builder.": "Only MCP and agents can use these. They never appear in the builder.",
   "Already in {name}": "Already in {name}",
-  "To move it out, assign it from another {term}.": "To move it out, assign it from another {term}."
+  "To move it out, assign it from another {term}.": "To move it out, assign it from another {term}.",
+  "Check what builders, MCP and agents can use.": "Check what builders, MCP and agents can use.",
+  "Search actions": "Search actions",
+  "· {count, plural, =1 {1 action} other {# actions}}": "· {count, plural, =1 {1 action} other {# actions}}"
 }
