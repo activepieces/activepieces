@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, ErrorCode } from '@activepieces/core-utils'
+import { ApId } from '@activepieces/core-utils'
 import { CreatePlatformModelTierRequest, DeletePlatformModelTierRequest, PlatformModelTier, PlatformModelTierSummary, PrincipalType, ReorderPlatformModelTiersRequest, UpdatePlatformModelTierRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { platformService } from '../platform/platform.service'
+import { aiProviderService } from './ai-provider-service'
 import { platformModelTierService } from './platform-model-tier-service'
 
 export const platformModelTierController: FastifyPluginAsyncZod = async (app) => {
@@ -29,16 +29,6 @@ export const platformModelTierController: FastifyPluginAsyncZod = async (app) =>
         await platformModelTierService.delete({ platformId: request.principal.platform.id, id: request.params.id, replacedBy: request.query.replacedBy })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
-}
-
-async function requireAiProvidersPlan(request: FastifyRequest): Promise<void> {
-    const platform = await platformService(request.log).getOneWithPlanOrThrow(request.principal.platform.id)
-    if (!platform.plan.aiProvidersEnabled) {
-        throw new ActivepiecesError({
-            code: ErrorCode.FEATURE_DISABLED,
-            params: { message: 'AI providers are not included in your plan' },
-        })
-    }
 }
 
 const TierIdParams = z.object({
@@ -74,7 +64,7 @@ const CreatePlatformModelTier = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
-    preHandler: requireAiProvidersPlan,
+    preHandler: (request: FastifyRequest): Promise<void> => aiProviderService(request.log).assertAiProvidersPlan(request.principal.platform.id),
     schema: {
         body: CreatePlatformModelTierRequest,
         response: {
@@ -87,7 +77,7 @@ const ReorderPlatformModelTiers = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
-    preHandler: requireAiProvidersPlan,
+    preHandler: (request: FastifyRequest): Promise<void> => aiProviderService(request.log).assertAiProvidersPlan(request.principal.platform.id),
     schema: {
         body: ReorderPlatformModelTiersRequest,
         response: {
@@ -100,7 +90,7 @@ const UpdatePlatformModelTier = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
-    preHandler: requireAiProvidersPlan,
+    preHandler: (request: FastifyRequest): Promise<void> => aiProviderService(request.log).assertAiProvidersPlan(request.principal.platform.id),
     schema: {
         params: TierIdParams,
         body: UpdatePlatformModelTierRequest,

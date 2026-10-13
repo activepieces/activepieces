@@ -287,7 +287,7 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
         '--no-lock',
         '--no-remote',
         resolveNodeModules ? '--node-modules-dir=manual' : '--no-npm',
-        `--v8-flags=--max-old-space-size=${memoryLimitMb}`,
+        ...(memoryLimitMb === null ? [] : [`--v8-flags=--max-old-space-size=${memoryLimitMb}`]),
         ...toPermissionFlags({ permissions, tmpDir: os.tmpdir() }),
         ...permissions.includes(DenoPermission.ALL) ? [] : allowReadPaths.map((path) => `--allow-read=${path}`),
         entryArg,
@@ -495,7 +495,7 @@ type DenoProgramParams = {
     body: string
     permissions: DenoPermission[]
     cwd?: string
-    memoryLimitMb?: number
+    memoryLimitMb?: number | null
     allowReadPaths?: string[]
     resolveNodeModules?: boolean
     env?: Record<string, string>
@@ -545,7 +545,7 @@ type SpawnDenoParams = {
     entry: string | { body: string }
     permissions: DenoPermission[]
     cwd?: string
-    memoryLimitMb: number
+    memoryLimitMb: number | null
     allowReadPaths: string[]
     resolveNodeModules: boolean
     env: Record<string, string>

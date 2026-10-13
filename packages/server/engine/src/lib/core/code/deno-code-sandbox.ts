@@ -9,7 +9,7 @@ import { CodeSandbox } from './code-sandbox-common'
 
 export { DenoPermission } from '@activepieces/core-utils'
 
-export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
+export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCodeSandboxParams): CodeSandbox {
     const sandbox: CodeSandbox = {
         async runCodeModule({ codeFilePath, inputs }) {
             // Deno compares permission paths after resolving symlinks (e.g. macOS
@@ -61,6 +61,7 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
 `,
                 permissions,
                 cwd: stepDir,
+                memoryLimitMb: codeStepMemoryLimitMb,
                 allowReadPaths: [stepDir],
                 resolveNodeModules: true,
                 env: buildPropagatedEnv(permissions),
@@ -187,4 +188,9 @@ type SentGlobal = {
 type LiveScriptSession = {
     session: DenoSession
     sentGlobals: Map<string, SentGlobal>
+}
+
+type DenoCodeSandboxParams = {
+    permissions: DenoPermission[]
+    codeStepMemoryLimitMb: number | null
 }

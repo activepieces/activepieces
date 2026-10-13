@@ -28,7 +28,7 @@ import {
   billingMutations,
   billingUtils,
   useCancelSubscriptionGuard,
-  useManagePlanDialogStore,
+  billingDialogHooks,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -100,7 +100,7 @@ function BillingRefreshButton() {
 }
 
 function PlanTab({ platform, info }: PlanTabProps) {
-  const { openDialog } = useManagePlanDialogStore();
+  const { openDialog } = billingDialogHooks.useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
   const { mutate: redirectToPortalSession, isPending: isOpeningPortal } =
