@@ -1811,6 +1811,8 @@
   "Bring your own API key to connect any of these.": "Bring your own API key to connect any of these.",
   "Your plan does not include Bring your own AI keys": "Your plan does not include Bring your own AI keys",
   "You can still delete the keys below. Upgrade your plan to add new keys or change existing ones.": "You can still delete the keys below. Upgrade your plan to add new keys or change existing ones.",
+  "configurationsCount": "{count, plural, =1 {1 key} other {# keys}}",
+  "Keys": "Keys",
   "modelsCount": "{count, plural, =1 {1 model} other {# models}}",
   "exceptProjectsCount": "{count, plural, =1 {All except 1 project} other {All except # projects}}",
   "projectsCount": "{count, plural, =1 {1 project} other {# projects}}",
@@ -3225,5 +3227,6 @@
   "Used by {tiers}": "Used by {tiers}",
   "Not offered anymore": "Not offered anymore",
   "New models from {provider} are added automatically.": "New models from {provider} are added automatically.",
-  "{on} of {total} on": "{on} of {total} on"
+  "{on} of {total} on": "{on} of {total} on",
+  "Image generation": "Image generation"
 }

@@ -27,7 +27,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Toggle } from '@/components/ui/toggle';
 import { modelMeta } from '@/features/agents/ai-model/model-meta';
 import { cn } from '@/lib/utils';
 
@@ -127,34 +126,26 @@ export function KeyModelList({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {CAPABILITY_CHIPS.map(({ capability, icon: Icon }) => (
-            <Toggle
+        <div className="flex flex-wrap items-center gap-2">
+          {CAPABILITY_CHIPS.map(({ capability, icon }) => (
+            <FilterCheck
               key={capability}
-              variant="outline"
-              size="sm"
-              className="h-7 rounded-full px-2.5 text-xs"
-              pressed={capabilities.includes(capability)}
-              onPressedChange={() => toggleCapability(capability)}
-            >
-              <Icon className="size-3" />
-              {capabilityLabel(capability)}
-            </Toggle>
+              icon={icon}
+              label={capabilityLabel(capability)}
+              checked={capabilities.includes(capability)}
+              onCheckedChange={() => toggleCapability(capability)}
+            />
           ))}
           {!allModels && (
-            <Toggle
-              variant="outline"
-              size="sm"
-              className="h-7 rounded-full px-2.5 text-xs"
-              pressed={selectedOnly}
-              onPressedChange={(pressed) => {
-                setSelectedOnly(pressed);
+            <FilterCheck
+              icon={ListChecks}
+              label={t('Selected only')}
+              checked={selectedOnly}
+              onCheckedChange={(checked) => {
+                setSelectedOnly(checked);
                 resetPaging();
               }}
-            >
-              <ListChecks className="size-3" />
-              {t('Selected only')}
-            </Toggle>
+            />
           )}
         </div>
       </div>
@@ -276,6 +267,34 @@ export function KeyModelList({
   );
 }
 
+function FilterCheck({
+  icon: Icon,
+  label,
+  checked,
+  onCheckedChange,
+}: {
+  icon: LucideIcon;
+  label: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <label
+      className={cn(
+        'inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-lg border border-gray-6 bg-gray-1 px-2.5 text-xs font-medium text-gray-12 transition-colors hover:bg-gray-2',
+        checked && 'border-gray-8 bg-gray-3 hover:bg-gray-3',
+      )}
+    >
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(value) => onCheckedChange(value === true)}
+      />
+      <Icon className="size-3.5 text-gray-11" />
+      {label}
+    </label>
+  );
+}
+
 function ModelBadges({
   model,
   stale,
@@ -337,7 +356,7 @@ function capabilityLabel(capability: ModelCapabilityFilter): string {
     case 'vision':
       return t('Vision');
     case 'image':
-      return t('Image');
+      return t('Image generation');
   }
 }
 

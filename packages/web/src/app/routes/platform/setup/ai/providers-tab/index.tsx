@@ -38,7 +38,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import { modelMeta } from '@/features/agents/ai-model/model-meta';
 import {
   PLATFORM_FEATURES,
   TIER_LABELS,
@@ -183,7 +182,6 @@ export function ProvidersTab() {
   };
 
   const connectedProviders = [...new Set(configs.map((c) => c.provider))];
-  const sortedConfigs = [...configs].sort(compareKeys);
   const available = SUPPORTED_AI_PROVIDERS.filter(
     ({ provider }) => !connectedProviders.includes(provider),
   );
@@ -195,13 +193,16 @@ export function ProvidersTab() {
   const activeConfig = configs.find(
     (config) => config.id === searchParams.get('config'),
   );
-  if (activeConfig && !locked) {
+  const activeInfo = activeConfig
+    ? providerInfoOf({ provider: activeConfig.provider })
+    : undefined;
+  if (activeConfig && activeInfo && !locked) {
     return (
       <>
         <ConfigDetail
           key={`${activeConfig.id}:${credentialsVersion}`}
           config={activeConfig}
-          info={modelMeta.providerInfoOf({ provider: activeConfig.provider })}
+          info={activeInfo}
           projects={projects}
           isSaving={isSaving}
           onSave={(request) =>
@@ -270,21 +271,20 @@ export function ProvidersTab() {
                 onChange={selectChatConfig}
               />
             )}
-            <div
-              className={cn(
-                'overflow-hidden rounded-xl border border-gray-6/60 bg-panel',
-                CARD_SHADOW,
-              )}
-            >
-              {sortedConfigs.map((config) => (
-                <KeyRow
-                  key={config.id}
-                  config={config}
+            <div className="flex flex-col gap-6">
+              {connectedProviders.map((provider) => (
+                <ProviderGroup
+                  key={provider}
+                  provider={provider}
+                  configs={configs.filter(
+                    (config) => config.provider === provider,
+                  )}
                   projects={projects}
-                  tierCount={tierCountOf({ tiers: tiers ?? [], config })}
+                  tiers={tiers ?? []}
                   locked={locked}
-                  onOpen={() => openConfig(config.id)}
-                  onDelete={() => deleteProvider(config.id)}
+                  onAdd={() => openConnect(provider)}
+                  onOpen={openConfig}
+                  onDelete={(id) => deleteProvider(id)}
                 />
               ))}
             </div>
@@ -361,7 +361,82 @@ function LockedProvidersAlert() {
   );
 }
 
-function KeyRow({
+function ProviderGroup({
+  provider,
+  configs,
+  projects,
+  tiers,
+  locked,
+  onAdd,
+  onOpen,
+  onDelete,
+}: {
+  provider: AIProviderName;
+  configs: AIProviderWithoutSensitiveData[];
+  projects: Project[];
+  tiers: PlatformModelTier[];
+  locked: boolean;
+  onAdd: () => void;
+  onOpen: (id: string) => void;
+  onDelete: (id: string) => Promise<unknown>;
+}) {
+  const info = providerInfoOf({ provider });
+  if (!info) {
+    return null;
+  }
+
+  return (
+    <section
+      className={cn(
+        'overflow-hidden rounded-xl border border-gray-6/60 bg-panel',
+        CARD_SHADOW,
+      )}
+    >
+      <div className="flex items-center gap-3 px-5 py-4">
+        <ProviderLogo info={info} />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium leading-none">{info.name}</p>
+          <p className="mt-1 text-xs text-gray-11">
+            {t('configurationsCount', { count: configs.length })}
+          </p>
+        </div>
+        {!locked && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onAdd}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+          >
+            <Plus className="size-4" />
+            {t('Add key')}
+          </Button>
+        )}
+      </div>
+      <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
+        <p className="text-xs font-medium text-gray-11">{t('Keys')}</p>
+      </div>
+      <div>
+        {configs.map((config) => (
+          <ConfigRow
+            key={config.id}
+            config={config}
+            projects={projects}
+            tierCount={
+              tiers.filter((tier) =>
+                tier.entries.some((entry) => entry.configId === config.id),
+              ).length
+            }
+            locked={locked}
+            onOpen={() => onOpen(config.id)}
+            onDelete={() => onDelete(config.id)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ConfigRow({
   config,
   projects,
   tierCount,
@@ -395,8 +470,6 @@ function KeyRow({
       ? t('exceptProjectsCount', { count: namedProjects.length })
       : t('projectsCount', { count: allowedProjectCount });
 
-  const info = modelMeta.providerInfoOf({ provider: config.provider });
-
   return (
     <div
       role={locked ? undefined : 'button'}
@@ -409,14 +482,13 @@ function KeyRow({
         }
       }}
       className={cn(
-        'group flex items-center gap-4 border-b border-gray-6/60 px-5 py-3.5 transition-colors last:border-b-0',
+        'group flex items-center gap-4 px-5 py-3 transition-colors',
         !locked &&
-          'cursor-pointer hover:bg-gray-2 active:bg-gray-3 focus-visible:bg-gray-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gray-8',
+          'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
-      <ProviderLogo info={info} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex items-center gap-2">
           <p className="truncate text-sm font-medium leading-none">
             {config.name}
           </p>
@@ -425,12 +497,11 @@ function KeyRow({
               {t('Chat')}
             </span>
           )}
+          <KeyStatusBadge status={config.status} />
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
             <p className="w-fit truncate text-xs text-gray-11">
-              {info.name}
-              <span aria-hidden> · </span>
               {modelsLabel}
               <span aria-hidden> · </span>
               {projectsLabel}
@@ -451,7 +522,7 @@ function KeyRow({
       </div>
 
       {config.projectScope !== 'all' && (
-        <div className="hidden min-w-0 items-center gap-1.5 md:flex">
+        <div className="flex min-w-0 items-center gap-1.5">
           <ProjectChips
             projects={namedProjects}
             excluded={config.projectScope === 'except'}
@@ -459,8 +530,6 @@ function KeyRow({
           />
         </div>
       )}
-
-      <KeyStatusBadge status={config.status} />
 
       <div
         className="flex shrink-0 items-center gap-1"
@@ -584,13 +653,11 @@ function ChatProviderRow({
         </SelectTrigger>
         <SelectContent>
           {configs.map((config) => {
-            const info = modelMeta.providerInfoOf({
-              provider: config.provider,
-            });
+            const info = providerInfoOf({ provider: config.provider });
             return (
               <SelectItem key={config.id} value={config.id}>
                 <div className="flex items-center gap-2">
-                  <ProviderLogo info={info} size="sm" />
+                  {info && <ProviderLogo info={info} size="sm" />}
                   <span className="truncate">{config.name}</span>
                 </div>
               </SelectItem>
@@ -725,57 +792,47 @@ function ProvidersSkeleton() {
         </div>
         <Skeleton className="h-9 w-52 rounded-md" />
       </div>
-      <section
-        className={cn(
-          'overflow-hidden rounded-xl border border-gray-6/60 bg-panel',
-          CARD_SHADOW,
-        )}
-      >
-        {[0, 1, 2].map((row) => (
-          <div
-            key={row}
-            className="flex items-center gap-4 border-b border-gray-6/60 px-5 py-3.5 last:border-b-0"
-          >
+      {[0, 1].map((group) => (
+        <section
+          key={group}
+          className={cn(
+            'overflow-hidden rounded-xl border border-gray-6/60 bg-panel',
+            CARD_SHADOW,
+          )}
+        >
+          <div className="flex items-center gap-3 px-5 py-4">
             <Skeleton className="size-8 shrink-0 rounded-xl" />
             <div className="flex flex-1 flex-col gap-2">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-64" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-3 w-20" />
             </div>
+            <Skeleton className="h-8 w-20 rounded-md" />
           </div>
-        ))}
-      </section>
+          <div className="border-t border-gray-6/60 px-5 pb-1 pt-3">
+            <Skeleton className="h-3 w-10" />
+          </div>
+          {[0, 1].map((row) => (
+            <div key={row} className="flex flex-col gap-2 px-5 py-3.5">
+              <Skeleton className="h-4 w-44" />
+              <Skeleton className="h-3 w-56" />
+            </div>
+          ))}
+        </section>
+      ))}
     </div>
   );
 }
 
 const CARD_SHADOW = 'shadow-panel';
 
-function compareKeys(
-  a: AIProviderWithoutSensitiveData,
-  b: AIProviderWithoutSensitiveData,
-): number {
-  if (a.enabledForChat !== b.enabledForChat) {
-    return a.enabledForChat ? -1 : 1;
-  }
-  return (
-    modelMeta
-      .providerInfoOf({ provider: a.provider })
-      .name.localeCompare(
-        modelMeta.providerInfoOf({ provider: b.provider }).name,
-      ) || a.name.localeCompare(b.name)
-  );
-}
-
-function tierCountOf({
-  tiers,
-  config,
+function providerInfoOf({
+  provider,
 }: {
-  tiers: PlatformModelTier[];
-  config: AIProviderWithoutSensitiveData;
-}): number {
-  return tiers.filter((tier) =>
-    tier.entries.some((entry) => entry.configId === config.id),
-  ).length;
+  provider: AIProviderName;
+}): AiProviderInfo | undefined {
+  return SUPPORTED_AI_PROVIDERS.find(
+    (candidate) => candidate.provider === provider,
+  );
 }
 
 const RECOMMENDED_PROVIDERS: AIProviderName[] = [

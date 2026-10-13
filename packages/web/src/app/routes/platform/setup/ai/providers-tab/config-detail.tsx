@@ -23,6 +23,7 @@ import {
   LeaveWithoutSavingDialog,
   useWarnBeforeLosingChanges,
 } from '@/components/custom/leave-without-saving';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -570,7 +571,11 @@ function ScopeTabs({
 }
 
 function TabCount({ count }: { count: number }) {
-  return <span className="text-xs text-gray-10 tabular-nums">{count}</span>;
+  return (
+    <Badge variant="secondary" className="ml-2 tabular-nums">
+      {count}
+    </Badge>
+  );
 }
 
 function tierNamesByModel({
