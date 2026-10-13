@@ -21,6 +21,21 @@ describe('costCapture.track', () => {
         expect(tracked.costUsd()).toBeNull()
     })
 
+    it('keeps the cost known when a call is rejected before the provider answers', async () => {
+        const answered = mockModel({ cost: 0.25 })
+        const tracked = costCapture.track({ model: new MockLanguageModelV3({
+            doGenerate: async () => {
+                throw new Error('bad request')
+            },
+            doStream: answered.doStream,
+        }) })
+
+        await generateText({ model: tracked.model, prompt: 'hi', maxRetries: 0 }).catch(() => undefined)
+        await streamText({ model: tracked.model, prompt: 'hi' }).consumeStream()
+
+        expect(tracked.costUsd()).toBe(0.25)
+    })
+
     it('asks OpenRouter to include usage cost on every call', async () => {
         const model = mockModel({ cost: 0.1 })
         const tracked = costCapture.track({ model })
