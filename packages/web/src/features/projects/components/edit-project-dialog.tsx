@@ -98,8 +98,9 @@ export function EditProjectDialog({
         </DialogHeader>
 
         {(!globalConnectionsEnabled || !isLoadingConnections) &&
-        !pieceSetField?.isLoading ? (
+        pieceSetField?.status !== 'loading' ? (
           <EditProjectForm
+            key={pieceSetField?.status ?? 'none'}
             onClose={onClose}
             projectId={projectId}
             initialValues={initialValues}
@@ -147,16 +148,43 @@ const EditProjectForm = ({
       },
       () => undefined,
     );
-  const { mutateAsync: movePieceSet } = useMutation({
+  const readyField = pieceSetField?.status === 'ready' ? pieceSetField : null;
+  const save = useMutation({
     mutationKey: projectCollectionUtils.updateMutationKey,
-    mutationFn: (pieceSetId: string) =>
-      pieceSetField?.isLoading === false
-        ? pieceSetField.save(pieceSetId)
-        : Promise.resolve(),
+    mutationFn: async (values: EditProjectFormValues) => {
+      await updateProject({
+        projectId,
+        request: {
+          displayName: values.displayName?.trim(),
+          externalId: values.externalId,
+          sensitive: values.sensitive,
+          globalConnectionExternalIds: values.globalConnectionExternalIds,
+        },
+      });
+      const nextSetId = values.pieceSetId;
+      if (
+        readyField === null ||
+        nextSetId === undefined ||
+        nextSetId === readyField.initialValue
+      ) {
+        return;
+      }
+      const { error } = await tryCatch(() => readyField.save(nextSetId));
+      if (error) {
+        throw new PartialSaveError(readyField.saveFailedMessage(error));
+      }
+    },
+    onSuccess: () => {
+      mutationFeedback.success(t('Changes saved'));
+      onClose();
+    },
     onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message: mutationFeedback.message(error),
+        message:
+          error instanceof PartialSaveError
+            ? error.message
+            : mutationFeedback.message(error),
       });
     },
   });
@@ -169,10 +197,7 @@ const EditProjectForm = ({
       externalId: initialValues?.externalId,
       sensitive: initialValues?.sensitive ?? false,
       globalConnectionExternalIds: currentConnectionExternalIds,
-      pieceSetId:
-        pieceSetField?.isLoading === false
-          ? pieceSetField.initialValue
-          : undefined,
+      pieceSetId: readyField?.initialValue,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
@@ -181,40 +206,9 @@ const EditProjectForm = ({
     <Form {...form}>
       <form
         className="space-y-4"
-        onSubmit={form.handleSubmit(async (values) => {
+        onSubmit={form.handleSubmit((values) => {
           form.clearErrors('root.serverError');
-          const { error: projectError } = await tryCatch(() =>
-            updateProject({
-              projectId,
-              request: {
-                displayName: values.displayName?.trim(),
-                externalId: values.externalId,
-                sensitive: values.sensitive,
-                globalConnectionExternalIds: values.globalConnectionExternalIds,
-              },
-            }),
-          );
-          if (projectError) {
-            form.setError('root.serverError', {
-              type: 'manual',
-              message: mutationFeedback.message(projectError),
-            });
-            return;
-          }
-          const pieceSetChanged =
-            pieceSetField?.isLoading === false &&
-            values.pieceSetId !== undefined &&
-            values.pieceSetId !== pieceSetField.initialValue;
-          if (pieceSetChanged && values.pieceSetId !== undefined) {
-            const { error: pieceSetError } = await tryCatch(() =>
-              movePieceSet(values.pieceSetId ?? ''),
-            );
-            if (pieceSetError) {
-              return;
-            }
-          }
-          mutationFeedback.success(t('Changes saved'));
-          onClose();
+          return save.mutateAsync(values).catch(() => undefined);
         })}
       >
         {globalConnectionsEnabled && <GlobalConnectionWarning />}
@@ -280,12 +274,13 @@ const EditProjectForm = ({
             />
           )}
 
-        {pieceSetField?.isLoading === false && (
+        {pieceSetField?.status === 'error' && pieceSetField.render()}
+        {readyField && (
           <FormField
             name="pieceSetId"
             render={({ field }) => (
               <FormItem>
-                {pieceSetField.render({
+                {readyField.render({
                   value: field.value,
                   onChange: field.onChange,
                   disabled: field.disabled,
@@ -357,10 +352,13 @@ const EditProjectFormSchema = UpdateProjectPlatformRequest.extend({
 
 type EditProjectFormValues = z.infer<typeof EditProjectFormSchema>;
 
+class PartialSaveError extends Error {}
+
 export type PieceSetField =
-  | { isLoading: true }
+  | { status: 'loading' }
+  | { status: 'error'; render: () => ReactNode }
   | {
-      isLoading: false;
+      status: 'ready';
       initialValue: string | undefined;
       render: (field: {
         value: string | undefined;
@@ -368,4 +366,5 @@ export type PieceSetField =
         disabled?: boolean;
       }) => ReactNode;
       save: (pieceSetId: string) => Promise<void>;
+      saveFailedMessage: (error: unknown) => string;
     };
