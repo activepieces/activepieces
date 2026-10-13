@@ -378,11 +378,11 @@ function TriggerContent({ current }: { current: CurrentPick }) {
       <span className="truncate font-medium text-gray-12">{current.label}</span>
       {current.source !== '' &&
         (warn ? (
-          <span className="shrink-0 rounded-full bg-warning-3 px-1.5 py-0.5 text-xss leading-none text-warning-11">
+          <span className="shrink-0 rounded-full bg-warning-3 px-1.5 py-0.5 text-xs leading-none text-warning-11">
             {current.source}
           </span>
         ) : (
-          <span className="min-w-0 shrink truncate rounded-full bg-gray-3 px-1.5 py-0.5 text-xss leading-none text-gray-11">
+          <span className="min-w-0 shrink truncate rounded-full bg-gray-3 px-1.5 py-0.5 text-xs leading-none text-gray-11">
             {current.source}
           </span>
         ))}
@@ -445,13 +445,13 @@ function TierBadges({
   return (
     <>
       {isDefault && (
-        <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent-3 px-1.5 py-0.5 text-xss leading-none text-accent-11">
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent-3 px-1.5 py-0.5 text-xs leading-none text-accent-11">
           <Star className="size-3 text-accent-11" />
           {t('Default')}
         </span>
       )}
       {isFast && (
-        <span className="flex shrink-0 items-center gap-1 rounded-full bg-warning-3 px-1.5 py-0.5 text-xss leading-none text-warning-11">
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-warning-3 px-1.5 py-0.5 text-xs leading-none text-warning-11">
           <Zap className="size-3 text-warning-11" />
           {t('Fast')}
         </span>
