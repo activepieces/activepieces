@@ -258,22 +258,33 @@ describe('POST /v1/analytics/refresh', () => {
             plan: { analyticsEnabled: true },
         })
         const flowId = apId()
-        const day = dayjs().startOf('day')
+        const otherFlowId = apId()
+        const day = dayjs().startOf('day').toISOString()
+        const previousDay = dayjs().startOf('day').subtract(1, 'day').toISOString()
         await db.save('platform_analytics_report', {
             id: apId(),
             platformId: ctx.platform.id,
             cachedAt: dayjs().toISOString(),
             outdated: false,
             runs: [
-                { flowId, day: day.toISOString(), runs: 3 },
-                { flowId, day: day.toISOString(), runs: 1 },
-                { flowId, day: day.subtract(1, 'day').toISOString(), runs: 2 },
-                { flowId: apId(), day: day.toISOString(), runs: 5 },
+                { flowId, day, runs: 3 },
+                { flowId, day, runs: 1 },
+                { flowId, day: previousDay, runs: 2 },
+                { flowId: otherFlowId, day, runs: 5 },
             ],
             flows: [],
             users: [],
         })
 
-        expect(await refreshRunsOfFlow({ ctx, flowId })).toEqual({ entries: 2, total: 6 })
+        const response = await ctx.post('/v1/analytics/refresh')
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        const runs = response!.json().runs
+        expect(runs).toHaveLength(3)
+        expect(runs).toEqual(expect.arrayContaining([
+            { flowId, day, runs: 4 },
+            { flowId, day: previousDay, runs: 2 },
+            { flowId: otherFlowId, day, runs: 5 },
+        ]))
     })
 })
