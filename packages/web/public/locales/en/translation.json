@@ -3572,7 +3572,6 @@
   "Decides which pieces builders in this project see.": "Decides which pieces builders in this project see.",
   "Set by the embed token": "Set by the embed token",
   "This project is embedded: the embed token sets its {term} at each sign-in, so a change here lasts until the next sign-in.": "This project is embedded: the embed token sets its {term} at each sign-in, so a change here lasts until the next sign-in.",
-  "{Term} for {name}": "{Term} for {name}",
   "Open project": "Open project",
   "Upgrade to manage global connections": "Upgrade to manage global connections",
   "{count, plural, =0 {Global · no projects} =1 {Global · 1 project} other {Global · # projects}}": "{count, plural, =0 {Global · no projects} =1 {Global · 1 project} other {Global · # projects}}",
@@ -3675,5 +3674,6 @@
   "Saving the piece menu is locked. You can try changes here.": "Saving the piece menu is locked. You can try changes here.",
   "A flow can be published only if it uses [all of] these actions:": "A flow can be published only if it uses [all of] these actions:",
   "A flow can be published only if it uses [at least one of] these actions:": "A flow can be published only if it uses [at least one of] these actions:",
-  "Publishing rule: {rule}": "Publishing rule: {rule}"
+  "Publishing rule: {rule}": "Publishing rule: {rule}",
+  "This project is embedded: the embed token sets its {term} at each sign-in, so a manual change lasts until the next sign-in.": "This project is embedded: the embed token sets its {term} at each sign-in, so a manual change lasts until the next sign-in."
 }
