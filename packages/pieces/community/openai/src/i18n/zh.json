@@ -2,7 +2,7 @@
   "Chat, images, audio and embeddings from OpenAI models.": "使用 OpenAI 模型进行聊天、图像、音频和嵌入处理。",
   "To get your API key:\n\n1. Go to https://platform.openai.com/api-keys\n2. Click **Create new secret key** and copy it.\n\nAdd credit to your OpenAI account first, or every request fails with a 429 quota error.\n": "获取 API 密钥：\n\n1. 访问 https://platform.openai.com/api-keys\n2. 点击 **Create new secret key** 并复制密钥。\n\n请先为 OpenAI 账户充值，否则每个请求都会因 429 配额错误而失败。\n",
   "Ask ChatGPT": "Ask ChatGPT",
-  "Ask Assistant": "Ask Assistant",
+  "Ask Assistant (Deprecated)": "Ask Assistant (Deprecated)",
   "Vision Prompt": "Vision Prompt",
   "Extract Structured Data": "Extract Structured Data",
   "Moderate Text": "Moderate Text",
@@ -48,6 +48,7 @@
   "Frequency Penalty": "Frequency Penalty",
   "Presence Penalty": "Presence Penalty",
   "Roles": "角色",
+  "Markdown": "Markdown",
   "Assistant": "Assistant",
   "Image": "Image",
   "Detail": "Detail",
@@ -90,6 +91,7 @@
   "From -2 to 2. Higher values make the model repeat itself less.": "范围 -2 到 2。值越高，模型越少重复自己。",
   "From -2 to 2. Higher values push the model toward new topics.": "范围 -2 到 2。值越高，模型越倾向于转向新话题。",
   "Messages sent before the question, such as a system instruction.": "在问题之前发送的消息，例如系统指令。",
+  "OpenAI shut down the Assistants API, so this action no longer works. Use the **Ask ChatGPT** action instead and put your assistant's instructions in its **Roles** field.": "OpenAI shut down the Assistants API, so this action no longer works. Use the **Ask ChatGPT** action instead and put your assistant's instructions in its **Roles** field.",
   "An assistant from your OpenAI account.": "你 OpenAI 账户中的一个助手。",
   "What you want the assistant to answer or do.": "希望助手回答或完成的内容。",
   "The picture to ask about.": "要提问的图片。",
@@ -234,5 +236,6 @@
   "PATCH": "PATCH",
   "PUT": "弹出",
   "DELETE": "删除",
-  "HEAD": "黑色"
+  "HEAD": "黑色",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Saved for the whole project, so other flows that use this ID join the same conversation."
 }
