@@ -88,6 +88,12 @@ export function PieceSelectorPage() {
     refetch: refetchPieces,
   } = piecesHooks.usePlatformCatalog();
 
+  const catalog: CatalogState = {
+    isLoading: piecesLoading,
+    isError: piecesError && pieces === undefined,
+    onRetry: refetchPieces,
+  };
+
   const togglePin = (pieceName: string) => {
     setPins((prev) =>
       prev.includes(pieceName)
@@ -178,6 +184,7 @@ export function PieceSelectorPage() {
       return;
     }
     const normalizedTabs = normalizeTabs(tabs);
+    const savedSnapshot = serializeTabs(tabs);
     gate.run(() =>
       save
         .mutateAsync({
@@ -186,7 +193,11 @@ export function PieceSelectorPage() {
             : platform.pieceSelectorConfig ?? null,
           pinnedPieces: pins,
         })
-        .then(() => setTabs(normalizedTabs)),
+        .then(() =>
+          setTabs((current) =>
+            serializeTabs(current) === savedSnapshot ? normalizedTabs : current,
+          ),
+        ),
     );
   };
 
@@ -195,7 +206,7 @@ export function PieceSelectorPage() {
       footer={
         <SaveBar
           dirty={dirty}
-          saving={save.isPending}
+          saving={save.isPending || reset.isPending}
           disabled={validationError !== null}
           error={dirty ? validationError : null}
           onSave={handleSave}
@@ -260,14 +271,22 @@ export function PieceSelectorPage() {
                 )}
                 confirmLabel={t('Reset')}
                 controlId={AdminControl.PIECES_SELECTOR_RESET_CONFIRM}
-                onConfirm={() => gate.run(() => reset.mutateAsync())}
+                onConfirm={() =>
+                  gate.run(() =>
+                    reset.isPending ? undefined : reset.mutateAsync(),
+                  )
+                }
               >
                 <Button
                   {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
                   type="button"
                   variant="ghost"
                   size="sm"
-                  disabled={!hasCustomMenu && !tabsDirty}
+                  disabled={
+                    (!hasCustomMenu && !tabsDirty) ||
+                    reset.isPending ||
+                    save.isPending
+                  }
                 >
                   <RotateCcw />
                   {t('Reset')}
@@ -307,7 +326,7 @@ export function PieceSelectorPage() {
                           tab={tab}
                           isNew={tab.id === newTabId}
                           pieces={pieces ?? []}
-                          piecesLoading={piecesLoading}
+                          catalog={catalog}
                           onChange={(patch) => updateTab(tab, patch)}
                           onRemove={() => removeTab(tab.id)}
                         />
@@ -463,7 +482,7 @@ function PinnedPiecesPanel({
         {body}
         <PiecePickerButton
           pieces={pieces}
-          disabled={isLoading || isError}
+          catalog={{ isLoading, isError, onRetry }}
           selectedPieceNames={pins}
           onChange={onChange}
           label={t('Pin pieces')}
@@ -528,7 +547,7 @@ function serializeTabs(tabs: PieceSelectorTabConfig[]): string {
 const TabCard = ({
   tab,
   pieces,
-  piecesLoading,
+  catalog,
   isNew,
   onChange,
   onRemove,
@@ -536,7 +555,7 @@ const TabCard = ({
   tab: PieceSelectorTabConfig;
   isNew: boolean;
   pieces: PieceMetadataModelSummary[];
-  piecesLoading: boolean;
+  catalog: CatalogState;
   onChange: (patch: Partial<PieceSelectorTabConfig>) => void;
   onRemove: () => void;
 }) => {
@@ -641,7 +660,7 @@ const TabCard = ({
             label={t('Pieces')}
             hint={t('Shown at the top of the tab')}
             pieces={pieces}
-            disabled={piecesLoading}
+            catalog={catalog}
             selectedPieceNames={tab.pieceNames ?? []}
             onChange={(pieceNames) => onChange({ pieceNames })}
           />
@@ -664,7 +683,7 @@ const TabCard = ({
                 />
                 <PiecePickerButton
                   pieces={pieces}
-                  disabled={piecesLoading}
+                  catalog={catalog}
                   selectedPieceNames={section.pieceNames}
                   onChange={(pieceNames) =>
                     updateSection(section.id, { pieceNames })
@@ -716,14 +735,14 @@ const PiecesPickerRow = ({
   label,
   hint,
   pieces,
-  disabled,
+  catalog,
   selectedPieceNames,
   onChange,
 }: {
   label: string;
   hint: string;
   pieces: PieceMetadataModelSummary[];
-  disabled: boolean;
+  catalog: CatalogState;
   selectedPieceNames: string[];
   onChange: (pieceNames: string[]) => void;
 }) => {
@@ -735,7 +754,7 @@ const PiecesPickerRow = ({
       </div>
       <PiecePickerButton
         pieces={pieces}
-        disabled={disabled}
+        catalog={catalog}
         selectedPieceNames={selectedPieceNames}
         onChange={onChange}
       />
@@ -790,14 +809,14 @@ const TabIconPicker = ({
 
 const PiecePickerButton = ({
   pieces,
-  disabled,
+  catalog,
   selectedPieceNames,
   onChange,
   label,
   icon,
 }: {
   pieces: PieceMetadataModelSummary[];
-  disabled: boolean;
+  catalog: CatalogState;
   selectedPieceNames: string[];
   onChange: (pieceNames: string[]) => void;
   label?: string;
@@ -840,7 +859,7 @@ const PiecePickerButton = ({
           type="button"
           variant="outline"
           size="sm"
-          disabled={disabled}
+          disabled={catalog.isLoading}
           className={cn(
             'shrink-0 whitespace-nowrap font-normal',
             label !== undefined && 'self-start',
@@ -858,7 +877,14 @@ const PiecePickerButton = ({
           <div className="border-b p-2">
             <Sortable
               value={selectedPieces.map((piece) => ({ id: piece.name }))}
-              onValueChange={(items) => onChange(items.map((item) => item.id))}
+              onValueChange={(items) =>
+                onChange([
+                  ...items.map((item) => item.id),
+                  ...selectedPieceNames.filter(
+                    (name) => !piecesByName.has(name),
+                  ),
+                ])
+              }
             >
               <div className="flex max-h-40 flex-col gap-1 overflow-y-auto">
                 {selectedPieces.map((piece) => (
@@ -895,44 +921,60 @@ const PiecePickerButton = ({
             </Sortable>
           </div>
         )}
-        <div className="border-b p-2">
-          <Input
-            type="search"
-            value={query}
-            placeholder={t('Search pieces')}
-            aria-label={t('Search pieces')}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </div>
-        {matches.length === 0 ? (
-          <p className="p-3 text-sm text-gray-11">{t('No pieces found')}</p>
-        ) : (
-          <div className="h-72 p-1">
-            <VirtualizedScrollArea
-              items={matches}
-              estimateSize={() => PICKER_ROW_HEIGHT}
-              getItemKey={(index) => matches[index].name}
-              renderItem={(piece) => {
-                const isSelected = selected.has(piece.name);
-                return (
-                  <button
-                    type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => togglePiece(piece.name)}
-                    className="flex h-9 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-gray-3 focus-visible:outline-2 focus-visible:outline-accent-8"
-                  >
-                    <LogoPlate src={piece.logoUrl} alt="" size="xs" border />
-                    <span className="min-w-0 grow truncate">
-                      {piece.displayName}
-                    </span>
-                    {isSelected && (
-                      <Check className="size-4 shrink-0 text-accent-11" />
-                    )}
-                  </button>
-                );
-              }}
+        {catalog.isError ? (
+          <div className="p-3">
+            <AdminFetchErrorState
+              entity={t('pieces')}
+              onRetry={catalog.onRetry}
             />
           </div>
+        ) : (
+          <>
+            <div className="border-b p-2">
+              <Input
+                type="search"
+                value={query}
+                placeholder={t('Search pieces')}
+                aria-label={t('Search pieces')}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </div>
+            {matches.length === 0 ? (
+              <p className="p-3 text-sm text-gray-11">{t('No pieces found')}</p>
+            ) : (
+              <div className="h-72 p-1">
+                <VirtualizedScrollArea
+                  items={matches}
+                  estimateSize={() => PICKER_ROW_HEIGHT}
+                  getItemKey={(index) => matches[index].name}
+                  renderItem={(piece) => {
+                    const isSelected = selected.has(piece.name);
+                    return (
+                      <button
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => togglePiece(piece.name)}
+                        className="flex h-9 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-gray-3 focus-visible:outline-2 focus-visible:outline-accent-8"
+                      >
+                        <LogoPlate
+                          src={piece.logoUrl}
+                          alt=""
+                          size="xs"
+                          border
+                        />
+                        <span className="min-w-0 grow truncate">
+                          {piece.displayName}
+                        </span>
+                        {isSelected && (
+                          <Check className="size-4 shrink-0 text-accent-11" />
+                        )}
+                      </button>
+                    );
+                  }}
+                />
+              </div>
+            )}
+          </>
         )}
       </PopoverContent>
     </Popover>
@@ -943,3 +985,9 @@ const FLASH_MS = 1400;
 const PICKER_ROW_HEIGHT = 36;
 const borderlessInputClass =
   'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';
+
+type CatalogState = {
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => unknown;
+};
