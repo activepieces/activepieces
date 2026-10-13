@@ -104,13 +104,12 @@ export default function UsersPage() {
     platform.id,
     true,
   );
-  const activeUsers = Math.max(
-    subscription?.usage.users ?? 0,
+  const activeUsers =
+    subscription?.usage.users ??
     seatUtils.reservedSeats({
       users: usersData?.data ?? [],
       invitations: invitationsData ?? [],
-    }),
-  );
+    });
   const usersLimit = platform.plan.usersLimit;
   const usersGate = useEnterpriseGate({
     unlocked: isNil(usersLimit) || activeUsers < usersLimit,
