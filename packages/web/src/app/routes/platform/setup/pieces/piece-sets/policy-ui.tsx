@@ -21,6 +21,7 @@ export function PolicySheet({
   description,
   toolbar,
   footer,
+  busy = false,
   children,
 }: PolicySheetProps) {
   return (
@@ -33,13 +34,20 @@ export function PolicySheet({
           {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
         {toolbar && (
-          <div className="flex shrink-0 flex-col gap-2 border-b px-6 py-4">
+          <fieldset
+            disabled={busy}
+            className="flex min-w-0 shrink-0 flex-col gap-2 border-b px-6 py-4"
+          >
             {toolbar}
-          </div>
+          </fieldset>
         )}
-        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 py-5">
+        <fieldset
+          disabled={busy}
+          aria-busy={busy}
+          className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 overflow-y-auto px-6 py-5"
+        >
           {children}
-        </div>
+        </fieldset>
         {footer && <SheetFooter className="p-0">{footer}</SheetFooter>}
       </SheetContent>
     </Sheet>
@@ -156,6 +164,7 @@ type PolicySheetProps = {
   description?: ReactNode;
   toolbar?: ReactNode;
   footer?: ReactNode;
+  busy?: boolean;
   children: ReactNode;
 };
 

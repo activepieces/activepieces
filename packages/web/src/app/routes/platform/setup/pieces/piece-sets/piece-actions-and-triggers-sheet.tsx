@@ -242,6 +242,7 @@ function PieceActionsAndTriggersSheetContent({
     <>
       <PolicySheet
         open
+        busy={saving}
         onRequestClose={requestClose}
         title={t('Actions and triggers for {name}', {
           name: pieceDisplayName,

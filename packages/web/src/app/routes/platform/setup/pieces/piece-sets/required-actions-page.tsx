@@ -280,6 +280,7 @@ function RequireAcrossSetsSheet({
     <>
       <PolicySheet
         open
+        busy={requireInSets.isPending}
         onRequestClose={requestClose}
         title={t('Require in several {terms}', pieceSetTerms.get())}
         description={t(
