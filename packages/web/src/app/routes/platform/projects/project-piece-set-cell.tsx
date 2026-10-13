@@ -33,12 +33,7 @@ export function ProjectPieceSetCell({
     verb: 'update',
     name: project.displayName,
     run: (toSetId) =>
-      moveProjects({
-        pieceSetId: toSetId,
-        added: [project.id],
-        removed: [],
-        defaultSetId: undefined,
-      }),
+      moveProjects({ pieceSetId: toSetId, added: [project.id] }),
   });
 
   return (
