@@ -85,7 +85,7 @@ export const projectRoleController: FastifyPluginAsyncZod = async (app) => {
         await transaction(async (entityManager) => {
             await userInvitationsService(req.log).detachProjectRoleFromPlatformInvites({ projectRoleId: projectRole.id, entityManager })
             await projectRoleService.delete({
-                name: req.params.name,
+                name: projectRole.name,
                 platformId: req.principal.platform.id,
                 entityManager,
             })

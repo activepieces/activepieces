@@ -155,6 +155,20 @@ describe('A platform invite outlives its project', () => {
         expect(invitation.projectRoleId).toBeNull()
     })
 
+    it('deletes the custom role when the request spells its name in a different case', async () => {
+        const { mockPlatform, mockProject, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
+        const role = createMockProjectRole({ platformId: mockPlatform.id, type: RoleType.CUSTOM, name: `Reviewer ${apId()}` })
+        await databaseConnection().getRepository('project_role').save(role)
+        const response = await invite({ token: ownerToken, email: faker.internet.email(), projectId: mockProject.id, projectRole: role.name })
+
+        const deletion = await app?.inject({ method: 'DELETE', url: `/api/v1/project-roles/${encodeURIComponent(role.name.toLowerCase())}`, headers: { authorization: `Bearer ${ownerToken}` } })
+
+        expect(deletion?.statusCode).toBe(StatusCodes.OK)
+        expect(await databaseConnection().getRepository('project_role').existsBy({ id: role.id })).toBe(false)
+        const invitation = await databaseConnection().getRepository('user_invitation').findOneByOrFail({ id: response?.json().id })
+        expect(invitation.projectId).toBeNull()
+    })
+
     it('keeps the project on the invite when someone tries to delete a built-in role', async () => {
         const { mockProject, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
         const response = await invite({ token: ownerToken, email: faker.internet.email(), projectId: mockProject.id, projectRole: DefaultProjectRole.EDITOR })
