@@ -1,14 +1,17 @@
+import { FastifyBaseLogger } from 'fastify'
 import { QueryRunner } from 'typeorm'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { BackgroundMigration } from './background-migration'
-import { BACKGROUND_MIGRATIONS_TABLE } from './background-migration-runner'
+import { BACKGROUND_MIGRATION_LOCK_TIMEOUT_SECONDS, BACKGROUND_MIGRATIONS_TABLE, backgroundMigrationLockKey } from './background-migration-runner'
 import { DatabaseType } from './database-type'
+import { distributedLock } from './redis-connections'
 
 export const migrationHelpers = {
     assertBackgroundMigrationComplete,
     createIndexConcurrently,
     dropIndexConcurrently,
+    withBackgroundMigrationLock,
 }
 
 async function assertBackgroundMigrationComplete({
@@ -83,6 +86,23 @@ async function dropIndexConcurrently({
 }): Promise<void> {
     const concurrently = isPGlite() ? '' : 'CONCURRENTLY'
     await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "${name}"`)
+}
+
+async function withBackgroundMigrationLock<T>({
+    log,
+    migration,
+    fn,
+}: {
+    log: FastifyBaseLogger
+    migration: new () => BackgroundMigration
+    fn: () => Promise<T>
+}): Promise<T> {
+    const name = new migration().name
+    return distributedLock(log).runExclusive({
+        key: backgroundMigrationLockKey(name),
+        timeoutInSeconds: BACKGROUND_MIGRATION_LOCK_TIMEOUT_SECONDS,
+        fn,
+    })
 }
 
 const isPGlite = (): boolean => system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
