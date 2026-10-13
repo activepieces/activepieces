@@ -1,9 +1,11 @@
+import { isIP } from 'net';
 import {
   httpClient,
   HttpMessageBody,
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { discourseNetwork } from './network-guard';
 
 export class DiscourseApiError extends Error {
   readonly status: number;
@@ -29,24 +31,6 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function isPrivateIpv4(host: string): boolean {
-  const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
-  if (match === null) {
-    return false;
-  }
-  const [a, b] = [Number(match[1]), Number(match[2])];
-  return (
-    a === 0 ||
-    a === 10 ||
-    a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168) ||
-    a >= 224
-  );
-}
-
 function isBlockedHost(hostname: string): boolean {
   const host = hostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
   if (
@@ -57,20 +41,7 @@ function isBlockedHost(hostname: string): boolean {
   ) {
     return true;
   }
-  if (isPrivateIpv4(host)) {
-    return true;
-  }
-  if (host.includes(':')) {
-    if (host === '::' || host === '::1') {
-      return true;
-    }
-    const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(host);
-    if (mapped !== null) {
-      return isPrivateIpv4(mapped[1]);
-    }
-    return /^(fc|fd|fe8|fe9|fea|feb|ff)/.test(host);
-  }
-  return false;
+  return isIP(host) !== 0 && discourseNetwork.isBlockedIp(host);
 }
 
 export function normalizeBaseUrl(raw: unknown): string {
@@ -280,9 +251,11 @@ export async function discourseRawRequest<T extends HttpMessageBody>({
     redactBodyInErrors: true,
     timeout: REQUEST_TIMEOUT_MS,
   };
+  await discourseNetwork.assertPublicHost(new URL(baseUrl).hostname);
+  const dispatcher = await discourseNetwork.getGuardedDispatcher();
   for (let attempt = 0; ; attempt++) {
     try {
-      const response = await httpClient.sendRequest<T>(request);
+      const response = await httpClient.sendRequest<T>(request, { dispatcher });
       return { status: response.status, body: response.body, headers: response.headers ?? {} };
     } catch (error) {
       const httpError = readHttpErrorResponse(error);

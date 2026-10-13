@@ -32,6 +32,13 @@ function text({ value, label }: { value: unknown; label: string }): string {
   return result;
 }
 
+function secret({ value, label }: { value: unknown; label: string }): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new Error(`${label} is required.`);
+  }
+  return value;
+}
+
 function optionalText(value: unknown): string | undefined {
   if (typeof value !== 'string') {
     return undefined;
@@ -101,6 +108,7 @@ function isoDate({ value, label }: { value: unknown; label: string }): string | 
 }
 
 export const discourseInput = {
+  secret,
   id,
   optionalId,
   name,

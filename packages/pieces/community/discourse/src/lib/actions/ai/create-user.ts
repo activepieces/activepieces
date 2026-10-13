@@ -46,7 +46,7 @@ export const createUserAction = createAction({
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new Error('Email must be a valid email address.');
     }
-    const password = discourseInput.text({ value: propsValue.password, label: 'Password' });
+    const password = discourseInput.secret({ value: propsValue.password, label: 'Password' });
     const username = discourseInput.text({ value: propsValue.username, label: 'Username' });
     const body = discourseMap.rec(
       await discourseRequest({

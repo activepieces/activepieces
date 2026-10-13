@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { DiscourseApiError, DiscourseCredentials, discourseRequest, headerValue, isRecord } from './client';
 import { discourseMap } from './mappers';
@@ -171,15 +171,18 @@ async function receive({
     return undefined;
   }
   const eventId = headerValue({ headers: payload.headers, name: 'x-discourse-event-id' }) ?? '';
-  if (eventId.length > 0) {
-    const deliveryKey = `${stored.id}:${eventId}`;
-    const seen = (await store.get<string[]>(DELIVERIES_KEY)) ?? [];
-    if (seen.includes(deliveryKey)) {
-      return undefined;
-    }
-    await store.put(DELIVERIES_KEY, [...seen, deliveryKey].slice(-MAX_REMEMBERED_DELIVERIES));
+  const deliveryKey = `${stored.id}:${signedBodyFingerprint(payload.rawBody)}`;
+  const seen = (await store.get<string[]>(DELIVERIES_KEY)) ?? [];
+  if (seen.includes(deliveryKey)) {
+    return undefined;
   }
+  await store.put(DELIVERIES_KEY, [...seen, deliveryKey].slice(-MAX_REMEMBERED_DELIVERIES));
   return { event, eventId, body };
+}
+
+function signedBodyFingerprint(rawBody: unknown): string {
+  const data = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(String(rawBody), 'utf8');
+  return createHash('sha256').update(data).digest('hex');
 }
 
 function parseStored(value: unknown): { id: number; secret: string } | undefined {

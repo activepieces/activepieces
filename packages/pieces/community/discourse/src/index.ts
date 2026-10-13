@@ -1,9 +1,9 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { addUsersToGroup } from './lib/actions/add-users-to-group.action';
 import { changeUserTrustLevel } from './lib/actions/change-trust-level.action';
 import { createPost } from './lib/actions/create-post.action';
 import { createTopic } from './lib/actions/create-topic.action';
+import { discourseCustomApiCall } from './lib/actions/custom-api-call';
 import { sendPrivateMessage } from './lib/actions/send-private-message.action';
 import { activateUserAction } from './lib/actions/ai/activate-user';
 import { addGroupMembersAction } from './lib/actions/ai/add-group-members';
@@ -62,7 +62,6 @@ import { newUserTrigger } from './lib/triggers/new-user';
 import { postEditedTrigger } from './lib/triggers/post-edited';
 import { userAddedToGroupTrigger } from './lib/triggers/user-added-to-group';
 import { discourseAuth } from './lib/auth';
-import { normalizeBaseUrl } from './lib/common/client';
 
 export const discourse = createPiece({
   displayName: 'Discourse',
@@ -129,14 +128,7 @@ export const discourse = createPiece({
     updatePostAction,
     updateTopicAction,
     updateUserAction,
-    createCustomApiCallAction({
-      baseUrl: (auth) => (auth ? normalizeBaseUrl(auth.props.website_url) : ''),
-      auth: discourseAuth,
-      authMapping: async (auth) => ({
-        'Api-Key': auth.props.api_key.trim(),
-        'Api-Username': auth.props.api_username.trim(),
-      }),
-    }),
+    discourseCustomApiCall,
   ],
   triggers: [
     newPostTrigger,
