@@ -45,6 +45,7 @@ import {
   modelMeta,
   ToolsVerdict,
 } from '@/features/agents/ai-model/model-meta';
+import { platformModelTierApi } from '@/features/platform-admin/api/platform-model-tier-api';
 import {
   platformModelTierKeys,
   platformModelTierMutations,
@@ -87,8 +88,6 @@ export function TierCard({
   const [fallbackPickerOpen, setFallbackPickerOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
 
-  const latestEntries = useRef(tier.entries);
-  latestEntries.current = tier.entries;
   const save = (request: UpdatePlatformModelTierRequest) =>
     updateAsync({ id: tier.id, request })
       .then((updated) =>
@@ -111,20 +110,26 @@ export function TierCard({
               removed.modelId,
             tier: tier.name,
           }),
-          onUndo: () => {
+          onUndo: async () => {
             if (queryClient.isMutating(tierWrites) > 0) {
-              return Promise.reject(
-                mutationFeedback.userError(
-                  t('Wait for the current change to finish, then undo.'),
-                ),
+              throw mutationFeedback.userError(
+                t('Wait for the current change to finish, then undo.'),
               );
             }
-            const current = latestEntries.current;
+            const fresh = (await platformModelTierApi.listAdmin()).find(
+              (candidate) => candidate.id === tier.id,
+            );
+            if (fresh === undefined) {
+              throw mutationFeedback.userError(
+                t('It no longer exists. Refresh the page and try again.'),
+              );
+            }
+            const current = fresh.entries;
             if (current.some((entry) => modelMeta.sameEntry(entry, removed))) {
-              return Promise.resolve();
+              return;
             }
             const at = Math.min(position, current.length);
-            return undoAsync({
+            await undoAsync({
               id: tier.id,
               request: {
                 entries: [
@@ -182,16 +187,19 @@ export function TierCard({
       main={mainModel}
       mode="fallback"
       align="end"
-      open={fallbackPickerOpen}
+      open={fallbackPickerOpen && !writing}
       onOpenChange={setFallbackPickerOpen}
-      onPick={(picked) =>
+      onPick={(picked) => {
+        if (writing) {
+          return;
+        }
         save({
           entries: modelMeta.addFallback({
             entries: tier.entries,
             entry: picked,
           }),
-        })
-      }
+        });
+      }}
     >
       {trigger}
     </AdminModelPicker>
@@ -256,6 +264,7 @@ export function TierCard({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
+              disabled={writing}
               onSelect={() => onEdit(menuTriggerRef.current)}
               {...adminControl(AdminControl.AI_TIER_OPEN)}
             >
@@ -283,13 +292,13 @@ export function TierCard({
               </DropdownMenuItem>
             )}
             {onMoveUp !== undefined && (
-              <DropdownMenuItem onSelect={onMoveUp}>
+              <DropdownMenuItem disabled={writing} onSelect={onMoveUp}>
                 <ArrowUp className="size-4" />
                 {t('Move up')}
               </DropdownMenuItem>
             )}
             {onMoveDown !== undefined && (
-              <DropdownMenuItem onSelect={onMoveDown}>
+              <DropdownMenuItem disabled={writing} onSelect={onMoveDown}>
                 <ArrowDown className="size-4" />
                 {t('Move down')}
               </DropdownMenuItem>
@@ -297,6 +306,7 @@ export function TierCard({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-danger-11"
+              disabled={writing}
               onSelect={() => onDelete(menuTriggerRef.current)}
               {...adminControl(AdminControl.AI_TIER_DELETE_OPEN)}
             >
@@ -404,16 +414,19 @@ export function TierCard({
                       exclude={tier.entries}
                       mode="main"
                       anchorOnly
-                      open={mainPickerOpen}
+                      open={mainPickerOpen && !writing}
                       onOpenChange={setMainPickerOpen}
-                      onPick={(picked: PlatformModelTierEntry) =>
+                      onPick={(picked: PlatformModelTierEntry) => {
+                        if (writing) {
+                          return;
+                        }
                         save({
                           entries: modelMeta.replaceMain({
                             entries: tier.entries,
                             entry: picked,
                           }),
-                        })
-                      }
+                        });
+                      }}
                     >
                       <div>{row}</div>
                     </AdminModelPicker>
