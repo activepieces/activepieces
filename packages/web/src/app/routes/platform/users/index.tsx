@@ -20,7 +20,12 @@ import {
 import { EnterpriseGate } from '@/app/components/enterprise-gate';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
-import { useEnterpriseGate, useSeatLimitGuard } from '@/features/billing';
+import {
+  billingQueries,
+  seatUtils,
+  useEnterpriseGate,
+  useSeatLimitGuard,
+} from '@/features/billing';
 import { InviteUserDialog } from '@/features/members';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import {
@@ -95,9 +100,17 @@ export default function UsersPage() {
   }, [usersData, invitationsData]);
 
   const { platform } = platformHooks.useCurrentPlatform();
-  const activeUsers =
-    usersData?.data.filter((user) => user.status === UserStatus.ACTIVE)
-      .length ?? 0;
+  const { data: subscription } = billingQueries.usePlatformSubscription(
+    platform.id,
+    true,
+  );
+  const activeUsers = Math.max(
+    subscription?.usage.users ?? 0,
+    seatUtils.reservedSeats({
+      users: usersData?.data ?? [],
+      invitations: invitationsData ?? [],
+    }),
+  );
   const usersLimit = platform.plan.usersLimit;
   const usersGate = useEnterpriseGate({
     unlocked: isNil(usersLimit) || activeUsers < usersLimit,
