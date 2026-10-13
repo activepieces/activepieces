@@ -4,6 +4,10 @@ import { AppSystemProp } from '../../helper/system/system-props'
 
 export const googleAuth = {
     isConfigured(): boolean {
-        return !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_ID)) && !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_SECRET))
+        return isSet(system.get(AppSystemProp.GOOGLE_CLIENT_ID)) && isSet(system.get(AppSystemProp.GOOGLE_CLIENT_SECRET))
     },
+}
+
+function isSet(value: string | undefined): boolean {
+    return !isNil(value) && value.trim().length > 0
 }

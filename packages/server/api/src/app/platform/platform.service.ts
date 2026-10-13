@@ -158,52 +158,25 @@ export const platformService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            if (!isNil(params.federatedAuthProviders.saml)) {
-                const platform = await this.getOneOrThrow(params.id)
-                if (platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.VALIDATION,
-                        params: {
-                            message: 'SSO domain must be verified before configuring SAML',
-                        },
-                    })
-                }
-            }
         }
-        const platform = params.federatedAuthProviders !== undefined
-            ? await this.getOneWithFederatedAuthOrThrow(params.id)
-            : await this.getOneOrThrow(params.id)
+        const platform = await this.getOneOrThrow(params.id)
         await assertAuditLogRetentionDaysAllowed({ log, platform, auditLogRetentionDays: params.auditLogRetentionDays })
-        const federatedAuthProviders = hasFederatedAuth(platform)
-            ? {
-                ...platform.federatedAuthProviders,
-                ...(params.federatedAuthProviders ?? {}),
+        const { saved, previousRetentionDays } = await transaction(async (entityManager) => {
+            const lockedRetentionDays = await lockAuditLogRetentionDays({ entityManager, platformId: params.id })
+            const current = await platformRepo(entityManager)
+                .createQueryBuilder('platform')
+                .addSelect('platform.federatedAuthProviders')
+                .where({ id: params.id })
+                .getOneOrFail()
+            assertSamlDomainVerified({ current, params })
+            const changes = platformChanges({ current, params })
+            assertSignInMethodRemains({ before: current, after: { ...current, ...changes } })
+            if (Object.keys(changes).length > 0) {
+                await platformRepo(entityManager).update({ id: params.id }, changes)
             }
-            : undefined
-        const updatedPlatform = {
-            ...platform,
-            ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
-            ...spreadIfDefined('name', params.name),
-            ...spreadIfDefined('primaryColor', params.primaryColor),
-            ...spreadIfNotUndefined('themeColors', params.themeColors),
-            ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
-            ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
-            ...spreadIfDefined('favIconUrl', params.favIconUrl),
-            ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
-            ...spreadIfDefined('googleAuthEnabled', params.googleAuthEnabled),
-            ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
-            ...spreadIfDefined('autoCreatePersonalProjects', params.autoCreatePersonalProjects),
-            ...spreadIfDefined(
-                'enforceAllowedAuthDomains',
-                params.enforceAllowedAuthDomains,
-            ),
-            ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
-            ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
-            ...spreadIfDefined('ssoDomain', params.ssoDomain),
-            ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
-            ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
-            ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
-        }
+            const savedPlatform = await platformRepo(entityManager).findOneByOrFail({ id: params.id })
+            return { saved: savedPlatform, previousRetentionDays: lockedRetentionDays }
+        })
         if (!isNil(params.plan)) {
             await platformPlanService(log).update({
                 platformId: params.id,
@@ -214,18 +187,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
             invalidateSamlClientCache(params.id)
         }
         log.info({ platform: { id: params.id } }, 'Platform updated')
-        const { saved, previousRetentionDays } = await transaction(async (entityManager) => {
-            const lockedRetentionDays = await lockAuditLogRetentionDays({ entityManager, platformId: params.id })
-            const signInMethods = touchesSignInMethods(params)
-                ? await checkedSignInMethods({ entityManager, params })
-                : {}
-            const savedPlatform = await platformRepo(entityManager).save({
-                ...updatedPlatform,
-                ...signInMethods,
-                auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedRetentionDays : params.auditLogRetentionDays,
-            })
-            return { saved: savedPlatform, previousRetentionDays: lockedRetentionDays }
-        })
         if (params.auditLogRetentionDays !== undefined && params.auditLogRetentionDays !== previousRetentionDays) {
             platformSideEffects(log).onAuditLogRetentionUpdated({
                 platformId: params.id,
@@ -464,30 +425,44 @@ function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
     return rest
 }
 
-function touchesSignInMethods(params: UpdateParams): boolean {
-    return params.emailAuthEnabled !== undefined
-        || params.googleAuthEnabled !== undefined
-        || params.federatedAuthProviders !== undefined
-        || params.ssoDomain !== undefined
-        || params.ssoDomainVerification !== undefined
+function platformChanges({ current, params }: { current: Platform, params: UpdateParams }): PlatformChanges {
+    return {
+        ...spreadIfDefined('federatedAuthProviders', isNil(params.federatedAuthProviders)
+            ? undefined
+            : { ...current.federatedAuthProviders, ...params.federatedAuthProviders }),
+        ...spreadIfDefined('name', params.name),
+        ...spreadIfDefined('primaryColor', params.primaryColor),
+        ...spreadIfNotUndefined('themeColors', params.themeColors),
+        ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
+        ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
+        ...spreadIfDefined('favIconUrl', params.favIconUrl),
+        ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
+        ...spreadIfDefined('googleAuthEnabled', params.googleAuthEnabled),
+        ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
+        ...spreadIfDefined('autoCreatePersonalProjects', params.autoCreatePersonalProjects),
+        ...spreadIfDefined('enforceAllowedAuthDomains', params.enforceAllowedAuthDomains),
+        ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
+        ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
+        ...spreadIfDefined('ssoDomain', params.ssoDomain),
+        ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
+        ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
+        ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
+        ...spreadIfNotUndefined('auditLogRetentionDays', params.auditLogRetentionDays),
+    }
 }
 
-async function checkedSignInMethods({ entityManager, params }: { entityManager: EntityManager, params: UpdateParams }): Promise<SignInMethodsState> {
-    const current = await platformRepo(entityManager)
-        .createQueryBuilder('platform')
-        .addSelect('platform.federatedAuthProviders')
-        .where({ id: params.id })
-        .getOneOrFail()
-    const after: SignInMethodsState = {
-        emailAuthEnabled: params.emailAuthEnabled ?? current.emailAuthEnabled,
-        googleAuthEnabled: params.googleAuthEnabled ?? current.googleAuthEnabled,
-        federatedAuthProviders: isNil(params.federatedAuthProviders)
-            ? current.federatedAuthProviders
-            : { ...current.federatedAuthProviders, ...params.federatedAuthProviders },
-        ssoDomainVerification: params.ssoDomainVerification ?? current.ssoDomainVerification,
+function assertSamlDomainVerified({ current, params }: { current: Platform, params: UpdateParams }): void {
+    if (isNil(params.federatedAuthProviders?.saml)) {
+        return
     }
-    assertSignInMethodRemains({ before: current, after })
-    return after
+    if (current.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'SSO domain must be verified before configuring SAML',
+            },
+        })
+    }
 }
 
 function signInMethodCount(platform: SignInMethodsState): number {
@@ -508,10 +483,6 @@ function assertSignInMethodRemains({ before, after }: { before: SignInMethodsSta
     }
 }
 
-function hasFederatedAuth(platform: Platform | PlatformWithoutFederatedAuth): platform is Platform {
-    return 'federatedAuthProviders' in platform
-}
-
 type AddParams = {
     ownerId: UserId
     name: string
@@ -528,6 +499,8 @@ type AssertAuditLogRetentionDaysAllowedParams = {
     platform: PlatformWithoutFederatedAuth
     auditLogRetentionDays: number | null | undefined
 }
+
+type PlatformChanges = Partial<Omit<Platform, 'id' | 'created' | 'updated'>>
 
 type SignInMethodsState = Pick<Platform, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders' | 'ssoDomainVerification'>
 
