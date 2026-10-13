@@ -238,6 +238,37 @@ public async up(q: QueryRunner): Promise<void> {
 - Blocking migrations: `down()` required unless `breaking = true`. `check-migration-rollback.ts` enforces the `breaking` flag on destructive DDL.
 - Background migrations: forward-only. `down()` is a no-op body; the rollback tooling skips the `background/` folder entirely. To undo a bad backfill, ship a forward-fix migration.
 
+### Rollback choreography when a blocking migration pairs with a background one
+
+`withBackgroundMigrationLock` acquires the per-migration lock without checking the completion row. `down()` uses this instead of `assertBackgroundMigrationComplete` because rollback must proceed even when the backfill never ran, failed, or was quiesced mid-run — otherwise a release with an incomplete background migration becomes un-rollbackable.
+
+**When `down()` needs the lock — only if its DDL touches objects a background migration also touches:**
+- Same-release reshape pair (blocking adds columns, background CIC on same table): **lock**.
+- `DROP COLUMN foo` while a background `BackfillFoo` could be in-flight: **lock**.
+- Dependency-style pair (M1's up calls `assertBackgroundMigrationComplete(B)` + does `SET NOT NULL`; down drops NOT NULL): **no lock** — B is already complete and won't re-run.
+- Any blocking migration whose paired background touches disjoint objects: **no lock**.
+
+```ts
+public async down(q: QueryRunner): Promise<void> {
+    await migrationHelpers.withBackgroundMigrationLock({
+        log: system.globalLogger(),
+        migration: ReshapeFooIndexes,
+        fn: async () => {
+            await q.query(`...restore old indexes, drop new ones...`)
+            await q.query(`DELETE FROM background_migrations WHERE name = $1`, [new ReshapeFooIndexes().name])
+            await q.query(`ALTER TABLE foo DROP COLUMN bar`)
+        },
+    })
+}
+```
+
+Deleting the `background_migrations` row is a per-migration choice — tells re-upgrade to re-run the reshape. Omit if `down()` leaves the background work's effects intact.
+
+**Caveats:**
+- Lock wait is bounded at ~4 min (`distributedLockFactory` passes `retryCount * retryDelay = (timeout / 200) * 200ms` into RedLock). If `down()` races a long in-flight backfill, the helper throws rather than waits for the full duration. Fix: scale API pods to 0 (quiesces the runner), re-run `rollback-migrations.ts`, redeploy.
+- Destructive data changes a background migration already made (uuid migration, type change) cannot be rolled back by the framework. Ship a reverse-fix background migration or accept the residue.
+- Rolling back release N with its background migration B already completed: B's data and row persist; re-deploy of N skips B. If wrong for your case, delete B's row in `down()`.
+
 ### Recovery — permanently failing background migrations
 
 A background migration that fails every retry stops the app from booting. The guard refuses the dependent blocking DDL; boot catchup exhausts its 10 attempts and throws with the migration name. Operator options, in order of preference:
@@ -268,7 +299,7 @@ A background migration that fails every retry stops the app from booting. The gu
 - `packages/server/api/src/app/database/postgres-connection.ts` — `getMigrations()`, `getBackgroundMigrations()`.
 - `packages/server/api/src/app/database/migration.ts` — the `Migration` interface.
 - `packages/server/api/src/app/database/background-migration.ts` — the `BackgroundMigration` interface.
-- `packages/server/api/src/app/database/migration-helpers.ts` — `assertBackgroundMigrationComplete`, `createIndexConcurrently`.
+- `packages/server/api/src/app/database/migration-helpers.ts` — `assertBackgroundMigrationComplete`, `withBackgroundMigrationLock`, `createIndexConcurrently`, `dropIndexConcurrently`.
 - `packages/server/api/src/app/database/background-migration-runner.ts` — the BullMQ handler.
 - `packages/server/api/src/migrate.ts` — both tracks in one process, for `check-migrations` and `db-migration`.
 - `tools/scripts/check-migration-rollback.ts` — the CI check.
