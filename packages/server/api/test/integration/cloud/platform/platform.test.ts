@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/core-utils'
+import { apId, ErrorCode } from '@activepieces/core-utils'
 import { ApEdition, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowStatus, PlanName, Platform, PlatformRole, PrincipalType, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyBaseLogger, FastifyInstance, LightMyRequestResponse } from 'fastify'
@@ -151,6 +151,15 @@ function pendingVerification(ssoDomain: string): SsoDomainVerification {
         },
         createdAt: new Date().toISOString(),
     }
+}
+
+const SSO_DOMAIN_CHANGED = {
+    error: {
+        code: ErrorCode.VALIDATION,
+        params: {
+            message: 'The SSO domain changed while this request was running. Try again.',
+        },
+    },
 }
 
 function appLog(): FastifyBaseLogger {
@@ -376,9 +385,14 @@ describe('Platform API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const lockIndex = hooks.queries.findIndex((sql) => /FROM "platform"/.test(sql) && /FOR UPDATE/.test(sql))
+            const readIndex = hooks.queries.findIndex((sql, index) => index > lockIndex
+                && /FROM "platform"/.test(sql)
+                && /"federatedAuthProviders"/.test(sql)
+                && /"emailAuthEnabled"/.test(sql))
             const updateIndex = hooks.queries.findIndex((sql) => /^UPDATE "platform"/.test(sql))
             expect(lockIndex).toBeGreaterThanOrEqual(0)
-            expect(updateIndex).toBeGreaterThan(lockIndex)
+            expect(readIndex).toBeGreaterThan(lockIndex)
+            expect(updateIndex).toBeGreaterThan(readIndex)
         })
 
         it('does not count SAML as a sign-in method when the platform has no SSO domain', async () => {
@@ -403,7 +417,7 @@ describe('Platform API', () => {
             }
 
             await expect(authnSsoSamlService(appLog()).verifySsoDomain({ platformId: mockPlatform.id }))
-                .rejects.toThrow()
+                .rejects.toMatchObject(SSO_DOMAIN_CHANGED)
 
             const saved = await readPlatform(mockPlatform.id)
             expect(saved.ssoDomain).toBe('victim.example.com')
@@ -419,6 +433,24 @@ describe('Platform API', () => {
             expect(result.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.VERIFIED)
         })
 
+        it('does not write a stale pending verification over the same token verified meanwhile', async () => {
+            const { mockPlatform } = await mockAndSavePendingDomainSetup()
+            const domain = mockPlatform.ssoDomain ?? ''
+            const pending = mockPlatform.ssoDomainVerification ?? pendingVerification(domain)
+            hooks.beforeTransaction = async (): Promise<void> => {
+                await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, {
+                    ssoDomainVerification: { ...pending, status: SsoDomainVerificationStatus.VERIFIED },
+                })
+            }
+
+            await expect(authnSsoSamlService(appLog()).updateSsoDomain({ platformId: mockPlatform.id, ssoDomain: domain }))
+                .rejects.toMatchObject(SSO_DOMAIN_CHANGED)
+
+            const saved = await readPlatform(mockPlatform.id)
+            expect(saved.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.VERIFIED)
+            expect(saved.ssoDomainVerification?.record.value).toBe(pending.record.value)
+        })
+
         it('does not write a stale pending verification over a domain verified meanwhile', async () => {
             const { mockPlatform } = await mockAndSavePendingDomainSetup()
             const domain = mockPlatform.ssoDomain ?? ''
@@ -429,7 +461,7 @@ describe('Platform API', () => {
             }
 
             await expect(authnSsoSamlService(appLog()).updateSsoDomain({ platformId: mockPlatform.id, ssoDomain: domain }))
-                .rejects.toThrow()
+                .rejects.toMatchObject(SSO_DOMAIN_CHANGED)
 
             const saved = await readPlatform(mockPlatform.id)
             expect(saved.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.VERIFIED)
