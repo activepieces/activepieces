@@ -311,7 +311,7 @@ function catalogEntries({
       grantKey: 'cursor',
       ...MCP_CLIENT_BRANDING.cursor,
       kind: 'editor',
-      docsUrl: 'https://cursor.com/docs/mcp',
+      docsUrl: isCloud ? CURSOR_DIRECTORY_URL : 'https://cursor.com/docs/mcp',
       methods: [
         {
           key: 'deeplink',
@@ -438,6 +438,24 @@ function catalogEntries({
             { brand, slug, url },
           ),
         }),
+        {
+          key: 'config',
+          label: t('Config file'),
+          hint: t('Edit the Gemini CLI settings yourself.'),
+          steps: [
+            {
+              body: t('Add the server to your Gemini CLI settings.'),
+              block: code({
+                label: '~/.gemini/settings.json',
+                text: prettyJson({ mcpServers: { [slug]: { httpUrl: url } } }),
+              }),
+            },
+            {
+              body: t('Inside Gemini CLI, sign in and approve the project.'),
+              block: terminal(`/mcp auth ${slug}`),
+            },
+          ],
+        },
       ],
     },
     {
@@ -686,6 +704,8 @@ export const mcpClientCatalog = {
 const FALLBACK_SLUG = 'activepieces';
 const CLAUDE_DIRECTORY_URL =
   'https://claude.ai/directory/cloud-activepieces-com';
+const CURSOR_DIRECTORY_URL =
+  'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor';
 const CHATGPT_PLUGINS_URL = 'https://chatgpt.com/plugins';
 const LOCAL_ICONS = {
   cline: '/mcp-clients/cline.svg',

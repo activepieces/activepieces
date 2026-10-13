@@ -42,5 +42,5 @@ export function ConnectTab({
     );
   }
 
-  return <ConnectPage home={home} />;
+  return <ConnectPage home={home} serverUrl={serverUrl} />;
 }

@@ -3734,5 +3734,8 @@
   "Read my Linear tickets and organize them into a roadmap.": "Read my Linear tickets and organize them into a roadmap.",
   "Update all my meetings for today.": "Update all my meetings for today.",
   "Summarize this week’s Salesforce deals that changed stage.": "Summarize this week’s Salesforce deals that changed stage.",
-  "Showing {shown} of {total}. Refine your search to see more.": "Showing {shown} of {total}. Refine your search to see more."
+  "Showing {shown} of {total}. Refine your search to see more.": "Showing {shown} of {total}. Refine your search to see more.",
+  "Manage connections": "Manage connections",
+  "Edit the Gemini CLI settings yourself.": "Edit the Gemini CLI settings yourself.",
+  "Add the server to your Gemini CLI settings.": "Add the server to your Gemini CLI settings."
 }
