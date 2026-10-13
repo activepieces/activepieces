@@ -476,7 +476,17 @@ export function PiecePicker({
       );
     }
     return (
-      <div className="h-80 rounded-xl border p-1">
+      <div
+        className="rounded-xl border p-1"
+        style={{
+          height: listUtils.cappedHeight({
+            count: matches.length,
+            rowHeight: PICKER_ROW_HEIGHT,
+            padding: LIST_PADDING,
+            max: PIECE_LIST_MAX_HEIGHT,
+          }),
+        }}
+      >
         <VirtualizedScrollArea
           items={matches}
           estimateSize={() => PICKER_ROW_HEIGHT}
@@ -615,10 +625,12 @@ export function ActionPicker({
             <div
               className="p-1"
               style={{
-                height: Math.min(
-                  matches.length * ACTION_ROW_HEIGHT + 8,
-                  ACTION_LIST_MAX_HEIGHT,
-                ),
+                height: listUtils.cappedHeight({
+                  count: matches.length,
+                  rowHeight: ACTION_ROW_HEIGHT,
+                  padding: LIST_PADDING,
+                  max: ACTION_LIST_MAX_HEIGHT,
+                }),
               }}
             >
               <VirtualizedScrollArea
@@ -722,4 +734,6 @@ function splitMarked(sentence: string): {
 const PICKER_ROW_HEIGHT = 44;
 const ACTION_ROW_HEIGHT = 56;
 const ACTION_LIST_MAX_HEIGHT = 320;
+const PIECE_LIST_MAX_HEIGHT = 320;
+const LIST_PADDING = 10;
 const REQUIRED_ACTIONS_SHOWN = 5;

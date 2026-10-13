@@ -327,6 +327,7 @@ export const PieceSetPiecesTab = ({
                 piece={piece}
                 pieceSet={pieceSet}
                 access={accessOf(piece)}
+                leavesView={segment !== 'all' && accessOf(piece) !== segment}
                 selected={selected.has(piece.name)}
                 onToggleSelected={() => toggleSelected(piece.name)}
                 onOpen={() => openPiece(piece)}
@@ -438,6 +439,7 @@ function PieceRow({
   piece,
   pieceSet,
   access,
+  leavesView,
   selected,
   onToggleSelected,
   onOpen,
@@ -446,6 +448,7 @@ function PieceRow({
   piece: PieceMetadataModelSummary;
   pieceSet: PieceSet;
   access: PieceAccess;
+  leavesView: boolean;
   selected: boolean;
   onToggleSelected: () => void;
   onOpen: () => void;
@@ -464,7 +467,10 @@ function PieceRow({
       <button
         type="button"
         onClick={onOpen}
-        className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-2 focus-visible:outline-accent-8"
+        className={cn(
+          'flex min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-2 focus-visible:outline-accent-8',
+          leavesView && 'opacity-50',
+        )}
       >
         <LogoPlate src={piece.logoUrl} alt="" size="xs" border />
         <span className="flex min-w-0 flex-1 flex-col">
@@ -492,6 +498,11 @@ function PieceRow({
           </span>
         </span>
       </button>
+      {leavesView && (
+        <span className="hidden shrink-0 text-xs text-gray-11 md:inline">
+          {t('Leaves this view')}
+        </span>
+      )}
       {required > 0 && (
         <Badge variant="outline" className="shrink-0">
           {t('requiredCount', { count: required })}

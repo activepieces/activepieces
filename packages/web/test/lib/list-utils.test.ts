@@ -73,3 +73,27 @@ describe('listUtils.freezeRows', () => {
     expect(frozen.names).toEqual(['gmail', 'notion']);
   });
 });
+
+describe('listUtils.cappedHeight', () => {
+  it('fits a short list to its rows', () => {
+    expect(
+      listUtils.cappedHeight({
+        count: 3,
+        rowHeight: 40,
+        padding: 10,
+        max: 288,
+      }),
+    ).toBe(130);
+  });
+
+  it('stops growing at the cap', () => {
+    expect(
+      listUtils.cappedHeight({
+        count: 200,
+        rowHeight: 40,
+        padding: 10,
+        max: 288,
+      }),
+    ).toBe(288);
+  });
+});

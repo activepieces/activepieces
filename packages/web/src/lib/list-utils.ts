@@ -34,7 +34,21 @@ function freezeRows<S>({
   return { filterKey, source, names: computeNames() };
 }
 
-export const listUtils = { cap, freezeRows };
+function cappedHeight({
+  count,
+  rowHeight,
+  padding,
+  max,
+}: {
+  count: number;
+  rowHeight: number;
+  padding: number;
+  max: number;
+}): number {
+  return Math.min(count * rowHeight + padding, max);
+}
+
+export const listUtils = { cap, freezeRows, cappedHeight };
 
 export type CappedList<T> = { visible: T[]; hiddenCount: number };
 
