@@ -30,6 +30,10 @@ const AgencyPage = lazyWithRetry(
   () => import('./agency').then((m) => ({ default: m.AgencyPage })),
   'agency',
 );
+const DashboardPage = lazyWithRetry(
+  () => import('./dashboard').then((m) => ({ default: m.DashboardPage })),
+  'dashboard',
+);
 const OnboardingPage = lazyWithRetry(
   () => import('./onboarding').then((m) => ({ default: m.OnboardingPage })),
   'onboarding',
@@ -124,6 +128,17 @@ const agentEditorElement = (
 );
 
 export const projectRoutes = [
+  {
+    path: '/dashboard',
+    element: (
+      <ProjectDashboardLayout>
+        <Suspense fallback={<RouteLoadingBar />}>
+          <DashboardPage />
+        </Suspense>
+      </ProjectDashboardLayout>
+    ),
+  },
+
   {
     path: '/agency',
     element: (

@@ -15,6 +15,7 @@ import { synkraAgencyPortalController } from '../agency/portal.controller';
 import { synkraAgencyInvoiceController } from '../agency/invoice.controller';
 import { synkraAgencyBillingCron } from '../agency/billing-cron.service';
 import { synkraAgencyWebhookController } from '../agency/agency-webhook.controller';
+import { synkraDashboardController } from '../dashboard/dashboard.controller';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -70,6 +71,7 @@ export const synkraBillingModule: FastifyPluginAsyncZod = async (app) => {
   await app.register(synkraCheckoutController, { prefix: '/v1/synkra/subscription' });
   await app.register(paystackWebhookController, { prefix: '/v1/synkra/paystack' });
   await app.register(synkraAgencyWebhookController, { prefix: '/v1/synkra/paystack' });
+  await app.register(synkraDashboardController, { prefix: '/v1/synkra/dashboard' });
   await app.register(synkraHealthController, { prefix: '/v1/synkra/health' });
   await app.register(synkraPreflightController, { prefix: '/v1/synkra/preflight' });
   await app.register(synkraAiBalanceController, { prefix: '/v1/synkra/ai' });

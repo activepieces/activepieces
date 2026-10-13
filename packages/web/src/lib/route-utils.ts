@@ -23,6 +23,8 @@ export const routesThatRequireProjectId = {
 
 export const CHAT_ROUTE = '/chat';
 
+export const DASHBOARD_ROUTE = '/dashboard';
+
 export const determineDefaultRoute = ({
   checkAccess,
   chatEnabled,
@@ -30,6 +32,14 @@ export const determineDefaultRoute = ({
   checkAccess: (permission: Permission) => boolean;
   chatEnabled?: boolean;
 }) => {
+  // Synkra: always land on the dashboard home.
+  // The dashboard shows snapshots of usage, runs, integrations, and
+  // provides quick actions. It requires a project context because it
+  // lives inside ProjectDashboardLayout.
+  if (authenticationSession.getProjectId()) {
+    return DASHBOARD_ROUTE;
+  }
+  // Fallback for users without a project yet.
   if (chatEnabled) {
     return CHAT_ROUTE;
   }
