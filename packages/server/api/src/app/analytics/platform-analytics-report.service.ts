@@ -145,26 +145,21 @@ async function listRuns(projectIds: string[], afterDate: string | null, currentD
             currentDate,
         })
     }
-    const runs = await query.getRawMany()
+    const runs = await query.getRawMany<{ flowId: string, day: Date, runs: string }>()
     return runs.map((run) => {
         return {
             flowId: run.flowId,
-            day: run.day,
+            day: dayjs(run.day).toISOString(),
             runs: Number(run.runs),
         }
     })
 }
 
 function mergeRuns(existing: AnalyticsRunsUsageItem[], incoming: AnalyticsRunsUsageItem[]): AnalyticsRunsUsageItem[] {
-    const map = new Map(existing.map(run => [`${run.flowId}-${run.day}`, { ...run }]))
-    for (const run of incoming) {
+    const map = new Map<string, AnalyticsRunsUsageItem>()
+    for (const run of [...existing, ...incoming]) {
         const key = `${run.flowId}-${run.day}`
-        if (map.has(key)) {
-            map.get(key)!.runs += run.runs
-        }
-        else {
-            map.set(key, { ...run })
-        }
+        map.set(key, { ...run, runs: (map.get(key)?.runs ?? 0) + run.runs })
     }
     return Array.from(map.values())
 }
