@@ -24,6 +24,15 @@ export const platformQueueMigrationService = (log: FastifyBaseLogger) => ({
 
         await migrateRegularJobs({ sourceQueue, targetQueue, batchSize, belongsTo: job => job.data?.projectId === projectId && PROJECT_GROUP_ROUTABLE_JOB_TYPES.has(job.data?.jobType) })
     },
+    async migrateFlowJobs({ fromQueueName, toQueueName, flowId, batchSize = 200 }: MigrateFlowJobsParams): Promise<void> {
+        if (fromQueueName === toQueueName) {
+            return
+        }
+        const sourceQueue = await jobQueue(log).getOrCreateQueue({ queueName: fromQueueName })
+        const targetQueue = await jobQueue(log).getOrCreateQueue({ queueName: toQueueName })
+
+        await migrateRegularJobs({ sourceQueue, targetQueue, batchSize, belongsTo: job => job.data?.flowId === flowId && PROJECT_GROUP_ROUTABLE_JOB_TYPES.has(job.data?.jobType) })
+    },
 })
 
 async function migrateRegularJobs({ sourceQueue, targetQueue, belongsTo, batchSize }: MigrateRegularJobsParams): Promise<void> {
@@ -175,6 +184,13 @@ type MigrateProjectJobsParams = {
     fromQueueName: string
     toQueueName: string
     projectId: string
+    batchSize?: number
+}
+
+type MigrateFlowJobsParams = {
+    fromQueueName: string
+    toQueueName: string
+    flowId: string
     batchSize?: number
 }
 

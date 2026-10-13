@@ -25,7 +25,8 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
 
         const platformId = data.platformId
         const projectId = 'projectId' in data ? data.projectId : null
-        const queueName = await workerGroupRouting.resolveQueueForJob({ platformId, projectId, jobType: data.jobType, log })
+        const flowId = 'flowId' in data ? data.flowId : null
+        const queueName = await workerGroupRouting.resolveQueueForJob({ platformId, projectId, flowId, jobType: data.jobType, log })
         const queue = await ensureQueueExists({ log, queueName })
 
         switch (type) {
@@ -76,8 +77,8 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }, '[jobQueue#removeRepeatingJob] removed jobs from all queues')
     },
 
-    async removeOneTimeJob({ jobId, platformId, projectId, jobType }: RemoveOneTimeJobParams): Promise<void> {
-        const queueName = await workerGroupRouting.resolveQueueForJob({ platformId, projectId, jobType, log })
+    async removeOneTimeJob({ jobId, platformId, projectId, flowId, jobType }: RemoveOneTimeJobParams): Promise<void> {
+        const queueName = await workerGroupRouting.resolveQueueForJob({ platformId, projectId, flowId, jobType, log })
         const queue = await ensureQueueExists({ log, queueName })
         const job = await queue.getJob(jobId)
         if (!isNil(job)) {
@@ -128,8 +129,8 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
         }
         return queue
     },
-    async removeAllFlowRunJobs({ flowRunId, platformId, projectId }: RemoveAllFlowRunJobsParams): Promise<void> {
-        const queueName = await workerGroupRouting.resolveQueueForJob({ platformId, projectId, jobType: WorkerJobType.EXECUTE_FLOW, log })
+    async removeAllFlowRunJobs({ flowRunId, platformId, projectId, flowId }: RemoveAllFlowRunJobsParams): Promise<void> {
+        const queueName = await workerGroupRouting.resolveQueueForJob({ platformId, projectId, flowId, jobType: WorkerJobType.EXECUTE_FLOW, log })
         const queue = await ensureQueueExists({ log, queueName })
         const allJobs = await queue.getJobs(['waiting', 'delayed'])
         const matching = allJobs.filter((j) => j.id?.startsWith(flowRunId))
@@ -225,6 +226,7 @@ type RemoveOneTimeJobParams = {
     jobId: ApId
     platformId: string | null
     projectId?: string | null
+    flowId?: string | null
     jobType?: WorkerJobType
 }
 
@@ -232,6 +234,7 @@ type RemoveAllFlowRunJobsParams = {
     flowRunId: string
     platformId: string | null
     projectId?: string | null
+    flowId?: string | null
 }
 
 type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> = {
