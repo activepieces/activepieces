@@ -5,6 +5,7 @@ import { BackgroundMigration } from '../../../../src/app/database/background-mig
 import {
     BACKGROUND_MIGRATIONS_TABLE,
     backgroundMigrationRunner,
+    MigrationLock,
 } from '../../../../src/app/database/background-migration-runner'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { BackgroundMigrationNotCompleteError, migrationHelpers } from '../../../../src/app/database/migration-helpers'
@@ -160,6 +161,29 @@ describe('runMigrationsWithCatchup', () => {
 
         await backgroundMigrationRunner.runMigrationsWithCatchup({ dataSource: ds, log: app!.log })
         expect(runMigrationsCalls).toBe(2)
+        const rows = await selectByName(new Backfill().name)
+        expect(rows).toHaveLength(1)
+    })
+
+    it('runs the catch-up backfill through an injected lock', async () => {
+        const Backfill = makeTestMigration({ name: `InjectedLock${Date.now()}` })
+        const ds = databaseConnection()
+        let runMigrationsCalls = 0
+        vi.spyOn(ds, 'runMigrations').mockImplementation(async () => {
+            runMigrationsCalls++
+            if (runMigrationsCalls === 1) throw new BackgroundMigrationNotCompleteError(Backfill)
+            return []
+        })
+        const lockedKeys: string[] = []
+        const lock: MigrationLock = {
+            runExclusive: async ({ key, fn }) => {
+                lockedKeys.push(key)
+                return fn()
+            },
+        }
+
+        await backgroundMigrationRunner.runMigrationsWithCatchup({ dataSource: ds, log: app!.log, lock })
+        expect(lockedKeys).toEqual([`background_migration:${new Backfill().name}`])
         const rows = await selectByName(new Backfill().name)
         expect(rows).toHaveLength(1)
     })
