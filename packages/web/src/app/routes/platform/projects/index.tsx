@@ -161,12 +161,17 @@ export default function ProjectsPage() {
         ).length ?? 0,
     }));
   }, [allProjects, allGlobalConnectionsPage?.data]);
-  const { data: pieceSets, isError: pieceSetsFailed } =
-    pieceSetQueries.useAllPieceSets();
+  const {
+    data: pieceSets,
+    isError: pieceSetsFailed,
+    refetch: refetchPieceSets,
+  } = pieceSetQueries.useAllPieceSets();
   const showEmbedKey = useShowEmbedKey();
   const pieceSetField = useProjectPieceSetField({
     project: editDialogProject,
     pieceSets,
+    isError: pieceSetsFailed,
+    onRetry: refetchPieceSets,
   });
   const columns = useMemo(
     () =>
