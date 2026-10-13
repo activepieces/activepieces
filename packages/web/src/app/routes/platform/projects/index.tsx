@@ -31,7 +31,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { globalConnectionsQueries } from '@/features/connections';
-import { pieceSetQueries } from '@/features/piece-sets';
+import { pieceSetQueries, useShowEmbedKey } from '@/features/piece-sets';
 import {
   CreateProjectButton,
   EditProjectDialog,
@@ -161,7 +161,9 @@ export default function ProjectsPage() {
         ).length ?? 0,
     }));
   }, [allProjects, allGlobalConnectionsPage?.data]);
-  const { data: pieceSets } = pieceSetQueries.useAllPieceSets();
+  const { data: pieceSets, isError: pieceSetsFailed } =
+    pieceSetQueries.useAllPieceSets();
+  const showEmbedKey = useShowEmbedKey();
   const pieceSetField = useProjectPieceSetField({
     project: editDialogProject,
     pieceSets,
@@ -171,8 +173,10 @@ export default function ProjectsPage() {
       projectsTableColumns({
         platform,
         pieceSets,
+        pieceSetsFailed,
+        showEmbedKey,
       }),
-    [platform, pieceSets],
+    [platform, pieceSets, pieceSetsFailed, showEmbedKey],
   );
 
   const columnsWithCheckbox: ColumnDef<

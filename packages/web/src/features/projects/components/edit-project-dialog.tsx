@@ -5,7 +5,11 @@ import {
   PlatformRole,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useIsMutating, useQueryClient } from '@tanstack/react-query';
+import {
+  useIsMutating,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
@@ -93,7 +97,8 @@ export function EditProjectDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {!globalConnectionsEnabled || !isLoadingConnections ? (
+        {(!globalConnectionsEnabled || !isLoadingConnections) &&
+        !pieceSetField?.isLoading ? (
           <EditProjectForm
             onClose={onClose}
             projectId={projectId}
@@ -133,21 +138,28 @@ const EditProjectForm = ({
     .filter((connection) => connection.projectIds.includes(projectId))
     .map((connection) => connection.externalId);
 
-  const { mutate, isPending } = projectCollectionUtils.useUpdateProject(
-    () => {
-      queryClient.invalidateQueries({
-        queryKey: globalConnectionsQueries.getGlobalConnectionsQueryKey([]),
-      });
-      mutationFeedback.success(t('Changes saved'));
-      onClose();
-    },
-    (error) => {
+  const { mutateAsync: updateProject } =
+    projectCollectionUtils.useUpdateProject(
+      () => {
+        queryClient.invalidateQueries({
+          queryKey: globalConnectionsQueries.getGlobalConnectionsQueryKey([]),
+        });
+      },
+      () => undefined,
+    );
+  const { mutateAsync: movePieceSet } = useMutation({
+    mutationKey: projectCollectionUtils.updateMutationKey,
+    mutationFn: (pieceSetId: string) =>
+      pieceSetField?.isLoading === false
+        ? pieceSetField.save(pieceSetId)
+        : Promise.resolve(),
+    onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
         message: mutationFeedback.message(error),
       });
     },
-  );
+  });
 
   const form = useForm<EditProjectFormValues>({
     resolver: zodResolver(EditProjectFormSchema),
@@ -157,7 +169,10 @@ const EditProjectForm = ({
       externalId: initialValues?.externalId,
       sensitive: initialValues?.sensitive ?? false,
       globalConnectionExternalIds: currentConnectionExternalIds,
-      pieceSetId: pieceSetField?.initialValue,
+      pieceSetId:
+        pieceSetField?.isLoading === false
+          ? pieceSetField.initialValue
+          : undefined,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
@@ -168,31 +183,38 @@ const EditProjectForm = ({
         className="space-y-4"
         onSubmit={form.handleSubmit(async (values) => {
           form.clearErrors('root.serverError');
-          if (
-            pieceSetField &&
+          const { error: projectError } = await tryCatch(() =>
+            updateProject({
+              projectId,
+              request: {
+                displayName: values.displayName?.trim(),
+                externalId: values.externalId,
+                sensitive: values.sensitive,
+                globalConnectionExternalIds: values.globalConnectionExternalIds,
+              },
+            }),
+          );
+          if (projectError) {
+            form.setError('root.serverError', {
+              type: 'manual',
+              message: mutationFeedback.message(projectError),
+            });
+            return;
+          }
+          const pieceSetChanged =
+            pieceSetField?.isLoading === false &&
             values.pieceSetId !== undefined &&
-            values.pieceSetId !== pieceSetField.initialValue
-          ) {
-            const { error } = await tryCatch(() =>
-              pieceSetField.save(values.pieceSetId ?? ''),
+            values.pieceSetId !== pieceSetField.initialValue;
+          if (pieceSetChanged && values.pieceSetId !== undefined) {
+            const { error: pieceSetError } = await tryCatch(() =>
+              movePieceSet(values.pieceSetId ?? ''),
             );
-            if (error) {
-              form.setError('root.serverError', {
-                type: 'manual',
-                message: mutationFeedback.message(error),
-              });
+            if (pieceSetError) {
               return;
             }
           }
-          mutate({
-            projectId,
-            request: {
-              displayName: values.displayName?.trim(),
-              externalId: values.externalId,
-              sensitive: values.sensitive,
-              globalConnectionExternalIds: values.globalConnectionExternalIds,
-            },
-          });
+          mutationFeedback.success(t('Changes saved'));
+          onClose();
         })}
       >
         {globalConnectionsEnabled && <GlobalConnectionWarning />}
@@ -258,7 +280,7 @@ const EditProjectForm = ({
             />
           )}
 
-        {pieceSetField && (
+        {pieceSetField?.isLoading === false && (
           <FormField
             name="pieceSetId"
             render={({ field }) => (
@@ -310,14 +332,14 @@ const EditProjectForm = ({
             type="button"
             variant="outline"
             onClick={onClose}
-            disabled={isPending}
+            disabled={form.formState.isSubmitting}
           >
             {t('Cancel')}
           </Button>
           <Button
             type="submit"
-            disabled={isPending || !form.formState.isDirty}
-            loading={isPending}
+            disabled={form.formState.isSubmitting || !form.formState.isDirty}
+            loading={form.formState.isSubmitting}
             {...adminControl(AdminControl.PROJECTS_EDIT_SUBMIT)}
           >
             {t('Save')}
@@ -335,12 +357,15 @@ const EditProjectFormSchema = UpdateProjectPlatformRequest.extend({
 
 type EditProjectFormValues = z.infer<typeof EditProjectFormSchema>;
 
-export type PieceSetField = {
-  initialValue: string | undefined;
-  render: (field: {
-    value: string | undefined;
-    onChange: (value: string) => void;
-    disabled?: boolean;
-  }) => ReactNode;
-  save: (pieceSetId: string) => Promise<void>;
-};
+export type PieceSetField =
+  | { isLoading: true }
+  | {
+      isLoading: false;
+      initialValue: string | undefined;
+      render: (field: {
+        value: string | undefined;
+        onChange: (value: string) => void;
+        disabled?: boolean;
+      }) => ReactNode;
+      save: (pieceSetId: string) => Promise<void>;
+    };

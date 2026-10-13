@@ -16,7 +16,7 @@ import {
   Clock,
   Hash,
   Link2,
-  Puzzle,
+  Box,
 } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
@@ -30,11 +30,15 @@ import { ProjectPieceSetCell } from './project-piece-set-cell';
 type ProjectsTableColumnsProps = {
   platform: PlatformWithoutSensitiveData;
   pieceSets: PieceSet[] | undefined;
+  pieceSetsFailed: boolean;
+  showEmbedKey: boolean;
 };
 
 export const projectsTableColumns = ({
   platform,
   pieceSets,
+  pieceSetsFailed,
+  showEmbedKey,
 }: ProjectsTableColumnsProps): ColumnDef<
   RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
 >[] => {
@@ -125,15 +129,26 @@ export const projectsTableColumns = ({
         <DataTableColumnHeader
           column={column}
           title={pieceSetTerms.get().titleSingular}
-          icon={Puzzle}
+          icon={Box}
         />
       ),
-      cell: ({ row }) =>
-        pieceSets === undefined ? (
-          <Skeleton className="h-8 w-44" />
-        ) : (
-          <ProjectPieceSetCell project={row.original} pieceSets={pieceSets} />
-        ),
+      cell: ({ row }) => {
+        if (pieceSets !== undefined) {
+          return (
+            <ProjectPieceSetCell
+              project={row.original}
+              pieceSets={pieceSets}
+              showEmbedNote={showEmbedKey && !!row.original.externalId}
+            />
+          );
+        }
+        if (pieceSetsFailed) {
+          return (
+            <span className="text-sm text-gray-11">{t("Couldn't load")}</span>
+          );
+        }
+        return <Skeleton className="h-8 w-44" />;
+      },
     };
     columns.push(pieceSetColumn);
   }

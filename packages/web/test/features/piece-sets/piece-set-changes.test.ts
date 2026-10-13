@@ -118,12 +118,54 @@ describe('pieceSetChanges.inverse', () => {
       pieceSet: changed,
       change: pieceSetChanges.inverse({ previous, change }),
     });
-    expect(
-      pieceSetChanges.sameConfig({
-        left: undone.config,
-        right: previous.config,
-      }),
-    ).toBe(true);
+    expect(undone.config).toEqual(previous.config);
+  });
+
+  it('leaves changes made by someone else in the meantime', () => {
+    const previous = pieceSet();
+    const change: PieceSetChange = {
+      type: 'visibility',
+      visible: { slack: false },
+    };
+    const changed = pieceSetChanges.apply({ pieceSet: previous, change });
+    const changedElsewhere = pieceSetChanges.apply({
+      pieceSet: changed,
+      change: { type: 'visibility', visible: { gmail: false } },
+    });
+    const undone = pieceSetChanges.apply({
+      pieceSet: changedElsewhere,
+      change: pieceSetChanges.inverse({ previous, change }),
+    });
+    expect(undone.config.pieces).toEqual({
+      mode: PieceSelectionMode.INCLUDE_ALL,
+      exceptions: ['gmail'],
+    });
+  });
+
+  it('restores only the required actions of the pieces it touched', () => {
+    const previous = pieceSet({
+      requiredActions: {
+        mode: RequiredActionsMode.ANY,
+        actions: { slack: ['send_message'] },
+      },
+    });
+    const change: PieceSetChange = {
+      type: 'required',
+      actions: { slack: [] },
+    };
+    const changed = pieceSetChanges.apply({ pieceSet: previous, change });
+    const changedElsewhere = pieceSetChanges.apply({
+      pieceSet: changed,
+      change: { type: 'required', actions: { gmail: ['send_email'] } },
+    });
+    const undone = pieceSetChanges.apply({
+      pieceSet: changedElsewhere,
+      change: pieceSetChanges.inverse({ previous, change }),
+    });
+    expect(undone.config.requiredActions.actions).toEqual({
+      slack: ['send_message'],
+      gmail: ['send_email'],
+    });
   });
 
   it('restores the curated actions of a piece', () => {
@@ -165,12 +207,7 @@ describe('pieceSetChanges.inverse', () => {
       pieceSet: blocked,
       change: pieceSetChanges.inverse({ previous, change }),
     });
-    expect(
-      pieceSetChanges.sameConfig({
-        left: undone.config,
-        right: previous.config,
-      }),
-    ).toBe(true);
+    expect(undone.config).toEqual(previous.config);
   });
 
   it('restores the previous publishing rule', () => {
@@ -240,38 +277,6 @@ describe('pieceSetChanges.toRequest', () => {
       actions: { slack: { mode: 'selected', selected: ['send_message'] } },
       triggers: { slack: { mode: 'all' } },
     });
-  });
-});
-
-describe('pieceSetChanges.sameConfig', () => {
-  it('ignores the order of exceptions and selections', () => {
-    expect(
-      pieceSetChanges.sameConfig({
-        left: pieceSet({
-          pieces: {
-            mode: PieceSelectionMode.EXCLUDE_ALL,
-            exceptions: ['a', 'b'],
-          },
-        }).config,
-        right: pieceSet({
-          pieces: {
-            mode: PieceSelectionMode.EXCLUDE_ALL,
-            exceptions: ['b', 'a'],
-          },
-        }).config,
-      }),
-    ).toBe(true);
-  });
-
-  it('notices a changed mode', () => {
-    expect(
-      pieceSetChanges.sameConfig({
-        left: pieceSet().config,
-        right: pieceSet({
-          requiredActions: { mode: RequiredActionsMode.ALL, actions: {} },
-        }).config,
-      }),
-    ).toBe(false);
   });
 });
 

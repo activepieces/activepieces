@@ -2,19 +2,14 @@ import { isNil, PieceSet, ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 
-import { adminLayout } from '@/app/components/admin';
+import {
+  AdminFetchErrorState,
+  adminLayout,
+  useAdminAction,
+} from '@/app/components/admin';
 import { ProjectAvatar } from '@/app/routes/platform/infra/workers/project-avatar';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
 import {
   Dialog,
   DialogContent,
@@ -23,192 +18,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import {
-  pieceSetMutations,
   pieceSetQueries,
   pieceSetTerms,
+  usePieceSetProjectMoves,
 } from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { SkeletonRows } from './policy-ui';
 
-type PieceSetProjectsDialogProps = {
-  pieceSet: PieceSet;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-
-const isAssignedToSet = ({
-  pieceSet,
-  project,
-}: {
-  pieceSet: PieceSet;
-  project: ProjectWithLimits;
-}) => {
-  if (pieceSet.isDefault) {
-    return project.pieceSetId === pieceSet.id || isNil(project.pieceSetId);
-  }
-  return project.pieceSetId === pieceSet.id;
-};
-
-function findCurrentSetName({
-  project,
-  pieceSets,
-}: {
-  project: ProjectWithLimits;
-  pieceSets: PieceSet[];
-}): string {
-  const currentSet = isNil(project.pieceSetId)
-    ? pieceSets.find((set) => set.isDefault)
-    : pieceSets.find((set) => set.id === project.pieceSetId);
-  return currentSet?.name ?? '';
-}
-
-function assignedFirst({
-  projects,
-  assignedIds,
-}: {
-  projects: ProjectWithLimits[];
-  assignedIds: string[];
-}): ProjectWithLimits[] {
-  const assigned = new Set(assignedIds);
-  return [
-    ...projects.filter((project) => assigned.has(project.id)),
-    ...projects.filter((project) => !assigned.has(project.id)),
-  ];
-}
-
-const AssignProjectsForm = ({
-  pieceSet,
-  allProjects,
-  serverAssignedIds,
-  onOpenChange,
-}: {
-  pieceSet: PieceSet;
-  allProjects: ProjectWithLimits[];
-  serverAssignedIds: string[];
-  onOpenChange: (open: boolean) => void;
-}) => {
-  const [selected, setSelected] = useState<string[]>(serverAssignedIds);
-  const [orderedProjects] = useState(() =>
-    assignedFirst({ projects: allProjects, assignedIds: serverAssignedIds }),
-  );
-  const { mutate: setProjects, isPending: isSaving } =
-    pieceSetMutations.useSetProjects();
-  const { data: pieceSets = [] } = pieceSetQueries.useAllPieceSets();
-  const movingCount = selected.filter(
-    (id) =>
-      !serverAssignedIds.includes(id) &&
-      !isNil(allProjects.find((project) => project.id === id)?.pieceSetId),
-  ).length;
-
-  const serverSet = new Set(serverAssignedIds);
-  const draftSet = new Set(selected);
-  const added = selected.filter((id) => !serverSet.has(id));
-  const removed = pieceSet.isDefault
-    ? []
-    : serverAssignedIds.filter((id) => !draftSet.has(id));
-  const dirty = added.length > 0 || removed.length > 0;
-
-  const toggleProject = (projectId: string) => {
-    setSelected((prev) =>
-      prev.includes(projectId)
-        ? prev.filter((id) => id !== projectId)
-        : [...prev, projectId],
-    );
-  };
-
-  const handleSave = () => {
-    if (!dirty || isSaving) {
-      return;
-    }
-    setProjects(
-      { id: pieceSet.id, added, removed },
-      { onSuccess: () => onOpenChange(false) },
-    );
-  };
-
-  return (
-    <>
-      <DialogHeader>
-        <DialogTitle>{t('Assign projects')}</DialogTitle>
-        <DialogDescription>
-          {pieceSet.isDefault
-            ? t(
-                'Projects without a {term} already use the Default {term}. Pick projects to move back to it.',
-                pieceSetTerms.get(),
-              )
-            : t('Choose which projects build with {name}.', {
-                name: pieceSet.name,
-              })}
-        </DialogDescription>
-      </DialogHeader>
-      <Command className="rounded-xl border">
-        <CommandInput placeholder={t('Search projects')} />
-        <CommandList className="max-h-72 overflow-y-auto">
-          <CommandEmpty>{t('No projects found')}</CommandEmpty>
-          <CommandGroup>
-            {orderedProjects.map((project) => {
-              const checked = selected.includes(project.id);
-              const locked =
-                pieceSet.isDefault && isAssignedToSet({ pieceSet, project });
-              return (
-                <CommandItem
-                  key={project.id}
-                  value={project.id}
-                  keywords={[project.displayName]}
-                  disabled={locked}
-                  onSelect={() => toggleProject(project.id)}
-                >
-                  <Checkbox checked={checked} className="pointer-events-none" />
-                  <ProjectAvatar project={project} size="sm" />
-                  <span className="truncate">{project.displayName}</span>
-                  {!isAssignedToSet({ pieceSet, project }) && (
-                    <span className="ml-auto shrink-0 text-xs text-gray-11">
-                      {t('Currently: {name}', {
-                        name: findCurrentSetName({ project, pieceSets }),
-                      })}
-                    </span>
-                  )}
-                </CommandItem>
-              );
-            })}
-          </CommandGroup>
-        </CommandList>
-      </Command>
-      {movingCount > 0 && (
-        <p className="text-xs text-warning-11">
-          {t('projectsMovingFromOtherPolicies', {
-            ...pieceSetTerms.get(),
-            count: movingCount,
-          })}
-        </p>
-      )}
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isSaving}
-          onClick={() => onOpenChange(false)}
-        >
-          {t('Cancel')}
-        </Button>
-        <Button
-          {...adminControl(AdminControl.PIECE_SETS_PROJECTS_SUBMIT)}
-          type="button"
-          loading={isSaving}
-          disabled={!dirty}
-          onClick={handleSave}
-        >
-          {t('Save')}
-        </Button>
-      </DialogFooter>
-    </>
-  );
-};
-
 export const usePieceSetProjects = (pieceSet: PieceSet) => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const {
     data: platformsData,
     isLoading,
@@ -216,8 +40,11 @@ export const usePieceSetProjects = (pieceSet: PieceSet) => {
     refetch,
   } = projectHooks.useProjectsForPlatforms();
   const allProjects = useMemo<ProjectWithLimits[]>(
-    () => platformsData?.flatMap((p) => p.projects) ?? [],
-    [platformsData],
+    () =>
+      (platformsData ?? [])
+        .flatMap((entry) => entry.projects)
+        .filter((project) => project.platformId === platform.id),
+    [platformsData, platform.id],
   );
   const assignedProjects = useMemo(
     () =>
@@ -234,33 +61,239 @@ export const PieceSetProjectsDialog = ({
 }: PieceSetProjectsDialogProps) => {
   const { allProjects, assignedProjects, isLoading, isError, refetch } =
     usePieceSetProjects(pieceSet);
+  const body = (() => {
+    if (isError) {
+      return (
+        <>
+          <DialogHeader>
+            <DialogTitle>{t('Assign projects')}</DialogTitle>
+          </DialogHeader>
+          <AdminFetchErrorState entity={t('projects')} onRetry={refetch} />
+        </>
+      );
+    }
+    if (isLoading) {
+      return (
+        <>
+          <DialogHeader>
+            <DialogTitle>{t('Assign projects')}</DialogTitle>
+          </DialogHeader>
+          <SkeletonRows count={5} className="h-9 rounded-lg" />
+        </>
+      );
+    }
+    return (
+      <AssignProjectsForm
+        key={open ? 'open' : 'closed'}
+        pieceSet={pieceSet}
+        allProjects={allProjects}
+        serverAssignedIds={assignedProjects.map((project) => project.id)}
+        onOpenChange={onOpenChange}
+      />
+    );
+  })();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={adminLayout.dialog.md}>
-        {isError ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>{t('Assign projects')}</DialogTitle>
-            </DialogHeader>
-            <DataFetchErrorState entity={t('projects')} onRetry={refetch} />
-          </>
-        ) : isLoading ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>{t('Assign projects')}</DialogTitle>
-            </DialogHeader>
-            <SkeletonRows count={5} className="h-9 rounded-lg" />
-          </>
-        ) : (
-          <AssignProjectsForm
-            key={open ? 'open' : 'closed'}
-            pieceSet={pieceSet}
-            allProjects={allProjects}
-            serverAssignedIds={assignedProjects.map((project) => project.id)}
-            onOpenChange={onOpenChange}
-          />
-        )}
-      </DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>{body}</DialogContent>
     </Dialog>
   );
+};
+
+const AssignProjectsForm = ({
+  pieceSet,
+  allProjects,
+  serverAssignedIds,
+  onOpenChange,
+}: {
+  pieceSet: PieceSet;
+  allProjects: ProjectWithLimits[];
+  serverAssignedIds: string[];
+  onOpenChange: (open: boolean) => void;
+}) => {
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(serverAssignedIds),
+  );
+  const [query, setQuery] = useState('');
+  const [orderedProjects] = useState(() =>
+    assignedFirst({ projects: allProjects, assignedIds: serverAssignedIds }),
+  );
+  const { data: pieceSets = [] } = pieceSetQueries.useAllPieceSets();
+  const moveProjects = usePieceSetProjectMoves();
+  const defaultSetId = pieceSets.find((set) => set.isDefault)?.id;
+  const projectsById = useMemo(
+    () => new Map(allProjects.map((project) => [project.id, project])),
+    [allProjects],
+  );
+  const setNames = useMemo(
+    () => new Map(pieceSets.map((set) => [set.id, set.name])),
+    [pieceSets],
+  );
+
+  const serverSet = new Set(serverAssignedIds);
+  const added = [...selected].filter((id) => !serverSet.has(id));
+  const removed = pieceSet.isDefault
+    ? []
+    : serverAssignedIds.filter((id) => !selected.has(id));
+  const dirty = added.length > 0 || removed.length > 0;
+  const movingCount = added.filter((id) => {
+    const current = projectsById.get(id)?.pieceSetId;
+    return !isNil(current) && current !== defaultSetId;
+  }).length;
+
+  const needle = query.trim().toLowerCase();
+  const visibleProjects =
+    needle === ''
+      ? orderedProjects
+      : orderedProjects.filter((project) =>
+          project.displayName.toLowerCase().includes(needle),
+        );
+
+  const save = useAdminAction({
+    verb: 'save',
+    messages: { failed: t("Some project changes weren't saved") },
+    run: () =>
+      moveProjects({
+        pieceSetId: pieceSet.id,
+        added,
+        removed,
+        defaultSetId,
+      }),
+    onSuccess: () => onOpenChange(false),
+  });
+
+  const toggleProject = (projectId: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(projectId)) {
+        next.delete(projectId);
+      } else {
+        next.add(projectId);
+      }
+      return next;
+    });
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>{t('Assign projects')}</DialogTitle>
+        <DialogDescription>
+          {pieceSet.isDefault
+            ? t(
+                'Projects without a {term} already use the Default {term}. Pick projects to move back to it.',
+                pieceSetTerms.get(),
+              )
+            : t('Choose which projects build with {name}.', {
+                name: pieceSet.name,
+              })}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex flex-col gap-2">
+        <Input
+          type="search"
+          value={query}
+          placeholder={t('Search projects')}
+          aria-label={t('Search projects')}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        {visibleProjects.length === 0 ? (
+          <p className="rounded-xl border p-4 text-sm text-gray-11">
+            {t('No projects found')}
+          </p>
+        ) : (
+          <div className="h-72 rounded-xl border p-1">
+            <VirtualizedScrollArea
+              items={visibleProjects}
+              estimateSize={() => PROJECT_ROW_HEIGHT}
+              getItemKey={(index) => visibleProjects[index].id}
+              renderItem={(project) => {
+                const locked =
+                  pieceSet.isDefault && isAssignedToSet({ pieceSet, project });
+                const currentSetId = project.pieceSetId ?? defaultSetId;
+                return (
+                  <label className="flex h-10 min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 hover:bg-gray-3 has-disabled:cursor-default has-disabled:opacity-60">
+                    <Checkbox
+                      checked={selected.has(project.id)}
+                      disabled={locked}
+                      onCheckedChange={() => toggleProject(project.id)}
+                    />
+                    <ProjectAvatar project={project} size="sm" />
+                    <span className="min-w-0 truncate text-sm">
+                      {project.displayName}
+                    </span>
+                    {!isAssignedToSet({ pieceSet, project }) &&
+                      currentSetId !== undefined && (
+                        <span className="ml-auto shrink-0 text-xs text-gray-11">
+                          {t('Currently: {name}', {
+                            name: setNames.get(currentSetId) ?? '',
+                          })}
+                        </span>
+                      )}
+                  </label>
+                );
+              }}
+            />
+          </div>
+        )}
+      </div>
+      {movingCount > 0 && (
+        <p className="text-xs text-warning-11">
+          {t('projectsMovingFromOtherSets', { count: movingCount })}
+        </p>
+      )}
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={save.isPending}
+          onClick={() => onOpenChange(false)}
+        >
+          {t('Cancel')}
+        </Button>
+        <Button
+          {...adminControl(AdminControl.PIECE_SETS_PROJECTS_SUBMIT)}
+          type="button"
+          loading={save.isPending}
+          disabled={!dirty}
+          onClick={() => save.mutate()}
+        >
+          {t('Save')}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+};
+
+function isAssignedToSet({
+  pieceSet,
+  project,
+}: {
+  pieceSet: PieceSet;
+  project: ProjectWithLimits;
+}): boolean {
+  if (pieceSet.isDefault) {
+    return project.pieceSetId === pieceSet.id || isNil(project.pieceSetId);
+  }
+  return project.pieceSetId === pieceSet.id;
+}
+
+function assignedFirst({
+  projects,
+  assignedIds,
+}: {
+  projects: ProjectWithLimits[];
+  assignedIds: string[];
+}): ProjectWithLimits[] {
+  const assigned = new Set(assignedIds);
+  return [
+    ...projects.filter((project) => assigned.has(project.id)),
+    ...projects.filter((project) => !assigned.has(project.id)),
+  ];
+}
+
+const PROJECT_ROW_HEIGHT = 40;
+
+type PieceSetProjectsDialogProps = {
+  pieceSet: PieceSet;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
