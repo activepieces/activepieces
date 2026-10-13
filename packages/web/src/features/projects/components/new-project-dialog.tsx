@@ -209,7 +209,6 @@ const NewProjectForm = ({
                   {...field}
                   id="displayName"
                   placeholder={t('Project Name')}
-                  className="rounded-sm"
                 />
               </FormItem>
             )}
@@ -226,7 +225,6 @@ const NewProjectForm = ({
                   id="alertReceiverEmail"
                   type="email"
                   placeholder="alerts@example.com"
-                  className="rounded-sm"
                   value={field.value ?? ''}
                 />
                 <span className="text-xs text-gray-11">

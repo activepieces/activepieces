@@ -6,7 +6,7 @@ import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-import { PlatformSidebar } from '@/app/components/sidebar/platform';
+import { PlatformNav } from '@/app/components/sidebar/platform';
 
 const plan = vi.hoisted(() => ({ aiProvidersEnabled: false }));
 
@@ -80,7 +80,7 @@ vi.mock('@/app/components/sidebar/ap-sidebar-item', () => ({
 function renderSidebar() {
   render(
     <MemoryRouter>
-      <PlatformSidebar />
+      <PlatformNav />
     </MemoryRouter>,
   );
 }

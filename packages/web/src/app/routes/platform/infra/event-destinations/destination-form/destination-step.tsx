@@ -58,7 +58,7 @@ export const DestinationStep = ({
                     key={option.kind}
                     htmlFor={itemId}
                     className={cn(
-                      'block rounded-lg border p-4 font-normal transition-shadow',
+                      'block rounded-xl border p-4 font-normal transition-shadow',
                       isEdit ? 'cursor-not-allowed' : 'cursor-pointer',
                       isSelected &&
                         'border-accent-9 ring-[3px] ring-accent-9/15',
