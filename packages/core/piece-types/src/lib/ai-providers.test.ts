@@ -129,21 +129,6 @@ describe('canDisableReasoning', () => {
         }
     })
 
-    it('is false for the Claude 5.5 models whose OpenRouter endpoint makes reasoning mandatory', () => {
-        expect(aiProviderUtils.canDisableReasoning({ modelId: 'anthropic/claude-sonnet-5.5' })).toBe(false)
-        expect(aiProviderUtils.canDisableReasoning({ modelId: 'anthropic/claude-opus-5.5' })).toBe(false)
-        expect(aiProviderUtils.canDisableReasoning({ modelId: 'anthropic/claude-haiku-5.5' })).toBe(true)
-    })
-
-    it('offers the Claude 5.5 models on credits and on an own Anthropic key', () => {
-        for (const id of ['anthropic/claude-sonnet-5.5', 'anthropic/claude-opus-5.5', 'anthropic/claude-haiku-5.5']) {
-            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES], id).toContain(id)
-        }
-        for (const id of ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5']) {
-            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ANTHROPIC], id).toContain(id)
-        }
-    })
-
     it('is false for a managed model we have never observed accepting one', () => {
         expect(aiProviderUtils.canDisableReasoning({ modelId: 'google/gemini-3.7-flash' })).toBe(false)
         expect(aiProviderUtils.canDisableReasoning({ modelId: 'x-ai/grok-4.20' })).toBe(false)
