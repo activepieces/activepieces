@@ -9,6 +9,7 @@ import { z } from 'zod';
 
 import {
   ConfirmDialog,
+  RowActionTooltip,
   adminLayout,
   useAdminAction,
 } from '@/app/components/admin';
@@ -23,11 +24,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { oauthAppsQueries } from '@/features/connections';
 import { oauthAppsApi } from '@/features/connections/api/oauth-apps';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -91,46 +87,50 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
     <>
       <Dialog open={open} onOpenChange={changeOpen}>
         <DialogTrigger asChild>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                {...adminControl(
-                  isNil(oauth2App)
-                    ? AdminControl.PIECES_OAUTH_CONFIGURE_OPEN
-                    : AdminControl.PIECES_OAUTH_DELETE_OPEN,
-                )}
-                ref={ref}
-                size={'sm'}
-                variant={'ghost'}
-                loading={isUpserting || isDeleting}
-                disabled={!isEnabled}
-                onClick={(e) => {
-                  if (!isEnabled) {
-                    e.preventDefault();
-                    return;
-                  }
-                  if (isNil(oauth2App)) {
-                    setOpen(true);
-                  } else {
-                    setConfirmingRemove(true);
-                  }
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-              >
-                {isNil(oauth2App) ? (
-                  <Unlock className="size-4" />
-                ) : (
-                  <Lock className="size-4 text-danger-11" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {isNil(oauth2App)
+          <RowActionTooltip
+            label={
+              isNil(oauth2App)
                 ? t('Configure OAuth2 App')
-                : t('Delete OAuth2 App')}
-            </TooltipContent>
-          </Tooltip>
+                : t('Delete OAuth2 App')
+            }
+          >
+            <Button
+              {...adminControl(
+                isNil(oauth2App)
+                  ? AdminControl.PIECES_OAUTH_CONFIGURE_OPEN
+                  : AdminControl.PIECES_OAUTH_DELETE_OPEN,
+              )}
+              ref={ref}
+              size={'sm'}
+              variant={'ghost'}
+              loading={isUpserting || isDeleting}
+              disabled={!isEnabled}
+              aria-label={
+                isNil(oauth2App)
+                  ? t('Configure OAuth2 App')
+                  : t('Delete OAuth2 App')
+              }
+              onClick={(e) => {
+                if (!isEnabled) {
+                  e.preventDefault();
+                  return;
+                }
+                if (isNil(oauth2App)) {
+                  setOpen(true);
+                } else {
+                  setConfirmingRemove(true);
+                }
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              {isNil(oauth2App) ? (
+                <Unlock className="size-4" />
+              ) : (
+                <Lock className="size-4 text-danger-11" />
+              )}
+            </Button>
+          </RowActionTooltip>
         </DialogTrigger>
         <DialogContent className={adminLayout.dialog.md}>
           <DialogTitle>{t('Configure OAuth2 App')}</DialogTitle>

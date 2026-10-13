@@ -78,6 +78,9 @@ export default function ProjectsPage() {
     [displayNameFilter, typeFilter.join(',')],
   );
 
+  const hasActiveFilters =
+    displayNameFilter !== undefined ||
+    typeFilter.some((type) => type !== ProjectType.TEAM);
   const { data: allProjects } =
     projectCollectionUtils.useAllPlatformProjects(filters);
   const projectsLoad = projectCollectionUtils.useLoadState();
@@ -388,10 +391,16 @@ export default function ProjectsPage() {
         </SettingsRow>
       </SettingsPanel>
       <AdminDataTable
-        emptyStateTextTitle={t('No projects found')}
-        emptyStateTextDescription={t(
-          'Start by creating projects to manage your automation teams',
-        )}
+        emptyStateTextTitle={
+          hasActiveFilters
+            ? t('No projects match these filters')
+            : t('No projects found')
+        }
+        emptyStateTextDescription={
+          hasActiveFilters
+            ? t('Clear a filter to see more.')
+            : t('Start by creating projects to manage your automation teams')
+        }
         emptyStateIcon={<Package />}
         onRowClick={async (project) => {
           await projectCollectionUtils.setCurrentProject(project.id);
@@ -431,6 +440,7 @@ export default function ProjectsPage() {
           projectCollectionUtils.refetchProjects().catch(() => undefined)
         }
         clientPagination={true}
+        hidePagination={projectsLoad.isError && allProjects.length === 0}
         bulkActions={bulkActions}
         actions={actions}
       />

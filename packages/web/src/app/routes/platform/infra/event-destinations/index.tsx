@@ -180,7 +180,10 @@ const EventDestinationsPage = () => {
         notClickable: true,
         header: () => null,
         cell: ({ row }) => (
-          <EventDestinationActions destination={row.original} />
+          <EventDestinationActions
+            destination={row.original}
+            name={destinationTitle(row.original)}
+          />
         ),
       },
     ],

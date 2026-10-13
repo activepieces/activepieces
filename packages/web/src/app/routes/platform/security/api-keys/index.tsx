@@ -75,7 +75,7 @@ const ApiKeysPage = () => {
         isError={isError && !isSample}
         hasData={data !== undefined}
         onRetry={refetch}
-        entity={t('API Keys')}
+        entity={t('API keys')}
         isEmpty={keys.length === 0}
         empty={
           <AdminEmpty

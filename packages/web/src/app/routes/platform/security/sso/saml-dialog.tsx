@@ -263,6 +263,7 @@ const DomainStep = ({
         SsoDomainVerificationStatus.VERIFIED;
       setNotFoundYet(!verified);
       if (verified) {
+        mutationFeedback.success(t('Domain verified'));
         onVerified();
       }
     },

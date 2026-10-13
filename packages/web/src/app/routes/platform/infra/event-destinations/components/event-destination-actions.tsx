@@ -19,8 +19,10 @@ import { EVENT_STREAMING_PATH } from '../lib/event-streaming-path';
 
 const EventDestinationActions = ({
   destination,
+  name,
 }: {
   destination: EventDestination;
+  name: string;
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -76,8 +78,8 @@ const EventDestinationActions = ({
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={t('Delete destination?')}
-        description={hostOf(destination.url)}
+        title={t('Delete {name}?', { name })}
+        description={destination.url}
         consequence={t('Events will stop being sent to this destination.')}
         confirmLabel={t('Delete')}
         onConfirm={() => deleteDestination.mutateAsync()}
@@ -86,13 +88,5 @@ const EventDestinationActions = ({
     </div>
   );
 };
-
-function hostOf(url: string): string | undefined {
-  try {
-    return new URL(url).host;
-  } catch {
-    return undefined;
-  }
-}
 
 export default EventDestinationActions;

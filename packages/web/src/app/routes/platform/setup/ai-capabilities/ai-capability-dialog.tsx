@@ -332,6 +332,7 @@ function CapabilityForm({
                     }
                   />
                 </FormControl>
+                <FormMessage />
                 {selectedProvider && (
                   <a
                     href={selectedProvider.signupUrl}
@@ -346,7 +347,6 @@ function CapabilityForm({
                     <ExternalLink className="size-3" />
                   </a>
                 )}
-                <FormMessage />
               </FormItem>
             )}
           />

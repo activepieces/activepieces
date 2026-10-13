@@ -3,7 +3,7 @@
  */
 /* eslint-disable jest-dom/prefer-in-document */
 /* eslint-disable testing-library/no-node-access -- the footer slot is a plain DOM node outside the rendered tree */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { createMemoryRouter, Link, RouterProvider } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -36,6 +36,27 @@ function mountWithRouter(element: React.ReactNode) {
   render(<RouterProvider router={router} />);
   return router;
 }
+
+function ControlledSaveBar({ control }: { control: BarControl }) {
+  const [state, setState] = React.useState<BarState>({
+    dirty: true,
+    saving: true,
+  });
+  control.set = setState;
+  return <SaveBar {...state} onSave={() => undefined} />;
+}
+
+class RouterRequest {
+  url: string;
+  signal: AbortSignal | undefined;
+  constructor(url: string, init?: { signal?: AbortSignal }) {
+    this.url = url;
+    this.signal = init?.signal;
+  }
+}
+
+type BarState = { dirty: boolean; saving: boolean; error?: string };
+type BarControl = { set?: (state: BarState) => void };
 
 function pressSave() {
   const isMac = /(Mac)/i.test(navigator.userAgent);
@@ -110,6 +131,33 @@ describe('SaveBar leave guard', () => {
     );
     fireEvent.click(screen.getByText('Go elsewhere'));
     expect(await screen.findAllByText('Leave without saving?')).toHaveLength(1);
+  });
+
+  it('waits for an in-flight save and then continues the navigation', async () => {
+    vi.stubGlobal('Request', RouterRequest);
+    const control: BarControl = {};
+    const router = mountWithRouter(<ControlledSaveBar control={control} />);
+    fireEvent.click(screen.getByText('Go elsewhere'));
+    await act(async () => undefined);
+    expect(screen.queryByText('Leave without saving?')).toBeNull();
+    expect(router.state.location.pathname).toBe('/');
+    await act(async () => control.set?.({ dirty: false, saving: false }));
+    expect(await screen.findByText('Other page')).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/other');
+    vi.unstubAllGlobals();
+  });
+
+  it('keeps the user on the page and asks when the in-flight save fails', async () => {
+    const control: BarControl = {};
+    const router = mountWithRouter(<ControlledSaveBar control={control} />);
+    fireEvent.click(screen.getByText('Go elsewhere'));
+    await act(async () => undefined);
+    await act(async () =>
+      control.set?.({ dirty: true, saving: false, error: 'Save failed' }),
+    );
+    expect(await screen.findByText('Leave without saving?')).toBeTruthy();
+    expect(screen.getByText('Save failed')).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/');
   });
 });
 

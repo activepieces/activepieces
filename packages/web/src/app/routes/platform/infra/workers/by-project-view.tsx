@@ -244,7 +244,11 @@ function WorkerGroupCell({
 
   return (
     <div className="flex flex-col gap-1">
-      <Select value={selectValue} onValueChange={handleChange}>
+      <Select
+        value={selectValue}
+        onValueChange={handleChange}
+        disabled={saveGroup.isPending}
+      >
         <SelectTrigger
           size="sm"
           aria-busy={saveGroup.isPending}
@@ -394,7 +398,7 @@ function useProjectUpdate({
       api.post<ProjectWithLimits>(`/v1/projects/${row.id}`, update),
     feedback: 'none',
     handleError: (error) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-projects-page'] });
       mutationFeedback.error({
         error,
         title: adminActionCopy.failed({

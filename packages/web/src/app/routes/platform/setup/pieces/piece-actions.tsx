@@ -38,6 +38,7 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
             size={'sm'}
             loading={isPinPending}
             disabled={!isEnabled}
+            aria-label={pinned ? t('Unpin this piece') : t('Pin this piece')}
             onClick={(e) => {
               if (!isEnabled) {
                 e.preventDefault();

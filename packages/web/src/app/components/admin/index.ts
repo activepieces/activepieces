@@ -19,6 +19,7 @@ export { StatCard, StatGrid } from './stat-card';
 export { LockedCallout } from './locked-callout';
 export { ConfirmDialog } from './confirm-dialog';
 export { InstantSwitch } from './instant-switch';
+export { RowActionTooltip } from './row-action-tooltip';
 export {
   AdminFetchErrorState,
   AdminQueryState,
