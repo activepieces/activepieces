@@ -446,6 +446,7 @@ function PieceSetDetails({
               <PublishingRuleSentence
                 count={requiredCount}
                 mode={requiredMode}
+                onChange={onChange}
               />
               <RequiredActionsList pieceSet={pieceSet} onChange={onChange} />
               <Button
