@@ -149,6 +149,31 @@ const useRefreshDraftOnPush = () => {
   }, [socket, flowId, refreshDraft]);
 };
 
+const useRefreshDraftOnReconnectAndReturn = () => {
+  const socket = useSocket();
+  const refreshDraft = useBuilderStateContext((state) => state.refreshDraft);
+  useEffect(() => {
+    let socketHasConnected = socket.connected;
+    const refreshOnReconnect = () => {
+      if (socketHasConnected) {
+        refreshDraft().catch(() => undefined);
+      }
+      socketHasConnected = true;
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') {
+        refreshDraft().catch(() => undefined);
+      }
+    };
+    socket.on('connect', refreshOnReconnect);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      socket.off('connect', refreshOnReconnect);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, [socket, refreshDraft]);
+};
+
 export const useSwitchToDraft = () => {
   const [flowVersion, setVersion, clearRun, setFlow] = useBuilderStateContext(
     (state) => [
@@ -284,6 +309,7 @@ export const flowCanvasHooks = {
   useShowBuilderIsSavingWarningBeforeLeaving,
   useFlushPendingEditsOnLeave,
   useRefreshDraftOnPush,
+  useRefreshDraftOnReconnectAndReturn,
   useIsFocusInsideListMapperModeInput,
   useFocusOnStep,
   useResizeCanvas,

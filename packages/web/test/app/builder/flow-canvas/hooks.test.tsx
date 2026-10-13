@@ -50,6 +50,7 @@ const socketHarness = vi.hoisted(() => {
   type ClientHandler = (payload: unknown) => void;
   const handlers: Record<string, ClientHandler[]> = {};
   const socket = {
+    connected: false,
     on: (event: string, handler: ClientHandler) => {
       (handlers[event] ??= []).push(handler);
       return socket;
@@ -74,6 +75,7 @@ const socketHarness = vi.hoisted(() => {
     for (const key of Object.keys(handlers)) {
       delete handlers[key];
     }
+    socket.connected = false;
   };
   return { socket, sendFromServer, reset };
 });
@@ -348,6 +350,109 @@ describe('useRefreshDraftOnPush', () => {
   }
 });
 
+describe('useRefreshDraftOnReconnectAndReturn', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    socketHarness.reset();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+    flowsApiMock.get.mockResolvedValue(
+      flowWithDraftVersion({
+        versionId: 'draft-1',
+        displayName: 'Renamed while the tab was away',
+      }),
+    );
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('shows the newest draft after a socket reconnect, with no toast', async () => {
+    socketHarness.socket.connected = true;
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    mount(store);
+
+    connectSocket();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).toHaveBeenCalledWith('flow-1');
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Renamed while the tab was away',
+    );
+    expect(shownToasts()).toHaveLength(0);
+  });
+
+  it('does not refresh on the first connect of a page load', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    mount(store);
+
+    connectSocket();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('refreshes on a reconnect that follows the first connect of a page load', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    mount(store);
+
+    connectSocket();
+    await vi.advanceTimersByTimeAsync(0);
+    connectSocket();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(1);
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Renamed while the tab was away',
+    );
+  });
+
+  it('shows the newest draft when the tab becomes visible again, with no toast', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    mount(store);
+
+    showTab();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).toHaveBeenCalledWith('flow-1');
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Renamed while the tab was away',
+    );
+    expect(shownToasts()).toHaveLength(0);
+  });
+
+  it('does not refresh when the tab becomes hidden', async () => {
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    mount(store);
+
+    hideTab();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  function mount(store: BuilderStore) {
+    act(() => {
+      root.render(
+        <BuilderStateContext.Provider value={store}>
+          <ReconnectAndReturnWatcher />
+          <Toaster />
+        </BuilderStateContext.Provider>,
+      );
+    });
+  }
+});
+
 function shownToasts() {
   return document.querySelectorAll('[data-sonner-toast]');
 }
@@ -366,6 +471,17 @@ function sendDraftPush(event: FlowDraftUpdatedEvent) {
   });
 }
 
+function ReconnectAndReturnWatcher() {
+  flowCanvasHooks.useRefreshDraftOnReconnectAndReturn();
+  return null;
+}
+
+function connectSocket() {
+  act(() => {
+    socketHarness.sendFromServer({ event: 'connect', payload: undefined });
+  });
+}
+
 function LeaveWatcher() {
   flowCanvasHooks.useFlushPendingEditsOnLeave();
   return null;
@@ -373,6 +489,11 @@ function LeaveWatcher() {
 
 function hideTab() {
   vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+  document.dispatchEvent(new Event('visibilitychange'));
+}
+
+function showTab() {
+  vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
   document.dispatchEvent(new Event('visibilitychange'));
 }
 
