@@ -217,82 +217,84 @@ const AssignProjectsForm = ({
               })}
         </DialogDescription>
       </DialogHeader>
-      <div className="flex flex-col gap-2">
-        <Input
-          type="search"
-          value={query}
-          placeholder={t('Search projects')}
-          aria-label={t('Search projects')}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        {visibleProjects.length === 0 ? (
-          <p className="rounded-xl border p-4 text-sm text-gray-11">
-            {t('No projects found')}
-          </p>
-        ) : (
-          <div
-            className="rounded-xl border p-1"
-            style={{
-              height: listUtils.cappedHeight({
-                count: visibleProjects.length,
-                rowHeight: PROJECT_ROW_HEIGHT,
-                padding: 10,
-                max: PROJECT_LIST_MAX_HEIGHT,
-              }),
-            }}
-          >
-            <VirtualizedScrollArea
-              items={visibleProjects}
-              estimateSize={() => PROJECT_ROW_HEIGHT}
-              getItemKey={(index) => visibleProjects[index].id}
-              renderItem={(project) => {
-                const row = projectPieceSet.assignRow({
-                  pieceSet,
-                  project,
-                  defaultSetId,
-                  setNames,
-                });
-                return (
-                  <label className="flex h-10 min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 hover:bg-gray-3 has-disabled:cursor-default has-disabled:opacity-60">
-                    <Checkbox
-                      checked={selected.has(project.id)}
-                      disabled={row.locked}
-                      onCheckedChange={() => toggleProject(project.id)}
-                    />
-                    <ProjectAvatar project={project} size="sm" />
-                    <span className="min-w-0 truncate text-sm">
-                      {project.displayName}
-                    </span>
-                    {row.lockedIn !== null && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span
-                            tabIndex={0}
-                            className="ml-auto shrink-0 rounded-sm text-xs text-gray-11 focus-visible:outline-2 focus-visible:outline-accent-8"
-                          >
-                            {t('Already in {name}', { name: row.lockedIn })}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {t(
-                            'To move it out, assign it from another {term}.',
-                            pieceSetTerms.get(),
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                    {row.currentlyIn !== null && (
-                      <span className="ml-auto shrink-0 text-xs text-gray-11">
-                        {t('Currently: {name}', { name: row.currentlyIn })}
-                      </span>
-                    )}
-                  </label>
-                );
+      <fieldset disabled={save.isPending} className="contents">
+        <div className="flex flex-col gap-2">
+          <Input
+            type="search"
+            value={query}
+            placeholder={t('Search projects')}
+            aria-label={t('Search projects')}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          {visibleProjects.length === 0 ? (
+            <p className="rounded-xl border p-4 text-sm text-gray-11">
+              {t('No projects found')}
+            </p>
+          ) : (
+            <div
+              className="rounded-xl border p-1"
+              style={{
+                height: listUtils.cappedHeight({
+                  count: visibleProjects.length,
+                  rowHeight: PROJECT_ROW_HEIGHT,
+                  padding: 10,
+                  max: PROJECT_LIST_MAX_HEIGHT,
+                }),
               }}
-            />
-          </div>
-        )}
-      </div>
+            >
+              <VirtualizedScrollArea
+                items={visibleProjects}
+                estimateSize={() => PROJECT_ROW_HEIGHT}
+                getItemKey={(index) => visibleProjects[index].id}
+                renderItem={(project) => {
+                  const row = projectPieceSet.assignRow({
+                    pieceSet,
+                    project,
+                    defaultSetId,
+                    setNames,
+                  });
+                  return (
+                    <label className="flex h-10 min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 hover:bg-gray-3 has-disabled:cursor-default has-disabled:opacity-60">
+                      <Checkbox
+                        checked={selected.has(project.id)}
+                        disabled={row.locked}
+                        onCheckedChange={() => toggleProject(project.id)}
+                      />
+                      <ProjectAvatar project={project} size="sm" />
+                      <span className="min-w-0 truncate text-sm">
+                        {project.displayName}
+                      </span>
+                      {row.lockedIn !== null && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              tabIndex={0}
+                              className="ml-auto shrink-0 rounded-sm text-xs text-gray-11 focus-visible:outline-2 focus-visible:outline-accent-8"
+                            >
+                              {t('Already in {name}', { name: row.lockedIn })}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t(
+                              'To move it out, assign it from another {term}.',
+                              pieceSetTerms.get(),
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {row.currentlyIn !== null && (
+                        <span className="ml-auto shrink-0 text-xs text-gray-11">
+                          {t('Currently: {name}', { name: row.currentlyIn })}
+                        </span>
+                      )}
+                    </label>
+                  );
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </fieldset>
       {setsFailed && (
         <AdminFetchErrorState
           entity={pieceSetTerms.get().terms}

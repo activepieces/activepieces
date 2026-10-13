@@ -79,24 +79,26 @@ const DuplicatePieceSetForm = ({
         className="flex flex-col gap-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Name')}</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <fieldset disabled={isPending} className="contents">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Name')}</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {form.formState.errors.root?.serverError && (
+            <FormMessage>
+              {form.formState.errors.root.serverError.message}
+            </FormMessage>
           )}
-        />
-        {form.formState.errors.root?.serverError && (
-          <FormMessage>
-            {form.formState.errors.root.serverError.message}
-          </FormMessage>
-        )}
+        </fieldset>
         <DialogFooter>
           <Button
             type="button"

@@ -162,3 +162,34 @@ describe('actions and triggers sheet', () => {
     expect(note.closest('[aria-live]')).not.toBeNull();
   });
 });
+
+describe('saving a sheet', () => {
+  it('locks the checklist until the save finishes, so later edits cannot be lost', () => {
+    renderWithProviders(
+      <PieceActionsAndTriggersSheet
+        pieceName="gmail"
+        pieceDisplayName="Gmail"
+        open
+        onOpenChange={vi.fn()}
+        pieceSet={pieceSet({})}
+        onChange={vi.fn().mockReturnValue(new Promise(() => undefined))}
+      />,
+    );
+    const checkboxOf = (name: string) =>
+      screen
+        .getByText(name)
+        .closest('label')!
+        .querySelector<HTMLElement>('button[role="checkbox"]')!;
+
+    fireEvent.click(checkboxOf('Reply to Email'));
+    fireEvent.click(screen.getByRole('button', { name: /^Save/ }));
+
+    expect(checkboxOf('Find Email').matches(':disabled')).toBe(true);
+    expect(checkboxOf('Send Email').matches(':disabled')).toBe(true);
+    expect(
+      screen
+        .getByPlaceholderText('Search actions and triggers')
+        .matches(':disabled'),
+    ).toBe(true);
+  });
+});
