@@ -4,6 +4,7 @@ import {
   User,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { UseMutationResult } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Resolver, useForm } from 'react-hook-form';
 
@@ -34,8 +35,26 @@ export const UpdateUserDialog = ({
   role,
   externalId,
 }: UpdateUserDialogProps) => {
+  const save = useAdminAction<UpdateUserRequestBody, User>({
+    verb: 'update',
+    name: email,
+    run: (request) => platformUserApi.update(userId, request),
+    feedback: 'inline',
+    onSuccess: ({ data }) => {
+      onUpdate(data.platformRole);
+      onOpenChange(false);
+    },
+  });
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && save.isPending) {
+          return;
+        }
+        onOpenChange(next);
+      }}
+    >
       <DialogContent className={adminLayout.dialog.sm}>
         <DialogHeader>
           <DialogTitle className="break-words">
@@ -48,9 +67,7 @@ export const UpdateUserDialog = ({
         <UpdateUserForm
           key={open ? 'open' : 'closed'}
           onOpenChange={onOpenChange}
-          onUpdate={onUpdate}
-          userId={userId}
-          email={email}
+          save={save}
           role={role}
           externalId={externalId}
         />
@@ -61,12 +78,10 @@ export const UpdateUserDialog = ({
 
 const UpdateUserForm = ({
   onOpenChange,
-  onUpdate,
-  userId,
-  email,
+  save,
   role,
   externalId,
-}: Omit<UpdateUserDialogProps, 'open'>) => {
+}: UpdateUserFormProps) => {
   const form = useForm<{ role: PlatformRole; externalId?: string }>({
     defaultValues: {
       role,
@@ -77,16 +92,7 @@ const UpdateUserForm = ({
       externalId?: string;
     }>,
   });
-  const { mutate, isPending } = useAdminAction<UpdateUserRequestBody, User>({
-    verb: 'update',
-    name: email,
-    run: (request) => platformUserApi.update(userId, request),
-    feedback: 'inline',
-    onSuccess: ({ data }) => {
-      onUpdate(data.platformRole);
-      onOpenChange(false);
-    },
-  });
+  const { mutate, isPending } = save;
 
   return (
     <>
@@ -130,6 +136,7 @@ const UpdateUserForm = ({
       <DialogFooter>
         <Button
           variant={'outline'}
+          disabled={isPending}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -174,6 +181,13 @@ type UpdateUserDialogProps = {
   onUpdate: (role: PlatformRole) => void;
   userId: string;
   email: string;
+  role: PlatformRole;
+  externalId?: string;
+};
+
+type UpdateUserFormProps = {
+  onOpenChange: (open: boolean) => void;
+  save: UseMutationResult<User, Error, UpdateUserRequestBody>;
   role: PlatformRole;
   externalId?: string;
 };
