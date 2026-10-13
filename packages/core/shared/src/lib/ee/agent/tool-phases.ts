@@ -25,6 +25,7 @@ const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_change_flow_status',
     'ap_delete_flow',
     'ap_rename_flow',
+    'ap_move_flow_to_folder',
     'ap_duplicate_flow',
     'ap_manage_notes',
     'ap_retry_run',
