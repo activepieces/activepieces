@@ -33,15 +33,40 @@ export const UpdateUserDialog = ({
   email,
   role,
   externalId,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onUpdate: (role: PlatformRole) => void;
-  userId: string;
-  email: string;
-  role: PlatformRole;
-  externalId?: string;
-}) => {
+}: UpdateUserDialogProps) => {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={adminLayout.dialog.sm}>
+        <DialogHeader>
+          <DialogTitle className="break-words">
+            {t('Edit {email}', { email })}
+          </DialogTitle>
+          <DialogDescription>
+            {t("Change this user's platform role and external ID.")}
+          </DialogDescription>
+        </DialogHeader>
+        <UpdateUserForm
+          key={open ? 'open' : 'closed'}
+          onOpenChange={onOpenChange}
+          onUpdate={onUpdate}
+          userId={userId}
+          email={email}
+          role={role}
+          externalId={externalId}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const UpdateUserForm = ({
+  onOpenChange,
+  onUpdate,
+  userId,
+  email,
+  role,
+  externalId,
+}: Omit<UpdateUserDialogProps, 'open'>) => {
   const form = useForm<{ role: PlatformRole; externalId?: string }>({
     defaultValues: {
       role,
@@ -64,97 +89,91 @@ export const UpdateUserDialog = ({
   });
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        form.reset();
-        onOpenChange(open);
-      }}
-    >
-      <DialogContent className={adminLayout.dialog.sm}>
-        <DialogHeader>
-          <DialogTitle className="break-words">
-            {t('Edit {email}', { email })}
-          </DialogTitle>
-          <DialogDescription>
-            {t("Change this user's platform role and external ID.")}
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
-            <FormField
-              name="role"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="role">{t('Role')}</Label>
-                  <RoleSelector
-                    type="platform"
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="externalId"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="externalId">{t('External ID')}</Label>
-                  <Input
-                    id="externalId"
-                    value={field.value}
-                    onChange={field.onChange}
-                  ></Input>
-                </FormItem>
-              )}
-            />
-
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
+    <>
+      <Form {...form}>
+        <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <FormField
+            name="role"
+            render={({ field }) => (
+              <FormItem className="grid space-y-2">
+                <Label htmlFor="role">{t('Role')}</Label>
+                <RoleSelector
+                  type="platform"
+                  value={field.value}
+                  onValueChange={field.onChange}
+                />
+                <FormMessage />
+              </FormItem>
             )}
-          </form>
-        </Form>
-        <DialogFooter>
-          <Button
-            variant={'outline'}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onOpenChange(false);
-            }}
-          >
-            {t('Cancel')}
-          </Button>
-          <Button
-            disabled={isPending}
-            loading={isPending}
-            {...adminControl(AdminControl.USERS_EDIT_SUBMIT)}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              form.clearErrors('root.serverError');
-              mutate(
-                {
-                  platformRole: form.getValues().role,
-                  externalId: form.getValues().externalId,
-                },
-                {
-                  onError: (error) =>
-                    form.setError('root.serverError', {
-                      type: 'manual',
-                      message: mutationFeedback.message(error),
-                    }),
-                },
-              );
-            }}
-          >
-            {t('Save')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          />
+          <FormField
+            name="externalId"
+            render={({ field }) => (
+              <FormItem className="grid space-y-2">
+                <Label htmlFor="externalId">{t('External ID')}</Label>
+                <Input
+                  id="externalId"
+                  value={field.value}
+                  onChange={field.onChange}
+                ></Input>
+              </FormItem>
+            )}
+          />
+
+          {form?.formState?.errors?.root?.serverError && (
+            <FormMessage>
+              {form.formState.errors.root.serverError.message}
+            </FormMessage>
+          )}
+        </form>
+      </Form>
+      <DialogFooter>
+        <Button
+          variant={'outline'}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onOpenChange(false);
+          }}
+        >
+          {t('Cancel')}
+        </Button>
+        <Button
+          disabled={isPending}
+          loading={isPending}
+          {...adminControl(AdminControl.USERS_EDIT_SUBMIT)}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            form.clearErrors('root.serverError');
+            mutate(
+              {
+                platformRole: form.getValues().role,
+                externalId: form.getValues().externalId,
+              },
+              {
+                onError: (error) =>
+                  form.setError('root.serverError', {
+                    type: 'manual',
+                    message: mutationFeedback.message(error),
+                  }),
+              },
+            );
+          }}
+        >
+          {t('Save')}
+        </Button>
+      </DialogFooter>
+    </>
   );
+};
+
+type UpdateUserDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUpdate: (role: PlatformRole) => void;
+  userId: string;
+  email: string;
+  role: PlatformRole;
+  externalId?: string;
 };

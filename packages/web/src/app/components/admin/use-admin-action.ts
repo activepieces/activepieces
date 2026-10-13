@@ -213,12 +213,15 @@ async function runEach<T>({
     failedOnes.length === 1 && nameOf !== undefined
       ? nameOf(failedOnes[0])
       : label(failures.length);
-  mutationFeedback.error({
-    error: failures[0],
-    title: failed({ verb, name }),
-    description: describe?.(failures[0]),
-  });
   const partial = new BulkPartialFailure(failedOnes);
+  mutationFeedback.error({
+    error: mutationFeedback.isQuotaExceeded(failures[0])
+      ? failures[0]
+      : partial,
+    title: failed({ verb, name }),
+    description:
+      describe?.(failures[0]) ?? mutationFeedback.message(failures[0]),
+  });
   mutationFeedback.markShown(partial);
   throw partial;
 }
