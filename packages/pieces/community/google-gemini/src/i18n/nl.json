@@ -101,5 +101,6 @@
   "None": "geen",
   "JSON": "JSON",
   "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte"
+  "Raw": "Onbewerkte",
+  "Saved for the whole project, so other flows that use this key join the same conversation.": "Wordt voor het hele project opgeslagen, dus andere flows met deze sleutel zetten hetzelfde gesprek voort."
 }

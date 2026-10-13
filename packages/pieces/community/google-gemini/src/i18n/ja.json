@@ -101,5 +101,6 @@
   "None": "なし",
   "JSON": "JSON",
   "Form Data": "フォームデータ",
-  "Raw": "Raw"
+  "Raw": "Raw",
+  "Saved for the whole project, so other flows that use this key join the same conversation.": "プロジェクト全体で保存されるため、このキーを使う他のフローも同じ会話を引き継ぎます。"
 }

@@ -101,5 +101,6 @@
   "None": "无",
   "JSON": "JSON",
   "Form Data": "表单数据",
-  "Raw": "原始文件"
+  "Raw": "原始文件",
+  "Saved for the whole project, so other flows that use this key join the same conversation.": "历史记录在整个项目中保存，因此使用此键的其他流程会延续同一段对话。"
 }

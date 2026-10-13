@@ -250,6 +250,7 @@
   "Slack mrkdwn is supported. Empty updates blocks only.": "Slack mrkdwn is supported. Empty updates blocks only.",
   "Lowercase letters, numbers, dashes and underscores only.": "Lowercase letters, numbers, dashes and underscores only.",
   "Only invited members can see and join it.": "Only invited members can see and join it.",
+  "Empty fields keep their current value.": "Empty fields keep their current value.",
   "Slack notifies both the old and new address.": "Slack notifies both the old and new address.",
   "Admins on paid plans only. Empty updates the connected user.": "Admins on paid plans only. Empty updates the connected user.",
   "Unix timestamp; only later messages are returned.": "Unix timestamp; only later messages are returned.",
