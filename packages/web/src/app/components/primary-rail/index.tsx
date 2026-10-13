@@ -11,8 +11,6 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
-  Bot,
-  ChartLine,
   ChevronsUpDown,
   Compass,
   Lock,
@@ -23,8 +21,12 @@ import {
   Shield,
   SlidersHorizontal,
   SquarePen,
-  Unplug,
   UserCogIcon,
+  Building2,
+  CreditCard,
+  LayoutDashboard,
+  Plug,
+  Workflow,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { ComponentType, useState } from 'react';
@@ -48,7 +50,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useAgentsNavVisible } from '@/features/agents';
 import { SidebarUsageLimits } from '@/features/billing';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
@@ -73,7 +74,6 @@ import { AccountSettingsDialog } from '../account-settings';
 import { recordAccess } from '../global-search/access-history';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { HelpAndFeedback } from '../help-and-feedback';
-import { mcpHooks } from '../project-settings/mcp-server/utils/mcp-hooks';
 
 export function PrimaryRail() {
   const { embedState } = useEmbedding();
@@ -83,9 +83,7 @@ export function PrimaryRail() {
   const { pathname } = useLocation();
   const [openedOn, setOpenedOn] = useState<string | null>(null);
   const collapsed = railIsCollapsed({ preference, pathname, openedOn });
-  const showAgents = useAgentsNavVisible();
   const isRailHidden = embedState.isEmbedded || embedState.hideSideNav;
-  const { reachesMcp } = mcpHooks.useMcpReach({ enabled: !isRailHidden });
 
   if (isRailHidden) {
     return null;
@@ -124,6 +122,34 @@ export function PrimaryRail() {
               collapsed && 'items-center',
             )}
           >
+            <RailNavButton
+              collapsed={collapsed}
+              to="/dashboard"
+              icon={LayoutDashboard}
+              label={t('Dashboard')}
+              isActive={({ pathname }) => pathname === '/dashboard' || pathname.endsWith('/dashboard')}
+            />
+            <RailNavButton
+              collapsed={collapsed}
+              to="/automations"
+              icon={Workflow}
+              label={t('Automations')}
+              isActive={({ pathname }) => pathname.startsWith('/automations')}
+            />
+            <RailNavButton
+              collapsed={collapsed}
+              to="/connections"
+              icon={Plug}
+              label={t('Integrations')}
+              isActive={({ pathname }) => pathname.startsWith('/connections')}
+            />
+            <RailNavButton
+              collapsed={collapsed}
+              to="/agency"
+              icon={Building2}
+              label={t('Agency')}
+              isActive={({ pathname }) => pathname.startsWith('/agency')}
+            />
             {platform.plan.chatEnabled && (
               <RailNavButton
                 collapsed={collapsed}
@@ -134,24 +160,6 @@ export function PrimaryRail() {
                 onClick={() =>
                   window.dispatchEvent(new Event(chatUtils.newChatEvent))
                 }
-              />
-            )}
-            {reachesMcp && (
-              <RailNavButton
-                collapsed={collapsed}
-                to="/mcp-server"
-                icon={Unplug}
-                label={t('MCP')}
-                isActive={({ pathname }) => pathname.startsWith('/mcp-server')}
-              />
-            )}
-            {showAgents && (
-              <RailNavButton
-                collapsed={collapsed}
-                to="/agents"
-                icon={Bot}
-                label={t('Agents')}
-                isActive={({ pathname }) => pathname.startsWith('/agents')}
               />
             )}
             <RailNavButton
@@ -167,13 +175,6 @@ export function PrimaryRail() {
                 })
               }
             />
-            <RailNavButton
-              collapsed={collapsed}
-              to="/impact"
-              icon={ChartLine}
-              label={t('Impact')}
-              isActive={({ pathname }) => pathname.startsWith('/impact')}
-            />
           </div>
           <RailPinnedProjects collapsed={collapsed} />
         </div>
@@ -183,6 +184,27 @@ export function PrimaryRail() {
             <SidebarUsageLimits />
           </div>
         )}
+        <div
+          className={cn(
+            'mt-2 flex shrink-0 flex-col gap-1',
+            collapsed ? 'items-center px-2' : 'px-2',
+          )}
+        >
+          <RailNavButton
+            collapsed={collapsed}
+            to="/billing"
+            icon={CreditCard}
+            label={t('Billing')}
+            isActive={({ pathname }) => pathname.startsWith('/billing')}
+          />
+          <RailNavButton
+            collapsed={collapsed}
+            to="/settings"
+            icon={Settings}
+            label={t('Settings')}
+            isActive={({ pathname }) => pathname.startsWith('/settings')}
+          />
+        </div>
         <RailPlatformAdminButton collapsed={collapsed} />
         <RailAccountRow collapsed={collapsed} />
       </div>

@@ -15,7 +15,7 @@ const AuthenticatePage = () => {
     if (response) {
       const decodedResponse = JSON.parse(response);
       authenticationSession.saveResponse(decodedResponse, false);
-      navigate(federatedLoginRedirect.consume() ?? '/flows');
+      navigate(federatedLoginRedirect.consume() ?? '/dashboard');
     }
   }, [response]);
 
