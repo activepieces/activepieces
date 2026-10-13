@@ -690,6 +690,7 @@ export const mcpClientCatalog = {
       slug: slugify(websiteName) || FALLBACK_SLUG,
       isCloud,
     }),
+  resolveKey: (key: string): string => CLIENT_KEY_ALIASES[key] ?? key,
   checkPrompts: (brand: string): string[] => [
     t(
       'What {brand} tools do you have? List a few things you could run for me.',
@@ -702,6 +703,7 @@ export const mcpClientCatalog = {
 };
 
 const FALLBACK_SLUG = 'activepieces';
+const CLIENT_KEY_ALIASES: Record<string, string> = { windsurf: 'devin' };
 const CLAUDE_DIRECTORY_URL =
   'https://claude.ai/directory/cloud-activepieces-com';
 const CURSOR_DIRECTORY_URL =
