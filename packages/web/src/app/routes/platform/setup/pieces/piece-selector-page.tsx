@@ -238,7 +238,7 @@ export function PieceSelectorPage() {
           className="min-w-0 xl:sticky xl:top-6"
           title={t('What builders see')}
           description={t(
-            'Click a tab, search, or point at a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.',
+            'Click a tab, search, or select a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.',
           )}
         >
           <PieceSelectorPreview
@@ -981,7 +981,7 @@ const PiecePickerButton = ({
   );
 };
 
-const FLASH_MS = 1400;
+const FLASH_MS = 700;
 const PICKER_ROW_HEIGHT = 36;
 const borderlessInputClass =
   'border-transparent bg-transparent dark:bg-transparent shadow-none hover:border-gray-6 focus-visible:bg-gray-1';

@@ -3620,7 +3620,6 @@
   "This tab is empty. Add pieces to it in the panel beside.": "This tab is empty. Add pieces to it in the panel beside.",
   "What builders see": "What builders see",
   "Built-in step": "Built-in step",
-  "Click a tab, search, or point at a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.": "Click a tab, search, or point at a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.",
   "Search pieces in the preview": "Search pieces in the preview",
   "Tabs builders see": "Tabs builders see",
   "{count, plural, =0 {No actions} =1 {1 action} other {# actions}}": "{count, plural, =0 {No actions} =1 {1 action} other {# actions}}",
@@ -3677,5 +3676,6 @@
   "Couldn't load the {terms}.": "Couldn't load the {terms}.",
   "Projects saved": "Projects saved",
   "The project was saved, but its {term} wasn't changed: {message}": "The project was saved, but its {term} wasn't changed: {message}",
-  "{count, plural, =1 {1 project had already moved to another {term}, so it stays there.} other {# projects had already moved to another {term}, so they stay there.}} The list is refreshed.": "{count, plural, =1 {1 project had already moved to another {term}, so it stays there.} other {# projects had already moved to another {term}, so they stay there.}} The list is refreshed."
+  "{count, plural, =1 {1 project had already moved to another {term}, so it stays there.} other {# projects had already moved to another {term}, so they stay there.}} The list is refreshed.": "{count, plural, =1 {1 project had already moved to another {term}, so it stays there.} other {# projects had already moved to another {term}, so they stay there.}} The list is refreshed.",
+  "Click a tab, search, or select a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied.": "Click a tab, search, or select a piece to see its actions. Pin a piece from its row. Pieces are listed as in your current project, with its piece set applied."
 }
