@@ -1,7 +1,5 @@
 import { PieceSet } from '@activepieces/shared';
 
-import { pieceSetsApi } from '../api/piece-sets-api';
-
 function currentSetId({
   pieceSetId,
   pieceSets,
@@ -13,26 +11,4 @@ function currentSetId({
   return (assigned ?? pieceSets.find((set) => set.isDefault))?.id;
 }
 
-async function move({
-  projectId,
-  fromSetId,
-  toSetId,
-  pieceSets,
-}: {
-  projectId: string;
-  fromSetId: string | undefined;
-  toSetId: string;
-  pieceSets: PieceSet[];
-}): Promise<void> {
-  if (fromSetId === toSetId) {
-    return;
-  }
-  const target = pieceSets.find((set) => set.id === toSetId);
-  if (target?.isDefault && fromSetId !== undefined) {
-    await pieceSetsApi.removeProject(fromSetId, projectId);
-    return;
-  }
-  await pieceSetsApi.assignProjects(toSetId, { projectIds: [projectId] });
-}
-
-export const projectPieceSet = { currentSetId, move };
+export const projectPieceSet = { currentSetId };

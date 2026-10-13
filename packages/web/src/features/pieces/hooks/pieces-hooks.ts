@@ -228,6 +228,23 @@ export const piecesHooks = {
       refetch: query.refetch,
     };
   },
+  usePlatformCatalog: () =>
+    piecesHooks.usePieces({
+      includeHidden: true,
+      isTableQuery: true,
+      skipProjectFilter: true,
+    }),
+  usePrefetchPlatformCatalog: () => {
+    const { i18n } = useTranslation();
+    usePrefetchQuery(
+      piecesQueryOptions({
+        includeHidden: true,
+        isTableQuery: true,
+        skipProjectFilter: true,
+        locale: i18n.language as LocalesEnum,
+      }),
+    );
+  },
   usePrefetchPieces: ({
     skipProjectFilter = false,
   }: UsePrefetchPiecesProps) => {
@@ -677,7 +694,30 @@ function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
   );
 }
 
-export const pieceCacheUtils = { invalidatePieceCaches };
+function invalidateProjectPieceCaches(queryClient: QueryClient): Promise<void> {
+  return queryClient.invalidateQueries({
+    predicate: (query) => isProjectPieceQuery(query.queryKey),
+  });
+}
+
+function isProjectPieceQuery(queryKey: QueryKey): boolean {
+  switch (queryKey[0]) {
+    case 'pieces':
+    case 'pieces-table':
+      return queryKey[PROJECT_ID_KEY_INDEX] !== undefined;
+    case 'pieces-metadata':
+      return true;
+    case 'piece':
+      return queryKey[PIECE_PROJECT_ID_KEY_INDEX] !== undefined;
+    default:
+      return false;
+  }
+}
+
+export const pieceCacheUtils = {
+  invalidatePieceCaches,
+  invalidateProjectPieceCaches,
+};
 
 function piecesQueryOptions({
   projectId,
@@ -736,5 +776,6 @@ function piecesQueryOptions({
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
+const PIECE_PROJECT_ID_KEY_INDEX = 4;
 
 export const pieceQueryOptions = { latest: latestPieceQueryOptions };

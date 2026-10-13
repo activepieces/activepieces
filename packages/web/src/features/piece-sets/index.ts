@@ -4,6 +4,8 @@ export {
   pieceSetMutations,
   pieceSetQueries,
   pieceSetQueryOptions,
+  usePieceSetChange,
+  usePieceSetProjectMoves,
 } from './hooks/piece-sets-hooks';
 export { pieceSetChanges } from './utils/piece-set-changes';
 export { pieceSetTerms } from './utils/piece-set-terms';

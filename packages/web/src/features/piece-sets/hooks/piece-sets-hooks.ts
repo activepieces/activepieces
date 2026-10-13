@@ -13,19 +13,24 @@ import { t } from 'i18next';
 import { useRef } from 'react';
 
 import { pieceCacheUtils } from '@/features/pieces';
-import { projectCollectionUtils } from '@/features/projects';
+import { projectCollectionUtils, projectQueryKeys } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { pieceSetsApi } from '../api/piece-sets-api';
-import { PieceSetChange, pieceSetChanges } from '../utils/piece-set-changes';
+import {
+  ChangePieceSet,
+  PieceSetChange,
+  pieceSetChanges,
+} from '../utils/piece-set-changes';
 import { pieceSetTerms } from '../utils/piece-set-terms';
 
 export const pieceSetKeys = {
   all: ['piece-sets'] as const,
   list: ['piece-sets', 'list'] as const,
   one: (id: string) => ['piece-sets', id] as const,
+  projects: ['piece-sets', 'project'] as const,
   project: (projectId: string) => ['piece-sets', 'project', projectId] as const,
 };
 
@@ -117,7 +122,10 @@ export const pieceSetMutations = {
         return { before, updated };
       },
       onMutate: async ({ change }) => {
-        await queryClient.cancelQueries({ queryKey });
+        await Promise.all([
+          queryClient.cancelQueries({ queryKey }),
+          queryClient.cancelQueries({ queryKey: pieceSetKeys.list }),
+        ]);
         const current = queryClient.getQueryData<PieceSet>(queryKey);
         if (current !== undefined) {
           queryClient.setQueryData(
@@ -125,10 +133,16 @@ export const pieceSetMutations = {
             pieceSetChanges.apply({ pieceSet: current, change }),
           );
         }
+        replaceInList({
+          queryClient,
+          id,
+          update: (pieceSet) => pieceSetChanges.apply({ pieceSet, change }),
+        });
       },
       onSuccess: ({ before, updated }, { change, isUndo }) => {
         if (isLastPending()) {
           queryClient.setQueryData(queryKey, updated);
+          replaceInList({ queryClient, id, update: () => updated });
         }
         latestChange.current += 1;
         if (isUndo) {
@@ -161,9 +175,9 @@ export const pieceSetMutations = {
         Promise.all([
           queryClient.invalidateQueries({ queryKey: pieceSetKeys.list }),
           queryClient.invalidateQueries({
-            queryKey: ['piece-sets', 'project'],
+            queryKey: pieceSetKeys.projects,
           }),
-          pieceCacheUtils.invalidatePieceCaches(queryClient),
+          pieceCacheUtils.invalidateProjectPieceCaches(queryClient),
         ]).catch(() => undefined);
       },
     });
@@ -198,36 +212,56 @@ export const pieceSetMutations = {
       onError,
     });
   },
-  useSetProjects: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: async ({ id, added, removed }: SetProjectsRequest) => {
-        await Promise.all([
-          ...(added.length > 0
-            ? [pieceSetsApi.assignProjects(id, { projectIds: added })]
-            : []),
-          ...removed.map((projectId) =>
-            pieceSetsApi.removeProject(id, projectId),
-          ),
-        ]);
-      },
-      onSuccess: (_, { added, removed }) => {
-        mutationFeedback.success(
-          t(
-            '{count, plural, =1 {1 project updated} other {# projects updated}}',
-            { count: added.length + removed.length },
-          ),
-        );
-      },
-      onError: (error) =>
-        mutationFeedback.error({
-          error,
-          title: t("Couldn't update the projects"),
-        }),
-      onSettled: () => refreshAfterProjectChange({ queryClient }),
-    });
-  },
 };
+
+export function usePieceSetChange(id: string): ChangePieceSet {
+  const { mutateAsync } = pieceSetMutations.useChangePieceSet(id);
+  return (change) =>
+    mutateAsync({ change }).then(
+      () => true,
+      () => false,
+    );
+}
+
+export function usePieceSetProjectMoves() {
+  const queryClient = useQueryClient();
+  return async ({
+    pieceSetId,
+    added,
+    removed,
+    defaultSetId,
+  }: ProjectMoves): Promise<void> => {
+    try {
+      const results = await Promise.allSettled([
+        ...(added.length > 0
+          ? [pieceSetsApi.assignProjects(pieceSetId, { projectIds: added })]
+          : []),
+        ...(removed.length > 0
+          ? [
+              defaultSetId === undefined
+                ? Promise.all(
+                    removed.map((projectId) =>
+                      pieceSetsApi.removeProject(pieceSetId, projectId),
+                    ),
+                  )
+                : pieceSetsApi.assignProjects(defaultSetId, {
+                    projectIds: removed,
+                  }),
+            ]
+          : []),
+      ]);
+      const failure = results.find(
+        (result): result is PromiseRejectedResult =>
+          result.status === 'rejected',
+      );
+      if (failure) {
+        throw failure.reason;
+      }
+    } finally {
+      await refreshAfterProjectChange({ queryClient });
+    }
+  };
+}
 
 function describeChange(change: PieceSetChange): string {
   switch (change.type) {
@@ -259,9 +293,23 @@ function describeChange(change: PieceSetChange): string {
       return t('Publishing rule saved');
     case 'components':
       return t('Actions for {name} saved', { name: change.pieceDisplayName });
-    case 'restore':
+    case 'patch':
       return t('Changes saved');
   }
+}
+
+function replaceInList({
+  queryClient,
+  id,
+  update,
+}: {
+  queryClient: QueryClient;
+  id: string;
+  update: (pieceSet: PieceSet) => PieceSet;
+}): void {
+  queryClient.setQueryData<PieceSet[]>(pieceSetKeys.list, (sets) =>
+    sets?.map((pieceSet) => (pieceSet.id === id ? update(pieceSet) : pieceSet)),
+  );
 }
 
 function refreshAfterProjectChange({
@@ -272,8 +320,8 @@ function refreshAfterProjectChange({
   projectCollectionUtils.refetchProjects();
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: pieceSetKeys.all }),
-    queryClient.invalidateQueries({ queryKey: ['projects-for-platforms'] }),
-    pieceCacheUtils.invalidatePieceCaches(queryClient),
+    queryClient.invalidateQueries({ queryKey: projectQueryKeys.forPlatforms }),
+    pieceCacheUtils.invalidateProjectPieceCaches(queryClient),
   ]);
 }
 
@@ -289,8 +337,9 @@ type FormErrorHandler = {
   onError: (error: Error) => void;
 };
 
-type SetProjectsRequest = {
-  id: string;
+type ProjectMoves = {
+  pieceSetId: string;
   added: string[];
   removed: string[];
+  defaultSetId: string | undefined;
 };

@@ -47,13 +47,12 @@ function toRequest({
       };
     case 'newPieces':
       return {
-        pieces:
-          change.restore ??
-          setNewPiecesMode({
-            current: config.pieces,
-            include: change.include,
-            knownPieceNames: change.knownPieceNames,
-          }),
+        pieces: setNewPiecesMode({
+          current: config.pieces,
+          include: change.include,
+          knownPieceNames: change.knownPieceNames,
+          keptExceptions: change.keptExceptions ?? [],
+        }),
       };
     case 'requiredMode':
       return { requiredActions: { mode: change.mode } };
@@ -64,8 +63,8 @@ function toRequest({
         actions: { [change.pieceName]: change.actions },
         triggers: { [change.pieceName]: change.triggers },
       };
-    case 'restore':
-      return restoreRequest({ current: config, target: change.config });
+    case 'patch':
+      return patchRequest({ pieceSet, change });
   }
 }
 
@@ -76,25 +75,166 @@ function inverse({
   previous: PieceSet;
   change: PieceSetChange;
 }): PieceSetChange {
+  const required = previous.config.requiredActions.actions;
+  const hadRequired = (pieceName: string) => required[pieceName] !== undefined;
   switch (change.type) {
-    case 'newPieces':
+    case 'newPieces': {
+      const known = new Set(change.knownPieceNames);
       return {
         type: 'newPieces',
         include: previous.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL,
         knownPieceNames: change.knownPieceNames,
-        restore: previous.config.pieces,
+        keptExceptions: previous.config.pieces.exceptions.filter(
+          (name) => !known.has(name),
+        ),
       };
+    }
     case 'requiredMode':
       return {
         type: 'requiredMode',
         mode: previous.config.requiredActions.mode,
       };
-    case 'visibility':
-    case 'required':
+    case 'visibility': {
+      const pieceNames = Object.keys(change.visible);
+      return revert({
+        previous,
+        visibilityOf: pieceNames,
+        requiredOf: pieceNames.filter(hadRequired),
+      });
+    }
     case 'components':
-    case 'restore':
-      return { type: 'restore', config: previous.config };
+      return revert({
+        previous,
+        actionsOf: [change.pieceName],
+        triggersOf: [change.pieceName],
+        requiredOf: hadRequired(change.pieceName) ? [change.pieceName] : [],
+      });
+    case 'required': {
+      const pieceNames = Object.keys(change.actions);
+      return revert({
+        previous,
+        actionsOf: pieceNames.filter(
+          (pieceName) =>
+            previous.config.selectedActions[pieceName] !== undefined,
+        ),
+        requiredOf: pieceNames,
+        mode: change.mode !== undefined,
+      });
+    }
+    case 'patch':
+      return revert({
+        previous,
+        visibilityOf: Object.keys(change.visible ?? {}),
+        actionsOf: Object.keys(change.actions ?? {}),
+        triggersOf: Object.keys(change.triggers ?? {}),
+        requiredOf: Object.keys(change.required ?? {}),
+        mode: change.requiredMode !== undefined,
+      });
   }
+}
+
+function revert({
+  previous,
+  visibilityOf = [],
+  actionsOf = [],
+  triggersOf = [],
+  requiredOf = [],
+  mode = false,
+}: {
+  previous: PieceSet;
+  visibilityOf?: string[];
+  actionsOf?: string[];
+  triggersOf?: string[];
+  requiredOf?: string[];
+  mode?: boolean;
+}): PieceSetChange {
+  const { config } = previous;
+  return {
+    type: 'patch',
+    ...(visibilityOf.length > 0
+      ? {
+          visible: Object.fromEntries(
+            visibilityOf.map((name) => [
+              name,
+              isPieceVisible({ pieces: config.pieces, name }),
+            ]),
+          ),
+        }
+      : {}),
+    ...(actionsOf.length > 0
+      ? {
+          actions: Object.fromEntries(
+            actionsOf.map((name) => [
+              name,
+              selectionOf(config.selectedActions[name]),
+            ]),
+          ),
+        }
+      : {}),
+    ...(triggersOf.length > 0
+      ? {
+          triggers: Object.fromEntries(
+            triggersOf.map((name) => [
+              name,
+              selectionOf(config.selectedTriggers[name]),
+            ]),
+          ),
+        }
+      : {}),
+    ...(requiredOf.length > 0
+      ? {
+          required: Object.fromEntries(
+            requiredOf.map((name) => [
+              name,
+              config.requiredActions.actions[name] ?? [],
+            ]),
+          ),
+        }
+      : {}),
+    ...(mode ? { requiredMode: config.requiredActions.mode } : {}),
+  };
+}
+
+function selectionOf(selected: string[] | undefined): ComponentSelection {
+  return selected === undefined
+    ? { mode: 'all' }
+    : { mode: 'selected', selected };
+}
+
+function patchRequest({
+  pieceSet,
+  change,
+}: {
+  pieceSet: PieceSet;
+  change: Extract<PieceSetChange, { type: 'patch' }>;
+}): UpdatePieceSetRequestBody {
+  const hasRequired =
+    change.required !== undefined || change.requiredMode !== undefined;
+  return {
+    ...(change.visible === undefined
+      ? {}
+      : {
+          pieces: Object.entries(change.visible).reduce(
+            (pieces, [name, visible]) =>
+              setPieceVisible({ pieces, name, visible }),
+            pieceSet.config.pieces,
+          ),
+        }),
+    ...(change.actions === undefined ? {} : { actions: change.actions }),
+    ...(change.triggers === undefined ? {} : { triggers: change.triggers }),
+    ...(hasRequired
+      ? {
+          requiredActions: {
+            ...(change.requiredMode === undefined
+              ? {}
+              : { mode: change.requiredMode }),
+            ...(change.required === undefined
+              ? {}
+              : { actions: change.required }),
+          },
+        }
+      : {}),
+  };
 }
 
 function excludedRequiredActions({
@@ -145,60 +285,6 @@ function requiredRequest({
   };
 }
 
-function restoreRequest({
-  current,
-  target,
-}: {
-  current: PieceSet['config'];
-  target: PieceSet['config'];
-}): UpdatePieceSetRequestBody {
-  return {
-    pieces: target.pieces,
-    actions: selectionsToRestore({
-      current: current.selectedActions,
-      target: target.selectedActions,
-    }),
-    triggers: selectionsToRestore({
-      current: current.selectedTriggers,
-      target: target.selectedTriggers,
-    }),
-    requiredActions: {
-      mode: target.requiredActions.mode,
-      actions: Object.fromEntries(
-        unique([
-          ...Object.keys(current.requiredActions.actions),
-          ...Object.keys(target.requiredActions.actions),
-        ]).map((pieceName) => [
-          pieceName,
-          target.requiredActions.actions[pieceName] ?? [],
-        ]),
-      ),
-    },
-  };
-}
-
-function selectionsToRestore({
-  current,
-  target,
-}: {
-  current: Record<string, string[]>;
-  target: Record<string, string[]>;
-}): Record<string, ComponentSelection> {
-  return Object.fromEntries(
-    unique([...Object.keys(current), ...Object.keys(target)]).map(
-      (pieceName): [string, ComponentSelection] => {
-        const selected = target[pieceName];
-        return [
-          pieceName,
-          selected === undefined
-            ? { mode: 'all' }
-            : { mode: 'selected', selected },
-        ];
-      },
-    ),
-  );
-}
-
 function setPieceVisible({
   pieces,
   name,
@@ -226,10 +312,12 @@ function setNewPiecesMode({
   current,
   include,
   knownPieceNames,
+  keptExceptions,
 }: {
   current: PieceSelection;
   include: boolean;
   knownPieceNames: string[];
+  keptExceptions: string[];
 }): PieceSelection {
   const mode = include
     ? PieceSelectionMode.INCLUDE_ALL
@@ -240,7 +328,10 @@ function setNewPiecesMode({
   const listed = new Set(current.exceptions);
   return {
     mode,
-    exceptions: knownPieceNames.filter((name) => !listed.has(name)),
+    exceptions: unique([
+      ...knownPieceNames.filter((name) => !listed.has(name)),
+      ...keptExceptions,
+    ]),
   };
 }
 
@@ -264,37 +355,6 @@ function countRequiredActions(config: PieceSet['config']): number {
   return Object.values(config.requiredActions.actions).flat().length;
 }
 
-function sameConfig({
-  left,
-  right,
-}: {
-  left: PieceSet['config'];
-  right: PieceSet['config'];
-}): boolean {
-  return canonicalConfig(left) === canonicalConfig(right);
-}
-
-function canonicalConfig(config: PieceSet['config']): string {
-  return JSON.stringify([
-    config.pieces.mode,
-    [...config.pieces.exceptions].sort(),
-    canonicalSelection(config.selectedActions),
-    canonicalSelection(config.selectedTriggers),
-    canonicalSelection(config.requiredActions.actions).filter(
-      ([, actionNames]) => actionNames.length > 0,
-    ),
-    config.requiredActions.mode,
-  ]);
-}
-
-function canonicalSelection(
-  selected: Record<string, string[]>,
-): [string, string[]][] {
-  return Object.keys(selected)
-    .sort()
-    .map((pieceName) => [pieceName, [...selected[pieceName]].sort()]);
-}
-
 export const pieceSetChanges = {
   apply,
   toRequest,
@@ -302,7 +362,6 @@ export const pieceSetChanges = {
   excludedRequiredActions,
   isActionAllowed,
   countRequiredActions,
-  sameConfig,
 };
 
 export type PieceSetChange =
@@ -311,7 +370,7 @@ export type PieceSetChange =
       type: 'newPieces';
       include: boolean;
       knownPieceNames: string[];
-      restore?: PieceSelection;
+      keptExceptions?: string[];
     }
   | { type: 'requiredMode'; mode: RequiredActionsMode }
   | {
@@ -326,6 +385,13 @@ export type PieceSetChange =
       actions: ComponentSelection;
       triggers: ComponentSelection;
     }
-  | { type: 'restore'; config: PieceSet['config'] };
+  | {
+      type: 'patch';
+      visible?: Record<string, boolean>;
+      actions?: Record<string, ComponentSelection>;
+      triggers?: Record<string, ComponentSelection>;
+      required?: Record<string, string[]>;
+      requiredMode?: RequiredActionsMode;
+    };
 
 export type ChangePieceSet = (change: PieceSetChange) => Promise<boolean>;

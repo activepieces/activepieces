@@ -15,7 +15,10 @@ export function PieceSetSelect({
   pieceSets,
   disabled,
   className,
+  id,
   'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
 }: PieceSetSelectProps) {
   const ordered = [
     ...pieceSets.filter((set) => set.isDefault),
@@ -24,8 +27,11 @@ export function PieceSetSelect({
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger
+        id={id}
         className={cn('min-w-0', className)}
         aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid}
       >
         <SelectValue />
       </SelectTrigger>
@@ -46,5 +52,8 @@ type PieceSetSelectProps = {
   pieceSets: PieceSet[];
   disabled?: boolean;
   className?: string;
+  id?: string;
   'aria-label'?: string;
+  'aria-describedby'?: string;
+  'aria-invalid'?: boolean;
 };
