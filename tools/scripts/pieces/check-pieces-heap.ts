@@ -110,19 +110,18 @@ function verdict(r: PieceHeapResult): { failed: boolean; reasons: string[] } {
         reasons.push(`could not measure current build: ${r.error ?? 'unknown error'}`)
         return { failed: true, reasons }
     }
-    if (r.previousError !== undefined) {
-        reasons.push(`could not measure previously-published version to verify delta: ${r.previousError}`)
-        return { failed: true, reasons }
-    }
-    if (r.previousMissing === true) {
+    if (r.previousHeapMB === undefined) {
         if (r.heapMB! > ABSOLUTE_LIMIT_MB) {
-            reasons.push(`heap ${r.heapMB!.toFixed(2)} MB > absolute limit ${ABSOLUTE_LIMIT_MB} MB (new piece)`)
+            const scope = r.previousMissing
+                ? 'new piece'
+                : `baseline unavailable: ${r.previousError}`
+            reasons.push(`heap ${r.heapMB!.toFixed(2)} MB > absolute limit ${ABSOLUTE_LIMIT_MB} MB (${scope})`)
         }
         return { failed: reasons.length > 0, reasons }
     }
-    const delta = r.heapMB! - r.previousHeapMB!
+    const delta = r.heapMB! - r.previousHeapMB
     if (delta > DELTA_LIMIT_MB) {
-        reasons.push(`heap grew +${delta.toFixed(2)} MB vs ${r.previousVersion} (${r.previousHeapMB!.toFixed(2)} → ${r.heapMB!.toFixed(2)} MB); allowed +${DELTA_LIMIT_MB} MB`)
+        reasons.push(`heap grew +${delta.toFixed(2)} MB vs ${r.previousVersion} (${r.previousHeapMB.toFixed(2)} → ${r.heapMB!.toFixed(2)} MB); allowed +${DELTA_LIMIT_MB} MB`)
     }
     return { failed: reasons.length > 0, reasons }
 }
@@ -166,8 +165,18 @@ async function main(): Promise<void> {
     }
 }
 
-const ABSOLUTE_LIMIT_MB = Number(process.env['PIECE_HEAP_ABSOLUTE_MB'] ?? '10')
-const DELTA_LIMIT_MB = Number(process.env['PIECE_HEAP_DELTA_MB'] ?? '2')
+function parseLimitFromEnv(envKey: string, defaultMB: number): number {
+    const raw = process.env[envKey]
+    if (raw === undefined || raw === '') return defaultMB
+    const parsed = Number(raw)
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        throw new Error(`invalid ${envKey}="${raw}": must be a positive number in MB`)
+    }
+    return parsed
+}
+
+const ABSOLUTE_LIMIT_MB = parseLimitFromEnv('PIECE_HEAP_ABSOLUTE_MB', 5)
+const DELTA_LIMIT_MB = parseLimitFromEnv('PIECE_HEAP_DELTA_MB', 2)
 const SKIP_LABEL = 'skip-heap-check'
 
 type PieceHeapResult = {
