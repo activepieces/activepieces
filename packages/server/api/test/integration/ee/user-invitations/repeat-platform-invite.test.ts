@@ -142,6 +142,25 @@ describe('Re-inviting someone who already accepted', () => {
         expect(Date.now() - new Date(after.updated).getTime()).toBeLessThan(60 * 1000)
     })
 
+    it('locks the invite rows it is about to update, so acceptance and sign-up wait for the re-send', async () => {
+        const { ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.OPERATOR })
+        const find = vi.spyOn(Repository.prototype, 'find')
+
+        try {
+            await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.ADMIN })
+            const invitationReads = find.mock.calls.filter((_call, index) => {
+                const repository = find.mock.contexts[index]
+                return repository instanceof Repository && repository.metadata.tableName === 'user_invitation'
+            })
+            expect(invitationReads.some(([options]) => options?.lock?.mode === 'pessimistic_write')).toBe(true)
+        }
+        finally {
+            find.mockRestore()
+        }
+    })
+
     it('keeps an acceptance that lands while a re-send is in progress', async () => {
         const { platformId, ownerToken } = await setupPlatform()
         const email = faker.internet.email().toLowerCase()
