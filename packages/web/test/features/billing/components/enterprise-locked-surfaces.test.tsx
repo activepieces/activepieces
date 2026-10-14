@@ -95,6 +95,10 @@ vi.mock('@/features/billing/hooks/use-credits-usage', () => ({
   useCreditsUsage: () => ({ isPaid: planName !== 'free' }),
 }));
 
+vi.mock('@/features/billing/components/enterprise-trial-seat-dialog', () => ({
+  EnterpriseTrialSeatDialog: () => <div>seat check</div>,
+}));
+
 vi.mock('@/features/billing/components/enterprise-trial-sales-link', () => ({
   EnterpriseTrialSalesLink: ({ label }: { label: string }) => <a>{label}</a>,
 }));
@@ -267,6 +271,19 @@ describe('trial ended dialog', () => {
     trialEndedAt = dayjs().subtract(20, 'day').toDate();
     render(<EnterpriseTrialEndedDialog />);
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('runs the seat check only once the dialog is out of the way', () => {
+    render(<EnterpriseTrialEndedDialog />);
+    expect(screen.queryByText('seat check')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Explore plans' }));
+    expect(screen.getByText('seat check')).toBeDefined();
+  });
+
+  it('still runs the seat check after the dialog stops showing', () => {
+    trialEndedAt = dayjs().subtract(20, 'day').toDate();
+    render(<EnterpriseTrialEndedDialog />);
+    expect(screen.getByText('seat check')).toBeDefined();
   });
 
   it('opens the plans dialog from Explore plans and reports the click', () => {
