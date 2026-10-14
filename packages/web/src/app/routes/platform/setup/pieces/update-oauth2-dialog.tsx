@@ -48,7 +48,10 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
   const [open, setOpen] = useState(false);
   const form = useForm<OAuth2FormValues>({
     resolver: zodResolver(OAuth2FormValues),
+    defaultValues: { clientId: '', clientSecret: '' },
+    mode: 'onChange',
   });
+  const canSave = OAuth2FormValues.safeParse(form.watch()).success;
 
   const { oauth2App, refetch } =
     oauthAppsQueries.useOAuthAppConfigured(pieceName);
@@ -140,6 +143,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
         <DialogContent
           className={adminLayout.dialog.md}
           showCloseButton={!isUpserting}
+          aria-describedby={undefined}
         >
           <DialogTitle>{t('Configure OAuth2 App')}</DialogTitle>
 
@@ -147,6 +151,9 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
             <form
               className="grid space-y-4 mt-4"
               onSubmit={form.handleSubmit((data) => {
+                if (isUpserting) {
+                  return;
+                }
                 form.clearErrors('root.serverError');
                 upsert(
                   {
@@ -211,7 +218,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                 <Button
                   {...adminControl(AdminControl.PIECES_OAUTH_CONFIGURE_SUBMIT)}
                   loading={isUpserting}
-                  disabled={!form.formState.isValid}
+                  disabled={!canSave}
                   type="submit"
                 >
                   {t('Save')}

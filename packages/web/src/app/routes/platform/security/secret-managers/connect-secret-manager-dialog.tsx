@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -67,6 +68,11 @@ const AddEditSecretManagerConnectionDialog = ({
               ? `${t('Edit')} ${connection.name}`
               : t('New Secret Manager Connection')}
           </DialogTitle>
+          <DialogDescription>
+            {t(
+              'Let connections read their secrets from your own secret manager.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         <AddEditSecretManagerForm
           key={open ? 'open' : 'closed'}

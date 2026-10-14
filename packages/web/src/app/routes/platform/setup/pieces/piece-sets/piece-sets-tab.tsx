@@ -31,6 +31,7 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,6 +45,7 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
+import { pieceSetName } from './piece-set-name';
 
 export const PieceSetsTab = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -65,7 +67,7 @@ export const PieceSetsTab = () => {
   const queryClient = useQueryClient();
   const { mutateAsync: deleteSet } = useAdminAction<PieceSet>({
     verb: 'delete',
-    name: (pieceSet) => pieceSet.name,
+    name: (pieceSet) => pieceSetName.short(pieceSet.name),
     run: (pieceSet) => pieceSetsApi.delete(pieceSet.id),
     onSuccess: () => {
       pieceSetCacheUtils
@@ -88,10 +90,14 @@ export const PieceSetsTab = () => {
           />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{row.original.name}</span>
+          <div className="flex min-w-0 items-center gap-2">
+            <TextWithTooltip tooltipMessage={row.original.name}>
+              <span className="min-w-0 font-medium">{row.original.name}</span>
+            </TextWithTooltip>
             {row.original.isDefault && (
-              <Badge variant="default">{t('Default')}</Badge>
+              <Badge variant="default" className="shrink-0">
+                {t('Default')}
+              </Badge>
             )}
           </div>
         ),
@@ -103,7 +109,11 @@ export const PieceSetsTab = () => {
         ),
         cell: ({ row }) =>
           row.original.key ? (
-            <span className="font-mono text-sm">{row.original.key}</span>
+            <TextWithTooltip tooltipMessage={row.original.key}>
+              <span className="block font-mono text-sm">
+                {row.original.key}
+              </span>
+            </TextWithTooltip>
           ) : (
             <span className="text-gray-11">—</span>
           ),
@@ -157,7 +167,9 @@ export const PieceSetsTab = () => {
               </Button>
             </RowActionTooltip>
             <ConfirmDialog
-              title={t('Delete {name}?', { name: row.original.name })}
+              title={t('Delete {name}?', {
+                name: pieceSetName.short(row.original.name),
+              })}
               description={t(
                 'Projects assigned to this set will be reassigned to the default set.',
               )}

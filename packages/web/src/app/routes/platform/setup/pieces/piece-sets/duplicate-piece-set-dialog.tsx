@@ -1,6 +1,8 @@
 import { DuplicatePieceSetRequestBody } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { UseMutationResult } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -9,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -25,6 +28,8 @@ import { Input } from '@/components/ui/input';
 import { pieceSetKeys, pieceSetsApi } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { pieceSetName } from './piece-set-name';
+
 type DuplicatePieceSetDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,35 +37,38 @@ type DuplicatePieceSetDialogProps = {
   sourceName: string;
 };
 
+type DuplicateRequest = { id: string; name: string };
+
 const DuplicatePieceSetForm = ({
-  onOpenChange,
+  duplicate,
+  onCancel,
   sourceId,
   sourceName,
 }: {
-  onOpenChange: (open: boolean) => void;
+  duplicate: UseMutationResult<unknown, Error, DuplicateRequest>;
+  onCancel: () => void;
   sourceId: string;
   sourceName: string;
 }) => {
+  const submitting = useRef(false);
   const form = useForm<z.infer<typeof DuplicatePieceSetRequestBody>>({
     resolver: zodResolver(DuplicatePieceSetRequestBody),
     defaultValues: { name: `${sourceName} (Copy)` },
     mode: 'onChange',
   });
 
-  const { mutate: duplicateSet, isPending } = useAdminAction<{
-    id: string;
-    name: string;
-  }>({
-    verb: 'duplicate',
-    name: sourceName,
-    run: ({ id, name }) => pieceSetsApi.duplicate(id, { name }),
-    invalidate: [pieceSetKeys.all],
-  });
-
   const handleSubmit = (data: z.infer<typeof DuplicatePieceSetRequestBody>) => {
-    duplicateSet(
+    if (submitting.current) {
+      return;
+    }
+    submitting.current = true;
+    duplicate.mutate(
       { id: sourceId, name: data.name },
-      { onSuccess: () => onOpenChange(false) },
+      {
+        onSettled: () => {
+          submitting.current = false;
+        },
+      },
     );
   };
 
@@ -87,14 +95,15 @@ const DuplicatePieceSetForm = ({
           <Button
             type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            disabled={duplicate.isPending}
+            onClick={onCancel}
           >
             {t('Cancel')}
           </Button>
           <Button
             {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_SUBMIT)}
             type="submit"
-            loading={isPending}
+            loading={duplicate.isPending}
           >
             {t('Duplicate')}
           </Button>
@@ -110,15 +119,35 @@ export const DuplicatePieceSetDialog = ({
   sourceId,
   sourceName,
 }: DuplicatePieceSetDialogProps) => {
+  const duplicate = useAdminAction<DuplicateRequest>({
+    verb: 'duplicate',
+    name: pieceSetName.short(sourceName),
+    run: ({ id, name }) => pieceSetsApi.duplicate(id, { name }),
+    invalidate: [pieceSetKeys.all],
+    onSuccess: () => onOpenChange(false),
+  });
+  const changeOpen = (next: boolean) => {
+    if (!next && duplicate.isPending) {
+      return;
+    }
+    onOpenChange(next);
+  };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={adminLayout.dialog.sm}>
+    <Dialog open={open} onOpenChange={changeOpen}>
+      <DialogContent
+        className={adminLayout.dialog.sm}
+        showCloseButton={!duplicate.isPending}
+      >
         <DialogHeader>
           <DialogTitle>{t('Duplicate Piece Set')}</DialogTitle>
+          <DialogDescription>
+            {t('The copy starts with the same settings as the original.')}
+          </DialogDescription>
         </DialogHeader>
         <DuplicatePieceSetForm
           key={open ? 'open' : 'closed'}
-          onOpenChange={onOpenChange}
+          duplicate={duplicate}
+          onCancel={() => changeOpen(false)}
           sourceId={sourceId}
           sourceName={sourceName}
         />

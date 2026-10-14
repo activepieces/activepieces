@@ -6,7 +6,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -23,7 +24,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { templateUtils } from '@/features/flows';
 import { templatesApi } from '@/features/templates';
 import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -31,12 +31,20 @@ import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { Textarea } from '../../../../../components/ui/textarea';
 
+import { readTemplateFile } from './read-template-file';
+
 const CreateFlowTemplateSchema = z.object({
   displayName: z.string().min(1, t('Name is required')),
   summary: z.string(),
   description: z.string(),
   blogUrl: z.string(),
-  template: FlowVersionTemplate,
+  template: z
+    .custom<FlowVersionTemplate>((value) => value !== undefined, {
+      message: t('Template is required'),
+    })
+    .refine((value) => FlowVersionTemplate.safeParse(value).success, {
+      message: t('Template file is invalid'),
+    }),
   tags: z.array(TemplateTagType).optional(),
   categories: z.array(z.string()).optional(),
 });
@@ -50,6 +58,7 @@ export const CreateTemplateDialog = ({
   onDone: () => void;
 }) => {
   const [open, setOpen] = useState(false);
+  const submitting = useRef(false);
   const { data: currentUser } = userHooks.useCurrentUser();
   const form = useForm<CreateFlowTemplateSchema>({
     defaultValues: {
@@ -64,10 +73,14 @@ export const CreateTemplateDialog = ({
     resolver: zodResolver(CreateFlowTemplateSchema),
   });
 
+  const close = () => {
+    setOpen(false);
+    form.reset();
+  };
+
   const { mutate, isPending } = useMutation({
     mutationKey: ['create-template'],
-    mutationFn: () => {
-      const formValue = form.getValues();
+    mutationFn: (formValue: CreateFlowTemplateSchema) => {
       const author = currentUser
         ? `${currentUser.firstName} ${currentUser.lastName}`
         : 'Unknown User';
@@ -91,44 +104,56 @@ export const CreateTemplateDialog = ({
         categories: formValue.categories || [],
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, formValue) => {
       adminFeedback.done({
         verb: 'create',
-        name: form.getValues().displayName,
+        name: formValue.displayName,
       });
       onDone();
-      setOpen(false);
+      close();
     },
     onError: (error) => {
-      form.setError('template', {
+      form.setError('root.serverError', {
+        type: 'manual',
         message: mutationFeedback.message(error),
       });
     },
   });
 
-  const onSubmit = () => {
-    if (!form.getValues().template) {
-      form.setError('template', {
-        message: t('Template is required'),
-      });
+  const onSubmit = (formValue: CreateFlowTemplateSchema) => {
+    if (submitting.current) {
       return;
     }
-
-    mutate();
+    submitting.current = true;
+    form.clearErrors('root.serverError');
+    mutate(formValue, {
+      onSettled: () => {
+        submitting.current = false;
+      },
+    });
   };
 
   return (
     <Dialog
       open={open}
-      onOpenChange={(open) => {
-        setOpen(open);
-        form.reset();
+      onOpenChange={(next) => {
+        if (next) {
+          setOpen(true);
+        } else if (!isPending) {
+          close();
+        }
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className={adminLayout.dialog.md}>
+      <DialogContent
+        className={adminLayout.dialog.md}
+        showCloseButton={!isPending}
+      >
         <DialogHeader>
           <DialogTitle>{t('Create New Template')}</DialogTitle>
+          <DialogDescription>
+            {t('Upload a flow template file and describe it.')}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -205,19 +230,16 @@ export const CreateTemplateDialog = ({
                   <Input
                     type="file"
                     accept=".json"
-                    onChange={(e) => {
-                      e.target.files &&
-                        e.target.files[0].text().then((text) => {
-                          const flowTemplate = templateUtils.extractFlow(text);
-                          if (flowTemplate) {
-                            field.onChange(flowTemplate);
-                          } else {
-                            form.setError('template', {
-                              message: t('Invalid JSON'),
-                            });
-                          }
-                        });
-                    }}
+                    onChange={(e) =>
+                      readTemplateFile({
+                        file: e.target.files?.[0],
+                        onChange: field.onChange,
+                        onInvalid: () =>
+                          form.setError('template', {
+                            message: t('Invalid JSON'),
+                          }),
+                      })
+                    }
                     required
                     id="template"
                     placeholder={t('Template')}
@@ -226,15 +248,21 @@ export const CreateTemplateDialog = ({
                 </FormItem>
               )}
             />
+            {form.formState.errors.root?.serverError && (
+              <FormMessage>
+                {form.formState.errors.root.serverError.message}
+              </FormMessage>
+            )}
           </form>
         </Form>
         <DialogFooter>
           <Button
             variant={'outline'}
+            disabled={isPending}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              setOpen(false);
+              close();
             }}
           >
             {t('Cancel')}

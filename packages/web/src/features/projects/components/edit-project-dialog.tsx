@@ -17,6 +17,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
 } from '@/components/ui/dialog';
@@ -79,11 +80,14 @@ export function EditProjectDialog({
         }
       }}
     >
-      <DialogContent className="max-w-md w-full" aria-describedby={undefined}>
+      <DialogContent className="max-w-md w-full">
         <DialogHeader>
           <DialogTitle className="break-words">
             {t('Edit {name}', { name: initialValues?.projectName ?? '' })}
           </DialogTitle>
+          <DialogDescription>
+            {t("Change this project's name and settings.")}
+          </DialogDescription>
         </DialogHeader>
 
         {!globalConnectionsEnabled || !isLoadingConnections ? (
@@ -274,7 +278,7 @@ const EditProjectForm = ({
           </Button>
           <Button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || !form.formState.isDirty}
             loading={isPending}
             {...adminControl(AdminControl.PROJECTS_EDIT_SUBMIT)}
           >

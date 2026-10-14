@@ -48,6 +48,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { piecesApi } from '../api/pieces-api';
 const FormSchema = z.object({
@@ -116,24 +117,6 @@ const InstallPieceDialog = ({
 
   const { mutate, isPending } = useMutation<void, Error, AddPieceRequestBody>({
     mutationFn: async (data) => {
-      form.clearErrors();
-
-      if (data.packageType === PackageType.REGISTRY) {
-        if (!data.pieceName) {
-          form.setError('pieceName', {
-            message: t('Piece name is required for NPM Registry'),
-          });
-        }
-        if (!data.pieceVersion) {
-          form.setError('pieceVersion', {
-            message: t('Piece version is required for NPM Registry'),
-          });
-        }
-        if (!data.pieceName || !data.pieceVersion) {
-          throw new Error('Validation failed');
-        }
-      }
-
       await piecesApi.install(data);
     },
     onSuccess: () => {
@@ -164,15 +147,52 @@ const InstallPieceDialog = ({
           });
           return;
         }
-        form.setError('root.serverError', {
-          message: t('Something went wrong, please try again later'),
-        });
       }
+      if (mutationFeedback.isQuotaExceeded(error)) {
+        mutationFeedback.error({ error });
+      }
+      form.setError('root.serverError', {
+        message: mutationFeedback.message(error),
+      });
     },
   });
 
+  const submit = (data: z.infer<typeof FormSchema>) => {
+    if (isPending) {
+      return;
+    }
+    form.clearErrors();
+    if (data.packageType === PackageType.REGISTRY) {
+      if (!data.pieceName) {
+        form.setError('pieceName', {
+          message: t('Piece name is required for NPM Registry'),
+        });
+      }
+      if (!data.pieceVersion) {
+        form.setError('pieceVersion', {
+          message: t('Piece version is required for NPM Registry'),
+        });
+      }
+      if (!data.pieceName || !data.pieceVersion) {
+        return;
+      }
+    }
+    mutate({
+      projectId: authenticationSession.getProjectId()!,
+      ...data,
+    } as AddPieceRequestBody);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && isPending) {
+          return;
+        }
+        setIsOpen(open);
+      }}
+    >
       <DialogTrigger asChild>
         <AnimatedIconButton
           {...adminControl(AdminControl.PIECES_INSTALL_OPEN)}
@@ -183,7 +203,7 @@ const InstallPieceDialog = ({
           {t('Install Piece')}
         </AnimatedIconButton>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent showCloseButton={!isPending}>
         <DialogHeader>
           <DialogTitle>{t('Install a piece')}</DialogTitle>
           <DialogDescription>
@@ -197,12 +217,7 @@ const InstallPieceDialog = ({
         <FormProvider {...form}>
           <form
             className="flex flex-col gap-4"
-            onSubmit={form.handleSubmit((data) =>
-              mutate({
-                projectId: authenticationSession.getProjectId()!,
-                ...data,
-              } as AddPieceRequestBody),
-            )}
+            onSubmit={form.handleSubmit(submit)}
           >
             <FormField
               name="packageType"
