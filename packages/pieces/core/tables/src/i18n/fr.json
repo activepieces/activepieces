@@ -41,5 +41,6 @@
   "Record Deleted": "Enregistrement supprimé",
   "Triggers when a new record is added to the selected table.": "Déclenche lorsqu'un nouvel enregistrement est ajouté à la table sélectionnée.",
   "Triggers when a record is updated in the selected table.": "Déclenche lorsqu'un enregistrement est mis à jour dans le tableau sélectionné.",
-  "Triggers when a record is deleted from the selected table.": "Déclenche lorsqu'un enregistrement est supprimé de la table sélectionnée."
+  "Triggers when a record is deleted from the selected table.": "Déclenche lorsqu'un enregistrement est supprimé de la table sélectionnée.",
+  "Empty fields keep their current value.": "Les champs vides conservent leur valeur actuelle."
 }
