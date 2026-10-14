@@ -4,6 +4,7 @@ import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformPlanService } from '../../../../src/app/ee/platform/platform-plan/platform-plan.service'
+import { projectMemberService } from '../../../../src/app/ee/projects/project-members/project-member.service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockProjectRole, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
@@ -254,6 +255,51 @@ describe('Project Role API', () => {
             expect(whileOnPlan.statusCode).not.toBe(StatusCodes.FORBIDDEN)
             expect(afterLapse.statusCode).toBe(StatusCodes.FORBIDDEN)
             expect(readAfterLapse.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('never gives a narrow custom role more than it had', async () => {
+            const ctx = await createTestContext(app!, { plan: { customRolesEnabled: true } })
+            const customRole = createMockProjectRole({
+                platformId: ctx.platform.id,
+                type: RoleType.CUSTOM,
+                name: 'Flow Reader',
+                permissions: [Permission.READ_FLOW],
+            })
+            await db.save('project_role', customRole)
+            const member = await createMemberContext(app!, ctx, { projectRole: customRole.name })
+            await platformPlanService(app!.log).update({ platformId: ctx.platform.id, customRolesEnabled: false })
+
+            const flows = await member.get('/v1/flows', { projectId: ctx.project.id })
+            const tables = await member.get('/v1/tables', { projectId: ctx.project.id })
+
+            expect(flows.statusCode).toBe(StatusCodes.OK)
+            expect(tables.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('applies the same limit to permission checks across projects', async () => {
+            const ctx = await createTestContext(app!, { plan: { customRolesEnabled: true } })
+            const customRole = createMockProjectRole({
+                platformId: ctx.platform.id,
+                type: RoleType.CUSTOM,
+                name: 'Inviter',
+                permissions: [Permission.WRITE_INVITATION, Permission.READ_AGENT],
+            })
+            await db.save('project_role', customRole)
+            const member = await createMemberContext(app!, ctx, { projectRole: customRole.name })
+            const projectsWith = (permission: Permission) => projectMemberService(app!.log).listProjectIdsWithPermission({
+                userId: member.user.id,
+                platformId: ctx.platform.id,
+                permission,
+            })
+
+            const inviteWhileOnPlan = await projectsWith(Permission.WRITE_INVITATION)
+            await platformPlanService(app!.log).update({ platformId: ctx.platform.id, customRolesEnabled: false })
+            const inviteAfterLapse = await projectsWith(Permission.WRITE_INVITATION)
+            const agentsAfterLapse = await projectsWith(Permission.READ_AGENT)
+
+            expect(inviteWhileOnPlan).toEqual([ctx.project.id])
+            expect(inviteAfterLapse).toEqual([])
+            expect(agentsAfterLapse).toEqual([ctx.project.id])
         })
     })
 })

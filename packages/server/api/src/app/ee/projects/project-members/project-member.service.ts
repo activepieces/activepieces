@@ -139,10 +139,10 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         if (projectRole.type !== RoleType.CUSTOM) {
             return projectRole
         }
-        const customRolesEnabled = await planFeatures(log).isEnabled({ platformId: project.platformId, feature: 'customRolesEnabled' })
-        return customRolesEnabled
+        const lapsedCap = await lapsedCustomRoleCap({ platformId: project.platformId, log })
+        return isNil(lapsedCap)
             ? projectRole
-            : projectRoleService.getOneOrThrow({ name: DefaultProjectRole.VIEWER, platformId: project.platformId })
+            : { ...projectRole, permissions: projectRole.permissions.filter((permission) => lapsedCap.includes(permission)) }
     },
     async update(params: UpdateMemberRole): Promise<ProjectMember> {
         const projectRole = await projectRoleService.getOneOrThrow({
@@ -215,7 +215,8 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         return projectIds.length > 0
     },
     async listProjectIdsWithPermission({ userId, platformId, permission }: HasPermissionOnAnyProjectParams): Promise<ProjectId[]> {
-        const rows = await repo()
+        const lapsedCap = await lapsedCustomRoleCap({ platformId, log })
+        const query = repo()
             .createQueryBuilder('project_member')
             .select('project_member.projectId', 'projectId')
             .innerJoin('project_member.projectRole', 'project_role')
@@ -224,7 +225,10 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             .andWhere('project_member.platformId = :platformId', { platformId })
             .andWhere(':permission = ANY(project_role.permissions)', { permission })
             .andWhere('project.deleted IS NULL')
-            .getRawMany<{ projectId: ProjectId }>()
+        if (!isNil(lapsedCap) && !lapsedCap.includes(permission)) {
+            query.andWhere('project_role.type <> :customRoleType', { customRoleType: RoleType.CUSTOM })
+        }
+        const rows = await query.getRawMany<{ projectId: ProjectId }>()
         return rows.map((row) => row.projectId)
     },
     async listProjectMemberUserIds({ projectId }: { projectId: ProjectId }): Promise<UserId[]> {
@@ -285,6 +289,15 @@ type HasPermissionOnAnyProjectParams = {
     userId: UserId
     platformId: PlatformId
     permission: Permission
+}
+
+async function lapsedCustomRoleCap({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<string[] | null> {
+    const customRolesEnabled = await planFeatures(log).isEnabled({ platformId, feature: 'customRolesEnabled' })
+    if (customRolesEnabled) {
+        return null
+    }
+    const viewer = await projectRoleService.getOneOrThrow({ name: DefaultProjectRole.VIEWER, platformId })
+    return viewer.permissions
 }
 
 function toProjectMemberWithUser(
