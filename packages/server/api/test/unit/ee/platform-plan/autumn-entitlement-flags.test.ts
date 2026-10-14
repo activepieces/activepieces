@@ -1,3 +1,4 @@
+import { PlanName, UnconsumableFeatureId } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { autumnUtils } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-utils'
 
@@ -222,6 +223,75 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
         expect(projection.showPoweredBy).toBe(true)
     })
 })
+
+describe('withoutExpiredEnterpriseTrial', () => {
+    const TRIAL_FLAGS = ['auditLogEnabled', 'ssoEnabled']
+    const HOUR_MS = 60 * 60 * 1000
+
+    function customerOnFreeWithTrial({ trialEndsAt }: { trialEndsAt: number }) {
+        return {
+            subscriptions: [
+                { ...subscription({ planId: PlanName.FREE, featureIds: FREE_FLAGS }), trialEndsAt: null },
+                { ...subscription({ planId: PlanName.ENTERPRISE_TRIAL, featureIds: TRIAL_FLAGS, addOn: true }), trialEndsAt },
+            ],
+            purchases: [],
+            balances: {
+                [UnconsumableFeatureId.USERS_LIMIT]: balance([
+                    grant({ planId: PlanName.FREE, includedGrant: 1 }),
+                    grant({ planId: PlanName.ENTERPRISE_TRIAL, unlimited: true }),
+                ]),
+                [UnconsumableFeatureId.TEAM_PROJECTS_LIMIT]: balance([
+                    grant({ planId: PlanName.ENTERPRISE_TRIAL, unlimited: true }),
+                ]),
+            },
+        }
+    }
+
+    it('drops a trial that Autumn still shows as active after its end date', () => {
+        const customer = customerOnFreeWithTrial({ trialEndsAt: Date.now() - HOUR_MS })
+
+        const trimmed = autumnUtils.withoutExpiredEnterpriseTrial(customer as never)
+
+        expect([...autumnUtils.toGrantedFeatureIds(trimmed)].sort()).toEqual([...FREE_FLAGS].sort())
+        expect(trimmed.balances[UnconsumableFeatureId.USERS_LIMIT]).toMatchObject({ granted: 1, unlimited: false })
+        expect(trimmed.balances).not.toHaveProperty(UnconsumableFeatureId.TEAM_PROJECTS_LIMIT)
+    })
+
+    it('keeps a trial that is still running', () => {
+        const customer = customerOnFreeWithTrial({ trialEndsAt: Date.now() + HOUR_MS })
+
+        expect(autumnUtils.withoutExpiredEnterpriseTrial(customer as never)).toBe(customer)
+    })
+})
+
+function balance(breakdown: Grant[]) {
+    return {
+        granted: breakdown.reduce((sum, entry) => sum + entry.includedGrant, 0),
+        remaining: 0,
+        usage: 0,
+        unlimited: breakdown.some((entry) => entry.unlimited),
+        breakdown,
+    }
+}
+
+function grant({ planId, includedGrant = 0, unlimited = false }: GrantParams): Grant {
+    return { planId, includedGrant, prepaidGrant: 0, remaining: includedGrant, usage: 0, unlimited }
+}
+
+type Grant = {
+    planId: string
+    includedGrant: number
+    prepaidGrant: number
+    remaining: number
+    usage: number
+    unlimited: boolean
+}
+
+type GrantParams = {
+    planId: string
+    includedGrant?: number
+    unlimited?: boolean
+}
 
 type PlanItems = {
     addOn: boolean
