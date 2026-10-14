@@ -8,6 +8,18 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Invoice Ninja 0.5.0: Get Report returns columns and rows, the existing actions are builder-only, and some text inputs changed type
+
+Get Report used to send a GET to `/api/v1/reports/<type>`, which does not return report data, and returned whatever came back (or an error message as a successful step). From Invoice Ninja 0.5.0 it runs the report and returns `{ reportType, columns, rows, rowCount }`, where each row is keyed by column key (for example `client.name`). It also gains a date range and fails the step on API errors.
+
+Create Task, Check Task Existence, Get Client Details from e-mail, Get Invoices, Get Report, Create Invoice, Create Recurring Invoice and Perform Action on Recurring Invoice are now builder-only. AI agents use their twins: Create Task (by IDs), List Tasks, Find Clients, List Invoices, Run Report, Create Invoice (from line items), Create Recurring Invoice (from line items), and Start, Stop, Send Now or Delete Recurring Invoice.
+
+Several single-line inputs (client name and address, task number, client email, recurring invoice ID) moved from long text to short text, Private Notes moved to long text, and Invoice Discount is now a number, and the Client ID text box on Get Invoices and Get Report is now a Client dropdown. Values saved by older steps still parse. The API token is now a secret and the connection is checked when it is saved.
+
+#### What you need to do
+
+If a later step reads Get Report's output, map it to `rows` and `columns`. Agents that used the builder actions as tools switch to the twins above. Steps keep running on the version they were built with until you upgrade them.
+
 #### SmartSuite 0.3.0: Upload File returns the file list, and record and selector actions are builder-only
 
 Upload File used to return the record's fields keyed by field label. From SmartSuite 0.3.0 it returns `{ recordId, field, fileName, files }`, where `files` is the field's file list (handle, name and metadata) after the upload.
