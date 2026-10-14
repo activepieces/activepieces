@@ -138,7 +138,6 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 ...rest,
                 ...(resolvedPoolId !== undefined ? { poolId: resolvedPoolId } : {}),
                 ...(maxConcurrentJobs !== undefined ? { maxConcurrentJobs } : {}),
-                ...(platformPlan.workerGroupsEnabled && workerGroupId !== undefined ? { workerGroupId } : {}),
             }, entityManager)
             if (platformPlan.globalConnectionsEnabled && globalConnectionExternalIds) {
                 const projectGlobalConnections = await appConnectionsRepo(entityManager).find({
@@ -195,13 +194,11 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         if (resolvedPoolId !== undefined) {
             await concurrencyPoolService(log).assignProject({ projectId, poolId: resolvedPoolId })
         }
-        const previousGroupId = project.workerGroupId ?? null
-        if (platformPlan.workerGroupsEnabled && workerGroupId !== undefined && previousGroupId !== workerGroupId) {
-            await projectWorkerGroupService(log).migrateProjectToGroup({
+        if (platformPlan.workerGroupsEnabled && workerGroupId !== undefined) {
+            await projectWorkerGroupService(log).assignProjectToGroup({
                 projectId,
                 platformId: project.platformId,
-                fromGroupId: previousGroupId,
-                toGroupId: workerGroupId,
+                workerGroupId,
             })
         }
         return this.getWithPlanAndUsageOrThrow(projectId)

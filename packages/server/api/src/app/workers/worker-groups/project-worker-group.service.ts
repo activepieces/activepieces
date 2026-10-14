@@ -1,4 +1,4 @@
-import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { WorkerGroupScope } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,7 +7,7 @@ import { projectRepo } from '../../project/project-repo'
 import { QueueName } from '../job'
 import { platformWorkerGroupService } from './platform-worker-group.service'
 import { platformQueueMigrationService } from './queue-migration.service'
-import { workerGroupQueues } from './worker-group-queues'
+import { NO_WORKER_GROUP_SENTINEL, workerGroupQueues } from './worker-group-queues'
 
 export const projectWorkerGroupService = (log: FastifyBaseLogger) => ({
     async getProjectWorkerGroup({ projectId, platformId }: { projectId: string, platformId?: string | null }): Promise<string | null> {
@@ -17,11 +17,12 @@ export const projectWorkerGroupService = (log: FastifyBaseLogger) => ({
         }
 
         const project = await projectRepo().findOne({
-            select: ['workerGroupId'],
+            select: ['id', 'workerGroupId'],
             where: { id: projectId, ...spreadIfDefined('platformId', platformId ?? undefined) },
         })
 
-        const workerGroupId = project?.workerGroupId ?? null
+        const stored = project?.workerGroupId ?? null
+        const workerGroupId = !isNil(stored) && workerGroupQueues.isRoutableWorkerGroupId(stored) ? stored : null
         await distributedStore.put(getProjectWorkerGroupCacheKey(projectId), workerGroupId ?? NO_WORKER_GROUP_SENTINEL, CACHE_TTL_SECONDS)
         return workerGroupId
     },
@@ -37,15 +38,33 @@ export const projectWorkerGroupService = (log: FastifyBaseLogger) => ({
         await distributedStore.delete(getProjectWorkerGroupCacheKey(projectId))
     },
 
-    async migrateProjectToGroup({ projectId, platformId, fromGroupId, toGroupId }: MigrateProjectToGroupParams): Promise<void> {
+    async assignProjectToGroup({ projectId, platformId, workerGroupId }: AssignProjectToGroupParams): Promise<void> {
+        if (!isNil(workerGroupId) && !workerGroupQueues.isRoutableWorkerGroupId(workerGroupId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `"${workerGroupId}" is not a valid worker group id`,
+                },
+            })
+        }
+        const project = await projectRepo().findOneOrFail({
+            select: ['id', 'workerGroupId'],
+            where: { id: projectId, platformId },
+        })
+        const previousGroupId = project.workerGroupId ?? null
+        await projectRepo().update({ id: projectId, platformId }, { workerGroupId })
+        await this.invalidate({ projectId })
+        if (previousGroupId === workerGroupId) {
+            return
+        }
         const ungroupedQueueName = await resolveUngroupedQueueName({ platformId, log })
         const { error } = await tryCatch(() => platformQueueMigrationService(log).migrateProjectJobs({
-            fromQueueName: isNil(fromGroupId) ? ungroupedQueueName : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PROJECT, workerGroupId: fromGroupId }),
-            toQueueName: isNil(toGroupId) ? ungroupedQueueName : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PROJECT, workerGroupId: toGroupId }),
+            fromQueueName: isNil(previousGroupId) ? ungroupedQueueName : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PROJECT, workerGroupId: previousGroupId }),
+            toQueueName: isNil(workerGroupId) ? ungroupedQueueName : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PROJECT, workerGroupId }),
             projectId,
         }))
         if (error) {
-            log.error({ project: { id: projectId }, platform: { id: platformId }, error }, '[projectWorkerGroupService#migrateProjectToGroup] Failed to migrate waiting jobs to the new worker group queue')
+            log.error({ project: { id: projectId }, platform: { id: platformId }, error }, '[projectWorkerGroupService#assignProjectToGroup] Failed to migrate waiting jobs to the new worker group queue')
         }
     },
 })
@@ -57,12 +76,10 @@ async function resolveUngroupedQueueName({ platformId, log }: { platformId: stri
 
 const getProjectWorkerGroupCacheKey = (projectId: string): string => `project:${projectId}:worker_group`
 
-const NO_WORKER_GROUP_SENTINEL = '__none__'
 const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
 
-type MigrateProjectToGroupParams = {
+type AssignProjectToGroupParams = {
     projectId: string
     platformId: string
-    fromGroupId: string | null
-    toGroupId: string | null
+    workerGroupId: string | null
 }

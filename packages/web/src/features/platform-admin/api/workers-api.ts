@@ -7,7 +7,17 @@ export const workersApi = {
     return api.get<WorkerMachineWithStatus[]>('/v1/worker-machines');
   },
   listWorkerGroups() {
-    return api.get<WorkerPoolCapacity>('/v1/projects/worker-groups');
+    return api.get<WorkerPoolCapacity>('/v1/worker-groups');
+  },
+  assignProject(projectId: string, workerGroupId: string | null) {
+    return api.post<void>(`/v1/worker-groups/projects/${projectId}`, {
+      workerGroupId,
+    });
+  },
+  assignFlow(flowId: string, workerGroupId: string | null) {
+    return api.post<void>(`/v1/worker-groups/flows/${flowId}`, {
+      workerGroupId,
+    });
   },
 };
 
