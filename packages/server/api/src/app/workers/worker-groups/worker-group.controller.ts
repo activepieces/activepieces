@@ -6,7 +6,6 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowRepo } from '../../flows/flow/flow.repo'
-import { projectService } from '../../project/project-service'
 import { machineService } from '../machine/machine-service'
 import { flowWorkerGroupService } from './flow-worker-group.service'
 import { platformWorkerGroupService } from './platform-worker-group.service'
@@ -30,9 +29,14 @@ export const workerGroupController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/flows/:id', UpdateFlowWorkerGroupRequestOptions, async (request, reply) => {
-        const flow = await flowRepo().findOneBy({ id: request.params.id })
-        const platformId = isNil(flow) ? null : await projectService(request.log).getPlatformId(flow.projectId)
-        if (isNil(flow) || platformId !== request.principal.platform.id) {
+        const platformId = request.principal.platform.id
+        const flow = await flowRepo()
+            .createQueryBuilder('flow')
+            .innerJoin('project', 'project', 'project.id = flow."projectId"')
+            .where('flow.id = :id', { id: request.params.id })
+            .andWhere('project."platformId" = :platformId', { platformId })
+            .getOne()
+        if (isNil(flow)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
