@@ -40,16 +40,29 @@ describe.each([newRecordTrigger, updatedRecordTrigger, deletedRecordTrigger])('$
     expect(sendRequest).not.toHaveBeenCalled();
   });
 
-  test('subscribes to the selected table', async () => {
+  test('subscribes to the selected table and turns on only after the webhook id is stored', async () => {
     vi.spyOn(tablesCommon, 'convertTableExternalIdToId').mockResolvedValue('table-1');
     const createWebhook = vi.spyOn(tablesCommon, 'createWebhook').mockResolvedValue({ id: 'webhook-1' });
     const context = buildTriggerContext('external-table-1');
-    const put = vi.spyOn(context.store, 'put');
+    let finishStoreWrite = () => undefined;
+    const put = vi.spyOn(context.store, 'put').mockImplementation(
+      () => new Promise((resolve) => {
+        finishStoreWrite = () => resolve(undefined);
+      })
+    );
+    let turnedOn = false;
+    const enabling = trigger.onEnable(context).then(() => {
+      turnedOn = true;
+    });
 
-    await trigger.onEnable(context);
+    await vi.waitFor(() => expect(put).toHaveBeenCalledWith('webhookId', 'webhook-1'));
+    expect(turnedOn).toBe(false);
 
+    finishStoreWrite();
+    await enabling;
+
+    expect(turnedOn).toBe(true);
     expect(createWebhook).toHaveBeenCalledWith(expect.objectContaining({ tableId: 'table-1' }));
-    expect(put).toHaveBeenCalledWith('webhookId', 'webhook-1');
   });
 
   test('turns off without a table', async () => {
