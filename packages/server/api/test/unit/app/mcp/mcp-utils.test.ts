@@ -653,11 +653,11 @@ describe('mcpUtils.normalizeFormulaText — double braces around a formula', () 
 
 describe('mcpUtils.normalizeAuth', () => {
     it('unwraps the connection template the research tools hand out', () => {
-        expect(mcpUtils.normalizeAuth('{{connections[\'95YG1g0Cj0T0R9rbrjgxV\']}}')).toBe('95YG1g0Cj0T0R9rbrjgxV')
+        expect(mcpUtils.normalizeAuth('{{connections[\'conn_test_id\']}}')).toBe('conn_test_id')
     })
 
     it('leaves a plain externalId and undefined alone', () => {
-        expect(mcpUtils.normalizeAuth('95YG1g0Cj0T0R9rbrjgxV')).toBe('95YG1g0Cj0T0R9rbrjgxV')
+        expect(mcpUtils.normalizeAuth('conn_test_id')).toBe('conn_test_id')
         expect(mcpUtils.normalizeAuth(undefined)).toBeUndefined()
     })
 
