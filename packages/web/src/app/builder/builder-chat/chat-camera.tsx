@@ -2,6 +2,8 @@ import { isNil } from '@activepieces/core-utils';
 import { useReactFlow } from '@xyflow/react';
 import { useEffect } from 'react';
 
+import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
+
 import { BuilderState, useBuilderStore } from '../builder-hooks';
 import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 import { ChatCameraShot } from '../state/builder-chat-state';
@@ -140,6 +142,11 @@ export function ChatCamera() {
       whenMeasured({
         stepName: shot.stepName,
         fn: () => {
+          if (shot.kind === 'testing' && shot.stepName === 'trigger') {
+            lastFramedStep = null;
+            showWholeFlow();
+            return;
+          }
           if (shot.kind === 'adding-after') {
             craneTo({ stepName: shot.stepName, zoom: ESTABLISH_ZOOM });
             return;
@@ -196,13 +203,7 @@ export function ChatCamera() {
       }
     };
 
-    const pullBackToWideShot = () => {
-      if (isPlayingShot || store.getState().isChatWaitingForUser) {
-        schedule({ fn: pullBackToWideShot, delayMs: SHOT_DWELL_MS });
-        return;
-      }
-      store.getState().setChatCameraShot(null);
-      lastFramedStep = null;
+    const showWholeFlow = () => {
       if (!isFollowing()) {
         return;
       }
@@ -212,6 +213,29 @@ export function ChatCamera() {
         minZoom: WIDE_SHOT_MIN_ZOOM,
         maxZoom: 1,
       }).catch(() => undefined);
+    };
+
+    const showTestRun = (runId: string) => {
+      flowRunsApi
+        .getPopulated(runId)
+        .then((run) => {
+          const state = store.getState();
+          if (run.flowId !== state.flow.id) {
+            return;
+          }
+          state.setRun(run, state.flowVersion);
+        })
+        .catch(() => undefined);
+    };
+
+    const pullBackToWideShot = () => {
+      if (isPlayingShot || store.getState().isChatWaitingForUser) {
+        schedule({ fn: pullBackToWideShot, delayMs: SHOT_DWELL_MS });
+        return;
+      }
+      store.getState().setChatCameraShot(null);
+      lastFramedStep = null;
+      showWholeFlow();
     };
 
     const unsubscribe = store.subscribe((state, previous) => {
@@ -255,6 +279,11 @@ export function ChatCamera() {
         return;
       }
 
+      newlyStarted({
+        current: state.chatActivity?.testRunIds,
+        before: previous.chatActivity?.testRunIds,
+      }).forEach(showTestRun);
+
       const isChatTurnLive = isWorking || Date.now() < turnTailEndsAt;
       if (!isChatTurnLive) {
         return;
@@ -282,6 +311,10 @@ function pickCameraShots({
     current: state.chatActivity?.addingAfterStepNames,
     before: previous.chatActivity?.addingAfterStepNames,
   }).map((stepName) => ({ stepName, kind: 'adding-after' as const }));
+  const testing = newlyStarted({
+    current: state.chatActivity?.testingStepNames,
+    before: previous.chatActivity?.testingStepNames,
+  }).map((stepName) => ({ stepName, kind: 'testing' as const }));
   const editing = newlyStarted({
     current: state.chatActivity?.editingStepNames,
     before: previous.chatActivity?.editingStepNames,
@@ -293,7 +326,7 @@ function pickCameraShots({
           kind: 'editing' as const,
         }))
       : [];
-  return [...addingAfter, ...editing, ...landed];
+  return [...addingAfter, ...editing, ...testing, ...landed];
 }
 
 function newlyStarted({

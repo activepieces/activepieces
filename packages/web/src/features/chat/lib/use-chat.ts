@@ -759,6 +759,30 @@ export function useAgentChat({
         : [],
     [flowContext, streamingMessage],
   );
+  const flowTestingKey = useMemo(
+    () =>
+      flowContext
+        ? chatFlowActivity
+            .testingStepNames({
+              message: streamingMessage ?? null,
+              flowId: flowContext.flowId,
+            })
+            .join(',')
+        : '',
+    [flowContext, streamingMessage],
+  );
+  const flowTestRunsKey = useMemo(
+    () =>
+      flowContext
+        ? chatFlowActivity
+            .testRunIds({
+              message: streamingMessage ?? null,
+              flowId: flowContext.flowId,
+            })
+            .join(',')
+        : '',
+    [flowContext, streamingMessage],
+  );
   const flowEditingKey = flowEditingStepNames.join(',');
   const flowAddingAfterKey = flowAddingAfterStepNames.join(',');
   useEffect(() => {
@@ -767,6 +791,8 @@ export function useAgentChat({
       editingStepNames: flowEditingKey === '' ? [] : flowEditingKey.split(','),
       addingAfterStepNames:
         flowAddingAfterKey === '' ? [] : flowAddingAfterKey.split(','),
+      testingStepNames: flowTestingKey === '' ? [] : flowTestingKey.split(','),
+      testRunIds: flowTestRunsKey === '' ? [] : flowTestRunsKey.split(','),
       wasStopped: wasCancelled,
       stop: cancelStream,
     });
@@ -776,6 +802,8 @@ export function useAgentChat({
     wasCancelled,
     flowEditingKey,
     flowAddingAfterKey,
+    flowTestingKey,
+    flowTestRunsKey,
     cancelStream,
   ]);
 

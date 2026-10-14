@@ -13,6 +13,7 @@ export function ChatCanvasStatus() {
     chatActivity,
     cameraStepName,
     cameraShotKind,
+    isTestingWholeFlow,
     isFollowing,
     setFollowing,
     isWaitingForUser,
@@ -25,6 +26,8 @@ export function ChatCanvasStatus() {
           state.flowVersion.trigger,
         )?.displayName ?? null,
     state.chatCameraShot?.kind ?? null,
+    state.chatCameraShot?.kind === 'testing' &&
+      state.chatCameraShot.stepName === 'trigger',
     state.isFollowingChat,
     state.setFollowingChat,
     state.isChatWaitingForUser,
@@ -55,6 +58,10 @@ export function ChatCanvasStatus() {
         >
           {isNil(cameraStepName)
             ? t('Chat is editing this flow…')
+            : isTestingWholeFlow
+            ? t('Chat is testing the flow…')
+            : cameraShotKind === 'testing'
+            ? t('Chat is testing {stepName}…', { stepName: cameraStepName })
             : cameraShotKind === 'adding-after'
             ? t('Chat is adding a step after {stepName}…', {
                 stepName: cameraStepName,

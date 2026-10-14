@@ -58,7 +58,10 @@ const ApStepCanvasNode = React.memo(
       state.recentlyChangedSteps.includes(step.name),
       state.recentlyAddedSteps.includes(step.name),
       state.chatActivity?.editingStepNames.includes(step.name) ?? false,
-      state.chatCameraShot?.stepName ?? null,
+      state.chatCameraShot?.kind === 'testing' &&
+      state.chatCameraShot.stepName === 'trigger'
+        ? null
+        : state.chatCameraShot?.stepName ?? null,
     ]);
     const isInChatSpotlight = chatCameraStep === step.name;
     const isOutOfChatSpotlight = chatCameraStep !== null && !isInChatSpotlight;

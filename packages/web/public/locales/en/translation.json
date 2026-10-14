@@ -3304,5 +3304,7 @@
   "Stop following": "Stop following",
   "Follow": "Follow",
   "Chat needs your answer before it carries on": "Chat needs your answer before it carries on",
-  "Chat is adding a step after {stepName}…": "Chat is adding a step after {stepName}…"
+  "Chat is adding a step after {stepName}…": "Chat is adding a step after {stepName}…",
+  "Chat is testing the flow…": "Chat is testing the flow…",
+  "Chat is testing {stepName}…": "Chat is testing {stepName}…"
 }

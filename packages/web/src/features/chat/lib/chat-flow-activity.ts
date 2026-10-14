@@ -1,3 +1,4 @@
+import { parseToJsonIfPossible } from '@activepieces/core-utils';
 import { agentToolSkills } from '@activepieces/shared';
 
 import { ChatUIMessage, chatPartUtils } from './chat-types';
@@ -32,6 +33,46 @@ function addingAfterStepNames({
   flowId: string;
 }): string[] {
   return stepTargets({ message, flowId, targets: ADD_STEP_TARGETS });
+}
+
+function testingStepNames({
+  message,
+  flowId,
+}: {
+  message: ChatUIMessage | null;
+  flowId: string;
+}): string[] {
+  return stepTargets({ message, flowId, targets: TEST_TARGETS });
+}
+
+function testRunIds({
+  message,
+  flowId,
+}: {
+  message: ChatUIMessage | null;
+  flowId: string;
+}): string[] {
+  if (!message) {
+    return [];
+  }
+  return message.parts
+    .filter(chatPartUtils.isAnyToolPart)
+    .filter((part) => part.state === 'output-available')
+    .filter((part) => {
+      const { toolName, input } = agentToolSkills.effectiveToolCall({
+        toolName: chatPartUtils.getToolPartName(part),
+        input: part.input,
+      });
+      return (
+        toolName in TEST_TARGETS && isRecord(input) && input.flowId === flowId
+      );
+    })
+    .flatMap((part) => {
+      const output = parseToJsonIfPossible(part.output);
+      const structured = isRecord(output) ? output.structuredContent : null;
+      const runId = isRecord(structured) ? structured.runId : null;
+      return typeof runId === 'string' ? [runId] : [];
+    });
 }
 
 function stepTargets({
@@ -75,6 +116,14 @@ const ADD_STEP_TARGETS: Record<
   ap_add_step: (input) => input.parentStepName,
 };
 
+const TEST_TARGETS: Record<
+  string,
+  (input: Record<string, unknown>) => unknown
+> = {
+  ap_test_step: (input) => input.stepName,
+  ap_test_flow: () => 'trigger',
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -82,12 +131,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export const chatFlowActivity = {
   editingStepNames,
   addingAfterStepNames,
+  testingStepNames,
+  testRunIds,
 };
 
 export type ChatFlowActivity = {
   isWorking: boolean;
   editingStepNames: string[];
   addingAfterStepNames: string[];
+  testingStepNames: string[];
+  testRunIds: string[];
   wasStopped: boolean;
   stop: () => void;
 };

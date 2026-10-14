@@ -96,6 +96,7 @@ export const createBuilderChatState = (
           flow.publishedVersionId !== flow.version.id &&
           flow.version.state === FlowVersionState.LOCKED,
         selectedStep: selectedStepStillExists ? state.selectedStep : null,
+        run: changes.length > 0 ? null : state.run,
         rightSidebar:
           !selectedStepStillExists &&
           state.rightSidebar === RightSideBarType.PIECE_SETTINGS
@@ -152,7 +153,7 @@ export const builderChatSelectors = {
 
 export type ChatCameraShot = {
   stepName: string;
-  kind: 'editing' | 'adding-after';
+  kind: 'editing' | 'adding-after' | 'testing';
 };
 
 export type BuilderChatState = {
