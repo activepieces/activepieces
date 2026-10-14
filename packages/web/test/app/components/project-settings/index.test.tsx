@@ -3,7 +3,7 @@
  */
 import { ColorName, ProjectType } from '@activepieces/shared';
 import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -67,6 +67,10 @@ vi.mock('@/app/components/project-settings/pieces', () => ({
 }));
 
 import { ProjectSettingsDialog } from '@/app/components/project-settings';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('ProjectSettingsDialog', () => {
   it('has an accessible name when opened on the members tab', () => {
