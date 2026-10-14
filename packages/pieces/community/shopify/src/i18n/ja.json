@@ -230,5 +230,9 @@
   "Triggers when a customer is created.": "顧客が作成されたときにトリガーされます。",
   "Triggers when an order is created.": "注文が作成されたときにトリガーされます。",
   "Triggers when a product is updated.": "商品が更新されたときにトリガーされます。",
-  "Triggers when an order is paid.": "注文が支払われたときにトリガーされます。"
+  "Triggers when an order is paid.": "注文が支払われたときにトリガーされます。",
+  "Leave empty to use Shopify's default.": "空欄の場合はShopifyの既定値を使用します。",
+  "Switched off, these leave the customer's current setting unchanged.": "オフの場合、顧客の現在の設定は変更されません。",
+  "Mark the customer's email as verified.": "顧客のメールアドレスを確認済みにします。",
+  "Leave empty to keep the current status.": "空欄の場合は現在のステータスを維持します。"
 }
