@@ -3299,5 +3299,8 @@
   "Explain the available data and how I can use it": "Explain the available data and how I can use it",
   "Automatically configure all fields using the available data": "Automatically configure all fields using the available data",
   "AI Assistant is here": "AI Assistant is here",
-  "Click the button below to reopen chat": "Click the button below to reopen chat"
+  "Click the button below to reopen chat": "Click the button below to reopen chat",
+  "Chat is editing {stepName}…": "Chat is editing {stepName}…",
+  "Stop following": "Stop following",
+  "Follow": "Follow"
 }

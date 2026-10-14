@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
@@ -28,7 +29,12 @@ import { useElementSize } from '@/hooks/use-element-size';
 import { cn } from '@/lib/utils';
 
 import { BuilderChatPanel } from './builder-chat/builder-chat-panel';
+import { ChatCamera } from './builder-chat/chat-camera';
 import { ChatCanvasStatus } from './builder-chat/chat-canvas-status';
+import {
+  ChatSettingsEntrance,
+  ChatSettingsEntranceKind,
+} from './builder-chat/chat-settings-entrance';
 import { ChatUpdatedStepNotice } from './builder-chat/chat-updated-step-notice';
 import { useLiveFlowUpdates } from './builder-chat/use-live-flow-updates';
 import { BuilderHeader } from './builder-header/builder-header';
@@ -109,6 +115,18 @@ const BuilderPage = () => {
   const rightHandleRef = useRef<PanelImperativeHandle>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const previousRightSidebar = usePrevious(rightSidebar);
+  const chatCameraStep = useBuilderStateContext(
+    (state) => state.chatCameraStep,
+  );
+  const previousSelectedStepName = usePrevious(selectedStepName);
+  const previousRemoteRevision = usePrevious(remoteRevision);
+  const settingsEntrance: ChatSettingsEntranceKind = isNil(chatCameraStep)
+    ? 'none'
+    : previousSelectedStepName !== selectedStepName
+    ? 'arrive'
+    : previousRemoteRevision !== remoteRevision
+    ? 'refresh'
+    : 'none';
 
   useLayoutEffect(() => {
     const handle = rightHandleRef.current;
@@ -187,7 +205,12 @@ const BuilderPage = () => {
               </CursorPositionProvider>
 
               <BuilderBanner />
-              {showBuilderChat && <ChatCanvasStatus />}
+              {showBuilderChat && (
+                <>
+                  <ChatCanvasStatus />
+                  <ChatCamera />
+                </>
+              )}
               {middlePanelRef.current &&
                 middlePanelRef.current.clientWidth > 0 && (
                   <CanvasControls
@@ -266,19 +289,24 @@ const BuilderPage = () => {
               <div className="min-h-0 grow">
                 {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
                   selectedStep && (
-                    <StepSettingsProvider
-                      pieceModel={pieceModel}
-                      pieceModelNotFound={pieceModelNotFound}
-                      selectedStep={selectedStep}
-                      key={constructContainerKey({
-                        flowVersionId: flowVersion.id,
-                        step: selectedStep,
-                        hasPieceModelLoaded: !!pieceModel,
-                        remoteRevision,
-                      })}
+                    <ChatSettingsEntrance
+                      key={`${selectedStep.name}-${remoteRevision}`}
+                      entrance={settingsEntrance}
                     >
-                      <StepSettingsContainer />
-                    </StepSettingsProvider>
+                      <StepSettingsProvider
+                        pieceModel={pieceModel}
+                        pieceModelNotFound={pieceModelNotFound}
+                        selectedStep={selectedStep}
+                        key={constructContainerKey({
+                          flowVersionId: flowVersion.id,
+                          step: selectedStep,
+                          hasPieceModelLoaded: !!pieceModel,
+                          remoteRevision,
+                        })}
+                      >
+                        <StepSettingsContainer />
+                      </StepSettingsProvider>
+                    </ChatSettingsEntrance>
                   )}
                 {rightSidebar === RightSideBarType.RUNS && <RunsList />}
                 {rightSidebar === RightSideBarType.VERSIONS && (

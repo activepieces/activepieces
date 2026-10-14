@@ -43,6 +43,7 @@ const ApStepCanvasNode = React.memo(
       isRecentlyChanged,
       isRecentlyAdded,
       isChatEditing,
+      chatCameraStep,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.selectedStep === step.name,
@@ -57,7 +58,11 @@ const ApStepCanvasNode = React.memo(
       state.recentlyChangedSteps.includes(step.name),
       state.recentlyAddedSteps.includes(step.name),
       state.chatActivity?.editingStepNames.includes(step.name) ?? false,
+      state.chatCameraStep,
     ]);
+    const isInChatSpotlight = chatCameraStep === step.name;
+    const isOutOfChatSpotlight =
+      chatCameraStep !== null && !isInChatSpotlight;
     const isHorizontal = canvasOrientation === 'horizontal';
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
@@ -152,9 +157,9 @@ const ApStepCanvasNode = React.memo(
             'rounded-tl-none': isTrigger && !isHorizontal,
             'hover:border-gray-8': !isSelected,
             'border-accent-9 shadow-md': isRecentlyChanged || isChatEditing,
-            'border-dashed animate-pulse': isChatEditing,
-            'animate-in fade-in slide-in-from-top-4 duration-500':
-              isRecentlyAdded,
+            'chat-spotlight border-accent-9': isInChatSpotlight,
+            'opacity-40 duration-500': isOutOfChatSpotlight,
+            'animate-in fade-in zoom-in-75 duration-700': isRecentlyAdded,
           },
         )}
         onClick={(e) => handleStepClick(e)}

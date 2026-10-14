@@ -146,6 +146,9 @@ export const createCanvasState = (
           userManuallySelectedStepDuringRun:
             state.userManuallySelectedStepDuringRun ||
             userPickedDifferentStepDuringRun,
+          isFollowingChat: options?.fromAutoFocus
+            ? state.isFollowingChat
+            : false,
         };
       });
     },

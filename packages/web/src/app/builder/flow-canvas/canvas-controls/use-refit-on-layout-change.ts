@@ -22,6 +22,12 @@ export function useRefitOnLayoutChange() {
       isFirstRender.current = false;
       return;
     }
+    const isChatDirectingCamera =
+      store.getState().chatActivity?.isWorking === true &&
+      store.getState().isFollowingChat;
+    if (isChatDirectingCamera) {
+      return;
+    }
     const timeout = window.setTimeout(() => {
       const { selectedStep } = store.getState();
       const options = isNil(selectedStep)

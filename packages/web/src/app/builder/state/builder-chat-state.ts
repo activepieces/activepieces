@@ -29,6 +29,12 @@ export const createBuilderChatState = (
       set({ isBuilderChatOpen: open, isChatCoachmarkVisible: showCoachmark });
     },
     isChatCoachmarkVisible: false,
+    chatCameraStep: null,
+    setChatCameraStep: (stepName: string | null) =>
+      set({ chatCameraStep: stepName }),
+    isFollowingChat: true,
+    setFollowingChat: (following: boolean) =>
+      set({ isFollowingChat: following }),
     dismissChatCoachmark: () => {
       writeStorage({ key: COACHMARK_SEEN_STORAGE_KEY, value: 'true' });
       set({ isChatCoachmarkVisible: false });
@@ -124,6 +130,10 @@ export type BuilderChatState = {
   setBuilderChatOpen: (open: boolean) => void;
   isChatCoachmarkVisible: boolean;
   dismissChatCoachmark: () => void;
+  chatCameraStep: string | null;
+  setChatCameraStep: (stepName: string | null) => void;
+  isFollowingChat: boolean;
+  setFollowingChat: (following: boolean) => void;
   recentlyChangedSteps: string[];
   recentlyAddedSteps: string[];
   remoteRevision: number;
