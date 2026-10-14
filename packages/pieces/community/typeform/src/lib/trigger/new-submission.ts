@@ -1,6 +1,11 @@
 import { typeformCommon, formsDropdown } from '../common';
 import { nanoid } from 'nanoid';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  MarkdownVariant,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { typeformAuth } from '../auth';
 import { newSubmissionOutputSchema } from '../output-schemas';
@@ -10,14 +15,21 @@ export const typeformNewSubmission = createTrigger({
   name: 'new_submission',
   classification: 'READ',
   displayName: 'New Submission',
-  description: 'Triggers when Typeform receives a new submission',
+  description: 'Triggers when someone submits the form.',
   aiMetadata: {
     description:
       'Fires when a respondent completes and submits the specified Typeform form. The event represents a single finished submission, delivered via webhook, and provides the form response payload including the submission token, landing/submission timestamps, the form definition, and the respondent\'s answers.',
   },
   outputSchema: newSubmissionOutputSchema,
+  propertyGroups: [
+    { key: 'form', display: 'section', label: 'Watch', icon: 'file', props: ['form_id', 'webhook_info'] },
+  ],
   props: {
     form_id: formsDropdown,
+    webhook_info: Property.MarkDown({
+      value: 'A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.',
+      variant: MarkdownVariant.INFO,
+    }),
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

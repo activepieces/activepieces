@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { typeformAuth } from '../auth';
 import { typeformCommon, TypeformRecord } from '../common';
@@ -17,17 +17,26 @@ export const createFormAction = createAction({
     idempotent: false,
   },
   outputSchema: formOutputSchema,
+  propertyGroups: [
+    { key: 'form', display: 'section', label: 'New form', icon: 'file', props: ['title', 'workspace', 'theme'] },
+    { key: 'content', display: 'section', label: 'Form content', icon: 'code', props: ['questions_info', 'fields'] },
+  ],
   props: {
     title: Property.ShortText({
       displayName: 'Title',
+      placeholder: 'Customer feedback survey',
       required: true,
     }),
     workspace: typeformCommon.workspace,
     theme: typeformCommon.theme,
+    questions_info: Property.MarkDown({
+      value:
+        'Questions use the [Typeform field format](https://www.typeform.com/developers/create/reference/create-form/). Leave empty to start with an empty form.',
+      variant: MarkdownVariant.INFO,
+    }),
     fields: Property.Json({
       displayName: 'Questions',
-      description:
-        'JSON array of Typeform field objects, as documented in the Typeform Create API. Leave empty for an empty form.',
+      description: 'A JSON array of Typeform question objects.',
       required: false,
     }),
   },
