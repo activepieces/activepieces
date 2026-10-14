@@ -8,12 +8,7 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  ChevronDown,
-  CircleHelp,
-  HistoryIcon,
-  MessageSquare,
-} from 'lucide-react';
+import { ChevronDown, CircleHelp, HistoryIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
@@ -52,6 +47,8 @@ import { cn } from '@/lib/utils';
 import FlowActionMenu from '../../components/flow-actions-menu';
 import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 
+import { BuilderChatToggle } from '../builder-chat/builder-chat-toggle';
+
 import { BuilderFlowStatusSection } from './flow-status';
 
 export const BuilderHeader = () => {
@@ -72,16 +69,12 @@ export const BuilderHeader = () => {
     moveToFolderClientSide,
     applyOperation,
     setRightSidebar,
-    isBuilderChatOpen,
-    setBuilderChatOpen,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.moveToFolderClientSide,
     state.applyOperation,
     state.setRightSidebar,
-    state.isBuilderChatOpen,
-    state.setBuilderChatOpen,
   ]);
 
   const { embedState } = useEmbedding();
@@ -196,15 +189,7 @@ export const BuilderHeader = () => {
       {!embedState.hideActiveUsers && (
         <ActiveUsersWidget resourceId={flow.id} />
       )}
-      {showBuilderChatToggle && (
-        <Button
-          variant={isBuilderChatOpen ? 'secondary' : 'ghost'}
-          onClick={() => setBuilderChatOpen(!isBuilderChatOpen)}
-        >
-          <MessageSquare className="w-4 h-4" />
-          {t('Chat')}
-        </Button>
-      )}
+      {showBuilderChatToggle && <BuilderChatToggle />}
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"

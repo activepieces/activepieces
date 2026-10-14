@@ -3285,5 +3285,7 @@
   "Full screen": "Full screen",
   "Findings": "Findings",
   "Made": "Made",
-  "Ask chat to build or change this flow...": "Ask chat to build or change this flow..."
+  "Ask chat to build or change this flow...": "Ask chat to build or change this flow...",
+  "Build this flow with chat": "Build this flow with chat",
+  "Describe what it should do. You can keep editing the canvas while chat works, and it will see your changes.": "Describe what it should do. You can keep editing the canvas while chat works, and it will see your changes."
 }

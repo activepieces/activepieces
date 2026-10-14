@@ -21,6 +21,9 @@ export const createBuilderChatState = (
       writeStoredOpen(open);
       set({ isBuilderChatOpen: open });
     },
+    collapsedAppSidebarForChat: false,
+    setCollapsedAppSidebarForChat: (collapsed: boolean) =>
+      set({ collapsedAppSidebarForChat: collapsed }),
     recentlyChangedSteps: [],
     remoteRevision: 0,
     applyRemoteFlow: (flow: PopulatedFlow) => {
@@ -94,6 +97,8 @@ function writeStoredOpen(open: boolean): void {
 export type BuilderChatState = {
   isBuilderChatOpen: boolean;
   setBuilderChatOpen: (open: boolean) => void;
+  collapsedAppSidebarForChat: boolean;
+  setCollapsedAppSidebarForChat: (collapsed: boolean) => void;
   recentlyChangedSteps: string[];
   remoteRevision: number;
   applyRemoteFlow: (flow: PopulatedFlow) => void;

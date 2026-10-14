@@ -170,7 +170,7 @@ const BuilderPage = () => {
           <>
             <ResizablePanel
               id="builder-chat"
-              defaultSize="30%"
+              defaultSize="380px"
               minSize="320px"
               maxSize="50%"
               className="min-w-0 z-30"

@@ -11,12 +11,12 @@ import { ChatFlowContext } from '@/features/chat/lib/use-chat';
 
 import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
 
+import { useToggleBuilderChat } from './use-toggle-builder-chat';
+
 export function BuilderChatPanel() {
   const store = useBuilderStore();
-  const [flowId, setBuilderChatOpen] = useBuilderStateContext((state) => [
-    state.flow.id,
-    state.setBuilderChatOpen,
-  ]);
+  const flowId = useBuilderStateContext((state) => state.flow.id);
+  const toggleBuilderChat = useToggleBuilderChat();
   const [freshSession, setFreshSession] = useState(0);
 
   const { data: latestConversationId, isLoading } = useQuery({
@@ -53,7 +53,7 @@ export function BuilderChatPanel() {
             variant="ghost"
             size="icon"
             aria-label={t('Close')}
-            onClick={() => setBuilderChatOpen(false)}
+            onClick={() => toggleBuilderChat(false)}
           >
             <X className="size-4" />
           </Button>
@@ -72,9 +72,23 @@ export function BuilderChatPanel() {
             conversationId={freshSession === 0 ? latestConversationId : null}
             flowContext={flowContext}
             placeholder={t('Ask chat to build or change this flow...')}
+            emptyState={<BuilderChatEmptyState />}
           />
         )}
       </div>
+    </div>
+  );
+}
+
+function BuilderChatEmptyState() {
+  return (
+    <div className="flex h-full flex-col justify-end gap-1 p-4">
+      <p className="text-sm font-medium">{t('Build this flow with chat')}</p>
+      <p className="text-sm text-gray-11">
+        {t(
+          'Describe what it should do. You can keep editing the canvas while chat works, and it will see your changes.',
+        )}
+      </p>
     </div>
   );
 }
