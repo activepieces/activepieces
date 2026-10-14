@@ -3,6 +3,7 @@ import { DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, Pri
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { ObjectLiteral, Repository } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockProject, createMockUserInvitation, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
@@ -139,6 +140,32 @@ describe('Re-inviting someone who already accepted', () => {
 
         const [after] = await platformInvitesOf({ email, platformId })
         expect(Date.now() - new Date(after.updated).getTime()).toBeLessThan(60 * 1000)
+    })
+
+    it('keeps an acceptance that lands while a re-send is in progress', async () => {
+        const { platformId, ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.OPERATOR })
+        const originalFind = Repository.prototype.find
+        let accepted = false
+        const find = vi.spyOn(Repository.prototype, 'find').mockImplementation(async function (this: Repository<ObjectLiteral>, ...args: Parameters<Repository<ObjectLiteral>['find']>) {
+            const rows = await originalFind.apply(this, args)
+            if (this.metadata.tableName === 'user_invitation' && !accepted) {
+                accepted = true
+                await databaseConnection().getRepository('user_invitation').update({ email, platformId }, { status: InvitationStatus.ACCEPTED })
+            }
+            return rows
+        })
+
+        try {
+            await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.OPERATOR })
+        }
+        finally {
+            find.mockRestore()
+        }
+
+        expect(accepted).toBe(true)
+        expect((await platformInvitesOf({ email, platformId }))[0].status).toBe(InvitationStatus.ACCEPTED)
     })
 
     it('gives a fresh link when re-sent to someone who clicked it but never signed up', async () => {

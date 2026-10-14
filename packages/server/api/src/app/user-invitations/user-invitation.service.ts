@@ -130,12 +130,27 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         switch (type) {
             case InvitationType.PLATFORM: {
                 const replaced = await replacePlatformInvites({ email: normalizedEmail, platformId, entityManager })
-                await repo(entityManager).save({
-                    id: replaced.id,
-                    ...record,
-                    status: replaced.wasAccepted ? InvitationStatus.ACCEPTED : status,
-                    updated: dayjs().toISOString(),
-                })
+                const resentStatus = replaced.wasAccepted ? InvitationStatus.ACCEPTED : status
+                if (replaced.existed) {
+                    await repo(entityManager).createQueryBuilder()
+                        .update()
+                        .set({
+                            ...record,
+                            status: () => 'CASE WHEN "status" = :acceptedStatus THEN :acceptedStatus ELSE :resentStatus END',
+                            updated: dayjs().toISOString(),
+                        })
+                        .setParameters({ acceptedStatus: InvitationStatus.ACCEPTED, resentStatus })
+                        .where({ id: replaced.id })
+                        .execute()
+                }
+                else {
+                    await repo(entityManager).save({
+                        id: replaced.id,
+                        ...record,
+                        status: resentStatus,
+                        updated: dayjs().toISOString(),
+                    })
+                }
                 return this.getOneOrThrow({ id: replaced.id, platformId, entityManager })
             }
             case InvitationType.PROJECT: {
@@ -365,6 +380,7 @@ async function replacePlatformInvites({ email, platformId, entityManager }: Repl
     }
     return {
         id: latest?.id ?? apId(),
+        existed: !isNil(latest),
         wasAccepted: invitations.some((invitation) => invitation.status === InvitationStatus.ACCEPTED),
     }
 }
@@ -479,6 +495,7 @@ const enrichWithInvitationLink = async (userInvitation: UserInvitation, expireyI
 }
 type ReplacedPlatformInvite = {
     id: string
+    existed: boolean
     wasAccepted: boolean
 }
 
