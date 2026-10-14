@@ -24,6 +24,10 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
+afterEach(() => {
+    vi.restoreAllMocks()
+})
+
 describe('Trigger Events API', () => {
     describe('POST /v1/trigger-events (Save)', () => {
         it('should save a trigger event', async () => {
@@ -125,30 +129,27 @@ describe('Trigger Events API', () => {
 
     describe('POST /v1/test-trigger (TEST_FUNCTION)', () => {
         it('should delete the files of the test events it replaces', async () => {
-            const engineSpy = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({
+            vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({
                 status: EngineResponseStatus.OK,
                 response: { output: [{ file: 'a.csv' }, { file: 'b.csv' }, { file: 'c.csv' }] },
             })
             const ctx = await createTestContext(app!)
-            const otherCtx = await createTestContext(app!)
             const { flow, flowVersion } = await seedPublishableFlow({ ctx })
-            const other = await seedPublishableFlow({ ctx: otherCtx })
+            const sibling = await seedPublishableFlow({ ctx })
 
             const responses = [
-                await testTriggerFunction({ ctx: otherCtx, flowId: other.flow.id, flowVersionId: other.flowVersion.id }),
+                await testTriggerFunction({ ctx, flowId: sibling.flow.id, flowVersionId: sibling.flowVersion.id }),
                 await testTriggerFunction({ ctx, flowId: flow.id, flowVersionId: flowVersion.id }),
                 await testTriggerFunction({ ctx, flowId: flow.id, flowVersionId: flowVersion.id }),
                 await testTriggerFunction({ ctx, flowId: flow.id, flowVersionId: flowVersion.id }),
             ]
-            engineSpy.mockRestore()
 
             expect(responses.map((response) => response?.statusCode)).toEqual(Array(4).fill(StatusCodes.OK))
-            const events = await db.findBy<TriggerEvent>('trigger_event', { projectId: ctx.project.id, flowId: flow.id })
+            const events = await db.findBy<TriggerEvent>('trigger_event', { projectId: ctx.project.id })
             const files = await db.findBy<File>('file', { projectId: ctx.project.id, type: FileType.TRIGGER_EVENT_FILE })
-            const otherFiles = await db.findBy<File>('file', { projectId: otherCtx.project.id, type: FileType.TRIGGER_EVENT_FILE })
-            expect(events).toHaveLength(3)
+            expect(events.filter((event) => event.flowId === flow.id)).toHaveLength(3)
+            expect(events.filter((event) => event.flowId === sibling.flow.id)).toHaveLength(3)
             expect(files.map((file) => file.id).sort()).toEqual(events.map((event) => event.fileId).sort())
-            expect(otherFiles).toHaveLength(3)
         })
     })
 

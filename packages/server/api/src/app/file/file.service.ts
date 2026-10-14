@@ -161,6 +161,14 @@ export const fileService = (log: FastifyBaseLogger) => ({
         }
         await fileRepo().delete({ id: file.id })
     },
+    async deleteMany({ projectId, fileIds }: { projectId: ProjectId, fileIds: FileId[] }): Promise<void> {
+        const files = await fileRepo().find({
+            select: ['id', 's3Key'],
+            where: { projectId, id: In(fileIds) },
+        })
+        await s3Helper(log).deleteFiles(files.flatMap((file) => isNil(file.s3Key) ? [] : [file.s3Key]))
+        await fileRepo().delete({ projectId, id: In(files.map((file) => file.id)) })
+    },
     async deleteStaleBulk(types: FileType[]) {
         const maximumFilesToDeletePerIteration = 4000
         const maximumFilesToDeletePerRun = 1_000_000

@@ -1,6 +1,7 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, ProjectId, SeekPage, tryCatch } from '@activepieces/core-utils'
 import { EngineResponse, EngineResponseStatus, ExecuteTriggerResponse, FileCompression, FileType, FlowTrigger, FlowTriggerType, getPieceMajorAndMinorVersion, PieceTrigger, PopulatedFlow, TriggerEventWithPayload, TriggerHookType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -75,15 +76,21 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                         },
                     })
                 }
-                const replacedEvents = await triggerEventRepo().findBy({
-                    projectId,
-                    flowId: flow.id,
+                const replacedEvents = await triggerEventRepo().find({
+                    select: { id: true, fileId: true },
+                    where: { projectId, flowId: flow.id },
                 })
                 await triggerEventRepo().delete({
                     projectId,
-                    flowId: flow.id,
+                    id: In(replacedEvents.map(({ id }) => id)),
                 })
-                await Promise.all(replacedEvents.map(({ fileId }) => fileService(log).delete({ projectId, fileId })))
+                const { error: fileCleanupError } = await tryCatch(() => fileService(log).deleteMany({
+                    projectId,
+                    fileIds: replacedEvents.map(({ fileId }) => fileId),
+                }))
+                if (!isNil(fileCleanupError)) {
+                    log.warn({ error: fileCleanupError, flow: { id: flow.id } }, '[triggerEventService#test] Failed to delete the files of replaced test events')
+                }
 
                 for (const output of engineResponse.response.output) {
                     await this.saveEvent({
