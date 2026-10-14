@@ -235,29 +235,39 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         await scheduleHardDeleteProjectJob({ id: personalProject.id, platformId, log })
     },
 
-    async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
-        await transaction(async (entityManager) => {
-            const result = await projectRepo(entityManager)
-                .createQueryBuilder()
-                .softDelete()
-                .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
-                .returning('id')
-                .execute()
-            const deletedRows: unknown[] = result.raw ?? []
-            if (deletedRows.length === 0) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityType: 'project',
-                        entityId: id,
-                    },
-                })
-            }
-            await platformService(log).removeDefaultProject({ platformId, projectId: id, entityManager })
+    async markForDeletion({ id, platformId, assertCanDelete }: MarkForDeletionParams): Promise<void> {
+        await platformService(log).runWithDefaultProjectsLock({
+            platformId,
+            fn: async () => {
+                await assertCanDelete?.()
+                await softDeleteAndRemoveDefault({ id, platformId, log })
+            },
         })
         await scheduleHardDeleteProjectJob({ id, platformId, log })
     },
 })
+
+async function softDeleteAndRemoveDefault({ id, platformId, log }: SoftDeleteAndRemoveDefaultParams): Promise<void> {
+    await transaction(async (entityManager) => {
+        const result = await projectRepo(entityManager)
+            .createQueryBuilder()
+            .softDelete()
+            .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
+            .returning('id')
+            .execute()
+        const deletedRows: unknown[] = result.raw ?? []
+        if (deletedRows.length === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'project',
+                    entityId: id,
+                },
+            })
+        }
+        await platformService(log).removeDefaultProject({ platformId, projectId: id, entityManager })
+    })
+}
 
 async function scheduleHardDeleteProjectJob({ id, platformId, log }: ScheduleHardDeleteProjectJobParams): Promise<void> {
     await systemJobsSchedule(log).upsertJob({
@@ -432,6 +442,14 @@ type CreateProjectParams = {
 type DeleteProjectParams = {
     id: ProjectId
     platformId: PlatformId
+}
+
+type MarkForDeletionParams = DeleteProjectParams & {
+    assertCanDelete?: () => Promise<void>
+}
+
+type SoftDeleteAndRemoveDefaultParams = DeleteProjectParams & {
+    log: FastifyBaseLogger
 }
 
 type ScheduleHardDeleteProjectJobParams = {
