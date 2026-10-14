@@ -1,32 +1,32 @@
-import { apId, isNil, tryCatch } from '@activepieces/core-utils'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
+import { transaction } from '../core/db/transaction'
 import { distributedStore } from '../database/redis-connections'
-import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { FlowRunWithDispatchIndex } from '../flows/flow-run/flow-run-entity'
+import { ChildDispatchTarget, flowRunService } from '../flows/flow-run/flow-run-service'
+import { shouldBlockRunOnCredits } from '../platform/billing-provider'
 import { barrierQueue } from './barrier-queue'
 import { BarrierFanOutPayload, BarrierJobData, barrierSourceKey } from './barrier-queue-factory'
-import { barrierService } from './barrier-service'
-import { WaitpointStatus } from './waitpoint-types'
+import { barrierService, SignalClaim } from './barrier-service'
+import { Waitpoint, WaitpointStatus } from './waitpoint-types'
 
-export async function handleFanOutDispatch({ data, log }: HandleFanOutDispatchParams): Promise<void> {
+export async function handleFanOutDispatch({ data, log }: JobParams): Promise<void> {
     const barrier = await barrierService(log).findById({ barrierId: data.barrierId, projectId: data.projectId })
     if (isNil(barrier) || barrier.status !== WaitpointStatus.PENDING) {
-        log.info({ fanIn: { barrierId: data.barrierId } }, '[fanOutDispatcher] Barrier is gone or already released, stopping without dispatching')
+        log.info({ waitpoint: { id: data.barrierId } }, '[fanOutDispatcher] Barrier is gone or already released, stopping without dispatching')
         return
     }
 
     const source = await distributedStore.get<BarrierFanOutPayload>(barrierSourceKey(data.barrierId))
     if (isNil(source)) {
-        const notDispatchedCount = await barrierService(log).markUnclaimedNotDispatched({ barrierId: data.barrierId, projectId: data.projectId })
-        log.warn({ fanIn: { barrierId: data.barrierId, notDispatchedCount } }, '[fanOutDispatcher] The stored source is gone, marking the unclaimed signals undispatched so the barrier can settle')
-        await barrierQueue(log).enqueueEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
+        const notDispatchedCount = await settleUnclaimedSignals({ data, log })
+        log.warn({ waitpoint: { id: data.barrierId }, notDispatchedCount }, '[fanOutDispatcher] The stored source is gone, marking the unclaimed signals undispatched so the barrier can settle')
         return
     }
 
-    const signals = await barrierService(log).listUnclaimedSignals({ barrierId: data.barrierId, projectId: data.projectId })
-    if (signals.length === 0) {
+    if (!await barrierService(log).hasUnclaimedSignals({ barrierId: data.barrierId, projectId: data.projectId })) {
         await barrierQueue(log).enqueueEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
         return
     }
@@ -36,44 +36,19 @@ export async function handleFanOutDispatch({ data, log }: HandleFanOutDispatchPa
         parentRunId: barrier.flowRunId,
         entryStepName: source.entryStepName,
     })
-    const limit = pLimit(MAX_DISPATCHES_IN_FLIGHT)
-    let cancelled = false
-
-    await Promise.all(signals.map((signal) => limit(async () => {
-        if (cancelled) {
+    const outcome = await dispatchChunks({ data, barrier, source, target, log })
+    switch (outcome) {
+        case 'barrier-closed':
+            log.info({ waitpoint: { id: data.barrierId } }, '[fanOutDispatcher] The barrier was released or cancelled mid-fan-out, stopping without retrying')
+            return
+        case 'credits-exhausted': {
+            const notDispatchedCount = await settleUnclaimedSignals({ data, log })
+            log.warn({ waitpoint: { id: data.barrierId }, platform: { id: target.platformId }, notDispatchedCount }, '[fanOutDispatcher] The platform ran out of run credits, marking the unclaimed signals undispatched')
             return
         }
-        const sequence = signal.sequence ?? 0
-        const batch = source.batches[sequence] ?? []
-        const childRunId = apId()
-        const claimed = await barrierService(log).claimSignal({ signalId: signal.id, refId: childRunId, projectId: data.projectId })
-        if (!claimed) {
-            return
-        }
-        const { error } = await tryCatch(() => flowRunService(log).dispatchChild({
-            target,
-            childRunId,
-            seedSteps: { ...source.seedSteps, [barrier.stepName]: batchStepOutput(batch) },
-            parentWaitpointId: barrier.id,
-            dispatchIndex: sequence,
-            dispatchKey: `${barrier.id}-${sequence}`,
-        }))
-        if (isNil(error)) {
-            return
-        }
-        await barrierService(log).releaseClaim({ signalId: signal.id, refId: childRunId, projectId: data.projectId })
-        if (isBarrierGone(error)) {
-            cancelled = true
-            log.info({ fanIn: { barrierId: data.barrierId } }, '[fanOutDispatcher] The barrier was cancelled mid-fan-out, stopping without retrying')
-            return
-        }
-        throw error
-    })))
-
-    if (cancelled) {
-        return
+        case 'dispatched':
+            await barrierQueue(log).enqueueEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
     }
-    await barrierQueue(log).enqueueEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
 }
 
 export function fanOutDispatchGaveUp({ attemptsMade, attempts, error }: FanOutDispatchGaveUpParams): GiveUpReason | null {
@@ -87,28 +62,117 @@ export function fanOutDispatchGaveUp({ attemptsMade, attempts, error }: FanOutDi
 }
 
 export async function handleFanOutDispatchGaveUp({ data, error, reason, log }: HandleFanOutDispatchGaveUpParams): Promise<void> {
-    const notDispatchedCount = await barrierService(log).markUnclaimedNotDispatched({ barrierId: data.barrierId, projectId: data.projectId })
-    const claimedCount = await barrierService(log).countClaimedSignals({ barrierId: data.barrierId, projectId: data.projectId })
-    log.error({ error, fanIn: { barrierId: data.barrierId, giveUpReason: reason, notDispatchedCount, claimedCount } }, '[fanOutDispatcher] Dispatch gave up, marking the unclaimed signals undispatched; signals already claimed keep their live children and release the barrier once those report')
-    await barrierQueue(log).enqueueEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
+    await distributedStore.delete(barrierSourceKey(data.barrierId))
+    const notDispatchedCount = await settleUnclaimedSignals({ data, log })
+    log.error({ error, waitpoint: { id: data.barrierId }, giveUpReason: reason, notDispatchedCount }, '[fanOutDispatcher] Dispatch gave up, marking the unclaimed signals undispatched; signals already claimed keep their live children and release the barrier once those report')
 }
 
-function batchStepOutput(items: unknown[]): unknown {
-    return {
-        type: 'PROCESS_IN_BATCHES',
-        status: 'SUCCEEDED',
-        input: {},
-        output: { items },
+async function dispatchChunks({ data, barrier, source, target, log }: DispatchChunksParams): Promise<DispatchOutcome> {
+    let afterSequence: number | null = START_OF_BARRIER
+    while (!isNil(afterSequence)) {
+        if (await shouldBlockRunOnCredits({ platformId: target.platformId, environment: target.environment, log })) {
+            return 'credits-exhausted'
+        }
+        const cursor: number = afterSequence
+        const chunk = await transaction(async (entityManager) => {
+            const claimResult = await barrierService(log).claimNextSignals({ barrierId: data.barrierId, projectId: data.projectId, afterSequence: cursor, limit: CLAIM_CHUNK_SIZE, entityManager })
+            if (!claimResult.barrierOpen) {
+                return null
+            }
+            const childRuns = await flowRunService(log).createChildRuns({
+                target,
+                parentWaitpointId: data.barrierId,
+                children: claimResult.claims.map((claim) => ({ id: claim.childRunId, dispatchIndex: claim.sequence })),
+                entityManager,
+            })
+            return { claims: claimResult.claims, childRuns, lastSequence: claimResult.lastSequence }
+        })
+        if (isNil(chunk)) {
+            return 'barrier-closed'
+        }
+        const outcomes = await enqueueChunk({ data, barrier, source, target, claims: chunk.claims, childRuns: chunk.childRuns, log })
+        if (outcomes.includes('barrier-gone')) {
+            return 'barrier-closed'
+        }
+        afterSequence = chunk.lastSequence ?? (cursor === START_OF_BARRIER ? null : START_OF_BARRIER)
+    }
+    return 'dispatched'
+}
+
+async function enqueueChunk({ data, barrier, source, target, claims, childRuns, log }: EnqueueChunkParams): Promise<EnqueueOutcome[]> {
+    const limit = pLimit(MAX_ENQUEUES_IN_FLIGHT)
+    const results = await Promise.allSettled(claims.map((claim, index) => limit(() => enqueueChild({
+        data,
+        claim,
+        childRun: childRuns[index],
+        seedSteps: { ...source.seedSteps, [barrier.stepName]: { type: BATCH_STEP_TYPE, status: 'SUCCEEDED', input: {}, output: { items: source.batches[claim.sequence] ?? [] } } },
+        target,
+        log,
+    }))))
+    const failure = results.find((result): result is PromiseRejectedResult => result.status === 'rejected')
+    if (!isNil(failure)) {
+        throw failure.reason
+    }
+    return results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : [])
+}
+
+async function enqueueChild({ data, claim, childRun, seedSteps, target, log }: EnqueueChildParams): Promise<EnqueueOutcome> {
+    const attempt = await transaction(async (entityManager): Promise<EnqueueAttempt> => {
+        const barrierExists = await barrierService(log).lockForDispatch({ barrierId: data.barrierId, projectId: data.projectId, entityManager })
+        if (!barrierExists) {
+            return { outcome: 'barrier-gone' }
+        }
+        const { error } = await tryCatch(() => flowRunService(log).enqueueChildRun({ target, childRun, seedSteps }))
+        if (isNil(error)) {
+            return { outcome: 'enqueued' }
+        }
+        await flowRunService(log).deleteChildRun({ id: childRun.id, projectId: data.projectId, entityManager })
+        await barrierService(log).releaseClaim({ signalId: claim.signalId, refId: childRun.id, projectId: data.projectId, entityManager })
+        return { outcome: 'failed', error }
+    })
+    switch (attempt.outcome) {
+        case 'enqueued':
+            await flowRunService(log).reportChildRunStarted({ target, childRun })
+            return 'enqueued'
+        case 'barrier-gone':
+            return 'barrier-gone'
+        case 'failed':
+            await settleIfDispatchGaveUp({ data, log })
+            throw attempt.error
     }
 }
 
-function isBarrierGone(error: unknown): boolean {
-    return error instanceof ActivepiecesError && error.error.code === ErrorCode.ENTITY_NOT_FOUND
+async function settleIfDispatchGaveUp({ data, log }: JobParams): Promise<void> {
+    if (await distributedStore.exists(barrierSourceKey(data.barrierId))) {
+        return
+    }
+    const notDispatchedCount = await settleUnclaimedSignals({ data, log })
+    log.warn({ waitpoint: { id: data.barrierId }, notDispatchedCount }, '[fanOutDispatcher] A claim was released after dispatch gave up, marking it undispatched so the barrier can settle')
 }
 
-const MAX_DISPATCHES_IN_FLIGHT = 5
+async function settleUnclaimedSignals({ data, log }: JobParams): Promise<number> {
+    const notDispatchedCount = await barrierService(log).markUnclaimedNotDispatched({ barrierId: data.barrierId, projectId: data.projectId })
+    await barrierQueue(log).enqueueEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
+    return notDispatchedCount
+}
 
-type HandleFanOutDispatchParams = {
+const BATCH_STEP_TYPE = 'PROCESS_IN_BATCHES'
+
+const START_OF_BARRIER = -1
+
+const CLAIM_CHUNK_SIZE = 25
+
+const MAX_ENQUEUES_IN_FLIGHT = 5
+
+type DispatchOutcome = 'dispatched' | 'barrier-closed' | 'credits-exhausted'
+
+type EnqueueOutcome = 'enqueued' | 'barrier-gone'
+
+type EnqueueAttempt =
+    | { outcome: EnqueueOutcome }
+    | { outcome: 'failed', error: Error }
+
+type JobParams = {
     data: BarrierJobData
     log: FastifyBaseLogger
 }
@@ -124,6 +188,28 @@ type FanOutDispatchGaveUpParams = {
     attemptsMade: number
     attempts?: number
     error: Error
+}
+
+type DispatchChunksParams = {
+    data: BarrierJobData
+    barrier: Waitpoint
+    source: BarrierFanOutPayload
+    target: ChildDispatchTarget
+    log: FastifyBaseLogger
+}
+
+type EnqueueChunkParams = DispatchChunksParams & {
+    claims: SignalClaim[]
+    childRuns: FlowRunWithDispatchIndex[]
+}
+
+type EnqueueChildParams = {
+    data: BarrierJobData
+    claim: SignalClaim
+    childRun: FlowRunWithDispatchIndex
+    seedSteps: Record<string, unknown>
+    target: ChildDispatchTarget
+    log: FastifyBaseLogger
 }
 
 export type GiveUpReason = 'exhausted' | 'unrecoverable'

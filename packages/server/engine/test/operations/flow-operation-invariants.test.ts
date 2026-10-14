@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils'
 import {
     ConnectionNotFoundError,
     EngineFileNotFoundError,
@@ -14,7 +15,6 @@ import {
     StreamStepProgress,
 } from '@activepieces/shared'
 import type { BeginExecuteFlowOperation, FlowAction, FlowVersion, ResumeExecuteFlowOperation } from '@activepieces/shared'
-import { isNil } from '@activepieces/core-utils'
 import dayjs from 'dayjs'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -500,10 +500,6 @@ describe('flow operation invariants', () => {
         })
 
         it('reports a start time for a run entered at a step, so a batch child is not left without one', async () => {
-            // Only executeFromTrigger ever passes a startTime to the progress reporter, and a run carrying an
-            // entryStepName skips it entirely — which left every barrier child with flow_run.startTime NULL
-            // and no derivable duration. BEGIN reports it; RESUME must not, or a child that pauses and
-            // resumes would overwrite its own start with the resume time.
             mockSendUpdate.mockClear()
 
             await flowOperation.execute(makeBeginOperation({
@@ -559,11 +555,6 @@ describe('flow operation invariants', () => {
         })
 
         it('resumes a run entered mid-graph from its entry step instead of walking the flow from the trigger', async () => {
-            // A child run dispatched into a container's body starts at that body's entry step, with the
-            // parent's steps seeded as SUCCEEDED. entryStepName rides in the run's own execution-state
-            // log, so a resume re-enters the body. Without it the engine walks from the trigger: the
-            // paused body step is never re-entered (its BEGIN placeholder output sticks), and the step
-            // *after* the container runs inside the child.
             mockDownload.mockReset()
             mockSendUpdate.mockClear()
             mockCreateWaitpoint.mockReset()
