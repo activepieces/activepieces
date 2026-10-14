@@ -41,7 +41,7 @@ export const Error = () => {
               </p>
             </div>
 
-            <div className="bg-gray-3/30 rounded-lg p-4 text-left">
+            <div className="bg-gray-3/30 rounded-xl p-4 text-left">
               <h3 className="text-sm font-medium text-gray-12 mb-2">
                 {t('What you can do:')}
               </h3>

@@ -25,7 +25,9 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-    await rm(stepDir, { recursive: true, force: true })
+    if (stepDir) {
+        await rm(stepDir, { recursive: true, force: true })
+    }
 })
 
 async function runModule(source: string, inputs: Record<string, unknown> = {}): Promise<unknown> {

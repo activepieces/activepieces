@@ -18,6 +18,14 @@ Create Record, Update Record, Find Records, Get Record, Delete Record and Upload
 
 If a later step reads fields from Upload File's output, read the record with Get Record after the upload, or use the new `files` list. Agents that used the builder actions as tools switch to the `*_by_id` twins. Steps keep running on the version they were built with until you upgrade them.
 
+#### Brevo 0.5.0: an unticked unsubscribe toggle no longer re-subscribes the contact
+
+On Create or Update Contact, the two blacklist toggles (now labelled **Unsubscribe From Email** and **Unsubscribe From SMS**) promised that leaving them untouched kept the contact's current setting. A fresh step saves an untouched toggle as `false`, so every run sent `emailBlacklisted: false` and `smsBlacklisted: false` and silently re-subscribed contacts who had opted out. Unsubscribe Contact did the same when one of its toggles was unticked. From 0.5.0 an unticked toggle sends nothing and the contact's setting is left as it is; a ticked toggle still unsubscribes. Unsubscribe Contact now fails with a clear message when nothing is ticked and no list is picked, instead of sending an empty update.
+
+#### What you need to do
+
+Nothing for flows that only ever unsubscribe contacts. A flow that relied on Create or Update Contact or Unsubscribe Contact to put a contact back on email or SMS can no longer do it from these actions; use **Custom API Call** with `PUT /contacts/{email}` and a body of `{"emailBlacklisted": false}` (or `smsBlacklisted`). Steps keep running on the version they were built with until you upgrade them.
+
 #### Telegram Bot Get Chat and Get Chat Member fail on Telegram errors, and Get File no longer returns the bot token
 
 Get Chat and Get Chat Member used to return Telegram's error response, such as `{ "ok": false, "description": "Bad Request: chat not found" }`, as a **successful** step. From Telegram Bot 0.8.0 the step fails with that error instead, so a wrong chat or user ID stops the flow where it happened.

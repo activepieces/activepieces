@@ -486,6 +486,25 @@ describe('buildProviderOptions', () => {
         expect(options.anthropic?.thinking).toEqual({ type: 'disabled' })
     })
 
+    for (const provider of [AIProviderName.ANTHROPIC, AIProviderName.BEDROCK]) {
+        for (const modelId of ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-haiku-5-5', 'claude-mythos-5-1', 'anthropic.claude-opus-5-5', 'claude-fable-5-1']) {
+            it(`keeps ${modelId} on ${provider} thinking at low effort instead of sending disabled`, () => {
+                const options = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking: true })
+                expect(options.anthropic).toEqual({ thinking: { type: 'adaptive' }, effort: 'low' })
+            })
+
+            it(`never sends a thinking budget to ${modelId} on ${provider}`, () => {
+                const options = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking: false })
+                expect(options.anthropic).toEqual({ thinking: { type: 'adaptive' } })
+            })
+        }
+    }
+
+    it('still spends the tier budget on an Anthropic model that takes one', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ANTHROPIC, tier: TIER, modelId: 'claude-sonnet-4-6', disableThinking: false })
+        expect(options.anthropic?.thinking).toEqual({ type: 'enabled', budgetTokens: TIER.thinkingBudget })
+    })
+
     it('leaves the ephemeral prompt cache in place beside the reasoning directive', () => {
         const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ACTIVEPIECES, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
         expect(options.openrouter?.cache_control).toEqual({ type: 'ephemeral' })

@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property, isNil } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property, isNil } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
 import { brevoProps } from '../common/props';
@@ -11,52 +11,33 @@ export const sendTransactionalEmail = createAction({
 	outputSchema: sendTransactionalEmailActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Transactional Email',
-	description: 'Send an email from your Brevo account with HTML or plain text content.',
+	description: 'Send one email, written here or from a saved Brevo template.',
 	audience: 'both',
 	aiMetadata: {
 		description:
 			'Sends a one-off transactional email through Brevo, either by supplying subject and HTML content directly or by selecting a saved template and passing its variables. Use for receipts, password resets, notifications and other per-recipient mail; not for bulk marketing campaigns. Requires a verified sender unless a template with its own sender is used. Not idempotent — each call sends a new message.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'recipients',
+			display: 'tabs',
+			label: 'Recipients',
+			description: 'Who receives this email, and where replies go.',
+			props: ['to', 'cc', 'bcc', 'reply_to_email'],
+		},
+	],
 	props: {
 		to: Property.Array({
 			displayName: 'To',
-			description: 'Recipients of the email.',
 			required: true,
 			properties: {
 				email: Property.ShortText({ displayName: 'Email', required: true }),
 				name: Property.ShortText({ displayName: 'Name', required: false }),
 			},
 		}),
-		sender_email: brevoProps.senderEmail,
-		sender_name: Property.ShortText({
-			displayName: 'Sender Name',
-			description: 'Overrides the display name of the selected sender.',
-			required: false,
-		}),
-		template_id: brevoProps.emailTemplateId,
-		subject: Property.ShortText({
-			displayName: 'Subject',
-			description: 'Required unless a template is selected.',
-			required: false,
-		}),
-		html_content: Property.LongText({
-			displayName: 'HTML Content',
-			description: 'Required unless a template is selected.',
-			required: false,
-		}),
-		text_content: Property.LongText({
-			displayName: 'Text Content',
-			description: 'Plain text alternative shown when HTML cannot be rendered.',
-			required: false,
-		}),
-		params: Property.Object({
-			displayName: 'Template Parameters',
-			description: 'Values substituted into the template placeholders.',
-			required: false,
-		}),
 		cc: Property.Array({
-			displayName: 'CC',
+			displayName: 'Cc',
 			required: false,
 			properties: {
 				email: Property.ShortText({ displayName: 'Email', required: true }),
@@ -64,7 +45,7 @@ export const sendTransactionalEmail = createAction({
 			},
 		}),
 		bcc: Property.Array({
-			displayName: 'BCC',
+			displayName: 'Bcc',
 			required: false,
 			properties: {
 				email: Property.ShortText({ displayName: 'Email', required: true }),
@@ -73,11 +54,45 @@ export const sendTransactionalEmail = createAction({
 		}),
 		reply_to_email: Property.ShortText({
 			displayName: 'Reply To',
+			description: 'Where replies go. Empty: back to the sender.',
+			placeholder: 'support@example.com',
+			required: false,
+		}),
+		sender_email: brevoProps.senderEmail,
+		sender_name: Property.ShortText({
+			displayName: 'Sender Name',
+			description: 'Replaces the display name of the selected sender.',
+			required: false,
+		}),
+		template_note: Property.MarkDown({
+			value: 'Pick a template, or leave it empty and write the email below. Without a template, a sender is also required.',
+			variant: MarkdownVariant.INFO,
+		}),
+		template_id: brevoProps.emailTemplateId,
+		params: Property.Object({
+			displayName: 'Template Parameters',
+			description: 'Values for the template placeholders, by name.',
+			required: false,
+		}),
+		subject: Property.ShortText({
+			displayName: 'Subject',
+			description: 'Required when no template is picked.',
+			placeholder: 'Your order has shipped',
+			required: false,
+		}),
+		html_content: Property.LongText({
+			displayName: 'HTML Content',
+			description: 'Required when no template is picked.',
+			required: false,
+		}),
+		text_content: Property.LongText({
+			displayName: 'Text Content',
+			description: 'Plain text version for inboxes that cannot show HTML.',
 			required: false,
 		}),
 		attachments: Property.Array({
 			displayName: 'Attachments',
-			description: 'Files attached by public URL. Brevo downloads each URL when sending.',
+			description: 'Files by public URL that Brevo downloads when sending.',
 			required: false,
 			properties: {
 				url: Property.ShortText({ displayName: 'URL', required: true }),
@@ -90,15 +105,16 @@ export const sendTransactionalEmail = createAction({
 			required: false,
 		}),
 		scheduled_at: Property.DateTime({
-			displayName: 'Scheduled At',
-			description: 'Send the email at this UTC time instead of immediately.',
+			displayName: 'Send At',
+			description: 'Leave empty to send right away.',
 			required: false,
+			advanced: true,
 		}),
 		sandbox: Property.Checkbox({
 			displayName: 'Sandbox Mode',
-			description:
-				'Validate the request without delivering anything. Brevo checks the payload, sender and credentials, returns a message id, and drops the message: nothing reaches the recipient and no event is logged.',
+			description: 'Brevo checks the request but delivers nothing.',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

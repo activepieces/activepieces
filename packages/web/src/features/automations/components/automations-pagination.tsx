@@ -39,7 +39,7 @@ export const AutomationsPagination = ({
           value={String(pageSize)}
           onValueChange={(val) => onPageSizeChange(Number(val))}
         >
-          <SelectTrigger className="h-8 w-[70px]">
+          <SelectTrigger size="sm" className="w-[70px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

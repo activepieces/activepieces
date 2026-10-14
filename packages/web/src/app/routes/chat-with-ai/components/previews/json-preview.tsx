@@ -21,14 +21,14 @@ export function JsonPreview({
 
   const actions = (
     <>
-      <CopyButton textToCopy={pretty} variant="ghost" className="size-8" />
+      <CopyButton textToCopy={pretty} variant="ghost" size="icon-sm" />
       <DownloadButton
         fileName={fileName}
         textToDownload={pretty}
         mimeType="application/json"
         extension="json"
         variant="ghost"
-        className="size-8"
+        size="icon-sm"
       />
     </>
   );

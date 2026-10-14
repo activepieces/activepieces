@@ -39,7 +39,7 @@ export function ClientPicker({
           <BackLink label={t('Back')} onClick={nav.showLanding} />
           <div className="flex flex-wrap items-end gap-6">
             <div className="flex flex-1 flex-col gap-1.5">
-              <h1 className="text-2xl font-bold leading-8 tracking-tight">
+              <h1 className="text-2xl font-semibold leading-8 tracking-tight">
                 {t('Where do you want to use it?')}
               </h1>
               <p className="text-sm text-gray-11">
@@ -118,9 +118,7 @@ function ClientGroupSection({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-bold uppercase tracking-wide">
-          {group.label}
-        </span>
+        <span className="text-xs font-semibold">{group.label}</span>
         {!isCatchAll && (
           <>
             <span className="text-xs font-semibold text-gray-11">
