@@ -1,10 +1,12 @@
 import { isNil } from '@activepieces/core-utils';
 import { useReactFlow } from '@xyflow/react';
-import { useEffect, useRef } from 'react';
+import { useUpdateEffect } from 'react-use';
 
 import { useBuilderStateContext, useBuilderStore } from '../../builder-hooks';
 import { RightSideBarType } from '../../types';
 import { flowCanvasConsts } from '../utils/consts';
+
+import { fitToViewZoom } from './use-fit-to-view';
 
 export function useRefitOnLayoutChange() {
   const store = useBuilderStore();
@@ -15,13 +17,7 @@ export function useRefitOnLayoutChange() {
       state.rightSidebar !== RightSideBarType.NONE,
     ],
   );
-  const isFirstRender = useRef(true);
-
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+  useUpdateEffect(() => {
     const isChatDirectingCamera =
       store.getState().chatActivity?.isWorking === true &&
       store.getState().isFollowingChat;
@@ -34,7 +30,7 @@ export function useRefitOnLayoutChange() {
         ? {
             duration: REFIT_DURATION_MS,
             padding: 0.1,
-            minZoom: isBuilderChatOpen ? 0.7 : 0.9,
+            minZoom: fitToViewZoom.minFitZoom({ isBuilderChatOpen }),
             maxZoom: 1.25,
           }
         : {

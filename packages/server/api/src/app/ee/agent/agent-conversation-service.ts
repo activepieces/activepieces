@@ -5,8 +5,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { databaseConnection } from '../../database/database-connection'
-import { FlowRunEntity } from '../../flows/flow-run/flow-run-entity'
 import { flowRepo } from '../../flows/flow/flow.repo'
+import { FlowRunEntity } from '../../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -320,8 +320,10 @@ async function resolveFlowProject({ flowId, platformId, userId, log }: {
     userId: string
     log: FastifyBaseLogger
 }): Promise<string> {
-    const flow = await flowRepo().findOne({ where: { id: flowId }, select: ['id', 'projectId'] })
-    const projects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    const [flow, projects] = await Promise.all([
+        flowRepo().findOne({ where: { id: flowId }, select: ['id', 'projectId'] }),
+        agentHelpers.getUserProjects({ platformId, userId, log }),
+    ])
     if (isNil(flow) || !projects.some((project) => project.id === flow.projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,

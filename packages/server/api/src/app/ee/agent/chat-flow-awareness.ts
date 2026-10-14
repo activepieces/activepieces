@@ -1,20 +1,11 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { FlowSnapshot, FlowStepChange, flowStepDiff, McpToolDefinition, McpToolResult } from '@activepieces/shared'
+import { FlowSnapshot, FlowStepChange, flowStepDiff, flowToolTargets, McpToolDefinition, McpToolResult, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowService } from '../../flows/flow/flow.service'
 import { AgentConversationEntity } from './agent-conversation-entity'
 
 const conversationRepo = repoFactory(AgentConversationEntity)
-
-const STEP_WRITE_TOOLS: Record<string, (args: Record<string, unknown>) => string | null> = {
-    ap_update_step: (args) => stringArg(args, 'stepName'),
-    ap_delete_step: (args) => stringArg(args, 'stepName'),
-    ap_update_trigger: () => 'trigger',
-    ap_add_branch: (args) => stringArg(args, 'routerStepName'),
-    ap_update_branch: (args) => stringArg(args, 'routerStepName'),
-    ap_delete_branch: (args) => stringArg(args, 'routerStepName'),
-}
 
 export const chatFlowAwareness = (log: FastifyBaseLogger) => ({
     wrap({ execute, toolTitle, conversationId, projectId }: {
@@ -24,9 +15,11 @@ export const chatFlowAwareness = (log: FastifyBaseLogger) => ({
         projectId: string
     }): McpToolDefinition['execute'] {
         return async (args) => {
-            const flowId = stringArg(args, 'flowId')
-            const userChanges = isNil(flowId) ? [] : await changesSinceAgentLooked({ conversationId, projectId, flowId, log })
-            const targetStep = STEP_WRITE_TOOLS[toolTitle]?.(args) ?? null
+            const flowId = stringArg({ args, key: 'flowId' })
+            const stored = isNil(flowId) ? null : await storedSnapshot({ conversationId, projectId, flowId })
+            const userChanges = isNil(flowId) || isNil(stored) ? [] : await changesSince({ stored, projectId, flowId, log })
+            const target = flowToolTargets.targetOf({ toolName: toolTitle, input: args })
+            const targetStep = target?.kind === 'editing' ? target.stepName : null
             const conflict = userChanges.find((change) => change.stepName === targetStep && change.kind !== 'added')
             if (!isNil(flowId) && !isNil(conflict)) {
                 return staleWriteResult({ flowId, changes: userChanges })
@@ -34,7 +27,7 @@ export const chatFlowAwareness = (log: FastifyBaseLogger) => ({
             const result = await execute(args)
             const touchedFlowId = flowId ?? structuredFlowId(result)
             if (!isNil(touchedFlowId)) {
-                await recordSnapshot({ conversationId, projectId, flowId: touchedFlowId, log })
+                await recordSnapshot({ conversationId, projectId, flowId: touchedFlowId, stored: touchedFlowId === flowId ? stored : null, log })
             }
             if (isNil(flowId) || userChanges.length === 0) {
                 return result
@@ -47,32 +40,37 @@ export const chatFlowAwareness = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function changesSinceAgentLooked({ conversationId, projectId, flowId, log }: {
+async function storedSnapshot({ conversationId, projectId, flowId }: {
     conversationId: string
+    projectId: string
+    flowId: string
+}): Promise<StoredFlowSnapshot | null> {
+    const conversation = await conversationRepo().findOne({ where: { id: conversationId, projectId }, select: ['id', 'flowSnapshots'] })
+    return conversation?.flowSnapshots?.[flowId] ?? null
+}
+
+async function changesSince({ stored, projectId, flowId, log }: {
+    stored: StoredFlowSnapshot
     projectId: string
     flowId: string
     log: FastifyBaseLogger
 }): Promise<FlowStepChange[]> {
-    const conversation = await conversationRepo().findOne({ where: { id: conversationId, projectId }, select: ['id', 'flowSnapshots'] })
-    const before = conversation?.flowSnapshots?.[flowId]
-    if (isNil(before)) {
-        return []
-    }
     const flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
-    if (isNil(flow) || flow.version.id === before.versionId && flow.version.updated === before.updated) {
+    if (isNil(flow) || isSameVersion({ stored, flow })) {
         return []
     }
-    return flowStepDiff.diff({ before, after: flowStepDiff.takeSnapshot({ trigger: flow.version.trigger, versionId: flow.version.id }) })
+    return flowStepDiff.diff({ before: stored, after: flowStepDiff.takeSnapshot({ trigger: flow.version.trigger, versionId: flow.version.id }) })
 }
 
-async function recordSnapshot({ conversationId, projectId, flowId, log }: {
+async function recordSnapshot({ conversationId, projectId, flowId, stored, log }: {
     conversationId: string
     projectId: string
     flowId: string
+    stored: StoredFlowSnapshot | null
     log: FastifyBaseLogger
 }): Promise<void> {
     const flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
-    if (isNil(flow)) {
+    if (isNil(flow) || (!isNil(stored) && isSameVersion({ stored, flow }))) {
         return
     }
     const snapshot: StoredFlowSnapshot = {
@@ -90,6 +88,10 @@ async function recordSnapshot({ conversationId, projectId, flowId, log }: {
     }
 }
 
+function isSameVersion({ stored, flow }: { stored: StoredFlowSnapshot, flow: PopulatedFlow }): boolean {
+    return flow.version.id === stored.versionId && flow.version.updated === stored.updated
+}
+
 function staleWriteResult({ flowId, changes }: { flowId: string, changes: FlowStepChange[] }): McpToolResult {
     return {
         isError: true,
@@ -102,7 +104,7 @@ function structuredFlowId(result: McpToolResult): string | null {
     return typeof value === 'string' ? value : null
 }
 
-function stringArg(args: Record<string, unknown>, key: string): string | null {
+function stringArg({ args, key }: { args: Record<string, unknown>, key: string }): string | null {
     const value = args[key]
     return typeof value === 'string' && value.length > 0 ? value : null
 }

@@ -1,5 +1,7 @@
+import { deepEquals, isNil, tryCatchSync } from '@activepieces/core-utils';
 import {
   flowStepDiff,
+  FlowToolTarget,
   FlowVersionState,
   PopulatedFlow,
   flowStructureUtil,
@@ -49,8 +51,11 @@ export const createBuilderChatState = (
     recentlyChangedFields: {},
     remoteRevision: 0,
     chatActivity: null,
-    setChatActivity: (activity: ChatFlowActivity) =>
-      set({ chatActivity: activity }),
+    setChatActivity: (activity: ChatFlowActivity) => {
+      if (!deepEquals({ a: get().chatActivity, b: activity })) {
+        set({ chatActivity: activity });
+      }
+    },
     applyRemoteFlow: (flow: PopulatedFlow) => {
       const state = get();
       const isStale =
@@ -112,7 +117,11 @@ export const createBuilderChatState = (
       if (changedStepNames.length > 0) {
         setTimeout(() => {
           if (get().recentlyChangedSteps === changedStepNames) {
-            set({ recentlyChangedSteps: [], recentlyAddedSteps: [] });
+            set({
+              recentlyChangedSteps: [],
+              recentlyAddedSteps: [],
+              recentlyChangedFields: {},
+            });
           }
         }, HIGHLIGHT_DURATION_MS);
       }
@@ -128,33 +137,28 @@ function formFieldName(diffPath: string): string[] {
 }
 
 function readStorage(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
+  return tryCatchSync(() => localStorage.getItem(key)).data ?? null;
 }
 
 function writeStorage({ key, value }: { key: string; value: string }): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    return;
-  }
+  tryCatchSync(() => localStorage.setItem(key, value));
 }
 
 function effectiveStepDataPanelView(state: BuilderState): StepDataPanelView {
   return state.isBuilderChatOpen ? 'drawer' : state.stepDataPanelView;
 }
 
+function cameraStepName(state: BuilderState): string | null {
+  const shot = state.chatCameraShot;
+  return isNil(shot) || shot.kind === 'testing-flow' ? null : shot.stepName;
+}
+
 export const builderChatSelectors = {
   effectiveStepDataPanelView,
+  cameraStepName,
 };
 
-export type ChatCameraShot = {
-  stepName: string;
-  kind: 'editing' | 'adding-after' | 'testing';
-};
+export type ChatCameraShot = FlowToolTarget;
 
 export type BuilderChatState = {
   isBuilderChatOpen: boolean;

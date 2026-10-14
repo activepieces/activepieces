@@ -739,71 +739,31 @@ export function useAgentChat({
     }
   }, [commitInFlightTurn, stopStream, updateSendStatus]);
 
-  const flowEditingStepNames = useMemo(
+  const flowToolActivity = useMemo(
     () =>
       flowContext
-        ? chatFlowActivity.editingStepNames({
+        ? chatFlowActivity.extract({
             message: streamingMessage ?? null,
             flowId: flowContext.flowId,
           })
-        : [],
+        : null,
     [flowContext, streamingMessage],
   );
-  const flowAddingAfterStepNames = useMemo(
-    () =>
-      flowContext
-        ? chatFlowActivity.addingAfterStepNames({
-            message: streamingMessage ?? null,
-            flowId: flowContext.flowId,
-          })
-        : [],
-    [flowContext, streamingMessage],
-  );
-  const flowTestingKey = useMemo(
-    () =>
-      flowContext
-        ? chatFlowActivity
-            .testingStepNames({
-              message: streamingMessage ?? null,
-              flowId: flowContext.flowId,
-            })
-            .join(',')
-        : '',
-    [flowContext, streamingMessage],
-  );
-  const flowTestRunsKey = useMemo(
-    () =>
-      flowContext
-        ? chatFlowActivity
-            .testRunIds({
-              message: streamingMessage ?? null,
-              flowId: flowContext.flowId,
-            })
-            .join(',')
-        : '',
-    [flowContext, streamingMessage],
-  );
-  const flowEditingKey = flowEditingStepNames.join(',');
-  const flowAddingAfterKey = flowAddingAfterStepNames.join(',');
   useEffect(() => {
-    flowContext?.onActivity({
+    if (!flowContext || !flowToolActivity) {
+      return;
+    }
+    flowContext.onActivity({
+      ...flowToolActivity,
       isWorking: isStreamActive,
-      editingStepNames: flowEditingKey === '' ? [] : flowEditingKey.split(','),
-      addingAfterStepNames:
-        flowAddingAfterKey === '' ? [] : flowAddingAfterKey.split(','),
-      testingStepNames: flowTestingKey === '' ? [] : flowTestingKey.split(','),
-      testRunIds: flowTestRunsKey === '' ? [] : flowTestRunsKey.split(','),
       wasStopped: wasCancelled,
       stop: cancelStream,
     });
   }, [
     flowContext,
+    flowToolActivity,
     isStreamActive,
     wasCancelled,
-    flowEditingKey,
-    flowAddingAfterKey,
-    flowTestingKey,
-    flowTestRunsKey,
     cancelStream,
   ]);
 

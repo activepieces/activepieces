@@ -415,4 +415,5 @@ export { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, agentToolPhases, type Agent
 export { AGENT_SKILLS, agentToolSkills, LAZY_TOOL_NAME, GET_TOOL_SCHEMA_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SKILLS_NOTE_HEADING, type AgentSkill, type SkillSurface } from './tool-skills'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
 export { flowStepDiff, type FlowFieldChange, type FlowSnapshot, type FlowStepChange, type FlowStepSnapshot } from './flow-step-diff'
+export { flowToolTargets, type FlowToolTarget } from './flow-tool-targets'
 export * from './chat-personalization'

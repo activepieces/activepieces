@@ -1,146 +1,63 @@
-import { parseToJsonIfPossible } from '@activepieces/core-utils';
-import { agentToolSkills } from '@activepieces/shared';
+import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
+import {
+  agentToolSkills,
+  FlowToolTarget,
+  flowToolTargets,
+} from '@activepieces/shared';
 
 import { ChatUIMessage, chatPartUtils } from './chat-types';
 
-const STEP_TARGETS: Record<
-  string,
-  (input: Record<string, unknown>) => unknown
-> = {
-  ap_update_step: (input) => input.stepName,
-  ap_delete_step: (input) => input.stepName,
-  ap_update_trigger: () => 'trigger',
-  ap_add_branch: (input) => input.routerStepName,
-  ap_update_branch: (input) => input.routerStepName,
-  ap_delete_branch: (input) => input.routerStepName,
-};
-
-function editingStepNames({
+function extract({
   message,
   flowId,
 }: {
   message: ChatUIMessage | null;
   flowId: string;
-}): string[] {
-  return stepTargets({ message, flowId, targets: STEP_TARGETS });
-}
-
-function addingAfterStepNames({
-  message,
-  flowId,
-}: {
-  message: ChatUIMessage | null;
-  flowId: string;
-}): string[] {
-  return stepTargets({ message, flowId, targets: ADD_STEP_TARGETS });
-}
-
-function testingStepNames({
-  message,
-  flowId,
-}: {
-  message: ChatUIMessage | null;
-  flowId: string;
-}): string[] {
-  return stepTargets({ message, flowId, targets: TEST_TARGETS });
-}
-
-function testRunIds({
-  message,
-  flowId,
-}: {
-  message: ChatUIMessage | null;
-  flowId: string;
-}): string[] {
-  if (!message) {
-    return [];
-  }
-  return message.parts
+}): ChatFlowToolActivity {
+  const calls = (message?.parts ?? [])
     .filter(chatPartUtils.isAnyToolPart)
-    .filter((part) => part.state === 'output-available')
-    .filter((part) => {
-      const { toolName, input } = agentToolSkills.effectiveToolCall({
-        toolName: chatPartUtils.getToolPartName(part),
-        input: part.input,
-      });
-      return (
-        toolName in TEST_TARGETS && isRecord(input) && input.flowId === flowId
-      );
-    })
-    .flatMap((part) => {
-      const output = parseToJsonIfPossible(part.output);
-      const structured = isRecord(output) ? output.structuredContent : null;
-      const runId = isRecord(structured) ? structured.runId : null;
-      return typeof runId === 'string' ? [runId] : [];
-    });
-}
-
-function stepTargets({
-  message,
-  flowId,
-  targets,
-}: {
-  message: ChatUIMessage | null;
-  flowId: string;
-  targets: Record<string, (input: Record<string, unknown>) => unknown>;
-}): string[] {
-  if (!message) {
-    return [];
-  }
-  return message.parts
-    .filter(chatPartUtils.isAnyToolPart)
-    .filter(
-      (part) =>
-        part.state !== 'output-available' && part.state !== 'output-error',
-    )
-    .map((part) =>
-      agentToolSkills.effectiveToolCall({
+    .map((part) => ({
+      part,
+      ...agentToolSkills.effectiveToolCall({
         toolName: chatPartUtils.getToolPartName(part),
         input: part.input,
       }),
-    )
-    .flatMap(({ toolName, input }) => {
-      const target = targets[toolName];
-      if (!target || !isRecord(input) || input.flowId !== flowId) {
-        return [];
-      }
-      const stepName = target(input);
-      return typeof stepName === 'string' ? [stepName] : [];
-    });
-}
-
-const ADD_STEP_TARGETS: Record<
-  string,
-  (input: Record<string, unknown>) => unknown
-> = {
-  ap_add_step: (input) => input.parentStepName,
-};
-
-const TEST_TARGETS: Record<
-  string,
-  (input: Record<string, unknown>) => unknown
-> = {
-  ap_test_step: (input) => input.stepName,
-  ap_test_flow: () => 'trigger',
-};
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+    }))
+    .filter(({ input }) => isObject(input) && input.flowId === flowId);
+  const isDone = (state: string) =>
+    state === 'output-available' || state === 'output-error';
+  return {
+    targets: calls
+      .filter(({ part }) => !isDone(part.state))
+      .flatMap(({ toolName, input }) => {
+        const target = flowToolTargets.targetOf({ toolName, input });
+        return target === null ? [] : [target];
+      }),
+    testRunIds: calls
+      .filter(
+        ({ part, toolName }) =>
+          isDone(part.state) && flowToolTargets.reportsTestRun(toolName),
+      )
+      .flatMap(({ part }) => {
+        const output = parseToJsonIfPossible(part.output);
+        const structured = isObject(output) ? output.structuredContent : null;
+        const runId = isObject(structured) ? structured.runId : null;
+        return typeof runId === 'string' ? [runId] : [];
+      }),
+  };
 }
 
 export const chatFlowActivity = {
-  editingStepNames,
-  addingAfterStepNames,
-  testingStepNames,
-  testRunIds,
+  extract,
 };
 
-export type ChatFlowActivity = {
-  isWorking: boolean;
-  editingStepNames: string[];
-  addingAfterStepNames: string[];
-  testingStepNames: string[];
+export type ChatFlowToolActivity = {
+  targets: FlowToolTarget[];
   testRunIds: string[];
+};
+
+export type ChatFlowActivity = ChatFlowToolActivity & {
+  isWorking: boolean;
   wasStopped: boolean;
   stop: () => void;
 };

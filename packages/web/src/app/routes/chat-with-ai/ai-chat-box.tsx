@@ -29,6 +29,7 @@ import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   ChatVariant,
   ChatVariantProvider,
+  useIsPanelChat,
 } from '@/features/chat/lib/chat-variant-context';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { ChatFlowContext, useAgentChat } from '@/features/chat/lib/use-chat';
@@ -101,7 +102,6 @@ export function AIChatBox({
             conversationId={conversationId}
             onTitleUpdate={onTitleUpdate}
             onConversationCreated={onConversationCreated}
-            variant={variant}
             inputContext={inputContext}
           />
         </TaskPanelLayout>
@@ -123,12 +123,11 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
-  variant = 'page',
   inputContext,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
-  const isPanel = variant === 'panel';
+  const isPanel = useIsPanelChat();
   const { data: chatProvider } = aiProviderQueries.useChatProvider();
 
   const {
@@ -515,7 +514,6 @@ function ChatBoxContent({
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}
             hideModelSelector={agentId !== undefined || isPanel}
-            variant={variant}
             leftActions={inputContext}
             placeholder={
               placeholder ??

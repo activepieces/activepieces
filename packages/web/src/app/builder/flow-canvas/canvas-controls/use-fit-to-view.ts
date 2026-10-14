@@ -25,7 +25,7 @@ const useFitToView = ({
   const [canvasOrientation, isBuilderChatOpen] = useBuilderStateContext(
     (state) => [state.canvasOrientation, state.isBuilderChatOpen],
   );
-  const minFitZoom = isBuilderChatOpen ? MIN_FIT_ZOOM_WITH_CHAT : MIN_FIT_ZOOM;
+  const minFitZoom = minFitZoomFor({ isBuilderChatOpen });
 
   const handleFitToView = useCallback(
     ({
@@ -196,4 +196,14 @@ const calculateViewportDelta = (
       : 0,
 });
 
-export { useFitToView };
+function minFitZoomFor({
+  isBuilderChatOpen,
+}: {
+  isBuilderChatOpen: boolean;
+}): number {
+  return isBuilderChatOpen ? MIN_FIT_ZOOM_WITH_CHAT : MIN_FIT_ZOOM;
+}
+
+const fitToViewZoom = { minFitZoom: minFitZoomFor };
+
+export { useFitToView, fitToViewZoom };

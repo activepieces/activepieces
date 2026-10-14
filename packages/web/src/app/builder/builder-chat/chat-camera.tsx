@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { deepEquals, isNil } from '@activepieces/core-utils';
 import { useReactFlow } from '@xyflow/react';
 import { useEffect } from 'react';
 
@@ -49,24 +49,26 @@ export function ChatCamera() {
       }
     };
 
-    const frame = ({
-      stepNames,
-      zoom,
+    const fitTo = ({
+      stepName,
+      minZoom,
+      maxZoom = minZoom,
       duration,
     }: {
-      stepNames: string[];
-      zoom: { min: number; max: number };
+      stepName?: string;
+      minZoom: number;
+      maxZoom?: number;
       duration: number;
     }) => {
       if (!isFollowing()) {
         return;
       }
       fitView({
-        nodes: stepNames.map((id) => ({ id })),
+        nodes: isNil(stepName) ? undefined : [{ id: stepName }],
+        padding: isNil(stepName) ? 0.15 : 0.35,
+        minZoom,
+        maxZoom,
         duration,
-        padding: 0.35,
-        minZoom: zoom.min,
-        maxZoom: zoom.max,
       }).catch(() => undefined);
     };
 
@@ -93,19 +95,11 @@ export function ChatCamera() {
       const from = lastFramedStep;
       lastFramedStep = stepName;
       const pushIn = () => {
-        frame({
-          stepNames: [stepName],
-          zoom: { min: zoom, max: zoom },
-          duration: PUSH_IN_MS,
-        });
+        fitTo({ stepName, minZoom: zoom, duration: PUSH_IN_MS });
         schedule({
           fn: () =>
             lastFramedStep === stepName &&
-            frame({
-              stepNames: [stepName],
-              zoom: { min: zoom, max: zoom },
-              duration: SETTLE_MS,
-            }),
+            fitTo({ stepName, minZoom: zoom, duration: SETTLE_MS }),
           delayMs: PUSH_IN_MS + 100,
         });
       };
@@ -115,9 +109,9 @@ export function ChatCamera() {
         pushIn();
         return;
       }
-      frame({
-        stepNames: [from],
-        zoom: { min: PULL_BACK_ZOOM, max: PULL_BACK_ZOOM },
+      fitTo({
+        stepName: from,
+        minZoom: PULL_BACK_ZOOM,
         duration: PULL_BACK_MS,
       });
       schedule({ fn: pushIn, delayMs: PULL_BACK_MS - 80 });
@@ -139,14 +133,14 @@ export function ChatCamera() {
       if (!state.isFollowingChat) {
         return;
       }
+      if (shot.kind === 'testing-flow') {
+        lastFramedStep = null;
+        showWholeFlow();
+        return;
+      }
       whenMeasured({
         stepName: shot.stepName,
         fn: () => {
-          if (shot.kind === 'testing' && shot.stepName === 'trigger') {
-            lastFramedStep = null;
-            showWholeFlow();
-            return;
-          }
           if (shot.kind === 'adding-after') {
             craneTo({ stepName: shot.stepName, zoom: ESTABLISH_ZOOM });
             return;
@@ -189,12 +183,8 @@ export function ChatCamera() {
     };
 
     const queueShot = (shot: ChatCameraShot) => {
-      const lastQueued =
-        queuedShots.at(-1) ?? store.getState().chatCameraShot ?? null;
-      const isRepeat =
-        lastQueued?.stepName === shot.stepName &&
-        lastQueued?.kind === shot.kind;
-      if (isRepeat) {
+      const lastQueued = queuedShots.at(-1) ?? store.getState().chatCameraShot;
+      if (deepEquals({ a: lastQueued, b: shot })) {
         return;
       }
       queuedShots.push(shot);
@@ -203,17 +193,12 @@ export function ChatCamera() {
       }
     };
 
-    const showWholeFlow = () => {
-      if (!isFollowing()) {
-        return;
-      }
-      fitView({
-        duration: WIDE_SHOT_DURATION_MS,
-        padding: 0.15,
+    const showWholeFlow = () =>
+      fitTo({
         minZoom: WIDE_SHOT_MIN_ZOOM,
         maxZoom: 1,
-      }).catch(() => undefined);
-    };
+        duration: WIDE_SHOT_DURATION_MS,
+      });
 
     const showTestRun = (runId: string) => {
       flowRunsApi
@@ -279,7 +264,7 @@ export function ChatCamera() {
         return;
       }
 
-      newlyStarted({
+      newItems({
         current: state.chatActivity?.testRunIds,
         before: previous.chatActivity?.testRunIds,
       }).forEach(showTestRun);
@@ -307,18 +292,10 @@ function pickCameraShots({
   state: BuilderState;
   previous: BuilderState;
 }): ChatCameraShot[] {
-  const addingAfter = newlyStarted({
-    current: state.chatActivity?.addingAfterStepNames,
-    before: previous.chatActivity?.addingAfterStepNames,
-  }).map((stepName) => ({ stepName, kind: 'adding-after' as const }));
-  const testing = newlyStarted({
-    current: state.chatActivity?.testingStepNames,
-    before: previous.chatActivity?.testingStepNames,
-  }).map((stepName) => ({ stepName, kind: 'testing' as const }));
-  const editing = newlyStarted({
-    current: state.chatActivity?.editingStepNames,
-    before: previous.chatActivity?.editingStepNames,
-  }).map((stepName) => ({ stepName, kind: 'editing' as const }));
+  const started = newItems({
+    current: state.chatActivity?.targets,
+    before: previous.chatActivity?.targets,
+  });
   const landed =
     state.recentlyChangedSteps !== previous.recentlyChangedSteps
       ? state.recentlyChangedSteps.map((stepName) => ({
@@ -326,18 +303,18 @@ function pickCameraShots({
           kind: 'editing' as const,
         }))
       : [];
-  return [...addingAfter, ...editing, ...testing, ...landed];
+  return [...started, ...landed];
 }
 
-function newlyStarted({
+function newItems<T>({
   current,
   before,
 }: {
-  current: string[] | undefined;
-  before: string[] | undefined;
-}): string[] {
+  current: T[] | undefined;
+  before: T[] | undefined;
+}): T[] {
   return (current ?? []).filter(
-    (stepName) => !(before ?? []).includes(stepName),
+    (item) => !(before ?? []).some((old) => deepEquals({ a: old, b: item })),
   );
 }
 

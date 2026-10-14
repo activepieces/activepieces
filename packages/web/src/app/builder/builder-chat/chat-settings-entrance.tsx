@@ -35,7 +35,7 @@ export function ChatSettingsEntrance({
     <div
       ref={containerRef}
       className={cn('h-full', {
-        'animate-in fade-in slide-in-from-right-8 duration-700 ease-out fill-mode-both':
+        'animate-in fade-in slide-in-from-right-8 duration-700 fill-mode-both':
           entranceAtMount === 'arrive',
         'chat-settings-flash':
           entranceAtMount === 'refresh' && fieldsAtMount.length === 0,

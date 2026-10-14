@@ -118,7 +118,7 @@ const BuilderPage = () => {
   const previousRightSidebar = usePrevious(rightSidebar);
   const [chatCameraStep, recentlyChangedFieldNames] = useBuilderStateContext(
     (state) => [
-      state.chatCameraShot?.stepName ?? null,
+      builderChatSelectors.cameraStepName(state),
       state.recentlyChangedFields[state.selectedStep ?? ''] ?? NO_FIELDS,
     ],
   );
@@ -306,7 +306,6 @@ const BuilderPage = () => {
                           flowVersionId: flowVersion.id,
                           step: selectedStep,
                           hasPieceModelLoaded: !!pieceModel,
-                          remoteRevision,
                         })}
                       >
                         <StepSettingsContainer />
@@ -335,12 +334,10 @@ function constructContainerKey({
   flowVersionId,
   step,
   hasPieceModelLoaded,
-  remoteRevision,
 }: {
   flowVersionId: string;
   step?: FlowAction | FlowTrigger;
   hasPieceModelLoaded: boolean;
-  remoteRevision: number;
 }) {
   const stepName = step?.name;
   const triggerOrActionName =
@@ -364,5 +361,5 @@ function constructContainerKey({
     pieceName ?? ''
   }-${pieceVersion ?? ''}-${'skipped-' + !!isSkipped}-${
     hasPieceModelLoaded ? 'loaded' : 'not-loaded'
-  }-${remoteRevision}`;
+  }`;
 }

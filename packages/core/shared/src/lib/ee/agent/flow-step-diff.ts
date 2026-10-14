@@ -1,4 +1,5 @@
 import { flowStructureUtil, FlowTrigger, Step } from '@activepieces/core-execution'
+import { deepEquals, isObject, prune } from '@activepieces/core-utils'
 
 const IGNORED_SETTING_KEYS = new Set(['sampleData', 'inputUiInfo', 'propertySettings'])
 const MAX_VALUE_LENGTH = 80
@@ -58,7 +59,7 @@ function stepContent(step: Step): FlowStepSnapshot {
 
 function changedFields({ before, after }: { before: FlowStepSnapshot, after: FlowStepSnapshot }): FlowFieldChange[] {
     const top = (['displayName', 'type', 'skip'] as const)
-        .filter((key) => stableStringify(before[key]) !== stableStringify(after[key]))
+        .filter((key) => !isSameValue({ a: before[key], b: after[key] }))
         .map((key) => ({ path: key, before: before[key], after: after[key] }))
     return [...top, ...objectFieldChanges({ before: before.settings, after: after.settings, prefix: '' })]
 }
@@ -69,10 +70,10 @@ function objectFieldChanges({ before, after, prefix }: { before: Record<string, 
         const path = `${prefix}${key}`
         const beforeValue = before[key]
         const afterValue = after[key]
-        if (stableStringify(beforeValue) === stableStringify(afterValue)) {
+        if (isSameValue({ a: beforeValue, b: afterValue })) {
             return []
         }
-        if (key === 'input' && isRecord(beforeValue) && isRecord(afterValue)) {
+        if (key === 'input' && isObject(beforeValue) && isObject(afterValue)) {
             return objectFieldChanges({ before: beforeValue, after: afterValue, prefix: 'input.' })
         }
         return [{ path, before: beforeValue, after: afterValue }]
@@ -93,22 +94,12 @@ function formatValue(value: unknown): string {
     if (value === undefined) {
         return '(empty)'
     }
-    const text = typeof value === 'string' ? `"${value}"` : stableStringify(value)
+    const text = typeof value === 'string' ? `"${value}"` : JSON.stringify(prune(value)) ?? 'undefined'
     return text.length > MAX_VALUE_LENGTH ? `${text.slice(0, MAX_VALUE_LENGTH)}…` : text
 }
 
-function stableStringify(value: unknown): string {
-    if (Array.isArray(value)) {
-        return `[${value.map(stableStringify).join(',')}]`
-    }
-    if (isRecord(value)) {
-        return `{${Object.keys(value).sort().filter((key) => value[key] !== undefined).map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`
-    }
-    return JSON.stringify(value) ?? 'undefined'
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
+function isSameValue({ a, b }: { a: unknown, b: unknown }): boolean {
+    return deepEquals({ a: prune(a), b: prune(b) })
 }
 
 export const flowStepDiff = {

@@ -11,6 +11,7 @@ import React, { useMemo } from 'react';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
+import { builderChatSelectors } from '@/app/builder/state/builder-chat-state';
 import { RightSideBarType } from '@/app/builder/types';
 import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
@@ -57,11 +58,10 @@ const ApStepCanvasNode = React.memo(
       state.canvasOrientation,
       state.recentlyChangedSteps.includes(step.name),
       state.recentlyAddedSteps.includes(step.name),
-      state.chatActivity?.editingStepNames.includes(step.name) ?? false,
-      state.chatCameraShot?.kind === 'testing' &&
-      state.chatCameraShot.stepName === 'trigger'
-        ? null
-        : state.chatCameraShot?.stepName ?? null,
+      state.chatActivity?.targets.some(
+        (target) => target.kind === 'editing' && target.stepName === step.name,
+      ) ?? false,
+      builderChatSelectors.cameraStepName(state),
     ]);
     const isInChatSpotlight = chatCameraStep === step.name;
     const isOutOfChatSpotlight = chatCameraStep !== null && !isInChatSpotlight;

@@ -17,6 +17,7 @@ import {
 } from '@/components/prompt-kit/prompt-input';
 import { Button } from '@/components/ui/button';
 import { VoiceWaveformBars } from '@/features/chat/components/voice-waveform';
+import { useIsPanelChat } from '@/features/chat/lib/chat-variant-context';
 import { useVoiceInput } from '@/features/chat/lib/use-voice-input';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +31,6 @@ export function ChatInput({
   rightActions,
   minimalUntilFocus = false,
   onFocusChange,
-  variant = 'page',
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
@@ -41,9 +41,8 @@ export function ChatInput({
   rightActions?: React.ReactNode;
   minimalUntilFocus?: boolean;
   onFocusChange?: (focused: boolean) => void;
-  variant?: 'page' | 'panel';
 }) {
-  const isPanel = variant === 'panel';
+  const isPanel = useIsPanelChat();
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
