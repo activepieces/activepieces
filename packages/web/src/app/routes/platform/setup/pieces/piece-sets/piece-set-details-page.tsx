@@ -4,23 +4,27 @@ import {
   PieceSet,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 
 import {
+  AdminEmpty,
   AdminPage,
   AdminPageHeader,
+  AdminQueryState,
+  InstantSwitch,
   SettingsPanel,
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { AdminControl, adminControl } from '@/lib/admin-control';
+import { AdminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { PieceSetPiecesTable } from './piece-set-pieces-table';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
@@ -30,17 +34,28 @@ import { useRequiredActionsGroupedByPiece } from './use-required-actions-grouped
 const PieceSetDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: pieceSet, isLoading } = pieceSetQueries.usePieceSet(id ?? '');
+  const {
+    data: pieceSet,
+    isLoading,
+    isError,
+    refetch,
+  } = pieceSetQueries.usePieceSet(id ?? '');
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({
     includeHidden: true,
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
+  const { mutateAsync: updateSet } = pieceSetMutations.useUpdatePieceSet({
+    announce: false,
+  });
 
-  const handleToggle = (value: boolean) => {
-    if (!pieceSet || !pieces) return;
-    updateSet({
+  const handleToggle = async (value: boolean) => {
+    if (!pieceSet || !pieces) {
+      throw mutationFeedback.userError(
+        t('The pieces list did not load. Refresh the page and try again.'),
+      );
+    }
+    await updateSet({
       id: pieceSet.id,
       request: {
         pieces: flipSelectionMode({
@@ -56,11 +71,38 @@ const PieceSetDetailsPage = () => {
     return <Navigate to="/platform/pieces/piece-sets" replace />;
   }
 
-  if (isLoading || !pieceSet) {
+  if (!pieceSet) {
     return (
-      <div className="flex items-center justify-center flex-1">
-        <Loader2 className="size-6 animate-spin text-gray-11" />
-      </div>
+      <AdminPage fill>
+        <AdminQueryState
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetch}
+          entity={t('piece set')}
+          isEmpty
+          empty={
+            <AdminEmpty
+              title={t('This piece set no longer exists')}
+              action={
+                <Button asChild variant="outline">
+                  <Link to="/platform/pieces/piece-sets">
+                    {t('Back to piece sets')}
+                  </Link>
+                </Button>
+              }
+            />
+          }
+          skeleton={
+            <div className="flex flex-col gap-4">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-24 rounded-xl" />
+              <Skeleton className="h-64 rounded-xl" />
+            </div>
+          }
+        >
+          {null}
+        </AdminQueryState>
+      </AdminPage>
     );
   }
 
@@ -107,18 +149,27 @@ const PieceSetDetailsPage = () => {
             </SettingsRow>
             <SettingsRow
               title={t('Include new pieces')}
-              description={t(
-                'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
-              )}
+              description={
+                !piecesLoading && !pieces
+                  ? t(
+                      'The pieces list did not load. Refresh the page to change this.',
+                    )
+                  : t(
+                      'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
+                    )
+              }
             >
-              <Switch
-                {...adminControl(AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE)}
+              <InstantSwitch
+                controlId={AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE}
                 aria-label={t('Include new pieces')}
                 checked={
                   pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
                 }
-                disabled={piecesLoading}
+                disabled={piecesLoading || !pieces}
                 onCheckedChange={handleToggle}
+                successMessage={(on) =>
+                  on ? t('New pieces included') : t('New pieces excluded')
+                }
               />
             </SettingsRow>
           </SettingsPanel>

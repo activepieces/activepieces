@@ -63,7 +63,7 @@ const RoleCell = ({
   refetch: () => void;
 }) => {
   const { data: rolesData, isPending: rolesLoading } =
-    projectRoleQueries.useProjectRoles(true);
+    projectRoleQueries.useProjectRoles({ enabled: true });
 
   const roles = rolesData?.data ?? [];
   const { checkAccess } = useAuthorization();

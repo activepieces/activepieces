@@ -50,6 +50,7 @@ export function AutoRechargeConfigDialog({
   isOpen,
   onOpenChange,
   feature,
+  adminFeedback = false,
 }: AutoRechargeConfigDialogProps) {
   const queryClient = useQueryClient();
   const autoTopUp = feature.autoTopUp?.enabled ? feature.autoTopUp : undefined;
@@ -71,7 +72,7 @@ export function AutoRechargeConfigDialog({
   });
 
   const { mutate: updateAutoTopUp, isPending } =
-    billingMutations.useUpdateAutoTopUp(queryClient);
+    billingMutations.useUpdateAutoTopUp({ queryClient, adminFeedback });
 
   const creditsToAdd = form.watch('creditsToAdd');
   const costPerTopUp =
@@ -368,6 +369,7 @@ interface AutoRechargeConfigDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   feature: ConsumableBillableFeature;
+  adminFeedback?: boolean;
 }
 
 type AutoRechargeFormValues = z.infer<typeof AutoRechargeFormSchema>;

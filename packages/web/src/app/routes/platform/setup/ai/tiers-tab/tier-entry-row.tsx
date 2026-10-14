@@ -54,7 +54,7 @@ export function TierEntryRow({
                 'my-1 shrink-0 rounded-full',
                 isMain
                   ? 'size-2.5 bg-accent-9 ring-4 ring-accent-3'
-                  : 'size-2 border-2 border-gray-8 bg-panel',
+                  : 'size-2 border-2 border-gray-8 bg-(--admin-surface)',
               )}
             />
           </TooltipTrigger>

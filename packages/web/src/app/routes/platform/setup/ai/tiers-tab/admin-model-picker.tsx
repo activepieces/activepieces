@@ -29,7 +29,6 @@ import {
   ModelPickerPopover,
 } from '@/features/agents/ai-model/model-picker-popover';
 import { SectionHeading } from '@/features/agents/ai-model/section-heading';
-import { cn } from '@/lib/utils';
 
 import { KeyStatusBadge } from '../providers-tab/key-status';
 
@@ -44,6 +43,7 @@ export function AdminModelPicker({
   onOpenChange,
   align = 'end',
   anchorOnly = false,
+  matchTriggerWidth = false,
   children,
 }: AdminModelPickerProps) {
   const pickable: PickableModel[] = configs.flatMap((config) =>
@@ -121,6 +121,7 @@ export function AdminModelPicker({
       onOpenChange={onOpenChange}
       align={align}
       anchorOnly={anchorOnly}
+      matchTriggerWidth={matchTriggerWidth}
       detail={(item) => {
         const detail = detailById.get(item.id);
         return isNil(detail) ? null : <ModelDetailCard detail={detail} />;
@@ -224,21 +225,16 @@ function KeyNotices({
           key={config.id}
           className="flex items-center justify-between gap-2 text-xs text-gray-11"
         >
-          <span>{t("Couldn't load {key} models", { key: config.name })}</span>
+          <span>{t('Trouble loading {key} models', { key: config.name })}</span>
           <Button
             type="button"
             variant="ghost"
             size="icon-xs"
             aria-label={t('Retry')}
-            disabled={keyModels[config.id]?.isFetching === true}
+            loading={keyModels[config.id]?.isFetching === true}
             onClick={() => keyModels[config.id]?.refetch()}
           >
-            <RefreshCw
-              className={cn(
-                'size-3',
-                keyModels[config.id]?.isFetching === true && 'animate-spin',
-              )}
-            />
+            <RefreshCw className="size-3" />
           </Button>
         </div>
       ))}
@@ -261,7 +257,7 @@ function emptyTextOf({
     return t('Loading models…');
   }
   if (total > 0 && failed === total) {
-    return t("Couldn't load models");
+    return t('Trouble loading models');
   }
   return pickable === 0
     ? t('No text models on your keys yet')
@@ -314,5 +310,6 @@ type AdminModelPickerProps = {
   onOpenChange: (open: boolean) => void;
   align?: 'start' | 'end';
   anchorOnly?: boolean;
+  matchTriggerWidth?: boolean;
   children: ReactNode;
 };

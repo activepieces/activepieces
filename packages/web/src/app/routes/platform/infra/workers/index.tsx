@@ -23,6 +23,7 @@ import {
   AdminEmpty,
   AdminPage,
   AdminPageHeader,
+  AdminQueryState,
   LockedCallout,
   StatusDot,
   adminPageResources,
@@ -31,6 +32,7 @@ import {
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -51,15 +53,25 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { platform } = platformHooks.useCurrentPlatform();
   const isCloud = edition === ApEdition.CLOUD;
-  const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
+  const {
+    data: workersData,
+    isLoading,
+    isError: isWorkersError,
+    refetch,
+  } = workersQueries.useWorkerMachines();
+  const isError = isWorkersError && workersData === undefined;
 
   const fleetType = workersData?.[0]?.type;
 
   return (
     <AdminPage>
       <AdminPageHeader
-        title={t('Workers')}
-        description={t('Check the health of your workers')}
+        title={section === 'worker-groups' ? t('Worker groups') : t('Workers')}
+        description={
+          section === 'worker-groups'
+            ? t('Give specific projects their own dedicated workers.')
+            : t('Check the health of your workers')
+        }
         resources={adminPageResources.workers}
       />
 
@@ -95,49 +107,36 @@ export default function WorkersPage({ section }: WorkersPageProps) {
           </Alert>
         )}
 
-      {section === 'health' && isLoading && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className={cn(
-                adminSurface.card,
-                'flex animate-pulse flex-col gap-4 p-5',
+      {section === 'health' && (
+        <AdminQueryState
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetch}
+          entity={t('workers')}
+          isEmpty={(workersData ?? []).length === 0}
+          empty={
+            <AdminEmpty
+              icon={<Server />}
+              title={t('No workers found')}
+              description={t(
+                "You don't have any workers yet. Spin up new workers to execute your automations",
               )}
-            >
-              <div className="flex items-center justify-between">
-                <div className="h-4 w-28 rounded-md bg-gray-3" />
-                <div className="h-5 w-16 rounded-md bg-gray-3" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="h-3 w-full rounded-md bg-gray-3" />
-                <div className="h-3 w-full rounded-md bg-gray-3" />
-                <div className="h-3 w-full rounded-md bg-gray-3" />
-              </div>
-              <div className="h-4 w-full rounded-md bg-gray-3" />
+            />
+          }
+          skeleton={
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-44 rounded-xl" />
+              ))}
             </div>
-          ))}
-        </div>
-      )}
-
-      {section === 'health' &&
-        !isLoading &&
-        (workersData ?? []).length === 0 && (
-          <AdminEmpty
-            icon={<Server />}
-            title={t('No workers found')}
-            description={t(
-              "You don't have any workers yet. Spin up new workers to execute your automations",
-            )}
-          />
-        )}
-
-      {section === 'health' && !isLoading && (workersData ?? []).length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {(workersData ?? []).map((worker, index) => (
-            <WorkerCard key={worker.id} worker={worker} index={index} />
-          ))}
-        </div>
+          }
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {(workersData ?? []).map((worker, index) => (
+              <WorkerCard key={worker.id} worker={worker} index={index} />
+            ))}
+          </div>
+        </AdminQueryState>
       )}
 
       {section === 'worker-groups' && (

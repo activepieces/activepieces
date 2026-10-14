@@ -1,5 +1,6 @@
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { isPieceVisible, PieceSet } from '@activepieces/shared';
+import { useIsMutating } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -11,9 +12,8 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
-import { AdminDataTable } from '@/app/components/admin';
+import { AdminDataTable, ConfirmDialog } from '@/app/components/admin';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { DataTableSelectPopover } from '@/components/custom/data-table/data-table-select-popover';
@@ -24,7 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetKeys, pieceSetMutations } from '@/features/piece-sets';
 import { PieceIcon, piecesHooks } from '@/features/pieces';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
@@ -40,7 +40,11 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
     isTableQuery: true,
     skipProjectFilter: true,
   });
-  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet, mutateAsync: updateSetAsync } =
+    pieceSetMutations.useUpdatePieceSet();
+  const saving = useIsMutating({ mutationKey: pieceSetKeys.update }) > 0;
+  const [pieceToInclude, setPieceToInclude] =
+    useState<PieceMetadataModelSummary | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState(new Set<string>());
   const [managingComponentsPiece, setManagingComponentsPiece] = useState<
     string | null
@@ -234,6 +238,8 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
                 <Switch
                   {...adminControl(AdminControl.PIECE_SETS_PIECE_TOGGLE)}
                   checked={included}
+                  disabled={saving}
+                  aria-busy={saving}
                   onCheckedChange={() => togglePiece(row.original.name)}
                 />
               </div>
@@ -241,7 +247,7 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
           },
         },
       ],
-      [pieceSet, togglePiece],
+      [pieceSet, togglePiece, saving],
     );
 
   const openPieceOrPromptInclude = (piece: PieceMetadataModelSummary) => {
@@ -253,15 +259,21 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
       setManagingComponentsPiece(piece.name);
       return;
     }
-    const message = t('To edit {name}, include it in the set first.', {
-      name: piece.displayName,
-    });
-    toast(message, {
-      action: {
-        label: t('Include'),
-        onClick: () => togglePiece(piece.name),
+    setPieceToInclude(piece);
+  };
+
+  const includeAndOpen = async (piece: PieceMetadataModelSummary) => {
+    await updateSetAsync({
+      id: pieceSet.id,
+      request: {
+        pieces: pieceSetInclusionUtils.setPiecesIncluded({
+          pieces: pieceSet.config.pieces,
+          pieceNames: [piece.name],
+          included: true,
+        }),
       },
     });
+    setManagingComponentsPiece(piece.name);
   };
 
   const managingPieceDisplayName = useMemo(
@@ -341,6 +353,23 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
           pieceSet={pieceSet}
         />
       )}
+      <ConfirmDialog
+        open={pieceToInclude !== null}
+        onOpenChange={(open) => {
+          if (!open) setPieceToInclude(null);
+        }}
+        title={t('Include {name}?', {
+          name: pieceToInclude?.displayName ?? '',
+        })}
+        description={t('To edit {name}, include it in the set first.', {
+          name: pieceToInclude?.displayName ?? '',
+        })}
+        confirmLabel={t('Include')}
+        destructive={false}
+        onConfirm={() =>
+          pieceToInclude ? includeAndOpen(pieceToInclude) : undefined
+        }
+      />
       <ConfirmExcludingRequiredActionsDialog
         excludedRequiredActions={
           excludePieceRequestToConfirm

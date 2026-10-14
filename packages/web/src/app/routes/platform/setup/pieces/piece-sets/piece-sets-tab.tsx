@@ -1,4 +1,5 @@
 import { PieceSelectionMode, PieceSet } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -18,8 +19,11 @@ import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
+  ConfirmDialog,
+  RowActionTooltip,
   StatusDot,
   adminPageResources,
+  useAdminAction,
 } from '@/app/components/admin';
 import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import {
@@ -27,22 +31,24 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+  pieceSetCacheUtils,
+  pieceSetQueries,
+  pieceSetsApi,
+} from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
+import { pieceSetName } from './piece-set-name';
 
 export const PieceSetsTab = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
@@ -58,7 +64,17 @@ export const PieceSetsTab = () => {
     isError,
     refetch,
   } = pieceSetQueries.usePieceSets({ cursor, limit });
-  const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();
+  const queryClient = useQueryClient();
+  const { mutateAsync: deleteSet } = useAdminAction<PieceSet>({
+    verb: 'delete',
+    name: (pieceSet) => pieceSetName.short(pieceSet.name),
+    run: (pieceSet) => pieceSetsApi.delete(pieceSet.id),
+    onSuccess: () => {
+      pieceSetCacheUtils
+        .refreshAfterProjectChange({ queryClient })
+        .catch(() => undefined);
+    },
+  });
 
   const pieceSets = useMemo(() => pieceSetsPage?.data ?? [], [pieceSetsPage]);
 
@@ -74,10 +90,14 @@ export const PieceSetsTab = () => {
           />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{row.original.name}</span>
+          <div className="flex min-w-0 items-center gap-2">
+            <TextWithTooltip tooltipMessage={row.original.name}>
+              <span className="min-w-0 font-medium">{row.original.name}</span>
+            </TextWithTooltip>
             {row.original.isDefault && (
-              <Badge variant="default">{t('Default')}</Badge>
+              <Badge variant="default" className="shrink-0">
+                {t('Default')}
+              </Badge>
             )}
           </div>
         ),
@@ -89,7 +109,11 @@ export const PieceSetsTab = () => {
         ),
         cell: ({ row }) =>
           row.original.key ? (
-            <span className="font-mono text-sm">{row.original.key}</span>
+            <TextWithTooltip tooltipMessage={row.original.key}>
+              <span className="block font-mono text-sm">
+                {row.original.key}
+              </span>
+            </TextWithTooltip>
           ) : (
             <span className="text-gray-11">—</span>
           ),
@@ -120,52 +144,49 @@ export const PieceSetsTab = () => {
         notClickable: true,
         cell: ({ row }) => (
           <div className="flex justify-end gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  {...adminControl(AdminControl.PIECE_SETS_EDIT_OPEN)}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingSet(row.original)}
-                >
-                  <Settings2 className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Edit Details')}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_OPEN)}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setDuplicatingSet(row.original)}
-                >
-                  <Copy className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t('Duplicate')}</TooltipContent>
-            </Tooltip>
-            <ConfirmationDeleteDialog
-              title={t('Delete {name}', { name: row.original.name })}
-              entityName={t('Piece Set')}
-              controlId={AdminControl.PIECE_SETS_DELETE_CONFIRM}
-              message={t(
+            <RowActionTooltip label={t('Edit Details')}>
+              <Button
+                {...adminControl(AdminControl.PIECE_SETS_EDIT_OPEN)}
+                variant="ghost"
+                size="sm"
+                aria-label={t('Edit {name}', { name: row.original.name })}
+                onClick={() => setEditingSet(row.original)}
+              >
+                <Settings2 className="size-4" />
+              </Button>
+            </RowActionTooltip>
+            <RowActionTooltip label={t('Duplicate')}>
+              <Button
+                {...adminControl(AdminControl.PIECE_SETS_DUPLICATE_OPEN)}
+                variant="ghost"
+                size="sm"
+                aria-label={t('Duplicate {name}', { name: row.original.name })}
+                onClick={() => setDuplicatingSet(row.original)}
+              >
+                <Copy className="size-4" />
+              </Button>
+            </RowActionTooltip>
+            <ConfirmDialog
+              title={t('Delete {name}?', {
+                name: pieceSetName.short(row.original.name),
+              })}
+              description={t(
                 'Projects assigned to this set will be reassigned to the default set.',
               )}
-              mutationFn={async () => {
-                deleteSet(row.original.id);
-              }}
+              confirmLabel={t('Delete piece set')}
+              controlId={AdminControl.PIECE_SETS_DELETE_CONFIRM}
+              onConfirm={() => deleteSet(row.original)}
             >
               <Button
                 {...adminControl(AdminControl.PIECE_SETS_DELETE_OPEN)}
                 variant="ghost"
                 size="sm"
+                aria-label={t('Delete {name}', { name: row.original.name })}
                 disabled={row.original.isDefault}
               >
                 <Trash2 className="size-4 text-danger-11" />
               </Button>
-            </ConfirmationDeleteDialog>
+            </ConfirmDialog>
           </div>
         ),
       },
@@ -186,10 +207,18 @@ export const PieceSetsTab = () => {
       </AdminPageHeader>
       <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
       <AdminDataTable
-        emptyStateTextTitle={t('No piece sets found')}
-        emptyStateTextDescription={t(
-          'Create a piece set to control which pieces are available to specific projects',
-        )}
+        emptyStateTextTitle={
+          platform.plan.managePiecesEnabled
+            ? t('No piece sets found')
+            : t('Piece sets need a higher plan.')
+        }
+        emptyStateTextDescription={
+          platform.plan.managePiecesEnabled
+            ? t(
+                'Create a piece set to control which pieces are available to specific projects',
+              )
+            : ''
+        }
         emptyStateIcon={<Layers />}
         columns={columns}
         filters={[

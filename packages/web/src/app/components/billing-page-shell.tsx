@@ -7,7 +7,8 @@ import {
 import { t } from 'i18next';
 import { ReactNode } from 'react';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { AdminFetchErrorState, AdminPage } from '@/app/components/admin';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { billingQueries } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -19,7 +20,7 @@ const LOCK_DOCUMENTATION_URL =
 
 export function BillingPageShell({
   lockTitle,
-  errorMessage,
+  header,
   children,
 }: BillingPageShellProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -35,37 +36,38 @@ export function BillingPageShell({
       )}
       lockDocumentationUrl={LOCK_DOCUMENTATION_URL}
     >
-      <BillingPageContent errorMessage={errorMessage}>
-        {children}
-      </BillingPageContent>
+      <BillingPageContent header={header}>{children}</BillingPageContent>
     </LockedFeatureGuard>
   );
 }
 
-function BillingPageContent({
-  errorMessage,
-  children,
-}: BillingPageContentProps) {
+function BillingPageContent({ header, children }: BillingPageContentProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const {
     data: info,
     isLoading,
     isError,
+    refetch,
   } = billingQueries.usePlatformSubscription(platform.id);
 
-  if (isLoading || isNil(info)) {
+  if (isError && isNil(info)) {
     return (
-      <div className="h-full flex items-center justify-center w-full">
-        <LoadingSpinner />
-      </div>
+      <AdminPage>
+        {header}
+        <AdminFetchErrorState
+          entity={t('billing information')}
+          onRetry={refetch}
+        />
+      </AdminPage>
     );
   }
 
-  if (isError) {
+  if (isLoading || isNil(info)) {
     return (
-      <div className="h-full flex items-center justify-center w-full">
-        {errorMessage}
-      </div>
+      <AdminPage>
+        {header}
+        <SkeletonList numberOfItems={3} className="h-18" />
+      </AdminPage>
     );
   }
 
@@ -82,7 +84,7 @@ type BillingPageShellRenderParams = {
 };
 
 type BillingPageContentProps = {
-  errorMessage: string;
+  header: ReactNode;
   children: (params: BillingPageShellRenderParams) => ReactNode;
 };
 

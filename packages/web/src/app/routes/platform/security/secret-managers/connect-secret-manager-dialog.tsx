@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -42,6 +43,7 @@ import { ProjectSelector } from '@/features/connections';
 import { secretManagersHooks } from '@/features/secret-managers';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { secretManagersUtils } from './util';
 
@@ -66,6 +68,11 @@ const AddEditSecretManagerConnectionDialog = ({
               ? `${t('Edit')} ${connection.name}`
               : t('New Secret Manager Connection')}
           </DialogTitle>
+          <DialogDescription>
+            {t(
+              'Let connections read their secrets from your own secret manager.',
+            )}
+          </DialogDescription>
         </DialogHeader>
         <AddEditSecretManagerForm
           key={open ? 'open' : 'closed'}
@@ -288,22 +295,18 @@ function handleMutationError(
   error: Error,
   form: ReturnType<typeof useForm<any>>,
 ): void {
-  if (api.isError(error)) {
-    const apError = error.response?.data as ApErrorParams;
-    if (apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED) {
-      form.setError('root.serverError', {
-        type: 'manual',
-        message: t('Failed to connect to secret manager with error: "{msg}"', {
-          msg: apError.params?.message,
-        }),
-      });
-    }
-  } else {
-    form.setError('root.serverError', {
-      type: 'manual',
-      message: t('Failed to connect to secret manager, please check console'),
-    });
-  }
+  const apError = api.isError(error)
+    ? (error.response?.data as ApErrorParams | undefined)
+    : undefined;
+  form.setError('root.serverError', {
+    type: 'manual',
+    message:
+      apError?.code === ErrorCode.SECRET_MANAGER_CONNECTION_FAILED
+        ? t('Failed to connect to secret manager with error: "{msg}"', {
+            msg: apError.params?.message,
+          })
+        : mutationFeedback.message(error),
+  });
 }
 
 type AddEditSecretManagerConnectionDialogProps = {

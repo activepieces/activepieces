@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { adminLayout } from '@/app/components/admin';
+import { adminFeedback, adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -61,8 +61,9 @@ const EditPieceSetForm = ({
     mode: 'onChange',
   });
 
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutate: updateSet, isPending } = pieceSetMutations.useUpdatePieceSet({
+    announce: false,
+  });
 
   const handleSubmit = ({ name, key }: FormValues) => {
     updateSet(
@@ -73,7 +74,12 @@ const EditPieceSetForm = ({
           key: key || undefined,
         },
       },
-      { onSuccess: () => onOpenChange(false) },
+      {
+        onSuccess: () => {
+          adminFeedback.done({ verb: 'update', name });
+          onOpenChange(false);
+        },
+      },
     );
   };
 

@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { toast } from 'sonner';
+
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { projectRoleApi } from '../api/project-role-api';
 
@@ -12,11 +13,18 @@ export const projectRoleKeys = {
 };
 
 export const projectRoleQueries = {
-  useProjectRoles: (enabled: boolean) =>
+  useProjectRoles: ({
+    enabled,
+    failFast = false,
+  }: {
+    enabled: boolean;
+    failFast?: boolean;
+  }) =>
     useQuery({
       queryKey: projectRoleKeys.all,
       queryFn: () => projectRoleApi.list(),
       enabled,
+      ...(failFast ? { retry: false } : {}),
     }),
   useProjectRoleMembers: (roleId: string | undefined, enabled: boolean) =>
     useInfiniteQuery({
@@ -58,26 +66,7 @@ export const projectRoleMutations = {
           onError(error);
           return;
         }
-        toast.error(t('Role name already exists'), {
-          duration: 3000,
-        });
-      },
-    });
-  },
-  useDeleteProjectRole: ({ onSuccess }: { onSuccess: () => void }) => {
-    return useMutation({
-      mutationKey: ['delete-project-role'],
-      mutationFn: (name: string) => projectRoleApi.delete(name),
-      onSuccess: () => {
-        onSuccess();
-        toast.success(t('Project Role entry deleted successfully'), {
-          duration: 3000,
-        });
-      },
-      onError: () => {
-        toast.error(t('Could not delete the role. Try again.'), {
-          duration: 5000,
-        });
+        mutationFeedback.error({ error, title: t("Couldn't save changes") });
       },
     });
   },

@@ -1,8 +1,18 @@
 import { ArrowLeft } from 'lucide-react';
-import { ReactNode } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { billingDialogHooks } from '@/features/billing';
+import { MenuFocusReturnScope } from '@/hooks/use-menu-focus-return';
+import { PLAN_LIMIT_EVENT } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { adminLayout } from './admin-layout';
@@ -16,28 +26,49 @@ export function AdminPage({
   className,
   children,
 }: AdminPageProps) {
+  const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null);
+  const footerContext = { inPage: true, slot: footerSlot };
+  useEffect(() => {
+    const openPlanDialog = () =>
+      billingDialogHooks.useManagePlanDialogStore.getState().openDialog();
+    window.addEventListener(PLAN_LIMIT_EVENT, openPlanDialog);
+    return () => window.removeEventListener(PLAN_LIMIT_EVENT, openPlanDialog);
+  }, []);
   return (
-    <div
-      data-slot="admin-page"
-      className={cn(
-        adminSurface.page,
-        'flex w-full flex-col',
-        fill ? 'h-full min-h-0' : 'flex-1',
-      )}
-    >
-      <div
-        className={cn(
-          'flex w-full flex-1 flex-col gap-6 px-4 py-6 md:px-6',
-          fill && 'min-h-0',
-          WIDTH_CLASS[width],
-          className,
-        )}
-      >
-        {children}
-      </div>
-      {footer}
-    </div>
+    <MenuFocusReturnScope>
+      <AdminPageFooterContext.Provider value={footerContext}>
+        <div
+          data-slot="admin-page"
+          className={cn(
+            adminSurface.page,
+            'flex w-full flex-col',
+            fill ? 'h-full min-h-0' : 'flex-1',
+          )}
+        >
+          <div
+            className={cn(
+              'flex w-full flex-1 flex-col gap-6 px-4 py-6 md:px-6',
+              fill && 'min-h-0',
+              WIDTH_CLASS[width],
+              className,
+            )}
+          >
+            {children}
+          </div>
+          {footer}
+          <div ref={setFooterSlot} className="contents" />
+        </div>
+      </AdminPageFooterContext.Provider>
+    </MenuFocusReturnScope>
   );
+}
+
+export function AdminPageFooter({ children }: { children: ReactNode }) {
+  const { inPage, slot } = useContext(AdminPageFooterContext);
+  if (!inPage) {
+    return children;
+  }
+  return slot ? createPortal(children, slot) : null;
 }
 
 export function AdminPageHeader({
@@ -49,6 +80,8 @@ export function AdminPageHeader({
   children,
 }: AdminPageHeaderProps) {
   const { embedState } = useEmbedding();
+  const hasResources =
+    !embedState.isEmbedded && resources !== undefined && resources.length > 0;
   if (embedState.hidePageHeader) {
     if (!back && !children) {
       return null;
@@ -67,8 +100,6 @@ export function AdminPageHeader({
       </div>
     );
   }
-  const hasResources =
-    !embedState.isEmbedded && resources !== undefined && resources.length > 0;
 
   return (
     <header
@@ -139,6 +170,11 @@ function AdminBackLink({ back }: { back: AdminPageBack }) {
     </Link>
   );
 }
+
+const AdminPageFooterContext = createContext<{
+  inPage: boolean;
+  slot: HTMLDivElement | null;
+}>({ inPage: false, slot: null });
 
 const WIDTH_CLASS: Record<AdminPageWidth, string> = {
   full: '',

@@ -9,11 +9,11 @@ import { Globe, Key, ListChecks, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
 import {
+  AdminFetchErrorState,
   AdminPage,
   AdminPageHeader,
   adminPageResources,
 } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { SkeletonList } from '@/components/ui/skeleton';
 import {
   embedSubdomainQueries,
@@ -45,6 +45,7 @@ const EmbedPage = () => {
   const {
     data,
     isLoading: isKeysLoading,
+    isError: isKeysError,
     refetch,
   } = signingKeyQueries.useSigningKeys();
   const isSample = !platform.plan.embeddingEnabled;
@@ -130,7 +131,7 @@ const EmbedPage = () => {
   return (
     <AdminPage width="content">
       <AdminPageHeader
-        title={t('Embed Onboarding')}
+        title={t('Embedding')}
         description={
           <>
             {description}{' '}
@@ -161,7 +162,7 @@ const EmbedPage = () => {
           {isLoading ? (
             <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
           ) : subdomainStepFailed ? (
-            <DataFetchErrorState
+            <AdminFetchErrorState
               entity={t('the embed subdomain')}
               onRetry={refetchSubdomain}
             />
@@ -174,7 +175,8 @@ const EmbedPage = () => {
           ) : displayedStep?.kind === 'signing-keys' ? (
             <SigningKeysStep
               signingKeys={signingKeys}
-              isLoading={isKeysLoading}
+              isLoading={isKeysLoading && !isSample}
+              isError={isKeysError && !isSample}
               refetch={refetch}
             />
           ) : null}

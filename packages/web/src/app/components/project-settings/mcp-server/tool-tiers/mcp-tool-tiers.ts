@@ -114,6 +114,7 @@ function titleOf(toolName: string): string {
 const TIER_ORDER: McpToolTier[] = ['read', 'draft', 'live', 'delete'];
 
 export const mcpToolTiers = {
+  tierOf,
   groupByTier,
   countEnabled,
   copyOf,

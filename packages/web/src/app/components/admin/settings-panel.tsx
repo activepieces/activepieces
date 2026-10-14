@@ -9,30 +9,44 @@ export function SettingsPanel({
   title,
   description,
   action,
+  media,
+  meta,
   flush = false,
   className,
   children,
+  'aria-label': ariaLabel,
 }: SettingsPanelProps) {
   const hasHeader = title !== undefined || action !== undefined;
   return (
     <section
       data-slot="settings-panel"
+      aria-label={ariaLabel}
       className={cn(adminSurface.card, 'flex flex-col', className)}
     >
       {hasHeader && (
         <header
           className={cn(
             adminSurface.panelHeader,
-            'flex items-start justify-between gap-4 p-5',
+            'flex flex-wrap items-start justify-between gap-4 p-5',
           )}
         >
-          <div className="flex min-w-0 flex-col gap-1">
-            {title && (
-              <h2 className="text-sm font-semibold text-gray-12">{title}</h2>
-            )}
-            {description && (
-              <p className="text-sm text-gray-11">{description}</p>
-            )}
+          <div className="flex min-w-0 flex-1 basis-60 items-start gap-3">
+            {media && <div className="flex shrink-0">{media}</div>}
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              {(title || meta) && (
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  {title && (
+                    <h2 className="min-w-0 text-sm font-semibold text-gray-12">
+                      {title}
+                    </h2>
+                  )}
+                  {meta}
+                </div>
+              )}
+              {description && (
+                <p className="text-sm text-gray-11">{description}</p>
+              )}
+            </div>
           </div>
           {action && (
             <div className="flex shrink-0 items-center gap-2">{action}</div>
@@ -122,6 +136,9 @@ type SettingsPanelProps = {
   title?: ReactNode;
   description?: ReactNode;
   action?: ReactNode;
+  media?: ReactNode;
+  meta?: ReactNode;
+  'aria-label'?: string;
   flush?: boolean;
   className?: string;
   children: ReactNode;

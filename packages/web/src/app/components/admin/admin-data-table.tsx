@@ -1,9 +1,12 @@
+import { apId } from '@activepieces/core-utils';
+
 import {
   DataTable,
   DataTableProps,
   DataWithId,
 } from '@/components/custom/data-table';
 
+import { adminFetchError } from './admin-query-state';
 import { adminSurface } from './admin-surface';
 
 export function AdminDataTable<
@@ -13,7 +16,12 @@ export function AdminDataTable<
 >(
   props: Omit<
     DataTableProps<TData, TValue, Keys>,
-    'bordered' | 'frameClassName' | 'toolbarClassName'
+    | 'bordered'
+    | 'frameClassName'
+    | 'toolbarClassName'
+    | 'errorStateDescription'
+    | 'stableRowActions'
+    | 'syncSelectionWithData'
   >,
 ) {
   return (
@@ -23,6 +31,7 @@ export function AdminDataTable<
     >
       <DataTable
         {...props}
+        getRowId={props.getRowId ?? ((row) => row.id ?? apId())}
         emptyStateIcon={
           props.emptyStateIcon && (
             <span className="flex size-10 items-center justify-center rounded-lg bg-gray-3 text-gray-11 [&_svg]:size-5">
@@ -30,6 +39,9 @@ export function AdminDataTable<
             </span>
           )
         }
+        errorStateDescription={adminFetchError.description()}
+        stableRowActions
+        syncSelectionWithData
         bordered
         frameClassName={adminSurface.listFrame}
         toolbarClassName="px-0 pt-0 pb-4"

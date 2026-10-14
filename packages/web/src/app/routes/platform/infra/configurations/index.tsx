@@ -8,24 +8,26 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { platformConfigurationApi } from '@/api/platform-configuration-api';
 import {
+  adminFeedback,
+  AdminFetchErrorState,
   AdminPage,
   AdminPageHeader,
+  adminPageResources,
   SaveBar,
   SettingsPanel,
   SettingsRow,
-  adminPageResources,
 } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { TelemetrySection } from './telemetry-section';
 
@@ -49,7 +51,7 @@ export const ConfigurationsPage = () => {
     return (
       <AdminPage width="content">
         <ConfigurationsHeader />
-        <DataFetchErrorState entity={t('configurations')} onRetry={refetch} />
+        <AdminFetchErrorState entity={t('configurations')} onRetry={refetch} />
       </AdminPage>
     );
   }
@@ -72,6 +74,7 @@ const ConfigurationsContent = ({
     mode: 'onChange',
   });
 
+  const [saveError, setSaveError] = useState<string | null>(null);
   const { mutate: saveConfiguration, isPending } = useMutation({
     mutationFn: (values: PlatformConfigurationSettings) =>
       platformConfigurationApi.update(values),
@@ -87,10 +90,14 @@ const ConfigurationsContent = ({
         window.location.reload();
         return;
       }
-      toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      adminFeedback.done({ verb: 'save' });
     },
-    onError: () => {
-      toast.error(t('Failed to save changes. Please try again.'));
+    onError: (error) => {
+      if (mutationFeedback.isQuotaExceeded(error)) {
+        mutationFeedback.error({ error });
+        return;
+      }
+      setSaveError(mutationFeedback.message(error));
     },
   });
 
@@ -98,7 +105,10 @@ const ConfigurationsContent = ({
     <Form {...form}>
       <form
         className="flex flex-1 flex-col"
-        onSubmit={form.handleSubmit((values) => saveConfiguration(values))}
+        onSubmit={form.handleSubmit((values) => {
+          setSaveError(null);
+          saveConfiguration(values);
+        })}
       >
         <AdminPage
           width="content"
@@ -107,7 +117,12 @@ const ConfigurationsContent = ({
               width="content"
               dirty={form.formState.isDirty}
               saving={isPending}
-              onDiscard={() => form.reset()}
+              error={saveError}
+              canDiscard={form.formState.isDirty || saveError !== null}
+              onDiscard={() => {
+                form.reset();
+                setSaveError(null);
+              }}
             />
           }
         >

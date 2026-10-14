@@ -76,7 +76,7 @@ export function RolesCard({
         </TabsList>
         {activeTab === 'project' && newRoleButton}
       </div>
-      <TabsContent value="project">
+      <TabsContent value="project" tabIndex={-1}>
         <ProjectRolesList
           projectRoles={projectRoles}
           isLoading={isLoading}
@@ -84,7 +84,7 @@ export function RolesCard({
           refetch={refetch}
         />
       </TabsContent>
-      <TabsContent value="platform">
+      <TabsContent value="platform" tabIndex={-1}>
         <PlatformRolesList />
       </TabsContent>
     </Tabs>

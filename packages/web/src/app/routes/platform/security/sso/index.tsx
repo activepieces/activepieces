@@ -1,11 +1,16 @@
-import { SsoDomainVerificationStatus } from '@activepieces/shared';
+import {
+  SsoDomainVerificationStatus,
+  UpdatePlatformRequestBody,
+} from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LockIcon, MailIcon, Earth } from 'lucide-react';
-import { toast } from 'sonner';
 
+import { platformApi } from '@/api/platforms-api';
 import {
   AdminPage,
   AdminPageHeader,
+  InstantSwitch,
   SettingsPanel,
   SettingsRow,
   StatusDot,
@@ -14,15 +19,17 @@ import {
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { AdminControl, adminControl } from '@/lib/admin-control';
+import { AdminControl } from '@/lib/admin-control';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 
+import { ssoRules } from './sso-rules';
+
 const SSOPage = () => {
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const { platform, refetch, setCurrentPlatform } =
+    platformHooks.useCurrentPlatform();
+  const queryClient = useQueryClient();
 
   const samlConnected = !!platform.federatedAuthProviders?.saml;
   const ssoDomainVerified =
@@ -31,23 +38,16 @@ const SSOPage = () => {
   const emailAuthEnabled = platform.emailAuthEnabled;
   const allowedDomains = platform.allowedAuthDomains ?? [];
 
-  const { mutate: toggleEmailAuthentication, isPending: isEmailAuthPending } =
-    ssoMutations.useUpdatePlatformSso({
-      platformId: platform.id,
-      refetch,
-      onSuccess: () => {
-        toast.success(t('Email authentication updated'), { duration: 3000 });
-      },
-    });
-
-  const { mutate: toggleGoogleAuth, isPending: isGoogleAuthPending } =
-    ssoMutations.useUpdatePlatformSso({
-      platformId: platform.id,
-      refetch,
-      onSuccess: () => {
-        toast.success(t('Google authentication updated'), { duration: 3000 });
-      },
-    });
+  const updatePlatform = async (request: UpdatePlatformRequestBody) => {
+    const updated = await platformApi.update(request, platform.id);
+    setCurrentPlatform(queryClient, updated);
+  };
+  const googleCanSignIn = platform.googleAuthEnabled;
+  const samlCanSignIn = samlConnected && ssoDomainVerified;
+  const otherSignInEnabled = googleCanSignIn || samlCanSignIn;
+  const signInOtherThanGoogle = emailAuthEnabled || samlCanSignIn;
+  const emailIsOnlyMethod = emailAuthEnabled && !otherSignInEnabled;
+  const googleIsOnlyMethod = googleCanSignIn && !signInOtherThanGoogle;
 
   return (
     <AdminPage width="content">
@@ -81,20 +81,37 @@ const SSOPage = () => {
         <SettingsRow
           icon={<img className="size-5" src={GoogleIcon} alt="icon" />}
           title="Google"
-          description={t(
-            "Allow logins through google's single sign-on functionality.",
-          )}
+          description={
+            googleIsOnlyMethod
+              ? t(
+                  'Allow logins through Google single sign-on. Turn on email or SAML before turning this off, so people can still sign in.',
+                )
+              : t('Allow logins through Google single sign-on.')
+          }
         >
-          <Switch
-            {...adminControl(AdminControl.SSO_GOOGLE_TOGGLE)}
+          <InstantSwitch
+            controlId={AdminControl.SSO_GOOGLE_TOGGLE}
             aria-label="Google"
             checked={platform.googleAuthEnabled}
-            onCheckedChange={() =>
-              toggleGoogleAuth({
-                googleAuthEnabled: !platform.googleAuthEnabled,
-              })
+            beforeSave={(googleAuthEnabled) =>
+              ssoRules.assertSignInRemains({ googleAuthEnabled })
             }
-            disabled={isGoogleAuthPending}
+            blockedReason={
+              googleIsOnlyMethod
+                ? t(
+                    'Google is the only way to sign in. Turn on email or SAML first.',
+                  )
+                : undefined
+            }
+            onCheckedChange={(googleAuthEnabled) =>
+              updatePlatform({ googleAuthEnabled })
+            }
+            undo
+            successMessage={(on) =>
+              on
+                ? t('Google sign-in turned on')
+                : t('Google sign-in turned off')
+            }
           />
         </SettingsRow>
 
@@ -103,9 +120,7 @@ const SSOPage = () => {
           title={t('SAML 2.0')}
           description={
             <div className="flex flex-col gap-2">
-              {t(
-                "Allow logins through saml 2.0's single sign-on functionality.",
-              )}
+              {t('Allow logins through SAML 2.0 single sign-on.')}
               {platform.ssoDomain && (
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline">{platform.ssoDomain}</Badge>
@@ -132,18 +147,46 @@ const SSOPage = () => {
         <SettingsRow
           icon={<MailIcon />}
           title={t('Allowed Email Login')}
-          description={t('Allow logins through email and password.')}
+          description={
+            emailIsOnlyMethod
+              ? t(
+                  'Allow logins through email and password. Turn on Google or SAML before turning this off, so people can still sign in.',
+                )
+              : t('Allow logins through email and password.')
+          }
         >
-          <Switch
-            {...adminControl(AdminControl.SSO_EMAIL_LOGIN_TOGGLE)}
+          <InstantSwitch
+            controlId={AdminControl.SSO_EMAIL_LOGIN_TOGGLE}
             aria-label={t('Allowed Email Login')}
             checked={emailAuthEnabled}
-            onCheckedChange={() =>
-              toggleEmailAuthentication({
-                emailAuthEnabled: !platform.emailAuthEnabled,
-              })
+            beforeSave={(next) =>
+              ssoRules.assertSignInRemains({ emailAuthEnabled: next })
             }
-            disabled={isEmailAuthPending}
+            blockedReason={
+              emailIsOnlyMethod
+                ? t(
+                    'Email is the only way to sign in. Turn on Google or SAML first.',
+                  )
+                : undefined
+            }
+            onCheckedChange={(next) =>
+              updatePlatform({ emailAuthEnabled: next })
+            }
+            undo
+            successMessage={(on) =>
+              on ? t('Email sign-in turned on') : t('Email sign-in turned off')
+            }
+            confirmBefore={(next) =>
+              next
+                ? null
+                : {
+                    title: t('Turn off email sign-in?'),
+                    consequence: t(
+                      'People who sign in with an email and password will have to use Google or SAML instead.',
+                    ),
+                    confirmLabel: t('Turn off email sign-in'),
+                  }
+            }
           />
         </SettingsRow>
       </SettingsPanel>

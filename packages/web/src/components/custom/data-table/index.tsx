@@ -8,13 +8,14 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  Row,
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -79,6 +80,7 @@ interface DataTableProps<
   isLoading: boolean;
   isError: boolean;
   errorStateEntity: string;
+  errorStateDescription?: string;
   onRetry?: () => void;
   filters?: DataTableFilters<Keys>[];
   customFilters?: React.ReactNode[];
@@ -102,6 +104,8 @@ interface DataTableProps<
   bordered?: boolean;
   frameClassName?: string;
   toolbarClassName?: string;
+  stableRowActions?: boolean;
+  syncSelectionWithData?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -129,6 +133,7 @@ export function DataTable<
   isLoading,
   isError,
   errorStateEntity,
+  errorStateDescription,
   onRetry,
   onSelectedRowsChange,
   hidePagination,
@@ -149,6 +154,8 @@ export function DataTable<
   getRowClassName,
   isRowSelectionDisabled,
   virtualizeRows = false,
+  stableRowActions = false,
+  syncSelectionWithData = false,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
     id: 'select',
@@ -180,6 +187,19 @@ export function DataTable<
     ? [selectColumnDef, ...columnsInitial]
     : columnsInitial;
 
+  const actionsRef = useRef(actions);
+  actionsRef.current = actions;
+  const renderActionsCell = useCallback(
+    ({ row }: { row: Row<RowDataWithActions<TData>> }) => (
+      <div className="flex justify-end gap-4">
+        {actionsRef.current.map((action, index) => (
+          <React.Fragment key={index}>{action(row.original)}</React.Fragment>
+        ))}
+      </div>
+    ),
+    [],
+  );
+
   const columns =
     actions.length > 0
       ? columnsWithSelect.concat([
@@ -191,19 +211,21 @@ export function DataTable<
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title="" />
             ),
-            cell: ({ row }) => {
-              return (
-                <div className="flex justify-end gap-4">
-                  {actions.map((action, index) => {
-                    return (
-                      <React.Fragment key={index}>
-                        {action(row.original)}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              );
-            },
+            cell: stableRowActions
+              ? renderActionsCell
+              : ({ row }) => {
+                  return (
+                    <div className="flex justify-end gap-4">
+                      {actions.map((action, index) => {
+                        return (
+                          <React.Fragment key={index}>
+                            {action(row.original)}
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  );
+                },
           },
         ])
       : columnsWithSelect;
@@ -303,9 +325,20 @@ export function DataTable<
   const rowSelection = table.getState().rowSelection;
   const selectedRowOriginals = React.useMemo(
     () => table.getSelectedRowModel().rows.map((row) => row.original),
-    [rowSelection],
+    [rowSelection, syncSelectionWithData ? tableData : undefined],
   );
+  const emittedSelection = useRef<RowDataWithActions<TData>[] | null>(null);
   useEffect(() => {
+    const previous = emittedSelection.current;
+    if (
+      syncSelectionWithData &&
+      previous !== null &&
+      previous.length === selectedRowOriginals.length &&
+      previous.every((row, index) => row === selectedRowOriginals[index])
+    ) {
+      return;
+    }
+    emittedSelection.current = selectedRowOriginals;
     onSelectedRowsChange?.(selectedRowOriginals);
   }, [selectedRowOriginals]);
 
@@ -648,6 +681,7 @@ export function DataTable<
                   <DataFetchErrorState
                     entity={errorStateEntity}
                     onRetry={onRetry}
+                    description={errorStateDescription}
                   />
                 </TableCell>
               </TableRow>

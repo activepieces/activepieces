@@ -31,11 +31,16 @@ const selectMock = vi.hoisted(() => ({
   onValueChange: undefined as undefined | ((value: string) => void),
 }));
 
+vi.mock('@/hooks/flags-hooks', () => ({
+  flagsHooks: { useFlag: () => ({ data: undefined }) },
+}));
+
 vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
-vi.mock('@tanstack/react-query', () => ({
+vi.mock('@tanstack/react-query', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useQuery: () => ({ data: [], isLoading: false }),
 }));
 
@@ -78,10 +83,6 @@ vi.mock('@/components/custom/delete-dialog', () => ({
 vi.mock('@/components/custom/leave-without-saving', () => ({
   LeaveWithoutSavingDialog: () => null,
   useWarnBeforeLosingChanges: () => ({ state: 'unblocked' }),
-}));
-
-vi.mock('@/app/routes/platform/setup/components/section-header', () => ({
-  SectionHeader: () => null,
 }));
 
 vi.mock('@/app/routes/platform/setup/ai/providers-tab/key-status', () => ({
@@ -192,7 +193,8 @@ describe('ConfigDetail save (manual models)', () => {
 
   const clickButton = (text: string) => {
     const button = Array.from(container.querySelectorAll('button')).find(
-      (candidate) => candidate.textContent?.trim() === text,
+      (candidate) =>
+        candidate.textContent?.replace(/(Ctrl|⌘) \+ S$/, '').trim() === text,
     );
     expect(button).toBeDefined();
     act(() => {

@@ -9,7 +9,7 @@ import {
   Play,
   Trash2,
 } from 'lucide-react';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -46,10 +46,12 @@ export function McpToolTierList({
   platformDisabledTools = NO_TOOLS,
   scope,
   projectId,
+  locked = false,
   onUpdateDisabledTools,
 }: McpToolTierListProps) {
   const { checkAccess } = useAuthorization(projectId);
-  const readOnly = scope === 'project' && !checkAccess(Permission.WRITE_MCP);
+  const cannotWrite = scope === 'project' && !checkAccess(Permission.WRITE_MCP);
+  const readOnly = locked || cannotWrite;
   const { data: toolSearchEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TOOL_SEARCH_ENABLED,
   );
@@ -80,9 +82,14 @@ export function McpToolTierList({
     [disabledTools, platformDisabledTools],
   );
 
+  const baselineRef = useRef<string[]>(disabledTools);
+
   const save = useDebouncedCallback((tools: string[]) => {
+    const previous = baselineRef.current;
+    baselineRef.current = tools;
     onUpdateDisabledTools({
       tools,
+      previous,
       onSettled: () =>
         setPendingDisabledTools((current) =>
           current === tools ? null : current,
@@ -102,6 +109,9 @@ export function McpToolTierList({
     const next = enabled
       ? disabledTools.filter((name) => !names.includes(name))
       : [...disabledTools, ...names.filter((n) => !disabledTools.includes(n))];
+    if (pendingDisabledTools === null) {
+      baselineRef.current = disabledTools;
+    }
     setPendingDisabledTools(next);
     save(next);
   };
@@ -134,7 +144,7 @@ export function McpToolTierList({
 
   return (
     <div className="flex flex-col gap-3">
-      {readOnly && (
+      {cannotWrite && (
         <p className="text-sm text-gray-11">
           {t('You can see these tools, but your role cannot change them.')}
         </p>
@@ -317,8 +327,10 @@ type McpToolTierListProps = {
   platformDisabledTools?: string[];
   scope: 'platform' | 'project';
   projectId?: string;
+  locked?: boolean;
   onUpdateDisabledTools: (params: {
     tools: string[];
+    previous?: string[];
     onSettled: () => void;
   }) => void;
 };

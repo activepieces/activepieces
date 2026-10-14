@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 export function DataFetchErrorState({
   entity,
   onRetry,
+  description,
   className,
 }: DataFetchErrorStateProps) {
   const [isRetrying, setIsRetrying] = useState(false);
@@ -38,7 +39,10 @@ export function DataFetchErrorState({
         {t('Trouble loading {entity}', { entity })}
       </p>
       <p className="max-w-sm text-sm text-gray-11">
-        {t('Nothing has been lost — your data is safe. Try again in a moment.')}
+        {description ??
+          t(
+            'Nothing has been lost — your data is safe. Try again in a moment.',
+          )}
       </p>
       {onRetry && (
         <Button
@@ -59,5 +63,6 @@ export function DataFetchErrorState({
 type DataFetchErrorStateProps = {
   entity: string;
   onRetry?: () => unknown;
+  description?: string;
   className?: string;
 };

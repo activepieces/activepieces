@@ -16,7 +16,9 @@ export const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { data: rolesData, isLoading: rolesLoading } =
-    projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
+    projectRoleQueries.useProjectRoles({
+      enabled: platform.plan.projectRolesEnabled,
+    });
 
   const roles = rolesData?.data ?? [];
   const defaultProjectRole =

@@ -1,4 +1,5 @@
 import { ApFlagId, PieceSyncMode } from '@activepieces/shared';
+import { t } from 'i18next';
 import { RefreshCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,7 @@ const SyncPiecesButton = () => {
           loading={isPending}
           size={'sm'}
         >
-          <RefreshCcw /> Sync from Cloud
+          <RefreshCcw /> {t('Sync from cloud')}
         </Button>
       )}
     </>

@@ -3,9 +3,8 @@ import { t } from 'i18next';
 import { MoreVertical, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { ConfirmDialog, useAdminAction } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,19 +12,29 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 import { EVENT_STREAMING_PATH } from '../lib/event-streaming-path';
 
 const EventDestinationActions = ({
   destination,
+  name,
 }: {
   destination: EventDestination;
+  name: string;
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const deleteDestination = useAdminAction({
+    verb: 'delete',
+    name: t('Destination'),
+    messages: {
+      done: t('Destination deleted'),
+      failed: t("Couldn't delete the destination"),
+    },
+    run: () => eventDestinationsCollectionUtils.delete([destination.id]),
+  });
 
   return (
     <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
@@ -51,44 +60,31 @@ const EventDestinationActions = ({
               {t('Edit')}
             </Link>
           </DropdownMenuItem>
-
-          <ConfirmationDeleteDialog
-            title={t('Delete destination')}
-            message={t('Events will stop being sent to this destination.')}
-            entityName={t('destination')}
-            buttonText={t('Delete')}
-            showToast
-            mutationFn={() =>
-              eventDestinationsCollectionUtils.delete([destination.id])
-            }
-            onError={(error) =>
-              toast.error(t('Error'), {
-                description: api.extractServerErrorMessage(
-                  error,
-                  INTERNAL_ERROR_MESSAGE,
-                ),
-              })
-            }
-            isDanger
-            controlId={
-              AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_CONFIRM
-            }
+          <DropdownMenuItem
+            {...adminControl(
+              AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_OPEN,
+            )}
+            variant="destructive"
+            onSelect={() => {
+              setDropdownOpen(false);
+              setConfirmOpen(true);
+            }}
           >
-            <DropdownMenuItem
-              {...adminControl(
-                AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_OPEN,
-              )}
-              variant="destructive"
-              onSelect={(e) => {
-                e.preventDefault();
-              }}
-            >
-              <Trash className="h-4 w-4 mr-2" />
-              {t('Delete')}
-            </DropdownMenuItem>
-          </ConfirmationDeleteDialog>
+            <Trash className="h-4 w-4 mr-2" />
+            {t('Delete')}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('Delete {name}?', { name })}
+        description={destination.url}
+        consequence={t('Events will stop being sent to this destination.')}
+        confirmLabel={t('Delete')}
+        onConfirm={() => deleteDestination.mutateAsync()}
+        controlId={AdminControl.EVENT_DESTINATIONS_DESTINATION_DELETE_CONFIRM}
+      />
     </div>
   );
 };

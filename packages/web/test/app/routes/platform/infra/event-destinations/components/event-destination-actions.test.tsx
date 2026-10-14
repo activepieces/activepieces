@@ -2,7 +2,14 @@
  * @vitest-environment jsdom
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import { AxiosError, AxiosHeaders } from 'axios';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -14,19 +21,15 @@ const { toastMock, collectionUtilsMock } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('i18next', () => ({ t: (key: string) => key }));
+vi.mock('i18next', () => ({
+  t: (key: string, params?: Record<string, string>) =>
+    key.replace(/\{(\w+)\}/g, (match, param) => params?.[param] ?? match),
+}));
 
 vi.mock('sonner', () => ({ toast: toastMock }));
 
 vi.mock('@/components/ui/sonner', () => ({
   INTERNAL_ERROR_MESSAGE: 'internal error',
-}));
-
-vi.mock('@/lib/api', () => ({
-  api: {
-    extractServerErrorMessage: (error: unknown, fallback: string) =>
-      error instanceof Error ? error.message : fallback,
-  },
 }));
 
 vi.mock(
@@ -44,10 +47,15 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
   ),
   DropdownMenuItem: ({
     children,
-    onSelect: _onSelect,
+    onSelect,
     variant: _variant,
-  }: React.PropsWithChildren<{ onSelect?: unknown; variant?: string }>) => (
-    <div role="menuitem">{children}</div>
+  }: React.PropsWithChildren<{
+    onSelect?: () => void;
+    variant?: string;
+  }>) => (
+    <div role="menuitem" onClick={() => onSelect?.()}>
+      {children}
+    </div>
   ),
 }));
 
@@ -115,7 +123,19 @@ import { makeDestination } from '../event-destination-fixtures';
 
 const destination = makeDestination();
 
-const serverError = new Error('Destination not reachable');
+const serverError = new AxiosError(
+  'Request failed',
+  'ERR_BAD_REQUEST',
+  undefined,
+  undefined,
+  {
+    status: 409,
+    statusText: 'Conflict',
+    headers: {},
+    config: { headers: new AxiosHeaders() },
+    data: { params: { message: 'Destination not reachable' } },
+  },
+);
 
 function mount(element: React.ReactElement) {
   render(
@@ -158,7 +178,9 @@ beforeEach(() => {
 
 describe('EventDestinationActions delete', () => {
   function confirmDelete() {
-    mount(<EventDestinationActions destination={destination} />);
+    mount(
+      <EventDestinationActions destination={destination} name="Orders hook" />,
+    );
     const deleteItem = screen
       .getAllByRole('menuitem')
       .find((item) => item.textContent === 'Delete');
@@ -170,14 +192,31 @@ describe('EventDestinationActions delete', () => {
     collectionUtilsMock.delete.mockRejectedValue(serverError);
 
     confirmDelete();
-    await settle();
+    await screen.findByText('Destination not reachable');
 
     expect(collectionUtilsMock.delete).toHaveBeenCalledWith([destination.id]);
-    expect(toastMock.error).toHaveBeenCalledWith('Error', {
-      description: serverError.message,
-    });
+    expect(toastMock.error).not.toHaveBeenCalled();
     expect(toastMock.success).not.toHaveBeenCalled();
     expect(dialogs()).toHaveLength(1);
+    expect(
+      within(dialogs()[0]).getAllByText("Couldn't delete the destination"),
+    ).toHaveLength(1);
+    expect(screen.getAllByText('Destination not reachable')).toHaveLength(1);
+  });
+
+  it('names the destination in the confirmation', () => {
+    mount(
+      <EventDestinationActions destination={destination} name="Orders hook" />,
+    );
+    const deleteItem = screen
+      .getAllByRole('menuitem')
+      .find((item) => item.textContent === 'Delete');
+    click(deleteItem);
+
+    expect(
+      within(dialogs()[0]).getAllByText('Delete Orders hook?'),
+    ).toHaveLength(1);
+    expect(within(dialogs()[0]).getAllByText(destination.url)).toHaveLength(1);
   });
 
   it('shows success and closes the confirmation only after deleting succeeds', async () => {
@@ -186,7 +225,9 @@ describe('EventDestinationActions delete', () => {
     confirmDelete();
     await settle();
 
-    expect(toastMock.success).toHaveBeenCalledWith('Removed {entityName}');
+    expect(toastMock.success).toHaveBeenCalledWith('Destination deleted', {
+      id: 'Destination deleted',
+    });
     expect(toastMock.error).not.toHaveBeenCalled();
     expect(dialogs()).toHaveLength(0);
   });
