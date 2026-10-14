@@ -30,7 +30,7 @@ export const MCP_CLIENT_BRANDING: Record<
   opencode: { icon: `${CDN_ICONS_URL}/opencode.svg`, name: 'OpenCode' },
   cursor: { icon: `${CDN_ICONS_URL}/cursor.svg`, name: 'Cursor' },
   vscode: { icon: `${CDN_ICONS_URL}/vscode.svg`, name: 'VS Code' },
-  windsurf: { icon: '/mcp-clients/devin.svg', name: 'Devin Desktop' },
+  windsurf: { icon: `${CDN_ICONS_URL}/windsurf.svg`, name: 'Windsurf' },
   unknown: {
     icon: `${CDN_ICONS_URL}/mcp-with-background.svg`,
     name: 'MCP client',

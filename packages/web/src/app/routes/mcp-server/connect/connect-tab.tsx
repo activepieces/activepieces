@@ -7,8 +7,9 @@ import { mcpClientCatalog } from '../mcp-client-catalog';
 import { useMcpNav } from '../mcp-nav';
 
 import { ClientInstructions } from './client-instructions';
+import { ClientPicker } from './client-picker';
 import { ConnectPage } from './connect-page';
-import { useConnectHome, useConnectWatch } from './use-connect-home';
+import { useConnectHome } from './use-connect-home';
 
 export function ConnectTab({
   serverUrl,
@@ -18,7 +19,6 @@ export function ConnectTab({
   isReachableFromInternet: boolean;
 }) {
   const { view, clientKey } = useMcpNav();
-  const watch = useConnectWatch();
   const { websiteName } = flagsHooks.useWebsiteBranding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCloud = edition === ApEdition.CLOUD;
@@ -26,25 +26,22 @@ export function ConnectTab({
     () => mcpClientCatalog.clients({ serverUrl, websiteName, isCloud }),
     [serverUrl, websiteName, isCloud],
   );
-  const selected =
-    clients.find(
-      (client) =>
-        clientKey !== null &&
-        client.key === mcpClientCatalog.resolveKey(clientKey),
-    ) ?? null;
-  const setupClient = view === 'client' ? selected : null;
-  const home = useConnectHome({ clients, watch, setupClient });
+  const selected = clients.find((client) => client.key === clientKey) ?? null;
+  const home = useConnectHome({ clients });
 
-  if (setupClient !== null) {
+  if (view === 'client' && selected !== null) {
     return (
       <ClientInstructions
-        key={setupClient.key}
-        client={setupClient}
-        grants={home.grantsByClient.get(setupClient.key)}
+        client={selected}
         serverUrl={serverUrl}
         isReachableFromInternet={isReachableFromInternet}
+        totalClients={clients.length}
       />
     );
+  }
+
+  if (view === 'browse') {
+    return <ClientPicker clients={clients} serverUrl={serverUrl} />;
   }
 
   return <ConnectPage home={home} serverUrl={serverUrl} />;
