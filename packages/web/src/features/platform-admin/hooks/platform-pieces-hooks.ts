@@ -18,16 +18,27 @@ export const platformPiecesMutations = {
   }) => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async (pieceName: string) => {
-        const newPinnedPieces = pinnedPieces.includes(pieceName)
+      mutationFn: async ({
+        pieceName,
+      }: {
+        pieceName: string;
+        displayName: string;
+      }) => {
+        const wasPinned = pinnedPieces.includes(pieceName);
+        const newPinnedPieces = wasPinned
           ? pinnedPieces.filter((name) => name !== pieceName)
           : [...pinnedPieces, pieceName];
         await platformApi.update({ pinnedPieces: newPinnedPieces }, platformId);
         await refetch();
+        return !wasPinned;
       },
-      onSuccess: () => {
+      onSuccess: (pinned, { displayName }) => {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
-        mutationFeedback.success(t('Changes saved'));
+        mutationFeedback.success(
+          pinned
+            ? t('{name} pinned', { name: displayName })
+            : t('{name} unpinned', { name: displayName }),
+        );
       },
       onError: (error) => {
         mutationFeedback.error({ error, title: t("Couldn't save changes") });

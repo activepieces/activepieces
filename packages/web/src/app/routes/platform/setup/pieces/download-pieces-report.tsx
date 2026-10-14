@@ -10,13 +10,14 @@ import { mutationFeedback } from '@/lib/mutation-feedback';
 const DownloadPiecesReportButton = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
-      const blob = await api.get<Blob>(
-        '/v1/platform/pieces-report.csv',
-        undefined,
-        {
+      const blob = await api
+        .get<Blob>('/v1/platform/pieces-report.csv', undefined, {
           responseType: 'blob',
-        },
-      );
+        })
+        .catch(async (error: unknown) => {
+          await mutationFeedback.parseBlobError(error);
+          throw error;
+        });
       const filename = `pieces-report-${new Date()
         .toISOString()
         .slice(0, 10)}.csv`;

@@ -87,7 +87,7 @@ export function SaveBar({
           role={error ? 'alert' : announceStatus ? 'status' : undefined}
           className="flex min-w-0 flex-1 items-center"
         >
-          {renderStatus({ status, error, locked, dirty })}
+          {renderStatus({ status, error, locked, dirty, saving })}
         </div>
         {children}
         {onDiscard && (
@@ -287,7 +287,8 @@ function renderStatus({
   error,
   locked,
   dirty,
-}: Pick<SaveBarProps, 'status' | 'error' | 'locked' | 'dirty'>) {
+  saving,
+}: Pick<SaveBarProps, 'status' | 'error' | 'locked' | 'dirty' | 'saving'>) {
   if (error) {
     return (
       <span className="flex min-w-0 flex-wrap items-start gap-x-4 gap-y-1">
@@ -306,6 +307,13 @@ function renderStatus({
     return (
       <StatusDot tone="accent" wrap className="text-gray-11">
         {locked.message}
+      </StatusDot>
+    );
+  }
+  if (saving) {
+    return (
+      <StatusDot tone="accent" wrap className="text-gray-11">
+        {t('Saving...')}
       </StatusDot>
     );
   }

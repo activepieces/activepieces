@@ -315,3 +315,128 @@ describe('mutationFeedback.undo', () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 });
+
+describe('mutationFeedback undo refusals and ids', () => {
+  it('passes the item id so a newer change replaces the older Undo toast', () => {
+    mutationFeedback.undo({
+      id: 'user-1',
+      message: 'Ann on',
+      onUndo: vi.fn(),
+    });
+
+    expect(toast.success.mock.calls[0][1].id).toBe('user-1');
+  });
+
+  it('keeps Undo available when the undo is refused for now', async () => {
+    const onUndo = vi
+      .fn()
+      .mockRejectedValueOnce(
+        mutationFeedback.userError(
+          'Wait for the current change to finish, then undo.',
+        ),
+      )
+      .mockResolvedValueOnce(undefined);
+    mutationFeedback.undo({ id: 'switch', message: 'Ann on', onUndo });
+
+    toast.success.mock.calls[0][1].action.onClick();
+
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Couldn't undo", {
+        description: 'Wait for the current change to finish, then undo.',
+      }),
+    );
+    expect(toast.success).toHaveBeenCalledTimes(2);
+    expect(toast.success.mock.calls[1][0]).toBe('Ann on');
+    expect(toast.success.mock.calls[1][1].id).toBe('switch');
+
+    toast.success.mock.calls[1][1].action.onClick();
+
+    await vi.waitFor(() =>
+      expect(toast.success).toHaveBeenLastCalledWith('Undone'),
+    );
+    expect(onUndo).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('mutationFeedback.message priority', () => {
+  it('prefers the friendly copy of a known code over the raw server text', () => {
+    const config = { headers: new AxiosHeaders() };
+    const error = new AxiosError(
+      'Request failed',
+      'ERR_BAD_REQUEST',
+      config,
+      null,
+      {
+        status: 404,
+        statusText: '',
+        headers: {},
+        config,
+        data: {
+          code: 'ENTITY_NOT_FOUND',
+          params: { message: 'Project Role by name and platformId not found' },
+        },
+      },
+    );
+
+    expect(mutationFeedback.message(error)).toBe(
+      'It no longer exists. Refresh the page and try again.',
+    );
+  });
+});
+
+describe('mutationFeedback.parseBlobError', () => {
+  it('reads a JSON error out of a blob response so its message shows', async () => {
+    const body = JSON.stringify({
+      params: { message: 'Report is not ready' },
+    });
+    class JsonBlob extends Blob {
+      text(): Promise<string> {
+        return Promise.resolve(body);
+      }
+    }
+    const config = { headers: new AxiosHeaders() };
+    const error = new AxiosError(
+      'Request failed',
+      'ERR_BAD_REQUEST',
+      config,
+      null,
+      {
+        status: 400,
+        statusText: '',
+        headers: {},
+        config,
+        data: new JsonBlob([body], { type: 'application/json' }),
+      },
+    );
+
+    await mutationFeedback.parseBlobError(error);
+
+    expect(mutationFeedback.message(error)).toBe('Report is not ready');
+  });
+
+  it('leaves a blob that is not JSON alone', async () => {
+    class TextBlob extends Blob {
+      text(): Promise<string> {
+        return Promise.resolve('not json');
+      }
+    }
+    const config = { headers: new AxiosHeaders() };
+    const error = new AxiosError(
+      'Request failed',
+      'ERR_BAD_REQUEST',
+      config,
+      null,
+      {
+        status: 400,
+        statusText: '',
+        headers: {},
+        config,
+        data: new TextBlob(['not json']),
+      },
+    );
+
+    await mutationFeedback.parseBlobError(error);
+
+    expect(mutationFeedback.message(error)).toBe(INTERNAL_ERROR_MESSAGE);
+  });
+});

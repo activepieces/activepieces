@@ -16,13 +16,13 @@ function message(error: unknown): string {
   if (!api.isError(error)) {
     return t(INTERNAL_ERROR_MESSAGE);
   }
-  const serverMessage = api.serverErrorMessage(error);
-  if (serverMessage !== undefined) {
-    return serverMessage;
-  }
   const known = knownCodeMessage(error);
   if (known !== undefined) {
     return known;
+  }
+  const serverMessage = api.serverErrorMessage(error);
+  if (serverMessage !== undefined) {
+    return serverMessage;
   }
   const clientMessage = clientErrorMessage({
     status: error.response?.status,
@@ -149,30 +149,32 @@ function success(message: ReactNode, description?: string): void {
   toast.success(message, { description });
 }
 
-function undo({
-  message,
-  onUndo,
-  undoneMessage,
-}: UndoToastParams): string | number {
+function undo(params: UndoToastParams): string | number {
+  const { message, id } = params;
   return toast.success(message, {
+    ...(id === undefined ? {} : { id }),
     duration: UNDO_TOAST_DURATION_MS,
     action: {
       label: t('Undo'),
       onClick: () => {
-        runUndo({ onUndo, undoneMessage }).catch(() => undefined);
+        runUndo(params).catch(() => undefined);
       },
     },
   });
 }
 
-async function runUndo({
-  onUndo,
-  undoneMessage,
-}: Pick<UndoToastParams, 'onUndo' | 'undoneMessage'>): Promise<void> {
+async function runUndo(params: UndoToastParams): Promise<void> {
+  const { onUndo, undoneMessage } = params;
   try {
     await onUndo();
     toast.success(undoneMessage ?? t('Undone'));
   } catch (caught) {
+    if (isUserFacingError(caught) && !wasShown(caught)) {
+      markShown(caught);
+      toast.error(t("Couldn't undo"), { description: caught.message });
+      undo(params);
+      return;
+    }
     if (isQuotaExceeded(caught)) {
       if (!wasShown(caught)) {
         openPlanDialog();
@@ -186,6 +188,23 @@ async function runUndo({
     if (!wasShown(caught)) {
       error({ error: caught, title: t("Couldn't undo") });
     }
+  }
+}
+
+async function parseBlobError(error: unknown): Promise<void> {
+  if (!api.isError(error) || error.response === undefined) {
+    return;
+  }
+  const response = error.response;
+  const data = response.data;
+  if (!(data instanceof Blob)) {
+    return;
+  }
+  try {
+    const parsed: unknown = JSON.parse(await data.text());
+    response.data = parsed;
+  } catch {
+    return;
   }
 }
 
@@ -247,6 +266,7 @@ export const mutationFeedback = {
   runConfirm,
   isNetworkError,
   undo,
+  parseBlobError,
 };
 
 export type ConfirmFailure = {
@@ -263,6 +283,7 @@ export type MutationErrorParams = {
 
 export type UndoToastParams = {
   message: string;
+  id?: string;
   onUndo: () => Promise<unknown> | unknown;
   undoneMessage?: string;
 };

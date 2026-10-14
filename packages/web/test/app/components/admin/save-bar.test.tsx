@@ -253,3 +253,11 @@ describe('AdminPageFooter', () => {
     ).toBe(true);
   });
 });
+
+describe('SaveBar saving state', () => {
+  it('says it is saving instead of showing unsaved changes', () => {
+    render(<SaveBar dirty saving guardNavigation={false} />);
+    expect(screen.getByText('Saving...')).toBeTruthy();
+    expect(screen.queryByText('You have unsaved changes')).toBeNull();
+  });
+});

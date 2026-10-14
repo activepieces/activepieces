@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Switch } from '@/components/ui/switch';
@@ -23,6 +23,7 @@ export function InstantSwitch({
   id,
   ...aria
 }: InstantSwitchProps) {
+  const undoToastId = useId();
   const [optimistic, setOptimistic] = useState<OptimisticValue | null>(null);
   const [pending, setPending] = useState(false);
   const [confirming, setConfirming] = useState<PendingConfirm | null>(null);
@@ -101,6 +102,7 @@ export function InstantSwitch({
     const message = successMessage?.(next) ?? t('Changes saved');
     if (undo) {
       mutationFeedback.undo({
+        id: undoToastId,
         message,
         onUndo: () => undoTo(!next),
       });

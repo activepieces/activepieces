@@ -335,6 +335,36 @@ describe('InstantSwitch', () => {
     );
   });
 
+  it('gives every Undo toast of one switch the same id', async () => {
+    const save = vi.fn(async () => undefined);
+    const { rerender } = render(
+      <InstantSwitch
+        aria-label="Ann"
+        checked={false}
+        undo
+        successMessage={(next) => (next ? 'Ann on' : 'Ann off')}
+        onCheckedChange={save}
+      />,
+      { wrapper },
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Ann' }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(1));
+    rerender(
+      <InstantSwitch
+        aria-label="Ann"
+        checked
+        undo
+        successMessage={(next) => (next ? 'Ann on' : 'Ann off')}
+        onCheckedChange={save}
+      />,
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Ann' }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(2));
+    const firstId = toast.success.mock.calls[0][1].id;
+    expect(firstId).toBeTruthy();
+    expect(toast.success.mock.calls[1][1].id).toBe(firstId);
+  });
+
   it('does not undo into a state that is blocked now', async () => {
     const save = vi.fn(async () => undefined);
     const { rerender } = render(
@@ -545,7 +575,7 @@ describe('adminBulk.runEach', () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
     expect(toast.error).toHaveBeenCalledWith(
       "Couldn't delete 1 items",
-      expect.objectContaining({ description: 'In use' }),
+      expect.objectContaining({ description: 'Deleted 2 of 3. In use' }),
     );
   });
 
