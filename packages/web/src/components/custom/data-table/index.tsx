@@ -289,20 +289,19 @@ export function DataTable<
     enableRowSelection: isRowSelectionDisabled
       ? (row) => !isRowSelectionDisabled(row.original)
       : undefined,
-    manualPagination: virtualizeRows ? false : !clientPagination,
+    manualPagination: virtualizeRows || !clientPagination,
     manualFiltering: !clientFiltering,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     ...(clientFiltering && { getFilteredRowModel: getFilteredRowModel() }),
-    ...((clientPagination || virtualizeRows) && {
-      getPaginationRowModel: getPaginationRowModel(),
-    }),
+    ...(clientPagination &&
+      !virtualizeRows && {
+        getPaginationRowModel: getPaginationRowModel(),
+      }),
     getRowId: getRowId ?? (() => apId()),
     initialState: {
       pagination: {
-        pageSize: virtualizeRows
-          ? tableData.length || 1000
-          : parseInt(startingLimit),
+        pageSize: parseInt(startingLimit),
       },
       columnVisibility,
       sorting: initialSorting,

@@ -174,6 +174,30 @@ describe('piece menu preview', () => {
     state.managePiecesEnabled = false;
   });
 
+  it('counts only builder actions that the set still allows', () => {
+    const slack = summary({ name: 'slack', displayName: 'Slack', actions: 3 });
+    const withAiTool: PieceMetadataModelSummary = {
+      ...slack,
+      actions: 4,
+      suggestedActions: [
+        ...(slack.suggestedActions ?? []),
+        { ...action('Slack AI tool'), audience: 'ai' },
+      ],
+    };
+    const counts = pieceSelectorPreviewUtils.countActions({
+      pieces: [withAiTool],
+      selectedActions: {
+        [pieceName('slack')]: ['slack_0', 'slack_ai_tool', 'removed_action'],
+      },
+    });
+    expect(counts.get(pieceName('slack'))).toBe(1);
+    expect(
+      pieceSelectorPreviewUtils
+        .countActions({ pieces: [withAiTool], selectedActions: undefined })
+        .get(pieceName('slack')),
+    ).toBe(3);
+  });
+
   it('finds pieces by their action names, like the builder search', async () => {
     state.pinnedPieces = [];
     state.selectedTab = PieceSelectorTabType.NONE;

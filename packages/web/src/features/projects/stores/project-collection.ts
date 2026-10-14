@@ -269,17 +269,6 @@ export const projectCollectionUtils = {
   },
 };
 
-export const projectQueryKeys = {
-  forPlatforms: ['projects-for-platforms'] as const,
-};
-
-export const projectQueryOptions = {
-  forPlatforms: () => ({
-    queryKey: projectQueryKeys.forPlatforms,
-    queryFn: () => api.get<ProjectWithLimitsWithPlatform[]>('/v1/platforms'),
-  }),
-};
-
 export const getProjectName = (
   project: Pick<ProjectWithLimits, 'type' | 'displayName'>,
 ): string => {
@@ -318,4 +307,15 @@ export const projectHooks = {
       };
     }, [projectId, embedState.isEmbedded, location.pathname]);
   },
+};
+
+export const projectQueryKeys = {
+  forPlatforms: ['projects-for-platforms'] as const,
+};
+
+export const projectQueryOptions = {
+  forPlatforms: () => ({
+    queryKey: projectQueryKeys.forPlatforms,
+    queryFn: () => api.get<ProjectWithLimitsWithPlatform[]>('/v1/platforms'),
+  }),
 };

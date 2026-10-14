@@ -108,11 +108,6 @@ type UsePiecesSearchProps = {
   shouldCaptureEvent: boolean;
 };
 
-export const pieceSelectorContent = {
-  categorize: categorizeStepsForSelector,
-  group: groupStepsForSelector,
-};
-
 export const piecesHooks = {
   usePiece: ({
     name,
@@ -837,4 +832,9 @@ const PIECE_PROJECT_ID_KEY_INDEX = 4;
 export const pieceQueryOptions = {
   latest: latestPieceQueryOptions,
   key: pieceQueryKey,
+};
+
+export const pieceSelectorContent = {
+  categorize: categorizeStepsForSelector,
+  group: groupStepsForSelector,
 };
