@@ -42,7 +42,7 @@ export const createFormAction = createAction({
   },
   async run({ auth, propsValue }) {
     const { title, workspace, theme, fields } = propsValue;
-    if (fields !== undefined && fields !== null && !Array.isArray(fields)) {
+    if (!isEmptyQuestions({ fields }) && !Array.isArray(fields)) {
       throw new Error('Questions must be a JSON array of field objects.');
     }
     return typeformCommon.typeformRequest<TypeformRecord>({
@@ -58,3 +58,7 @@ export const createFormAction = createAction({
     });
   },
 });
+
+function isEmptyQuestions({ fields }: { fields: unknown }): boolean {
+  return fields === undefined || fields === null || (typeformCommon.isRecord(fields) && Object.keys(fields).length === 0);
+}
