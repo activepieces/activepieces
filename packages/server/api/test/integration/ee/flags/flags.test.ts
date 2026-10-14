@@ -1,4 +1,4 @@
-import { ApFlagId } from '@activepieces/shared'
+import { ApFlagId, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { createTestContext } from '../../../helpers/test-context'
@@ -155,6 +155,36 @@ describe('Flags API', () => {
 
             expect(response.statusCode).toBe(StatusCodes.OK)
             expect(response.json()[ApFlagId.THEME].statusColors).toStrictEqual({})
+        })
+    })
+
+    describe('sign-in options on an SSO-only platform', () => {
+        const SAML_ONLY_PLATFORM = {
+            emailAuthEnabled: false,
+            federatedAuthProviders: {
+                saml: {
+                    idpMetadata: '<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"></md:EntityDescriptor>',
+                    idpCertificate: 'test-cert',
+                },
+            },
+        }
+
+        it('shows SAML and hides email sign-in while the plan includes single sign-on', async () => {
+            const ctx = await createTestContext(app!, { platform: SAML_ONLY_PLATFORM, plan: { ssoEnabled: true } })
+
+            const body = (await ctx.get('/v1/flags')).json()
+
+            expect(body[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP][ThirdPartyAuthnProviderEnum.SAML]).toBe(true)
+            expect(body[ApFlagId.EMAIL_AUTH_ENABLED]).toBe(false)
+        })
+
+        it('falls back to email sign-in once the plan no longer includes single sign-on', async () => {
+            const ctx = await createTestContext(app!, { platform: SAML_ONLY_PLATFORM, plan: { ssoEnabled: false } })
+
+            const body = (await ctx.get('/v1/flags')).json()
+
+            expect(body[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP][ThirdPartyAuthnProviderEnum.SAML]).toBe(false)
+            expect(body[ApFlagId.EMAIL_AUTH_ENABLED]).toBe(true)
         })
     })
 })

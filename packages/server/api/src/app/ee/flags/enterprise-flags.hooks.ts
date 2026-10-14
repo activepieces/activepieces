@@ -39,7 +39,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             [ThirdPartyAuthnProviderEnum.GOOGLE]: googleAuthEnabled && platform.googleAuthEnabled,
             [ThirdPartyAuthnProviderEnum.SAML]: samlConfigured && platformWithPlan.plan.ssoEnabled,
         }
-        modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
+        modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled || !platformWithPlan.plan.ssoEnabled
         modifiedFlags[ApFlagId.SHOW_POWERED_BY_IN_FORM] = platformWithPlan.plan.showPoweredBy
         modifiedFlags[ApFlagId.THEME] = await appearanceHelper.getTheme({
             platformId,
