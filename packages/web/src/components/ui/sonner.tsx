@@ -7,6 +7,7 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from 'lucide-react';
+import { useSyncExternalStore } from 'react';
 import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
 
 import { useTheme } from '@/components/providers/theme-provider';
@@ -34,14 +35,22 @@ export const UNSAVED_CHANGES_TOAST = {
 
 function Toaster({ ...props }: ToasterProps) {
   const { resolvedTheme } = useTheme();
+  const clearToasts = useSyncExternalStore(
+    toastInteraction.subscribeClearance,
+    toastInteraction.hasClearance,
+  );
 
   return (
     <Sonner
       theme={resolvedTheme}
       className="group"
       expand={true}
-      offset={{ bottom: toastInteraction.bottomOffset(24) }}
-      mobileOffset={{ bottom: toastInteraction.bottomOffset(16) }}
+      {...(clearToasts
+        ? {
+            offset: { bottom: toastInteraction.bottomOffset(24) },
+            mobileOffset: { bottom: toastInteraction.bottomOffset(16) },
+          }
+        : {})}
       toastOptions={{
         classNames: {
           toast: `
