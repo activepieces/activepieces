@@ -7,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useEnterpriseGate } from '@/features/billing';
 import { platformPiecesMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -23,8 +24,12 @@ const PieceActions = ({
   isEnabled,
 }: PieceActionsProps) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const gate = useEnterpriseGate({
+    unlocked: isEnabled,
+    featureKey: 'PIECES',
+  });
 
-  const { mutate: togglePin, isPending: isPinPending } =
+  const { mutateAsync: togglePin, isPending: isPinPending } =
     platformPiecesMutations.useTogglePiecePin({
       platformId: platform.id,
       pinnedPieces: platform.pinnedPieces,
@@ -42,15 +47,11 @@ const PieceActions = ({
             variant="ghost"
             size={'sm'}
             loading={isPinPending}
-            disabled={!isEnabled}
+            disabled={gate.access === 'community'}
             aria-label={pinned ? t('Unpin this piece') : t('Pin this piece')}
-            onClick={(e) => {
-              if (!isEnabled) {
-                e.preventDefault();
-                return;
-              }
-              togglePin({ pieceName, displayName });
-            }}
+            onClick={() =>
+              gate.run(() => togglePin({ pieceName, displayName }))
+            }
           >
             {pinned ? (
               <PinOff className="size-4" />

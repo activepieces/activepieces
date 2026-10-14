@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+/* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
@@ -16,7 +17,6 @@ const state = vi.hoisted(() => ({
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
     useCurrentPlatform: () => ({
@@ -29,7 +29,8 @@ vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: 'cloud' }) },
 }));
 
-vi.mock('@/features/billing', () => ({
+vi.mock('@/features/billing', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   PLATFORM_FEATURES: {
     aiProviders: {
       featureKey: 'UNIVERSAL_AI',
@@ -40,7 +41,6 @@ vi.mock('@/features/billing', () => ({
   },
   TIER_LABELS: { plus: 'Plus' },
   useUpgradeClick: () => vi.fn(),
-  RequestTrial: () => null,
 }));
 
 vi.mock('@/features/platform-admin', () => {
@@ -126,13 +126,15 @@ beforeEach(() => {
 });
 
 describe('providers tab on a plan without aiProvidersEnabled', () => {
-  it('lists existing keys with delete only and an upgrade note', () => {
+  it('lists existing keys with delete only and an upgrade note', async () => {
     state.providers = [ANTHROPIC_KEY];
 
     renderTab();
 
     expect(
-      screen.getByText('Your plan does not include Bring your own AI keys'),
+      await screen.findByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toBeDefined();
     expect(screen.getAllByText('Trial Anthropic key').length).toBeGreaterThan(
       0,
@@ -156,14 +158,18 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
     );
   });
 
-  it('shows the upgrade sample when there is nothing to delete', () => {
+  it('shows the locked AI Center card when there is nothing to delete', async () => {
     renderTab();
 
     expect(
-      screen.getByRole('heading', { name: 'Unlock AI Center' }),
+      await screen.findByRole('heading', {
+        name: 'Bring your own AI providers',
+      }),
     ).toBeDefined();
     expect(
-      screen.queryAllByText('Your plan does not include Bring your own AI keys'),
+      screen.queryAllByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toEqual([]);
   });
 });
@@ -179,7 +185,9 @@ describe('providers tab on a plan with aiProvidersEnabled', () => {
       screen.getAllByRole('button', { name: /Add key/ }).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.queryAllByText('Your plan does not include Bring your own AI keys'),
+      screen.queryAllByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toEqual([]);
     expect(
       screen.queryAllByRole('heading', { name: 'Unlock AI Center' }),

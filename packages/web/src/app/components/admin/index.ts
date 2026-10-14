@@ -16,7 +16,6 @@ export type { SaveBarLock } from './save-bar';
 export { StatusDot } from './status-dot';
 export type { StatusTone } from './status-dot';
 export { StatCard, StatGrid } from './stat-card';
-export { LockedCallout } from './locked-callout';
 export { ConfirmDialog } from './confirm-dialog';
 export { InstantSwitch } from './instant-switch';
 export { RowActionTooltip } from './row-action-tooltip';

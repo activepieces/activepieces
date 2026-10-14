@@ -50,6 +50,24 @@ vi.mock('@/app/routes/platform/security/project-role/permission-grid', () => ({
 vi.mock('@/app/routes/platform/security/project-role/role-people-tab', () => ({
   RolePeopleTab: () => <div>people</div>,
 }));
+vi.mock('@/hooks/platform-hooks', () => ({
+  platformHooks: {
+    useCurrentPlatform: () => ({
+      platform: { id: 'p', plan: { customRolesEnabled: true } },
+    }),
+  },
+}));
+vi.mock('@/features/billing', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/billing')>()),
+  useEnterpriseGate: () => ({
+    access: 'entitled',
+    locked: false,
+    run: (action: () => unknown) => {
+      Promise.resolve(action()).catch(() => undefined);
+    },
+    explain: vi.fn(),
+  }),
+}));
 
 globalThis.ResizeObserver = class {
   observe() {}

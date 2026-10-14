@@ -256,9 +256,11 @@ export const platformRoutes = [
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
           >
-            <SuspenseWrapper>
-              <PieceSetsPage />
-            </SuspenseWrapper>
+            <PlanFeatureSample feature="pieces">
+              <SuspenseWrapper>
+                <PieceSetsPage />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -269,9 +271,11 @@ export const platformRoutes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Piece Set">
-          <SuspenseWrapper>
-            <PieceSetDetailsPage />
-          </SuspenseWrapper>
+          <PlanFeatureSample feature="pieces">
+            <SuspenseWrapper>
+              <PieceSetDetailsPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
         </PageTitle>
       </PlatformLayout>
     ),

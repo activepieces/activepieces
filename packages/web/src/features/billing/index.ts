@@ -30,11 +30,42 @@ export {
 } from './components/plan-selector-utils';
 export { billingDialogHooks } from './hooks/billing-dialog-hooks';
 export { AutomaticTrialActivation } from './components/automatic-trial-activation';
-export { useFeatureGate, UpgradeFeatureDialog } from './hooks/use-feature-gate';
+export { useFeatureGate } from './hooks/use-feature-gate';
 export { useUpgradeClick } from './hooks/use-upgrade-click';
 export type { PlatformFeature } from './hooks/use-feature-gate';
-export { RequestTrial } from './components/request-trial';
 export type { FeatureKey } from './components/request-trial';
 export { TIER_LABELS } from './utils/feature-tier';
 export type { FeatureTier } from './utils/feature-tier';
 export { PLATFORM_FEATURES } from './utils/platform-features';
+export { EnterpriseTrialBillingStatus } from './components/enterprise-trial-billing-status';
+export { EnterpriseTrialLockedActions } from './components/enterprise-trial-locked-actions';
+export { enterpriseTrialFeatures } from './utils/enterprise-trial-features';
+export { EnterpriseTrialDialog } from './components/enterprise-trial-dialog';
+export { EnterpriseTrialEndedDialog } from './components/enterprise-trial-ended-dialog';
+export { EnterpriseTrialEndingAlert } from './components/enterprise-trial-ending-alert';
+export {
+  EnterprisePlanIndicator,
+  EnterpriseTrialPill,
+} from './components/enterprise-trial-pill';
+export {
+  enterpriseTrialHooks,
+  enterpriseTrialKey,
+} from './hooks/enterprise-trial-hooks';
+export { LockedGem } from './components/locked-gem';
+export { PlanBadge } from './components/plan-badge';
+export { seatUtils } from './utils/seat-utils';
+export { EnterpriseLockedRow } from './components/enterprise-locked-row';
+export { EnterpriseTrialSalesLink } from './components/enterprise-trial-sales-link';
+export { EnterpriseLockedCard } from './components/enterprise-locked-card';
+export { EnterpriseUsageMeter } from './components/enterprise-usage-meter';
+export {
+  useEnterpriseAccess,
+  useEnterpriseGate,
+} from './hooks/use-enterprise-gate';
+export type {
+  EnterpriseAccess,
+  EnterpriseGate as EnterpriseGateState,
+} from './hooks/use-enterprise-gate';
+export { enterpriseMotion } from './utils/enterprise-motion';
+export { planTiers } from './utils/plan-tiers';
+export { usePlanTier } from './hooks/use-plan-tier';

@@ -10,7 +10,12 @@ import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
+import {
+  CreditsUsageAlert,
+  EnterpriseTrialDialog,
+  EnterpriseTrialEndingAlert,
+  ManagePlanDialog,
+} from '@/features/billing';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
@@ -111,6 +116,7 @@ export function ProjectDashboardLayout({
         {children}
       </ProjectDashboardLayoutInner>
       {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+      <EnterpriseTrialDialog />
     </GlobalSearchProvider>
   );
 
@@ -169,6 +175,7 @@ function ProjectDashboardLayoutInner({
                 !isEmbedded && 'rounded-xl shadow-panel border',
               )}
             >
+              <EnterpriseTrialEndingAlert />
               {!hideHeader && (
                 <ProjectDashboardLayoutHeader key={currentProjectId} />
               )}

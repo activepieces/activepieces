@@ -9,6 +9,7 @@ import {
   SetupPaymentParams,
   AdjustUnconsumableFeatureQuantityParams,
   CancelSubscriptionRequest,
+  EnterpriseTrialStatus,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -59,6 +60,17 @@ export const platformBillingApi = {
     return api.post<{ url: string | null }>(
       '/v1/platform-billing/setup-payment',
       params,
+    );
+  },
+  getEnterpriseTrial() {
+    return api.get<EnterpriseTrialStatus>(
+      '/v1/platform-billing/enterprise-trial',
+    );
+  },
+  startEnterpriseTrial() {
+    return api.post<EnterpriseTrialStatus>(
+      '/v1/platform-billing/enterprise-trial/start',
+      {},
     );
   },
   getProjectsUsage(params: {
