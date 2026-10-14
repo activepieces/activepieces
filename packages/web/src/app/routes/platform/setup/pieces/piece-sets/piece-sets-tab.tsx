@@ -58,6 +58,7 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
 import { EditPieceSetDialog } from './edit-piece-set-dialog';
+import { pieceSetName } from './piece-set-name';
 import { pieceSetSamples } from './piece-set-samples';
 import { pieceSetSummary } from './piece-set-summary';
 
@@ -177,7 +178,9 @@ function PieceSetsList({
                 </span>
               </TextWithTooltip>
               {row.original.isDefault && (
-                <Badge variant="outline">{t('Default')}</Badge>
+                <Badge variant="outline" className="shrink-0">
+                  {t('Default')}
+                </Badge>
               )}
             </span>
             <span className="truncate text-xs text-gray-11">
@@ -391,7 +394,9 @@ function PieceSetsList({
         <ConfirmDialog
           open
           onOpenChange={(open) => !open && setDeletingSet(null)}
-          title={t('Delete {name}?', { name: deletingSet.name })}
+          title={t('Delete {name}?', {
+            name: pieceSetName.short(deletingSet.name),
+          })}
           description={t(
             'The {term} is removed from the platform.',
             pieceSetTerms.get(),
