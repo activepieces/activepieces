@@ -30,7 +30,7 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
     if (location.pathname?.includes('/runs')) {
       navigate(`/flows/${flowId}`);
     } else {
-      switchToDraft();
+      switchToDraft({ keepSelectedStep: true });
     }
   };
   const { text, icon } = getButtonTextAndIcon({
@@ -58,7 +58,7 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
             if (location.pathname?.includes('/runs')) {
               navigate(`/flows/${flowId}`);
             } else {
-              switchToDraft();
+              switchToDraft({ keepSelectedStep: true });
             }
           }}
         >

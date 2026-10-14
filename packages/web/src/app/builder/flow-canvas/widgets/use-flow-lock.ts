@@ -28,7 +28,7 @@ function useFlowLock() {
     if (!isNil(run)) {
       navigate(`/flows/${flowId}`);
     } else {
-      switchToDraft();
+      switchToDraft({ keepSelectedStep: false });
     }
   }, [run, navigate, flowId, switchToDraft]);
 
