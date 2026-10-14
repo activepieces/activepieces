@@ -1,0 +1,182 @@
+import { httpClient } from '@activepieces/pieces-common';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { invoiceninja } from '../src';
+import { InvoiceNinjaApiError, invoiceNinjaClient } from '../src/lib/common/client';
+
+const auth = { props: { base_url: 'https://invoices.example.com/', access_token: 'tok-secret' } };
+
+function action(name: string) {
+  const found = invoiceninja.actions()[name];
+  if (!found) throw new Error(`missing ${name}`);
+  return found;
+}
+
+function mockResponses(bodies: unknown[]) {
+  const spy = vi.spyOn(httpClient, 'sendRequest');
+  for (const body of bodies) spy.mockResolvedValueOnce({ status: 200, headers: {}, body });
+  return spy;
+}
+
+function runAction({ name, propsValue = {} }: { name: string; propsValue?: Record<string, unknown> }) {
+  return Reflect.apply(action(name).run, undefined, [{ auth, propsValue }]);
+}
+
+function requestOf({ spy, index = 0 }: { spy: ReturnType<typeof mockResponses>; index?: number }) {
+  return spy.mock.calls[index][0];
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe('normalizeBaseUrl', () => {
+  it('strips trailing slashes and a pasted /api/v1', () => {
+    expect(invoiceNinjaClient.normalizeBaseUrl('https://invoicing.co/')).toBe('https://invoicing.co');
+    expect(invoiceNinjaClient.normalizeBaseUrl(' http://localhost:8090/api/v1/ ')).toBe('http://localhost:8090');
+    expect(invoiceNinjaClient.normalizeBaseUrl('https://h.example.com/ninja')).toBe('https://h.example.com/ninja');
+  });
+  it.each(['ftp://h.example.com', 'https://u:p@h.example.com', 'https://h.example.com/?x=1', 'https://h.example.com/#a', 'https://h.example.com/%2e%2e/x', 'h.example.com', ''])(
+    'rejects %s',
+    (value) => {
+      expect(() => invoiceNinjaClient.normalizeBaseUrl(value)).toThrow();
+    },
+  );
+});
+
+describe('isSameOrigin', () => {
+  it('rejects lookalike hosts and other paths', () => {
+    const baseUrl = 'https://invoices.example.com/api/v1';
+    expect(invoiceNinjaClient.isSameOrigin({ url: 'https://invoices.example.com/api/v1/clients', baseUrl })).toBe(true);
+    expect(invoiceNinjaClient.isSameOrigin({ url: 'https://invoices.example.com.evil.io/api/v1/clients', baseUrl })).toBe(false);
+    expect(invoiceNinjaClient.isSameOrigin({ url: 'https://invoices.example.com/other', baseUrl })).toBe(false);
+    expect(invoiceNinjaClient.isSameOrigin({ url: 'https://x@invoices.example.com/api/v1', baseUrl })).toBe(false);
+  });
+});
+
+describe('ids, dates and line items', () => {
+  it('accepts hashed ids only', () => {
+    expect(invoiceNinjaClient.parseId({ value: ' VolejRejNm ', label: 'ID' })).toBe('VolejRejNm');
+    expect(() => invoiceNinjaClient.parseId({ value: 'a/../b', label: 'ID' })).toThrow();
+    expect(() => invoiceNinjaClient.parseId({ value: '', label: 'ID' })).toThrow();
+  });
+  it('keeps the calendar date of an ISO date-time', () => {
+    expect(invoiceNinjaClient.toDateOnly({ value: '2026-12-01T23:30:00.000Z', label: 'D' })).toBe('2026-12-01');
+    expect(invoiceNinjaClient.toDateOnly({ value: '', label: 'D' })).toBeUndefined();
+    expect(() => invoiceNinjaClient.toDateOnly({ value: '01/12/2026', label: 'D' })).toThrow();
+  });
+  it('maps line items and parses numeric strings', () => {
+    expect(invoiceNinjaClient.lineItemsOf({ value: [{ notes: 'x', cost: '10', quantity: '2' }], label: 'L', required: true })).toEqual([
+      { notes: 'x', cost: 10, quantity: 2 },
+    ]);
+    expect(() => invoiceNinjaClient.lineItemsOf({ value: [{ cost: 1 }], label: 'L', required: true })).toThrow();
+    expect(() => invoiceNinjaClient.lineItemsOf({ value: [], label: 'L', required: true })).toThrow();
+  });
+});
+
+describe('requests', () => {
+  it('sends the token, X-Requested-With and no redirects', async () => {
+    const spy = mockResponses([{ data: { id: 'Abc123' } }]);
+    await runAction({ name: 'get_client', propsValue: { id: 'Abc123' } });
+    const request = requestOf({ spy });
+    expect(request.url).toBe('https://invoices.example.com/api/v1/clients/Abc123');
+    expect(request.headers).toMatchObject({ 'X-API-TOKEN': 'tok-secret', 'X-Requested-With': 'XMLHttpRequest' });
+    expect(request.followRedirects).toBe(false);
+  });
+
+  it('create_client sends a JSON body with a contacts array and no query string', async () => {
+    const spy = mockResponses([{ data: { id: 'C1', contacts: [{ password: 'x', email: 'a@b.co' }] } }]);
+    const result = await runAction({
+      name: 'create_client',
+      propsValue: { client_business_name: 'Acme', client_email: 'a@b.co', client_address1: '1 St', client_city: 'Rome', client_send_email: true },
+    });
+    const request = requestOf({ spy });
+    expect(request.url).toBe('https://invoices.example.com/api/v1/clients');
+    expect(request.queryParams).toEqual({});
+    expect(request.body).toEqual({
+      name: 'Acme',
+      address1: '1 St',
+      city: 'Rome',
+      contacts: [{ email: 'a@b.co', send_email: true, is_primary: true }],
+    });
+    expect(result).toEqual({ data: { id: 'C1', contacts: [{ email: 'a@b.co' }] } });
+  });
+
+  it('create_task sends its fields in the body', async () => {
+    const spy = mockResponses([{ data: { id: 'T1' } }]);
+    await runAction({ name: 'create_task', propsValue: { number: 'T-1', description: 'Work', client_id: 'C1', rate: 0 } });
+    expect(requestOf({ spy }).body).toEqual({ number: 'T-1', description: 'Work', client_id: 'C1', rate: 0 });
+  });
+
+  it('list actions return paging info', async () => {
+    mockResponses([{ data: [{ id: 'A' }], meta: { pagination: { total: 41, total_pages: 3 } } }]);
+    const result = await runAction({ name: 'find_clients', propsValue: { search: 'acme', page: 2, per_page: 20 } });
+    expect(result).toEqual({ items: [{ id: 'A' }], page: 2, perPage: 20, total: 41, hasMore: true });
+  });
+
+  it('update_client sends only given fields plus cleared ones', async () => {
+    const spy = mockResponses([{ data: { id: 'C1' } }]);
+    await runAction({ name: 'update_client', propsValue: { client_id: 'C1', city: 'Paris', clear_fields: ['website'] } });
+    expect(requestOf({ spy }).body).toEqual({ website: '', city: 'Paris' });
+  });
+
+  it('update_client refuses an empty update', async () => {
+    await expect(runAction({ name: 'update_client', propsValue: { client_id: 'C1' } })).rejects.toThrow('Nothing to update');
+  });
+});
+
+describe('errors', () => {
+  it('throws InvoiceNinjaApiError with the vendor message instead of returning a string', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue(
+      Object.assign(new Error('x'), { response: { status: 422, body: { message: 'The given data was invalid.', errors: { client_id: ['Client is required'] } } } }),
+    );
+    const promise = runAction({ name: 'getclient_task', propsValue: { email: 'a@b.co' } });
+    await expect(promise).rejects.toBeInstanceOf(InvoiceNinjaApiError);
+    await expect(runAction({ name: 'getclient_task', propsValue: { email: 'a@b.co' } })).rejects.toThrow('client_id: Client is required');
+  });
+
+  it('getclient_task returns false when no client matches', async () => {
+    mockResponses([{ data: [], meta: { pagination: { total: 0, total_pages: 1 } } }]);
+    expect(await runAction({ name: 'getclient_task', propsValue: { email: 'a@b.co' } })).toBe(false);
+  });
+
+  it('getinvoices_task copes with an invoice without line items', async () => {
+    mockResponses([{ data: [{ number: '1', line_items: [] }], meta: { pagination: { total: 1, total_pages: 1 } } }]);
+    const result = await runAction({ name: 'getinvoices_task', propsValue: { invoiceStatus: 'all' } });
+    expect(result).toEqual([expect.objectContaining({ invoice: expect.objectContaining({ invoiceno: '1', firstsku: null }) })]);
+  });
+});
+
+describe('legacy create_invoice', () => {
+  it('matches the product key exactly and sends a date-only due date', async () => {
+    const spy = mockResponses([
+      { data: [{ product_key: 'W&1-extra', price: 99 }, { product_key: 'W&1', price: 12.5, notes: 'Widget' }], meta: { pagination: { total: 2, total_pages: 1 } } },
+      { data: { id: 'I1' } },
+    ]);
+    await runAction({
+      name: 'create_invoice',
+      propsValue: { client_id: 'C1', discount: 0, discount_type: true, order_items_json: '[{"quantity":2,"product_key":"W&1","discount":"0"}]', send_email: false, mark_sent: true, due_date: '2026-12-01T23:30:00.000Z' },
+    });
+    expect(requestOf({ spy, index: 0 }).queryParams).toMatchObject({ product_key: 'W&1' });
+    const body = requestOf({ spy, index: 1 }).body;
+    expect(body).toMatchObject({ client_id: 'C1', due_date: '2026-12-01', line_items: [expect.objectContaining({ product_key: 'W&1', cost: 12.5 })] });
+    expect(requestOf({ spy, index: 1 }).queryParams).toEqual({ mark_sent: 'true' });
+  });
+
+  it('rejects invalid JSON with a clear message', async () => {
+    await expect(
+      runAction({ name: 'create_invoice', propsValue: { client_id: 'C1', discount: 0, discount_type: true, order_items_json: '{bad' } }),
+    ).rejects.toThrow('not valid JSON');
+  });
+});
+
+describe('metadata', () => {
+  it('has the expected audiences and an outputSchema on every action but the custom call', () => {
+    const actions = Object.values(invoiceninja.actions());
+    const human = actions.filter((a) => a.audience === 'human').map((a) => a.name).sort();
+    expect(human).toEqual(
+      ['action_recurring_invoice', 'create_invoice', 'create_recurring_invoice', 'create_task', 'custom_api_call', 'exists_task', 'getclient_task', 'getinvoices_task', 'getreport_task'].sort(),
+    );
+    expect(actions.filter((a) => a.audience === 'both').map((a) => a.name)).toEqual(['create_client']);
+    expect(actions.filter((a) => a.name !== 'custom_api_call' && !a.outputSchema)).toEqual([]);
+  });
+});
