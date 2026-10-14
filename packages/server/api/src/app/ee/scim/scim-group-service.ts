@@ -271,12 +271,9 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        await platformService(log).runWithDefaultProjectsLock({
+        await platformProjectService(log).markForDeletion({
+            id: projectId,
             platformId,
-            fn: () => platformProjectService(log).markForDeletion({
-                id: projectId,
-                platformId,
-            }),
         })
     },
 })
