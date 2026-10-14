@@ -26,7 +26,8 @@ export const createJobRequisition = createAction({
 		}),
 		reasonId: Property.ShortText({
 			displayName: 'Reason ID',
-			description: 'The reason for creating the requisition.',
+			description:
+				'Creation reason as a General_Event_Subcategory_ID (e.g. `Create_Job_Requisition_Administrative_Non_Competitive_Fill_No_Recruiting_Required`) or a WID.',
 			required: true,
 		}),
 		jobPostingTitle: Property.ShortText({
@@ -45,9 +46,19 @@ export const createJobRequisition = createAction({
 			description: 'Job profile reference ID.',
 			required: false,
 		}),
+		workerTypeId: Property.ShortText({
+			displayName: 'Worker Type ID',
+			description: 'Worker type reference ID (Worker_Type_ID), e.g. `EE`. Required when the tenant has no default.',
+			required: false,
+		}),
+		workerSubTypeId: Property.ShortText({
+			displayName: 'Worker Sub-Type ID',
+			description: 'Worker sub-type reference ID (Employee_Type_ID), e.g. `Regular`. Required when the tenant has no default.',
+			required: false,
+		}),
 		primaryLocationId: Property.ShortText({
 			displayName: 'Primary Location ID',
-			description: 'Primary location reference ID.',
+			description: 'Primary location WID, also used as the primary job posting location.',
 			required: false,
 		}),
 		recruitingStartDate: Property.ShortText({
@@ -67,6 +78,10 @@ export const createJobRequisition = createAction({
 			reasonId,
 			jobPostingTitle,
 			numberOfOpenings,
+			jobProfileId,
+			workerTypeId,
+			workerSubTypeId,
+			primaryLocationId,
 			recruitingStartDate,
 			targetHireDate,
 		} = ctx.propsValue;
@@ -92,6 +107,39 @@ export const createJobRequisition = createAction({
             <bsvc:Target_Hire_Date>${escapeXml(targetHireDate)}</bsvc:Target_Hire_Date>`;
 		}
 
+		const jobProfileXml = jobProfileId
+			? `
+          <bsvc:Job_Profile_Reference>
+            <bsvc:ID bsvc:type="WID">${escapeXml(jobProfileId)}</bsvc:ID>
+          </bsvc:Job_Profile_Reference>`
+			: '';
+
+		const primaryLocationXml = primaryLocationId
+			? `
+          <bsvc:Primary_Location_Reference>
+            <bsvc:ID bsvc:type="WID">${escapeXml(primaryLocationId)}</bsvc:ID>
+          </bsvc:Primary_Location_Reference>
+          <bsvc:Primary_Job_Posting_Location_Reference>
+            <bsvc:ID bsvc:type="WID">${escapeXml(primaryLocationId)}</bsvc:ID>
+          </bsvc:Primary_Job_Posting_Location_Reference>`
+			: '';
+
+		const workerTypeXml = workerTypeId
+			? `
+          <bsvc:Worker_Type_Reference>
+            <bsvc:ID bsvc:type="Worker_Type_ID">${escapeXml(workerTypeId)}</bsvc:ID>
+          </bsvc:Worker_Type_Reference>`
+			: '';
+
+		const workerSubTypeXml = workerSubTypeId
+			? `
+          <bsvc:Worker_Sub-Type_Reference>
+            <bsvc:ID bsvc:type="Employee_Type_ID">${escapeXml(workerSubTypeId)}</bsvc:ID>
+          </bsvc:Worker_Sub-Type_Reference>`
+			: '';
+
+		const reasonIdKind = WID_PATTERN.test(reasonId) ? 'WID' : 'General_Event_Subcategory_ID';
+
 		const operationXml = `
     <bsvc:Create_Requisition_Request bsvc:version="v46.0" xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Business_Process_Parameters>
@@ -103,11 +151,11 @@ export const createJobRequisition = createAction({
           <bsvc:ID bsvc:type="WID">${escapeXml(supervisoryOrganizationId)}</bsvc:ID>
         </bsvc:Supervisory_Organization_Reference>
         <bsvc:Create_Job_Requisition_Reason_Reference>
-          <bsvc:ID bsvc:type="WID">${escapeXml(reasonId)}</bsvc:ID>
+          <bsvc:ID bsvc:type="${reasonIdKind}">${escapeXml(reasonId)}</bsvc:ID>
         </bsvc:Create_Job_Requisition_Reason_Reference>
+        <bsvc:Number_of_Openings>${openings}</bsvc:Number_of_Openings>
         <bsvc:Job_Requisition_Data>
-          <bsvc:Job_Posting_Title>${escapeXml(jobPostingTitle)}</bsvc:Job_Posting_Title>
-          <bsvc:Number_of_Openings>${openings}</bsvc:Number_of_Openings>${recruitingStartDateXml}${targetHireDateXml}
+          <bsvc:Job_Posting_Title>${escapeXml(jobPostingTitle)}</bsvc:Job_Posting_Title>${recruitingStartDateXml}${targetHireDateXml}${jobProfileXml}${workerTypeXml}${workerSubTypeXml}${primaryLocationXml}
         </bsvc:Job_Requisition_Data>
       </bsvc:Create_Job_Requisition_Data>
     </bsvc:Create_Requisition_Request>`;
@@ -119,3 +167,5 @@ export const createJobRequisition = createAction({
 		);
 	},
 });
+
+const WID_PATTERN = /^[0-9a-f]{32}$/i;
