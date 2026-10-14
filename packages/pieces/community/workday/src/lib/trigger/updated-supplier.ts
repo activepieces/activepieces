@@ -1,20 +1,28 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import dayjs from 'dayjs';
 import { workdayAuth } from '../auth';
-import { workdayWqlRequest } from '../common';
+import { workdayBusinessProcessTransactions } from '../common';
+import { readNestedDescriptor, readNestedId } from '../common/fields';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Record<string, never>> = {
-	strategy: DedupeStrategy.LAST_ITEM,
-	items: async ({ auth }) => {
-		const response = await workdayWqlRequest<{ total: number; data: Array<Record<string, unknown>> }>(
+	strategy: DedupeStrategy.TIMEBASED,
+	items: async ({ auth, lastFetchEpochMS }) => {
+		const rows = await workdayBusinessProcessTransactions({
 			auth,
-			`SELECT supplier, supplierName FROM suppliers LIMIT 100`,
-		);
-
-		const items = response.body.data ?? [];
-		return items.map((item) => ({
-			id: JSON.stringify(item),
-			data: item,
+			momentField: 'dateAndTimeCompleted',
+			sinceEpochMS: lastFetchEpochMS,
+			typeIds: [SUPPLIER_CHANGE_EVENT_TYPE_ID],
+			completedOnly: true,
+		});
+		return rows.map((row) => ({
+			epochMilliSeconds: dayjs(String(row['dateAndTimeCompleted'])).valueOf(),
+			data: {
+				id: readNestedId(row['subject']),
+				descriptor: readNestedDescriptor(row['subject']),
+				lastUpdated: row['dateAndTimeCompleted'],
+				...row,
+			},
 		}));
 	},
 };
@@ -34,3 +42,5 @@ export const updatedSupplier = createTrigger({
 	async onDisable(ctx) { await pollingHelper.onDisable(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue }); },
 	async run(ctx) { return await pollingHelper.poll(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue, files: ctx.files }); },
 });
+
+const SUPPLIER_CHANGE_EVENT_TYPE_ID = '753afb929c24100007bb327a66aa0011';

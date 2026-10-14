@@ -1,20 +1,27 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import dayjs from 'dayjs';
 import { workdayAuth } from '../auth';
-import { workdayWqlRequest } from '../common';
+import { workdayBusinessProcessTransactions } from '../common';
+import { readNestedDescriptor, readNestedId } from '../common/fields';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Record<string, never>> = {
-	strategy: DedupeStrategy.LAST_ITEM,
-	items: async ({ auth }) => {
-		const response = await workdayWqlRequest<{ total: number; data: Array<Record<string, unknown>> }>(
+	strategy: DedupeStrategy.TIMEBASED,
+	items: async ({ auth, lastFetchEpochMS }) => {
+		const rows = await workdayBusinessProcessTransactions({
 			auth,
-			`SELECT supplier, supplierName FROM suppliers LIMIT 100`,
-		);
-
-		const items = response.body.data ?? [];
-		return items.map((item) => ({
-			id: JSON.stringify(item),
-			data: item,
+			momentField: 'dateAndTimeInitiated',
+			sinceEpochMS: lastFetchEpochMS,
+			typeIds: [SUPPLIER_EVENT_TYPE_ID],
+		});
+		return rows.map((row) => ({
+			epochMilliSeconds: dayjs(String(row['dateAndTimeInitiated'])).valueOf(),
+			data: {
+				id: readNestedId(row['subject']),
+				descriptor: readNestedDescriptor(row['subject']),
+				createdDate: row['dateAndTimeInitiated'],
+				...row,
+			},
 		}));
 	},
 };
@@ -27,7 +34,7 @@ export const newSupplier = createTrigger({
 	description: 'Triggers when a new supplier is created in Workday.',
 	aiMetadata: {
 		description:
-			'Fires when a new supplier appears in Workday, detected by polling the suppliers dataset. Represents a supplier-creation event. Use to sync new vendors into downstream systems or kick off supplier onboarding.',
+			'Fires when a new supplier is created in Workday, detected by polling Supplier Event business process transactions by their initiation time. Represents a supplier-creation event. Use to sync new vendors into downstream systems or kick off supplier onboarding.',
 	},
 	props: {},
 	sampleData: { id: 'sup-001', descriptor: 'Acme Corp', createdDate: '2026-04-01T10:00:00Z' },
@@ -37,3 +44,5 @@ export const newSupplier = createTrigger({
 	async onDisable(ctx) { await pollingHelper.onDisable(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue }); },
 	async run(ctx) { return await pollingHelper.poll(polling, { auth: ctx.auth, store: ctx.store, propsValue: ctx.propsValue, files: ctx.files }); },
 });
+
+const SUPPLIER_EVENT_TYPE_ID = 'fbb860b6147b1000101faa99aeb40004';
