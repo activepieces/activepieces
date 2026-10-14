@@ -176,11 +176,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
 
               <div className="flex flex-col gap-8 min-w-0">
                 <div className="flex flex-row justify-center gap-3 min-w-0">
-                  <Button
-                    onClick={handleUseTemplate}
-                    size="xl"
-                    className="flex-1"
-                  >
+                  <Button onClick={handleUseTemplate} className="flex-1">
                     {t('Use Template')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -188,7 +184,6 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
                     <Button
                       variant="outline"
                       onClick={handleUseWithGuide}
-                      size="xl"
                       className="flex-1"
                     >
                       {t('Setup guide')}

@@ -35,6 +35,11 @@ export const aiProviderApi = {
       `/v1/ai-providers/configs/${configId}/models`,
     );
   },
+  listSuggestedModelsForConfig(configId: string) {
+    return api.get<string[]>(
+      `/v1/ai-providers/configs/${configId}/suggested-models`,
+    );
+  },
   listModelOptions({
     projectId,
     surface,

@@ -19,3 +19,23 @@ describe('evalFormat.judgeAgreement', () => {
         expect(evalFormat.judgeAgreement({ verdicts: [{ humanLabel: 'fail', judgePass: false, draft: true }] })).toEqual({ n: 0, tpr: null, tnr: null, draft: { n: 1, tpr: null, tnr: 1 } })
     })
 })
+
+describe('evalFormat cost helpers', () => {
+    it('sums costs, but is unknown when any part is unknown', () => {
+        expect(evalFormat.sumCost({ costs: [0.1, 0.2] })).toBeCloseTo(0.3)
+        expect(evalFormat.sumCost({ costs: [0.1, null] })).toBeNull()
+    })
+
+    it('formats dollars with precision for small amounts', () => {
+        expect(evalFormat.formatUsd(0.01234)).toBe('$0.0123')
+        expect(evalFormat.formatUsd(12.5)).toBe('$12.50')
+        expect(evalFormat.formatUsd(null)).toBe('—')
+    })
+
+    it('shows the candidate cost change as a signed percentage', () => {
+        expect(evalFormat.costDelta({ baseline: 0.4, candidate: 0.1 })).toBe('−75%')
+        expect(evalFormat.costDelta({ baseline: 0.1, candidate: 0.15 })).toBe('+50%')
+        expect(evalFormat.costDelta({ baseline: 0, candidate: 0.1 })).toBeNull()
+        expect(evalFormat.costDelta({ baseline: null, candidate: 0.1 })).toBeNull()
+    })
+})

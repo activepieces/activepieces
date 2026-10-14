@@ -26,7 +26,7 @@ export type ChatEvalRecordedToolCall = {
     output: unknown
 }
 
-type ChatEvalFixtureModel = {
+export type ChatEvalFixtureModel = {
     provider: AIProviderName
     modelId: string
     tier: { id: string, thinkingBudget: number, modelId: string }

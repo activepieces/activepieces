@@ -132,10 +132,10 @@ export function ChatModelSelector({
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
+          size="xs"
           role="combobox"
           aria-expanded={open}
-          className="h-7 gap-1 rounded-full px-2.5 text-xs text-gray-11 hover:text-gray-12"
+          className="rounded-full text-gray-11 hover:text-gray-12"
         >
           <span>{t(selectedOption.displayLabel)}</span>
           <ChevronDown className="size-3 opacity-50" />
@@ -171,7 +171,7 @@ export function ChatModelSelector({
                     isFocused && 'bg-gray-4',
                   )}
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-gray-1">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border bg-gray-1">
                     <Icon className="size-4 text-gray-12" />
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5">
@@ -206,16 +206,16 @@ export function ChatModelSelector({
           )}
           <div className="flex items-center gap-3 border-t px-3 py-2 text-xs text-gray-11">
             <div className="flex items-center gap-1">
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded-md border bg-gray-3">
                 <ArrowUp className="size-3" />
               </kbd>
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded-md border bg-gray-3">
                 <ArrowDown className="size-3" />
               </kbd>
               <span>{t('to navigate')}</span>
             </div>
             <div className="flex items-center gap-1">
-              <kbd className="flex h-5 w-5 items-center justify-center rounded border bg-gray-3">
+              <kbd className="flex h-5 w-5 items-center justify-center rounded-md border bg-gray-3">
                 <CornerDownLeft className="size-3" />
               </kbd>
               <span>{t('to select')}</span>

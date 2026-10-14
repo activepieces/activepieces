@@ -118,7 +118,7 @@ export const KnowledgeBaseSection = ({
           <div
             className={cn(
               'overflow-hidden',
-              asRows ? 'rounded-[10px] border p-3' : 'border rounded-md p-4',
+              asRows ? 'rounded-lg border p-3' : 'border rounded-md p-4',
             )}
           >
             <KnowledgeBaseToolPills
