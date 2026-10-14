@@ -10787,7 +10787,7 @@
     },
     "packages/pieces/core/tables": {
       "name": "@activepieces/piece-tables",
-      "version": "0.5.2",
+      "version": "0.5.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10799,6 +10799,7 @@
       "devDependencies": {
         "@types/qs": "6.14.0",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/core/tags": {
@@ -11889,6 +11890,7 @@
     "@activepieces/piece-google-docs": ["@activepieces/piece-google-docs@workspace:packages/pieces/community/google-docs"],
 
     "@activepieces/piece-google-document-ai": ["@activepieces/piece-google-document-ai@workspace:packages/pieces/community/google-document-ai"],
+
     "@activepieces/piece-google-drive": ["@activepieces/piece-google-drive@workspace:packages/pieces/community/google-drive"],
 
     "@activepieces/piece-google-forms": ["@activepieces/piece-google-forms@workspace:packages/pieces/community/google-forms"],
