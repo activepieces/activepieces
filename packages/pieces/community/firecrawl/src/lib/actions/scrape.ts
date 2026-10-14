@@ -262,7 +262,7 @@ export const scrape = createAction({
     }
 
     const format = propsValue.formats as string;
-    const formatsArray: any[] = [];
+    const formatsArray: Array<string | Record<string, unknown>> = [];
 
     // user selection
     if (format === 'screenshot') {
