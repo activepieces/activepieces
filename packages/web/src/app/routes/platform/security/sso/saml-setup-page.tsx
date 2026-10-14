@@ -1,8 +1,8 @@
 import {
   ApFlagId,
+  formErrors,
   PlatformWithoutSensitiveData,
   SsoDomainVerification,
-  SsoDomainVerificationRecord,
   SsoDomainVerificationStatus,
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
@@ -10,14 +10,22 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircle, Loader2, TriangleAlert } from 'lucide-react';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
-import { adminLayout } from '@/app/components/admin';
-import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import {
+  AdminPage,
+  AdminPageHeader,
+  SettingsPanel,
+  adminLayout,
+  adminPageResources,
+} from '@/app/components/admin';
+import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
+import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -27,7 +35,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -39,43 +46,35 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { samlSsoApi } from '@/features/platform-admin';
+import { samlSsoApi, ssoMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-export const ConfigureSamlDialog = ({
-  platform,
-  connected,
-  refetch,
-}: ConfigureSamlDialogProps) => {
-  const [open, setOpen] = useState(false);
+export const SamlSetupPage = () => {
+  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const navigate = useNavigate();
+  const connected = !!platform.federatedAuthProviders?.saml;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          {...adminControl(AdminControl.SSO_SAML_OPEN)}
-          size="sm"
-          variant="basic"
-          onClick={() => setOpen(true)}
-        >
-          {connected ? t('Edit') : t('Enable')}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className={adminLayout.dialog.md}>
-        {open && (
-          <SamlWizard
-            key={open ? 'open' : 'closed'}
-            platform={platform}
-            connected={connected}
-            refetch={refetch}
-            onClose={() => setOpen(false)}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
+    <AdminPage width="content">
+      <AdminPageHeader
+        title={t('Single sign-on')}
+        description={t('Connect a SAML 2.0 identity provider.')}
+        back={{ label: t('Authentication'), to: ssoPaths.authentication }}
+        resources={adminPageResources.sso}
+      />
+      <SettingsPanel>
+        <SamlWizard
+          platform={platform}
+          connected={connected}
+          refetch={refetch}
+          onClose={() => navigate(ssoPaths.authentication)}
+        />
+      </SettingsPanel>
+    </AdminPage>
   );
 };
 
@@ -117,9 +116,6 @@ const SamlWizard = ({
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>{t('Configure SAML 2.0 SSO')}</DialogTitle>
-      </DialogHeader>
       <StepIndicator step={step} />
       <div className={cn(step !== 'domain' && 'hidden')}>
         <DomainStep
@@ -233,31 +229,8 @@ const DomainStep = ({
     },
   });
 
-  const { mutate: verifyDomain, isPending: isVerifying } = useMutation({
-    mutationFn: async () => {
-      const result = await samlSsoApi.verifySsoDomain();
-      await refetch();
-      return result;
-    },
-    onSuccess: (result) => {
-      if (
-        result.ssoDomainVerification?.status ===
-        SsoDomainVerificationStatus.VERIFIED
-      ) {
-        toast.success(t('Domain verified'));
-        onVerified();
-      } else {
-        toast.message(
-          t('TXT record not found yet — DNS can take a few minutes.'),
-        );
-      }
-    },
-    onError: (error) => {
-      toast.error(
-        api.extractServerErrorMessage(error, t("Couldn't verify domain")),
-      );
-    },
-  });
+  const { mutate: verifyDomain, isPending: isVerifying } =
+    ssoMutations.useVerifySsoDomain({ refetch, onVerified });
 
   const handleSubmit = (values: SsoDomainFormValues) => {
     if (platform.ssoDomain) {
@@ -303,7 +276,7 @@ const DomainStep = ({
           </FormMessage>
         )}
 
-        <DialogFooter>
+        <StepFooter>
           {disableAction && (
             <Button
               {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
@@ -334,10 +307,13 @@ const DomainStep = ({
               {t('Next')}
             </Button>
           )}
-        </DialogFooter>
+        </StepFooter>
       </form>
       <Dialog open={showUpdateWarning} onOpenChange={setShowUpdateWarning}>
-        <DialogContent className={adminLayout.dialog.md}>
+        <DialogContent
+          className={adminLayout.dialog.md}
+          onInteractOutside={(event) => event.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>{t('Update SSO domain?')}</DialogTitle>
           </DialogHeader>
@@ -476,7 +452,7 @@ Activepieces
             </FormMessage>
           )}
 
-          <DialogFooter>
+          <StepFooter>
             {disableAction && (
               <Button
                 {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
@@ -500,12 +476,18 @@ Activepieces
             >
               {t('Save')}
             </Button>
-          </DialogFooter>
+          </StepFooter>
         </form>
       </Form>
     </>
   );
 };
+
+const StepFooter = ({ children }: { children: ReactNode }) => (
+  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+    {children}
+  </div>
+);
 
 const DomainVerificationPanel = ({
   verification,
@@ -527,7 +509,7 @@ const DomainVerificationPanel = ({
               "Add this TXT record at your DNS provider. We'll detect it once it propagates — this usually takes a few minutes.",
             )}
           </p>
-          <VerificationRecordRow record={verification.record} />
+          <DomainDnsRecord record={verification.record} />
           <div>
             <Button
               {...adminControl(AdminControl.SSO_SAML_DNS_RUN)}
@@ -567,43 +549,11 @@ const VerificationStatusBadge = ({
   );
 };
 
-const VerificationRecordRow = ({
-  record,
-}: {
-  record: SsoDomainVerificationRecord;
-}) => (
-  <div className="flex flex-col gap-2 rounded-md border p-4">
-    <div className="flex items-center gap-2">
-      <span className="text-xs font-mono px-1.5 py-0.5 rounded-md bg-gray-3">
-        {record.type}
-      </span>
-    </div>
-    <div className="grid grid-cols-2 gap-3">
-      <div className="flex flex-col gap-1.5 min-w-0">
-        <Label className="text-xs text-gray-11">{t('Name')}</Label>
-        <CopyToClipboardInput
-          textToCopy={record.name}
-          useInput={true}
-          controlId={AdminControl.SSO_SAML_DNS_NAME_COPY}
-        />
-      </div>
-      <div className="flex flex-col gap-1.5 min-w-0">
-        <Label className="text-xs text-gray-11">{t('Value')}</Label>
-        <CopyToClipboardInput
-          textToCopy={record.value}
-          useInput={true}
-          controlId={AdminControl.SSO_SAML_DNS_VALUE_COPY}
-        />
-      </div>
-    </div>
-  </div>
-);
-
 const SsoDomainFormValues = z.object({
   ssoDomain: z
-    .hostname('invalidSsoDomain')
-    .max(253, 'invalidSsoDomain')
-    .refine((v) => v.includes('.'), 'invalidSsoDomain'),
+    .hostname(formErrors.invalidDomain)
+    .max(253, formErrors.invalidDomain)
+    .refine((v) => v.includes('.'), formErrors.invalidDomain),
 });
 type SsoDomainFormValues = z.infer<typeof SsoDomainFormValues>;
 
@@ -619,9 +569,3 @@ type DisableAction = {
   onDisable: () => void;
   isDisabling: boolean;
 } | null;
-
-type ConfigureSamlDialogProps = {
-  platform: PlatformWithoutSensitiveData;
-  connected: boolean;
-  refetch: () => Promise<void>;
-};
