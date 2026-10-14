@@ -162,6 +162,9 @@ export const fileService = (log: FastifyBaseLogger) => ({
         await fileRepo().delete({ id: file.id })
     },
     async deleteMany({ projectId, fileIds }: { projectId: ProjectId, fileIds: FileId[] }): Promise<void> {
+        if (fileIds.length === 0) {
+            return
+        }
         const files = await fileRepo().find({
             select: ['id', 's3Key'],
             where: { projectId, id: In(fileIds) },

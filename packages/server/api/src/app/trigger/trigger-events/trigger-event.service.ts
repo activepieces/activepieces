@@ -1,7 +1,7 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, ProjectId, SeekPage, tryCatch } from '@activepieces/core-utils'
 import { EngineResponse, EngineResponseStatus, ExecuteTriggerResponse, FileCompression, FileType, FlowTrigger, FlowTriggerType, getPieceMajorAndMinorVersion, PieceTrigger, PopulatedFlow, TriggerEventWithPayload, TriggerHookType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { z } from 'zod'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -76,21 +76,13 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                         },
                     })
                 }
-                const replacedEvents = await triggerEventRepo().find({
-                    select: { id: true, fileId: true },
-                    where: { projectId, flowId: flow.id },
-                })
-                await triggerEventRepo().delete({
-                    projectId,
-                    id: In(replacedEvents.map(({ id }) => id)),
-                })
-                const { error: fileCleanupError } = await tryCatch(() => fileService(log).deleteMany({
-                    projectId,
-                    fileIds: replacedEvents.map(({ fileId }) => fileId),
-                }))
-                if (!isNil(fileCleanupError)) {
-                    log.warn({ error: fileCleanupError, flow: { id: flow.id } }, '[triggerEventService#test] Failed to delete the files of replaced test events')
-                }
+                const deleteResult = await triggerEventRepo()
+                    .createQueryBuilder()
+                    .delete()
+                    .where({ projectId, flowId: flow.id })
+                    .returning(['fileId'])
+                    .execute()
+                const replacedFileIds = ReplacedTriggerEventRows.parse(deleteResult.raw ?? []).map(({ fileId }) => fileId)
 
                 for (const output of engineResponse.response.output) {
                     await this.saveEvent({
@@ -98,6 +90,14 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                         flowId: flow.id,
                         payload: output,
                     })
+                }
+
+                const { error: fileCleanupError } = await tryCatch(() => fileService(log).deleteMany({
+                    projectId,
+                    fileIds: replacedFileIds,
+                }))
+                if (!isNil(fileCleanupError)) {
+                    log.warn({ error: fileCleanupError, flow: { id: flow.id } }, '[triggerEventService#test] Failed to delete the files of replaced test events')
                 }
 
                 return this.list({
@@ -166,6 +166,10 @@ function getSourceName(trigger: FlowTrigger): string {
             return trigger.type
     }
 }
+
+const ReplacedTriggerEventRows = z.array(z.object({
+    fileId: z.string(),
+}))
 
 type TestParams = {
     projectId: ProjectId
