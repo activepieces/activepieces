@@ -25,6 +25,7 @@ export const WorkdayService = {
 	expenseManagement: 'expense/v1',
 	timeTracking: 'timeTracking/v7',
 	helpCase: 'helpCase/v4',
+	customObjectDefinition: 'customObjectDefinition/v1',
 } as const;
 
 export type ServicePath = typeof WorkdayService[keyof typeof WorkdayService];
@@ -256,18 +257,13 @@ export async function workdayGetReport(
 export async function workdayListCustomObjectDefinitions(
 	auth: OAuth2PropertyValue,
 ): Promise<Record<string, unknown>[]> {
-	const tenant = getTenant(auth);
-	const response = await httpClient.sendRequest<{
-		data?: Record<string, unknown>[];
-	}>({
-		method: HttpMethod.GET,
-		url: `https://${getHost(auth)}/ccx/api/customObjects/v1/${tenant}/customObjectDefinitions`,
-		authentication: {
-			type: AuthenticationType.BEARER_TOKEN,
-			token: auth.access_token,
-		},
-	});
-	return response.body.data ?? [];
+	return fetchAllPages<Record<string, unknown>>(
+		auth,
+		'/definitions',
+		undefined,
+		'data',
+		WorkdayService.customObjectDefinition,
+	);
 }
 
 export async function workdayGetCustomObject(

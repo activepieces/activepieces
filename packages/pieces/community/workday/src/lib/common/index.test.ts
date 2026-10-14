@@ -142,7 +142,7 @@ describe('custom object helpers', () => {
 		const defs = await workdayListCustomObjectDefinitions(AUTH);
 		expect(defs).toHaveLength(1);
 		expect((sendRequest.mock.calls[0][0] as HttpRequest).url).toContain(
-			'/customObjects/v1/mytenant/customObjectDefinitions',
+			'/ccx/api/customObjectDefinition/v1/mytenant/definitions',
 		);
 	});
 
