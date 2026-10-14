@@ -327,7 +327,17 @@ export function DataTable<
     () => table.getSelectedRowModel().rows.map((row) => row.original),
     [rowSelection, syncSelectionWithData ? tableData : undefined],
   );
+  const emittedSelection = useRef<RowDataWithActions<TData>[] | null>(null);
   useEffect(() => {
+    const previous = emittedSelection.current;
+    if (
+      previous !== null &&
+      previous.length === selectedRowOriginals.length &&
+      previous.every((row, index) => row === selectedRowOriginals[index])
+    ) {
+      return;
+    }
+    emittedSelection.current = selectedRowOriginals;
     onSelectedRowsChange?.(selectedRowOriginals);
   }, [selectedRowOriginals]);
 
