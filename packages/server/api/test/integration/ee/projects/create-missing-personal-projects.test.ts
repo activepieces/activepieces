@@ -162,6 +162,30 @@ describe('Creating personal projects for existing members', () => {
         expect(await savedDataOf(run)).toStrictEqual({ platformId, runId: run.runId, onlyUserIds: [failing.id] })
     })
 
+    it('removes the alerts a failed attempt already added along with its project', async () => {
+        const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
+        const member = await saveUser({ platformId })
+        const createdProjectIds: string[] = []
+        projectHooks.set(() => ({
+            postCreate: async (project) => {
+                createdProjectIds.push(project.id)
+                await databaseConnection().getRepository('alert').save({ id: apId(), projectId: project.id, channel: 'EMAIL', receiver: 'owner@example.com' })
+                throw new Error('piece set failed')
+            },
+        }))
+
+        try {
+            await expect(personalProjectsService(mockLog).createMissingHandler(await queueRun({ platformId }))).rejects.toThrow()
+        }
+        finally {
+            projectHooks.set(projectEnterpriseHooks)
+        }
+
+        expect(await personalProjectCountOf({ ownerId: member.id })).toBe(0)
+        expect(createdProjectIds.length).toBeGreaterThan(0)
+        expect(await databaseConnection().getRepository('alert').countBy({ projectId: In(createdProjectIds) })).toBe(0)
+    })
+
     it('a retry creates the failed member\'s project', async () => {
         const { platformId } = await setupPlatform({ projectRolesEnabled: true, autoCreatePersonalProjects: true })
         const member = await saveUser({ platformId })
