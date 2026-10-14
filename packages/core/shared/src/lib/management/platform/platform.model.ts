@@ -93,6 +93,7 @@ export const PlatformPlan = z.object({
     showPoweredBy: z.boolean(),
     auditLogEnabled: z.boolean(),
     embeddingEnabled: z.boolean(),
+    activepiecesAiProviderHidden: z.boolean(),
     aiProvidersEnabled: z.boolean(),
     chatEnabled: z.boolean(),
     agentsEnabled: z.boolean(),

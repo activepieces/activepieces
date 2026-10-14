@@ -178,6 +178,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         apiKeysEnabled: platformPlan?.apiKeysEnabled ?? false,
         showPoweredBy: platformPlan?.showPoweredBy ?? false,
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
+        activepiecesAiProviderHidden: platformPlan?.activepiecesAiProviderHidden ?? false,
         aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
         chatEnabled: platformPlan?.chatEnabled ?? false,
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
