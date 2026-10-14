@@ -174,3 +174,34 @@ describe('auth validate', () => {
     expect(result).toMatchObject({ valid: false });
   });
 });
+
+describe('custom_api_call', () => {
+  it('sends with the Client Token through the verifying TLS dispatcher', async () => {
+    const spy = mockResponse({ ok: true });
+    const result = await runAction({
+      name: 'custom_api_call',
+      propsValue: { path: '/application', method: 'POST', queryParams: { a: 1 }, body: { name: 'x' } },
+    });
+    const [request, options] = spy.mock.calls[0];
+    expect(request.url).toBe('https://gotify.example.com/application');
+    expect(request.headers).toMatchObject({ 'x-gotify-key': 'client-secret' });
+    expect(request.queryParams).toEqual({ a: '1' });
+    expect(request.body).toEqual({ name: 'x' });
+    expect(request.followRedirects).toBe(false);
+    expect(options?.dispatcher).toBeDefined();
+    expect(result).toEqual({ body: { ok: true } });
+  });
+  it('drops the body on GET', async () => {
+    const spy = mockResponse([]);
+    await runAction({ name: 'custom_api_call', propsValue: { path: '/message', method: 'GET', body: { x: 1 } } });
+    expect(spy.mock.calls[0][0].body).toBeUndefined();
+  });
+  it.each(['https://evil.example.com/x', '//evil.example.com/x', 'message', '/a/../b', '/a/%2e%2e/b', '/a?token=x', '/a\\b'])(
+    'rejects path %s before any request',
+    async (path) => {
+      const spy = mockResponse({});
+      await expect(runAction({ name: 'custom_api_call', propsValue: { path, method: 'GET' } })).rejects.toThrow();
+      expect(spy).not.toHaveBeenCalled();
+    },
+  );
+});

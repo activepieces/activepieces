@@ -9,11 +9,12 @@ export const updateApplication = createAction({
   name: 'update_application',
   classification: 'WRITE',
   displayName: 'Update Application',
-  description: 'Change the name, description or default priority of an application.',
+  description:
+    'Change the name, description or default priority of an application. Gotify replaces all three fields on every update, so fields you leave empty are re-sent with the values read just before the update; do not run two updates of the same application at the same time.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates a Gotify application by numeric id: only the fields you pass change (name, description, defaultPriority 0-10); set clearDescription=true to blank the description. Omitted fields keep their current value. Needs the Client Token. Idempotent: the same input gives the same end state. Returns the application without its token.',
+      'Updates a Gotify application by numeric id: only the fields you pass change (name, description, defaultPriority 0-10); set clearDescription=true to blank the description. Omitted fields keep their current value: Gotify has no partial update or version check, so the action reads the application and re-sends all three fields; concurrent updates of the same application can overwrite each other, so run them one at a time. Needs the Client Token. Idempotent: the same input gives the same end state. Returns the application without its token.',
     idempotent: true,
   },
   outputSchema: gotifyOutputSchemas.application,
