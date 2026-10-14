@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { platformUserApi } from '@/api/platform-user-api';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import {
   platformUserHooks,
@@ -26,6 +27,8 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
+import { refreshBillingCaches } from '../../hooks/billing-hooks';
+
 export const DeactivateUsersDialog = ({
   open,
   onOpenChange,
@@ -34,10 +37,21 @@ export const DeactivateUsersDialog = ({
   planName,
   warning,
   onConfirmed,
+  enforced,
 }: DeactivateUsersDialogProps) => {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] gap-4">
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (isNil(enforced)) {
+          onOpenChange(next);
+        }
+      }}
+    >
+      <DialogContent
+        className="max-w-[480px] gap-4"
+        showCloseButton={isNil(enforced)}
+      >
         <DeactivateUsersForm
           key={open ? 'deactivate-open' : 'deactivate-closed'}
           targetSeats={targetSeats}
@@ -46,6 +60,7 @@ export const DeactivateUsersDialog = ({
           warning={warning}
           onConfirmed={onConfirmed}
           onOpenChange={onOpenChange}
+          enforced={enforced}
         />
       </DialogContent>
     </Dialog>
@@ -59,6 +74,7 @@ function DeactivateUsersForm({
   warning,
   onConfirmed,
   onOpenChange,
+  enforced,
 }: DeactivateUsersFormProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: usersPage } = platformUserHooks.useUsers();
@@ -72,34 +88,61 @@ function DeactivateUsersForm({
   >(new Set());
 
   const deactivatableUsers = (usersPage?.data ?? []).filter(
-    (user) => user.status === UserStatus.ACTIVE && user.id !== platform.ownerId,
+    (user) =>
+      user.status === UserStatus.ACTIVE &&
+      user.id !== platform.ownerId &&
+      user.id !== enforced?.excludeUserId,
   );
   const pendingInvitations = invitations ?? [];
+  const seatsOnlyTheOwnerCanFree =
+    isNil(enforced?.excludeUserId) ||
+    enforced.excludeUserId === platform.ownerId
+      ? 1
+      : 2;
+  const ownerOnly = !isNil(enforced) && seatsOnlyTheOwnerCanFree > targetSeats;
 
+  const usersToDeactivate = deactivatableUsers.filter((user) =>
+    selectedUserIds.has(user.id),
+  );
+  const invitationsToRevoke = pendingInvitations.filter((invitation) =>
+    selectedInvitationIds.has(invitation.id),
+  );
   const seatsAfter =
-    currentUsers - selectedUserIds.size - selectedInvitationIds.size;
+    currentUsers - usersToDeactivate.length - invitationsToRevoke.length;
   const withinLimit = seatsAfter <= targetSeats;
+
+  const refreshLists = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
+      queryClient.invalidateQueries({
+        queryKey: platformUserKeys.invitations,
+      }),
+    ]);
 
   const { mutate: deactivateAndContinue, isPending } = useMutation({
     mutationFn: async () => {
-      await Promise.all([
-        ...Array.from(selectedUserIds).map((userId) =>
-          platformUserApi.update(userId, { status: UserStatus.INACTIVE }),
+      const results = await Promise.allSettled([
+        ...usersToDeactivate.map((user) =>
+          platformUserApi.update(user.id, { status: UserStatus.INACTIVE }),
         ),
-        ...Array.from(selectedInvitationIds).map((invitationId) =>
-          userInvitationApi.delete(invitationId),
+        ...invitationsToRevoke.map((invitation) =>
+          userInvitationApi.delete(invitation.id),
         ),
       ]);
+      const failure = results.find((result) => result.status === 'rejected');
+      if (!isNil(failure)) {
+        throw failure.reason;
+      }
     },
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
-        queryClient.invalidateQueries({
-          queryKey: platformUserKeys.invitations,
-        }),
-      ]);
+      await refreshLists();
       onOpenChange(false);
       onConfirmed();
+    },
+    onError: async () => {
+      internalErrorToast();
+      await refreshLists();
+      refreshBillingCaches(queryClient);
     },
   });
 
@@ -114,38 +157,101 @@ function DeactivateUsersForm({
       <DialogHeader>
         <DialogTitle>{t('Deactivate users')}</DialogTitle>
         <DialogDescription>
-          {isNil(planName)
-            ? t(
-                "You're reducing to {target, plural, =1 {1 seat} other {# seats}}. Deactivate users to get within the limit.",
-                { target: targetSeats },
-              )
-            : t(
-                'The {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. Deactivate users to get within the limit before switching.',
-                { plan: planName, target: targetSeats },
-              )}
+          {enforced?.description ??
+            (isNil(planName)
+              ? t(
+                  "You're reducing to {target, plural, =1 {1 seat} other {# seats}}. Deactivate users to get within the limit.",
+                  { target: targetSeats },
+                )
+              : t(
+                  'The {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. Deactivate users to get within the limit before switching.',
+                  { plan: planName, target: targetSeats },
+                ))}
         </DialogDescription>
       </DialogHeader>
 
+      {ownerOnly ? (
+        <p className="text-sm text-gray-11">{enforced?.ownerOnlyMessage}</p>
+      ) : (
+        <SeatChoices
+          users={deactivatableUsers.map((user) => ({
+            id: user.id,
+            email: user.email,
+            trailingLabel: roleLabel(user.platformRole),
+          }))}
+          invitations={pendingInvitations.map((invitation) => ({
+            id: invitation.id,
+            email: invitation.email,
+            trailingLabel: t('Invited'),
+          }))}
+          selectedUserIds={selectedUserIds}
+          selectedInvitationIds={selectedInvitationIds}
+          onToggleUser={toggleUser}
+          onToggleInvitation={toggleInvitation}
+          seatsAfter={seatsAfter}
+          targetSeats={targetSeats}
+          withinLimit={withinLimit}
+          warning={warning}
+        />
+      )}
+
+      <DialogFooter>
+        {isNil(enforced) ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            {t('Cancel')}
+          </Button>
+        ) : (
+          enforced.actions
+        )}
+        {!ownerOnly && (
+          <Button
+            {...adminControl(AdminControl.BILLING_DEACTIVATE_USERS_SUBMIT)}
+            type="button"
+            loading={isPending}
+            disabled={!withinLimit}
+            onClick={() => deactivateAndContinue()}
+          >
+            {invitationsToRevoke.length > 0 && usersToDeactivate.length === 0
+              ? t('Revoke & continue')
+              : t('Deactivate & continue')}
+          </Button>
+        )}
+      </DialogFooter>
+    </>
+  );
+}
+
+function SeatChoices({
+  users,
+  invitations,
+  selectedUserIds,
+  selectedInvitationIds,
+  onToggleUser,
+  onToggleInvitation,
+  seatsAfter,
+  targetSeats,
+  withinLimit,
+  warning,
+}: SeatChoicesProps) {
+  return (
+    <>
       <SelectableEmailList
-        items={deactivatableUsers.map((user) => ({
-          id: user.id,
-          email: user.email,
-          trailingLabel: roleLabel(user.platformRole),
-        }))}
+        items={users}
         selectedIds={selectedUserIds}
-        onToggle={toggleUser}
+        onToggle={onToggleUser}
         maxHeightClass="max-h-[220px]"
       />
 
       <SelectableEmailList
         heading={t('Pending invitations')}
-        items={pendingInvitations.map((invitation) => ({
-          id: invitation.id,
-          email: invitation.email,
-          trailingLabel: t('Invited'),
-        }))}
+        items={invitations}
         selectedIds={selectedInvitationIds}
-        onToggle={toggleInvitation}
+        onToggle={onToggleInvitation}
         maxHeightClass="max-h-[160px]"
       />
 
@@ -164,28 +270,6 @@ function DeactivateUsersForm({
       {!isNil(warning) && (
         <span className="text-xs text-danger-11">{warning}</span>
       )}
-
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          disabled={isPending}
-        >
-          {t('Cancel')}
-        </Button>
-        <Button
-          {...adminControl(AdminControl.BILLING_DEACTIVATE_USERS_SUBMIT)}
-          type="button"
-          loading={isPending}
-          disabled={!withinLimit}
-          onClick={() => deactivateAndContinue()}
-        >
-          {selectedInvitationIds.size > 0 && selectedUserIds.size === 0
-            ? t('Revoke & continue')
-            : t('Deactivate & continue')}
-        </Button>
-      </DialogFooter>
     </>
   );
 }
@@ -268,9 +352,30 @@ type DeactivateUsersDialogProps = {
   planName?: string;
   warning?: string;
   onConfirmed: () => void;
+  enforced?: EnforcedSeatFloor;
+};
+
+type EnforcedSeatFloor = {
+  description: string;
+  ownerOnlyMessage: string;
+  excludeUserId: string | null;
+  actions: ReactNode;
 };
 
 type DeactivateUsersFormProps = Omit<DeactivateUsersDialogProps, 'open'>;
+
+type SeatChoicesProps = {
+  users: SelectableEmailItem[];
+  invitations: SelectableEmailItem[];
+  selectedUserIds: Set<string>;
+  selectedInvitationIds: Set<string>;
+  onToggleUser: (id: string) => void;
+  onToggleInvitation: (id: string) => void;
+  seatsAfter: number;
+  targetSeats: number;
+  withinLimit: boolean;
+  warning?: string;
+};
 
 type SelectableEmailItem = {
   id: string;
