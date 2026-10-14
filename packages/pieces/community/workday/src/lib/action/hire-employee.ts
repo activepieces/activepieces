@@ -6,6 +6,9 @@ import {
 import { workdayAuth } from '../auth';
 import { workdaySoapRequest } from '../common';
 
+const DEFAULT_HIRE_REASON_ID = 'Hire_Employee_Hire_Employee_New_Hire';
+const DEFAULT_EMPLOYEE_TYPE_ID = 'Regular';
+
 export const hireEmployee = createAction({
 	auth: workdayAuth,
 	name: 'hire_employee',
@@ -44,13 +47,30 @@ export const hireEmployee = createAction({
 			description: 'Position reference ID.',
 			required: false,
 		}),
+		hireReasonId: Property.ShortText({
+			displayName: 'Hire Reason ID',
+			description:
+				'Hire reason reference ID (General_Event_Subcategory_ID), e.g. `Hire_Employee_Hire_Employee_New_Hire`.',
+			required: false,
+			defaultValue: DEFAULT_HIRE_REASON_ID,
+		}),
+		employeeTypeId: Property.ShortText({
+			displayName: 'Employee Type ID',
+			description: 'Employee type reference ID (Employee_Type_ID), e.g. `Regular`.',
+			required: false,
+			defaultValue: DEFAULT_EMPLOYEE_TYPE_ID,
+		}),
 	},
 	async run(ctx) {
 		const {
 			applicantId,
 			hireDate,
 			positionId,
+			supervisoryOrganizationId,
+			jobProfileId,
 		} = ctx.propsValue;
+		const hireReasonId = ctx.propsValue.hireReasonId || DEFAULT_HIRE_REASON_ID;
+		const employeeTypeId = ctx.propsValue.employeeTypeId || DEFAULT_EMPLOYEE_TYPE_ID;
 
 		const escapeXml = (s: string) =>
 			s
@@ -67,6 +87,20 @@ export const hireEmployee = createAction({
         </bsvc:Position_Reference>`;
 		}
 
+		const organizationXml = supervisoryOrganizationId
+			? `
+        <bsvc:Organization_Reference>
+          <bsvc:ID bsvc:type="WID">${escapeXml(supervisoryOrganizationId)}</bsvc:ID>
+        </bsvc:Organization_Reference>`
+			: '';
+
+		const jobProfileXml = jobProfileId
+			? `
+            <bsvc:Job_Profile_Reference>
+              <bsvc:ID bsvc:type="WID">${escapeXml(jobProfileId)}</bsvc:ID>
+            </bsvc:Job_Profile_Reference>`
+			: '';
+
 		const operationXml = `
     <bsvc:Hire_Employee_Request bsvc:version="v46.0" xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Business_Process_Parameters>
@@ -76,8 +110,19 @@ export const hireEmployee = createAction({
       <bsvc:Hire_Employee_Data>
         <bsvc:Applicant_Reference>
           <bsvc:ID bsvc:type="WID">${escapeXml(applicantId)}</bsvc:ID>
-        </bsvc:Applicant_Reference>${positionXml}
+        </bsvc:Applicant_Reference>${organizationXml}${positionXml}
         <bsvc:Hire_Date>${escapeXml(hireDate)}</bsvc:Hire_Date>
+        <bsvc:Hire_Employee_Event_Data>
+          <bsvc:Hire_Reason_Reference>
+            <bsvc:ID bsvc:type="General_Event_Subcategory_ID">${escapeXml(hireReasonId)}</bsvc:ID>
+          </bsvc:Hire_Reason_Reference>
+          <bsvc:Employee_Type_Reference>
+            <bsvc:ID bsvc:type="Employee_Type_ID">${escapeXml(employeeTypeId)}</bsvc:ID>
+          </bsvc:Employee_Type_Reference>
+          <bsvc:First_Day_of_Work>${escapeXml(hireDate)}</bsvc:First_Day_of_Work>
+          <bsvc:Position_Details>${jobProfileXml}
+          </bsvc:Position_Details>
+        </bsvc:Hire_Employee_Event_Data>
       </bsvc:Hire_Employee_Data>
     </bsvc:Hire_Employee_Request>`;
 
