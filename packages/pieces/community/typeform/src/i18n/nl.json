@@ -73,5 +73,6 @@
   "After Response": "Na antwoord",
   "Response token. Returns responses submitted after it.": "Antwoordtoken. Geeft later ingediende antwoorden terug.",
   "Triggers when someone submits the form.": "Wordt geactiveerd wanneer iemand het formulier indient.",
-  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "Er wordt een webhook aan dit formulier in Typeform toegevoegd wanneer je de flow publiceert, en verwijderd wanneer je hem uitzet."
+  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "Er wordt een webhook aan dit formulier in Typeform toegevoegd wanneer je de flow publiceert, en verwijderd wanneer je hem uitzet.",
+  "Leave empty to keep the original form's workspace.": "Laat leeg om de werkruimte van het oorspronkelijke formulier te houden."
 }

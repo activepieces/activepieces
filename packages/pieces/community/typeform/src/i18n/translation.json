@@ -122,6 +122,7 @@
   "The full form JSON from Get Form, with your changes. Must include title.": "The full form JSON from Get Form, with your changes. Must include title.",
   "Allow removing existing questions. Their responses are deleted too.": "Allow removing existing questions. Their responses are deleted too.",
   "Leave empty for \"Copy of\" and the original title.": "Leave empty for \"Copy of\" and the original title.",
+  "Leave empty to keep the original form's workspace.": "Leave empty to keep the original form's workspace.",
   "Responses, translations and webhooks are not copied.": "Responses, translations and webhooks are not copied.",
   "Dropdown, multiple choice, ranking and picture choice questions.": "Dropdown, multiple choice, ranking and picture choice questions.",
   "This list replaces every current option. Options whose label stays the same keep their past answers.": "This list replaces every current option. Options whose label stays the same keep their past answers.",

@@ -73,5 +73,6 @@
   "After Response": "Après la réponse",
   "Response token. Returns responses submitted after it.": "Jeton de réponse. Renvoie les réponses soumises après.",
   "Triggers when someone submits the form.": "Se déclenche lorsque quelqu'un soumet le formulaire.",
-  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "Un webhook est ajouté à ce formulaire dans Typeform lorsque vous publiez le flux, et supprimé lorsque vous le désactivez."
+  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "Un webhook est ajouté à ce formulaire dans Typeform lorsque vous publiez le flux, et supprimé lorsque vous le désactivez.",
+  "Leave empty to keep the original form's workspace.": "Laissez vide pour conserver l'espace de travail du formulaire d'origine."
 }

@@ -28,7 +28,7 @@ export const duplicateFormAction = createAction({
       description: 'Leave empty for "Copy of" and the original title.',
       required: false,
     }),
-    workspace: typeformCommon.workspace,
+    workspace: typeformCommon.copyWorkspace,
     copy_info: Property.MarkDown({
       value: 'Responses, translations and webhooks are not copied.',
       variant: MarkdownVariant.INFO,

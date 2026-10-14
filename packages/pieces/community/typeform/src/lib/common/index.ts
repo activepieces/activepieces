@@ -229,6 +229,17 @@ function toTypeformError({ error }: { error: unknown }): unknown {
   return new Error(`${code} (${status}): ${description}${details}`.trim());
 }
 
+function workspaceDropdown({ description }: { description: string }) {
+  return Property.Dropdown<string, false, typeof typeformAuth>({
+    auth: typeformAuth,
+    displayName: 'Workspace',
+    description,
+    required: false,
+    refreshers: [],
+    options: async ({ auth }) => workspaceOptions({ token: auth?.access_token }),
+  });
+}
+
 async function workspaceOptions({ token }: { token: string | undefined }): Promise<DropdownState<string>> {
   if (!token) {
     return { disabled: true, placeholder: 'Connect your Typeform account', options: [] };
@@ -392,14 +403,8 @@ export const typeformCommon = {
     return await httpClient.sendRequest(request);
   },
   form: formsDropdown,
-  workspace: Property.Dropdown<string, false, typeof typeformAuth>({
-    auth: typeformAuth,
-    displayName: 'Workspace',
-    description: 'Leave empty for your default workspace.',
-    required: false,
-    refreshers: [],
-    options: async ({ auth }) => workspaceOptions({ token: auth?.access_token }),
-  }),
+  workspace: workspaceDropdown({ description: 'Leave empty for your default workspace.' }),
+  copyWorkspace: workspaceDropdown({ description: "Leave empty to keep the original form's workspace." }),
   theme: Property.Dropdown<string, false, typeof typeformAuth>({
     auth: typeformAuth,
     displayName: 'Theme',

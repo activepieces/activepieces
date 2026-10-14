@@ -73,5 +73,6 @@
   "After Response": "晚于此回复",
   "Response token. Returns responses submitted after it.": "回复令牌。返回在其之后提交的回复。",
   "Triggers when someone submits the form.": "当有人提交表单时触发。",
-  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "发布流程时会在 Typeform 中为此表单添加一个 Webhook，关闭流程时会将其删除。"
+  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "发布流程时会在 Typeform 中为此表单添加一个 Webhook，关闭流程时会将其删除。",
+  "Leave empty to keep the original form's workspace.": "留空则保留原表单所在的工作区。"
 }
