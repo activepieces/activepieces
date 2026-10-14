@@ -107,7 +107,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         return tryDequeue(worker, queueName, log)
     }
 
-    log.info({ queueName, job: { id: job.id }, jobName: job.name }, '[jobBroker#tryDequeue] Dequeued job')
+    log.info({ queueName, job: { id: job.id, pickupWaitMs: (job.processedOn ?? Date.now()) - job.timestamp }, jobName: job.name }, '[jobBroker#tryDequeue] Dequeued job')
 
     const originalSchemaVersion = (job.data as Record<string, unknown>).schemaVersion
     const migratedData = await jobMigrations(log).apply(job.data)
