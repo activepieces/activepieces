@@ -36,11 +36,6 @@ export const updateSupplierInvoiceAction = createAction({
 			description: 'Invoice total amount.',
 			required: false,
 		}),
-		additionalData: Property.Object({
-			displayName: 'Additional Data',
-			description: 'Additional fields as key-value pairs.',
-			required: false,
-		}),
 	},
 	async run({ auth, propsValue }) {
 		return await workdayApi.updateSupplierInvoice({

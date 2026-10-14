@@ -36,11 +36,6 @@ export const createSupplierCreditMemoAction = createAction({
 			description: 'Description of the credit memo.',
 			required: false,
 		}),
-		additionalData: Property.Object({
-			displayName: 'Additional Data',
-			description: 'Additional fields as key-value pairs.',
-			required: false,
-		}),
 	},
 	async run({ auth, propsValue }) {
 		return await workdayApi.createSupplierCreditMemo({

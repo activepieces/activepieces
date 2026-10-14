@@ -62,13 +62,13 @@ export const createJobRequisitionAction = createAction({
 		}),
 		recruitingStartDate: Property.ShortText({
 			displayName: 'Recruiting Start Date',
-			description: 'Date to start recruiting (YYYY-MM-DD).',
-			required: false,
+			description: 'Date to start recruiting (YYYY-MM-DD). Required by Workday.',
+			required: true,
 		}),
 		targetHireDate: Property.ShortText({
 			displayName: 'Target Hire Date',
-			description: 'Target date for hiring (YYYY-MM-DD).',
-			required: false,
+			description: 'Target date for hiring (YYYY-MM-DD). Required by Workday.',
+			required: true,
 		}),
 	},
 	async run({ auth, propsValue }) {

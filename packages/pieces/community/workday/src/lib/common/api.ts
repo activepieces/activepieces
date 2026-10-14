@@ -224,9 +224,11 @@ async function findPurchaseOrder({
 }): Promise<WorkdayPage<WorkdayRecord>> {
 	return await runWql({
 		auth,
-		query: `SELECT purchaseOrder FROM purchaseOrders WHERE purchaseOrder = '${escapeWql({
-			value: purchaseOrderId,
-		})}'`,
+		query: `SELECT purchaseOrder FROM purchaseOrders(dataSourceFilter = purchaseOrdersFilter) WHERE purchaseOrder = '${escapeWql(
+			{
+				value: purchaseOrderId,
+			},
+		)}'`,
 	});
 }
 
@@ -243,10 +245,20 @@ async function findSupplierPayments({
 	if (supplierId) conditions.push(`supplier = '${escapeWql({ value: supplierId })}'`);
 	if (paymentId) conditions.push(`supplierPayment = '${escapeWql({ value: paymentId })}'`);
 
+	const companies = await runWqlAll({ auth, query: 'SELECT company FROM companies' });
+	const companyIds = companies
+		.map((row) => workdayUtils.readNestedId({ value: row['company'] }))
+		.filter((id): id is string => typeof id === 'string' && WID_PATTERN.test(id));
+	if (companyIds.length === 0) {
+		return { total: 0, data: [] };
+	}
+
 	const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
 	return await runWql({
 		auth,
-		query: `SELECT supplierPayment FROM supplierPayments${whereClause}`,
+		query: `SELECT supplierPayment FROM supplierPayments(dataSourceFilter = supplierPaymentsFilter, company = (${companyIds.join(
+			', ',
+		)}))${whereClause}`,
 	});
 }
 
@@ -382,9 +394,9 @@ async function approveTask({
 	let commentXml = '';
 	if (comment) {
 		commentXml = `
-      <bsvc:Business_Process_Comment_Data>
+      <bsvc:Approve_Business_Process_Data>
         <bsvc:Comment>${workdayUtils.escapeXml({ value: comment })}</bsvc:Comment>
-      </bsvc:Business_Process_Comment_Data>`;
+      </bsvc:Approve_Business_Process_Data>`;
 	}
 
 	const operationXml = `
@@ -488,26 +500,20 @@ async function createJobRequisition({
 	workerTypeId?: string;
 	workerSubTypeId?: string;
 	primaryLocationId?: string;
-	recruitingStartDate?: string;
-	targetHireDate?: string;
+	recruitingStartDate: string;
+	targetHireDate: string;
 }): Promise<WorkdayRecord> {
 	const openings = numberOfOpenings ?? 1;
 
-	let recruitingStartDateXml = '';
-	if (recruitingStartDate) {
-		recruitingStartDateXml = `
+	const recruitingStartDateXml = `
             <bsvc:Recruiting_Start_Date>${workdayUtils.escapeXml({
 							value: recruitingStartDate,
 						})}</bsvc:Recruiting_Start_Date>`;
-	}
 
-	let targetHireDateXml = '';
-	if (targetHireDate) {
-		targetHireDateXml = `
+	const targetHireDateXml = `
             <bsvc:Target_Hire_Date>${workdayUtils.escapeXml({
 							value: targetHireDate,
 						})}</bsvc:Target_Hire_Date>`;
-	}
 
 	const jobProfileXml = jobProfileId
 		? `
@@ -709,8 +715,11 @@ async function createTimeOffRequest({
 }): Promise<WorkdayRecord> {
 	const typeIdKind = WID_PATTERN.test(timeOffTypeId) ? 'WID' : 'Time_Off_Type_ID';
 	const requested = hoursPerDay ?? 8;
-	const start = new Date(startDate);
-	const end = new Date(endDate);
+	const start = parseIsoDate({ value: startDate, label: 'Start Date' });
+	const end = parseIsoDate({ value: endDate, label: 'End Date' });
+	if (end < start) {
+		throw new Error('End Date must be on or after Start Date.');
+	}
 	let entriesXml = '';
 	const current = new Date(start);
 	while (current <= end) {
@@ -786,7 +795,7 @@ async function createWorkerTimeBlock({
 	}
 
 	const operationXml = `
-    <bsvc:Import_Reported_Time_Blocks_Request xmlns:bsvc="urn:com.workday/bsvc">
+    <bsvc:Put_Reported_Time_Blocks_for_Worker_Request xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Reported_Time_Block_Data>
         <bsvc:Worker_Reference>
           <bsvc:ID bsvc:type="WID">${workdayUtils.escapeXml({ value: workerId })}</bsvc:ID>
@@ -794,7 +803,7 @@ async function createWorkerTimeBlock({
         <bsvc:Date>${workdayUtils.escapeXml({ value: date })}</bsvc:Date>
         <bsvc:Quantity>${hours}</bsvc:Quantity>${timeEntryCodeXml}${commentXml}
       </bsvc:Reported_Time_Block_Data>
-    </bsvc:Import_Reported_Time_Blocks_Request>`;
+    </bsvc:Put_Reported_Time_Blocks_for_Worker_Request>`;
 
 	return await workdayClient.soap({ auth, service: 'Time_Tracking', operationXml });
 }
@@ -881,14 +890,19 @@ async function updateSupplier({
 	supplierId,
 	supplierName,
 	taxId,
+	taxIdType,
 	paymentTermsId,
 }: {
 	auth: WorkdayAuthValue;
 	supplierId: string;
 	supplierName?: string;
 	taxId?: string;
+	taxIdType?: string;
 	paymentTermsId?: string;
 }): Promise<WorkdayRecord> {
+	if (Boolean(taxId) !== Boolean(taxIdType)) {
+		throw new Error('Tax ID and Tax ID Type must be set together, e.g. Tax ID Type `USA-EIN`.');
+	}
 	let supplierDataFields = '';
 	if (supplierName) {
 		supplierDataFields += `
@@ -896,9 +910,18 @@ async function updateSupplier({
 					value: supplierName,
 				})}</bsvc:Supplier_Name>`;
 	}
-	if (taxId) {
+	if (taxId && taxIdType) {
 		supplierDataFields += `
-        <bsvc:Tax_ID>${workdayUtils.escapeXml({ value: taxId })}</bsvc:Tax_ID>`;
+        <bsvc:Tax_ID_Widget_Data bsvc:Replace_All="false">
+          <bsvc:Tax_ID_Data>
+            <bsvc:Tax_ID_Text>${workdayUtils.escapeXml({ value: taxId })}</bsvc:Tax_ID_Text>
+            <bsvc:Tax_ID_Type_Reference>
+              <bsvc:ID bsvc:type="Tax_ID_Type">${workdayUtils.escapeXml({
+								value: taxIdType,
+							})}</bsvc:ID>
+            </bsvc:Tax_ID_Type_Reference>
+          </bsvc:Tax_ID_Data>
+        </bsvc:Tax_ID_Widget_Data>`;
 	}
 	if (paymentTermsId) {
 		supplierDataFields += `
@@ -933,19 +956,21 @@ async function updateSupplierInvoice({
 	total?: string;
 }): Promise<WorkdayRecord> {
 	let invoiceDataFields = '';
-	if (invoiceDate) {
-		invoiceDataFields += `
-        <bsvc:Invoice_Date>${workdayUtils.escapeXml({ value: invoiceDate })}</bsvc:Invoice_Date>`;
-	}
 	if (invoiceNumber) {
 		invoiceDataFields += `
         <bsvc:Invoice_Number>${workdayUtils.escapeXml({
 					value: invoiceNumber,
 				})}</bsvc:Invoice_Number>`;
 	}
+	if (invoiceDate) {
+		invoiceDataFields += `
+        <bsvc:Invoice_Date>${workdayUtils.escapeXml({ value: invoiceDate })}</bsvc:Invoice_Date>`;
+	}
 	if (total) {
 		invoiceDataFields += `
-        <bsvc:Total_Amount>${workdayUtils.escapeXml({ value: total })}</bsvc:Total_Amount>`;
+        <bsvc:Control_Amount_Total>${workdayUtils.escapeXml({
+					value: total,
+				})}</bsvc:Control_Amount_Total>`;
 	}
 
 	const operationXml = `
@@ -958,6 +983,19 @@ async function updateSupplierInvoice({
     </bsvc:Submit_Supplier_Invoice_Request>`;
 
 	return await workdayClient.soap({ auth, service: 'Resource_Management', operationXml });
+}
+
+function parseIsoDate({ value, label }: { value: string; label: string }): Date {
+	const trimmed = value.trim();
+	const date = new Date(`${trimmed}T00:00:00.000Z`);
+	if (
+		!/^\d{4}-\d{2}-\d{2}$/.test(trimmed) ||
+		Number.isNaN(date.getTime()) ||
+		date.toISOString().slice(0, 10) !== trimmed
+	) {
+		throw new Error(`${label} must be a date in YYYY-MM-DD format, e.g. 2026-11-03.`);
+	}
+	return date;
 }
 
 function escapeWql({ value }: { value: string }): string {

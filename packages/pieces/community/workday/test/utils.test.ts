@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { workdayUtils } from './utils';
+import { workdayUtils } from '../src/lib/common/utils';
 
 describe('flattenRecord', () => {
 	it('flattens nested objects with underscore-joined keys', () => {
@@ -155,10 +155,10 @@ describe('getRecordTimestamp', () => {
 describe('resolveBusinessObject', () => {
 	it('resolves a standard business object for a module', () => {
 		const config = workdayUtils.resolveBusinessObject({
-			module: 'recruiting',
-			selection: { objectType: 'jobRequisitions' },
+			module: 'onboarding',
+			selection: { objectType: 'workers' },
 		});
-		expect(config.path).toBe('/jobRequisitions');
+		expect(config.path).toBe('/workers');
 		expect(config.service).toBe('staffing/v6');
 	});
 

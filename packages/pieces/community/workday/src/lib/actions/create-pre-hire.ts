@@ -36,11 +36,6 @@ export const createPreHireAction = createAction({
 			description: 'Phone number.',
 			required: false,
 		}),
-		dateOfBirth: Property.ShortText({
-			displayName: 'Date of Birth',
-			description: 'Date of birth (YYYY-MM-DD).',
-			required: false,
-		}),
 		country: Property.ShortText({
 			displayName: 'Country',
 			description:

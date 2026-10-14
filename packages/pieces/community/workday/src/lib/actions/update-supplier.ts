@@ -12,7 +12,7 @@ export const updateSupplierAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Updates an existing supplier (identified by its supplier WID) in Workday, setting any of name, tax ID, and payment-terms WID. Use to amend supplier master data. Idempotent: keyed on the supplier ID, so re-sending the same field values converges to the same state.',
+			'Updates an existing supplier (identified by its supplier WID) in Workday, setting any of name, a tax ID with its Tax ID Type (e.g. USA-EIN; other tax IDs are kept), and payment-terms WID. Use to amend supplier master data. Idempotent: keyed on the supplier ID, so re-sending the same field values converges to the same state.',
 		idempotent: true,
 	},
 	props: {
@@ -28,17 +28,18 @@ export const updateSupplierAction = createAction({
 		}),
 		taxId: Property.ShortText({
 			displayName: 'Tax ID',
-			description: 'Supplier tax identification number.',
+			description:
+				'Supplier tax identification number. Needs Tax ID Type. Adds or replaces the tax ID of that type only; other tax IDs are kept.',
+			required: false,
+		}),
+		taxIdType: Property.ShortText({
+			displayName: 'Tax ID Type',
+			description: 'Workday Tax ID Type reference ID, e.g. `USA-EIN`. Required when Tax ID is set.',
 			required: false,
 		}),
 		paymentTermsId: Property.ShortText({
 			displayName: 'Payment Terms ID',
 			description: 'Payment terms reference ID.',
-			required: false,
-		}),
-		additionalData: Property.Object({
-			displayName: 'Additional Data',
-			description: 'Additional fields as key-value pairs.',
 			required: false,
 		}),
 	},
@@ -48,6 +49,7 @@ export const updateSupplierAction = createAction({
 			supplierId: propsValue.supplierId,
 			supplierName: propsValue.supplierName,
 			taxId: propsValue.taxId,
+			taxIdType: propsValue.taxIdType,
 			paymentTermsId: propsValue.paymentTermsId,
 		});
 	},

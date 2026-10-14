@@ -15,7 +15,7 @@ export const callOperationAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Invokes a Workday operation that has no dedicated action, in one of two modes: a REST sub-resource call (POST, PUT, or PATCH against a business-object path such as /jobRequisitions/{id}/close) or a raw SOAP operation against a named web service such as Staffing. Use as the escape hatch for verbs like approve, close, or submit, and prefer the specific action (e.g. Approve Task, Update Business Object) whenever one exists. Requires the operation name, plus the SOAP service name when running in SOAP mode. Not idempotent: each call submits the operation as a fresh event.',
+			'Invokes a Workday operation that has no dedicated action, in one of two modes: a REST sub-resource call (POST, PUT, or PATCH against a business-object path such as /cases/{id}/reopen) or a raw SOAP operation against a named web service such as Staffing. Use as the escape hatch for verbs like approve, close, or submit, and prefer the specific action (e.g. Approve Task, Update Business Object) whenever one exists. Requires the operation name, plus the SOAP service name when running in SOAP mode. Not idempotent: each call submits the operation as a fresh event.',
 		idempotent: false,
 	},
 	props: {
@@ -36,7 +36,7 @@ export const callOperationAction = createAction({
 		operationName: Property.ShortText({
 			displayName: 'Operation Name',
 			description:
-				'REST sub-resource or SOAP operation path, e.g. `/jobRequisitions/{id}/close` or `Submit_Job_Requisition`.',
+				'REST sub-resource or SOAP operation path, e.g. `/cases/{id}/reopen` or `Close_Job_Requisition`.',
 			required: true,
 		}),
 		soapService: Property.ShortText({

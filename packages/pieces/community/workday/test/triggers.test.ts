@@ -2,12 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HttpResponse, httpClient } from '@activepieces/pieces-common';
 
-import { employeeTerminatedTrigger } from './employee-terminated';
-import { newHireCreatedTrigger } from './new-hire-created';
-import { newOrUpdatedBusinessObjectTrigger } from './new-or-updated-business-object';
-import { newOrUpdatedBusinessObjectBatchTrigger } from './new-or-updated-business-object-batch';
-import { scheduledReportFetchBatchTrigger } from './scheduled-report-fetch-batch';
-import { scheduledReportFetchWqlBatchTrigger } from './scheduled-report-fetch-wql-batch';
+import { employeeTerminatedTrigger } from '../src/lib/triggers/employee-terminated';
+import { newHireCreatedTrigger } from '../src/lib/triggers/new-hire-created';
+import { newOrUpdatedBusinessObjectTrigger } from '../src/lib/triggers/new-or-updated-business-object';
+import { newOrUpdatedBusinessObjectBatchTrigger } from '../src/lib/triggers/new-or-updated-business-object-batch';
+import { scheduledReportFetchBatchTrigger } from '../src/lib/triggers/scheduled-report-fetch-batch';
+import { scheduledReportFetchWqlBatchTrigger } from '../src/lib/triggers/scheduled-report-fetch-wql-batch';
 
 const AUTH = {
 	access_token: 'tok',
@@ -65,7 +65,11 @@ describe('new_or_updated_business_object', () => {
 			triggerContext(
 				{
 					module: 'recruiting',
-					businessObject: { objectType: 'jobRequisitions' },
+					businessObject: {
+						objectType: '__custom__',
+						customPath: '/jobPostings',
+						customService: 'recruiting/v4',
+					},
 					dateField: 'lastFunctionallyUpdated',
 					additionalFilters: undefined,
 				},
@@ -103,7 +107,11 @@ describe('new_or_updated_business_object', () => {
 			triggerContext(
 				{
 					module: 'recruiting',
-					businessObject: { objectType: 'jobRequisitions' },
+					businessObject: {
+						objectType: '__custom__',
+						customPath: '/jobPostings',
+						customService: 'recruiting/v4',
+					},
 					dateField: 'lastFunctionallyUpdated',
 					additionalFilters: undefined,
 				},
@@ -139,7 +147,11 @@ describe('new_or_updated_business_object_batch', () => {
 			triggerContext(
 				{
 					module: 'recruiting',
-					businessObject: { objectType: 'jobRequisitions' },
+					businessObject: {
+						objectType: '__custom__',
+						customPath: '/jobPostings',
+						customService: 'recruiting/v4',
+					},
 					dateField: 'lastFunctionallyUpdated',
 					additionalFilters: undefined,
 				},

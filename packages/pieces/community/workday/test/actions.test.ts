@@ -2,17 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HttpMethod, HttpRequest, HttpResponse, httpClient } from '@activepieces/pieces-common';
 
-import { callOperationAction } from './call-operation';
-import { createTimeOffRequestAction } from './create-time-off-request';
-import { createUpdateCustomObjectAction } from './create-update-custom-object';
-import { findSupplierInvoiceAction } from './find-supplier-invoice';
-import { getBusinessObjectDetailsBatchAction } from './get-business-object-details-batch';
-import { getCustomObjectsAction } from './get-custom-objects';
-import { getReportAction } from './get-report';
-import { getReportWqlBatchAction } from './get-report-wql-batch';
-import { listCustomObjectDefinitionsBatchAction } from './list-custom-object-definitions-batch';
-import { searchBusinessObjectBatchAction } from './search-business-object-batch';
-import { updateBusinessObjectAction } from './update-business-object';
+import { callOperationAction } from '../src/lib/actions/call-operation';
+import { createTimeOffRequestAction } from '../src/lib/actions/create-time-off-request';
+import { createUpdateCustomObjectAction } from '../src/lib/actions/create-update-custom-object';
+import { findSupplierInvoiceAction } from '../src/lib/actions/find-supplier-invoice';
+import { getBusinessObjectDetailsBatchAction } from '../src/lib/actions/get-business-object-details-batch';
+import { getCustomObjectsAction } from '../src/lib/actions/get-custom-objects';
+import { getReportAction } from '../src/lib/actions/get-report';
+import { getReportWqlBatchAction } from '../src/lib/actions/get-report-wql-batch';
+import { listCustomObjectDefinitionsBatchAction } from '../src/lib/actions/list-custom-object-definitions-batch';
+import { searchBusinessObjectBatchAction } from '../src/lib/actions/search-business-object-batch';
+import { updateBusinessObjectAction } from '../src/lib/actions/update-business-object';
 
 const AUTH = {
 	access_token: 'tok',
@@ -61,7 +61,11 @@ describe('get_business_object_details_batch', () => {
 		const out = (await getBusinessObjectDetailsBatchAction.run(
 			context({
 				module: 'recruiting',
-				businessObject: { objectType: 'jobRequisitions' },
+				businessObject: {
+					objectType: '__custom__',
+					customPath: '/jobPostings',
+					customService: 'recruiting/v4',
+				},
 				objectIds: [{ id: '1' }, { id: '2' }],
 			}),
 		)) as { total_count: number; records: Record<string, unknown>[] };
@@ -72,7 +76,7 @@ describe('get_business_object_details_batch', () => {
 			title: 'Req 1',
 		});
 		expect(requests()[0].url).toBe(
-			'https://wd2-impl-services1.workday.com/ccx/api/staffing/v6/mytenant/jobRequisitions/1',
+			'https://wd2-impl-services1.workday.com/ccx/api/recruiting/v4/mytenant/jobPostings/1',
 		);
 	});
 });
@@ -127,10 +131,10 @@ describe('call_operation', () => {
 
 		await callOperationAction.run(
 			context({
-				module: 'recruiting',
-				businessObject: { objectType: 'jobRequisitions' },
+				module: 'hr_services_time_tracking',
+				businessObject: { objectType: 'cases' },
 				operationType: 'rest',
-				operationName: '1/close',
+				operationName: 'c-1/reopen',
 				httpMethod: 'POST',
 			}),
 		);
@@ -138,7 +142,7 @@ describe('call_operation', () => {
 		const req = requests()[0];
 		expect(req.method).toBe(HttpMethod.POST);
 		expect(req.url).toBe(
-			'https://wd2-impl-services1.workday.com/ccx/api/staffing/v6/mytenant/jobRequisitions/1/close',
+			'https://wd2-impl-services1.workday.com/ccx/api/helpCase/v4/mytenant/cases/c-1/reopen',
 		);
 	});
 
@@ -153,20 +157,24 @@ describe('call_operation', () => {
 			context(
 				{
 					module: 'recruiting',
-					businessObject: { objectType: 'jobRequisitions' },
+					businessObject: {
+						objectType: '__custom__',
+						customPath: '/jobPostings',
+						customService: 'recruiting/v4',
+					},
 					operationType: 'soap',
-					operationName: 'Submit_Job_Requisition',
-					soapService: 'Staffing',
+					operationName: 'Close_Job_Requisition',
+					soapService: 'Recruiting',
 				},
 				AUTH_WITH_ISU,
 			),
 		);
 
 		const req = requests()[0];
-		expect(req.url).toContain('/ccx/service/mytenant/Staffing/');
+		expect(req.url).toContain('/ccx/service/mytenant/Recruiting/');
 		expect(String(req.body)).toContain('soapenv:Envelope');
 		expect(String(req.body)).toContain(
-			'<bsvc:Submit_Job_Requisition xmlns:bsvc="urn:com.workday/bsvc"/>',
+			'<bsvc:Close_Job_Requisition xmlns:bsvc="urn:com.workday/bsvc"/>',
 		);
 	});
 });
@@ -242,6 +250,7 @@ describe('list_custom_object_definitions_batch', () => {
 		};
 
 		expect(out.total_count).toBe(2);
+		expect(requests()[0].url).toContain('/ccx/api/customObjectDefinition/v1/mytenant/definitions');
 	});
 });
 
@@ -259,6 +268,9 @@ describe('create_update_custom_object', () => {
 
 		const req = requests()[0];
 		expect(req.method).toBe(HttpMethod.POST);
+		expect(req.url).toBe(
+			'https://wd2-impl-services1.workday.com/ccx/api/v1/mytenant/customObjects/apTestInfo',
+		);
 		expect(req.queryParams).toEqual({ updateIfExists: 'true' });
 		expect(req.body).toEqual({ worker: { id: 'w1' }, note: 'X' });
 	});

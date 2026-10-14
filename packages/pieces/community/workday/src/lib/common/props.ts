@@ -139,7 +139,7 @@ function businessObjectType({ module }: { module: string }) {
 		description: 'Workday business object to work with.',
 		required: true,
 		options: {
-			disabled: moduleObjects.length === 0,
+			disabled: false,
 			options: [
 				...moduleObjects.map((item) => ({
 					label: item.label,
@@ -154,7 +154,8 @@ function businessObjectType({ module }: { module: string }) {
 function customBusinessObjectPath() {
 	return Property.ShortText({
 		displayName: 'Custom Business Object Path',
-		description: 'REST path segment when using a custom object, e.g. `/jobRequisitions`.',
+		description:
+			'REST path segment when using a custom object, e.g. `/jobPostings` with the Recruiting (v4) service.',
 		required: false,
 	});
 }
@@ -169,6 +170,7 @@ function customService() {
 			options: [
 				{ label: 'Common (v1)', value: 'v1' },
 				{ label: 'Staffing (v6)', value: 'staffing/v6' },
+				{ label: 'Recruiting (v4)', value: 'recruiting/v4' },
 				{ label: 'Time Tracking (v7)', value: 'timeTracking/v7' },
 				{ label: 'Expense Management', value: 'expense/v1' },
 				{ label: 'Procurement (v5)', value: 'procurement/v5' },

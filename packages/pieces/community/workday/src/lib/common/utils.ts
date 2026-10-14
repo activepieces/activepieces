@@ -229,29 +229,7 @@ const MAX_FLATTEN_DEPTH = 4;
 const CUSTOM_BUSINESS_OBJECT = '__custom__';
 
 const BUSINESS_OBJECTS_BY_MODULE: Record<string, WorkdayBusinessObject[]> = {
-	recruiting: [
-		{
-			label: 'Job Requisition',
-			value: 'jobRequisitions',
-			path: '/jobRequisitions',
-			service: 'staffing/v6',
-			wqlDataSource: 'jobRequisitions',
-		},
-		{
-			label: 'Job Application',
-			value: 'jobApplications',
-			path: '/jobApplications',
-			service: 'staffing/v6',
-			wqlDataSource: 'jobApplications',
-		},
-		{
-			label: 'Candidate',
-			value: 'candidates',
-			path: '/candidates',
-			service: 'staffing/v6',
-			wqlDataSource: 'candidates',
-		},
-	],
+	recruiting: [],
 	onboarding: [
 		{
 			label: 'Worker',
@@ -259,13 +237,6 @@ const BUSINESS_OBJECTS_BY_MODULE: Record<string, WorkdayBusinessObject[]> = {
 			path: '/workers',
 			service: 'staffing/v6',
 			wqlDataSource: 'allWorkers',
-		},
-		{
-			label: 'Pre-Hire',
-			value: 'preHires',
-			path: '/preHires',
-			service: 'staffing/v6',
-			wqlDataSource: 'preHires',
 		},
 	],
 	hr_services_time_tracking: [
