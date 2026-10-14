@@ -11,6 +11,11 @@ import { ArrowUpRight, ExternalLink, RefreshCw } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  AdminPage,
+  AdminPageHeader,
+  adminSurface,
+} from '@/app/components/admin';
 import { BillingPageShell } from '@/app/components/billing-page-shell';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -43,23 +48,17 @@ export function BillingPlanTab() {
       errorMessage={t('Failed to load billing information')}
     >
       {({ platform, info }) => (
-        <div className="flex w-full flex-col gap-4 p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-xl font-medium">
-                {t('Billing & subscription')}
-              </h1>
-              <div className="text-sm text-gray-11">
-                {t(
-                  'For questions about billing contact us at support@activepieces.com',
-                )}
-              </div>
-            </div>
+        <AdminPage>
+          <AdminPageHeader
+            title={t('Billing & subscription')}
+            description={t(
+              'For questions about billing contact us at support@activepieces.com',
+            )}
+          >
             <BillingRefreshButton />
-          </div>
-          <Separator />
+          </AdminPageHeader>
           <PlanTab platform={platform} info={info} />
-        </div>
+        </AdminPage>
       )}
     </BillingPageShell>
   );
@@ -84,8 +83,6 @@ function BillingRefreshButton() {
     <Button
       {...adminControl(AdminControl.BILLING_REFRESH_RUN)}
       variant="outline"
-      size="sm"
-      className="shrink-0"
       loading={isRefreshing}
       onClick={() =>
         refreshBilling(undefined, {
@@ -93,7 +90,7 @@ function BillingRefreshButton() {
         })
       }
     >
-      <RefreshCw className="size-4 mr-2" />
+      <RefreshCw className="size-4" />
       {t('Refresh')}
     </Button>
   );
@@ -136,7 +133,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
   const licenseKeyCopy = licenseKeySectionCopy({ hasLicenseKey, isCloud });
 
   return (
-    <div className="flex w-full flex-col gap-4 p-6">
+    <div className="flex w-full flex-col gap-6">
       {info.billingUnavailable && (
         <Alert variant="warning">
           <AlertDescription>
@@ -190,7 +187,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
               </div>
             }
           >
-            <CreditsCard info={info} />
+            <CreditsCard info={info} className={adminSurface.card} />
             {isPaid &&
               isNil(info.trialEndsAt) &&
               !isNil(displayedCreditsFeature) && (
@@ -198,6 +195,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
                   feature={displayedCreditsFeature}
                   hasCard={hasBillingPortal}
                   note={autoRechargeNote}
+                  className={adminSurface.card}
                 />
               )}
           </BillingSection>
@@ -212,7 +210,11 @@ function PlanTab({ platform, info }: PlanTabProps) {
                 'Manage how many members can join your platform. New seats are available immediately.',
               )}
             >
-              <UsersCard info={info} feature={seatsFeature} />
+              <UsersCard
+                info={info}
+                feature={seatsFeature}
+                className={adminSurface.card}
+              />
             </BillingSection>
           </>
         )}
@@ -236,7 +238,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
                     onClick={() => redirectToPortalSession()}
                   >
                     {t('Manage subscription in Stripe')}
-                    <ExternalLink className="size-3.5 ml-2" />
+                    <ExternalLink className="size-3.5" />
                   </Button>
                 )}
                 {!isCompedLifetimePlan &&
@@ -334,7 +336,7 @@ const BillingSection = ({
   description?: React.ReactNode;
   children: React.ReactNode;
 }) => (
-  <section className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_400px] md:gap-20 pr-4">
+  <section className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_400px] md:gap-20">
     <div className="flex flex-col gap-1">
       <h2 className="text-base font-semibold">{title}</h2>
       <div className="text-sm text-gray-11">{description}</div>
