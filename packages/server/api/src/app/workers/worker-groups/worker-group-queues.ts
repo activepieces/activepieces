@@ -1,17 +1,17 @@
 import { isNil } from '@activepieces/core-utils'
 import { WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
 
-const parseWorkerGroupValue = ({ value, projectWorker, scope }: ParseWorkerGroupValueParams): WorkerGroupAssignment | null => {
+const parseWorkerGroupValue = ({ value, scope }: ParseWorkerGroupValueParams): WorkerGroupAssignment | null => {
     if (isNil(value) || value.length === 0) {
         return null
     }
     return {
-        scope: resolveScope({ projectWorker, scope }),
+        scope,
         id: value,
     }
 }
 
-const resolveScope = ({ projectWorker, scope }: { projectWorker: boolean, scope: string | undefined }): WorkerGroupScope => {
+const resolveScope = ({ projectWorker, scope }: ResolveScopeParams): WorkerGroupScope => {
     const explicitScope = Object.values(WorkerGroupScope).find((knownScope) => knownScope === scope)
     if (!isNil(explicitScope)) {
         return explicitScope
@@ -38,6 +38,7 @@ const isRoutableWorkerGroupId = (value: string): boolean => {
 
 export const workerGroupQueues = {
     parseWorkerGroupValue,
+    resolveScope,
     getPlatformGroupQueueName,
     getProjectGroupQueueName,
     getFlowGroupQueueName,
@@ -58,6 +59,10 @@ export type WorkerGroupAssignment = {
 
 type ParseWorkerGroupValueParams = {
     value: string | undefined
+    scope: WorkerGroupScope
+}
+
+type ResolveScopeParams = {
     projectWorker: boolean
     scope: string | undefined
 }

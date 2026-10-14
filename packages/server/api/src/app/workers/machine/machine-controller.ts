@@ -21,10 +21,13 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
             // AP_PROJECT_WORKER is deprecated in favor of AP_WORKER_GROUP_SCOPE but kept for backward compatibility.
             const projectWorker = socket.handshake.auth?.projectWorker === true
             const rawWorkerGroupScope = socket.handshake.auth?.workerGroupScope
-            const assignment = workerGroupQueues.parseWorkerGroupValue({
-                value: typeof rawWorkerGroupValue === 'string' ? rawWorkerGroupValue : undefined,
+            const scope = workerGroupQueues.resolveScope({
                 projectWorker,
                 scope: typeof rawWorkerGroupScope === 'string' ? rawWorkerGroupScope : undefined,
+            })
+            const assignment = workerGroupQueues.parseWorkerGroupValue({
+                value: typeof rawWorkerGroupValue === 'string' ? rawWorkerGroupValue : undefined,
+                scope,
             })
             const response = await machineService(app.log).onConnection(request, assignment)
             callback?.(response)

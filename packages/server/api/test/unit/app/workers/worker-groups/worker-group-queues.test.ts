@@ -4,20 +4,27 @@ import { workerGroupQueues } from '../../../../../src/app/workers/worker-groups/
 
 describe('workerGroupQueues.parseWorkerGroupValue', () => {
     it('returns null when no group id is set', () => {
-        expect(workerGroupQueues.parseWorkerGroupValue({ value: undefined, projectWorker: true, scope: undefined })).toBeNull()
-        expect(workerGroupQueues.parseWorkerGroupValue({ value: '', projectWorker: false, scope: 'flow' })).toBeNull()
+        expect(workerGroupQueues.parseWorkerGroupValue({ value: undefined, scope: WorkerGroupScope.PROJECT })).toBeNull()
+        expect(workerGroupQueues.parseWorkerGroupValue({ value: '', scope: WorkerGroupScope.FLOW })).toBeNull()
     })
 
+    it('returns an assignment carrying the given scope', () => {
+        expect(workerGroupQueues.parseWorkerGroupValue({ value: 'g1', scope: WorkerGroupScope.FLOW })).toEqual({ scope: WorkerGroupScope.FLOW, id: 'g1' })
+        expect(workerGroupQueues.parseWorkerGroupValue({ value: 'g1', scope: WorkerGroupScope.PLATFORM })).toEqual({ scope: WorkerGroupScope.PLATFORM, id: 'g1' })
+    })
+})
+
+describe('workerGroupQueues.resolveScope', () => {
     it('uses the explicit scope when valid', () => {
-        expect(workerGroupQueues.parseWorkerGroupValue({ value: 'g1', projectWorker: true, scope: 'flow' })).toEqual({ scope: WorkerGroupScope.FLOW, id: 'g1' })
-        expect(workerGroupQueues.parseWorkerGroupValue({ value: 'g1', projectWorker: true, scope: 'platform' })).toEqual({ scope: WorkerGroupScope.PLATFORM, id: 'g1' })
-        expect(workerGroupQueues.parseWorkerGroupValue({ value: 'g1', projectWorker: false, scope: 'project' })).toEqual({ scope: WorkerGroupScope.PROJECT, id: 'g1' })
+        expect(workerGroupQueues.resolveScope({ projectWorker: true, scope: 'flow' })).toBe(WorkerGroupScope.FLOW)
+        expect(workerGroupQueues.resolveScope({ projectWorker: true, scope: 'platform' })).toBe(WorkerGroupScope.PLATFORM)
+        expect(workerGroupQueues.resolveScope({ projectWorker: false, scope: 'project' })).toBe(WorkerGroupScope.PROJECT)
     })
 
     it('falls back to the projectWorker flag when the scope is missing or invalid', () => {
-        expect(workerGroupQueues.parseWorkerGroupValue({ value: 'g1', projectWorker: true, scope: undefined })).toEqual({ scope: WorkerGroupScope.PROJECT, id: 'g1' })
-        expect(workerGroupQueues.parseWorkerGroupValue({ value: 'g1', projectWorker: false, scope: undefined })).toEqual({ scope: WorkerGroupScope.PLATFORM, id: 'g1' })
-        expect(workerGroupQueues.parseWorkerGroupValue({ value: 'g1', projectWorker: true, scope: 'bogus' })).toEqual({ scope: WorkerGroupScope.PROJECT, id: 'g1' })
+        expect(workerGroupQueues.resolveScope({ projectWorker: true, scope: undefined })).toBe(WorkerGroupScope.PROJECT)
+        expect(workerGroupQueues.resolveScope({ projectWorker: false, scope: undefined })).toBe(WorkerGroupScope.PLATFORM)
+        expect(workerGroupQueues.resolveScope({ projectWorker: true, scope: 'bogus' })).toBe(WorkerGroupScope.PROJECT)
     })
 })
 
