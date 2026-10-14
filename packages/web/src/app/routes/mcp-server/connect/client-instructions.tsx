@@ -66,11 +66,15 @@ export function ClientInstructions({
             </a>
           </Button>
         </header>
-        <ConnectionStatus
-          clientName={client.name}
-          grants={grants}
-          onManage={() => nav.showTab('connections')}
-        />
+        {client.grantKey === null ? (
+          <UndetectedClientNote onOpen={() => nav.showTab('connections')} />
+        ) : (
+          <ConnectionStatus
+            clientName={client.name}
+            grants={grants}
+            onManage={() => nav.showTab('connections')}
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-6">
@@ -140,6 +144,19 @@ export function ClientInstructions({
         </h2>
         <CopyToClipboardInput textToCopy={serverUrl} useInput />
       </section>
+    </div>
+  );
+}
+
+function UndetectedClientNote({ onOpen }: { onOpen: () => void }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border bg-panel px-4 py-3">
+      <span className="flex-1 text-sm text-gray-11">
+        {t('After you sign in, check the connection in Connections.')}
+      </span>
+      <Button variant="link" size="sm" className="h-auto p-0" onClick={onOpen}>
+        {t('Open Connections')}
+      </Button>
     </div>
   );
 }

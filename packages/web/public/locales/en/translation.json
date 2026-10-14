@@ -3737,5 +3737,7 @@
   "Showing {shown} of {total}. Refine your search to see more.": "Showing {shown} of {total}. Refine your search to see more.",
   "Manage connections": "Manage connections",
   "Edit the Gemini CLI settings yourself.": "Edit the Gemini CLI settings yourself.",
-  "Add the server to your Gemini CLI settings.": "Add the server to your Gemini CLI settings."
+  "Add the server to your Gemini CLI settings.": "Add the server to your Gemini CLI settings.",
+  "After you sign in, check the connection in Connections.": "After you sign in, check the connection in Connections.",
+  "Open Connections": "Open Connections"
 }

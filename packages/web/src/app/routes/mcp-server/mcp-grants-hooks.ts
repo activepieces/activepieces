@@ -27,7 +27,7 @@ export const mcpGrantsQueries = {
     return useQuery({
       queryKey: [...GRANTS_QUERY_KEY, 'all', request],
       queryFn: () => listAllGrants({ request }),
-      refetchInterval,
+      refetchInterval: (query) => refetchInterval(query.state.data),
     });
   },
 };
@@ -86,5 +86,5 @@ type AllGrantsRequest = Omit<
 
 type UseAllGrantsParams = {
   request: AllGrantsRequest;
-  refetchInterval: () => number | false;
+  refetchInterval: (grants: McpOAuthGrant[] | undefined) => number | false;
 };
