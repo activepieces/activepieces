@@ -24,11 +24,11 @@ export const redactMessage = createAction({
     reason: Property.ShortText({ displayName: 'Reason', required: false }),
     transactionId: Property.ShortText({ displayName: 'Transaction ID', required: false }),
   },
-  async run({ auth, propsValue }) {
+  async run({ auth, propsValue, run, step }) {
     const roomId = matrixIds.roomId(propsValue.roomId);
     const eventId = matrixIds.eventId(propsValue.eventId);
-    const txnId = matrixIds.transactionId(propsValue.transactionId);
     const reason = matrixClient.optionalText(propsValue.reason);
+    const txnId = matrixIds.transactionId({ value: propsValue.transactionId, run, step, parts: [roomId, eventId, reason ?? null] });
     const body = await matrixClient.request({
       auth: auth.props,
       method: HttpMethod.PUT,

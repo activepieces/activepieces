@@ -24,11 +24,11 @@ export const reactToMessage = createAction({
     key: Property.ShortText({ displayName: 'Reaction', description: 'Usually a single emoji, e.g. 👍', required: true }),
     transactionId: Property.ShortText({ displayName: 'Transaction ID', required: false }),
   },
-  async run({ auth, propsValue }) {
+  async run({ auth, propsValue, run, step }) {
     const roomId = matrixIds.roomId(propsValue.roomId);
     const eventId = matrixIds.eventId(propsValue.eventId);
     const key = matrixClient.requiredText({ value: propsValue.key, label: 'Reaction' });
-    const txnId = matrixIds.transactionId(propsValue.transactionId);
+    const txnId = matrixIds.transactionId({ value: propsValue.transactionId, run, step, parts: [roomId, eventId, key] });
     try {
       const sent = await matrixCommon.sendEvent({
         auth: auth.props,

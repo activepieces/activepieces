@@ -64,7 +64,7 @@ export const sendMessage = createAction({
       required: true,
     }),
   },
-  async run({ auth, propsValue }) {
+  async run({ auth, propsValue, run, step }) {
     const message = matrixClient.requiredText({ value: propsValue.message, label: 'Message' });
     const picked = matrixClient.optionalText(propsValue.room);
     const alias = matrixClient.optionalText(propsValue.room_alias);
@@ -81,7 +81,7 @@ export const sendMessage = createAction({
       roomId,
       eventType: 'm.room.message',
       content,
-      txnId: matrixIds.transactionId(undefined),
+      txnId: matrixIds.transactionId({ value: undefined, run, step, parts: [roomId, content] }),
     });
   },
 });

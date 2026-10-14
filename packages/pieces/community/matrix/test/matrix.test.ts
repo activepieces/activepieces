@@ -13,8 +13,8 @@ function action(name: string) {
   return found;
 }
 
-function runAction({ name, propsValue = {}, connection = auth }: { name: string; propsValue?: Record<string, unknown>; connection?: unknown }) {
-  return Reflect.apply(action(name).run, undefined, [{ auth: connection, propsValue }]);
+function runAction({ name, propsValue = {}, connection = auth, runId = 'run1', stepName = 'step_1' }: { name: string; propsValue?: Record<string, unknown>; connection?: unknown; runId?: string; stepName?: string }) {
+  return Reflect.apply(action(name).run, undefined, [{ auth: connection, propsValue, run: { id: runId }, step: { name: stepName } }]);
 }
 
 function mockOk(body: unknown) {
@@ -57,7 +57,10 @@ describe('ids', () => {
     expect(matrixIds.roomId('!abc:x.org')).toBe('!abc:x.org');
     expect(matrixIds.roomId('!opaqueV12id')).toBe('!opaqueV12id');
     expect(() => matrixIds.roomId('#a:x.org')).toThrow();
-    expect(() => matrixIds.roomId('!a/../b')).toThrow();
+    expect(() => matrixIds.roomId('!a b:x.org')).toThrow();
+    expect(matrixIds.roomAlias('#team/ops:x.org')).toBe('#team/ops:x.org');
+    expect(matrixIds.userId('@team/bot:x.org')).toBe('@team/bot:x.org');
+    expect(matrixIds.clientPath('directory', 'room', '#team/ops:x.org')).toBe('/_matrix/client/v3/directory/room/%23team%2Fops%3Ax.org');
     expect(() => matrixIds.userId('@alice')).toThrow();
     expect(() => matrixIds.roomAlias('#room')).toThrow();
     expect(() => matrixIds.eventId('abc')).toThrow();
@@ -67,9 +70,15 @@ describe('ids', () => {
     expect(matrixIds.clientPath('rooms', '!a:b.org', 'event', '$e+/=')).toBe('/_matrix/client/v3/rooms/!a%3Ab.org/event/%24e%2B%2F%3D');
   });
   it('generates or validates transaction ids', () => {
-    expect(matrixIds.transactionId(undefined)).toMatch(/^ap-[0-9a-f-]{36}$/);
-    expect(matrixIds.transactionId('retry-1')).toBe('retry-1');
-    expect(() => matrixIds.transactionId('a/b')).toThrow();
+    const base = { run: { id: 'run1' }, step: { name: 'step_1' }, parts: ['!r:x.org', { body: 'hi' }] };
+    const derived = matrixIds.transactionId({ ...base, value: undefined });
+    expect(derived).toMatch(/^ap-[0-9a-f]{40}$/);
+    expect(matrixIds.transactionId({ ...base, value: '' })).toBe(derived);
+    expect(matrixIds.transactionId({ ...base, value: undefined, run: { id: 'run2' } })).not.toBe(derived);
+    expect(matrixIds.transactionId({ ...base, value: undefined, step: { name: 'step_2' } })).not.toBe(derived);
+    expect(matrixIds.transactionId({ ...base, value: undefined, parts: ['!r:x.org', { body: 'bye' }] })).not.toBe(derived);
+    expect(matrixIds.transactionId({ ...base, value: 'retry-1' })).toBe('retry-1');
+    expect(() => matrixIds.transactionId({ ...base, value: 'a/b' })).toThrow();
   });
 });
 
@@ -155,6 +164,26 @@ describe('send_message (human)', () => {
     const out = await runAction({ name: 'send_message', propsValue: { room: '!r:x.org', message: 'x' } });
     expect(Object.keys(out).sort()).toEqual(['eventId', 'roomId', 'transactionId']);
   });
+  it('reuses the same txnId when the step is retried in the same run', async () => {
+    const spy = mockOk({ event_id: '$ev' });
+    const first = await runAction({ name: 'send_message', propsValue: { room: '!r:x.org', message: 'x' } });
+    const retry = await runAction({ name: 'send_message', propsValue: { room: '!r:x.org', message: 'x' } });
+    const otherRun = await runAction({ name: 'send_message', propsValue: { room: '!r:x.org', message: 'x' }, runId: 'run2' });
+    expect(retry.transactionId).toBe(first.transactionId);
+    expect(otherRun.transactionId).not.toBe(first.transactionId);
+    expect(spy.mock.calls[0][0].url).toBe(spy.mock.calls[1][0].url);
+  });
+});
+
+describe('send_text_message retries', () => {
+  it('derives a stable txnId when none is given', async () => {
+    mockOk({ event_id: '$ev' });
+    const a = await runAction({ name: 'send_text_message', propsValue: { room: '!r:x.org', text: 'hi' } });
+    const b = await runAction({ name: 'send_text_message', propsValue: { room: '!r:x.org', text: 'hi' } });
+    const c = await runAction({ name: 'send_text_message', propsValue: { room: '!r:x.org', text: 'other' } });
+    expect(a.transactionId).toBe(b.transactionId);
+    expect(c.transactionId).not.toBe(a.transactionId);
+  });
 });
 
 describe('react_to_message', () => {
@@ -171,8 +200,17 @@ describe('list_messages', () => {
   it('sends dir, limit, from and the message filter', async () => {
     const spy = mockOk({ chunk: [{ event_id: '$1', type: 'm.room.message', sender: '@a:x.org', origin_server_ts: 0, content: { msgtype: 'm.text', body: 'b' } }], end: 'tok2' });
     const out = await runAction({ name: 'list_messages', propsValue: { room: '!r:x.org', limit: 5, from: 'tok1' } });
-    expect(spy.mock.calls[0][0].queryParams).toEqual({ dir: 'b', limit: '5', from: 'tok1', filter: '{"types":["m.room.message"]}' });
+    expect(spy.mock.calls[0][0].queryParams).toEqual({ dir: 'b', limit: '5', from: 'tok1', filter: '{"types":["m.room.message","m.room.encrypted"]}' });
     expect(out).toMatchObject({ count: 1, hasMore: true, nextToken: 'tok2', items: [{ eventId: '$1', body: 'b', timestamp: '1970-01-01T00:00:00.000Z' }] });
+  });
+});
+
+describe('create_room', () => {
+  it('still returns roomId when the alias lookup fails', async () => {
+    vi.spyOn(httpClient, 'sendRequest')
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { room_id: '!new:x.org' } })
+      .mockRejectedValueOnce(httpFailure({ status: 404, body: { errcode: 'M_NOT_FOUND', error: 'none' } }));
+    await expect(runAction({ name: 'create_room', propsValue: { aliasName: 'team-ops' } })).resolves.toEqual({ roomId: '!new:x.org', alias: null });
   });
 });
 

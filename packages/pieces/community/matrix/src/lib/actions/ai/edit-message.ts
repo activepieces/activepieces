@@ -14,7 +14,7 @@ export const editMessage = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Edits a message previously sent by this account by posting an m.replace edit event; clients then show the new text with an "(edited)" marker. Needs roomId (!...) and eventId ($...) of the original message. Only the original sender can edit. The original text stays in the room history. Each call adds a new edit event unless transactionId repeats.',
+      'Edits a message previously sent by this account by posting an m.replace edit event; clients then show the new text with an "(edited)" marker. Needs roomId (!...) and eventId ($...) of the original message. Only the original sender can edit. The original text stays in the room history. A retry of the same edit (same flow run, step, room and content) or a repeated transactionId returns the original edit event instead of adding another.',
     idempotent: false,
   },
   outputSchema: matrixOutputSchemas.edited,
@@ -30,11 +30,10 @@ export const editMessage = createAction({
     }),
     transactionId: Property.ShortText({ displayName: 'Transaction ID', required: false }),
   },
-  async run({ auth, propsValue }) {
+  async run({ auth, propsValue, run, step }) {
     const roomId = matrixIds.roomId(propsValue.roomId);
     const eventId = matrixIds.eventId(propsValue.eventId);
     const text = matrixClient.requiredText({ value: propsValue.text, label: 'New Text' });
-    const txnId = matrixIds.transactionId(propsValue.transactionId);
     const newContent = await matrixCommon.buildTextContent({ text, msgtype: 'm.text', format: propsValue.format ?? 'markdown' });
     const content: Record<string, unknown> = {
       ...newContent,
@@ -43,6 +42,7 @@ export const editMessage = createAction({
       'm.relates_to': { rel_type: 'm.replace', event_id: eventId },
     };
     if (typeof newContent['formatted_body'] === 'string') content['formatted_body'] = `* ${newContent['formatted_body']}`;
+    const txnId = matrixIds.transactionId({ value: propsValue.transactionId, run, step, parts: [roomId, content] });
     const sent = await matrixCommon.sendEvent({ auth: auth.props, roomId, eventType: 'm.room.message', content, txnId });
     return { ...sent, editedEventId: eventId };
   },

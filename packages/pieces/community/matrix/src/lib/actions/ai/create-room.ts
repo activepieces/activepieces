@@ -62,12 +62,17 @@ export const createRoom = createAction({
     if (roomId === null) throw new Error('The homeserver did not return a room ID.');
     let alias = matrixClient.stringOr(record['room_alias']);
     if (alias === null && aliasName !== undefined) {
-      const state = await matrixClient.request({
-        auth: auth.props,
-        method: HttpMethod.GET,
-        path: matrixIds.clientPath('rooms', roomId, 'state', 'm.room.canonical_alias', ''),
-      });
-      alias = matrixClient.isRecord(state) ? matrixClient.stringOr(state['alias']) : null;
+      // Best-effort: the room already exists, so a failed lookup must not hide its roomId.
+      try {
+        const state = await matrixClient.request({
+          auth: auth.props,
+          method: HttpMethod.GET,
+          path: matrixIds.clientPath('rooms', roomId, 'state', 'm.room.canonical_alias', ''),
+        });
+        alias = matrixClient.isRecord(state) ? matrixClient.stringOr(state['alias']) : null;
+      } catch {
+        alias = null;
+      }
     }
     return { roomId, alias };
   },

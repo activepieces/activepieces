@@ -38,7 +38,7 @@ export const listMessages = createAction({
         dir: 'b',
         limit,
         from,
-        filter: messagesOnly ? JSON.stringify({ types: ['m.room.message'] }) : undefined,
+        filter: messagesOnly ? JSON.stringify({ types: ['m.room.message', 'm.room.encrypted'] }) : undefined,
       },
     });
     const record = matrixClient.isRecord(body) ? body : {};

@@ -14,7 +14,7 @@ export const sendTextMessage = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Posts a message to a Matrix room the account has joined. room accepts a room ID (!abc:server) or an alias (#room:server). format markdown (default) also sends sanitized HTML; plain sends text only. msgtype m.text (default), m.notice (bot-style) or m.emote (/me). Set replyToEventId to send it as a reply to that event. Each call posts a new message unless transactionId repeats a previous call from the same connection, in which case the server returns the original eventId instead of posting again. Text sent into an end-to-end encrypted room is delivered unencrypted.',
+      'Posts a message to a Matrix room the account has joined. room accepts a room ID (!abc:server) or an alias (#room:server). format markdown (default) also sends sanitized HTML; plain sends text only. msgtype m.text (default), m.notice (bot-style) or m.emote (/me). Set replyToEventId to send it as a reply to that event. Without transactionId, the ID is derived from the flow run, step, room and content, so a retry of the same send returns the original eventId instead of posting twice; an identical message to the same room in the same step is therefore sent once, so pass a distinct transactionId to post it again. A repeated transactionId from the same connection also returns the original eventId. Text sent into an end-to-end encrypted room is delivered unencrypted.',
     idempotent: false,
   },
   outputSchema: matrixOutputSchemas.sent,
@@ -40,9 +40,8 @@ export const sendTextMessage = createAction({
       required: false,
     }),
   },
-  async run({ auth, propsValue }) {
+  async run({ auth, propsValue, run, step }) {
     const text = matrixClient.requiredText({ value: propsValue.text, label: 'Text' });
-    const txnId = matrixIds.transactionId(propsValue.transactionId);
     const replyText = matrixClient.optionalText(propsValue.replyToEventId);
     const replyTo = replyText === undefined ? undefined : matrixIds.eventId(replyText);
     const content = await matrixCommon.buildTextContent({
@@ -52,6 +51,7 @@ export const sendTextMessage = createAction({
     });
     if (replyTo) content['m.relates_to'] = { 'm.in_reply_to': { event_id: replyTo } };
     const roomId = await matrixCommon.resolveRoom({ auth: auth.props, room: propsValue.room });
+    const txnId = matrixIds.transactionId({ value: propsValue.transactionId, run, step, parts: [roomId, content] });
     return matrixCommon.sendEvent({ auth: auth.props, roomId, eventType: 'm.room.message', content, txnId });
   },
 });

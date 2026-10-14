@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { createHash } from 'crypto';
 
 const CLIENT_PREFIX = '/_matrix/client/v3';
 
@@ -13,7 +13,7 @@ function check({ value, sigil, label, example, needsServer }: { value: unknown; 
     text.startsWith(sigil) &&
     body.length > 0 &&
     text.length <= 255 &&
-    !/[\s/]/.test(text) &&
+    !/[\s\x00-\x1f\x7f]/.test(text) &&
     (!needsServer || /^[^:]+:[^:].*$/.test(body));
   if (!valid) {
     throw new Error(`${label} must look like ${example}.`);
@@ -44,9 +44,13 @@ function eventId(value: unknown): string {
   return check({ value, sigil: '$', label: 'Event ID', example: '$AbC123', needsServer: false });
 }
 
-function transactionId(value: unknown): string {
+function transactionId({ value, run, step, parts }: { value: unknown; run: { id: string }; step: { name: string }; parts: unknown[] }): string {
   const text = clean(value);
-  if (text === '') return `ap-${randomUUID()}`;
+  if (text === '') {
+    // Same flow run + step + request => same ID, so an AP retry of this step is deduplicated by the homeserver.
+    const digest = createHash('sha256').update(JSON.stringify([run.id, step.name, ...parts])).digest('hex').slice(0, 40);
+    return `ap-${digest}`;
+  }
   if (!/^[A-Za-z0-9._~-]{1,128}$/.test(text)) {
     throw new Error('Transaction ID may only contain letters, digits and . _ ~ - (max 128 characters).');
   }
