@@ -782,7 +782,12 @@ const TabIconPicker = ({
           {iconNode}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-2">
+      <PopoverContent
+        side="bottom"
+        align="start"
+        collisionPadding={16}
+        className="w-72 p-2"
+      >
         <div className="grid grid-cols-6 gap-1 max-h-64 overflow-y-auto overflow-x-hidden">
           {PIECE_SELECTOR_TAB_ICON_OPTIONS.map(({ key, Icon }) => (
             <Button

@@ -58,9 +58,7 @@ describe('DataTable selection sync', () => {
 
 describe('sampleData', () => {
   it('returns the same sample page every time', () => {
-    expect(sampleData.globalConnectionsPage()).toBe(
-      sampleData.globalConnectionsPage(),
-    );
+    expect(sampleData.apiKeysPage()).toBe(sampleData.apiKeysPage());
     expect(sampleData.secretManagers()).toBe(sampleData.secretManagers());
   });
 });
