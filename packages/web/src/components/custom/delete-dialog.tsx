@@ -32,6 +32,8 @@ interface ConfirmationDeleteDialogProps {
   warning?: React.ReactNode | string;
   confirmDisabled?: boolean;
   controlId?: AdminControl;
+  contentClassName?: string;
+  keepOpenOnOutsideClick?: boolean;
 }
 
 export const ConfirmationDeleteDialog = ({
@@ -49,6 +51,8 @@ export const ConfirmationDeleteDialog = ({
   warning,
   confirmDisabled,
   controlId,
+  contentClassName,
+  keepOpenOnOutsideClick = false,
 }: ConfirmationDeleteDialogProps) => {
   const [isControlled] = useState(
     open !== undefined && onOpenChange !== undefined,
@@ -83,7 +87,15 @@ export const ConfirmationDeleteDialog = ({
     >
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
-      <DialogContent onClick={(e) => e.stopPropagation()}>
+      <DialogContent
+        className={contentClassName}
+        onClick={(e) => e.stopPropagation()}
+        onInteractOutside={(event) => {
+          if (keepOpenOnOutsideClick) {
+            event.preventDefault();
+          }
+        }}
+      >
         <DialogHeader className="min-w-0">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="pt-2 break-words">
