@@ -266,6 +266,7 @@ Deleting the `background_migrations` row is a per-migration choice — tells re-
 
 **Caveats:**
 - Lock wait is bounded at ~4 min (`distributedLockFactory` passes `retryCount * retryDelay = (timeout / 200) * 200ms` into RedLock). If `down()` races a long in-flight backfill, the helper throws rather than waits for the full duration. Fix: scale API pods to 0 (quiesces the runner), re-run `rollback-migrations.ts`, redeploy.
+- The helper opens a Redis connection inside the rollback CLI, which keeps the event loop alive after the last `down()`. `src/rollback.ts` therefore ends with `process.exit(0)`; without it the CLI prints "Rollback complete" and never exits.
 - Destructive data changes a background migration already made (uuid migration, type change) cannot be rolled back by the framework. Ship a reverse-fix background migration or accept the residue.
 - Rolling back release N with its background migration B already completed: B's data and row persist; re-deploy of N skips B. If wrong for your case, delete B's row in `down()`.
 
