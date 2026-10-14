@@ -43,6 +43,7 @@ On `agent` and `chat` a tier whose main model can't call tools is hidden, and so
 - **Don't use `defaultChoice` on a hot run path.** `aiModelOptionsService.list` fetches every key's model list and skips a key whose list fails, so a flaky provider API (or a fake test key) can leave `defaultChoice` null, or point it somewhere else. The chat run path (`agentChatModel.defaultPick`) checks the Default tier and the Default AI key without listing models, and only falls back to `list` when neither exists.
 - The picker never writes a default by itself. An agent gets its default model from the server when it is created. An unknown pick shows an amber "Unavailable" and is never silently swapped (S11).
 - **Builder-facing picker copy says "Tiers" and "Models", never "Your …".** Builders don't own the keys, the admin does (Kareem, 2026-10-14). Only the admin tier editor (`admin-model-picker.tsx`) keeps "Your keys".
+- **Chat and agents list every tool-calling model a key has, curated ones first with a "Recommended" badge** (`modelMeta.isRecommended`, from `getCuratedChatModels`). Flows show no badge. The curated list only orders and labels; it no longer limits what chat can pick, and a non-curated pick runs as that exact model (`resolveNamedModelId`).
 
 ## Key files
 - `packages/web/src/features/agents/ai-model/`: `ModelPicker`, `ModelPickerPopover`, `ModelDetailCard`
