@@ -10707,7 +10707,7 @@
     },
     "packages/pieces/core/sftp": {
       "name": "@activepieces/piece-sftp",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10723,6 +10723,7 @@
         "@types/ssh2": "1.15.5",
         "@types/ssh2-sftp-client": "9.0.6",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/core/smtp": {
