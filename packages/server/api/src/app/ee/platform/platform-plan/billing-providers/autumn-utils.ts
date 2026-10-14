@@ -225,6 +225,7 @@ export const autumnUtils = {
             includedCredits: credits?.granted ?? 0,
             enterpriseTrialStartedAt: msToIsoOrNull(entitlements.enterpriseTrial?.startedAt),
             enterpriseTrialEndsAt: msToIsoOrNull(entitlements.enterpriseTrial?.endsAt),
+            activepiecesAiProviderHidden: entitlements.embeddingOutsideEnterpriseTrial,
         }
     },
     async readBalance({ platformId, featureId }: BalanceCacheRef): Promise<CreditsBalanceCache | null> {
@@ -232,6 +233,10 @@ export const autumnUtils = {
     },
     async writeBalance({ platformId, featureId, balance }: WriteBalanceParams): Promise<void> {
         await distributedStore.put(balanceCacheKey({ platformId, featureId }), autumnUtils.toBalanceCache(balance), CREDITS_CACHE_TTL_SECONDS)
+    },
+    grantsEmbeddingOutsideEnterpriseTrial(attachments: AutumnPlanAttachments): boolean {
+        return toEntitlementPlans(attachments).some((plan) =>
+            plan.planId !== PlanName.ENTERPRISE_TRIAL && plan.featureIds.includes(FeatureFlagId.EMBEDDING_ENABLED))
     },
     toGrantedFeatureIds(attachments: AutumnPlanAttachments): ReadonlySet<string> {
         const plans = toEntitlementPlans(attachments)
@@ -514,6 +519,7 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
         balances,
         scheduledUsersLimit: toScheduledUsersLimit(baseSubscriptions),
         enterpriseTrial: toLiveEnterpriseTrial(customer),
+        embeddingOutsideEnterpriseTrial: autumnUtils.grantsEmbeddingOutsideEnterpriseTrial(customer),
     }
 }
 
@@ -647,6 +653,7 @@ type AutumnEntitlements = {
     balances: Record<string, AutumnFeatureBalance>
     scheduledUsersLimit: number | null
     enterpriseTrial: LiveEnterpriseTrial | null
+    embeddingOutsideEnterpriseTrial: boolean
 }
 
 type LiveEnterpriseTrial = {
