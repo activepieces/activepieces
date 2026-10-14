@@ -60,6 +60,15 @@ describe('mcpClientCatalog cloud overrides', () => {
     );
   });
 
+  it('shows Gemini CLI sign-in as a Gemini CLI command, not a shell command', () => {
+    const auth = method('gemini-cli', 'terminal')?.steps[1].block;
+    expect(auth).toEqual({
+      kind: 'code',
+      label: 'Gemini CLI',
+      text: '/mcp auth activepieces',
+    });
+  });
+
   it('offers a Gemini CLI config file with httpUrl', () => {
     const config = method('gemini-cli', 'config');
     expect(config?.steps[0].block?.label).toBe('~/.gemini/settings.json');
