@@ -301,6 +301,7 @@ export function ConfigDetail({
           {manualModels ? (
             <ManualModelList
               models={draft.models}
+              tiersByModel={tiersByModel}
               onChange={(models) => setDraft({ ...draft, models })}
             />
           ) : (

@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,9 +16,11 @@ import {
 
 export function ManualModelList({
   models,
+  tiersByModel = new Map(),
   onChange,
 }: {
   models: ProviderModelConfig[];
+  tiersByModel?: Map<string, string[]>;
   onChange: (models: ProviderModelConfig[]) => void;
 }) {
   const [draftId, setDraftId] = useState('');
@@ -90,6 +93,13 @@ export function ManualModelList({
               <span className="min-w-0 flex-1 truncate font-mono text-sm">
                 {model.modelId}
               </span>
+              {tiersByModel.has(model.modelId) && (
+                <Badge variant="info" className="shrink-0">
+                  {t('Used by {tiers}', {
+                    tiers: tiersByModel.get(model.modelId)?.join(', '),
+                  })}
+                </Badge>
+              )}
               <button
                 type="button"
                 title={t('Model Type')}
@@ -111,6 +121,7 @@ export function ManualModelList({
                 variant="ghost"
                 size="icon-xs"
                 aria-label={t('Remove')}
+                disabled={tiersByModel.has(model.modelId)}
                 onClick={() =>
                   onChange(
                     models.filter(

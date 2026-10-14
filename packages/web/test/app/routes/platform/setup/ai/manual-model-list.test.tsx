@@ -26,8 +26,13 @@ const selectMock = vi.hoisted(() => ({
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, onClick, title }: any) => (
-    <button onClick={onClick} title={title}>
+  Button: ({ children, onClick, title, disabled, ...rest }: any) => (
+    <button
+      onClick={onClick}
+      title={title}
+      disabled={disabled}
+      aria-label={rest['aria-label']}
+    >
       {children}
     </button>
   ),
@@ -67,10 +72,19 @@ describe('ManualModelList', () => {
   let root: Root;
   let onChange: ReturnType<typeof vi.fn>;
 
-  const render = (models: ProviderModelConfig[]) => {
+  const render = (
+    models: ProviderModelConfig[],
+    tiersByModel?: Map<string, string[]>,
+  ) => {
     onChange = vi.fn();
     act(() => {
-      root.render(<ManualModelList models={models} onChange={onChange} />);
+      root.render(
+        <ManualModelList
+          models={models}
+          tiersByModel={tiersByModel}
+          onChange={onChange}
+        />,
+      );
     });
   };
 
@@ -152,5 +166,24 @@ describe('ManualModelList', () => {
         modelType: AIProviderModelType.IMAGE,
       },
     ]);
+  });
+
+  it('keeps a model a tier uses: labelled, and its remove button disabled', () => {
+    render(
+      [
+        {
+          modelId: 'gemini-pro',
+          modelName: 'gemini-pro',
+          modelType: AIProviderModelType.TEXT,
+        },
+      ],
+      new Map([['gemini-pro', ['Smart']]]),
+    );
+
+    expect(container.textContent).toContain('Used by {tiers}');
+    const remove = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Remove"]',
+    );
+    expect(remove?.disabled).toBe(true);
   });
 });
