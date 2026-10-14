@@ -373,6 +373,7 @@ async function replacePlatformInvites({ email, platformId, entityManager }: Repl
     const invitations = await repo(entityManager).find({
         where: { type: InvitationType.PLATFORM, email, platformId },
         order: { created: 'DESC' },
+        lock: { mode: 'pessimistic_write' },
     })
     const [latest, ...duplicates] = invitations
     if (duplicates.length > 0) {
