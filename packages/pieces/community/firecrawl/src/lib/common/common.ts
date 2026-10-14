@@ -2,9 +2,9 @@ import {
 	httpClient,
 	HttpMethod,
 } from '@activepieces/pieces-common';
+import { FilesService } from '@activepieces/pieces-framework';
 import Ajv from 'ajv';
 import { randomUUID } from 'crypto';
-import mime from 'mime-types';
 
 export const FIRECRAWL_API_BASE_URL = 'https://api.firecrawl.dev/v2';
 export const POLLING_INTERVAL = 5000;
@@ -20,11 +20,19 @@ export const forSimpleOutputFormat = (format: string): string => {
   return format;
 }
 
+const FILE_EXTENSIONS_BY_MIME_TYPE: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'application/pdf': 'pdf',
+};
+
 export async function saveFirecrawlFile({
   context,
   firecrawlFileUrl,
 }: {
-  context: any;
+  context: { files: FilesService };
   firecrawlFileUrl: string;
 }): Promise<{ fileName: string; fileUrl: string }> {
   const response = await httpClient.sendRequest({
@@ -34,8 +42,8 @@ export async function saveFirecrawlFile({
   });
 
   const contentTypeHeader = response.headers?.['content-type'];
-  const fileMimetype = typeof contentTypeHeader === 'string' ? contentTypeHeader : 'application/octet-stream';
-  const fileName = `firecrawl-${randomUUID()}.${mime.extension(fileMimetype) || 'bin'}`;
+  const fileMimetype = typeof contentTypeHeader === 'string' ? contentTypeHeader.split(';')[0].trim().toLowerCase() : '';
+  const fileName = `firecrawl-${randomUUID()}.${FILE_EXTENSIONS_BY_MIME_TYPE[fileMimetype] ?? 'bin'}`;
   const fileUrl = await context.files.write({
     fileName: fileName,
     data: Buffer.from(response.body),

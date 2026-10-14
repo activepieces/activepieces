@@ -302,6 +302,9 @@ export const scrape = createAction({
     });
 
     const result = response.body;
+    if (!result?.data) {
+      throw new Error(`Firecrawl returned no page data${result?.error ? `: ${result.error}` : ''}`);
+    }
     const savedScreenshot = result.data.screenshot
       ? await saveFirecrawlFile({ context, firecrawlFileUrl: result.data.screenshot })
       : undefined;
@@ -339,4 +342,4 @@ export const scrape = createAction({
 
     return output;
   },
-}); 
+});
