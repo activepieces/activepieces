@@ -3,8 +3,10 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
   FlowActionType,
   FlowOperationType,
+  isComponentVisible,
   PieceSelectorTabConfig,
   PieceSetConfig,
+  SuggestionType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Pin, PinOff, PuzzleIcon, SearchIcon } from 'lucide-react';
@@ -470,7 +472,7 @@ export function usePieceMenuPreviewSteps() {
     isLoading,
     isError: isPiecesError,
     refetch,
-  } = piecesHooks.usePieces({});
+  } = piecesHooks.usePieces({ suggestionType: SuggestionType.ACTION });
   const {
     data: pieceSet,
     isLoading: isLoadingPieceSet,
@@ -514,9 +516,28 @@ function countActions({
   return new Map(
     pieces.map((piece) => [
       piece.name,
-      selectedActions?.[piece.name]?.length ?? piece.actions,
+      countPieceActions({ piece, selected: selectedActions?.[piece.name] }),
     ]),
   );
+}
+
+function countPieceActions({
+  piece,
+  selected,
+}: {
+  piece: PieceMetadataModelSummary;
+  selected: string[] | undefined;
+}): number {
+  if (isNil(piece.suggestedActions)) {
+    return isNil(selected)
+      ? piece.actions
+      : Math.min(selected.length, piece.actions);
+  }
+  return piece.suggestedActions.filter(
+    (action) =>
+      action.audience !== 'ai' &&
+      isComponentVisible({ selected, name: action.name }),
+  ).length;
 }
 
 function toPreviewSteps({
@@ -651,6 +672,7 @@ export const pieceSelectorPreviewUtils = {
   toPreviewSteps,
   groupForPreview,
   previewSteps,
+  countActions,
 };
 
 type PreviewRow =
