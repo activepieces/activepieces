@@ -6,6 +6,7 @@ import { retellAiAuth } from '../common/auth';
 export const getPhoneNumber = createAction({
   auth: retellAiAuth,
   name: 'get_phone_number',
+  classification: 'READ',
   displayName: 'Get Phone Number',
   description: 'Retrieve full details for an existing phone number in Retell AI.',
   audience: 'both',

@@ -7,6 +7,7 @@
 
 const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_build_flow',
+    'ap_create_folder',
     'ap_create_flow',
     'ap_add_step',
     'ap_update_step',
@@ -17,7 +18,6 @@ const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_delete_branch',
     'ap_test_flow',
     'ap_test_step',
-    'ap_validate_flow',
     'ap_validate_step_config',
     'ap_execute_action',
     'ap_discover_action_auth',
@@ -25,6 +25,7 @@ const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_change_flow_status',
     'ap_delete_flow',
     'ap_rename_flow',
+    'ap_move_flow_to_folder',
     'ap_duplicate_flow',
     'ap_manage_notes',
     'ap_retry_run',
@@ -48,6 +49,19 @@ const CHAT_HIDDEN_TOOL_NAMES = new Set<string>([
     'ap_set_project_context',
     'ap_setup_guide',
 ])
+
+const CATALOG_ONLY_TOOL_NAMES = new Set<string>([
+    'ap_research_pieces',
+    'ap_search_actions',
+    'ap_search_triggers',
+    'ap_list_connections',
+    'ap_load_skill',
+    'ap_get_tool_schema',
+])
+
+function taintsTurn(toolName: string): boolean {
+    return !CATALOG_ONLY_TOOL_NAMES.has(toolName)
+}
 
 function activeToolsForPhase({ phase, allToolNames }: {
     phase: AgentPhase
@@ -79,4 +93,5 @@ export const agentToolPhases = {
     activeToolsForPhase,
     isBuildOnlyTool,
     isAgentHiddenTool,
+    taintsTurn,
 }

@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const sendWhatsAppFreeform = createAction({
   auth: famulorAuth,
   name: 'sendWhatsAppFreeform',
+  classification: 'WRITE',
   displayName: 'Send WhatsApp Freeform Message',
   description: 'Send a free-text WhatsApp message within an active 24-hour session.',
   audience: 'both',

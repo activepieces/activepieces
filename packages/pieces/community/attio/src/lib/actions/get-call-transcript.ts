@@ -3,14 +3,16 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { attioApiCall } from '../common/client';
 import { attioAuth } from '../auth';
 import { callRecordingIdDropdown, meetingIdDropdown } from '../common/props';
+import { getCallTranscriptOutputSchema } from '../output-schemas';
 
 export const getCallTranscriptAction = createAction({
 	auth: attioAuth,
 	name: 'get_call_transcript',
+	outputSchema: getCallTranscriptOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Call Transcript',
 	description: 'Fetches the full transcript for a given call recording.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Retrieves the full transcript for a specific call recording, identified by its meeting ID and call recording ID. Use this to obtain the spoken text of a recorded call, typically after a call-recording event. Read-only and idempotent.', idempotent: true },
 	props: {
 		meeting_id: meetingIdDropdown({

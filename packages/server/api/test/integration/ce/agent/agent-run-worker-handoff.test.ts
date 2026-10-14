@@ -60,7 +60,7 @@ describe('community edition: the worker picking up an agent step', () => {
             source: AgentRunSource.FLOW_STEP,
         })
 
-        expect(config.provider).toBe(AIProviderName.OPENAI)
+        expect(config.credentials.provider).toBe(AIProviderName.OPENAI)
         expect(config.modelId).toBe('gpt-4o')
         expect(config.systemPrompt.length).toBeGreaterThan(0)
     })

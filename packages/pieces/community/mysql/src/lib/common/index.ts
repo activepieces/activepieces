@@ -35,6 +35,20 @@ export async function mysqlGetTableNames(conn: Connection): Promise<string[]> {
   return result.map((row: Record<string, string>) => row[Object.keys(row)[0]]);
 }
 
+export async function mysqlGetColumns({ conn, table }: { conn: Connection; table: string }): Promise<MysqlColumn[]> {
+  const rows: Record<string, unknown>[] = await conn.query(
+    'SELECT column_name AS column_name, data_type AS data_type, is_nullable AS is_nullable, column_default AS column_default, extra AS extra FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? ORDER BY ordinal_position',
+    [table]
+  );
+  return rows.map((row) => ({
+    column_name: String(row['column_name']),
+    data_type: String(row['data_type']),
+    is_nullable: String(row['is_nullable']),
+    column_default: row['column_default'] === null ? null : String(row['column_default']),
+    extra: String(row['extra']),
+  }));
+}
+
 export const mysqlCommon = {
   timezone: Property.ShortText({
     displayName: 'Timezone',
@@ -81,3 +95,11 @@ export function sanitizeColumnName(name: string | undefined): string {
   }
   return sqlstring.escapeId(name);
 }
+
+export type MysqlColumn = {
+  column_name: string;
+  data_type: string;
+  is_nullable: string;
+  column_default: string | null;
+  extra: string;
+};

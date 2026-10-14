@@ -27,6 +27,7 @@ function detectChanges(previous: any, current: any): Record<string, { from: any;
 export const updatedSubscriberTrigger = createTrigger({
   auth: sendpulseAuth,
   name: 'updated_subscriber',
+  classification: 'READ',
   displayName: 'Updated Subscriber',
   description: 'Fires when subscriber details change (polling)',
   aiMetadata: {

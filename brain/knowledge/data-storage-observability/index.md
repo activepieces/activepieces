@@ -34,9 +34,9 @@ Security-relevant actions persisted to `audit_event`, queryable by platform admi
 
 Platform reporting: daily runs, active flows/users, time-saved estimates. `PlatformAnalyticsReport` cached (5-min TTL) refreshed under a distributed lock; separate daily cron (12:00 UTC) tallies per-piece usage into `pieceMetadata.usage`. minutesSaved = runs × flow.timeSavedPerRun. Powers `/impact` (Summary/Trends/Details). Gated by `analyticsEnabled` — NOT in CE. Frontend queries carry `enabled: platform.plan.analyticsEnabled`.
 
-### Structured Logging (evlog)
+### Logging & Metrics (evlog)
 
-All server logging goes through `ap-logger` onto evlog wide events: one event per API request and **one per worker job** (`wideEvent.run` wraps the whole handler in `worker.ts`). Inside that scope a `logger.info/warn/error` call does not emit its own line — it merges its fields into the single job/request event and its message is captured on it. The field schema (entity groups, canonical names) is in `packages/server/CLAUDE.md`.
+All structured logging goes through **evlog** — one wide event per unit of work, one remote drain (Axiom / HyperDX / Loki / Better Stack / OTLP; first match wins). Metrics on ClickStack are **log-based**: dashboards and alerts query numeric fields (`durationMs`, `memRssMb`, `eventLoopDelayP99Ms`) on wide events. Both API and worker emit a 60s `system.snapshot` event with process RSS / heap / event-loop lag so those charts exist at all. BullMQ queue depth is the one signal exported as a **native OTLP gauge** (`bullmq.job.count`), because per-queue-per-state cardinality would bloat wide events. Worker CPU / RAM travels in-band on the poll healthcheck (not to ClickStack) and surfaces on `GET /v1/health/system`.
 
 Gotchas:
 - **The top-level `error` key belongs to the wide event, and a string you put there is silently thrown away.** `RequestLogger.error` ends with `context.error = errorObj`, built from whatever the call passed — so `log.error({ error: String(e) }, 'msg')` is overwritten by an object derived from `'msg'`, and the real error text is gone with no warning (GIT-1876; the same line shipped in `execute-polling.ts` for a year). Pass the **Error object** instead — `ap-logger` normalizes `obj.err ?? obj.error` through `toError` and hands it to the wide event, keeping name, message and stack — or, for an error that belongs to something else, name it after its owner (`engine: { status, error }`). The rule only bites the reserved top-level key; nested and descriptive error fields are safe.
@@ -44,7 +44,7 @@ Gotchas:
 
 ### Product Telemetry
 
-Anonymous product analytics to PostHog, from both the browser and the app container. Gated per platform by `platform_configuration.isProductTelemetryEnabled`, edited at Platform Admin > Infrastructure > Configurations; `AP_TELEMETRY_ENABLED` survives only as the value a platform's row is *born* with. See [000033](../decisions/000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md).
+Anonymous product analytics to PostHog, from both the browser and the app container. Gated per platform by `platform_configuration.isProductTelemetryEnabled`, edited at Platform Admin > Account > Configurations; `AP_TELEMETRY_ENABLED` survives only as the value a platform's row is *born* with. See [000033](../decisions/000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md).
 
 Gotchas:
 - **Two independent PostHog paths exist and they are gated differently.** Product analytics obeys the per-platform switch; the license-key events (`total_runs_per_day`, `ai_usage_per_run`, `chat_message`) go through `captureLicenseKeyEvent` and deliberately do **not**, because PostHog is also the billing transport and a customer must not be able to switch off their own meter. Never "consistency-fix" that by routing a billing event through the gate.
@@ -61,6 +61,27 @@ Gotchas:
 - **Names and emails only ever leave on Cloud, and one helper is the whole reason.** `pickTelemetryPii` returns `{}` unless `edition === ApEdition.CLOUD`, and both the `signed.up` payload and `identify` build their PII by spreading it — so on CE and EE those events carry a user id and nothing personal, while on Cloud they carry email, first name and last name. Reviewers reading the payload type see the fields and reasonably conclude they are always sent; the gate is one spread away in the call site, not in the type. Since [000034](../decisions/000034-account-and-sign-in-telemetry-is-cloud-only.md) the question is moot for account events, which never leave a self-hosted instance at all; `pickTelemetryPii` still governs what `identify` carries, and `identify` still runs there.
 - **Pre-login capture happens only on `cloud.activepieces.com`** — the browser cannot read a platform's row before a session exists, so that hostname is the whole of the exception (see the decision). `canary.activepieces.com` and the `*.preview.activepieces.dev` envs are therefore excluded, which means **the pre-login funnel cannot be exercised on canary or a preview environment** — verify it on `cloud.activepieces.com`, or add the host.
 
+### Sign-up Attribution
+
+The web stashes the marketing params a visitor arrived with (`utm_*`, `gclid`, `fbclid`, `ref`, `ap_cta`, `ap_landing`, `ap_referrer`, `ap_sid`; contract in `attribution.ts` in shared) in local storage at boot and sends them as `attribution` on `SignUpRequest`, `VerifyEmailCodeRequest`, `CompleteSignUpRequest` and `ClaimTokenRequest`. The auth services return `{ response, signedUp }`; `signedUp` comes from `createPlatformWithProject`'s `provisioned` flag and from `getOrCreateWithProject`'s `created` flag. Only when it is true does the controller call `telemetry(log).identifySignUp`, which writes `signup_method` (`SignUpMethod`) and the attribution as PostHog `$set_once` person properties, so later logins never overwrite them.
+
+Gotchas:
+- The Google `USER_SIGNED_UP` audit event is gated on `signedUp` too; before that it fired on every login.
+- SAML users are never stamped: they are provisioned by their platform admin, not by a campaign link.
+
+### Product Lifecycle Telemetry
+
+Server-side PostHog events for the moments between sign-up and payment: `onboarding.completed` (name step done), `invite.sent` / `invite.accepted`, `checkout.started`, `plan.changed`, `plan.cancelled`, `plan.reactivated`, `trial.started`, plus `flow.published` from the service so API and approval publishes count too. Billing events are emitted by `platform-plan-telemetry.ts`; the entitlement refresh in `autumn-utils.ts` compares the plan before and after and emits `trial.started` or `plan.changed` when it changed, skipping free plans (`FREE`, `FREE_LEGACY`, `APPSUMO`). Platforms are PostHog groups (`groupIdentify`, type `platform`) set on creation and refreshed on plan change. Every event, person and group carries `deployment` (`DeploymentKind`: cloud, self_hosted, dev) because self-hosted instances report into the same project.
+
+Gotchas:
+- Pre-login email-code events are keyed by the identity id; `aliasIdentity` merges that person into the user once the user exists, and `trackForIdentity` in `passwordless-auth.service.ts` switches to the user id as soon as one exists for identity+platform.
+- Billing and onboarding events are in `CLOUD_ONLY_TELEMETRY_EVENTS`; the tracked-events catalog on the platform settings page hides groups whose events are all cloud-only, so `billing` never shows on self-hosted.
+- In a development environment the web sends nothing to PostHog unless `localStorage.ap_posthog_dev` is `'1'`.
+- **The event is `plan.changed`, not `plan.upgraded`** — the entitlement refresh only knows the plan differs, not which way, so a downgrade reaches the same code path. Direction is derived in PostHog from the `previousPlan` and `plan` properties. A trial converting to paid emits **nothing**: it is the same `planId` with the trial simply ended, so the plan-equality check returns early, and no previous trialing state is persisted anywhere to compare against (`trialEndsAt` comes from the live Autumn subscription, `platform_plan` has no trial column, and the customer state cache holds only balances).
+- **`flow.published` is emitted once, by `flowService`** — the browser capture in `flow-hooks.tsx` was removed when the service emit landed, because the two fired on exactly the same UI publishes. The service emit also counts publishes no user pressed Publish for: the connection-swap republish in `app-connection.handler.ts` and the git-sync project-release import both dispatch `LOCK_AND_PUBLISH`.
+- **A platform group's `name` only leaves Cloud** (`pickPlatformGroupPii`): a self-hosted platform name is usually the customer's company name, the same reason `pickTelemetryPii` exists. The group itself is still created on every edition, so `plan`, `createdAt` and `deployment` stay groupable off Cloud.
+- **Google and SAML emit `signed.in` only for a returning user**, in the `else` branch of the `signedUp` check, mirroring the password path where sign-up emits `signed.up` and only a later sign-in emits `signed.in`. Emitting it on every claim made SSO sign-in counts run high against password.
+
 ### Flow Failure Alerts (EE)
 
 Email on flow-run failure. First failure per flowVersion per 24h window sends; rest suppressed via Redis counter `flow_fail_count:<flowVersionId>` (1-day TTL). Personal projects: single owner-only receiver toggle; team projects: any number of receivers. Platform admins can bulk sub/unsub across projects (max 5 concurrent). Receivers stored/compared lowercase. Edition check (`paidEditions`) in service, no plan flag. No Issues feature — email links straight to the run page. EE/Cloud only.
@@ -75,9 +96,11 @@ Streams platform/project events to webhook URLs in real time — internal AP flo
 
 ## Pages
 
+- **Database** — the load-bearing page for all backend DB work: isolation, entity registration, migrations (blocking + background), constraint recipes, CIC helper
 - **Tables** — Field / Record / Cell and TableWebhooks
 - **File Storage** — blobs in S3 or DB, compression, expiry
 - **Key-Value Store** — project-scoped state pieces persist across runs
 - **Knowledge Base** — documents chunked into vector embeddings for AI search
 - **Analytics** — usage reporting
 - **Audit Logs** — the persisted security-action record
+- **Logging & Metrics (evlog)** — wide events, drains, log-based metrics, `system.snapshot`, OTLP queue gauge

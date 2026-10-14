@@ -7,6 +7,7 @@ import { foreplayCoAuth } from '../..';
 
 export const findBoards = createAction({
   name: 'findBoards',
+  classification: 'SEARCH',
   displayName: 'Find Boards',
   description: 'Get all boards for the authenticated user with pagination.',
   audience: 'both',

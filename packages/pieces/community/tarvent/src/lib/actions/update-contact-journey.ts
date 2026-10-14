@@ -5,6 +5,7 @@ import { makeClient, tarventCommon } from '../common';
 export const updateContactJourney = createAction({
   auth: tarventAuth,
   name: 'tarvent_update_contact_journey',
+  classification: 'WRITE',
   displayName: 'Add/Remove A Contact From A Journey',
   description: 'Adds or removes the contact from a journey.',
   audience: 'both',

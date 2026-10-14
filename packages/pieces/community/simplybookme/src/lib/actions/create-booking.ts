@@ -11,6 +11,7 @@ import {
 export const createBooking = createAction({
   auth: simplybookAuth,
   name: 'create_booking',
+  classification: 'WRITE',
   displayName: 'Create Booking',
   description:
     'Create a new booking using the book API method. Returns appointment info or throws exception if time not available.',

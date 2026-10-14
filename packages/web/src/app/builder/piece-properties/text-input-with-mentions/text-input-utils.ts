@@ -332,28 +332,36 @@ const removeIntroplationBrackets = (text: string) => {
   return text;
 };
 
+const pureAccessorRegex =
+  /^[\p{L}_$][\p{L}\p{N}_$]*(?:\.[\p{L}\p{N}_$]+|\[\s*(?:'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|\d+)\s*\])*$/u;
+
 function parseStepAndNameFromMention(mention: string) {
-  const mentionWithoutInterpolationBrackets =
-    removeIntroplationBrackets(mention);
-  const { isValid, stepName, arrayPath } = parseFlattenArrayPath(
-    mentionWithoutInterpolationBrackets,
-  );
+  const expression = removeIntroplationBrackets(mention);
+  const { isValid, stepName, arrayPath } = parseFlattenArrayPath(expression);
   if (isValid) {
     return {
       stepName,
       path: arrayPath ?? [],
+      expression,
+      isPureAccessor: true,
     };
   }
-  const keys = keysWithinPath(mentionWithoutInterpolationBrackets);
+  const keys = pureAccessorRegex.test(expression)
+    ? keysWithinPath(expression)
+    : [];
   if (keys.length === 0) {
     return {
       stepName: null,
       path: [],
+      expression,
+      isPureAccessor: false,
     };
   }
   return {
     stepName: keys[0],
     path: keys.slice(1),
+    expression,
+    isPureAccessor: true,
   };
 }
 
@@ -363,7 +371,16 @@ function parseLabelFromMention(
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
   variableByName?: Map<string, string>,
 ) {
-  const { stepName, path } = parseStepAndNameFromMention(mention);
+  const { stepName, path, expression, isPureAccessor } =
+    parseStepAndNameFromMention(mention);
+  if (!isPureAccessor) {
+    return {
+      displayText: expression,
+      serverValue: mention,
+      logoUrl: undefined,
+      isVariable: expression.startsWith('variables'),
+    };
+  }
   if (stepName === 'variables') {
     const name = path[0] ?? '';
     const displayName = variableByName?.get(name) ?? name;
@@ -475,7 +492,7 @@ function convertTiptapJsonToText(
 // eslint-disable-next-line testing-library/render-result-naming-convention
 const VARIABLE_ICON_SVG_MARKUP = renderToStaticMarkup(
   createElement(VariableIcon, {
-    className: 'w-4 h-4 shrink-0 text-primary',
+    className: 'w-4 h-4 shrink-0 text-accent-11',
     'aria-hidden': true,
   }),
 );
@@ -494,7 +511,7 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     mentionAttrs.label || '{}',
   );
   mentionElement.className =
-    'inline-flex bg-muted/10 break-all my-1 mx-px border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px] text-muted-foreground ';
+    'inline-flex bg-gray-3/10 break-all my-1 mx-px border border-gray-6 border-solid items-center gap-2 py-1 px-2 rounded-sm text-gray-11 ';
   assertNotNullOrUndefined(mentionAttrs.label, 'mentionAttrs.label');
   assertNotNullOrUndefined(mentionAttrs.id, 'mentionAttrs.id');
   assertNotNullOrUndefined(
@@ -514,10 +531,6 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     imgElement.src = apMentionNodeAttrs.logoUrl;
     imgElement.className = 'object-contain w-4 h-4';
     mentionElement.appendChild(imgElement);
-  } else {
-    const emptyImagePlaceHolder = document.createElement('span');
-    emptyImagePlaceHolder.className = 'h-4 -mr-2';
-    mentionElement.appendChild(emptyImagePlaceHolder);
   }
 
   const mentiontextDiv = document.createTextNode(

@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, realpathSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -15,7 +15,7 @@ describe('bundlePiece — external dependency capture', () => {
     })
 
     it('captures a native dep reached transitively through an inlined package', async () => {
-        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+        root = realpathSync(mkdtempSync(join(tmpdir(), 'ap-bundle-')))
 
         const sdkDir = join(root, 'node_modules', 'fake-sdk')
         mkdirSync(sdkDir, { recursive: true })
@@ -37,7 +37,7 @@ describe('bundlePiece — external dependency capture', () => {
     })
 
     it('keeps wasm/native asset packages (tiktoken, sharp) external so their runtime-loaded assets resolve', async () => {
-        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+        root = realpathSync(mkdtempSync(join(tmpdir(), 'ap-bundle-')))
 
         for (const [name, version] of [['tiktoken', '1.0.11'], ['sharp', '0.35.2']]) {
             const depDir = join(root, 'node_modules', name)
@@ -62,7 +62,7 @@ describe('bundlePiece — external dependency capture', () => {
     })
 
     it('externalizes an inlined package that relies on import.meta', async () => {
-        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+        root = realpathSync(mkdtempSync(join(tmpdir(), 'ap-bundle-')))
 
         const esmDir = join(root, 'node_modules', 'esm-dep')
         mkdirSync(esmDir, { recursive: true })
@@ -94,7 +94,7 @@ describe('bundlePiece — forked sibling entries (GIT-1772)', () => {
     })
 
     function setupForkingPiece({ declareEntry }: { declareEntry: boolean }): string {
-        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+        root = realpathSync(mkdtempSync(join(tmpdir(), 'ap-bundle-')))
 
         const dbDir = join(root, 'node_modules', 'oracledb')
         mkdirSync(dbDir, { recursive: true })

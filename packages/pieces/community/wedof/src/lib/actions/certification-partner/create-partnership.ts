@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const createPartnership = createAction({
   auth: wedofAuth,
   name: 'createPartnership',
+  classification: 'WRITE',
   displayName: "Créer un partenariat",
   description: "Permet de créer un nouveau partenariat avec le SIRET fourni",
   audience: 'both',

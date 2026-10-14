@@ -81,6 +81,8 @@ Please check the [navigation](./navigation) section, as it's very important to u
 | embedding.hideActiveUsers | ❌ | boolean | Hides the active users (presence) avatars in the builder's header and the table editor's header. When hidden, the embedded user also stops appearing in other collaborators' active-users list. By default it is false. (added in [0.12.0](./sdk-changelog#07%2F09%2F2026-0-12-0)) |
 | embedding.hideGlobalSearch | ❌ | boolean | Hides the global search button in the dashboard sidebar and disables the `CMD+K` / `Ctrl+K` command palette, by default it is false. (added in [0.13.0](./sdk-changelog#07%2F09%2F2026-0-13-0)) |
 | embedding.formulasDocsUrl | ❌ | string | Where the "See All" link in the formula editor points. Leave it unset (the default) and the link is hidden entirely, so embedded users are never sent to the Activepieces docs. Set it to your own formula reference to show the link pointing there. (added in [0.15.0](./sdk-changelog#08%2F01%2F2026-0-15-0)) |
+| embedding.analytics.gtmContainerId | ❌ | string | Loads Google Tag Manager inside the embedded app using this container id (e.g. `GTM-XXXXXXX`), so the tags you configure in GTM (analytics, session recording) run on the builder and dashboard. Scripts on your own page cannot see into the iframe, so this is the only way to track it. Off when unset. (added in [0.16.0](./sdk-changelog#09%2F10%2F2026-0-16-0)) |
+| embedding.analytics.clarityProjectId | ❌ | string | Loads Microsoft Clarity inside the embedded app using this project id. Session recording on a large flow canvas can be heavy, so test it on a real flow before rolling out. Off when unset. (added in [0.16.0](./sdk-changelog#09%2F10%2F2026-0-16-0)) |
 | embedding.styling.fontUrl | ❌ | string | The url of the font to be used in the embedding, by default it is `https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap`. |
 | embedding.styling.fontFamily | ❌ | string | The font family to be used in the embedding, by default it is `Roboto`. |
 | embedding.styling.mode | ❌ | `light` \| `dark` | Controls light/dark mode (added in [0.5.0](./sdk-changelog#03%2F07%2F2025-0-5-0))|
@@ -94,3 +96,7 @@ Please check the [navigation](./navigation) section, as it's very important to u
  The default font is `Roboto`.
  The font weights we use are the default font-weights from [tailwind](https://tailwindcss.com/docs/font-weight).
 </Tip>
+
+<Warning>
+**Before enabling `embedding.analytics`:** the GTM container and Clarity tag run inside the embedded app with your user's session, so any tag you publish can read what that user can. Clarity masks input fields by default but records everything else on screen, including step outputs, sample data, and connection names in the builder. You own the consent banner and privacy disclosure for that data. Session recording also mirrors the page in memory, so test it on your largest flows before rolling it out widely.
+</Warning>

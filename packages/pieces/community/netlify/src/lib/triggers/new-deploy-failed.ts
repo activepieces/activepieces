@@ -4,6 +4,7 @@ import { netlifyAuth } from "../common/auth";
 
 export const newDeployFailed = createTrigger({
   name: "new_deploy_failed",
+  classification: 'READ',
   displayName: "New Deploy Failed",
   description: "Fires when a site deploy fails.",
   aiMetadata: {

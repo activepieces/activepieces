@@ -24,6 +24,9 @@
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/engine": ["packages/server/engine/src/main.ts"],
+      "@activepieces/piece-0codekit": [
+        "packages/pieces/community/0codekit/src/index.ts"
+      ],
       "@activepieces/piece-activecampaign": [
         "packages/pieces/community/activecampaign/src/index.ts"
       ],
@@ -220,6 +223,12 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
+      "@activepieces/piece-google-translate": [
+        "packages/pieces/community/google-translate/src/index.ts"
+      ],
+      "@activepieces/piece-google-document-ai": [
+        "packages/pieces/community/google-document-ai/src/index.ts"
+      ],
       "@activepieces/piece-rounded-studio": [
         "packages/pieces/community/rounded-studio/src/index.ts"
       ],
@@ -345,6 +354,9 @@
       ],
       "@activepieces/piece-contiguity": [
         "packages/pieces/community/contiguity/src/index.ts"
+      ],
+      "@activepieces/piece-convertapi": [
+        "packages/pieces/community/convertapi/src/index.ts"
       ],
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
@@ -493,6 +505,9 @@
       ],
       "@activepieces/piece-frill": [
         "packages/pieces/community/frill/src/index.ts"
+      ],
+      "@activepieces/piece-floqer": [
+        "packages/pieces/community/floqer/src/index.ts"
       ],
       "@activepieces/piece-flow-helper": [
         "packages/pieces/community/flow-helper/src/index.ts"
@@ -703,8 +718,14 @@
       "@activepieces/piece-jotform": [
         "packages/pieces/community/jotform/src/index.ts"
       ],
+      "@activepieces/piece-jsm-operations": [
+        "packages/pieces/community/jsm-operations/src/index.ts"
+      ],
       "@activepieces/piece-json": [
         "packages/pieces/community/json/src/index.ts"
+      ],
+      "@activepieces/piece-jumpcloud": [
+        "packages/pieces/community/jumpcloud/src/index.ts"
       ],
       "@activepieces/piece-kallabot-ai": [
         "packages/pieces/community/kallabot-ai/src/index.ts"

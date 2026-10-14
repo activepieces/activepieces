@@ -4,6 +4,7 @@ import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
 export const findAPlan = createAction({
   auth: microsoft365PlannerAuth,
   name: 'findAPlan',
+  classification: 'SEARCH',
   displayName: 'Find a Plan',
   description: 'Finds a plan by field.',
   audience: 'both',

@@ -16,6 +16,10 @@ import {
   GetColorsResponse,
 } from './types';
 
+const SYNC_SERIES_PARAMS: Record<string, string> = {
+  maxResults: '2500',
+};
+
 export async function stopWatchEvent(
   body: GoogleWatchResponse,
   authProp: GoogleCalendarAuthValue
@@ -70,9 +74,8 @@ export async function getInitialSyncToken({
 }): Promise<string | undefined> {
   const accessToken = await getAccessToken(authProp);
   const qParams: Record<string, string> = {
-    singleEvents: 'true',
-    showDeleted: 'true',
-    maxResults: '2500',
+    ...SYNC_SERIES_PARAMS,
+    fields: 'nextPageToken,nextSyncToken',
   };
   let pageToken = '';
   let nextSyncToken: string | undefined;
@@ -113,8 +116,8 @@ export async function listEventsWithSyncToken({
 }> {
   const accessToken = await getAccessToken(authProp);
   const qParams: Record<string, string> = {
+    ...SYNC_SERIES_PARAMS,
     syncToken,
-    maxResults: '2500',
   };
   let pageToken = '';
   let nextSyncToken: string | undefined;
@@ -240,10 +243,9 @@ export async function getEvents(
 export async function getLatestEvent(
   calendarId: string,
   authProp: GoogleCalendarAuthValue
-): Promise<GoogleCalendarEvent> {
+): Promise<GoogleCalendarEvent | null> {
   const eventList = await getEvents(calendarId, false, authProp);
-  const lastUpdatedEvent = eventList.pop()!; // You can retrieve the last updated event.
-  return lastUpdatedEvent;
+  return eventList.length > 0 ? eventList[eventList.length - 1] : null;
 }
 
 export async function getEventsForDropdown(

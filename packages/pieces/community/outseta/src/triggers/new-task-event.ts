@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const newTaskEventTrigger = createTrigger({
   name: 'new_task_event',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'New Task Event',
   description: 'Triggers on task lifecycle events (created, updated).',

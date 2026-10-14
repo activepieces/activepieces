@@ -25,6 +25,14 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             ...ApIdSchema,
             nullable: false,
         },
+        flowRunId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        aiCredits: {
+            type: Number,
+            nullable: true,
+        },
         agentId: {
             ...ApIdSchema,
             nullable: true,
@@ -40,6 +48,10 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
         },
         modelName: {
             type: String,
+            nullable: true,
+        },
+        modelTierId: {
+            ...ApIdSchema,
             nullable: true,
         },
         status: {
@@ -78,6 +90,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             name: 'idx_agent_conversation_flow_step_created',
             columns: ['created', 'projectId'],
             where: `source = '${AgentRunSource.FLOW_STEP}'`,
+        },
+        {
+            name: 'idx_agent_conversation_agent_runs_created_id',
+            columns: ['projectId', 'agentId', 'created', 'id'],
+            where: `source = '${AgentRunSource.FLOW_STEP}' AND "agentId" IS NOT NULL`,
         },
         {
             name: 'idx_agent_conversation_agent_user_created_id',

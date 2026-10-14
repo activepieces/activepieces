@@ -3,6 +3,8 @@ import {
   AIProviderModel,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
+  ModelOptions,
+  ModelOptionsSurface,
   ProjectAIProvider,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
@@ -33,6 +35,29 @@ export const aiProviderApi = {
       `/v1/ai-providers/configs/${configId}/models`,
     );
   },
+  listSuggestedModelsForConfig(configId: string) {
+    return api.get<string[]>(
+      `/v1/ai-providers/configs/${configId}/suggested-models`,
+    );
+  },
+  listModelOptions({
+    projectId,
+    surface,
+    tierId,
+  }: {
+    projectId: string;
+    surface: ModelOptionsSurface;
+    tierId?: string;
+  }) {
+    return api.get<ModelOptions>('/v1/ai-providers/model-options', {
+      projectId,
+      surface,
+      ...(tierId === undefined ? {} : { tierId }),
+    });
+  },
+  listModelTiers() {
+    return api.get<ModelTiersResponse>('/v1/ai-providers/tiers');
+  },
   upsert(request: CreateAIProviderRequest) {
     return api.post<AIProviderWithoutSensitiveData>(
       '/v1/ai-providers',
@@ -52,3 +77,18 @@ export const aiProviderApi = {
     return api.delete(`/v1/ai-providers/${providerId}`);
   },
 };
+
+export type ModelTierSurface = 'chat' | 'flow';
+
+export type ModelTier = {
+  id: string;
+  label: string;
+  modelId: string;
+};
+
+export type ModelTierList = {
+  tiers: ModelTier[];
+  defaultTierId: string;
+};
+
+export type ModelTiersResponse = Record<ModelTierSurface, ModelTierList>;

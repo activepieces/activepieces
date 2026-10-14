@@ -31,11 +31,11 @@ export { CardList };
 const cardItemListVariants = cva('flex items-center gap-3 w-full py-3 px-2 ', {
   variants: {
     interactive: {
-      true: 'cursor-pointer transition-all hover:bg-accent hover:text-accent-foreground',
-      false: 'cursor-default text-accent-foreground/50 font-semibold',
+      true: 'cursor-pointer transition-all hover:bg-gray-4 hover:text-gray-12',
+      false: 'cursor-default text-gray-12/50 font-semibold',
     },
     selected: {
-      true: 'bg-accent text-accent-foreground',
+      true: 'bg-gray-5 text-gray-12',
       false: '',
     },
   },
@@ -102,7 +102,7 @@ type CardListEmptyProps = React.HTMLAttributes<HTMLDivElement> & {
 };
 const CardListEmpty = React.memo(({ message }: CardListEmptyProps) => {
   return (
-    <div className="flex h-full w-full items-center justify-center gap-3 flex-col text-muted-foreground">
+    <div className="flex h-full w-full items-center justify-center gap-3 flex-col text-gray-11">
       <PackageOpen className="w-10 h-10" />
       <div className="text-center tracking-tight">{message}</div>
     </div>

@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const updateListItemAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_update_list_item',
+  classification: 'WRITE',
   displayName: 'Update List Item',
   description: 'Updates an existing item in a list.',
   audience: 'both',

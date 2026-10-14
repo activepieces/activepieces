@@ -11,6 +11,7 @@ interface MetabaseParam {
 
 export const embedQuestion = createAction({
   name: 'embedQuestion',
+  classification: 'WRITE',
   auth: metabaseAuth,
   requireAuth: true,
   displayName: 'Embed question',

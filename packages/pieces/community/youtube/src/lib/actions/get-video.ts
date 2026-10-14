@@ -10,7 +10,7 @@ export const youtubeGetVideoAction = createAction({
   classification: 'READ',
   displayName: 'Get Video',
   description: 'Retrieve a video by ID, including its statistics and duration.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches full details for one or more YouTube videos by ID using videos.list, returning title, description, tags, duration, view and like counts, and privacy status. Use it after Search or New Video, which give you a video ID but none of these details. Read-only and idempotent.',
@@ -20,7 +20,8 @@ export const youtubeGetVideoAction = createAction({
     videoIds: Property.ShortText({
       displayName: 'Video ID',
       description:
-        'The video ID, or a comma-separated list of IDs. This is the `v` parameter in a YouTube URL (e.g. `dQw4w9WgXcQ`).',
+        'A video ID, or several separated by commas: the v= value in the URL.',
+      placeholder: 'dQw4w9WgXcQ',
       required: true,
     }),
   },

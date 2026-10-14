@@ -5,6 +5,7 @@ import {
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
+import { PlatformModelTierEntity } from '../ai/platform-model-tier-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { OtpEntity } from '../authentication/otp/otp-entity'
@@ -42,6 +43,7 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { KnowledgeBaseChunkEntity } from '../knowledge-base/knowledge-base-chunk.entity'
 import { KnowledgeBaseFileEntity } from '../knowledge-base/knowledge-base-file.entity'
+import { McpActivityEntity } from '../mcp/activity/mcp-activity-entity'
 import { McpServerEntity } from '../mcp/mcp-entity'
 import { McpOAuthClientEntity } from '../mcp/oauth/client/mcp-oauth-client.entity'
 import { McpOAuthAuthorizationCodeEntity } from '../mcp/oauth/code/mcp-oauth-code.entity'
@@ -95,6 +97,7 @@ function getEntities(): EntitySchema<unknown>[] {
         UserInvitationEntity,
         AIProviderEntity,
         AiToolConfigEntity,
+        PlatformModelTierEntity,
         ProjectRoleEntity,
         TableEntity,
         FieldEntity,
@@ -102,6 +105,7 @@ function getEntities(): EntitySchema<unknown>[] {
         CellEntity,
         TableWebhookEntity,
         UserIdentityEntity,
+        McpActivityEntity,
         McpServerEntity,
         McpOAuthClientEntity,
         McpOAuthAuthorizationCodeEntity,

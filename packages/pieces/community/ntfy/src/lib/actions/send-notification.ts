@@ -4,12 +4,10 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { ntfyAuth } from '../..';
+import { ntfyAuth } from '../auth';
+import { ntfyClient } from '../common/client';
+import { ntfyProps } from '../common/props';
 import { sendNotificationActionOutputSchema } from '../output-schemas';
-
-const encodeToRFC2047 = (text: string) => {
-  return `=?UTF-8?B?${Buffer.from(text, 'utf-8').toString('base64')}?=`;
-};
 
 export const sendNotification = createAction({
   auth: ntfyAuth,
@@ -17,8 +15,8 @@ export const sendNotification = createAction({
   classification: 'WRITE',
   displayName: 'Send Notification',
   description: 'Send a notification to ntfy',
-  audience: 'both',
-  aiMetadata: { description: 'Publishes a push notification to a ntfy topic on the configured ntfy server, optionally with a title, priority (1-5), tags, icon, click-through URL, action buttons, or scheduled delay. Choose this to alert a user or channel via ntfy. Requires a topic and message; each call sends a new notification (not idempotent).', idempotent: false },
+  audience: 'human',
+  aiMetadata: { description: 'Publishes a push notification to a ntfy topic using ntfy\'s header format, optionally with a title, priority, tags, icon, click URL, action buttons, attachment URL, Markdown, email, sequence ID or scheduled delay. Agents should prefer Publish Message (ntfy_publish_message), which takes typed fields. Not idempotent: each call sends a new notification.', idempotent: false },
   props: {
     topic: Property.ShortText({
       displayName: 'Topic',
@@ -70,6 +68,26 @@ export const sendNotification = createAction({
         "Let ntfy send messages at a later date, e.g. 'tomorrow, 10am', see https://docs.ntfy.sh/publish/#scheduled-delivery",
       required: false,
     }),
+    attach: ntfyProps.attach(),
+    filename: ntfyProps.filename(),
+    markdown: ntfyProps.markdown(),
+    email: ntfyProps.email(),
+    call: ntfyProps.call(),
+    sequence_id: ntfyProps.publishSequenceId(),
+    cache: Property.StaticDropdown({
+      displayName: 'Server Cache',
+      description:
+        'Leave empty to let the server cache the message (default), so it can be fetched later. "Do not cache" delivers it only to clients connected right now.',
+      required: false,
+      options: { options: [{ label: 'Do not cache', value: 'no' }] },
+    }),
+    firebase: Property.StaticDropdown({
+      displayName: 'Firebase',
+      description:
+        'Leave empty to also push through Firebase (default, needed for instant delivery on Google Play Android apps). "Do not forward" skips Firebase.',
+      required: false,
+      options: { options: [{ label: 'Do not forward to Firebase', value: 'no' }] },
+    }),
   },
   outputSchema: sendNotificationActionOutputSchema,
   async run({ auth, propsValue }) {
@@ -77,16 +95,6 @@ export const sendNotification = createAction({
     const accessToken = auth.props.access_token;
 
     const topic = propsValue.topic;
-    let title = propsValue.title;
-    let message = propsValue.message;
-    title = encodeToRFC2047(title as string);
-    message = encodeToRFC2047(message as string);
-    const priority = propsValue.priority;
-    const tags = propsValue.tags;
-    const icon = propsValue.icon;
-    const actions = propsValue.actions;
-    const click = propsValue.click;
-    const delay = propsValue.delay;
 
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -97,16 +105,24 @@ export const sendNotification = createAction({
           token: accessToken,
         },
       }),
-      headers: {
-        'X-Message': message,
-        'X-Title': title,
-        'X-Priority': priority,
-        'X-Tags': tags?.join(','),
-        'X-Icon': icon,
-        'X-Actions': actions,
-        'X-Click': click,
-        'X-Delay': delay,
-      },
+      headers: ntfyClient.buildSendNotificationHeaders({
+        message: propsValue.message,
+        title: propsValue.title,
+        priority: propsValue.priority,
+        tags: propsValue.tags,
+        icon: propsValue.icon,
+        actions: propsValue.actions,
+        click: propsValue.click,
+        delay: propsValue.delay,
+        attach: propsValue.attach,
+        filename: propsValue.filename,
+        markdown: propsValue.markdown,
+        email: propsValue.email,
+        call: propsValue.call,
+        sequence_id: propsValue.sequence_id,
+        cache: propsValue.cache,
+        firebase: propsValue.firebase,
+      }),
     });
   },
 });

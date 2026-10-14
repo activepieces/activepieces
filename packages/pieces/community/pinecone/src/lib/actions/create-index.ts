@@ -5,6 +5,7 @@ import { pineconeAuth } from '../auth';
 export const createIndex = createAction({
   auth: pineconeAuth,
   name: 'create_index',
+  classification: 'WRITE',
   displayName: 'Create Index',
   description: 'Creates a new Pinecone index with custom settings.',
   audience: 'both',

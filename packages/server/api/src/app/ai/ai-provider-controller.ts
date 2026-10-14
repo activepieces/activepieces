@@ -1,11 +1,13 @@
 import { AiProviderKeyStatus, AIProviderName } from '@activepieces/core-utils'
-import { AIProviderModel, CreateAIProviderRequest, PrincipalType, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
+import { modelTierCatalog } from '@activepieces/server-utils'
+import { AIProviderModel, CreateAIProviderRequest, ModelOptions, ModelOptionsSurface, PrincipalType, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
+import { aiModelOptionsService } from './ai-model-options-service'
 import { aiProviderService } from './ai-provider-service'
 
 export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
@@ -24,17 +26,22 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             configId: request.params.id,
         })
     })
-    app.get('/:provider/config', GetAIProviderConfig, async (request) => {
-        const platformId = request.principal.platform.id
-        const provider = request.params.provider
-        if (provider === AIProviderName.ACTIVEPIECES) {
-            await assertCreditsAndAppSumoNotExceeded({ platformId, log: app.log })
-        }
-        return aiProviderService(app.log).getConfigOrThrow({
-            platformId,
-            provider,
-            scope: { type: 'project', projectId: request.principal.projectId },
-            ...spreadIfDefined('configId', request.query.configId),
+    app.get('/configs/:id/suggested-models', ListSuggestedModelsForConfig, async (request) => {
+        return aiProviderService(app.log).suggestModelsForConfig({
+            platformId: request.principal.platform.id,
+            configId: request.params.id,
+        })
+    })
+    app.get('/tiers', ListModelTiers, async () => ({
+        flow: modelTierCatalog.current('flow'),
+        chat: modelTierCatalog.current('chat'),
+    }))
+    app.get('/model-options', ListModelOptions, async (request) => {
+        return aiModelOptionsService(app.log).list({
+            platformId: request.principal.platform.id,
+            projectId: request.projectId,
+            surface: request.query.surface,
+            tierId: request.query.tierId,
         })
     })
     app.get('/:provider/models', ListModels, async (request) => {
@@ -98,17 +105,56 @@ const ListModelsForConfig = {
     },
 }
 
-const GetAIProviderConfig = {
+const ListSuggestedModelsForConfig = {
     config: {
-        security: securityAccess.engine(),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: z.object({
-            provider: z.nativeEnum(AIProviderName),
+            id: z.string(),
         }),
+        response: {
+            [StatusCodes.OK]: z.array(z.string()),
+        },
+    },
+}
+
+const ModelTierList = z.object({
+    tiers: z.array(z.object({
+        id: z.string(),
+        label: z.string(),
+        modelId: z.string(),
+    })),
+    defaultTierId: z.string(),
+})
+
+const ListModelTiers = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER, PrincipalType.ENGINE]),
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: z.object({
+                flow: ModelTierList,
+                chat: ModelTierList,
+            }),
+        },
+    },
+}
+
+const ListModelOptions = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER], undefined, { type: ProjectResourceType.QUERY }),
+    },
+    schema: {
         querystring: z.object({
-            configId: z.string().optional(),
+            projectId: z.string().optional(),
+            surface: ModelOptionsSurface,
+            tierId: z.string().optional(),
         }),
+        response: {
+            [StatusCodes.OK]: ModelOptions,
+        },
     },
 }
 
@@ -134,6 +180,7 @@ const CreateAIProvider = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
+    preHandler: (request: FastifyRequest): Promise<void> => aiProviderService(request.log).assertAiProvidersPlan(request.principal.platform.id),
     schema: {
         body: CreateAIProviderRequest,
     },

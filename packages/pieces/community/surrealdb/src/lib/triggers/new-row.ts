@@ -102,6 +102,7 @@ function constructQuery({
 
 export const newRow = createTrigger({
   name: 'new-row',
+  classification: 'READ',
   displayName: 'New Row',
   description: 'Triggers when a new row is added to the defined table.',
   aiMetadata: {

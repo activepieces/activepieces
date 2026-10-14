@@ -3,34 +3,35 @@ import {
   createTrigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { togglTrackAuth } from '../..';
 import {
-  HttpMethod,
-  httpClient,
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
+import { togglTrackAuth } from '../auth';
+import { togglApi } from '../common/client';
+import { togglModels } from '../common/models';
+import { togglOutputSchemas } from '../output-schemas';
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof togglTrackAuth>, Record<string, never>> = {
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof togglTrackAuth>,
+  Record<string, never>
+> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const authHeader = `Basic ${Buffer.from(`${auth.secret_text}:api_token`).toString('base64')}`;
-    
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: 'https://api.track.toggl.com/api/v9/workspaces',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader,
-      },
+    if (togglApi.isTwo(auth)) {
+      throw togglApi.classicOnlyError(TRIGGER_NAME);
+    }
+    const workspaces = await togglApi.request<ClassicWorkspace[] | null>({
+      auth,
+      method: togglApi.HttpMethod.GET,
+      path: '/workspaces',
     });
-
-    const workspaces = response.body as any[];
-    
-    return workspaces.map((workspace: any) => ({
-      epochMilliSeconds: new Date(workspace.at || workspace.last_modified).getTime(),
-      data: workspace,
+    return (workspaces ?? []).map((workspace) => ({
+      epochMilliSeconds: new Date(
+        workspace.at ?? workspace.last_modified ?? 0
+      ).getTime(),
+      data: togglModels.classicWorkspace(workspace),
     }));
   },
 };
@@ -40,11 +41,14 @@ export const newWorkspace = createTrigger({
   name: 'new_workspace',
   classification: 'READ',
   displayName: 'New or Updated Workspace',
-  description: 'Fires when a workspace is created or updated (Toggl only supports workspace updated events).',
+  description:
+    'Fires when a workspace is created or updated (Toggl only supports workspace updated events).',
   aiMetadata: {
-    description: 'Fires when a workspace accessible to the authenticated user is created or modified, delivering the workspace record. Polls Toggl periodically and emits each workspace whose last-modified timestamp is new since the previous poll.',
+    description:
+      'Fires when a workspace is created or modified, delivering the workspace record (API token removed). Polls Toggl. Classic only.',
   },
   props: {},
+  outputSchema: togglOutputSchemas.workspace,
   sampleData: {
     id: 20763798,
     organization_id: 20764737,
@@ -69,7 +73,6 @@ export const newWorkspace = createTrigger({
     reports_collapse: true,
     rounding: 1,
     rounding_minutes: 0,
-    api_token: '72565784d2250b9ba2f2d61039ba9fee',
     at: '2025-09-01T09:23:02+00:00',
     logo_url: 'https://assets.track.toggl.com/images/workspace.jpg',
     ical_enabled: true,
@@ -79,36 +82,33 @@ export const newWorkspace = createTrigger({
   type: TriggerStrategy.POLLING,
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    if (togglApi.isTwo(context.auth)) {
+      throw togglApi.classicOnlyError(TRIGGER_NAME);
+    }
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
 
   async test(context) {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
 });
+
+const TRIGGER_NAME = 'The New or Updated Workspace trigger';
+
+type ClassicWorkspace = {
+  id: number;
+  name: string;
+  at?: string;
+  last_modified?: string;
+  api_token?: string;
+  ical_url?: string;
+  [key: string]: unknown;
+};

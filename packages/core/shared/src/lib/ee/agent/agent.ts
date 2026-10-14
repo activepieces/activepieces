@@ -1,11 +1,11 @@
 import { AgentOutputField, AgentTool } from '@activepieces/core-execution'
+import { AgentToolType } from '@activepieces/core-piece-types'
 import { AIProviderName, ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
 import { ColorName } from '../../management/project/project'
 
 const MAX_AGENT_TEXT_LENGTH = 51_200
-const MAX_SUGGESTED_AGENT_TOOLS = 4
 const MAX_AGENT_TOOLS = 100
 const MAX_AGENT_OUTPUT_FIELDS = 50
 const MAX_AGENT_STEP_BUDGET = 1_000
@@ -15,8 +15,9 @@ const MAX_AGENT_SEARCH_LENGTH = 200
 const MAX_AGENT_NAME_LENGTH = 200
 const MAX_AGENT_DESCRIPTION_LENGTH = 2_000
 const MAX_AGENT_CONFIG_BYTES = 128_000
-const MAX_DRAFT_PROMPT_LENGTH = 2_000
 const DEFAULT_AGENT_MAX_STEPS = 20
+
+const MAX_AGENT_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 
 enum AgentVisibility {
     PROJECT = 'PROJECT',
@@ -43,6 +44,7 @@ const AgentConfig = z.object({
     provider: Nullable(z.enum(AIProviderName)),
     providerConfigId: Nullable(ApId),
     modelName: Nullable(z.string().max(MAX_AGENT_NAME_LENGTH)),
+    modelTierId: Nullable(ApId),
     maxSteps: z.number().int().positive().max(MAX_AGENT_STEP_BUDGET).default(DEFAULT_AGENT_MAX_STEPS),
     tools: z.array(AgentTool).max(MAX_AGENT_TOOLS).default([]),
     structuredOutput: z.array(AgentOutputField).max(MAX_AGENT_OUTPUT_FIELDS).default([]),
@@ -57,6 +59,7 @@ const Agent = z.object({
     projectId: ApId,
     ownerId: ApId,
     externalId: z.string(),
+    folderId: Nullable(ApId),
     displayName: z.string(),
     description: Nullable(z.string()),
     icon: z.enum(AgentIcon),
@@ -70,6 +73,7 @@ const Agent = z.object({
 const AgentUsage = z.object({
     total: z.number().int().nonnegative(),
     names: z.array(z.string()),
+    flows: z.array(z.object({ id: z.string(), displayName: z.string() })),
 })
 
 const AgentWithUsage = Agent.extend({
@@ -80,6 +84,7 @@ const AgentSummary = Agent.omit({ draft: true, published: true }).extend({
     isPublished: z.boolean(),
     toolCount: z.number(),
     toolPieceNames: z.array(z.string()),
+    toolTypes: z.array(z.enum(AgentToolType)),
     projectDisplayName: z.string(),
     projectIsPrivate: z.boolean(),
 })
@@ -92,31 +97,12 @@ const CreateAgentRequest = z.object({
     color: z.enum(ColorName),
     visibility: z.enum(AgentVisibility).optional(),
     sharedWithUserIds: z.array(ApId).max(MAX_AGENT_SHARED_MEMBERS).optional(),
+    folderId: Nullable(ApId),
     draft: AgentConfig,
 })
 
 const UpdateAgentRequest = CreateAgentRequest.omit({ projectId: true }).partial().extend({
     goLive: z.boolean().optional(),
-})
-
-const AgentDraftFields = z.object({
-    displayName: z.string().min(1, formErrors.required).max(MAX_AGENT_NAME_LENGTH),
-    description: z.string().max(MAX_AGENT_NAME_LENGTH),
-    icon: z.enum(AgentIcon).catch(AgentIcon.BOT),
-    color: z.enum(ColorName).catch(ColorName.PURPLE),
-    instructions: z.string().min(1, formErrors.required).max(MAX_AGENT_TEXT_LENGTH),
-})
-
-const DraftAgentResponse = AgentDraftFields.extend({
-    tools: z.array(AgentTool).max(MAX_SUGGESTED_AGENT_TOOLS),
-    provider: Nullable(z.enum(AIProviderName)),
-    modelName: Nullable(z.string().max(MAX_AGENT_NAME_LENGTH)),
-})
-
-
-const DraftAgentRequest = z.object({
-    projectId: ApId,
-    prompt: z.string().min(1, formErrors.required).max(MAX_DRAFT_PROMPT_LENGTH),
 })
 
 const GetAgentRequest = z.object({
@@ -159,6 +145,13 @@ const ListAgentsRequest = z.object({
     limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
 })
 
+const ListAgentRunsRequest = z.object({
+    projectId: ApId,
+    agentId: ApId,
+    cursor: z.string().optional(),
+    limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
+})
+
 const agentUtils = {
     isPublishable: (config: AgentConfig): boolean => (config.instructions ?? '').trim().length > 0,
 }
@@ -181,21 +174,18 @@ export {
     AgentVisibility,
     CreateAgentRequest,
     DEFAULT_AGENT_MAX_STEPS,
-    DraftAgentRequest,
-    AgentDraftFields,
-    DraftAgentResponse,
+    MAX_AGENT_TURN_WALL_CLOCK_MS,
+    ListAgentRunsRequest,
     ListAgentsRequest,
     MAX_AGENT_OUTPUT_FIELDS,
     MAX_AGENT_CONFIG_BYTES,
     MAX_AGENT_DESCRIPTION_LENGTH,
     MAX_AGENT_NAME_LENGTH,
     MAX_AGENT_PAGE_SIZE,
-    MAX_DRAFT_PROMPT_LENGTH,
     MAX_AGENT_SHARED_MEMBERS,
     MAX_AGENT_STEP_BUDGET,
     MAX_AGENT_TEXT_LENGTH,
     MAX_AGENT_TOOLS,
-    MAX_SUGGESTED_AGENT_TOOLS,
     UpdateAgentRequest,
 }
 
@@ -206,11 +196,9 @@ export type AgentWithUsage = z.infer<typeof AgentWithUsage>
 export type GetAgentRequest = z.infer<typeof GetAgentRequest>
 export type AgentConfig = z.infer<typeof AgentConfig>
 export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
-export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
-export type AgentDraftFields = z.infer<typeof AgentDraftFields>
-export type DraftAgentResponse = z.infer<typeof DraftAgentResponse>
 export type AgentMoveLoss = z.infer<typeof AgentMoveLoss>
 export type AgentMovePreview = z.infer<typeof AgentMovePreview>
+export type ListAgentRunsRequest = z.infer<typeof ListAgentRunsRequest>
 export type ListAgentsRequest = z.infer<typeof ListAgentsRequest>
 export type MoveAgentRequest = z.infer<typeof MoveAgentRequest>
 export type UpdateAgentRequest = z.infer<typeof UpdateAgentRequest>

@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const getAppInfo = createAction({
   auth: villageAuth,
   name: 'get_app_info',
+  classification: 'READ',
   displayName: 'Get App Information',
   description:
     'Get information about the partner application associated with your token — title, description, domain, logo URL, public key, and active flag. Useful for verifying your app configuration.',

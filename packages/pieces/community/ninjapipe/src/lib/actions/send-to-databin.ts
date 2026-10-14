@@ -6,6 +6,7 @@ import { getAuth } from '../common';
 export const sendToDatabin = createAction({
   auth: ninjapipeAuth,
   name: 'send_to_databin',
+  classification: 'WRITE',
   displayName: 'Send to Databin',
   description: 'Sends a JSON payload to a Databin webhook URL on your connected NinjaPipe workspace.',
   audience: 'both',

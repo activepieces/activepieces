@@ -7,6 +7,7 @@ import { SessionContext } from '../../common/types';
 export const createContext = createAction({
   auth: hedyAuth,
   name: 'create-context',
+  classification: 'WRITE',
   displayName: 'Create Session Context',
   description: 'Create a new session context with AI instructions.',
   audience: 'both',

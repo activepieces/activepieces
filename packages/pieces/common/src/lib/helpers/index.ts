@@ -17,6 +17,7 @@ import {
   HttpMethod,
   HttpRequest,
   QueryParams,
+  acceptsRequestBody,
   httpClient,
   toFailsafeOutput,
 } from '../http';
@@ -81,7 +82,6 @@ function contentTypeToExtension(contentType: string): string {
   const type = contentType.split(';')[0].trim().toLowerCase();
   return CONTENT_TYPE_EXTENSIONS[type] ?? '';
 }
-import FormData from 'form-data';
 
 export const getAccessTokenOrThrow = (
   auth: OAuth2PropertyValue | undefined
@@ -235,39 +235,38 @@ export function createCustomApiCallAction<
         required: false,
         ...(props?.queryParams ?? {}),
       }),
-      body_type: Property.StaticDropdown({
+      body_type: Property.Dropdown({
+        auth,
         displayName: 'Body Type',
         required: false,
         defaultValue: 'none',
-        options: {
-          disabled: false,
-          options: [
-            {
-              label: 'None',
-              value: 'none',
-            },
-            {
-              label: 'JSON',
-              value: 'json',
-            },
-            {
-              label: 'Form Data',
-              value: 'form_data',
-            },
-            {
-              label: 'Raw',
-              value: 'raw',
-            },
-          ],
+        refreshers: ['method'],
+        options: async ({ method }) => {
+          if (!acceptsRequestBody(method as HttpMethod)) {
+            return {
+              disabled: true,
+              placeholder: 'Not available for GET or HEAD requests',
+              options: [],
+            };
+          }
+          return {
+            disabled: false,
+            options: [
+              { label: 'None', value: 'none' },
+              { label: 'JSON', value: 'json' },
+              { label: 'Form Data', value: 'form_data' },
+              { label: 'Raw', value: 'raw' },
+            ],
+          };
         },
       }),
       body: Property.DynamicProperties({
         auth,
         displayName: 'Body',
-        refreshers: ['body_type'],
+        refreshers: ['body_type', 'method'],
         required: false,
-        props: async ({ body_type }) => {
-          if (!body_type) return {};
+        props: async ({ body_type, method }) => {
+          if (!body_type || !acceptsRequestBody(method as HttpMethod)) return {};
 
           const bodyTypeInput = body_type as unknown as string;
 
@@ -358,6 +357,22 @@ export function createCustomApiCallAction<
       }),
       ...extraProps,
     },
+    propertyGroups: [
+      {
+        key: 'request',
+        display: 'section',
+        label: 'Request',
+        icon: 'send',
+        props: ['method', 'url', 'headers', 'queryParams'],
+      },
+      {
+        key: 'payload',
+        display: 'section',
+        label: 'Data to send',
+        icon: 'code',
+        props: ['body_type', 'body'],
+      },
+    ],
 
     run: async (context) => {
       const {
@@ -420,6 +435,7 @@ export function createCustomApiCallAction<
               fileFieldValue?: ApFile;
             }>;
 
+            const { default: FormData } = await import('form-data');
             const formData = new FormData();
 
             for (const {

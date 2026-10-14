@@ -4,6 +4,8 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
+import { platformHooks } from '@/hooks/platform-hooks';
+
 import { signingKeyApi } from '../api/signing-key-api';
 
 export const signingKeyKeys = {
@@ -11,13 +13,16 @@ export const signingKeyKeys = {
 };
 
 export const signingKeyQueries = {
-  useSigningKeys: () =>
-    useQuery({
+  useSigningKeys: () => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    return useQuery({
       queryKey: signingKeyKeys.all,
       gcTime: 0,
       staleTime: 0,
       queryFn: () => signingKeyApi.list(),
-    }),
+      enabled: platform.plan.embeddingEnabled,
+    });
+  },
 };
 
 export const signingKeyMutations = {

@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import {
+  AiRouterAction,
+  AiRouterMatchMode,
+  BranchExecutionType,
   CodeAction,
   EmptyTrigger,
+  FlowAction,
   FlowActionType,
   FlowTriggerType,
   FlowVersion,
@@ -39,7 +43,38 @@ const createCodeAction = (
   nextAction,
 });
 
-const createFlowVersion = (firstAction?: CodeAction): FlowVersion => {
+const createAiRouter = (): AiRouterAction => ({
+  name: 'step_1',
+  valid: true,
+  displayName: 'AI Router',
+  lastUpdatedDate: '2026-01-01T00:00:00.000Z',
+  type: FlowActionType.AI_ROUTER,
+  settings: {
+    text: '{{trigger.body.message}}',
+    question: 'Which team?',
+    matchMode: AiRouterMatchMode.BEST_MATCH,
+    branches: [
+      {
+        branchType: BranchExecutionType.CONDITION,
+        branchName: 'Billing',
+        description: 'payments',
+      },
+      {
+        branchType: BranchExecutionType.CONDITION,
+        branchName: 'Technical',
+        description: 'bugs',
+      },
+      {
+        branchType: BranchExecutionType.FALLBACK,
+        branchName: 'Otherwise',
+        description: 'else',
+      },
+    ],
+  },
+  children: [null, null, null],
+});
+
+const createFlowVersion = (firstAction?: FlowAction): FlowVersion => {
   const trigger: EmptyTrigger = {
     name: 'trigger',
     valid: false,
@@ -113,5 +148,35 @@ describe('flowCanvasUtils.createFlowGraph', () => {
     expect(triggerEdge?.target).toEqual('trigger-subgraph-end');
     const lastEdge = graph.edges.find((edge) => edge.source === 'step_1');
     expect(lastEdge?.target).toEqual('step_1-subgraph-end');
+  });
+});
+
+describe('flowCanvasUtils.createFlowGraph with an AI router', () => {
+  it('draws one labelled branch per route', () => {
+    const graph = flowCanvasUtils.createFlowGraph({
+      version: createFlowVersion(createAiRouter()),
+      notes: [],
+      orientation: 'vertical',
+    });
+
+    const branchLabels = graph.edges
+      .filter((edge) => edge.type === ApEdgeType.ROUTER_START_EDGE)
+      .map((edge) => edge.data?.label);
+
+    expect(branchLabels).toEqual(['Billing', 'Technical', 'Otherwise']);
+  });
+
+  it('gives every empty route its own add button', () => {
+    const graph = flowCanvasUtils.createFlowGraph({
+      version: createFlowVersion(createAiRouter()),
+      notes: [],
+      orientation: 'vertical',
+    });
+
+    const addButtons = graph.nodes.filter(
+      (node) => node.type === ApNodeType.BIG_ADD_BUTTON,
+    );
+
+    expect(addButtons).toHaveLength(3);
   });
 });

@@ -6,6 +6,7 @@ import { smartsheetCommon } from '../common';
 export const findRowsByQuery = createAction({
   auth: smartsheetAuth,
   name: 'find_rows_by_query',
+  classification: 'SEARCH',
   displayName: 'Find Row',
   description: 'Finds rows in a specific sheet or across all accessible sheets using text queries with advanced filtering options.',
   audience: 'both',

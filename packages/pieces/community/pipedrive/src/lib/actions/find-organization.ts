@@ -19,7 +19,7 @@ export const findOrganizationAction = createAction({
 	classification: 'SEARCH',
 	displayName: 'Find Organization',
 	description: 'Finds an organization.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Finds a single organization by matching a chosen field to a value (exact match), returning the most recently updated match. Use to locate an organization before reading or updating it; pick the field via Search Field and supply its value. Read-only and idempotent (a temporary search filter is created and removed internally).',

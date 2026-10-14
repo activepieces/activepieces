@@ -14,10 +14,12 @@ import { pageSlice, TablePagination } from '../components/table-pagination';
 export function ModelSelectionPanel({
   models,
   selectedIds,
+  isLoading,
   onChange,
 }: {
   models: AIProviderModel[];
   selectedIds: string[];
+  isLoading: boolean;
   onChange: (modelIds: string[]) => void;
 }) {
   const [search, setSearch] = useState('');
@@ -71,7 +73,7 @@ export function ModelSelectionPanel({
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium">{row.original.name}</span>
             {row.original.id !== row.original.name && (
-              <span className="font-mono text-xs text-muted-foreground">
+              <span className="font-mono text-xs text-gray-11">
                 {row.original.id}
               </span>
             )}
@@ -82,10 +84,10 @@ export function ModelSelectionPanel({
   ];
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-border/60">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-gray-6/60">
       <div className="flex flex-wrap items-center gap-2 p-3">
         <InputWithIcon
-          icon={<Search className="size-4 shrink-0 text-muted-foreground" />}
+          icon={<Search className="size-4 shrink-0 text-gray-11" />}
           value={search}
           onChange={(event) => {
             setSearch(event.target.value);
@@ -102,11 +104,11 @@ export function ModelSelectionPanel({
           }}
         />
       </div>
-      <div className="border-t border-border/60 [&_tbody_tr:last-child]:border-b-0 [&_thead]:border-t-0">
+      <div className="border-t border-gray-6/60 [&_tbody_tr:last-child]:border-b-0 [&_thead]:border-t-0">
         <DataTable
           columns={columns}
           page={{ data: rows, next: null, previous: null }}
-          isLoading={false}
+          isLoading={isLoading}
           isError={false}
           errorStateEntity={t('models')}
           hidePagination={true}
@@ -117,9 +119,7 @@ export function ModelSelectionPanel({
               ? t('No model is selected yet.')
               : t('No model matches your search.')
           }
-          emptyStateIcon={
-            <Sparkles className="size-10 text-muted-foreground" />
-          }
+          emptyStateIcon={<Sparkles className="size-10 text-gray-11" />}
         />
       </div>
       <TablePagination
@@ -127,7 +127,7 @@ export function ModelSelectionPanel({
         pageSize={PAGE_SIZE}
         total={filtered.length}
         onPageChange={setPage}
-        className="border-t border-border/60 p-3"
+        className="border-t border-gray-6/60 p-3"
       />
     </div>
   );

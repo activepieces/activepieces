@@ -20,54 +20,61 @@ export const askClaude = createAction({
   name: 'ask_claude',
   classification: 'READ',
   displayName: 'Ask Claude',
-  description: 'Ask Claude anything you want!',
+  description: 'Send a question or instruction to Claude and get a text reply.',
   aiMetadata: { description: 'Sends a free-form question or instruction to a chosen Anthropic Claude model and returns the reply as plain text, optionally with an image attached for vision and earlier user/assistant turns supplied as Roles for multi-turn context; enabling Extended Thinking Mode routes the call to Claude 3.7 Sonnet with a separate reasoning token budget. Prefer the sibling Extract Structured Data action when the answer must be constrained to defined fields rather than prose. Requires a model and a question, with temperature between 0 and 1; not idempotent, since each call is a fresh generation that can return different text.', idempotent: false },
   props: {
     model: modelDropdown,
+    prompt: Property.LongText({
+      displayName: 'Question',
+      description: 'What you want Claude to answer or do.',
+      required: true,
+    }),
     systemPrompt: Property.LongText({
       displayName: 'System Prompt',
+      description:
+        'Standing instructions, such as a role or tone, for Claude to follow.',
       required: false,
       defaultValue: "You're a helpful assistant.",
     }),
-    temperature: Property.Number({
-      displayName: 'Temperature',
+    image: Property.File({
+      displayName: 'Image',
       required: false,
-      description:
-        'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
+      description: 'An image for Claude to look at along with your question.',
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
       required: false,
       description:
-        "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion, don't set the value to maximum and leave some tokens for the input. The exact limit varies by model. (One token is roughly 4 characters for normal English text)",
+        'Longest reply in tokens, about 4 characters each. Empty: 1,000.',
     }),
-    prompt: Property.LongText({
-      displayName: 'Question',
-      required: true,
-    }),
-    image: Property.File({
-      displayName: 'Image (URL)',
+    temperature: Property.Number({
+      displayName: 'Temperature',
       required: false,
-      description: 'URL of image to be used as input for the model.',
+      advanced: true,
+      description: 'From 0 to 1. Lower is more focused, higher is more varied.',
     }),
     roles: Property.Json({
       displayName: 'Roles',
       required: false,
+      advanced: true,
       defaultValue: [],
-      description: `Array of roles to specify more accurate response.Please check [guide to Input Messages](https://docs.anthropic.com/en/api/messages-examples#vision).`,
+      description:
+        'Extra messages sent after the question, as user or assistant turns.',
     }),
     thinkingMode: Property.Checkbox({
       displayName: 'Extended Thinking Mode',
       required: false,
+      advanced: true,
       defaultValue: false,
       description:
-        'Uses claude 3.7 sonnet enhanced reasoning capabilities for complex tasks.',
+        'Lets Claude reason first. Uses Claude 3.7 Sonnet, regardless of Model.',
     }),
     thinkingModeParams: Property.DynamicProperties({
       auth: claudeAuth,
       displayName: '',
       refreshers: ['thinkingMode'],
       required: false,
+      advanced: true,
       props: async ({ auth, thinkingMode }) => {
         if (!auth || !thinkingMode) return {};
 
@@ -78,7 +85,7 @@ export const askClaude = createAction({
           required: true,
           defaultValue: DEFAULT_TOKENS_FOR_THINKING_MODE,
           description:
-            'This parameter determines the maximum number of tokens Claude is allowed to use for its internal reasoning process.Your budget tokens must always be less than the max tokens specified.',
+            'Tokens Claude may spend reasoning. Must be below Maximum Tokens.',
         });
 
         return props;

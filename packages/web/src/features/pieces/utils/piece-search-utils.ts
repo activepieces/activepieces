@@ -22,7 +22,8 @@ const isFlowController = (stepMetadata: StepMetadata) => {
   }
   return (
     stepMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
-    stepMetadata.type === FlowActionType.ROUTER
+    stepMetadata.type === FlowActionType.ROUTER ||
+    stepMetadata.type === FlowActionType.AI_ROUTER
   );
 };
 

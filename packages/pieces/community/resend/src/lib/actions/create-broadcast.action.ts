@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createBroadcastOutputSchema } from '../output-schemas';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { resendProps } from '../common/props';
 
 export const createBroadcast = createAction({
@@ -68,12 +69,6 @@ export const createBroadcast = createAction({
     if (propsValue.reply_to) body['reply_to'] = propsValue.reply_to;
     if (propsValue.preview_text) body['preview_text'] = propsValue.preview_text;
 
-    const response = await httpClient.sendRequest<{ object: string; id: string }>({
-      method: HttpMethod.POST,
-      url: 'https://api.resend.com/broadcasts',
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-      body,
-    });
-    return response.body;
+    return await resendClient.sendRequest<{ object: string; id: string }>({ auth: auth.secret_text, method: HttpMethod.POST, path: '/broadcasts', body: body });
   },
 });

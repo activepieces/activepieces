@@ -1,13 +1,17 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   Agent,
+  AgentConversationStatus,
+  AgentRunListItem,
   AgentListSort,
   CreateAgentRequest,
-  DraftAgentRequest,
   MoveAgentRequest,
   Permission,
+  SeekPage,
   UpdateAgentRequest,
 } from '@activepieces/shared';
 import {
+  InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -34,6 +38,9 @@ export const useAgentsNavVisible = (): boolean => {
 };
 
 const AGENTS_PAGE_SIZE = 100;
+const AGENT_RUNS_PAGE_SIZE = 20;
+const AGENT_RUNS_ACTIVE_POLL_MS = 5 * 1000;
+const AGENT_RUNS_IDLE_POLL_MS = 15 * 1000;
 
 export const agentsQueries = {
   useAgents: ({
@@ -94,6 +101,76 @@ export const agentsQueries = {
       queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
     }),
+  useAgentRun: ({
+    runId,
+    projectId,
+  }: {
+    runId: string | null;
+    projectId: string;
+  }) =>
+    useQuery({
+      queryKey: [AGENTS_KEY, 'run', runId],
+      enabled: !isNil(runId),
+      queryFn: () => agentsApi.getRun(runId ?? '', projectId),
+    }),
+  useAgentRuns: ({
+    agentId,
+    projectId,
+  }: {
+    agentId: string;
+    projectId: string;
+  }) => {
+    const queryClient = useQueryClient();
+    const listKey = [AGENTS_KEY, 'runs', agentId];
+    const list = useInfiniteQuery({
+      queryKey: listKey,
+      queryFn: ({ pageParam }) =>
+        agentsApi.listRuns({
+          agentId,
+          projectId,
+          cursor: pageParam,
+          limit: AGENT_RUNS_PAGE_SIZE,
+        }),
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage) => lastPage.next ?? undefined,
+    });
+    const latest = useQuery({
+      queryKey: [AGENTS_KEY, 'runs-latest', agentId],
+      queryFn: async () => {
+        const latest = await agentsApi.listRuns({
+          agentId,
+          projectId,
+          limit: AGENT_RUNS_PAGE_SIZE,
+        });
+        const shown =
+          queryClient.getQueryData<InfiniteData<SeekPage<AgentRunListItem>>>(
+            listKey,
+          )?.pages[0];
+        if (!isNil(shown) && runsSignature(shown) !== runsSignature(latest)) {
+          await queryClient.invalidateQueries({
+            queryKey: listKey,
+            exact: true,
+          });
+        }
+        return latest;
+      },
+      enabled: list.isSuccess,
+      refetchInterval: (query) => {
+        const stillRunning = query.state.data?.data.some(
+          (run) => run.status === AgentConversationStatus.STREAMING,
+        );
+        return stillRunning === true
+          ? AGENT_RUNS_ACTIVE_POLL_MS
+          : AGENT_RUNS_IDLE_POLL_MS;
+      },
+    });
+    return {
+      ...list,
+      isError: list.isError || latest.isError,
+      refetch: () =>
+        Promise.all([list.refetch(), latest.refetch()]).catch(() => undefined),
+    };
+  },
 };
 
 export const agentsMutations = {
@@ -141,9 +218,10 @@ export const agentsMutations = {
       },
     });
   },
-  useDraftAgent: () =>
-    useMutation({
-      mutationFn: (request: DraftAgentRequest) => agentsApi.draft(request),
-      onError: () => undefined,
-    }),
 };
+
+function runsSignature(page: SeekPage<AgentRunListItem>): string {
+  return page.data
+    .map((run) => `${run.id}:${run.status}:${run.title ?? ''}`)
+    .join(',');
+}

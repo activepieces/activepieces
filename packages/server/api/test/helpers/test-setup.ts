@@ -47,8 +47,15 @@ async function createFreshEnvironment(): Promise<FastifyInstance> {
     resetDatabaseConnection()
     await initializeDatabase({ runMigrations: false })
     const app = await setupServer()
+    giveInjectedRequestsASocketThatCanBeClosed(app)
     setGlobalState({ app })
     return app
+}
+
+function giveInjectedRequestsASocketThatCanBeClosed(app: FastifyInstance): void {
+    app.addHook('onRequest', async (request) => {
+        request.raw.socket.destroySoon ??= () => undefined
+    })
 }
 
 async function cleanDatabase(): Promise<void> {

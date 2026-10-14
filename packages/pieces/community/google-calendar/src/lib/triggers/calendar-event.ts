@@ -9,7 +9,7 @@ import { eventOutputSchema } from '../output-schemas';
 
 const polling: Polling<
     AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
-	{ calendarId?: string; expandRecurringEvent: boolean }
+	{ calendarId?: string; expandRecurringEvent?: boolean }
 > = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue: { calendarId, expandRecurringEvent }, lastFetchEpochMS }) => {
@@ -24,7 +24,7 @@ const polling: Polling<
 		}
 
 		const currentValues: GoogleCalendarEvent[] =
-			(await getEvents(calendarId!, expandRecurringEvent, auth, minUpdated)) ?? [];
+			(await getEvents(calendarId!, expandRecurringEvent ?? false, auth, minUpdated)) ?? [];
 		const items = currentValues.map((item) => ({
 			epochMilliSeconds: new Date(item.updated).getTime(),
 			data: item,
@@ -46,9 +46,9 @@ export const calendarEventChanged = createTrigger({
 	props: {
 		calendar_id: googleCalendarCommon.calendarDropdown(),
 		expandRecurringEvent: Property.Checkbox({
-			displayName: 'Expand Recurring Event?',
-			description: 'If true, the trigger will activate for every occurrence of a recurring event.',
-			required: true,
+			displayName: 'Expand Recurring Events',
+			description: 'Fires once per occurrence of a recurring event.',
+			required: false,
 			defaultValue: false,
 		}),
 	},

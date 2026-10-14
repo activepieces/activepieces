@@ -6,6 +6,7 @@ import { BASE_URL } from '../common/props';
 export const getTask = createAction({
   auth: motionAuth,
   name: 'get-task',
+  classification: 'READ',
   displayName: 'Get Task',
   description: 'Get details of a specific task by ID.',
   audience: 'both',

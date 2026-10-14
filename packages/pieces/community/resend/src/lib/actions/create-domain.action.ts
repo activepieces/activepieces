@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { createDomainOutputSchema } from '../output-schemas';
 
 export const createDomain = createAction({
@@ -36,7 +37,7 @@ export const createDomain = createAction({
     const body: Record<string, unknown> = { name: propsValue.name };
     if (propsValue.region) body['region'] = propsValue.region;
 
-    const response = await httpClient.sendRequest<{
+    const response = await resendClient.sendRequest<{
       id: string;
       name: string;
       status: string;
@@ -44,14 +45,9 @@ export const createDomain = createAction({
       created_at: string;
       capabilities: { sending: string; receiving: string };
       records: { record: string; name: string; type: string; value: string; status: string; ttl: string }[];
-    }>({
-      method: HttpMethod.POST,
-      url: 'https://api.resend.com/domains',
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-      body,
-    });
+    }>({ auth: auth.secret_text, method: HttpMethod.POST, path: '/domains', body: body });
 
-    const d = response.body;
+    const d = response;
     return {
       id: d.id,
       name: d.name,

@@ -1340,5 +1340,7 @@
   "License activated successfully!": "Лицензия успешно активирована!",
   "Activation failed, invalid license key": "Активация не удалась, неверный лицензионный ключ",
   "Invalid Access": "Неправильный доступ",
-  "Either the project does not exist or you do not have access to it.": "Проект не существует или у вас нет доступа к нему."
+  "Either the project does not exist or you do not have access to it.": "Проект не существует или у вас нет доступа к нему.",
+  "Activepieces AI": "",
+  "what the call costs": ""
 }

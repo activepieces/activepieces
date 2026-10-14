@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { tavilyAuth } from '../auth';
+import { extractOutputSchema } from '../output-schemas';
 
 export const extractAction = createAction({
   name: 'extract',
+  outputSchema: extractOutputSchema,
   classification: 'READ',
   displayName: 'Extract Content',
   description: 'Retrieve raw web content from specified URLs.',

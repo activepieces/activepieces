@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const linkedinPersonLookup = createAction({
   auth: pubrioAuth,
   name: 'linkedin_person_lookup',
+  classification: 'READ',
   displayName: 'People LinkedIn Lookup',
   description: 'Real-time LinkedIn person lookup by LinkedIn URL',
   audience: 'both',

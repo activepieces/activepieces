@@ -6,6 +6,7 @@ import { respaidCommon } from '../common';
 
 export const createNewCampaign = createAction({
   name: 'create_new_campaign',
+  classification: 'WRITE',
   displayName: 'Create New Campaign',
   description: 'Action for creating a new campaign.',
   audience: 'both',

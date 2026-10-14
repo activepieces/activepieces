@@ -4,6 +4,7 @@ import { netlifyAuth } from "../common/auth";
 
 export const listSiteDeploys = createAction({
   name: "list_site_deploys",
+  classification: 'SEARCH',
   displayName: "List Site Deploys",
   description: "Returns a list of all deploys for a specific site.",
   audience: 'both',

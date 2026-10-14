@@ -25,10 +25,22 @@ export const PieceSelection = z.object({
 })
 export type PieceSelection = z.infer<typeof PieceSelection>
 
+export enum RequiredActionsMode {
+    ANY = 'any',
+    ALL = 'all',
+}
+
+export const RequiredActions = z.object({
+    mode: z.enum(RequiredActionsMode).default(RequiredActionsMode.ANY),
+    actions: z.record(z.string(), z.array(z.string())).default({}),
+})
+export type RequiredActions = z.infer<typeof RequiredActions>
+
 export const PieceSetConfig = z.object({
     pieces: PieceSelection.default({ mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }),
     selectedActions: z.record(z.string(), z.array(z.string())).default({}),
     selectedTriggers: z.record(z.string(), z.array(z.string())).default({}),
+    requiredActions: RequiredActions.default({ mode: RequiredActionsMode.ANY, actions: {} }),
 })
 export type PieceSetConfig = z.infer<typeof PieceSetConfig>
 
@@ -43,11 +55,11 @@ export const PieceSet = z.object({
 })
 export type PieceSet = z.infer<typeof PieceSet>
 
-export const ComponentIntent = z.discriminatedUnion('mode', [
+export const ComponentSelection = z.discriminatedUnion('mode', [
     z.object({ mode: z.literal('all') }),
     z.object({ mode: z.literal('selected'), selected: z.array(z.string()) }),
 ])
-export type ComponentIntent = z.infer<typeof ComponentIntent>
+export type ComponentSelection = z.infer<typeof ComponentSelection>
 
 export const CreatePieceSetRequestBody = z.object({
     name: z.string().min(1, { message: formErrors.required }),
@@ -59,8 +71,12 @@ export const UpdatePieceSetRequestBody = z.object({
     name: z.string().min(1, { message: formErrors.required }).optional(),
     key: z.string().optional(),
     pieces: PieceSelection.optional(),
-    actions: z.record(z.string(), ComponentIntent).optional(),
-    triggers: z.record(z.string(), ComponentIntent).optional(),
+    actions: z.record(z.string(), ComponentSelection).optional(),
+    triggers: z.record(z.string(), ComponentSelection).optional(),
+    requiredActions: z.object({
+        mode: z.enum(RequiredActionsMode).optional(),
+        actions: z.record(z.string(), z.array(z.string())).optional(),
+    }).optional(),
 })
 export type UpdatePieceSetRequestBody = z.infer<typeof UpdatePieceSetRequestBody>
 

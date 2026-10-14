@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const confirmMandateFunds = createAction({
   auth: trueLayerCommon.auth,
   name: 'confirm-mandate-funds',
+  classification: 'READ',
   displayName: 'Confirm Mandate Funds',
   description: 'Confirm that the PSU has the given funds. This API can be called using the mandate_token associated with the mandate or using a backend bearer token.',
   audience: 'both',
@@ -33,7 +34,7 @@ export const confirmMandateFunds = createAction({
       headers: {
         Authorization: `Bearer ${(ctx.auth as OAuth2PropertyValue).access_token}`,
       },
-      body: {
+      queryParams: {
         amount_in_minor: ctx.propsValue.amount_in_minor,
         currency: ctx.propsValue.currency,
       },

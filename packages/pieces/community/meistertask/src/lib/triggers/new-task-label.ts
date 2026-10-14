@@ -50,6 +50,7 @@ const newTaskLabelPolling: Polling<
 export const newTaskLabel = createTrigger({
   auth: meistertaskAuth,
   name: 'new_task_label',
+  classification: 'READ',
   displayName: 'New Task Label',
   description: 'Triggers when a task label is created.',
   aiMetadata: {

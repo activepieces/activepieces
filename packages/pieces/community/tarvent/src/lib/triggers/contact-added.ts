@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const contactAddedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_contact_added',
+  classification: 'READ',
   displayName: 'Contact Added',
   description: 'Triggers when a contact is added to the selected audience.',
   aiMetadata: {

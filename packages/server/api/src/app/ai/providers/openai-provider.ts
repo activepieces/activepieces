@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderModel, AIProviderModelType, OpenAIProviderAuthConfig, OpenAIProviderConfig } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { AIProviderStrategy } from './ai-provider'
+import { AIProviderStrategy, MODEL_LIST_TIMEOUT_MS } from './ai-provider'
 
 export const openaiProvider: AIProviderStrategy<OpenAIProviderAuthConfig, OpenAIProviderConfig> = {
     name: 'OpenAI',
@@ -12,6 +12,7 @@ export const openaiProvider: AIProviderStrategy<OpenAIProviderAuthConfig, OpenAI
         const res = await httpClient.sendRequest<{ data: OpenAIModel[] }>({
             url: 'https://api.openai.com/v1/models',
             method: HttpMethod.GET,
+            timeout: MODEL_LIST_TIMEOUT_MS,
             headers: {
                 'Authorization': `Bearer ${authConfig.apiKey}`,
                 'Content-Type': 'application/json',
