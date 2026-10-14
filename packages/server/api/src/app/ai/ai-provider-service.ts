@@ -418,7 +418,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
 async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
     const { plan } = await platformService(log).getOneWithPlanOrThrow(platformId)
-    return plan.embeddingEnabled
+    return plan.activepiecesAiProviderHidden
 }
 
 

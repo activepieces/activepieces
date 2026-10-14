@@ -466,6 +466,8 @@ import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migrat
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
 import { AddEnterpriseTrialToPlatformPlan1871000000000 } from './migration/postgres/1871000000000-AddEnterpriseTrialToPlatformPlan'
+import { AddActivepiecesAiProviderHiddenToPlatformPlan1872000000000 } from './migration/postgres/1872000000000-AddActivepiecesAiProviderHiddenToPlatformPlan'
+import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -951,6 +953,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddPieceTranslationTable1873000000000,
         AddDefaultChatModelToPlatformConfiguration1875000000000,
         AddEnterpriseTrialToPlatformPlan1871000000000,
+        AddActivepiecesAiProviderHiddenToPlatformPlan1872000000000,
     ]
     return migrations
 }
