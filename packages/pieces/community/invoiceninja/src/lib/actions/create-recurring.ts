@@ -74,7 +74,6 @@ export const createRecurringInvoice = createAction({
     const lastSentDate = invoiceNinjaClient.toDateOnly({ value: propsValue.last_date, label: 'Last sent date' });
     const cycles = invoiceNinjaClient.optionalInt({ value: propsValue.nocycles, label: 'Number of billing cycles', min: 0, max: 999 });
     const override = invoiceNinjaClient.optionalInt({ value: propsValue.auto_frequency, label: 'Override Frequency ID', min: 1, max: 12 });
-    // Any supplied override wins, as in earlier versions, so saved steps keep their schedule.
     const frequency = override ?? propsValue.frequency;
     if (frequency === undefined || frequency < 1 || frequency > 12) {
       throw new Error('Choose a billing frequency, or enter an Override Frequency ID (1-12) with "Use override below".');

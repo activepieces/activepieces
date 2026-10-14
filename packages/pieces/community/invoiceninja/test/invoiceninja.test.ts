@@ -194,7 +194,6 @@ describe('legacy create_recurring_invoice', () => {
 });
 
 describe('getreport_task', () => {
-  // Trimmed capture of POST /reports/preview/{id} from Invoice Ninja v5.13.47 (clients report).
   const preview = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'report-preview-clients.json'), 'utf8'));
   const jobId = 'b5f785dc-3a04-4ac2-ad53-305d5de0b188';
   const stillWorking = Object.assign(new Error('x'), { response: { status: 409, body: { message: 'Still working.....' } } });
