@@ -31,6 +31,7 @@ export const tableService = {
         projectId,
         request,
     }: CreateParams): Promise<Table> {
+        await assertExternalIdIsUnique({ projectId, externalId: request.externalId })
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log: system.globalLogger() })
         const table = await tableRepo().save({
             id: apId(),
@@ -376,6 +377,19 @@ function assertSortIsNotCombinedWithCursor({ sortBy, cursor }: { sortBy: 'NAME' 
         code: ErrorCode.GENERIC_ERROR,
         params: { message: 'sortBy cannot be combined with cursor' },
     })
+}
+
+async function assertExternalIdIsUnique({ projectId, externalId }: { projectId: string, externalId: string | undefined }): Promise<void> {
+    if (isNil(externalId)) {
+        return
+    }
+    const exists = await tableRepo().existsBy({ projectId, externalId })
+    if (exists) {
+        throw new ActivepiecesError({
+            code: ErrorCode.TABLE_EXTERNAL_ID_ALREADY_EXISTS,
+            params: { externalId },
+        })
+    }
 }
 
 async function fetchRecordPage({ tableId, projectId, afterCursor }: FetchRecordPageParams): Promise<FetchRecordPageResult> {

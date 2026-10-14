@@ -40,6 +40,28 @@ describe('Table Diff Service', () => {
         expect(diff.tables[0].tableState).toBe(tableTwo)
     })
 
+    it('should create only one table when the new state has two tables with the same externalId', async () => {
+        const externalId = nanoid()
+        const tableOne = tableGenerator.simpleTable({ externalId })
+        const tableTwo = tableGenerator.simpleTable({ externalId })
+        const diff = await projectDiffService.diff({
+            currentState: {
+                flows: [],
+                tables: [],
+            },
+            newState: {
+                flows: [],
+                tables: [tableOne, tableTwo],
+            },
+        })
+        expect(diff.tables).toEqual([
+            {
+                type: 'CREATE_TABLE',
+                tableState: tableOne,
+            },
+        ])
+    })
+
     it('should return the table to create if the mapping is invalid', async () => {
         const tableOne = tableGenerator.simpleTable({ externalId: nanoid() })
         const tableTwo = tableGenerator.simpleTable({})

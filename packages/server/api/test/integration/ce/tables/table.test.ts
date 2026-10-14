@@ -128,6 +128,42 @@ describe('Table API', () => {
             expect(body.externalId).toBe(externalId)
         })
 
+        it('should reject a second table with the same externalId in the project', async () => {
+            const ctx = await setup()
+            const externalId = apId()
+
+            const first = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'First Table',
+                externalId,
+            })
+            const second = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'Second Table',
+                externalId,
+            })
+
+            expect(first?.statusCode).toBe(StatusCodes.OK)
+            expect(second?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(second?.json().code).toBe('TABLE_EXTERNAL_ID_ALREADY_EXISTS')
+        })
+
+        it('should allow the same externalId in another project', async () => {
+            const ctx = await setup()
+            const externalId = apId()
+            const otherProject = createMockProject({ platformId: ctx.platform.id, ownerId: ctx.user.id })
+            await db.save('project', otherProject)
+            await db.save('table', { ...createMockTable({ projectId: otherProject.id }), externalId })
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'Same Id Table',
+                externalId,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
         const MALICIOUS_EXTERNAL_IDS: Array<[string, string]> = [
             ['..', 'parent directory reference'],
             ['.', 'current directory reference'],

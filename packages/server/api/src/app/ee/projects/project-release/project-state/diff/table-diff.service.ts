@@ -36,9 +36,10 @@ function findTablesToUpdate(currentState: ProjectState, newState: ProjectState):
 function findTablesToCreate(currentState: ProjectState, newState: ProjectState): TableOperation[] {
     if (!newState.tables) return []
     const operations: TableOperation[] = []
-    newState.tables.forEach(table => {
+    newState.tables.forEach((table, index) => {
         const exists = currentState.tables?.find((t) => t.externalId === table.externalId)
-        if (isNil(exists)) {
+        const isFirstWithExternalId = newState.tables?.findIndex((t) => t.externalId === table.externalId) === index
+        if (isNil(exists) && isFirstWithExternalId) {
             operations.push({
                 type: TableOperationType.CREATE_TABLE,
                 tableState: table,

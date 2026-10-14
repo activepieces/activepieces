@@ -43,6 +43,11 @@ export const TableEntity = new EntitySchema<TableSchema>({
             columns: ['projectId', 'name'],
         },
         {
+            name: 'idx_table_project_id_external_id',
+            columns: ['projectId', 'externalId'],
+            unique: true,
+        },
+        {
             name: 'idx_table_folder_id',
             columns: ['folderId'],
             unique: false,
