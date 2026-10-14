@@ -84,7 +84,11 @@ export const SidebarUsageLimits = React.memo(() => {
   });
   return (
     <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
-      {inTrial && <EnterpriseTrialLine trial={trial} />}
+      {inTrial && (
+        <div className="flex border-b border-gray-5 pb-2">
+          <EnterpriseTrialLine trial={trial} />
+        </div>
+      )}
       <div className="flex h-5 items-center justify-between gap-2">
         <div className="flex items-baseline gap-1 min-w-0">
           <span className="text-sm font-semibold truncate">{creditsText}</span>
