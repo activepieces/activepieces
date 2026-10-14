@@ -355,11 +355,13 @@ export const tableService = {
         return this.getOneOrThrow({ projectId, id })
     },
     async count({ projectId, folderId }: CountParams): Promise<number> {
-        const where: Record<string, unknown> = { projectId }
-        if (!isNil(folderId)) {
-            where.folderId = folderId === UncategorizedFolderId ? null : folderId
+        if (isNil(folderId)) {
+            return tableRepo().countBy({ projectId })
         }
-        return tableRepo().count({ where })
+        return tableRepo().countBy({
+            projectId,
+            folderId: folderId === UncategorizedFolderId ? IsNull() : folderId,
+        })
     },
 
 }
