@@ -1,17 +1,20 @@
+import { isNil } from '@activepieces/core-utils';
 import { useReactFlow } from '@xyflow/react';
 import { useEffect } from 'react';
 
 import { BuilderState, useBuilderStore } from '../builder-hooks';
 import { flowCanvasConsts } from '../flow-canvas/utils/consts';
+import { ChatCameraShot } from '../state/builder-chat-state';
 import { RightSideBarType } from '../types';
 
 export function ChatCamera() {
   const store = useBuilderStore();
-  const { fitView } = useReactFlow();
+  const { fitView, getNode, getInternalNode, getViewport } = useReactFlow();
 
   useEffect(() => {
     const timers = new Set<number>();
     let turnTailEndsAt = 0;
+    let lastFramedStep: string | null = null;
 
     const schedule = ({ fn, delayMs }: { fn: () => void; delayMs: number }) => {
       const id = window.setTimeout(() => {
@@ -21,16 +24,90 @@ export function ChatCamera() {
       timers.add(id);
     };
 
-    const glideTo = (stepName: string) => {
-      if (!store.getState().isFollowingChat) {
+    const isFollowing = () => store.getState().isFollowingChat;
+
+    const whenMeasured = ({
+      stepName,
+      fn,
+      attempt = 0,
+    }: {
+      stepName: string;
+      fn: () => void;
+      attempt?: number;
+    }) => {
+      if (!isNil(getInternalNode(stepName)?.measured.width)) {
+        fn();
+        return;
+      }
+      if (attempt < MEASURE_RETRIES) {
+        schedule({
+          fn: () => whenMeasured({ stepName, fn, attempt: attempt + 1 }),
+          delayMs: MEASURE_INTERVAL_MS,
+        });
+      }
+    };
+
+    const frame = ({
+      stepNames,
+      zoom,
+      duration,
+    }: {
+      stepNames: string[];
+      zoom: { min: number; max: number };
+      duration: number;
+    }) => {
+      if (!isFollowing()) {
         return;
       }
       fitView({
-        nodes: [{ id: stepName }],
-        duration: GLIDE_DURATION_MS,
-        minZoom: FOCUS_ZOOM,
-        maxZoom: FOCUS_ZOOM,
+        nodes: stepNames.map((id) => ({ id })),
+        duration,
+        padding: 0.35,
+        minZoom: zoom.min,
+        maxZoom: zoom.max,
       }).catch(() => undefined);
+    };
+
+    const isFarFrom = ({ from, to }: { from: string; to: string }) => {
+      const fromNode = getNode(from);
+      const toNode = getNode(to);
+      if (isNil(fromNode) || isNil(toNode)) {
+        return false;
+      }
+      const distance = Math.hypot(
+        toNode.position.x - fromNode.position.x,
+        toNode.position.y - fromNode.position.y,
+      );
+      return distance * getViewport().zoom > FAR_AWAY_PX;
+    };
+
+    const craneTo = ({
+      stepName,
+      zoom,
+    }: {
+      stepName: string;
+      zoom: number;
+    }) => {
+      const from = lastFramedStep;
+      lastFramedStep = stepName;
+      const pushIn = () =>
+        frame({
+          stepNames: [stepName],
+          zoom: { min: zoom, max: zoom },
+          duration: PUSH_IN_MS,
+        });
+      const needsCrane =
+        !isNil(from) && from !== stepName && isFarFrom({ from, to: stepName });
+      if (!needsCrane) {
+        pushIn();
+        return;
+      }
+      frame({
+        stepNames: [from],
+        zoom: { min: PULL_BACK_ZOOM, max: PULL_BACK_ZOOM },
+        duration: PULL_BACK_MS,
+      });
+      schedule({ fn: pushIn, delayMs: PULL_BACK_MS - 80 });
     };
 
     const openSettings = (stepName: string) => {
@@ -40,30 +117,39 @@ export function ChatCamera() {
       }
     };
 
-    const focus = (stepName: string) => {
+    const play = (shot: ChatCameraShot) => {
       const state = store.getState();
-      state.setChatCameraStep(stepName);
+      state.setChatCameraShot(shot);
       if (!state.isFollowingChat) {
         return;
       }
-      const isSettingsOpen =
-        state.rightSidebar === RightSideBarType.PIECE_SETTINGS;
-      if (isSettingsOpen) {
-        glideTo(stepName);
-        schedule({
-          fn: () => openSettings(stepName),
-          delayMs: GLIDE_DURATION_MS * SETTINGS_SWAP_AT,
-        });
-        return;
-      }
-      openSettings(stepName);
-      schedule({
-        fn: () => glideTo(stepName),
-        delayMs: flowCanvasConsts.SIDEBAR_ANIMATION_DURATION + 60,
+      whenMeasured({
+        stepName: shot.stepName,
+        fn: () => {
+          if (shot.kind === 'adding-after') {
+            craneTo({ stepName: shot.stepName, zoom: ESTABLISH_ZOOM });
+            return;
+          }
+          const isSettingsOpen =
+            store.getState().rightSidebar === RightSideBarType.PIECE_SETTINGS;
+          if (isSettingsOpen) {
+            craneTo({ stepName: shot.stepName, zoom: FOCUS_ZOOM });
+            schedule({
+              fn: () => openSettings(shot.stepName),
+              delayMs: SETTINGS_SWAP_MS,
+            });
+            return;
+          }
+          openSettings(shot.stepName);
+          schedule({
+            fn: () => craneTo({ stepName: shot.stepName, zoom: FOCUS_ZOOM }),
+            delayMs: flowCanvasConsts.SIDEBAR_ANIMATION_DURATION + 60,
+          });
+        },
       });
     };
 
-    const queuedShots: string[] = [];
+    const queuedShots: ChatCameraShot[] = [];
     let isPlayingShot = false;
 
     const playNextShot = () => {
@@ -77,16 +163,20 @@ export function ChatCamera() {
         return;
       }
       isPlayingShot = true;
-      focus(next);
+      play(next);
       schedule({ fn: playNextShot, delayMs: SHOT_DWELL_MS });
     };
 
-    const queueShot = (stepName: string) => {
-      const lastQueued = queuedShots.at(-1) ?? store.getState().chatCameraStep;
-      if (lastQueued === stepName) {
+    const queueShot = (shot: ChatCameraShot) => {
+      const lastQueued =
+        queuedShots.at(-1) ?? store.getState().chatCameraShot ?? null;
+      const isRepeat =
+        lastQueued?.stepName === shot.stepName &&
+        lastQueued?.kind === shot.kind;
+      if (isRepeat) {
         return;
       }
-      queuedShots.push(stepName);
+      queuedShots.push(shot);
       if (!isPlayingShot) {
         playNextShot();
       }
@@ -97,14 +187,15 @@ export function ChatCamera() {
         schedule({ fn: pullBackToWideShot, delayMs: SHOT_DWELL_MS });
         return;
       }
-      store.getState().setChatCameraStep(null);
-      if (!store.getState().isFollowingChat) {
+      store.getState().setChatCameraShot(null);
+      lastFramedStep = null;
+      if (!isFollowing()) {
         return;
       }
       fitView({
         duration: WIDE_SHOT_DURATION_MS,
         padding: 0.15,
-        minZoom: 0.7,
+        minZoom: WIDE_SHOT_MIN_ZOOM,
         maxZoom: 1,
       }).catch(() => undefined);
     };
@@ -123,7 +214,7 @@ export function ChatCamera() {
       const startedWaiting =
         state.isChatWaitingForUser && !previous.isChatWaitingForUser;
       if (startedWaiting) {
-        state.setChatCameraStep(null);
+        state.setChatCameraShot(null);
       }
       const stoppedWaiting =
         !state.isChatWaitingForUser && previous.isChatWaitingForUser;
@@ -133,8 +224,8 @@ export function ChatCamera() {
 
       const resumedFollowing =
         state.isFollowingChat && !previous.isFollowingChat;
-      if (resumedFollowing && state.chatCameraStep !== null) {
-        focus(state.chatCameraStep);
+      if (resumedFollowing && !isNil(state.chatCameraShot)) {
+        play(state.chatCameraShot);
         return;
       }
 
@@ -142,39 +233,65 @@ export function ChatCamera() {
       if (!isChatTurnLive) {
         return;
       }
-      pickCameraTargets({ state, previous }).forEach(queueShot);
+      pickCameraShots({ state, previous }).forEach(queueShot);
     });
 
     return () => {
       unsubscribe();
       timers.forEach((id) => window.clearTimeout(id));
     };
-  }, [store, fitView]);
+  }, [store, fitView, getNode, getInternalNode, getViewport]);
 
   return null;
 }
 
-function pickCameraTargets({
+function pickCameraShots({
   state,
   previous,
 }: {
   state: BuilderState;
   previous: BuilderState;
-}): string[] {
-  const previouslyEditing = previous.chatActivity?.editingStepNames ?? [];
-  const newlyEditing = (state.chatActivity?.editingStepNames ?? []).filter(
-    (stepName) => !previouslyEditing.includes(stepName),
-  );
-  const remoteChanges =
+}): ChatCameraShot[] {
+  const addingAfter = newlyStarted({
+    current: state.chatActivity?.addingAfterStepNames,
+    before: previous.chatActivity?.addingAfterStepNames,
+  }).map((stepName) => ({ stepName, kind: 'adding-after' as const }));
+  const editing = newlyStarted({
+    current: state.chatActivity?.editingStepNames,
+    before: previous.chatActivity?.editingStepNames,
+  }).map((stepName) => ({ stepName, kind: 'editing' as const }));
+  const landed =
     state.recentlyChangedSteps !== previous.recentlyChangedSteps
-      ? state.recentlyChangedSteps
+      ? state.recentlyChangedSteps.map((stepName) => ({
+          stepName,
+          kind: 'editing' as const,
+        }))
       : [];
-  return [...newlyEditing, ...remoteChanges];
+  return [...addingAfter, ...editing, ...landed];
 }
 
-const GLIDE_DURATION_MS = 1100;
-const SETTINGS_SWAP_AT = 0.65;
+function newlyStarted({
+  current,
+  before,
+}: {
+  current: string[] | undefined;
+  before: string[] | undefined;
+}): string[] {
+  return (current ?? []).filter(
+    (stepName) => !(before ?? []).includes(stepName),
+  );
+}
+
+const PULL_BACK_MS = 600;
+const PULL_BACK_ZOOM = 0.85;
+const WIDE_SHOT_MIN_ZOOM = 0.7;
+const PUSH_IN_MS = 1200;
+const SETTINGS_SWAP_MS = 1200;
+const FOCUS_ZOOM = 1.15;
+const ESTABLISH_ZOOM = 0.95;
+const FAR_AWAY_PX = 260;
 const WIDE_SHOT_DURATION_MS = 1400;
-const FOCUS_ZOOM = 1.1;
 const TURN_TAIL_MS = 1500;
-const SHOT_DWELL_MS = 2600;
+const SHOT_DWELL_MS = 3000;
+const MEASURE_RETRIES = 20;
+const MEASURE_INTERVAL_MS = 100;

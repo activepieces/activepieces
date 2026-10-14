@@ -118,7 +118,7 @@ const BuilderPage = () => {
   const previousRightSidebar = usePrevious(rightSidebar);
   const [chatCameraStep, recentlyChangedFieldNames] = useBuilderStateContext(
     (state) => [
-      state.chatCameraStep,
+      state.chatCameraShot?.stepName ?? null,
       state.recentlyChangedFields[state.selectedStep ?? ''] ?? NO_FIELDS,
     ],
   );

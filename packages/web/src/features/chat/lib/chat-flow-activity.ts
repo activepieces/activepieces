@@ -21,6 +21,28 @@ function editingStepNames({
   message: ChatUIMessage | null;
   flowId: string;
 }): string[] {
+  return stepTargets({ message, flowId, targets: STEP_TARGETS });
+}
+
+function addingAfterStepNames({
+  message,
+  flowId,
+}: {
+  message: ChatUIMessage | null;
+  flowId: string;
+}): string[] {
+  return stepTargets({ message, flowId, targets: ADD_STEP_TARGETS });
+}
+
+function stepTargets({
+  message,
+  flowId,
+  targets,
+}: {
+  message: ChatUIMessage | null;
+  flowId: string;
+  targets: Record<string, (input: Record<string, unknown>) => unknown>;
+}): string[] {
   if (!message) {
     return [];
   }
@@ -37,7 +59,7 @@ function editingStepNames({
       }),
     )
     .flatMap(({ toolName, input }) => {
-      const target = STEP_TARGETS[toolName];
+      const target = targets[toolName];
       if (!target || !isRecord(input) || input.flowId !== flowId) {
         return [];
       }
@@ -46,16 +68,25 @@ function editingStepNames({
     });
 }
 
+const ADD_STEP_TARGETS: Record<
+  string,
+  (input: Record<string, unknown>) => unknown
+> = {
+  ap_add_step: (input) => input.parentStepName,
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
 export const chatFlowActivity = {
   editingStepNames,
+  addingAfterStepNames,
 };
 
 export type ChatFlowActivity = {
   isWorking: boolean;
   editingStepNames: string[];
+  addingAfterStepNames: string[];
   stop: () => void;
 };

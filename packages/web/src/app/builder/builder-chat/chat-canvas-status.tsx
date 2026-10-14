@@ -12,17 +12,19 @@ export function ChatCanvasStatus() {
   const [
     chatActivity,
     cameraStepName,
+    cameraShotKind,
     isFollowing,
     setFollowing,
     isWaitingForUser,
   ] = useBuilderStateContext((state) => [
     state.chatActivity,
-    isNil(state.chatCameraStep)
+    isNil(state.chatCameraShot)
       ? null
       : flowStructureUtil.getStep(
-          state.chatCameraStep,
+          state.chatCameraShot.stepName,
           state.flowVersion.trigger,
         )?.displayName ?? null,
+    state.chatCameraShot?.kind ?? null,
     state.isFollowingChat,
     state.setFollowingChat,
     state.isChatWaitingForUser,
@@ -48,11 +50,15 @@ export function ChatCanvasStatus() {
       <div className="pointer-events-auto flex max-w-[90%] items-center gap-2 rounded-full border bg-gray-1 py-1 pl-4 pr-1 shadow-md animate-in fade-in slide-in-from-bottom-2">
         <LoadingSpinner className="size-4 shrink-0" />
         <span
-          key={cameraStepName ?? 'flow'}
+          key={`${cameraShotKind}-${cameraStepName}`}
           className="truncate text-sm animate-in fade-in slide-in-from-bottom-1"
         >
           {isNil(cameraStepName)
             ? t('Chat is editing this flow…')
+            : cameraShotKind === 'adding-after'
+            ? t('Chat is adding a step after {stepName}…', {
+                stepName: cameraStepName,
+              })
             : t('Chat is editing {stepName}…', { stepName: cameraStepName })}
         </span>
         <Button

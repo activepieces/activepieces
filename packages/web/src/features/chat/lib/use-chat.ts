@@ -749,14 +749,33 @@ export function useAgentChat({
         : [],
     [flowContext, streamingMessage],
   );
+  const flowAddingAfterStepNames = useMemo(
+    () =>
+      flowContext
+        ? chatFlowActivity.addingAfterStepNames({
+            message: streamingMessage ?? null,
+            flowId: flowContext.flowId,
+          })
+        : [],
+    [flowContext, streamingMessage],
+  );
   const flowEditingKey = flowEditingStepNames.join(',');
+  const flowAddingAfterKey = flowAddingAfterStepNames.join(',');
   useEffect(() => {
     flowContext?.onActivity({
       isWorking: isStreamActive,
       editingStepNames: flowEditingKey === '' ? [] : flowEditingKey.split(','),
+      addingAfterStepNames:
+        flowAddingAfterKey === '' ? [] : flowAddingAfterKey.split(','),
       stop: cancelStream,
     });
-  }, [flowContext, isStreamActive, flowEditingKey, cancelStream]);
+  }, [
+    flowContext,
+    isStreamActive,
+    flowEditingKey,
+    flowAddingAfterKey,
+    cancelStream,
+  ]);
 
   const createConversation = useCallback(
     async ({

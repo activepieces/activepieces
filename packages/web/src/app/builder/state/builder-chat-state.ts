@@ -30,9 +30,9 @@ export const createBuilderChatState = (
       set({ isBuilderChatOpen: open, isChatCoachmarkVisible: showCoachmark });
     },
     isChatCoachmarkVisible: false,
-    chatCameraStep: null,
-    setChatCameraStep: (stepName: string | null) =>
-      set({ chatCameraStep: stepName }),
+    chatCameraShot: null,
+    setChatCameraShot: (shot: ChatCameraShot | null) =>
+      set({ chatCameraShot: shot }),
     isChatWaitingForUser: false,
     setChatWaitingForUser: (waiting: boolean) =>
       set({ isChatWaitingForUser: waiting }),
@@ -144,13 +144,18 @@ export const builderChatSelectors = {
   effectiveStepDataPanelView,
 };
 
+export type ChatCameraShot = {
+  stepName: string;
+  kind: 'editing' | 'adding-after';
+};
+
 export type BuilderChatState = {
   isBuilderChatOpen: boolean;
   setBuilderChatOpen: (open: boolean) => void;
   isChatCoachmarkVisible: boolean;
   dismissChatCoachmark: () => void;
-  chatCameraStep: string | null;
-  setChatCameraStep: (stepName: string | null) => void;
+  chatCameraShot: ChatCameraShot | null;
+  setChatCameraShot: (shot: ChatCameraShot | null) => void;
   isChatWaitingForUser: boolean;
   setChatWaitingForUser: (waiting: boolean) => void;
   isFollowingChat: boolean;
