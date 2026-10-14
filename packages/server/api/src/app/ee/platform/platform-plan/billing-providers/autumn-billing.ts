@@ -3,12 +3,13 @@ import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, ApEdition, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, PlanName, SeatsBillableFeature, UNAVAILABLE_ENTERPRISE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEnterpriseTrialStartLockKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEnterpriseTrialStartLockKey, getEntitlementsRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { domainHelper } from '../../../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { system } from '../../../../helper/system/system'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, TrackFeatureParams } from '../../../../platform/billing-provider'
+import { platformPlanTelemetry } from '../platform-plan-telemetry'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache } from './autumn-utils'
 
@@ -199,16 +200,24 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                     if (current.state !== 'eligible') {
                         return current
                     }
-                    return autumnConsole.startEnterpriseTrial({
+                    const started = await autumnConsole.startEnterpriseTrial({
                         ...creds,
                         ...owner,
                         platformId,
                         appUrl: await domainHelper.getPublicUrl({ path: '' }),
                     })
+                    if (started.state === 'active') {
+                        rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialStarted({ platformId, endsAt: started.endsAt }), log)
+                    }
+                    return started
                 },
             }),
         })
-        await autumnUtils.refreshEntitlements(log, platformId)
+        const { error } = await tryCatch(() => autumnUtils.refreshEntitlements(log, platformId))
+        if (!isNil(error)) {
+            log.warn({ error, platform: { id: platformId } }, 'Enterprise trial start finished but the entitlements refresh failed; the next plan read retries it')
+            rejectedPromiseHandler(distributedStore.delete(getEntitlementsRefreshKey(platformId)), log)
+        }
         return status
     },
 })
