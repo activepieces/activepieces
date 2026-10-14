@@ -3,6 +3,7 @@ import {
   FlowRunStatus,
   WebsocketClientEvent,
   RunEnvironment,
+  flowStructureUtil,
   isFlowRunStateTerminal,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -19,7 +20,7 @@ import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
-import { useBuilderStateContext } from '../builder-hooks';
+import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
@@ -97,14 +98,15 @@ const useShowBuilderIsSavingWarningBeforeLeaving = () => {
 };
 
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion, clearRun, setFlow] = useBuilderStateContext(
-    (state) => [
+  const builderStore = useBuilderStore();
+  const [flowVersion, setVersion, clearRun, setFlow, selectStepByName] =
+    useBuilderStateContext((state) => [
       state.flowVersion,
       state.setVersion,
       state.clearRun,
       state.setFlow,
-    ],
-  );
+      state.selectStepByName,
+    ]);
   const socket = useSocket();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
@@ -116,10 +118,17 @@ export const useSwitchToDraft = () => {
         return flow;
       },
       onSuccess: (flow) => {
+        const { selectedStep } = builderStore.getState();
         setFlow(flow);
         setVersion(flow.version);
         clearRun(userHasPermissionToEditFlow);
         socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
+        if (
+          !isNil(selectedStep) &&
+          !isNil(flowStructureUtil.getStep(selectedStep, flow.version.trigger))
+        ) {
+          selectStepByName(selectedStep);
+        }
       },
       // surface the failure instead of silently keeping a stale draft, which
       // matters most on the lock take-over path where the refresh replaces a
