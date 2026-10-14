@@ -262,7 +262,7 @@ public async down(q: QueryRunner): Promise<void> {
 }
 ```
 
-Deleting the `background_migrations` row is a per-migration choice — tells re-upgrade to re-run the reshape. Omit if `down()` leaves the background work's effects intact.
+Deleting the `background_migrations` row is a per-migration choice — tells re-upgrade to re-run the reshape. **Only do this if the rollback runbook (scale API pods to 0 first) is strictly followed.** During a rolling rollback with mixed-version pods, an old-release pod can pick up `RUN_BACKGROUND_MIGRATIONS`, see the deleted row as pending, and re-run the reshape against a schema the new-release `down()` already stripped — producing recorded failures (not corruption, but noise and a bad `failedMigration` signal in `/v1/health/system`). Keep the row if you can't guarantee quiesce; accept that re-upgrade will then need an explicit forward-fix migration.
 
 **Caveats:**
 - Lock wait is bounded at ~4 min (`distributedLockFactory` passes `retryCount * retryDelay = (timeout / 200) * 200ms` into RedLock). If `down()` races a long in-flight backfill, the helper throws rather than waits for the full duration. Fix: scale API pods to 0 (quiesces the runner), re-run `rollback-migrations.ts`, redeploy.
