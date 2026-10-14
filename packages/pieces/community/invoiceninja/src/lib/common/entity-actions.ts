@@ -1,57 +1,34 @@
-import { createAction, OutputSchema, Property } from '@activepieces/pieces-framework';
-import { invoiceninjaAuth } from './auth';
+import { Property } from '@activepieces/pieces-framework';
 import { invoiceNinjaClient } from './client';
 
-function getAction({ name, entity, label, aiDescription, outputSchema }: GetActionInput) {
-  return createAction({
-    auth: invoiceninjaAuth,
-    name,
-    classification: 'READ',
-    displayName: `Get ${label}`,
-    description: `Get one ${label.toLowerCase()} by its ID.`,
-    audience: 'ai',
-    aiMetadata: { description: aiDescription, idempotent: true },
-    outputSchema,
-    props: {
-      id: Property.ShortText({
-        displayName: `${label} ID`,
-        description: `The Invoice Ninja ID of the ${label.toLowerCase()} (letters and digits, e.g. VolejRejNm).`,
-        required: true,
-      }),
-    },
-    async run({ auth, propsValue }) {
-      const id = invoiceNinjaClient.parseId({ value: propsValue.id, label: `${label} ID` });
-      return invoiceNinjaClient.getRecord({ auth: auth.props, entity, id });
-    },
+function getIdProp(label: string) {
+  return Property.ShortText({
+    displayName: `${label} ID`,
+    description: `The Invoice Ninja ID of the ${label.toLowerCase()} (letters and digits, e.g. VolejRejNm).`,
+    required: true,
   });
 }
 
-function bulkAction({ name, entity, label, action, displayName, description, aiDescription, classification, idempotent, outputSchema }: BulkActionInput) {
-  return createAction({
-    auth: invoiceninjaAuth,
-    name,
-    classification,
-    displayName,
-    description,
-    audience: 'ai',
-    aiMetadata: { description: aiDescription, idempotent },
-    outputSchema,
-    props: {
-      id: Property.ShortText({
-        displayName: `${label} ID`,
-        description: `The Invoice Ninja ID of the ${label.toLowerCase()}.`,
-        required: true,
-      }),
-    },
-    async run({ auth, propsValue }) {
-      const id = invoiceNinjaClient.parseId({ value: propsValue.id, label: `${label} ID` });
-      const record = await invoiceNinjaClient.bulk({ auth: auth.props, entity, action, ids: [id] });
-      if (Object.keys(record).length === 0) {
-        throw new Error(`Invoice Ninja did not return the ${label.toLowerCase()} ${id}; it may not exist or the action does not apply to it.`);
-      }
-      return record;
-    },
+function bulkIdProp(label: string) {
+  return Property.ShortText({
+    displayName: `${label} ID`,
+    description: `The Invoice Ninja ID of the ${label.toLowerCase()}.`,
+    required: true,
   });
+}
+
+async function runGet({ auth, entity, label, id }: RunGetInput) {
+  const parsed = invoiceNinjaClient.parseId({ value: id, label: `${label} ID` });
+  return invoiceNinjaClient.getRecord({ auth, entity, id: parsed });
+}
+
+async function runBulk({ auth, entity, label, action, id }: RunBulkInput) {
+  const parsed = invoiceNinjaClient.parseId({ value: id, label: `${label} ID` });
+  const record = await invoiceNinjaClient.bulk({ auth, entity, action, ids: [parsed] });
+  if (Object.keys(record).length === 0) {
+    throw new Error(`Invoice Ninja did not return the ${label.toLowerCase()} ${parsed}; it may not exist or the action does not apply to it.`);
+  }
+  return record;
 }
 
 function listProps() {
@@ -106,28 +83,16 @@ async function runList({ auth, entity, page, perPage, query }: RunListInput) {
   return invoiceNinjaClient.listPage({ auth, entity, query, page: paging.page, perPage: paging.perPage });
 }
 
-export const entityActions = { getAction, bulkAction, listProps, statusProp, sortProp, runList };
+export const entityActions = { getIdProp, bulkIdProp, runGet, runBulk, listProps, statusProp, sortProp, runList };
 
-type GetActionInput = {
-  name: string;
+type RunGetInput = {
+  auth: { base_url: string; access_token: string };
   entity: string;
   label: string;
-  aiDescription: string;
-  outputSchema: OutputSchema;
+  id: string;
 };
 
-type BulkActionInput = {
-  name: string;
-  entity: string;
-  label: string;
-  action: string;
-  displayName: string;
-  description: string;
-  aiDescription: string;
-  classification: 'WRITE' | 'DESTRUCTIVE';
-  idempotent: boolean;
-  outputSchema: OutputSchema;
-};
+type RunBulkInput = RunGetInput & { action: string };
 
 type RunListInput = {
   auth: { base_url: string; access_token: string };

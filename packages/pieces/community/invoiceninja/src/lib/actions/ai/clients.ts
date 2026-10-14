@@ -8,12 +8,22 @@ import { invoiceNinjaProps } from '../../common/props';
 
 const CLEARABLE = ['website', 'phone', 'vat_number', 'id_number', 'address1', 'address2', 'city', 'state', 'postal_code', 'public_notes', 'private_notes'] as const;
 
-export const getClientAi = entityActions.getAction({
+export const getClientAi = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_client',
-  entity: 'clients',
-  label: 'Client',
-  aiDescription: 'Returns one Invoice Ninja client by its ID, with address, balances and contacts. Use Find Clients first if you only know a name or email. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Client',
+  description: 'Get one client by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja client by its ID, with address, balances and contacts. Use Find Clients first if you only know a name or email. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.client,
+  props: { id: entityActions.getIdProp('Client') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'clients', label: 'Client', id: propsValue.id });
+  },
 });
 
 export const findClients = createAction({
@@ -95,41 +105,56 @@ export const updateClient = createAction({
   },
 });
 
-export const archiveClient = entityActions.bulkAction({
+export const archiveClient = createAction({
+  auth: invoiceninjaAuth,
   name: 'archive_client',
-  entity: 'clients',
-  label: 'Client',
-  action: 'archive',
+  classification: 'WRITE',
   displayName: 'Archive Client',
   description: 'Archive a client (hidden from lists, can be restored).',
-  aiDescription: 'Archives an Invoice Ninja client by ID; it disappears from active lists and can be brought back with Restore Client. Returns the client. Idempotent.',
-  classification: 'WRITE',
-  idempotent: true,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Archives an Invoice Ninja client by ID; it disappears from active lists and can be brought back with Restore Client. Returns the client. Idempotent.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.client,
+  props: { id: entityActions.bulkIdProp('Client') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'clients', label: 'Client', action: 'archive', id: propsValue.id });
+  },
 });
 
-export const restoreClient = entityActions.bulkAction({
+export const restoreClient = createAction({
+  auth: invoiceninjaAuth,
   name: 'restore_client',
-  entity: 'clients',
-  label: 'Client',
-  action: 'restore',
+  classification: 'WRITE',
   displayName: 'Restore Client',
   description: 'Restore an archived or deleted client.',
-  aiDescription: 'Restores an archived or deleted Invoice Ninja client by ID back to active. Returns the client. Idempotent.',
-  classification: 'WRITE',
-  idempotent: true,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Restores an archived or deleted Invoice Ninja client by ID back to active. Returns the client. Idempotent.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.client,
+  props: { id: entityActions.bulkIdProp('Client') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'clients', label: 'Client', action: 'restore', id: propsValue.id });
+  },
 });
 
-export const deleteClient = entityActions.bulkAction({
+export const deleteClient = createAction({
+  auth: invoiceninjaAuth,
   name: 'delete_client',
-  entity: 'clients',
-  label: 'Client',
-  action: 'delete',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Client',
   description: 'Delete a client (soft delete, can be restored).',
-  aiDescription: 'Deletes an Invoice Ninja client by ID (soft delete: is_deleted becomes true; its existing invoices are not deleted). Can be undone with Restore Client. Returns the client. Ask the user before calling.',
-  classification: 'DESTRUCTIVE',
-  idempotent: false,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Deletes an Invoice Ninja client by ID (soft delete: is_deleted becomes true; its existing invoices are not deleted). Can be undone with Restore Client. Returns the client. Ask the user before calling.',
+    idempotent: false,
+  },
   outputSchema: invoiceNinjaOutputSchemas.client,
+  props: { id: entityActions.bulkIdProp('Client') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'clients', label: 'Client', action: 'delete', id: propsValue.id });
+  },
 });

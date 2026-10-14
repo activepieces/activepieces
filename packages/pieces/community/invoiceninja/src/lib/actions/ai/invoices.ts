@@ -8,12 +8,22 @@ import { invoiceNinjaProps } from '../../common/props';
 
 const CLEARABLE = ['po_number', 'public_notes', 'private_notes', 'terms', 'due_date'] as const;
 
-export const getInvoice = entityActions.getAction({
+export const getInvoice = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_invoice',
-  entity: 'invoices',
-  label: 'Invoice',
-  aiDescription: 'Returns one Invoice Ninja invoice by its ID: status, amounts, balance, line items and client portal links. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Invoice',
+  description: 'Get one invoice by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja invoice by its ID: status, amounts, balance, line items and client portal links. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.invoice,
+  props: { id: entityActions.getIdProp('Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'invoices', label: 'Invoice', id: propsValue.id });
+  },
 });
 
 export const listInvoices = createAction({
@@ -128,80 +138,110 @@ export const updateInvoice = createAction({
   },
 });
 
-export const emailInvoice = entityActions.bulkAction({
+export const emailInvoice = createAction({
+  auth: invoiceninjaAuth,
   name: 'email_invoice',
-  entity: 'invoices',
-  label: 'Invoice',
-  action: 'email',
+  classification: 'WRITE',
   displayName: 'Email Invoice',
   description: 'Email the invoice to the client\'s contacts and mark it sent.',
-  aiDescription: 'Emails an Invoice Ninja invoice to the client contacts that receive email, using the company template, and marks a draft as sent. Not idempotent: each call sends another email.',
-  classification: 'WRITE',
-  idempotent: false,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Emails an Invoice Ninja invoice to the client contacts that receive email, using the company template, and marks a draft as sent. Not idempotent: each call sends another email.',
+    idempotent: false,
+  },
   outputSchema: invoiceNinjaOutputSchemas.invoice,
+  props: { id: entityActions.bulkIdProp('Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'invoices', label: 'Invoice', action: 'email', id: propsValue.id });
+  },
 });
 
-export const markInvoiceSent = entityActions.bulkAction({
+export const markInvoiceSent = createAction({
+  auth: invoiceninjaAuth,
   name: 'mark_invoice_sent',
-  entity: 'invoices',
-  label: 'Invoice',
-  action: 'mark_sent',
+  classification: 'WRITE',
   displayName: 'Mark Invoice Sent',
   description: 'Mark a draft invoice as sent without emailing it.',
-  aiDescription: 'Marks an Invoice Ninja draft invoice as sent (status 2) without sending email, which makes its balance due. Idempotent.',
-  classification: 'WRITE',
-  idempotent: true,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Marks an Invoice Ninja draft invoice as sent (status 2) without sending email, which makes its balance due. Idempotent.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.invoice,
+  props: { id: entityActions.bulkIdProp('Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'invoices', label: 'Invoice', action: 'mark_sent', id: propsValue.id });
+  },
 });
 
-export const markInvoicePaid = entityActions.bulkAction({
+export const markInvoicePaid = createAction({
+  auth: invoiceninjaAuth,
   name: 'mark_invoice_paid',
-  entity: 'invoices',
-  label: 'Invoice',
-  action: 'mark_paid',
+  classification: 'WRITE',
   displayName: 'Mark Invoice Paid',
   description: 'Record a payment for the full balance and mark the invoice paid.',
-  aiDescription: 'Marks an Invoice Ninja invoice as paid by creating a manual payment for its whole remaining balance (status 4). Use Create Payment for partial amounts. Calling it on an invoice that is already paid fails with "cannot be marked as paid" and creates nothing.',
-  classification: 'WRITE',
-  idempotent: false,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Marks an Invoice Ninja invoice as paid by creating a manual payment for its whole remaining balance (status 4). Use Create Payment for partial amounts. Calling it on an invoice that is already paid fails with "cannot be marked as paid" and creates nothing.',
+    idempotent: false,
+  },
   outputSchema: invoiceNinjaOutputSchemas.invoice,
+  props: { id: entityActions.bulkIdProp('Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'invoices', label: 'Invoice', action: 'mark_paid', id: propsValue.id });
+  },
 });
 
-export const archiveInvoice = entityActions.bulkAction({
+export const archiveInvoice = createAction({
+  auth: invoiceninjaAuth,
   name: 'archive_invoice',
-  entity: 'invoices',
-  label: 'Invoice',
-  action: 'archive',
+  classification: 'WRITE',
   displayName: 'Archive Invoice',
   description: 'Archive an invoice (can be restored).',
-  aiDescription: 'Archives an Invoice Ninja invoice by ID; restore it with Restore Invoice. Idempotent.',
-  classification: 'WRITE',
-  idempotent: true,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Archives an Invoice Ninja invoice by ID; restore it with Restore Invoice. Idempotent.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.invoice,
+  props: { id: entityActions.bulkIdProp('Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'invoices', label: 'Invoice', action: 'archive', id: propsValue.id });
+  },
 });
 
-export const restoreInvoice = entityActions.bulkAction({
+export const restoreInvoice = createAction({
+  auth: invoiceninjaAuth,
   name: 'restore_invoice',
-  entity: 'invoices',
-  label: 'Invoice',
-  action: 'restore',
+  classification: 'WRITE',
   displayName: 'Restore Invoice',
   description: 'Restore an archived or deleted invoice.',
-  aiDescription: 'Restores an archived or deleted Invoice Ninja invoice by ID back to active. Idempotent.',
-  classification: 'WRITE',
-  idempotent: true,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Restores an archived or deleted Invoice Ninja invoice by ID back to active. Idempotent.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.invoice,
+  props: { id: entityActions.bulkIdProp('Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'invoices', label: 'Invoice', action: 'restore', id: propsValue.id });
+  },
 });
 
-export const deleteInvoice = entityActions.bulkAction({
+export const deleteInvoice = createAction({
+  auth: invoiceninjaAuth,
   name: 'delete_invoice',
-  entity: 'invoices',
-  label: 'Invoice',
-  action: 'delete',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Invoice',
   description: 'Delete an invoice (soft delete).',
-  aiDescription: 'Deletes an Invoice Ninja invoice by ID (soft delete, is_deleted true). Restore Invoice brings it back. Ask the user before calling. Deleting an already deleted invoice fails.',
-  classification: 'DESTRUCTIVE',
-  idempotent: false,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Deletes an Invoice Ninja invoice by ID (soft delete, is_deleted true). Restore Invoice brings it back. Ask the user before calling. Deleting an already deleted invoice fails.',
+    idempotent: false,
+  },
   outputSchema: invoiceNinjaOutputSchemas.invoice,
+  props: { id: entityActions.bulkIdProp('Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'invoices', label: 'Invoice', action: 'delete', id: propsValue.id });
+  },
 });

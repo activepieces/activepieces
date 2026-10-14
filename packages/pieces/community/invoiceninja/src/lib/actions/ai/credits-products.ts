@@ -8,12 +8,22 @@ import { invoiceNinjaProps } from '../../common/props';
 
 const PRODUCT_CLEARABLE = ['notes', 'tax_name1'] as const;
 
-export const getCredit = entityActions.getAction({
+export const getCredit = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_credit',
-  entity: 'credits',
-  label: 'Credit',
-  aiDescription: 'Returns one Invoice Ninja credit note by ID with amount, remaining balance and line items. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Credit',
+  description: 'Get one credit by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja credit note by ID with amount, remaining balance and line items. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.credit,
+  props: { id: entityActions.getIdProp('Credit') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'credits', label: 'Credit', id: propsValue.id });
+  },
 });
 
 export const listCredits = createAction({
@@ -78,12 +88,22 @@ export const createCredit = createAction({
   },
 });
 
-export const getProduct = entityActions.getAction({
+export const getProduct = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_product',
-  entity: 'products',
-  label: 'Product',
-  aiDescription: 'Returns one Invoice Ninja product by ID: product key, description, price, cost and tax. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Product',
+  description: 'Get one product by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja product by ID: product key, description, price, cost and tax. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.product,
+  props: { id: entityActions.getIdProp('Product') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'products', label: 'Product', id: propsValue.id });
+  },
 });
 
 export const listProducts = createAction({

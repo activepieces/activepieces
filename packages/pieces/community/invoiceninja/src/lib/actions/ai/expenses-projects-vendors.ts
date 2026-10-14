@@ -5,12 +5,22 @@ import { invoiceNinjaClient } from '../../common/client';
 import { entityActions } from '../../common/entity-actions';
 import { invoiceNinjaOutputSchemas } from '../../common/output-schemas';
 
-export const getExpense = entityActions.getAction({
+export const getExpense = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_expense',
-  entity: 'expenses',
-  label: 'Expense',
-  aiDescription: 'Returns one Invoice Ninja expense by ID: amount, date, vendor, client, project and whether it should be invoiced. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Expense',
+  description: 'Get one expense by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja expense by ID: amount, date, vendor, client, project and whether it should be invoiced. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.expense,
+  props: { id: entityActions.getIdProp('Expense') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'expenses', label: 'Expense', id: propsValue.id });
+  },
 });
 
 export const listExpenses = createAction({
@@ -95,12 +105,22 @@ export const createExpense = createAction({
   },
 });
 
-export const getProject = entityActions.getAction({
+export const getProject = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_project',
-  entity: 'projects',
-  label: 'Project',
-  aiDescription: 'Returns one Invoice Ninja project by ID: name, client, task rate, budgeted hours and due date. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Project',
+  description: 'Get one project by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja project by ID: name, client, task rate, budgeted hours and due date. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.project,
+  props: { id: entityActions.getIdProp('Project') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'projects', label: 'Project', id: propsValue.id });
+  },
 });
 
 export const listProjects = createAction({
@@ -175,12 +195,22 @@ export const createProject = createAction({
   },
 });
 
-export const getVendor = entityActions.getAction({
+export const getVendor = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_vendor',
-  entity: 'vendors',
-  label: 'Vendor',
-  aiDescription: 'Returns one Invoice Ninja vendor (supplier) by ID with address and contacts. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Vendor',
+  description: 'Get one vendor by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja vendor (supplier) by ID with address and contacts. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.vendor,
+  props: { id: entityActions.getIdProp('Vendor') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'vendors', label: 'Vendor', id: propsValue.id });
+  },
 });
 
 export const listVendors = createAction({

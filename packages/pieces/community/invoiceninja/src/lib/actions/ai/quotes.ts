@@ -8,12 +8,22 @@ import { invoiceNinjaProps } from '../../common/props';
 
 const CLEARABLE = ['po_number', 'public_notes', 'private_notes', 'terms', 'due_date'] as const;
 
-export const getQuote = entityActions.getAction({
+export const getQuote = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_quote',
-  entity: 'quotes',
-  label: 'Quote',
-  aiDescription: 'Returns one Invoice Ninja quote by its ID: status, amount, line items, portal links and, once converted, invoice_id. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Quote',
+  description: 'Get one quote by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja quote by its ID: status, amount, line items, portal links and, once converted, invoice_id. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.quote,
+  props: { id: entityActions.getIdProp('Quote') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'quotes', label: 'Quote', id: propsValue.id });
+  },
 });
 
 export const listQuotes = createAction({
@@ -129,54 +139,74 @@ export const updateQuote = createAction({
   },
 });
 
-export const emailQuote = entityActions.bulkAction({
+export const emailQuote = createAction({
+  auth: invoiceninjaAuth,
   name: 'email_quote',
-  entity: 'quotes',
-  label: 'Quote',
-  action: 'email',
+  classification: 'WRITE',
   displayName: 'Email Quote',
   description: 'Email the quote to the client\'s contacts and mark it sent.',
-  aiDescription: 'Emails an Invoice Ninja quote to the client contacts that receive email and marks a draft as sent. Not idempotent: each call sends another email.',
-  classification: 'WRITE',
-  idempotent: false,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Emails an Invoice Ninja quote to the client contacts that receive email and marks a draft as sent. Not idempotent: each call sends another email.',
+    idempotent: false,
+  },
   outputSchema: invoiceNinjaOutputSchemas.quote,
+  props: { id: entityActions.bulkIdProp('Quote') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'quotes', label: 'Quote', action: 'email', id: propsValue.id });
+  },
 });
 
-export const approveQuote = entityActions.bulkAction({
+export const approveQuote = createAction({
+  auth: invoiceninjaAuth,
   name: 'approve_quote',
-  entity: 'quotes',
-  label: 'Quote',
-  action: 'approve',
+  classification: 'WRITE',
   displayName: 'Approve Quote',
   description: 'Mark a sent quote as approved on the client\'s behalf.',
-  aiDescription: 'Approves an Invoice Ninja quote (status 3) on the client\'s behalf, including a draft quote. Idempotent.',
-  classification: 'WRITE',
-  idempotent: true,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Approves an Invoice Ninja quote (status 3) on the client\'s behalf, including a draft quote. Idempotent.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.quote,
+  props: { id: entityActions.bulkIdProp('Quote') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'quotes', label: 'Quote', action: 'approve', id: propsValue.id });
+  },
 });
 
-export const convertQuoteToInvoice = entityActions.bulkAction({
+export const convertQuoteToInvoice = createAction({
+  auth: invoiceninjaAuth,
   name: 'convert_quote_to_invoice',
-  entity: 'quotes',
-  label: 'Quote',
-  action: 'convert_to_invoice',
+  classification: 'WRITE',
   displayName: 'Convert Quote to Invoice',
   description: 'Create an invoice from a quote.',
-  aiDescription: 'Converts an Invoice Ninja quote into a new draft invoice; the returned quote has status 4 and invoice_id set to the new invoice (fetch it with Get Invoice). Calling it again on a converted quote fails and creates nothing.',
-  classification: 'WRITE',
-  idempotent: false,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Converts an Invoice Ninja quote into a new draft invoice; the returned quote has status 4 and invoice_id set to the new invoice (fetch it with Get Invoice). Calling it again on a converted quote fails and creates nothing.',
+    idempotent: false,
+  },
   outputSchema: invoiceNinjaOutputSchemas.quote,
+  props: { id: entityActions.bulkIdProp('Quote') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'quotes', label: 'Quote', action: 'convert_to_invoice', id: propsValue.id });
+  },
 });
 
-export const deleteQuote = entityActions.bulkAction({
+export const deleteQuote = createAction({
+  auth: invoiceninjaAuth,
   name: 'delete_quote',
-  entity: 'quotes',
-  label: 'Quote',
-  action: 'delete',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Quote',
   description: 'Delete a quote (soft delete).',
-  aiDescription: 'Deletes an Invoice Ninja quote by ID (soft delete, is_deleted true). Ask the user before calling. Deleting an already deleted quote fails.',
-  classification: 'DESTRUCTIVE',
-  idempotent: false,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Deletes an Invoice Ninja quote by ID (soft delete, is_deleted true). Ask the user before calling. Deleting an already deleted quote fails.',
+    idempotent: false,
+  },
   outputSchema: invoiceNinjaOutputSchemas.quote,
+  props: { id: entityActions.bulkIdProp('Quote') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'quotes', label: 'Quote', action: 'delete', id: propsValue.id });
+  },
 });

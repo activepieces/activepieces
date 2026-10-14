@@ -9,12 +9,22 @@ import { invoiceNinjaReports } from '../../common/report';
 
 const TASK_CLEARABLE = ['description', 'project_id'] as const;
 
-export const getTask = entityActions.getAction({
+export const getTask = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_task',
-  entity: 'tasks',
-  label: 'Task',
-  aiDescription: 'Returns one Invoice Ninja task (time entry) by ID: description, client, project, rate, duration and time log. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Task',
+  description: 'Get one task by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja task (time entry) by ID: description, client, project, rate, duration and time log. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.task,
+  props: { id: entityActions.getIdProp('Task') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'tasks', label: 'Task', id: propsValue.id });
+  },
 });
 
 export const listTasks = createAction({
@@ -119,30 +129,40 @@ export const updateTask = createAction({
   },
 });
 
-export const startTask = entityActions.bulkAction({
+export const startTask = createAction({
+  auth: invoiceninjaAuth,
   name: 'start_task',
-  entity: 'tasks',
-  label: 'Task',
-  action: 'start',
+  classification: 'WRITE',
   displayName: 'Start Task Timer',
   description: 'Start the timer of a task (adds a new running time entry).',
-  aiDescription: 'Starts the timer of an Invoice Ninja task by adding a running time-log entry from now. A task that is already running is left as is. Idempotent.',
-  classification: 'WRITE',
-  idempotent: true,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Starts the timer of an Invoice Ninja task by adding a running time-log entry from now. A task that is already running is left as is. Idempotent.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.task,
+  props: { id: entityActions.bulkIdProp('Task') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'tasks', label: 'Task', action: 'start', id: propsValue.id });
+  },
 });
 
-export const stopTask = entityActions.bulkAction({
+export const stopTask = createAction({
+  auth: invoiceninjaAuth,
   name: 'stop_task',
-  entity: 'tasks',
-  label: 'Task',
-  action: 'stop',
+  classification: 'WRITE',
   displayName: 'Stop Task Timer',
   description: 'Stop the running timer of a task.',
-  aiDescription: 'Stops the running timer of an Invoice Ninja task, closing its open time-log entry at now; duration grows accordingly. A stopped task is left as is. Idempotent.',
-  classification: 'WRITE',
-  idempotent: true,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Stops the running timer of an Invoice Ninja task, closing its open time-log entry at now; duration grows accordingly. A stopped task is left as is. Idempotent.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.task,
+  props: { id: entityActions.bulkIdProp('Task') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'tasks', label: 'Task', action: 'stop', id: propsValue.id });
+  },
 });
 
 export const runReport = createAction({

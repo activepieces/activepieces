@@ -5,12 +5,22 @@ import { invoiceNinjaClient } from '../../common/client';
 import { entityActions } from '../../common/entity-actions';
 import { invoiceNinjaOutputSchemas } from '../../common/output-schemas';
 
-export const getPayment = entityActions.getAction({
+export const getPayment = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_payment',
-  entity: 'payments',
-  label: 'Payment',
-  aiDescription: 'Returns one Invoice Ninja payment by ID with amount, refunded amount and the invoices it is applied to. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Payment',
+  description: 'Get one payment by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja payment by ID with amount, refunded amount and the invoices it is applied to. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.payment,
+  props: { id: entityActions.getIdProp('Payment') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'payments', label: 'Payment', id: propsValue.id });
+  },
 });
 
 export const listPayments = createAction({
@@ -119,17 +129,22 @@ export const refundPayment = createAction({
   },
 });
 
-export const deletePayment = entityActions.bulkAction({
+export const deletePayment = createAction({
+  auth: invoiceninjaAuth,
   name: 'delete_payment',
-  entity: 'payments',
-  label: 'Payment',
-  action: 'delete',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Payment',
   description: 'Delete a payment (reopens the invoices it paid).',
-  aiDescription: 'Deletes an Invoice Ninja payment by ID (soft delete); invoices it paid get their balance back. Use Refund Payment to record money returned instead. Ask the user before calling.',
-  classification: 'DESTRUCTIVE',
-  idempotent: false,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Deletes an Invoice Ninja payment by ID (soft delete); invoices it paid get their balance back. Use Refund Payment to record money returned instead. Ask the user before calling.',
+    idempotent: false,
+  },
   outputSchema: invoiceNinjaOutputSchemas.payment,
+  props: { id: entityActions.bulkIdProp('Payment') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'payments', label: 'Payment', action: 'delete', id: propsValue.id });
+  },
 });
 
 function numberOf(value: unknown): number {

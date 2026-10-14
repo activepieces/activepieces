@@ -6,12 +6,22 @@ import { entityActions } from '../../common/entity-actions';
 import { invoiceNinjaOutputSchemas } from '../../common/output-schemas';
 import { invoiceNinjaProps } from '../../common/props';
 
-export const getRecurringInvoice = entityActions.getAction({
+export const getRecurringInvoice = createAction({
+  auth: invoiceninjaAuth,
   name: 'get_recurring_invoice',
-  entity: 'recurring_invoices',
-  label: 'Recurring Invoice',
-  aiDescription: 'Returns one Invoice Ninja recurring invoice by ID: status, frequency, next send date, remaining cycles and line items. Read-only.',
+  classification: 'READ',
+  displayName: 'Get Recurring Invoice',
+  description: 'Get one recurring invoice by its ID.',
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Returns one Invoice Ninja recurring invoice by ID: status, frequency, next send date, remaining cycles and line items. Read-only.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.recurring,
+  props: { id: entityActions.getIdProp('Recurring Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runGet({ auth: auth.props, entity: 'recurring_invoices', label: 'Recurring Invoice', id: propsValue.id });
+  },
 });
 
 export const listRecurringInvoices = createAction({
@@ -97,54 +107,74 @@ export const createRecurringInvoiceAi = createAction({
   },
 });
 
-export const startRecurringInvoice = entityActions.bulkAction({
+export const startRecurringInvoice = createAction({
+  auth: invoiceninjaAuth,
   name: 'start_recurring_invoice',
-  entity: 'recurring_invoices',
-  label: 'Recurring Invoice',
-  action: 'start',
+  classification: 'WRITE',
   displayName: 'Start Recurring Invoice',
   description: 'Start (or resume) the schedule of a recurring invoice.',
-  aiDescription: 'Starts or resumes an Invoice Ninja recurring invoice so it generates invoices on its schedule (status 2 active). Idempotent.',
-  classification: 'WRITE',
-  idempotent: true,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Starts or resumes an Invoice Ninja recurring invoice so it generates invoices on its schedule (status 2 active). Idempotent.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.recurring,
+  props: { id: entityActions.bulkIdProp('Recurring Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'recurring_invoices', label: 'Recurring Invoice', action: 'start', id: propsValue.id });
+  },
 });
 
-export const stopRecurringInvoice = entityActions.bulkAction({
+export const stopRecurringInvoice = createAction({
+  auth: invoiceninjaAuth,
   name: 'stop_recurring_invoice',
-  entity: 'recurring_invoices',
-  label: 'Recurring Invoice',
-  action: 'stop',
+  classification: 'WRITE',
   displayName: 'Pause Recurring Invoice',
   description: 'Pause the schedule of a recurring invoice.',
-  aiDescription: 'Pauses an Invoice Ninja recurring invoice (status 3 paused); no invoices are generated until Start Recurring Invoice. Idempotent.',
-  classification: 'WRITE',
-  idempotent: true,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Pauses an Invoice Ninja recurring invoice (status 3 paused); no invoices are generated until Start Recurring Invoice. Idempotent.',
+    idempotent: true,
+  },
   outputSchema: invoiceNinjaOutputSchemas.recurring,
+  props: { id: entityActions.bulkIdProp('Recurring Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'recurring_invoices', label: 'Recurring Invoice', action: 'stop', id: propsValue.id });
+  },
 });
 
-export const sendRecurringInvoiceNow = entityActions.bulkAction({
+export const sendRecurringInvoiceNow = createAction({
+  auth: invoiceninjaAuth,
   name: 'send_recurring_invoice_now',
-  entity: 'recurring_invoices',
-  label: 'Recurring Invoice',
-  action: 'send_now',
+  classification: 'WRITE',
   displayName: 'Send Recurring Invoice Now',
   description: 'Generate and send the next invoice of a recurring invoice now.',
-  aiDescription: 'Generates the next invoice from an Invoice Ninja recurring invoice immediately (and emails it if the schedule sends emails), then moves next_send_date forward. Not idempotent: each call creates another invoice.',
-  classification: 'WRITE',
-  idempotent: false,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Generates the next invoice from an Invoice Ninja recurring invoice immediately (and emails it if the schedule sends emails), then moves next_send_date forward. Not idempotent: each call creates another invoice.',
+    idempotent: false,
+  },
   outputSchema: invoiceNinjaOutputSchemas.recurring,
+  props: { id: entityActions.bulkIdProp('Recurring Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'recurring_invoices', label: 'Recurring Invoice', action: 'send_now', id: propsValue.id });
+  },
 });
 
-export const deleteRecurringInvoice = entityActions.bulkAction({
+export const deleteRecurringInvoice = createAction({
+  auth: invoiceninjaAuth,
   name: 'delete_recurring_invoice',
-  entity: 'recurring_invoices',
-  label: 'Recurring Invoice',
-  action: 'delete',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Recurring Invoice',
   description: 'Delete a recurring invoice (soft delete; invoices already generated stay).',
-  aiDescription: 'Deletes an Invoice Ninja recurring invoice by ID (soft delete) so it stops generating invoices; invoices it already created are kept. Ask the user before calling.',
-  classification: 'DESTRUCTIVE',
-  idempotent: false,
+  audience: 'ai',
+  aiMetadata: {
+    description: 'Deletes an Invoice Ninja recurring invoice by ID (soft delete) so it stops generating invoices; invoices it already created are kept. Ask the user before calling.',
+    idempotent: false,
+  },
   outputSchema: invoiceNinjaOutputSchemas.recurring,
+  props: { id: entityActions.bulkIdProp('Recurring Invoice') },
+  async run({ auth, propsValue }) {
+    return entityActions.runBulk({ auth: auth.props, entity: 'recurring_invoices', label: 'Recurring Invoice', action: 'delete', id: propsValue.id });
+  },
 });
