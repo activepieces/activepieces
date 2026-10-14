@@ -13,12 +13,18 @@ export const projectRoleKeys = {
 };
 
 export const projectRoleQueries = {
-  useProjectRoles: (enabled: boolean) =>
+  useProjectRoles: ({
+    enabled,
+    failFast = false,
+  }: {
+    enabled: boolean;
+    failFast?: boolean;
+  }) =>
     useQuery({
       queryKey: projectRoleKeys.all,
       queryFn: () => projectRoleApi.list(),
       enabled,
-      retry: false,
+      ...(failFast ? { retry: false } : {}),
     }),
   useProjectRoleMembers: (roleId: string | undefined, enabled: boolean) =>
     useInfiniteQuery({

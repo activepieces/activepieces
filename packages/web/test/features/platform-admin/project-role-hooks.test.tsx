@@ -27,7 +27,8 @@ describe('projectRoleQueries.useProjectRoles', () => {
     listProjectRoles.mockRejectedValue(new Error('500'));
 
     const { result } = renderHook(
-      () => projectRoleQueries.useProjectRoles(true),
+      () =>
+        projectRoleQueries.useProjectRoles({ enabled: true, failFast: true }),
       {
         wrapper: ({ children }: { children: ReactNode }) => (
           <QueryClientProvider client={queryClient}>

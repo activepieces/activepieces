@@ -19,7 +19,7 @@ import {
 import { Shortcut } from '@/components/custom/shortcut';
 import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { TOAST_CLEARANCE_VAR } from '@/lib/toast-interaction';
+import { TOAST_CLEARANCE_VAR, toastInteraction } from '@/lib/toast-interaction';
 import { cn } from '@/lib/utils';
 
 import { adminLayout } from './admin-layout';
@@ -180,6 +180,7 @@ function useToastClearance(rootRef: RefObject<HTMLDivElement | null>) {
       return;
     }
     const style = document.documentElement.style;
+    const release = toastInteraction.claimClearance();
     const observer = new ResizeObserver(() => {
       style.setProperty(TOAST_CLEARANCE_VAR, `${root.offsetHeight}px`);
     });
@@ -187,6 +188,7 @@ function useToastClearance(rootRef: RefObject<HTMLDivElement | null>) {
     return () => {
       observer.disconnect();
       style.removeProperty(TOAST_CLEARANCE_VAR);
+      release();
     };
   }, [rootRef]);
 }
