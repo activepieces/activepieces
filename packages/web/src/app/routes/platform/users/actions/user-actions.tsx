@@ -118,7 +118,6 @@ export const UserActions = ({
       </DropdownMenu>
       {!isInvitation && (
         <UpdateUserDialog
-          key={`${row.data.platformRole}-${row.data.externalId ?? ''}`}
           open={editOpen}
           onOpenChange={setEditOpen}
           userId={row.data.id}

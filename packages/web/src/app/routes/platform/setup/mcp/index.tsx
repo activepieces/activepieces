@@ -109,10 +109,10 @@ function AccessContent() {
           disabledTools={mcpServer.disabledTools}
           scope="platform"
           locked={undoingChange}
-          onUpdateDisabledTools={({ tools, onSettled }) => {
-            const previous = mcpServer.disabledTools ?? [];
-            const disabled = tools.filter((tool) => !previous.includes(tool));
-            const enabled = previous.filter((tool) => !tools.includes(tool));
+          onUpdateDisabledTools={({ tools, previous, onSettled }) => {
+            const baseline = previous ?? mcpServer.disabledTools ?? [];
+            const disabled = tools.filter((tool) => !baseline.includes(tool));
+            const enabled = baseline.filter((tool) => !tools.includes(tool));
             updateTools(
               { disabledTools: tools },
               {
