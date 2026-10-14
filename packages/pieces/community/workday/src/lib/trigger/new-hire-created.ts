@@ -1,6 +1,5 @@
 import {
 	DedupeStrategy,
-	HttpMethod,
 	Polling,
 	pollingHelper,
 } from '@activepieces/pieces-common';
@@ -11,21 +10,28 @@ import {
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { workdayAuth } from '../auth';
-import { workdayRequest, WorkdayService } from '../common';
+import { workdayWqlRequestAll } from '../common';
+import { readNestedDescriptor, readNestedId } from '../common/fields';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Record<string, never>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS }) => {
-		const hiredAfter = dayjs(lastFetchEpochMS).toISOString();
-		const response = await workdayRequest<{
-			data: { id: string; descriptor: string; hireDate: string }[];
-		}>(auth, HttpMethod.GET, '/workers', undefined, { hiredAfter }, WorkdayService.staffing);
-
-		const items = response.body.data ?? [];
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.hireDate).valueOf(),
-			data: item,
-		}));
+		const since = dayjs(lastFetchEpochMS).toISOString();
+		const limit = lastFetchEpochMS === 0 ? ' LIMIT 10' : '';
+		const rows = await workdayWqlRequestAll(
+			auth,
+			`SELECT worker, hireDate, createdMoment FROM allWorkers WHERE createdMoment > '${since}' ORDER BY createdMoment DESC${limit}`,
+		);
+		return rows.map((row) => {
+			return {
+				epochMilliSeconds: dayjs(String(row['createdMoment'])).valueOf(),
+				data: {
+					id: readNestedId(row['worker']),
+					descriptor: readNestedDescriptor(row['worker']),
+					...row,
+				},
+			};
+		});
 	},
 };
 

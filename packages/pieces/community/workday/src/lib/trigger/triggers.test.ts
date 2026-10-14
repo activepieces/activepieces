@@ -1,5 +1,7 @@
 import { HttpResponse, httpClient } from '@activepieces/pieces-common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { employeeTerminated } from './employee-terminated';
+import { newHireCreated } from './new-hire-created';
 import { newOrUpdatedBusinessObject } from './new-or-updated-business-object';
 import { newOrUpdatedBusinessObjectBatch } from './new-or-updated-business-object-batch';
 import { scheduledReportFetchBatch } from './scheduled-report-fetch-batch';
@@ -163,5 +165,33 @@ describe('scheduled_report_fetch_wql_batch', () => {
 
 		expect(items).toHaveLength(1);
 		expect(items[0].total_count).toBe(1);
+	});
+});
+
+describe('new_hire_created', () => {
+	it('polls allWorkers by createdMoment and keeps the id/descriptor keys', async () => {
+		sendRequest.mockResolvedValue(
+			resp({
+				data: [{ worker: { id: 'w-9', descriptor: 'Pat Doe' }, hireDate: '2027-11-30', createdMoment: '2026-10-14T08:00:00.000Z' }],
+			}),
+		);
+		const events = await newHireCreated.test(triggerContext({}, makeStore()));
+		const query = (sendRequest.mock.calls[0][0] as { body: { query: string } }).body.query;
+		expect(query).toContain("FROM allWorkers WHERE createdMoment > '1970-01-01T00:00:00.000Z'");
+		expect(events[0]).toMatchObject({ id: 'w-9', descriptor: 'Pat Doe', hireDate: '2027-11-30' });
+	});
+});
+
+describe('employee_terminated', () => {
+	it('polls completed terminations and maps the effective date to terminationDate', async () => {
+		sendRequest.mockResolvedValue(
+			resp({
+				data: [{ worker: { id: 'w-3', descriptor: 'Sam Roe' }, effectiveDate: '2026-10-31', dateAndTimeCompleted: '2026-10-14T09:00:00.000Z' }],
+			}),
+		);
+		const events = await employeeTerminated.test(triggerContext({}, makeStore()));
+		const query = (sendRequest.mock.calls[0][0] as { body: { query: string } }).body.query;
+		expect(query).toContain('FROM terminations WHERE dateAndTimeCompleted >');
+		expect(events[0]).toMatchObject({ id: 'w-3', descriptor: 'Sam Roe', terminationDate: '2026-10-31' });
 	});
 });

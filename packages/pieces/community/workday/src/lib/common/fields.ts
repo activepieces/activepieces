@@ -113,7 +113,7 @@ export function getRecordTimestamp(
 	return undefined;
 }
 
-function readNestedId(value: unknown): unknown {
+export function readNestedId(value: unknown): unknown {
 	if (value === null || value === undefined) {
 		return null;
 	}
@@ -123,7 +123,7 @@ function readNestedId(value: unknown): unknown {
 	return value;
 }
 
-function readNestedDescriptor(value: unknown): unknown {
+export function readNestedDescriptor(value: unknown): unknown {
 	if (value === null || value === undefined) {
 		return null;
 	}

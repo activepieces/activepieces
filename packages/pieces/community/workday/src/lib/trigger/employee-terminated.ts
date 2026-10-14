@@ -1,22 +1,30 @@
-import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { workdayAuth } from '../auth';
-import { workdayRequest, WorkdayService } from '../common';
+import { workdayWqlRequestAll } from '../common';
+import { readNestedDescriptor, readNestedId } from '../common/fields';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Record<string, never>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS }) => {
-		const terminatedAfter = dayjs(lastFetchEpochMS).toISOString();
-		const response = await workdayRequest<{
-			data: { id: string; descriptor: string; terminationDate: string }[];
-		}>(auth, HttpMethod.GET, '/workers', undefined, { terminatedAfter }, WorkdayService.staffing);
-
-		const items = response.body.data ?? [];
-		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.terminationDate).valueOf(),
-			data: item,
-		}));
+		const since = dayjs(lastFetchEpochMS).toISOString();
+		const limit = lastFetchEpochMS === 0 ? ' LIMIT 10' : '';
+		const rows = await workdayWqlRequestAll(
+			auth,
+			`SELECT worker, effectiveDate, primaryTerminationReason, dateAndTimeCompleted FROM terminations WHERE dateAndTimeCompleted > '${since}' ORDER BY dateAndTimeCompleted DESC${limit}`,
+		);
+		return rows.map((row) => {
+			return {
+				epochMilliSeconds: dayjs(String(row['dateAndTimeCompleted'])).valueOf(),
+				data: {
+					id: readNestedId(row['worker']),
+					descriptor: readNestedDescriptor(row['worker']),
+					terminationDate: row['effectiveDate'],
+					...row,
+				},
+			};
+		});
 	},
 };
 
