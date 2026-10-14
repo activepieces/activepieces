@@ -135,7 +135,9 @@ function PieceActionsAndTriggersSheetContent({
   const hiddenChanged =
     !sameNames(localHiddenActions, originalHiddenActions) ||
     !sameNames(localHiddenTriggers, originalHiddenTriggers);
-  const isDirty = hiddenChanged;
+  const fixedListFullyChecked =
+    !originallyEverything && allChecked && totalCount > 0;
+  const isDirty = hiddenChanged || fixedListFullyChecked;
   const buildersSeeEverything =
     allChecked && (originallyEverything || hiddenChanged);
 
@@ -183,7 +185,7 @@ function PieceActionsAndTriggersSheetContent({
 
   const close = () => onOpenChange(false);
   const { requestClose, dialog: leaveDialog } = useGuardedClose({
-    dirty: isDirty && !saving,
+    dirty: hiddenChanged && !saving,
     onClose: close,
   });
 
@@ -312,6 +314,12 @@ function PieceActionsAndTriggersSheetContent({
                       >
                         {t('Hide the whole piece instead')}
                       </Button>
+                    </p>
+                  ) : fixedListFullyChecked ? (
+                    <p className="text-xs text-gray-11">
+                      {t(
+                        'Saved as a fixed list. Save to also include actions and triggers added later.',
+                      )}
                     </p>
                   ) : (
                     !allChecked && (

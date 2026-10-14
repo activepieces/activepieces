@@ -16,6 +16,7 @@ import {
   adminPageResources,
   useAdminAction,
 } from '@/app/components/admin';
+import { SearchInput } from '@/components/custom/search-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -53,6 +54,14 @@ export function RequiredActionsPage() {
     ? pieceSetSamples.samplePieceSets({ pieceNames: [] })
     : data ?? [];
   const [adding, setAdding] = useState(false);
+  const [search, setSearch] = useState('');
+  const [shownCount, setShownCount] = useState(SETS_PAGE_SIZE);
+  const query = search.trim().toLowerCase();
+  const matchingSets = pieceSets.filter(
+    (pieceSet) => query === '' || pieceSet.name.toLowerCase().includes(query),
+  );
+  const shownSets = matchingSets.slice(0, shownCount);
+  const remaining = matchingSets.length - shownSets.length;
 
   return (
     <AdminPage>
@@ -81,19 +90,49 @@ export function RequiredActionsPage() {
         entity={pieceSetTerms.get().terms}
         skeleton={<SetRulesSkeleton />}
       >
-        <SettingsPanel flush>
-          {pieceSets.map((pieceSet) =>
-            locked ? (
-              <SetRule
-                key={pieceSet.id}
-                pieceSet={pieceSet}
-                onChange={async () => false}
-              />
-            ) : (
-              <LiveSetRule key={pieceSet.id} pieceSet={pieceSet} />
-            ),
+        <div className="flex flex-col gap-3">
+          <div className="max-w-sm">
+            <SearchInput
+              value={search}
+              onChange={(value) => {
+                setSearch(value);
+                setShownCount(SETS_PAGE_SIZE);
+              }}
+              placeholder={t('Search {terms}', pieceSetTerms.get())}
+            />
+          </div>
+          {matchingSets.length === 0 ? (
+            <p className="text-sm text-gray-11">
+              {t('No {term} matches', pieceSetTerms.get())}
+            </p>
+          ) : (
+            <SettingsPanel flush>
+              {shownSets.map((pieceSet) =>
+                locked ? (
+                  <SetRule
+                    key={pieceSet.id}
+                    pieceSet={pieceSet}
+                    onChange={async () => false}
+                  />
+                ) : (
+                  <LiveSetRule key={pieceSet.id} pieceSet={pieceSet} />
+                ),
+              )}
+            </SettingsPanel>
           )}
-        </SettingsPanel>
+          {remaining > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => setShownCount((count) => count + SETS_PAGE_SIZE)}
+            >
+              {t('Show {count} more', {
+                count: Math.min(remaining, SETS_PAGE_SIZE),
+              })}
+            </Button>
+          )}
+        </div>
       </AdminQueryState>
       {adding && (
         <RequireAcrossSetsSheet
@@ -434,5 +473,7 @@ function RequireAcrossSetsSheet({
     </>
   );
 }
+
+const SETS_PAGE_SIZE = 20;
 
 type FailedSets = { partial: boolean; sets: PieceSet[] };

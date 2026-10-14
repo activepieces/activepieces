@@ -3695,5 +3695,6 @@
   "Make flows use the actions that matter": "Make flows use the actions that matter",
   "Not saved": "Not saved",
   "Choose the actions every flow in a {term} must use, such as an approval or a log step, before it can be published.": "Choose the actions every flow in a {term} must use, such as an approval or a log step, before it can be published.",
-  "Loading": "Loading"
+  "Loading": "Loading",
+  "Search {terms}": "Search {terms}"
 }

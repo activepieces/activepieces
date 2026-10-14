@@ -5,13 +5,20 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 export const GlobalConnectionsRedirect = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { hash } = useLocation();
-  const search = platform.plan.globalConnectionsEnabled
-    ? `?${new URLSearchParams({ scope: AppConnectionScope.PLATFORM })}`
-    : '';
+  const { search, hash } = useLocation();
+  const params = new URLSearchParams(search);
+  params.delete('cursor');
+  if (platform.plan.globalConnectionsEnabled) {
+    params.set('scope', AppConnectionScope.PLATFORM);
+  }
+  const nextSearch = params.toString();
   return (
     <Navigate
-      to={{ pathname: '/platform/connections', search, hash }}
+      to={{
+        pathname: '/platform/connections',
+        search: nextSearch ? `?${nextSearch}` : '',
+        hash,
+      }}
       replace
     />
   );
