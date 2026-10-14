@@ -554,8 +554,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus }): Promise<void> {
-        await applyStatusChange({ id, projectId, newStatus }, log)
+    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus, isRepublish }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus, isRepublish: boolean }): Promise<void> {
+        await applyStatusChange({ id, projectId, newStatus, isRepublish }, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
