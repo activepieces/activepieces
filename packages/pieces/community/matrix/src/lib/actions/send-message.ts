@@ -76,12 +76,12 @@ export const sendMessage = createAction({
         ? matrixIds.roomId(picked)
         : (await matrixCommon.resolveAlias({ auth: auth.props, alias: matrixIds.roomAlias(alias) })).roomId;
     const content = await matrixCommon.buildTextContent({ text: message, msgtype: 'm.text', format: 'markdown' });
-    return matrixCommon.sendEvent({
-      auth: auth.props,
-      roomId,
-      eventType: 'm.room.message',
-      content,
-      txnId: matrixIds.transactionId({ value: undefined, run, step, parts: [roomId, content] }),
+    return matrixIds.withTransactionId({
+      value: undefined,
+      run,
+      step,
+      parts: [roomId, content],
+      send: (txnId) => matrixCommon.sendEvent({ auth: auth.props, roomId, eventType: 'm.room.message', content, txnId }),
     });
   },
 });

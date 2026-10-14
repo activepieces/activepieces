@@ -28,21 +28,28 @@ export const reactToMessage = createAction({
     const roomId = matrixIds.roomId(propsValue.roomId);
     const eventId = matrixIds.eventId(propsValue.eventId);
     const key = matrixClient.requiredText({ value: propsValue.key, label: 'Reaction' });
-    const txnId = matrixIds.transactionId({ value: propsValue.transactionId, run, step, parts: [roomId, eventId, key] });
-    try {
-      const sent = await matrixCommon.sendEvent({
-        auth: auth.props,
-        roomId,
-        eventType: 'm.reaction',
-        content: { 'm.relates_to': { rel_type: 'm.annotation', event_id: eventId, key } },
-        txnId,
-      });
-      return { eventId: sent.eventId, roomId, reactedToEventId: eventId, key, alreadyReacted: false, transactionId: txnId };
-    } catch (error) {
-      if (error instanceof MatrixApiError && error.errcode === 'M_DUPLICATE_ANNOTATION') {
-        return { eventId: null, roomId, reactedToEventId: eventId, key, alreadyReacted: true, transactionId: txnId };
-      }
-      throw error;
-    }
+    return matrixIds.withTransactionId({
+      value: propsValue.transactionId,
+      run,
+      step,
+      parts: [roomId, eventId, key],
+      send: async (txnId) => {
+        try {
+          const sent = await matrixCommon.sendEvent({
+            auth: auth.props,
+            roomId,
+            eventType: 'm.reaction',
+            content: { 'm.relates_to': { rel_type: 'm.annotation', event_id: eventId, key } },
+            txnId,
+          });
+          return { eventId: sent.eventId, roomId, reactedToEventId: eventId, key, alreadyReacted: false, transactionId: txnId };
+        } catch (error) {
+          if (error instanceof MatrixApiError && error.errcode === 'M_DUPLICATE_ANNOTATION') {
+            return { eventId: null, roomId, reactedToEventId: eventId, key, alreadyReacted: true, transactionId: txnId };
+          }
+          throw error;
+        }
+      },
+    });
   },
 });

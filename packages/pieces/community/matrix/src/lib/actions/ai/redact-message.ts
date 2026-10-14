@@ -28,18 +28,25 @@ export const redactMessage = createAction({
     const roomId = matrixIds.roomId(propsValue.roomId);
     const eventId = matrixIds.eventId(propsValue.eventId);
     const reason = matrixClient.optionalText(propsValue.reason);
-    const txnId = matrixIds.transactionId({ value: propsValue.transactionId, run, step, parts: [roomId, eventId, reason ?? null] });
-    const body = await matrixClient.request({
-      auth: auth.props,
-      method: HttpMethod.PUT,
-      path: matrixIds.clientPath('rooms', roomId, 'redact', eventId, txnId),
-      body: reason === undefined ? {} : { reason },
+    return matrixIds.withTransactionId({
+      value: propsValue.transactionId,
+      run,
+      step,
+      parts: [roomId, eventId, reason ?? null],
+      send: async (txnId) => {
+        const body = await matrixClient.request({
+          auth: auth.props,
+          method: HttpMethod.PUT,
+          path: matrixIds.clientPath('rooms', roomId, 'redact', eventId, txnId),
+          body: reason === undefined ? {} : { reason },
+        });
+        return {
+          redactionEventId: matrixClient.isRecord(body) ? matrixClient.stringOr(body['event_id']) : null,
+          roomId,
+          redactedEventId: eventId,
+          transactionId: txnId,
+        };
+      },
     });
-    return {
-      redactionEventId: matrixClient.isRecord(body) ? matrixClient.stringOr(body['event_id']) : null,
-      roomId,
-      redactedEventId: eventId,
-      transactionId: txnId,
-    };
   },
 });
