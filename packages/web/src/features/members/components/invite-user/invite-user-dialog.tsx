@@ -51,6 +51,11 @@ import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 
+import {
+  FailedInvitation,
+  InvitationOutcome,
+  sendInvitations,
+} from './send-invitations';
 import { UserSuggestionsPopover } from './user-suggestions-popover';
 
 const buildInvalidEmailsMessage = (emails: string[]): string => {
@@ -124,6 +129,9 @@ const InviteUserDialogInternal = ({
     UserInvitationWithLink[]
   >([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [failedInvitations, setFailedInvitations] = useState<
+    FailedInvitation[]
+  >([]);
   const { platform } = platformHooks.useCurrentPlatform();
   const { handleSeatLimitError, ensureSeatsAvailable, seatLimitDialog } =
     useSeatLimitGuard();
@@ -154,29 +162,34 @@ const InviteUserDialogInternal = ({
   ).length;
 
   const { mutate, isPending } = useMutation<
-    UserInvitationWithLink[],
+    InvitationOutcome<UserInvitationWithLink>,
     HttpError,
     FormSchema
   >({
-    mutationFn: async (data) => {
-      const promises = data.emails.map((email) =>
-        data.type === InvitationType.PLATFORM
-          ? userInvitationApi.invite({
-              email: email.trim().toLowerCase(),
-              type: data.type,
-              platformRole: data.platformRole,
-            })
-          : userInvitationApi.invite({
-              email: email.trim().toLowerCase(),
-              type: data.type,
-              projectRole: data.projectRole!,
-              projectId: project.id,
-            }),
-      );
-
-      return Promise.all(promises);
-    },
-    onSuccess: (results) => {
+    mutationFn: (data) =>
+      sendInvitations.sendAll({
+        emails: data.emails,
+        invite: (email) =>
+          data.type === InvitationType.PLATFORM
+            ? userInvitationApi.invite({
+                email: email.trim().toLowerCase(),
+                type: data.type,
+                platformRole: data.platformRole,
+              })
+            : userInvitationApi.invite({
+                email: email.trim().toLowerCase(),
+                type: data.type,
+                projectRole: data.projectRole!,
+                projectId: project.id,
+              }),
+      }),
+    onSuccess: ({ sent: results, failed }) => {
+      refetch();
+      onInviteSuccess?.();
+      if (failed.length > 0) {
+        reportPartialFailure({ results, failed });
+        return;
+      }
       const addedCount = results.filter(
         (r) => r.status === InvitationStatus.ACCEPTED,
       ).length;
@@ -200,8 +213,6 @@ const InviteUserDialogInternal = ({
       } else if (toastMessage) {
         toast.success(toastMessage, { duration: 3000 });
       }
-      refetch();
-      onInviteSuccess?.();
     },
     onError: (error) => {
       if (handleSeatLimitError(error)) {
@@ -234,7 +245,39 @@ const InviteUserDialogInternal = ({
     },
   });
 
+  const reportPartialFailure = ({
+    results,
+    failed,
+  }: {
+    results: UserInvitationWithLink[];
+    failed: FailedInvitation[];
+  }) => {
+    setFailedInvitations(failed);
+    if (results.some((r) => r.link)) {
+      setInvitationResults(results);
+    }
+    form.setValue(
+      'emails',
+      failed.map((invitation) => invitation.email),
+    );
+    form.clearErrors('emails');
+    const copy = sendInvitations.partialFailureCopy({
+      sentCount: results.length,
+      failedCount: failed.length,
+    });
+    if (adminFeedback) {
+      mutationFeedback.error({
+        error: failed[0].error,
+        title: copy.title,
+        description: copy.description,
+      });
+      return;
+    }
+    toast.error(copy.title, { description: copy.description, duration: 4000 });
+  };
+
   const invitationType = form.getValues().type;
+  const currentEmails = form.watch('emails');
   const isPlatformInvite = invitationType === InvitationType.PLATFORM;
 
   const handleEmailsChange = useCallback(
@@ -271,6 +314,7 @@ const InviteUserDialogInternal = ({
       return;
     }
 
+    setFailedInvitations([]);
     mutate(data);
   };
 
@@ -326,9 +370,13 @@ const InviteUserDialogInternal = ({
           open={open}
           modal
           onOpenChange={(open) => {
+            if (!open && isPending) {
+              return;
+            }
             setOpen(open);
             form.reset();
             setInvitationResults([]);
+            setFailedInvitations([]);
             setSuggestionsOpen(false);
           }}
         >
@@ -367,6 +415,12 @@ const InviteUserDialogInternal = ({
                     )}
                   />
 
+                  <FailedInvitationsList
+                    failed={failedInvitations.filter((invitation) =>
+                      currentEmails.includes(invitation.email),
+                    )}
+                  />
+
                   {form.getValues().type === InvitationType.PLATFORM && (
                     <PlatformRoleSelect form={form} />
                   )}
@@ -381,7 +435,11 @@ const InviteUserDialogInternal = ({
                   )}
                   <DialogFooter>
                     <DialogClose asChild>
-                      <Button type="button" variant={'outline'}>
+                      <Button
+                        type="button"
+                        variant={'outline'}
+                        disabled={isPending}
+                      >
                         {t('Cancel')}
                       </Button>
                     </DialogClose>
@@ -397,6 +455,7 @@ const InviteUserDialogInternal = ({
               </Form>
             ) : (
               <div className="flex flex-col gap-3">
+                <FailedInvitationsList failed={failedInvitations} />
                 <ScrollArea className="max-h-[300px]">
                   <div className="flex flex-col gap-3">
                     {resultsWithLinks.map((result) => (
@@ -444,6 +503,27 @@ const InviteUserDialogInternal = ({
     </>
   );
 };
+
+function FailedInvitationsList({ failed }: { failed: FailedInvitation[] }) {
+  if (failed.length === 0) {
+    return null;
+  }
+  return (
+    <ul
+      className="flex flex-col gap-1 text-sm font-medium text-danger-11"
+      aria-live="polite"
+    >
+      {failed.map((invitation) => (
+        <li key={invitation.email} className="wrap-break-word">
+          {t('{email}: {reason}', {
+            email: invitation.email,
+            reason: invitation.reason,
+          })}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 function getDialogDescription({
   hasLinks,
