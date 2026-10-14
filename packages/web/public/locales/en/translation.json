@@ -3289,6 +3289,5 @@
   "Read {page}": "Read {page}",
   "Searched “{query}”": "Searched “{query}”",
   "Your change was not saved": "Your change was not saved",
-  "The builder now shows the last saved version of the flow.": "The builder now shows the last saved version of the flow.",
-  "This flow was changed in a different tab or by a different editor. You see the newest version.": "This flow was changed in a different tab or by a different editor. You see the newest version."
+  "The builder now shows the last saved version of the flow.": "The builder now shows the last saved version of the flow."
 }

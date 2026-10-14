@@ -12,7 +12,6 @@ import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useEffect, useRef } from 'react';
 import { useLocation, usePrevious } from 'react-use';
-import { toast } from 'sonner';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -143,7 +142,6 @@ const useRefreshDraftOnPush = () => {
   const flowId = useBuilderStateContext((state) => state.flow.id);
   const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
   useEffect(() => {
-    let listening = true;
     const refreshOnPush = (event: FlowDraftUpdatedEvent) => {
       if (
         event.flowId !== flowId ||
@@ -151,23 +149,10 @@ const useRefreshDraftOnPush = () => {
       ) {
         return;
       }
-      refreshDraft()
-        .then((applied) => {
-          if (!applied || !listening) {
-            return;
-          }
-          toast.info(
-            t(
-              'This flow was changed in a different tab or by a different editor. You see the newest version.',
-            ),
-            { id: 'flow-draft-refreshed' },
-          );
-        })
-        .catch(() => undefined);
+      refreshDraft().catch(() => undefined);
     };
     socket.on(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
     return () => {
-      listening = false;
       socket.off(WebsocketClientEvent.FLOW_DRAFT_UPDATED, refreshOnPush);
     };
   }, [socket, flowId, refreshDraft]);

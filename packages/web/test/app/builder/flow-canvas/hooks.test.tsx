@@ -191,7 +191,6 @@ describe('useRefreshDraftOnPush', () => {
     lockHarness.lockedBy = null;
     flowsApiMock.update.mockReset();
     flowsApiMock.get.mockReset();
-    vi.spyOn(toast, 'info');
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -204,7 +203,7 @@ describe('useRefreshDraftOnPush', () => {
     vi.useRealTimers();
   });
 
-  it('shows the newest draft after a push from a different Editor Session', async () => {
+  it('shows the newest draft after a push from a different Editor Session, with no toast', async () => {
     const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
     flowsApiMock.get.mockResolvedValue(
       flowWithDraftVersion({
@@ -221,10 +220,7 @@ describe('useRefreshDraftOnPush', () => {
     expect(store.getState().flowVersion.displayName).toBe(
       'Renamed in a different tab',
     );
-    expect(toast.info).toHaveBeenCalledWith(
-      'This flow was changed in a different tab or by a different editor. You see the newest version.',
-      expect.anything(),
-    );
+    expect(shownToasts()).toHaveLength(0);
   });
 
   it('ignores a push with the Editor Session id of the tab', async () => {
@@ -238,7 +234,6 @@ describe('useRefreshDraftOnPush', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(flowsApiMock.get).not.toHaveBeenCalled();
-    expect(toast.info).not.toHaveBeenCalled();
   });
 
   it('ignores a push for a different flow', async () => {
@@ -249,7 +244,6 @@ describe('useRefreshDraftOnPush', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(flowsApiMock.get).not.toHaveBeenCalled();
-    expect(toast.info).not.toHaveBeenCalled();
   });
 
   it('shows the newest draft after a push with no Editor Session id', async () => {
@@ -296,25 +290,7 @@ describe('useRefreshDraftOnPush', () => {
     );
   });
 
-  it('shows one toast for a burst of pushes', async () => {
-    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
-    flowsApiMock.get.mockResolvedValue(
-      flowWithDraftVersion({
-        versionId: 'draft-1',
-        displayName: 'Renamed by an agent',
-      }),
-    );
-    mount(store);
-
-    for (let push = 0; push < 3; push++) {
-      sendDraftPush({ flowId: 'flow-1', editorSessionId: null });
-      await vi.advanceTimersByTimeAsync(100);
-    }
-
-    expect(shownToasts()).toHaveLength(1);
-  });
-
-  it('sends two GETs for a chat that saves six times in 12 s, and shows each save in one toast', async () => {
+  it('sends two GETs for a chat that saves six times in 12 s', async () => {
     const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
     const firstResponse = Promise.withResolvers<void>();
     let agentSaves = 0;
@@ -349,7 +325,6 @@ describe('useRefreshDraftOnPush', () => {
       'Agent save 5',
       'Agent save 6',
     ]);
-    expect(shownToasts()).toHaveLength(1);
   });
 
   it('ignores a push while the tab shows a run', async () => {
@@ -361,7 +336,6 @@ describe('useRefreshDraftOnPush', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(flowsApiMock.get).not.toHaveBeenCalled();
-    expect(shownToasts()).toHaveLength(0);
   });
 
   it('ignores a push while the tab shows an older version', async () => {
@@ -377,7 +351,6 @@ describe('useRefreshDraftOnPush', () => {
 
     expect(flowsApiMock.get).not.toHaveBeenCalled();
     expect(store.getState().flowVersion.id).toBe('version-1');
-    expect(shownToasts()).toHaveLength(0);
   });
 
   it('shows the new draft in a read-only tab on the published version with no draft, and makes the tab editable', async () => {
@@ -398,7 +371,6 @@ describe('useRefreshDraftOnPush', () => {
       readonly: false,
       flowVersion: { id: 'draft-1', displayName: 'Changed by an agent' },
     });
-    expect(shownToasts()).toHaveLength(1);
   });
 
   it('keeps the tab read-only for a person who cannot edit the flow when a new draft arrives', async () => {
@@ -445,27 +417,7 @@ describe('useRefreshDraftOnPush', () => {
     });
   });
 
-  it('shows no toast when the builder unmounts before the refresh ends', async () => {
-    const response = Promise.withResolvers<PopulatedFlow>();
-    flowsApiMock.get.mockReturnValue(response.promise);
-    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
-    mount(store);
-
-    sendDraftPush({ flowId: 'flow-1', editorSessionId: null });
-    await vi.advanceTimersByTimeAsync(0);
-    act(() => root.unmount());
-    response.resolve(
-      flowWithDraftVersion({
-        versionId: 'draft-1',
-        displayName: 'Renamed by an agent',
-      }),
-    );
-    await vi.advanceTimersByTimeAsync(0);
-
-    expect(toast.info).not.toHaveBeenCalled();
-  });
-
-  it('shows the error toast and not the refresh toast when the fetch fails', async () => {
+  it('shows the error toast when the fetch fails', async () => {
     const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
     flowsApiMock.get.mockRejectedValue(new Error('Network Error'));
     vi.spyOn(toast, 'error');
@@ -478,7 +430,6 @@ describe('useRefreshDraftOnPush', () => {
       'Something went wrong',
       expect.anything(),
     );
-    expect(toast.info).not.toHaveBeenCalled();
     expect(store.getState().flowVersion.displayName).toBe('Order lookup');
   });
 
