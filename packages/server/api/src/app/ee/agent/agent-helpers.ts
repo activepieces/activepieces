@@ -7,7 +7,6 @@ import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
 import { z } from 'zod'
-import { aiModelCandidates } from '../../ai/ai-model-candidates'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { platformModelTierService } from '../../ai/platform-model-tier-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -21,6 +20,7 @@ import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
 import { agentModelResolution } from './agent-model-resolution'
+import { agentModelTier } from './agent-model-tier'
 import { UserMemoryEntity } from './user-memory-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
@@ -164,7 +164,7 @@ async function resolvePlatformFastModel({ platformId, log }: { platformId: strin
 
 async function assertRunProviderConfigured({ platformId, provider, providerConfigId, modelTierId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, modelTierId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
     if (!isNil(modelTierId)) {
-        await aiModelCandidates(log).firstCandidate({ platformId, tierId: modelTierId, scope })
+        await agentModelTier(log).assertUsable({ platformId, tierId: modelTierId, scope })
         return
     }
     if (isNil(provider)) {
@@ -398,8 +398,11 @@ async function acquireStreamingLock({ conversationId, runId }: { conversationId:
         return 'acquired'
     }
     const current = await conversationRepo().findOneBy({ id: conversationId })
-    const supersededByNewerRun = !isNil(runId) && !isNil(current?.activeRunId) && current.activeRunId !== runId
-    return supersededByNewerRun ? 'superseded' : 'busy'
+    const ownedByARun = !isNil(runId) && !isNil(current?.activeRunId)
+    if (!ownedByARun) {
+        return 'busy'
+    }
+    return current.activeRunId === runId ? 'duplicate' : 'superseded'
 }
 
 async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
@@ -496,7 +499,7 @@ export const agentHelpers = {
 
 type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'modelTierId' | 'promptOverride'>
 
-export type StreamingLockResult = 'acquired' | 'busy' | 'superseded'
+export type StreamingLockResult = 'acquired' | 'busy' | 'superseded' | 'duplicate'
 
 export type PlatformWorkModel = {
     config: GetProviderConfigResponse

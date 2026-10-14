@@ -9,7 +9,7 @@ import { Send } from 'lucide-react';
 import { useState } from 'react';
 import { UseFormReturn, useFormState, useWatch } from 'react-hook-form';
 
-import { Badge } from '@/components/ui/badge';
+import { SettingsPanel, StatusDot } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -86,11 +86,7 @@ export const TestEventCard = ({
     !isNil(headerBlocker);
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border p-4">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-sm font-medium">{t('Send test event')}</span>
-        <span className="text-sm text-gray-11">{description}</span>
-      </div>
+    <SettingsPanel title={t('Send test event')} description={description}>
       <div className="flex gap-2">
         <Select
           value={activeEvent ?? ''}
@@ -139,10 +135,8 @@ export const TestEventCard = ({
       )}
 
       {isCurrent && !isNil(testError) && (
-        <div className="flex flex-col gap-2 border-t pt-3">
-          <Badge className="self-start" variant="destructive">
-            {t('Failed')}
-          </Badge>
+        <div className="flex flex-col gap-2 border-t pt-4">
+          <StatusDot tone="danger">{t('Failed')}</StatusDot>
           <p className="text-xs text-danger-11">
             {destinationErrors.describe(testError)}
           </p>
@@ -150,22 +144,21 @@ export const TestEventCard = ({
       )}
 
       {isCurrent && !isNil(testResult) && (
-        <div className="flex flex-col gap-2 border-t pt-3">
+        <div className="flex flex-col gap-2 border-t pt-4">
           <div className="flex items-center gap-2.5">
             {!isNil(testResult.status) && (
-              <Badge
-                variant={
+              <StatusDot
+                tone={
                   testResult.status < SUCCESS_STATUS_CEILING
                     ? 'success'
-                    : 'destructive'
+                    : 'danger'
                 }
               >
-                <span className="size-1.5 rounded-full bg-current" />
                 {testResult.status}
-              </Badge>
+              </StatusDot>
             )}
             {!isNil(testResult.errorCode) && (
-              <Badge variant="destructive">{t('Failed')}</Badge>
+              <StatusDot tone="danger">{t('Failed')}</StatusDot>
             )}
             <span className="text-sm text-gray-11">
               {t('{duration} ms', { duration: testResult.durationMs })}
@@ -187,7 +180,7 @@ export const TestEventCard = ({
           </pre>
         </div>
       )}
-    </div>
+    </SettingsPanel>
   );
 };
 

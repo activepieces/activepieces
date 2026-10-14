@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { MoreHorizontal, Pencil, Trash, X } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
+import { adminLayout } from '@/app/components/admin';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import EditableText from '@/components/custom/editable-text';
 import { Badge } from '@/components/ui/badge';
@@ -62,7 +63,10 @@ export const ProjectRoleDialog = ({
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent
         showCloseButton={false}
-        className="@container flex h-[min(39rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0"
+        className={cn(
+          adminLayout.dialog.lg,
+          '@container flex h-[min(39rem,88dvh)] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0',
+        )}
       >
         <RoleDialogBody
           key={isOpen ? `${projectRole?.id ?? 'new'}-open` : 'closed'}

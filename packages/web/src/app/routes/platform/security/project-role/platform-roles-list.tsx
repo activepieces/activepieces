@@ -1,14 +1,8 @@
 import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 
+import { SettingsPanel, SettingsRow } from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
-import {
-  Item,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemTitle,
-} from '@/components/ui/item';
 import {
   Tooltip,
   TooltipContent,
@@ -23,22 +17,24 @@ export function PlatformRolesList() {
   const { platform } = platformHooks.useCurrentPlatform();
 
   return (
-    <div className="flex flex-col gap-3">
-      <ItemGroup className="gap-2">
+    <div className="flex flex-col gap-4">
+      <SettingsPanel flush>
         {roleCopy
           .platformRoles({
             personalProjectsEnabled: platform.autoCreatePersonalProjects,
           })
           .map((platformRole) => (
-            <Item
+            <SettingsRow
               key={platformRole.role}
-              variant="outline"
-              size="sm"
-              className="flex-nowrap bg-panel"
-            >
-              <RoleAvatar name={platformRole.label} tone={platformRole.tone} />
-              <ItemContent className="min-w-0">
-                <ItemTitle className="min-w-0 max-w-full flex-wrap">
+              media={
+                <RoleAvatar
+                  name={platformRole.label}
+                  tone={platformRole.tone}
+                  className="rounded-lg"
+                />
+              }
+              title={
+                <>
                   {platformRole.label}
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -55,16 +51,14 @@ export function PlatformRolesList() {
                     </TooltipContent>
                   </Tooltip>
                   {platformRole.isDefaultForNewMembers && (
-                    <Badge variant="info" className="">
-                      {t('Default for new people')}
-                    </Badge>
+                    <Badge variant="info">{t('Default for new people')}</Badge>
                   )}
-                </ItemTitle>
-                <ItemDescription>{platformRole.description}</ItemDescription>
-              </ItemContent>
-            </Item>
+                </>
+              }
+              description={platformRole.description}
+            />
           ))}
-      </ItemGroup>
+      </SettingsPanel>
       <p className="text-xs text-gray-11">
         {t("Everyone has exactly one. To change someone's, open")}{' '}
         <Link

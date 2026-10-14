@@ -133,6 +133,13 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 params: { message: 'This message was replaced by a newer one' },
             })
         }
+        if (lock === 'duplicate') {
+            log.warn({ conversation: { id: conversationId }, run: { id: input.runId } }, '[agentRpc#getAgentConfig] Run redelivered while its first delivery is still streaming, dropping the duplicate')
+            throw new ActivepiecesError({
+                code: ErrorCode.AGENT_RUN_SUPERSEDED,
+                params: { message: 'This run is already in progress' },
+            })
+        }
         if (lock === 'busy') {
             log.warn({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Concurrent run rejected (conversation already STREAMING)')
             throw new ActivepiecesError({
