@@ -3314,13 +3314,12 @@
   "duplicateDomain": "This domain is already on the list",
   "Allowed domains": "Allowed domains",
   "Only people with an email at these domains can sign in with email and password.": "Only people with an email at these domains can sign in with email and password.",
-  "Add an allowed domain": "Add an allowed domain",
   "No allowed domains": "No allowed domains",
   "Any email address can sign in with email and password. Add a domain to limit that.": "Any email address can sign in with email and password. Add a domain to limit that.",
   "With no domains left, any email address can sign in with email and password.": "With no domains left, any email address can sign in with email and password.",
   "People at {domain} can no longer sign in with email and password.": "People at {domain} can no longer sign in with email and password.",
   "Allowed domain added": "Allowed domain added",
   "People at this domain can sign in with email and password.": "People at this domain can sign in with email and password.",
-  "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your own domain too.": "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your own domain too.",
-  "Add your own company's domain too, or your own people can't sign in with email and password.": "Add your own company's domain too, or your own people can't sign in with email and password."
+  "Add your company domain too, or people at your company can't sign in with email and password.": "Add your company domain too, or people at your company can't sign in with email and password.",
+  "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.": "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too."
 }

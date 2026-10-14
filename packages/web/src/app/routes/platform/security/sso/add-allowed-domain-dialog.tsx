@@ -80,7 +80,7 @@ export const AddAllowedDomainDialog = ({
         onInteractOutside={(event) => event.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>{t('Add an allowed domain')}</DialogTitle>
+          <DialogTitle>{t('Add domain')}</DialogTitle>
           <DialogDescription>
             {describeAddingDomain({ isFirstDomain: existing.length === 0 })}
           </DialogDescription>
@@ -137,7 +137,7 @@ function describeAddingDomain({
 }): string {
   return isFirstDomain
     ? t(
-        'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your own domain too.',
+        'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.',
       )
     : t('People at this domain can sign in with email and password.');
 }
