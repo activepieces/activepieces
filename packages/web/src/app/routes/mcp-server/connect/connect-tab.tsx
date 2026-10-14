@@ -32,15 +32,15 @@ export function ConnectTab({
         clientKey !== null &&
         client.key === mcpClientCatalog.resolveKey(clientKey),
     ) ?? null;
-  const isSetupOpen = view === 'client' && selected !== null;
-  const home = useConnectHome({ clients, watch, isSetupOpen });
+  const setupClient = view === 'client' ? selected : null;
+  const home = useConnectHome({ clients, watch, setupClient });
 
-  if (isSetupOpen && selected !== null) {
+  if (setupClient !== null) {
     return (
       <ClientInstructions
-        key={selected.key}
-        client={selected}
-        grants={home.grantsByClient.get(selected.key)}
+        key={setupClient.key}
+        client={setupClient}
+        grants={home.grantsByClient.get(setupClient.key)}
         serverUrl={serverUrl}
         isReachableFromInternet={isReachableFromInternet}
       />

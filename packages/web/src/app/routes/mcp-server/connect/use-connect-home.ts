@@ -17,17 +17,25 @@ export function useConnectWatch(): ConnectWatch {
 export function useConnectHome({
   clients,
   watch,
-  isSetupOpen,
+  setupClient,
 }: {
   clients: CatalogClient[];
   watch: ConnectWatch;
-  isSetupOpen: boolean;
+  setupClient: CatalogClient | null;
 }) {
   const userId = authenticationSession.getCurrentUserId();
   const grantsQuery = mcpGrantsQueries.useAllGrants({
     request: userId === null ? {} : { memberIds: [userId] },
-    refetchInterval: () =>
-      isWatching({ until: watch.until, isSetupOpen, now: Date.now() })
+    refetchInterval: (latest) =>
+      isWatching({
+        until: watch.until,
+        isWaitingOnSetup: isWaitingOnSetup({
+          client: setupClient,
+          grants: latest ?? [],
+          clients,
+        }),
+        now: Date.now(),
+      })
         ? WATCH_INTERVAL_MS
         : false,
   });
@@ -49,14 +57,29 @@ export function useConnectHome({
 
 function isWatching({
   until,
-  isSetupOpen,
+  isWaitingOnSetup,
   now,
 }: {
   until: number | null;
-  isSetupOpen: boolean;
+  isWaitingOnSetup: boolean;
   now: number;
 }): boolean {
-  return isSetupOpen || (until !== null && now < until);
+  return isWaitingOnSetup || (until !== null && now < until);
+}
+
+function isWaitingOnSetup({
+  client,
+  grants,
+  clients,
+}: {
+  client: CatalogClient | null;
+  grants: McpOAuthGrant[];
+  clients: CatalogClient[];
+}): boolean {
+  if (client === null || client.grantKey === null) {
+    return false;
+  }
+  return !groupByClient({ grants, clients }).has(client.key);
 }
 
 function groupByClient({
@@ -86,7 +109,7 @@ function sortByLastUsed(grants: McpOAuthGrant[]): McpOAuthGrant[] {
 const WATCH_INTERVAL_MS = 4000;
 const WATCH_DURATION_MS = 10 * 60 * 1000;
 
-export const connectWatchUtils = { isWatching };
+export const connectWatchUtils = { isWatching, isWaitingOnSetup };
 
 export type ConnectHome = ReturnType<typeof useConnectHome>;
 
