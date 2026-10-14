@@ -160,6 +160,7 @@ describe('call_operation', () => {
 		const req = requests()[0];
 		expect(req.url).toContain('/ccx/service/mytenant/Staffing/');
 		expect(String(req.body)).toContain('soapenv:Envelope');
+		expect(String(req.body)).toContain('<bsvc:Submit_Job_Requisition xmlns:bsvc="urn:com.workday/bsvc"/>');
 	});
 });
 

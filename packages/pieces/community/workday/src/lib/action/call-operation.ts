@@ -72,7 +72,7 @@ export const callOperation = createAction({
 			const xml =
 				propsValue.soapBody && propsValue.soapBody.trim().length > 0
 					? propsValue.soapBody
-					: `<${propsValue.operationName} xmlns:bsvc="urn:com.workday/bsvc"/>`;
+					: `<bsvc:${propsValue.operationName} xmlns:bsvc="urn:com.workday/bsvc"/>`;
 			const result = await workdaySoapRequest(auth, propsValue.soapService, xml);
 			return flattenRecord(result);
 		}
