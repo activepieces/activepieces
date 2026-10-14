@@ -7,12 +7,14 @@ export const getProductsAction = createAction({
   name: 'get_products',
   classification: 'SEARCH',
   displayName: 'Get Products',
-  description: `Get existing products by title.`,
+  description: 'Get every product, or those with a given title.',
   audience: 'both',
   aiMetadata: { description: 'List Shopify products, optionally filtered by title, to discover products or look up their IDs. Use this read-only search before actions that need a product ID; omit the title to list products broadly. Read-only and idempotent.', idempotent: true },
   props: {
     title: Property.ShortText({
       displayName: 'Title',
+      description: 'Filter by product title. Empty: all products.',
+      placeholder: 'Organic cotton T-shirt',
       required: false,
     }),
   },
