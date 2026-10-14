@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
 import { updateProduct } from '../common';
-import { ShopifyImage, ShopifyProductStatuses } from '../common/types';
+import { ShopifyProductStatuses } from '../common/types';
 
 export const updateProductAction = createAction({
   auth: shopifyAuth,
@@ -108,13 +108,6 @@ export const updateProductAction = createAction({
     const { id, title, bodyHtml, vendor, productType, tags, productImage } =
       propsValue;
 
-    const images: Partial<ShopifyImage>[] = [];
-    if (productImage) {
-      images.push({
-        attachment: productImage.base64,
-      });
-    }
-
     return await updateProduct(
       +id,
       {
@@ -123,7 +116,9 @@ export const updateProductAction = createAction({
         vendor,
         product_type: productType,
         tags,
-        images,
+        ...(productImage
+          ? { images: [{ attachment: productImage.base64 }] }
+          : {}),
       },
       auth
     );
