@@ -20,10 +20,9 @@ function getHost(auth: OAuth2PropertyValue): string {
 export const WorkdayService = {
 	common: 'v1',
 	staffing: 'staffing/v6',
-	resourceManagement: 'resourceManagement/v3',
+	procurement: 'procurement/v5',
+	accountsPayable: 'accountsPayable/v1',
 	expenseManagement: 'expense/v1',
-	inbox: 'inbox/v1',
-	leaveManagement: 'absenceManagement/v1',
 	timeTracking: 'timeTracking/v7',
 } as const;
 

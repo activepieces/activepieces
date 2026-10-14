@@ -95,7 +95,8 @@ export const customServiceProperty = Property.StaticDropdown({
 			{ label: 'Staffing (v6)', value: WorkdayService.staffing },
 			{ label: 'Time Tracking (v7)', value: WorkdayService.timeTracking },
 			{ label: 'Expense Management', value: WorkdayService.expenseManagement },
-			{ label: 'Resource Management', value: WorkdayService.resourceManagement },
+			{ label: 'Procurement (v5)', value: WorkdayService.procurement },
+			{ label: 'Accounts Payable (v1)', value: WorkdayService.accountsPayable },
 		],
 	},
 });
@@ -162,6 +163,7 @@ export function toWorkdayModule(module: string): WorkdayModule {
 const LEGACY_SERVICE_PATHS: Record<string, ServicePath> = {
 	'expenseManagement/v1': WorkdayService.expenseManagement,
 	'time/v2': WorkdayService.timeTracking,
+	'resourceManagement/v3': WorkdayService.procurement,
 };
 
 export type BusinessObjectConfig = {

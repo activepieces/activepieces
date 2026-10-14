@@ -25,6 +25,11 @@ describe('resolveBusinessObject', () => {
 		expect(config.service).toBe('timeTracking/v7');
 	});
 
+	it('maps the retired resourceManagement/v3 service to procurement/v5', () => {
+		const config = resolveBusinessObject('onboarding', '__custom__', '/purchaseOrders', 'resourceManagement/v3');
+		expect(config.service).toBe('procurement/v5');
+	});
+
 	it('resolves Time Entry to worker time blocks', () => {
 		const config = resolveBusinessObject('hr_services_time_tracking', 'timeEntries', undefined, undefined);
 		expect(config.path).toBe('/workerTimeBlocks');
