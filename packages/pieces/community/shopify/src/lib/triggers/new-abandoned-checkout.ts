@@ -118,6 +118,9 @@ export const newAbandonedCheckout = createTrigger({
     await pollingHelper.onDisable(polling, { auth, propsValue, store });
   },
   async run({ auth, propsValue, store, files }) {
+    if (isNil(await store.get(LAST_ITEM_KEY))) {
+      await store.put(LAST_ITEM_KEY, READ_FROM_FIRST_CHECKOUT);
+    }
     return await pollingHelper.poll(polling, { auth, propsValue, store, files });
   },
   async test({ auth, propsValue, store, files }) {
@@ -182,3 +185,5 @@ function maxId({ checkouts }: { checkouts: ShopifyCheckout[] }): number {
 }
 
 const MAX_PAGES_TO_FIND_NEWEST = 40;
+const LAST_ITEM_KEY = 'lastItem';
+const READ_FROM_FIRST_CHECKOUT = 0;

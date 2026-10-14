@@ -71,7 +71,7 @@ describe('update_customer toggles', () => {
 describe('webhook trigger lifecycle', () => {
     it('stores the id of the webhook it creates', async () => {
         mockRest({ replies: [{ body: { webhook: { id: 7, topic: 'orders/create', address: WEBHOOK_URL } } }] });
-        const store = createStore({ stored: null });
+        const store = createStore({ entries: {} });
 
         await newOrder.onEnable(webhookContext({ store }));
 
@@ -85,7 +85,7 @@ describe('webhook trigger lifecycle', () => {
                 { body: { webhooks: [{ id: 9, topic: 'orders/create', address: WEBHOOK_URL }] } },
             ],
         });
-        const store = createStore({ stored: 7 });
+        const store = createStore({ entries: { shopify_webhook_id: 7 } });
 
         await newOrder.onEnable(webhookContext({ store }));
 
@@ -97,7 +97,7 @@ describe('webhook trigger lifecycle', () => {
 
     it('fails with the original error when no registered webhook matches', async () => {
         mockRest({ replies: [{ error: 422 }, { body: { webhooks: [{ id: 9, topic: 'orders/paid', address: WEBHOOK_URL }] } }] });
-        const store = createStore({ stored: null });
+        const store = createStore({ entries: {} });
 
         await expect(newOrder.onEnable(webhookContext({ store }))).rejects.toBeInstanceOf(HttpError);
         expect(store.put).not.toHaveBeenCalled();
@@ -105,7 +105,7 @@ describe('webhook trigger lifecycle', () => {
 
     it('does nothing on disable when no webhook id was stored', async () => {
         const sent = mockRest({ replies: [] });
-        const store = createStore({ stored: null });
+        const store = createStore({ entries: {} });
 
         await newOrder.onDisable(webhookContext({ store }));
 
@@ -115,7 +115,7 @@ describe('webhook trigger lifecycle', () => {
 
     it('treats a webhook that is already gone as deleted', async () => {
         const sent = mockRest({ replies: [{ error: 404 }] });
-        const store = createStore({ stored: 7 });
+        const store = createStore({ entries: { shopify_webhook_id: 7 } });
 
         await newOrder.onDisable(webhookContext({ store }));
 
@@ -125,7 +125,7 @@ describe('webhook trigger lifecycle', () => {
 
     it('keeps the stored id when the delete fails for another reason', async () => {
         mockRest({ replies: [{ error: 500 }] });
-        const store = createStore({ stored: 7 });
+        const store = createStore({ entries: { shopify_webhook_id: 7 } });
 
         await expect(newOrder.onDisable(webhookContext({ store }))).rejects.toBeInstanceOf(HttpError);
         expect(store.delete).not.toHaveBeenCalled();
@@ -138,7 +138,7 @@ describe('new_abandoned_checkout polling', () => {
         const sent = mockRest({
             replies: [{ body: { checkouts: firstPage } }, { body: { checkouts: [{ id: 252 }, { id: 251 }] } }],
         });
-        const store = createStore({ stored: null });
+        const store = createStore({ entries: {} });
 
         await newAbandonedCheckout.onEnable(pollingContext({ store }));
 
@@ -149,13 +149,34 @@ describe('new_abandoned_checkout polling', () => {
 
     it('returns new checkouts newest first and remembers the newest', async () => {
         const sent = mockRest({ replies: [{ body: { checkouts: [{ id: 253 }, { id: 255 }, { id: 254 }] } }] });
-        const store = createStore({ stored: 252 });
+        const store = createStore({ entries: { lastItem: 252 } });
 
         const result = await newAbandonedCheckout.run(pollingContext({ store }));
 
         expect(sent[0].queryParams).toEqual({ limit: '250', since_id: '252' });
         expect(result).toEqual([{ id: 255 }, { id: 254 }, { id: 253 }]);
         expect(store.put).toHaveBeenCalledWith('lastItem', 255);
+    });
+
+    it('reports every checkout that arrives after enabling on an empty store, across pages', async () => {
+        const firstPage = Array.from({ length: 250 }, (_, index) => ({ id: index + 1 }));
+        const sent = mockRest({
+            replies: [
+                { body: { checkouts: [] } },
+                { body: { checkouts: firstPage } },
+                { body: { checkouts: [{ id: 251 }] } },
+            ],
+        });
+        const store = createStore({ entries: {} });
+
+        await newAbandonedCheckout.onEnable(pollingContext({ store }));
+        const firstPoll = await newAbandonedCheckout.run(pollingContext({ store }));
+        const secondPoll = await newAbandonedCheckout.run(pollingContext({ store }));
+
+        expect(sent[1].queryParams).toEqual({ limit: '250', since_id: '0' });
+        expect(sent[2].queryParams).toEqual({ limit: '250', since_id: '250' });
+        expect(firstPoll).toHaveLength(250);
+        expect(secondPoll).toEqual([{ id: 251 }]);
     });
 });
 
@@ -177,11 +198,17 @@ function pollingContext({ store }: { store: ReturnType<typeof createStore> }) {
     };
 }
 
-function createStore({ stored }: { stored: number | null }) {
+function createStore({ entries }: { entries: Record<string, number> }) {
+    const data = new Map<string, unknown>(Object.entries(entries));
     return {
-        put: vi.fn(async (_key: string, value: unknown) => value),
-        get: vi.fn().mockResolvedValue(stored),
-        delete: vi.fn(async () => undefined),
+        put: vi.fn(async (key: string, value: unknown) => {
+            data.set(key, value);
+            return value;
+        }),
+        get: vi.fn(async (key: string) => data.get(key) ?? null),
+        delete: vi.fn(async (key: string) => {
+            data.delete(key);
+        }),
     };
 }
 
