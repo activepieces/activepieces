@@ -1,6 +1,8 @@
+import { In } from 'typeorm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockFindOneBy = vi.fn()
+const mockFind = vi.fn()
 const mockRepoDelete = vi.fn()
 const mockDeleteFiles = vi.fn()
 
@@ -13,7 +15,7 @@ vi.mock('../../../../src/app/core/db/repo-factory', () => ({
         findOneBy: mockFindOneBy,
         delete: mockRepoDelete,
         save: vi.fn(),
-        find: vi.fn(),
+        find: mockFind,
     })),
 }))
 
@@ -84,5 +86,38 @@ describe('fileService.delete', () => {
 
         expect(mockRepoDelete).not.toHaveBeenCalled()
         expect(mockDeleteFiles).not.toHaveBeenCalled()
+    })
+})
+
+describe('fileService.deleteMany', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+    })
+
+    it('should delete DB and S3 files in one batch', async () => {
+        mockFind.mockResolvedValue([{ id: 'file-1', s3Key: null }, { id: 'file-2', s3Key: 'key-2' }])
+        mockDeleteFiles.mockResolvedValue([])
+
+        await fileService(mockLog).deleteMany({ projectId: 'proj-1', fileIds: ['file-1', 'file-2'] })
+
+        expect(mockDeleteFiles).toHaveBeenCalledWith(['key-2'])
+        expect(mockRepoDelete).toHaveBeenCalledWith({ projectId: 'proj-1', id: In(['file-1', 'file-2']) })
+    })
+
+    it('should keep the rows of files whose S3 objects could not be deleted', async () => {
+        mockFind.mockResolvedValue([{ id: 'file-1', s3Key: 'key-1' }, { id: 'file-2', s3Key: 'key-2' }])
+        mockDeleteFiles.mockResolvedValue(['key-2'])
+
+        await fileService(mockLog).deleteMany({ projectId: 'proj-1', fileIds: ['file-1', 'file-2'] })
+
+        expect(mockRepoDelete).toHaveBeenCalledWith({ projectId: 'proj-1', id: In(['file-1']) })
+    })
+
+    it('should do nothing for an empty list', async () => {
+        await fileService(mockLog).deleteMany({ projectId: 'proj-1', fileIds: [] })
+
+        expect(mockFind).not.toHaveBeenCalled()
+        expect(mockDeleteFiles).not.toHaveBeenCalled()
+        expect(mockRepoDelete).not.toHaveBeenCalled()
     })
 })
