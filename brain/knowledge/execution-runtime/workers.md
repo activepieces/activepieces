@@ -12,6 +12,7 @@ The deep `Resolver`/`Runtime` concurrency and bundle-caching model lives on the 
 - Workers connect over Socket.IO; on connect they emit `FETCH_WORKER_SETTINGS`, get a `WorkerSettingsResponse` (incl. `APP_VERSION`), and the app registers an RPC server (`WorkerToApiContract`) per socket.
 - Jobs are **pulled** via `poll()`, not pushed. Handing out a job moves it to BullMQ `active`, so the app records it under the polling `socket.id` (`jobAssignmentTracker`, keyed queue+jobId). Worker executes → periodic `extendLock` → `completeJob` clears the assignment.
 - On disconnect, `connectionGeneration++` stops the loops; the app returns that socket's still-held jobs to the queue (`releaseConnectionJobs(socket.id)`) so they don't sit orphaned in `active` (the "Job stalled" storm); the worker aborts its in-flight runtime. Reconnect recreates the runtime fresh (kills any lingering job rather than colliding on the reused box).
+- **A requeue on disconnect can run a job twice.** `releaseConnectionJobs` fires as soon as the socket closes, with no grace period. On 2026-10-13 a fleet-wide `transport close` blip requeued live jobs while the original worker kept running them for another ~90s and then lost its RPC channel (`Missing lock` on completion). Any job type can execute twice this way, not just chat.
 - Graceful `stop()` (SIGTERM) drains in-flight jobs first (≤25s); the stalled-scan is the backstop for abrupt death.
 
 ### Config & routing

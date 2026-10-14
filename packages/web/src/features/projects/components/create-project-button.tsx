@@ -1,6 +1,6 @@
 import { ProjectWithLimits, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Crown, Plus } from 'lucide-react';
+import { Gem, Plus } from 'lucide-react';
 import React from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
@@ -8,6 +8,11 @@ import { PlusIcon } from '@/components/icons/plus';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   PLATFORM_FEATURES,
   useFeatureGate,
@@ -40,7 +45,7 @@ export function CreateProjectButton({
     locked: projectsGate.locked,
   });
 
-  return (
+  const dialog = (
     <NewProjectDialog
       onCreate={onCreate}
       onBlocked={() =>
@@ -57,8 +62,39 @@ export function CreateProjectButton({
         content: teamProjectLimitContent,
       }}
     >
-      {trigger}
+      {variant === 'icon' ? (
+        <TooltipTrigger
+          asChild
+          aria-label={
+            projectsGate.locked
+              ? `${t('Create Project')}, ${t('Requires a plan upgrade')}`
+              : t('Create Project')
+          }
+        >
+          {trigger}
+        </TooltipTrigger>
+      ) : (
+        trigger
+      )}
     </NewProjectDialog>
+  );
+
+  if (variant !== 'icon') {
+    return dialog;
+  }
+
+  return (
+    <Tooltip>
+      {dialog}
+      <TooltipContent side="bottom">
+        <span className="flex flex-col">
+          <span>{t('Create Project')}</span>
+          {projectsGate.locked && (
+            <span className="opacity-70">{t('Requires a plan upgrade')}</span>
+          )}
+        </span>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -71,11 +107,11 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
       return (
         <Button
           variant="ghost"
-          size="icon"
-          className={cn('h-6 w-6 hover:bg-gray-4', className)}
+          size="icon-xs"
+          className={cn('hover:bg-gray-4', className)}
           {...control}
         >
-          {locked ? <Crown className="text-accent-11" /> : <Plus />}
+          {locked ? <Gem className="text-accent-11" /> : <Plus />}
         </Button>
       );
     case 'full':
@@ -106,7 +142,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           {...control}
         >
           {locked ? (
-            <Crown className="size-4 text-accent-11" />
+            <Gem className="size-4 text-accent-11" />
           ) : (
             <Plus className="size-4" />
           )}

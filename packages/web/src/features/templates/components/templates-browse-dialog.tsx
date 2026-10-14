@@ -42,14 +42,14 @@ type TemplatesBrowseDialogProps = {
 };
 
 const TemplateCardSkeleton = () => (
-  <div className="h-[250px] rounded-lg border bg-panel flex flex-col">
+  <div className="h-[250px] rounded-xl border bg-panel flex flex-col">
     <div className="p-4 flex flex-col gap-2 flex-1">
       <Skeleton className="h-5 w-3/4" />
       <Skeleton className="h-4 w-full mt-1" />
       <Skeleton className="h-4 w-2/3" />
       <Skeleton className="h-5 w-20 mt-2" />
     </div>
-    <div className="h-16 bg-gray-3/30 rounded-b-lg" />
+    <div className="h-16 bg-gray-3/30 rounded-b-xl" />
   </div>
 );
 
@@ -147,17 +147,17 @@ export const TemplatesBrowseDialog = ({
                 opts={{ align: 'start', loop: false }}
                 className="w-full px-4"
               >
-                <CarouselContent className="-ml-2 gap-1">
+                <CarouselContent className="gap-3">
                   {allCategories.map((category) => {
                     const isSelected = selectedCategory === category;
                     return (
-                      <CarouselItem key={category} className="basis-auto pl-2">
+                      <CarouselItem key={category} className="basis-auto">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setSelectedCategory(category)}
                           className={cn(
-                            'px-3 py-1 h-auto whitespace-nowrap transition-colors border-none',
+                            'whitespace-nowrap transition-colors border-none',
                             isSelected
                               ? 'bg-gray-12 text-gray-1 hover:!bg-gray-12 hover:!text-gray-1'
                               : 'bg-transparent hover:!bg-gray-4 hover:!text-gray-12',

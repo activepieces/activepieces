@@ -51,7 +51,7 @@ function ManageMemoriesContent() {
         </DialogDescription>
       </DialogHeader>
 
-      <div className="rounded-lg border p-2">
+      <div className="rounded-xl border p-2">
         <ScrollArea className="max-h-[45vh] pr-2">
           <RememberedFacts
             memories={memories}
@@ -78,8 +78,8 @@ function ManageMemoriesContent() {
         />
         <Button
           type="button"
-          size="icon"
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
+          size="icon-sm"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full"
           loading={instruct.isPending}
           disabled={instruction.trim().length === 0}
           onClick={() => instruct.mutate()}

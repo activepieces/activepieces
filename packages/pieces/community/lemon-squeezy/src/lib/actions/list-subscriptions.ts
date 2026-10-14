@@ -1,24 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { lemonSqueezyAuth } from '../common/auth';
-import {
-  LEMON_SQUEEZY_API_BASE,
-  getLemonSqueezyHeaders,
-  buildQueryString,
-  fetchStoreOptions,
-  fetchOrderOptions,
-  fetchProductOptions,
-  fetchVariantOptions,
-} from '../common/api';
-
+import { lsRequest, pageParams, seg } from '../common/client';
+import { storeOptions, orderOptions, productOptions, variantOptions } from '../common/props';
+import { rawSchemas } from '../common/output-schemas';
 export const listSubscriptions = createAction({
   name: 'list_subscriptions',
   classification: 'SEARCH',
   displayName: 'List Subscriptions',
   description: 'Retrieve a paginated list of subscriptions from your Lemon Squeezy store.',
-  audience: 'both',
-  aiMetadata: { description: 'List subscriptions from Lemon Squeezy, optionally filtered by store, order, order item, product, variant, customer email, and status (active, on_trial, cancelled, expired, etc.), with page-based pagination. Use to find subscriptions matching criteria or to audit a customer\'s subscriptions. Read-only and idempotent.', idempotent: true },
+  audience: 'human',
   auth: lemonSqueezyAuth,
+  outputSchema: rawSchemas.subscriptions,
   props: {
     storeId: Property.Dropdown({
       displayName: 'Store',
@@ -26,13 +18,7 @@ export const listSubscriptions = createAction({
       required: false,
       auth: lemonSqueezyAuth,
       refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
-        }
-        const options = await fetchStoreOptions(auth.secret_text);
-        return { options };
-      },
+      options: async ({ auth }) => storeOptions({ auth }),
     }),
     orderId: Property.Dropdown({
       displayName: 'Order',
@@ -40,13 +26,7 @@ export const listSubscriptions = createAction({
       required: false,
       auth: lemonSqueezyAuth,
       refreshers: ['auth', 'storeId'],
-      options: async ({ auth, storeId }) => {
-        if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
-        }
-        const options = await fetchOrderOptions(auth.secret_text, storeId as string | undefined);
-        return { options };
-      },
+      options: async ({ auth, storeId }) => orderOptions({ auth, storeId }),
     }),
     orderItemId: Property.ShortText({
       displayName: 'Order Item ID',
@@ -59,13 +39,7 @@ export const listSubscriptions = createAction({
       required: false,
       auth: lemonSqueezyAuth,
       refreshers: ['auth', 'storeId'],
-      options: async ({ auth, storeId }) => {
-        if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
-        }
-        const options = await fetchProductOptions(auth.secret_text, storeId as string | undefined);
-        return { options };
-      },
+      options: async ({ auth, storeId }) => productOptions({ auth, storeId }),
     }),
     variantId: Property.Dropdown({
       displayName: 'Variant',
@@ -73,13 +47,7 @@ export const listSubscriptions = createAction({
       required: false,
       auth: lemonSqueezyAuth,
       refreshers: ['auth', 'productId'],
-      options: async ({ auth, productId }) => {
-        if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
-        }
-        const options = await fetchVariantOptions(auth.secret_text, productId as string | undefined);
-        return { options };
-      },
+      options: async ({ auth, productId }) => variantOptions({ auth, productId }),
     }),
     userEmail: Property.ShortText({
       displayName: 'Customer Email',
@@ -123,20 +91,18 @@ export const listSubscriptions = createAction({
 
     if (propsValue.storeId) queryParams['filter[store_id]'] = propsValue.storeId;
     if (propsValue.orderId) queryParams['filter[order_id]'] = propsValue.orderId;
-    if (propsValue.orderItemId) queryParams['filter[order_item_id]'] = propsValue.orderItemId;
+    if (propsValue.orderItemId) queryParams['filter[order_item_id]'] = seg({ value: propsValue.orderItemId, label: 'Order Item ID' });
     if (propsValue.productId) queryParams['filter[product_id]'] = propsValue.productId;
     if (propsValue.variantId) queryParams['filter[variant_id]'] = propsValue.variantId;
     if (propsValue.userEmail) queryParams['filter[user_email]'] = propsValue.userEmail;
     if (propsValue.status) queryParams['filter[status]'] = propsValue.status;
-    if (propsValue.page) queryParams['page[number]'] = String(propsValue.page);
-    if (propsValue.perPage) queryParams['page[size]'] = String(propsValue.perPage);
+    Object.assign(queryParams, pageParams(propsValue));
 
-    const url = `${LEMON_SQUEEZY_API_BASE}/subscriptions${buildQueryString(queryParams)}`;
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url,
-      headers: getLemonSqueezyHeaders(auth.secret_text),
+    const response = await lsRequest({
+      apiKey: auth.secret_text,
+      method: 'GET',
+      path: '/subscriptions',
+      query: queryParams,
     });
 
     return response.body;

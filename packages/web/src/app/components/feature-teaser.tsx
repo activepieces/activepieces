@@ -36,7 +36,7 @@ export function FeatureTeaserContent({
         loop
         muted
         playsInline
-        className="w-full rounded-lg"
+        className="w-full rounded-xl"
         controls={false}
         src={videoUrl}
       />
