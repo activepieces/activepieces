@@ -5,8 +5,8 @@ import {
   AdminPageHeader,
   adminPageResources,
 } from '@/app/components/admin';
+import { AllowedDomainsSection } from '@/app/routes/platform/security/sso/allowed-domains-section';
 import { DomainsSection } from '@/app/routes/platform/security/sso/domains-section';
-import { GuestDomainsSection } from '@/app/routes/platform/security/sso/guest-domains-section';
 import { SignInMethodsSection } from '@/app/routes/platform/security/sso/sign-in-methods-section';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -22,7 +22,7 @@ const SSOPage = () => {
       />
       <DomainsSection platform={platform} refetch={refetch} />
       <SignInMethodsSection platform={platform} refetch={refetch} />
-      <GuestDomainsSection platform={platform} refetch={refetch} />
+      <AllowedDomainsSection platform={platform} refetch={refetch} />
     </AdminPage>
   );
 };
