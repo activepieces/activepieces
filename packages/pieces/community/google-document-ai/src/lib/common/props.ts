@@ -9,7 +9,7 @@ import type { GoogleDocumentAiAuthValue, GoogleDocumentAiProcessor } from './typ
 function processor<R extends boolean>({
 	required,
 	displayName = 'Processor',
-	description = "Processor of the connection's project and location. The list comes from Document AI; a disabled dropdown shows why.",
+	description = 'The processor to run the document through.',
 }: PropParams<R>) {
 	return Property.Dropdown({
 		auth: googleDocumentAiAuth,

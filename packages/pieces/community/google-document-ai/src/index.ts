@@ -20,7 +20,7 @@ export const googleDocumentAi = createPiece({
 			auth: googleDocumentAiAuth,
 			baseUrl: (auth) => googleDocumentAiClient.baseUrl({ auth }),
 			description:
-				"Call any Document AI endpoint on the connection's regional host (https://<location>-documentai.googleapis.com). Paths must include the version, e.g. /v1/projects/{project}/locations/{location}/processors, /v1/projects/{project}/locations/{location}/processors/{id}:batchProcess, /v1/{operationName}.",
+				"Call any Document AI endpoint. Paths start with the version, for example `/v1/projects/{project}/locations/{location}/processors`.",
 			authMapping: async (auth, propsValue) =>
 				await googleDocumentAiClient.authHeaders({ auth, url: requestedUrl(propsValue) }),
 		}),

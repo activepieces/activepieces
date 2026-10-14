@@ -32,7 +32,7 @@ export const processDocumentAction = createAction({
 		processorVersion: Property.ShortText({
 			displayName: 'Processor Version',
 			description:
-				"Optional: a specific version id (e.g. `pretrained-ocr-v2.0-2023-06-02`) or its full resource name. Empty uses the processor's default version.",
+				"For example `pretrained-ocr-v2.1-2024-08-07`. Leave empty to use the processor's default version.",
 			required: false,
 		}),
 		source: Property.StaticDropdown<'file' | 'gcs', true>({
@@ -44,43 +44,44 @@ export const processDocumentAction = createAction({
 		file: Property.File({
 			displayName: 'File',
 			description:
-				'The document to process (PDF, GIF, TIFF, JPEG, PNG, BMP, WEBP; Layout Parser also takes DOCX, PPTX, XLSX, HTML). Online processing accepts up to 15 pages, 30 with Imageless Mode.',
+				'The document to process. Up to 15 pages, or 30 with Imageless Mode.',
 			required: false,
 		}),
 		gcsUri: Property.ShortText({
 			displayName: 'Cloud Storage URI',
 			description:
-				'`gs://bucket/path/file.pdf`. The Document AI service agent of your project needs read access to the bucket.',
+				'For example `gs://bucket/file.pdf`.',
 			required: false,
 		}),
 		mimeType: Property.ShortText({
 			displayName: 'MIME Type',
-			description: `Optional: inferred from the file name / URI extension. One of ${googleDocumentAiUtils.supportedMimeTypes()}.`,
+			description: 'Leave empty to detect it from the file extension.',
 			required: false,
 		}),
 		pages: Property.ShortText({
 			displayName: 'Pages',
 			description:
-				'Optional: only process these pages, 1-based, e.g. `1,3-5`. Useful to stay under the online page limit.',
+				'Only process these pages, for example `1,3-5`.',
 			required: false,
 		}),
 		imagelessMode: Property.Checkbox({
 			displayName: 'Imageless Mode',
 			description:
-				'Do not return page images in the document (smaller output) and raise the online limit from 15 to 30 pages.',
+				'Leave page images out of the result and allow up to 30 pages.',
 			required: false,
 			defaultValue: true,
 		}),
 		includeFullDocument: Property.Checkbox({
 			displayName: 'Include Full Document',
 			description:
-				'Also return the raw Document AI `document` (layout, blocks, paragraphs, tokens…). Can be several MB.',
+				'Also return Google\'s raw `document` output. Can be several MB.',
 			required: false,
 			defaultValue: false,
 		}),
 		fieldMask: Property.ShortText({
 			displayName: 'Field Mask (Advanced)',
-			description: `Comma-separated top-level \`document\` / \`pages\` fields to request. Default without full document: \`${googleDocumentAiUtils.DEFAULT_FIELD_MASK}\`. \`text\` is added automatically when a requested field needs it (entities, form fields, tables, layout), and \`pages.pageNumber\` when a page-level field is requested so results keep their page numbers. Ignored when "Include Full Document" is on.`,
+			description:
+				'Comma-separated fields to return, for example `text,entities`. Ignored when Include Full Document is on.',
 			required: false,
 		}),
 	},

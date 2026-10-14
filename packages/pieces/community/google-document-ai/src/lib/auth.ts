@@ -4,7 +4,7 @@ import { googleDocumentAiApi } from './common/api';
 import { googleDocumentAiClient } from './common/client';
 
 const locationDescription =
-	'Multi-region where your processors live: `us` or `eu` (the Document AI console shows it next to each processor). Other regional locations work too when Google offers them for your processor type.';
+	'Where your processors live, usually `us` or `eu`.';
 
 const serviceAccountInstructions = `
 Connect with a **service account** from **your own** Google Cloud project (recommended: flows run without anyone signing in):
@@ -46,7 +46,7 @@ export const googleDocumentAiServiceAccount = PieceAuth.CustomAuth({
 		projectId: Property.ShortText({
 			displayName: 'Project ID (Override)',
 			description:
-				"Only when the processors live in a project other than the key file's `project_id`.",
+				"Only if your processors are in a different project than the key file's.",
 			required: false,
 		}),
 	},
@@ -80,7 +80,7 @@ export const googleDocumentAiOAuth2 = PieceAuth.OAuth2({
 		projectId: Property.ShortText({
 			displayName: 'Project ID',
 			description:
-				'Google Cloud project that owns the processors (the ID, e.g. `my-company-prod`, not the number or the name).',
+				'Your Google Cloud project ID, for example `my-company-prod`.',
 			required: true,
 		}),
 		location: Property.ShortText({

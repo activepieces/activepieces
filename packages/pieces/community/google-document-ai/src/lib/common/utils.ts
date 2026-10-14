@@ -353,7 +353,6 @@ export const googleDocumentAiUtils = {
 	parentOf,
 	processorResourceName,
 	mimeTypeFor,
-	supportedMimeTypes,
 	parsePageSelection,
 	textOf,
 	splitDocumentText,
