@@ -3,7 +3,7 @@
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { ApEdition } from '@activepieces/shared';
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,7 +11,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 let edition: ApEdition = ApEdition.CLOUD;
 let access: EnterpriseAccess = 'trial_used';
 let offer = false;
-let payload: { featureKey?: string } | null = null;
+let payload: { featureKey?: string; resume?: () => Promise<unknown> } | null =
+  null;
+let startPending = false;
+let onStarted: ((status: { state: string }) => void) | undefined;
+const closeDialog = vi.fn();
+const mutate = vi.fn();
 
 vi.mock('i18next', () => ({
   t: (key: string, values: Record<string, unknown> = {}) =>
@@ -58,7 +63,7 @@ vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
     useEnterpriseTrialDialogStore: () => ({
       payload,
       openDialog: vi.fn(),
-      closeDialog: vi.fn(),
+      closeDialog,
     }),
   },
 }));
@@ -68,13 +73,16 @@ vi.mock('@/features/billing/hooks/enterprise-trial-hooks', () => ({
   enterpriseTrialHooks: {
     useStatus: () => ({ data: undefined }),
     useOffer: () => offer,
-    useStart: () => ({
-      data: undefined,
-      isPending: false,
-      isError: false,
-      mutate: vi.fn(),
-      reset: vi.fn(),
-    }),
+    useStart: (callback?: (status: { state: string }) => void) => {
+      onStarted = callback;
+      return {
+        data: undefined,
+        isPending: startPending,
+        isError: false,
+        mutate,
+        reset: vi.fn(),
+      };
+    },
     useTrial: () => ({
       state: 'none',
       startedAt: null,
@@ -120,6 +128,9 @@ beforeEach(() => {
   access = 'trial_used';
   offer = false;
   payload = { featureKey: 'PROJECTS' };
+  startPending = false;
+  closeDialog.mockClear();
+  mutate.mockClear();
 });
 
 describe('one trial dialog for every locked feature', () => {
@@ -154,5 +165,33 @@ describe('one trial dialog for every locked feature', () => {
     expect(screen.getByText('What you get')).toBeDefined();
     expect(screen.getByText('Talk to sales')).toBeDefined();
     expect(screen.queryByRole('button', { name: 'Explore plans' })).toBeNull();
+  });
+
+  it('cannot be closed while the trial is starting', () => {
+    offer = true;
+    access = 'trial_available';
+    startPending = true;
+    renderDialog();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(closeDialog).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+  });
+
+  it('finishes the blocked change from the hook even if the dialog state was reset', async () => {
+    offer = true;
+    access = 'trial_available';
+    const resume = vi.fn().mockResolvedValue(undefined);
+    payload = { featureKey: 'PROJECTS', resume };
+    renderDialog();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start trial and save' }),
+    );
+    expect(mutate).toHaveBeenCalledTimes(1);
+    payload = null;
+    await act(async () => {
+      onStarted?.({ state: 'active' });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    });
+    expect(resume).toHaveBeenCalledTimes(1);
   });
 });

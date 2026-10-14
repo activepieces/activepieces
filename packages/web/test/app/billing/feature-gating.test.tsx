@@ -3,6 +3,7 @@
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 /* eslint-disable testing-library/no-container, testing-library/no-node-access -- <video> has no implicit ARIA role */
+import { TelemetryEventName } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, fireEvent } from '@testing-library/react';
 import * as React from 'react';
@@ -12,9 +13,18 @@ let teamProjectsLimit: number | null = 0;
 let aiProvidersEnabled = false;
 let edition = 'cloud';
 const createProject = vi.fn();
+const capture = vi.fn();
 const createProjectHandlers: { onError?: (error: unknown) => void } = {};
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
+
+vi.mock(
+  '@/components/providers/telemetry-provider',
+  async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    useTelemetry: () => ({ capture }),
+  }),
+);
 
 vi.mock('lucide-react', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -144,6 +154,7 @@ beforeEach(() => {
   aiProvidersEnabled = false;
   edition = 'cloud';
   createProject.mockClear();
+  capture.mockClear();
 });
 
 describe('create project gating', () => {
@@ -220,6 +231,11 @@ describe('create project gating', () => {
       'PROJECTS',
     );
     expect(screen.queryAllByRole('textbox')).toHaveLength(0);
+    expect(capture).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED,
+      }),
+    );
   });
 
   it('shows the limit instead of a generic error when the server refuses the project', () => {
@@ -242,27 +258,27 @@ describe('create project gating', () => {
     quota.mockRestore();
   });
 
-  it('opens the project form once the trial lifts the limit and resumes the blocked click', async () => {
+  it('opens the trial without a save step, then the form once the trial lifts the limit', () => {
     edition = 'cloud';
     teamProjectsLimit = 1;
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
-    const button = (
+    const button = () => (
       <QueryClientProvider client={client}>
         <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />
       </QueryClientProvider>
     );
-    const view = render(button);
+    const view = render(button());
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    const resume = useEnterpriseTrialDialogStore.getState().payload?.resume;
-    expect(resume).toBeDefined();
+    const payload = useEnterpriseTrialDialogStore.getState().payload;
+    expect(payload?.featureKey).toBe('PROJECTS');
+    expect(payload?.resume).toBeUndefined();
     expect(screen.queryAllByRole('textbox')).toHaveLength(0);
+    act(() => useEnterpriseTrialDialogStore.getState().closeDialog());
     teamProjectsLimit = null;
-    view.rerender(button);
-    await act(async () => {
-      await resume?.();
-    });
+    view.rerender(button());
+    fireEvent.click(screen.getByRole('button', { name: /new project/i }));
     expect(screen.queryAllByRole('textbox').length).toBeGreaterThan(0);
   });
 

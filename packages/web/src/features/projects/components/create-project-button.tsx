@@ -48,6 +48,15 @@ export function CreateProjectButton({
   });
   const [createOpen, setCreateOpen] = useState(false);
   const { capture } = useTelemetry();
+  const reportLimitReached = () =>
+    capture({
+      name: TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED,
+      payload: {
+        limit: PlatformAdminLimit.TEAM_PROJECTS,
+        used,
+        allowed: limit ?? 0,
+      },
+    });
   const reportBlocked = () =>
     capture({
       name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
@@ -69,19 +78,12 @@ export function CreateProjectButton({
         return;
       }
       reportBlocked();
-      capture({
-        name: TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED,
-        payload: {
-          limit: PlatformAdminLimit.TEAM_PROJECTS,
-          used,
-          allowed: limit ?? 0,
-        },
-      });
+      reportLimitReached();
       if (gate.access === 'community') {
         projectsGate.open();
         return;
       }
-      gate.run(() => setCreateOpen(true));
+      gate.run(() => setCreateOpen(true), { resumable: false });
     },
   });
 
@@ -111,6 +113,7 @@ export function CreateProjectButton({
         limitReached={gate.locked}
         onLimitReached={() => {
           reportBlocked();
+          reportLimitReached();
           projectsGate.open();
         }}
       />

@@ -224,6 +224,7 @@ export enum PlatformAdminSurface {
     SAMPLE = 'sample',
     TEASER = 'teaser',
     DIALOG = 'dialog',
+    LIMIT = 'limit',
     BANNER = 'banner',
 }
 
