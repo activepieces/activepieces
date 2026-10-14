@@ -1,6 +1,7 @@
 import { DuplicatePieceSetRequestBody } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -38,10 +39,14 @@ type DuplicatePieceSetDialogProps = {
 
 const DuplicatePieceSetForm = ({
   onOpenChange,
+  onCancel,
+  onSavingChange,
   sourceId,
   sourceName,
 }: {
   onOpenChange: (open: boolean) => void;
+  onCancel: () => void;
+  onSavingChange: (saving: boolean) => void;
   sourceId: string;
   sourceName: string;
 }) => {
@@ -57,18 +62,27 @@ const DuplicatePieceSetForm = ({
       onError: (error) => pieceSetFormErrors.show({ form, error }),
     });
 
+  const submitting = useRef(false);
+  const finish = () => {
+    submitting.current = false;
+    onSavingChange(false);
+  };
   const handleSubmit = (data: z.infer<typeof DuplicatePieceSetRequestBody>) => {
-    if (isPending) {
+    if (isPending || submitting.current) {
       return;
     }
+    submitting.current = true;
+    onSavingChange(true);
     form.clearErrors('root.serverError');
     duplicateSet(
       { id: sourceId, name: data.name },
       {
         onSuccess: (copy) => {
+          finish();
           onOpenChange(false);
           navigate(`/platform/pieces/piece-sets/${copy.id}`);
         },
+        onError: finish,
       },
     );
   };
@@ -103,7 +117,8 @@ const DuplicatePieceSetForm = ({
           <Button
             type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+            onClick={onCancel}
           >
             {t('Cancel')}
           </Button>
@@ -127,9 +142,19 @@ export const DuplicatePieceSetDialog = ({
   sourceId,
   sourceName,
 }: DuplicatePieceSetDialogProps) => {
+  const [saving, setSaving] = useState(false);
+  const changeOpen = (next: boolean) => {
+    if (!next && saving) {
+      return;
+    }
+    onOpenChange(next);
+  };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={adminLayout.dialog.md}>
+    <Dialog open={open} onOpenChange={changeOpen}>
+      <DialogContent
+        className={adminLayout.dialog.md}
+        showCloseButton={!saving}
+      >
         <DialogHeader>
           <DialogTitle>
             {t('Duplicate {term}', pieceSetTerms.get())}
@@ -144,6 +169,8 @@ export const DuplicatePieceSetDialog = ({
         <DuplicatePieceSetForm
           key={open ? 'open' : 'closed'}
           onOpenChange={onOpenChange}
+          onCancel={() => changeOpen(false)}
+          onSavingChange={setSaving}
           sourceId={sourceId}
           sourceName={sourceName}
         />

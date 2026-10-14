@@ -24,24 +24,51 @@ vi.mock('@/hooks/platform-hooks', () => ({
     }),
   },
 }));
-vi.mock('@/features/piece-sets', () => ({
-  pieceSetKeys: { all: ['piece-sets'] },
-  pieceSetsApi: { create: (...args: unknown[]) => state.create(...args) },
-}));
+vi.mock('@/features/piece-sets', async () => {
+  const { useMutation } = await vi.importActual<
+    typeof import('@tanstack/react-query')
+  >('@tanstack/react-query');
+  return {
+    pieceSetTerms: {
+      get: () => ({
+        term: 'piece set',
+        terms: 'piece sets',
+        Term: 'Piece set',
+      }),
+    },
+    pieceSetMutations: {
+      useCreatePieceSet: ({ onError }: { onError: (error: Error) => void }) =>
+        useMutation({
+          mutationFn: (request: unknown) => state.create(request),
+          onError,
+        }),
+    },
+  };
+});
+
+function Harness() {
+  const [open, setOpen] = React.useState(true);
+  return (
+    <CreatePieceSetDialog
+      open={open}
+      onOpenChange={setOpen}
+      onCreated={vi.fn()}
+    />
+  );
+}
 
 function renderDialog() {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <TooltipProvider>
-        <CreatePieceSetDialog onCreated={vi.fn()} />
+        <Harness />
       </TooltipProvider>
     </QueryClientProvider>,
   );
-  fireEvent.click(screen.getByRole('button', { name: 'New Piece Set' }));
 }
 
 async function fillName() {
-  fireEvent.change(await screen.findByPlaceholderText('e.g. Engineering'), {
+  fireEvent.change(await screen.findByPlaceholderText('e.g. Sales'), {
     target: { value: 'Engineering' },
   });
 }
@@ -52,7 +79,8 @@ describe('CreatePieceSetDialog', () => {
     renderDialog();
     await fillName();
 
-    const create = screen.getByRole('button', { name: 'Create' });
+    const create = await screen.findByRole('button', { name: 'Create' });
+    await waitFor(() => expect(create.hasAttribute('disabled')).toBe(false));
     fireEvent.submit(create);
     fireEvent.submit(create);
 
@@ -65,7 +93,9 @@ describe('CreatePieceSetDialog', () => {
     state.create = vi.fn(() => new Promise(() => undefined));
     renderDialog();
     await fillName();
-    fireEvent.submit(screen.getByRole('button', { name: 'Create' }));
+    const create = await screen.findByRole('button', { name: 'Create' });
+    await waitFor(() => expect(create.hasAttribute('disabled')).toBe(false));
+    fireEvent.submit(create);
     await waitFor(() => expect(state.create).toHaveBeenCalledTimes(1));
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });

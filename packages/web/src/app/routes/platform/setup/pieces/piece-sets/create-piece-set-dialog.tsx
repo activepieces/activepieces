@@ -1,6 +1,7 @@
 import { CreatePieceSetRequestBody, PieceSet } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -42,9 +43,13 @@ type CreatePieceSetDialogProps = {
 const CreatePieceSetForm = ({
   onCreated,
   onOpenChange,
+  onCancel,
+  onSavingChange,
 }: {
   onCreated: (pieceSet: PieceSet) => void;
   onOpenChange: (open: boolean) => void;
+  onCancel: () => void;
+  onSavingChange: (saving: boolean) => void;
 }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -64,18 +69,27 @@ const CreatePieceSetForm = ({
       }),
   });
 
+  const submitting = useRef(false);
+  const finish = () => {
+    submitting.current = false;
+    onSavingChange(false);
+  };
   const handleSubmit = (data: FormValues) => {
-    if (isPending) {
+    if (isPending || submitting.current) {
       return;
     }
+    submitting.current = true;
+    onSavingChange(true);
     form.clearErrors('root.serverError');
     createSet(
       { name: data.name, key: data.key || undefined },
       {
         onSuccess: (pieceSet) => {
+          finish();
           onOpenChange(false);
           onCreated(pieceSet);
         },
+        onError: finish,
       },
     );
   };
@@ -129,7 +143,8 @@ const CreatePieceSetForm = ({
           <Button
             type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+            onClick={onCancel}
           >
             {t('Cancel')}
           </Button>
@@ -152,9 +167,19 @@ export const CreatePieceSetDialog = ({
   onOpenChange,
   onCreated,
 }: CreatePieceSetDialogProps) => {
+  const [saving, setSaving] = useState(false);
+  const changeOpen = (next: boolean) => {
+    if (!next && saving) {
+      return;
+    }
+    onOpenChange(next);
+  };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={adminLayout.dialog.md}>
+    <Dialog open={open} onOpenChange={changeOpen}>
+      <DialogContent
+        className={adminLayout.dialog.md}
+        showCloseButton={!saving}
+      >
         <DialogHeader>
           <DialogTitle>{t('New {term}', pieceSetTerms.get())}</DialogTitle>
           <DialogDescription>
@@ -168,6 +193,8 @@ export const CreatePieceSetDialog = ({
           key={open ? 'open' : 'closed'}
           onCreated={onCreated}
           onOpenChange={onOpenChange}
+          onCancel={() => changeOpen(false)}
+          onSavingChange={setSaving}
         />
       </DialogContent>
     </Dialog>
