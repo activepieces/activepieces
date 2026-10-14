@@ -2,6 +2,7 @@ import {
 	httpClient,
 	HttpMethod,
 } from '@activepieces/pieces-common';
+import { FilesService } from '@activepieces/pieces-framework';
 import Ajv from 'ajv';
 import { randomUUID } from 'crypto';
 
@@ -19,42 +20,36 @@ export const forSimpleOutputFormat = (format: string): string => {
   return format;
 }
 
-// Download and save screenshot(s) - works for both single scrape and crawl results
-export async function downloadAndSaveScreenshot(screenshotTarget: any, context: any): Promise<void> {
-  const screenshotUrl = screenshotTarget.screenshot;
+const FILE_EXTENSIONS_BY_MIME_TYPE: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'application/pdf': 'pdf',
+};
+
+export async function saveFirecrawlFile({
+  context,
+  firecrawlFileUrl,
+}: {
+  context: { files: FilesService };
+  firecrawlFileUrl: string;
+}): Promise<{ fileName: string; fileUrl: string }> {
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
-    url: screenshotUrl,
+    url: firecrawlFileUrl,
     responseType: 'arraybuffer'
   });
 
-  const fileName = `screenshot-${randomUUID()}.png`;
+  const contentTypeHeader = response.headers?.['content-type'];
+  const fileMimetype = typeof contentTypeHeader === 'string' ? contentTypeHeader.split(';')[0].trim().toLowerCase() : '';
+  const fileName = `firecrawl-${randomUUID()}.${FILE_EXTENSIONS_BY_MIME_TYPE[fileMimetype] ?? 'bin'}`;
   const fileUrl = await context.files.write({
     fileName: fileName,
     data: Buffer.from(response.body),
   });
 
-  screenshotTarget.screenshot = {
-    fileName: fileName,
-    fileUrl: fileUrl,
-  };
-}
-
-export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context: any): Promise<void> {
-
-  if (!crawlResult.data || !Array.isArray(crawlResult.data)) {
-    return;
-  }
-
-  for (const data of crawlResult.data) {
-    if (data.screenshot) {
-      try {
-        await downloadAndSaveScreenshot(data, context);
-      } catch (error) {
-        console.error(`Failed to download screenshot for page: ${error}`);
-      }
-    }
-  }
+  return { fileName, fileUrl };
 }
 
 // scrape, extract and crawl uses this function
