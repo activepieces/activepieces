@@ -9,6 +9,7 @@ import { PlanDropdown, TaskDropdown } from '../common/properties';
 export const updateTask = createAction({
   auth: microsoft365PlannerAuth,
   name: 'updateTask',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description:
     'Modify existing task fields: title, due date, assignments, descriptions.',

@@ -10,6 +10,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const createCampaignAction = createAction({
   name: 'create_campaign',
+  classification: 'WRITE',
   auth: sendyAuth,
   displayName: 'Create Campaign',
   description: 'Create a new campaign',

@@ -5,6 +5,7 @@ import { rabbitmqConnect } from '../common';
 export const sendMessageToExchange = createAction({
   auth: rabbitmqAuth,
   name: 'sendMessageToExchange',
+  classification: 'WRITE',
   displayName: 'sendMessageToExchange',
   description: 'Send a message on a RabbitMQ exchange',
   audience: 'both',

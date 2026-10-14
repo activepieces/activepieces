@@ -9,6 +9,7 @@ import { stabilityAiAuth } from '../..';
 export const textToImage = createAction({
   auth: stabilityAiAuth,
   name: 'text-to-image',
+  classification: 'READ',
   displayName: 'Text to Image',
   description: 'Generate an image using a text prompt',
   audience: 'both',

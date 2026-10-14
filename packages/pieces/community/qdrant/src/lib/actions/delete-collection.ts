@@ -6,6 +6,7 @@ import { collectionName } from '../common';
 export const deleteCollection = createAction({
   auth: qdrantAuth,
   name: 'delete_collection',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Collection',
   description: 'Delete a collection of your database',
   audience: 'both',

@@ -1,15 +1,11 @@
 import {
   createAction,
-  OAuth2PropertyValue,
+  MarkdownVariant,
   Property,
 } from '@activepieces/pieces-framework';
-import {
-  getContacts,
-  getTask,
-  getTasks,
-  getUsers,
-  updateTask,
-} from '../common';
+import { getTasks, updateTask } from '../common';
+import { leadConnectorProps } from '../common/props';
+import { requestBodyUtils } from '../common/request-body';
 import { leadConnectorAuth } from '../..';
 
 export const updateTaskAction = createAction({
@@ -20,50 +16,48 @@ export const updateTaskAction = createAction({
   description: 'Update a task.',
   audience: 'both',
   aiMetadata: { description: 'Updates an existing task on a GoHighLevel/LeadConnector contact, identified by contact ID and task ID, changing title, due date, description, assignee, or completed flag. Use to edit or complete a known task. Idempotent — repeating with the same input leaves the task in the same state.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'task',
+      display: 'section',
+      label: 'Task to update',
+      icon: 'file',
+      props: ['contact', 'task', 'changesInfo'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['title', 'description', 'dueDate', 'assignedTo', 'completed'],
+    },
+  ],
   props: {
-    contact: Property.Dropdown({
-  auth: leadConnectorAuth,
-      displayName: 'Contact',
-      description: 'The contact to use.',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-          };
-
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
-
-        return {
-          options: contacts.map((contact) => {
-            return {
-              label: contact.contactName,
-              value: contact.id,
-            };
-          }),
-        };
-      },
-    }),
+    contact: leadConnectorProps.contact({ required: true }),
     task: Property.Dropdown({
-  auth: leadConnectorAuth,
+      auth: leadConnectorAuth,
       displayName: 'Task',
       required: true,
       refreshers: ['contact'],
       options: async ({ auth, contact }) => {
-        if (!auth || !contact)
+        if (!auth) {
           return {
             disabled: true,
             options: [],
+            placeholder: 'Connect your account first',
           };
+        }
+        if (typeof contact !== 'string' || !contact) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select a contact first',
+          };
+        }
 
-        const tasks = await getTasks(
-          (auth as OAuth2PropertyValue).access_token,
-          contact as string
-        );
+        const tasks = await getTasks(auth.access_token, contact);
         return {
-          options: tasks.map((task: any) => {
+          options: tasks.map((task: LeadConnectorTaskOption) => {
             return {
               label: task.title,
               value: task.id,
@@ -72,43 +66,29 @@ export const updateTaskAction = createAction({
         };
       },
     }),
+    changesInfo: Property.MarkDown({
+      value: 'Empty fields keep their current value, except Completed.',
+      variant: MarkdownVariant.INFO,
+    }),
     title: Property.ShortText({
       displayName: 'Title',
-      required: false,
-    }),
-    dueDate: Property.DateTime({
-      displayName: 'Due Date',
       required: false,
     }),
     description: Property.ShortText({
       displayName: 'Description',
       required: false,
     }),
-    assignedTo: Property.Dropdown({
-  auth: leadConnectorAuth,
+    dueDate: Property.DateTime({
+      displayName: 'Due Date',
+      required: false,
+    }),
+    assignedTo: leadConnectorProps.user({
       displayName: 'Assigned To',
       required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth)
-          return {
-            disabled: true,
-            options: [],
-          };
-
-        const users = await getUsers(auth as OAuth2PropertyValue);
-        return {
-          options: users.map((user: any) => {
-            return {
-              label: `${user.firstName} ${user.lastName}`,
-              value: user.id,
-            };
-          }),
-        };
-      },
     }),
     completed: Property.Checkbox({
       displayName: 'Completed',
+      description: 'Always applied: unticked marks a done task as open.',
       required: false,
       defaultValue: false,
     }),
@@ -125,21 +105,26 @@ export const updateTaskAction = createAction({
       completed,
     } = propsValue;
 
-    // let originalData: any;
-    // if (!title || !dueDate)
-    //   originalData = await getTask(auth.access_token, contact, task);
-
-    return await updateTask(auth.access_token, contact, task, {
-      title: title, //?? originalData.title,
-      // Needs to be ISO string without milliseconds
-      dueDate: dueDate, // ? formatDate(dueDate) : formatDate(originalData.dueDate),
-      body: description,
-      assignedTo: assignedTo,
-      completed,
-    });
+    return await updateTask(
+      auth.access_token,
+      contact,
+      task,
+      requestBodyUtils.omitEmptyValues({
+        title: title,
+        dueDate: dueDate ? formatDate(dueDate) : undefined,
+        body: description,
+        assignedTo: assignedTo,
+        completed,
+      })
+    );
   },
 });
 
 function formatDate(date: string) {
   return new Date(date).toISOString().split('.')[0] + 'Z';
 }
+
+type LeadConnectorTaskOption = {
+  id: string;
+  title: string;
+};

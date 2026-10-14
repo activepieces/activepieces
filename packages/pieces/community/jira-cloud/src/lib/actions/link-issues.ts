@@ -9,6 +9,7 @@ import { legacyLinkIssuesOutputSchema } from '../output-schemas';
 export const linkIssuesAction = createAction({
   auth: jiraCloudAuth,
   name: 'link-issues',
+  classification: 'WRITE',
   displayName: 'Link Issues',
   description: 'Creates a link between two issues.',
   audience: 'human',

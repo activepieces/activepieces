@@ -5,6 +5,7 @@ import { getLocations } from '../common';
 export const getLocationsAction = createAction({
   auth: shopifyAuth,
   name: 'get_locations',
+  classification: 'SEARCH',
   displayName: 'Get Locations',
   description: `Get locations.`,
   audience: 'both',

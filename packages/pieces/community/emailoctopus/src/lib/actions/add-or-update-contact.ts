@@ -6,6 +6,7 @@ import { emailOctopusProps } from "../common/props";
 export const addOrUpdateContact = createAction({
     auth: emailOctopusAuth,
     name: 'add_or_update_contact',
+    classification: 'WRITE',
     displayName: 'Add / Update Contact',
     description: 'Adds a new contact to a list or updates an existing contact if one exists.',
     audience: 'both',

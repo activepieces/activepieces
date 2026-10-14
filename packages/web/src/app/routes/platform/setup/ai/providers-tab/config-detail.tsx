@@ -13,10 +13,18 @@ import {
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Activity, ChevronLeft, KeyRound, Trash2 } from 'lucide-react';
+import { Activity, KeyRound, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
 
+import {
+  AdminPageHeader,
+  AdminSection,
+  DangerZone,
+  SettingsPanel,
+  SettingsRow,
+  adminPageResources,
+} from '@/app/components/admin';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import {
   LeaveWithoutSavingDialog,
@@ -33,10 +41,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AiProviderInfo } from '@/features/agents';
+import {
+  KeyScopeImpact,
+  modelMeta,
+} from '@/features/agents/ai-model/model-meta';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
+import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
-
-import { SectionHeader } from '../components/section-header';
 
 import { KeyStatusBadge } from './key-status';
 import { ManualModelList } from './manual-model-list';
@@ -61,7 +74,7 @@ export function ConfigDetail({
   info: AiProviderInfo;
   projects: Project[];
   isSaving: boolean;
-  onSave: (request: UpdateAIProviderRequest) => Promise<unknown>;
+  onSave: (request: UpdateAIProviderRequest) => Promise<{ error: unknown }>;
   onDelete: () => Promise<unknown>;
   onReplaceCredentials: () => void;
   isRechecking: boolean;
@@ -70,6 +83,9 @@ export function ConfigDetail({
 }) {
   const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [scopeImpact, setScopeImpact] = useState<KeyScopeImpact[]>([]);
+  const { data: tiers } = platformModelTierQueries.useAdminList();
+  const { data: allConfigs } = aiProviderQueries.useAiProviderConfigs();
   const leavingOnPurpose = useRef(false);
   const saveInFlight = useRef(false);
 
@@ -80,6 +96,11 @@ export function ConfigDetail({
     queryKey: aiProviderKeys.configModels(config.id),
     queryFn: () => aiProviderApi.listModelsForConfig(config.id),
     enabled: !manualModels,
+  });
+  const { data: suggestedModelIds = [] } = useQuery({
+    queryKey: [...aiProviderKeys.configModels(config.id), 'suggested'],
+    queryFn: () => aiProviderApi.listSuggestedModelsForConfig(config.id),
+    enabled: manualModels,
   });
   const selectableModels = [
     ...models,
@@ -119,7 +140,30 @@ export function ConfigDetail({
       ? projects.length - draft.projectIds.length
       : draft.projectIds.length;
 
-  const save = async () => {
+  const requestSave = () => {
+    if (nameMissing || saveInFlight.current) {
+      return;
+    }
+    const impact = modelMeta.keyScopeImpact({
+      tiers: tiers ?? [],
+      configsById: new Map(
+        (allConfigs ?? []).map((other) => [other.id, other]),
+      ),
+      config: {
+        ...config,
+        projectScope: draft.projectScope,
+        projectIds: draft.projectIds,
+      },
+      projectIds: projects.map((project) => project.id),
+    });
+    if (impact.length > 0) {
+      setScopeImpact(impact);
+      return;
+    }
+    return save();
+  };
+
+  const save = async (): Promise<boolean> => {
     const manualConfigParse = manualModels
       ? ManualProviderConfig.safeParse(config.config)
       : undefined;
@@ -127,11 +171,11 @@ export function ConfigDetail({
       ? manualConfigParse.data
       : undefined;
     if (nameMissing || saveInFlight.current) {
-      return;
+      return false;
     }
     saveInFlight.current = true;
     try {
-      await onSave({
+      const { error } = await onSave({
         displayName: draft.name.trim(),
         modelScope: draft.modelScope,
         modelIds: manualModels
@@ -145,43 +189,33 @@ export function ConfigDetail({
             }
           : {}),
       });
+      return error === null || error === undefined;
     } finally {
       saveInFlight.current = false;
     }
   };
 
   return (
-    <div className="flex grow flex-col gap-8 pb-4">
-      <div className="flex flex-col gap-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex w-fit items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ChevronLeft className="size-4" />
-          {t('Providers')}
-        </button>
-        <div className="flex items-start gap-3">
-          <ProviderLogo info={info} />
-          <div className="flex min-w-0 flex-col gap-1">
-            <h1 className="truncate text-lg font-semibold leading-none tracking-tight">
-              {draft.name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span>{info.name}</span>
-              <KeyStatusBadge status={config.status} />
-            </div>
-          </div>
-        </div>
-      </div>
+    <>
+      <AdminPageHeader
+        title={draft.name}
+        back={{ label: t('Providers'), to: '/platform/ai' }}
+        badge={<KeyStatusBadge status={config.status} />}
+        description={
+          <span className="flex items-center gap-2">
+            <ProviderLogo info={info} size="sm" />
+            {info.name}
+          </span>
+        }
+        resources={adminPageResources.aiProviders}
+      />
 
-      <section className="flex flex-col gap-3">
-        <SectionHeader
-          title={t('General')}
-          description={t('How this key is labelled and authorised.')}
-        />
-        <div className="flex flex-col divide-y divide-border/60 rounded-xl border border-border/60">
-          <div className="flex flex-col gap-1.5 p-4">
+      <AdminSection
+        title={t('General')}
+        description={t('How this key is labelled and authorised.')}
+      >
+        <SettingsPanel flush>
+          <div className="flex flex-col gap-2 px-5 py-4">
             <Label htmlFor="config-name">{t('Name')}</Label>
             <Input
               id="config-name"
@@ -193,69 +227,55 @@ export function ConfigDetail({
               aria-invalid={nameMissing}
             />
             {nameMissing && (
-              <p className="text-sm text-destructive">
-                {t(formErrors.required)}
-              </p>
+              <p className="text-sm text-danger-11">{t(formErrors.required)}</p>
             )}
           </div>
-          <div className="flex items-center justify-between gap-3 p-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
-                <KeyRound className="size-4 text-muted-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-none">
-                  {t('Credentials')}
-                </p>
-                <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
-                  {t('Stored securely')}
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" onClick={onReplaceCredentials}>
+          <SettingsRow
+            icon={<KeyRound />}
+            title={t('Credentials')}
+            description={t('Stored securely')}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReplaceCredentials}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN)}
+            >
               {t('Replace')}
             </Button>
-          </div>
-          <div className="flex items-center justify-between gap-3 p-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
-                <Activity className="size-4 text-muted-foreground" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-none">
-                  {t('Status')}
-                </p>
-                {statusDetail && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {statusDetail}
-                  </p>
-                )}
-              </div>
-            </div>
+          </SettingsRow>
+          <SettingsRow
+            icon={<Activity />}
+            title={t('Status')}
+            description={statusDetail || undefined}
+          >
             <Button
               variant="outline"
               size="sm"
               loading={isRechecking}
               onClick={onRecheck}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_RECHECK_RUN)}
             >
               {t('Recheck')}
             </Button>
-          </div>
-        </div>
-      </section>
+          </SettingsRow>
+        </SettingsPanel>
+      </AdminSection>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <SectionHeader
+      <AdminSection
+        title={
+          <SectionTitle
             title={t('Models')}
             count={isLoadingModels ? undefined : enabledModelCount}
-            description={
-              manualModels
-                ? t('Model ids exposed through this key.')
-                : t('Which of this key’s models the platform may use.')
-            }
           />
-          {!manualModels && (
+        }
+        description={
+          manualModels
+            ? t('Model ids exposed through this key.')
+            : t('Which of this key’s models the platform may use.')
+        }
+        action={
+          manualModels ? undefined : (
             <ScopeTabs
               value={draft.modelScope}
               onChange={(value) =>
@@ -270,11 +290,13 @@ export function ConfigDetail({
                 { value: 'selected', label: t('Only selected') },
               ]}
             />
-          )}
-        </div>
+          )
+        }
+      >
         {manualModels ? (
           <ManualModelList
             models={draft.models}
+            suggestedModelIds={suggestedModelIds}
             onChange={(models) => setDraft({ ...draft, models })}
           />
         ) : (
@@ -287,23 +309,25 @@ export function ConfigDetail({
             />
           )
         )}
-      </section>
+      </AdminSection>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <SectionHeader
+      <AdminSection
+        title={
+          <SectionTitle
             title={t('Project access')}
             count={allowedProjectCount}
-            description={
-              draft.projectScope === 'except'
-                ? t(
-                    'Every project except these — new projects get access automatically.',
-                  )
-                : draft.projectScope === 'selected'
-                ? t('Only these projects can use this key.')
-                : t('Every project on this platform can use it.')
-            }
           />
+        }
+        description={
+          draft.projectScope === 'except'
+            ? t(
+                'Every project except these — new projects get access automatically.',
+              )
+            : draft.projectScope === 'selected'
+            ? t('Only these projects can use this key.')
+            : t('Every project on this platform can use it.')
+        }
+        action={
           <ScopeTabs
             value={draft.projectScope}
             onChange={(value) =>
@@ -324,7 +348,8 @@ export function ConfigDetail({
               { value: 'except', label: t('All except') },
             ]}
           />
-        </div>
+        }
+      >
         {draft.projectScope !== 'all' && (
           <ProjectSelectionPanel
             projects={projects}
@@ -332,50 +357,43 @@ export function ConfigDetail({
             onChange={(projectIds) => setDraft({ ...draft, projectIds })}
           />
         )}
-      </section>
+      </AdminSection>
 
-      <section className="flex flex-col gap-3">
-        <SectionHeader
-          title={t('Danger zone')}
-          description={t('Irreversible actions for this key.')}
-        />
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/30 p-4">
-          <div className="min-w-0">
-            <p className="text-sm font-medium leading-none">
-              {t('Delete this key')}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t('Steps and agents using it will stop working.')}
-            </p>
-          </div>
+      <DangerZone>
+        <SettingsRow
+          title={t('Delete this key')}
+          description={t('Flows and agents that use it will fail.')}
+        >
           <Button
-            variant="outline"
+            variant="destructive"
             size="sm"
-            className="shrink-0 gap-2 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={() => setDeleteOpen(true)}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
           >
             <Trash2 className="size-4" />
             {t('Delete')}
           </Button>
-        </div>
+        </SettingsRow>
         <ConfirmationDeleteDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           title={t('Delete {name}', { name: config.name })}
-          message={t('Steps and agents using this key will stop working.')}
+          message={t('Flows and agents that use this key will fail.')}
           entityName={config.name}
           showToast={true}
+          onError={() => undefined}
+          controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
           mutationFn={async () => {
             await onDelete();
             leavingOnPurpose.current = true;
             onBack();
           }}
         />
-      </section>
+      </DangerZone>
 
       {dirty && (
         <div className="sticky bottom-4 z-20 mt-auto flex justify-center px-4">
-          <div className="flex animate-in items-center gap-3 rounded-xl border bg-background/95 px-4 py-2.5 shadow-lg backdrop-blur-sm duration-200 fade-in slide-in-from-bottom-4">
+          <div className="flex animate-in items-center gap-3 rounded-xl border bg-gray-1/95 px-4 py-2.5 shadow-lg backdrop-blur-sm duration-200 fade-in slide-in-from-bottom-4">
             <span className="text-sm">{t('You have unsaved changes')}</span>
             <Button
               variant="outline"
@@ -389,8 +407,9 @@ export function ConfigDetail({
               loading={isSaving}
               disabled={nameMissing || isSaving}
               keyboardShortcut="S"
-              onKeyboardShortcut={save}
-              onClick={save}
+              onKeyboardShortcut={requestSave}
+              onClick={requestSave}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT)}
             >
               {t('Save')}
             </Button>
@@ -398,13 +417,67 @@ export function ConfigDetail({
         </div>
       )}
 
+      <ConfirmationDeleteDialog
+        open={scopeImpact.length > 0}
+        onOpenChange={(open) => {
+          if (!open) {
+            setScopeImpact([]);
+          }
+        }}
+        title={t('Change which projects can use {name}?', {
+          name: config.name,
+        })}
+        message={
+          <ul className="flex list-disc flex-col gap-1 pl-5">
+            {scopeImpact.map((impact) => (
+              <li key={impact.tierName}>{scopeImpactText(impact)}</li>
+            ))}
+          </ul>
+        }
+        entityName={config.name}
+        isDanger={false}
+        buttonText={t('Save anyway')}
+        showToast={false}
+        mutationFn={async () => {
+          if (!(await save())) {
+            throw new Error('Saving the key failed');
+          }
+        }}
+      />
+
       <LeaveWithoutSavingDialog
         open={leaveBlocker.state === 'blocked'}
         onKeepEditing={() => leaveBlocker.reset?.()}
         onDiscard={() => leaveBlocker.proceed?.()}
       />
-    </div>
+    </>
   );
+}
+
+function SectionTitle({ title, count }: { title: string; count?: number }) {
+  return (
+    <span className="flex items-baseline gap-2">
+      {title}
+      {count !== undefined && (
+        <span className="text-sm font-normal tabular-nums text-gray-11">
+          {count}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function scopeImpactText(impact: KeyScopeImpact): string {
+  if (impact.lostProjects > 0) {
+    return t('tierLosesProjects', {
+      tier: impact.tierName,
+      count: impact.lostProjects,
+    });
+  }
+  return t('tierFallbackSkippedInMoreProjects', {
+    tier: impact.tierName,
+    count: impact.skippedProjects,
+  });
 }
 
 function ScopeTabs({
@@ -418,7 +491,7 @@ function ScopeTabs({
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-44 shrink-0">
+      <SelectTrigger size="sm" className="w-44 shrink-0">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

@@ -4,6 +4,7 @@ import { kallabotAuth } from '../..';
 
 export const createContactListAction = createAction({
     name: 'create-contact-list',
+    classification: 'WRITE',
     displayName: 'Create Contact List',
     description: 'Create a new contact list.',
     audience: 'both',

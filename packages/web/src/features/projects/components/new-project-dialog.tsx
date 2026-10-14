@@ -7,7 +7,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Crown } from 'lucide-react';
+import { Gem } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -40,10 +40,12 @@ import { globalConnectionsQueries } from '@/features/connections';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
   onCreate?: (project: ProjectWithLimits) => void;
+  onBlocked?: () => void;
   gate?: {
     locked: boolean;
     content: (args: { onClose: () => void }) => React.ReactNode;
@@ -67,6 +69,9 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
 
   const changeOpen = (next: boolean) => {
     setOpen(next);
+    if (next && props.gate?.locked === true) {
+      props.onBlocked?.();
+    }
     if (!next) {
       setBlockedOnSubmit(false);
     }
@@ -103,7 +108,10 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
                     ? undefined
                     : {
                         locked: props.gate.locked,
-                        onBlocked: () => setBlockedOnSubmit(true),
+                        onBlocked: () => {
+                          setBlockedOnSubmit(true);
+                          props.onBlocked?.();
+                        },
                       }
                 }
               />
@@ -201,7 +209,6 @@ const NewProjectForm = ({
                   {...field}
                   id="displayName"
                   placeholder={t('Project Name')}
-                  className="rounded-sm"
                 />
               </FormItem>
             )}
@@ -218,10 +225,9 @@ const NewProjectForm = ({
                   id="alertReceiverEmail"
                   type="email"
                   placeholder="alerts@example.com"
-                  className="rounded-sm"
                   value={field.value ?? ''}
                 />
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-gray-11">
                   {t('Receives flow failure emails for this project.')}
                 </span>
                 <FormMessage />
@@ -245,6 +251,7 @@ const NewProjectForm = ({
                     id="sensitive"
                     checked={!!field.value}
                     onCheckedChange={field.onChange}
+                    {...adminControl(AdminControl.PROJECTS_SENSITIVE_TOGGLE)}
                   />
                   <FormMessage />
                 </FormItem>
@@ -302,6 +309,7 @@ const NewProjectForm = ({
             <Button
               disabled={isPending}
               loading={isPending}
+              {...adminControl(AdminControl.PROJECTS_NEW_SUBMIT)}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -312,7 +320,9 @@ const NewProjectForm = ({
                 form.handleSubmit(handleCreate)(e);
               }}
             >
-              {gate?.locked === true && <Crown className="size-3.5 shrink-0" />}
+              {gate?.locked === true && (
+                <Gem className="size-3.5 shrink-0 text-on-accent/90" />
+              )}
               {t('Create Project')}
             </Button>
           </DialogFooter>

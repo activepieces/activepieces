@@ -5,6 +5,7 @@ import { getPriorities } from '../common';
 import { priorityTriggerOutputSchema } from '../output-schemas';
 export const newPriority = createTrigger({
   name: 'new_priority',
+  classification: 'READ',
   displayName: 'New Priority',
   description: 'Triggers when a new priority is created',
   aiMetadata: {

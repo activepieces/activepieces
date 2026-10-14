@@ -8,6 +8,7 @@ interface WebhookInfo {
 
 export const videoGeneratedSuccessfully = createTrigger({
   name: 'videoGeneratedSuccessfully',
+  classification: 'READ',
   displayName: 'Video Generated Successfully',
   description: 'Fires when a video is generated successfully',
   aiMetadata: {

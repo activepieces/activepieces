@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const campaignSendFinishedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_campaign_send_finished',
+  classification: 'READ',
   displayName: 'Campaign Sent',
   description: 'Triggers when a campaign has been sent to a contact. WARNING: This will fire for every contact the campaign is sent to, please be careful using this trigger.',
   aiMetadata: {

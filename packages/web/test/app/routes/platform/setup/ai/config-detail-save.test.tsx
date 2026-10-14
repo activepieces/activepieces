@@ -24,6 +24,7 @@ import {
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const selectMock = vi.hoisted(() => ({
@@ -106,6 +107,14 @@ vi.mock('@/features/platform-admin', () => ({
   aiProviderKeys: { configModels: () => ['ai-provider', 'models'] },
 }));
 
+vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
+  platformModelTierQueries: { useAdminList: () => ({ data: [] }) },
+}));
+
+vi.mock('@/features/platform-admin/hooks/ai-provider-hooks', () => ({
+  aiProviderQueries: { useAiProviderConfigs: () => ({ data: [] }) },
+}));
+
 vi.mock('@/lib/format-utils', () => ({
   formatUtils: { formatDateToAgo: () => 'just now' },
 }));
@@ -155,26 +164,28 @@ describe('ConfigDetail save (manual models)', () => {
   let onSave: ReturnType<typeof vi.fn>;
 
   const render = () => {
-    onSave = vi.fn().mockResolvedValue(undefined);
+    onSave = vi.fn().mockResolvedValue({ error: null });
     act(() => {
       root.render(
-        <ConfigDetail
-          config={gatewayConfig}
-          info={{
-            provider: AIProviderName.CLOUDFLARE_GATEWAY,
-            name: 'Cloudflare AI Gateway',
-            markdown: '',
-            logoUrl: '',
-          }}
-          projects={[]}
-          isSaving={false}
-          onSave={onSave}
-          onDelete={async () => undefined}
-          onReplaceCredentials={() => undefined}
-          isRechecking={false}
-          onRecheck={() => undefined}
-          onBack={() => undefined}
-        />,
+        <MemoryRouter>
+          <ConfigDetail
+            config={gatewayConfig}
+            info={{
+              provider: AIProviderName.CLOUDFLARE_GATEWAY,
+              name: 'Cloudflare AI Gateway',
+              markdown: '',
+              logoUrl: '',
+            }}
+            projects={[]}
+            isSaving={false}
+            onSave={onSave}
+            onDelete={async () => undefined}
+            onReplaceCredentials={() => undefined}
+            isRechecking={false}
+            onRecheck={() => undefined}
+            onBack={() => undefined}
+          />
+        </MemoryRouter>,
       );
     });
   };

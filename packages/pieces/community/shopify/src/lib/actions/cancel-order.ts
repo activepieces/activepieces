@@ -5,6 +5,7 @@ import { cancelOrder } from '../common';
 export const cancelOrderAction = createAction({
   auth: shopifyAuth,
   name: 'cancel_order',
+  classification: 'DESTRUCTIVE',
   displayName: 'Cancel Order',
   description: `Cancel an order.`,
   audience: 'both',

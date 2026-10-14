@@ -6,6 +6,7 @@ import { getAccountSubdomain } from '../common/get-subdomain';
 export const getJob = createAction({
   auth: workableAuth,
   name: 'getJob',
+  classification: 'READ',
   displayName: 'Get Job',
   description: 'Gets specific job deatils.',
   audience: 'both',

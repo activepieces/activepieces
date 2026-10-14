@@ -7,6 +7,7 @@ import { figmaAuth } from '../auth';
 export const getCommentsAction = createAction({
   auth: figmaAuth,
   name: 'get_comments',
+  classification: 'SEARCH',
   displayName: 'Get File Comments',
   description: 'Get file comments',
   audience: 'both',

@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const findCompany = createAction({
 	name: 'find_company',
+	classification: 'SEARCH',
 	displayName: 'Find Company',
 	description: 'Search for a company by name or domain.',
 	audience: 'both',

@@ -7,6 +7,7 @@ import { pageIdProp, spaceIdProp } from '../common/props';
 export const movePageAction = createAction({
 	auth: confluenceAuth,
 	name: 'move-page',
+	classification: 'WRITE',
 	displayName: 'Move Page',
 	description: 'Moves a page to a new parent as a child, sibling, or to the top of the parent.',
 	audience: 'both',

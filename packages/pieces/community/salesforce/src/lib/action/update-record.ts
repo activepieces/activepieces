@@ -7,6 +7,7 @@ import { successOutputSchema } from '../output-schemas';
 export const updateRecord = createAction({
     auth: salesforceAuth,
     name: 'update_record',
+    classification: 'WRITE',
     displayName: 'Update Record',
     description: 'Updates an existing record.',
     audience: 'human',

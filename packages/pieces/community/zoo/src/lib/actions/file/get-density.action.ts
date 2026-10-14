@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getDensityAction = createAction({
   name: 'get_density',
+  classification: 'READ',
   displayName: 'Get Density',
   description: 'Calculate the density of a CAD file',
   audience: 'both',

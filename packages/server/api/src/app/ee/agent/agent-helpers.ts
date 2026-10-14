@@ -8,6 +8,7 @@ import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
 import { z } from 'zod'
+import { aiModelCandidates } from '../../ai/ai-model-candidates'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -129,7 +130,11 @@ async function resolveChatProvider({ platformId, scope, log }: { platformId: str
     return chatProvider
 }
 
-async function assertRunProviderConfigured({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
+async function assertRunProviderConfigured({ platformId, provider, providerConfigId, modelTierId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, modelTierId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
+    if (!isNil(modelTierId)) {
+        await aiModelCandidates(log).firstCandidate({ platformId, tierId: modelTierId, scope })
+        return
+    }
     if (isNil(provider)) {
         const chatProvider = await aiProviderService(log).getChatProviderName({ platformId, scope })
         if (isNil(chatProvider)) {
@@ -336,6 +341,7 @@ function jobFieldsFromConfig({ config }: { config: AgentConfig }): AgentJobConfi
         modelName: config.modelName ?? null,
         ...spreadIfDefined('provider', config.provider ?? undefined),
         ...spreadIfDefined('providerConfigId', config.providerConfigId ?? undefined),
+        ...spreadIfDefined('modelTierId', config.modelTierId ?? undefined),
         promptOverride: { system: config.instructions },
     }
 }
@@ -348,6 +354,28 @@ async function claimConversationForRun({ conversationId, runId }: { conversation
         await repo.update(conversationId, { activeRunId: runId })
         return { preemptedRunId: wasStreaming ? current?.activeRunId ?? null : null, wasStreaming }
     })
+}
+
+async function acquireStreamingLock({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<StreamingLockResult> {
+    const builder = conversationRepo()
+        .createQueryBuilder()
+        .update()
+        .set({ status: AgentConversationStatus.STREAMING })
+        .where('id = :id AND status != :streaming', { id: conversationId, streaming: AgentConversationStatus.STREAMING })
+    if (!isNil(runId)) {
+        builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
+    }
+    const result = await builder.returning('id').execute()
+    const lockedRows: unknown[] = result.raw ?? []
+    if (lockedRows.length > 0) {
+        return 'acquired'
+    }
+    const current = await conversationRepo().findOneBy({ id: conversationId })
+    const ownedByARun = !isNil(runId) && !isNil(current?.activeRunId)
+    if (!ownedByARun) {
+        return 'busy'
+    }
+    return current.activeRunId === runId ? 'duplicate' : 'superseded'
 }
 
 async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
@@ -411,6 +439,7 @@ async function assertAgentsSurfaceAvailable({ platformId, log }: { platformId: s
 export const agentHelpers = {
     jobFieldsFromConfig,
     claimConversationForRun,
+    acquireStreamingLock,
     resolveFlowTools,
     agentsSurfaceAvailable,
     assertAgentsSurfaceAvailable,
@@ -438,4 +467,6 @@ export const agentHelpers = {
     saveUserMemory,
 }
 
-type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'promptOverride'>
+type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'modelTierId' | 'promptOverride'>
+
+export type StreamingLockResult = 'acquired' | 'busy' | 'superseded' | 'duplicate'

@@ -11,8 +11,9 @@ import {
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { presentonAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
+import { presentonClient } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { newpresentationOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof presentonAuth>,
@@ -22,15 +23,17 @@ const polling: Polling<
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const apiKey = auth.secret_text;
 
-    const response: any = await makeRequest(
-      apiKey,
-      HttpMethod.GET,
-      '/ppt/presentation/all'
-    );
+    const response = await presentonClient.request<{
+      results: { created_at: string }[];
+    }>({
+      auth: apiKey,
+      method: HttpMethod.GET,
+      path: '/api/v1/ppt/presentation/all',
+    });
 
     const itemsArray = response.results;
 
-    return itemsArray.map((item: any) => ({
+    return itemsArray.map((item) => ({
       epochMilliSeconds: dayjs(item.created_at).valueOf(),
       data: item,
     }));
@@ -40,6 +43,7 @@ const polling: Polling<
 export const newPresentation = createTrigger({
   auth: presentonAuth,
   name: 'newPresentation',
+  outputSchema: newpresentationOutputSchema,
   classification: 'READ',
   displayName: 'New Presentation',
   description: 'Triggers when a new presentation is created in Presenton.',

@@ -1,5 +1,5 @@
 import { AgentPromptOverride, AgentRunSource } from '@activepieces/core-execution'
-import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
+import { ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
 import { MAX_AGENT_TEXT_LENGTH } from './agent'
@@ -173,6 +173,7 @@ export const PersistedAgentMessageSchema = z.object({
     parts: z.array(PersistedAgentPartSchema),
     thinkingDurationMs: z.number().optional(),
     feedback: AgentMessageFeedbackSchema.optional(),
+    tainted: z.boolean().optional(),
 })
 
 export type PersistedAgentPart = z.infer<typeof PersistedAgentPartSchema>
@@ -204,6 +205,7 @@ export const AgentConversation = z.object({
     source: z.enum(AgentRunSource),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
+    modelTierId: Nullable(ApId),
     status: z.nativeEnum(AgentConversationStatus).default(AgentConversationStatus.IDLE),
     activeRunId: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
@@ -222,6 +224,7 @@ export type AgentRunListItem = z.infer<typeof AgentRunListItem>
 export const CreateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
+    modelTierId: z.optional(Nullable(ApId)),
     agentId: z.optional(z.string()),
     builder: z.optional(z.boolean()),
     projectId: z.optional(z.string()),
@@ -231,6 +234,7 @@ export type CreateAgentConversationRequest = z.infer<typeof CreateAgentConversat
 export const UpdateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
+    modelTierId: z.optional(Nullable(ApId)),
 })
 export type UpdateAgentConversationRequest = z.infer<typeof UpdateAgentConversationRequest>
 
@@ -378,5 +382,6 @@ export * from './agent'
 export { agentToolClassification } from './tool-classification'
 export { CHAT_CREDITS_PER_TOOL_CALL, chatBilling, type ChatToolCall, type TurnCredits } from './chat-billing'
 export { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, agentToolPhases, type AgentPhase } from './tool-phases'
+export { AGENT_SKILLS, agentToolSkills, LAZY_TOOL_NAME, GET_TOOL_SCHEMA_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SKILLS_NOTE_HEADING, type AgentSkill, type SkillSurface } from './tool-skills'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
 export * from './chat-personalization'

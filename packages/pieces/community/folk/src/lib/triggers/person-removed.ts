@@ -6,6 +6,7 @@ import { folkProps } from '../common/props';
 export const personRemoved = createTrigger({
   auth: folkAuth,
   name: 'person_removed',
+  classification: 'READ',
   displayName: 'Person Removed',
   description: 'Fires when a person is removed from your Folk workspace.',
   aiMetadata: {

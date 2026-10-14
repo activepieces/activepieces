@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const cancelPayment = createAction({
   auth: trueLayerCommon.auth,
   name: 'cancel-payment',
+  classification: 'DESTRUCTIVE',
   displayName: 'Cancel Payment',
   description: 'Cancel a payment. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
   audience: 'both',

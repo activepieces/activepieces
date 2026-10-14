@@ -5,6 +5,7 @@ import { getProductVariant } from '../common';
 export const getProductVariantAction = createAction({
   auth: shopifyAuth,
   name: 'get_product_variant',
+  classification: 'READ',
   displayName: 'Get Product Variant',
   description: `Get a product variant.`,
   audience: 'both',

@@ -1,14 +1,36 @@
 import { AIProviderName, tryCatch } from '@activepieces/core-utils';
-import { AIProviderWithoutSensitiveData, Project } from '@activepieces/shared';
+import {
+  AIProviderWithoutSensitiveData,
+  PlatformAdminSurface,
+  Project,
+} from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Bot, ChevronRight, MessageSquare, Plus, Trash2 } from 'lucide-react';
+import {
+  Bot,
+  ChevronRight,
+  Lock,
+  MessageSquare,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import {
+  AdminEmpty,
+  AdminPageHeader,
+  AdminSection,
+  SettingsPanel,
+  SettingsRow,
+  adminPageResources,
+  adminSurface,
+} from '@/app/components/admin';
+import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -25,15 +47,19 @@ import {
 } from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import {
+  PLATFORM_FEATURES,
+  TIER_LABELS,
+  useUpgradeClick,
+} from '@/features/billing';
+import {
   aiProviderKeys,
   aiProviderMutations,
   aiProviderQueries,
 } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
-
-import { SectionHeader } from '../components/section-header';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
@@ -53,14 +79,14 @@ export function ProvidersTab() {
   >(undefined);
 
   const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const locked = !platform.plan.aiProvidersEnabled;
   const {
     data: providers,
     isLoading,
     isError: isProvidersError,
     refetch,
   } = aiProviderQueries.useAiProviderConfigs();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const configs = (providers ?? []).filter(
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
@@ -79,6 +105,16 @@ export function ProvidersTab() {
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
       onSuccess: () => refetch(),
+      onError: (error) => {
+        const data = error.response?.data;
+        toast.error(
+          t(
+            data?.params?.message ??
+              data?.message ??
+              'Could not delete this key',
+          ),
+        );
+      },
     });
   const { mutate: recheckProvider, isPending: isRechecking } =
     aiProviderMutations.useRecheckAiProvider({
@@ -164,7 +200,7 @@ export function ProvidersTab() {
   const activeInfo = activeConfig
     ? providerInfoOf({ provider: activeConfig.provider })
     : undefined;
-  if (activeConfig && activeInfo && allowWrite) {
+  if (activeConfig && activeInfo && !locked) {
     return (
       <>
         <ConfigDetail
@@ -195,88 +231,87 @@ export function ProvidersTab() {
     );
   }
 
-  return (
+  const page = (
     <>
-      <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-3">
-          <SectionHeader
-            title={t('Providers')}
-            isPageTitle
-            count={configs.length}
-            description={
-              configs.length === 0
-                ? t(
-                    'Connect a provider to turn on chat, agents, and AI steps across your platform.',
-                  )
-                : t('Each key has its own models and project access.')
-            }
-          />
-          {allowWrite && (
-            <Button
-              size="sm"
-              className="shrink-0"
-              onClick={() => openConnect()}
-            >
-              <Plus className="size-4" />
-              {t('Add key')}
-            </Button>
-          )}
-        </div>
-
-        {isProvidersError ? (
-          <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
-        ) : configs.length === 0 ? (
-          <EmptyProviders onConnect={openConnect} allowWrite={allowWrite} />
-        ) : (
-          <>
-            {allowWrite && (
-              <ChatProviderRow
-                configs={providers ?? []}
-                value={chatProviderRow?.id ?? null}
-                isSwitching={isSwitchingChatProvider}
-                onChange={selectChatConfig}
-              />
-            )}
-            <div className="flex flex-col gap-6">
-              {connectedProviders.map((provider) => (
-                <ProviderGroup
-                  key={provider}
-                  provider={provider}
-                  configs={configs.filter(
-                    (config) => config.provider === provider,
-                  )}
-                  projects={projects}
-                  allowWrite={allowWrite}
-                  onAdd={() => openConnect(provider)}
-                  onOpen={openConfig}
-                  onDelete={(id) => deleteProvider(id)}
-                />
-              ))}
-            </div>
-            {available.length > 0 && (
-              <section className="flex flex-col gap-4 border-t border-border/60 pt-6">
-                <SectionHeader
-                  title={t('Also available')}
-                  count={available.length}
-                  description={t(
-                    'Bring your own API key to connect any of these.',
-                  )}
-                />
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                  {available.map((info) => (
-                    <AvailableProviderCard
-                      key={info.provider}
-                      info={info}
-                      allowWrite={allowWrite}
-                      onConnect={() => openConnect(info.provider)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-          </>
+      <AdminPageHeader
+        title={t('Providers')}
+        badge={
+          <span className="text-sm tabular-nums text-gray-11">
+            {configs.length}
+          </span>
+        }
+        description={
+          configs.length === 0
+            ? t(
+                'Connect a provider to turn on chat, agents, and AI steps across your platform.',
+              )
+            : t('Each key has its own models and project access.')
+        }
+        resources={adminPageResources.aiProviders}
+      >
+        {!locked && (
+          <Button
+            onClick={() => openConnect()}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+          >
+            <Plus className="size-4" />
+            {t('Add key')}
+          </Button>
         )}
-      </div>
+      </AdminPageHeader>
+
+      {isProvidersError ? (
+        <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
+      ) : configs.length === 0 ? (
+        <EmptyProviders onConnect={openConnect} />
+      ) : (
+        <>
+          {locked && <LockedProvidersAlert />}
+          {!locked && (
+            <ChatProviderRow
+              configs={providers ?? []}
+              value={chatProviderRow?.id ?? null}
+              isSwitching={isSwitchingChatProvider}
+              onChange={selectChatConfig}
+            />
+          )}
+          {connectedProviders.map((provider) => (
+            <ProviderGroup
+              key={provider}
+              provider={provider}
+              configs={configs.filter((config) => config.provider === provider)}
+              projects={projects}
+              locked={locked}
+              onAdd={() => openConnect(provider)}
+              onOpen={openConfig}
+              onDelete={(id) => deleteProvider(id)}
+            />
+          ))}
+          {!locked && available.length > 0 && (
+            <AdminSection
+              title={
+                <span className="flex items-baseline gap-2">
+                  {t('Also available')}
+                  <span className="text-sm font-normal tabular-nums text-gray-11">
+                    {available.length}
+                  </span>
+                </span>
+              }
+              description={t('Bring your own API key to connect any of these.')}
+            >
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {available.map((info) => (
+                  <AvailableProviderCard
+                    key={info.provider}
+                    info={info}
+                    onConnect={() => openConnect(info.provider)}
+                  />
+                ))}
+              </div>
+            </AdminSection>
+          )}
+        </>
+      )}
 
       <ConnectProviderDialog
         open={dialogOpen}
@@ -287,13 +322,55 @@ export function ProvidersTab() {
       />
     </>
   );
+
+  if (configs.length === 0 && !isProvidersError) {
+    return (
+      <PlanFeatureSample feature="aiProviders">
+        <div className="flex flex-col gap-6">{page}</div>
+      </PlanFeatureSample>
+    );
+  }
+  return page;
+}
+
+function LockedProvidersAlert() {
+  const upgradeClick = useUpgradeClick();
+  const { featureKey, tier } = PLATFORM_FEATURES.aiProviders;
+
+  return (
+    <Alert variant="primary">
+      <Lock />
+      <AlertTitle>
+        {t('Your plan does not include Bring your own AI keys')}
+      </AlertTitle>
+      <AlertDescription className="flex flex-col items-start gap-3">
+        <p>
+          {t(
+            'You can still delete the keys below. Upgrade your plan to add new keys or change existing ones.',
+          )}
+        </p>
+        <Button
+          size="sm"
+          onClick={() =>
+            upgradeClick({
+              feature: featureKey,
+              tier,
+              surface: PlatformAdminSurface.SAMPLE,
+            })
+          }
+        >
+          {t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
 }
 
 function ProviderGroup({
   provider,
   configs,
   projects,
-  allowWrite,
+  locked,
   onAdd,
   onOpen,
   onDelete,
@@ -301,7 +378,7 @@ function ProviderGroup({
   provider: AIProviderName;
   configs: AIProviderWithoutSensitiveData[];
   projects: Project[];
-  allowWrite: boolean;
+  locked: boolean;
   onAdd: () => void;
   onOpen: (id: string) => void;
   onDelete: (id: string) => Promise<unknown>;
@@ -312,58 +389,54 @@ function ProviderGroup({
   }
 
   return (
-    <section
-      className={cn(
-        'overflow-hidden rounded-xl border border-border/60 bg-card',
-        CARD_SHADOW,
-      )}
-    >
-      <div className="flex items-center gap-3 px-5 py-4">
-        <ProviderLogo info={info} />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium leading-none">{info.name}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t('configurationsCount', { count: configs.length })}
-          </p>
-        </div>
-        {allowWrite && (
-          <Button variant="ghost" size="sm" onClick={onAdd}>
+    <SettingsPanel
+      flush
+      title={
+        <span className="flex items-center gap-2">
+          <ProviderLogo info={info} size="sm" />
+          {info.name}
+        </span>
+      }
+      description={t('configurationsCount', { count: configs.length })}
+      action={
+        locked ? undefined : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onAdd}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+          >
             <Plus className="size-4" />
             {t('Add key')}
           </Button>
-        )}
-      </div>
-      <div className="border-t border-border/60 px-5 pb-1 pt-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          {t('Keys')}
-        </p>
-      </div>
-      <div>
-        {configs.map((config) => (
-          <ConfigRow
-            key={config.id}
-            config={config}
-            projects={projects}
-            allowWrite={allowWrite}
-            onOpen={() => onOpen(config.id)}
-            onDelete={() => onDelete(config.id)}
-          />
-        ))}
-      </div>
-    </section>
+        )
+      }
+    >
+      <p className="px-5 py-2 text-xs font-medium text-gray-11">{t('Keys')}</p>
+      {configs.map((config) => (
+        <ConfigRow
+          key={config.id}
+          config={config}
+          projects={projects}
+          locked={locked}
+          onOpen={() => onOpen(config.id)}
+          onDelete={() => onDelete(config.id)}
+        />
+      ))}
+    </SettingsPanel>
   );
 }
 
 function ConfigRow({
   config,
   projects,
-  allowWrite,
+  locked,
   onOpen,
   onDelete,
 }: {
   config: AIProviderWithoutSensitiveData;
   projects: Project[];
-  allowWrite: boolean;
+  locked: boolean;
   onOpen: () => void;
   onDelete: () => Promise<unknown>;
 }) {
@@ -388,28 +461,28 @@ function ConfigRow({
 
   return (
     <div
-      role={allowWrite ? 'button' : undefined}
-      tabIndex={allowWrite ? 0 : undefined}
-      onClick={allowWrite ? onOpen : undefined}
+      role={locked ? undefined : 'button'}
+      tabIndex={locked ? undefined : 0}
+      onClick={locked ? undefined : onOpen}
       onKeyDown={(event) => {
-        if (allowWrite && (event.key === 'Enter' || event.key === ' ')) {
+        if (!locked && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           onOpen();
         }
       }}
       className={cn(
         'group flex items-center gap-4 px-5 py-3 transition-colors',
-        allowWrite &&
-          'cursor-pointer hover:bg-muted/50 active:bg-muted focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        !locked &&
+          'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-medium leading-none">
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="truncate text-sm font-medium text-gray-12">
             {config.name}
           </p>
           {config.enabledForChat && (
-            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-px text-[11px] font-medium text-primary">
+            <span className="shrink-0 rounded-md bg-accent-3 px-2 py-px text-xs font-medium text-accent-11">
               {t('Chat')}
             </span>
           )}
@@ -417,7 +490,7 @@ function ConfigRow({
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <p className="w-fit truncate text-xs text-muted-foreground">
+            <p className="w-fit truncate text-xs text-gray-11">
               {modelsLabel}
               <span aria-hidden> · </span>
               {projectsLabel}
@@ -432,7 +505,7 @@ function ConfigRow({
       </div>
 
       {config.projectScope !== 'all' && (
-        <div className="flex min-w-0 items-center gap-1.5">
+        <div className="flex min-w-0 items-center gap-2">
           <ProjectChips
             projects={namedProjects}
             excluded={config.projectScope === 'except'}
@@ -441,39 +514,45 @@ function ConfigRow({
         </div>
       )}
 
-      {allowWrite && (
-        <div
-          className="flex shrink-0 items-center gap-1"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="px-2 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 className="size-4" />
-                <span className="sr-only">{t('Delete')}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{t('Delete')}</TooltipContent>
-          </Tooltip>
-          <ChevronRight className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-foreground" />
-          <ConfirmationDeleteDialog
-            open={deleteOpen}
-            onOpenChange={setDeleteOpen}
-            title={t('Delete {name}', { name: config.name })}
-            message={t('Steps and agents using this key will stop working.')}
-            entityName={config.name}
-            showToast={true}
-            mutationFn={async () => {
-              await onDelete();
-            }}
-          />
-        </div>
-      )}
+      <div
+        className="flex shrink-0 items-center gap-1"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className={cn(
+                'text-gray-11 opacity-0 transition-opacity hover:bg-danger-3 hover:text-danger-11 focus-visible:opacity-100 group-hover:opacity-100',
+                locked && 'opacity-100',
+              )}
+              onClick={() => setDeleteOpen(true)}
+              {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
+            >
+              <Trash2 className="size-4" />
+              <span className="sr-only">{t('Delete')}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('Delete')}</TooltipContent>
+        </Tooltip>
+        {!locked && (
+          <ChevronRight className="size-4 text-gray-11 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-gray-12" />
+        )}
+        <ConfirmationDeleteDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title={t('Delete {name}', { name: config.name })}
+          message={t('Flows and agents that use this key will fail.')}
+          entityName={config.name}
+          showToast={true}
+          onError={() => undefined}
+          controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
+          mutationFn={async () => {
+            await onDelete();
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -494,7 +573,7 @@ function ProjectChips({
       <TooltipTrigger asChild>
         <span className="flex min-w-0 items-center gap-1">
           {excluded && (
-            <span className="shrink-0 text-sm text-muted-foreground">
+            <span className="shrink-0 text-sm text-gray-11">
               {t('All except')}
             </span>
           )}
@@ -502,7 +581,7 @@ function ProjectChips({
             <ProjectSwatch key={project.id} project={project} />
           ))}
           {rest > 0 && (
-            <span className="text-sm text-muted-foreground tabular-nums">
+            <span className="text-sm text-gray-11 tabular-nums">
               {t('+{count}', { count: rest })}
             </span>
           )}
@@ -532,53 +611,45 @@ function ChatProviderRow({
   onChange: (configId: string) => void;
 }) {
   return (
-    <div
-      className={cn(
-        'flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3',
-        CARD_SHADOW,
-      )}
-    >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/60">
-        <MessageSquare className="size-4 text-muted-foreground" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium leading-none">{t('Chat provider')}</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {t('Powers the built-in chat for everyone on this platform')}
-        </p>
-      </div>
-      <Select
-        value={value ?? undefined}
-        onValueChange={onChange}
-        disabled={isSwitching}
+    <SettingsPanel flush>
+      <SettingsRow
+        icon={<MessageSquare />}
+        title={t('Chat provider')}
+        description={t(
+          'Powers the built-in chat for everyone on this platform',
+        )}
       >
-        <SelectTrigger className="w-52">
-          <SelectValue placeholder={t('Select provider')} />
-        </SelectTrigger>
-        <SelectContent>
-          {configs.map((config) => {
-            const info = providerInfoOf({ provider: config.provider });
-            return (
-              <SelectItem key={config.id} value={config.id}>
-                <div className="flex items-center gap-2">
-                  {info && <ProviderLogo info={info} size="sm" />}
-                  <span className="truncate">{config.name}</span>
-                </div>
-              </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
-    </div>
+        <Select
+          value={value ?? undefined}
+          onValueChange={onChange}
+          disabled={isSwitching}
+        >
+          <SelectTrigger className="w-52">
+            <SelectValue placeholder={t('Select provider')} />
+          </SelectTrigger>
+          <SelectContent>
+            {configs.map((config) => {
+              const info = providerInfoOf({ provider: config.provider });
+              return (
+                <SelectItem key={config.id} value={config.id}>
+                  <div className="flex items-center gap-2">
+                    {info && <ProviderLogo info={info} size="sm" />}
+                    <span className="truncate">{config.name}</span>
+                  </div>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+      </SettingsRow>
+    </SettingsPanel>
   );
 }
 
 function EmptyProviders({
   onConnect,
-  allowWrite,
 }: {
   onConnect: (provider?: AIProviderName) => void;
-  allowWrite: boolean;
 }) {
   const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
     SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
@@ -588,56 +659,46 @@ function EmptyProviders({
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-card px-6 py-14 text-center">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
-          <Bot className="size-5 text-primary" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <p className="text-base font-semibold tracking-tight">
-            {t('Connect your first provider')}
-          </p>
-          <p className="max-w-md text-sm text-muted-foreground">
-            {t(
-              'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
-            )}
-          </p>
-        </div>
-        {allowWrite && (
-          <Button onClick={() => onConnect()}>
+    <>
+      <AdminEmpty
+        icon={<Bot />}
+        title={t('Connect your first provider')}
+        description={t(
+          'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
+        )}
+        action={
+          <Button
+            onClick={() => onConnect()}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
+          >
             <Plus className="size-4" />
             {t('Connect a provider')}
           </Button>
-        )}
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        }
+      />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {recommended.map((info) => (
           <AvailableProviderCard
             key={info.provider}
             info={info}
             tagline={recommendedTagline({ provider: info.provider })}
             recommended
-            allowWrite={allowWrite}
             onConnect={() => onConnect(info.provider)}
           />
         ))}
       </div>
-      <div className="flex flex-col gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          {t('Or choose another provider')}
-        </p>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <AdminSection title={t('Or choose another provider')}>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {others.map((info) => (
             <AvailableProviderCard
               key={info.provider}
               info={info}
-              allowWrite={allowWrite}
               onConnect={() => onConnect(info.provider)}
             />
           ))}
         </div>
-      </div>
-    </div>
+      </AdminSection>
+    </>
   );
 }
 
@@ -645,98 +706,75 @@ function AvailableProviderCard({
   info,
   tagline,
   recommended,
-  allowWrite,
   onConnect,
 }: {
   info: AiProviderInfo;
   tagline?: string;
   recommended?: boolean;
-  allowWrite: boolean;
   onConnect: () => void;
 }) {
   return (
-    <div
-      className={cn(
-        'flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-border',
-        CARD_SHADOW,
-      )}
-    >
+    <div className={cn(adminSurface.card, 'flex items-center gap-4 p-5')}>
       <ProviderLogo info={info} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate text-sm font-medium leading-none">{info.name}</p>
-        {tagline && (
-          <p className="truncate text-xs text-muted-foreground">{tagline}</p>
-        )}
+        <p className="truncate text-sm font-medium text-gray-12">{info.name}</p>
+        {tagline && <p className="truncate text-xs text-gray-11">{tagline}</p>}
       </div>
-      {allowWrite && (
-        <Button
-          size="sm"
-          variant={recommended ? 'default' : 'outline'}
-          onClick={onConnect}
-        >
-          {t('Connect')}
-        </Button>
-      )}
+      <Button
+        size="sm"
+        variant={recommended ? 'default' : 'outline'}
+        onClick={onConnect}
+        {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
+      >
+        {t('Connect')}
+      </Button>
     </div>
   );
 }
 
 function ProvidersSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-3">
+    <>
+      <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <Skeleton className="h-5 w-28" />
+          <Skeleton className="h-8 w-40" />
           <Skeleton className="h-4 w-72" />
         </div>
-        <Skeleton className="h-8 w-24 rounded-md" />
+        <Skeleton className="h-9 w-24 rounded-lg" />
       </div>
       <div
-        className={cn(
-          'flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3',
-          CARD_SHADOW,
-        )}
+        className={cn(adminSurface.card, 'flex items-center gap-4 px-5 py-4')}
       >
-        <Skeleton className="size-9 shrink-0 rounded-xl" />
+        <Skeleton className="size-9 shrink-0 rounded-lg" />
         <div className="flex flex-1 flex-col gap-2">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-64" />
         </div>
-        <Skeleton className="h-9 w-52 rounded-md" />
+        <Skeleton className="h-9 w-52 rounded-lg" />
       </div>
       {[0, 1].map((group) => (
         <section
           key={group}
-          className={cn(
-            'overflow-hidden rounded-xl border border-border/60 bg-card',
-            CARD_SHADOW,
-          )}
+          className={cn(adminSurface.card, 'flex flex-col overflow-hidden')}
         >
-          <div className="flex items-center gap-3 px-5 py-4">
-            <Skeleton className="size-8 shrink-0 rounded-lg" />
+          <div className="flex items-center gap-4 border-b p-5">
             <div className="flex flex-1 flex-col gap-2">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-3 w-20" />
             </div>
-            <Skeleton className="h-8 w-20 rounded-md" />
-          </div>
-          <div className="border-t border-border/60 px-5 pb-1 pt-3">
-            <Skeleton className="h-3 w-10" />
+            <Skeleton className="h-8 w-20 rounded-lg" />
           </div>
           {[0, 1].map((row) => (
-            <div key={row} className="flex flex-col gap-2 px-5 py-3.5">
+            <div key={row} className="flex flex-col gap-2 px-5 py-4">
               <Skeleton className="h-4 w-44" />
               <Skeleton className="h-3 w-56" />
             </div>
           ))}
         </section>
       ))}
-    </div>
+    </>
   );
 }
-
-const CARD_SHADOW =
-  'shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)]';
 
 function providerInfoOf({
   provider,

@@ -29,7 +29,7 @@ export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: Fastif
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
             displayName: z.string().optional().describe('Display name for the trigger step'),
         },
-        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             const { flowId, pieceName, triggerName, input: rawInput, auth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
 
@@ -64,13 +64,11 @@ export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: Fastif
 
             const { auth: _rawAuth, ...rawInputWithoutAuth } = rawInput ?? {}
             const rewritten = mcpUtils.rewriteAllReferences({ input: rawInputWithoutAuth, trigger: flow.version.trigger })
-            const input = {
-                ...(existingPieceSettings?.input ?? {}),
+            const callerInput = {
                 ...(rewritten.input ?? {}),
                 ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
             }
-
-            const unknownPropsError = await mcpUtils.rejectUnknownInputProps({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input, platformId: project.platformId, log })
+            const { input, error: unknownPropsError } = await mcpUtils.keepKnownInputProps({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input: { ...(existingPieceSettings?.input ?? {}), ...callerInput }, callerInput, platformId: project.platformId, log })
             if (unknownPropsError) {
                 return unknownPropsError
             }
@@ -86,7 +84,7 @@ export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: Fastif
                     pieceVersion,
                     triggerName,
                     input,
-                    propertySettings: existingPieceSettings?.propertySettings ?? {},
+                    propertySettings: await mcpUtils.resolveDynamicPropertySettings({ pieceName: resolvedPieceName, pieceVersion, componentName: triggerName, componentType: 'trigger', input, propertySettings: existingPieceSettings?.propertySettings, changedKeys: existingPieceSettings?.pieceVersion === pieceVersion ? Object.keys(callerInput) : Object.keys(input), projectId: mcp.projectId, platformId: project.platformId, log }),
                 },
             }
 

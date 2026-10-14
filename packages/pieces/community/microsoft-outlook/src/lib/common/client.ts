@@ -1,5 +1,6 @@
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { Client } from '@microsoft/microsoft-graph-client';
+import { Recipient } from '@microsoft/microsoft-graph-types';
 import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from './microsoft-cloud';
 
 function createClient(auth: OAuth2PropertyValue): Client {
@@ -23,4 +24,15 @@ function mailboxPrefix(auth: OAuth2PropertyValue): string {
   return mailbox ? `/users/${encodeURIComponent(mailbox)}` : '/me';
 }
 
-export const outlookCommon = { createClient, mailboxPrefix };
+function toRecipients(addresses: unknown): Recipient[] {
+  if (!Array.isArray(addresses)) {
+    return [];
+  }
+  return addresses
+    .filter((entry) => entry !== null && entry !== undefined)
+    .map((entry) => String(entry).trim())
+    .filter((address) => address.length > 0)
+    .map((address) => ({ emailAddress: { address } }));
+}
+
+export const outlookCommon = { createClient, mailboxPrefix, toRecipients };

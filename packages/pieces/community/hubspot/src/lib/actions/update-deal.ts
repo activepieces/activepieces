@@ -30,21 +30,24 @@ export const updateDealAction = createAction({
 	props: {
 		dealId: Property.ShortText({
 			displayName: 'Deal ID',
-			description: 'The ID of the deal to update.',
+			description: 'Map it from an earlier step like Find Deal.',
 			required: true,
 		}),
 		dealname: Property.ShortText({
 			displayName: 'Deal Name',
+			description: 'Leave empty to keep the current name.',
 			required: false,
 		}),
 		pipelineId: pipelineDropdown({
 			objectType: OBJECT_TYPE.DEAL,
 			displayName: 'Deal Pipeline',
+			description: 'Leave empty to keep the current pipeline.',
 			required: false,
 		}),
 		pipelineStageId: pipelineStageDropdown({
 			objectType: OBJECT_TYPE.DEAL,
 			displayName: 'Deal Stage',
+			description: 'Leave empty to keep the current stage.',
 			required: false,
 		}),
 		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.DEAL, [
@@ -54,16 +57,15 @@ export const updateDealAction = createAction({
 		]),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-												
-					  dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-														
-					  **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.DEAL,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

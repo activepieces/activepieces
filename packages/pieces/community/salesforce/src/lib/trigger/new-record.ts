@@ -19,6 +19,7 @@ import { newRecordTriggerOutputSchema } from '../output-schemas';
 export const newRecord = createTrigger({
   auth: salesforceAuth,
   name: 'new_record',
+  classification: 'READ',
   displayName: 'New Record',
   description: 'Triggers when there is new record',
   aiMetadata: {

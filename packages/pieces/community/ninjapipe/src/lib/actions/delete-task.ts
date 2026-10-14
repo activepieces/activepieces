@@ -6,6 +6,7 @@ import { ninjapipeApiCall, getAuth, ninjapipeCommon } from '../common';
 export const deleteTask = createAction({
   auth: ninjapipeAuth,
   name: 'delete_task',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Task',
   description: 'Deletes a task within a project. Subtasks may cascade.',
   audience: 'both',

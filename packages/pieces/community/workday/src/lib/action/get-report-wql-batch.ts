@@ -7,6 +7,7 @@ import { wqlQueryProperty } from '../common/props';
 export const getReportWqlBatch = createAction({
 	auth: workdayAuth,
 	name: 'get_report_wql_batch',
+	classification: 'SEARCH',
 	displayName: 'Get Report using WQL (Batch)',
 	description:
 		'Executes a WQL query and returns all rows (use for report-style datasets).',

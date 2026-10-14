@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const upsertGroup = createAction({
   auth: villageAuth,
   name: 'upsert_group',
+  classification: 'WRITE',
   displayName: 'Create or Update Group',
   description:
     'Create a new group or update an existing one. To create: provide a name (id is auto-generated). To update: provide group_id (requires admin permissions).',

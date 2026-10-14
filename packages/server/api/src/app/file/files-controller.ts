@@ -1,5 +1,6 @@
+import type { IncomingHttpHeaders } from 'node:http'
 import { Readable } from 'node:stream'
-import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
 import { ALL_PRINCIPAL_TYPES, EnginePrincipal, FileCompression, FileTransportQueryParams, FileType, Principal, PrincipalType } from '@activepieces/shared'
 import contentDisposition from 'content-disposition'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -33,7 +34,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
             const token = (request.query as { token: string }).token
             const principal = await verifyEnginePrincipal(token, request.log)
             const fileType = parseFileTypeHeader(request.headers[fileTransportHeaders.TYPE])
-            const fileName = parseStringHeader(request.headers[fileTransportHeaders.NAME])
+            const fileName = parseFileNameHeader(request.headers)
             const contentEncoding = parseStringHeader(request.headers['content-encoding'])
             const compression = contentEncoding === 'zstd' ? FileCompression.ZSTD : FileCompression.NONE
             const contentLength = Number(request.headers['content-length'] ?? 0)
@@ -79,7 +80,7 @@ export const filesController: FastifyPluginAsyncZod = async (app) => {
         const { fileId } = request.params
         const principal = await verifyEnginePrincipal(request.query.token, request.log)
         const fileType = parseFileTypeHeader(request.headers[fileTransportHeaders.TYPE])
-        const fileName = parseStringHeader(request.headers[fileTransportHeaders.NAME])
+        const fileName = parseFileNameHeader(request.headers)
         const contentEncoding = parseStringHeader(request.headers['content-encoding'])
         const compression = contentEncoding === 'zstd' ? FileCompression.ZSTD : FileCompression.NONE
 
@@ -229,6 +230,17 @@ function parseFileTypeHeader(value: unknown): FileType {
         })
     }
     return raw as FileType
+}
+
+function parseFileNameHeader(headers: IncomingHttpHeaders): string | undefined {
+    const encoded = parseStringHeader(headers[fileTransportHeaders.ENCODED_NAME])
+    if (!isNil(encoded) && encoded.length > 0) {
+        const { data: decoded } = tryCatchSync(() => decodeURIComponent(encoded))
+        if (!isNil(decoded)) {
+            return decoded
+        }
+    }
+    return parseStringHeader(headers[fileTransportHeaders.NAME])
 }
 
 function parseStringHeader(value: unknown): string | undefined {

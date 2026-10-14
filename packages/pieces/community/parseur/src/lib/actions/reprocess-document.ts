@@ -5,6 +5,7 @@ import { documentDropdown, parserDropdown } from '../common/properties';
 export const reprocessDocument = createAction({
   auth: parseurAuth,
   name: 'reprocessDocument',
+  classification: 'WRITE',
   displayName: 'Reprocess Document',
   description:
     'Send an existing document back through parsing (e.g. after updating template).',

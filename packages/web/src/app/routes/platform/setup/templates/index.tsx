@@ -7,13 +7,14 @@ import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
-  DataTable,
-  RowDataWithActions,
-  BulkAction,
-} from '@/components/custom/data-table';
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
+import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
+import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
@@ -28,6 +29,7 @@ import {
 import { PieceIconList } from '@/features/pieces';
 import { templatesApi, templatesMutations } from '@/features/templates';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { sampleData } from '../../sample-data';
 
@@ -168,6 +170,7 @@ const PlatformTemplatesPage = () => {
                 'Are you sure you want to delete the selected templates?',
               )}
               entityName={t('Templates')}
+              controlId={AdminControl.TEMPLATES_DELETE_CONFIRM}
               mutationFn={async () => {
                 await bulkDeleteMutation.mutateAsync(
                   selectedRows.map((row) => row.id),
@@ -178,9 +181,10 @@ const PlatformTemplatesPage = () => {
             >
               {selectedRows.length > 0 && (
                 <Button
+                  {...adminControl(AdminControl.TEMPLATES_DELETE_OPEN)}
                   variant="ghost"
                   size="sm"
-                  className="text-destructive hover:text-destructive"
+                  className="text-danger-11 hover:text-danger-11"
                 >
                   <Trash className="mr-1 w-4" />
                   {`${t('Delete')} (${selectedRows.length})`}
@@ -194,31 +198,31 @@ const PlatformTemplatesPage = () => {
     [selectedRows, bulkDeleteMutation],
   );
 
-  const toolbarButtons = useMemo(
-    () => [
-      <CreateTemplateDialog key="new-template" onDone={() => refetch()}>
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-          {t('New Template')}
-        </AnimatedIconButton>
-      </CreateTemplateDialog>,
-    ],
-    [refetch],
-  );
-
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
+        title={t('Templates')}
         description={t(
           'Convert the most common automations into reusable templates',
         )}
-        title={t('Templates')}
-      />
-      <DataTable
+        resources={adminPageResources.templates}
+      >
+        <CreateTemplateDialog onDone={() => refetch()}>
+          <AnimatedIconButton
+            {...adminControl(AdminControl.TEMPLATES_NEW_OPEN)}
+            icon={PlusIcon}
+            iconSize={16}
+          >
+            {t('New Template')}
+          </AnimatedIconButton>
+        </CreateTemplateDialog>
+      </AdminPageHeader>
+      <AdminDataTable
         emptyStateTextTitle={t('No templates found')}
         emptyStateTextDescription={t(
           'Create a template for your user to inspire them',
         )}
-        emptyStateIcon={<FileText className="size-14" />}
+        emptyStateIcon={<FileText />}
         columns={columnsWithCheckbox}
         page={isSample ? sampleData.templatesPage() : data}
         hidePagination={true}
@@ -227,7 +231,6 @@ const PlatformTemplatesPage = () => {
         errorStateEntity={t('templates')}
         onRetry={refetch}
         bulkActions={bulkActions}
-        toolbarButtons={toolbarButtons}
         actions={[
           (row) => {
             return (
@@ -238,7 +241,11 @@ const PlatformTemplatesPage = () => {
                       onDone={() => refetch()}
                       template={row}
                     >
-                      <Button variant="ghost" className="size-8 p-0">
+                      <Button
+                        {...adminControl(AdminControl.TEMPLATES_EDIT_OPEN)}
+                        variant="ghost"
+                        size="icon-sm"
+                      >
                         <Pencil className="size-4" />
                       </Button>
                     </UpdateTemplateDialog>
@@ -252,7 +259,7 @@ const PlatformTemplatesPage = () => {
           },
         ]}
       />
-    </div>
+    </AdminPage>
   );
 };
 

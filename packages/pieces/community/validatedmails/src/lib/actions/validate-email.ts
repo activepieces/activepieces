@@ -5,6 +5,7 @@ import { executeValidateEmailRequest } from '../common/validate-email-helpers';
 export const validateEmail = createAction({
   auth: validatedMailsAuth,
   name: 'validateEmail',
+  classification: 'READ',
   displayName: 'Validate Email',
   description: 'Validate a single email address using the ValidatedMails API.',
   audience: 'both',
