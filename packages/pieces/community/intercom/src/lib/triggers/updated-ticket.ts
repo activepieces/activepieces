@@ -1,6 +1,8 @@
 import { intercomAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
+import { ticketTriggerOutputSchema } from '../output-schemas';
+import { toWebhookTicketShape } from '../common/ticket-attributes';
 
 export const updatedTicketTrigger = createTrigger({
 	auth: intercomAuth,
@@ -13,9 +15,10 @@ export const updatedTicketTrigger = createTrigger({
 			'Fires when an existing Intercom ticket changes, covering both ticket state transitions and ticket attribute updates. Outputs the updated ticket object.',
 	},
 	props: {},
+	outputSchema: ticketTriggerOutputSchema,
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 		const response = await client.admins.identify();
 
 		if (!response.app?.id_code) {
@@ -27,11 +30,11 @@ export const updatedTicketTrigger = createTrigger({
 			identifierValue: response['app']['id_code'],
 		});
 	},
-	async onDisable(context) {
-		// implement webhook deletion logic
+	async onDisable() {
+		return;
 	},
 	async test(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.tickets.search({
 			query: {
@@ -42,7 +45,7 @@ export const updatedTicketTrigger = createTrigger({
 			pagination: { per_page: 5 },
 		});
 
-		return response.data;
+		return response.data.map(toWebhookTicketShape);
 	},
 	async run(context) {
 		const payload = context.payload.body as TriggerPayload;
@@ -56,9 +59,14 @@ export const updatedTicketTrigger = createTrigger({
 			_default_title_: 'Cannot log in',
 			_default_description_: 'Customer is unable to log in to the dashboard.',
 		},
-		ticket_state: 'in_progress',
-		ticket_state_internal_label: 'In progress',
-		ticket_state_external_label: 'In progress',
+		ticket_state: {
+			type: 'ticket_state',
+			id: '9744094',
+			category: 'in_progress',
+			internal_label: 'In progress',
+			external_label: 'In progress',
+		},
+		previous_ticket_state_id: '9744093',
 		open: true,
 		category: 'Customer',
 		created_at: 1739105560,

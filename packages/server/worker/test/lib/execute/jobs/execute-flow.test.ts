@@ -86,7 +86,7 @@ function makeMockContext(opts?: { resolveResult?: unknown, apiOverrides?: Record
         resolve: vi.fn().mockResolvedValue(
             opts?.resolveResult ?? {
                 kind: 'ready',
-                provision: { platformId: 'plat-1', pieces: [], codes: [], publicApiUrl: 'http://localhost:3000/api/', engineToken: 'test-token' },
+                provision: { platformId: 'plat-1', pieces: [], codes: [], internalApiUrl: 'http://localhost:3000/api/', engineToken: 'test-token' },
                 flowVersion: makeFlowVersion(),
             },
         ),
@@ -109,7 +109,7 @@ function makeMockContext(opts?: { resolveResult?: unknown, apiOverrides?: Record
         runtime,
         workerIndex: 0,
         engineToken: 'test-token',
-        internalApiUrl: 'http://localhost:3000',
+        internalApiUrl: 'http://localhost:3000/api/',
         publicApiUrl: 'http://localhost:4200',
     } as any
 }
@@ -149,6 +149,18 @@ describe('executeFlowJob', () => {
             expect(operation.resumePayload).toEqual({ type: 'ref', fileId: 'resume-payload-1' })
             expect(operation.logsFileId).toBe('logs-file-1')
             expect(operation.executionState).toBeUndefined()
+        })
+    })
+
+    describe('piece bundle source', () => {
+        it('resolves pieces against the worker internal API URL, not the public one', async () => {
+            const ctx = makeMockContext()
+
+            await executeFlowJob.execute(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
+
+            const resolveInput = ctx.resolver.resolve.mock.calls[0][0]
+            expect(resolveInput.internalApiUrl).toBe('http://localhost:3000/api/')
+            expect(resolveInput).not.toHaveProperty('publicApiUrl')
         })
     })
 

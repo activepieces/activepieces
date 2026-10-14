@@ -146,7 +146,7 @@ export function ConversationList({
       <div className="mb-2 flex flex-col gap-px">
         <button
           type="button"
-          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-[11px] font-semibold px-2 py-1 uppercase tracking-wider text-gray-11 transition-colors hover:text-gray-12"
+          className="flex items-center gap-0.5 rounded-md bg-transparent border-none cursor-pointer text-xs font-semibold px-2 py-1 text-gray-11 transition-colors hover:text-gray-12"
           onClick={() => toggleGroup(label)}
         >
           {label}
@@ -236,7 +236,7 @@ export function ConversationList({
               <Plus size={mobile ? 16 : 14} />
               {t('New chat')}
             </span>
-            {!mobile && <span className="text-[11px] opacity-50">⇧⌘O</span>}
+            {!mobile && <span className="text-xs opacity-50">⇧⌘O</span>}
           </button>
           {onCollapse !== undefined && (
             <ConversationsToggle open onClick={onCollapse} />
@@ -249,10 +249,7 @@ export function ConversationList({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('Search...')}
-              className={cn(
-                'h-7 pl-7 text-xs rounded-md',
-                mobile && 'h-9 pl-8 text-base',
-              )}
+              className={cn('h-7 pl-7 text-xs', mobile && 'h-9 pl-8 text-base')}
             />
           </div>
         )}

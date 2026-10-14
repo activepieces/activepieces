@@ -216,9 +216,8 @@ const ActionsCell = ({
       >
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-sm"
           disabled={!userHasPermissionToDelete}
-          className="h-8 w-8 p-0"
         >
           <Trash2 className="h-4 w-4 text-danger-11" />
         </Button>

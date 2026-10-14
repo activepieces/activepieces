@@ -40,7 +40,7 @@ const DownloadPiecesReportButton = () => {
       loading={isPending}
       size={'sm'}
     >
-      <Download className="w-4 h-4 mr-2" />
+      <Download />
       {t('Download Report')}
     </Button>
   );

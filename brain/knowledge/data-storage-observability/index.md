@@ -92,6 +92,7 @@ Streams platform/project events to webhook URLs in real time — internal AP flo
 
 ## Pages
 
+- **Database** — the load-bearing page for all backend DB work: isolation, entity registration, migrations (blocking + background), constraint recipes, CIC helper
 - **Tables** — Field / Record / Cell and TableWebhooks
 - **File Storage** — blobs in S3 or DB, compression, expiry
 - **Key-Value Store** — project-scoped state pieces persist across runs

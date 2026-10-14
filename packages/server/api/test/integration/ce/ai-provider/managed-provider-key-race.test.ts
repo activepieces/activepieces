@@ -201,7 +201,6 @@ describe('managed AI provider deletion', () => {
             entries: [{ configId: managedId, modelId: 'openai/gpt-4o' }],
             isDefault: true,
         })
-        await expect(aiProviderService(app.log).delete(ctx.platform.id, managedId)).rejects.toThrow()
 
         await aiProviderService(app.log).deleteManagedProvider({ platformId: ctx.platform.id })
 

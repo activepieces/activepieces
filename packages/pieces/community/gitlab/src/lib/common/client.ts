@@ -1,96 +1,122 @@
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
-  HttpMessageBody,
-  HttpMethod,
-  QueryParams,
-  httpClient,
-} from '@activepieces/pieces-common';
-import {
-  ListProjectsRequest,
-  CreateProjectIssueRequest,
-  GitlabProject,
-  ProjectWebhookRequest,
-  ProjectWebhook,
-} from './models';
-export class GitlabApi {
-  constructor(private accessToken: string) {}
+  GitlabQueryValue,
+  GitlabRequest,
+  sendGitlabRequest,
+} from './secret-request';
 
-  async makeRequest<T extends HttpMessageBody>(
-    method: HttpMethod,
-    url: string,
-    query?: QueryParams,
-    body?: object
-  ): Promise<T> {
-    const res = await httpClient.sendRequest<T>({
-      method,
-      url: 'https://gitlab.com/api/v4' + url,
-      queryParams: query,
-      body,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: this.accessToken,
-      },
-    });
-    return res.body;
-  }
-  async listProjects(request: ListProjectsRequest) {
-    return this.makeRequest<GitlabProject[]>(
-      HttpMethod.GET,
-      '/projects',
-      prepareQuery(request)
-    );
-  }
-  async createProjectIssue(
-    projectId: string,
-    request: CreateProjectIssueRequest
-  ) {
-    return this.makeRequest(
-      HttpMethod.POST,
-      `/projects/${projectId}/issues`,
-      undefined,
-      request
-    );
-  }
-  async subscribeProjectWebhook(
-    projectId: string,
-    request: ProjectWebhookRequest
-  ) {
-    return this.makeRequest<ProjectWebhook>(
-      HttpMethod.POST,
-      `/projects/${projectId}/hooks`,
-      undefined,
-      request
-    );
-  }
-  async unsubscribeProjectWebhook(projectId: string, webhookId: string) {
-    return this.makeRequest(
-      HttpMethod.DELETE,
-      `/projects/${projectId}/hooks/${webhookId}`,
-      undefined
-    );
-  }
+export function gitlabToken(auth: GitlabAuthValue): string {
+  return getAccessTokenOrThrow(auth);
 }
 
-function emptyValueFilter(
-  accessor: (key: string) => any
-): (key: string) => boolean {
-  return (key: string) => {
-    const val = accessor(key);
-    return (
-      val !== null &&
-      val !== undefined &&
-      (typeof val != 'string' || val.length > 0)
-    );
+export function encodeSegment({
+  value,
+  label,
+}: {
+  value: string | number;
+  label: string;
+}): string {
+  const text = String(value).trim();
+  if (text.length === 0) {
+    throw new Error(`${label} is required.`);
+  }
+  if (text === '.' || text === '..') {
+    throw new Error(`${label} is not valid.`);
+  }
+  return encodeURIComponent(text);
+}
+
+export function filePathSegment(value: unknown): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new Error('File Path is required.');
+  }
+  if (value === '.' || value === '..') {
+    throw new Error('File Path is not valid.');
+  }
+  return encodeURIComponent(value);
+}
+
+export function projectPath(projectId: string | number): string {
+  return `/projects/${encodeSegment({
+    value: projectId,
+    label: 'Project ID or path',
+  })}`;
+}
+
+export async function gitlabRequest<T>({
+  auth,
+  ...call
+}: GitlabCall & { auth: GitlabAuthValue }): Promise<T> {
+  const response = await sendGitlabRequest<T>({
+    ...call,
+    token: gitlabToken(auth),
+  });
+  return response.body;
+}
+
+function headerInt({
+  headers,
+  name,
+}: {
+  headers: Headers;
+  name: string;
+}): number | null {
+  const raw = headers.get(name);
+  if (raw === null || raw.trim() === '') {
+    return null;
+  }
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+export async function gitlabListPage<T>({
+  auth,
+  path,
+  query,
+  page,
+  perPage,
+  statusMessages,
+}: {
+  auth: GitlabAuthValue;
+  path: string;
+  query?: Record<string, GitlabQueryValue>;
+  page?: number;
+  perPage?: number;
+  statusMessages?: Partial<Record<number, string>>;
+}): Promise<GitlabPage<T>> {
+  const currentPage = page ?? 1;
+  const response = await sendGitlabRequest<T[]>({
+    token: gitlabToken(auth),
+    method: 'GET',
+    path,
+    query: { ...query, page: currentPage, per_page: perPage ?? 20 },
+    statusMessages,
+  });
+  const items = Array.isArray(response.body) ? response.body : [];
+  const nextPage = headerInt({
+    headers: response.headers,
+    name: 'x-next-page',
+  });
+  return {
+    items,
+    count: items.length,
+    page: currentPage,
+    nextPage,
+    hasMore: nextPage !== null,
+    total: headerInt({ headers: response.headers, name: 'x-total' }),
   };
 }
 
-export function prepareQuery(request?: Record<string, any>): QueryParams {
-  const params: QueryParams = {};
-  if (!request) return params;
-  Object.keys(request)
-    .filter(emptyValueFilter((k) => request[k]))
-    .forEach((k: string) => {
-      params[k] = (request as Record<string, any>)[k].toString();
-    });
-  return params;
-}
+export type GitlabAuthValue = OAuth2PropertyValue;
+
+export type GitlabCall = Omit<GitlabRequest, 'token'>;
+
+export type GitlabPage<T> = {
+  items: T[];
+  count: number;
+  page: number;
+  nextPage: number | null;
+  hasMore: boolean;
+  total: number | null;
+};
