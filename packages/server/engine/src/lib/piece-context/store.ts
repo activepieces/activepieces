@@ -32,6 +32,22 @@ export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { ap
     }
 }
 
+export function createRepublishSafeStore(store: Store): Store {
+    return {
+        async put<T>(key: string, value: T, scope?: StoreScope): Promise<T> {
+            const existing = await store.get<T>(key, scope)
+            if (!isNil(existing)) {
+                return existing
+            }
+            return store.put(key, value, scope)
+        },
+        async delete(): Promise<void> {
+            return
+        },
+        get: store.get,
+    }
+}
+
 function createStoreClient({ engineToken, apiUrl }: CreateStoreClientParams): StoreClient {
     return {
         async get(key: string): Promise<StoreEntry | null> {

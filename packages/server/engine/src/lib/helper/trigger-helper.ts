@@ -6,7 +6,7 @@ import { EngineConstants, ResolvedExecuteTriggerOperation } from '../handler/con
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
-import { createContextStore } from '../piece-context/store'
+import { createContextStore, createRepublishSafeStore } from '../piece-context/store'
 import { utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { createPropsResolver } from '../variables/props-resolver'
@@ -168,7 +168,8 @@ export const triggerHelper = {
                 return {}
             }
             case TriggerHookType.ON_ENABLE: {
-                await pieceTrigger.onEnable(context)
+                const preserveExistingState = pieceTrigger.type === TriggerStrategy.POLLING && params.isRepublish === true
+                await pieceTrigger.onEnable(preserveExistingState ? { ...context, store: createRepublishSafeStore(context.store) } : context)
                 return {
                     listeners: appListeners,
                     scheduleOptions: pieceTrigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
