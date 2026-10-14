@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { callOperation } from './call-operation';
+import { createTimeOffRequest } from './create-time-off-request';
 import { createUpdateCustomObject } from './create-update-custom-object';
 import { getBusinessObjectDetailsBatch } from './get-business-object-details-batch';
 import { getCustomObjects } from './get-custom-objects';
@@ -237,5 +238,55 @@ describe('create_update_custom_object', () => {
 		);
 
 		expect(requests()[0].body).toEqual({ name: 'X', id: 'obj-1' });
+	});
+});
+
+describe('create_time_off_request', () => {
+	it('skips weekends and sends a reference ID as Time_Off_Type_ID', async () => {
+		sendRequest.mockResolvedValue(
+			resp('<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><ok/></env:Body></env:Envelope>'),
+		);
+		await createTimeOffRequest.run(
+			context(
+				{
+					workerId: 'w1',
+					timeOffTypeId: 'Vacation_Hours',
+					startDate: '2026-11-06',
+					endDate: '2026-11-09',
+					hoursPerDay: 4,
+				},
+				AUTH_WITH_ISU,
+			),
+		);
+		const body = String(requests()[0].body);
+		expect(body.match(/<bsvc:Date>/g)).toHaveLength(2);
+		expect(body).toContain('<bsvc:Date>2026-11-06</bsvc:Date>');
+		expect(body).toContain('<bsvc:Date>2026-11-09</bsvc:Date>');
+		expect(body).toContain('<bsvc:Requested>4</bsvc:Requested>');
+		expect(body).toContain('bsvc:type="Time_Off_Type_ID">Vacation_Hours<');
+	});
+
+	it('sends a 32-character hex value as a WID', async () => {
+		sendRequest.mockResolvedValue(
+			resp('<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><ok/></env:Body></env:Envelope>'),
+		);
+		await createTimeOffRequest.run(
+			context(
+				{ workerId: 'w1', timeOffTypeId: '693618e08cc11001896716301cde0000', startDate: '2026-11-02', endDate: '2026-11-02' },
+				AUTH_WITH_ISU,
+			),
+		);
+		expect(String(requests()[0].body)).toContain('bsvc:type="WID">693618e08cc11001896716301cde0000<');
+	});
+
+	it('rejects a range with no weekdays', async () => {
+		await expect(
+			createTimeOffRequest.run(
+				context(
+					{ workerId: 'w1', timeOffTypeId: 'Vacation_Hours', startDate: '2026-11-07', endDate: '2026-11-08' },
+					AUTH_WITH_ISU,
+				),
+			),
+		).rejects.toThrow('no weekdays');
 	});
 });

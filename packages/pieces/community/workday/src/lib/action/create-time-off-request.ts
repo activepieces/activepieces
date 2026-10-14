@@ -26,7 +26,8 @@ export const createTimeOffRequest = createAction({
 		}),
 		timeOffTypeId: Property.ShortText({
 			displayName: 'Time Off Type ID',
-			description: 'The time off type reference ID (e.g., vacation, sick).',
+			description:
+				'Time off type as a Time_Off_Type_ID (e.g. `Vacation_Hours`, `Sick_Hours`) or a WID.',
 			required: true,
 		}),
 		startDate: Property.ShortText({
@@ -44,9 +45,15 @@ export const createTimeOffRequest = createAction({
 			description: 'Optional comment for the request.',
 			required: false,
 		}),
+		hoursPerDay: Property.Number({
+			displayName: 'Hours per Day',
+			description: 'Hours requested for each weekday in the range (default: 8). Weekends are skipped.',
+			required: false,
+			defaultValue: 8,
+		}),
 	},
 	async run(ctx) {
-		const { workerId, timeOffTypeId, startDate, endDate, comment } =
+		const { workerId, timeOffTypeId, startDate, endDate, comment, hoursPerDay } =
 			ctx.propsValue;
 
 		const escapeXml = (s: string) =>
@@ -56,22 +63,29 @@ export const createTimeOffRequest = createAction({
 				.replace(/>/g, '&gt;')
 				.replace(/"/g, '&quot;');
 
-		// Build entry for each day between start and end
+		const typeIdKind = WID_PATTERN.test(timeOffTypeId) ? 'WID' : 'Time_Off_Type_ID';
+		const requested = hoursPerDay ?? 8;
 		const start = new Date(startDate);
 		const end = new Date(endDate);
 		let entriesXml = '';
 		const current = new Date(start);
 		while (current <= end) {
-			const dateStr = current.toISOString().split('T')[0];
-			entriesXml += `
+			const isWeekend = current.getUTCDay() === 0 || current.getUTCDay() === 6;
+			if (!isWeekend) {
+				const dateStr = current.toISOString().split('T')[0];
+				entriesXml += `
           <bsvc:Enter_Time_Off_Entry_Data>
             <bsvc:Date>${dateStr}</bsvc:Date>
-            <bsvc:Requested>8</bsvc:Requested>
+            <bsvc:Requested>${requested}</bsvc:Requested>
             <bsvc:Time_Off_Type_Reference>
-              <bsvc:ID bsvc:type="WID">${escapeXml(timeOffTypeId)}</bsvc:ID>
+              <bsvc:ID bsvc:type="${typeIdKind}">${escapeXml(timeOffTypeId)}</bsvc:ID>
             </bsvc:Time_Off_Type_Reference>${comment ? `\n            <bsvc:Comment>${escapeXml(comment)}</bsvc:Comment>` : ''}
           </bsvc:Enter_Time_Off_Entry_Data>`;
-			current.setDate(current.getDate() + 1);
+			}
+			current.setUTCDate(current.getUTCDate() + 1);
+		}
+		if (entriesXml === '') {
+			throw new Error('The date range has no weekdays to request time off for.');
 		}
 
 		const operationXml = `
@@ -94,3 +108,5 @@ export const createTimeOffRequest = createAction({
 		);
 	},
 });
+
+const WID_PATTERN = /^[0-9a-f]{32}$/i;
