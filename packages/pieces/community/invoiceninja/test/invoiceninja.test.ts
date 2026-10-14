@@ -1,4 +1,6 @@
 import { httpClient } from '@activepieces/pieces-common';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { invoiceninja } from '../src';
 import { InvoiceNinjaApiError, invoiceNinjaClient } from '../src/lib/common/client';
@@ -26,6 +28,7 @@ function requestOf({ spy, index = 0 }: { spy: ReturnType<typeof mockResponses>; 
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -166,6 +169,102 @@ describe('legacy create_invoice', () => {
     await expect(
       runAction({ name: 'create_invoice', propsValue: { client_id: 'C1', discount: 0, discount_type: true, order_items_json: '{bad' } }),
     ).rejects.toThrow('not valid JSON');
+  });
+});
+
+describe('legacy create_recurring_invoice', () => {
+  const product = { data: [{ product_key: 'W1', price: 10 }], meta: { pagination: { total: 1, total_pages: 1 } } };
+  const base = { client_id: 'C1', discount: 0, discount_type: true, order_items_json: '[{"quantity":1,"product_key":"W1","discount":"0"}]', due_date: '2026-12-01T00:00:00.000Z' };
+
+  it('a supplied override wins over the chosen frequency, as saved steps expect', async () => {
+    const spy = mockResponses([product, { data: { id: 'R1' } }]);
+    await runAction({ name: 'create_recurring_invoice', propsValue: { ...base, frequency: 5, auto_frequency: 7 } });
+    expect(requestOf({ spy, index: 1 }).body).toMatchObject({ frequency_id: '7', next_send_date: '2026-12-01' });
+  });
+
+  it('uses the chosen frequency when no override is given', async () => {
+    const spy = mockResponses([product, { data: { id: 'R1' } }]);
+    await runAction({ name: 'create_recurring_invoice', propsValue: { ...base, frequency: 5 } });
+    expect(requestOf({ spy, index: 1 }).body).toMatchObject({ frequency_id: '5' });
+  });
+
+  it('"Use override below" without an override is rejected', async () => {
+    await expect(runAction({ name: 'create_recurring_invoice', propsValue: { ...base, frequency: 0 } })).rejects.toThrow('Choose a billing frequency');
+  });
+});
+
+describe('getreport_task', () => {
+  // Trimmed capture of POST /reports/preview/{id} from Invoice Ninja v5.13.47 (clients report).
+  const preview = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'report-preview-clients.json'), 'utf8'));
+  const jobId = 'b5f785dc-3a04-4ac2-ad53-305d5de0b188';
+  const stillWorking = Object.assign(new Error('x'), { response: { status: 409, body: { message: 'Still working.....' } } });
+
+  it('starts the job, retries on 409 and maps the preview to columns and rows', async () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(httpClient, 'sendRequest');
+    spy.mockResolvedValueOnce({ status: 200, headers: {}, body: { message: jobId } });
+    spy.mockRejectedValueOnce(stillWorking);
+    spy.mockResolvedValueOnce({ status: 200, headers: {}, body: preview });
+    const promise = runAction({ name: 'getreport_task', propsValue: { reportType: 'clients' } });
+    await vi.advanceTimersByTimeAsync(5_000);
+    const result = await promise;
+    expect(spy).toHaveBeenCalledTimes(3);
+    expect(requestOf({ spy, index: 0 }).url).toBe('https://invoices.example.com/api/v1/reports/clients');
+    expect(requestOf({ spy, index: 0 }).queryParams).toEqual({ output: 'json' });
+    expect(requestOf({ spy, index: 0 }).body).toMatchObject({ date_range: 'all', send_email: false });
+    expect(requestOf({ spy, index: 2 }).url).toBe(`https://invoices.example.com/api/v1/reports/preview/${jobId}`);
+    expect(result).toEqual({
+      reportType: 'clients',
+      columns: [
+        { identifier: 'client.name', display_value: 'Name' },
+        { identifier: 'client.number', display_value: 'Number' },
+        { identifier: 'client.user', display_value: 'Client User' },
+        { identifier: 'client.assigned_user', display_value: 'Client Assigned User' },
+      ],
+      rows: [{ 'client.name': 'Report Fixture Co', 'client.number': '0004', 'client.user': 'New User', 'client.assigned_user': '' }],
+      rowCount: 1,
+    });
+  });
+
+  it('keeps row order numeric and applies Max Rows', async () => {
+    vi.useFakeTimers();
+    const row = (name: string) => preview['0'].map((cell: Record<string, unknown>) => (cell['identifier'] === 'client.name' ? { ...cell, display_value: name } : cell));
+    const spy = vi.spyOn(httpClient, 'sendRequest');
+    spy.mockResolvedValueOnce({ status: 200, headers: {}, body: { message: jobId } });
+    spy.mockResolvedValueOnce({ status: 200, headers: {}, body: { columns: preview.columns, '10': row('ten'), '2': row('two'), '0': row('zero') } });
+    const promise = runAction({ name: 'getreport_task', propsValue: { reportType: 'clients', numberOfResults: 2 } });
+    await vi.advanceTimersByTimeAsync(3_000);
+    const result = await promise;
+    expect(result.rows.map((r: Record<string, unknown>) => r['client.name'])).toEqual(['zero', 'two']);
+    expect(result.rowCount).toBe(2);
+  });
+
+  it('gives up with a clear message when the job is still running after 60 seconds', async () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(httpClient, 'sendRequest');
+    spy.mockResolvedValueOnce({ status: 200, headers: {}, body: { message: jobId } });
+    spy.mockRejectedValue(stillWorking);
+    const promise = runAction({ name: 'getreport_task', propsValue: { reportType: 'clients' } });
+    const assertion = expect(promise).rejects.toThrow('was not ready after 60 seconds');
+    await vi.advanceTimersByTimeAsync(62_000);
+    await assertion;
+  });
+
+  it('does not retry other errors', async () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(httpClient, 'sendRequest');
+    spy.mockResolvedValueOnce({ status: 200, headers: {}, body: { message: jobId } });
+    spy.mockRejectedValueOnce(Object.assign(new Error('x'), { response: { status: 500, body: { message: 'Server Error' } } }));
+    const promise = runAction({ name: 'getreport_task', propsValue: { reportType: 'clients' } });
+    const assertion = expect(promise).rejects.toThrow('Server Error');
+    await vi.advanceTimersByTimeAsync(3_000);
+    await assertion;
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects a start response without a job ID', async () => {
+    mockResponses([{ message: 'nope' }]);
+    await expect(runAction({ name: 'getreport_task', propsValue: { reportType: 'clients' } })).rejects.toThrow('did not return a report job ID');
   });
 });
 

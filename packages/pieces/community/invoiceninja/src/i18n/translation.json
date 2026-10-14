@@ -282,7 +282,7 @@
   "Optional.": "Optional.",
   "How often an invoice is generated.": "How often an invoice is generated.",
   "How many invoices to generate. Empty = endless.": "How many invoices to generate. Empty = endless.",
-  "Only used when Frequency is \"Use override below\": 1-12 (Daily 1, Weekly 2, ...).": "Only used when Frequency is \"Use override below\": 1-12 (Daily 1, Weekly 2, ...).",
+  "When set, this wins over Frequency: 1-12 (Daily 1, Weekly 2, ...).": "When set, this wins over Frequency: 1-12 (Daily 1, Weekly 2, ...).",
   "Date the first invoice is generated, e.g. 2024-01-20.": "Date the first invoice is generated, e.g. 2024-01-20.",
   "Optional, e.g. 2024-01-20.": "Optional, e.g. 2024-01-20.",
   "The ID of the recurring invoice in Invoice Ninja.": "The ID of the recurring invoice in Invoice Ninja.",
