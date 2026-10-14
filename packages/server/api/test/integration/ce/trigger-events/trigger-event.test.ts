@@ -1,9 +1,20 @@
 import {
+    EngineResponseStatus,
+    File,
+    FileType,
+    FlowTriggerType,
+    FlowVersionState,
     PopulatedFlow,
+    PropertyExecutionType,
+    TriggerEvent,
+    TriggerTestStrategy,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { createTestContext } from '../../../helpers/test-context'
+import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
+import { db } from '../../../helpers/db'
+import { createMockFlow, createMockFlowVersion } from '../../../helpers/mocks'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -115,6 +126,35 @@ describe('Trigger Events API', () => {
         })
     })
 
+    describe('POST /v1/test-trigger (TEST_FUNCTION)', () => {
+        it('should delete the files of the test events it replaces', async () => {
+            const engineSpy = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({
+                status: EngineResponseStatus.OK,
+                response: { output: [{ file: 'a.csv' }, { file: 'b.csv' }, { file: 'c.csv' }] },
+            })
+            const ctx = await createTestContext(app!)
+            const otherCtx = await createTestContext(app!)
+            const flow = await createFlowWithPollingTrigger(ctx)
+            const otherFlow = await createFlowWithPollingTrigger(otherCtx)
+
+            const responses = [
+                await testPollingTrigger({ ctx: otherCtx, ...otherFlow }),
+                await testPollingTrigger({ ctx, ...flow }),
+                await testPollingTrigger({ ctx, ...flow }),
+                await testPollingTrigger({ ctx, ...flow }),
+            ]
+            engineSpy.mockRestore()
+
+            expect(responses.map((response) => response?.statusCode)).toEqual(Array(4).fill(StatusCodes.OK))
+            const events = await db.findBy<TriggerEvent>('trigger_event', { projectId: ctx.project.id, flowId: flow.flowId })
+            const files = await db.findBy<File>('file', { projectId: ctx.project.id, type: FileType.TRIGGER_EVENT_FILE })
+            const otherFiles = await db.findBy<File>('file', { projectId: otherCtx.project.id, type: FileType.TRIGGER_EVENT_FILE })
+            expect(events).toHaveLength(3)
+            expect(files.map((file) => file.id).sort()).toEqual(events.map((event) => event.fileId).sort())
+            expect(otherFiles).toHaveLength(3)
+        })
+    })
+
     describe('Cross-project isolation', () => {
         it('should not allow saving events for another project flow', async () => {
             const ctx1 = await createTestContext(app!)
@@ -136,3 +176,39 @@ describe('Trigger Events API', () => {
         })
     })
 })
+
+async function createFlowWithPollingTrigger(ctx: TestContext): Promise<{ flowId: string, flowVersionId: string }> {
+    const flow = createMockFlow({ projectId: ctx.project.id })
+    await db.save('flow', flow)
+    const flowVersion = createMockFlowVersion({
+        flowId: flow.id,
+        state: FlowVersionState.DRAFT,
+        trigger: {
+            type: FlowTriggerType.PIECE,
+            name: 'trigger',
+            displayName: 'New File',
+            valid: true,
+            lastUpdatedDate: new Date().toISOString(),
+            settings: {
+                pieceName: '@activepieces/piece-sftp',
+                pieceVersion: '0.5.9',
+                triggerName: 'new_file',
+                input: { path: './' },
+                propertySettings: {
+                    path: { type: PropertyExecutionType.MANUAL },
+                },
+            },
+        },
+    })
+    await db.save('flow_version', flowVersion)
+    return { flowId: flow.id, flowVersionId: flowVersion.id }
+}
+
+function testPollingTrigger({ ctx, flowId, flowVersionId }: { ctx: TestContext, flowId: string, flowVersionId: string }) {
+    return ctx.post('/v1/test-trigger', {
+        projectId: ctx.project.id,
+        flowId,
+        flowVersionId,
+        testStrategy: TriggerTestStrategy.TEST_FUNCTION,
+    })
+}
