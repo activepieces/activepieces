@@ -396,7 +396,7 @@ describe('SSOPage', () => {
     );
   });
 
-  it('adds the first allowed domain in one step and warns to add your own domain', async () => {
+  it('adds the first allowed domain in one step and warns to add your company domain', async () => {
     setPlatform({
       ssoDomain: 'acme.com',
       ssoDomainVerification: verifiedVerification,
@@ -407,7 +407,7 @@ describe('SSOPage', () => {
     const dialog = screen.getByRole('dialog');
     expect(
       within(dialog).getByText(
-        'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your own domain too.',
+        'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.',
       ),
     ).toBeDefined();
     fireEvent.change(within(dialog).getByRole('textbox'), {
@@ -434,7 +434,7 @@ describe('SSOPage', () => {
     });
     mount();
 
-    click(findButton('Add an allowed domain'));
+    click(findButton('Add domain'));
     const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByRole('textbox'), {
       target: { value: 'partners.io' },
@@ -460,7 +460,7 @@ describe('SSOPage', () => {
     });
     mount();
 
-    click(findButton('Add an allowed domain'));
+    click(findButton('Add domain'));
     const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByRole('textbox'), {
       target: { value: 'contractors.io' },

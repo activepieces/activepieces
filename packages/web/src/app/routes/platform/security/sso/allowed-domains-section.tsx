@@ -43,7 +43,7 @@ export const AllowedDomainsSection = ({
               variant="outline"
             >
               <Plus />
-              {t('Add an allowed domain')}
+              {t('Add domain')}
             </Button>
           </AddAllowedDomainDialog>
         )
@@ -140,7 +140,7 @@ export const AllowedDomainsSection = ({
           </SettingsPanel>
           <p className="text-xs text-gray-11">
             {t(
-              "Add your own company's domain too, or your own people can't sign in with email and password.",
+              "Add your company domain too, or people at your company can't sign in with email and password.",
             )}
           </p>
         </>
