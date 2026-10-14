@@ -101,6 +101,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 conversationId, runId, platformId, userId, userMessage, modelName, files,
                 ...spreadIfDefined('source', jobSource),
                 ...spreadIfDefined('messageSource', data.messageSource),
+                ...spreadIfDefined('selectedStepName', data.selectedStepName),
                 ...spreadIfDefined('agentId', data.agentId),
                 ...spreadIfDefined('flowRunId', flowRunId),
                 ...spreadIfDefined('provider', data.provider),

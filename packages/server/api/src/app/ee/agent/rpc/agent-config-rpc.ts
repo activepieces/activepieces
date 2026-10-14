@@ -98,7 +98,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const attachmentRefs = files && files.length > 0 && !isNil(selectedProjectId)
             ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, conversationId, log })
             : []
-        const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
+        const userContent = await buildUserContentWithFiles({ text: withBuilderContext({ text: userMessage, flowId: conversation.flowId, selectedStepName: input.selectedStepName }), files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const chosen = dryRun
@@ -323,6 +323,14 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+function withBuilderContext({ text, flowId, selectedStepName }: { text: string, flowId: string | null | undefined, selectedStepName: string | undefined }): string {
+    if (isNil(flowId)) {
+        return text
+    }
+    const openStep = isNil(selectedStepName) ? 'No step is open.' : `They have step "${selectedStepName}" open, so "this step" means ${selectedStepName}.`
+    return `${text}\n\n[Builder context: the user is chatting from the flow builder, looking at flow ${flowId}. ${openStep} Work on this flow unless they say otherwise.]`
+}
 
 function withLeadingNote({ content, note }: { content: UserContent, note: string }): UserContent {
     return [{ type: 'text', text: note }, ...(typeof content === 'string' ? [{ type: 'text' as const, text: content }] : content)]

@@ -27,7 +27,7 @@ import {
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
-import { useAgentChat } from '@/features/chat/lib/use-chat';
+import { ChatFlowContext, useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
@@ -58,6 +58,7 @@ export function AIChatBox({
   initialPrompt,
   agentId,
   builder,
+  flowContext,
   onTurnEnd,
   emptyState,
   footerNote,
@@ -85,6 +86,7 @@ export function AIChatBox({
           initialPrompt={initialPrompt}
           agentId={agentId}
           builder={builder}
+          flowContext={flowContext}
           onTurnEnd={onTurnEnd}
           emptyState={emptyState}
           footerNote={footerNote}
@@ -103,6 +105,7 @@ function ChatBoxContent({
   initialPrompt,
   agentId,
   builder,
+  flowContext,
   onTurnEnd,
   emptyState,
   footerNote,
@@ -132,6 +135,7 @@ function ChatBoxContent({
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
     ...(builder === undefined ? {} : { builder }),
+    ...(flowContext === undefined ? {} : { flowContext }),
     defaultModelName:
       agentId === undefined
         ? chatUtils.newChatModelName({ provider: chatProvider?.provider })
@@ -541,6 +545,7 @@ type AIChatBoxProps = {
   initialPrompt?: string;
   agentId?: string;
   builder?: boolean;
+  flowContext?: ChatFlowContext;
   onTurnEnd?: () => void;
   emptyState?: React.ReactNode;
   footerNote?: string;

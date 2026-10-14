@@ -39,6 +39,7 @@ const ApStepCanvasNode = React.memo(
       setOpenedPieceSelectorStepNameOrAddButtonId,
       isRightSidebarOpen,
       canvasOrientation,
+      isRecentlyChanged,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.selectedStep === step.name,
@@ -50,6 +51,7 @@ const ApStepCanvasNode = React.memo(
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
       state.rightSidebar !== RightSideBarType.NONE,
       state.canvasOrientation,
+      state.recentlyChangedSteps.includes(step.name),
     ]);
     const isHorizontal = canvasOrientation === 'horizontal';
     const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -144,6 +146,8 @@ const ApStepCanvasNode = React.memo(
             'bg-gray-4': isSkipped,
             'rounded-tl-none': isTrigger && !isHorizontal,
             'hover:border-gray-8': !isSelected,
+            'ring-2 ring-accent-9 ring-offset-2 animate-pulse':
+              isRecentlyChanged,
           },
         )}
         onClick={(e) => handleStepClick(e)}

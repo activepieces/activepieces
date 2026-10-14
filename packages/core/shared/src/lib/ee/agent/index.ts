@@ -212,6 +212,7 @@ export const AgentConversation = z.object({
     uiMessages: z.array(PersistedAgentMessageSchema).nullable().default(null),
     summary: Nullable(z.string()),
     summarizedUpToIndex: Nullable(z.number().int()),
+    flowId: z.optional(Nullable(z.string())),
 })
 
 export const AgentRunListItem = AgentConversation.extend({
@@ -228,6 +229,7 @@ export const CreateAgentConversationRequest = z.object({
     agentId: z.optional(z.string()),
     builder: z.optional(z.boolean()),
     projectId: z.optional(z.string()),
+    flowId: z.optional(z.string()),
 })
 export type CreateAgentConversationRequest = z.infer<typeof CreateAgentConversationRequest>
 
@@ -304,6 +306,7 @@ export const SendAgentMessageRequest = z.object({
     runId: z.string().optional(),
     files: z.array(AgentMessageFile).max(10).optional(),
     messageSource: AgentMessageSource.optional(),
+    selectedStepName: z.string().optional(),
 }).refine(
     (val) => val.content.length > 0 || (val.files && val.files.length > 0),
     { message: formErrors.messageRequiresContentOrFiles },
@@ -411,4 +414,5 @@ export { CHAT_CREDITS_PER_TOOL_CALL, chatBilling, type ChatToolCall, type TurnCr
 export { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, agentToolPhases, type AgentPhase } from './tool-phases'
 export { AGENT_SKILLS, agentToolSkills, LAZY_TOOL_NAME, GET_TOOL_SCHEMA_NAME, LOAD_SKILL_NAME, MAX_CORE_TOOLS, SKILLS_NOTE_HEADING, type AgentSkill, type SkillSurface } from './tool-skills'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
+export { flowStepDiff, type FlowFieldChange, type FlowSnapshot, type FlowStepChange, type FlowStepSnapshot } from './flow-step-diff'
 export * from './chat-personalization'

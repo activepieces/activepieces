@@ -204,6 +204,7 @@ export const createFlowState = (
                   ...updatedFlowVersionWithUpdatedSampleData,
                   id: serverFlowVersion.id,
                   state: serverFlowVersion.state,
+                  updated: serverFlowVersion.updated,
                 },
                 saving: flowUpdatesQueue.size() !== 0,
               };

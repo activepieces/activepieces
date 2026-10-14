@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateFlowRequest, FlowDraftUpdatedEvent, WebsocketClientEvent, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
@@ -471,6 +471,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             id,
             projectId,
         })
+        emitFlowUpdated({ flow: updatedFlow, log })
         if (!isNil(flowBeforeOperation)) {
             flowSideEffects(log).onOperationApplied({
                 platformId,
@@ -745,6 +746,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
     },
 })
 
+
+function emitFlowUpdated({ flow, log }: { flow: PopulatedFlow, log: FastifyBaseLogger }): void {
+    const event: FlowDraftUpdatedEvent = { flowId: flow.id, versionId: flow.version.id, updated: flow.version.updated }
+    rejectedPromiseHandler(import('../../core/websockets.service').then(({ websocketService }) => {
+        websocketService.to(flow.projectId).emit(WebsocketClientEvent.FLOW_UPDATED, event)
+    }), log)
+}
 
 async function assertRequiredActionsPresent({ projectId, platformId, flowVersion, log }: AssertRequiredActionsParams): Promise<void> {
     const result = await flowPublishHooks.get(log).findMissingRequiredActions({ projectId, platformId, flowVersion })

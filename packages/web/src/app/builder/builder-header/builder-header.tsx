@@ -8,7 +8,12 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, CircleHelp, HistoryIcon } from 'lucide-react';
+import {
+  ChevronDown,
+  CircleHelp,
+  HistoryIcon,
+  MessageSquare,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
@@ -38,6 +43,7 @@ import { foldersHooks } from '@/features/folders';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
@@ -66,15 +72,22 @@ export const BuilderHeader = () => {
     moveToFolderClientSide,
     applyOperation,
     setRightSidebar,
+    isBuilderChatOpen,
+    setBuilderChatOpen,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.moveToFolderClientSide,
     state.applyOperation,
     state.setRightSidebar,
+    state.isBuilderChatOpen,
+    state.setBuilderChatOpen,
   ]);
 
   const { embedState } = useEmbedding();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const showBuilderChatToggle =
+    platform.plan.chatEnabled && !embedState.isEmbedded;
   const { project } = projectCollectionUtils.useCurrentProject();
 
   const { data: folderData } = foldersHooks.useFolder(
@@ -182,6 +195,15 @@ export const BuilderHeader = () => {
       )}
       {!embedState.hideActiveUsers && (
         <ActiveUsersWidget resourceId={flow.id} />
+      )}
+      {showBuilderChatToggle && (
+        <Button
+          variant={isBuilderChatOpen ? 'secondary' : 'ghost'}
+          onClick={() => setBuilderChatOpen(!isBuilderChatOpen)}
+        >
+          <MessageSquare className="w-4 h-4" />
+          {t('Chat')}
+        </Button>
       )}
       {hasPermissionToReadRuns && (
         <Button

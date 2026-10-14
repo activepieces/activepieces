@@ -16,6 +16,7 @@ import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-
 import { RightSideBarType } from '@/app/builder/types';
 import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
 import { ShowPoweredBy } from '@/components/custom/show-powered-by';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -26,6 +27,8 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { useElementSize } from '@/hooks/use-element-size';
 import { cn } from '@/lib/utils';
 
+import { BuilderChatPanel } from './builder-chat/builder-chat-panel';
+import { useLiveFlowUpdates } from './builder-chat/use-live-flow-updates';
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
 import { flowCanvasHooks } from './flow-canvas/hooks';
@@ -55,6 +58,8 @@ const BuilderPage = () => {
     isStepDataPanelOpen,
     setStepDataPanelView,
     setStepDataPanelOpen,
+    isBuilderChatOpen,
+    remoteRevision,
   ] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.rightSidebar,
@@ -68,7 +73,13 @@ const BuilderPage = () => {
     state.isStepDataPanelOpen,
     state.setStepDataPanelView,
     state.setStepDataPanelOpen,
+    state.isBuilderChatOpen,
+    state.remoteRevision,
   ]);
+  const { embedState } = useEmbedding();
+  const showBuilderChat =
+    isBuilderChatOpen && platform.plan.chatEnabled && !embedState.isEmbedded;
+  useLiveFlowUpdates();
   useEffect(() => {
     return () => {
       removeAllStepTestsListeners();
@@ -155,6 +166,20 @@ const BuilderPage = () => {
         <BuilderHeader />
       </div>
       <ResizablePanelGroup orientation="horizontal">
+        {showBuilderChat && (
+          <>
+            <ResizablePanel
+              id="builder-chat"
+              defaultSize="30%"
+              minSize="320px"
+              maxSize="50%"
+              className="min-w-0 z-30"
+            >
+              <BuilderChatPanel />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+          </>
+        )}
         <ResizablePanel defaultSize="100%" id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
             <CursorPositionProvider>
@@ -231,6 +256,7 @@ const BuilderPage = () => {
                     flowVersionId: flowVersion.id,
                     step: selectedStep,
                     hasPieceModelLoaded: !!pieceModel,
+                    remoteRevision,
                   })}
                 >
                   <StepSettingsContainer />
@@ -254,10 +280,12 @@ function constructContainerKey({
   flowVersionId,
   step,
   hasPieceModelLoaded,
+  remoteRevision,
 }: {
   flowVersionId: string;
   step?: FlowAction | FlowTrigger;
   hasPieceModelLoaded: boolean;
+  remoteRevision: number;
 }) {
   const stepName = step?.name;
   const triggerOrActionName =
@@ -281,5 +309,5 @@ function constructContainerKey({
     pieceName ?? ''
   }-${pieceVersion ?? ''}-${'skipped-' + !!isSkipped}-${
     hasPieceModelLoaded ? 'loaded' : 'not-loaded'
-  }`;
+  }-${remoteRevision}`;
 }

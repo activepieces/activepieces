@@ -329,6 +329,7 @@ type SendStatus =
 export function useAgentChat({
   agentId,
   builder,
+  flowContext,
   defaultModelName,
   onTitleUpdate,
   onConversationCreated,
@@ -337,6 +338,7 @@ export function useAgentChat({
 }: {
   agentId?: string;
   builder?: boolean;
+  flowContext?: ChatFlowContext;
   defaultModelName?: string | null;
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
@@ -746,12 +748,13 @@ export function useAgentChat({
         modelName: modelName ?? null,
         ...(agentId === undefined ? {} : { agentId }),
         ...(builder === undefined ? {} : { builder }),
+        ...(flowContext === undefined ? {} : { flowId: flowContext.flowId }),
       });
       conversationIdRef.current = conv.id;
       setConversationIdState(conv.id);
       return conv;
     },
-    [agentId, builder],
+    [agentId, builder, flowContext],
   );
 
   const sendMessage = useCallback(
@@ -863,6 +866,7 @@ export function useAgentChat({
           ...(options?.messageSource
             ? { messageSource: options.messageSource }
             : {}),
+          ...spreadSelectedStep(flowContext),
         }),
       );
       if (sendError) {
@@ -895,6 +899,7 @@ export function useAgentChat({
       updateSendStatus,
       commitInFlightTurn,
       store,
+      flowContext,
     ],
   );
 
@@ -1067,3 +1072,15 @@ export function useAgentChat({
     setModelName,
   };
 }
+
+function spreadSelectedStep(flowContext: ChatFlowContext | undefined): {
+  selectedStepName?: string;
+} {
+  const selectedStepName = flowContext?.getSelectedStepName();
+  return selectedStepName ? { selectedStepName } : {};
+}
+
+export type ChatFlowContext = {
+  flowId: string;
+  getSelectedStepName: () => string | null;
+};

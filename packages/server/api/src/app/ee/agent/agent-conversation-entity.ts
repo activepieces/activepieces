@@ -1,12 +1,14 @@
 import { Agent, AgentConversation, AgentConversationStatus, AgentRunSource, Platform, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
+import { StoredFlowSnapshot } from './chat-flow-awareness'
 
 export type AgentConversationWithRelations = AgentConversation & {
     platform: Platform
     project: Project
     user: User
     agent: Agent
+    flowSnapshots: Record<string, StoredFlowSnapshot> | null
 }
 
 export const AgentConversationEntity = new EntitySchema<AgentConversationWithRelations>({
@@ -80,6 +82,15 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             type: Number,
             nullable: true,
         },
+        flowId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        flowSnapshots: {
+            type: 'jsonb',
+            nullable: true,
+            select: false,
+        },
     },
     indices: [
         {
@@ -100,6 +111,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             name: 'idx_agent_conversation_agent_user_created_id',
             columns: ['agentId', 'userId', 'created', 'id'],
             where: '"agentId" IS NOT NULL',
+        },
+        {
+            name: 'idx_agent_conversation_project_flow_created',
+            columns: ['projectId', 'flowId', 'created'],
+            where: '"flowId" IS NOT NULL',
         },
         {
             name: 'idx_agent_conversation_streaming_updated',

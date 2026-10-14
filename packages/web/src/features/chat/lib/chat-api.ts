@@ -26,15 +26,18 @@ async function listConversations({
   cursor,
   limit = 20,
   agentId,
+  flowId,
 }: {
   cursor?: string;
   limit?: number;
   agentId?: string;
+  flowId?: string;
 }): Promise<SeekPage<AgentConversation>> {
   return api.get<SeekPage<AgentConversation>>('/v1/agents/conversations', {
     limit,
     cursor,
     ...(agentId === undefined ? {} : { agentId }),
+    ...(flowId === undefined ? {} : { flowId }),
   });
 }
 
@@ -67,16 +70,18 @@ async function sendMessage({
   runId,
   files,
   messageSource,
+  selectedStepName,
 }: {
   conversationId: string;
   content: string;
   runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
   messageSource?: AgentMessageSource;
+  selectedStepName?: string;
 }): Promise<{ conversationId: string; runId?: string }> {
   return api.post<{ conversationId: string; runId?: string }>(
     `/v1/agents/conversations/${conversationId}/messages`,
-    { content, runId, files, messageSource },
+    { content, runId, files, messageSource, selectedStepName },
   );
 }
 
