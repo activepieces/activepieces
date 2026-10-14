@@ -262,7 +262,7 @@ describe('SSOPage', () => {
     const dialog = screen.getByRole('dialog');
     expect(
       within(dialog).getByText(
-        'Single sign-on is turned off and its SAML configuration is deleted. People who sign in with SAML will need another way in.',
+        'This deletes your SAML connection, so people who use single sign-on will have to sign in another way.',
       ),
     ).toBeDefined();
     click(findButton('Remove domain', dialog));
@@ -277,6 +277,24 @@ describe('SSOPage', () => {
     expect(platformApiMock.update.mock.invocationCallOrder[0]).toBeLessThan(
       samlSsoApiMock.updateSsoDomain.mock.invocationCallOrder[0],
     );
+  });
+
+  it('warns that email sign-in is off before removing a domain with SAML connected', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+      federatedAuthProviders: { saml: samlConfig },
+      emailAuthEnabled: false,
+    });
+    mount();
+
+    click(menuItem('Remove domain'));
+
+    expect(
+      within(screen.getByRole('dialog')).getByText(
+        'Email sign-in is off. Turn it on first if they need it.',
+      ),
+    ).toBeDefined();
   });
 
   it('keeps the domain when turning SAML off fails', async () => {
@@ -308,10 +326,10 @@ describe('SSOPage', () => {
     click(menuItem('Remove domain'));
     const dialog = screen.getByRole('dialog');
     expect(
-      within(dialog).queryByText(
-        'Single sign-on is turned off and its SAML configuration is deleted. People who sign in with SAML will need another way in.',
+      within(dialog).getByText(
+        "To set up single sign-on later, you'll need to add and verify a domain again.",
       ),
-    ).toBeNull();
+    ).toBeDefined();
     click(findButton('Remove domain', dialog));
 
     await waitFor(() =>

@@ -162,7 +162,12 @@ const DomainRow = ({
           <DropdownMenuSeparator />
           <ConfirmationDeleteDialog
             title={t('Remove {domain}?', { domain })}
-            message={<RemoveDomainConsequences samlConnected={samlConnected} />}
+            message={
+              <RemoveDomainConsequences
+                samlConnected={samlConnected}
+                emailAuthEnabled={platform.emailAuthEnabled}
+              />
+            }
             entityName={domain}
             buttonText={t('Remove domain')}
             controlId={AdminControl.SSO_DOMAIN_REMOVE_CONFIRM}
@@ -219,21 +224,31 @@ const DomainRow = ({
 
 const RemoveDomainConsequences = ({
   samlConnected,
+  emailAuthEnabled,
 }: {
   samlConnected: boolean;
-}) => (
-  <span className="flex flex-col gap-2">
-    {samlConnected && (
+  emailAuthEnabled: boolean;
+}) => {
+  if (!samlConnected) {
+    return t(
+      "To set up single sign-on later, you'll need to add and verify a domain again.",
+    );
+  }
+  return (
+    <span className="flex flex-col gap-2">
       <span>
         {t(
-          'Single sign-on is turned off and its SAML configuration is deleted. People who sign in with SAML will need another way in.',
+          'This deletes your SAML connection, so people who use single sign-on will have to sign in another way.',
         )}
       </span>
-    )}
-    <span>{t('Google and email sign-in stay as they are.')}</span>
-    <span>{t('Nobody loses their account.')}</span>
-  </span>
-);
+      {!emailAuthEnabled && (
+        <span>
+          {t('Email sign-in is off. Turn it on first if they need it.')}
+        </span>
+      )}
+    </span>
+  );
+};
 
 async function removeSsoDomain({
   platformId,

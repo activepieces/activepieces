@@ -3297,17 +3297,14 @@
   "Domain actions": "Domain actions",
   "Domains": "Domains",
   "Email and password": "Email and password",
-  "Google and email sign-in stay as they are.": "Google and email sign-in stay as they are.",
   "Manage": "Manage",
   "No domains yet": "No domains yet",
-  "Nobody loses their account.": "Nobody loses their account.",
   "OAuth 2.0": "OAuth 2.0",
   "Pending DNS": "Pending DNS",
   "Remove domain": "Remove domain",
   "Remove {domain}?": "Remove {domain}?",
   "Set up": "Set up",
   "Sign-in methods": "Sign-in methods",
-  "Single sign-on is turned off and its SAML configuration is deleted. People who sign in with SAML will need another way in.": "Single sign-on is turned off and its SAML configuration is deleted. People who sign in with SAML will need another way in.",
   "Verify the email domain your company owns. People at it can join using the sign-in methods below.": "Verify the email domain your company owns. People at it can join using the sign-in methods below.",
   "View DNS record": "View DNS record",
   "invalidDomain": "Enter a domain like acme.com",
@@ -3321,5 +3318,8 @@
   "Allowed domain added": "Allowed domain added",
   "People at this domain can sign in with email and password.": "People at this domain can sign in with email and password.",
   "Add your company domain too, or people at your company can't sign in with email and password.": "Add your company domain too, or people at your company can't sign in with email and password.",
-  "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.": "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too."
+  "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.": "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.",
+  "This deletes your SAML connection, so people who use single sign-on will have to sign in another way.": "This deletes your SAML connection, so people who use single sign-on will have to sign in another way.",
+  "To set up single sign-on later, you'll need to add and verify a domain again.": "To set up single sign-on later, you'll need to add and verify a domain again.",
+  "Email sign-in is off. Turn it on first if they need it.": "Email sign-in is off. Turn it on first if they need it."
 }
