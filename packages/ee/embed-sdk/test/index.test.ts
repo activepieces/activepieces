@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ActivepiecesClientEventName,
@@ -9,6 +9,11 @@ import {
 describe('ActivepiecesEmbedded', () => {
   beforeEach(() => {
     document.body.innerHTML = `<div id="${CONTAINER_ID}"></div>`;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('defers navigate() calls made before the handshake and applies the latest one once configuration finishes', async () => {
@@ -149,6 +154,60 @@ describe('ActivepiecesEmbedded', () => {
     await expect(secondConfigure).resolves.toEqual({ status: 'success' });
   });
 
+  it('rejects configure() when embedding throws while the container is already present', async () => {
+    const embedError = new Error('iframe creation failed');
+    vi.spyOn(document, 'createElement').mockImplementation(() => {
+      throw embedError;
+    });
+
+    await expect(
+      configureSdk({ sdk: new ActivepiecesEmbedded() }),
+    ).rejects.toBe(embedError);
+  });
+
+  describe('when the container is missing at configure()', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      document.body.innerHTML = '';
+    });
+
+    it('rejects configure() with the container error when the container never appears', async () => {
+      const outcome = settled(configureSdk({ sdk: new ActivepiecesEmbedded() }));
+      await vi.runAllTimersAsync();
+
+      expect(await settledOrPending(outcome)).toEqual({
+        rejected: 'container not found',
+      });
+    });
+
+    it('keeps a superseded configure() resolved as superseded when the container never appears', async () => {
+      const sdk = new ActivepiecesEmbedded();
+      const firstConfigure = settled(configureSdk({ sdk }));
+      const secondConfigure = settled(configureSdk({ sdk }));
+      await vi.runAllTimersAsync();
+
+      expect(await settledOrPending(firstConfigure)).toEqual({
+        resolved: { status: 'superseded' },
+      });
+      expect(await settledOrPending(secondConfigure)).toEqual({
+        rejected: 'container not found',
+      });
+    });
+
+    it('rejects configure() when embedding throws after the container appears late', async () => {
+      const outcome = settled(configureSdk({ sdk: new ActivepiecesEmbedded() }));
+      const embedError = new Error('iframe creation failed');
+      vi.spyOn(document, 'createElement').mockImplementation(() => {
+        throw embedError;
+      });
+      document.body.innerHTML = `<div id="${CONTAINER_ID}"></div>`;
+      await vi.runAllTimersAsync();
+
+      expect(await settledOrPending(outcome)).toEqual({ rejected: embedError });
+    });
+  });
+
   it('resets the cached embedding auth when configure() is called again', () => {
     const sdk = new ActivepiecesEmbedded();
     sdk._embeddingAuth = {
@@ -172,7 +231,6 @@ describe('ActivepiecesEmbedded', () => {
     expect(errorSpy).toHaveBeenCalledWith(
       'Activepieces: dashboard iframe not found',
     );
-    errorSpy.mockRestore();
   });
 });
 
@@ -236,6 +294,17 @@ async function waitFor(condition: () => boolean) {
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
   throw new Error('condition not met in time');
+}
+
+function settled(promise: Promise<unknown>) {
+  return promise.then(
+    (value: unknown) => ({ resolved: value }),
+    (error: unknown) => ({ rejected: error }),
+  );
+}
+
+function settledOrPending(promise: Promise<unknown>) {
+  return Promise.race([promise, Promise.resolve('still pending')]);
 }
 
 function completeHandshake({ iframeWindow }: { iframeWindow: Window }) {
