@@ -1,7 +1,7 @@
 import { AIProviderModelType, ProviderModelConfig } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,11 +15,17 @@ import {
 
 export function ManualModelList({
   models,
+  suggestedModelIds = [],
   onChange,
 }: {
   models: ProviderModelConfig[];
+  suggestedModelIds?: string[];
   onChange: (models: ProviderModelConfig[]) => void;
 }) {
+  const suggestionListId = useId();
+  const unusedSuggestions = suggestedModelIds.filter(
+    (modelId) => !models.some((model) => model.modelId === modelId),
+  );
   const [draftId, setDraftId] = useState('');
   const [draftType, setDraftType] = useState<AIProviderModelType>(
     AIProviderModelType.TEXT,
@@ -44,6 +50,7 @@ export function ManualModelList({
       <div className="flex items-center gap-2 p-3">
         <Input
           className="max-w-xs"
+          list={suggestionListId}
           value={draftId}
           onChange={(event) => setDraftId(event.target.value)}
           onKeyDown={(event) => {
@@ -54,6 +61,11 @@ export function ManualModelList({
           }}
           placeholder={t('e.g. openai/gpt-4o')}
         />
+        <datalist id={suggestionListId}>
+          {unusedSuggestions.map((modelId) => (
+            <option key={modelId} value={modelId} />
+          ))}
+        </datalist>
         <Select
           value={draftType}
           onValueChange={(value) => setDraftType(modelTypeOf(value))}

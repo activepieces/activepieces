@@ -9,7 +9,7 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   ChevronDownIcon,
-  Crown,
+  Gem,
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
@@ -22,6 +22,7 @@ import {
 import { ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { adminLayout } from '@/app/components/admin';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
@@ -98,7 +99,7 @@ export const CustomizeSelectorDialog = ({
             gate.open();
           }}
         >
-          <Crown className="size-3.5 shrink-0 text-accent-11" />
+          <Gem className="size-3.5 shrink-0 text-accent-11" />
           {t('Customize Selector')}
         </Button>
         {gate.dialog}
@@ -114,13 +115,13 @@ export const CustomizeSelectorDialog = ({
           variant="outline"
           size="sm"
         >
-          <Settings2Icon className="size-4 mr-2" />
+          <Settings2Icon />
           {t('Customize Selector')}
         </Button>
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-lg flex flex-col gap-0 p-0"
+        className={cn(adminLayout.sheet.md, 'flex flex-col gap-0 p-0')}
       >
         <SelectorTabsEditor
           key={open ? 'open' : 'closed'}
