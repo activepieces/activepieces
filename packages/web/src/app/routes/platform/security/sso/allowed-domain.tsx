@@ -86,7 +86,10 @@ export const AllowedDomainDialog = ({
           {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
         </Button>
       </DialogTrigger>
-      <DialogContent className={adminLayout.dialog.md}>
+      <DialogContent
+        className={adminLayout.dialog.md}
+        aria-describedby={undefined}
+      >
         <DialogHeader>
           <DialogTitle>{t('Configure Allowed Domains')}</DialogTitle>
         </DialogHeader>

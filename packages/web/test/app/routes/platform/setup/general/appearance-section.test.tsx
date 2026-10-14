@@ -263,6 +263,18 @@ describe('AppearanceSection', () => {
     expect(fields).not.toHaveProperty('primaryColor');
   });
 
+  it('does not save a platform name made only of spaces', async () => {
+    await render();
+    await type({ selector: '#name', value: '   ' });
+    const button = submitButton();
+    if (!button.disabled) {
+      await act(async () => {
+        button.click();
+      });
+    }
+    expect(state.update).not.toHaveBeenCalled();
+  });
+
   it('sends the colour when the admin changes it', async () => {
     await render();
     await type({ selector: 'input[aria-label="colour"]', value: '#0ea5e9' });

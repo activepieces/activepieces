@@ -29,7 +29,10 @@ const isValidOrigin = (value: string): boolean =>
 const AllowedOriginsForm = z.object({
   origins: z
     .array(z.string())
-    .refine((items) => items.every(isValidOrigin), 'invalidEmbedOrigin'),
+    .refine(
+      (items) => items.every(isValidOrigin),
+      'Each entry must be a full origin, like https://app.example.com',
+    ),
 });
 
 type AllowedOriginsForm = z.infer<typeof AllowedOriginsForm>;

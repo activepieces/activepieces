@@ -331,6 +331,7 @@ export function DataTable<
   useEffect(() => {
     const previous = emittedSelection.current;
     if (
+      syncSelectionWithData &&
       previous !== null &&
       previous.length === selectedRowOriginals.length &&
       previous.every((row, index) => row === selectedRowOriginals[index])

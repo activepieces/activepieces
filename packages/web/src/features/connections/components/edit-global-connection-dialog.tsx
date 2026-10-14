@@ -58,55 +58,6 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  return (
-    <Tooltip>
-      <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
-        <DialogTrigger asChild>
-          <>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={!userHasPermissionToEdit}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setIsOpen(true);
-                }}
-                {...adminControl(AdminControl.CONNECTIONS_CONNECTION_EDIT_OPEN)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {!userHasPermissionToEdit ? t('Permission needed') : t('Edit')}
-            </TooltipContent>
-          </>
-        </DialogTrigger>
-        <EditGlobalConnectionForm
-          key={isOpen ? 'open' : 'closed'}
-          connectionId={connectionId}
-          currentName={currentName}
-          projectIds={projectIds}
-          preSelectForNewProjects={preSelectForNewProjects}
-          onEdit={onEdit}
-          setIsOpen={setIsOpen}
-          adminFeedback={adminFeedback}
-        />
-      </Dialog>
-    </Tooltip>
-  );
-};
-
-const EditGlobalConnectionForm = ({
-  connectionId,
-  currentName,
-  projectIds,
-  preSelectForNewProjects,
-  onEdit,
-  setIsOpen,
-  adminFeedback,
-}: EditGlobalConnectionFormProps) => {
   const editConnectionForm = useForm<EditGlobalConnectionSchema>({
     resolver: zodResolver(EditGlobalConnectionSchema),
     defaultValues: {
@@ -125,113 +76,151 @@ const EditGlobalConnectionForm = ({
     editConnectionForm,
     { adminFeedback },
   );
+  const changeOpen = (open: boolean) => {
+    if (adminFeedback && !open && isUpdatingGlobalConnection) {
+      return;
+    }
+    if (adminFeedback && open) {
+      editConnectionForm.reset({
+        displayName: currentName,
+        projectIds: projectIds,
+        preSelectForNewProjects: preSelectForNewProjects,
+      });
+    }
+    setIsOpen(open);
+  };
 
   return (
-    <DialogContent
-      aria-describedby={undefined}
-      showCloseButton={!isUpdatingGlobalConnection}
-      onInteractOutside={(event) => event.preventDefault()}
-      onEscapeKeyDown={(event) => {
-        if (isUpdatingGlobalConnection) {
-          event.preventDefault();
-        }
-      }}
-    >
-      <DialogHeader>
-        <DialogTitle>{t('Edit Global Connection')}</DialogTitle>
-      </DialogHeader>
-      <Form {...editConnectionForm}>
-        <form
-          onSubmit={editConnectionForm.handleSubmit((data) =>
-            updateGlobalConnection({
-              connectionId,
-              displayName: data.displayName,
-              projectIds: data.projectIds,
-              preSelectForNewProjects: data.preSelectForNewProjects,
-              currentName: currentName,
-            }),
-          )}
+    <Tooltip>
+      <Dialog open={isOpen} onOpenChange={changeOpen}>
+        <DialogTrigger asChild>
+          <>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={!userHasPermissionToEdit}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  changeOpen(true);
+                }}
+                {...adminControl(AdminControl.CONNECTIONS_CONNECTION_EDIT_OPEN)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {!userHasPermissionToEdit ? t('Permission needed') : t('Edit')}
+            </TooltipContent>
+          </>
+        </DialogTrigger>
+        <DialogContent
+          onInteractOutside={(event) => event.preventDefault()}
+          {...(adminFeedback
+            ? {
+                showCloseButton: !isUpdatingGlobalConnection,
+                'aria-describedby': undefined,
+                onEscapeKeyDown: (event: KeyboardEvent) => {
+                  if (isUpdatingGlobalConnection) {
+                    event.preventDefault();
+                  }
+                },
+              }
+            : {})}
         >
-          <div className="grid space-y-4">
-            <GlobalConnectionWarning />
-            <FormField
-              control={editConnectionForm.control}
-              name="displayName"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="displayName">{t('Name')}</Label>
-                  <Input
-                    {...field}
-                    id="displayName"
-                    placeholder={t('Connection Name')}
-                  />
-                  <FormMessage />
-                </FormItem>
+          <DialogHeader>
+            <DialogTitle>{t('Edit Global Connection')}</DialogTitle>
+          </DialogHeader>
+          <Form {...editConnectionForm}>
+            <form
+              onSubmit={editConnectionForm.handleSubmit((data) =>
+                updateGlobalConnection({
+                  connectionId,
+                  displayName: data.displayName,
+                  projectIds: data.projectIds,
+                  preSelectForNewProjects: data.preSelectForNewProjects,
+                  currentName: currentName,
+                }),
               )}
-            />
-            <ProjectSelector
-              control={editConnectionForm.control}
-              name="projectIds"
-            />
-            <FormField
-              control={editConnectionForm.control}
-              name="preSelectForNewProjects"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center gap-3">
-                  <Checkbox
-                    id="preSelectForNewProjects"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                  <Label
-                    htmlFor="preSelectForNewProjects"
-                    className="cursor-pointer"
-                  >
-                    {t('Include by default in new projects')}
-                  </Label>
-                </FormItem>
-              )}
-            />
-            {editConnectionForm?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {editConnectionForm.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
-          </div>
-          <DialogFooter className="mt-8">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isUpdatingGlobalConnection}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setIsOpen(false);
-              }}
             >
-              {t('Cancel')}
-            </Button>
-            <Button
-              loading={isUpdatingGlobalConnection}
-              {...adminControl(AdminControl.CONNECTIONS_CONNECTION_EDIT_SUBMIT)}
-            >
-              {t('Save')}
-            </Button>
-          </DialogFooter>
-        </form>
-      </Form>
-    </DialogContent>
+              <div className="grid space-y-4">
+                <GlobalConnectionWarning />
+                <FormField
+                  control={editConnectionForm.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem className="grid space-y-2">
+                      <Label htmlFor="displayName">{t('Name')}</Label>
+                      <Input
+                        {...field}
+                        id="displayName"
+                        placeholder={t('Connection Name')}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <ProjectSelector
+                  control={editConnectionForm.control}
+                  name="projectIds"
+                />
+                <FormField
+                  control={editConnectionForm.control}
+                  name="preSelectForNewProjects"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-3">
+                      <Checkbox
+                        id="preSelectForNewProjects"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                      <Label
+                        htmlFor="preSelectForNewProjects"
+                        className="cursor-pointer"
+                      >
+                        {t('Include by default in new projects')}
+                      </Label>
+                    </FormItem>
+                  )}
+                />
+                {editConnectionForm?.formState?.errors?.root?.serverError && (
+                  <FormMessage>
+                    {
+                      editConnectionForm.formState.errors.root.serverError
+                        .message
+                    }
+                  </FormMessage>
+                )}
+              </div>
+              <DialogFooter className="mt-8">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isUpdatingGlobalConnection}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setIsOpen(false);
+                  }}
+                >
+                  {t('Cancel')}
+                </Button>
+                <Button
+                  loading={isUpdatingGlobalConnection}
+                  {...adminControl(
+                    AdminControl.CONNECTIONS_CONNECTION_EDIT_SUBMIT,
+                  )}
+                >
+                  {t('Save')}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </Tooltip>
   );
 };
 
 export { EditGlobalConnectionDialog };
-
-type EditGlobalConnectionFormProps = {
-  connectionId: string;
-  currentName: string;
-  projectIds: string[];
-  preSelectForNewProjects: boolean;
-  onEdit: () => void;
-  setIsOpen: (isOpen: boolean) => void;
-  adminFeedback: boolean;
-};

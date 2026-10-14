@@ -218,16 +218,10 @@ describe('InviteUserDialog with some invitations failing', () => {
         ? Promise.reject(new Error('Email domain is blocked'))
         : Promise.resolve({ id: email, email, status: 'PENDING' }),
     );
-    render();
+    render(true);
 
     await addEmailsAndSubmit();
 
-    expect(mocks.toastError).toHaveBeenCalledWith(
-      'invitationsSentOfTotal {"sent":2,"total":3}',
-      expect.objectContaining({
-        description: 'invitationsFailedCheck {"count":1}',
-      }),
-    );
     expect(query('[data-testid="emails"]').textContent).toBe('b@x.com');
     expect(container.textContent).toContain(
       '{email}: {reason} {"email":"b@x.com","reason":"Email domain is blocked"}',
@@ -256,7 +250,7 @@ describe('InviteUserDialog with some invitations failing', () => {
 
   it('cannot be closed while the invitations are being sent', async () => {
     mocks.invite.mockImplementation(() => new Promise(() => undefined));
-    render();
+    render(true);
 
     await addEmailsAndSubmit();
     act(() => {

@@ -187,7 +187,13 @@ export const billingMutations = {
       },
     });
   },
-  useUpdateAutoTopUp: (queryClient: QueryClient) => {
+  useUpdateAutoTopUp: ({
+    queryClient,
+    adminFeedback = false,
+  }: {
+    queryClient: QueryClient;
+    adminFeedback?: boolean;
+  }) => {
     return useMutation({
       mutationFn: async (params: ConsumableProductAutoTopupParams) => {
         await platformBillingApi.updateAutoTopUp(params);
@@ -209,14 +215,23 @@ export const billingMutations = {
         queryClient.invalidateQueries({
           queryKey: PLATFORM_BILLING_SUBSCRIPTION_KEY,
         });
-        mutationFeedback.success(t('Auto top-up config saved'));
+        if (adminFeedback) {
+          mutationFeedback.success(t('Auto top-up config saved'));
+        } else {
+          toast.success(t('Auto top-up config saved'));
+        }
       },
       onError: (error, _params, context) => {
         restoreBillingSubscription(queryClient, context?.previous);
-        mutationFeedback.error({
-          error,
-          title: t('Auto top-up config change failed'),
-        });
+        if (adminFeedback) {
+          mutationFeedback.error({
+            error,
+            title: t('Auto top-up config change failed'),
+          });
+          return;
+        }
+        toast.error(t('Auto top-up config change failed'));
+        internalErrorToast();
       },
     });
   },
