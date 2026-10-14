@@ -1104,4 +1104,5 @@ export type ChatFlowContext = {
   flowId: string;
   getSelectedStepName: () => string | null;
   onActivity: (activity: ChatFlowActivity) => void;
+  onWaitingForUser: (waiting: boolean) => void;
 };

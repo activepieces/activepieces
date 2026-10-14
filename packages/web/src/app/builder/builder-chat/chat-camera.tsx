@@ -67,6 +67,10 @@ export function ChatCamera() {
     let isPlayingShot = false;
 
     const playNextShot = () => {
+      if (store.getState().isChatWaitingForUser) {
+        isPlayingShot = false;
+        return;
+      }
       const next = queuedShots.shift();
       if (next === undefined) {
         isPlayingShot = false;
@@ -89,7 +93,7 @@ export function ChatCamera() {
     };
 
     const pullBackToWideShot = () => {
-      if (isPlayingShot) {
+      if (isPlayingShot || store.getState().isChatWaitingForUser) {
         schedule({ fn: pullBackToWideShot, delayMs: SHOT_DWELL_MS });
         return;
       }
@@ -114,6 +118,17 @@ export function ChatCamera() {
       if (!isWorking && wasWorking) {
         turnTailEndsAt = Date.now() + TURN_TAIL_MS;
         schedule({ fn: pullBackToWideShot, delayMs: TURN_TAIL_MS });
+      }
+
+      const startedWaiting =
+        state.isChatWaitingForUser && !previous.isChatWaitingForUser;
+      if (startedWaiting) {
+        state.setChatCameraStep(null);
+      }
+      const stoppedWaiting =
+        !state.isChatWaitingForUser && previous.isChatWaitingForUser;
+      if (stoppedWaiting && !isPlayingShot) {
+        playNextShot();
       }
 
       const resumedFollowing =

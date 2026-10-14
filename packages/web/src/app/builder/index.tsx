@@ -54,6 +54,7 @@ const SPLIT_MODE_SIDEBAR_SIZE_PX = 850;
 const DEFAULT_SIDEBAR_SIZE = '25%';
 const DEFAULT_MIN_SIZE = '400px';
 const WITH_CHAT_SIDEBAR_SIZE = 340;
+const NO_FIELDS: string[] = [];
 const SPLIT_MODE_COLLAPSE_THRESHOLD_PX = 700;
 
 const BuilderPage = () => {
@@ -115,8 +116,11 @@ const BuilderPage = () => {
   const rightHandleRef = useRef<PanelImperativeHandle>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const previousRightSidebar = usePrevious(rightSidebar);
-  const chatCameraStep = useBuilderStateContext(
-    (state) => state.chatCameraStep,
+  const [chatCameraStep, recentlyChangedFieldNames] = useBuilderStateContext(
+    (state) => [
+      state.chatCameraStep,
+      state.recentlyChangedFields[state.selectedStep ?? ''] ?? NO_FIELDS,
+    ],
   );
   const previousSelectedStepName = usePrevious(selectedStepName);
   const previousRemoteRevision = usePrevious(remoteRevision);
@@ -292,6 +296,7 @@ const BuilderPage = () => {
                     <ChatSettingsEntrance
                       key={`${selectedStep.name}-${remoteRevision}`}
                       entrance={settingsEntrance}
+                      changedFieldNames={recentlyChangedFieldNames}
                     >
                       <StepSettingsProvider
                         pieceModel={pieceModel}

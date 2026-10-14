@@ -3302,5 +3302,6 @@
   "Click the button below to reopen chat": "Click the button below to reopen chat",
   "Chat is editing {stepName}…": "Chat is editing {stepName}…",
   "Stop following": "Stop following",
-  "Follow": "Follow"
+  "Follow": "Follow",
+  "Chat needs your answer before it carries on": "Chat needs your answer before it carries on"
 }

@@ -124,7 +124,13 @@ export function ChatBottomBar({
 
   return (
     <div className="flex flex-col gap-2">
-      {activeCard}
+      {activeCard && variant === 'panel' ? (
+        <div className="chat-spotlight rounded-xl animate-in fade-in slide-in-from-bottom-2 duration-500">
+          {activeCard}
+        </div>
+      ) : (
+        activeCard
+      )}
       <div
         className={cn(
           'overflow-hidden rounded-xl border transition-colors',

@@ -842,7 +842,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     const completionTool = structuredOutput.length === 0
         ? {}
         : agentWorkerTools.createStructuredOutputTool({ fields: structuredOutput, capture: captureStructured })
-    return agentToolPolicy.selectToolsForSource({
+    return agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: agentToolPolicy.selectToolsForSource({
         source,
         groups: {
             local: localTools,
@@ -859,7 +859,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             knowledgeBase: knowledgeBaseTools,
             completion: completionTool,
         },
-    })
+    }) })
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle, holdErrorChunks }: {

@@ -15,6 +15,7 @@ import { StepDataPanelView } from './canvas-state';
 const OPEN_STORAGE_KEY = 'builder-chat-panel-open';
 const COACHMARK_SEEN_STORAGE_KEY = 'builder-chat-coachmark-seen';
 const HIGHLIGHT_DURATION_MS = 4000;
+const NOT_FORM_FIELDS = new Set(['displayName', 'type', 'skip']);
 
 export const createBuilderChatState = (
   get: StoreApi<BuilderState>['getState'],
@@ -32,6 +33,9 @@ export const createBuilderChatState = (
     chatCameraStep: null,
     setChatCameraStep: (stepName: string | null) =>
       set({ chatCameraStep: stepName }),
+    isChatWaitingForUser: false,
+    setChatWaitingForUser: (waiting: boolean) =>
+      set({ isChatWaitingForUser: waiting }),
     isFollowingChat: true,
     setFollowingChat: (following: boolean) =>
       set({ isFollowingChat: following }),
@@ -41,6 +45,7 @@ export const createBuilderChatState = (
     },
     recentlyChangedSteps: [],
     recentlyAddedSteps: [],
+    recentlyChangedFields: {},
     remoteRevision: 0,
     chatActivity: null,
     setChatActivity: (activity: ChatFlowActivity) =>
@@ -67,6 +72,12 @@ export const createBuilderChatState = (
       const changedStepNames = changes
         .filter((change) => change.kind !== 'removed')
         .map((change) => change.stepName);
+      const changedFieldNames = Object.fromEntries(
+        changes.map((change) => [
+          change.stepName,
+          change.fields.flatMap((field) => formFieldName(field.path)),
+        ]),
+      );
       const addedStepNames = changes
         .filter((change) => change.kind === 'added')
         .map((change) => change.stepName);
@@ -86,6 +97,7 @@ export const createBuilderChatState = (
         selectedStep: selectedStepStillExists ? state.selectedStep : null,
         recentlyChangedSteps: changedStepNames,
         recentlyAddedSteps: addedStepNames,
+        recentlyChangedFields: changedFieldNames,
         remoteRevision: selectedStepChanged
           ? state.remoteRevision + 1
           : state.remoteRevision,
@@ -100,6 +112,13 @@ export const createBuilderChatState = (
     },
   };
 };
+
+function formFieldName(diffPath: string): string[] {
+  if (NOT_FORM_FIELDS.has(diffPath)) {
+    return [];
+  }
+  return [`settings.${diffPath}`];
+}
 
 function readStorage(key: string): string | null {
   try {
@@ -132,10 +151,13 @@ export type BuilderChatState = {
   dismissChatCoachmark: () => void;
   chatCameraStep: string | null;
   setChatCameraStep: (stepName: string | null) => void;
+  isChatWaitingForUser: boolean;
+  setChatWaitingForUser: (waiting: boolean) => void;
   isFollowingChat: boolean;
   setFollowingChat: (following: boolean) => void;
   recentlyChangedSteps: string[];
   recentlyAddedSteps: string[];
+  recentlyChangedFields: Record<string, string[]>;
   remoteRevision: number;
   chatActivity: ChatFlowActivity | null;
   setChatActivity: (activity: ChatFlowActivity) => void;

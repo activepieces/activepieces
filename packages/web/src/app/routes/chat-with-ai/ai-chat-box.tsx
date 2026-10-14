@@ -247,6 +247,10 @@ function ChatBoxContent({
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
   );
 
+  useEffect(() => {
+    flowContext?.onWaitingForUser(hasBlockingCard);
+  }, [flowContext, hasBlockingCard]);
+
   const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
   const [hasInput, setHasInput] = useState(false);

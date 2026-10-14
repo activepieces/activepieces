@@ -61,8 +61,7 @@ const ApStepCanvasNode = React.memo(
       state.chatCameraStep,
     ]);
     const isInChatSpotlight = chatCameraStep === step.name;
-    const isOutOfChatSpotlight =
-      chatCameraStep !== null && !isInChatSpotlight;
+    const isOutOfChatSpotlight = chatCameraStep !== null && !isInChatSpotlight;
     const isHorizontal = canvasOrientation === 'horizontal';
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
