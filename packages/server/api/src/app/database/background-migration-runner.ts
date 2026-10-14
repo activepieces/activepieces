@@ -105,8 +105,8 @@ async function runOne({
     dataSource: DataSource
 }): Promise<void> {
     await distributedLock(log).runExclusive({
-        key: `background_migration:${migration.name}`,
-        timeoutInSeconds: RUN_LOCK_TIMEOUT_SECONDS,
+        key: backgroundMigrationLockKey(migration.name),
+        timeoutInSeconds: BACKGROUND_MIGRATION_LOCK_TIMEOUT_SECONDS,
         fn: async () => {
             const completed = await getCompletedNames(dataSource)
             if (completed.has(migration.name)) {
@@ -212,7 +212,9 @@ async function getLatestFailure(dataSource: DataSource, sourceNames: string[]): 
 }
 
 const MAX_CATCHUP_ATTEMPTS = 10
-const RUN_LOCK_TIMEOUT_SECONDS = 240
+
+export const backgroundMigrationLockKey = (migrationName: string): string => `background_migration:${migrationName}`
+export const BACKGROUND_MIGRATION_LOCK_TIMEOUT_SECONDS = 240
 
 export const BACKGROUND_MIGRATIONS_TABLE = 'background_migrations'
 

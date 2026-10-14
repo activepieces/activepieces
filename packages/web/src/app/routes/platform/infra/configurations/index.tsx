@@ -13,8 +13,15 @@ import { Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { platformConfigurationApi } from '@/api/platform-configuration-api';
-import { CenteredPage } from '@/app/components/centered-page';
-import { Button } from '@/components/ui/button';
+import {
+  AdminPage,
+  AdminPageHeader,
+  SaveBar,
+  SettingsPanel,
+  SettingsRow,
+  adminPageResources,
+} from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -24,14 +31,27 @@ import { TelemetrySection } from './telemetry-section';
 
 export const ConfigurationsPage = () => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { data: configuration, isLoading } =
-    platformConfigurationHooks.useCurrentPlatformConfiguration({
-      refetchOnMount: 'always',
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
-    });
+  const {
+    data: configuration,
+    isLoading,
+    isError,
+    refetch,
+  } = platformConfigurationHooks.useCurrentPlatformConfiguration({
+    refetchOnMount: 'always',
+    meta: { loadSubsetOptions: {} },
+  });
 
   if (edition === ApEdition.CLOUD) {
     return <Navigate to="/platform/workers" replace />;
+  }
+
+  if (isError && isNil(configuration)) {
+    return (
+      <AdminPage width="content">
+        <ConfigurationsHeader />
+        <DataFetchErrorState entity={t('configurations')} onRetry={refetch} />
+      </AdminPage>
+    );
   }
 
   if (isLoading || isNil(configuration)) {
@@ -77,43 +97,59 @@ const ConfigurationsContent = ({
   return (
     <Form {...form}>
       <form
-        className="flex flex-1 flex-col min-h-0"
+        className="flex flex-1 flex-col"
         onSubmit={form.handleSubmit((values) => saveConfiguration(values))}
       >
-        <CenteredPage
-          title={t('Configurations')}
+        <AdminPage
+          width="content"
           footer={
-            <Button
-              type="submit"
-              loading={isPending}
-              disabled={!form.formState.isDirty}
-            >
-              {t('Save')}
-            </Button>
+            <SaveBar
+              width="content"
+              dirty={form.formState.isDirty}
+              saving={isPending}
+              onDiscard={() => form.reset()}
+            />
           }
         >
+          <ConfigurationsHeader />
           <TelemetrySection control={form.control} disabled={isPending} />
-        </CenteredPage>
+        </AdminPage>
       </form>
     </Form>
   );
 };
 
+const ConfigurationsHeader = () => (
+  <AdminPageHeader
+    title={t('Configurations')}
+    resources={adminPageResources.configurations}
+  />
+);
+
 const ConfigurationsSkeleton = () => {
   return (
-    <div className="flex flex-1 flex-col min-h-0">
-      <CenteredPage
-        title={t('Configurations')}
-        footer={<Button disabled>{t('Save')}</Button>}
-      >
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-4 w-full" />
-          </div>
-          <Skeleton className="h-[4.5rem] w-full rounded-lg" />
-        </div>
-      </CenteredPage>
+    <div className="flex flex-1 flex-col">
+      <AdminPage width="content">
+        <ConfigurationsHeader />
+        <SettingsPanel
+          title={t('Telemetry')}
+          description={t(
+            'Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys.',
+          )}
+          flush
+        >
+          {[0, 1].map((row) => (
+            <SettingsRow
+              key={row}
+              icon={<Skeleton className="size-4" />}
+              title={<Skeleton className="h-4 w-32" />}
+              description={<Skeleton className="h-4 w-full" />}
+            >
+              <Skeleton className="h-5 w-9 rounded-full" />
+            </SettingsRow>
+          ))}
+        </SettingsPanel>
+      </AdminPage>
     </div>
   );
 };

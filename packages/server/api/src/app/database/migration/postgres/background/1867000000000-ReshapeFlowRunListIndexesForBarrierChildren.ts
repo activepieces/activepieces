@@ -11,13 +11,13 @@ export class ReshapeFlowRunListIndexesForBarrierChildren1867000000000 implements
         for (const index of FLOW_RUN_BARRIER_INDEXES) {
             await migrationHelpers.createIndexConcurrently({ queryRunner, table: 'flow_run', ...index })
         }
-        for (const index of FLOW_RUN_LEGACY_LIST_INDEXES) {
-            await migrationHelpers.dropIndexConcurrently({ queryRunner, name: index.name })
-        }
+        await migrationHelpers.dropIndexConcurrently({ queryRunner, name: FLOW_RUN_SHADOWING_LEGACY_INDEX_NAME })
     }
 
     public async down(): Promise<void> {}
 }
+
+export const FLOW_RUN_SHADOWING_LEGACY_INDEX_NAME = 'idx_run_project_id_environment_created_archived_at'
 
 export const FLOW_RUN_BARRIER_INDEXES: FlowRunIndex[] = [
     {
@@ -56,7 +56,7 @@ export const FLOW_RUN_LEGACY_LIST_INDEXES: FlowRunIndex[] = [
         columns: '"projectId", "environment", "created" DESC, "archivedAt", "status"',
     },
     {
-        name: 'idx_run_project_id_environment_created_archived_at',
+        name: FLOW_RUN_SHADOWING_LEGACY_INDEX_NAME,
         columns: '"projectId", "environment", "created" DESC, "archivedAt"',
     },
     {
@@ -64,7 +64,7 @@ export const FLOW_RUN_LEGACY_LIST_INDEXES: FlowRunIndex[] = [
         columns: '"projectId", "environment", "flowId", "created" DESC, "archivedAt"',
     },
     {
-        name: 'idx_run_project_id_environment_flow_id_status_created_archived_at',
+        name: 'idx_run_project_id_environment_flow_id_status_created_archived_',
         columns: '"projectId", "environment", "flowId", "status", "created" DESC, "archivedAt"',
     },
 ]

@@ -51,6 +51,7 @@ export type ApErrorParams =
     | TriggerFailedErrorParams
     | ValidationErrorParams
     | AgentRunSupersededErrorParams
+    | AgentRunBusyErrorParams
     | RequiredActionsMissingErrorParams
     | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
@@ -331,6 +332,13 @@ ErrorCode.VALIDATION,
 
 export type AgentRunSupersededErrorParams = BaseErrorParams<
 ErrorCode.AGENT_RUN_SUPERSEDED,
+{
+    message: string
+}
+>
+
+export type AgentRunBusyErrorParams = BaseErrorParams<
+ErrorCode.AGENT_RUN_BUSY,
 {
     message: string
 }
@@ -623,6 +631,7 @@ export enum ErrorCode {
     USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
     AGENT_RUN_SUPERSEDED = 'AGENT_RUN_SUPERSEDED',
+    AGENT_RUN_BUSY = 'AGENT_RUN_BUSY',
     REQUIRED_ACTIONS_MISSING = 'REQUIRED_ACTIONS_MISSING',
     FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
