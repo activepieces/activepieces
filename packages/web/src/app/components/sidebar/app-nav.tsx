@@ -54,8 +54,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import { mcpClientDisplay } from '../../routes/mcp-server/mcp-client-display';
-import { mcpGrantsQueries } from '../../routes/mcp-server/mcp-grants-hooks';
+import { MCP_CLIENT_BRANDING } from '../../routes/mcp-server/mcp-client-display';
 import { recordAccess } from '../global-search/access-history';
 import { mcpHooks } from '../project-settings/mcp-server/utils/mcp-hooks';
 
@@ -169,24 +168,13 @@ export function PlatformAdminNavItem() {
 }
 
 function McpClientLogos() {
-  const userId = authenticationSession.getCurrentUserId();
-  const { data: grants } = mcpGrantsQueries.useAllGrants({
-    request: userId === null ? {} : { memberIds: [userId] },
-    refetchInterval: () => false,
-  });
-  const clientKeys = [
-    ...new Set((grants ?? []).map((grant) => grant.clientKey)),
-  ].slice(0, MAX_SIDEBAR_CLIENTS);
-  if (clientKeys.length === 0) {
-    return null;
-  }
   return (
     <span aria-hidden className="ml-auto flex shrink-0 items-center gap-0.5">
-      {clientKeys.map((clientKey) => (
+      {MCP_SIDEBAR_CLIENTS.map((client) => (
         <LogoPlate
-          key={clientKey ?? 'unknown'}
+          key={client}
           size="xxs"
-          src={mcpClientDisplay.icon(clientKey)}
+          src={MCP_CLIENT_BRANDING[client].icon}
           alt=""
           className="size-4.5 rounded-md border border-gray-6"
           innerClassName="p-px"
@@ -465,7 +453,7 @@ function orderProjects({
   return [...personal.sort(compare), ...others.sort(compare)];
 }
 
-const MAX_SIDEBAR_CLIENTS = 3;
+const MCP_SIDEBAR_CLIENTS = ['claude', 'chatgpt', 'cursor'] as const;
 
 const PROJECTS_HEADER_ICON_BUTTON =
   'size-6 rounded-md text-gray-11 hover:bg-gray-4 hover:text-gray-12 [&_svg]:size-3.5!';
