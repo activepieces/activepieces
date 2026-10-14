@@ -51,11 +51,12 @@ export const autumnUtils = {
                     idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : undefined,
                 )
             },
-            getCustomer(params?: { expand?: GetCustomerParams['expand'] }) {
-                return client.customers.get(
+            async getCustomer(params?: { expand?: GetCustomerParams['expand'] }) {
+                const customer = await client.customers.get(
                     { customerId, expand: params?.expand },
                     { timeoutMs: AUTUMN_GET_CUSTOMER_TIMEOUT_MS },
                 )
+                return autumnUtils.withoutExpiredEnterpriseTrial(customer)
             },
             listPlans(params?: ListPlansParams) {
                 return client.plans.list(params)
@@ -165,13 +166,13 @@ export const autumnUtils = {
         const entitlements = toAutumnEntitlements(customer)
         const previousPlan = await platformPlanRepo().findOneBy({ platformId })
         await platformPlanService(log).update({ platformId, ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements) })
-        await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
-        await autumnUtils.invalidateBillingOverview(platformId)
-        await autumnUtils.provisionLicenseKeyIfPaid(log, platformId, entitlements.planId)
         const previousTrialEndsAt = previousPlan?.enterpriseTrialEndsAt ?? null
         if (!isNil(previousTrialEndsAt) && isNil(entitlements.enterpriseTrial)) {
             rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialEnded({ platformId, endedAt: new Date(previousTrialEndsAt).toISOString() }), log)
         }
+        await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
+        await autumnUtils.invalidateBillingOverview(platformId)
+        await autumnUtils.provisionLicenseKeyIfPaid(log, platformId, entitlements.planId)
         const currentSubscription = autumnUtils.selectCurrentBaseSubscription(autumnUtils.toBaseSubscriptions(customer))
         rejectedPromiseHandler(platformPlanTelemetry(log).onEntitlementsRefreshed({
             platformId,
@@ -258,6 +259,20 @@ export const autumnUtils = {
             unlimited: balance.unlimited,
             nextResetAt: largestGrantResetAt(balance) ?? balance.nextResetAt,
             syncedAt: Date.now(),
+        }
+    },
+    withoutExpiredEnterpriseTrial(customer: GetCustomerResponse): GetCustomerResponse {
+        const now = Date.now()
+        if (!customer.subscriptions.some((subscription) => isExpiredEnterpriseTrial({ subscription, now }))) {
+            return customer
+        }
+        return {
+            ...customer,
+            subscriptions: customer.subscriptions.filter((subscription) => !isExpiredEnterpriseTrial({ subscription, now })),
+            balances: Object.entries(customer.balances).reduce<GetCustomerResponse['balances']>((balances, [featureId, balance]) => {
+                const trimmed = withoutPlanGrants({ balance, planId: PlanName.ENTERPRISE_TRIAL })
+                return isNil(trimmed) ? balances : { ...balances, [featureId]: trimmed }
+            }, {}),
         }
     },
     toBaseSubscriptions(customer: GetCustomerResponse): GetCustomerResponse['subscriptions'] {
@@ -514,6 +529,29 @@ function msToIsoOrNull(ms: number | null | undefined): string | null {
     return isNil(ms) ? null : new Date(ms).toISOString()
 }
 
+function isExpiredEnterpriseTrial({ subscription, now }: ExpiredEnterpriseTrialParams): boolean {
+    return subscription.planId === PlanName.ENTERPRISE_TRIAL && !isNil(subscription.trialEndsAt) && subscription.trialEndsAt <= now
+}
+
+function withoutPlanGrants({ balance, planId }: WithoutPlanGrantsParams): Balance | null {
+    const breakdown = balance.breakdown ?? []
+    const kept = breakdown.filter((entry) => entry.planId !== planId)
+    if (kept.length === breakdown.length) {
+        return balance
+    }
+    if (kept.length === 0) {
+        return null
+    }
+    return {
+        ...balance,
+        granted: kept.reduce((sum, entry) => sum + entry.includedGrant + entry.prepaidGrant, 0),
+        remaining: kept.reduce((sum, entry) => sum + entry.remaining, 0),
+        usage: kept.reduce((sum, entry) => sum + entry.usage, 0),
+        unlimited: kept.some((entry) => entry.unlimited),
+        breakdown: kept,
+    }
+}
+
 function toEntitlementPlans(attachments: AutumnPlanAttachments): EntitlementPlan[] {
     const now = Date.now()
     const attached = [
@@ -609,6 +647,16 @@ type AutumnEntitlements = {
 type LiveEnterpriseTrial = {
     startedAt: number
     endsAt: number
+}
+
+type ExpiredEnterpriseTrialParams = {
+    subscription: GetCustomerResponse['subscriptions'][number]
+    now: number
+}
+
+type WithoutPlanGrantsParams = {
+    balance: Balance
+    planId: string
 }
 
 type AutumnPlanAttachment = {
