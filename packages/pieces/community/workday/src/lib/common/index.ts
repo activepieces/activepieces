@@ -238,6 +238,33 @@ export async function workdayWqlRequestAll(
 	return allRows;
 }
 
+export async function workdayBusinessProcessTransactions({
+	auth,
+	momentField,
+	sinceEpochMS,
+	typeIds,
+	completedOnly,
+}: {
+	auth: OAuth2PropertyValue;
+	momentField: 'dateAndTimeInitiated' | 'dateAndTimeCompleted';
+	sinceEpochMS: number;
+	typeIds?: string[];
+	completedOnly?: boolean;
+}): Promise<Record<string, unknown>[]> {
+	const conditions = [`${momentField} > '${new Date(sinceEpochMS).toISOString()}'`];
+	if (typeIds && typeIds.length > 0) {
+		conditions.push(`businessProcessType in (${typeIds.map((id) => `'${escapeWql(id)}'`).join(', ')})`);
+	}
+	if (completedOnly) {
+		conditions.push(`status = 'Successfully Completed'`);
+	}
+	const limit = sinceEpochMS === 0 ? ' LIMIT 10' : '';
+	return workdayWqlRequestAll(
+		auth,
+		`SELECT businessProcessEvent, businessProcessType, status, worker, subject, dateAndTimeInitiated, dateAndTimeCompleted FROM businessProcessTransactions WHERE ${conditions.join(' AND ')} ORDER BY ${momentField} DESC${limit}`,
+	);
+}
+
 export async function workdayGetReport(
 	auth: OAuth2PropertyValue,
 	reportId: string,

@@ -1,20 +1,27 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import dayjs from 'dayjs';
 import { workdayAuth } from '../auth';
-import { workdayWqlRequest } from '../common';
+import { workdayBusinessProcessTransactions } from '../common';
+import { readNestedDescriptor, readNestedId } from '../common/fields';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof workdayAuth>, Record<string, never>> = {
-	strategy: DedupeStrategy.LAST_ITEM,
-	items: async ({ auth }) => {
-		const response = await workdayWqlRequest<{ total: number; data: Array<Record<string, unknown>> }>(
+	strategy: DedupeStrategy.TIMEBASED,
+	items: async ({ auth, lastFetchEpochMS }) => {
+		const rows = await workdayBusinessProcessTransactions({
 			auth,
-			`SELECT worker, fullName FROM allActiveEmployees LIMIT 100`,
-		);
-
-		const items = response.body.data ?? [];
-		return items.map((item) => ({
-			id: JSON.stringify(item),
-			data: item,
+			momentField: 'dateAndTimeCompleted',
+			sinceEpochMS: lastFetchEpochMS,
+			completedOnly: true,
+		});
+		return rows.map((row) => ({
+			epochMilliSeconds: dayjs(String(row['dateAndTimeCompleted'])).valueOf(),
+			data: {
+				id: readNestedId(row['businessProcessEvent']),
+				descriptor: readNestedDescriptor(row['businessProcessEvent']),
+				completedDate: row['dateAndTimeCompleted'],
+				...row,
+			},
 		}));
 	},
 };
@@ -27,7 +34,7 @@ export const businessProcessCompleted = createTrigger({
 	description: 'Triggers when a business process event is completed in Workday.',
 	aiMetadata: {
 		description:
-			'Fires when a Workday business process completes (e.g. a hire, change-job, or approval workflow reaches its end state). Polls active workers as the change signal. Use to run downstream automation once a Workday workflow finishes.',
+			'Fires when a Workday business process completes (e.g. a hire, change-job, or approval workflow reaches its end state), detected by polling business process transactions with status Successfully Completed by their completion time. Use to run downstream automation once a Workday workflow finishes.',
 	},
 	props: {},
 	sampleData: { id: 'bp-001', descriptor: 'Hire: John Smith', completedDate: '2026-04-01T14:30:00Z' },

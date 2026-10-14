@@ -11,6 +11,7 @@ import {
 	fetchAllPages,
 	workdayGetCustomObject,
 	workdayGetReport,
+	workdayBusinessProcessTransactions,
 	workdayListCustomObjectDefinitions,
 	workdayRequest,
 	workdayUpsertCustomObject,
@@ -170,5 +171,29 @@ describe('escapeWql', () => {
 
 	it('escapes backslashes before quotes', () => {
 		expect(escapeWql("a\\'b")).toBe("a\\\\\\'b");
+	});
+});
+
+describe('workdayBusinessProcessTransactions', () => {
+	it('filters by moment, type and status and orders newest first', async () => {
+		sendRequest.mockResolvedValue(resp({ data: [] }));
+		await workdayBusinessProcessTransactions({
+			auth: AUTH,
+			momentField: 'dateAndTimeCompleted',
+			sinceEpochMS: Date.parse('2026-10-14T00:00:00.000Z'),
+			typeIds: ['t1', 't2'],
+			completedOnly: true,
+		});
+		const query = (sendRequest.mock.calls[0][0] as HttpRequest<{ query: string }>).body?.query;
+		expect(query).toBe(
+			"SELECT businessProcessEvent, businessProcessType, status, worker, subject, dateAndTimeInitiated, dateAndTimeCompleted FROM businessProcessTransactions WHERE dateAndTimeCompleted > '2026-10-14T00:00:00.000Z' AND businessProcessType in ('t1', 't2') AND status = 'Successfully Completed' ORDER BY dateAndTimeCompleted DESC",
+		);
+	});
+
+	it('limits the first test fetch to 10 rows', async () => {
+		sendRequest.mockResolvedValue(resp({ data: [] }));
+		await workdayBusinessProcessTransactions({ auth: AUTH, momentField: 'dateAndTimeInitiated', sinceEpochMS: 0 });
+		const query = (sendRequest.mock.calls[0][0] as HttpRequest<{ query: string }>).body?.query;
+		expect(query).toContain("dateAndTimeInitiated > '1970-01-01T00:00:00.000Z' ORDER BY dateAndTimeInitiated DESC LIMIT 10");
 	});
 });
