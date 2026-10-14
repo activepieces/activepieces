@@ -60,6 +60,16 @@ describe('buildSkillSurface', () => {
         expect(surface.tools['ap_add_step']).toBeDefined()
     })
 
+    it('attaches a skill\'s tools directly once it is loaded', async () => {
+        const surface = chatSurface()
+        expect(surface.attachedToolNames()).not.toContain('ap_build_flow')
+        const playbook = String(await surface.tools['ap_load_skill']?.execute?.({ skills: ['flow_building'] }, CALL_OPTIONS))
+        expect(surface.attachedToolNames()).toEqual(expect.arrayContaining(['ap_build_flow', 'ap_add_step', 'ap_test_flow', ...surface.coreToolNames]))
+        expect(surface.attachedToolNames()).not.toContain('ap_list_tables')
+        expect(playbook).toContain('Tools now attached to you')
+        expect(playbook).not.toContain('Call: ap_lazy_tool with tool: "ap_build_flow"')
+    })
+
     it('lists tools no skill covers in the catalog note', () => {
         expect(chatSurface().catalogNote).toContain('mcp__gmail__send_email')
     })
@@ -105,7 +115,7 @@ describe('paid tools', () => {
         const surfaceFor = (canAfford: boolean) => buildSkillSurface({ tools, surface: 'CHAT', guides: {}, onSkillLoaded: vi.fn(), canAffordPaidTool: () => canAfford })
 
         const lowPlaybook = String(await surfaceFor(false).tools['ap_load_skill']?.execute?.({ skills: ['web_and_media'] }, CALL_OPTIONS))
-        expect(lowPlaybook).toContain('### ap_fetch_url')
+        expect(lowPlaybook).toMatch(/attached to you[^\n]*\nap_fetch_url/)
         expect(lowPlaybook).not.toContain('### ap_web_search')
         expect(lowPlaybook).not.toContain('### ap_scrape_url')
         expect(lowPlaybook).toContain('balance cannot cover these paid tools: ap_web_search, ap_scrape_url')

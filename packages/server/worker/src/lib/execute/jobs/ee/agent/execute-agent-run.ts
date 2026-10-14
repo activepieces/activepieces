@@ -1,11 +1,12 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
+import { aiUtils } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
-import { createUIMessageStream, generateText, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
+import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
+import { agentTitle } from './agent-title'
 import { agentToolPolicy } from './agent-tool-policy'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
 import { creditLedger } from './credit-ledger'
@@ -254,8 +255,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
             const thinkingStartTime = Date.now()
 
-            const autoTitlePromise = generateTitleIfFirstTurn({
-                model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId, abortSignal: abortController.signal,
+            const autoTitlePromise = agentTitle.generateIfFirstTurn({
+                model: fastTurnModel?.model ?? model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId, abortSignal: abortController.signal,
             })
 
             const turn = await agentMcpClient.withStepMcpTools({
@@ -977,42 +978,6 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
     if (flushTimer) clearTimeout(flushTimer)
     await flushChunks()
     return drainOf({ state: stepContent })
-}
-
-async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages, log, conversationId, abortSignal }: {
-    model: ReturnType<typeof aiUtils.createModel>
-    userMessage: string
-    previousUiMessages: unknown[]
-    log: JobContext['log']
-    conversationId: string
-    abortSignal?: AbortSignal
-}): Promise<string | undefined> {
-    // getAgentConfig includes the just-saved user message, so length 1 = first turn
-    const isFirstTurn = previousUiMessages.length === 1
-    if (!isFirstTurn) return undefined
-
-    const { data: generatedTitle } = await tryCatch(async () => {
-        const { text } = await generateText({
-            model,
-            abortSignal,
-            telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-title' }),
-            prompt: `Generate a concise 3-6 word title for this conversation. Return ONLY the title, nothing else.\n\nUser: ${userMessage}`,
-        })
-        return sanitizeGeneratedTitle(text)
-    })
-
-    if (!generatedTitle) {
-        log.warn({ conversation: { id: conversationId } }, 'Failed to auto-generate title')
-    }
-    return generatedTitle ?? undefined
-}
-
-function sanitizeGeneratedTitle(rawTitle: string): string {
-    return rawTitle
-        .replace(/[*_`~#]/g, '')
-        .replace(/^["']+|["']+$/g, '')
-        .trim()
-        .slice(0, 100)
 }
 
 function waitForAbort(signal: AbortSignal): Promise<void> {

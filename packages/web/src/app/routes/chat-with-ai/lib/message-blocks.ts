@@ -218,6 +218,7 @@ export function buildMessageBlocks({
         continue;
       }
       if (chatPartUtils.isDisplayTool(toolName)) {
+        endSegment();
         result.push({ kind: 'display-tool', part: p });
         continue;
       }

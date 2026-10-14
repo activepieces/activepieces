@@ -172,7 +172,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             const stepModel = isFirstStep && !isNil(fast) ? fast : current()
             const usesFastModel = stepModel !== current()
             const stepBudget = stepModel.budget
-            const visibleTools = skillSurface?.coreToolNames ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
+            const visibleTools = skillSurface?.attachedToolNames() ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
             const phaseTools = isNil(skillSurface) ? visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)) : visibleTools
             const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
             const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider: stepModel.provider })
