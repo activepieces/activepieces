@@ -2308,7 +2308,6 @@
   "useMultiSelect must be used within MultiSelectProvider": "useMultiSelect must be used within MultiSelectProvider",
   "Unset": "Unset",
   "+{remainingPiecesCount} more": "+{remainingPiecesCount} more",
-  "{name} is editing this {resource}. Only one person can edit at a time.": "{name} is editing this {resource}. Only one person can edit at a time.",
   "Take Over": "Take Over",
   "fieldCount": "{count, plural, =1 {1 field} other {# fields}}",
   "Raw JSON": "Raw JSON",
