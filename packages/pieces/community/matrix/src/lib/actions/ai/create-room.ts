@@ -62,7 +62,6 @@ export const createRoom = createAction({
     if (roomId === null) throw new Error('The homeserver did not return a room ID.');
     let alias = matrixClient.stringOr(record['room_alias']);
     if (alias === null && aliasName !== undefined) {
-      // Best-effort: the room already exists, so a failed lookup must not hide its roomId.
       try {
         const state = await matrixClient.request({
           auth: auth.props,

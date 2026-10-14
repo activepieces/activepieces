@@ -47,7 +47,6 @@ function eventId(value: unknown): string {
 function transactionId({ value, run, step, parts }: { value: unknown; run: { id: string }; step: { name: string }; parts: unknown[] }): string {
   const text = clean(value);
   if (text === '') {
-    // Same flow run + step + request => same ID, so an AP retry of this step is deduplicated by the homeserver.
     const digest = createHash('sha256').update(JSON.stringify([run.id, step.name, ...parts])).digest('hex').slice(0, 40);
     return `ap-${digest}`;
   }
