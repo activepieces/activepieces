@@ -10448,7 +10448,7 @@
     },
     "packages/pieces/core/crypto": {
       "name": "@activepieces/piece-crypto",
-      "version": "0.0.29",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
