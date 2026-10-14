@@ -61,7 +61,7 @@ export function truncateLargeResult(result: unknown): unknown {
         maxBytes: MAX_TOOL_RESULT_BYTES,
         wrap: (json) => buildOversizeEnvelope({
             result,
-            text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved]${sizeNote} Truncated values are marked with "…[truncated]".\n\n${json}`,
+            text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved]${sizeNote} Truncated values are marked with "…[truncated]". This is not the full data, so never answer as if you saw all of it: narrow the request (a filter, fewer items or fields), or hand the digging to a task when you can.\n\n${json}`,
         }),
     })
     return fitted ?? buildOversizeEnvelope({
