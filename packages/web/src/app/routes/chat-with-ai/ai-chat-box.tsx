@@ -26,6 +26,10 @@ import {
 } from '@/features/chat/lib/chat-store-context';
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import {
+  ChatVariant,
+  ChatVariantProvider,
+} from '@/features/chat/lib/chat-variant-context';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { ChatFlowContext, useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
@@ -82,24 +86,26 @@ export function AIChatBox({
 
   return (
     <ChatStoreProvider>
-      <TaskPanelLayout>
-        <ChatBoxContent
-          incognito={incognito}
-          initialPrompt={initialPrompt}
-          agentId={agentId}
-          builder={builder}
-          flowContext={flowContext}
-          onTurnEnd={onTurnEnd}
-          emptyState={emptyState}
-          footerNote={footerNote}
-          placeholder={placeholder}
-          conversationId={conversationId}
-          onTitleUpdate={onTitleUpdate}
-          onConversationCreated={onConversationCreated}
-          variant={variant}
-          inputContext={inputContext}
-        />
-      </TaskPanelLayout>
+      <ChatVariantProvider value={variant}>
+        <TaskPanelLayout>
+          <ChatBoxContent
+            incognito={incognito}
+            initialPrompt={initialPrompt}
+            agentId={agentId}
+            builder={builder}
+            flowContext={flowContext}
+            onTurnEnd={onTurnEnd}
+            emptyState={emptyState}
+            footerNote={footerNote}
+            placeholder={placeholder}
+            conversationId={conversationId}
+            onTitleUpdate={onTitleUpdate}
+            onConversationCreated={onConversationCreated}
+            variant={variant}
+            inputContext={inputContext}
+          />
+        </TaskPanelLayout>
+      </ChatVariantProvider>
     </ChatStoreProvider>
   );
 }
@@ -264,10 +270,11 @@ function ChatBoxContent({
     (personalization.companyInput ?? '').trim().length > 0 &&
     currentUser?.platformRole !== PlatformRole.ADMIN;
   const showOnboardingCard =
-    isEmpty && !incognito && (isFirstRun || promptOpen);
+    isEmpty && !incognito && !isPanel && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
     isEmpty &&
     !incognito &&
+    !isPanel &&
     isNil(agentId) &&
     !showOnboardingCard &&
     !personalization.isResolving &&
@@ -371,8 +378,8 @@ function ChatBoxContent({
             >
               <ChatContainerContent
                 className={cn(
-                  'max-w-3xl mx-auto pb-4 gap-0 min-h-full',
-                  isPanel ? 'pt-2' : 'pt-8',
+                  'max-w-3xl mx-auto pb-4 min-h-full',
+                  isPanel ? 'pt-2 gap-2' : 'pt-8 gap-0',
                 )}
               >
                 {isLoadingHistory && <MessageSkeletons />}
@@ -576,6 +583,6 @@ type AIChatBoxProps = {
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
   onTitleUpdate?: (title: string) => void;
-  variant?: 'page' | 'panel';
+  variant?: ChatVariant;
   inputContext?: React.ReactNode;
 };

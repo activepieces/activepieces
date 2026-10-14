@@ -38,14 +38,12 @@ import { foldersHooks } from '@/features/folders';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
-import { BuilderChatToggle } from '../builder-chat/builder-chat-toggle';
 import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 
 import { BuilderFlowStatusSection } from './flow-status';
@@ -77,9 +75,6 @@ export const BuilderHeader = () => {
   ]);
 
   const { embedState } = useEmbedding();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const showBuilderChatToggle =
-    platform.plan.chatEnabled && !embedState.isEmbedded;
   const { project } = projectCollectionUtils.useCurrentProject();
 
   const { data: folderData } = foldersHooks.useFolder(
@@ -188,7 +183,6 @@ export const BuilderHeader = () => {
       {!embedState.hideActiveUsers && (
         <ActiveUsersWidget resourceId={flow.id} />
       )}
-      {showBuilderChatToggle && <BuilderChatToggle />}
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"

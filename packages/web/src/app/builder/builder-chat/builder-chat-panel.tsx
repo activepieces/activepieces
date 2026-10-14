@@ -6,7 +6,9 @@ import { PanelLeft, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import autoConfigureImage from '@/assets/img/custom/builder-chat/auto-configure.png';
+import manipulateDataImage from '@/assets/img/custom/builder-chat/manipulate-data.png';
+import understandImage from '@/assets/img/custom/builder-chat/understand.png';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -17,15 +19,16 @@ import {
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { ChatFlowContext } from '@/features/chat/lib/use-chat';
 import { stepsHooks } from '@/features/pieces';
+import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
-
-import { useToggleBuilderChat } from './use-toggle-builder-chat';
 
 export function BuilderChatPanel() {
   const store = useBuilderStore();
   const flowId = useBuilderStateContext((state) => state.flow.id);
-  const toggleBuilderChat = useToggleBuilderChat();
+  const toggleBuilderChat = useBuilderStateContext(
+    (state) => state.setBuilderChatOpen,
+  );
   const [freshSession, setFreshSession] = useState(0);
   const [prompt, setPrompt] = useState<string | undefined>(undefined);
 
@@ -55,9 +58,9 @@ export function BuilderChatPanel() {
   return (
     <div className="flex h-full w-full flex-col border-r bg-gray-1">
       <div className="flex items-center justify-between px-4 py-2.5">
-        <span className="text-sm font-medium">{t('Chat')}</span>
+        <span className="text-sm font-medium">{t('AI Assistant')}</span>
         <div className="flex items-center gap-1">
-          <HeaderAction label={t('Reset conversation')} onClick={startFresh}>
+          <HeaderAction label={t('Reset Conversation')} onClick={startFresh}>
             <RefreshCw className="size-4" />
           </HeaderAction>
           <HeaderAction
@@ -82,7 +85,7 @@ export function BuilderChatPanel() {
             conversationId={freshSession === 0 ? latestConversationId : null}
             initialPrompt={prompt}
             flowContext={flowContext}
-            placeholder={t('Ask chat to build or change this flow...')}
+            placeholder={t('Ask to configure your steps...')}
             emptyState={<QuickStartActions onPick={startFresh} />}
             inputContext={<SelectedStepChip />}
           />
@@ -107,7 +110,7 @@ function HeaderAction({
         <Button
           variant="ghost"
           size="icon"
-          className="size-7 text-gray-11"
+          className="size-6 rounded text-gray-9 hover:bg-gray-3"
           aria-label={label}
           onClick={() => onClick()}
         >
@@ -122,31 +125,44 @@ function HeaderAction({
 function QuickStartActions({ onPick }: { onPick: (prompt: string) => void }) {
   const actions = [
     {
-      title: t('Build this flow for me'),
-      prompt: t('Build this flow for me. Ask me what it should do first.'),
+      title: t('Manipulate my data'),
+      prompt: t(
+        'Help me process and transform the data to the required format',
+      ),
+      image: manipulateDataImage,
+      imageClassName: 'h-[110px] w-[235px]',
     },
     {
-      title: t('Explain this flow'),
-      prompt: t('Explain what this flow does, step by step.'),
+      title: t('Help me to understand'),
+      prompt: t('Explain the available data and how I can use it'),
+      image: understandImage,
+      imageClassName: 'h-[118px] w-[174px]',
     },
     {
       title: t('Auto configure my steps'),
-      prompt: t(
-        'Configure all the steps in this flow using the data available.',
-      ),
+      prompt: t('Automatically configure all fields using the available data'),
+      image: autoConfigureImage,
+      imageClassName: 'h-[110px] w-[235px]',
     },
   ];
   return (
-    <div className="flex flex-col gap-2.5 px-4 pb-4 pt-2">
+    <div className="flex flex-col gap-2.5 px-4 pb-4 pt-4">
       {actions.map((action, index) => (
         <button
           key={action.title}
           type="button"
           onClick={() => onPick(action.prompt)}
-          className="rounded-lg bg-gray-2 px-4 py-4 text-left text-sm font-medium text-gray-11 transition-colors hover:bg-gray-3 animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
+          className="flex h-40 w-full flex-col items-start gap-3.5 overflow-hidden rounded-lg bg-gray-2 px-4 pt-4 text-left transition-colors hover:bg-gray-3 animate-in fade-in slide-in-from-bottom-2 fill-mode-both"
           style={{ animationDelay: `${index * 100}ms` }}
         >
-          {action.title}
+          <span className="text-sm font-medium text-gray-11">
+            {action.title}
+          </span>
+          <img
+            src={action.image}
+            alt=""
+            className={cn('shrink-0 object-cover', action.imageClassName)}
+          />
         </button>
       ))}
     </div>
@@ -170,14 +186,17 @@ function SelectedStepChip() {
 
 function StepChip({ step }: { step: Step }) {
   const { stepMetadata } = stepsHooks.useStepMetadata({ step });
+  if (isNil(stepMetadata)) {
+    return null;
+  }
   return (
-    <span className="flex min-w-0 max-w-[160px] items-center gap-1.5 rounded-md bg-gray-3 px-1.5 py-0.5 text-xs text-gray-11 animate-in fade-in slide-in-from-left-2">
-      {stepMetadata && (
-        <img src={stepMetadata.logoUrl} alt="" className="size-3.5 shrink-0" />
-      )}
-      <TextWithTooltip tooltipMessage={step.displayName}>
-        <p className="truncate">{step.displayName}</p>
-      </TextWithTooltip>
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="flex size-5 shrink-0 items-center justify-center rounded bg-gray-3 animate-in fade-in slide-in-from-left-2">
+          <img src={stepMetadata.logoUrl} alt="" className="size-3" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{step.displayName}</TooltipContent>
+    </Tooltip>
   );
 }

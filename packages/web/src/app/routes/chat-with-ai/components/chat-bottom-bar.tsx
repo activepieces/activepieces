@@ -129,7 +129,7 @@ export function ChatBottomBar({
         className={cn(
           'overflow-hidden rounded-xl border transition-colors',
           variant === 'panel'
-            ? 'chat-panel-composer border-[1.5px] border-transparent shadow-[0_4px_0_0_var(--accent-3)]'
+            ? 'chat-panel-composer rounded-[10px] border-[1.5px] border-transparent'
             : minimal
             ? 'border-transparent bg-transparent hover:bg-gray-3/30'
             : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',
@@ -149,6 +149,7 @@ export function ChatBottomBar({
               : placeholder ?? t('Reply...')
           }
           leftActions={leftActions}
+          variant={variant}
           rightActions={
             hideModelSelector === true ? null : (
               <ChatModelSelector

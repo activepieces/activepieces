@@ -38,6 +38,7 @@ import { flowCanvasConsts } from './flow-canvas/utils/consts';
 import { BuilderBanner } from './flow-canvas/widgets/builder-banner';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
+import { builderChatSelectors } from './state/builder-chat-state';
 import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
 const animateResizeClassName = `transition-all `;
@@ -46,6 +47,7 @@ const SPLIT_MODE_INITIAL_OPEN_SIZE_PX = 1000;
 const SPLIT_MODE_SIDEBAR_SIZE_PX = 850;
 const DEFAULT_SIDEBAR_SIZE = '25%';
 const DEFAULT_MIN_SIZE = '400px';
+const WITH_CHAT_SIDEBAR_SIZE = 340;
 const SPLIT_MODE_COLLAPSE_THRESHOLD_PX = 700;
 
 const BuilderPage = () => {
@@ -71,7 +73,7 @@ const BuilderPage = () => {
       state.selectedStep ?? '',
       state.flowVersion.trigger,
     ),
-    state.stepDataPanelView,
+    builderChatSelectors.effectiveStepDataPanelView(state),
     state.isStepDataPanelOpen,
     state.setStepDataPanelView,
     state.setStepDataPanelOpen,
@@ -120,11 +122,13 @@ const BuilderPage = () => {
       ? isInitialOpen
         ? SPLIT_MODE_INITIAL_OPEN_SIZE_PX
         : SPLIT_MODE_SIDEBAR_SIZE_PX
+      : showBuilderChat
+      ? WITH_CHAT_SIDEBAR_SIZE
       : DEFAULT_SIDEBAR_SIZE;
     handle.resize(targetSize);
     const rafId = window.requestAnimationFrame(() => handle.resize(targetSize));
     return () => window.cancelAnimationFrame(rafId);
-  }, [prefersSplitLayout, previousRightSidebar, rightSidebar]);
+  }, [prefersSplitLayout, previousRightSidebar, rightSidebar, showBuilderChat]);
 
   useEffect(() => {
     if (!isSplitForPiece || !isDraggingHandle) return;
@@ -167,119 +171,124 @@ const BuilderPage = () => {
       <div className="z-40">
         <BuilderHeader />
       </div>
-      <ResizablePanelGroup orientation="horizontal">
+      <div className="flex min-h-0 grow">
         {showBuilderChat && (
-          <>
-            <ResizablePanel
-              id="builder-chat"
-              defaultSize="360px"
-              minSize="320px"
-              maxSize="50%"
-              className="min-w-0 z-30"
-            >
-              <BuilderChatPanel />
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-          </>
+          <div className="z-30 h-full w-[360px] shrink-0">
+            <BuilderChatPanel />
+          </div>
         )}
-        <ResizablePanel defaultSize="100%" id="flow-canvas">
-          <div ref={middlePanelRef} className="relative h-full w-full">
-            <CursorPositionProvider>
-              <FlowCanvas
-                setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
-              ></FlowCanvas>
-            </CursorPositionProvider>
+        <ResizablePanelGroup orientation="horizontal">
+          <ResizablePanel defaultSize="100%" id="flow-canvas">
+            <div ref={middlePanelRef} className="relative h-full w-full">
+              <CursorPositionProvider>
+                <FlowCanvas
+                  setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
+                ></FlowCanvas>
+              </CursorPositionProvider>
 
-            <BuilderBanner />
-            {showBuilderChat && <ChatCanvasStatus />}
-            {middlePanelRef.current &&
-              middlePanelRef.current.clientWidth > 0 && (
-                <CanvasControls
-                  canvasHeight={middlePanelRef.current?.clientHeight ?? 0}
-                  canvasWidth={middlePanelRef.current?.clientWidth ?? 0}
-                  hasCanvasBeenInitialised={hasCanvasBeenInitialised}
-                  selectedStep={selectedStepName}
-                ></CanvasControls>
-              )}
-
-            <ShowPoweredBy
-              position="absolute"
-              show={platform?.plan.showPoweredBy}
-            />
-            <DataSelector
-              parentHeight={middlePanelSize.height}
-              parentWidth={middlePanelSize.width}
-            ></DataSelector>
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle
-          disabled={rightSidebar === RightSideBarType.NONE}
-          withHandle={rightSidebar !== RightSideBarType.NONE}
-          onPointerDown={() => setIsDraggingHandle(true)}
-          onPointerUp={() => setIsDraggingHandle(false)}
-          onPointerCancel={() => setIsDraggingHandle(false)}
-          className={
-            rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
-          }
-        />
-
-        <ResizablePanel
-          panelRef={rightHandleRef}
-          id="right-sidebar"
-          collapsedSize="0%"
-          defaultSize="0%"
-          minSize={
-            rightSidebar === RightSideBarType.NONE ? '0%' : DEFAULT_MIN_SIZE
-          }
-          maxSize={
-            rightSidebar === RightSideBarType.NONE
-              ? '0%'
-              : prefersSplitLayout
-              ? '95%'
-              : '60%'
-          }
-          className={cn('min-w-0 bg-gray-1 z-30', {
-            [animateResizeClassName]: !isDraggingHandle,
-          })}
-          style={{
-            transitionDuration: `${
-              isDraggingHandle ? 0 : flowCanvasConsts.SIDEBAR_ANIMATION_DURATION
-            }ms`,
-          }}
-        >
-          <div
-            ref={rightSidePanelRef}
-            className="relative flex h-full w-full flex-col"
-          >
-            {rightSidebar === RightSideBarType.PIECE_SETTINGS && (
-              <ChatUpdatedStepNotice />
-            )}
-            <div className="min-h-0 grow">
-              {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-                selectedStep && (
-                  <StepSettingsProvider
-                    pieceModel={pieceModel}
-                    pieceModelNotFound={pieceModelNotFound}
-                    selectedStep={selectedStep}
-                    key={constructContainerKey({
-                      flowVersionId: flowVersion.id,
-                      step: selectedStep,
-                      hasPieceModelLoaded: !!pieceModel,
-                      remoteRevision,
-                    })}
-                  >
-                    <StepSettingsContainer />
-                  </StepSettingsProvider>
+              <BuilderBanner />
+              {showBuilderChat && <ChatCanvasStatus />}
+              {middlePanelRef.current &&
+                middlePanelRef.current.clientWidth > 0 && (
+                  <CanvasControls
+                    canvasHeight={
+                      middlePanelSize.height ||
+                      middlePanelRef.current.clientHeight
+                    }
+                    canvasWidth={
+                      middlePanelSize.width ||
+                      middlePanelRef.current.clientWidth
+                    }
+                    hasCanvasBeenInitialised={hasCanvasBeenInitialised}
+                    selectedStep={selectedStepName}
+                  ></CanvasControls>
                 )}
-              {rightSidebar === RightSideBarType.RUNS && <RunsList />}
-              {rightSidebar === RightSideBarType.VERSIONS && (
-                <FlowVersionsList />
-              )}
+
+              <ShowPoweredBy
+                position="absolute"
+                show={platform?.plan.showPoweredBy}
+              />
+              <DataSelector
+                parentHeight={middlePanelSize.height}
+                parentWidth={middlePanelSize.width}
+              ></DataSelector>
             </div>
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          </ResizablePanel>
+
+          <ResizableHandle
+            disabled={rightSidebar === RightSideBarType.NONE}
+            withHandle={rightSidebar !== RightSideBarType.NONE}
+            onPointerDown={() => setIsDraggingHandle(true)}
+            onPointerUp={() => setIsDraggingHandle(false)}
+            onPointerCancel={() => setIsDraggingHandle(false)}
+            className={
+              rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
+            }
+          />
+
+          <ResizablePanel
+            panelRef={rightHandleRef}
+            id="right-sidebar"
+            collapsedSize="0%"
+            defaultSize="0%"
+            minSize={
+              rightSidebar === RightSideBarType.NONE
+                ? '0%'
+                : showBuilderChat
+                ? WITH_CHAT_SIDEBAR_SIZE
+                : DEFAULT_MIN_SIZE
+            }
+            maxSize={
+              rightSidebar === RightSideBarType.NONE
+                ? '0%'
+                : prefersSplitLayout
+                ? '95%'
+                : '60%'
+            }
+            className={cn('min-w-0 bg-gray-1 z-30', {
+              [animateResizeClassName]: !isDraggingHandle,
+            })}
+            style={{
+              transitionDuration: `${
+                isDraggingHandle
+                  ? 0
+                  : flowCanvasConsts.SIDEBAR_ANIMATION_DURATION
+              }ms`,
+            }}
+          >
+            <div
+              ref={rightSidePanelRef}
+              className="relative flex h-full w-full flex-col"
+            >
+              {rightSidebar === RightSideBarType.PIECE_SETTINGS && (
+                <ChatUpdatedStepNotice />
+              )}
+              <div className="min-h-0 grow">
+                {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+                  selectedStep && (
+                    <StepSettingsProvider
+                      pieceModel={pieceModel}
+                      pieceModelNotFound={pieceModelNotFound}
+                      selectedStep={selectedStep}
+                      key={constructContainerKey({
+                        flowVersionId: flowVersion.id,
+                        step: selectedStep,
+                        hasPieceModelLoaded: !!pieceModel,
+                        remoteRevision,
+                      })}
+                    >
+                      <StepSettingsContainer />
+                    </StepSettingsProvider>
+                  )}
+                {rightSidebar === RightSideBarType.RUNS && <RunsList />}
+                {rightSidebar === RightSideBarType.VERSIONS && (
+                  <FlowVersionsList />
+                )}
+              </div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
 
       <ChatDrawer />
     </div>

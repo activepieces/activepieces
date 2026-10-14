@@ -45,7 +45,13 @@ import { PlatformNav } from './platform';
 import { sidebarStyles } from './sidebar-styles';
 import { SidebarUser } from './sidebar-user';
 
-export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
+export function AppSidebar({
+  mode,
+  expandOnHoverOnly = false,
+}: {
+  mode: AppSidebarMode;
+  expandOnHoverOnly?: boolean;
+}) {
   const { embedState } = useEmbedding();
   const rail = useRailOpenState();
   const isPlatform = mode === 'platform';
@@ -58,9 +64,12 @@ export function AppSidebar({ mode }: { mode: AppSidebarMode }) {
 
   return (
     <SidebarProvider
-      open={isPlatform || rail.open}
-      onOpenChange={isPlatform ? keepOpen : rail.onOpenChange}
-      keyboardShortcut={!isPlatform}
+      open={isPlatform || (rail.open && !expandOnHoverOnly)}
+      onOpenChange={
+        isPlatform || expandOnHoverOnly ? ignoreOpenChange : rail.onOpenChange
+      }
+      hoverMode={expandOnHoverOnly}
+      keyboardShortcut={!isPlatform && !expandOnHoverOnly}
       shortcutIgnoresEditable
       className="contents"
       style={SIDEBAR_STYLE}
@@ -321,7 +330,7 @@ function HeaderIconButton({
   );
 }
 
-function keepOpen() {
+function ignoreOpenChange() {
   return undefined;
 }
 

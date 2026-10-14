@@ -30,6 +30,7 @@ export function ChatInput({
   rightActions,
   minimalUntilFocus = false,
   onFocusChange,
+  variant = 'page',
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
@@ -40,7 +41,9 @@ export function ChatInput({
   rightActions?: React.ReactNode;
   minimalUntilFocus?: boolean;
   onFocusChange?: (focused: boolean) => void;
+  variant?: 'page' | 'panel';
 }) {
+  const isPanel = variant === 'panel';
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
@@ -125,6 +128,7 @@ export function ChatInput({
         value={value}
         onValueChange={handleValueChange}
         onSubmit={handleSubmit}
+        maxHeight={isPanel ? 150 : 240}
         className="border-0 rounded-none shadow-none"
       >
         <AnimatePresence>
@@ -179,7 +183,11 @@ export function ChatInput({
             placeholder={placeholder ?? t('Tell me what you need...')}
             className={cn(
               'text-base sm:text-sm',
-              showToolbar ? 'min-h-[44px]' : 'min-h-[24px]',
+              isPanel
+                ? 'min-h-[80px]'
+                : showToolbar
+                ? 'min-h-[44px]'
+                : 'min-h-[24px]',
             )}
             onFocus={() => {
               setFocused(true);
@@ -193,14 +201,16 @@ export function ChatInput({
         )}
         {showToolbar && (
           <PromptInputActions className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <PromptInputAction tooltip={t('Attach files')}>
-                <FileUploadTrigger asChild>
-                  <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12">
-                    <Paperclip className="size-4" />
-                  </div>
-                </FileUploadTrigger>
-              </PromptInputAction>
+            <div className="flex min-w-0 items-center gap-1">
+              {!isPanel && (
+                <PromptInputAction tooltip={t('Attach files')}>
+                  <FileUploadTrigger asChild>
+                    <div className="flex h-9 w-9 sm:h-7 sm:w-7 cursor-pointer items-center justify-center rounded-full text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12">
+                      <Paperclip className="size-4" />
+                    </div>
+                  </FileUploadTrigger>
+                </PromptInputAction>
+              )}
               {leftActions}
             </div>
             <div className="flex items-center gap-1">
@@ -239,7 +249,7 @@ export function ChatInput({
                     <ArrowUp className="size-4" />
                   </Button>
                 </PromptInputAction>
-              ) : isVoiceSupported ? (
+              ) : isVoiceSupported && !isPanel ? (
                 <PromptInputAction tooltip={t('Voice input')}>
                   <button
                     type="button"

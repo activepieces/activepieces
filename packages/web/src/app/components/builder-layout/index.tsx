@@ -32,7 +32,7 @@ function BuilderLayoutInner({ children }: { children: React.ReactNode }) {
         !embedState.isEmbedded && 'max-md:h-svh max-md:flex-col',
       )}
     >
-      {!embedState.isEmbedded && <AppSidebar mode="app" />}
+      {!embedState.isEmbedded && <AppSidebar mode="app" expandOnHoverOnly />}
       <SidebarProvider
         hoverMode={!searchOpen}
         defaultOpen={false}

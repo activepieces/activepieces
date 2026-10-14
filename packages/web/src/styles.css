@@ -1244,14 +1244,15 @@
 
 .chat-panel-composer {
   background-image: linear-gradient(var(--gray-1), var(--gray-1)),
-    linear-gradient(90deg, var(--accent-6), var(--accent-8), var(--accent-6));
+    linear-gradient(90deg, #faadff 0%, #ffd68a 50%, #8ac8ff 100%);
   background-origin: border-box;
   background-clip: padding-box, border-box;
+  box-shadow: 0 4px 0 0 var(--chat-panel-composer-shadow);
 }
 
 .chat-panel-composer:focus-within {
   background-image: linear-gradient(var(--gray-1), var(--gray-1)),
-    linear-gradient(90deg, var(--accent-8), var(--accent-9), var(--accent-8));
+    linear-gradient(90deg, #8800f7 0%, #ef9c01 50%, #007dea 100%);
 }
 
 @layer base {
@@ -1260,9 +1261,11 @@
     --admin-page: oklch(97.9% 0 0);
     --admin-surface: var(--panel);
     --admin-card-border: var(--gray-6);
+    --chat-panel-composer-shadow: #f7e2ff;
   }
 
   [data-theme='dark'] {
+    --chat-panel-composer-shadow: oklch(28% 0.07 305);
     --admin-page: var(--gray-1);
     --admin-surface: var(--panel);
     --admin-card-border: var(--gray-6);

@@ -13,9 +13,16 @@ const StepDataPanelViewToggle = ({
   disabled = false,
   className,
 }: StepDataPanelViewToggleProps) => {
-  const [stepDataPanelView, setStepDataPanelView] = useBuilderStateContext(
-    (state) => [state.stepDataPanelView, state.setStepDataPanelView],
-  );
+  const [stepDataPanelView, setStepDataPanelView, isBuilderChatOpen] =
+    useBuilderStateContext((state) => [
+      state.stepDataPanelView,
+      state.setStepDataPanelView,
+      state.isBuilderChatOpen,
+    ]);
+
+  if (isBuilderChatOpen) {
+    return null;
+  }
 
   const isSplit = stepDataPanelView === 'split';
   const ToggleIcon = isSplit ? PanelBottom : PanelRight;

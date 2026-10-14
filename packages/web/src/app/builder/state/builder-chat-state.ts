@@ -10,7 +10,10 @@ import { ChatFlowActivity } from '@/features/chat/lib/chat-flow-activity';
 
 import { BuilderState } from '../builder-hooks';
 
+import { StepDataPanelView } from './canvas-state';
+
 const OPEN_STORAGE_KEY = 'builder-chat-panel-open';
+const COACHMARK_SEEN_STORAGE_KEY = 'builder-chat-coachmark-seen';
 const HIGHLIGHT_DURATION_MS = 4000;
 
 export const createBuilderChatState = (
@@ -18,14 +21,18 @@ export const createBuilderChatState = (
   set: StoreApi<BuilderState>['setState'],
 ): BuilderChatState => {
   return {
-    isBuilderChatOpen: readStoredOpen(),
+    isBuilderChatOpen: readStorage(OPEN_STORAGE_KEY) === 'true',
     setBuilderChatOpen: (open: boolean) => {
-      writeStoredOpen(open);
-      set({ isBuilderChatOpen: open });
+      writeStorage({ key: OPEN_STORAGE_KEY, value: String(open) });
+      const showCoachmark =
+        !open && readStorage(COACHMARK_SEEN_STORAGE_KEY) !== 'true';
+      set({ isBuilderChatOpen: open, isChatCoachmarkVisible: showCoachmark });
     },
-    collapsedAppSidebarForChat: false,
-    setCollapsedAppSidebarForChat: (collapsed: boolean) =>
-      set({ collapsedAppSidebarForChat: collapsed }),
+    isChatCoachmarkVisible: false,
+    dismissChatCoachmark: () => {
+      writeStorage({ key: COACHMARK_SEEN_STORAGE_KEY, value: 'true' });
+      set({ isChatCoachmarkVisible: false });
+    },
     recentlyChangedSteps: [],
     recentlyAddedSteps: [],
     remoteRevision: 0,
@@ -88,27 +95,35 @@ export const createBuilderChatState = (
   };
 };
 
-function readStoredOpen(): boolean {
+function readStorage(key: string): string | null {
   try {
-    return localStorage.getItem(OPEN_STORAGE_KEY) === 'true';
+    return localStorage.getItem(key);
   } catch {
-    return false;
+    return null;
   }
 }
 
-function writeStoredOpen(open: boolean): void {
+function writeStorage({ key, value }: { key: string; value: string }): void {
   try {
-    localStorage.setItem(OPEN_STORAGE_KEY, String(open));
+    localStorage.setItem(key, value);
   } catch {
     return;
   }
 }
 
+function effectiveStepDataPanelView(state: BuilderState): StepDataPanelView {
+  return state.isBuilderChatOpen ? 'drawer' : state.stepDataPanelView;
+}
+
+export const builderChatSelectors = {
+  effectiveStepDataPanelView,
+};
+
 export type BuilderChatState = {
   isBuilderChatOpen: boolean;
   setBuilderChatOpen: (open: boolean) => void;
-  collapsedAppSidebarForChat: boolean;
-  setCollapsedAppSidebarForChat: (collapsed: boolean) => void;
+  isChatCoachmarkVisible: boolean;
+  dismissChatCoachmark: () => void;
   recentlyChangedSteps: string[];
   recentlyAddedSteps: string[];
   remoteRevision: number;

@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm, Resolver } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { builderChatSelectors } from '@/app/builder/state/builder-chat-state';
 import { Form } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -70,7 +71,7 @@ const StepSettingsContainer = () => {
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
     state.run,
-    state.stepDataPanelView,
+    builderChatSelectors.effectiveStepDataPanelView(state),
     state.isStepDataPanelOpen,
   ]);
 
