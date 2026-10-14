@@ -10,7 +10,7 @@ export const tidycal = createPiece({
   displayName: 'TidyCal',
   description: 'Streamline your scheduling',
   auth: tidyCalAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/tidycal.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
