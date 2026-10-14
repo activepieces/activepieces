@@ -11,7 +11,7 @@ A Team or Enterprise feature stops working once the plan no longer includes it, 
 Most gates sat on the admin routes that configure a feature (`platformMustHaveFeatureEnabled`), so anything set up while a plan or trial was live kept working after it lapsed. The self-serve Enterprise Trial makes that the common case, because every trial ends.
 
 ## Why
-Checking only at setup let a lapsed plan keep its Enterprise features. A clear plan error won over quiet fallbacks (AI steps moving to credits, SAML users sent to email sign-in) because an unexplained change of behaviour is harder to support than an error that says why. Two features degrade instead of failing, so nobody is locked out of their own work: a custom-role member acts as Viewer, and deleting a flow or table with git sync connected still deletes it and skips the push. An env var to switch enforcement off was rejected as one more setting to support.
+Checking only at setup let a lapsed plan keep its Enterprise features. A clear plan error won over quiet fallbacks (AI steps moving to credits, SAML users sent to email sign-in) because an unexplained change of behaviour is harder to support than an error that says why. Two features degrade instead of failing, so nobody is locked out of their own work: a custom-role member keeps only the permissions their role shares with Viewer, and deleting a flow or table with git sync connected still deletes it and skips the push. An env var to switch enforcement off was rejected as one more setting to support.
 
 ## Consequences
 - A functional breaking change, documented in `docs/install/reference/breaking-changes-unreleased.mdx` until the release that ships it.

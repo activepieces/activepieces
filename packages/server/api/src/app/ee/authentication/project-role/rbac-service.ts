@@ -1,10 +1,9 @@
-import { ActivepiecesError, ApId, ErrorCode, isNil, Permission, ProjectId, ProjectRole } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, Permission, ProjectId, ProjectRole } from '@activepieces/core-utils'
 import { ApEdition, FlowOperationType, Principal, PrincipalType, UserPrincipal } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
 import { projectMemberService } from '../../projects/project-members/project-member.service'
-import { projectRoleService } from '../../projects/project-role/project-role.service'
 
 export const rbacService = (log: FastifyBaseLogger) => ({
     async assertPrinicpalAccessToProject({ principal, permission, projectId }: AssertRoleHasPermissionParams): Promise<void> {
@@ -23,8 +22,8 @@ export const rbacService = (log: FastifyBaseLogger) => ({
 
             case PrincipalType.USER: {
                 const principalRole = await getPrincipalRoleOrThrow({ principal, projectId, log })
-                const access = await grantAccess({
-                    principalRoleId: principalRole.id,
+                const access = grantAccess({
+                    principalRole,
                     routePermission: permission,
                 })
 
@@ -127,20 +126,11 @@ const getPrincipalRoleOrThrow = async ({ principal, projectId, log }: GetPrincip
     return projectRole
 }
 
-const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs): Promise<boolean> => {
+const grantAccess = ({ principalRole, routePermission }: GrantAccessArgs): boolean => {
     if (isNil(routePermission)) {
         return true
     }
-
-    const principalRole = await projectRoleService.getOneOrThrowById({
-        id: principalRoleId,
-    })
-
-    if (isNil(principalRole)) {
-        return false
-    }
-
-    return principalRole.permissions?.includes(routePermission)
+    return principalRole.permissions?.includes(routePermission) ?? false
 }
 
 const throwPermissionDenied = ({ principal, projectId, projectRole, permission }: ThrowPermissionDeniedParams): never => {
@@ -156,7 +146,7 @@ const throwPermissionDenied = ({ principal, projectId, projectRole, permission }
 }
 
 type GrantAccessArgs = {
-    principalRoleId: ApId
+    principalRole: ProjectRole
     routePermission: Permission | undefined
 }
 

@@ -6,7 +6,6 @@ import { AuthorizationType, RouteKind } from '../../../core/security/authorizati
 import { convertToSecurityAccessRequest } from '../../../core/security/v2/authz/authorization-middleware'
 import { system } from '../../../helper/system/system'
 import { projectMemberService } from '../../projects/project-members/project-member.service'
-import { projectRoleService } from '../../projects/project-role/project-role.service'
 
 export function editionRequiresRbac(): boolean {
     return [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
@@ -76,8 +75,8 @@ export const assertRoleHasPermission = async (principal: Principal, projectId: P
         return
     }
     const principalRole = await getPrincipalRoleOrThrow(principal.id, projectId, log)
-    const access = await grantAccess({
-        principalRoleId: principalRole.id,
+    const access = grantAccess({
+        principalRole,
         routePermission: permission,
     })
     if (!access) {
@@ -124,20 +123,11 @@ export const getPrincipalRoleOrThrow = async (userId: ApId, projectId: ProjectId
 
 }
 
-const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs): Promise<boolean> => {
+const grantAccess = ({ principalRole, routePermission }: GrantAccessArgs): boolean => {
     if (isNil(routePermission)) {
         return true
     }
-
-    const principalRole = await projectRoleService.getOneOrThrowById({
-        id: principalRoleId,
-    })
-    
-    if (isNil(principalRole)) {
-        return false
-    }
-
-    return principalRole.permissions?.includes(routePermission)
+    return principalRole.permissions?.includes(routePermission) ?? false
 }
 
 const throwPermissionDenied = (projectRole: ProjectRole, userId: ApId, projectId: ProjectId, permission: Permission | undefined): never => {
@@ -153,6 +143,6 @@ const throwPermissionDenied = (projectRole: ProjectRole, userId: ApId, projectId
 }
 
 type GrantAccessArgs = {
-    principalRoleId: ApId
+    principalRole: ProjectRole
     routePermission: Permission | undefined
 }
