@@ -38,6 +38,8 @@ export function ChatBottomBar({
   placeholder,
   banner,
   recede,
+  variant = 'page',
+  leftActions,
 }: ChatBottomBarProps) {
   const [composerEngaged, setComposerEngaged] = useState(false);
   const pendingActionPreview = useChatStoreContext((s) =>
@@ -126,7 +128,9 @@ export function ChatBottomBar({
       <div
         className={cn(
           'overflow-hidden rounded-xl border transition-colors',
-          minimal
+          variant === 'panel'
+            ? 'chat-panel-composer border-[1.5px] border-transparent shadow-[0_4px_0_0_var(--accent-3)]'
+            : minimal
             ? 'border-transparent bg-transparent hover:bg-gray-3/30'
             : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',
         )}
@@ -144,6 +148,7 @@ export function ChatBottomBar({
               ? t('Or reply in your own words')
               : placeholder ?? t('Reply...')
           }
+          leftActions={leftActions}
           rightActions={
             hideModelSelector === true ? null : (
               <ChatModelSelector
@@ -232,4 +237,6 @@ type ChatBottomBarProps = {
   placeholder?: string;
   banner?: ReactNode;
   recede?: boolean;
+  variant?: 'page' | 'panel';
+  leftActions?: ReactNode;
 };

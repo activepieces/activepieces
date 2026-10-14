@@ -66,6 +66,8 @@ export function AIChatBox({
   conversationId,
   onTitleUpdate,
   onConversationCreated,
+  variant = 'page',
+  inputContext,
 }: AIChatBoxProps) {
   const { data: chatProvider, isLoading: isLoadingProviders } =
     aiProviderQueries.useChatProvider();
@@ -94,6 +96,8 @@ export function AIChatBox({
           conversationId={conversationId}
           onTitleUpdate={onTitleUpdate}
           onConversationCreated={onConversationCreated}
+          variant={variant}
+          inputContext={inputContext}
         />
       </TaskPanelLayout>
     </ChatStoreProvider>
@@ -113,9 +117,12 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
+  variant = 'page',
+  inputContext,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
+  const isPanel = variant === 'panel';
   const { data: chatProvider } = aiProviderQueries.useChatProvider();
 
   const {
@@ -351,7 +358,10 @@ function ChatBoxContent({
             transition={{ duration: 0.25 }}
           >
             <ChatContainerRoot
-              className="flex-1 relative h-full px-3 sm:px-6"
+              className={cn(
+                'flex-1 relative h-full',
+                isPanel ? 'px-4' : 'px-3 sm:px-6',
+              )}
               style={{
                 maskImage:
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
@@ -359,7 +369,12 @@ function ChatBoxContent({
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
+              <ChatContainerContent
+                className={cn(
+                  'max-w-3xl mx-auto pb-4 gap-0 min-h-full',
+                  isPanel ? 'pt-2' : 'pt-8',
+                )}
+              >
                 {isLoadingHistory && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
@@ -442,7 +457,13 @@ function ChatBoxContent({
         )}
       </AnimatePresence>
 
-      <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div
+        className={
+          isPanel
+            ? 'px-3 pb-3'
+            : 'px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]'
+        }
+      >
         <div className="max-w-3xl mx-auto relative">
           {showOnboardingCard && (
             <div className="mb-3">
@@ -482,7 +503,9 @@ function ChatBoxContent({
             onModelChange={setModelName}
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}
-            hideModelSelector={agentId !== undefined}
+            hideModelSelector={agentId !== undefined || isPanel}
+            variant={variant}
+            leftActions={inputContext}
             placeholder={
               placeholder ??
               (showOnboardingCard
@@ -553,4 +576,6 @@ type AIChatBoxProps = {
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
   onTitleUpdate?: (title: string) => void;
+  variant?: 'page' | 'panel';
+  inputContext?: React.ReactNode;
 };

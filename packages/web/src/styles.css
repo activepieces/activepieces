@@ -1242,6 +1242,18 @@
   .recurring-chip-gradient { animation: none; }
 }
 
+.chat-panel-composer {
+  background-image: linear-gradient(var(--gray-1), var(--gray-1)),
+    linear-gradient(90deg, var(--accent-6), var(--accent-8), var(--accent-6));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+.chat-panel-composer:focus-within {
+  background-image: linear-gradient(var(--gray-1), var(--gray-1)),
+    linear-gradient(90deg, var(--accent-8), var(--accent-9), var(--accent-8));
+}
+
 @layer base {
   :root,
   [data-theme='light'] {
