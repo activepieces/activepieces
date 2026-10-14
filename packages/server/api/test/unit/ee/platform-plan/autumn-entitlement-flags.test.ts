@@ -224,6 +224,23 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
     })
 })
 
+describe('grantsEmbeddingOutsideEnterpriseTrial', () => {
+    const TRIAL = subscription({ planId: PlanName.ENTERPRISE_TRIAL, featureIds: ['embeddingEnabled', 'ssoEnabled'], addOn: true })
+    const EMBED_DEAL = subscription({ planId: 'custom_embed', featureIds: [...FREE_FLAGS, 'embeddingEnabled'] })
+
+    it('is false when only the Enterprise trial grants Embedding', () => {
+        const free = subscription({ planId: PlanName.FREE, featureIds: FREE_FLAGS })
+
+        expect(autumnUtils.grantsEmbeddingOutsideEnterpriseTrial({ subscriptions: [free, TRIAL], purchases: [] })).toBe(false)
+        expect(autumnUtils.grantsEmbeddingOutsideEnterpriseTrial({ subscriptions: [free], purchases: [] })).toBe(false)
+    })
+
+    it('is true when the customer\'s own plan grants Embedding, with or without a trial', () => {
+        expect(autumnUtils.grantsEmbeddingOutsideEnterpriseTrial({ subscriptions: [EMBED_DEAL], purchases: [] })).toBe(true)
+        expect(autumnUtils.grantsEmbeddingOutsideEnterpriseTrial({ subscriptions: [EMBED_DEAL, TRIAL], purchases: [] })).toBe(true)
+    })
+})
+
 describe('withoutExpiredEnterpriseTrial', () => {
     const TRIAL_FLAGS = ['auditLogEnabled', 'ssoEnabled']
     const HOUR_MS = 60 * 60 * 1000
