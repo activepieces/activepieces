@@ -32,6 +32,7 @@ import {
   useAdminAction,
 } from '@/app/components/admin';
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -476,27 +477,33 @@ function ConfigRow({
     <SettingsRow
       className={cn(
         'group relative py-3 transition-colors',
-        !locked && 'hover:bg-gray-4',
+        !locked &&
+          'hover:bg-gray-4 has-[[data-key-link]:focus-visible]:ring-2 has-[[data-key-link]:focus-visible]:ring-inset has-[[data-key-link]:focus-visible]:ring-gray-8',
       )}
       title={
         <>
           {locked ? (
-            <span className="truncate">{config.name}</span>
+            <TextWithTooltip tooltipMessage={config.name}>
+              <span className="min-w-0">{config.name}</span>
+            </TextWithTooltip>
           ) : (
-            <button
-              type="button"
-              onClick={onOpen}
-              className="truncate text-left after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-gray-8"
-            >
-              {config.name}
-            </button>
+            <TextWithTooltip tooltipMessage={config.name}>
+              <button
+                type="button"
+                data-key-link
+                onClick={onOpen}
+                className="min-w-0 text-left after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+              >
+                {config.name}
+              </button>
+            </TextWithTooltip>
           )}
           {config.enabledForChat && (
             <span className="shrink-0 rounded-md bg-accent-3 px-2 py-px text-xs font-medium text-accent-11">
               {t('Chat')}
             </span>
           )}
-          <KeyStatusBadge status={config.status} />
+          <KeyStatusBadge status={config.status} className="shrink-0" />
         </>
       }
       description={

@@ -2231,7 +2231,7 @@
   "Select preset": "プリセットを選択",
   "Select Time Range": "時間範囲の選択",
   "Removed {entityName}": "{entityName} を削除しました",
-  "Deselecting a global connection from a project that has a flow using it, will break the flow.": "フローを使用しているプロジェクトからグローバル接続を選択解除すると、フローが壊れます。",
+  "Deselecting a global connection from a project that has a flow using it will break the flow.": "フローを使用しているプロジェクトからグローバル接続を選択解除すると、フローが壊れます。",
   "Any flows currently using these connections": "現在、これらの接続を使用しているフロー",
   "will break immediately": "即座に壊れます",
   "Leave without saving?": "Leave without saving?",

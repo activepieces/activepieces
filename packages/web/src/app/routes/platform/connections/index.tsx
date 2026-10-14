@@ -123,24 +123,24 @@ export default function PlatformConnectionsPage() {
         />
       ),
       cell: ({ row }) => (
-        <CopyTextTooltip
-          title={t('External ID')}
-          text={row.original.externalId || ''}
-          controlId={AdminControl.CONNECTIONS_EXTERNAL_ID_COPY}
-        >
-          <div className="flex items-center gap-2 w-fit min-w-0">
-            <PieceIconWithPieceName
-              pieceName={row.original.pieceName}
-              showTooltip={false}
-              size="sm"
-            />
-            <TextWithTooltip tooltipMessage={row.original.displayName}>
-              <span className="truncate max-w-[160px] 2xl:max-w-[260px]">
-                {row.original.displayName}
-              </span>
-            </TextWithTooltip>
-          </div>
-        </CopyTextTooltip>
+        <div className="flex min-w-0 items-center gap-2">
+          <CopyTextTooltip
+            title={t('External ID')}
+            text={row.original.externalId || ''}
+            controlId={AdminControl.CONNECTIONS_EXTERNAL_ID_COPY}
+          >
+            <span className="flex shrink-0">
+              <PieceIconWithPieceName
+                pieceName={row.original.pieceName}
+                showTooltip={false}
+                size="sm"
+              />
+            </span>
+          </CopyTextTooltip>
+          <TextWithTooltip tooltipMessage={row.original.displayName}>
+            <span className="min-w-0">{row.original.displayName}</span>
+          </TextWithTooltip>
+        </div>
       ),
     },
     {
@@ -199,9 +199,11 @@ export default function PlatformConnectionsPage() {
           .join(' ');
         const label = fullName || owner.email;
         return (
-          <TextWithTooltip tooltipMessage={owner.email}>
-            <span className="truncate max-w-[180px]">{label}</span>
-          </TextWithTooltip>
+          <div className="flex min-w-0 items-center">
+            <TextWithTooltip tooltipMessage={label}>
+              <span className="min-w-0">{label}</span>
+            </TextWithTooltip>
+          </div>
         );
       },
     },

@@ -12,6 +12,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import {
   AdminDataTable,
+  AdminFetchErrorState,
   adminActionCopy,
   adminFeedback,
   useAdminAction,
@@ -35,14 +36,12 @@ import { ProjectAvatar } from './project-avatar';
 
 const SHARED_SENTINEL = '__shared__';
 
-type ByProjectViewProps = {
-  workerGroups: WorkerGroupInfo[];
-  sharedSlots: number;
-};
-
 export function ByProjectView({
   workerGroups,
   sharedSlots,
+  isWorkerGroupsLoading,
+  isWorkerGroupsError,
+  onRetryWorkerGroups,
 }: ByProjectViewProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const cursor = searchParams.get('cursor') ?? undefined;
@@ -104,20 +103,27 @@ export function ByProjectView({
         )}
       </p>
 
-      <AdminDataTable
-        columns={columns}
-        page={page}
-        isLoading={isLoading}
-        isError={isError}
-        errorStateEntity={t('projects')}
-        onRetry={refetch}
-        emptyStateTextTitle={t('No projects yet')}
-        emptyStateTextDescription={t(
-          'Start by creating projects to manage your automation teams',
-        )}
-        emptyStateIcon={<Server />}
-        toolbarButtons={[searchBar]}
-      />
+      {isWorkerGroupsError ? (
+        <AdminFetchErrorState
+          entity={t('worker groups')}
+          onRetry={onRetryWorkerGroups}
+        />
+      ) : (
+        <AdminDataTable
+          columns={columns}
+          page={page}
+          isLoading={isLoading || isWorkerGroupsLoading}
+          isError={isError}
+          errorStateEntity={t('projects')}
+          onRetry={refetch}
+          emptyStateTextTitle={t('No projects yet')}
+          emptyStateTextDescription={t(
+            'Start by creating projects to manage your automation teams',
+          )}
+          emptyStateIcon={<Server />}
+          toolbarButtons={[searchBar]}
+        />
+      )}
     </div>
   );
 }
@@ -286,7 +292,7 @@ function WorkerGroupCell({
       </Select>
       {isOffline && (
         <p className="text-xs text-danger-11">
-          {t('{group} has no workers online. Runs will wait in its queue', {
+          {t('{group} has no workers online. Runs will wait in its queue.', {
             group: row.workerGroupId!.replaceAll('_', ' '),
           })}
         </p>
@@ -435,3 +441,11 @@ function useProjectUpdate({
     },
   };
 }
+
+type ByProjectViewProps = {
+  workerGroups: WorkerGroupInfo[];
+  sharedSlots: number;
+  isWorkerGroupsLoading: boolean;
+  isWorkerGroupsError: boolean;
+  onRetryWorkerGroups: () => unknown;
+};

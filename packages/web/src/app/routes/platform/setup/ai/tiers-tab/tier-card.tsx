@@ -216,7 +216,7 @@ export function TierCard({
       exclude={tier.entries}
       main={mainModel}
       mode="fallback"
-      align="end"
+      align="start"
       open={fallbackPickerOpen && !writing}
       onOpenChange={setFallbackPickerOpen}
       onPick={(picked) => {

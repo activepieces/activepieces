@@ -22,6 +22,7 @@ export const platformAppConnectionsQueries = {
       queryKey: platformAppConnectionsKeys.list(searchParams.toString()),
       staleTime: 0,
       gcTime: 0,
+      retry: false,
       queryFn: () => {
         const cursor = searchParams.get(CURSOR_QUERY_PARAM);
         const limit = searchParams.get(LIMIT_QUERY_PARAM);

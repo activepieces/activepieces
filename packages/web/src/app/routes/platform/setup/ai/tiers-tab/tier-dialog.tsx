@@ -7,7 +7,7 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { ChevronDown, Plus } from 'lucide-react';
+import { ChevronsUpDown, Plus } from 'lucide-react';
 import { KeyboardEvent, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -312,6 +312,7 @@ function TierForm({
                       exclude={[]}
                       mode="main"
                       align="start"
+                      matchTriggerWidth
                       open={pickerOpen}
                       onOpenChange={setPickerOpen}
                       onPick={(entry) => field.onChange(entry)}
@@ -319,7 +320,7 @@ function TierForm({
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-auto min-h-9 justify-between px-3 py-1.5"
+                        className="h-auto min-h-9 w-full justify-between border-gray-8 bg-transparent px-3 py-1.5 shadow-xs enabled:hover:bg-transparent dark:bg-gray-6/30 dark:enabled:hover:bg-gray-6/50"
                         aria-label={t('Main model')}
                       >
                         {field.value !== undefined &&
@@ -344,7 +345,7 @@ function TierForm({
                             {t('Pick a model')}
                           </span>
                         )}
-                        <ChevronDown className="size-4 shrink-0 opacity-60" />
+                        <ChevronsUpDown className="size-4 shrink-0 text-gray-11" />
                       </Button>
                     </AdminModelPicker>
                     <FormMessage />

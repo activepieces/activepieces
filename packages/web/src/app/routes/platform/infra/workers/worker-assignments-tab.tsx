@@ -14,9 +14,12 @@ import { ByProjectView } from './by-project-view';
 export function WorkerAssignmentsTab() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
-  const { data: capacity } = workersQueries.useWorkerGroups(
-    platform.plan.workerGroupsEnabled,
-  );
+  const {
+    data: capacity,
+    isLoading: isCapacityLoading,
+    isError: isCapacityError,
+    refetch: refetchCapacity,
+  } = workersQueries.useWorkerGroups(platform.plan.workerGroupsEnabled);
   const { data: workersData } = workersQueries.useWorkerMachines();
 
   const workerGroups = capacity?.groups ?? [];
@@ -57,6 +60,9 @@ export function WorkerAssignmentsTab() {
           <ByProjectView
             workerGroups={workerGroups}
             sharedSlots={sharedSlots}
+            isWorkerGroupsLoading={isCapacityLoading}
+            isWorkerGroupsError={isCapacityError && capacity === undefined}
+            onRetryWorkerGroups={refetchCapacity}
           />
         </TabsContent>
 

@@ -68,8 +68,8 @@ function TierTools({
   const canSetAll = !tier.locked && !readOnly && editableNames.length > 0;
   return (
     <>
-      <SheetHeader className="shrink-0 border-b px-6 py-4 pr-12">
-        <SheetTitle>{copy.label}</SheetTitle>
+      <SheetHeader className="shrink-0 border-b px-6 py-4">
+        <SheetTitle className="pr-6">{copy.label}</SheetTitle>
         <div className="flex items-center justify-between gap-4">
           <SheetDescription>
             {tier.locked
