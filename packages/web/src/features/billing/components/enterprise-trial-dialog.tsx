@@ -12,7 +12,7 @@ import {
   ChevronDown,
   LoaderCircle,
 } from 'lucide-react';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,10 @@ import {
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
-import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
+import {
+  billingDialogHooks,
+  EnterpriseTrialDialogPayload,
+} from '../hooks/billing-dialog-hooks';
 import {
   ENTERPRISE_TRIAL_DAYS,
   enterpriseTrialHooks,
@@ -52,12 +55,24 @@ export function EnterpriseTrialDialog() {
   const queryClient = useQueryClient();
   enterpriseTrialHooks.useStatus();
   const offer = enterpriseTrialHooks.useOffer();
-  const start = enterpriseTrialHooks.useStart();
   const [resumeState, setResumeState] = useState<ResumeState>('idle');
+  const resumeOnStart =
+    useRef<EnterpriseTrialDialogPayload['resume']>(undefined);
+  const start = enterpriseTrialHooks.useStart((status) => {
+    if (status.state !== 'active') {
+      return;
+    }
+    celebrate();
+    finishBlockedWork(resumeOnStart.current).catch(() => undefined);
+  });
   const open = !isNil(payload);
   const result = start.data?.state;
   const view = viewFor({ result, offer });
+  const busy = start.isPending || resumeState === 'saving';
   const close = () => {
+    if (busy) {
+      return;
+    }
     confetti.reset();
     closeDialog();
     start.reset();
@@ -65,15 +80,17 @@ export function EnterpriseTrialDialog() {
   };
   const resume = payload?.resume;
 
-  const finishBlockedWork = async () => {
-    if (isNil(resume)) {
+  const finishBlockedWork = async (
+    work: EnterpriseTrialDialogPayload['resume'],
+  ) => {
+    if (isNil(work)) {
       return;
     }
     setResumeState('saving');
     for (const delayMs of RESUME_ATTEMPT_DELAYS_MS) {
       await wait(delayMs);
       await queryClient.refetchQueries({ queryKey: ['platform'] });
-      const { error } = await tryCatch(async () => resume());
+      const { error } = await tryCatch(async () => work());
       if (isNil(error)) {
         setResumeState('saved');
         return;
@@ -87,6 +104,17 @@ export function EnterpriseTrialDialog() {
       <EnterpriseTrialEndedDialog />
       <Dialog open={open} onOpenChange={(next) => !next && close()}>
         <DialogContent
+          showCloseButton={!busy}
+          onEscapeKeyDown={(event) => {
+            if (busy) {
+              event.preventDefault();
+            }
+          }}
+          onInteractOutside={(event) => {
+            if (busy) {
+              event.preventDefault();
+            }
+          }}
           onOpenAutoFocus={focusDialogItself}
           onCloseAutoFocus={(event) => {
             if (returnFocus?.isConnected) {
@@ -110,16 +138,10 @@ export function EnterpriseTrialDialog() {
                   resumes={!isNil(resume)}
                   isPending={start.isPending}
                   isError={start.isError}
-                  onStart={() =>
-                    start.mutate(undefined, {
-                      onSuccess: (status) => {
-                        if (status.state === 'active') {
-                          celebrate();
-                          finishBlockedWork().catch(() => undefined);
-                        }
-                      },
-                    })
-                  }
+                  onStart={() => {
+                    resumeOnStart.current = resume;
+                    start.mutate();
+                  }}
                 />
               )}
               {view === 'started' && (
@@ -128,7 +150,9 @@ export function EnterpriseTrialDialog() {
                   startedAt={start.data?.startedAt ?? null}
                   featureKey={payload?.featureKey}
                   resumeState={resumeState}
-                  onRetry={() => finishBlockedWork().catch(() => undefined)}
+                  onRetry={() =>
+                    finishBlockedWork(resume).catch(() => undefined)
+                  }
                   onClose={close}
                 />
               )}
