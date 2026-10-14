@@ -19,17 +19,16 @@ const resolveScope = ({ projectWorker, scope }: ResolveScopeParams): WorkerGroup
     return projectWorker ? WorkerGroupScope.PROJECT : WorkerGroupScope.PLATFORM
 }
 
-const getPlatformGroupQueueName = (workerGroupId: string): string => {
-    // TODO Rename this to workerGroups-workerGroupId-jobs in the future and migrate existings jobs there.
-    return `platform-${workerGroupId}-jobs`
-}
-
-const getProjectGroupQueueName = (workerGroupId: string): string => {
-    return `project-${workerGroupId}-jobs`
-}
-
-const getFlowGroupQueueName = (workerGroupId: string): string => {
-    return `flow-${workerGroupId}-jobs`
+const getQueueName = ({ scope, workerGroupId }: GetQueueNameParams): string => {
+    switch (scope) {
+        case WorkerGroupScope.FLOW:
+            return `flow-${workerGroupId}-jobs`
+        case WorkerGroupScope.PROJECT:
+            return `project-${workerGroupId}-jobs`
+        case WorkerGroupScope.PLATFORM:
+            // TODO Rename this to workerGroups-workerGroupId-jobs in the future and migrate existings jobs there.
+            return `platform-${workerGroupId}-jobs`
+    }
 }
 
 const isRoutableWorkerGroupId = (value: string): boolean => {
@@ -39,9 +38,7 @@ const isRoutableWorkerGroupId = (value: string): boolean => {
 export const workerGroupQueues = {
     parseWorkerGroupValue,
     resolveScope,
-    getPlatformGroupQueueName,
-    getProjectGroupQueueName,
-    getFlowGroupQueueName,
+    getQueueName,
     isRoutableWorkerGroupId,
 }
 
@@ -65,4 +62,9 @@ type ParseWorkerGroupValueParams = {
 type ResolveScopeParams = {
     projectWorker: boolean
     scope: string | undefined
+}
+
+type GetQueueNameParams = {
+    scope: WorkerGroupScope
+    workerGroupId: string
 }

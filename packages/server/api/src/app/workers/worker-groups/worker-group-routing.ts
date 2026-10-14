@@ -14,12 +14,12 @@ const resolveQueueForJob = async ({ platformId, projectId, flowId, jobType, log 
             if (!isNil(flowId)) {
                 const flowGroupId = await flowWorkerGroupService(log).getFlowWorkerGroup({ flowId })
                 if (!isNil(flowGroupId)) {
-                    return workerGroupQueues.getFlowGroupQueueName(flowGroupId)
+                    return workerGroupQueues.getQueueName({ scope: WorkerGroupScope.FLOW, workerGroupId: flowGroupId })
                 }
             }
             const projectGroupId = await projectWorkerGroupService(log).getProjectWorkerGroup({ projectId, platformId })
             if (!isNil(projectGroupId)) {
-                return workerGroupQueues.getProjectGroupQueueName(projectGroupId)
+                return workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PROJECT, workerGroupId: projectGroupId })
             }
         }
     }
@@ -30,21 +30,14 @@ const resolveQueueForJob = async ({ platformId, projectId, flowId, jobType, log 
     if (isNil(groupId)) {
         return QueueName.WORKER_JOBS
     }
-    return workerGroupQueues.getPlatformGroupQueueName(groupId)
+    return workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PLATFORM, workerGroupId: groupId })
 }
 
 const resolveQueueForWorker = (assignment: WorkerGroupAssignment | null): string => {
     if (isNil(assignment)) {
         return QueueName.WORKER_JOBS
     }
-    switch (assignment.scope) {
-        case WorkerGroupScope.FLOW:
-            return workerGroupQueues.getFlowGroupQueueName(assignment.id)
-        case WorkerGroupScope.PROJECT:
-            return workerGroupQueues.getProjectGroupQueueName(assignment.id)
-        case WorkerGroupScope.PLATFORM:
-            return workerGroupQueues.getPlatformGroupQueueName(assignment.id)
-    }
+    return workerGroupQueues.getQueueName({ scope: assignment.scope, workerGroupId: assignment.id })
 }
 
 export const workerGroupRouting = {

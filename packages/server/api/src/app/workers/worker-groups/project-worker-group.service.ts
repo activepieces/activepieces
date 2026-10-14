@@ -1,5 +1,6 @@
 import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
+import { WorkerGroupScope } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { projectRepo } from '../../project/project-repo'
@@ -39,8 +40,8 @@ export const projectWorkerGroupService = (log: FastifyBaseLogger) => ({
     async migrateProjectToGroup({ projectId, platformId, fromGroupId, toGroupId }: MigrateProjectToGroupParams): Promise<void> {
         const ungroupedQueueName = await resolveUngroupedQueueName({ platformId, log })
         const { error } = await tryCatch(() => platformQueueMigrationService(log).migrateProjectJobs({
-            fromQueueName: isNil(fromGroupId) ? ungroupedQueueName : workerGroupQueues.getProjectGroupQueueName(fromGroupId),
-            toQueueName: isNil(toGroupId) ? ungroupedQueueName : workerGroupQueues.getProjectGroupQueueName(toGroupId),
+            fromQueueName: isNil(fromGroupId) ? ungroupedQueueName : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PROJECT, workerGroupId: fromGroupId }),
+            toQueueName: isNil(toGroupId) ? ungroupedQueueName : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PROJECT, workerGroupId: toGroupId }),
             projectId,
         }))
         if (error) {
@@ -51,7 +52,7 @@ export const projectWorkerGroupService = (log: FastifyBaseLogger) => ({
 
 async function resolveUngroupedQueueName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<string> {
     const platformGroupId = await platformWorkerGroupService(log).getWorkerGroupId({ platformId })
-    return isNil(platformGroupId) ? QueueName.WORKER_JOBS : workerGroupQueues.getPlatformGroupQueueName(platformGroupId)
+    return isNil(platformGroupId) ? QueueName.WORKER_JOBS : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PLATFORM, workerGroupId: platformGroupId })
 }
 
 const getProjectWorkerGroupCacheKey = (projectId: string): string => `project:${projectId}:worker_group`

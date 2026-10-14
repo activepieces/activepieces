@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FlowTriggerType, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
+import { FlowTriggerType, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { workerGroupQueues } from '../../../../src/app/workers/worker-groups/worker-group-queues'
 import { jobQueue } from '../../../../src/app/workers/job-queue/job-queue'
@@ -21,8 +21,8 @@ describe('platformQueueMigrationService', () => {
     let toQueueName: string
 
     beforeEach(() => {
-        fromQueueName = workerGroupQueues.getPlatformGroupQueueName(apId())
-        toQueueName = workerGroupQueues.getPlatformGroupQueueName(apId())
+        fromQueueName = workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PLATFORM, workerGroupId: apId() })
+        toQueueName = workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PLATFORM, workerGroupId: apId() })
     })
 
     afterEach(async () => {
@@ -35,7 +35,7 @@ describe('platformQueueMigrationService', () => {
     it('returns early without touching queues when fromQueueName equals toQueueName', async () => {
         const platformId = apId()
         const flowVersionId = apId()
-        const sameQueue = workerGroupQueues.getPlatformGroupQueueName(apId())
+        const sameQueue = workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PLATFORM, workerGroupId: apId() })
         const queue = await jobQueue(app.log).getOrCreateQueue({ queueName: sameQueue })
 
         await queue.upsertJobScheduler(

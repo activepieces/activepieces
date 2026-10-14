@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { WorkerJobType } from '@activepieces/shared'
+import { WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
@@ -51,8 +51,8 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
         }
         const ungroupedQueueName = await workerGroupRouting.resolveQueueForJob({ platformId, projectId, jobType: WorkerJobType.EXECUTE_FLOW, log })
         const { error } = await tryCatch(() => platformQueueMigrationService(log).migrateFlowJobs({
-            fromQueueName: isNil(previousGroupId) ? ungroupedQueueName : workerGroupQueues.getFlowGroupQueueName(previousGroupId),
-            toQueueName: isNil(workerGroupId) ? ungroupedQueueName : workerGroupQueues.getFlowGroupQueueName(workerGroupId),
+            fromQueueName: isNil(previousGroupId) ? ungroupedQueueName : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.FLOW, workerGroupId: previousGroupId }),
+            toQueueName: isNil(workerGroupId) ? ungroupedQueueName : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.FLOW, workerGroupId }),
             flowId,
         }))
         if (error) {
