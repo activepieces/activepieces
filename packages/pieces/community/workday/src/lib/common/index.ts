@@ -24,7 +24,7 @@ export const WorkdayService = {
 	expenseManagement: 'expense/v1',
 	inbox: 'inbox/v1',
 	leaveManagement: 'absenceManagement/v1',
-	timeTracking: 'time/v2',
+	timeTracking: 'timeTracking/v7',
 } as const;
 
 export type ServicePath = typeof WorkdayService[keyof typeof WorkdayService];

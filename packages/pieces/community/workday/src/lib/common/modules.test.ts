@@ -20,6 +20,17 @@ describe('resolveBusinessObject', () => {
 		expect(config.service).toBe('expense/v1');
 	});
 
+	it('maps the retired time/v2 service to timeTracking/v7', () => {
+		const config = resolveBusinessObject('onboarding', '__custom__', '/workerTimeBlocks', 'time/v2');
+		expect(config.service).toBe('timeTracking/v7');
+	});
+
+	it('resolves Time Entry to worker time blocks', () => {
+		const config = resolveBusinessObject('hr_services_time_tracking', 'timeEntries', undefined, undefined);
+		expect(config.path).toBe('/workerTimeBlocks');
+		expect(config.service).toBe('timeTracking/v7');
+	});
+
 	it('prefixes a missing slash on custom paths', () => {
 		const config = resolveBusinessObject('onboarding', '__custom__', 'workers', undefined);
 		expect(config.path).toBe('/workers');

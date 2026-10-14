@@ -89,6 +89,19 @@ describe('formatWorkdayOutput', () => {
 		});
 		expect(out['case_id']).toBeUndefined();
 	});
+
+	it('maps a timeTracking v7 worker time block', () => {
+		const out = formatWorkdayOutput(
+			{ id: 'tb-1', worker: { id: 'w-3' }, calendarDate: '2026-10-14', reportedQuantity: 4 },
+			'hr_services_time_tracking',
+		);
+		expect(out).toMatchObject({
+			time_entry_id: 'tb-1',
+			employee_id: 'w-3',
+			date: '2026-10-14',
+			hours: 4,
+		});
+	});
 });
 
 describe('getRecordTimestamp', () => {

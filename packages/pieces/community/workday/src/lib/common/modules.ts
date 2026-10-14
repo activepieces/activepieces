@@ -59,7 +59,7 @@ export const BUSINESS_OBJECTS_BY_MODULE: Record<string, BusinessObjectConfig[]> 
 		{
 			label: 'Time Entry',
 			value: 'timeEntries',
-			path: '/timeEntries',
+			path: '/workerTimeBlocks',
 			service: WorkdayService.timeTracking,
 			wqlDataSource: 'workerTimeBlocks',
 		},
@@ -93,7 +93,7 @@ export const customServiceProperty = Property.StaticDropdown({
 		options: [
 			{ label: 'Common (v1)', value: WorkdayService.common },
 			{ label: 'Staffing (v6)', value: WorkdayService.staffing },
-			{ label: 'Time Tracking (v2)', value: WorkdayService.timeTracking },
+			{ label: 'Time Tracking (v7)', value: WorkdayService.timeTracking },
 			{ label: 'Expense Management', value: WorkdayService.expenseManagement },
 			{ label: 'Resource Management', value: WorkdayService.resourceManagement },
 		],
@@ -161,6 +161,7 @@ export function toWorkdayModule(module: string): WorkdayModule {
 
 const LEGACY_SERVICE_PATHS: Record<string, ServicePath> = {
 	'expenseManagement/v1': WorkdayService.expenseManagement,
+	'time/v2': WorkdayService.timeTracking,
 };
 
 export type BusinessObjectConfig = {

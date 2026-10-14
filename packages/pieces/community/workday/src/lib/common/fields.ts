@@ -69,7 +69,8 @@ export function formatWorkdayOutput(
 
 		if (isTimeEntry) {
 			standard['time_entry_id'] = record['id'] ?? record['timeEntryId'];
-			standard['date'] = record['date'] ?? record['entryDate'] ?? record['timeBlockDate'];
+			standard['date'] =
+				record['date'] ?? record['entryDate'] ?? record['timeBlockDate'] ?? record['calendarDate'];
 			standard['hours'] = record['hours'] ?? record['quantity'] ?? record['reportedQuantity'];
 		} else {
 			standard['case_id'] = record['id'] ?? record['workdayID'];
