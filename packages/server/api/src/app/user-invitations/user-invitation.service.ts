@@ -178,7 +178,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     userInvitation,
                 })
             }
-            return userInvitation
+            return { ...userInvitation, addedNow: registered }
         }
         return enrichWithInvitationLink(userInvitation, invitationExpirySeconds, log)
     },

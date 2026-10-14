@@ -216,6 +216,28 @@ describe('Re-inviting someone who already accepted', () => {
     })
 })
 
+describe('Adding someone to a project', () => {
+    it('says they were added now when they already have an account on the platform', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        const email = faker.internet.email().toLowerCase()
+        await mockBasicUser({ userIdentity: { email }, user: { platformId, platformRole: PlatformRole.MEMBER } })
+
+        const response = await inviteProject({ token: ownerToken, email, projectId, projectRole: DefaultProjectRole.VIEWER })
+
+        expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        expect(response?.json().addedNow).toBe(true)
+    })
+
+    it('does not say they were added now when they still have to accept', async () => {
+        const { projectId, ownerToken } = await setupPlatform()
+
+        const response = await inviteProject({ token: ownerToken, email: faker.internet.email().toLowerCase(), projectId, projectRole: DefaultProjectRole.VIEWER })
+
+        expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        expect(response?.json().addedNow).not.toBe(true)
+    })
+})
+
 describe('A platform invite and a project invite for the same project', () => {
     it('a platform invite naming the project replaces the pending project invite', async () => {
         const { platformId, projectId, ownerToken } = await setupPlatform()

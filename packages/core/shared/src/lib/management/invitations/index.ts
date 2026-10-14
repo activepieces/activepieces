@@ -28,6 +28,7 @@ export type UserInvitation = z.infer<typeof UserInvitation>
 
 export const UserInvitationWithLink = UserInvitation.extend({
     link: z.string().optional(),
+    addedNow: z.boolean().optional(),
 })
 
 export type UserInvitationWithLink = z.infer<typeof UserInvitationWithLink>

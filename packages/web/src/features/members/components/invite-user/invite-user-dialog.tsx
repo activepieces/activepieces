@@ -1,7 +1,6 @@
 import { isNil, Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
-  InvitationStatus,
   InvitationType,
   PlatformRole,
   ProjectType,
@@ -165,7 +164,7 @@ const InviteUserDialogInternal = ({
   const resultsWithLinks = invitationResults.filter((r) => r.link);
   const hasLinks = resultsWithLinks.length > 0;
   const addedMembersCount = invitationResults.filter((result) =>
-    wasAddedNow({ result, platformUserEmails }),
+    wasAddedNow({ result }),
   ).length;
 
   const { mutate, isPending } = useMutation<
@@ -198,7 +197,7 @@ const InviteUserDialogInternal = ({
     },
     onSuccess: (results) => {
       const addedCount = results.filter((result) =>
-        wasAddedNow({ result, platformUserEmails }),
+        wasAddedNow({ result }),
       ).length;
       const invitedCount = results.filter((r) => r.link).length;
 
@@ -575,15 +574,8 @@ const InviteUserDialogInternal = ({
   );
 };
 
-function wasAddedNow({
-  result,
-  platformUserEmails,
-}: WasAddedNowParams): boolean {
-  return (
-    result.status === InvitationStatus.ACCEPTED &&
-    !result.link &&
-    platformUserEmails.has(result.email.toLowerCase())
-  );
+function wasAddedNow({ result }: WasAddedNowParams): boolean {
+  return result.addedNow === true;
 }
 
 function invitedProjectMode({
@@ -821,5 +813,4 @@ type InvitedProjectFieldsParams = {
 
 type WasAddedNowParams = {
   result: UserInvitationWithLink;
-  platformUserEmails: Set<string>;
 };
