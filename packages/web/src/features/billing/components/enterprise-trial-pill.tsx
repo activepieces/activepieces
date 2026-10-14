@@ -37,19 +37,21 @@ export function EnterpriseTrialLine({ trial }: { trial: EnterpriseTrial }) {
   const line = (
     <span
       className={cn(
-        'flex min-w-0 items-start gap-1.5 text-xs',
+        'flex min-w-0 items-center gap-1.5 text-xs whitespace-nowrap',
         trial.endsToday ? 'text-warning-11' : 'text-gray-11',
       )}
     >
       <Gem
         className={cn(
-          'mt-px size-3.5 shrink-0',
+          'size-3.5 shrink-0',
           trial.endsToday ? 'text-warning-11' : 'text-accent-11',
         )}
       />
-      <span className="flex flex-wrap gap-x-1">
-        <span className="font-medium">{t('Enterprise plan trial')}</span>
-        <span>· {enterpriseTrialCopy.sidebarDetail(trial)}</span>
+      <span className="min-w-0 truncate font-medium">
+        {t('Enterprise trial')}
+      </span>
+      <span className="shrink-0">
+        · {enterpriseTrialCopy.cardStatus(trial)}
       </span>
     </span>
   );
@@ -59,12 +61,12 @@ export function EnterpriseTrialLine({ trial }: { trial: EnterpriseTrial }) {
         {trial.isPlatformAdmin ? (
           <Link
             to="/platform/billing"
-            className="min-w-0 self-start hover:underline"
+            className="max-w-full min-w-0 self-start hover:underline"
           >
             {line}
           </Link>
         ) : (
-          <span tabIndex={0} className="min-w-0 self-start">
+          <span tabIndex={0} className="max-w-full min-w-0 self-start">
             {line}
           </span>
         )}

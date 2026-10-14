@@ -347,19 +347,25 @@ describe('credits card trial line', () => {
   it('shows members the trial end as plain text without the Billing link', () => {
     trial = { ...midTrial(), isPlatformAdmin: false };
     renderInRouter(<EnterpriseTrialPill />);
-    expect(screen.getByText('Enterprise plan trial')).toBeDefined();
+    expect(screen.getByText('Enterprise trial')).toBeDefined();
     expect(screen.queryByRole('link')).toBeNull();
   });
 
-  it('shows the trial line to admins with the shared wording', () => {
+  it('keeps the trial line to one short line with the days left', () => {
     trial = midTrial();
     renderInRouter(<EnterpriseTrialPill />);
-    expect(screen.getByText('Enterprise plan trial')).toBeDefined();
-    expect(
-      screen.getByText(
-        `· 4 days left, ends ${dayjs(trial.endsAt).format('MMM D')}`,
-      ),
-    ).toBeDefined();
+    expect(screen.getByText('Enterprise trial')).toBeDefined();
+    expect(screen.getByText('· 4 days left')).toBeDefined();
+  });
+
+  it('says 1 day left the day before and last day on the final day', () => {
+    trial = endsTomorrow();
+    const view = renderInRouter(<EnterpriseTrialPill />);
+    expect(screen.getByText('· 1 day left')).toBeDefined();
+    view.unmount();
+    trial = endsToday();
+    renderInRouter(<EnterpriseTrialPill />);
+    expect(screen.getByText('· last day')).toBeDefined();
   });
 
   it('never shows the trial line or pill to members', () => {
