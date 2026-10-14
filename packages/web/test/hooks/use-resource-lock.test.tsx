@@ -277,6 +277,20 @@ describe('useResourceLock takeOver', () => {
     expect(lockEmits()).toHaveLength(1);
   });
 
+  it('clears the locker when the same user takes the lock in another tab', async () => {
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} />);
+    });
+    await act(async () => {
+      lockEmits()[0].ack?.({ acquired: false, lock: OTHER_USER });
+    });
+
+    await lockBySameUserInAnotherTab();
+
+    expect(latestHookResult?.lockedBy).toBeNull();
+    expect(lockEmits()).toHaveLength(1);
+  });
+
   it('does not release the lock during re-acquire when a stale owner takes over', async () => {
     const onTakeOver = vi.fn();
     await act(async () => {
@@ -447,6 +461,51 @@ describe('useResourceLock with onLockFreed', () => {
     expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
   });
 
+  it('stops waiting, after the callback ends, when the same user takes the lock in another tab', async () => {
+    const callbackRun = Promise.withResolvers<void>();
+    const onLockFreed = vi.fn(() => callbackRun.promise);
+    await mountWaitingFor({ onLockFreed, holder: OTHER_USER });
+
+    await lockBySameUserInAnotherTab();
+    expect(onLockFreed).toHaveBeenCalledTimes(1);
+    expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
+
+    await act(async () => {
+      callbackRun.resolve();
+    });
+    expect(latestHookResult?.lockedBy).toBeNull();
+    expect(lockEmits()).toHaveLength(1);
+
+    await act(async () => {
+      root.unmount();
+    });
+    expect(unlockEmits()).toEqual([
+      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+    ]);
+  });
+
+  it('stops waiting when the same user takes the lock back in another tab after a take over', async () => {
+    const onLockFreed = vi.fn(() => Promise.resolve());
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} onLockFreed={onLockFreed} />);
+    });
+    await act(async () => {
+      lockEmits()[0].ack?.({ acquired: true, lock: null });
+    });
+    await act(async () => {
+      socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
+        resourceId: RESOURCE_ID,
+        ...OTHER_USER,
+      });
+    });
+    expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
+
+    await lockBySameUserInAnotherTab();
+
+    expect(onLockFreed).toHaveBeenCalledTimes(1);
+    expect(latestHookResult?.lockedBy).toBeNull();
+  });
+
   it('does not take a freed lock when the tab does not wait for it', async () => {
     const onLockFreed = vi.fn(() => Promise.resolve());
     await act(async () => {
@@ -578,6 +637,16 @@ describe('useResourceLock with beforeRelease', () => {
     });
   }
 });
+
+async function lockBySameUserInAnotherTab() {
+  await act(async () => {
+    socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
+      resourceId: RESOURCE_ID,
+      userId: 'current-user',
+      userDisplayName: 'Me',
+    });
+  });
+}
 
 async function freeTheLock() {
   await act(async () => {

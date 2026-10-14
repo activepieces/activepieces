@@ -33,11 +33,16 @@ function useResourceLock({
 
   useEffect(() => {
     const handleLocked = (event: ResourceLockedEvent) => {
-      if (event.resourceId === resourceId && event.userId !== currentUserId) {
+      if (event.resourceId !== resourceId) {
+        return;
+      }
+      if (event.userId !== currentUserId) {
         setLockedBy({
           userId: event.userId,
           userDisplayName: event.userDisplayName,
         });
+      } else if (!acquiresFreedLock) {
+        setLockedBy(null);
       }
     };
     const handleUnlocked = (event: ResourceUnlockedEvent) => {
@@ -59,6 +64,13 @@ function useResourceLock({
     if (isNil(onLockFreed) || isNil(lockedBy)) {
       return;
     }
+    const stopWaitingAfterLockFreed = () => {
+      onLockFreed()
+        .then(() =>
+          setLockedBy((holder) => (holder === lockedBy ? null : holder)),
+        )
+        .catch(() => undefined);
+    };
     const acquireFreedLock = (event: ResourceUnlockedEvent) => {
       if (event.resourceId !== resourceId) {
         return;
@@ -72,19 +84,24 @@ function useResourceLock({
             return;
           }
           isOwner.current = response.acquired;
-          onLockFreed()
-            .then(() =>
-              setLockedBy((holder) => (holder === lockedBy ? null : holder)),
-            )
-            .catch(() => undefined);
+          stopWaitingAfterLockFreed();
         },
       );
     };
+    const shareLockOfSameUser = (event: ResourceLockedEvent) => {
+      if (event.resourceId !== resourceId || event.userId !== currentUserId) {
+        return;
+      }
+      isOwner.current = true;
+      stopWaitingAfterLockFreed();
+    };
     socket.on(WebsocketClientEvent.RESOURCE_UNLOCKED, acquireFreedLock);
+    socket.on(WebsocketClientEvent.RESOURCE_LOCKED, shareLockOfSameUser);
     return () => {
       socket.off(WebsocketClientEvent.RESOURCE_UNLOCKED, acquireFreedLock);
+      socket.off(WebsocketClientEvent.RESOURCE_LOCKED, shareLockOfSameUser);
     };
-  }, [resourceId, socket, lockedBy, onLockFreed]);
+  }, [resourceId, socket, lockedBy, onLockFreed, currentUserId]);
 
   useEffect(() => {
     const acquire = Symbol(resourceId);
