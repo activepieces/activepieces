@@ -36,7 +36,7 @@ export const updateChoiceOptionsAction = createAction({
   },
   async run({ auth, propsValue }) {
     const { form_id, field, choices } = propsValue;
-    const labels = typeformCommon.toStringList({ values: choices });
+    const labels = [...new Set(typeformCommon.toStringList({ values: choices }))];
     if (labels.length === 0) {
       throw new Error('Options must contain at least one label.');
     }
