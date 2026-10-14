@@ -83,9 +83,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     projectId,
                     flowId: flow.id,
                 })
-                for (const { fileId } of replacedEvents) {
-                    await fileService(log).delete({ projectId, fileId })
-                }
+                await Promise.all(replacedEvents.map(({ fileId }) => fileService(log).delete({ projectId, fileId })))
 
                 for (const output of engineResponse.response.output) {
                     await this.saveEvent({

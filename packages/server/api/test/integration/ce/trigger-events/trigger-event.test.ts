@@ -2,10 +2,7 @@ import {
     EngineResponseStatus,
     File,
     FileType,
-    FlowTriggerType,
-    FlowVersionState,
     PopulatedFlow,
-    PropertyExecutionType,
     TriggerEvent,
     TriggerTestStrategy,
 } from '@activepieces/shared'
@@ -13,7 +10,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
 import { db } from '../../../helpers/db'
-import { createMockFlow, createMockFlowVersion } from '../../../helpers/mocks'
+import { seedPublishableFlow } from '../../../helpers/mcp-flow'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -134,19 +131,19 @@ describe('Trigger Events API', () => {
             })
             const ctx = await createTestContext(app!)
             const otherCtx = await createTestContext(app!)
-            const flow = await createFlowWithPollingTrigger(ctx)
-            const otherFlow = await createFlowWithPollingTrigger(otherCtx)
+            const { flow, flowVersion } = await seedPublishableFlow({ ctx })
+            const other = await seedPublishableFlow({ ctx: otherCtx })
 
             const responses = [
-                await testPollingTrigger({ ctx: otherCtx, ...otherFlow }),
-                await testPollingTrigger({ ctx, ...flow }),
-                await testPollingTrigger({ ctx, ...flow }),
-                await testPollingTrigger({ ctx, ...flow }),
+                await testTriggerFunction({ ctx: otherCtx, flowId: other.flow.id, flowVersionId: other.flowVersion.id }),
+                await testTriggerFunction({ ctx, flowId: flow.id, flowVersionId: flowVersion.id }),
+                await testTriggerFunction({ ctx, flowId: flow.id, flowVersionId: flowVersion.id }),
+                await testTriggerFunction({ ctx, flowId: flow.id, flowVersionId: flowVersion.id }),
             ]
             engineSpy.mockRestore()
 
             expect(responses.map((response) => response?.statusCode)).toEqual(Array(4).fill(StatusCodes.OK))
-            const events = await db.findBy<TriggerEvent>('trigger_event', { projectId: ctx.project.id, flowId: flow.flowId })
+            const events = await db.findBy<TriggerEvent>('trigger_event', { projectId: ctx.project.id, flowId: flow.id })
             const files = await db.findBy<File>('file', { projectId: ctx.project.id, type: FileType.TRIGGER_EVENT_FILE })
             const otherFiles = await db.findBy<File>('file', { projectId: otherCtx.project.id, type: FileType.TRIGGER_EVENT_FILE })
             expect(events).toHaveLength(3)
@@ -177,34 +174,7 @@ describe('Trigger Events API', () => {
     })
 })
 
-async function createFlowWithPollingTrigger(ctx: TestContext): Promise<{ flowId: string, flowVersionId: string }> {
-    const flow = createMockFlow({ projectId: ctx.project.id })
-    await db.save('flow', flow)
-    const flowVersion = createMockFlowVersion({
-        flowId: flow.id,
-        state: FlowVersionState.DRAFT,
-        trigger: {
-            type: FlowTriggerType.PIECE,
-            name: 'trigger',
-            displayName: 'New File',
-            valid: true,
-            lastUpdatedDate: new Date().toISOString(),
-            settings: {
-                pieceName: '@activepieces/piece-sftp',
-                pieceVersion: '0.5.9',
-                triggerName: 'new_file',
-                input: { path: './' },
-                propertySettings: {
-                    path: { type: PropertyExecutionType.MANUAL },
-                },
-            },
-        },
-    })
-    await db.save('flow_version', flowVersion)
-    return { flowId: flow.id, flowVersionId: flowVersion.id }
-}
-
-function testPollingTrigger({ ctx, flowId, flowVersionId }: { ctx: TestContext, flowId: string, flowVersionId: string }) {
+function testTriggerFunction({ ctx, flowId, flowVersionId }: { ctx: TestContext, flowId: string, flowVersionId: string }) {
     return ctx.post('/v1/test-trigger', {
         projectId: ctx.project.id,
         flowId,
