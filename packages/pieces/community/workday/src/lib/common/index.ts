@@ -21,7 +21,7 @@ export const WorkdayService = {
 	common: 'v1',
 	staffing: 'staffing/v6',
 	resourceManagement: 'resourceManagement/v3',
-	expenseManagement: 'expenseManagement/v1',
+	expenseManagement: 'expense/v1',
 	inbox: 'inbox/v1',
 	leaveManagement: 'absenceManagement/v1',
 	timeTracking: 'time/v2',

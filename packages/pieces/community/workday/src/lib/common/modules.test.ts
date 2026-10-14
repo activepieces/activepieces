@@ -15,6 +15,11 @@ describe('resolveBusinessObject', () => {
 		expect(config.service).toBe(WorkdayService.common);
 	});
 
+	it('maps the retired expenseManagement/v1 service to expense/v1', () => {
+		const config = resolveBusinessObject('onboarding', '__custom__', '/reports', 'expenseManagement/v1');
+		expect(config.service).toBe('expense/v1');
+	});
+
 	it('prefixes a missing slash on custom paths', () => {
 		const config = resolveBusinessObject('onboarding', '__custom__', 'workers', undefined);
 		expect(config.path).toBe('/workers');

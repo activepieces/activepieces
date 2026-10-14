@@ -115,7 +115,10 @@ export function resolveBusinessObject(
 			label: 'Custom',
 			value: 'custom',
 			path,
-			service: (customService as ServicePath) ?? WorkdayService.common,
+			service:
+				LEGACY_SERVICE_PATHS[customService ?? ''] ??
+				(customService as ServicePath) ??
+				WorkdayService.common,
 		};
 	}
 	const objects = BUSINESS_OBJECTS_BY_MODULE[module ?? ''] ?? [];
@@ -155,6 +158,10 @@ export function toWorkdayModule(module: string): WorkdayModule {
 	}
 	throw new Error('Invalid Workday module selected.');
 }
+
+const LEGACY_SERVICE_PATHS: Record<string, ServicePath> = {
+	'expenseManagement/v1': WorkdayService.expenseManagement,
+};
 
 export type BusinessObjectConfig = {
 	label: string;
