@@ -230,5 +230,9 @@
   "Triggers when a customer is created.": "Wordt geactiveerd wanneer een klant wordt aangemaakt.",
   "Triggers when an order is created.": "Wordt geactiveerd wanneer een bestelling wordt aangemaakt.",
   "Triggers when a product is updated.": "Wordt geactiveerd wanneer een product wordt bijgewerkt.",
-  "Triggers when an order is paid.": "Wordt geactiveerd wanneer een bestelling wordt betaald."
+  "Triggers when an order is paid.": "Wordt geactiveerd wanneer een bestelling wordt betaald.",
+  "Leave empty to use Shopify's default.": "Laat leeg om de standaardwaarde van Shopify te gebruiken.",
+  "Switched off, these leave the customer's current setting unchanged.": "Uitgeschakeld laten deze de huidige instelling van de klant ongewijzigd.",
+  "Mark the customer's email as verified.": "Markeer het e-mailadres van de klant als geverifieerd.",
+  "Leave empty to keep the current status.": "Laat leeg om de huidige status te behouden."
 }

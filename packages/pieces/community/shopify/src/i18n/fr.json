@@ -230,5 +230,9 @@
   "Triggers when a customer is created.": "Se déclenche lorsqu'un client est créé.",
   "Triggers when an order is created.": "Se déclenche lorsqu'une commande est créée.",
   "Triggers when a product is updated.": "Se déclenche lorsqu'un produit est mis à jour.",
-  "Triggers when an order is paid.": "Se déclenche lorsqu'une commande est payée."
+  "Triggers when an order is paid.": "Se déclenche lorsqu'une commande est payée.",
+  "Leave empty to use Shopify's default.": "Laissez vide pour utiliser la valeur par défaut de Shopify.",
+  "Switched off, these leave the customer's current setting unchanged.": "Désactivées, elles laissent le réglage actuel du client inchangé.",
+  "Mark the customer's email as verified.": "Marquer l'e-mail du client comme vérifié.",
+  "Leave empty to keep the current status.": "Laissez vide pour conserver le statut actuel."
 }
