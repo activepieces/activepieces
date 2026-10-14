@@ -85,7 +85,7 @@ describe('Managed Authentication API', () => {
         })
 
         it('never asks ZeroBounce about a managed-auth sign-up, since the platform vouches for it', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup({ plan: { embeddingEnabled: true } })
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
