@@ -8,6 +8,18 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### MessageBird 1.0.0 becomes Bird and uses the current Bird API
+
+The proposed 1.0.0 major keeps the `@activepieces/piece-messagebird` package name and displays as **Bird**. It uses Bird OAuth or a current Bird access key instead of the legacy API key, workspace ID and channel ID connection. Legacy `send-sms` and `listMessages` actions are removed. The new actions use current regional Bird APIs and return different response shapes.
+
+**Custom API Call** keeps its `custom_api_call` action ID but changes authentication, inputs and API. It accepts versioned paths on the regional Bird API host with JSON or no request body. Like the legacy connector, it does not enumerate endpoints; new paths need no connector release and Bird enforces connection permissions. It does not accept arbitrary URLs or legacy Channels API requests.
+
+#### What you need to do
+
+Keep existing 0.3.x steps pinned and their legacy connections intact until replacements have been tested. Create a separate Bird OAuth or current access-key connection for the new actions; do not convert a legacy connection to either method. Reconnect legacy connections using the Legacy MessageBird authentication option, which preserves the original API key, workspace ID and channel ID fields. It retains the original save behavior without an API-validation callback. New Bird actions require OAuth or a current Bird access key; they do not accept legacy credentials.
+
+Replace legacy **Send SMS** (`send-sms`) with the new **Send SMS** (`sms_send`) and map the sender, recipient and message again. Replace **List Messages** (`listMessages`) with **List sent emails**, **List received emails**, **List SMS messages** or **List WhatsApp messages** for the corresponding current channel. Remap filters and response references: lists now return one page in `data`, default to 25 messages (maximum 100), and expose `next_cursor` for the next page. Current SMS, WhatsApp and received-email lists retain messages for 30 days; sent email lists omit message bodies. Rebuild **Custom API Call** inputs for the current API or retain the old step for legacy calls. Major upgrades reset inputs and sample data, so remap downstream response references and test the draft before publishing the workflow. Keep old connections while other flows still use them.
+
 #### Brevo 0.5.0: an unticked unsubscribe toggle no longer re-subscribes the contact
 
 On Create or Update Contact, the two blacklist toggles (now labelled **Unsubscribe From Email** and **Unsubscribe From SMS**) promised that leaving them untouched kept the contact's current setting. A fresh step saves an untouched toggle as `false`, so every run sent `emailBlacklisted: false` and `smsBlacklisted: false` and silently re-subscribed contacts who had opted out. Unsubscribe Contact did the same when one of its toggles was unticked. From 0.5.0 an unticked toggle sends nothing and the contact's setting is left as it is; a ticked toggle still unsubscribes. Unsubscribe Contact now fails with a clear message when nothing is ticked and no list is picked, instead of sending an empty update.
