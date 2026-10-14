@@ -516,7 +516,7 @@ async function assertCapabilitiesKeepKey({ manager, platformId, providerId, requ
             return []
         }
         const losesProjects = next.projectScope !== 'all'
-        const losesModel = !isNil(choice.data.modelId) && !aiKeyScope.keyOffersModel({ key: next, modelId: choice.data.modelId })
+        const losesModel = toolConfig.capability !== AiToolCapability.EMBEDDINGS && !isNil(choice.data.modelId) && !aiKeyScope.keyOffersModel({ key: next, modelId: choice.data.modelId })
         return losesProjects || losesModel ? [CAPABILITY_LABELS[toolConfig.capability]] : []
     })
     if (broken.length > 0) {

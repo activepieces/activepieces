@@ -14,12 +14,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PROVIDER_EMBEDDING_MODELS } from '@/features/agents';
-import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { AgentKnowledgeBaseDialog } from '../knowledge-base-dialog';
+import { useKnowledgeBaseEmbeddingSource } from '../knowledge-base-dialog/knowledge-base-hooks';
 import { useKnowledgeBaseToolDialogStore } from '../stores/knowledge-base-tools';
 
 import { AddKnowledgeBaseDropdown } from './add-knowledge-base-dropdown';
@@ -93,10 +92,8 @@ export const KnowledgeBaseSection = ({
   onToolsUpdate,
   layout = 'card',
 }: KnowledgeBaseSectionProps) => {
-  const { data: chatProvider } = aiProviderQueries.useChatProvider();
-  const embeddingProvider = chatProvider?.provider;
-  const supportsEmbeddings =
-    !isNil(embeddingProvider) && !!PROVIDER_EMBEDDING_MODELS[embeddingProvider];
+  const { data: embeddingSource } = useKnowledgeBaseEmbeddingSource();
+  const supportsEmbeddings = !isNil(embeddingSource?.provider);
   const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
     ApFlagId.PGVECTOR_AVAILABLE,
   );
@@ -134,7 +131,7 @@ export const KnowledgeBaseSection = ({
             ) : (
               <p className="text-xs text-gray-11 mt-3">
                 {t(
-                  'Your chat provider does not support embeddings. Switch it to a provider like OpenAI or Google for knowledge base to work.',
+                  'None of your AI keys can index files for this project. Ask your admin to set an Embeddings key, such as OpenAI or Google.',
                 )}
               </p>
             )}

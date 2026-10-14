@@ -25,10 +25,11 @@ describe('AI_PROVIDER_CAPABILITIES', () => {
         ].sort())
     })
 
-    it('marks embedding support iff a default embedding model exists', () => {
+    it('marks embedding support iff the provider lists embedding models, the first being the default', () => {
         for (const provider of Object.values(AIProviderName)) {
             const caps = AI_PROVIDER_CAPABILITIES[provider]
-            expect(caps.supportsEmbedding).toBe(caps.defaultEmbeddingModel !== undefined)
+            expect(caps.supportsEmbedding).toBe(caps.embeddingModels.length > 0)
+            expect(caps.defaultEmbeddingModel).toBe(caps.embeddingModels[0])
         }
     })
 })

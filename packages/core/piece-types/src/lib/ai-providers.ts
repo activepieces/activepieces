@@ -399,12 +399,12 @@ function getMaxContextTokens({ provider }: { provider: AIProviderName | undefine
     return PROVIDER_MAX_CONTEXT_TOKENS[provider] ?? DEFAULT_MAX_CONTEXT_TOKENS
 }
 
-const DEFAULT_EMBEDDING_MODELS: Partial<Record<AIProviderName, string>> = {
-    [AIProviderName.OPENAI]: 'text-embedding-3-small',
-    [AIProviderName.GOOGLE]: 'text-embedding-004',
-    [AIProviderName.AZURE]: 'text-embedding-3-small',
-    [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
-    [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
+const EMBEDDING_MODELS: Partial<Record<AIProviderName, readonly string[]>> = {
+    [AIProviderName.OPENAI]: ['text-embedding-3-small', 'text-embedding-3-large'],
+    [AIProviderName.GOOGLE]: ['text-embedding-004', 'gemini-embedding-001'],
+    [AIProviderName.AZURE]: ['text-embedding-3-small', 'text-embedding-3-large'],
+    [AIProviderName.ACTIVEPIECES]: ['text-embedding-3-small'],
+    [AIProviderName.OPENROUTER]: ['openai/text-embedding-3-small', 'openai/text-embedding-3-large'],
 }
 
 const WEB_SEARCH_MODE_BY_PROVIDER: Partial<Record<AIProviderName, AIWebSearchMode>> = {
@@ -438,8 +438,9 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
     return {
         chatModels: ALLOWED_CHAT_MODELS_BY_PROVIDER[provider],
         maxContextTokens: getMaxContextTokens({ provider }),
-        defaultEmbeddingModel: DEFAULT_EMBEDDING_MODELS[provider],
-        supportsEmbedding: DEFAULT_EMBEDDING_MODELS[provider] !== undefined,
+        embeddingModels: EMBEDDING_MODELS[provider] ?? [],
+        defaultEmbeddingModel: EMBEDDING_MODELS[provider]?.[0],
+        supportsEmbedding: (EMBEDDING_MODELS[provider] ?? []).length > 0,
         supportsImageGeneration: !NO_IMAGE_GENERATION_PROVIDERS.has(provider),
         defaultImageModel: DEFAULT_IMAGE_MODELS[provider],
         webSearch: WEB_SEARCH_MODE_BY_PROVIDER[provider],
@@ -520,6 +521,7 @@ export type OpenAiCompatibleVendor =
 export type AIProviderCapabilities = {
     chatModels?: readonly string[] | undefined
     maxContextTokens: number
+    embeddingModels: readonly string[]
     defaultEmbeddingModel: string | undefined
     supportsEmbedding: boolean
     supportsImageGeneration: boolean

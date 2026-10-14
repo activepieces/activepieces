@@ -231,6 +231,55 @@ describe('knowledge base embeddings', () => {
         expect(createEmbeddingModel).toHaveBeenCalledWith(expect.objectContaining({ providerConfigId: embeddingsKey.id }))
     })
 
+    it('embeds with the picked model, even on a key whose chat models are narrowed', async () => {
+        const ctx = await context()
+        const embeddingsKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, modelScope: 'selected', modelIds: ['gpt-4o'] })
+        await aiToolConfigService(app.log).upsert(ctx.platform.id, { capability: AiToolCapability.EMBEDDINGS, provider: AiToolProvider.AI_PROVIDER, config: { aiProviderId: embeddingsKey.id, modelId: 'text-embedding-3-large' } })
+        const createEmbeddingModel = vi.spyOn(aiUtils, 'createEmbeddingModel')
+
+        await knowledgeBaseService(app.log).embedderFor({ platformId: ctx.platform.id, projectId: ctx.project.id })
+        await aiProviderService(app.log).update(ctx.platform.id, embeddingsKey.id, { displayName: 'OpenAI', modelScope: 'selected', modelIds: ['gpt-4o-mini'] })
+
+        expect(createEmbeddingModel).toHaveBeenCalledWith(expect.objectContaining({ providerConfigId: embeddingsKey.id, modelId: 'text-embedding-3-large' }))
+    })
+
+    it('refuses an embedding model the provider does not list', async () => {
+        const ctx = await context()
+        const embeddingsKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+
+        await expect(aiToolConfigService(app.log).upsert(ctx.platform.id, { capability: AiToolCapability.EMBEDDINGS, provider: AiToolProvider.AI_PROVIDER, config: { aiProviderId: embeddingsKey.id, modelId: 'gpt-4o' } }))
+            .rejects.toMatchObject({ error: { code: ErrorCode.VALIDATION } })
+    })
+
+    it('tells project members which provider and model embed their files', async () => {
+        const ctx = await context()
+        const embeddingsKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        await aiToolConfigService(app.log).upsert(ctx.platform.id, { capability: AiToolCapability.EMBEDDINGS, provider: AiToolProvider.AI_PROVIDER, config: { aiProviderId: embeddingsKey.id, modelId: 'text-embedding-3-large' } })
+
+        const response = await ctx.get(EMBEDDING_SOURCE_URL, { projectId: ctx.project.id })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json()).toEqual({ provider: AIProviderName.OPENAI, modelId: 'text-embedding-3-large' })
+    })
+
+    it('reports no embedding source when the Default AI key cannot embed and nothing is picked', async () => {
+        const ctx = await context()
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.ANTHROPIC, enabledForChat: true })
+
+        const response = await ctx.get(EMBEDDING_SOURCE_URL, { projectId: ctx.project.id })
+
+        expect(response.json()).toEqual({ provider: null, modelId: null })
+    })
+
+    it('does not tell another platform\'s user about a project\'s embedding source', async () => {
+        const ctx = await context()
+        const outsider = await context()
+
+        const response = await outsider.get(EMBEDDING_SOURCE_URL, { projectId: ctx.project.id })
+
+        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+    })
+
     it('refuses an Embeddings choice that is not one of the platform\'s AI keys', async () => {
         const ctx = await context()
 
@@ -302,3 +351,4 @@ function curatedOpenAiModel(): string {
 }
 
 const CONVERSATIONS_URL = '/v1/agents/conversations'
+const EMBEDDING_SOURCE_URL = '/v1/knowledge-base/files/embedding-source'

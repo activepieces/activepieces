@@ -37,6 +37,8 @@ export function ModelPicker({
   onChange,
   disabled = false,
   withTiers = true,
+  variant = 'field',
+  footer,
   className,
 }: ModelPickerProps) {
   const [open, setOpen] = useState(false);
@@ -57,12 +59,20 @@ export function ModelPicker({
   );
 
   if (isLoading) {
-    return <Skeleton className={cn('h-9 w-full', className)} />;
+    return (
+      <Skeleton
+        className={cn(
+          variant === 'pill' ? 'h-6 w-24 rounded-full' : 'h-9 w-full',
+          className,
+        )}
+      />
+    );
   }
 
   return (
     <ModelPickerPopover
-      matchTriggerWidth
+      matchTriggerWidth={variant === 'field'}
+      footer={footer}
       groups={view?.groups ?? []}
       notices={
         isError ? (
@@ -96,12 +106,22 @@ export function ModelPicker({
         disabled={disabled}
         data-testid="model-picker-trigger"
         className={cn(
-          'flex h-9 w-full min-w-0 items-center gap-2 rounded-md border bg-panel px-2.5 text-left text-sm transition-colors hover:bg-gray-2 disabled:pointer-events-none disabled:opacity-50',
+          variant === 'pill'
+            ? 'flex h-6 min-w-0 max-w-64 items-center gap-1.5 rounded-full px-2 text-left text-xs transition-colors hover:bg-gray-3 disabled:pointer-events-none disabled:opacity-50'
+            : 'flex h-9 w-full min-w-0 items-center gap-2 rounded-md border bg-panel px-2.5 text-left text-sm transition-colors hover:bg-gray-2 disabled:pointer-events-none disabled:opacity-50',
           className,
         )}
       >
-        <TriggerContent current={view?.current ?? emptyPick()} />
-        <ChevronDown className="ml-auto size-4 shrink-0 text-gray-10" />
+        <TriggerContent
+          current={view?.current ?? emptyPick()}
+          compact={variant === 'pill'}
+        />
+        <ChevronDown
+          className={cn(
+            'ml-auto shrink-0 text-gray-10',
+            variant === 'pill' ? 'size-3.5' : 'size-4',
+          )}
+        />
       </button>
     </ModelPickerPopover>
   );
@@ -402,13 +422,20 @@ function unavailablePick({ label }: { label: string }): CurrentPick {
   };
 }
 
-function TriggerContent({ current }: { current: CurrentPick }) {
+function TriggerContent({
+  current,
+  compact,
+}: {
+  current: CurrentPick;
+  compact: boolean;
+}) {
   const warn = current.kind === 'unavailable' || current.kind === 'hidden';
   return (
     <>
       {current.leading}
       <span className="truncate font-medium text-gray-12">{current.label}</span>
       {current.source !== '' &&
+        (warn || !compact) &&
         (warn ? (
           <span className="shrink-0 rounded-full bg-warning-3 px-1.5 py-0.5 text-xs leading-none text-warning-11">
             {current.source}
@@ -543,5 +570,18 @@ type ModelPickerProps = {
   onChange: (choice: ModelChoice) => void;
   disabled?: boolean;
   withTiers?: boolean;
+  variant?: 'field' | 'pill';
+  footer?: ReactNode;
   className?: string;
+};
+
+export const modelPickerUtils = {
+  isUnavailable: ({
+    options,
+    value,
+  }: {
+    options: ModelOptions;
+    value: ModelChoice | null;
+  }): boolean =>
+    resolveCurrent({ options, shown: value }).kind === 'unavailable',
 };

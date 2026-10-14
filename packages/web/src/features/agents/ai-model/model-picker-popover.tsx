@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 export function ModelPickerPopover<T>({
   groups,
   notices,
+  footer,
   emptyText,
   onPick,
   open,
@@ -273,6 +274,7 @@ export function ModelPickerPopover<T>({
           </CommandGroup>
         ))}
       </CommandList>
+      {footer}
     </Command>
   );
 
@@ -471,6 +473,7 @@ type PickerSection<T> = {
 type ModelPickerPopoverProps<T> = {
   groups: ModelPickerGroup<T>[];
   notices?: ReactNode;
+  footer?: ReactNode;
   emptyText: string;
   onPick: (value: T) => void;
   open: boolean;

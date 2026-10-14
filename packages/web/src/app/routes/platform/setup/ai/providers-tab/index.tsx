@@ -1,4 +1,4 @@
-import { AIProviderName, tryCatch } from '@activepieces/core-utils';
+import { AIProviderName, isNil, tryCatch } from '@activepieces/core-utils';
 import {
   AIProviderWithoutSensitiveData,
   PlatformAdminSurface,
@@ -102,7 +102,7 @@ export function ProvidersTab() {
     aiProviderMutations.useToggleChatProvider({
       onSuccess: () => {
         refetch();
-        toast.success(t('Chat provider updated'));
+        toast.success(t('Default AI key updated'));
       },
     });
   const { mutateAsync: deleteProvider } =
@@ -273,6 +273,7 @@ export function ProvidersTab() {
           {!locked && (
             <ChatProviderRow
               configs={providers ?? []}
+              defaultTier={tiers?.find((tier) => tier.isDefault)}
               value={chatProviderRow?.id ?? null}
               isSwitching={isSwitchingChatProvider}
               onChange={selectChatConfig}
@@ -496,7 +497,7 @@ function ConfigRow({
           </p>
           {config.enabledForChat && (
             <span className="shrink-0 rounded-md bg-accent-3 px-2 py-px text-xs font-medium text-accent-11">
-              {t('Chat')}
+              {t('Default')}
             </span>
           )}
           <KeyStatusBadge status={config.status} />
@@ -620,11 +621,13 @@ function ProjectChips({
 
 function ChatProviderRow({
   configs,
+  defaultTier,
   value,
   isSwitching,
   onChange,
 }: {
   configs: AIProviderWithoutSensitiveData[];
+  defaultTier: PlatformModelTier | undefined;
   value: string | null;
   isSwitching: boolean;
   onChange: (configId: string) => void;
@@ -633,10 +636,21 @@ function ChatProviderRow({
     <SettingsPanel flush>
       <SettingsRow
         icon={<MessageSquare />}
-        title={t('Chat provider')}
-        description={t(
-          'Powers the built-in chat for everyone on this platform',
-        )}
+        title={t('Default AI key')}
+        description={
+          <>
+            {t(
+              'New chats start here when no Default tier fits. Memory and knowledge-base embeddings also use it.',
+            )}
+            {!isNil(defaultTier) && (
+              <span className="mt-1 block text-xs">
+                {t('New chats use your Default tier: {tier}', {
+                  tier: `${defaultTier.emoji} ${defaultTier.name}`,
+                })}
+              </span>
+            )}
+          </>
+        }
       >
         <Select
           value={value ?? undefined}

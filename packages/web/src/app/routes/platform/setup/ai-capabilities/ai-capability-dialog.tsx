@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  AI_PROVIDER_CAPABILITIES,
   AIProviderModelType,
   AiProviderToolConfig,
   AIProviderWithoutSensitiveData,
@@ -108,8 +109,27 @@ function CapabilityForm({
     providers,
   });
   const existingChoice = AiProviderToolConfig.safeParse(existingConfig?.config);
+  const isEmbeddings =
+    capabilityInfo.capability === AiToolCapability.EMBEDDINGS;
   const needsModel =
+    isEmbeddings ||
     capabilityInfo.capability === AiToolCapability.IMAGE_GENERATION;
+  const defaultSource = pickDefaultSource({
+    preferred: existingChoice.success
+      ? existingChoice.data.aiProviderId
+      : existingConfig?.provider ?? defaultProviderId,
+    sourceIds: [
+      ...aiProviders.map((p) => p.id),
+      ...capabilityInfo.providers.map((p) => p.id),
+    ],
+    fallback: capabilityInfo.providers[0]?.id ?? aiProviders[0]?.id ?? '',
+  });
+  const firstEmbeddingModel = (sourceId: string): string => {
+    const provider = aiProviders.find((p) => p.id === sourceId);
+    return isEmbeddings && !isNil(provider)
+      ? AI_PROVIDER_CAPABILITIES[provider.provider].embeddingModels[0] ?? ''
+      : '';
+  };
   const savedKeyProvider = existingConfig?.hasApiKey
     ? existingConfig.provider
     : undefined;
@@ -136,34 +156,31 @@ function CapabilityForm({
     ),
     mode: 'onChange',
     defaultValues: {
-      source: pickDefaultSource({
-        preferred: existingChoice.success
-          ? existingChoice.data.aiProviderId
-          : existingConfig?.provider ?? defaultProviderId,
-        sourceIds: [
-          ...aiProviders.map((p) => p.id),
-          ...capabilityInfo.providers.map((p) => p.id),
-        ],
-        fallback: capabilityInfo.providers[0].id,
-      }),
+      source: defaultSource,
       apiKey: '',
-      modelId: existingChoice.success ? existingChoice.data.modelId ?? '' : '',
+      modelId:
+        (existingChoice.success ? existingChoice.data.modelId : undefined) ??
+        firstEmbeddingModel(defaultSource),
     },
   });
   const source = form.watch('source');
   const selectedAiProvider = aiProviders.find((p) => p.id === source);
   const { data: models = [] } = aiProviderQueries.useConfigModels(
-    needsModel ? selectedAiProvider?.id : undefined,
+    needsModel && !isEmbeddings ? selectedAiProvider?.id : undefined,
   );
-  const imageModels = isNil(selectedAiProvider)
+  const modelOptions = isNil(selectedAiProvider)
     ? []
+    : isEmbeddings
+    ? AI_PROVIDER_CAPABILITIES[selectedAiProvider.provider].embeddingModels.map(
+        (id) => ({ id, name: id }),
+      )
     : models.filter(
         (model) =>
           model.type === AIProviderModelType.IMAGE &&
           modelAllowed({ model, provider: selectedAiProvider }),
       );
 
-  const selectedModel = imageModels.find(
+  const selectedModel = modelOptions.find(
     (model) => model.id === form.watch('modelId'),
   );
 
@@ -240,7 +257,7 @@ function CapabilityForm({
                   value={field.value}
                   onValueChange={(value) => {
                     field.onChange(value);
-                    form.setValue('modelId', '');
+                    form.setValue('modelId', firstEmbeddingModel(value));
                   }}
                 >
                   <FormControl>
@@ -273,7 +290,9 @@ function CapabilityForm({
             name="modelId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('Image model')}</FormLabel>
+                <FormLabel>
+                  {isEmbeddings ? t('Embedding model') : t('Image model')}
+                </FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger>
@@ -283,22 +302,26 @@ function CapabilityForm({
                             <span className="truncate">
                               {selectedModel.name}
                             </span>
-                            <span className="truncate text-xs text-gray-11">
-                              {selectedModel.id}
-                            </span>
+                            {selectedModel.name !== selectedModel.id && (
+                              <span className="truncate text-xs text-gray-11">
+                                {selectedModel.id}
+                              </span>
+                            )}
                           </span>
                         )}
                       </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {imageModels.map((model) => (
+                    {modelOptions.map((model) => (
                       <SelectItem key={model.id} value={model.id}>
                         <span className="flex flex-col">
                           <span>{model.name}</span>
-                          <span className="text-xs text-gray-11">
-                            {model.id}
-                          </span>
+                          {model.name !== model.id && (
+                            <span className="text-xs text-gray-11">
+                              {model.id}
+                            </span>
+                          )}
                         </span>
                       </SelectItem>
                     ))}
@@ -310,7 +333,23 @@ function CapabilityForm({
           />
         )}
 
-        {!selectedAiProvider && (
+        {isEmbeddings && sourceCount > 0 && (
+          <p className="text-xs text-gray-11">
+            {t(
+              'Files already in knowledge bases keep their old vectors. Re-upload them to search with the new key or model.',
+            )}
+          </p>
+        )}
+
+        {sourceCount === 0 && (
+          <p className="text-sm text-gray-11">
+            {t(
+              'Add a key that serves all projects and supports embeddings, such as OpenAI, Google, Azure or OpenRouter.',
+            )}
+          </p>
+        )}
+
+        {!selectedAiProvider && sourceCount > 0 && (
           <FormField
             control={form.control}
             name="apiKey"
@@ -361,6 +400,7 @@ function CapabilityForm({
           </Button>
           <Button
             type="submit"
+            disabled={sourceCount === 0}
             loading={isPending || isReenabling}
             {...adminControl(AdminControl.AI_CAPABILITY_SUBMIT)}
           >

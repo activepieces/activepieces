@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
-import { FileCompression, FileType, KnowledgeBaseFile } from '@activepieces/shared'
+import { AI_PROVIDER_CAPABILITIES, FileCompression, FileType, GetProviderConfigResponse, KnowledgeBaseEmbeddingSource, KnowledgeBaseFile } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, embedMany } from 'ai'
 import { parse as parseCsv } from 'csv-parse/sync'
@@ -157,17 +157,29 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
     },
 
     async embeddingModelFor({ platformId, projectId, billing }: { platformId: string, projectId: string, billing: ActivepiecesAiBilling }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
-        const scope = { type: 'project' as const, projectId }
-        const choice = (await aiToolConfigService(log).getProviderChoices({ platformId })).embeddings
-        const chosen = isNil(choice) ? null : await aiProviderService(log).findKeyConfig({ platformId, configId: choice.aiProviderId, scope })
-        const provider = chosen ?? await aiProviderService(log).getChatProvider({ platformId, scope })
-        if (isNil(provider)) {
+        const source = await this.embeddingSourceFor({ platformId, projectId })
+        if (isNil(source)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: KNOWLEDGE_BASE_NEEDS_AI_PROVIDER },
             })
         }
-        return aiUtils.createEmbeddingModel({ credentials: provider, platformId, providerConfigId: provider.configId, billing })
+        const { credentials, modelId } = source
+        return aiUtils.createEmbeddingModel({ credentials, modelId, platformId, providerConfigId: credentials.configId, billing })
+    },
+
+    async embeddingSourceFor({ platformId, projectId }: { platformId: string, projectId: string }): Promise<{ credentials: GetProviderConfigResponse, modelId: string } | null> {
+        const scope = { type: 'project' as const, projectId }
+        const choice = (await aiToolConfigService(log).getProviderChoices({ platformId })).embeddings
+        const chosen = isNil(choice) ? null : await aiProviderService(log).findKeyConfig({ platformId, configId: choice.aiProviderId, scope })
+        const credentials = chosen ?? await aiProviderService(log).getChatProvider({ platformId, scope })
+        const modelId = (isNil(chosen) ? undefined : choice?.modelId) ?? (isNil(credentials) ? undefined : AI_PROVIDER_CAPABILITIES[credentials.provider].defaultEmbeddingModel)
+        return isNil(credentials) || isNil(modelId) ? null : { credentials, modelId }
+    },
+
+    async getEmbeddingSource({ platformId, projectId }: { platformId: string, projectId: string }): Promise<KnowledgeBaseEmbeddingSource> {
+        const source = await this.embeddingSourceFor({ platformId, projectId })
+        return { provider: source?.credentials.provider ?? null, modelId: source?.modelId ?? null }
     },
 
     embedFnOf(params: { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }): EmbedFn {
