@@ -293,38 +293,37 @@ export async function workdayListCustomObjectDefinitions(
 	);
 }
 
-export async function workdayGetCustomObject(
-	auth: OAuth2PropertyValue,
-	definitionId: string,
-	objectId: string,
-): Promise<Record<string, unknown>> {
-	const tenant = getTenant(auth);
-	const response = await httpClient.sendRequest<Record<string, unknown>>({
-		method: HttpMethod.GET,
-		url: `https://${getHost(auth)}/ccx/api/customObjects/v1/${tenant}/customObjects/${definitionId}`,
-		queryParams: { id: objectId },
-		authentication: {
-			type: AuthenticationType.BEARER_TOKEN,
-			token: auth.access_token,
-		},
-	});
+export async function workdayGetCustomObject({
+	auth,
+	alias,
+	objectId,
+}: {
+	auth: OAuth2PropertyValue;
+	alias: string;
+	objectId: string;
+}): Promise<Record<string, unknown>> {
+	const response = await workdayRequest<Record<string, unknown>>(
+		auth,
+		HttpMethod.GET,
+		`/customObjects/${encodeURIComponent(alias)}/${encodeURIComponent(objectId)}`,
+	);
 	return response.body;
 }
 
-export async function workdayUpsertCustomObject(
-	auth: OAuth2PropertyValue,
-	definitionId: string,
-	body: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-	const tenant = getTenant(auth);
-	const response = await httpClient.sendRequest<Record<string, unknown>>({
-		method: HttpMethod.PUT,
-		url: `https://${getHost(auth)}/ccx/api/customObjects/v1/${tenant}/customObjects/${definitionId}`,
-		body,
-		authentication: {
-			type: AuthenticationType.BEARER_TOKEN,
-			token: auth.access_token,
-		},
-	});
+export async function workdayUpsertCustomObject({
+	auth,
+	alias,
+	objectId,
+	body,
+}: {
+	auth: OAuth2PropertyValue;
+	alias: string;
+	objectId?: string;
+	body: Record<string, unknown>;
+}): Promise<Record<string, unknown>> {
+	const path = `/customObjects/${encodeURIComponent(alias)}`;
+	const response = objectId
+		? await workdayRequest<Record<string, unknown>>(auth, HttpMethod.PUT, `${path}/${encodeURIComponent(objectId)}`, body)
+		: await workdayRequest<Record<string, unknown>>(auth, HttpMethod.POST, path, body, { updateIfExists: 'true' });
 	return response.body;
 }

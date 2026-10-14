@@ -1,5 +1,6 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
+import { workdayListCustomObjectDefinitions } from './index';
 import {
 	businessObjectPropertyForModule,
 	customBusinessObjectProperty,
@@ -69,10 +70,25 @@ export const dateFieldProperty = Property.ShortText({
 	defaultValue: 'lastFunctionallyUpdated',
 });
 
-export const customObjectDefinitionProperty = Property.ShortText({
-	displayName: 'Custom Object Definition ID',
-	description: 'Custom object definition alias or ID from Workday.',
+export const customObjectDefinitionProperty = Property.Dropdown({
+	auth: workdayAuth,
+	displayName: 'Custom Object Definition',
+	description: 'The custom object definition; its value is the definition alias, e.g. `apTestInfo`.',
 	required: true,
+	refreshers: [],
+	options: async ({ auth }) => {
+		if (!auth) {
+			return { disabled: true, options: [], placeholder: 'Connect your Workday account first.' };
+		}
+		const definitions = await workdayListCustomObjectDefinitions(auth);
+		return {
+			disabled: false,
+			options: definitions.map((definition) => ({
+				label: String(definition['name'] ?? definition['descriptor'] ?? definition['alias']),
+				value: String(definition['alias']),
+			})),
+		};
+	},
 });
 
 export const operationNameProperty = Property.ShortText({

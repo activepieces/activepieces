@@ -170,11 +170,11 @@ describe('get_custom_objects', () => {
 		sendRequest.mockResolvedValue(resp({ id: 'obj-1', data: { name: 'X' } }));
 
 		const out = (await getCustomObjects.run(
-			context({ definitionId: 'def-1', objectId: 'obj-1' }),
+			context({ definitionId: 'apTestInfo', objectId: 'obj-1' }),
 		)) as Record<string, unknown>;
 
 		expect(out['data_name']).toBe('X');
-		expect(requests()[0].url).toContain('/customObjects/v1/mytenant/customObjects/def-1');
+		expect(requests()[0].url).toContain('/v1/mytenant/customObjects/apTestInfo/obj-1');
 	});
 });
 
@@ -218,26 +218,30 @@ describe('list_custom_object_definitions_batch', () => {
 });
 
 describe('create_update_custom_object', () => {
-	it('creates a custom object (no id) with PUT', async () => {
-		sendRequest.mockResolvedValue(resp({ id: 'obj-1' }));
+	it('creates with POST and updateIfExists when no record id is given', async () => {
+		sendRequest.mockResolvedValue(resp({ ok: 'Created' }));
 
 		await createUpdateCustomObject.run(
-			context({ definitionId: 'def-1', objectId: undefined, body: { name: 'X' } }),
+			context({ definitionId: 'apTestInfo', objectId: undefined, body: { worker: { id: 'w1' }, note: 'X' } }),
+		);
+
+		const req = requests()[0];
+		expect(req.method).toBe(HttpMethod.POST);
+		expect(req.queryParams).toEqual({ updateIfExists: 'true' });
+		expect(req.body).toEqual({ worker: { id: 'w1' }, note: 'X' });
+	});
+
+	it('updates the record with PUT when a record id is given', async () => {
+		sendRequest.mockResolvedValue(resp({ ok: 'OK' }));
+
+		await createUpdateCustomObject.run(
+			context({ definitionId: 'apTestInfo', objectId: 'obj-1', body: { note: 'X' } }),
 		);
 
 		const req = requests()[0];
 		expect(req.method).toBe(HttpMethod.PUT);
-		expect(req.body).toEqual({ name: 'X' });
-	});
-
-	it('injects the id into the body when updating', async () => {
-		sendRequest.mockResolvedValue(resp({ id: 'obj-1' }));
-
-		await createUpdateCustomObject.run(
-			context({ definitionId: 'def-1', objectId: 'obj-1', body: { name: 'X' } }),
-		);
-
-		expect(requests()[0].body).toEqual({ name: 'X', id: 'obj-1' });
+		expect(req.url).toContain('/v1/mytenant/customObjects/apTestInfo/obj-1');
+		expect(req.body).toEqual({ note: 'X' });
 	});
 });
 

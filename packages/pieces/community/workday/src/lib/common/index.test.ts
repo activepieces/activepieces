@@ -147,20 +147,33 @@ describe('custom object helpers', () => {
 		);
 	});
 
-	it('gets a custom object instance by id', async () => {
+	it('gets a custom object record by alias and record id', async () => {
 		sendRequest.mockResolvedValue(resp({ id: 'obj-1' }));
-		await workdayGetCustomObject(AUTH, 'def-1', 'obj-1');
+		await workdayGetCustomObject({ auth: AUTH, alias: 'apTestInfo', objectId: 'obj-1' });
 		const req = sendRequest.mock.calls[0][0] as HttpRequest;
-		expect(req.url).toContain('/customObjects/v1/mytenant/customObjects/def-1');
-		expect(req.queryParams).toEqual({ id: 'obj-1' });
+		expect(req.method).toBe(HttpMethod.GET);
+		expect(req.url).toBe(
+			'https://wd2-impl-services1.workday.com/ccx/api/v1/mytenant/customObjects/apTestInfo/obj-1',
+		);
 	});
 
-	it('upserts a custom object with PUT', async () => {
-		sendRequest.mockResolvedValue(resp({ id: 'obj-1' }));
-		await workdayUpsertCustomObject(AUTH, 'def-1', { name: 'x' });
+	it('creates with POST and updateIfExists when no record id is given', async () => {
+		sendRequest.mockResolvedValue(resp({ ok: 'Created' }));
+		await workdayUpsertCustomObject({ auth: AUTH, alias: 'apTestInfo', body: { worker: { id: 'w1' }, note: 'x' } });
+		const req = sendRequest.mock.calls[0][0] as HttpRequest;
+		expect(req.method).toBe(HttpMethod.POST);
+		expect(req.url).toBe('https://wd2-impl-services1.workday.com/ccx/api/v1/mytenant/customObjects/apTestInfo');
+		expect(req.queryParams).toEqual({ updateIfExists: 'true' });
+		expect(req.body).toEqual({ worker: { id: 'w1' }, note: 'x' });
+	});
+
+	it('updates with PUT on the record when a record id is given', async () => {
+		sendRequest.mockResolvedValue(resp({ ok: 'OK' }));
+		await workdayUpsertCustomObject({ auth: AUTH, alias: 'apTestInfo', objectId: 'obj-1', body: { note: 'x' } });
 		const req = sendRequest.mock.calls[0][0] as HttpRequest;
 		expect(req.method).toBe(HttpMethod.PUT);
-		expect(req.body).toEqual({ name: 'x' });
+		expect(req.url).toBe('https://wd2-impl-services1.workday.com/ccx/api/v1/mytenant/customObjects/apTestInfo/obj-1');
+		expect(req.body).toEqual({ note: 'x' });
 	});
 });
 
