@@ -86,7 +86,6 @@ describe('flowProvisioning.resolve', () => {
                 sourceCode: { code: 'export const code = async () => 1', packageJson: '{}' },
                 flowVersionId: 'fv1',
                 flowVersionState: FlowVersionState.LOCKED,
-                useDeno: false,
             }])
             expect(resolved.publishBundle).toBeNull()
             expect(resolved.pieces).toEqual([httpPiece])

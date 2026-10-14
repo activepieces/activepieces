@@ -47,15 +47,15 @@ async function expectRejection(run: Promise<unknown>, pattern: RegExp): Promise<
 describe('denoCodeSandbox permission boundary', () => {
     describe('blocks unpermitted operations', () => {
         it('rejects outbound network access', async () => {
-            await expectRejection(runModule(`export const code = async () => (await fetch('https://example.com')).status`), PERMISSION_DENIED)
+            await expectRejection(runModule('export const code = async () => (await fetch(\'https://example.com\')).status'), PERMISSION_DENIED)
         })
 
         it('rejects reading a file outside the step directory', async () => {
-            await expectRejection(runModule(`export const code = async () => Deno.readTextFile('/etc/hosts')`), PERMISSION_DENIED)
+            await expectRejection(runModule('export const code = async () => Deno.readTextFile(\'/etc/hosts\')'), PERMISSION_DENIED)
         })
 
         it('rejects reading environment variables', async () => {
-            await expectRejection(runModule(`export const code = async () => Deno.env.toObject()`), PERMISSION_DENIED)
+            await expectRejection(runModule('export const code = async () => Deno.env.toObject()'), PERMISSION_DENIED)
         })
 
         it('gives each run its own DENO_DIR and removes it after the run', async () => {
@@ -100,7 +100,7 @@ describe('denoCodeSandbox permission boundary', () => {
         it('with the ENV permission exposes only PATH, never the engine env', async () => {
             const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
             const codeFilePath = path.join(stepDir, 'index.ts')
-            await writeFile(codeFilePath, `export const code = async () => ({ keys: Object.keys(Deno.env.toObject()).sort(), missing: process.env.AP_EXECUTION_MODE ?? null })`)
+            await writeFile(codeFilePath, 'export const code = async () => ({ keys: Object.keys(Deno.env.toObject()).sort(), missing: process.env.AP_EXECUTION_MODE ?? null })')
             const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
             expect(result).toEqual({ keys: ['DENO_DIR', 'PATH'], missing: null })
         })
@@ -112,13 +112,13 @@ describe('denoCodeSandbox permission boundary', () => {
                 process.env.MY_PROPAGATED_SECRET = 'propagated-value'
                 process.env.MY_UNLISTED_SECRET = 'must-not-leak'
                 const codeFilePath = path.join(stepDir, 'index.ts')
-                await writeFile(codeFilePath, `export const code = async () => ({ secret: process.env.MY_PROPAGATED_SECRET ?? null, unlisted: process.env.MY_UNLISTED_SECRET ?? null, keys: Object.keys(Deno.env.toObject()).sort() })`)
+                await writeFile(codeFilePath, 'export const code = async () => ({ secret: process.env.MY_PROPAGATED_SECRET ?? null, unlisted: process.env.MY_UNLISTED_SECRET ?? null, keys: Object.keys(Deno.env.toObject()).sort() })')
 
                 const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
                 const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
                 expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['DENO_DIR', 'MY_PROPAGATED_SECRET', 'PATH'] })
 
-                await writeFile(codeFilePath, `export const code = async () => { try { Deno.env.toObject(); return 'readable' } catch { return 'blocked' } }`)
+                await writeFile(codeFilePath, 'export const code = async () => { try { Deno.env.toObject(); return \'readable\' } catch { return \'blocked\' } }')
                 const lockedResult = await denoCodeSandbox.runCodeModule({ codeFilePath, inputs: {} })
                 expect(lockedResult).toBe('blocked')
             }
@@ -142,32 +142,32 @@ describe('denoCodeSandbox permission boundary', () => {
         })
 
         it('rejects writing outside the step directory', async () => {
-            await expectRejection(runModule(`export const code = async () => Deno.writeTextFile('/tmp/ap-pwned.txt', 'hi')`), PERMISSION_DENIED)
+            await expectRejection(runModule('export const code = async () => Deno.writeTextFile(\'/tmp/ap-pwned.txt\', \'hi\')'), PERMISSION_DENIED)
         })
 
         it('rejects writing inside the step directory (locked profile grants no write)', async () => {
-            await expectRejection(runModule(`export const code = async () => Deno.writeTextFile('./data.json', 'x')`), PERMISSION_DENIED)
+            await expectRejection(runModule('export const code = async () => Deno.writeTextFile(\'./data.json\', \'x\')'), PERMISSION_DENIED)
         })
 
         it('rejects path traversal out of the step directory', async () => {
-            await expectRejection(runModule(`export const code = async () => Deno.readTextFile('../../../../etc/hosts')`), PERMISSION_DENIED)
+            await expectRejection(runModule('export const code = async () => Deno.readTextFile(\'../../../../etc/hosts\')'), PERMISSION_DENIED)
         })
     })
 
     describe('allows permitted operations', () => {
         it('runs pure compute over inputs', async () => {
-            const result = await runModule(`export const code = async (inputs) => ({ doubled: inputs.n * 2 })`, { n: 21 })
+            const result = await runModule('export const code = async (inputs) => ({ doubled: inputs.n * 2 })', { n: 21 })
             expect(result).toEqual({ doubled: 42 })
         })
 
         it('reads files inside its own step directory (needed for module loading)', async () => {
             await writeFile(path.join(stepDir, 'data.txt'), 'step-local')
-            const result = await runModule(`export const code = async () => Deno.readTextFile('./data.txt')`)
+            const result = await runModule('export const code = async () => Deno.readTextFile(\'./data.txt\')')
             expect(result).toBe('step-local')
         })
 
         it('surfaces user thrown errors', async () => {
-            await expectRejection(runModule(`export const code = async () => { throw new Error('boom') }`), /boom/)
+            await expectRejection(runModule('export const code = async () => { throw new Error(\'boom\') }'), /boom/)
         })
     })
 
@@ -200,41 +200,41 @@ describe('denoCodeSandbox permission boundary', () => {
         })
 
         it('surfaces a TS syntax error as a catchable user failure', async () => {
-            await expectRejection(runModule(`export const code = async () => {`), /SyntaxError|Unexpected|expected/i)
+            await expectRejection(runModule('export const code = async () => {'), /SyntaxError|Unexpected|expected/i)
         })
 
         it('rejects a module that does not export a code function', async () => {
-            await expectRejection(runModule(`export const notCode = 1`), /must export a "code" function/)
+            await expectRejection(runModule('export const notCode = 1'), /must export a "code" function/)
         })
     })
 
     describe('runs legacy CommonJS code steps', () => {
         it('loads exports.code style modules through the require fallback', async () => {
-            const result = await runModule(`exports.code = async (inputs: { a: number }) => inputs.a + 1`, { a: 41 })
+            const result = await runModule('exports.code = async (inputs: { a: number }) => inputs.a + 1', { a: 41 })
             expect(result).toBe(42)
         })
 
         it('loads module.exports = { code } style modules', async () => {
-            const result = await runModule(`module.exports = { code: async () => 'cjs-object' }`)
+            const result = await runModule('module.exports = { code: async () => \'cjs-object\' }')
             expect(result).toBe('cjs-object')
         })
 
         it('supports require of node builtins inside CJS modules', async () => {
-            const result = await runModule(`const crypto = require('node:crypto');\nexports.code = async () => crypto.createHash('sha256').update('ap').digest('hex')`)
+            const result = await runModule('const crypto = require(\'node:crypto\');\nexports.code = async () => crypto.createHash(\'sha256\').update(\'ap\').digest(\'hex\')')
             expect(result).toMatch(/^[0-9a-f]{64}$/)
         })
 
         it('rejects a CJS module that does not export a code function', async () => {
-            await expectRejection(runModule(`exports.notCode = 1`), /must export a "code" function/)
+            await expectRejection(runModule('exports.notCode = 1'), /must export a "code" function/)
         })
 
         it('evaluates module-scope statements of a CJS step exactly once', async () => {
-            const result = await runModule(`globalThis.__apRuns = (globalThis.__apRuns ?? 0) + 1;\nexports.code = async () => globalThis.__apRuns`)
+            const result = await runModule('globalThis.__apRuns = (globalThis.__apRuns ?? 0) + 1;\nexports.code = async () => globalThis.__apRuns')
             expect(result).toBe(1)
         })
 
         it('loads a top-level-await ESM step even when it looks like CJS to the source sniff', async () => {
-            const result = await runModule(`const note = "module.exports is legacy"; export const code = async () => note + '-' + top;\nconst top = await Promise.resolve('tla');`)
+            const result = await runModule('const note = "module.exports is legacy"; export const code = async () => note + \'-\' + top;\nconst top = await Promise.resolve(\'tla\');')
             expect(result).toBe('module.exports is legacy-tla')
         })
 
@@ -242,24 +242,24 @@ describe('denoCodeSandbox permission boundary', () => {
             const pkgDir = path.join(stepDir, 'node_modules', 'cjs-req-fixture')
             await mkdir(pkgDir, { recursive: true })
             await writeFile(path.join(pkgDir, 'package.json'), JSON.stringify({ name: 'cjs-req-fixture', version: '1.0.0', main: 'index.js' }))
-            await writeFile(path.join(pkgDir, 'index.js'), `module.exports = { greet: (name) => 'hello ' + name }`)
-            const result = await runModule(`const { greet } = require('cjs-req-fixture');\nexports.code = async () => greet('cjs')`)
+            await writeFile(path.join(pkgDir, 'index.js'), 'module.exports = { greet: (name) => \'hello \' + name }')
+            const result = await runModule('const { greet } = require(\'cjs-req-fixture\');\nexports.code = async () => greet(\'cjs\')')
             expect(result).toBe('hello cjs')
         })
 
         it('does not swallow genuine module-scope errors from ESM modules', async () => {
-            await expectRejection(runModule(`throw new Error('boom at module scope');\nexport const code = async () => 1`), /boom at module scope/)
+            await expectRejection(runModule('throw new Error(\'boom at module scope\');\nexport const code = async () => 1'), /boom at module scope/)
         })
     })
 
     describe('resolves imports', () => {
         it('supports bare require of node builtins (legacy user code)', async () => {
-            const result = await runModule(`const crypto = require('node:crypto'); export const code = async () => crypto.createHash('sha256').update('ap').digest('hex')`)
+            const result = await runModule('const crypto = require(\'node:crypto\'); export const code = async () => crypto.createHash(\'sha256\').update(\'ap\').digest(\'hex\')')
             expect(result).toMatch(/^[0-9a-f]{64}$/)
         })
 
         it('imports node builtins via ESM', async () => {
-            const result = await runModule(`import { createHash } from 'node:crypto'; export const code = async () => createHash('sha256').update('ap').digest('hex')`)
+            const result = await runModule('import { createHash } from \'node:crypto\'; export const code = async () => createHash(\'sha256\').update(\'ap\').digest(\'hex\')')
             expect(result).toMatch(/^[0-9a-f]{64}$/)
         })
 
@@ -267,8 +267,8 @@ describe('denoCodeSandbox permission boundary', () => {
             const pkgDir = path.join(stepDir, 'node_modules', 'cjs-fixture')
             await mkdir(pkgDir, { recursive: true })
             await writeFile(path.join(pkgDir, 'package.json'), JSON.stringify({ name: 'cjs-fixture', version: '1.0.0', main: 'index.js' }))
-            await writeFile(path.join(pkgDir, 'index.js'), `module.exports = { greet: (name) => 'hello ' + name }`)
-            const result = await runModule(`import { greet } from 'cjs-fixture'; export const code = async () => greet('ap')`)
+            await writeFile(path.join(pkgDir, 'index.js'), 'module.exports = { greet: (name) => \'hello \' + name }')
+            const result = await runModule('import { greet } from \'cjs-fixture\'; export const code = async () => greet(\'ap\')')
             expect(result).toBe('hello ap')
         })
 
@@ -276,13 +276,13 @@ describe('denoCodeSandbox permission boundary', () => {
             const pkgDir = path.join(stepDir, 'node_modules', 'esm-fixture')
             await mkdir(pkgDir, { recursive: true })
             await writeFile(path.join(pkgDir, 'package.json'), JSON.stringify({ name: 'esm-fixture', version: '1.0.0', type: 'module', main: 'index.js' }))
-            await writeFile(path.join(pkgDir, 'index.js'), `export const triple = (n) => n * 3`)
-            const result = await runModule(`import { triple } from 'esm-fixture'; export const code = async () => triple(14)`)
+            await writeFile(path.join(pkgDir, 'index.js'), 'export const triple = (n) => n * 3')
+            const result = await runModule('import { triple } from \'esm-fixture\'; export const code = async () => triple(14)')
             expect(result).toBe(42)
         })
 
         it('rejects remote imports', async () => {
-            await expectRejection(runModule(`export const code = async () => (await import('https://example.com/mod.ts')).default`), /Requires import access|--no-remote/i)
+            await expectRejection(runModule('export const code = async () => (await import(\'https://example.com/mod.ts\')).default'), /Requires import access|--no-remote/i)
         })
     })
 
@@ -303,7 +303,7 @@ describe('denoCodeSandbox permission boundary', () => {
         })
 
         it('runs without any permissions (network blocked)', async () => {
-            await expectRejection(denoCodeSandbox.runScript({ script: `fetch('https://example.com')`, scriptContext: {}, functions: {} }), PERMISSION_DENIED)
+            await expectRejection(denoCodeSandbox.runScript({ script: 'fetch(\'https://example.com\')', scriptContext: {}, functions: {} }), PERMISSION_DENIED)
         })
     })
 
@@ -326,7 +326,7 @@ describe('denoCodeSandbox permission boundary', () => {
                 await expectRejection(session.run('missingVar.foo'), /missingVar/)
                 expect(await session.run('Promise.resolve(base + step_1.out)')).toBe(45)
 
-                await expectRejection(session.run(`fetch('https://example.com')`), PERMISSION_DENIED)
+                await expectRejection(session.run('fetch(\'https://example.com\')'), PERMISSION_DENIED)
             }
             finally {
                 session.dispose()
@@ -437,7 +437,7 @@ describe('denoCodeSandbox permission boundary', () => {
             const session = await denoCodeSandbox.createScriptSession({ scriptContext: {}, functions: {} })
             try {
                 const expected = '😀🌍'.repeat(50_000)
-                expect(await session.run(`'😀🌍'.repeat(50000)`)).toBe(expected)
+                expect(await session.run('\'😀🌍\'.repeat(50000)')).toBe(expected)
             }
             finally {
                 session.dispose()
@@ -452,7 +452,7 @@ describe('denoCodeSandbox permission profiles', () => {
     let DenoPermission: any
 
     beforeAll(async () => {
-        ;({ DenoPermission } = denoModule)
+        ({ DenoPermission } = denoModule)
         dir = await mkdtemp(path.join(tmpdir(), 'ap-deno-profile-'))
     })
 

@@ -12,30 +12,6 @@ import { codeCache } from './code-cache'
 import { denoStepTranspiler } from './deno-step-transpiler'
 import { packageDependencies } from './package-dependencies'
 
-const TS_CONFIG_CONTENT = `
-{
-    "compilerOptions": {
-        "lib": ["es2022", "dom"],
-        "module": "commonjs",
-        "target": "es2022",
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "noUnusedLocals": false,
-        "noUnusedParameters": false,
-        "strict": false,
-        "strictPropertyInitialization": false,
-        "strictNullChecks": false,
-        "strictFunctionTypes": false,
-        "strictBindCallApply": false,
-        "noImplicitAny": false,
-        "noImplicitThis": false,
-        "noImplicitReturns": false,
-        "noFallthroughCasesInSwitch": false
-    }
-}
-`
-
 const DENO_TRANSPILER_VERSION = 'sucrase-v1'
 
 const INSTALL_LOCKS_DIR = '.install-locks'
@@ -50,28 +26,18 @@ const INVALID_DENO_ARTIFACT_TEMPLATE = `
     };
     `
 
-const INVALID_LEGACY_ARTIFACT_TEMPLATE = `
-    exports.code = async (params) => {
-      throw new Error(${INVALID_ARTIFACT_ERROR_PLACEHOLDER});
-    };
-    `
-
 export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) => ({
     async processCodeStep({
         artifact,
         codesFolderPath,
     }: ProcessCodeStepParams): Promise<CodeBuildStatus> {
-        const { sourceCode, flowVersionId, name, useDeno } = artifact
+        const { sourceCode, flowVersionId, name } = artifact
         const codes = codeCache(codesFolderPath)
         const codePath = codes.stepDir({ flowVersionId, stepName: name })
-        log.debug({ sourceCode, name, codePath, useDeno }, 'Processing code step')
+        log.debug({ sourceCode, name, codePath }, 'Processing code step')
 
-        const currentHash = await cryptoUtils.hashObject(useDeno
-            ? { sourceCode, useDeno, transpiler: DENO_TRANSPILER_VERSION }
-            : { sourceCode, useDeno })
-        const entryPath = useDeno
-            ? codes.stepEntryPath({ flowVersionId, stepName: name })
-            : codes.compiledStepPath({ flowVersionId, stepName: name })
+        const currentHash = await cryptoUtils.hashObject({ sourceCode, useDeno: true, transpiler: DENO_TRANSPILER_VERSION })
+        const entryPath = codes.stepEntryPath({ flowVersionId, stepName: name })
         const transpiledPath = codes.transpiledStepPath({ flowVersionId, stepName: name })
         const packageJson = getPackageJson(sourceCode.packageJson, getSettings)
         const hasDependencies = Object.keys(JSON.parse(packageJson).dependencies ?? {}).length > 0
@@ -80,12 +46,10 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
         const { cacheHit } = await cache.getOrSetCache({
             key: codePath,
             cacheMiss: (value: string) => {
-                const entryExists = useDeno
-                    ? existsSync(transpiledPath) || existsSync(entryPath)
-                    : existsSync(entryPath)
+                const entryExists = existsSync(transpiledPath) || existsSync(entryPath)
                 return value !== currentHash
                     || !entryExists
-                    || (useDeno && hasDependencies && !existsSync(path.join(codePath, 'node_modules')))
+                    || (hasDependencies && !existsSync(path.join(codePath, 'node_modules')))
             },
             installFn: async () => {
                 await fileSystemUtils.threadSafeMkdir(codePath)
@@ -113,7 +77,6 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                 if (installError) {
                     await writeInvalidArtifact({
                         entryPath,
-                        useDeno,
                         errorMessage: `Failed to install dependencies. ${installError ?? 'error installing dependencies'}`,
                     })
                     await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
@@ -121,52 +84,21 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                     return currentHash
                 }
 
-                if (useDeno) {
-                    await wideEvent.timed({
-                        name: 'codeCompile',
-                        fn: async () => {
-                            await fs.writeFile(entryPath, sourceCode.code, 'utf8')
-                            const { data: transpiled, error } = await tryCatch(() => denoStepTranspiler.toCommonJs({ source: sourceCode.code }))
-                            if (error !== null || transpiled.fallbackToEsm === true) {
-                                const fallbackError = error ?? transpiled?.error
-                                if (!isNil(fallbackError)) {
-                                    log.info({ codePath, error: fallbackError }, 'Deno step transpile failed, falling back to raw source')
-                                }
-                                return
-                            }
-                            await fs.writeFile(transpiledPath, transpiled.code, 'utf8')
-                        },
-                    })
-                    return currentHash
-                }
-
-                const compileError = await wideEvent.timed({
+                await wideEvent.timed({
                     name: 'codeCompile',
                     fn: async () => {
-                        const { error } = await tryCatch(() => compileCode({
-                            path: codePath,
-                            code: sourceCode.code,
-                        }, log))
-                        if (error) {
-                            log.info({ codePath, error }, 'Compilation error')
-                            await writeInvalidArtifact({
-                                entryPath,
-                                useDeno,
-                                errorMessage: `Compilation Error ${error ?? 'error compiling'}`,
-                            })
+                        await fs.writeFile(entryPath, sourceCode.code, 'utf8')
+                        const { data: transpiled, error } = await tryCatch(() => denoStepTranspiler.toCommonJs({ source: sourceCode.code }))
+                        if (error !== null || transpiled.fallbackToEsm === true) {
+                            const fallbackError = error ?? transpiled?.error
+                            if (!isNil(fallbackError)) {
+                                log.info({ codePath, error: fallbackError }, 'Deno step transpile failed, falling back to raw source')
+                            }
+                            return
                         }
-                        else {
-                            log.info({ codePath }, 'Compilation success')
-                        }
-                        return error
+                        await fs.writeFile(transpiledPath, transpiled.code, 'utf8')
                     },
                 })
-                if (compileError) {
-                    buildStatus = 'compile-failed'
-                }
-
-                // node_modules is only needed at runtime by deno steps; the legacy bundle inlines it.
-                await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                 return currentHash
             },
             skipSave: () => buildStatus !== 'success',
@@ -227,23 +159,8 @@ async function installDependencies({ path, packageJson, locksPath }: InstallDepe
     })
 }
 
-async function compileCode({ path, code }: CompileCodeParams, log: ApLogger): Promise<void> {
-    await fs.writeFile(`${path}/tsconfig.json`, TS_CONFIG_CONTENT, {
-        encoding: 'utf8',
-        flag: 'w',
-    })
-    await fs.writeFile(`${path}/index.ts`, code, { encoding: 'utf8', flag: 'w' })
-
-    await bunRunner(log).build({
-        path,
-        entryFile: `${path}/index.ts`,
-        outputFile: `${path}/index.js`,
-    })
-}
-
-async function writeInvalidArtifact({ entryPath, useDeno, errorMessage }: WriteInvalidArtifactParams): Promise<void> {
-    const template = useDeno ? INVALID_DENO_ARTIFACT_TEMPLATE : INVALID_LEGACY_ARTIFACT_TEMPLATE
-    const invalidArtifactContent = template.replace(
+async function writeInvalidArtifact({ entryPath, errorMessage }: WriteInvalidArtifactParams): Promise<void> {
+    const invalidArtifactContent = INVALID_DENO_ARTIFACT_TEMPLATE.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
         () => JSON.stringify(errorMessage),
     )
@@ -267,15 +184,9 @@ type InstallDependenciesParams = {
     locksPath: string
 }
 
-type CompileCodeParams = {
-    path: string
-    code: string
-}
-
 type WriteInvalidArtifactParams = {
     entryPath: string
-    useDeno: boolean
     errorMessage: string
 }
 
-export type CodeBuildStatus = 'success' | 'install-failed' | 'compile-failed'
+export type CodeBuildStatus = 'success' | 'install-failed'

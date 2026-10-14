@@ -93,7 +93,6 @@ export type CodeArtifact = {
     sourceCode: SourceCode
     flowVersionId: string
     flowVersionState: FlowVersionState
-    useDeno: boolean
 }
 
 // Structural subset of WorkerSettingsResponse used by the local-pool runtime tree.

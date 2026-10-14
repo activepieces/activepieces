@@ -4,7 +4,6 @@
   "packageManager": "bun@1.4.0",
   "trustedDependencies": [
     "sqlite3",
-    "isolated-vm",
     "redis-memory-server",
     "deno"
   ],

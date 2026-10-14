@@ -361,7 +361,6 @@ export type PrewarmCodeStep = {
     sourceCode: SourceCode
     flowVersionId: string
     flowVersionState: FlowVersionState
-    useDeno: boolean
 }
 
 export type PrewarmDataResponse = {

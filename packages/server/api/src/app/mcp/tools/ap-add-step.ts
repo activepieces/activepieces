@@ -87,7 +87,6 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                             },
                             input: resolvedInput,
                             errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({ continueOnFailure, retryOnFailure }),
-                            useDeno: true,
                         },
                     }
                     break

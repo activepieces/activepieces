@@ -113,7 +113,7 @@ export function buildAiRouter({ children, routes, fallback, minConfidence, match
     }
 }
 
-export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions, useDeno }: { name: 'echo_step' | 'runtime' | 'echo_step_1' | 'system_error' | 'process_exit' | 'unhandled_rejection' | 'hello_world_npm' | 'stdout_on_failure' | 'setTimeout_error' | 'echo_step_legacy', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: FlowAction, useDeno?: boolean }): CodeAction {
+export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1' | 'system_error' | 'process_exit' | 'unhandled_rejection' | 'hello_world_npm' | 'stdout_on_failure' | 'setTimeout_error', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: FlowAction }): CodeAction {
     return {
         name,
         displayName: 'Your Action Name',
@@ -126,7 +126,6 @@ export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOp
                 code: '',
             },
             errorHandlingOptions,
-            useDeno: useDeno ?? true,
         },
         nextAction,
         valid: true,

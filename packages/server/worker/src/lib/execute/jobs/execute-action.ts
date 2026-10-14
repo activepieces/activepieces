@@ -65,7 +65,6 @@ async function resolveCodeStep({ step, platformId }: ResolveCodeStepParams): Pro
             sourceCode: step.settings.sourceCode,
             flowVersionId: namespace,
             flowVersionState: DEFAULT_MCP_DATA.flowVersionState,
-            useDeno: step.settings.useDeno === true,
         }],
     }
 }

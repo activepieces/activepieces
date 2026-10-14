@@ -103,7 +103,6 @@ function extractCodeArtifacts(flowVersion: FlowVersion): CodeArtifact[] {
         sourceCode: step.settings.sourceCode,
         flowVersionId: flowVersion.id,
         flowVersionState: flowVersion.state,
-        useDeno: step.settings.useDeno === true,
     }))
 }
 
