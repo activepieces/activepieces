@@ -14,10 +14,18 @@ import {
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronLeft, KeyRound, RefreshCw, Trash2 } from 'lucide-react';
+import { KeyRound, RefreshCw, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
 
+import {
+  AdminPageHeader,
+  AdminSection,
+  DangerZone,
+  SettingsPanel,
+  SettingsRow,
+  adminPageResources,
+} from '@/app/components/admin';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import {
   LeaveWithoutSavingDialog,
@@ -45,8 +53,6 @@ import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-h
 import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
-
-import { SectionHeader } from '../components/section-header';
 
 import { KeyModelList } from './key-model-list';
 import { KeyStatusBadge } from './key-status';
@@ -93,6 +99,11 @@ export function ConfigDetail({
     queryKey: aiProviderKeys.configModels(config.id),
     queryFn: () => aiProviderApi.listModelsForConfig(config.id),
     enabled: !manualModels,
+  });
+  const { data: suggestedModelIds = [] } = useQuery({
+    queryKey: [...aiProviderKeys.configModels(config.id), 'suggested'],
+    queryFn: () => aiProviderApi.listSuggestedModelsForConfig(config.id),
+    enabled: manualModels,
   });
   const selectableModels = [
     ...models,
@@ -209,41 +220,30 @@ export function ConfigDetail({
   };
 
   return (
-    <div className="flex grow flex-col gap-6 pb-4">
-      <div className="flex flex-col gap-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex w-fit items-center gap-1 text-sm text-gray-11 transition-colors hover:text-gray-12"
+    <>
+      <AdminPageHeader
+        title={draft.name}
+        back={{ label: t('Providers'), to: '/platform/ai' }}
+        badge={<KeyStatusBadge status={config.status} />}
+        description={
+          <span className="flex items-center gap-2">
+            <ProviderLogo info={info} size="sm" />
+            {metaLine}
+          </span>
+        }
+        resources={adminPageResources.aiProviders}
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          loading={isRechecking}
+          onClick={onRecheck}
+          {...adminControl(AdminControl.AI_PROVIDER_KEY_RECHECK_RUN)}
         >
-          <ChevronLeft className="size-4" />
-          {t('Providers')}
-        </button>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            <ProviderLogo info={info} />
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <div className="flex min-w-0 items-center gap-2">
-                <h1 className="truncate text-lg font-semibold leading-none tracking-tight">
-                  {draft.name}
-                </h1>
-                <KeyStatusBadge status={config.status} />
-              </div>
-              <p className="text-xs text-gray-11">{metaLine}</p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            loading={isRechecking}
-            onClick={onRecheck}
-            {...adminControl(AdminControl.AI_PROVIDER_KEY_RECHECK_RUN)}
-          >
-            <RefreshCw className="size-4" />
-            {t('Recheck')}
-          </Button>
-        </div>
-      </div>
+          <RefreshCw className="size-4" />
+          {t('Recheck')}
+        </Button>
+      </AdminPageHeader>
 
       <Tabs defaultValue="models" className="flex flex-col gap-6">
         <TabsList
@@ -266,106 +266,109 @@ export function ConfigDetail({
         <TabsContent
           value="models"
           forceMount
-          className="mt-0 flex flex-col gap-3 data-[state=inactive]:hidden"
+          className="mt-0 data-[state=inactive]:hidden"
         >
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <SectionHeader
-              title={t('Models')}
-              description={
-                manualModels
-                  ? t('Model ids exposed through this key.')
-                  : t('Which of this key’s models the platform may use.')
-              }
-            />
-            {!manualModels && (
-              <ScopeTabs
-                value={draft.modelScope}
-                disabled={isLoadingModels}
-                onChange={(value) =>
-                  setDraft({
-                    ...draft,
-                    modelScope: value === 'all' ? 'all' : 'selected',
-                    modelIds:
-                      value === 'all'
-                        ? []
-                        : withTierModels(models.map((model) => model.id)),
-                  })
+          <AdminSection
+            title={t('Models')}
+            description={
+              manualModels
+                ? t('Model ids exposed through this key.')
+                : t('Which of this key’s models the platform may use.')
+            }
+            action={
+              manualModels ? undefined : (
+                <ScopeTabs
+                  value={draft.modelScope}
+                  disabled={isLoadingModels}
+                  onChange={(value) =>
+                    setDraft({
+                      ...draft,
+                      modelScope: value === 'all' ? 'all' : 'selected',
+                      modelIds:
+                        value === 'all'
+                          ? []
+                          : withTierModels(models.map((model) => model.id)),
+                    })
+                  }
+                  options={[
+                    { value: 'all', label: t('All models') },
+                    { value: 'selected', label: t('Only selected') },
+                  ]}
+                />
+              )
+            }
+          >
+            {manualModels ? (
+              <ManualModelList
+                models={draft.models}
+                suggestedModelIds={suggestedModelIds}
+                tiersByModel={tiersByModel}
+                onChange={(models) => setDraft({ ...draft, models })}
+              />
+            ) : (
+              <KeyModelList
+                config={config}
+                models={draft.modelScope === 'all' ? models : selectableModels}
+                staleIds={staleIds}
+                tiersByModel={tiersByModel}
+                allModels={draft.modelScope === 'all'}
+                selectedIds={draft.modelIds}
+                isLoading={isLoadingModels}
+                onChange={(modelIds) =>
+                  setDraft({ ...draft, modelIds: withTierModels(modelIds) })
                 }
-                options={[
-                  { value: 'all', label: t('All models') },
-                  { value: 'selected', label: t('Only selected') },
-                ]}
               />
             )}
-          </div>
-          {manualModels ? (
-            <ManualModelList
-              models={draft.models}
-              tiersByModel={tiersByModel}
-              onChange={(models) => setDraft({ ...draft, models })}
-            />
-          ) : (
-            <KeyModelList
-              config={config}
-              models={draft.modelScope === 'all' ? models : selectableModels}
-              staleIds={staleIds}
-              tiersByModel={tiersByModel}
-              allModels={draft.modelScope === 'all'}
-              selectedIds={draft.modelIds}
-              isLoading={isLoadingModels}
-              onChange={(modelIds) =>
-                setDraft({ ...draft, modelIds: withTierModels(modelIds) })
-              }
-            />
-          )}
+          </AdminSection>
         </TabsContent>
 
         <TabsContent
           value="access"
           forceMount
-          className="mt-0 flex flex-col gap-3 data-[state=inactive]:hidden"
+          className="mt-0 data-[state=inactive]:hidden"
         >
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <SectionHeader
-              title={t('Project access')}
-              description={
-                draft.projectScope === 'except'
-                  ? t(
-                      'Every project except these — new projects get access automatically.',
-                    )
-                  : draft.projectScope === 'selected'
-                  ? t('Only these projects can use this key.')
-                  : t('Every project on this platform can use it.')
-              }
-            />
-            <ScopeTabs
-              value={draft.projectScope}
-              onChange={(value) =>
-                setDraft({
-                  ...draft,
-                  projectScope:
-                    value === 'all'
-                      ? 'all'
-                      : value === 'except'
-                      ? 'except'
-                      : 'selected',
-                  projectIds: value === 'all' ? [] : draft.projectIds,
-                })
-              }
-              options={[
-                { value: 'all', label: t('All') },
-                { value: 'selected', label: t('Only selected') },
-                { value: 'except', label: t('All except') },
-              ]}
-            />
-          </div>
-          {draft.projectScope !== 'all' && (
-            <ProjectSelectionPanel
-              projects={projects}
-              selectedIds={draft.projectIds}
-              onChange={(projectIds) => setDraft({ ...draft, projectIds })}
-            />
-          )}
+          <AdminSection
+            title={t('Project access')}
+            description={
+              draft.projectScope === 'except'
+                ? t(
+                    'Every project except these — new projects get access automatically.',
+                  )
+                : draft.projectScope === 'selected'
+                ? t('Only these projects can use this key.')
+                : t('Every project on this platform can use it.')
+            }
+            action={
+              <ScopeTabs
+                value={draft.projectScope}
+                onChange={(value) =>
+                  setDraft({
+                    ...draft,
+                    projectScope:
+                      value === 'all'
+                        ? 'all'
+                        : value === 'except'
+                        ? 'except'
+                        : 'selected',
+                    projectIds: value === 'all' ? [] : draft.projectIds,
+                  })
+                }
+                options={[
+                  { value: 'all', label: t('All') },
+                  { value: 'selected', label: t('Only selected') },
+                  { value: 'except', label: t('All except') },
+                ]}
+              />
+            }
+          >
+            {draft.projectScope !== 'all' && (
+              <ProjectSelectionPanel
+                projects={projects}
+                selectedIds={draft.projectIds}
+                onChange={(projectIds) => setDraft({ ...draft, projectIds })}
+              />
+            )}
+          </AdminSection>
         </TabsContent>
 
         <TabsContent
@@ -373,13 +376,12 @@ export function ConfigDetail({
           forceMount
           className="mt-0 flex flex-col gap-8 data-[state=inactive]:hidden"
         >
-          <section className="flex flex-col gap-3">
-            <SectionHeader
-              title={t('General')}
-              description={t('How this key is labelled and authorised.')}
-            />
-            <div className="flex flex-col divide-y divide-gray-6/60 rounded-xl border border-gray-6/60">
-              <div className="flex flex-col gap-1.5 p-4">
+          <AdminSection
+            title={t('General')}
+            description={t('How this key is labelled and authorised.')}
+          >
+            <SettingsPanel flush>
+              <div className="flex flex-col gap-2 px-5 py-4">
                 <Label htmlFor="config-name">{t('Name')}</Label>
                 <Input
                   id="config-name"
@@ -396,20 +398,11 @@ export function ConfigDetail({
                   </p>
                 )}
               </div>
-              <div className="flex items-center justify-between gap-3 p-4">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-gray-3/60">
-                    <KeyRound className="size-4 text-gray-11" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium leading-none">
-                      {t('Credentials')}
-                    </p>
-                    <p className="mt-1 truncate font-mono text-xs text-gray-11">
-                      {t('Stored securely')}
-                    </p>
-                  </div>
-                </div>
+              <SettingsRow
+                icon={<KeyRound />}
+                title={t('Credentials')}
+                description={t('Stored securely')}
+              >
                 <Button
                   variant="outline"
                   size="sm"
@@ -420,35 +413,25 @@ export function ConfigDetail({
                 >
                   {t('Replace')}
                 </Button>
-              </div>
-            </div>
-          </section>
+              </SettingsRow>
+            </SettingsPanel>
+          </AdminSection>
 
-          <section className="flex flex-col gap-3">
-            <SectionHeader
-              title={t('Danger zone')}
-              description={t('Irreversible actions for this key.')}
-            />
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-danger-6 p-4">
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-none">
-                  {t('Delete this key')}
-                </p>
-                <p className="mt-1 text-sm text-gray-11">
-                  {t('Flows and agents that use it will fail.')}
-                </p>
-              </div>
+          <DangerZone>
+            <SettingsRow
+              title={t('Delete this key')}
+              description={t('Flows and agents that use it will fail.')}
+            >
               <Button
-                variant="outline"
+                variant="destructive"
                 size="sm"
-                className="shrink-0 gap-2 border-danger-7 text-danger-11 enabled:hover:bg-danger-3 enabled:hover:text-danger-11"
                 onClick={() => setDeleteOpen(true)}
                 {...adminControl(AdminControl.AI_PROVIDER_KEY_DELETE_OPEN)}
               >
                 <Trash2 className="size-4" />
                 {t('Delete')}
               </Button>
-            </div>
+            </SettingsRow>
             <ConfirmationDeleteDialog
               open={deleteOpen}
               onOpenChange={setDeleteOpen}
@@ -464,7 +447,7 @@ export function ConfigDetail({
                 onBack();
               }}
             />
-          </section>
+          </DangerZone>
         </TabsContent>
       </Tabs>
 
@@ -527,47 +510,7 @@ export function ConfigDetail({
         onKeepEditing={() => leaveBlocker.reset?.()}
         onDiscard={() => leaveBlocker.proceed?.()}
       />
-    </div>
-  );
-}
-
-function scopeImpactText(impact: KeyScopeImpact): string {
-  if (impact.lostProjects > 0) {
-    return t('tierLosesProjects', {
-      tier: impact.tierName,
-      count: impact.lostProjects,
-    });
-  }
-  return t('tierFallbackSkippedInMoreProjects', {
-    tier: impact.tierName,
-    count: impact.skippedProjects,
-  });
-}
-
-function ScopeTabs({
-  value,
-  disabled = false,
-  onChange,
-  options,
-}: {
-  value: string;
-  disabled?: boolean;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <Select value={value} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger className="w-44 shrink-0">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    </>
   );
 }
 
@@ -597,6 +540,46 @@ function tierNamesByModel({
       );
     return byModel;
   }, new Map<string, string[]>());
+}
+
+function scopeImpactText(impact: KeyScopeImpact): string {
+  if (impact.lostProjects > 0) {
+    return t('tierLosesProjects', {
+      tier: impact.tierName,
+      count: impact.lostProjects,
+    });
+  }
+  return t('tierFallbackSkippedInMoreProjects', {
+    tier: impact.tierName,
+    count: impact.skippedProjects,
+  });
+}
+
+function ScopeTabs({
+  value,
+  disabled = false,
+  onChange,
+  options,
+}: {
+  value: string;
+  disabled?: boolean;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger size="sm" className="w-44 shrink-0">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 function draftOf(config: AIProviderWithoutSensitiveData): ConfigDraft {

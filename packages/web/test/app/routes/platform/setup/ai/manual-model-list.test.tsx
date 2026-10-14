@@ -39,8 +39,13 @@ vi.mock('@/components/ui/button', () => ({
 }));
 
 vi.mock('@/components/ui/input', () => ({
-  Input: ({ value, onChange, placeholder }: any) => (
-    <input value={value} onChange={onChange} placeholder={placeholder} />
+  Input: ({ value, onChange, placeholder, list }: any) => (
+    <input
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      list={list}
+    />
   ),
 }));
 
@@ -74,6 +79,7 @@ describe('ManualModelList', () => {
 
   const render = (
     models: ProviderModelConfig[],
+    suggestedModelIds?: string[],
     tiersByModel?: Map<string, string[]>,
   ) => {
     onChange = vi.fn();
@@ -81,6 +87,7 @@ describe('ManualModelList', () => {
       root.render(
         <ManualModelList
           models={models}
+          suggestedModelIds={suggestedModelIds}
           tiersByModel={tiersByModel}
           onChange={onChange}
         />,
@@ -149,6 +156,27 @@ describe('ManualModelList', () => {
     ]);
   });
 
+  it('suggests the models the server listed, minus the ones already added', () => {
+    render(
+      [
+        {
+          modelId: 'llama-4',
+          modelName: 'llama-4',
+          modelType: AIProviderModelType.TEXT,
+        },
+      ],
+      ['llama-4', 'qwen3-32b'],
+    );
+
+    const input = container.querySelector('input');
+    const suggestions = Array.from(
+      container.querySelectorAll(
+        `datalist[id="${input?.getAttribute('list')}"] option`,
+      ),
+    ).map((option) => option.getAttribute('value'));
+    expect(suggestions).toEqual(['qwen3-32b']);
+  });
+
   it('flips the type of a model that is already saved, keeping its name', () => {
     render([
       {
@@ -177,6 +205,7 @@ describe('ManualModelList', () => {
           modelType: AIProviderModelType.TEXT,
         },
       ],
+      undefined,
       new Map([['gemini-pro', ['Smart']]]),
     );
 

@@ -371,8 +371,11 @@ async function acquireStreamingLock({ conversationId, runId }: { conversationId:
         return 'acquired'
     }
     const current = await conversationRepo().findOneBy({ id: conversationId })
-    const supersededByNewerRun = !isNil(runId) && !isNil(current?.activeRunId) && current.activeRunId !== runId
-    return supersededByNewerRun ? 'superseded' : 'busy'
+    const ownedByARun = !isNil(runId) && !isNil(current?.activeRunId)
+    if (!ownedByARun) {
+        return 'busy'
+    }
+    return current.activeRunId === runId ? 'duplicate' : 'superseded'
 }
 
 async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
@@ -466,4 +469,4 @@ export const agentHelpers = {
 
 type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'modelTierId' | 'promptOverride'>
 
-export type StreamingLockResult = 'acquired' | 'busy' | 'superseded'
+export type StreamingLockResult = 'acquired' | 'busy' | 'superseded' | 'duplicate'
