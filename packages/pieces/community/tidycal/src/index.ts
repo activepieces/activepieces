@@ -28,7 +28,7 @@ export const tidycal = createPiece({
       baseUrl: () => 'https://tidycal.com/api',
       auth: tidyCalAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],
