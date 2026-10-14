@@ -30,6 +30,12 @@ describe('resolveBusinessObject', () => {
 		expect(config.service).toBe('procurement/v5');
 	});
 
+	it('resolves Case to the helpCase/v4 service', () => {
+		const config = resolveBusinessObject('hr_services_time_tracking', 'cases', undefined, undefined);
+		expect(config.path).toBe('/cases');
+		expect(config.service).toBe('helpCase/v4');
+	});
+
 	it('resolves Time Entry to worker time blocks', () => {
 		const config = resolveBusinessObject('hr_services_time_tracking', 'timeEntries', undefined, undefined);
 		expect(config.path).toBe('/workerTimeBlocks');

@@ -24,6 +24,7 @@ export const WorkdayService = {
 	accountsPayable: 'accountsPayable/v1',
 	expenseManagement: 'expense/v1',
 	timeTracking: 'timeTracking/v7',
+	helpCase: 'helpCase/v4',
 } as const;
 
 export type ServicePath = typeof WorkdayService[keyof typeof WorkdayService];

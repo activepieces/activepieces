@@ -53,7 +53,7 @@ export const BUSINESS_OBJECTS_BY_MODULE: Record<string, BusinessObjectConfig[]> 
 			label: 'Case',
 			value: 'cases',
 			path: '/cases',
-			service: WorkdayService.common,
+			service: WorkdayService.helpCase,
 			wqlDataSource: 'cases',
 		},
 		{
