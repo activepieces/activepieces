@@ -9,7 +9,6 @@ import { useFormContext } from 'react-hook-form';
 import { AgentLink } from '@/app/builder/step-settings/agent-settings/agent-link';
 import { agentLinkUtils } from '@/app/builder/step-settings/agent-settings/agent-link-utils';
 import { AgentModelField } from '@/app/builder/step-settings/agent-settings/agent-model-field';
-import { agentModelUtils } from '@/app/builder/step-settings/agent-settings/agent-model-utils';
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -141,19 +140,7 @@ const selectAgentFormComponentForProperty = (
 
   switch (propertyName) {
     case AgentPieceProps.AGENT_TOOLS: {
-      const pick = agentModelUtils.choiceOf({
-        value: params.form?.watch?.(
-          `settings.input.${AgentPieceProps.AI_PROVIDER_MODEL}`,
-        ),
-      });
-      return (
-        <AgentTools
-          disabled={disabled}
-          toolsField={field}
-          selectedProvider={pick?.type === 'model' ? pick.provider : undefined}
-          tierPicked={pick?.type === 'tier'}
-        />
-      );
+      return <AgentTools disabled={disabled} toolsField={field} />;
     }
     case AgentPieceProps.STRUCTURED_OUTPUT: {
       return (

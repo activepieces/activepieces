@@ -64,13 +64,7 @@ import { KnowledgeBaseSection } from '@/features/agents/agent-tools/components/k
 let container: HTMLDivElement;
 let root: Root;
 
-function render({
-  selectedProvider,
-  tierPicked,
-}: {
-  selectedProvider?: AIProviderName;
-  tierPicked?: boolean;
-}) {
+function render() {
   act(() => {
     root.render(
       <KnowledgeBaseSection
@@ -79,8 +73,6 @@ function render({
         allTools={[]}
         removeTool={vi.fn()}
         onToolsUpdate={vi.fn()}
-        selectedProvider={selectedProvider}
-        tierPicked={tierPicked}
       />,
     );
   });
@@ -105,32 +97,26 @@ afterEach(() => {
 });
 
 describe('adding knowledge to an agent', () => {
-  it('is offered on a tier pick when the Default AI key can embed', () => {
+  it('is offered when the chat key can embed, whatever the step picked', () => {
     chat.provider = AIProviderName.OPENAI;
 
-    render({ tierPicked: true });
+    render();
 
     expect(canAddKnowledge()).toBe(true);
   });
 
-  it('is explained on a tier pick when the Default AI key cannot embed', () => {
+  it('is explained when the chat key cannot embed', () => {
     chat.provider = AIProviderName.ANTHROPIC;
 
-    render({ tierPicked: true, selectedProvider: AIProviderName.OPENAI });
-
-    expect(canAddKnowledge()).toBe(false);
-  });
-
-  it('is offered on a provider with an embedding model', () => {
-    render({ selectedProvider: AIProviderName.OPENAI });
-
-    expect(canAddKnowledge()).toBe(true);
-  });
-
-  it('is explained instead when the provider has no embedding model', () => {
-    render({ selectedProvider: AIProviderName.ANTHROPIC });
+    render();
 
     expect(canAddKnowledge()).toBe(false);
     expect(container.textContent).toContain('requires a provider');
+  });
+
+  it('is explained when the project has no chat key', () => {
+    render();
+
+    expect(canAddKnowledge()).toBe(false);
   });
 });

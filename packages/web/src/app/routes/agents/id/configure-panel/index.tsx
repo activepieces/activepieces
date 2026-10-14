@@ -55,6 +55,7 @@ import { AgentMark } from '@/features/agents/agent-mark';
 import { DeleteAgentDialog } from '@/features/agents/delete-agent-dialog';
 import { agentsMutations } from '@/features/agents/hooks/agents-hooks';
 import { MoveAgentDialog } from '@/features/agents/move-agent-dialog';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import {
   ApProjectDisplay,
   getProjectName,
@@ -223,7 +224,8 @@ const ConfigureBehaviorTab = ({
 }) => {
   const tools = form.watch('draft.tools') ?? [];
   const draft = form.watch('draft');
-  const provider = draft.provider;
+  const { data: chatProvider } = aiProviderQueries.useChatProvider();
+  const provider = chatProvider?.provider;
   const knowledgeCount = tools.filter(
     (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
   ).length;
@@ -296,7 +298,9 @@ const ConfigureBehaviorTab = ({
               ? t('Embedding model for knowledge base: {model}', {
                   model: PROVIDER_EMBEDDING_MODELS[provider],
                 })
-              : t('This provider does not support knowledge base embeddings.')}
+              : t(
+                  'Your chat provider does not support knowledge base embeddings.',
+                )}
           </p>
         )}
       </FormItem>
@@ -305,11 +309,7 @@ const ConfigureBehaviorTab = ({
         name="draft.tools"
         render={({ field }) => (
           <FormItem className="flex flex-col gap-2">
-            <AgentTools
-              toolsField={field}
-              selectedProvider={form.watch('draft.provider') ?? undefined}
-              tierPicked={!isNil(form.watch('draft.modelTierId'))}
-            />
+            <AgentTools toolsField={field} />
             <FormMessage />
           </FormItem>
         )}
