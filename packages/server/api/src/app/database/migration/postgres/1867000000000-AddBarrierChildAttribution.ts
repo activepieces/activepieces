@@ -1,4 +1,5 @@
 import { QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { BACKGROUND_MIGRATIONS_TABLE } from '../../background-migration-runner'
 import { Migration } from '../../migration'
 import { migrationHelpers } from '../../migration-helpers'
@@ -26,17 +27,23 @@ export class AddBarrierChildAttribution1867000000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        for (const index of FLOW_RUN_LEGACY_LIST_INDEXES) {
-            await migrationHelpers.createIndexConcurrently({ queryRunner, table: 'flow_run', ...index })
-        }
-        for (const index of FLOW_RUN_BARRIER_INDEXES) {
-            await migrationHelpers.dropIndexConcurrently({ queryRunner, name: index.name })
-        }
-        await queryRunner.query(
-            `DELETE FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "name" = $1`,
-            [new ReshapeFlowRunListIndexesForBarrierChildren1867000000000().name],
-        )
-        await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "dispatchIndex"')
-        await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "parentWaitpointId"')
+        await migrationHelpers.withBackgroundMigrationLock({
+            log: system.globalLogger(),
+            migration: ReshapeFlowRunListIndexesForBarrierChildren1867000000000,
+            fn: async () => {
+                for (const index of FLOW_RUN_LEGACY_LIST_INDEXES) {
+                    await migrationHelpers.createIndexConcurrently({ queryRunner, table: 'flow_run', ...index })
+                }
+                for (const index of FLOW_RUN_BARRIER_INDEXES) {
+                    await migrationHelpers.dropIndexConcurrently({ queryRunner, name: index.name })
+                }
+                await queryRunner.query(
+                    `DELETE FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "name" = $1`,
+                    [new ReshapeFlowRunListIndexesForBarrierChildren1867000000000().name],
+                )
+                await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "dispatchIndex"')
+                await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "parentWaitpointId"')
+            },
+        })
     }
 }
