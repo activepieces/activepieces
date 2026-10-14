@@ -3527,6 +3527,5 @@
   "Give your AI secure access to {apps}": "Give your AI secure access to {apps}",
   "plus your flows and tables, with granular access control.": "plus your flows and tables, with granular access control.",
   "Your change was not saved": "Your change was not saved",
-  "The builder now shows the last saved version of the flow.": "The builder now shows the last saved version of the flow.",
-  "This flow was changed in a different tab or by a different editor. You see the newest version.": "This flow was changed in a different tab or by a different editor. You see the newest version."
+  "The builder now shows the last saved version of the flow.": "The builder now shows the last saved version of the flow."
 }
