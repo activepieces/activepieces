@@ -16,7 +16,12 @@ export const ListFlowRunsRequestQuery = z.object({
     failedStepMessage: z.string().optional(),
     flowRunIds: OptionalArrayFromQuery(ApId),
     includeArchived: OptionalBooleanFromQuery,
-})
+    parentWaitpointId: z.optional(ApId),
+    dispatchIndex: z.coerce.number().int().nonnegative().optional(),
+}).refine(
+    (query) => query.dispatchIndex === undefined || query.parentWaitpointId !== undefined,
+    { message: 'dispatchIndexRequiresParentWaitpointId', path: ['dispatchIndex'] },
+)
 
 export type ListFlowRunsRequestQuery = z.infer<typeof ListFlowRunsRequestQuery>
 

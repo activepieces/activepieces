@@ -455,6 +455,8 @@ import { AddEventDestinationHeaders1863000000000 } from './migration/postgres/18
 import { AddPlatformTierFastAndConversationTier1864000000000 } from './migration/postgres/1864000000000-AddPlatformTierFastAndConversationTier'
 import { AddAuditLogRetentionDaysToPlatform1865000000000 } from './migration/postgres/1865000000000-AddAuditLogRetentionDaysToPlatform'
 import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from './migration/postgres/1866000000000-AddAiSpecificModelsVisibleToPlatformConfiguration'
+import { AddBarrierChildAttribution1867000000000 } from './migration/postgres/1867000000000-AddBarrierChildAttribution'
+import { ReshapeFlowRunListIndexesForBarrierChildren1867000000000 } from './migration/postgres/background/1867000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -467,7 +469,9 @@ const getSslConfig = (): boolean | TlsOptions => {
 }
 
 export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
-    return []
+    return [
+        ReshapeFlowRunListIndexesForBarrierChildren1867000000000,
+    ]
 }
 
 export const getMigrations = (): (new () => Migration)[] => {
@@ -928,6 +932,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddPlatformTierFastAndConversationTier1864000000000,
         AddAuditLogRetentionDaysToPlatform1865000000000,
         AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000,
+        AddBarrierChildAttribution1867000000000,
     ]
     return migrations
 }
