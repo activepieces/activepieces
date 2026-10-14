@@ -25,7 +25,7 @@ Lets platform admins configure one or more LLM backends for AI pieces in flows. 
 - Model lists are cached in memory, cleared daily at midnight via cron.
 
 ### Provider visibility
-- `isActivepiecesAiProviderHidden` hides the managed provider when the `aiCreditsEnabled` flag is off (`OPENROUTER_PROVISION_KEY` unset — typical self-hosted) or when `shouldHideActivepiecesAiProvider` returns true, which is gated only on `plan.embeddingEnabled`.
+- `isActivepiecesAiProviderHidden` hides the managed provider when the `aiCreditsEnabled` flag is off (`OPENROUTER_PROVISION_KEY` unset — typical self-hosted) or when `shouldHideActivepiecesAiProvider` returns true, which reads `plan.activepiecesAiProviderHidden`. The entitlements refresh sets it when a plan other than the Enterprise trial grants Embedding, so Embedding that only comes from the trial does not hide it.
 - Hidden means treated as absent everywhere: `listProviders()` omits the row and `getChatProvider()`/`getChatProviderName()` return null (`findAvailableChatProviderRow`). This keeps a stale `enabledForChat` (e.g. from the 0.82.1 migration) from pinning chat to a provider that 402s with no top-up path (GIT-1620).
 
 ### Model catalog
