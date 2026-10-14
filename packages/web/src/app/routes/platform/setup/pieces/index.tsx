@@ -149,6 +149,7 @@ export const PiecesListTab = () => {
                 )}
                 <PieceActions
                   pieceName={row.original.name}
+                  displayName={row.original.displayName}
                   isEnabled={isEnabled}
                 />
                 {row.original.pieceType === PieceType.CUSTOM && (

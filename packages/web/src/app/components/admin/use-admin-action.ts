@@ -6,6 +6,7 @@ import {
   UseMutationResult,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useId } from 'react';
 import { toast } from 'sonner';
 
 import { mutationFeedback } from '@/lib/mutation-feedback';
@@ -23,6 +24,7 @@ export function useAdminAction<TVars = void, TData = unknown>({
   mutationKey,
 }: AdminActionConfig<TVars, TData>): UseMutationResult<TData, Error, TVars> {
   const queryClient = useQueryClient();
+  const actionId = useId();
   const nameOf = (vars: TVars) =>
     typeof name === 'function' ? name(vars) : name;
   const verbOf = (vars: TVars) =>
@@ -51,7 +53,9 @@ export function useAdminAction<TVars = void, TData = unknown>({
         toast.success(message, { id: message });
         return;
       }
+      const itemName = nameOf(vars);
       mutationFeedback.undo({
+        id: itemName.trim() === '' ? undefined : `${actionId}:${itemName}`,
         message,
         onUndo: async () => {
           try {
@@ -217,16 +221,43 @@ async function runEach<T>({
       ? nameOf(failedOnes[0])
       : label(failures.length);
   const partial = new BulkPartialFailure(failedOnes);
+  const reason =
+    describe?.(failures[0]) ?? mutationFeedback.message(failures[0]);
   mutationFeedback.error({
     error: mutationFeedback.isQuotaExceeded(failures[0])
       ? failures[0]
       : partial,
     title: failed({ verb, name }),
-    description:
-      describe?.(failures[0]) ?? mutationFeedback.message(failures[0]),
+    description: partialDescription({
+      verb,
+      done: items.length - failures.length,
+      total: items.length,
+      reason,
+    }),
   });
   mutationFeedback.markShown(partial);
   throw partial;
+}
+
+function partialDescription({
+  verb,
+  done,
+  total,
+  reason,
+}: {
+  verb: AdminVerb;
+  done: number;
+  total: number;
+  reason: string;
+}): string {
+  switch (verb) {
+    case 'delete':
+      return t('Deleted {done} of {total}. {reason}', { done, total, reason });
+    case 'remove':
+      return t('Removed {done} of {total}. {reason}', { done, total, reason });
+    default:
+      return reason;
+  }
 }
 
 function isPartialFailure(error: unknown): boolean {
