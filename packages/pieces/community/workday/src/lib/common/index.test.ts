@@ -164,7 +164,11 @@ describe('custom object helpers', () => {
 });
 
 describe('escapeWql', () => {
-	it('doubles single quotes', () => {
-		expect(escapeWql("O'Brien")).toBe("O''Brien");
+	it('backslash-escapes single quotes', () => {
+		expect(escapeWql("O'Brien")).toBe("O\\'Brien");
+	});
+
+	it('escapes backslashes before quotes', () => {
+		expect(escapeWql("a\\'b")).toBe("a\\\\\\'b");
 	});
 });
