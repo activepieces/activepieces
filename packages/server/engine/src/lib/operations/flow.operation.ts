@@ -174,7 +174,10 @@ async function buildFailedTriggerContext({ input, baseContext, error }: BuildFai
 async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, constants: EngineConstants, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     if (input.executionType === ExecutionType.BEGIN) {
         if (!isNil(input.entryStepName)) {
-            return restoreSteps({ steps: input.triggerPayload as Record<string, StepOutput>, flowContext, keepFailedSteps: true })
+            if (!isSeededSteps(input.triggerPayload)) {
+                throw new EngineGenericError('InvalidSeededStepsError', `A run entered at step ${input.entryStepName} needs the steps it starts after as its payload`)
+            }
+            return restoreSteps({ steps: input.triggerPayload, flowContext, keepFailedSteps: true })
         }
         const newPayload = await runOrReturnPayload(input, constants)
         return flowContext.upsertStep(input.flowVersion.trigger.name,
@@ -193,7 +196,7 @@ async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, consta
 
 async function restoreSteps({ steps, flowContext, keepFailedSteps }: RestoreStepsParams): Promise<FlowExecutorContext> {
     let restored = flowContext
-    for (const [step, output] of Object.entries(steps ?? {})) {
+    for (const [step, output] of Object.entries(steps)) {
         if (isStepRestorable({ status: output.status, isWaitpointResume: keepFailedSteps })) {
             const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume: keepFailedSteps })
             if (!isNil(newOutput)) {
@@ -202,6 +205,13 @@ async function restoreSteps({ steps, flowContext, keepFailedSteps }: RestoreStep
         }
     }
     return restored
+}
+
+function isSeededSteps(payload: unknown): payload is Record<string, StepOutput> {
+    if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+        return false
+    }
+    return Object.values(payload).every((step: unknown) => step !== null && typeof step === 'object' && 'type' in step && 'status' in step)
 }
 
 async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, constants: EngineConstants): Promise<TriggerPayload> {

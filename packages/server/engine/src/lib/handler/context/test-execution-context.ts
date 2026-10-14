@@ -80,7 +80,6 @@ export const testExecutionContext = {
                 }
                 case FlowActionType.PIECE:
                 case FlowActionType.CODE:
-                case FlowActionType.PROCESS_IN_BATCHES:
                 case FlowTriggerType.EMPTY:
                 case FlowTriggerType.PIECE: {
                     const stepOutput = GenericStepOutput.create({
