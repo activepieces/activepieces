@@ -65,6 +65,7 @@ export const createPreHire = createAction({
 		if (phone) {
 			phoneXml = `
             <bsvc:Phone_Data>
+              <bsvc:Country_ISO_Code>${escapeXml(country)}</bsvc:Country_ISO_Code>
               <bsvc:Phone_Number>${escapeXml(phone)}</bsvc:Phone_Number>
               <bsvc:Phone_Device_Type_Reference>
                 <bsvc:ID bsvc:type="Phone_Device_Type_ID">Mobile</bsvc:ID>
