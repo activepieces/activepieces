@@ -2,6 +2,7 @@ import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import {
   AIProviderWithoutSensitiveData,
   PlatformAdminSurface,
+  PlatformModelTier,
   Project,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
@@ -56,6 +57,7 @@ import {
   aiProviderMutations,
   aiProviderQueries,
 } from '@/features/platform-admin';
+import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -88,6 +90,7 @@ export function ProvidersTab() {
     refetch,
   } = aiProviderQueries.useAiProviderConfigs();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
+  const { data: tiers } = platformModelTierQueries.useAdminList();
   const configs = (providers ?? []).filter(
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
   );
@@ -281,6 +284,7 @@ export function ProvidersTab() {
               provider={provider}
               configs={configs.filter((config) => config.provider === provider)}
               projects={projects}
+              tiers={tiers ?? []}
               locked={locked}
               onAdd={() => openConnect(provider)}
               onOpen={openConfig}
@@ -370,6 +374,7 @@ function ProviderGroup({
   provider,
   configs,
   projects,
+  tiers,
   locked,
   onAdd,
   onOpen,
@@ -378,6 +383,7 @@ function ProviderGroup({
   provider: AIProviderName;
   configs: AIProviderWithoutSensitiveData[];
   projects: Project[];
+  tiers: PlatformModelTier[];
   locked: boolean;
   onAdd: () => void;
   onOpen: (id: string) => void;
@@ -418,6 +424,11 @@ function ProviderGroup({
           key={config.id}
           config={config}
           projects={projects}
+          tierCount={
+            tiers.filter((tier) =>
+              tier.entries.some((entry) => entry.configId === config.id),
+            ).length
+          }
           locked={locked}
           onOpen={() => onOpen(config.id)}
           onDelete={() => onDelete(config.id)}
@@ -430,12 +441,14 @@ function ProviderGroup({
 function ConfigRow({
   config,
   projects,
+  tierCount,
   locked,
   onOpen,
   onDelete,
 }: {
   config: AIProviderWithoutSensitiveData;
   projects: Project[];
+  tierCount: number;
   locked: boolean;
   onOpen: () => void;
   onDelete: () => Promise<unknown>;
@@ -494,6 +507,12 @@ function ConfigRow({
               {modelsLabel}
               <span aria-hidden> · </span>
               {projectsLabel}
+              {tierCount > 0 && (
+                <>
+                  <span aria-hidden> · </span>
+                  {t('usedByTiersCount', { count: tierCount })}
+                </>
+              )}
             </p>
           </TooltipTrigger>
           {config.modelIds.length > 0 && (

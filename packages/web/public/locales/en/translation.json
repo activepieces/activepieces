@@ -3269,5 +3269,16 @@
   "Couldn't load {key} models": "Couldn't load {key} models",
   "Update this step to the latest version to use your tiers.": "Update this step to the latest version to use your tiers.",
   "Your chat provider does not support embeddings. Switch it to a provider like OpenAI or Google for knowledge base to work.": "Your chat provider does not support embeddings. Switch it to a provider like OpenAI or Google for knowledge base to work.",
-  "Your chat provider does not support knowledge base embeddings.": "Your chat provider does not support knowledge base embeddings."
+  "Your chat provider does not support knowledge base embeddings.": "Your chat provider does not support knowledge base embeddings.",
+  "Access": "Access",
+  "Sort": "Sort",
+  "Newest": "Newest",
+  "Cheapest": "Cheapest",
+  "Biggest context": "Biggest context",
+  "usedByTiersCount": "{count, plural, =1 {Used by 1 tier} other {Used by # tiers}}",
+  "Used by {tiers}": "Used by {tiers}",
+  "Not offered anymore": "Not offered anymore",
+  "New models from {provider} are added automatically.": "New models from {provider} are added automatically.",
+  "{on} of {total} on": "{on} of {total} on",
+  "Image generation": "Image generation"
 }
