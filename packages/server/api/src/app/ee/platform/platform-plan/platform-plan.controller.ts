@@ -125,12 +125,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/enterprise-trial/start', StartEnterpriseTrialRequest, async (request) => {
-        const platformId = request.principal.platform.id
-        const status = await billingProvider.get(request.log).startEnterpriseTrial(platformId)
-        if (status.state === 'active') {
-            rejectedPromiseHandler(platformPlanTelemetry(request.log).onEnterpriseTrialStarted({ platformId, endsAt: status.endsAt }), request.log)
-        }
-        return status
+        return billingProvider.get(request.log).startEnterpriseTrial(request.principal.platform.id)
     })
 
     app.post('/setup-payment', SetupPaymentRequest, async (request) => {
