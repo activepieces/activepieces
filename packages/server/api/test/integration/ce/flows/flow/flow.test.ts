@@ -1,3 +1,4 @@
+import { apId } from '@activepieces/core-utils'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     FlowOperationType,
@@ -22,6 +23,7 @@ import {
     createMockFlow,
     createMockFlowVersion,
     createMockPieceMetadata,
+    createMockProject,
 } from '../../../../helpers/mocks'
 import { createTestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
@@ -78,6 +80,43 @@ describe('Flow API', () => {
             expect(responseBody?.version?.trigger.displayName).toBe('Select Trigger')
             expect(responseBody?.version?.valid).toBe(false)
             expect(responseBody?.version?.state).toBe('DRAFT')
+        })
+
+        it('Rejects a second flow with the same externalId in the project', async () => {
+            const ctx = await createTestContext(app!)
+            const externalId = apId()
+
+            const first = await ctx.post('/v1/flows', {
+                displayName: 'first flow',
+                projectId: ctx.project.id,
+                externalId,
+            }, { query: { projectId: ctx.project.id } })
+            const second = await ctx.post('/v1/flows', {
+                displayName: 'second flow',
+                projectId: ctx.project.id,
+                externalId,
+            }, { query: { projectId: ctx.project.id } })
+
+            expect(first?.statusCode).toBe(StatusCodes.CREATED)
+            expect(second?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(second?.json().code).toBe('FLOW_EXTERNAL_ID_ALREADY_EXISTS')
+        })
+
+        it('Allows the same externalId in another project', async () => {
+            const ctx = await createTestContext(app!)
+            const externalId = apId()
+            const otherProject = createMockProject({ platformId: ctx.platform.id, ownerId: ctx.user.id })
+            await db.save('project', otherProject)
+            await db.save('flow', createMockFlow({ projectId: otherProject.id, externalId }))
+
+            const response = await ctx.post('/v1/flows', {
+                displayName: 'same id flow',
+                projectId: ctx.project.id,
+                externalId,
+            }, { query: { projectId: ctx.project.id } })
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            expect(response?.json().externalId).toBe(externalId)
         })
     })
 
