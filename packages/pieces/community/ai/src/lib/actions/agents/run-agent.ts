@@ -7,7 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { AGENT_STEP_TEST_TIMEOUT_MS, AGENT_STEP_TIMEOUT_MS, AgentPieceProps, AgentProviderModel, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
+import { AGENT_STEP_TEST_TIMEOUT_MS, AGENT_STEP_TIMEOUT_MS, AgentPieceProps, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
@@ -141,9 +141,7 @@ export const runAgent = createAction({
         flowRunId: context.run.id,
         waitpointId: waitpoint.id,
         ...(agentId ? { agentId } : {
-          ...spreadIfDefined('modelName', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model),
-          ...spreadIfDefined('provider', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.provider),
-          ...spreadIfDefined('providerConfigId', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.configId),
+          ...modelFieldsOf(context.propsValue.aiProviderModel),
           tools: toolsWithoutResolvedAuth(context.propsValue.agentTools ?? []),
           structuredOutput: context.propsValue.structuredOutput ?? [],
           ...spreadIfDefined('maxSteps', context.propsValue.maxSteps),
@@ -155,6 +153,25 @@ export const runAgent = createAction({
     return {};
   },
 });
+
+function modelFieldsOf(pick: Record<string, unknown> | undefined): Record<string, string> {
+  if (isNil(pick)) {
+    return {};
+  }
+  const modelTierId = stringOf(pick['modelTierId']);
+  if (!isNil(modelTierId)) {
+    return { modelTierId };
+  }
+  return {
+    ...spreadIfDefined('modelName', stringOf(pick['model'])),
+    ...spreadIfDefined('provider', stringOf(pick['provider'])),
+    ...spreadIfDefined('providerConfigId', stringOf(pick['configId'])),
+  };
+}
+
+function stringOf(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
 
 // The engine resolves {{connections[...]}} in every step input, so a connection pinned on a tool
 // arrives here as the decrypted credential rather than its id. The server wants the id and rebuilds

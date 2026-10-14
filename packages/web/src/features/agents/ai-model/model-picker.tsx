@@ -1,5 +1,6 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
+  aiProviderUtils,
   ModelChoice,
   ModelOptions,
   ModelOptionsSurface,
@@ -35,6 +36,7 @@ export function ModelPicker({
   value,
   onChange,
   disabled = false,
+  withTiers = true,
   className,
 }: ModelPickerProps) {
   const [open, setOpen] = useState(false);
@@ -45,8 +47,13 @@ export function ModelPicker({
   });
   const view = useMemo(
     () =>
-      isNil(data) ? null : modelPickerView({ options: data, shown: value }),
-    [data, value],
+      isNil(data)
+        ? null
+        : modelPickerView({
+            options: withTiers ? data : { ...data, tiers: [] },
+            shown: value,
+          }),
+    [data, value, withTiers],
   );
 
   if (isLoading) {
@@ -302,6 +309,15 @@ function resolveCurrent({
     const tier = options.credits?.tiers.find(
       (candidate) => candidate.id === shown.modelId,
     );
+    if (isNil(tier) && runsOnCredits({ options, modelId: shown.modelId })) {
+      return {
+        kind: 'credits',
+        id: shown.modelId,
+        label: shown.modelId,
+        leading: <CreditTile tierId={shown.modelId} size="sm" />,
+        source: t('Credits'),
+      };
+    }
     return isNil(tier)
       ? unavailablePick({ label: shown.modelId })
       : {
@@ -348,6 +364,22 @@ function resolveCurrent({
     leading: <KeyLogo logoUrl={info.logoUrl} name={info.name} size="xxs" />,
     source: key.name,
   };
+}
+
+function runsOnCredits({
+  options,
+  modelId,
+}: {
+  options: ModelOptions;
+  modelId: string;
+}): boolean {
+  if (isNil(options.credits)) {
+    return false;
+  }
+  return (
+    aiProviderUtils.managedChatModelIds().includes(modelId) ||
+    options.credits.tiers.some((tier) => tier.model.modelId === modelId)
+  );
 }
 
 function emptyPick(): CurrentPick {
@@ -510,5 +542,6 @@ type ModelPickerProps = {
   value: ModelChoice | null;
   onChange: (choice: ModelChoice) => void;
   disabled?: boolean;
+  withTiers?: boolean;
   className?: string;
 };
