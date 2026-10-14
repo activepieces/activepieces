@@ -23,7 +23,7 @@ let app: FastifyInstance | null = null
 const originalFileService = fileServiceModule.fileService
 
 beforeAll(async () => {
-    app = await setupTestEnvironment()
+    app = await setupTestEnvironment({ fresh: true })
 })
 
 afterAll(async () => {
