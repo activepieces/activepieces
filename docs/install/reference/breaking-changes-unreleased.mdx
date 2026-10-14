@@ -8,6 +8,33 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Background migrations need a dedicated Postgres role when the app role has `statement_timeout` set
+
+The app's background migration track (slow data backfills, `CREATE INDEX CONCURRENTLY`, `DROP INDEX CONCURRENTLY`) runs through whichever database connection the app itself uses. When the app role carries a `statement_timeout` — for example because the operator hardened it (`ALTER ROLE ap SET statement_timeout = '60s'`), or because the deployment runs behind a managed pooler that imposes one — every long DDL statement a background migration issues is cancelled at that cap and never completes. The retry loop leaves `INVALID` index artifacts behind that an `IF NOT EXISTS` on the next deploy silently skips.
+
+The app now reads `POSTGRES_MIGRATION_URL` and, when set, runs background migrations through that connection instead of the main one. The connection string should point at a Postgres role whose `statement_timeout` is `0`.
+
+A `SET statement_timeout = 0` at runtime from the app can't substitute: in transaction-pooling mode (the default on managed poolers) the `SET` lands on one backend and the actual DDL on another, so the cap stays in force on the DDL and the `SET` leaks to normal app traffic on the first backend. The role-level default stays with the backend from its startup and never leaks.
+
+#### What you need to do
+
+Nothing if the app role has no `statement_timeout` (Postgres default is `0`, which is the common self-host case). Background migrations keep running on the main connection.
+
+If the app role has a `statement_timeout`, provision a dedicated migration role and tell the app about it:
+
+```sql
+CREATE ROLE ap_migrator WITH LOGIN PASSWORD '<generated>';
+ALTER  ROLE ap_migrator SET  statement_timeout = 0;
+
+GRANT  USAGE, CREATE ON SCHEMA public TO ap_migrator;
+GRANT  ALL ON ALL TABLES    IN SCHEMA public TO ap_migrator;
+GRANT  ALL ON ALL SEQUENCES IN SCHEMA public TO ap_migrator;
+ALTER  DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES    TO ap_migrator;
+ALTER  DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ap_migrator;
+```
+
+Then set `POSTGRES_MIGRATION_URL=postgres://ap_migrator:<password>@<host>:<port>/<database>` on the API deployment. On managed Postgres with a connection pooler (DO, Supabase), create a small pool (size 2–3) scoped to this role and use that pool's URL; transaction pooling is fine for the migration role because nothing uses runtime `SET` on it.
+
 #### Firecrawl's Scrape Website stops reusing cached pages, and Crawl keeps its pages when a screenshot fails
 
 Three changes in Firecrawl 0.6.0 alter what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.

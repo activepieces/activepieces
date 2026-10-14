@@ -979,6 +979,20 @@ export const createPostgresDataSource = (): DataSource => {
     })
 }
 
+export const createPostgresMigrationDataSource = (): DataSource | null => {
+    const url = system.get(AppSystemProp.POSTGRES_MIGRATION_URL)
+    if (isNil(url)) return null
+    return new DataSource({
+        type: 'postgres',
+        url,
+        ssl: getSslConfig(),
+        poolSize: 2,
+        migrationsRun: false,
+        synchronize: false,
+        ...commonProperties,
+    })
+}
+
 type MigrationConfig = {
     migrationsRun?: boolean
     migrationsTransactionMode?: 'all' | 'none' | 'each'
