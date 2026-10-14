@@ -150,6 +150,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                     : undefined
 
+                await jobQueue(log).removeAllFlowRunJobs({ flowRunId: oldFlowRun.id, platformId: project.platformId, projectId: oldFlowRun.projectId })
+
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
                     projectId: oldFlowRun.projectId,
@@ -159,12 +161,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     finishTime: null,
                 })
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
-                const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
-                await flowRunSideEffects(log).onRetry({ flowRun: updatedFlowRun, platformId })
+                await flowRunSideEffects(log).onRetry({ flowRun: updatedFlowRun, platformId: project.platformId })
                 if (triggerFailed) {
                     return addToQueue({
                         flowRun: updatedFlowRun,
-                        platformId,
+                        platformId: project.platformId,
                         payload: triggerPayload,
                         streamStepProgress: StreamStepProgress.NONE,
                         executeTrigger: true,
@@ -175,7 +176,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 }
                 return addToQueue({
                     flowRun: updatedFlowRun,
-                    platformId,
+                    platformId: project.platformId,
                     streamStepProgress: StreamStepProgress.NONE,
                     executionType: ExecutionType.RESUME,
                     resumeReason: ResumeReason.RETRY,

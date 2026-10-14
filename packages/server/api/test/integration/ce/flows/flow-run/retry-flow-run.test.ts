@@ -1,6 +1,7 @@
 import { FileCompression, FileType, FlowRetryStrategy, FlowRunStatus, FlowTriggerType, FlowVersionState, RunEnvironment, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { fileService } from '../../../../../src/app/file/file.service'
+import { jobQueue } from '../../../../../src/app/workers/job-queue/job-queue'
 import { payloadOffloader } from '../../../../../src/app/workers/payload-offloader'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -65,6 +66,33 @@ describe('Retry flow run', () => {
 
         const updatedRun = await db.findOneByOrFail<{ id: string, status: string }>('flow_run', { id: flowRun.id })
         expect(updatedRun.status).toBe(FlowRunStatus.QUEUED)
+    })
+
+    it('should purge a stale BullMQ job at the run id before enqueueing the retry', async () => {
+        const { flowRun } = await createFailedFlowRun({
+            projectId: ctx.project.id,
+        })
+
+        const queue = jobQueue(app.log).getSharedQueue()
+        const staleJob = await queue.add(
+            flowRun.id,
+            { synthetic: 'stale' },
+            { jobId: flowRun.id, delay: 3_600_000 },
+        )
+        const staleTimestamp = staleJob.timestamp
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+            projectId: ctx.project.id,
+        })
+
+        expect(response.statusCode).toBe(200)
+
+        const currentJob = await queue.getJob(flowRun.id)
+        expect(currentJob).not.toBeNull()
+        expect(currentJob!.timestamp).toBeGreaterThan(staleTimestamp)
+
+        await currentJob!.remove()
     })
 
     it('should reset startTime and clear finishTime when retrying from failed step', async () => {
