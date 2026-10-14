@@ -88,5 +88,6 @@ export type ChatFlowActivity = {
   isWorking: boolean;
   editingStepNames: string[];
   addingAfterStepNames: string[];
+  wasStopped: boolean;
   stop: () => void;
 };

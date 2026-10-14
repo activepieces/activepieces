@@ -9,6 +9,7 @@ import { StoreApi } from 'zustand';
 import { ChatFlowActivity } from '@/features/chat/lib/chat-flow-activity';
 
 import { BuilderState } from '../builder-hooks';
+import { RightSideBarType } from '../types';
 
 import { StepDataPanelView } from './canvas-state';
 
@@ -95,6 +96,11 @@ export const createBuilderChatState = (
           flow.publishedVersionId !== flow.version.id &&
           flow.version.state === FlowVersionState.LOCKED,
         selectedStep: selectedStepStillExists ? state.selectedStep : null,
+        rightSidebar:
+          !selectedStepStillExists &&
+          state.rightSidebar === RightSideBarType.PIECE_SETTINGS
+            ? RightSideBarType.NONE
+            : state.rightSidebar,
         recentlyChangedSteps: changedStepNames,
         recentlyAddedSteps: addedStepNames,
         recentlyChangedFields: changedFieldNames,

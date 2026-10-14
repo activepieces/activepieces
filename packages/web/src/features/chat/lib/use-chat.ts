@@ -767,11 +767,13 @@ export function useAgentChat({
       editingStepNames: flowEditingKey === '' ? [] : flowEditingKey.split(','),
       addingAfterStepNames:
         flowAddingAfterKey === '' ? [] : flowAddingAfterKey.split(','),
+      wasStopped: wasCancelled,
       stop: cancelStream,
     });
   }, [
     flowContext,
     isStreamActive,
+    wasCancelled,
     flowEditingKey,
     flowAddingAfterKey,
     cancelStream,

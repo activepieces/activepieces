@@ -90,12 +90,23 @@ export function ChatCamera() {
     }) => {
       const from = lastFramedStep;
       lastFramedStep = stepName;
-      const pushIn = () =>
+      const pushIn = () => {
         frame({
           stepNames: [stepName],
           zoom: { min: zoom, max: zoom },
           duration: PUSH_IN_MS,
         });
+        schedule({
+          fn: () =>
+            lastFramedStep === stepName &&
+            frame({
+              stepNames: [stepName],
+              zoom: { min: zoom, max: zoom },
+              duration: SETTLE_MS,
+            }),
+          delayMs: PUSH_IN_MS + 100,
+        });
+      };
       const needsCrane =
         !isNil(from) && from !== stepName && isFarFrom({ from, to: stepName });
       if (!needsCrane) {
@@ -112,7 +123,10 @@ export function ChatCamera() {
 
     const openSettings = (stepName: string) => {
       const state = store.getState();
-      if (state.isFollowingChat && state.selectedStep !== stepName) {
+      const isAlreadyOpen =
+        state.selectedStep === stepName &&
+        state.rightSidebar === RightSideBarType.PIECE_SETTINGS;
+      if (state.isFollowingChat && !isAlreadyOpen) {
         state.selectStepByName(stepName, { fromAutoFocus: true });
       }
     };
@@ -206,6 +220,18 @@ export function ChatCamera() {
       if (isWorking && !wasWorking) {
         state.setFollowingChat(true);
       }
+      const justStopped =
+        state.chatActivity?.wasStopped === true &&
+        previous.chatActivity?.wasStopped !== true;
+      if (justStopped) {
+        timers.forEach((id) => window.clearTimeout(id));
+        timers.clear();
+        queuedShots.length = 0;
+        isPlayingShot = false;
+        turnTailEndsAt = 0;
+        pullBackToWideShot();
+        return;
+      }
       if (!isWorking && wasWorking) {
         turnTailEndsAt = Date.now() + TURN_TAIL_MS;
         schedule({ fn: pullBackToWideShot, delayMs: TURN_TAIL_MS });
@@ -286,6 +312,7 @@ const PULL_BACK_MS = 600;
 const PULL_BACK_ZOOM = 0.85;
 const WIDE_SHOT_MIN_ZOOM = 0.7;
 const PUSH_IN_MS = 1200;
+const SETTLE_MS = 400;
 const SETTINGS_SWAP_MS = 1200;
 const FOCUS_ZOOM = 1.15;
 const ESTABLISH_ZOOM = 0.95;
