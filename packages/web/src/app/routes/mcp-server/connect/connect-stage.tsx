@@ -6,7 +6,7 @@ import { LogoPlate } from '@/components/custom/logo-plate';
 import { cn } from '@/lib/utils';
 
 import { ClientIcon } from '../client-icon';
-import { CatalogClient, ClientKind } from '../mcp-client-catalog';
+import { CatalogClient, ClientGroupKey } from '../mcp-client-catalog';
 
 import { connectStatus } from './connect-status';
 
@@ -80,7 +80,7 @@ function ClientTile({
   onOpen: () => void;
   onManage: () => void;
 }) {
-  const isOther = client.kind === 'other';
+  const isOther = client.group === 'other';
   const name = client.name;
   return (
     <li
@@ -112,7 +112,7 @@ function ClientTile({
             isOther ? 'text-gray-1/65' : 'text-gray-11',
           )}
         >
-          {grants ? connectStatus.label(grants) : clientKind(client.kind)}
+          {grants ? connectStatus.label(grants) : clientKind(client.group)}
         </span>
       </span>
       {grants ? (
@@ -290,13 +290,13 @@ function rowCenter(index: number): number {
   return TILE_HEIGHT / 2 + index * (TILE_HEIGHT + TILE_GAP);
 }
 
-function clientKind(kind: ClientKind): string {
-  switch (kind) {
+function clientKind(group: ClientGroupKey): string {
+  switch (group) {
     case 'chat':
       return t('Chat app');
-    case 'agent':
+    case 'terminal':
       return t('Coding agent');
-    case 'editor':
+    case 'editors':
       return t('Code editor');
     case 'other':
       return t('URL or JSON');

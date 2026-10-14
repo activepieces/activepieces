@@ -1,85 +1,41 @@
-import { McpOAuthClientKey, McpOAuthGrant } from '@activepieces/shared';
-import { useMemo, useState } from 'react';
+import { McpOAuthGrant } from '@activepieces/shared';
+import { useMemo } from 'react';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { CatalogClient } from '../mcp-client-catalog';
 import { mcpGrantsQueries } from '../mcp-grants-hooks';
 
-export function useConnectWatch(): ConnectWatch {
-  const [until, setUntil] = useState<number | null>(null);
-  return {
-    until,
-    start: () => setUntil(Date.now() + WATCH_DURATION_MS),
-  };
-}
-
-export function useConnectHome({
-  clients,
-  watch,
-  setupClient,
-}: {
-  clients: CatalogClient[];
-  watch: ConnectWatch;
-  setupClient: CatalogClient | null;
-}) {
+export function useConnectHome({ clients }: { clients: CatalogClient[] }) {
+  const ordered = useMemo(() => orderClients(clients), [clients]);
   const userId = authenticationSession.getCurrentUserId();
-  const grantsQuery = mcpGrantsQueries.useAllGrants({
-    request: userId === null ? {} : { memberIds: [userId] },
-    refetchInterval: (latest) =>
-      isWatching({
-        until: watch.until,
-        isWaitingOnSetup: isWaitingOnSetup({
-          client: setupClient,
-          grants: latest ?? [],
-          clients,
-        }),
-        now: Date.now(),
-      })
-        ? WATCH_INTERVAL_MS
-        : false,
+  const grantsQuery = mcpGrantsQueries.useGrants({
+    request: {
+      limit: GRANTS_LIMIT,
+      ...(userId === null ? {} : { memberIds: [userId] }),
+    },
   });
 
   const grants = useMemo(
-    () => sortByLastUsed(grantsQuery.data ?? []),
+    () => sortByLastUsed(grantsQuery.data?.data ?? []),
     [grantsQuery.data],
   );
 
   return {
-    clients,
+    clients: ordered,
     grants,
-    grantsByClient: groupByClient({ grants, clients }),
-    startWatching: watch.start,
+    grantsByClient: groupByClient({ grants, clients: ordered }),
     isGrantsError: grantsQuery.isError,
     refetchGrants: grantsQuery.refetch,
   };
 }
 
-function isWatching({
-  until,
-  isWaitingOnSetup,
-  now,
-}: {
-  until: number | null;
-  isWaitingOnSetup: boolean;
-  now: number;
-}): boolean {
-  return isWaitingOnSetup || (until !== null && now < until);
-}
-
-function isWaitingOnSetup({
-  client,
-  grants,
-  clients,
-}: {
-  client: CatalogClient | null;
-  grants: McpOAuthGrant[];
-  clients: CatalogClient[];
-}): boolean {
-  if (client === null || client.grantKey === null) {
-    return false;
-  }
-  return !groupByClient({ grants, clients }).has(client.key);
+function orderClients(clients: CatalogClient[]): CatalogClient[] {
+  const rank = (client: CatalogClient) => {
+    const index = CLIENT_ORDER.indexOf(client.key);
+    return index === -1 ? CLIENT_ORDER.length : index;
+  };
+  return [...clients].sort((a, b) => rank(a) - rank(b));
 }
 
 function groupByClient({
@@ -89,13 +45,9 @@ function groupByClient({
   grants: McpOAuthGrant[];
   clients: CatalogClient[];
 }): Map<string, McpOAuthGrant[]> {
-  const cardByGrantKey = new Map(
-    clients.flatMap((client): [McpOAuthClientKey, string][] =>
-      client.grantKey === null ? [] : [[client.grantKey, client.key]],
-    ),
-  );
+  const known = new Set(clients.map((client) => client.key));
   return grants.reduce((groups, grant) => {
-    const key = cardByGrantKey.get(grant.clientKey) ?? 'unknown';
+    const key = known.has(grant.clientKey) ? grant.clientKey : 'unknown';
     return new Map(groups).set(key, [...(groups.get(key) ?? []), grant]);
   }, new Map<string, McpOAuthGrant[]>());
 }
@@ -106,14 +58,18 @@ function sortByLastUsed(grants: McpOAuthGrant[]): McpOAuthGrant[] {
   );
 }
 
-const WATCH_INTERVAL_MS = 4000;
-const WATCH_DURATION_MS = 10 * 60 * 1000;
-
-export const connectWatchUtils = { isWatching, isWaitingOnSetup };
+const GRANTS_LIMIT = 100;
+const CLIENT_ORDER = [
+  'claude',
+  'chatgpt',
+  'claude-code',
+  'codex',
+  'cursor',
+  'vscode',
+  'gemini-cli',
+  'windsurf',
+  'opencode',
+  'unknown',
+];
 
 export type ConnectHome = ReturnType<typeof useConnectHome>;
-
-export type ConnectWatch = {
-  until: number | null;
-  start: () => void;
-};
