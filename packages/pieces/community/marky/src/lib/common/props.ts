@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 
 import { markyAuth } from '../auth';
-import { MarkyBusiness, MarkyTopic, markyCommon } from './client';
+import { MarkyBusiness, MarkyCategory, MarkyTopic, markyCommon } from './client';
 
 const businessId = Property.Dropdown({
   displayName: 'Business',
@@ -104,6 +104,62 @@ const topicId = Property.Dropdown({
   },
 });
 
+function categoryId({ description }: { description: string }) {
+  return Property.Dropdown({
+    displayName: 'Category',
+    description,
+    required: false,
+    refreshers: ['businessId'],
+    auth: markyAuth,
+    options: async ({ auth, businessId }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Connect your Marky account first.',
+        };
+      }
+
+      if (typeof businessId !== 'string' || businessId.length === 0) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Select a business first.',
+        };
+      }
+
+      try {
+        const categories = await markyCommon.fetchAllPages<MarkyCategory>({
+          apiKey: auth.secret_text,
+          path: `/businesses/${businessId}/categories`,
+        });
+
+        if (categories.length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No categories found for this business.',
+          };
+        }
+
+        return {
+          disabled: false,
+          options: categories.map((category) => ({
+            label: category.name,
+            value: category.id,
+          })),
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load categories. Check your connection.',
+        };
+      }
+    },
+  });
+}
+
 const restrictPublishTo = Property.StaticMultiSelectDropdown({
   displayName: 'Platforms',
   description:
@@ -143,6 +199,7 @@ const postStatusFilter = Property.StaticDropdown({
 export const markyProps = {
   businessId,
   topicId,
+  categoryId,
   restrictPublishTo,
   postStatusFilter,
 };

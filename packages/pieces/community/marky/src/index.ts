@@ -18,7 +18,7 @@ import { postPublishedTrigger } from './lib/triggers/post-published';
 export const marky = createPiece({
   displayName: 'Marky',
   description: 'AI-powered social media content generation, scheduling and publishing.',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/marky.png',
   categories: [PieceCategory.MARKETING, PieceCategory.CONTENT_AND_FILES],
   auth: markyAuth,

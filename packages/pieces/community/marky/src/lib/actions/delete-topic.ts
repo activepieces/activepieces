@@ -8,6 +8,7 @@ import { markyProps } from '../common/props';
 export const deleteTopicAction = createAction({
   auth: markyAuth,
   name: 'delete_topic',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Topic',
   description: 'Delete a topic from a Marky business.',
   audience: 'both',

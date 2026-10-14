@@ -8,6 +8,7 @@ import { markyProps } from '../common/props';
 export const updateTopicAction = createAction({
   auth: markyAuth,
   name: 'update_topic',
+  classification: 'WRITE',
   displayName: 'Update Topic',
   description: 'Update an existing Marky topic.',
   audience: 'both',
@@ -29,10 +30,8 @@ export const updateTopicAction = createAction({
       description: 'New notes or description. Leave empty to keep the current ones.',
       required: false,
     }),
-    categoryId: Property.ShortText({
-      displayName: 'Category ID',
-      description: 'ID of the category to move this topic to.',
-      required: false,
+    categoryId: markyProps.categoryId({
+      description: 'The category to move this topic to. Leave empty to keep the current one.',
     }),
     enabled: Property.Checkbox({
       displayName: 'Enabled',

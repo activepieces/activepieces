@@ -8,6 +8,7 @@ import { markyProps } from '../common/props';
 export const listPostsAction = createAction({
   auth: markyAuth,
   name: 'list_posts',
+  classification: 'SEARCH',
   displayName: 'List Posts',
   description: 'List the posts of a Marky business, newest first.',
   audience: 'both',

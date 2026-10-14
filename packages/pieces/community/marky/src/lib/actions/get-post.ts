@@ -8,6 +8,7 @@ import { markyProps } from '../common/props';
 export const getPostAction = createAction({
   auth: markyAuth,
   name: 'get_post',
+  classification: 'READ',
   displayName: 'Get Post',
   description: 'Retrieve a single post, including its per-platform publish results.',
   audience: 'both',

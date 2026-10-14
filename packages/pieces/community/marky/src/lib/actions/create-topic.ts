@@ -8,6 +8,7 @@ import { markyProps } from '../common/props';
 export const createTopicAction = createAction({
   auth: markyAuth,
   name: 'create_topic',
+  classification: 'WRITE',
   displayName: 'Create Topic',
   description: 'Create a topic for a Marky business. Topics steer what the AI writes about.',
   audience: 'both',
@@ -28,10 +29,8 @@ export const createTopicAction = createAction({
       description: 'Notes or a description giving the AI context when it writes about this topic.',
       required: false,
     }),
-    categoryId: Property.ShortText({
-      displayName: 'Category ID',
-      description: 'ID of a category to group this topic under.',
-      required: false,
+    categoryId: markyProps.categoryId({
+      description: 'The category to group this topic under.',
     }),
     enabled: Property.Checkbox({
       displayName: 'Enabled',

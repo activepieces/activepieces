@@ -14,6 +14,7 @@ import { markyProps } from '../common/props';
 export const uploadMediaAction = createAction({
   auth: markyAuth,
   name: 'upload_media',
+  classification: 'WRITE',
   displayName: 'Upload Media',
   description:
     "Upload an image or video into a business's media library. JPEG, PNG, WebP, GIF, MP4 and MOV are supported, up to 20 MB for images and 500 MB for video.",
@@ -31,8 +32,9 @@ export const uploadMediaAction = createAction({
       required: true,
     }),
     altText: Property.ShortText({
-      displayName: 'Alt Text',
-      description: 'Text describing the media for screen readers.',
+      displayName: 'Alt Text Hint',
+      description:
+        "Context the picture can't show on its own, such as a place or a person's name. Marky writes the alt text itself by looking at the image, and uses this as a hint.",
       required: false,
     }),
   },

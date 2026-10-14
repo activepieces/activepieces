@@ -8,6 +8,7 @@ import { markyProps } from '../common/props';
 export const createPostAction = createAction({
   auth: markyAuth,
   name: 'create_post',
+  classification: 'WRITE',
   displayName: 'Create Post',
   description: 'Create a post in a Marky business without using the AI generation pipeline.',
   audience: 'both',

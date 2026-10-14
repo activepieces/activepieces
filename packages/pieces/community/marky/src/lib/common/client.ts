@@ -95,6 +95,11 @@ export type MarkyTopic = {
   title: string;
 };
 
+export type MarkyCategory = {
+  id: string;
+  name: string;
+};
+
 export type MarkyWebhook = {
   id: string;
 };

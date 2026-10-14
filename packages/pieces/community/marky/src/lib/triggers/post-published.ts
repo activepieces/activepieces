@@ -7,6 +7,7 @@ import { MarkyWebhook, markyCommon } from '../common/client';
 export const postPublishedTrigger = createTrigger({
   auth: markyAuth,
   name: 'post_published',
+  classification: 'READ',
   displayName: 'Post Published',
   description:
     'Fires when a Marky post is published to any platform. Marky webhooks cover the whole organization, so this fires for every business in it.',

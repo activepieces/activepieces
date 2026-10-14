@@ -8,6 +8,7 @@ import { markyProps } from '../common/props';
 export const createFileAction = createAction({
   auth: markyAuth,
   name: 'create_file',
+  classification: 'WRITE',
   displayName: 'Create File',
   description: "Create a markdown document in a business's library.",
   audience: 'both',

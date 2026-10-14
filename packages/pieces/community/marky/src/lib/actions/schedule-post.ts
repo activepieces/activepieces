@@ -8,12 +8,13 @@ import { markyProps } from '../common/props';
 export const schedulePostAction = createAction({
   auth: markyAuth,
   name: 'schedule_post',
+  classification: 'WRITE',
   displayName: 'Schedule Post',
   description: 'Schedule an existing post for publishing at a specific time.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Set the publish time of a Marky post that is still New or Scheduled, optionally restricting which platforms it goes to. This is the only way to set a publish time, and the only place a repeating cron can be set. Re-scheduling the same post to the same time is safe to retry.',
+      'Set the publish time of a Marky post that is New, approved (Draft) or already Scheduled, optionally restricting which platforms it goes to. This is the only way to set a publish time, and the only place a repeating cron can be set. Re-scheduling the same post to the same time is safe to retry.',
     idempotent: true,
   },
   props: {
@@ -21,7 +22,7 @@ export const schedulePostAction = createAction({
     postId: Property.ShortText({
       displayName: 'Post ID',
       description:
-        'The ID of the post to schedule, as returned by Create Post or List Posts. The post must still be New or Scheduled.',
+        'The ID of the post to schedule, as returned by Create Post or List Posts. The post must be New, Draft (approved) or Scheduled — rejected and published posts cannot be scheduled.',
       required: true,
     }),
     scheduledPublishTime: Property.DateTime({

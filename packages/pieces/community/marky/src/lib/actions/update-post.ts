@@ -8,6 +8,7 @@ import { markyProps } from '../common/props';
 export const updatePostAction = createAction({
   auth: markyAuth,
   name: 'update_post',
+  classification: 'WRITE',
   displayName: 'Update Post',
   description: "Update a post's caption, review status or target platforms.",
   audience: 'both',
