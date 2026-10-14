@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import {
   AgentKnowledgeBaseTool,
   AgentTool,
@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PROVIDER_EMBEDDING_MODELS } from '@/features/agents';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
@@ -90,13 +91,12 @@ export const KnowledgeBaseSection = ({
   allTools,
   removeTool,
   onToolsUpdate,
-  selectedProvider,
   layout = 'card',
 }: KnowledgeBaseSectionProps) => {
-  const embeddingModel = selectedProvider
-    ? PROVIDER_EMBEDDING_MODELS[selectedProvider]
-    : undefined;
-  const supportsEmbeddings = !!embeddingModel;
+  const { data: chatProvider } = aiProviderQueries.useChatProvider();
+  const embeddingProvider = chatProvider?.provider;
+  const supportsEmbeddings =
+    !isNil(embeddingProvider) && !!PROVIDER_EMBEDDING_MODELS[embeddingProvider];
   const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
     ApFlagId.PGVECTOR_AVAILABLE,
   );
@@ -134,7 +134,7 @@ export const KnowledgeBaseSection = ({
             ) : (
               <p className="text-xs text-gray-11 mt-3">
                 {t(
-                  'The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.',
+                  'Your chat provider does not support embeddings. Switch it to a provider like OpenAI or Google for knowledge base to work.',
                 )}
               </p>
             )}
@@ -191,5 +191,4 @@ type KnowledgeBaseSectionProps = {
   allTools: AgentTool[];
   removeTool: (toolName: string) => void;
   onToolsUpdate: (tools: AgentTool[]) => void;
-  selectedProvider?: AIProviderName;
 };
