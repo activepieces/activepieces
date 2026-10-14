@@ -34,7 +34,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
 vi.mock('@/features/platform-admin/hooks/platform-user-hooks', () => ({
   platformUserKeys: { users: ['users'], invitations: ['invitations'] },
   platformUserHooks: {
-    useUsers: () => ({ data: { data: users } }),
+    useAllUsers: () => ({ data: users }),
     useInvitesReservingSeats: () => ({ data: invitations }),
   },
 }));

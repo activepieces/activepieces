@@ -101,6 +101,8 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
     app.get('/reserving-seats', ListInvitationsReservingSeatsRequestParams, async (request) => {
         return userInvitationsService(request.log).listPlatformInvitesReservingSeats({
             platformId: request.principal.platform.id,
+            cursor: request.query.cursor ?? null,
+            limit: request.query.limit ?? 10,
         })
     })
 
@@ -236,8 +238,12 @@ const ListInvitationsReservingSeatsRequestParams = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
+        querystring: z.object({
+            cursor: z.string().optional(),
+            limit: z.coerce.number().optional(),
+        }),
         response: {
-            [StatusCodes.OK]: z.array(UserInvitation),
+            [StatusCodes.OK]: SeekPage(UserInvitation),
         },
     },
 }

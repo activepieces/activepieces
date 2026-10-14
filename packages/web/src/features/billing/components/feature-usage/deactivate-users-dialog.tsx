@@ -77,7 +77,7 @@ function DeactivateUsersForm({
   enforced,
 }: DeactivateUsersFormProps) {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: usersPage } = platformUserHooks.useUsers();
+  const { data: users } = platformUserHooks.useAllUsers();
   const { data: invitations } = platformUserHooks.useInvitesReservingSeats();
   const queryClient = useQueryClient();
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(
@@ -85,7 +85,7 @@ function DeactivateUsersForm({
   );
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
 
-  const deactivatableUsers = (usersPage?.data ?? []).filter(
+  const deactivatableUsers = (users ?? []).filter(
     (user) =>
       user.status === UserStatus.ACTIVE &&
       user.id !== platform.ownerId &&

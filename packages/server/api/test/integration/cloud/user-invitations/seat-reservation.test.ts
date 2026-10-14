@@ -1,4 +1,4 @@
-import { ErrorCode, PlatformUsageMetric, ProjectRole } from '@activepieces/core-utils'
+import { ErrorCode, PlatformUsageMetric, ProjectRole, SeekPage } from '@activepieces/core-utils'
 import { DefaultProjectRole, InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, User, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
@@ -221,8 +221,24 @@ describe('Seat reservation (ADR-0010) + active-user floor (ADR-0009)', () => {
             const response = await listReservingSeats({ token: mockOwnerToken })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
-            const emails = response.json<UserInvitation[]>().map((invitation) => invitation.email)
+            const emails = response.json<SeekPage<UserInvitation>>().data.map((invitation) => invitation.email)
             expect(emails.sort()).toEqual([acceptedEmail, pendingEmail].sort())
+        })
+
+        it('pages through the invites with a cursor', async () => {
+            const { mockOwnerToken, mockPlatform } = await setupPlatform({ usersLimit: 10 })
+            const emails = [1, 2, 3].map(() => faker.internet.email().toLowerCase())
+            for (const email of emails) {
+                await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.PENDING, email })
+            }
+
+            const first = (await listReservingSeats({ token: mockOwnerToken, query: { limit: '2' } })).json<SeekPage<UserInvitation>>()
+            const second = (await listReservingSeats({ token: mockOwnerToken, query: { limit: '2', cursor: first.next ?? '' } })).json<SeekPage<UserInvitation>>()
+
+            expect(first.data).toHaveLength(2)
+            expect(second.data).toHaveLength(1)
+            expect(second.next).toBeNull()
+            expect([...first.data, ...second.data].map((invitation) => invitation.email).sort()).toEqual(emails.sort())
         })
 
         it('refuses a platform member', async () => {
@@ -318,11 +334,12 @@ function invite({ token, apiKey, email, projectId }: {
     })
 }
 
-function listReservingSeats({ token }: { token: string }): ReturnType<NonNullable<typeof app>['inject']> {
+function listReservingSeats({ token, query }: { token: string, query?: Record<string, string> }): ReturnType<NonNullable<typeof app>['inject']> {
     return app!.inject({
         method: 'GET',
         url: '/api/v1/user-invitations/reserving-seats',
         headers: { authorization: `Bearer ${token}` },
+        query,
     })
 }
 
