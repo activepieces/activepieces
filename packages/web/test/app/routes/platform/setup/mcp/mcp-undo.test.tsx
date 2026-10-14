@@ -23,6 +23,7 @@ const state = vi.hoisted(() => ({
   message: undefined as string | undefined,
   nextTools: ['flows_write', 'flows_delete'],
   initialTools: [] as string[],
+  previous: undefined as string[] | undefined,
   get: undefined as (() => Promise<{ disabledTools: string[] }>) | undefined,
 }));
 
@@ -92,6 +93,7 @@ vi.mock(
       locked?: boolean;
       onUpdateDisabledTools: (change: {
         tools: string[];
+        previous?: string[];
         onSettled: () => void;
       }) => void;
     }) => (
@@ -101,6 +103,7 @@ vi.mock(
         onClick={() =>
           onUpdateDisabledTools({
             tools: state.nextTools,
+            previous: state.previous,
             onSettled: () => undefined,
           })
         }
@@ -120,6 +123,7 @@ beforeEach(() => {
   state.message = undefined;
   state.nextTools = ['flows_write', 'flows_delete'];
   state.initialTools = [];
+  state.previous = undefined;
   state.get = undefined;
 });
 
@@ -256,5 +260,22 @@ describe('Platform MCP saved toast', () => {
     state.nextTools = ['ap_create_flow'];
     renderAccessPage();
     await waitFor(() => expect(state.message).toBe('Changes saved'));
+  });
+});
+
+describe('Platform MCP undo with a change still saving', () => {
+  it('undoes only the second change when the first is still pending', async () => {
+    state.initialTools = [];
+    state.previous = ['ap_create_flow'];
+    state.nextTools = ['ap_create_flow', 'ap_delete_flow'];
+    renderAccessPage();
+    await waitFor(() => expect(state.message).toBe('Delete flow turned off'));
+
+    state.serverTools = ['ap_create_flow', 'ap_delete_flow'];
+    await state.onUndo?.();
+
+    expect(state.updateAsync).toHaveBeenCalledWith({
+      disabledTools: ['ap_create_flow'],
+    });
   });
 });

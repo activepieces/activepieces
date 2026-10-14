@@ -9,7 +9,7 @@ import {
   Play,
   Trash2,
 } from 'lucide-react';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -82,9 +82,14 @@ export function McpToolTierList({
     [disabledTools, platformDisabledTools],
   );
 
+  const baselineRef = useRef<string[]>(disabledTools);
+
   const save = useDebouncedCallback((tools: string[]) => {
+    const previous = baselineRef.current;
+    baselineRef.current = tools;
     onUpdateDisabledTools({
       tools,
+      previous,
       onSettled: () =>
         setPendingDisabledTools((current) =>
           current === tools ? null : current,
@@ -104,6 +109,9 @@ export function McpToolTierList({
     const next = enabled
       ? disabledTools.filter((name) => !names.includes(name))
       : [...disabledTools, ...names.filter((n) => !disabledTools.includes(n))];
+    if (pendingDisabledTools === null) {
+      baselineRef.current = disabledTools;
+    }
     setPendingDisabledTools(next);
     save(next);
   };
@@ -322,6 +330,7 @@ type McpToolTierListProps = {
   locked?: boolean;
   onUpdateDisabledTools: (params: {
     tools: string[];
+    previous?: string[];
     onSettled: () => void;
   }) => void;
 };
