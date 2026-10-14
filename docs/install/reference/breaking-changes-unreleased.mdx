@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Code steps always run on Deno
+
+Code steps now always execute in the Deno runtime; the per-step `useDeno` flag is ignored and the legacy Node (`node --eval`) and v8-isolate code sandboxes were removed, along with the `isolated-vm` native dependency and the admin `migrate-to-deno` / `revert-from-deno` endpoints. Code step sources are transpiled to CommonJS with sucrase instead of being bundled with esbuild, so dependencies now resolve from the step's `node_modules` at runtime and every existing code step is rebuilt once on its first run after the upgrade.
+
+#### What you need to do
+
+Nothing for most installations — Deno ships in the official Docker images and code steps keep their Node-compatible semantics through Deno's Node compatibility layer. Review code steps that relied on Node-runtime specifics: hardcoded paths such as `/tmp` are subject to Deno's permission grants, ES-module-only syntax at the top level (top-level `await`) now runs the step as a strict ES module, and a step whose JavaScript heap exceeded 128MB in the `SANDBOX_CODE_ONLY`/`SANDBOX_CODE_AND_PROCESS` execution modes is killed (matching the previous v8-isolate limit; the process-sandboxed modes stay uncapped). Custom deployments that do not use the official images must provide a Deno binary via `AP_DENO_PATH`.
+
 #### Brevo 0.5.0: an unticked unsubscribe toggle no longer re-subscribes the contact
 
 On Create or Update Contact, the two blacklist toggles (now labelled **Unsubscribe From Email** and **Unsubscribe From SMS**) promised that leaving them untouched kept the contact's current setting. A fresh step saves an untouched toggle as `false`, so every run sent `emailBlacklisted: false` and `smsBlacklisted: false` and silently re-subscribed contacts who had opted out. Unsubscribe Contact did the same when one of its toggles was unticked. From 0.5.0 an unticked toggle sends nothing and the contact's setting is left as it is; a ticked toggle still unsubscribes. Unsubscribe Contact now fails with a clear message when nothing is ticked and no list is picked, instead of sending an empty update.

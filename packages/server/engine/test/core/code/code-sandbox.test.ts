@@ -9,41 +9,29 @@ async function loadSandboxModule(executionMode: string) {
     return import('../../../src/lib/core/code/code-sandbox')
 }
 
-async function loadLegacySandboxes() {
-    const noOp = (await import('../../../src/lib/core/code/no-op-code-sandbox')).noOpCodeSandbox
-    const v8Isolate = (await import('../../../src/lib/core/code/v8-isolate-code-sandbox')).v8IsolateCodeSandbox
-    return { noOp, v8Isolate }
-}
-
 describe('initCodeSandbox selection', () => {
-    it.each(['UNSANDBOXED', 'SANDBOX_PROCESS'])('useDeno=false in %s mode returns the no-op sandbox', async (mode) => {
+    it.each(['UNSANDBOXED', 'SANDBOX_PROCESS', 'SANDBOX_CODE_ONLY', 'SANDBOX_CODE_AND_PROCESS'])('returns the deno sandbox in %s mode', async (mode) => {
         const { initCodeSandbox } = await loadSandboxModule(mode)
-        const { noOp } = await loadLegacySandboxes()
-        const sandbox = await initCodeSandbox({ useDeno: false })
-        expect(sandbox).toBe(noOp)
+        const sandbox = await initCodeSandbox()
+        expect(typeof sandbox.runCodeModule).toBe('function')
+        expect(typeof sandbox.runScript).toBe('function')
     })
 
-    it.each(['SANDBOX_CODE_ONLY', 'SANDBOX_CODE_AND_PROCESS'])('useDeno=false in %s mode returns the v8 isolate sandbox', async (mode) => {
-        const { initCodeSandbox } = await loadSandboxModule(mode)
-        const { v8Isolate } = await loadLegacySandboxes()
-        const sandbox = await initCodeSandbox({ useDeno: false })
-        expect(sandbox).toBe(v8Isolate)
-    })
-
-    it.each(['UNSANDBOXED', 'SANDBOX_PROCESS', 'SANDBOX_CODE_ONLY', 'SANDBOX_CODE_AND_PROCESS'])('useDeno=true in %s mode returns the deno sandbox', async (mode) => {
-        const { initCodeSandbox } = await loadSandboxModule(mode)
-        const { noOp, v8Isolate } = await loadLegacySandboxes()
-        const sandbox = await initCodeSandbox({ useDeno: true })
-        expect(sandbox).not.toBe(noOp)
-        expect(sandbox).not.toBe(v8Isolate)
-    })
-
-    it('caches one instance per kind without mixing them', async () => {
+    it('caches a single instance', async () => {
         const { initCodeSandbox } = await loadSandboxModule('UNSANDBOXED')
-        const denoSandbox = await initCodeSandbox({ useDeno: true })
-        const legacySandbox = await initCodeSandbox({ useDeno: false })
-        expect(denoSandbox).not.toBe(legacySandbox)
-        expect(await initCodeSandbox({ useDeno: true })).toBe(denoSandbox)
-        expect(await initCodeSandbox({ useDeno: false })).toBe(legacySandbox)
+        const first = await initCodeSandbox()
+        expect(await initCodeSandbox()).toBe(first)
+    })
+
+    it('throws when the execution mode is missing', async () => {
+        vi.resetModules()
+        delete process.env.AP_EXECUTION_MODE
+        const { initCodeSandbox } = await import('../../../src/lib/core/code/code-sandbox')
+        await expect(initCodeSandbox()).rejects.toThrow('AP_EXECUTION_MODE')
+    })
+
+    it('throws on an invalid execution mode', async () => {
+        const { initCodeSandbox } = await loadSandboxModule('NOT_A_MODE')
+        await expect(initCodeSandbox()).rejects.toThrow('Invalid AP_EXECUTION_MODE')
     })
 })

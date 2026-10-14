@@ -1,10 +1,8 @@
 import { CodeSandbox } from '../../../src/lib/core/code/code-sandbox-common'
-import { noOpCodeSandbox } from '../../../src/lib/core/code/no-op-code-sandbox'
-import { v8IsolateCodeSandbox } from '../../../src/lib/core/code/v8-isolate-code-sandbox'
+import { denoCodeSandbox } from '../../../src/lib/core/code/deno-code-sandbox'
 
 const implementations: [string, CodeSandbox][] = [
-    ['noOpCodeSandbox', noOpCodeSandbox],
-    ['v8IsolateCodeSandbox', v8IsolateCodeSandbox],
+    ['denoCodeSandbox', denoCodeSandbox({ permissions: [], codeStepMemoryLimitMb: 128 })],
 ]
 
 describe.each(implementations)('%s createScriptSession', (_name, sandbox) => {
@@ -86,33 +84,5 @@ describe.each(implementations)('%s createScriptSession', (_name, sandbox) => {
         })
         session.dispose()
         await expect(session.run('1 + 1')).rejects.toThrow()
-    })
-})
-
-describe('session parity across implementations', () => {
-    it('returns identical values from both implementations for the same scripts', async () => {
-        const scriptContext = {
-            step_1: { output: { price: 6.4, items: [5, 'a'], user: { name: 'John' } } },
-        }
-        const scripts = [
-            'step_1.output.price',
-            'step_1.output.items',
-            'step_1.output.user',
-            'step_1.output.price > 5',
-            'step_1.output.items.length + 1',
-            'step_1.output.user.name + \'!\'',
-            'step_1.output.nothing === undefined',
-        ]
-        const noOpSession = await noOpCodeSandbox.createScriptSession({ scriptContext, functions: {} })
-        const isolateSession = await v8IsolateCodeSandbox.createScriptSession({ scriptContext, functions: {} })
-        try {
-            for (const script of scripts) {
-                expect(await noOpSession.run(script)).toEqual(await isolateSession.run(script))
-            }
-        }
-        finally {
-            noOpSession.dispose()
-            isolateSession.dispose()
-        }
     })
 })
