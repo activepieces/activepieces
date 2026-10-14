@@ -3287,5 +3287,9 @@
   "Made": "Made",
   "Ask chat to build or change this flow...": "Ask chat to build or change this flow...",
   "Build this flow with chat": "Build this flow with chat",
-  "Describe what it should do. You can keep editing the canvas while chat works, and it will see your changes.": "Describe what it should do. You can keep editing the canvas while chat works, and it will see your changes."
+  "Describe what it should do. You can keep editing the canvas while chat works, and it will see your changes.": "Describe what it should do. You can keep editing the canvas while chat works, and it will see your changes.",
+  "Chat is editing this flow…": "Chat is editing this flow…",
+  "Chat is editing…": "Chat is editing…",
+  "Updated by chat": "Updated by chat",
+  "Chat updated this step. You are seeing its latest settings.": "Chat updated this step. You are seeing its latest settings."
 }

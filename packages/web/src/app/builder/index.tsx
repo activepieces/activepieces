@@ -28,6 +28,8 @@ import { useElementSize } from '@/hooks/use-element-size';
 import { cn } from '@/lib/utils';
 
 import { BuilderChatPanel } from './builder-chat/builder-chat-panel';
+import { ChatCanvasStatus } from './builder-chat/chat-canvas-status';
+import { ChatUpdatedStepNotice } from './builder-chat/chat-updated-step-notice';
 import { useLiveFlowUpdates } from './builder-chat/use-live-flow-updates';
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
@@ -189,6 +191,7 @@ const BuilderPage = () => {
             </CursorPositionProvider>
 
             <BuilderBanner />
+            {showBuilderChat && <ChatCanvasStatus />}
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls
@@ -245,25 +248,35 @@ const BuilderPage = () => {
             }ms`,
           }}
         >
-          <div ref={rightSidePanelRef} className="h-full w-full">
-            {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-              selectedStep && (
-                <StepSettingsProvider
-                  pieceModel={pieceModel}
-                  pieceModelNotFound={pieceModelNotFound}
-                  selectedStep={selectedStep}
-                  key={constructContainerKey({
-                    flowVersionId: flowVersion.id,
-                    step: selectedStep,
-                    hasPieceModelLoaded: !!pieceModel,
-                    remoteRevision,
-                  })}
-                >
-                  <StepSettingsContainer />
-                </StepSettingsProvider>
+          <div
+            ref={rightSidePanelRef}
+            className="relative flex h-full w-full flex-col"
+          >
+            {rightSidebar === RightSideBarType.PIECE_SETTINGS && (
+              <ChatUpdatedStepNotice />
+            )}
+            <div className="min-h-0 grow">
+              {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
+                selectedStep && (
+                  <StepSettingsProvider
+                    pieceModel={pieceModel}
+                    pieceModelNotFound={pieceModelNotFound}
+                    selectedStep={selectedStep}
+                    key={constructContainerKey({
+                      flowVersionId: flowVersion.id,
+                      step: selectedStep,
+                      hasPieceModelLoaded: !!pieceModel,
+                      remoteRevision,
+                    })}
+                  >
+                    <StepSettingsContainer />
+                  </StepSettingsProvider>
+                )}
+              {rightSidebar === RightSideBarType.RUNS && <RunsList />}
+              {rightSidebar === RightSideBarType.VERSIONS && (
+                <FlowVersionsList />
               )}
-            {rightSidebar === RightSideBarType.RUNS && <RunsList />}
-            {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}
+            </div>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

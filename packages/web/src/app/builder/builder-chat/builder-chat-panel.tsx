@@ -32,6 +32,7 @@ export function BuilderChatPanel() {
     () => ({
       flowId,
       getSelectedStepName: () => store.getState().selectedStep,
+      onActivity: (activity) => store.getState().setChatActivity(activity),
     }),
     [flowId, store],
   );

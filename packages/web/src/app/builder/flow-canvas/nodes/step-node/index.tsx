@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { flowCanvasConsts } from '../../utils/consts';
 import { ApStepNode } from '../../utils/types';
 
+import { StepNodeChatBadge } from './step-node-chat-badge';
 import { StepNodeChevron } from './step-node-chevron';
 import { StepNodeDisplayName } from './step-node-display-name';
 import { StepNodeLogo } from './step-node-logo';
@@ -40,6 +41,8 @@ const ApStepCanvasNode = React.memo(
       isRightSidebarOpen,
       canvasOrientation,
       isRecentlyChanged,
+      isRecentlyAdded,
+      isChatEditing,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.selectedStep === step.name,
@@ -52,6 +55,8 @@ const ApStepCanvasNode = React.memo(
       state.rightSidebar !== RightSideBarType.NONE,
       state.canvasOrientation,
       state.recentlyChangedSteps.includes(step.name),
+      state.recentlyAddedSteps.includes(step.name),
+      state.chatActivity?.editingStepNames.includes(step.name) ?? false,
     ]);
     const isHorizontal = canvasOrientation === 'horizontal';
     const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -146,8 +151,10 @@ const ApStepCanvasNode = React.memo(
             'bg-gray-4': isSkipped,
             'rounded-tl-none': isTrigger && !isHorizontal,
             'hover:border-gray-8': !isSelected,
-            'ring-2 ring-accent-9 ring-offset-2 animate-pulse':
-              isRecentlyChanged,
+            'border-accent-9 shadow-md': isRecentlyChanged || isChatEditing,
+            'border-dashed animate-pulse': isChatEditing,
+            'animate-in fade-in slide-in-from-top-4 duration-500':
+              isRecentlyAdded,
           },
         )}
         onClick={(e) => handleStepClick(e)}
@@ -157,6 +164,10 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivListeners}
       >
         {isTrigger && <TriggerWidget isSelected={isSelected} />}
+        <StepNodeChatBadge
+          isEditing={isChatEditing}
+          isUpdated={isRecentlyChanged && !isRecentlyAdded}
+        />
         <LoopIterationInput stepName={step.name} />
         <ApStepNodeStatusInRun stepName={step.name} />
         <ApStepNodeSkippedStatus stepName={step.name} />

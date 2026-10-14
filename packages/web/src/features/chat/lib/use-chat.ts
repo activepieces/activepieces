@@ -23,6 +23,7 @@ import { api } from '@/lib/api';
 import { chatDebug } from '@/lib/chat-debug-logger';
 
 import { chatApi, type PendingGate } from './chat-api';
+import { ChatFlowActivity, chatFlowActivity } from './chat-flow-activity';
 import {
   chatBuildUtils,
   chatStoreSelectors,
@@ -738,6 +739,25 @@ export function useAgentChat({
     }
   }, [commitInFlightTurn, stopStream, updateSendStatus]);
 
+  const flowEditingStepNames = useMemo(
+    () =>
+      flowContext
+        ? chatFlowActivity.editingStepNames({
+            message: streamingMessage ?? null,
+            flowId: flowContext.flowId,
+          })
+        : [],
+    [flowContext, streamingMessage],
+  );
+  const flowEditingKey = flowEditingStepNames.join(',');
+  useEffect(() => {
+    flowContext?.onActivity({
+      isWorking: isStreamActive,
+      editingStepNames: flowEditingKey === '' ? [] : flowEditingKey.split(','),
+      stop: cancelStream,
+    });
+  }, [flowContext, isStreamActive, flowEditingKey, cancelStream]);
+
   const createConversation = useCallback(
     async ({
       title,
@@ -1083,4 +1103,5 @@ function spreadSelectedStep(flowContext: ChatFlowContext | undefined): {
 export type ChatFlowContext = {
   flowId: string;
   getSelectedStepName: () => string | null;
+  onActivity: (activity: ChatFlowActivity) => void;
 };
