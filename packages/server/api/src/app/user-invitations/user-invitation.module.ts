@@ -98,6 +98,12 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         await reply.status(StatusCodes.OK).send(invitations)
     })
 
+    app.get('/reserving-seats', ListInvitationsReservingSeatsRequestParams, async (request) => {
+        return userInvitationsService(request.log).listPlatformInvitesReservingSeats({
+            platformId: request.principal.platform.id,
+        })
+    })
+
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
         const invitation = await userInvitationsService(request.log).getOneByInvitationTokenOrThrow(request.body.invitationToken)
         const { registered } = await userInvitationsService(request.log).accept({
@@ -221,6 +227,17 @@ const ListUserInvitationsRequestParams = {
         querystring: ListUserInvitationsRequest,
         response: {
             [StatusCodes.OK]: SeekPage(UserInvitation),
+        },
+    },
+}
+
+const ListInvitationsReservingSeatsRequestParams = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: z.array(UserInvitation),
         },
     },
 }

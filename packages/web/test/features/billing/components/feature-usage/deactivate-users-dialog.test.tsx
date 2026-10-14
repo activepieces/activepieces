@@ -35,7 +35,7 @@ vi.mock('@/features/platform-admin/hooks/platform-user-hooks', () => ({
   platformUserKeys: { users: ['users'], invitations: ['invitations'] },
   platformUserHooks: {
     useUsers: () => ({ data: { data: users } }),
-    usePlatformInvitations: () => ({ data: invitations }),
+    useInvitesReservingSeats: () => ({ data: invitations }),
   },
 }));
 
@@ -103,8 +103,8 @@ function user(id: string): TestUser {
   };
 }
 
-function invitation(id: string): TestInvitation {
-  return { id, email: `${id}@example.com` };
+function invitation(id: string, email = `${id}@example.com`): TestInvitation {
+  return { id, email };
 }
 
 beforeEach(() => {
@@ -124,7 +124,7 @@ beforeEach(() => {
 });
 
 describe('DeactivateUsersDialog when a trial ends', () => {
-  it('lets the owner choose even when only the first page of invitations has loaded', () => {
+  it('lets the owner choose however many invitations are pending', () => {
     invitations = Array.from({ length: 100 }, (_, index) =>
       invitation(`invite-${index}`),
     );
@@ -150,6 +150,28 @@ describe('DeactivateUsersDialog when a trial ends', () => {
     renderEnforced({ viewerId: ADMIN_ID, targetSeats: 2, currentUsers: 3 });
 
     expect(screen.queryByText(OWNER_ONLY)).toBeNull();
+  });
+
+  it('counts one seat per invited email and revokes every invite for it', async () => {
+    invitations = [
+      invitation('invite-1', 'bob@example.com'),
+      invitation('invite-2', 'Bob@example.com'),
+    ];
+    const { onOpenChange } = renderEnforced({
+      viewerId: OWNER_ID,
+      targetSeats: 1,
+      currentUsers: 2,
+    });
+
+    const checkboxes = screen.getAllByRole('checkbox');
+    expect(checkboxes).toHaveLength(1);
+    fireEvent.click(checkboxes[0]);
+    fireEvent.click(screen.getByText('Revoke & continue'));
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(deleteInvitation).toHaveBeenCalledTimes(2);
+    expect(deleteInvitation).toHaveBeenCalledWith('invite-1');
+    expect(deleteInvitation).toHaveBeenCalledWith('invite-2');
   });
 
   it('stays open after a partial failure and retries only what is still there', async () => {

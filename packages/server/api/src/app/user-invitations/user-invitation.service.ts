@@ -167,6 +167,13 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             .getRawOne<{ count: string }>()
         return Number(result?.count ?? 0)
     },
+    async listPlatformInvitesReservingSeats({ platformId }: ListPlatformInvitesReservingSeatsParams): Promise<UserInvitation[]> {
+        return withinReservationWindow(repo().createQueryBuilder('invitation'), platformId)
+            .andWhere(EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER)
+            .andWhere('invitation.type = :type', { type: InvitationType.PLATFORM })
+            .orderBy('invitation.created', 'ASC')
+            .getMany()
+    },
     async countAdditionalSeatsNeeded({
         email,
         platformId,
@@ -403,6 +410,10 @@ export type CountAdditionalSeatsNeededParams = {
 export type CountReservedSeatsParams = {
     platformId: string
     entityManager?: EntityManager
+}
+
+type ListPlatformInvitesReservingSeatsParams = {
+    platformId: string
 }
 
 type GetOneByPlatformIdAndEmailParams = {

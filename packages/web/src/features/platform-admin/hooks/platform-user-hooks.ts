@@ -10,6 +10,7 @@ import { userHooks } from '@/hooks/user-hooks';
 export const platformUserKeys = {
   users: ['users'] as const,
   invitations: ['platform-invitations'] as const,
+  invitesReservingSeats: ['platform-invitations', 'reserving-seats'] as const,
 };
 
 export const platformUserHooks = {
@@ -37,12 +38,19 @@ export const platformUserHooks = {
           .list({
             type: InvitationType.PLATFORM,
             cursor: undefined,
-            limit: 2000,
+            limit: 100,
             projectId: null,
           })
           .then((res) => res.data);
       },
       queryKey: platformUserKeys.invitations,
+      staleTime: 0,
+    });
+  },
+  useInvitesReservingSeats: () => {
+    return useQuery({
+      queryFn: userInvitationApi.listReservingSeats,
+      queryKey: platformUserKeys.invitesReservingSeats,
       staleTime: 0,
     });
   },

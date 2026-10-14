@@ -1,5 +1,5 @@
-import { isNil } from '@activepieces/core-utils';
-import { PlatformRole, UserStatus } from '@activepieces/shared';
+import { isNil, unique } from '@activepieces/core-utils';
+import { PlatformRole, UserInvitation, UserStatus } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ReactNode, useState } from 'react';
@@ -78,14 +78,12 @@ function DeactivateUsersForm({
 }: DeactivateUsersFormProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: usersPage } = platformUserHooks.useUsers();
-  const { data: invitations } = platformUserHooks.usePlatformInvitations();
+  const { data: invitations } = platformUserHooks.useInvitesReservingSeats();
   const queryClient = useQueryClient();
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(
     new Set(),
   );
-  const [selectedInvitationIds, setSelectedInvitationIds] = useState<
-    Set<string>
-  >(new Set());
+  const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
 
   const deactivatableUsers = (usersPage?.data ?? []).filter(
     (user) =>
@@ -93,7 +91,7 @@ function DeactivateUsersForm({
       user.id !== platform.ownerId &&
       user.id !== enforced?.excludeUserId,
   );
-  const pendingInvitations = invitations ?? [];
+  const invitedEmails = groupByEmail(invitations ?? []);
   const seatsOnlyTheOwnerCanFree =
     isNil(enforced?.excludeUserId) ||
     enforced.excludeUserId === platform.ownerId
@@ -104,11 +102,11 @@ function DeactivateUsersForm({
   const usersToDeactivate = deactivatableUsers.filter((user) =>
     selectedUserIds.has(user.id),
   );
-  const invitationsToRevoke = pendingInvitations.filter((invitation) =>
-    selectedInvitationIds.has(invitation.id),
+  const emailsToRevoke = invitedEmails.filter((invited) =>
+    selectedEmails.has(invited.email),
   );
   const seatsAfter =
-    currentUsers - usersToDeactivate.length - invitationsToRevoke.length;
+    currentUsers - usersToDeactivate.length - emailsToRevoke.length;
   const withinLimit = seatsAfter <= targetSeats;
 
   const refreshLists = () =>
@@ -125,8 +123,10 @@ function DeactivateUsersForm({
         ...usersToDeactivate.map((user) =>
           platformUserApi.update(user.id, { status: UserStatus.INACTIVE }),
         ),
-        ...invitationsToRevoke.map((invitation) =>
-          userInvitationApi.delete(invitation.id),
+        ...emailsToRevoke.flatMap(({ invitationIds }) =>
+          invitationIds.map((invitationId) =>
+            userInvitationApi.delete(invitationId),
+          ),
         ),
       ]);
       const failure = results.find((result) => result.status === 'rejected');
@@ -149,8 +149,8 @@ function DeactivateUsersForm({
   const toggleUser = (userId: string) =>
     setSelectedUserIds((previous) => toggled(previous, userId));
 
-  const toggleInvitation = (invitationId: string) =>
-    setSelectedInvitationIds((previous) => toggled(previous, invitationId));
+  const toggleEmail = (email: string) =>
+    setSelectedEmails((previous) => toggled(previous, email));
 
   return (
     <>
@@ -179,15 +179,15 @@ function DeactivateUsersForm({
             email: user.email,
             trailingLabel: roleLabel(user.platformRole),
           }))}
-          invitations={pendingInvitations.map((invitation) => ({
-            id: invitation.id,
-            email: invitation.email,
+          invitations={invitedEmails.map(({ email }) => ({
+            id: email,
+            email,
             trailingLabel: t('Invited'),
           }))}
           selectedUserIds={selectedUserIds}
-          selectedInvitationIds={selectedInvitationIds}
+          selectedEmails={selectedEmails}
           onToggleUser={toggleUser}
-          onToggleInvitation={toggleInvitation}
+          onToggleEmail={toggleEmail}
           seatsAfter={seatsAfter}
           targetSeats={targetSeats}
           withinLimit={withinLimit}
@@ -216,7 +216,7 @@ function DeactivateUsersForm({
             disabled={!withinLimit}
             onClick={() => deactivateAndContinue()}
           >
-            {invitationsToRevoke.length > 0 && usersToDeactivate.length === 0
+            {emailsToRevoke.length > 0 && usersToDeactivate.length === 0
               ? t('Revoke & continue')
               : t('Deactivate & continue')}
           </Button>
@@ -230,9 +230,9 @@ function SeatChoices({
   users,
   invitations,
   selectedUserIds,
-  selectedInvitationIds,
+  selectedEmails,
   onToggleUser,
-  onToggleInvitation,
+  onToggleEmail,
   seatsAfter,
   targetSeats,
   withinLimit,
@@ -250,8 +250,8 @@ function SeatChoices({
       <SelectableEmailList
         heading={t('Pending invitations')}
         items={invitations}
-        selectedIds={selectedInvitationIds}
-        onToggle={onToggleInvitation}
+        selectedIds={selectedEmails}
+        onToggle={onToggleEmail}
         maxHeightClass="max-h-[160px]"
       />
 
@@ -333,6 +333,18 @@ function toggled(selectedIds: Set<string>, id: string): Set<string> {
   return next;
 }
 
+function groupByEmail(invitations: UserInvitation[]): InvitedEmail[] {
+  const emails = unique(
+    invitations.map((invitation) => invitation.email.toLowerCase()),
+  );
+  return emails.map((email) => ({
+    email,
+    invitationIds: invitations
+      .filter((invitation) => invitation.email.toLowerCase() === email)
+      .map((invitation) => invitation.id),
+  }));
+}
+
 function roleLabel(role: PlatformRole): string {
   switch (role) {
     case PlatformRole.ADMIN:
@@ -368,13 +380,18 @@ type SeatChoicesProps = {
   users: SelectableEmailItem[];
   invitations: SelectableEmailItem[];
   selectedUserIds: Set<string>;
-  selectedInvitationIds: Set<string>;
+  selectedEmails: Set<string>;
   onToggleUser: (id: string) => void;
-  onToggleInvitation: (id: string) => void;
+  onToggleEmail: (email: string) => void;
   seatsAfter: number;
   targetSeats: number;
   withinLimit: boolean;
   warning?: string;
+};
+
+type InvitedEmail = {
+  email: string;
+  invitationIds: string[];
 };
 
 type SelectableEmailItem = {
