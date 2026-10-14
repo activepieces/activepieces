@@ -2282,7 +2282,6 @@
   "Remove knowledge source": "Remove knowledge source",
   "Knowledge Base": "Knowledge Base",
   "Add knowledge": "Add knowledge",
-  "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.",
   "Add files or tables as knowledge sources for your agent.": "Add files or tables as knowledge sources for your agent.",
   "MCP Servers": "MCP Servers",
   "Remove MCP server": "Remove MCP server",
@@ -2318,7 +2317,6 @@
   "e.g., company_docs": "e.g., company_docs",
   "e.g., products_catalog": "e.g., products_catalog",
   "A unique name for the agent to reference this knowledge source": "A unique name for the agent to reference this knowledge source",
-  "Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.": "Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.",
   "This file has no text that can be searched.": "This file has no text that can be searched.",
   "Failed to upload file": "Failed to upload file",
   "Connect an account": "Connect an account",
@@ -3275,7 +3273,6 @@
   "New models from {provider} are added automatically.": "New models from {provider} are added automatically.",
   "{on} of {total} on": "{on} of {total} on",
   "Image generation": "Image generation",
-  "None of your AI keys can index files for this project.": "None of your AI keys can index files for this project.",
   "Pick another model to continue": "Pick another model to continue",
   "Embedding model": "Embedding model",
   "Files already in knowledge bases keep their old vectors. Re-upload them to search with the new key or model.": "Files already in knowledge bases keep their old vectors. Re-upload them to search with the new key or model.",
@@ -3288,6 +3285,10 @@
   "Default AI key": "Default AI key",
   "Default AI key updated": "Default AI key updated",
   "New chats start here when no Default tier fits. Memory and knowledge-base embeddings also use it.": "New chats start here when no Default tier fits. Memory and knowledge-base embeddings also use it.",
-  "New chats use your Default tier: {tier}": "New chats use your Default tier: {tier}",
-  "None of your AI keys can index files for this project. Ask your admin to set an Embeddings key, such as OpenAI or Google.": "None of your AI keys can index files for this project. Ask your admin to set an Embeddings key, such as OpenAI or Google."
+  "Add a provider key": "Add a provider key",
+  "Set as default": "Set as default",
+  "No AI key can index files for this project yet.": "No AI key can index files for this project yet.",
+  "Pick an embedding model": "Pick an embedding model",
+  "Ask your admin to set an Embeddings model.": "Ask your admin to set an Embeddings model.",
+  "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.": "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin."
 }

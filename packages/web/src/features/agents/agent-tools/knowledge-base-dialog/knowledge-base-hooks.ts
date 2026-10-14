@@ -62,7 +62,7 @@ function uploadErrorMessage(error: unknown): string {
     switch (error.response?.data?.params?.message) {
       case 'KNOWLEDGE_BASE_NEEDS_AI_PROVIDER':
         return t(
-          'Add an AI provider before uploading. Files are indexed when uploaded so agents can search them.',
+          'No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.',
         );
       case 'KNOWLEDGE_BASE_FILE_HAS_NO_TEXT':
         return t('This file has no text that can be searched.');

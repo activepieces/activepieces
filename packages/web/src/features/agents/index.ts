@@ -2,7 +2,10 @@ export { AgentTimeline } from './agent-timeline';
 export { AddToolDropdown } from './agent-tools/add-agent-tool-dropwdown';
 export { AgentFlowToolComponent } from './agent-tools/components/flow-tool';
 export { AgentMcpToolComponent } from './agent-tools/components/mcp-tool';
-export { KnowledgeBaseSection } from './agent-tools/components/knowledge-base-tool';
+export {
+  KnowledgeBaseSection,
+  NoEmbeddingSourceNote,
+} from './agent-tools/components/knowledge-base-tool';
 export { useKnowledgeBaseEmbeddingSource } from './agent-tools/knowledge-base-dialog/knowledge-base-hooks';
 export { AgentPieceToolComponent } from './agent-tools/components/piece-tool';
 export { AgentFlowToolDialog } from './agent-tools/flow-tool-dialog';

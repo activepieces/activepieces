@@ -49,6 +49,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   AgentStructuredOutput,
   ModelPicker,
+  NoEmbeddingSourceNote,
   useKnowledgeBaseEmbeddingSource,
 } from '@/features/agents';
 import { AgentMark } from '@/features/agents/agent-mark';
@@ -290,15 +291,17 @@ const ConfigureBehaviorTab = ({
             });
           }}
         />
-        {knowledgeCount > 0 && !isNil(embeddingSource) && (
-          <p className="text-xs text-gray-11">
-            {isNil(embeddingSource.modelId)
-              ? t('None of your AI keys can index files for this project.')
-              : t('Embedding model for knowledge base: {model}', {
-                  model: embeddingSource.modelId,
-                })}
-          </p>
-        )}
+        {knowledgeCount > 0 &&
+          !isNil(embeddingSource) &&
+          (isNil(embeddingSource.modelId) ? (
+            <NoEmbeddingSourceNote className="text-xs text-gray-11" />
+          ) : (
+            <p className="text-xs text-gray-11">
+              {t('Embedding model for knowledge base: {model}', {
+                model: embeddingSource.modelId,
+              })}
+            </p>
+          ))}
       </FormItem>
       <FormField
         control={form.control}

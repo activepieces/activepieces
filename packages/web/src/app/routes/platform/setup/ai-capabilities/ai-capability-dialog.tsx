@@ -15,6 +15,7 @@ import { t } from 'i18next';
 import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import { z } from 'zod';
 
 import { adminLayout } from '@/app/components/admin';
@@ -342,11 +343,16 @@ function CapabilityForm({
         )}
 
         {sourceCount === 0 && (
-          <p className="text-sm text-gray-11">
-            {t(
-              'Add a key that serves all projects and supports embeddings, such as OpenAI, Google, Azure or OpenRouter.',
-            )}
-          </p>
+          <div className="flex flex-col items-start gap-2">
+            <p className="text-sm text-gray-11">
+              {t(
+                'Add a key that serves all projects and supports embeddings, such as OpenAI, Google, Azure or OpenRouter.',
+              )}
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/platform/ai">{t('Add a provider key')}</Link>
+            </Button>
+          </div>
         )}
 
         {!selectedAiProvider && sourceCount > 0 && (

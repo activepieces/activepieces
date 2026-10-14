@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { BookOpen, FileText, Table2, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
@@ -84,6 +86,25 @@ function KnowledgeBaseToolPills({
   );
 }
 
+export function NoEmbeddingSourceNote({ className }: { className?: string }) {
+  const isAdmin = useIsPlatformAdmin();
+  return (
+    <p className={className}>
+      {t('No AI key can index files for this project yet.')}{' '}
+      {isAdmin ? (
+        <Link
+          to="/platform/ai/capabilities"
+          className="font-medium text-gray-12 underline underline-offset-2"
+        >
+          {t('Pick an embedding model')}
+        </Link>
+      ) : (
+        t('Ask your admin to set an Embeddings model.')
+      )}
+    </p>
+  );
+}
+
 export const KnowledgeBaseSection = ({
   disabled,
   tools,
@@ -129,11 +150,7 @@ export const KnowledgeBaseSection = ({
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </div>
             ) : (
-              <p className="text-xs text-gray-11 mt-3">
-                {t(
-                  'None of your AI keys can index files for this project. Ask your admin to set an Embeddings key, such as OpenAI or Google.',
-                )}
-              </p>
+              <NoEmbeddingSourceNote className="text-xs text-gray-11 mt-3" />
             )}
           </div>
         ) : asRows ? (
@@ -142,11 +159,7 @@ export const KnowledgeBaseSection = ({
               <AddRow label={t('Add knowledge')} disabled={disabled} />
             </AddKnowledgeBaseDropdown>
           ) : (
-            <p className="text-xs leading-4 text-gray-11">
-              {t(
-                'Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.',
-              )}
-            </p>
+            <NoEmbeddingSourceNote className="text-xs leading-4 text-gray-11" />
           )
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-panel px-4 py-8 text-center">
@@ -163,11 +176,7 @@ export const KnowledgeBaseSection = ({
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </>
             ) : (
-              <p className="text-sm text-gray-11">
-                {t(
-                  'Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.',
-                )}
-              </p>
+              <NoEmbeddingSourceNote className="text-sm text-gray-11" />
             )}
           </div>
         )}

@@ -14,6 +14,7 @@ import {
   Rocket,
   Sparkles,
   Star,
+  ThumbsUp,
   TriangleAlert,
   Zap,
 } from 'lucide-react';
@@ -54,8 +55,9 @@ export function ModelPicker({
         : modelPickerView({
             options: withTiers ? data : { ...data, tiers: [] },
             shown: value,
+            surface,
           }),
-    [data, value, withTiers],
+    [data, value, withTiers, surface],
   );
 
   if (isLoading) {
@@ -131,9 +133,11 @@ export function ModelPicker({
 export function modelPickerView({
   options,
   shown,
+  surface,
 }: {
   options: ModelOptions;
   shown: ModelChoice | null;
+  surface?: ModelOptionsSurface;
 }): PickerView {
   const current = resolveCurrent({ options, shown });
   const tierItems = options.tiers.map((tier) => {
@@ -210,6 +214,9 @@ export function modelPickerView({
         keyName: key.name,
         ...(isNil(model.metadata) ? {} : { metadata: model.metadata }),
       };
+      const recommended =
+        surface !== 'flow' &&
+        modelMeta.isRecommended({ provider: key.provider, modelId: model.id });
       return {
         item: {
           id: `model:${key.providerConfigId}:${model.id}`,
@@ -220,6 +227,7 @@ export function modelPickerView({
             modelId: model.id,
           } satisfies ModelChoice,
           name: model.name,
+          badges: recommended ? <RecommendedBadge /> : undefined,
           trailing: contextOf({ model: optionModel }),
           searchText: `${model.name} ${model.id} ${key.name} ${info.name}`,
           selected:
@@ -515,6 +523,15 @@ function TierBadges({
         </span>
       )}
     </>
+  );
+}
+
+function RecommendedBadge() {
+  return (
+    <span className="flex shrink-0 items-center gap-1 rounded-full bg-success-3 px-1.5 py-0.5 text-xs leading-none text-success-11">
+      <ThumbsUp className="size-3 text-success-11" />
+      {t('Recommended')}
+    </span>
   );
 }
 

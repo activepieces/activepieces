@@ -27,6 +27,18 @@ vi.mock(
   }),
 );
 
+const viewer = vi.hoisted(() => ({ isAdmin: false }));
+
+vi.mock('@/hooks/authorization-hooks', () => ({
+  useIsPlatformAdmin: () => viewer.isAdmin,
+}));
+
+vi.mock('react-router-dom', () => ({
+  Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
+    <a href={to}>{children}</a>
+  ),
+}));
+
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: true }) },
 }));
@@ -89,6 +101,7 @@ function canAddKnowledge(): boolean {
 beforeEach(() => {
   source.loaded = true;
   source.provider = null;
+  viewer.isAdmin = false;
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
@@ -110,11 +123,22 @@ describe('adding knowledge to an agent', () => {
     expect(canAddKnowledge()).toBe(true);
   });
 
-  it("is explained when no key can embed this project's files", () => {
+  it("tells a builder to ask the admin when no key can embed this project's files", () => {
     render();
 
     expect(canAddKnowledge()).toBe(false);
-    expect(container.textContent).toContain('requires a provider');
+    expect(container.textContent).toContain('Ask your admin');
+    expect(container.querySelector('a')).toBeNull();
+  });
+
+  it('links an admin to the Embeddings capability', () => {
+    viewer.isAdmin = true;
+
+    render();
+
+    expect(container.querySelector('a')?.getAttribute('href')).toBe(
+      '/platform/ai/capabilities',
+    );
   });
 
   it('is not offered before the server answers', () => {

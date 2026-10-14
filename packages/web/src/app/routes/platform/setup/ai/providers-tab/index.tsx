@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, tryCatch } from '@activepieces/core-utils';
+import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import {
   AIProviderWithoutSensitiveData,
   PlatformAdminSurface,
@@ -7,14 +7,7 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Bot,
-  ChevronRight,
-  Lock,
-  MessageSquare,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { Bot, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -24,7 +17,6 @@ import {
   AdminPageHeader,
   AdminSection,
   SettingsPanel,
-  SettingsRow,
   adminPageResources,
   adminSurface,
 } from '@/app/components/admin';
@@ -33,13 +25,6 @@ import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state'
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -93,9 +78,6 @@ export function ProvidersTab() {
   const { data: tiers } = platformModelTierQueries.useAdminList();
   const configs = (providers ?? []).filter(
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
-  );
-  const chatProviderRow = (providers ?? []).find(
-    (provider) => provider.enabledForChat,
   );
 
   const { mutate: toggleChatProvider, isPending: isSwitchingChatProvider } =
@@ -181,12 +163,6 @@ export function ProvidersTab() {
     }
     setCredentialsVersion((version) => version + 1);
   };
-  const selectChatConfig = (configId: string) => {
-    const row = (providers ?? []).find((config) => config.id === configId);
-    if (row) {
-      toggleChatProvider({ providerId: row.id, displayName: row.name });
-    }
-  };
 
   const connectedProviders = [...new Set(configs.map((c) => c.provider))];
   const available = SUPPORTED_AI_PROVIDERS.filter(
@@ -221,6 +197,13 @@ export function ProvidersTab() {
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
           isRechecking={isRechecking}
           onRecheck={() => recheckProvider(activeConfig.id)}
+          isSettingDefault={isSwitchingChatProvider}
+          onSetDefault={() =>
+            toggleChatProvider({
+              providerId: activeConfig.id,
+              displayName: activeConfig.name,
+            })
+          }
           onBack={closeConfig}
         />
         <ConnectProviderDialog
@@ -270,15 +253,6 @@ export function ProvidersTab() {
       ) : (
         <>
           {locked && <LockedProvidersAlert />}
-          {!locked && (
-            <ChatProviderRow
-              configs={providers ?? []}
-              defaultTier={tiers?.find((tier) => tier.isDefault)}
-              value={chatProviderRow?.id ?? null}
-              isSwitching={isSwitchingChatProvider}
-              onChange={selectChatConfig}
-            />
-          )}
           {connectedProviders.map((provider) => (
             <ProviderGroup
               key={provider}
@@ -496,9 +470,18 @@ function ConfigRow({
             {config.name}
           </p>
           {config.enabledForChat && (
-            <span className="shrink-0 rounded-md bg-accent-3 px-2 py-px text-xs font-medium text-accent-11">
-              {t('Default')}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="shrink-0 rounded-md bg-accent-3 px-2 py-px text-xs font-medium text-accent-11">
+                  {t('Default')}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t(
+                  'New chats start here when no Default tier fits. Memory and knowledge-base embeddings also use it.',
+                )}
+              </TooltipContent>
+            </Tooltip>
           )}
           <KeyStatusBadge status={config.status} />
         </div>
@@ -616,66 +599,6 @@ function ProjectChips({
           : projects.map((project) => project.displayName).join(', ')}
       </TooltipContent>
     </Tooltip>
-  );
-}
-
-function ChatProviderRow({
-  configs,
-  defaultTier,
-  value,
-  isSwitching,
-  onChange,
-}: {
-  configs: AIProviderWithoutSensitiveData[];
-  defaultTier: PlatformModelTier | undefined;
-  value: string | null;
-  isSwitching: boolean;
-  onChange: (configId: string) => void;
-}) {
-  return (
-    <SettingsPanel flush>
-      <SettingsRow
-        icon={<MessageSquare />}
-        title={t('Default AI key')}
-        description={
-          <>
-            {t(
-              'New chats start here when no Default tier fits. Memory and knowledge-base embeddings also use it.',
-            )}
-            {!isNil(defaultTier) && (
-              <span className="mt-1 block text-xs">
-                {t('New chats use your Default tier: {tier}', {
-                  tier: `${defaultTier.emoji} ${defaultTier.name}`,
-                })}
-              </span>
-            )}
-          </>
-        }
-      >
-        <Select
-          value={value ?? undefined}
-          onValueChange={onChange}
-          disabled={isSwitching}
-        >
-          <SelectTrigger className="w-52">
-            <SelectValue placeholder={t('Select provider')} />
-          </SelectTrigger>
-          <SelectContent>
-            {configs.map((config) => {
-              const info = providerInfoOf({ provider: config.provider });
-              return (
-                <SelectItem key={config.id} value={config.id}>
-                  <div className="flex items-center gap-2">
-                    {info && <ProviderLogo info={info} size="sm" />}
-                    <span className="truncate">{config.name}</span>
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </SettingsRow>
-    </SettingsPanel>
   );
 }
 

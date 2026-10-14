@@ -182,6 +182,8 @@ describe('ConfigDetail save (manual models)', () => {
             onReplaceCredentials={() => undefined}
             isRechecking={false}
             onRecheck={() => undefined}
+            isSettingDefault={false}
+            onSetDefault={() => undefined}
             onBack={() => undefined}
           />
         </MemoryRouter>,
