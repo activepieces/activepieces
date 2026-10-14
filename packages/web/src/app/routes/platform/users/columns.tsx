@@ -15,8 +15,8 @@ import {
 import { StatusDot } from '@/app/components/admin';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { TruncatedColumnTextValue } from '@/components/custom/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import {
   Tooltip,
   TooltipContent,
@@ -49,11 +49,11 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
       const showEmail = email?.includes('@');
 
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {isInvitation && (
             <Tooltip>
               <TooltipTrigger>
-                <Info className="size-4 text-gray-11" />
+                <Info className="size-4 shrink-0 text-gray-11" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>{t('Pending Invitation')}</p>
@@ -62,26 +62,24 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
           )}
           <div
             className={cn(
-              'flex flex-col gap-0.5',
+              'flex min-w-0 flex-col gap-0.5',
               isInvitation && 'text-gray-11',
             )}
           >
             {showEmail && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex min-w-0 items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5 shrink-0 text-gray-11" />
-                <TruncatedColumnTextValue
-                  value={email}
-                  className="max-w-[200px] 2xl:max-w-[280px]"
-                />
+                <TextWithTooltip tooltipMessage={email}>
+                  <div className="min-w-0 text-left">{email}</div>
+                </TextWithTooltip>
               </div>
             )}
             {externalId && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex min-w-0 items-center gap-1.5">
                 <Hash className="h-3.5 w-3.5 shrink-0 text-gray-11" />
-                <TruncatedColumnTextValue
-                  value={externalId}
-                  className="max-w-[200px] 2xl:max-w-[280px]"
-                />
+                <TextWithTooltip tooltipMessage={externalId}>
+                  <div className="min-w-0 text-left">{externalId}</div>
+                </TextWithTooltip>
               </div>
             )}
             {!showEmail && !externalId && (
@@ -102,11 +100,12 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
       if (row.original.type === 'invitation') {
         return <div className="text-gray-11">-</div>;
       }
+      const fullName =
+        row.original.data.firstName + ' ' + row.original.data.lastName;
       return (
-        <TruncatedColumnTextValue
-          value={row.original.data.firstName + ' ' + row.original.data.lastName}
-          className="max-w-[160px] 2xl:max-w-[200px]"
-        />
+        <TextWithTooltip tooltipMessage={fullName}>
+          <div className="min-w-0 text-left">{fullName}</div>
+        </TextWithTooltip>
       );
     },
   },

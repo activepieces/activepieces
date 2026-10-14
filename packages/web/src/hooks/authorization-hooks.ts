@@ -19,7 +19,7 @@ export const useAuthorization = (projectId?: string) => {
       const platform = await platformApi.getCurrentPlatform();
       if (platform.plan.projectRolesEnabled) {
         const projectRole = await authenticationApi.getCurrentProjectRole({
-          projectId: scopedProjectId ?? '',
+          projectId: scopedProjectId!,
         });
         return projectRole;
       }
@@ -27,7 +27,10 @@ export const useAuthorization = (projectId?: string) => {
     },
     retry: false,
     enabled:
-      !isNil(edition) && edition !== ApEdition.COMMUNITY && !isNil(platformId),
+      !isNil(edition) &&
+      edition !== ApEdition.COMMUNITY &&
+      !isNil(platformId) &&
+      !!scopedProjectId,
   });
 
   const checkAccess = (permission: Permission) => {

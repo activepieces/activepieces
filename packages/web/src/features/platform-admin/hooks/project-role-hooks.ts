@@ -18,6 +18,7 @@ export const projectRoleQueries = {
       queryKey: projectRoleKeys.all,
       queryFn: () => projectRoleApi.list(),
       enabled,
+      retry: false,
     }),
   useProjectRoleMembers: (roleId: string | undefined, enabled: boolean) =>
     useInfiniteQuery({

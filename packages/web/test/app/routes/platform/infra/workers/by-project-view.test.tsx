@@ -77,7 +77,17 @@ const PROJECT = {
   analytics: { totalFlows: 3 },
 };
 
-function renderView() {
+function renderView(
+  workerGroupsState: {
+    isWorkerGroupsLoading: boolean;
+    isWorkerGroupsError: boolean;
+    onRetryWorkerGroups: () => unknown;
+  } = {
+    isWorkerGroupsLoading: false,
+    isWorkerGroupsError: false,
+    onRetryWorkerGroups: vi.fn(),
+  },
+) {
   return render(
     <QueryClientProvider
       client={
@@ -91,6 +101,7 @@ function renderView() {
             { label: 'group_b', slots: 5 },
           ]}
           sharedSlots={10}
+          {...workerGroupsState}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -141,5 +152,36 @@ describe('ByProjectView worker group selector', () => {
 
     resolveSave({ ...PROJECT, workerGroupId: 'group_a' });
     await waitFor(() => expect(currentSelect().disabled).toBe(false));
+  });
+});
+
+describe('ByProjectView worker groups request', () => {
+  it('shows no concurrency defaults while worker groups are loading', async () => {
+    renderView({
+      isWorkerGroupsLoading: true,
+      isWorkerGroupsError: false,
+      onRetryWorkerGroups: vi.fn(),
+    });
+    await waitFor(() => expect(state.get).toHaveBeenCalled());
+    expect(screen.queryByPlaceholderText('Default {count}')).toBeNull();
+    expect(screen.queryByText('Acme')).toBeNull();
+  });
+
+  it('shows the error state with a retry instead of concurrency defaults when worker groups fail', async () => {
+    const onRetryWorkerGroups = vi.fn();
+    renderView({
+      isWorkerGroupsLoading: false,
+      isWorkerGroupsError: true,
+      onRetryWorkerGroups,
+    });
+    expect(screen.getByText('Trouble loading {entity}')).toBeTruthy();
+    expect(screen.queryByPlaceholderText('Default {count}')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(onRetryWorkerGroups).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows concurrency defaults once worker groups have loaded', async () => {
+    renderView();
+    expect(await screen.findByPlaceholderText('Default {count}')).toBeTruthy();
   });
 });

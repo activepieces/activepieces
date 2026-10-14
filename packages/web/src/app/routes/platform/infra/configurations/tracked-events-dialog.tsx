@@ -33,7 +33,7 @@ export const TrackedEventsDialog = () => {
           type="button"
           variant="ghost"
           size="sm"
-          className="w-fit"
+          className="w-fit px-0 hover:bg-transparent has-[>svg]:px-0"
         >
           <List className="size-4" /> {t('See the events we track')}
         </Button>

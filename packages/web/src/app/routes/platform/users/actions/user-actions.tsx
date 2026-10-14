@@ -63,7 +63,7 @@ export const UserActions = ({
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
+        <DropdownMenuContent collisionPadding={8}>
           {!isInvitation && (
             <DropdownMenuItem
               onSelect={() => {

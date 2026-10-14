@@ -2310,7 +2310,7 @@
   "Select preset": "選擇預設",
   "Select Time Range": "选择时间范围",
   "Removed {entityName}": "Removed {entityName}",
-  "Deselecting a global connection from a project that has a flow using it, will break the flow.": "從項目中取消全域連接且該項目中的流運行時將會失敗。",
+  "Deselecting a global connection from a project that has a flow using it will break the flow.": "從項目中取消全域連接且該項目中的流運行時將會失敗。",
   "Any flows currently using these connections": "當前使用這些連接的任何流",
   "will break immediately": "將立即失效",
   "Leave without saving?": "Leave without saving?",

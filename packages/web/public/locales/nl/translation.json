@@ -2310,7 +2310,7 @@
   "Select preset": "Selecteer voorinstellingen",
   "Select Time Range": "Selecteer tijdbereik",
   "Removed {entityName}": "Verwijderd {entityName}",
-  "Deselecting a global connection from a project that has a flow using it, will break the flow.": "Het deselecteren van een wereldwijde verbinding van een project dat een flow gebruikt, breekt de flow.",
+  "Deselecting a global connection from a project that has a flow using it will break the flow.": "Het deselecteren van een wereldwijde verbinding van een project dat een flow gebruikt, breekt de flow.",
   "Any flows currently using these connections": "Alle flows die deze verbindingen momenteel gebruiken",
   "will break immediately": "zullen onmiddellijk breken",
   "Leave without saving?": "Leave without saving?",

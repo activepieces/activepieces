@@ -43,6 +43,7 @@ export function AdminModelPicker({
   onOpenChange,
   align = 'end',
   anchorOnly = false,
+  matchTriggerWidth = false,
   children,
 }: AdminModelPickerProps) {
   const pickable: PickableModel[] = configs.flatMap((config) =>
@@ -120,6 +121,7 @@ export function AdminModelPicker({
       onOpenChange={onOpenChange}
       align={align}
       anchorOnly={anchorOnly}
+      matchTriggerWidth={matchTriggerWidth}
       detail={(item) => {
         const detail = detailById.get(item.id);
         return isNil(detail) ? null : <ModelDetailCard detail={detail} />;
@@ -308,5 +310,6 @@ type AdminModelPickerProps = {
   onOpenChange: (open: boolean) => void;
   align?: 'start' | 'end';
   anchorOnly?: boolean;
+  matchTriggerWidth?: boolean;
   children: ReactNode;
 };
