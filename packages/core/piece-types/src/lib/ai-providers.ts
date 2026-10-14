@@ -234,7 +234,7 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
 }
 
 const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
-const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
+const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-5', 'claude-opus-5-5', 'claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-opus-4-7'] as const
 const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
 const GOOGLE_CHAT_MODELS = ['gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
 const DEPRECATED_GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash'] as const
@@ -269,6 +269,8 @@ const CHAT_MODEL_LABELS: Record<string, string> = {
     'gpt-5.4-nano': 'GPT-5.4 nano',
     'gpt-4.1': 'GPT-4.1',
     'gpt-4.1-mini': 'GPT-4.1 mini',
+    'claude-sonnet-5': 'Claude Sonnet 5',
+    'claude-opus-5-5': 'Claude Opus 5.5',
     'claude-sonnet-4-6': 'Claude Sonnet 4.6',
     'claude-opus-4-7': 'Claude Opus 4.7',
     'claude-haiku-4-5': 'Claude Haiku 4.5',

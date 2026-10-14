@@ -20,10 +20,12 @@ export const agentChatModel = (log: FastifyBaseLogger) => ({
                 return { modelTierId: defaultTier.tier.id, providerConfigId: null, modelName: null }
             }
         }
-        if (!isNil(await aiProviderService(log).getChatKey({ platformId, scope }))) {
+        const chatKey = await aiProviderService(log).getChatKey({ platformId, scope })
+        const { defaultChoice } = await aiModelOptionsService(log).list({ platformId, projectId, surface: 'chat' })
+        const onChatKey = defaultChoice?.type === 'model' && defaultChoice.providerConfigId === chatKey?.id
+        if (!isNil(chatKey) && !onChatKey) {
             return null
         }
-        const { defaultChoice } = await aiModelOptionsService(log).list({ platformId, projectId, surface: 'chat' })
         if (isNil(defaultChoice)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,

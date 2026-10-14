@@ -6,6 +6,8 @@ import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { aiToolConfigService } from '../../../../src/app/ai/ai-tool-config-service'
+import { aiProviders } from '../../../../src/app/ai/providers'
+import { agentChatModel } from '../../../../src/app/ee/agent/agent-chat-model'
 import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
 import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
 import { knowledgeBaseService } from '../../../../src/app/knowledge-base/knowledge-base.service'
@@ -42,6 +44,18 @@ describe('a chat pinned to a key', () => {
 
         expect(config.providerConfigId).toBe(key.id)
         expect(config.modelId).toBe('team-model')
+    })
+
+    it('accepts and runs a model the key lists that is not on the recommended list', async () => {
+        const ctx = await context()
+        vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockResolvedValue([{ id: 'gpt-4o', name: 'GPT-4o', type: AIProviderModelType.TEXT }])
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+
+        const conversation = await createConversation({ ctx, body: { projectId: ctx.project.id, providerConfigId: key.id, modelName: 'gpt-4o' } })
+        const config = await getConfig({ ctx, conversationId: conversation.id })
+
+        expect(config.providerConfigId).toBe(key.id)
+        expect(config.modelId).toBe('gpt-4o')
     })
 
     it('is refused when the key does not serve the chat\'s project', async () => {
@@ -179,6 +193,28 @@ describe('a chat with no model picked', () => {
 
         const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
         expect(stored).toMatchObject({ modelTierId: tier.id, providerConfigId: null, modelName: null })
+    })
+
+    it('stores the Default AI key and its first recommended model when there is no tier', async () => {
+        const ctx = await context()
+        vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockResolvedValue([{ id: 'gpt-4o', name: 'GPT-4o', type: AIProviderModelType.TEXT }])
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
+        const conversation = await createConversation({ ctx, body: { projectId: ctx.project.id } })
+
+        await getConfig({ ctx, conversationId: conversation.id, dryRun: false })
+
+        const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
+        expect(stored).toMatchObject({ modelTierId: null, providerConfigId: key.id, modelName: curatedOpenAiModel() })
+    })
+
+    it('keeps the legacy path when the Default AI key\'s models cannot be listed', async () => {
+        const ctx = await context()
+        vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockRejectedValue(new Error('provider down'))
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
+
+        const pick = await agentChatModel(app.log).defaultPick({ platformId: ctx.platform.id, projectId: ctx.project.id })
+
+        expect(pick).toBeNull()
     })
 
     it('can be talked to on a platform that has tiers but no Default AI key', async () => {
