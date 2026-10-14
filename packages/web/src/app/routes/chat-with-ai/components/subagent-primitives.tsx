@@ -88,7 +88,7 @@ export function AppLogos({ pieces }: { pieces: string[] }) {
         <AppLogo key={pieceName} pieceName={pieceName} />
       ))}
       {extra > 0 && (
-        <span className="text-xss text-gray-11 tabular-nums">+{extra}</span>
+        <span className="text-xs text-gray-11 tabular-nums">+{extra}</span>
       )}
     </div>
   );
