@@ -89,7 +89,9 @@ export function EnterpriseTrialEndedDialog() {
           </div>
           {paused.length > 0 && (
             <div className="flex flex-col gap-3 border-t pt-5">
-              <span className="text-sm text-gray-11">{t('Paused for now')}</span>
+              <span className="text-sm text-gray-11">
+                {t('Paused for now')}
+              </span>
               <ul className="flex flex-wrap gap-2">
                 {paused.map((feature) => (
                   <li

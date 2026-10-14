@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import {
   platformUserHooks,
@@ -25,6 +26,8 @@ import {
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
+
+import { refreshBillingCaches } from '../../hooks/billing-hooks';
 
 export const DeactivateUsersDialog = ({
   open,
@@ -91,37 +94,55 @@ function DeactivateUsersForm({
       user.id !== enforced?.excludeUserId,
   );
   const pendingInvitations = invitations ?? [];
-  const ownerOnly =
-    !isNil(enforced) &&
-    !isNil(usersPage) &&
-    !isNil(invitations) &&
-    currentUsers - deactivatableUsers.length - pendingInvitations.length >
-      targetSeats;
+  const seatsOnlyTheOwnerCanFree =
+    isNil(enforced?.excludeUserId) ||
+    enforced.excludeUserId === platform.ownerId
+      ? 1
+      : 2;
+  const ownerOnly = !isNil(enforced) && seatsOnlyTheOwnerCanFree > targetSeats;
 
+  const usersToDeactivate = deactivatableUsers.filter((user) =>
+    selectedUserIds.has(user.id),
+  );
+  const invitationsToRevoke = pendingInvitations.filter((invitation) =>
+    selectedInvitationIds.has(invitation.id),
+  );
   const seatsAfter =
-    currentUsers - selectedUserIds.size - selectedInvitationIds.size;
+    currentUsers - usersToDeactivate.length - invitationsToRevoke.length;
   const withinLimit = seatsAfter <= targetSeats;
+
+  const refreshLists = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
+      queryClient.invalidateQueries({
+        queryKey: platformUserKeys.invitations,
+      }),
+    ]);
 
   const { mutate: deactivateAndContinue, isPending } = useMutation({
     mutationFn: async () => {
-      await Promise.all([
-        ...Array.from(selectedUserIds).map((userId) =>
-          platformUserApi.update(userId, { status: UserStatus.INACTIVE }),
+      const results = await Promise.allSettled([
+        ...usersToDeactivate.map((user) =>
+          platformUserApi.update(user.id, { status: UserStatus.INACTIVE }),
         ),
-        ...Array.from(selectedInvitationIds).map((invitationId) =>
-          userInvitationApi.delete(invitationId),
+        ...invitationsToRevoke.map((invitation) =>
+          userInvitationApi.delete(invitation.id),
         ),
       ]);
+      const failure = results.find((result) => result.status === 'rejected');
+      if (!isNil(failure)) {
+        throw failure.reason;
+      }
     },
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
-        queryClient.invalidateQueries({
-          queryKey: platformUserKeys.invitations,
-        }),
-      ]);
+      await refreshLists();
       onOpenChange(false);
       onConfirmed();
+    },
+    onError: async () => {
+      internalErrorToast();
+      await refreshLists();
+      refreshBillingCaches(queryClient);
     },
   });
 
@@ -195,7 +216,7 @@ function DeactivateUsersForm({
             disabled={!withinLimit}
             onClick={() => deactivateAndContinue()}
           >
-            {selectedInvitationIds.size > 0 && selectedUserIds.size === 0
+            {invitationsToRevoke.length > 0 && usersToDeactivate.length === 0
               ? t('Revoke & continue')
               : t('Deactivate & continue')}
           </Button>

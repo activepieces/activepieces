@@ -1,15 +1,18 @@
 import { isNil } from '@activepieces/core-utils';
+import { PlatformAdminSurface } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { platformBillingApi } from '../api/billing-plans-api';
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import { billingQueries, refreshBillingCaches } from '../hooks/billing-hooks';
 import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
-import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
+import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import { billingUtils } from '../utils/billing-utils';
 import { trialSeatEnforcement } from '../utils/trial-seat-enforcement';
 
@@ -25,8 +28,9 @@ export function EnterpriseTrialSeatDialog() {
     platform.id,
     trialState === 'ended',
   );
-  const { isOpen: managePlanOpen, openDialog: openManagePlanDialog } =
-    useManagePlanDialogStore();
+  const { isOpen: managePlanOpen } =
+    billingDialogHooks.useManagePlanDialogStore();
+  const upgradeClick = useUpgradeClick();
 
   useQuery({
     queryKey: ['enterprise-trial-plan-refresh', platform.id],
@@ -67,7 +71,7 @@ export function EnterpriseTrialSeatDialog() {
       onConfirmed={() => refreshBillingCaches(queryClient)}
       enforced={{
         description: t(
-          'Your Enterprise trial has ended, and the {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. Choose who to deactivate to continue.',
+          'Your Enterprise plan trial has ended, and the {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. Choose who to deactivate to continue.',
           { plan: planName, target: seatLimit },
         ),
         ownerOnlyMessage: t(
@@ -82,11 +86,14 @@ export function EnterpriseTrialSeatDialog() {
               label={t('Talk to sales')}
             />
             <Button
+              {...adminControl(AdminControl.TRIAL_PLANS_OPEN)}
               type="button"
               variant="outline"
-              onClick={() => openManagePlanDialog()}
+              onClick={() =>
+                upgradeClick({ surface: PlatformAdminSurface.DIALOG })
+              }
             >
-              {t('Upgrade')}
+              {t('Explore plans')}
             </Button>
           </>
         ),

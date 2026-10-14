@@ -37,7 +37,7 @@ export const platformUserHooks = {
           .list({
             type: InvitationType.PLATFORM,
             cursor: undefined,
-            limit: 100,
+            limit: 2000,
             projectId: null,
           })
           .then((res) => res.data);
