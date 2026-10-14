@@ -40,7 +40,7 @@ export const enterpriseTrialHooks = {
     const { data } = enterpriseTrialHooks.useStatus();
     return data?.state === 'eligible';
   },
-  useStart: () => {
+  useStart: (onStarted?: (status: EnterpriseTrialStatus) => void) => {
     const queryClient = useQueryClient();
     const { platform } = platformHooks.useCurrentPlatform();
     return useMutation({
@@ -48,6 +48,7 @@ export const enterpriseTrialHooks = {
       onSuccess: (status: EnterpriseTrialStatus) => {
         queryClient.setQueryData(enterpriseTrialKey(platform.id), status);
         refreshBillingCaches(queryClient);
+        onStarted?.(status);
       },
     });
   },
