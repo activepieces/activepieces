@@ -10,8 +10,7 @@ import {
   SettingsRow,
   adminLayout,
 } from '@/app/components/admin';
-import { AddGuestDomainDialog } from '@/app/routes/platform/security/sso/add-guest-domain-dialog';
-import { getVerifiedDomain } from '@/app/routes/platform/security/sso/verified-domain';
+import { AddAllowedDomainDialog } from '@/app/routes/platform/security/sso/add-allowed-domain-dialog';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,31 +22,30 @@ import {
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
-export const GuestDomainsSection = ({
+export const AllowedDomainsSection = ({
   platform,
   refetch,
-}: GuestDomainsSectionProps) => {
+}: AllowedDomainsSectionProps) => {
   const domains = platform.allowedAuthDomains;
-  const verifiedDomain = getVerifiedDomain(platform);
 
   return (
     <AdminSection
-      title={t('Guest domains')}
+      title={t('Allowed domains')}
       description={t(
-        'Invite people from these domains into your platform. They can sign in with Google or email.',
+        'Only people with an email at these domains can sign in with email and password.',
       )}
       action={
         domains.length > 0 && (
-          <AddGuestDomainDialog platform={platform} refetch={refetch}>
+          <AddAllowedDomainDialog platform={platform} refetch={refetch}>
             <Button
               {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_OPEN)}
               size="sm"
               variant="outline"
             >
               <Plus />
-              {t('Add a guest domain')}
+              {t('Add an allowed domain')}
             </Button>
-          </AddGuestDomainDialog>
+          </AddAllowedDomainDialog>
         )
       }
     >
@@ -55,10 +53,12 @@ export const GuestDomainsSection = ({
         <SettingsPanel flush>
           <SettingsRow
             icon={<Globe />}
-            title={t('No guest domains')}
-            description={t('Add the domains of users you want to invite.')}
+            title={t('No allowed domains')}
+            description={t(
+              'Any email address can sign in with email and password. Add a domain to limit that.',
+            )}
           >
-            <AddGuestDomainDialog platform={platform} refetch={refetch}>
+            <AddAllowedDomainDialog platform={platform} refetch={refetch}>
               <Button
                 {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_OPEN)}
                 size="sm"
@@ -66,7 +66,7 @@ export const GuestDomainsSection = ({
               >
                 {t('Add domain')}
               </Button>
-            </AddGuestDomainDialog>
+            </AddAllowedDomainDialog>
           </SettingsRow>
         </SettingsPanel>
       ) : (
@@ -90,20 +90,23 @@ export const GuestDomainsSection = ({
                       message={
                         domains.length === 1
                           ? t(
-                              'With no domains left, people from any domain can be invited.',
+                              'With no domains left, any email address can sign in with email and password.',
                             )
-                          : t('People at {domain} can no longer be invited.', {
-                              domain,
-                            })
+                          : t(
+                              'People at {domain} can no longer sign in with email and password.',
+                              {
+                                domain,
+                              },
+                            )
                       }
                       entityName={domain}
                       buttonText={t('Remove domain')}
-                      controlId={AdminControl.SSO_GUEST_DOMAIN_REMOVE_CONFIRM}
+                      controlId={AdminControl.SSO_ALLOWED_DOMAIN_REMOVE_CONFIRM}
                       contentClassName={adminLayout.dialog.md}
                       keepOpenOnOutsideClick
                       showToast
                       mutationFn={async () => {
-                        await removeGuestDomain({
+                        await removeAllowedDomain({
                           platformId: platform.id,
                           domains,
                           domain,
@@ -121,7 +124,7 @@ export const GuestDomainsSection = ({
                     >
                       <DropdownMenuItem
                         {...adminControl(
-                          AdminControl.SSO_GUEST_DOMAIN_REMOVE_OPEN,
+                          AdminControl.SSO_ALLOWED_DOMAIN_REMOVE_OPEN,
                         )}
                         variant="destructive"
                         onSelect={(e) => e.preventDefault()}
@@ -136,14 +139,9 @@ export const GuestDomainsSection = ({
             ))}
           </SettingsPanel>
           <p className="text-xs text-gray-11">
-            {verifiedDomain
-              ? t(
-                  'Only people at {verifiedDomain} and these domains can be invited to the platform.',
-                  { verifiedDomain },
-                )
-              : t(
-                  'Only people at these domains can be invited to the platform.',
-                )}
+            {t(
+              "Add your own company's domain too, or your own people can't sign in with email and password.",
+            )}
           </p>
         </>
       )}
@@ -151,7 +149,7 @@ export const GuestDomainsSection = ({
   );
 };
 
-async function removeGuestDomain({
+async function removeAllowedDomain({
   platformId,
   domains,
   domain,
@@ -170,7 +168,7 @@ async function removeGuestDomain({
   );
 }
 
-type GuestDomainsSectionProps = {
+type AllowedDomainsSectionProps = {
   platform: PlatformWithoutSensitiveData;
   refetch: () => Promise<void>;
 };

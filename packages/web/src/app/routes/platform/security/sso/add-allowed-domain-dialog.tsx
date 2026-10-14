@@ -9,7 +9,6 @@ import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
 import { adminLayout } from '@/app/components/admin';
-import { getVerifiedDomain } from '@/app/routes/platform/security/sso/verified-domain';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -31,21 +30,21 @@ import { Input } from '@/components/ui/input';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
-export const AddGuestDomainDialog = ({
+export const AddAllowedDomainDialog = ({
   platform,
   refetch,
   children,
-}: AddGuestDomainDialogProps) => {
+}: AddAllowedDomainDialogProps) => {
   const [open, setOpen] = useState(false);
   const existing = platform.allowedAuthDomains;
-  const form = useForm<GuestDomainFormValues>({
+  const form = useForm<AllowedDomainFormValues>({
     defaultValues: { domain: '' },
-    resolver: zodResolver(guestDomainSchema(existing)),
+    resolver: zodResolver(allowedDomainSchema(existing)),
     mode: 'onChange',
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async ({ domain }: GuestDomainFormValues) => {
+    mutationFn: async ({ domain }: AllowedDomainFormValues) => {
       await platformApi.update(
         {
           allowedAuthDomains: [...existing, normalizeDomain(domain)],
@@ -56,7 +55,7 @@ export const AddGuestDomainDialog = ({
       await refetch();
     },
     onSuccess: () => {
-      toast.success(t('Guest domain added'));
+      toast.success(t('Allowed domain added'));
       setOpen(false);
     },
     onError: (error) => {
@@ -81,12 +80,9 @@ export const AddGuestDomainDialog = ({
         onInteractOutside={(event) => event.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>{t('Add a guest domain')}</DialogTitle>
+          <DialogTitle>{t('Add an allowed domain')}</DialogTitle>
           <DialogDescription>
-            {describeAddingDomain({
-              isFirstDomain: existing.length === 0,
-              verifiedDomain: getVerifiedDomain(platform),
-            })}
+            {describeAddingDomain({ isFirstDomain: existing.length === 0 })}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -136,32 +132,21 @@ export const AddGuestDomainDialog = ({
 
 function describeAddingDomain({
   isFirstDomain,
-  verifiedDomain,
 }: {
   isFirstDomain: boolean;
-  verifiedDomain: string | null;
 }): string {
-  if (!isFirstDomain) {
-    return t(
-      'People at this domain can be invited and sign in with Google or email.',
-    );
-  }
-  if (verifiedDomain) {
-    return t(
-      'Once a domain is on this list, only people at {verifiedDomain} and at listed domains can sign up.',
-      { verifiedDomain },
-    );
-  }
-  return t(
-    'Once a domain is on this list, only people at listed domains can sign up. Add your own domain too.',
-  );
+  return isFirstDomain
+    ? t(
+        'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your own domain too.',
+      )
+    : t('People at this domain can sign in with email and password.');
 }
 
 function normalizeDomain(domain: string): string {
   return domain.trim().toLowerCase();
 }
 
-function guestDomainSchema(existing: string[]) {
+function allowedDomainSchema(existing: string[]) {
   return z.object({
     domain: z
       .string()
@@ -179,9 +164,9 @@ function guestDomainSchema(existing: string[]) {
   });
 }
 
-type GuestDomainFormValues = { domain: string };
+type AllowedDomainFormValues = { domain: string };
 
-type AddGuestDomainDialogProps = {
+type AddAllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;
   refetch: () => Promise<void>;
   children: ReactNode;

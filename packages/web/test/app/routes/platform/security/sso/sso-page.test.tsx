@@ -194,7 +194,7 @@ describe('SSOPage', () => {
 
     expect(screen.getByText('Authentication')).toBeDefined();
     expect(screen.getByText('No domains yet')).toBeDefined();
-    expect(screen.getByText('No guest domains')).toBeDefined();
+    expect(screen.getByText('No allowed domains')).toBeDefined();
     expect(findButton('Set up')).toBeDefined();
     expect(screen.queryByText('Connected')).toBeNull();
   });
@@ -353,7 +353,7 @@ describe('SSOPage', () => {
     );
   });
 
-  it('removes one guest domain and keeps the list enforced', async () => {
+  it('removes one allowed domain and keeps the list enforced', async () => {
     setPlatform({
       id: 'platform-1',
       allowedAuthDomains: ['contractors.io', 'partners.io'],
@@ -375,7 +375,7 @@ describe('SSOPage', () => {
     );
   });
 
-  it('stops enforcing the list when the last guest domain is removed', async () => {
+  it('stops enforcing the list when the last allowed domain is removed', async () => {
     setPlatform({ id: 'platform-1', allowedAuthDomains: ['contractors.io'] });
     mount();
 
@@ -383,7 +383,7 @@ describe('SSOPage', () => {
     const dialog = screen.getByRole('dialog');
     expect(
       within(dialog).getByText(
-        'With no domains left, people from any domain can be invited.',
+        'With no domains left, any email address can sign in with email and password.',
       ),
     ).toBeDefined();
     click(findButton('Remove domain', dialog));
@@ -396,7 +396,7 @@ describe('SSOPage', () => {
     );
   });
 
-  it('adds the first guest domain in one step and says the verified domain stays allowed', async () => {
+  it('adds the first allowed domain in one step and warns to add your own domain', async () => {
     setPlatform({
       ssoDomain: 'acme.com',
       ssoDomainVerification: verifiedVerification,
@@ -407,7 +407,7 @@ describe('SSOPage', () => {
     const dialog = screen.getByRole('dialog');
     expect(
       within(dialog).getByText(
-        'Once a domain is on this list, only people at acme.com and at listed domains can sign up.',
+        'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your own domain too.',
       ),
     ).toBeDefined();
     fireEvent.change(within(dialog).getByRole('textbox'), {
@@ -426,7 +426,7 @@ describe('SSOPage', () => {
     );
   });
 
-  it('appends a guest domain to the existing list', async () => {
+  it('appends a allowed domain to the existing list', async () => {
     setPlatform({
       ssoDomain: 'acme.com',
       ssoDomainVerification: verifiedVerification,
@@ -434,7 +434,7 @@ describe('SSOPage', () => {
     });
     mount();
 
-    click(findButton('Add a guest domain'));
+    click(findButton('Add an allowed domain'));
     const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByRole('textbox'), {
       target: { value: 'partners.io' },
@@ -452,7 +452,7 @@ describe('SSOPage', () => {
     );
   });
 
-  it('refuses a guest domain that is already on the list', async () => {
+  it('refuses a allowed domain that is already on the list', async () => {
     setPlatform({
       ssoDomain: 'acme.com',
       ssoDomainVerification: verifiedVerification,
@@ -460,7 +460,7 @@ describe('SSOPage', () => {
     });
     mount();
 
-    click(findButton('Add a guest domain'));
+    click(findButton('Add an allowed domain'));
     const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByRole('textbox'), {
       target: { value: 'contractors.io' },
