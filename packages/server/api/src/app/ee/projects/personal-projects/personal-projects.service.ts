@@ -12,6 +12,7 @@ import { ProjectEntity } from '../../../project/project-entity'
 import { projectService } from '../../../project/project-service'
 import { UserSchema } from '../../../user/user-entity'
 import { userRepo } from '../../../user/user-service'
+import { alertsService } from '../../alerts/alerts-service'
 
 const projectRepo = repoFactory(ProjectEntity)
 const CREATE_MISSING_BATCH_SIZE = 50
@@ -147,6 +148,7 @@ async function createPersonalProject({ platformId, member, log }: CreatePersonal
     })
     const { error } = await tryCatch(() => projectService(log).callProjectPostCreateHooks(project))
     if (!isNil(error)) {
+        await alertsService(log).deleteByProjectId({ projectId: project.id })
         await projectRepo().delete({ id: project.id, platformId })
         throw error
     }
