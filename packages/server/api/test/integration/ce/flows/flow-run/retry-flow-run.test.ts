@@ -1,6 +1,8 @@
 import { FileCompression, FileType, FlowRetryStrategy, FlowRunStatus, FlowTriggerType, FlowVersionState, RunEnvironment, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { distributedStore } from '../../../../../src/app/database/redis-connections'
 import { fileService } from '../../../../../src/app/file/file.service'
+import { redisMetadataKey } from '../../../../../src/app/workers/job'
 import { payloadOffloader } from '../../../../../src/app/workers/payload-offloader'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -87,6 +89,38 @@ describe('Retry flow run', () => {
         expect(updatedRun.startTime).not.toBeNull()
         expect(new Date(updatedRun.startTime!).getTime()).toBeGreaterThan(new Date(originalStartTime).getTime())
         expect(updatedRun.finishTime).toBeNull()
+    })
+
+    it('should clear the previous failed step when retrying from failed step', async () => {
+        const { flowRun } = await createFailedFlowRun({
+            projectId: ctx.project.id,
+        })
+        const failedStep = { name: 'step_1', displayName: 'Step 1', message: 'boom' }
+        await db.update('flow_run', flowRun.id, { failedStep })
+        const pendingMetadataKey = redisMetadataKey({ projectId: ctx.project.id, runId: flowRun.id })
+        await distributedStore.merge(pendingMetadataKey, { status: FlowRunStatus.FAILED, failedStep })
+        const listFailedStepRunIds = async () => {
+            const listResponse = await ctx.get('/v1/flow-runs', {
+                projectId: ctx.project.id,
+                failedStepName: 'step_1',
+            })
+            expect(listResponse.statusCode).toBe(200)
+            return listResponse.json().data.map((run: { id: string }) => run.id)
+        }
+        expect(await listFailedStepRunIds()).toContain(flowRun.id)
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+            projectId: ctx.project.id,
+        })
+
+        expect(response.statusCode).toBe(200)
+
+        const updatedRun = await db.findOneByOrFail<{ id: string, failedStep: unknown }>('flow_run', { id: flowRun.id })
+        expect(updatedRun.failedStep).toBeNull()
+        const pendingMetadata = await distributedStore.hgetJson<{ failedStep?: unknown }>(pendingMetadataKey)
+        expect(pendingMetadata?.failedStep).toBeUndefined()
+        expect(await listFailedStepRunIds()).not.toContain(flowRun.id)
     })
 
     it('should retry on latest version and create a new run', async () => {
