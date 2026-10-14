@@ -2,6 +2,7 @@ import React, { Suspense, useMemo } from 'react';
 import { matchRoutes, Navigate, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
+import { PieceSetPageTitle } from '@/app/routes/platform/setup/pieces/piece-sets/piece-set-page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { Error, Success } from '@/features/billing';
 
@@ -70,15 +71,25 @@ const GeneralPage = React.lazy(() =>
     default: m.GeneralPage,
   })),
 );
-const GlobalConnectionsTable = React.lazy(() =>
-  import('./platform/setup/connections').then((m) => ({
-    default: m.GlobalConnectionsTable,
+const GlobalConnectionsRedirect = React.lazy(() =>
+  import('./platform/connections/global-connections-redirect').then((m) => ({
+    default: m.GlobalConnectionsRedirect,
   })),
 );
 const PiecesListPage = React.lazy(() =>
   import('./platform/setup/pieces').then((m) => ({
     default: m.PiecesListTab,
   })),
+);
+const PieceSelectorPage = React.lazy(() =>
+  import('./platform/setup/pieces/piece-selector-page').then((m) => ({
+    default: m.PieceSelectorPage,
+  })),
+);
+const RequiredActionsPage = React.lazy(() =>
+  import('./platform/setup/pieces/piece-sets/required-actions-page').then(
+    (m) => ({ default: m.RequiredActionsPage }),
+  ),
 );
 const PieceSetsPage = React.lazy(() =>
   import('./platform/setup/pieces/piece-sets/piece-sets-tab').then((m) => ({
@@ -248,10 +259,36 @@ export const platformRoutes = [
     ),
   },
   {
+    path: '/platform/pieces/required-actions',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Required actions">
+          <PlanFeatureSample feature="requiredActions">
+            <SuspenseWrapper>
+              <RequiredActionsPage />
+            </SuspenseWrapper>
+          </PlanFeatureSample>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/pieces/selector',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Piece menu">
+          <SuspenseWrapper>
+            <PieceSelectorPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
     path: '/platform/pieces/piece-sets',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Sets">
+        <PieceSetPageTitle>
           <LegacyTabRedirect
             basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
@@ -262,7 +299,7 @@ export const platformRoutes = [
               </SuspenseWrapper>
             </PlanFeatureSample>
           </LegacyTabRedirect>
-        </PageTitle>
+        </PieceSetPageTitle>
       </PlatformLayout>
     ),
   },
@@ -270,13 +307,13 @@ export const platformRoutes = [
     path: '/platform/pieces/piece-sets/:id',
     element: (
       <PlatformLayout>
-        <PageTitle title="Piece Set">
+        <PieceSetPageTitle singular>
           <PlanFeatureSample feature="pieces">
             <SuspenseWrapper>
               <PieceSetDetailsPage />
             </SuspenseWrapper>
           </PlanFeatureSample>
-        </PageTitle>
+        </PieceSetPageTitle>
       </PlatformLayout>
     ),
   },
@@ -284,12 +321,10 @@ export const platformRoutes = [
     path: '/platform/connections/global',
     element: (
       <PlatformLayout>
-        <PageTitle title="Global Connections">
-          <PlanFeatureSample feature="globalConnections">
-            <SuspenseWrapper>
-              <GlobalConnectionsTable />
-            </SuspenseWrapper>
-          </PlanFeatureSample>
+        <PageTitle title="Connections">
+          <SuspenseWrapper>
+            <GlobalConnectionsRedirect />
+          </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),

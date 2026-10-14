@@ -116,6 +116,7 @@ export type BulkAction<TData extends DataWithId> = {
   render: (
     selectedRows: RowDataWithActions<TData>[],
     resetSelection: () => void,
+    selectOnly: (rowIds: string[]) => void,
   ) => React.ReactNode;
 };
 
@@ -288,20 +289,19 @@ export function DataTable<
     enableRowSelection: isRowSelectionDisabled
       ? (row) => !isRowSelectionDisabled(row.original)
       : undefined,
-    manualPagination: virtualizeRows ? false : !clientPagination,
+    manualPagination: virtualizeRows || !clientPagination,
     manualFiltering: !clientFiltering,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     ...(clientFiltering && { getFilteredRowModel: getFilteredRowModel() }),
-    ...((clientPagination || virtualizeRows) && {
-      getPaginationRowModel: getPaginationRowModel(),
-    }),
+    ...(clientPagination &&
+      !virtualizeRows && {
+        getPaginationRowModel: getPaginationRowModel(),
+      }),
     getRowId: getRowId ?? (() => apId()),
     initialState: {
       pagination: {
-        pageSize: virtualizeRows
-          ? tableData.length || 1000
-          : parseInt(startingLimit),
+        pageSize: parseInt(startingLimit),
       },
       columnVisibility,
       sorting: initialSorting,
@@ -375,6 +375,11 @@ export function DataTable<
 
   const resetSelection = () => {
     table.toggleAllRowsSelected(false);
+  };
+  const selectOnly = (rowIds: string[]) => {
+    table.setRowSelection(
+      Object.fromEntries(rowIds.map((rowId) => [rowId, true])),
+    );
   };
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -781,6 +786,7 @@ export function DataTable<
           selectedRows={selectedRowOriginals}
           actions={bulkActions}
           resetSelection={resetSelection}
+          selectOnly={selectOnly}
         />
       )}
     </div>

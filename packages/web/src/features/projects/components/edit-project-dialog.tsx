@@ -1,12 +1,17 @@
-import { formErrors, Permission } from '@activepieces/core-utils';
+import { formErrors, Permission, tryCatch } from '@activepieces/core-utils';
 import {
   AppConnectionWithoutSensitiveData,
   UpdateProjectPlatformRequest,
   PlatformRole,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useIsMutating, useQueryClient } from '@tanstack/react-query';
+import {
+  useIsMutating,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
+import { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -30,7 +35,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SkeletonList } from '@/components/ui/skeleton';
+import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections/hooks/global-connections-hooks';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
@@ -49,6 +54,7 @@ interface EditProjectDialogProps {
     externalId?: string;
     sensitive?: boolean;
   };
+  pieceSetField?: PieceSetField;
 }
 
 export function EditProjectDialog({
@@ -56,6 +62,7 @@ export function EditProjectDialog({
   onClose,
   projectId,
   initialValues,
+  pieceSetField,
 }: EditProjectDialogProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
@@ -97,6 +104,7 @@ export function EditProjectDialog({
             initialValues={initialValues}
             globalConnections={globalConnections}
             globalConnectionsEnabled={globalConnectionsEnabled}
+            pieceSetField={pieceSetField}
           />
         ) : (
           <SkeletonList numberOfItems={3} className="h-10" />
@@ -112,37 +120,72 @@ const EditProjectForm = ({
   initialValues,
   globalConnections,
   globalConnectionsEnabled,
+  pieceSetField,
 }: {
   onClose: () => void;
   projectId: string;
   initialValues?: EditProjectDialogProps['initialValues'];
   globalConnections: AppConnectionWithoutSensitiveData[];
   globalConnectionsEnabled: boolean;
+  pieceSetField?: PieceSetField;
 }) => {
   const { checkAccess } = useAuthorization();
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const queryClient = useQueryClient();
-
   const currentConnectionExternalIds = globalConnections
     .filter((connection) => connection.projectIds.includes(projectId))
     .map((connection) => connection.externalId);
 
-  const { mutate, isPending } = projectCollectionUtils.useUpdateProject(
-    () => {
-      queryClient.invalidateQueries({
-        queryKey: globalConnectionsQueries.getGlobalConnectionsQueryKey([]),
+  const { mutateAsync: updateProject } =
+    projectCollectionUtils.useUpdateProject(
+      () => {
+        queryClient.invalidateQueries({
+          queryKey: globalConnectionsQueries.getGlobalConnectionsQueryKey([]),
+        });
+      },
+      () => undefined,
+    );
+  const readyField = pieceSetField?.status === 'ready' ? pieceSetField : null;
+  const save = useMutation({
+    mutationKey: projectCollectionUtils.updateMutationKey,
+    mutationFn: async (values: EditProjectFormValues) => {
+      await updateProject({
+        projectId,
+        request: {
+          displayName: values.displayName?.trim(),
+          externalId: values.externalId,
+          sensitive: values.sensitive,
+          globalConnectionExternalIds: values.globalConnectionExternalIds,
+        },
       });
+      const nextSetId = values.pieceSetId;
+      if (
+        readyField === null ||
+        nextSetId === undefined ||
+        nextSetId === readyField.initialValue
+      ) {
+        return;
+      }
+      const { error } = await tryCatch(() => readyField.save(nextSetId));
+      if (error) {
+        throw new PartialSaveError(readyField.saveFailedMessage(error));
+      }
+    },
+    onSuccess: () => {
       mutationFeedback.success(t('Changes saved'));
       onClose();
     },
-    (error) => {
+    onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message: mutationFeedback.message(error),
+        message:
+          error instanceof PartialSaveError
+            ? error.message
+            : mutationFeedback.message(error),
       });
     },
-  );
+  });
 
   const form = useForm<EditProjectFormValues>({
     resolver: zodResolver(EditProjectFormSchema),
@@ -152,6 +195,7 @@ const EditProjectForm = ({
       externalId: initialValues?.externalId,
       sensitive: initialValues?.sensitive ?? false,
       globalConnectionExternalIds: currentConnectionExternalIds,
+      pieceSetId: readyField?.initialValue,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
@@ -162,15 +206,7 @@ const EditProjectForm = ({
         className="space-y-4"
         onSubmit={form.handleSubmit((values) => {
           form.clearErrors('root.serverError');
-          mutate({
-            projectId,
-            request: {
-              displayName: values.displayName?.trim(),
-              externalId: values.externalId,
-              sensitive: values.sensitive,
-              globalConnectionExternalIds: values.globalConnectionExternalIds,
-            },
-          });
+          return save.mutateAsync(values).catch(() => undefined);
         })}
       >
         {globalConnectionsEnabled && <GlobalConnectionWarning />}
@@ -236,6 +272,29 @@ const EditProjectForm = ({
             />
           )}
 
+        {pieceSetField?.status === 'loading' && (
+          <Skeleton
+            aria-label={t('Loading')}
+            className="h-20 w-full rounded-lg"
+          />
+        )}
+        {pieceSetField?.status === 'error' && pieceSetField.render()}
+        {readyField && (
+          <FormField
+            name="pieceSetId"
+            render={({ field }) => (
+              <FormItem>
+                {readyField.render({
+                  value: field.value ?? readyField.initialValue,
+                  onChange: field.onChange,
+                  disabled: field.disabled,
+                })}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         {globalConnectionsEnabled && (
           <FormField
             name="globalConnectionExternalIds"
@@ -272,14 +331,14 @@ const EditProjectForm = ({
             type="button"
             variant="outline"
             onClick={onClose}
-            disabled={isPending}
+            disabled={form.formState.isSubmitting}
           >
             {t('Cancel')}
           </Button>
           <Button
             type="submit"
-            disabled={isPending || !form.formState.isDirty}
-            loading={isPending}
+            disabled={form.formState.isSubmitting || !form.formState.isDirty}
+            loading={form.formState.isSubmitting}
             {...adminControl(AdminControl.PROJECTS_EDIT_SUBMIT)}
           >
             {t('Save')}
@@ -292,6 +351,24 @@ const EditProjectForm = ({
 
 const EditProjectFormSchema = UpdateProjectPlatformRequest.extend({
   displayName: z.string().trim().min(1, formErrors.required),
+  pieceSetId: z.string().optional(),
 });
 
 type EditProjectFormValues = z.infer<typeof EditProjectFormSchema>;
+
+class PartialSaveError extends Error {}
+
+export type PieceSetField =
+  | { status: 'loading' }
+  | { status: 'error'; render: () => ReactNode }
+  | {
+      status: 'ready';
+      initialValue: string | undefined;
+      render: (field: {
+        value: string | undefined;
+        onChange: (value: string) => void;
+        disabled?: boolean;
+      }) => ReactNode;
+      save: (pieceSetId: string) => Promise<void>;
+      saveFailedMessage: (error: unknown) => string;
+    };

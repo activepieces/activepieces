@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   AppConnectionScope,
   AppConnectionStatus,
@@ -8,72 +9,127 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   Activity,
-  CheckIcon,
   Clock,
   Folder,
   Globe,
+  MapPin,
+  Plus,
   Puzzle,
-  Shield,
+  Trash2,
   Unplug,
   User,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
-  StatusDot,
-  StatusTone,
   adminPageResources,
 } from '@/app/components/admin';
-import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
+import { EnterpriseLockedSection } from '@/app/components/enterprise-gate';
+import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import {
+  BulkAction,
   DataTableFilters,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Badge } from '@/components/ui/badge';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { PieceIconWithPieceName, piecesHooks } from '@/features/pieces';
+import { Button } from '@/components/ui/button';
+import { LockedGem, useEnterpriseGate } from '@/features/billing';
+import { piecesHooks } from '@/features/pieces';
 import { platformAppConnectionsQueries } from '@/features/platform-admin/hooks/platform-app-connections-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
-import { AdminControl } from '@/lib/admin-control';
-import { formatUtils } from '@/lib/format-utils';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+
+import {
+  ConnectionRowActions,
+  GlobalConnectionAccess,
+} from './connection-actions';
+import {
+  ConnectionNameCell,
+  ConnectionStatus,
+  OwnerCell,
+  WhereCell,
+  connectionCellsUtils,
+} from './connection-cells';
+import { ConnectionSheet } from './connection-sheet';
+import { DeleteConnectionsDialog } from './delete-connections-dialog';
 
 export default function PlatformConnectionsPage() {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const globalLocked = !platform.plan.globalConnectionsEnabled;
+  const gate = useEnterpriseGate({
+    unlocked: !globalLocked,
+    featureKey: 'GLOBAL_CONNECTIONS',
+  });
+  const explainLock = useRef(gate.explain);
+  explainLock.current = gate.explain;
+  const access: GlobalConnectionAccess = useMemo(
+    () => ({ locked: globalLocked, upgrade: () => explainLock.current() }),
+    [globalLocked],
+  );
+
+  const [searchParams] = useSearchParams();
   const {
     data: connections,
     isLoading,
     isError,
     refetch,
-  } = platformAppConnectionsQueries.useList();
+  } = platformAppConnectionsQueries.useList({
+    scopeFilterEnabled: !globalLocked,
+  });
   const { data: owners } = platformAppConnectionsQueries.useOwners();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
-  const { pieces } = piecesHooks.usePieces({});
+  const { pieces } = piecesHooks.usePlatformCatalog();
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const resetBulkSelection = useRef<(() => void) | null>(null);
+  const narrowBulkSelection = useRef<((rowIds: string[]) => void) | null>(null);
+  const { checkAccess } = useAuthorization();
+  const canWriteConnections = checkAccess(Permission.WRITE_APP_CONNECTION);
+  const [deleting, setDeleting] = useState<PlatformAppConnectionsListItem[]>(
+    [],
+  );
 
-  const filters: DataTableFilters<
-    keyof PlatformAppConnectionsListItem | 'ownerIds'
-  >[] = [
+  const rows = connections?.data ?? [];
+  const viewing = rows.find((row) => row.id === viewingId) ?? null;
+  const refresh = useCallback(() => {
+    refetch().catch(() => undefined);
+  }, [refetch]);
+  const filtered = FILTER_PARAMS.some((param) => searchParams.has(param));
+
+  const filters: DataTableFilters<FilterKey>[] = [
     {
       type: 'input',
       title: t('Name'),
       accessorKey: 'displayName',
       icon: Unplug,
     },
+    ...(globalLocked
+      ? []
+      : [
+          {
+            type: 'select' as const,
+            title: t('Scope'),
+            accessorKey: 'scope' as const,
+            icon: Globe,
+            options: [
+              { label: t('Global'), value: AppConnectionScope.PLATFORM },
+              { label: t('Project'), value: AppConnectionScope.PROJECT },
+            ],
+          },
+        ]),
     {
       type: 'select',
       title: t('Status'),
       accessorKey: 'status',
-      icon: CheckIcon,
+      icon: Activity,
       options: Object.values(AppConnectionStatus).map((status) => ({
-        label: formatUtils.convertEnumToHumanReadable(status),
+        label: connectionCellsUtils.statusLabel(status),
         value: status,
       })),
     },
@@ -103,7 +159,7 @@ export default function PlatformConnectionsPage() {
       accessorKey: 'ownerIds',
       icon: User,
       options: (owners?.data ?? []).map((owner) => ({
-        label: owner.email,
+        label: connectionCellsUtils.ownerLabel(owner),
         value: owner.id,
       })),
     },
@@ -111,126 +167,142 @@ export default function PlatformConnectionsPage() {
 
   const columns: ColumnDef<
     RowDataWithActions<PlatformAppConnectionsListItem>
-  >[] = [
-    {
-      accessorKey: 'displayName',
-      size: 280,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Name')}
-          icon={Unplug}
-        />
-      ),
-      cell: ({ row }) => (
-        <div className="flex min-w-0 items-center gap-2">
-          <CopyTextTooltip
-            title={t('External ID')}
-            text={row.original.externalId || ''}
-            controlId={AdminControl.CONNECTIONS_EXTERNAL_ID_COPY}
-          >
-            <span className="flex shrink-0">
-              <PieceIconWithPieceName
-                pieceName={row.original.pieceName}
-                showTooltip={false}
-                size="sm"
-              />
-            </span>
-          </CopyTextTooltip>
-          <TextWithTooltip tooltipMessage={row.original.displayName}>
-            <span className="min-w-0">{row.original.displayName}</span>
-          </TextWithTooltip>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      size: 130,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Status')}
-          icon={Activity}
-        />
-      ),
-      cell: ({ row }) => (
-        <StatusDot tone={CONNECTION_STATUS_TONE[row.original.status]}>
-          {formatUtils.convertEnumToHumanReadable(row.original.status)}
-        </StatusDot>
-      ),
-    },
-    {
-      accessorKey: 'projects',
-      size: 220,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Project')}
-          icon={Folder}
-        />
-      ),
-      cell: ({ row }) => <ProjectsCell projects={row.original.projects} />,
-    },
-    {
-      accessorKey: 'scope',
-      size: 120,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Scope')}
-          icon={Shield}
-        />
-      ),
-      cell: ({ row }) => <ScopeBadge scope={row.original.scope} />,
-    },
-    {
-      accessorKey: 'owner',
-      size: 200,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
-      ),
-      cell: ({ row }) => {
-        const owner = row.original.owner;
-        if (!owner) {
-          return <span className="text-gray-11">{t('N/A')}</span>;
-        }
-        const fullName = [owner.firstName, owner.lastName]
-          .filter(Boolean)
-          .join(' ');
-        const label = fullName || owner.email;
-        return (
-          <div className="flex min-w-0 items-center">
-            <TextWithTooltip tooltipMessage={label}>
-              <span className="min-w-0">{label}</span>
-            </TextWithTooltip>
-          </div>
-        );
+  >[] = useMemo(
+    () => [
+      {
+        accessorKey: 'displayName',
+        size: 260,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Connection')}
+            icon={Unplug}
+          />
+        ),
+        cell: ({ row }) => <ConnectionNameCell connection={row.original} />,
       },
-    },
+      {
+        id: 'where',
+        size: 280,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Where')}
+            icon={MapPin}
+          />
+        ),
+        cell: ({ row }) => <WhereCell connection={row.original} />,
+      },
+      {
+        id: 'owner',
+        size: 180,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Owner')}
+            icon={User}
+          />
+        ),
+        cell: ({ row }) => <OwnerCell owner={row.original.owner} />,
+      },
+      {
+        accessorKey: 'status',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Status')}
+            icon={Activity}
+          />
+        ),
+        cell: ({ row }) => <ConnectionStatus status={row.original.status} />,
+      },
+      {
+        accessorKey: 'updated',
+        size: 150,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Updated')}
+            icon={Clock}
+          />
+        ),
+        cell: ({ row }) => (
+          <FormattedDate date={new Date(row.original.updated)} />
+        ),
+      },
+      {
+        id: 'actions',
+        size: 110,
+        cell: ({ row }) => (
+          <div
+            className="flex items-center justify-end gap-1"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <ConnectionRowActions
+              connection={row.original}
+              access={access}
+              onChanged={refresh}
+            />
+          </div>
+        ),
+      },
+    ],
+    [access, refresh],
+  );
+
+  const bulkActions: BulkAction<PlatformAppConnectionsListItem>[] = [
     {
-      accessorKey: 'updated',
-      size: 150,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Connected At')}
-          icon={Clock}
-        />
-      ),
-      cell: ({ row }) => (
-        <FormattedDate date={new Date(row.original.updated)} />
-      ),
+      render: (selected, resetSelection, selectOnly) =>
+        selected.length > 0 && (
+          <Button
+            {...adminControl(AdminControl.CONNECTIONS_CONNECTION_DELETE_OPEN)}
+            variant="ghost"
+            size="sm"
+            className="text-danger-11 hover:text-danger-11"
+            disabled={!canWriteConnections}
+            onClick={() => {
+              resetBulkSelection.current = resetSelection;
+              narrowBulkSelection.current = selectOnly;
+              setDeleting(selected);
+            }}
+          >
+            <Trash2 />
+            {t('Delete ({count})', { count: selected.length })}
+          </Button>
+        ),
     },
   ];
+
+  const newGlobalConnection = globalLocked ? (
+    <Button onClick={access.upgrade}>
+      <LockedGem />
+      {t('New global connection')}
+    </Button>
+  ) : (
+    <NewConnectionDialog isGlobalConnection onConnectionCreated={refresh}>
+      <Button {...adminControl(AdminControl.CONNECTIONS_CONNECTION_OPEN)}>
+        <Plus />
+        {t('New global connection')}
+      </Button>
+    </NewConnectionDialog>
+  );
 
   return (
     <AdminPage>
       <AdminPageHeader
         title={t('Connections')}
         description={t(
-          'All app connections across every project on this platform',
+          'Every connection in every project, and the global ones you share with the projects you choose.',
         )}
         resources={adminPageResources.connections}
+      >
+        {newGlobalConnection}
+      </AdminPageHeader>
+      <EnterpriseLockedSection
+        unlocked={!globalLocked}
+        featureKey="GLOBAL_CONNECTIONS"
+        line={t('Global connections are locked.')}
       />
       <div className="flex flex-col gap-2">
         {owners?.truncated && (
@@ -241,11 +313,18 @@ export default function PlatformConnectionsPage() {
           </p>
         )}
         <AdminDataTable
-          emptyStateTextTitle={t('No connections found')}
-          emptyStateTextDescription={t(
-            'Connections created in any project on this platform will appear here.',
-          )}
+          emptyStateTextTitle={
+            filtered ? t('No connections match') : t('No connections yet')
+          }
+          emptyStateTextDescription={
+            filtered
+              ? t('Try a different search or clear a filter.')
+              : t(
+                  'Connections from every project appear here, next to the global ones you share.',
+                )
+          }
           emptyStateIcon={<Unplug />}
+          emptyStateAction={filtered ? undefined : newGlobalConnection}
           columns={columns}
           page={connections}
           isLoading={isLoading}
@@ -253,70 +332,66 @@ export default function PlatformConnectionsPage() {
           errorStateEntity={t('connections')}
           onRetry={refetch}
           filters={filters}
+          onRowClick={(row) => setViewingId(row.id)}
+          selectColumn={!globalLocked}
+          getRowId={(row) => row.id}
+          isRowSelectionDisabled={(row) =>
+            row.scope !== AppConnectionScope.PLATFORM
+          }
+          bulkActions={bulkActions}
         />
       </div>
+      <ConnectionSheet
+        connection={viewing}
+        access={access}
+        onChanged={refresh}
+        onDelete={(connection) => {
+          resetBulkSelection.current = null;
+          setDeleting([connection]);
+        }}
+        onOpenChange={(open) => !open && setViewingId(null)}
+      />
+      <DeleteConnectionsDialog
+        connections={deleting}
+        open={deleting.length > 0}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleting([]);
+            resetBulkSelection.current = null;
+          }
+        }}
+        onDeleted={refresh}
+        onFinished={() => {
+          if (deleting.some((connection) => connection.id === viewingId)) {
+            setViewingId(null);
+          }
+          resetBulkSelection.current?.();
+          resetBulkSelection.current = null;
+        }}
+        onPartialFailure={(failed) => {
+          const viewingDeleted =
+            deleting.some((connection) => connection.id === viewingId) &&
+            !failed.some((connection) => connection.id === viewingId);
+          if (viewingDeleted) {
+            setViewingId(null);
+          }
+          narrowBulkSelection.current?.(
+            failed.map((connection) => connection.id),
+          );
+          setDeleting(failed);
+        }}
+      />
     </AdminPage>
   );
 }
 
-const ScopeBadge = ({ scope }: { scope: AppConnectionScope }) => {
-  if (scope === AppConnectionScope.PLATFORM) {
-    return (
-      <Badge variant="secondary">
-        <Globe />
-        {t('Global')}
-      </Badge>
-    );
-  }
-  return <Badge variant="outline">{t('Project')}</Badge>;
-};
+const FILTER_PARAMS = [
+  'displayName',
+  'scope',
+  'status',
+  'pieceName',
+  'projectIds',
+  'ownerIds',
+] as const;
 
-const ProjectsCell = ({
-  projects,
-}: {
-  projects: PlatformAppConnectionsListItem['projects'];
-}) => {
-  if (projects.length === 0) {
-    return <span className="text-gray-11">{t('N/A')}</span>;
-  }
-  if (projects.length === 1) {
-    const project = projects[0];
-    const name = getProjectName(project);
-    return (
-      <Link to={`/projects/${project.id}`}>
-        <TextWithTooltip tooltipMessage={name}>
-          <span className="truncate max-w-[200px] text-accent-11 hover:underline">
-            {name}
-          </span>
-        </TextWithTooltip>
-      </Link>
-    );
-  }
-  const label = t('{count, plural, =1 {1 project} other {# projects}}', {
-    count: projects.length,
-  });
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="cursor-default underline decoration-dashed underline-offset-2">
-          {label}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>
-        <ul className="flex flex-col gap-1 max-w-[260px]">
-          {projects.map((project) => (
-            <li key={project.id} className="truncate">
-              {getProjectName(project)}
-            </li>
-          ))}
-        </ul>
-      </TooltipContent>
-    </Tooltip>
-  );
-};
-
-const CONNECTION_STATUS_TONE: Record<AppConnectionStatus, StatusTone> = {
-  [AppConnectionStatus.ACTIVE]: 'success',
-  [AppConnectionStatus.ERROR]: 'danger',
-  [AppConnectionStatus.MISSING]: 'neutral',
-};
+type FilterKey = (typeof FILTER_PARAMS)[number];

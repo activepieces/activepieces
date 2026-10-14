@@ -59,6 +59,11 @@ vi.mock(
 vi.mock('@/app/routes/platform/projects/columns', () => ({
   projectsTableColumns: () => [],
 }));
+vi.mock('@/hooks/user-hooks', () => ({
+  userHooks: {
+    getCurrentUserPlatformRole: () => 'ADMIN',
+  },
+}));
 vi.mock('@/app/components/enterprise-gate', () => ({
   EnterpriseGate: ({ children }: { children: React.ReactNode }) => children,
 }));

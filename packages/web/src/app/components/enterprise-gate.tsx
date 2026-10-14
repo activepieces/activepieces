@@ -13,6 +13,7 @@ import {
   EnterpriseLockedRow,
   EnterpriseUsageMeter,
   FeatureKey,
+  LockedFeatureCopy,
   useEnterpriseGate,
 } from '@/features/billing';
 import { cn } from '@/lib/utils';
@@ -54,6 +55,7 @@ export function EnterpriseGate(props: EnterpriseGateProps) {
       callout={
         <EnterpriseLockedCard
           featureKey={props.featureKey}
+          copyOverride={props.copy}
           fallbackHeadline={props.title}
           surface={PlatformAdminSurface.SAMPLE}
         />
@@ -141,6 +143,7 @@ export type EnterpriseGateProps =
   | (EnterpriseGateBaseProps & {
       mode: 'preview';
       title?: string;
+      copy?: LockedFeatureCopy;
     })
   | (EnterpriseGateBaseProps & {
       mode: 'limit';

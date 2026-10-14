@@ -1,13 +1,11 @@
 import { CreatePieceSetRequestBody, PieceSet } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { UseMutationResult } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { adminLayout, useAdminAction } from '@/app/components/admin';
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,57 +14,84 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { pieceSetKeys, pieceSetsApi } from '@/features/piece-sets';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
-import { pieceSetName } from './piece-set-name';
+import { pieceSetFormErrors } from './piece-set-form-errors';
 
 const formSchema = CreatePieceSetRequestBody;
 
 type FormValues = z.infer<typeof formSchema>;
 
 type CreatePieceSetDialogProps = {
-  onCreated: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (pieceSet: PieceSet) => void;
 };
 
 const CreatePieceSetForm = ({
-  create,
+  onCreated,
+  onOpenChange,
   onCancel,
+  onSavingChange,
 }: {
-  create: UseMutationResult<PieceSet, Error, CreatePieceSetRequestBody>;
+  onCreated: (pieceSet: PieceSet) => void;
+  onOpenChange: (open: boolean) => void;
   onCancel: () => void;
+  onSavingChange: (saving: boolean) => void;
 }) => {
-  const submitting = useRef(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      key: '',
     },
     mode: 'onChange',
   });
 
+  const { mutate: createSet, isPending } = pieceSetMutations.useCreatePieceSet({
+    onError: (error) =>
+      pieceSetFormErrors.show({
+        form,
+        error,
+        keyField: 'key',
+      }),
+  });
+
+  const submitting = useRef(false);
+  const finish = () => {
+    submitting.current = false;
+    onSavingChange(false);
+  };
   const handleSubmit = (data: FormValues) => {
-    if (submitting.current) {
+    if (isPending || submitting.current) {
       return;
     }
     submitting.current = true;
-    create.mutate(data, {
-      onSettled: () => {
-        submitting.current = false;
+    onSavingChange(true);
+    form.clearErrors('root.serverError');
+    createSet(
+      { name: data.name, key: data.key || undefined },
+      {
+        onSuccess: (pieceSet) => {
+          finish();
+          onOpenChange(false);
+          onCreated(pieceSet);
+        },
+        onError: finish,
       },
-    });
+    );
   };
 
   return (
@@ -75,24 +100,50 @@ const CreatePieceSetForm = ({
         className="flex flex-col gap-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Name')}</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder={t('e.g. Engineering')} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <fieldset disabled={isPending} className="contents">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Name')}</FormLabel>
+                <FormControl>
+                  <Input {...field} autoFocus placeholder={t('e.g. Sales')} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="key"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Embed key (optional)')}</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder={t('e.g. sales')} />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'The embed SDK passes this key to put a project on this {term}. Leave it empty to make one from the name.',
+                    pieceSetTerms.get(),
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {form.formState.errors.root?.serverError && (
+            <FormMessage>
+              {form.formState.errors.root.serverError.message}
+            </FormMessage>
           )}
-        />
+        </fieldset>
         <DialogFooter>
           <Button
             type="button"
             variant="outline"
-            disabled={create.isPending}
+            disabled={isPending}
             onClick={onCancel}
           >
             {t('Cancel')}
@@ -100,7 +151,8 @@ const CreatePieceSetForm = ({
           <Button
             {...adminControl(AdminControl.PIECE_SETS_CREATE_SUBMIT)}
             type="submit"
-            loading={create.isPending}
+            loading={isPending}
+            disabled={!form.formState.isValid}
           >
             {t('Create')}
           </Button>
@@ -111,52 +163,38 @@ const CreatePieceSetForm = ({
 };
 
 export const CreatePieceSetDialog = ({
+  open,
+  onOpenChange,
   onCreated,
 }: CreatePieceSetDialogProps) => {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const isEnabled = platform.plan.managePiecesEnabled;
-  const [open, setOpen] = useState(false);
-  const create = useAdminAction<CreatePieceSetRequestBody, PieceSet>({
-    verb: 'create',
-    name: (request) => pieceSetName.short(request.name),
-    run: (request) => pieceSetsApi.create(request),
-    invalidate: [pieceSetKeys.all],
-    onSuccess: () => {
-      setOpen(false);
-      onCreated();
-    },
-  });
+  const [saving, setSaving] = useState(false);
   const changeOpen = (next: boolean) => {
-    if (!next && create.isPending) {
+    if (!next && saving) {
       return;
     }
-    setOpen(next);
+    onOpenChange(next);
   };
   return (
     <Dialog open={open} onOpenChange={changeOpen}>
-      <DialogTrigger asChild>
-        <Button
-          {...adminControl(AdminControl.PIECE_SETS_CREATE_OPEN)}
-          disabled={!isEnabled}
-        >
-          <Plus />
-          {t('New Piece Set')}
-        </Button>
-      </DialogTrigger>
       <DialogContent
         className={adminLayout.dialog.md}
-        showCloseButton={!create.isPending}
+        showCloseButton={!saving}
       >
         <DialogHeader>
-          <DialogTitle>{t('Create Piece Set')}</DialogTitle>
+          <DialogTitle>{t('New {term}', pieceSetTerms.get())}</DialogTitle>
           <DialogDescription>
-            {t('Give the new piece set a name.')}
+            {t(
+              'A new {term} shows every piece. Hide the ones its projects should not use once it exists.',
+              pieceSetTerms.get(),
+            )}
           </DialogDescription>
         </DialogHeader>
         <CreatePieceSetForm
           key={open ? 'open' : 'closed'}
-          create={create}
+          onCreated={onCreated}
+          onOpenChange={onOpenChange}
           onCancel={() => changeOpen(false)}
+          onSavingChange={setSaving}
         />
       </DialogContent>
     </Dialog>

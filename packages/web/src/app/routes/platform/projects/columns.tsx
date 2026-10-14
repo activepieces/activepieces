@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  PieceSet,
   PlatformWithoutSensitiveData,
   ProjectWithLimits,
   ProjectType,
@@ -15,18 +16,29 @@ import {
   Clock,
   Hash,
   Link2,
+  Box,
 } from 'lucide-react';
 
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
+import { Skeleton } from '@/components/ui/skeleton';
+import { pieceSetTerms } from '@/features/piece-sets';
+
+import { ProjectPieceSetCell } from './project-piece-set-cell';
 
 type ProjectsTableColumnsProps = {
   platform: PlatformWithoutSensitiveData;
+  pieceSets: PieceSet[] | undefined;
+  pieceSetsFailed: boolean;
+  showEmbedKey: boolean;
 };
 
 export const projectsTableColumns = ({
   platform,
+  pieceSets,
+  pieceSetsFailed,
+  showEmbedKey,
 }: ProjectsTableColumnsProps): ColumnDef<
   RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
 >[] => {
@@ -105,6 +117,40 @@ export const projectsTableColumns = ({
       },
     },
   ];
+
+  if (platform.plan.managePiecesEnabled) {
+    const pieceSetColumn: ColumnDef<
+      RowDataWithActions<ProjectWithLimits & { globalConnectionsCount: number }>
+    > = {
+      id: 'pieceSet',
+      size: 180,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title={pieceSetTerms.get().titleSingular}
+          icon={Box}
+        />
+      ),
+      cell: ({ row }) => {
+        if (pieceSets !== undefined) {
+          return (
+            <ProjectPieceSetCell
+              project={row.original}
+              pieceSets={pieceSets}
+              showEmbedNote={showEmbedKey && !!row.original.externalId}
+            />
+          );
+        }
+        if (pieceSetsFailed) {
+          return (
+            <span className="text-sm text-gray-11">{t("Couldn't load")}</span>
+          );
+        }
+        return <Skeleton className="h-4 w-28" />;
+      },
+    };
+    columns.push(pieceSetColumn);
+  }
 
   if (platform.plan.embeddingEnabled) {
     columns.push({

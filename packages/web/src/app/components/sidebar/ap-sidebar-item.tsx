@@ -38,6 +38,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   const isLinkActive = isRouteActive({
     pathname,
     to: item.activeOn ?? item.to,
+    end: item.end,
   });
   const isCollapsed = state === 'collapsed' && !isMobile;
   const subItems = item.subItems ?? [];
@@ -89,8 +90,12 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   };
 
   const hoverHandlers = {
-    onMouseEnter: () => iconRef.current?.startAnimation?.(),
+    onMouseEnter: () => {
+      iconRef.current?.startAnimation?.();
+      item.onIntent?.();
+    },
     onMouseLeave: () => iconRef.current?.stopAnimation?.(),
+    onFocus: () => item.onIntent?.(),
   };
 
   const plainIcon = item.icon && renderIcon({ Icon: item.icon, ref: iconRef });
@@ -329,8 +334,10 @@ export type SidebarItemType = {
   tier?: FeatureTier;
   subItems?: SidebarSubItemType[];
   activeOn?: string;
+  end?: boolean;
   badge?: ReactNode;
   onClick?: () => void;
+  onIntent?: () => void;
 };
 
 type ExpandOverride = {

@@ -2,7 +2,9 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
+import { BoxIcon } from '@/components/icons/box';
 import { ChartLineIcon } from '@/components/icons/chart-line';
+import { CompassIcon } from '@/components/icons/compass';
 import { FileHeartIcon } from '@/components/icons/file-heart';
 import { FileJson2Icon } from '@/components/icons/file-json2';
 import { FrameIcon } from '@/components/icons/frame';
@@ -15,6 +17,7 @@ import { ReceiptIcon } from '@/components/icons/receipt';
 import { ServerIcon } from '@/components/icons/server';
 import { SettingsIcon } from '@/components/icons/settings';
 import { Settings2Icon } from '@/components/icons/settings2';
+import { ShieldIcon } from '@/components/icons/shield';
 import { SparklesIcon } from '@/components/icons/sparkles';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
 import { UnplugIcon } from '@/components/icons/unplug';
@@ -26,6 +29,8 @@ import {
   SidebarMenu,
 } from '@/components/ui/sidebar-shadcn';
 import { PLATFORM_FEATURES } from '@/features/billing';
+import { pieceSetTerms } from '@/features/piece-sets';
+import { piecesHooks } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -35,6 +40,8 @@ export function PlatformNav() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
+  const prefetchPieceMenu = piecesHooks.usePieceMenuPrefetch();
+  const groupLabels = platformGroupLabels();
   const groups: { label: string; items: PlatformNavItem[] }[] = [
     {
       label: t('Platform'),
@@ -58,39 +65,49 @@ export function PlatformNav() {
             },
           ],
         },
-        {
-          to: '/platform/connections',
-          label: t('Connections'),
-          icon: UnplugIcon,
-          subItems: [
-            { to: '/platform/connections', label: t('All'), end: true },
-            {
-              to: '/platform/connections/global',
-              label: t('Global Connections'),
-              locked: !platform.plan.globalConnectionsEnabled,
-              tier: PLATFORM_FEATURES.globalConnections.tier,
-            },
-          ],
-        },
       ],
     },
     {
-      label: t('Catalogue'),
+      label: groupLabels.integrations,
       items: [
         {
           to: '/platform/pieces',
           label: t('Pieces'),
           icon: PuzzleIcon,
-          subItems: [
-            { to: '/platform/pieces', label: t('Pieces'), end: true },
-            {
-              to: '/platform/pieces/piece-sets',
-              label: t('Piece Sets'),
-              locked: !platform.plan.managePiecesEnabled,
-              tier: PLATFORM_FEATURES.pieces.tier,
-            },
-          ],
+          end: true,
         },
+        {
+          to: '/platform/pieces/piece-sets',
+          label: pieceSetTerms.get().title,
+          icon: BoxIcon,
+          locked: !platform.plan.managePiecesEnabled,
+          tier: PLATFORM_FEATURES.pieces.tier,
+        },
+        {
+          to: '/platform/pieces/required-actions',
+          label: t('Required actions'),
+          icon: ShieldIcon,
+          locked: !platform.plan.managePiecesEnabled,
+          tier: PLATFORM_FEATURES.pieces.tier,
+        },
+        {
+          to: '/platform/pieces/selector',
+          label: t('Piece menu'),
+          icon: CompassIcon,
+          onIntent: prefetchPieceMenu,
+          locked: !platform.plan.managePiecesEnabled,
+          tier: PLATFORM_FEATURES.pieces.tier,
+        },
+        {
+          to: '/platform/connections',
+          label: t('Connections'),
+          icon: UnplugIcon,
+        },
+      ],
+    },
+    {
+      label: groupLabels.resources,
+      items: [
         {
           to: '/platform/templates',
           label: t('Templates'),
@@ -281,6 +298,8 @@ export function PlatformNav() {
                   locked={item.locked}
                   tier={item.tier}
                   subItems={item.subItems}
+                  end={item.end}
+                  onIntent={item.onIntent}
                 />
               ))}
             </SidebarMenu>
@@ -291,7 +310,14 @@ export function PlatformNav() {
   );
 }
 
+function platformGroupLabels() {
+  return {
+    integrations: t('Integrations'),
+    resources: t('Resources'),
+  };
+}
+
 type PlatformNavItem = Pick<
   SidebarItemType,
-  'to' | 'label' | 'icon' | 'locked' | 'tier' | 'subItems'
+  'to' | 'label' | 'icon' | 'locked' | 'tier' | 'subItems' | 'end' | 'onIntent'
 >;

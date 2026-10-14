@@ -1,32 +1,41 @@
 import {
+  CreatePieceSetRequestBody,
+  isNil,
   PieceSet,
-  pieceSetConfigUtil,
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
 import {
   QueryClient,
   useMutation,
-  useMutationState,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { z } from 'zod';
 
 import { pieceCacheUtils } from '@/features/pieces';
-import { projectCollectionUtils } from '@/features/projects';
+import {
+  projectCollectionUtils,
+  projectQueryKeys,
+  projectQueryOptions,
+} from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { pieceSetsApi } from '../api/piece-sets-api';
+import {
+  ChangePieceSet,
+  PieceSetChange,
+  pieceSetChanges,
+} from '../utils/piece-set-changes';
+import { pieceSetTerms } from '../utils/piece-set-terms';
 
 export const pieceSetKeys = {
   all: ['piece-sets'] as const,
-  page: (cursor: string | undefined, limit: number | undefined) =>
-    ['piece-sets', 'page', cursor ?? null, limit ?? null] as const,
+  list: ['piece-sets', 'list'] as const,
   one: (id: string) => ['piece-sets', id] as const,
+  projects: ['piece-sets', 'project'] as const,
   project: (projectId: string) => ['piece-sets', 'project', projectId] as const,
-  update: ['piece-sets', 'update'] as const,
 };
 
 export const pieceSetQueryOptions = {
@@ -37,36 +46,23 @@ export const pieceSetQueryOptions = {
 };
 
 export const pieceSetQueries = {
-  usePieceSets: ({
-    cursor,
-    limit,
-  }: { cursor?: string; limit?: number } = {}) => {
+  useAllPieceSets: () => {
     const { platform } = platformHooks.useCurrentPlatform();
     return useQuery({
-      queryKey: pieceSetKeys.page(cursor, limit),
-      queryFn: () => pieceSetsApi.list({ cursor, limit }),
+      queryKey: pieceSetKeys.list,
+      queryFn: () => pieceSetsApi.listAll(),
       enabled: platform.plan.managePiecesEnabled,
     });
   },
   usePieceSet: (id: string) => {
     const { platform } = platformHooks.useCurrentPlatform();
-    const query = useQuery({
+    return useQuery({
       queryKey: pieceSetKeys.one(id),
       queryFn: () => pieceSetsApi.get(id),
       enabled: platform.plan.managePiecesEnabled && !!id,
+      retry: (failureCount, error) =>
+        !isNotFound(error) && failureCount < MAX_RETRIES,
     });
-    const pendingUpdates = useMutationState({
-      filters: { mutationKey: pieceSetKeys.update, status: 'pending' },
-      select: (mutation) =>
-        UpdatePieceSetVariables.safeParse(mutation.state.variables),
-    });
-    const pendingRequests = pendingUpdates.flatMap((parsed) =>
-      parsed.success && parsed.data.id === id ? [parsed.data.request] : [],
-    );
-    const data = query.data
-      ? applyPendingRequests({ pieceSet: query.data, pendingRequests })
-      : undefined;
-    return { ...query, data };
   },
   useProjectPieceSet: (projectId: string | null) => {
     const { platform } = platformHooks.useCurrentPlatform();
@@ -78,11 +74,23 @@ export const pieceSetQueries = {
 };
 
 export const pieceSetMutations = {
-  useUpdatePieceSet: ({ announce = true }: { announce?: boolean } = {}) => {
+  useCreatePieceSet: ({ onError }: FormErrorHandler) => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationKey: pieceSetKeys.update,
-      scope: { id: 'piece-set-update' },
+      mutationFn: (request: CreatePieceSetRequestBody) =>
+        pieceSetsApi.create(request),
+      onSuccess: () => {
+        mutationFeedback.success(t('{Term} created', pieceSetTerms.get()));
+        queryClient
+          .invalidateQueries({ queryKey: pieceSetKeys.all })
+          .catch(() => undefined);
+      },
+      onError,
+    });
+  },
+  useUpdatePieceSet: ({ onError }: FormErrorHandler) => {
+    const queryClient = useQueryClient();
+    return useMutation({
       mutationFn: ({
         id,
         request,
@@ -90,64 +98,274 @@ export const pieceSetMutations = {
         id: string;
         request: UpdatePieceSetRequestBody;
       }) => pieceSetsApi.update(id, request),
-      onSuccess: async (_, { id }) => {
-        pieceCacheUtils.invalidatePieceCaches(queryClient);
+      onSuccess: (updated) => {
+        queryClient.setQueryData(pieceSetKeys.one(updated.id), updated);
+        mutationFeedback.success(t('Changes saved'));
+        queryClient
+          .invalidateQueries({ queryKey: pieceSetKeys.all })
+          .catch(() => undefined);
+      },
+      onError,
+    });
+  },
+  useChangePieceSet: (id: string) => {
+    const queryClient = useQueryClient();
+    const queryKey = pieceSetKeys.one(id);
+    const mutationKey = [...queryKey, 'change'];
+    const isLastPending = () => queryClient.isMutating({ mutationKey }) <= 1;
+    const mutation = useMutation({
+      mutationKey,
+      scope: { id: `piece-set-${id}` },
+      mutationFn: async ({ change }: ChangeVariables) => {
+        const before = await pieceSetsApi.get(id);
+        const updated = await pieceSetsApi.update(
+          id,
+          pieceSetChanges.toRequest({ pieceSet: before, change }),
+        );
+        return { before, updated };
+      },
+      onMutate: async ({ change }) => {
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: pieceSetKeys.all }),
-          queryClient.invalidateQueries({ queryKey: pieceSetKeys.one(id) }),
+          queryClient.cancelQueries({ queryKey }),
+          queryClient.cancelQueries({ queryKey: pieceSetKeys.list }),
         ]);
-        if (announce) {
-          mutationFeedback.success(t('Changes saved'));
+        const current = queryClient.getQueryData<PieceSet>(queryKey);
+        if (current !== undefined) {
+          queryClient.setQueryData(
+            queryKey,
+            pieceSetChanges.apply({ pieceSet: current, change }),
+          );
         }
+        replaceInList({
+          queryClient,
+          id,
+          update: (pieceSet) => pieceSetChanges.apply({ pieceSet, change }),
+        });
+      },
+      onSuccess: ({ before, updated }, { change, isUndo }) => {
+        if (isLastPending()) {
+          queryClient.setQueryData(queryKey, updated);
+          replaceInList({ queryClient, id, update: () => updated });
+        }
+        const changeNumber = (latestChangeBySet.get(id) ?? 0) + 1;
+        latestChangeBySet.set(id, changeNumber);
+        if (isUndo) {
+          return;
+        }
+        mutationFeedback.undo({
+          message: describeChange(change),
+          undoneMessage: t('Change undone'),
+          onUndo: async () => {
+            if (queryClient.isMutating({ mutationKey }) > 0) {
+              throw mutationFeedback.userError(
+                t('Wait for the current change to finish, then undo.'),
+              );
+            }
+            if (changeNumber !== latestChangeBySet.get(id)) {
+              throw mutationFeedback.userError(
+                t('Only the latest change can be undone'),
+              );
+            }
+            await mutation.mutateAsync({
+              change: pieceSetChanges.inverse({ previous: before, change }),
+              isUndo: true,
+            });
+          },
+        });
       },
       onError: (error) => {
+        if (isLastPending()) {
+          queryClient.invalidateQueries({ queryKey }).catch(() => undefined);
+        }
         mutationFeedback.error({ error, title: t("Couldn't save changes") });
       },
+      onSettled: () => {
+        if (!isLastPending()) {
+          return;
+        }
+        Promise.all([
+          queryClient.invalidateQueries({ queryKey: pieceSetKeys.list }),
+          queryClient.invalidateQueries({
+            queryKey: pieceSetKeys.projects,
+          }),
+          pieceCacheUtils.invalidateProjectPieceCaches(queryClient),
+        ]).catch(() => undefined);
+      },
+    });
+    return mutation;
+  },
+  useDeletePieceSet: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (id: string) => pieceSetsApi.delete(id),
+      onSuccess: (_, id) => {
+        queryClient.removeQueries({ queryKey: pieceSetKeys.one(id) });
+        refreshAfterProjectChange({ queryClient }).catch(() => undefined);
+      },
+      onError: (error) =>
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't delete the {term}", pieceSetTerms.get()),
+        }),
+    });
+  },
+  useDuplicatePieceSet: ({ onError }: FormErrorHandler) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: ({ id, name }: { id: string; name: string }) =>
+        pieceSetsApi.duplicate(id, { name }),
+      onSuccess: () => {
+        mutationFeedback.success(t('{Term} duplicated', pieceSetTerms.get()));
+        queryClient
+          .invalidateQueries({ queryKey: pieceSetKeys.all })
+          .catch(() => undefined);
+      },
+      onError,
     });
   },
 };
 
-export const pieceSetCacheUtils = {
-  refreshAfterProjectChange: async ({
-    queryClient,
-    id,
-  }: {
-    queryClient: QueryClient;
-    id?: string;
-  }) => {
-    pieceCacheUtils.invalidatePieceCaches(queryClient);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: pieceSetKeys.all }),
-      id === undefined
-        ? Promise.resolve()
-        : queryClient.invalidateQueries({ queryKey: pieceSetKeys.one(id) }),
-      queryClient.invalidateQueries({ queryKey: ['projects-for-platforms'] }),
-      projectCollectionUtils.refetchProjects(),
-    ]);
-  },
-};
+export function usePieceSetChange(id: string): ChangePieceSet {
+  const { mutateAsync } = pieceSetMutations.useChangePieceSet(id);
+  return (change) =>
+    mutateAsync({ change }).then(
+      () => true,
+      () => false,
+    );
+}
 
-function applyPendingRequests({
-  pieceSet,
-  pendingRequests,
-}: {
-  pieceSet: PieceSet;
-  pendingRequests: UpdatePieceSetRequestBody[];
-}): PieceSet {
-  return pendingRequests.reduce<PieceSet>(
-    (current, request) => ({
-      ...current,
-      name: request.name ?? current.name,
-      config: pieceSetConfigUtil.applyUpdate({
-        current: current.config,
-        request,
+export function usePieceSetProjectMoves() {
+  const queryClient = useQueryClient();
+  return async ({
+    pieceSetId,
+    added,
+    removed = [],
+  }: ProjectMoves): Promise<ProjectMovesResult> => {
+    try {
+      const results = await Promise.allSettled([
+        ...(added.length > 0
+          ? [pieceSetsApi.assignProjects(pieceSetId, { projectIds: added })]
+          : []),
+        ...removed.map((projectId) =>
+          pieceSetsApi.removeProject(pieceSetId, projectId),
+        ),
+      ]);
+      const failure = results.find(
+        (result): result is PromiseRejectedResult =>
+          result.status === 'rejected',
+      );
+      if (failure) {
+        throw failure.reason;
+      }
+    } finally {
+      await refreshAfterProjectChange({ queryClient });
+    }
+    if (removed.length === 0) {
+      return { movedElsewhere: [] };
+    }
+    const [platforms, sets] = await Promise.all([
+      queryClient.fetchQuery(projectQueryOptions.forPlatforms()),
+      queryClient.fetchQuery({
+        queryKey: pieceSetKeys.list,
+        queryFn: () => pieceSetsApi.listAll(),
       }),
-    }),
-    pieceSet,
+    ]);
+    const defaultSetId = sets.find((set) => set.isDefault)?.id;
+    const setOf = new Map(
+      platforms
+        .flatMap((entry) => entry.projects)
+        .map((project) => [project.id, project.pieceSetId]),
+    );
+    return {
+      movedElsewhere: removed.filter((projectId) => {
+        const current = setOf.get(projectId);
+        return (
+          !isNil(current) && current !== pieceSetId && current !== defaultSetId
+        );
+      }),
+    };
+  };
+}
+
+function describeChange(change: PieceSetChange): string {
+  switch (change.type) {
+    case 'visibility': {
+      const values = Object.values(change.visible);
+      const count = values.length;
+      if (values.every(Boolean)) {
+        return count === 1 && change.label
+          ? t('{name} shown', { name: change.label })
+          : t('{count, plural, =1 {1 piece shown} other {# pieces shown}}', {
+              count,
+            });
+      }
+      if (values.every((visible) => !visible)) {
+        return count === 1 && change.label
+          ? t('{name} hidden', { name: change.label })
+          : t('{count, plural, =1 {1 piece hidden} other {# pieces hidden}}', {
+              count,
+            });
+      }
+      return t('Changes saved');
+    }
+    case 'newPieces':
+      return change.include
+        ? t('New pieces are shown automatically')
+        : t('New pieces stay hidden until you show them');
+    case 'requiredMode':
+    case 'required':
+      return t('Publishing rule saved');
+    case 'components':
+      return t('Actions for {name} saved', { name: change.pieceDisplayName });
+    case 'patch':
+      return t('Changes saved');
+  }
+}
+
+function replaceInList({
+  queryClient,
+  id,
+  update,
+}: {
+  queryClient: QueryClient;
+  id: string;
+  update: (pieceSet: PieceSet) => PieceSet;
+}): void {
+  queryClient.setQueryData<PieceSet[]>(pieceSetKeys.list, (sets) =>
+    sets?.map((pieceSet) => (pieceSet.id === id ? update(pieceSet) : pieceSet)),
   );
 }
 
-const UpdatePieceSetVariables = z.object({
-  id: z.string(),
-  request: UpdatePieceSetRequestBody,
-});
+function refreshAfterProjectChange({
+  queryClient,
+}: {
+  queryClient: QueryClient;
+}): Promise<unknown> {
+  projectCollectionUtils.refetchProjects();
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: pieceSetKeys.all }),
+    queryClient.invalidateQueries({ queryKey: projectQueryKeys.forPlatforms }),
+    pieceCacheUtils.invalidateProjectPieceCaches(queryClient),
+  ]);
+}
+
+function isNotFound(error: unknown): boolean {
+  return api.isError(error) && error.response?.status === 404;
+}
+
+const MAX_RETRIES = 3;
+const latestChangeBySet = new Map<string, number>();
+
+type ChangeVariables = { change: PieceSetChange; isUndo?: boolean };
+
+type FormErrorHandler = {
+  onError: (error: Error) => void;
+};
+
+type ProjectMoves = {
+  pieceSetId: string;
+  added: string[];
+  removed?: string[];
+};
+
+type ProjectMovesResult = { movedElsewhere: string[] };

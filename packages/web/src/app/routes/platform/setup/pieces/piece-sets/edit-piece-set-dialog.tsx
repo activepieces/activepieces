@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { adminFeedback, adminLayout } from '@/app/components/admin';
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,15 +23,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetMutations, pieceSetTerms } from '@/features/piece-sets';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
-const formSchema = z.object({
-  name: z.string().min(1, { message: formErrors.required }),
-  key: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { pieceSetFormErrors } from './piece-set-form-errors';
 
 type EditPieceSetDialogProps = {
   open: boolean;
@@ -53,7 +48,7 @@ const EditPieceSetForm = ({
   currentKey: string | null;
 }) => {
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(currentKey !== null ? formSchemaWithKey : formSchema),
     defaultValues: {
       name: currentName,
       key: currentKey ?? '',
@@ -62,24 +57,25 @@ const EditPieceSetForm = ({
   });
 
   const { mutate: updateSet, isPending } = pieceSetMutations.useUpdatePieceSet({
-    announce: false,
+    onError: (error) =>
+      pieceSetFormErrors.show({
+        form,
+        error,
+        keyField: 'key',
+      }),
   });
 
   const handleSubmit = ({ name, key }: FormValues) => {
+    if (isPending || !form.formState.isDirty) {
+      return;
+    }
+    form.clearErrors('root.serverError');
     updateSet(
       {
         id,
-        request: {
-          name,
-          key: key || undefined,
-        },
+        request: key !== '' && key !== currentKey ? { name, key } : { name },
       },
-      {
-        onSuccess: () => {
-          adminFeedback.done({ verb: 'update', name });
-          onOpenChange(false);
-        },
-      },
+      { onSuccess: () => onOpenChange(false) },
     );
   };
 
@@ -89,35 +85,45 @@ const EditPieceSetForm = ({
         className="flex flex-col gap-4"
         onSubmit={form.handleSubmit(handleSubmit)}
       >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Name')}</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <fieldset disabled={isPending} className="contents">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Name')}</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="key"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Embed key')}</FormLabel>
+                <FormControl>
+                  <Input placeholder={t('e.g. sales')} {...field} />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'The embed SDK passes this key to put a project on this {term}.',
+                    pieceSetTerms.get(),
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {form.formState.errors.root?.serverError && (
+            <FormMessage>
+              {form.formState.errors.root.serverError.message}
+            </FormMessage>
           )}
-        />
-        <FormField
-          control={form.control}
-          name="key"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t('Key')}</FormLabel>
-              <FormControl>
-                <Input placeholder={t('e.g. my-set')} {...field} />
-              </FormControl>
-              <FormDescription>
-                {t('Used in the Embed SDK to assign this set to a project')}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        </fieldset>
         <DialogFooter>
           <Button
             type="button"
@@ -130,6 +136,7 @@ const EditPieceSetForm = ({
             {...adminControl(AdminControl.PIECE_SETS_SAVE_SUBMIT)}
             type="submit"
             loading={isPending}
+            disabled={!form.formState.isDirty || !form.formState.isValid}
           >
             {t('Save')}
           </Button>
@@ -150,7 +157,7 @@ export const EditPieceSetDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
-          <DialogTitle>{t('Edit Piece Set')}</DialogTitle>
+          <DialogTitle>{t('Edit details')}</DialogTitle>
         </DialogHeader>
         <EditPieceSetForm
           key={open ? 'open' : 'closed'}
@@ -163,3 +170,14 @@ export const EditPieceSetDialog = ({
     </Dialog>
   );
 };
+
+const formSchema = z.object({
+  name: z.string().trim().min(1, { message: formErrors.required }),
+  key: z.string().trim(),
+});
+
+const formSchemaWithKey = formSchema.extend({
+  key: z.string().trim().min(1, { message: formErrors.required }),
+});
+
+type FormValues = z.infer<typeof formSchema>;
