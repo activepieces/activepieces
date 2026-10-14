@@ -371,12 +371,11 @@ async function acquireStreamingLock({ conversationId, runId }: { conversationId:
         return 'acquired'
     }
     const current = await conversationRepo().findOneBy({ id: conversationId })
-    const supersededByNewerRun = !isNil(runId) && !isNil(current?.activeRunId) && current.activeRunId !== runId
-    if (supersededByNewerRun) {
-        return 'superseded'
+    const ownedByARun = !isNil(runId) && !isNil(current?.activeRunId)
+    if (!ownedByARun) {
+        return 'busy'
     }
-    const redeliveredWhileStreaming = !isNil(runId) && current?.activeRunId === runId && current.status === AgentConversationStatus.STREAMING
-    return redeliveredWhileStreaming ? 'duplicate' : 'busy'
+    return current.activeRunId === runId ? 'duplicate' : 'superseded'
 }
 
 async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
