@@ -20,29 +20,25 @@ export const tidycalnewbooking = createTrigger({
   },
   props: {},
   sampleData: {
-    data: [
-      {
-        id: 1,
-        contact_id: 1,
-        booking_type_id: 1,
-        starts_at: '2022-01-01T00:00:00.000000Z',
-        ends_at: '2022-02-01T00:00:00.000000Z',
-        cancelled_at: '2022-02-01T00:00:00.000000Z',
-        created_at: '2022-02-01T00:00:00.000000Z',
-        updated_at: '2022-02-01T00:00:00.000000Z',
-        timezone: 'America/Los_Angeles',
-        meeting_url: 'https://zoom.us/j/949494949494',
-        meeting_id: 'fw44lkj48fks',
-        questions: {},
-        contact: {
-          id: '1',
-          email: 'john@doe.com',
-          name: 'John Doe',
-          created_at: '2022-01-01T00:00:00.000000Z',
-          updated_at: '2022-01-01T00:00:00.000000Z',
-        },
-      },
-    ],
+    id: 1,
+    contact_id: 1,
+    booking_type_id: 1,
+    starts_at: '2022-01-01T00:00:00.000000Z',
+    ends_at: '2022-02-01T00:00:00.000000Z',
+    cancelled_at: null,
+    created_at: '2022-02-01T00:00:00.000000Z',
+    updated_at: '2022-02-01T00:00:00.000000Z',
+    timezone: 'America/Los_Angeles',
+    meeting_url: 'https://zoom.us/j/949494949494',
+    meeting_id: 'fw44lkj48fks',
+    questions: [],
+    contact: {
+      id: 1,
+      email: 'john@doe.com',
+      name: 'John Doe',
+      created_at: '2022-01-01T00:00:00.000000Z',
+      updated_at: '2022-01-01T00:00:00.000000Z',
+    },
   },
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
@@ -82,7 +78,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof tidyCalAuth>, Re
   items: async ({ auth, lastFetchEpochMS }) => {
     const currentValues = await calltidycalapi<{
       data: {
-        id: string;
+        id: number;
         created_at: string;
       }[];
     }>(HttpMethod.GET, `bookings?cancelled=false`, auth, undefined);
