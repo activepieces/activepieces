@@ -51,8 +51,11 @@ export const aiModelCandidates = (log: FastifyBaseLogger) => ({
 })
 
 async function readableCandidates({ platformId, forRun, log }: { platformId: PlatformId, forRun: TierForRun, log: FastifyBaseLogger }): Promise<TierConfigCandidate[]> {
-    const read = await Promise.all(forRun.entries.map(async ({ modelId, key }) => {
+    const read = await Promise.all(forRun.entries.map(async ({ modelId, key }, index) => {
         const { data: config, error } = await tryCatch(() => aiProviderService(log).configForTierKey({ platformId, key }))
+        if (index === 0 && error instanceof ActivepiecesError && error.error.code === ErrorCode.FEATURE_DISABLED) {
+            throw error
+        }
         if (!isNil(error) || isNil(config)) {
             log.warn({ error, aiProvider: { id: key.id }, platformTier: { id: forRun.tier.id } }, '[aiModelCandidates] Skipping a tier entry whose key cannot be read')
             return []

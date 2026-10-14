@@ -21,30 +21,15 @@ export const appearanceHelper = {
 }
 
 const enterpriseThemeChecker = async (platform: PlatformWithoutSensitiveData) => {
-    const edition = system.getEdition()
-    switch (edition) {
-        case ApEdition.COMMUNITY:
-            return defaultTheme
-        case ApEdition.CLOUD:
-            return generateTheme({
-                websiteName: platform.name,
-                fullLogoUrl: platform.fullLogoUrl,
-                favIconUrl: platform.favIconUrl,
-                logoIconUrl: platform.logoIconUrl,
-                primaryColor: platform.primaryColor,
-                themeColors: platform.themeColors ?? undefined,
-            })
-        case ApEdition.ENTERPRISE:
-            if (platform.plan.customAppearanceEnabled) {
-                return generateTheme({
-                    websiteName: platform.name,
-                    fullLogoUrl: platform.fullLogoUrl,
-                    favIconUrl: platform.favIconUrl,
-                    logoIconUrl: platform.logoIconUrl,
-                    primaryColor: platform.primaryColor,
-                    themeColors: platform.themeColors ?? undefined,
-                })
-            }
-            return defaultTheme
+    if (system.getEdition() === ApEdition.COMMUNITY || !platform.plan.customAppearanceEnabled) {
+        return defaultTheme
     }
+    return generateTheme({
+        websiteName: platform.name,
+        fullLogoUrl: platform.fullLogoUrl,
+        favIconUrl: platform.favIconUrl,
+        logoIconUrl: platform.logoIconUrl,
+        primaryColor: platform.primaryColor,
+        themeColors: platform.themeColors ?? undefined,
+    })
 }

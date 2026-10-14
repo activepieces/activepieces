@@ -151,3 +151,20 @@ describe('a tier step falls back on provider failures', () => {
         expect(generateCalls.map((call) => call.modelId)).toEqual(['main', 'backup'])
     })
 })
+
+describe('a tier step the plan no longer covers', () => {
+    it('fails with the plan message the API gave, not the RPC wrapper', async () => {
+        const { ctx } = contextWith([])
+        ctx.apiClient.resolveAiModelCandidates = async () => {
+            throw Object.assign(new Error('RPC [resolveAiModelCandidates] handler threw: FEATURE_DISABLED'), {
+                apError: { code: 'FEATURE_DISABLED', message: PLAN_MESSAGE },
+            })
+        }
+
+        const result = await executeAiJob.execute(ctx, tierJob())
+
+        expect('response' in result ? result.response : undefined).toEqual({ failure: PLAN_MESSAGE })
+    })
+})
+
+const PLAN_MESSAGE = 'Your own AI provider keys are not on this platform\'s plan'

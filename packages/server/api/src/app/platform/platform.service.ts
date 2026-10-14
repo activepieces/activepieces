@@ -261,7 +261,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         }
         const [samlConfigured, plan, usage] = await Promise.all([
             this.hasSamlConfigured(id),
-            getPlan(log, platform),
+            getPlan(log, platform.id),
             getUsage(log, platform),
         ])
         return {
@@ -271,11 +271,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
             plan,
         }
     },
+    async getPlanForPlatform(id: PlatformId): Promise<PlatformPlanLimits> {
+        return getPlan(log, id)
+    },
     async getOneWithPlanOrThrow(id: PlatformId): Promise<Omit<PlatformWithoutSensitiveData, 'usage'>> {
         const platform = await this.getOneOrThrow(id)
         const [samlConfigured, plan] = await Promise.all([
             this.hasSamlConfigured(id),
-            getPlan(log, platform),
+            getPlan(log, platform.id),
         ])
         return {
             ...platform,
@@ -288,7 +291,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         const [samlConfigured, usage, plan, billingEnforced] = await Promise.all([
             this.hasSamlConfigured(id),
             getUsage(log, platform),
-            getPlan(log, platform),
+            getPlan(log, platform.id),
             getBillingEnforced(log, id),
         ])
         return {
@@ -421,7 +424,7 @@ async function assertAuditLogRetentionDaysAllowed({ log, platform, auditLogReten
     if (auditLogRetentionDays === undefined) {
         return
     }
-    const plan = await getPlan(log, platform)
+    const plan = await getPlan(log, platform.id)
     if (!plan.auditLogEnabled) {
         throw new ActivepiecesError({
             code: ErrorCode.FEATURE_DISABLED,
@@ -444,14 +447,14 @@ async function assertAuditLogRetentionDaysAllowed({ log, platform, auditLogReten
     }
 }
 
-async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformPlanLimits> {
+async function getPlan(log: FastifyBaseLogger, platformId: PlatformId): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return {
             ...OPEN_SOURCE_PLAN,
         }
     }
-    return platformPlanService(log).getOrCreateForPlatform(platform.id)
+    return platformPlanService(log).getOrCreateForPlatform(platformId)
 }
 
 function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
