@@ -132,9 +132,9 @@ async function executeMigrationBody({
     log: FastifyBaseLogger
     dataSource: DataSource
 }): Promise<void> {
-    const executionDs = await migrationDatabaseConnection()
-    const queryRunner = executionDs.createQueryRunner()
     try {
+        const executionDs = await migrationDatabaseConnection()
+        const queryRunner = executionDs.createQueryRunner()
         try {
             await migration.up(queryRunner)
         }
