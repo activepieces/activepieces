@@ -1,5 +1,6 @@
 import { AppConnectionType, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { workdaySoapRequest } from './common';
+
+import { workdayApi } from './common/api';
 
 const apiHostDescription =
 	'Your Workday services host, without https://, e.g. `wd2-impl-services1.workday.com`. It is the host of the Token Endpoint or Workday REST API Endpoint shown in **View API Clients**.';
@@ -42,8 +43,7 @@ export const workdayOAuth2Auth = PieceAuth.OAuth2({
 		}),
 		isuPassword: PieceAuth.SecretText({
 			displayName: 'ISU Password (for write operations)',
-			description:
-				'Integration System User password for SOAP API write operations.',
+			description: 'Integration System User password for SOAP API write operations.',
 			required: false,
 		}),
 		wwsVersion: wwsVersionProperty,
@@ -51,8 +51,7 @@ export const workdayOAuth2Auth = PieceAuth.OAuth2({
 	required: true,
 	description: 'Authenticate with Workday',
 	authUrl: 'https://{authHost}/{tenant}/authorize',
-	tokenUrl:
-		'https://{apiHost}/ccx/oauth2/{tenant}/token',
+	tokenUrl: 'https://{apiHost}/ccx/oauth2/{tenant}/token',
 	scope: ['staffing', 'expenses', 'timeTracking', 'resourceManagement'],
 });
 
@@ -77,7 +76,8 @@ The ISU needs a security group with access to the domains and business processes
 		}),
 		username: Property.ShortText({
 			displayName: 'Username',
-			description: 'The ISU username, e.g. `isu_activepieces` (`@<tenant>` is added for SOAP when missing).',
+			description:
+				'The ISU username, e.g. `isu_activepieces` (`@<tenant>` is added for SOAP when missing).',
 			required: true,
 		}),
 		password: PieceAuth.SecretText({
@@ -88,11 +88,9 @@ The ISU needs a security group with access to the domains and business processes
 	},
 	validate: async ({ auth }) => {
 		try {
-			await workdaySoapRequest(
-				{ type: AppConnectionType.CUSTOM_AUTH, props: auth },
-				'Human_Resources',
-				'<bsvc:Server_Timestamp_Get xmlns:bsvc="urn:com.workday/bsvc"/>',
-			);
+			await workdayApi.getServerTimestamp({
+				auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth },
+			});
 			return { valid: true };
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
