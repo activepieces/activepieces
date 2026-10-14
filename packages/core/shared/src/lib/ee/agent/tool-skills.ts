@@ -134,11 +134,12 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
     },
     {
         name: 'flow_management',
-        loadWhen: 'before inspecting, renaming, duplicating, deleting, pausing or annotating an existing flow',
+        loadWhen: 'before inspecting, renaming, duplicating, moving to a folder, deleting, pausing or annotating an existing flow',
         entersBuildPhase: false,
         toolNames: [
             'ap_flow_structure', 'ap_read_step_code', 'ap_read_step_settings',
             'ap_rename_flow', 'ap_duplicate_flow', 'ap_delete_flow', 'ap_change_flow_status', 'ap_manage_notes',
+            'ap_list_folders', 'ap_move_flow_to_folder',
         ],
     },
     {

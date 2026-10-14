@@ -41,7 +41,7 @@ const ActionErrorHandlingForm = React.memo(
       >
         <div className="flex items-center gap-2 text-gray-11">
           <ShieldAlert className="size-4" />
-          <span className="text-[13px] font-semibold tracking-[-0.005em] text-gray-11">
+          <span className="text-sm font-semibold tracking-tight text-gray-11">
             {t('Error handling')}
           </span>
         </div>

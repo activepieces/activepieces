@@ -126,7 +126,7 @@ function FailureDetails({
   const remaining = results.length - 2;
 
   return (
-    <div className="rounded-lg bg-warning-3 px-3 py-2 space-y-1.5">
+    <div className="rounded-xl bg-warning-3 px-3 py-2 space-y-1.5">
       <span className="text-xs font-medium text-warning-11">
         {t('Failed items')}
       </span>

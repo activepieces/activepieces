@@ -67,8 +67,7 @@ const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
           <Button
             type="button"
             variant="ghost"
-            size="icon"
-            className="size-6"
+            size="icon-xs"
             onClick={handleOpen}
             loading={isLoading}
           >
