@@ -46,7 +46,7 @@ export function ModelCapabilityIcons({
             <span
               className={cn(
                 'inline-flex size-5 items-center justify-center rounded-sm',
-                on ? 'bg-gray-3 text-gray-11' : 'text-gray-10',
+                on ? 'bg-gray-3 text-gray-11' : 'text-gray-7',
               )}
               aria-label={
                 on

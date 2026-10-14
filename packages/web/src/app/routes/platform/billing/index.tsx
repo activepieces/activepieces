@@ -210,6 +210,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
                   hasCard={hasBillingPortal}
                   note={autoRechargeNote}
                   className={adminSurface.card}
+                  adminFeedback
                 />
               )}
           </BillingSection>

@@ -81,6 +81,7 @@ export const ConfigureSamlDialog = ({
       <DialogContent
         className={adminLayout.dialog.md}
         showCloseButton={!saving}
+        aria-describedby={undefined}
       >
         {open && (
           <SamlWizard

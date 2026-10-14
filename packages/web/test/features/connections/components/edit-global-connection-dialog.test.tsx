@@ -93,6 +93,7 @@ function render() {
         preSelectForNewProjects={false}
         onEdit={() => undefined}
         userHasPermissionToEdit
+        adminFeedback
       />,
     );
   });

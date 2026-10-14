@@ -347,7 +347,7 @@ describe('mutationFeedback undo refusals and ids', () => {
     );
     expect(toast.success).toHaveBeenCalledTimes(2);
     expect(toast.success.mock.calls[1][0]).toBe('Ann on');
-    expect(toast.success.mock.calls[1][1].id).toBe('switch');
+    expect(toast.success.mock.calls[1][1].id).toMatch(/^switch:retry-/);
 
     toast.success.mock.calls[1][1].action.onClick();
 
@@ -359,7 +359,7 @@ describe('mutationFeedback undo refusals and ids', () => {
 });
 
 describe('mutationFeedback.message priority', () => {
-  it('prefers the friendly copy of a known code over the raw server text', () => {
+  it('keeps the server message ahead of the generic copy for a known code', () => {
     const config = { headers: new AxiosHeaders() };
     const error = new AxiosError(
       'Request failed',
@@ -379,7 +379,7 @@ describe('mutationFeedback.message priority', () => {
     );
 
     expect(mutationFeedback.message(error)).toBe(
-      'It no longer exists. Refresh the page and try again.',
+      'Project Role by name and platformId not found',
     );
   });
 });

@@ -2310,7 +2310,7 @@
   "Select preset": "",
   "Select Time Range": "",
   "Removed {entityName}": "",
-  "Deselecting a global connection from a project that has a flow using it will break the flow.": "",
+  "Deselecting a global connection from a project that has a flow using it, will break the flow.": "",
   "Any flows currently using these connections": "",
   "will break immediately": "",
   "Leave without saving?": "",

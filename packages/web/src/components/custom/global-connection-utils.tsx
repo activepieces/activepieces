@@ -16,7 +16,7 @@ export const GlobalConnectionWarning = () => {
       <TriangleAlert className="h-4 w-4" />
       <AlertDescription>
         {t(
-          'Deselecting a global connection from a project that has a flow using it will break the flow.',
+          'Deselecting a global connection from a project that has a flow using it, will break the flow.',
         )}
       </AlertDescription>
     </Alert>

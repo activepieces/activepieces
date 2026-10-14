@@ -2310,7 +2310,7 @@
   "Select preset": "Seleccionar preajuste",
   "Select Time Range": "Seleccionar rango de tiempo",
   "Removed {entityName}": "Eliminado {entityName}",
-  "Deselecting a global connection from a project that has a flow using it will break the flow.": "Deseleccionar una conexión global de un proyecto que tenga un flujo usándola, romperá el flujo.",
+  "Deselecting a global connection from a project that has a flow using it, will break the flow.": "Deseleccionar una conexión global de un proyecto que tenga un flujo usándola, romperá el flujo.",
   "Any flows currently using these connections": "Cualquier flujo que actualmente use estas conexiones",
   "will break immediately": "se romperá inmediatamente",
   "Leave without saving?": "Leave without saving?",

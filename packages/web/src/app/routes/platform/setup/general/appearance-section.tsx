@@ -470,7 +470,10 @@ function withStatusColors({
 }
 
 const PlatformAppearanceSchema = z.object({
-  name: z.string().min(1, formErrors.required),
+  name: z
+    .string()
+    .min(1, formErrors.required)
+    .refine((value) => value.trim().length > 0, formErrors.required),
   color: ThemeHexColor,
   statusColors: PlatformThemeColors.shape.status.unwrap(),
 });

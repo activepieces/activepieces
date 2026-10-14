@@ -16,13 +16,13 @@ function message(error: unknown): string {
   if (!api.isError(error)) {
     return t(INTERNAL_ERROR_MESSAGE);
   }
-  const known = knownCodeMessage(error);
-  if (known !== undefined) {
-    return known;
-  }
   const serverMessage = api.serverErrorMessage(error);
   if (serverMessage !== undefined) {
     return serverMessage;
+  }
+  const known = knownCodeMessage(error);
+  if (known !== undefined) {
+    return known;
   }
   const clientMessage = clientErrorMessage({
     status: error.response?.status,
@@ -172,7 +172,7 @@ async function runUndo(params: UndoToastParams): Promise<void> {
     if (isUserFacingError(caught) && !wasShown(caught)) {
       markShown(caught);
       toast.error(t("Couldn't undo"), { description: caught.message });
-      undo(params);
+      undo({ ...params, id: retryUndoId(params.id) });
       return;
     }
     if (isQuotaExceeded(caught)) {
@@ -189,6 +189,11 @@ async function runUndo(params: UndoToastParams): Promise<void> {
       error({ error: caught, title: t("Couldn't undo") });
     }
   }
+}
+
+function retryUndoId(id: string | undefined): string | undefined {
+  undoRetryCount += 1;
+  return id === undefined ? undefined : `${id}:retry-${undoRetryCount}`;
 }
 
 async function parseBlobError(error: unknown): Promise<void> {
@@ -231,6 +236,8 @@ const pendingReports = new WeakMap<
 >();
 
 const shownErrors = new WeakSet<object>();
+
+let undoRetryCount = 0;
 
 function isQuotaExceeded(error: unknown): boolean {
   return api.isApError(error, ErrorCode.QUOTA_EXCEEDED);

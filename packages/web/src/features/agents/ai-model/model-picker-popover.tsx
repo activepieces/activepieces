@@ -285,7 +285,6 @@ export function ModelPickerPopover<T>({
       )}
       <PopoverContent
         align={align}
-        collisionPadding={16}
         className={cn(
           'relative p-0',
           matchTriggerWidth

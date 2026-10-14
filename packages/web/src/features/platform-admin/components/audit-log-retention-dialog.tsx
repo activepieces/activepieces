@@ -3,7 +3,7 @@ import { ApFlagId } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CirclePause, Clock, TriangleAlert } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { platformApi } from '@/api/platforms-api';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -103,6 +103,7 @@ function AuditLogRetentionForm({
   const { data: oldestEventCreated } = auditLogQueries.useOldestEventCreated();
   const queryClient = useQueryClient();
 
+  const submitting = useRef(false);
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       await platformApi.update(
@@ -207,7 +208,17 @@ function AuditLogRetentionForm({
           variant={deletesEvents ? 'destructive' : 'default'}
           disabled={selectedValue === initialValue || isPending}
           loading={isPending}
-          onClick={() => mutate()}
+          onClick={() => {
+            if (submitting.current) {
+              return;
+            }
+            submitting.current = true;
+            mutate(undefined, {
+              onSettled: () => {
+                submitting.current = false;
+              },
+            });
+          }}
         >
           {t('Save')}
         </Button>

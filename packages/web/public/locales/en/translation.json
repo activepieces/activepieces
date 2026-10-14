@@ -2260,7 +2260,7 @@
   "Select preset": "Select preset",
   "Select Time Range": "Select Time Range",
   "Removed {entityName}": "Removed {entityName}",
-  "Deselecting a global connection from a project that has a flow using it will break the flow.": "Deselecting a global connection from a project that has a flow using it will break the flow.",
+  "Deselecting a global connection from a project that has a flow using it, will break the flow.": "Deselecting a global connection from a project that has a flow using it, will break the flow.",
   "Any flows currently using these connections": "Any flows currently using these connections",
   "will break immediately": "will break immediately",
   "Leave without saving?": "Leave without saving?",
@@ -3376,5 +3376,7 @@
   "{name} pinned": "{name} pinned",
   "{name} unpinned": "{name} unpinned",
   "Deleted {done} of {total}. {reason}": "Deleted {done} of {total}. {reason}",
-  "Removed {done} of {total}. {reason}": "Removed {done} of {total}. {reason}"
+  "Removed {done} of {total}. {reason}": "Removed {done} of {total}. {reason}",
+  "Each entry must be a full origin, like https://app.example.com": "Each entry must be a full origin, like https://app.example.com",
+  "worker groups": "worker groups"
 }

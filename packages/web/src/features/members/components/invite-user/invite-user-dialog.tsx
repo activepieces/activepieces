@@ -166,27 +166,30 @@ const InviteUserDialogInternal = ({
     HttpError,
     FormSchema
   >({
-    mutationFn: (data) =>
-      sendInvitations.sendAll({
-        emails: data.emails,
-        invite: (email) =>
-          data.type === InvitationType.PLATFORM
-            ? userInvitationApi.invite({
-                email: email.trim().toLowerCase(),
-                type: data.type,
-                platformRole: data.platformRole,
-              })
-            : userInvitationApi.invite({
-                email: email.trim().toLowerCase(),
-                type: data.type,
-                projectRole: data.projectRole!,
-                projectId: project.id,
-              }),
-      }),
+    mutationFn: async (data) => {
+      const invite = (email: string) =>
+        data.type === InvitationType.PLATFORM
+          ? userInvitationApi.invite({
+              email: email.trim().toLowerCase(),
+              type: data.type,
+              platformRole: data.platformRole,
+            })
+          : userInvitationApi.invite({
+              email: email.trim().toLowerCase(),
+              type: data.type,
+              projectRole: data.projectRole!,
+              projectId: project.id,
+            });
+      if (adminFeedback) {
+        return sendInvitations.sendAll({ emails: data.emails, invite });
+      }
+      const sent = await Promise.all(data.emails.map(invite));
+      return { sent, failed: [] };
+    },
     onSuccess: ({ sent: results, failed }) => {
-      refetch();
-      onInviteSuccess?.();
       if (failed.length > 0) {
+        refetch();
+        onInviteSuccess?.();
         reportPartialFailure({ results, failed });
         return;
       }
@@ -213,6 +216,8 @@ const InviteUserDialogInternal = ({
       } else if (toastMessage) {
         toast.success(toastMessage, { duration: 3000 });
       }
+      refetch();
+      onInviteSuccess?.();
     },
     onError: (error) => {
       if (handleSeatLimitError(error)) {
@@ -370,7 +375,7 @@ const InviteUserDialogInternal = ({
           open={open}
           modal
           onOpenChange={(open) => {
-            if (!open && isPending) {
+            if (!open && isPending && adminFeedback) {
               return;
             }
             setOpen(open);
@@ -438,7 +443,7 @@ const InviteUserDialogInternal = ({
                       <Button
                         type="button"
                         variant={'outline'}
-                        disabled={isPending}
+                        disabled={adminFeedback && isPending}
                       >
                         {t('Cancel')}
                       </Button>
