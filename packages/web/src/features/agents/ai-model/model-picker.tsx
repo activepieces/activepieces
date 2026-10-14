@@ -95,7 +95,8 @@ export function ModelPicker({
       onPick={(choice) => onChange(choice)}
       open={open}
       onOpenChange={setOpen}
-      align="start"
+      align={variant === 'pill' ? 'end' : 'start'}
+      side={variant === 'pill' ? 'top' : undefined}
       detail={(item) => {
         const detail = view?.detailById.get(item.id);
         return isNil(detail) ? null : <ModelDetailCard detail={detail} />;
@@ -247,9 +248,9 @@ export function modelPickerView({
             id: 'tiers',
             section: 'tiers',
             sectionHeading: (
-              <SectionHeading dot="bg-swatch-12-mark" label={t('Your tiers')} />
+              <SectionHeading dot="bg-swatch-12-mark" label={t('Tiers')} />
             ),
-            heading: t('Your tiers'),
+            heading: t('Tiers'),
             items: tierItems.map(({ item }) => item),
           },
         ]),
@@ -269,9 +270,7 @@ export function modelPickerView({
     ...keyGroups.map(({ key, info, models }) => ({
       id: `key:${key.providerConfigId}`,
       section: 'keys',
-      sectionHeading: (
-        <SectionHeading dot="bg-gray-10" label={t('Your keys')} />
-      ),
+      sectionHeading: <SectionHeading dot="bg-gray-10" label={t('Models')} />,
       heading: (
         <>
           <KeyLogo logoUrl={info.logoUrl} name={info.name} />

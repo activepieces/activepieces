@@ -35,6 +35,7 @@ export function ModelPickerPopover<T>({
   open,
   onOpenChange,
   align = 'end',
+  side,
   anchorOnly = false,
   matchTriggerWidth = false,
   detail,
@@ -287,6 +288,7 @@ export function ModelPickerPopover<T>({
       )}
       <PopoverContent
         align={align}
+        side={side}
         className={cn(
           'relative p-0',
           matchTriggerWidth
@@ -479,6 +481,7 @@ type ModelPickerPopoverProps<T> = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   align?: 'start' | 'end';
+  side?: 'top' | 'bottom';
   anchorOnly?: boolean;
   matchTriggerWidth?: boolean;
   detail?: (item: ModelPickerItem<T>) => ReactNode;
