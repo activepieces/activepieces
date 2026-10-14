@@ -20,7 +20,6 @@ import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import {
-  AdminEmpty,
   AdminSection,
   SettingsPanel,
   SettingsRow,
@@ -71,11 +70,12 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
           />
         </SettingsPanel>
       ) : (
-        <AdminEmpty
-          icon={<Globe />}
-          title={t('No domains yet')}
-          description={t('Add the domain your people sign in with.')}
-          action={
+        <SettingsPanel flush>
+          <SettingsRow
+            icon={<Globe />}
+            title={t('No domains yet')}
+            description={t('Add the domain your people sign in with.')}
+          >
             <Button asChild size="sm">
               <Link
                 {...adminControl(AdminControl.SSO_DOMAIN_ADD_OPEN)}
@@ -85,8 +85,8 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
                 {t('Add domain')}
               </Link>
             </Button>
-          }
-        />
+          </SettingsRow>
+        </SettingsPanel>
       )}
     </AdminSection>
   );

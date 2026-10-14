@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import {
-  AdminEmpty,
   AdminSection,
   SettingsPanel,
   SettingsRow,
@@ -53,11 +52,12 @@ export const GuestDomainsSection = ({
       }
     >
       {domains.length === 0 ? (
-        <AdminEmpty
-          icon={<Globe />}
-          title={t('No guest domains')}
-          description={t('Add the domains of users you want to invite.')}
-          action={
+        <SettingsPanel flush>
+          <SettingsRow
+            icon={<Globe />}
+            title={t('No guest domains')}
+            description={t('Add the domains of users you want to invite.')}
+          >
             <AddGuestDomainDialog platform={platform} refetch={refetch}>
               <Button
                 {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_OPEN)}
@@ -67,8 +67,8 @@ export const GuestDomainsSection = ({
                 {t('Add domain')}
               </Button>
             </AddGuestDomainDialog>
-          }
-        />
+          </SettingsRow>
+        </SettingsPanel>
       ) : (
         <>
           <SettingsPanel flush>
