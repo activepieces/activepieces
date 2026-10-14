@@ -37,6 +37,7 @@
     "@activepieces/core-formula": "workspace:*"
   },
   "devDependencies": {
+    "@ai-sdk/devtools": "1.0.9",
     "@types/node": "24.11.0",
     "vitest": "3.2.6"
   }

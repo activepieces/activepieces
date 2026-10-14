@@ -88,7 +88,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                           <Button
                             type="button"
                             variant="outline"
-                            className="h-10 px-3 rounded-r-none border-r flex items-center gap-1"
+                            className="rounded-r-none border-r gap-1"
                             disabled={form.formState.disabled}
                           >
                             <div
@@ -108,9 +108,9 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                                 key={colorName}
                                 type="button"
                                 variant="ghost"
-                                size="icon"
+                                size="icon-sm"
                                 className={cn(
-                                  'h-8 w-8 rounded-sm transition-all hover:scale-110 p-0',
+                                  'transition-all hover:scale-110',
                                   PROJECT_COLOR_SWATCH[currentColor] ===
                                     PROJECT_COLOR_SWATCH[colorName] &&
                                     'ring-2 ring-offset-2 ring-offset-panel ring-gray-12',
@@ -142,7 +142,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                       {...field}
                       id="projectName"
                       placeholder={t('Project Name')}
-                      className="h-10 rounded-l-none border-l-0"
+                      className="rounded-l-none border-l-0"
                       disabled={form.formState.disabled}
                     />
                     <FormMessage />
@@ -165,7 +165,7 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                   {...field}
                   id="externalId"
                   placeholder={t('org-3412321')}
-                  className="h-10 font-mono"
+                  className="font-mono"
                   disabled={form.formState.disabled}
                 />
                 <FormDescription className="text-xs text-gray-11">

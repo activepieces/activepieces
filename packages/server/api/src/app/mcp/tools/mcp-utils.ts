@@ -1,4 +1,4 @@
-import { applyFunctionToValuesSync, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { applyFunctionToValuesSync, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
@@ -675,6 +675,10 @@ function extractOptionsArray(options: unknown): Array<{ label: string, value: un
 const RESOLVE_TIMEOUT_MS = 30_000
 const DOUBLE_BRACED_FORMULA = /ap-formula-v(\d+)::\{\{\s*([A-Za-z_]\w*\s*\([\s\S]*?\))\s*\}\}::ap-formula-v\1/g
 
+const CONTAINER_PROP_TYPES = new Set<PropertyType>([PropertyType.ARRAY, PropertyType.OBJECT, PropertyType.JSON])
+
+const ContainerCheckedProp = z.object({ type: z.enum(PropertyType), properties: z.unknown().optional() })
+
 const FOLDER_NAME_SCHEMA = z.string().trim().min(1).max(255).optional().describe('Name of an existing folder to place it in. For a solution of several flows and tables, create the folder with ap_create_folder in an earlier step than the calls that use it (never in the same step, they run at once), then pass the same folderName to each of them.')
 
 async function executePropertyResolution({ pieceName, pieceVersion, actionOrTriggerName, propertyName, auth, input, searchValue, projectId, platformId, log }: {
@@ -761,7 +765,54 @@ async function resolveDynamicPropertySettings({ pieceName, pieceVersion, compone
         const settings: PropertySettings = result?.status === 'dynamic' ? { type, schema: result.props } : { type }
         return [name, settings] as const
     }))
-    return { ...current, ...Object.fromEntries(refreshed) }
+    return syncContainerExecutionTypes({ props: component.props, input, propertySettings: { ...current, ...Object.fromEntries(refreshed) } })
+}
+
+function syncContainerExecutionTypes({ props, input, propertySettings }: {
+    props: PiecePropertyMap
+    input: Record<string, unknown>
+    propertySettings: Record<string, PropertySettings>
+}): Record<string, PropertySettings> {
+    const topLevelFields = Object.entries(props).map(([name, prop]) => ({ name, type: containerExecutionType({ prop, value: input[name] }) }))
+    const claimedByTopLevel = new Set(topLevelFields.filter(({ type }) => !isNil(type)).map(({ name }) => name))
+    const childFields = Object.entries(props)
+        .flatMap(([name, prop]) => dynamicChildFields({ prop, value: input[name], schema: propertySettings[name]?.schema }))
+        .filter(({ name }) => !claimedByTopLevel.has(name))
+        .map(({ name, prop, value }) => ({ name, type: containerExecutionType({ prop, value }) }))
+    const updates = [...topLevelFields, ...childFields].flatMap(({ name, type }): [string, PropertySettings][] => {
+        if (isNil(type) || (propertySettings[name]?.type ?? PropertyExecutionType.MANUAL) === type) {
+            return []
+        }
+        return [[name, { ...propertySettings[name], type }]]
+    })
+    return { ...propertySettings, ...Object.fromEntries(updates) }
+}
+
+function dynamicChildFields({ prop, value, schema }: { prop: ContainerCheckedProp, value: unknown, schema: unknown }): { name: string, prop: ContainerCheckedProp, value: unknown }[] {
+    if (prop.type !== PropertyType.DYNAMIC || !isObject(value)) {
+        return []
+    }
+    const children = z.record(z.string(), ContainerCheckedProp).safeParse(schema).data ?? {}
+    return Object.entries(children).map(([name, child]) => ({ name, prop: child, value: value[name] }))
+}
+
+function containerExecutionType({ prop, value }: { prop: ContainerCheckedProp, value: unknown }): PropertyExecutionType | undefined {
+    const isStructuredArray = prop.type === PropertyType.ARRAY && !isNil(prop.properties)
+    if (!CONTAINER_PROP_TYPES.has(prop.type) || isStructuredArray) {
+        return undefined
+    }
+    if (isWholeReference(value)) {
+        return PropertyExecutionType.DYNAMIC
+    }
+    return Array.isArray(value) || isObject(value) ? PropertyExecutionType.MANUAL : undefined
+}
+
+function isWholeReference(value: unknown): boolean {
+    if (typeof value !== 'string') {
+        return false
+    }
+    const tokens = extractMustacheTokens(value)
+    return tokens.length === 1 && tokens[0].token === value.trim()
 }
 
 // Classify an action by how many records it returns, from its name. This is the signal the agent
@@ -899,6 +950,7 @@ export const mcpUtils = {
     extractOptionsArray,
     executePropertyResolution,
     resolveDynamicPropertySettings,
+    syncContainerExecutionTypes,
     RESOLVE_TIMEOUT_MS,
     STEP_REFERENCE_HINT,
     BRANCH_CONDITIONS_INPUT_SCHEMA,
@@ -971,6 +1023,8 @@ type LookupPieceComponentParams = {
 type LookupPieceComponentResult =
     | { piece: PieceMetadataModel, component: { props: PiecePropertyMap, requireAuth: boolean, name: string, displayName: string, description: string, outputSchema?: OutputSchema, aiMetadata?: AiMetadata, sampleData?: unknown }, pieceName: string, error?: never, closestName?: never }
     | { error: McpToolResult, closestName?: string, piece?: never, component?: never, pieceName?: never }
+
+type ContainerCheckedProp = z.infer<typeof ContainerCheckedProp>
 
 type ResolveFolderResult =
     | { folderId: string | undefined, folderName: string | undefined, error?: never }

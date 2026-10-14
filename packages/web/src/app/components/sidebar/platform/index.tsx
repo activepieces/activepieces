@@ -1,14 +1,8 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useRef } from 'react';
-import { Link } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { ChartLineIcon } from '@/components/icons/chart-line';
-import {
-  ChevronLeftIcon,
-  ChevronLeftIconHandle,
-} from '@/components/icons/chevron-left';
 import { FileHeartIcon } from '@/components/icons/file-heart';
 import { FileJson2Icon } from '@/components/icons/file-json2';
 import { FrameIcon } from '@/components/icons/frame';
@@ -25,37 +19,21 @@ import { SparklesIcon } from '@/components/icons/sparkles';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
 import { UnplugIcon } from '@/components/icons/unplug';
 import { UsersIcon } from '@/components/icons/users';
-import { buttonVariants } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarMenu,
-  SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarMenu,
 } from '@/components/ui/sidebar-shadcn';
 import { PLATFORM_FEATURES } from '@/features/billing';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { determineDefaultRoute } from '@/lib/route-utils';
-import { cn } from '@/lib/utils';
 
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
-import { SidebarUser } from '../sidebar-user';
 
-export function PlatformSidebar() {
+export function PlatformNav() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { checkAccess } = useAuthorization();
-  const defaultRoute = determineDefaultRoute({
-    checkAccess,
-    chatEnabled: platform.plan.chatEnabled,
-  });
-  const chevronRef = useRef<ChevronLeftIconHandle>(null);
 
   const groups: { label: string; items: PlatformNavItem[] }[] = [
     {
@@ -287,65 +265,29 @@ export function PlatformSidebar() {
   ];
 
   return (
-    <Sidebar className="border-r-0!">
-      <SidebarHeader className="px-3 pb-0">
-        <Link
-          to={defaultRoute}
-          className={cn(
-            buttonVariants({ variant: 'ghost' }),
-            'w-full justify-start gap-2 px-2',
-          )}
-          onMouseEnter={() => chevronRef.current?.startAnimation()}
-          onMouseLeave={() => chevronRef.current?.stopAnimation()}
-        >
-          <ChevronLeftIcon ref={chevronRef} className="size-4" size={16} />
-          <span className="truncate text-sm">{t('Back to app')}</span>
-        </Link>
-      </SidebarHeader>
-      <SidebarContent className="gap-0 overflow-hidden">
-        <ScrollArea
-          type="hover"
-          className="min-h-0 flex-1"
-          scrollBarClassName="py-1 pr-0.5"
-          showGradient
-          gradientClassName="h-12"
-        >
-          {groups.map((group, idx) => (
-            <SidebarGroup
-              key={group.label}
-              className={cn(
-                'cursor-default shrink-0 px-3 py-0',
-                idx > 0 && 'mt-4',
-              )}
-            >
-              <SidebarGroupLabel className="h-8 text-sm">
-                {group.label}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.items.map((item) => (
-                    <ApSidebarItem
-                      type="link"
-                      key={item.to}
-                      to={item.to}
-                      label={item.label}
-                      icon={item.icon}
-                      locked={item.locked}
-                      tier={item.tier}
-                      subItems={item.subItems}
-                    />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
-        </ScrollArea>
-      </SidebarContent>
-
-      <SidebarFooter className="px-3 pb-3">
-        <SidebarUser />
-      </SidebarFooter>
-    </Sidebar>
+    <>
+      {groups.map((group) => (
+        <SidebarGroup key={group.label} className="py-1">
+          <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {group.items.map((item) => (
+                <ApSidebarItem
+                  type="link"
+                  key={item.to}
+                  to={item.to}
+                  label={item.label}
+                  icon={item.icon}
+                  locked={item.locked}
+                  tier={item.tier}
+                  subItems={item.subItems}
+                />
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      ))}
+    </>
   );
 }
 

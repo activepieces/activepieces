@@ -14,8 +14,9 @@ vi.mock('../../../../../src/app/waitpoints/resume-service', () => ({
     resumeService: () => ({ resumeFromWaitpoint: mockResumeFromWaitpoint }),
 }))
 
-const { mockSet, mockSetParameters, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOne, mockSave, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
+const { mockSet, mockSetParameters, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOne, mockSave, mockInsertValues, mockTrack, mockSendConversationUpdate } = vi.hoisted(() => ({
     mockSave: vi.fn(),
+    mockInsertValues: vi.fn(),
     mockSet: vi.fn(),
     mockSetParameters: vi.fn(),
     mockWhere: vi.fn(),
@@ -107,6 +108,9 @@ type QueryBuilderMock = {
     where: (sql: string, params: unknown) => QueryBuilderMock
     andWhere: (sql: string, params: unknown) => QueryBuilderMock
     returning: (columns: string) => QueryBuilderMock
+    insert: () => QueryBuilderMock
+    values: (values: unknown) => QueryBuilderMock
+    orIgnore: () => QueryBuilderMock
     execute: () => Promise<{ raw?: unknown[] }>
 }
 
@@ -118,6 +122,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
         resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
+            findOneByOrFail: mockFindOneBy,
             findOne: mockFindOne,
             save: mockSave,
             createQueryBuilder: (): QueryBuilderMock => {
@@ -128,6 +133,9 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
                     where: (_sql, params) => { mockWhere(params); return builder },
                     andWhere: (_sql, params) => { mockAndWhere(params); return builder },
                     returning: () => builder,
+                    insert: () => builder,
+                    values: (values) => { mockInsertValues(values); return builder },
+                    orIgnore: () => builder,
                     execute: mockExecute,
                 }
                 return builder
@@ -359,13 +367,12 @@ async function callGetAgentConfigFor(input: Record<string, unknown>): Promise<un
 
 describe('agentRpcHandlers.getAgentConfig — a flow-step run creates its conversation on first use', () => {
     beforeEach(() => {
-        mockSave.mockClear()
+        mockInsertValues.mockClear()
         mockFindOneBy.mockReset()
     })
 
     it('creates the row with the owner and project the job carried', async () => {
-        mockFindOneBy.mockResolvedValue(null)
-        mockSave.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', messages: [] })
+        mockFindOneBy.mockResolvedValueOnce(null).mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'owner-1', messages: [] })
 
         await callGetAgentConfigFor({
             conversationId: 'conv-1', platformId: 'plat-1', userId: 'owner-1',
@@ -373,7 +380,7 @@ describe('agentRpcHandlers.getAgentConfig — a flow-step run creates its conver
             source: 'FLOW_STEP', projectId: 'proj-1',
         }).catch(() => undefined)
 
-        expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({
+        expect(mockInsertValues).toHaveBeenCalledWith(expect.objectContaining({
             id: 'conv-1',
             source: 'FLOW_STEP',
             projectId: 'proj-1',
@@ -390,7 +397,7 @@ describe('agentRpcHandlers.getAgentConfig — a flow-step run creates its conver
             source: 'FLOW_STEP', projectId: 'proj-1',
         }).catch(() => undefined)
 
-        expect(mockSave).not.toHaveBeenCalled()
+        expect(mockInsertValues).not.toHaveBeenCalled()
     })
 })
 
