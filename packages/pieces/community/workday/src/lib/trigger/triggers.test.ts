@@ -141,12 +141,12 @@ describe('scheduled_report_fetch_batch', () => {
 		);
 
 		const items = (await scheduledReportFetchBatch.test(
-			triggerContext({ reportId: 'Worker_Report', reportParameters: undefined }, makeStore()),
+			triggerContext({ reportId: 'lmcneil/PT_Workers', reportParameters: undefined }, makeStore()),
 		)) as Array<{ total_count: number; report_id: string }>;
 
 		expect(items).toHaveLength(1);
 		expect(items[0].total_count).toBe(2);
-		expect(items[0].report_id).toBe('Worker_Report');
+		expect(items[0].report_id).toBe('lmcneil/PT_Workers');
 	});
 });
 

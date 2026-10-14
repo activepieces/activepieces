@@ -1,12 +1,10 @@
 import {
 	DedupeStrategy,
 	Polling,
-	QueryParams,
 	pollingHelper,
 } from '@activepieces/pieces-common';
 import {
 	AppConnectionValueForAuthProperty,
-	Property,
 	StaticPropsValue,
 	TriggerStrategy,
 	createTrigger,
@@ -15,15 +13,11 @@ import dayjs from 'dayjs';
 import { workdayAuth } from '../auth';
 import { workdayGetReport } from '../common';
 import { flattenRecord } from '../common/fields';
-import { reportIdProperty } from '../common/props';
+import { reportIdProperty, reportParametersProperty } from '../common/props';
 
 const props = {
 	reportId: reportIdProperty,
-	reportParameters: Property.Json({
-		displayName: 'Report Parameters (JSON)',
-		description: 'Optional report prompt values as JSON key-value pairs.',
-		required: false,
-	}),
+	reportParameters: reportParametersProperty,
 };
 
 const polling: Polling<
@@ -33,16 +27,12 @@ const polling: Polling<
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
 		const isTest = lastFetchEpochMS === 0;
-		const report = await workdayGetReport(
+		const report = await workdayGetReport({
 			auth,
-			propsValue.reportId,
-			propsValue.reportParameters as QueryParams | undefined,
-		);
-		const rows = Array.isArray(report['data'])
-			? (report['data'] as Record<string, unknown>[])
-			: Array.isArray(report['Report_Entry'])
-			? (report['Report_Entry'] as Record<string, unknown>[])
-			: [report];
+			report: propsValue.reportId,
+			parameters: propsValue.reportParameters,
+		});
+		const rows = report.format === 'json' ? report.rows : [];
 
 		const limitedRows = isTest ? rows.slice(0, 10) : rows;
 		const flattened = limitedRows.map((row) => flattenRecord(row));
@@ -56,7 +46,7 @@ const polling: Polling<
 				data: {
 					total_count: flattened.length,
 					records: flattened,
-					report_id: propsValue.reportId,
+					report_id: report.reportPath,
 					fetched_at: dayjs().toISOString(),
 				},
 			},
@@ -73,12 +63,12 @@ export const scheduledReportFetchBatch = createTrigger({
 		'Polls a Workday report on a schedule and returns all rows as a batch.',
 	aiMetadata: {
 		description:
-			'Fires on every poll with the full row set of a published Workday custom report, identified by report ID or web service alias and optionally given prompt values as JSON. The whole report is re-fetched each cycle rather than only changed rows, so treat it as a scheduled extract, not a change feed. Use Scheduled Report Fetch using WQL (Batch) instead when the data comes from a WQL query.',
+			'Fires on every poll with the full row set of a Workday custom report enabled as a web service (RaaS), identified by its RaaS URL or `owner/report_name` and optionally given prompt values keyed by prompt XML alias. The whole report is re-fetched each cycle rather than only changed rows, so treat it as a scheduled extract, not a change feed. Use Scheduled Report Fetch using WQL (Batch) instead when the data comes from a WQL query.',
 	},
 	props,
 	sampleData: {
 		total_count: 1,
-		report_id: 'Worker_Report',
+		report_id: 'lmcneil/PT_Workers',
 		records: [{ employee_id: 'worker-001', name: 'Jane Doe' }],
 	},
 	type: TriggerStrategy.POLLING,

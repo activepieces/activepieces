@@ -186,11 +186,22 @@ describe('get_report', () => {
 		);
 
 		const out = (await getReport.run(
-			context({ reportId: 'Worker_Report', reportParameters: undefined }),
+			context({ reportId: 'lmcneil/PT_Workers', reportParameters: undefined, format: undefined }),
 		)) as { total_count: number; report_id: string };
 
 		expect(out.total_count).toBe(2);
-		expect(out.report_id).toBe('Worker_Report');
+		expect(out.report_id).toBe('lmcneil/PT_Workers');
+		expect(requests()[0].url).toContain('/ccx/service/customreport2/mytenant/lmcneil/PT_Workers');
+	});
+
+	it('returns CSV text when the format is csv', async () => {
+		sendRequest.mockResolvedValue(resp('Worker\nA\n'));
+
+		const out = await getReport.run(
+			context({ reportId: 'lmcneil/PT_Workers', reportParameters: undefined, format: 'csv' }),
+		);
+
+		expect(out).toEqual({ report_id: 'lmcneil/PT_Workers', csv: 'Worker\nA\n' });
 	});
 });
 

@@ -57,9 +57,17 @@ export const wqlQueryProperty = Property.LongText({
 });
 
 export const reportIdProperty = Property.ShortText({
-	displayName: 'Report ID or Alias',
-	description: 'Workday report ID or web service alias from the report definition.',
+	displayName: 'Report',
+	description:
+		"The custom report's RaaS URL (on the report: Actions → Web Service → View URLs, copy the JSON link) or `owner/report_name`, e.g. `lmcneil/PT_Workers`. The report must have Enable As Web Service ticked. Prompt values in a pasted URL are kept.",
 	required: true,
+});
+
+export const reportParametersProperty = Property.Json({
+	displayName: 'Report Prompts (JSON)',
+	description:
+		'Prompt values keyed by the prompt XML alias, e.g. `{ "Start_Date": "2026-10-01", "Organizations!WID": "<WID>" }`. A list is sent as multiple values. These override prompts in a pasted URL.',
+	required: false,
 });
 
 export const dateFieldProperty = Property.ShortText({

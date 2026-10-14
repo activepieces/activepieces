@@ -1,46 +1,52 @@
-import { QueryParams } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdayGetReport } from '../common';
 import { flattenRecord } from '../common/fields';
-import { reportIdProperty } from '../common/props';
+import { reportIdProperty, reportParametersProperty } from '../common/props';
 
 export const getReport = createAction({
 	auth: workdayAuth,
 	name: 'get_report',
 	classification: 'READ',
 	displayName: 'Get Report',
-	description: 'Fetches a Workday report by ID or web service alias.',
+	description: 'Runs a Workday custom report through Reports-as-a-Service (RaaS).',
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Runs a published Workday custom report, addressed by its report ID or web service alias, and returns its rows, optionally passing report prompt values as JSON. Use when the data is already shaped by a report definition in the tenant; prefer Find Records (WQL) or Get Report using WQL (Batch) when the query can be expressed in WQL instead. Read-only and idempotent.',
+			'Runs a Workday custom report that is enabled as a web service (RaaS), addressed by its RaaS URL or `owner/report_name`, and returns its rows as JSON or the raw CSV, optionally passing prompt values keyed by prompt XML alias. Use when the data is already shaped by a report definition in the tenant; prefer Find Records (WQL) or Get Report using WQL (Batch) when the query can be expressed in WQL instead. Read-only and idempotent.',
 		idempotent: true,
 	},
 	props: {
 		reportId: reportIdProperty,
-		reportParameters: Property.Json({
-			displayName: 'Report Parameters (JSON)',
-			description: 'Optional report prompt values as JSON key-value pairs.',
+		reportParameters: reportParametersProperty,
+		format: Property.StaticDropdown({
+			displayName: 'Format',
+			description: 'JSON returns the rows; CSV returns the report as CSV text.',
 			required: false,
+			defaultValue: 'json',
+			options: {
+				disabled: false,
+				options: [
+					{ label: 'JSON', value: 'json' },
+					{ label: 'CSV', value: 'csv' },
+				],
+			},
 		}),
 	},
 	async run({ auth, propsValue }) {
-		const report = await workdayGetReport(
+		const report = await workdayGetReport({
 			auth,
-			propsValue.reportId,
-			propsValue.reportParameters as QueryParams | undefined,
-		);
-		const rows = Array.isArray(report['data'])
-			? (report['data'] as Record<string, unknown>[])
-			: Array.isArray(report['Report_Entry'])
-			? (report['Report_Entry'] as Record<string, unknown>[])
-			: [report];
-
+			report: propsValue.reportId,
+			parameters: propsValue.reportParameters,
+			format: propsValue.format === 'csv' ? 'csv' : 'json',
+		});
+		if (report.format === 'csv') {
+			return { report_id: report.reportPath, csv: report.csv };
+		}
 		return {
-			total_count: rows.length,
-			report_id: propsValue.reportId,
-			records: rows.map((row) => flattenRecord(row)),
+			total_count: report.rows.length,
+			report_id: report.reportPath,
+			records: report.rows.map((row) => flattenRecord(row)),
 		};
 	},
 });

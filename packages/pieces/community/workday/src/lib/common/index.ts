@@ -265,20 +265,92 @@ export async function workdayBusinessProcessTransactions({
 	);
 }
 
-export async function workdayGetReport(
-	auth: OAuth2PropertyValue,
-	reportId: string,
-	queryParams?: QueryParams,
-): Promise<Record<string, unknown>> {
-	const response = await workdayRequest<Record<string, unknown>>(
-		auth,
-		HttpMethod.GET,
-		`/reports/${reportId}`,
-		undefined,
-		queryParams,
-		WorkdayService.common,
+export async function workdayGetReport({
+	auth,
+	report,
+	parameters,
+	format = 'json',
+}: {
+	auth: OAuth2PropertyValue;
+	report: string;
+	parameters?: Record<string, unknown>;
+	format?: 'json' | 'csv';
+}): Promise<WorkdayReport> {
+	const { owner, name, urlParameters } = parseReportReference({ auth, report });
+	const reportPath = `${owner}/${name}`;
+	const response = await httpClient.sendRequest<unknown>({
+		method: HttpMethod.GET,
+		url: `https://${getHost(auth)}/ccx/service/customreport2/${encodeURIComponent(getTenant(auth))}/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`,
+		queryParams: { ...urlParameters, ...toPromptValues(parameters), format },
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token: auth.access_token,
+		},
+	});
+	if (format === 'csv') {
+		return { reportPath, format, csv: typeof response.body === 'string' ? response.body : '' };
+	}
+	return { reportPath, format, rows: readReportEntries(response.body) };
+}
+
+function parseReportReference({
+	auth,
+	report,
+}: {
+	auth: OAuth2PropertyValue;
+	report: string;
+}): { owner: string; name: string; urlParameters: Record<string, string> } {
+	const value = report.trim();
+	if (!/^https?:\/\//i.test(value)) {
+		const parts = value.split('/');
+		if (parts.length !== 2 || !parts[0] || !parts[1]) {
+			throw new Error('Enter the report as `owner/report_name` (e.g. `lmcneil/PT_Workers`) or paste its RaaS URL.');
+		}
+		return { owner: parts[0], name: parts[1], urlParameters: {} };
+	}
+	const url = new URL(value);
+	const host = getHost(auth);
+	if (url.hostname.toLowerCase() !== host.toLowerCase()) {
+		throw new Error(`The report URL host "${url.hostname}" does not match the connection's API host "${host}".`);
+	}
+	const match = /^\/ccx\/service\/customreport2\/([^/]+)\/([^/]+)\/([^/]+)\/?$/.exec(url.pathname);
+	if (!match) {
+		throw new Error('The URL is not a Workday RaaS URL (expected /ccx/service/customreport2/{tenant}/{owner}/{report}).');
+	}
+	const tenant = getTenant(auth);
+	if (decodeURIComponent(match[1]) !== tenant) {
+		throw new Error(`The report URL tenant "${decodeURIComponent(match[1])}" does not match the connection's tenant "${tenant}".`);
+	}
+	const urlParameters = Object.fromEntries(
+		[...url.searchParams.entries()].filter(([key]) => key !== 'format'),
 	);
-	return response.body;
+	return {
+		owner: decodeURIComponent(match[2]),
+		name: decodeURIComponent(match[3]),
+		urlParameters,
+	};
+}
+
+function toPromptValues(parameters: Record<string, unknown> | undefined): Record<string, string> {
+	if (!parameters) {
+		return {};
+	}
+	return Object.fromEntries(
+		Object.entries(parameters)
+			.filter(([, value]) => value !== undefined && value !== null)
+			.map(([key, value]) => [key, Array.isArray(value) ? value.map(String).join('!') : String(value)]),
+	);
+}
+
+function readReportEntries(body: unknown): Record<string, unknown>[] {
+	if (typeof body !== 'object' || body === null || !('Report_Entry' in body)) {
+		return [];
+	}
+	const entries = body.Report_Entry;
+	const list = Array.isArray(entries) ? entries : [entries];
+	return list.filter(
+		(entry): entry is Record<string, unknown> => typeof entry === 'object' && entry !== null,
+	);
 }
 
 export async function workdayListCustomObjectDefinitions(
@@ -327,3 +399,7 @@ export async function workdayUpsertCustomObject({
 		: await workdayRequest<Record<string, unknown>>(auth, HttpMethod.POST, path, body, { updateIfExists: 'true' });
 	return response.body;
 }
+
+export type WorkdayReport =
+	| { reportPath: string; format: 'json'; rows: Record<string, unknown>[] }
+	| { reportPath: string; format: 'csv'; csv: string };

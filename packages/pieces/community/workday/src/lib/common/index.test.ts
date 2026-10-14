@@ -127,13 +127,65 @@ describe('workdayWqlRequestAll', () => {
 });
 
 describe('workdayGetReport', () => {
-	it('GETs the report by id on the common service', async () => {
-		sendRequest.mockResolvedValue(resp({ Report_Entry: [{ id: 1 }] }));
-		await workdayGetReport(AUTH, 'Worker_Report');
+	const RAAS = 'https://wd2-impl-services1.workday.com/ccx/service/customreport2/mytenant/lmcneil/PT_Workers';
+
+	it('calls RaaS for owner/report with prompts and format', async () => {
+		sendRequest.mockResolvedValue(resp({ Report_Entry: [{ Worker: 'A' }] }));
+		const report = await workdayGetReport({
+			auth: AUTH,
+			report: 'lmcneil/PT_Workers',
+			parameters: { Start_Date: '2026-10-01', 'Organizations!WID': ['o1', 'o2'], Count: 2 },
+		});
 		const req = sendRequest.mock.calls[0][0] as HttpRequest;
-		expect(req.url).toBe(
-			'https://wd2-impl-services1.workday.com/ccx/api/v1/mytenant/reports/Worker_Report',
-		);
+		expect(req.url).toBe(RAAS);
+		expect(req.queryParams).toEqual({ Start_Date: '2026-10-01', 'Organizations!WID': 'o1!o2', Count: '2', format: 'json' });
+		expect(req.authentication).toMatchObject({ token: 'tok' });
+		expect(report).toEqual({ reportPath: 'lmcneil/PT_Workers', format: 'json', rows: [{ Worker: 'A' }] });
+	});
+
+	it('rebuilds a pasted RaaS URL and keeps its prompts, letting explicit prompts override', async () => {
+		sendRequest.mockResolvedValue(resp({ Report_Entry: [] }));
+		await workdayGetReport({
+			auth: AUTH,
+			report: ` ${RAAS}?Start_Date=2026-01-01&Employee_ID_s_=21001&format=csv `,
+			parameters: { Start_Date: '2026-10-01' },
+		});
+		const req = sendRequest.mock.calls[0][0] as HttpRequest;
+		expect(req.url).toBe(RAAS);
+		expect(req.queryParams).toEqual({ Start_Date: '2026-10-01', Employee_ID_s_: '21001', format: 'json' });
+	});
+
+	it('returns no rows for a report without Report_Entry', async () => {
+		sendRequest.mockResolvedValue(resp({}));
+		const report = await workdayGetReport({ auth: AUTH, report: 'lmcneil/PT_Workers' });
+		expect(report).toEqual({ reportPath: 'lmcneil/PT_Workers', format: 'json', rows: [] });
+	});
+
+	it('returns CSV text when asked', async () => {
+		sendRequest.mockResolvedValue(resp('Worker\nA\n'));
+		const report = await workdayGetReport({ auth: AUTH, report: 'lmcneil/PT_Workers', format: 'csv' });
+		expect((sendRequest.mock.calls[0][0] as HttpRequest).queryParams).toEqual({ format: 'csv' });
+		expect(report).toEqual({ reportPath: 'lmcneil/PT_Workers', format: 'csv', csv: 'Worker\nA\n' });
+	});
+
+	it('refuses a URL on another host', async () => {
+		await expect(
+			workdayGetReport({ auth: AUTH, report: 'https://evil.example.com/ccx/service/customreport2/mytenant/lmcneil/PT_Workers' }),
+		).rejects.toThrow('does not match the connection\'s API host');
+		expect(sendRequest).not.toHaveBeenCalled();
+	});
+
+	it('refuses a URL for another tenant', async () => {
+		await expect(
+			workdayGetReport({ auth: AUTH, report: 'https://wd2-impl-services1.workday.com/ccx/service/customreport2/other/lmcneil/PT_Workers' }),
+		).rejects.toThrow('does not match the connection\'s tenant');
+	});
+
+	it('refuses a reference that is neither a RaaS URL nor owner/report', async () => {
+		await expect(workdayGetReport({ auth: AUTH, report: 'Worker_Report' })).rejects.toThrow('owner/report_name');
+		await expect(
+			workdayGetReport({ auth: AUTH, report: 'https://wd2-impl-services1.workday.com/ccx/api/v1/mytenant/reports/x' }),
+		).rejects.toThrow('not a Workday RaaS URL');
 	});
 });
 
