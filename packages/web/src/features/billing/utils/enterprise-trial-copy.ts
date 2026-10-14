@@ -15,6 +15,15 @@ function daysLeftLabel(trial: EnterpriseTrial): string {
   });
 }
 
+function cardStatus(trial: EnterpriseTrial): string {
+  if (trial.endsToday) {
+    return t('last day');
+  }
+  return t('{count, plural, =1 {1 day left} other {# days left}}', {
+    count: trial.ending ? 1 : trial.daysLeft,
+  });
+}
+
 function sidebarDetail(trial: EnterpriseTrial): string {
   const end = dayjs(trial.endsAt);
   if (trial.endsToday) {
@@ -67,6 +76,7 @@ function details(trial: EnterpriseTrial): string {
 export const enterpriseTrialCopy = {
   daysLeftLabel,
   sidebarDetail,
+  cardStatus,
   endsSentence,
   details,
 };
