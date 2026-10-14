@@ -794,7 +794,6 @@
   "Model": "Model",
   "Pick a model so this agent can answer.": "Pick a model so this agent can answer.",
   "Embedding model for knowledge base: {model}": "Embedding model for knowledge base: {model}",
-  "This provider does not support knowledge base embeddings.": "This provider does not support knowledge base embeddings.",
   "Max steps": "Max steps",
   "Name": "Name",
   "Description": "Description",
@@ -2285,7 +2284,6 @@
   "Add Flow": "Add Flow",
   "Remove knowledge source": "Remove knowledge source",
   "Knowledge Base": "Knowledge Base",
-  "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.": "The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.",
   "Add knowledge": "Add knowledge",
   "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.": "Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.",
   "Add files or tables as knowledge sources for your agent.": "Add files or tables as knowledge sources for your agent.",
@@ -3228,5 +3226,7 @@
   "Not offered anymore": "Not offered anymore",
   "New models from {provider} are added automatically.": "New models from {provider} are added automatically.",
   "{on} of {total} on": "{on} of {total} on",
-  "Image generation": "Image generation"
+  "Image generation": "Image generation",
+  "Your chat provider does not support embeddings. Switch it to a provider like OpenAI or Google for knowledge base to work.": "Your chat provider does not support embeddings. Switch it to a provider like OpenAI or Google for knowledge base to work.",
+  "Your chat provider does not support knowledge base embeddings.": "Your chat provider does not support knowledge base embeddings."
 }
