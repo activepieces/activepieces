@@ -76,7 +76,7 @@ export function ModelDetailCard({ detail }: { detail: ModelDetail }) {
           <DetailRow label={t('Released')}>
             <span className="flex items-center justify-end gap-1.5">
               {dayjs().diff(released, 'day') <= NEW_MODEL_DAYS && (
-                <span className="rounded-full bg-success-3 px-1.5 py-0.5 text-xss leading-none text-success-11">
+                <span className="rounded-full bg-success-3 px-1.5 py-0.5 text-xs leading-none text-success-11">
                   {t('New')}
                 </span>
               )}

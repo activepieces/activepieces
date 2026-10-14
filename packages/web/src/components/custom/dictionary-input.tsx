@@ -119,8 +119,7 @@ export const DictionaryInput = ({
           <Button
             type="button"
             variant="outline"
-            size="icon"
-            className="size-8 shrink-0"
+            size="icon-sm"
             disabled={disabled}
             onClick={() => remove(index)}
           >

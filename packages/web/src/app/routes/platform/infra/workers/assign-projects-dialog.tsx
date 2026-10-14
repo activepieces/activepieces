@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Layers, Search } from 'lucide-react';
 import { useState } from 'react';
 
+import { adminLayout } from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -30,7 +31,7 @@ export function AssignProjectsDialog({
 }: AssignProjectsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className={adminLayout.dialog.md}>
         <AssignProjectsContent
           key={open ? `open-${groupLabel}` : 'closed'}
           groupLabel={groupLabel}

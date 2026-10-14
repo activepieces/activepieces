@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { lemonSqueezyAuth } from '../common/auth';
-import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, buildQueryString, fetchStoreOptions } from '../common/api';
-
+import { lsRequest, pageParams } from '../common/client';
+import { storeOptions } from '../common/props';
+import { rawSchemas } from '../common/output-schemas';
 export const listProducts = createAction({
   name: 'list_products',
   classification: 'SEARCH',
@@ -11,6 +11,7 @@ export const listProducts = createAction({
   audience: 'both',
   aiMetadata: { description: 'List products from Lemon Squeezy, optionally scoped to one store (leave the store empty to span all stores) with page-based pagination. Use to enumerate a catalog or look up products before referencing a variant in a checkout. Read-only and idempotent.', idempotent: true },
   auth: lemonSqueezyAuth,
+  outputSchema: rawSchemas.products,
   props: {
     storeId: Property.Dropdown({
       displayName: 'Store',
@@ -18,13 +19,7 @@ export const listProducts = createAction({
       required: false,
       auth: lemonSqueezyAuth,
       refreshers: ['auth'],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return { disabled: true, placeholder: 'Connect your account first.', options: [] };
-        }
-        const options = await fetchStoreOptions(auth.secret_text);
-        return { options };
-      },
+      options: async ({ auth }) => storeOptions({ auth }),
     }),
     page: Property.Number({
       displayName: 'Page',
@@ -45,15 +40,13 @@ export const listProducts = createAction({
     const queryParams: Record<string, string> = {};
 
     if (propsValue.storeId) queryParams['filter[store_id]'] = propsValue.storeId;
-    if (propsValue.page) queryParams['page[number]'] = String(propsValue.page);
-    if (propsValue.perPage) queryParams['page[size]'] = String(propsValue.perPage);
+    Object.assign(queryParams, pageParams(propsValue));
 
-    const url = `${LEMON_SQUEEZY_API_BASE}/products${buildQueryString(queryParams)}`;
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url,
-      headers: getLemonSqueezyHeaders(auth.secret_text),
+    const response = await lsRequest({
+      apiKey: auth.secret_text,
+      method: 'GET',
+      path: '/products',
+      query: queryParams,
     });
 
     return response.body;

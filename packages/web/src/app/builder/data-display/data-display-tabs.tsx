@@ -66,8 +66,7 @@ const DataDisplayTabs = ({
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="size-7 p-0"
+                    size="icon-xs"
                     onClick={handleCopy}
                     aria-label={t('Copy to clipboard')}
                   >
@@ -82,8 +81,7 @@ const DataDisplayTabs = ({
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="size-7 p-0"
+                    size="icon-xs"
                     onClick={handleDownload}
                     aria-label={t('Download JSON')}
                   >

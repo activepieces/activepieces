@@ -91,7 +91,7 @@ export function ActionPreviewCard({
 function ParamsSection({ params }: { params: InputParam[] }) {
   return (
     <div className="pb-3">
-      <div className="rounded-lg border bg-gray-3/20 divide-y overflow-hidden">
+      <div className="rounded-xl border bg-gray-3/20 divide-y overflow-hidden">
         {params.map((param) => (
           <ParamRow key={param.key} param={param} />
         ))}
@@ -146,7 +146,7 @@ function ExpandableParamRow({ param }: { param: RichInputParam }) {
             {param.kind === 'html' ? (
               <HtmlPreview html={param.value} label={param.key} />
             ) : (
-              <pre className="mt-2 rounded-lg bg-gray-3/40 px-3 py-2 text-xs text-gray-12 overflow-auto max-h-60 whitespace-pre-wrap break-words">
+              <pre className="mt-2 rounded-xl bg-gray-3/40 px-3 py-2 text-xs text-gray-12 overflow-auto max-h-60 whitespace-pre-wrap break-words">
                 {param.value}
               </pre>
             )}
@@ -175,7 +175,7 @@ function BatchParamsSection({
           count: totalCount,
         })}
       </p>
-      <div className="rounded-lg border bg-gray-3/20 divide-y overflow-hidden">
+      <div className="rounded-xl border bg-gray-3/20 divide-y overflow-hidden">
         {samples.map((sample, i) => (
           <div key={i} className="px-1 py-1 space-y-1">
             {buildInputParams(sample).map((param) => (
