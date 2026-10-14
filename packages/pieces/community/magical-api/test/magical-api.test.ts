@@ -6,6 +6,12 @@ import { MagicalApiError, magicalApiRequest } from '../src/lib/common/client';
 import { fetchJobResult, runJob, POLL_MAX_ATTEMPTS } from '../src/lib/common/poll';
 import { toProfileSlug } from '../src/lib/actions/get-profile-data';
 import { magicalApi } from '../src/index';
+import { AppConnectionType, createMockActionContext } from '@activepieces/pieces-framework';
+import { parseResume } from '../src/lib/actions/parse-resume';
+import { reviewResume } from '../src/lib/actions/review-resume';
+import { scoreResume } from '../src/lib/actions/score-resume';
+import { getProfileData } from '../src/lib/actions/get-profile-data';
+import { getCompanyData } from '../src/lib/actions/get-company-data';
 
 let sendRequest: ReturnType<typeof vi.spyOn>;
 let requests: HttpRequest[];
@@ -148,24 +154,29 @@ describe('runJob', () => {
     expect(requests).toHaveLength(0);
   });
 
-  it.each(['parse_resume', 'review_resume', 'score_resume', 'get_profile_data', 'get_company_data'])(
-    '%s rejects a whitespace-only request_id even with valid new-job inputs',
-    async (actionName) => {
-      respondWith({ status: 201, body: { data: { request_id: 'new-paid-job' } } });
-      const action = magicalApi.actions()[actionName];
-      const propsValue = {
-        url: 'https://x.io/a.pdf',
-        job_description: 'jd',
-        profile_name: 'satyanadella',
-        company_name: 'Microsoft',
-        request_id: '   ',
-      };
-      await expect(
-        action.run({ auth: { secret_text: 'k' }, propsValue } as unknown as Parameters<typeof action.run>[0]),
-      ).rejects.toThrow('Request ID is blank');
-      expect(requests).toHaveLength(0);
-    },
-  );
+  it('every new-job action rejects a whitespace-only request_id even with valid new-job inputs', async () => {
+    respondWith({ status: 201, body: { data: { request_id: 'new-paid-job' } } });
+    const auth: { type: AppConnectionType.SECRET_TEXT; secret_text: string } = { type: AppConnectionType.SECRET_TEXT, secret_text: 'k' };
+    const url = 'https://x.io/a.pdf';
+    const request_id = '   ';
+    const runs = [
+      () => parseResume.run({ ...createMockActionContext<typeof parseResume.props>({ propsValue: { url, request_id } }), auth }),
+      () => reviewResume.run({ ...createMockActionContext<typeof reviewResume.props>({ propsValue: { url, request_id } }), auth }),
+      () => scoreResume.run({ ...createMockActionContext<typeof scoreResume.props>({ propsValue: { url, job_description: 'jd', request_id } }), auth }),
+      () => getProfileData.run({ ...createMockActionContext<typeof getProfileData.props>({ propsValue: { profile_name: 'satyanadella', request_id } }), auth }),
+      () =>
+        getCompanyData.run({
+          ...createMockActionContext<typeof getCompanyData.props>({
+            propsValue: { company_name: 'Microsoft', company_username: undefined, company_website: undefined, request_id },
+          }),
+          auth,
+        }),
+    ];
+    for (const run of runs) {
+      await expect(run()).rejects.toThrow('Request ID is blank');
+    }
+    expect(requests).toHaveLength(0);
+  });
 
   it('times out with the Request ID after the attempt budget', async () => {
     respondWith({ status: 201, body: { data: { request_id: 'slow' } } });
