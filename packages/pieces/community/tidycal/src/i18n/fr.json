@@ -29,5 +29,10 @@
   "New Contact": "Nouveau contact",
   "Triggers when a new booking is canceled": "Déclenche quand une nouvelle réservation est annulée",
   "Triggers when a new booking is created": "Déclenche quand une nouvelle réservation est créée",
-  "Triggers when a new contact is created": "Déclenche lorsqu'un nouveau contact est créé"
+  "Triggers when a new contact is created": "Déclenche lorsqu'un nouveau contact est créé",
+  "Triggers when a booking is canceled": "Déclenche quand une réservation est annulée",
+  "Checks TidyCal periodically and runs once for each new booking.": "Vérifie TidyCal régulièrement et s'exécute une fois pour chaque nouvelle réservation.",
+  "Checks TidyCal periodically and runs once for each canceled booking.": "Vérifie TidyCal régulièrement et s'exécute une fois pour chaque réservation annulée.",
+  "Checks TidyCal periodically and runs once for each new contact.": "Vérifie TidyCal régulièrement et s'exécute une fois pour chaque nouveau contact.",
+  "To create a personal access token:\n1. In TidyCal, open [Manage API keys](https://tidycal.com/integrations/advanced) under Integrations.\n2. On the **Personal tokens** tab, click **Create token**, enter a name and click **Create**.\n3. Copy the token now: TidyCal shows it only once.\n\nAPI access needs a paid TidyCal plan.": "Pour créer un jeton d'accès personnel :\n1. Dans TidyCal, ouvrez [Manage API keys](https://tidycal.com/integrations/advanced) sous Integrations.\n2. Dans l'onglet **Personal tokens**, cliquez sur **Create token**, saisissez un nom et cliquez sur **Create**.\n3. Copiez le jeton maintenant : TidyCal ne l'affiche qu'une seule fois.\n\nL'accès à l'API nécessite un abonnement TidyCal payant."
 }
