@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { callOperation } from './call-operation';
 import { createTimeOffRequest } from './create-time-off-request';
 import { createUpdateCustomObject } from './create-update-custom-object';
+import { findSupplierInvoice } from './find-supplier-invoice';
 import { getBusinessObjectDetailsBatch } from './get-business-object-details-batch';
 import { getCustomObjects } from './get-custom-objects';
 import { getReport } from './get-report';
@@ -292,5 +293,36 @@ describe('create_time_off_request', () => {
 				),
 			),
 		).rejects.toThrow('no weekdays');
+	});
+});
+
+describe('find_supplier_invoice', () => {
+	const ENVELOPE =
+		'<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><wd:Get_Supplier_Invoices_Response xmlns:wd="urn:com.workday/bsvc"><wd:Response_Data><wd:Supplier_Invoice><wd:Supplier_Invoice_Data><wd:Invoice_Number>SINV-1</wd:Invoice_Number></wd:Supplier_Invoice_Data></wd:Supplier_Invoice></wd:Response_Data></wd:Get_Supplier_Invoices_Response></env:Body></env:Envelope>';
+
+	it('looks up a Supplier Invoice ID and returns the invoice', async () => {
+		sendRequest.mockResolvedValue(resp(ENVELOPE));
+		const out = (await findSupplierInvoice.run(
+			context({ invoiceId: ' SUPPLIER_INVOICE-11-894 ' }, AUTH_WITH_ISU),
+		)) as Record<string, Record<string, unknown>>;
+		const req = requests()[0];
+		expect(req.url).toContain('/ccx/service/mytenant/Resource_Management/');
+		expect(String(req.body)).toContain('bsvc:type="Supplier_Invoice_Reference_ID">SUPPLIER_INVOICE-11-894<');
+		expect(out['Supplier_Invoice_Data']['Invoice_Number']).toBe('SINV-1');
+	});
+
+	it('sends a 32-character hex value as a WID', async () => {
+		sendRequest.mockResolvedValue(resp(ENVELOPE));
+		await findSupplierInvoice.run(context({ invoiceId: '91d942dfcc7a9001456f855817a50000' }, AUTH_WITH_ISU));
+		expect(String(requests()[0].body)).toContain('bsvc:type="WID">91d942dfcc7a9001456f855817a50000<');
+	});
+
+	it('throws when no invoice comes back', async () => {
+		sendRequest.mockResolvedValue(
+			resp('<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><wd:Get_Supplier_Invoices_Response xmlns:wd="urn:com.workday/bsvc"/></env:Body></env:Envelope>'),
+		);
+		await expect(
+			findSupplierInvoice.run(context({ invoiceId: 'SUPPLIER_INVOICE-0' }, AUTH_WITH_ISU)),
+		).rejects.toThrow('No supplier invoice found');
 	});
 });
