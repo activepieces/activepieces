@@ -2,19 +2,32 @@ import {
 	AuthenticationType,
 	HttpMethod,
 	HttpMessageBody,
+	HttpRequest,
 	HttpResponse,
 	httpClient,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { AppConnectionType, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { XMLParser } from 'fast-xml-parser';
+import type { workdayAuth } from '../auth';
 
-const DEFAULT_HOST = 'wd2-impl-services1.workday.com';
 const WQL_BASE = 'wql/v1';
-const SOAP_VERSION = 'v46.0';
+const DEFAULT_WWS_VERSION = 'v47.0';
 
-function getHost(auth: OAuth2PropertyValue): string {
-	return (auth?.props?.['apiHost'] as string) ?? DEFAULT_HOST;
+function getHost(auth: WorkdayAuthValue): string {
+	return readConnectionProp({ auth, key: 'apiHost' }) ?? '';
+}
+
+function readConnectionProp({
+	auth,
+	key,
+}: {
+	auth: WorkdayAuthValue;
+	key: 'apiHost' | 'tenant' | 'wwsVersion' | 'isuUsername' | 'isuPassword';
+}): string | undefined {
+	const props: Record<string, unknown> | undefined = auth.props;
+	const value = props?.[key];
+	return typeof value === 'string' ? value : undefined;
 }
 
 export const WorkdayService = {
@@ -30,13 +43,29 @@ export const WorkdayService = {
 
 export type ServicePath = typeof WorkdayService[keyof typeof WorkdayService];
 
-function getTenant(auth: OAuth2PropertyValue): string {
-	if (!auth) return '';
-	return auth.props?.['tenant'] ?? '';
+export function getTenant(auth: WorkdayAuthValue): string {
+	return readConnectionProp({ auth, key: 'tenant' }) ?? '';
+}
+
+export function getBearerToken(auth: WorkdayAuthValue): string {
+	if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+		throw new Error(
+			"This action uses Workday's REST API, which needs the OAuth 2.0 connection. Select a Workday OAuth 2.0 connection for this step.",
+		);
+	}
+	return auth.access_token;
+}
+
+function getWwsVersion(auth: WorkdayAuthValue): string {
+	const version = readConnectionProp({ auth, key: 'wwsVersion' })?.trim() || DEFAULT_WWS_VERSION;
+	if (!/^v\d+(\.\d+)?$/.test(version)) {
+		throw new Error(`WWS Version "${version}" is not valid. Use a version like v47.0.`);
+	}
+	return version;
 }
 
 export async function workdayRequest<T extends HttpMessageBody>(
-	auth: OAuth2PropertyValue,
+	auth: WorkdayAuthValue,
 	method: HttpMethod,
 	path: string,
 	body?: Record<string, unknown>,
@@ -51,20 +80,18 @@ export async function workdayRequest<T extends HttpMessageBody>(
 		queryParams,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: auth.access_token,
+			token: getBearerToken(auth),
 		},
 	});
 }
 
 export async function workdayWqlRequest<T extends HttpMessageBody>(
-	auth: OAuth2PropertyValue,
+	auth: WorkdayAuthValue,
 	query: string,
 	limit?: number,
 	offset?: number,
 ): Promise<HttpResponse<T>> {
-	if (!auth || !auth.access_token) {
-		throw new Error('Workday connection is not configured. Please select a valid Workday connection.');
-	}
+	const token = getBearerToken(auth);
 	const tenant = getTenant(auth);
 	const queryParams: QueryParams = {};
 	if (limit !== undefined) queryParams['limit'] = String(limit);
@@ -76,13 +103,13 @@ export async function workdayWqlRequest<T extends HttpMessageBody>(
 		queryParams,
 		authentication: {
 			type: AuthenticationType.BEARER_TOKEN,
-			token: auth.access_token,
+			token,
 		},
 	});
 }
 
 export async function fetchAllPages<T>(
-	auth: OAuth2PropertyValue,
+	auth: WorkdayAuthValue,
 	path: string,
 	queryParams?: QueryParams,
 	dataKey = 'data',
@@ -121,12 +148,15 @@ export async function fetchAllPages<T>(
 	return allItems;
 }
 
-function getIsuCredentials(auth: OAuth2PropertyValue): {
+function getIsuCredentials(auth: WorkdayAuthValue): {
 	username: string;
 	password: string;
 } {
-	const username = auth.props?.['isuUsername'] as string | undefined;
-	const password = auth.props?.['isuPassword'] as string | undefined;
+	if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+		return { username: auth.props.username.trim(), password: auth.props.password };
+	}
+	const username = readConnectionProp({ auth, key: 'isuUsername' })?.trim();
+	const password = readConnectionProp({ auth, key: 'isuPassword' });
 	if (!username || !password) {
 		throw new Error(
 			'ISU Username and Password are required for write operations. Please update your Workday connection with Integration System User credentials.',
@@ -135,18 +165,31 @@ function getIsuCredentials(auth: OAuth2PropertyValue): {
 	return { username, password };
 }
 
-function buildSoapEnvelope(
-	username: string,
-	password: string,
-	operationXml: string,
-): string {
+function escapeXml(value: string): string {
+	return value
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&apos;');
+}
+
+function buildSoapEnvelope({
+	username,
+	password,
+	operationXml,
+}: {
+	username: string;
+	password: string;
+	operationXml: string;
+}): string {
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:bsvc="urn:com.workday/bsvc">
   <soapenv:Header>
     <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" soapenv:mustUnderstand="1">
       <wsse:UsernameToken>
-        <wsse:Username>${username}</wsse:Username>
-        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${password}</wsse:Password>
+        <wsse:Username>${escapeXml(username)}</wsse:Username>
+        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${escapeXml(password)}</wsse:Password>
       </wsse:UsernameToken>
     </wsse:Security>
   </soapenv:Header>
@@ -157,17 +200,21 @@ function buildSoapEnvelope(
 }
 
 export async function workdaySoapRequest(
-	auth: OAuth2PropertyValue,
+	auth: WorkdayAuthValue,
 	soapService: string,
 	operationXml: string,
 ): Promise<Record<string, unknown>> {
 	const tenant = getTenant(auth);
 	const { username, password } = getIsuCredentials(auth);
-	const envelope = buildSoapEnvelope(username, password, operationXml);
+	const envelope = buildSoapEnvelope({
+		username: username.includes('@') ? username : `${username}@${tenant}`,
+		password,
+		operationXml,
+	});
 
 	const response = await httpClient.sendRequest({
 		method: HttpMethod.POST,
-		url: `https://${getHost(auth)}/ccx/service/${tenant}/${soapService}/${SOAP_VERSION}`,
+		url: `https://${getHost(auth)}/ccx/service/${tenant}/${soapService}/${getWwsVersion(auth)}`,
 		headers: {
 			'Content-Type': 'text/xml;charset=UTF-8',
 		},
@@ -202,12 +249,12 @@ export function escapeWql(value: string): string {
 	return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
-export function getApiHost(auth: OAuth2PropertyValue): string {
+export function getApiHost(auth: WorkdayAuthValue): string {
 	return getHost(auth);
 }
 
 export async function workdayWqlRequestAll(
-	auth: OAuth2PropertyValue,
+	auth: WorkdayAuthValue,
 	query: string,
 ): Promise<Record<string, unknown>[]> {
 	const allRows: Record<string, unknown>[] = [];
@@ -245,7 +292,7 @@ export async function workdayBusinessProcessTransactions({
 	typeIds,
 	completedOnly,
 }: {
-	auth: OAuth2PropertyValue;
+	auth: WorkdayAuthValue;
 	momentField: 'dateAndTimeInitiated' | 'dateAndTimeCompleted';
 	sinceEpochMS: number;
 	typeIds?: string[];
@@ -271,7 +318,7 @@ export async function workdayGetReport({
 	parameters,
 	format = 'json',
 }: {
-	auth: OAuth2PropertyValue;
+	auth: WorkdayAuthValue;
 	report: string;
 	parameters?: Record<string, unknown>;
 	format?: 'json' | 'csv';
@@ -282,10 +329,7 @@ export async function workdayGetReport({
 		method: HttpMethod.GET,
 		url: `https://${getHost(auth)}/ccx/service/customreport2/${encodeURIComponent(getTenant(auth))}/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`,
 		queryParams: { ...urlParameters, ...toPromptValues(parameters), format },
-		authentication: {
-			type: AuthenticationType.BEARER_TOKEN,
-			token: auth.access_token,
-		},
+		authentication: getReportAuthentication(auth),
 	});
 	if (format === 'csv') {
 		return { reportPath, format, csv: typeof response.body === 'string' ? response.body : '' };
@@ -293,11 +337,22 @@ export async function workdayGetReport({
 	return { reportPath, format, rows: readReportEntries(response.body) };
 }
 
+function getReportAuthentication(auth: WorkdayAuthValue): HttpRequest['authentication'] {
+	if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+		return {
+			type: AuthenticationType.BASIC,
+			username: auth.props.username.trim().split('@')[0],
+			password: auth.props.password,
+		};
+	}
+	return { type: AuthenticationType.BEARER_TOKEN, token: auth.access_token };
+}
+
 function parseReportReference({
 	auth,
 	report,
 }: {
-	auth: OAuth2PropertyValue;
+	auth: WorkdayAuthValue;
 	report: string;
 }): { owner: string; name: string; urlParameters: Record<string, string> } {
 	const value = report.trim();
@@ -354,7 +409,7 @@ function readReportEntries(body: unknown): Record<string, unknown>[] {
 }
 
 export async function workdayListCustomObjectDefinitions(
-	auth: OAuth2PropertyValue,
+	auth: WorkdayAuthValue,
 ): Promise<Record<string, unknown>[]> {
 	return fetchAllPages<Record<string, unknown>>(
 		auth,
@@ -370,7 +425,7 @@ export async function workdayGetCustomObject({
 	alias,
 	objectId,
 }: {
-	auth: OAuth2PropertyValue;
+	auth: WorkdayAuthValue;
 	alias: string;
 	objectId: string;
 }): Promise<Record<string, unknown>> {
@@ -388,7 +443,7 @@ export async function workdayUpsertCustomObject({
 	objectId,
 	body,
 }: {
-	auth: OAuth2PropertyValue;
+	auth: WorkdayAuthValue;
 	alias: string;
 	objectId?: string;
 	body: Record<string, unknown>;
@@ -403,3 +458,5 @@ export async function workdayUpsertCustomObject({
 export type WorkdayReport =
 	| { reportPath: string; format: 'json'; rows: Record<string, unknown>[] }
 	| { reportPath: string; format: 'csv'; csv: string };
+
+export type WorkdayAuthValue = AppConnectionValueForAuthProperty<typeof workdayAuth>;

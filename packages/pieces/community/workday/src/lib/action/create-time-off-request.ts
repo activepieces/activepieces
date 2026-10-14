@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdaySoapRequest } from '../common';
 
@@ -89,7 +85,7 @@ export const createTimeOffRequest = createAction({
 		}
 
 		const operationXml = `
-    <bsvc:Enter_Time_Off_Request bsvc:version="v46.0" xmlns:bsvc="urn:com.workday/bsvc">
+    <bsvc:Enter_Time_Off_Request xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Business_Process_Parameters>
         <bsvc:Auto_Complete>true</bsvc:Auto_Complete>
         <bsvc:Run_Now>true</bsvc:Run_Now>
@@ -102,7 +98,7 @@ export const createTimeOffRequest = createAction({
     </bsvc:Enter_Time_Off_Request>`;
 
 		return workdaySoapRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			'Absence_Management',
 			operationXml,
 		);

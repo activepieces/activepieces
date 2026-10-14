@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { escapeWql, workdayWqlRequest } from '../common';
 
@@ -39,7 +35,7 @@ export const findSupplierPayment = createAction({
 		const whereClause =
 			conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
 		const response = await workdayWqlRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			`SELECT supplierPayment FROM supplierPayments${whereClause}`,
 		);
 		return response.body;

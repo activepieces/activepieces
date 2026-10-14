@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdaySoapRequest } from '../common';
 
@@ -81,7 +77,7 @@ export const createPreHire = createAction({
 		}
 
 		const operationXml = `
-    <bsvc:Put_Applicant_Request bsvc:version="v46.0" xmlns:bsvc="urn:com.workday/bsvc">
+    <bsvc:Put_Applicant_Request xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Applicant_Data>
         <bsvc:Personal_Data>
           <bsvc:Name_Data>
@@ -112,7 +108,7 @@ export const createPreHire = createAction({
     </bsvc:Put_Applicant_Request>`;
 
 		return workdaySoapRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			'Staffing',
 			operationXml,
 		);

@@ -1,4 +1,4 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { AppConnectionType, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdayListCustomObjectDefinitions } from './index';
 import {
@@ -87,6 +87,9 @@ export const customObjectDefinitionProperty = Property.Dropdown({
 	options: async ({ auth }) => {
 		if (!auth) {
 			return { disabled: true, options: [], placeholder: 'Connect your Workday account first.' };
+		}
+		if (auth.type === AppConnectionType.CUSTOM_AUTH) {
+			return { disabled: true, options: [], placeholder: 'Custom objects need the OAuth 2.0 connection.' };
 		}
 		const definitions = await workdayListCustomObjectDefinitions(auth);
 		return {

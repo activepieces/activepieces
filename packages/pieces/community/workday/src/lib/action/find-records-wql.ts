@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdayWqlRequest } from '../common';
 
@@ -29,7 +25,7 @@ export const findRecordsWql = createAction({
 	},
 	async run(ctx) {
 		const response = await workdayWqlRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			ctx.propsValue.query,
 		);
 		return response.body;

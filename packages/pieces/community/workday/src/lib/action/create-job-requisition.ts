@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdaySoapRequest } from '../common';
 
@@ -141,7 +137,7 @@ export const createJobRequisition = createAction({
 		const reasonIdKind = WID_PATTERN.test(reasonId) ? 'WID' : 'General_Event_Subcategory_ID';
 
 		const operationXml = `
-    <bsvc:Create_Requisition_Request bsvc:version="v46.0" xmlns:bsvc="urn:com.workday/bsvc">
+    <bsvc:Create_Requisition_Request xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Business_Process_Parameters>
         <bsvc:Auto_Complete>true</bsvc:Auto_Complete>
         <bsvc:Run_Now>true</bsvc:Run_Now>
@@ -161,7 +157,7 @@ export const createJobRequisition = createAction({
     </bsvc:Create_Requisition_Request>`;
 
 		return workdaySoapRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			'Recruiting',
 			operationXml,
 		);

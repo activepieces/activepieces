@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdaySoapRequest } from '../common';
 
@@ -94,7 +90,7 @@ export const changeJob = createAction({
 		}
 
 		const operationXml = `
-    <bsvc:Change_Job_Request bsvc:version="v46.0" xmlns:bsvc="urn:com.workday/bsvc">
+    <bsvc:Change_Job_Request xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Business_Process_Parameters>
         <bsvc:Auto_Complete>true</bsvc:Auto_Complete>
         <bsvc:Run_Now>true</bsvc:Run_Now>
@@ -113,7 +109,7 @@ export const changeJob = createAction({
     </bsvc:Change_Job_Request>`;
 
 		return workdaySoapRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			'Staffing',
 			operationXml,
 		);

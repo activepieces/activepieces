@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdaySoapRequest } from '../common';
 
@@ -70,7 +66,7 @@ export const updateSupplierInvoice = createAction({
 		}
 
 		const operationXml = `
-    <bsvc:Submit_Supplier_Invoice_Request bsvc:version="v46.0" xmlns:bsvc="urn:com.workday/bsvc">
+    <bsvc:Submit_Supplier_Invoice_Request xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Supplier_Invoice_Reference>
         <bsvc:ID bsvc:type="WID">${escapeXml(invoiceId)}</bsvc:ID>
       </bsvc:Supplier_Invoice_Reference>
@@ -79,7 +75,7 @@ export const updateSupplierInvoice = createAction({
     </bsvc:Submit_Supplier_Invoice_Request>`;
 
 		return workdaySoapRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			'Resource_Management',
 			operationXml,
 		);

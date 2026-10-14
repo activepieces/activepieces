@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdaySoapRequest } from '../common';
 
@@ -49,14 +45,14 @@ export const approveTask = createAction({
 		}
 
 		const operationXml = `
-    <bsvc:Approve_Business_Process_Request bsvc:version="v46.0" xmlns:bsvc="urn:com.workday/bsvc">
+    <bsvc:Approve_Business_Process_Request xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Event_Reference>
         <bsvc:ID bsvc:type="WID">${escapeXml(taskId)}</bsvc:ID>
       </bsvc:Event_Reference>${commentXml}
     </bsvc:Approve_Business_Process_Request>`;
 
 		return workdaySoapRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			'Integrations',
 			operationXml,
 		);

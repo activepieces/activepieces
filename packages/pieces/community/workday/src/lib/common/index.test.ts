@@ -4,7 +4,7 @@ import {
 	HttpResponse,
 	httpClient,
 } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { AppConnectionType, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	escapeWql,
@@ -14,6 +14,7 @@ import {
 	workdayBusinessProcessTransactions,
 	workdayListCustomObjectDefinitions,
 	workdayRequest,
+	workdaySoapRequest,
 	workdayUpsertCustomObject,
 	workdayWqlRequestAll,
 	WorkdayService,
@@ -260,5 +261,59 @@ describe('workdayBusinessProcessTransactions', () => {
 		await workdayBusinessProcessTransactions({ auth: AUTH, momentField: 'dateAndTimeInitiated', sinceEpochMS: 0 });
 		const query = (sendRequest.mock.calls[0][0] as HttpRequest<{ query: string }>).body?.query;
 		expect(query).toContain("dateAndTimeInitiated > '1970-01-01T00:00:00.000Z' ORDER BY dateAndTimeInitiated DESC LIMIT 10");
+	});
+});
+
+describe('Integration System User connection', () => {
+	const ISU_AUTH = {
+		type: AppConnectionType.CUSTOM_AUTH,
+		props: {
+			apiHost: 'wd2-impl-services1.workday.com',
+			tenant: 'mytenant',
+			username: 'isu_ap',
+			password: 'p<&>"\'w',
+			wwsVersion: '',
+		},
+	} as const;
+	const SOAP_OK =
+		'<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><ok/></env:Body></env:Envelope>';
+
+	it('sends SOAP to the default v47.0 with username@tenant and XML-escaped credentials', async () => {
+		sendRequest.mockResolvedValue(resp(SOAP_OK));
+		await workdaySoapRequest(ISU_AUTH, 'Human_Resources', '<bsvc:Server_Timestamp_Get/>');
+		const req = sendRequest.mock.calls[0][0] as HttpRequest;
+		expect(req.url).toBe('https://wd2-impl-services1.workday.com/ccx/service/mytenant/Human_Resources/v47.0');
+		expect(String(req.body)).toContain('<wsse:Username>isu_ap@mytenant</wsse:Username>');
+		expect(String(req.body)).toContain('>p&lt;&amp;&gt;&quot;&apos;w</wsse:Password>');
+	});
+
+	it('uses the configured WWS version and rejects a malformed one', async () => {
+		sendRequest.mockResolvedValue(resp(SOAP_OK));
+		await workdaySoapRequest({ ...ISU_AUTH, props: { ...ISU_AUTH.props, wwsVersion: 'v45.0' } }, 'Staffing', '<x/>');
+		expect((sendRequest.mock.calls[0][0] as HttpRequest).url).toContain('/Staffing/v45.0');
+		await expect(
+			workdaySoapRequest({ ...ISU_AUTH, props: { ...ISU_AUTH.props, wwsVersion: '../v1' } }, 'Staffing', '<x/>'),
+		).rejects.toThrow('is not valid');
+	});
+
+	it('runs RaaS with Basic auth and the bare username', async () => {
+		sendRequest.mockResolvedValue(resp({ Report_Entry: [] }));
+		await workdayGetReport({
+			auth: { ...ISU_AUTH, props: { ...ISU_AUTH.props, username: 'isu_ap@mytenant' } },
+			report: 'lmcneil/PT_Workers',
+		});
+		expect((sendRequest.mock.calls[0][0] as HttpRequest).authentication).toEqual({
+			type: 'BASIC',
+			username: 'isu_ap',
+			password: 'p<&>"\'w',
+		});
+	});
+
+	it('refuses REST and WQL calls with a clear message', async () => {
+		await expect(workdayRequest(ISU_AUTH, HttpMethod.GET, '/workers')).rejects.toThrow('needs the OAuth 2.0 connection');
+		await expect(workdayWqlRequestAll(ISU_AUTH, 'SELECT worker FROM allWorkers')).rejects.toThrow(
+			'needs the OAuth 2.0 connection',
+		);
+		expect(sendRequest).not.toHaveBeenCalled();
 	});
 });

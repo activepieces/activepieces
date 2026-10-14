@@ -1,11 +1,9 @@
-import {
-	OAuth2PropertyValue,
-	createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 import { workdayAuth } from './lib/auth';
+import { getApiHost, getBearerToken, getTenant } from './lib/common';
 
 import { approveTask } from './lib/action/approve-task';
 import { changeJob } from './lib/action/change-job';
@@ -85,12 +83,14 @@ export const workday = createPiece({
 		createUpdateCustomObject,
 		createCustomApiCallAction({
 			baseUrl: (auth) => {
-				const value = auth as OAuth2PropertyValue;
-				return `https://${value.props?.['apiHost']}/ccx/api/v1/${value.props?.['tenant']}`;
+				if (!auth) {
+					throw new Error('Connect Workday first.');
+				}
+				return `https://${getApiHost(auth)}/ccx/api/v1/${getTenant(auth)}`;
 			},
 			auth: workdayAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+				Authorization: `Bearer ${getBearerToken(auth)}`,
 			}),
 		}),
 	],

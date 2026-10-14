@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdaySoapRequest } from '../common';
 
@@ -62,7 +58,7 @@ export const createSupplierCreditMemo = createAction({
 		}
 
 		const operationXml = `
-    <bsvc:Submit_Supplier_Invoice_Adjustment_Request bsvc:version="v46.0" xmlns:bsvc="urn:com.workday/bsvc">
+    <bsvc:Submit_Supplier_Invoice_Adjustment_Request xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Business_Process_Parameters>
         <bsvc:Auto_Complete>true</bsvc:Auto_Complete>
       </bsvc:Business_Process_Parameters>
@@ -77,7 +73,7 @@ export const createSupplierCreditMemo = createAction({
     </bsvc:Submit_Supplier_Invoice_Adjustment_Request>`;
 
 		return workdaySoapRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			'Resource_Management',
 			operationXml,
 		);

@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { escapeWql, workdayWqlRequest } from '../common';
 
@@ -28,7 +24,7 @@ export const findSupplier = createAction({
 	async run(ctx) {
 		const { supplierId } = ctx.propsValue;
 		const response = await workdayWqlRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			`SELECT supplier, supplierName FROM suppliers WHERE supplier = '${escapeWql(supplierId)}'`,
 		);
 		return response.body;

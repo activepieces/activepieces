@@ -1,8 +1,4 @@
-import {
-	OAuth2PropertyValue,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { workdayAuth } from '../auth';
 import { workdaySoapRequest } from '../common';
 
@@ -70,7 +66,7 @@ export const createWorkerTimeBlock = createAction({
 		}
 
 		const operationXml = `
-    <bsvc:Import_Reported_Time_Blocks_Request bsvc:version="v46.0" xmlns:bsvc="urn:com.workday/bsvc">
+    <bsvc:Import_Reported_Time_Blocks_Request xmlns:bsvc="urn:com.workday/bsvc">
       <bsvc:Reported_Time_Block_Data>
         <bsvc:Worker_Reference>
           <bsvc:ID bsvc:type="WID">${escapeXml(workerId)}</bsvc:ID>
@@ -81,7 +77,7 @@ export const createWorkerTimeBlock = createAction({
     </bsvc:Import_Reported_Time_Blocks_Request>`;
 
 		return workdaySoapRequest(
-			ctx.auth as OAuth2PropertyValue,
+			ctx.auth,
 			'Time_Tracking',
 			operationXml,
 		);
