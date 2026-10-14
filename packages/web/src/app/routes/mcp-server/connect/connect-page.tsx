@@ -29,14 +29,9 @@ export function ConnectPage({
   const appLogos = useMemo(() => pickWallLogos(pieces ?? []), [pieces]);
   const brand = keepTogether(websiteName);
   const openClient = (key: string) => {
-    const detectable = home.clients.some(
-      (client) => client.key === key && client.grantKey !== null,
-    );
-    if (detectable) {
-      home.startWatching();
-    }
     nav.showClient(key);
   };
+
   const showConnections = () => nav.showTab('connections');
 
   return (

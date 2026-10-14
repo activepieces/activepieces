@@ -15,9 +15,10 @@ export function useMcpNav(): McpNav {
     clientKey,
     segment,
     tab: toTab(tab),
-    view: clientKey ? 'client' : 'landing',
+    view: clientKey ? 'client' : params.has('browse') ? 'browse' : 'landing',
     projectId: projectParam ?? authenticationSession.getProjectId(),
     showLanding: () => setParams({}),
+    showBrowse: () => setParams({ browse: '1' }),
     showClient: (key: string) => setParams({ client: key }),
     showTab: (value: string) => navigate(`/mcp-server/${toTab(value)}`),
     selectSegment: (value: string) =>
@@ -63,7 +64,7 @@ export type McpTab = 'connect' | 'tools' | 'connections';
 
 export type McpToolSegment = 'built-in' | 'pieces';
 
-export type McpView = 'landing' | 'client';
+export type McpView = 'landing' | 'browse' | 'client';
 
 export type McpNav = {
   tab: McpTab;
@@ -72,6 +73,7 @@ export type McpNav = {
   clientKey: string | null;
   projectId: string | null;
   showLanding: () => void;
+  showBrowse: () => void;
   showClient: (key: string) => void;
   showTab: (value: string) => void;
   selectSegment: (value: string) => void;
