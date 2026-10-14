@@ -1,5 +1,6 @@
 import { apId } from '@activepieces/core-utils'
 import { FieldType, FilterOperator } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import qs from 'qs'
@@ -237,6 +238,49 @@ describe('Record API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
             expect(body.cells[field2.id].value).toBe('new-cell-value')
+        })
+
+        it('should move the record updated time when a cell is edited', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const lastWeek = dayjs().subtract(7, 'day').toISOString()
+            const [record] = await saveRecordsWithValues({ ctx, table, field, values: ['draft'] })
+            await db.update('record', record.id, { created: lastWeek, updated: lastWeek })
+
+            const response = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [{ fieldId: field.id, value: 'final' }],
+            })
+            const readBack = await ctx.get(`/v1/records/${record.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = readBack?.json()
+            expect(response?.json().updated).toBe(body.updated)
+            expect(dayjs(body.updated).isAfter(lastWeek)).toBe(true)
+            expect(body.updated).toBe(body.cells[field.id].updated)
+            expect(dayjs(body.created).toISOString()).toBe(lastWeek)
+        })
+
+        it('should keep the record updated time when no cell is written', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithField(ctx)
+            const lastWeek = dayjs().subtract(7, 'day').toISOString()
+            const [record] = await saveRecordsWithValues({ ctx, table, field, values: ['draft'] })
+            await db.update('record', record.id, { created: lastWeek, updated: lastWeek })
+
+            const unknownField = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [{ fieldId: apId(), value: 'ignored' }],
+            })
+            const noCells = await ctx.post(`/v1/records/${record.id}`, {
+                tableId: table.id,
+                cells: [],
+            })
+
+            expect(unknownField?.statusCode).toBe(StatusCodes.OK)
+            expect(dayjs(unknownField?.json().updated).toISOString()).toBe(lastWeek)
+            expect(noCells?.statusCode).toBe(StatusCodes.OK)
+            expect(dayjs(noCells?.json().updated).toISOString()).toBe(lastWeek)
         })
 
         it('should return 404 for non-existent record', async () => {

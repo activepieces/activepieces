@@ -197,6 +197,9 @@ export const recordService = {
                 // Perform bulk upsert only for valid cells
                 if (cellsToUpsert.length > 0) {
                     await entityManager
+                        .getRepository(RecordEntity)
+                        .update({ id, projectId, tableId }, { updated: () => 'now()' })
+                    await entityManager
                         .getRepository(CellEntity)
                         .upsert(cellsToUpsert, ['projectId', 'fieldId', 'recordId'])
                 }
