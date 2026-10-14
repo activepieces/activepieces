@@ -108,7 +108,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
     },
 
     async claimNextSignals({ barrierId, projectId, afterSequence, limit, entityManager }: ClaimNextSignalsParams): Promise<SignalClaimResult> {
-        const openBarrier = await lockBarrier({ barrierId, projectId, status: WaitpointStatus.PENDING, entityManager })
+        const openBarrier = await lockOpenBarrier({ barrierId, projectId, entityManager })
         if (isNil(openBarrier)) {
             return { barrierOpen: false }
         }
@@ -133,7 +133,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
     },
 
     async lockForDispatch({ barrierId, projectId, entityManager }: LockForDispatchParams): Promise<boolean> {
-        return !isNil(await lockBarrier({ barrierId, projectId, entityManager }))
+        return !isNil(await lockOpenBarrier({ barrierId, projectId, entityManager }))
     },
 
     async releaseClaim({ signalId, refId, projectId, entityManager }: ReleaseClaimParams): Promise<void> {
@@ -166,7 +166,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
 
     async recordDecision({ barrierId, signalId, projectId, status, result }: RecordDecisionParams): Promise<boolean> {
         const recorded = await transaction(async (entityManager) => {
-            const openBarrier = await lockBarrier({ barrierId, projectId, status: WaitpointStatus.PENDING, entityManager })
+            const openBarrier = await lockOpenBarrier({ barrierId, projectId, entityManager })
             if (isNil(openBarrier)) {
                 return false
             }
@@ -262,11 +262,11 @@ function unclaimedSignalWhere({ barrierId, projectId }: BarrierScopeParams): Fin
     return { waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING, refId: IsNull() }
 }
 
-async function lockBarrier({ barrierId, projectId, status, entityManager }: LockBarrierParams): Promise<Waitpoint | null> {
+async function lockOpenBarrier({ barrierId, projectId, entityManager }: LockForDispatchParams): Promise<Waitpoint | null> {
     return waitpointRepo(entityManager)
         .createQueryBuilder('waitpoint')
         .setLock('pessimistic_read')
-        .where({ id: barrierId, projectId, type: PauseType.BARRIER, ...spreadIfDefined('status', status) })
+        .where({ id: barrierId, projectId, type: PauseType.BARRIER, status: WaitpointStatus.PENDING })
         .getOne()
 }
 
@@ -477,11 +477,6 @@ type ClaimNextSignalsParams = BarrierScopeParams & {
 }
 
 type LockForDispatchParams = BarrierScopeParams & {
-    entityManager: EntityManager
-}
-
-type LockBarrierParams = BarrierScopeParams & {
-    status?: WaitpointStatus
     entityManager: EntityManager
 }
 

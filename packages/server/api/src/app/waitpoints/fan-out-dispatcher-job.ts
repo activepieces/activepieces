@@ -91,7 +91,7 @@ async function dispatchChunks({ data, barrier, source, target, log }: DispatchCh
             return 'barrier-closed'
         }
         const outcomes = await enqueueChunk({ data, barrier, source, target, claims: chunk.claims, childRuns: chunk.childRuns, log })
-        if (outcomes.includes('barrier-gone')) {
+        if (outcomes.includes('barrier-closed')) {
             return 'barrier-closed'
         }
         afterSequence = chunk.lastSequence ?? (cursor === START_OF_BARRIER ? null : START_OF_BARRIER)
@@ -118,9 +118,9 @@ async function enqueueChunk({ data, barrier, source, target, claims, childRuns, 
 
 async function enqueueChild({ data, claim, childRun, seedSteps, target, log }: EnqueueChildParams): Promise<EnqueueOutcome> {
     const attempt = await transaction(async (entityManager): Promise<EnqueueAttempt> => {
-        const barrierExists = await barrierService(log).lockForDispatch({ barrierId: data.barrierId, projectId: data.projectId, entityManager })
-        if (!barrierExists) {
-            return { outcome: 'barrier-gone' }
+        const barrierOpen = await barrierService(log).lockForDispatch({ barrierId: data.barrierId, projectId: data.projectId, entityManager })
+        if (!barrierOpen) {
+            return { outcome: 'barrier-closed' }
         }
         const { error } = await tryCatch(() => flowRunService(log).enqueueChildRun({ target, childRun, seedSteps }))
         if (isNil(error)) {
@@ -134,8 +134,9 @@ async function enqueueChild({ data, claim, childRun, seedSteps, target, log }: E
         case 'enqueued':
             await flowRunService(log).reportChildRunStarted({ target, childRun })
             return 'enqueued'
-        case 'barrier-gone':
-            return 'barrier-gone'
+        case 'barrier-closed':
+            await flowRunService(log).cancelUnstartedChildRun({ target, childRun })
+            return 'barrier-closed'
         case 'failed':
             await settleIfDispatchGaveUp({ data, log })
             throw attempt.error
@@ -166,7 +167,7 @@ const MAX_ENQUEUES_IN_FLIGHT = 5
 
 type DispatchOutcome = 'dispatched' | 'barrier-closed' | 'credits-exhausted'
 
-type EnqueueOutcome = 'enqueued' | 'barrier-gone'
+type EnqueueOutcome = 'enqueued' | 'barrier-closed'
 
 type EnqueueAttempt =
     | { outcome: EnqueueOutcome }

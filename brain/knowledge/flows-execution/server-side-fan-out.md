@@ -43,9 +43,9 @@ the source, then marks the unclaimed signals `NOT_DISPATCHED`.
 - **Never widen a sweep to "all `PENDING`".** A dispatched signal stays `PENDING` with a `refId` until its child
   ends, and a body that waits on an approval keeps it there for days. A status-only sweep marks live children
   `NOT_DISPATCHED`, the barrier releases, and their outcomes report into nothing.
-- **A child claimed before a release still starts after it.** The summary lists it as `stillRunning` with its run
-  id. Only a cancel, which deletes the barrier row, stops its enqueue; the cancel's child snapshot then cancels the
-  row.
+- **A child claimed just before a release never starts.** Its enqueue needs the barrier `PENDING`, so the
+  dispatcher cancels it instead (`cancelUnstartedChildRun`). The release summary still counts it as `stillRunning`
+  with its run id, because its claim came first.
 - **The engine retries `POST /v1/waitpoints` on a 500.** The retry reuses the open barrier, so `create` stores the
   source and adds the dispatch job on that path too. The fixed job id `dispatch-<barrierId>` and the claims make
   the repeat safe.

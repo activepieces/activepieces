@@ -406,13 +406,17 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }, log)
     },
 
-    async reportChildRunStarted({ target, childRun }: ReportChildRunStartedParams): Promise<void> {
+    async reportChildRunStarted({ target, childRun }: ChildRunParams): Promise<void> {
         const logFields = { flowRun: { id: childRun.id, dispatchIndex: childRun.dispatchIndex }, project: { id: target.projectId }, waitpoint: { id: childRun.parentWaitpointId } }
         const { error } = await tryCatch(() => flowRunSideEffects(log).onStart({ flowRun: childRun, platformId: target.platformId }))
         if (error) {
             log.error({ ...logFields, error }, '[flowRunService#reportChildRunStarted] Child run was enqueued but its start side effects failed')
         }
         log.info(logFields, '[flowRunService#reportChildRunStarted] Child run dispatched')
+    },
+
+    async cancelUnstartedChildRun({ target, childRun }: ChildRunParams): Promise<void> {
+        await cancelSingleRun(log, childRun, target.platformId)
     },
 
     async deleteChildRun({ id, projectId, entityManager }: DeleteChildRunParams): Promise<void> {
@@ -983,7 +987,7 @@ type EnqueueChildRunParams = {
     seedSteps: Record<string, unknown>
 }
 
-type ReportChildRunStartedParams = {
+type ChildRunParams = {
     target: ChildDispatchTarget
     childRun: FlowRunWithDispatchIndex
 }

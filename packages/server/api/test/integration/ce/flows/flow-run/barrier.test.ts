@@ -17,6 +17,7 @@ import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import * as barrierQueueModule from '../../../../../src/app/waitpoints/barrier-queue'
 import { BarrierJobData, barrierSourceKey } from '../../../../../src/app/waitpoints/barrier-queue-factory'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
+import * as barrierServiceModule from '../../../../../src/app/waitpoints/barrier-service'
 import { fanOutDispatchGaveUp, handleFanOutDispatch, handleFanOutDispatchGaveUp } from '../../../../../src/app/waitpoints/fan-out-dispatcher-job'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
@@ -1401,6 +1402,30 @@ describe('fan-out dispatch', () => {
             expect(attributedRunIds.sort()).toEqual(chunk.childRuns.map((childRun) => childRun.id).sort())
             await dispatch(barrier.id)
             expect(await listChildren(barrier.id)).toHaveLength(2)
+        })
+    })
+
+    it('cancels a claimed child whose barrier released before its enqueue, so it never starts', async () => {
+        const { flowRun } = await createFanOutParentRun(FlowRunStatus.RUNNING)
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1], batchSize: 1 })
+            const realBarrierService = barrierServiceModule.barrierService
+            vi.spyOn(barrierServiceModule, 'barrierService').mockImplementation((log) => ({
+                ...realBarrierService(log),
+                lockForDispatch: async (params) => {
+                    await realBarrierService(log).release({ barrier, timedOut: true, releaseReason: 'timeout' })
+                    return realBarrierService(log).lockForDispatch(params)
+                },
+            }))
+            try {
+                await expect(dispatch(barrier.id)).resolves.toBeUndefined()
+            }
+            finally {
+                vi.restoreAllMocks()
+            }
+
+            expect(await readSummary(barrier.id)).toMatchObject({ total: 1, stillRunning: 1 })
+            await waitFor(async () => (await listChildren(barrier.id))[0]?.status === FlowRunStatus.CANCELED)
         })
     })
 
