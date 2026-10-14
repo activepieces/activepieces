@@ -107,7 +107,7 @@ describe('Own AI keys plan gate', () => {
         const tier = (await ctx.post(TIERS, { name: 'Fast', emoji: '⚡', entries: [{ configId: key.id, modelId: 'gpt-4o' }] })).json()
         await platformPlanService(app!.log).update({ platformId: ctx.platform.id, aiProvidersEnabled: false })
 
-        await expect(aiModelCandidates(app!.log).resolve({ platformId: ctx.platform.id, tierId: tier.id })).rejects.toMatchObject({
+        await expect(aiModelCandidates(app!.log).resolve({ platformId: ctx.platform.id, tierId: tier.id, scope: { type: 'platform' } })).rejects.toMatchObject({
             error: expect.objectContaining({ code: ErrorCode.FEATURE_DISABLED }),
         })
     })
