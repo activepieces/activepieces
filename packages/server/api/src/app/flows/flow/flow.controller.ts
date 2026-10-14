@@ -364,7 +364,7 @@ const UpdateFlowWorkerGroupRequestOptions = {
             id: ApId,
         }),
         body: z.object({
-            workerGroupId: z.string().nullable(),
+            workerGroupId: z.string().min(1).nullable(),
         }),
     },
 }

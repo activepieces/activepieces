@@ -32,12 +32,19 @@ const getFlowGroupQueueName = (workerGroupId: string): string => {
     return `flow-${workerGroupId}-jobs`
 }
 
+const isRoutableWorkerGroupId = (value: string): boolean => {
+    return value.length > 0 && value !== NO_WORKER_GROUP_SENTINEL
+}
+
 export const workerGroupQueues = {
     parseWorkerGroupValue,
     getPlatformGroupQueueName,
     getProjectGroupQueueName,
     getFlowGroupQueueName,
+    isRoutableWorkerGroupId,
 }
+
+export const NO_WORKER_GROUP_SENTINEL = '__none__'
 
 export const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
     WorkerJobType.EXECUTE_FLOW,

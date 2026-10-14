@@ -1,11 +1,11 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { platformQueueMigrationService } from './queue-migration.service'
-import { workerGroupQueues } from './worker-group-queues'
+import { NO_WORKER_GROUP_SENTINEL, workerGroupQueues } from './worker-group-queues'
 import { workerGroupRouting } from './worker-group-routing'
 
 export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
@@ -20,7 +20,8 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
             where: { id: flowId },
         })
 
-        const workerGroupId = flow?.workerGroupId ?? null
+        const stored = flow?.workerGroupId ?? null
+        const workerGroupId = !isNil(stored) && workerGroupQueues.isRoutableWorkerGroupId(stored) ? stored : null
         await distributedStore.put(getFlowWorkerGroupCacheKey(flowId), workerGroupId ?? NO_WORKER_GROUP_SENTINEL, CACHE_TTL_SECONDS)
         return workerGroupId
     },
@@ -30,6 +31,14 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
     },
 
     async assignFlowToGroup({ flowId, projectId, platformId, workerGroupId }: AssignFlowToGroupParams): Promise<void> {
+        if (!isNil(workerGroupId) && !workerGroupQueues.isRoutableWorkerGroupId(workerGroupId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `"${workerGroupId}" is not a valid worker group id`,
+                },
+            })
+        }
         const flow = await flowRepo().findOneOrFail({
             select: ['id', 'workerGroupId'],
             where: { id: flowId, projectId },
@@ -54,7 +63,6 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
 
 const getFlowWorkerGroupCacheKey = (flowId: string): string => `flow:${flowId}:worker_group`
 
-const NO_WORKER_GROUP_SENTINEL = '__none__'
 const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
 
 type AssignFlowToGroupParams = {

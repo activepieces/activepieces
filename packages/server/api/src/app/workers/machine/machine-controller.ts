@@ -18,6 +18,7 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.FETCH_WORKER_SETTINGS, (socket) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
             const rawWorkerGroupValue = socket.handshake.auth?.workerGroupId
+            // AP_PROJECT_WORKER is deprecated in favor of AP_WORKER_GROUP_SCOPE but kept for backward compatibility.
             const projectWorker = socket.handshake.auth?.projectWorker === true
             const rawWorkerGroupScope = socket.handshake.auth?.workerGroupScope
             const assignment = workerGroupQueues.parseWorkerGroupValue({

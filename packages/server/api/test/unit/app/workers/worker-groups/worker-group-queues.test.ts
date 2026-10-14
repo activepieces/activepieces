@@ -20,3 +20,15 @@ describe('workerGroupQueues.parseWorkerGroupValue', () => {
         expect(workerGroupQueues.parseWorkerGroupValue({ value: 'g1', projectWorker: true, scope: 'bogus' })).toEqual({ scope: WorkerGroupScope.PROJECT, id: 'g1' })
     })
 })
+
+describe('workerGroupQueues.isRoutableWorkerGroupId', () => {
+    it('rejects values no worker can ever claim', () => {
+        expect(workerGroupQueues.isRoutableWorkerGroupId('')).toBe(false)
+        expect(workerGroupQueues.isRoutableWorkerGroupId('__none__')).toBe(false)
+    })
+
+    it('accepts ordinary labels', () => {
+        expect(workerGroupQueues.isRoutableWorkerGroupId('g1')).toBe(true)
+        expect(workerGroupQueues.isRoutableWorkerGroupId('canary')).toBe(true)
+    })
+})
