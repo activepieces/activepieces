@@ -61,6 +61,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         embeddingEnabled: {
             type: Boolean,
         },
+        activepiecesAiProviderHidden: {
+            type: Boolean,
+            default: false,
+        },
         aiProvidersEnabled: {
             type: Boolean,
             default: false,
@@ -161,6 +165,14 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         },
         workerGroupId: {
             type: String,
+            nullable: true,
+        },
+        enterpriseTrialStartedAt: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
+        enterpriseTrialEndsAt: {
+            type: 'timestamp with time zone',
             nullable: true,
         },
         /** @deprecated see RetiredPlatformPlanColumns */

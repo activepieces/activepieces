@@ -3361,5 +3361,6 @@
   "Deleted {done} of {total}. {reason}": "Deleted {done} of {total}. {reason}",
   "Removed {done} of {total}. {reason}": "Removed {done} of {total}. {reason}",
   "Each entry must be a full origin, like https://app.example.com": "Each entry must be a full origin, like https://app.example.com",
-  "worker groups": "worker groups"
+  "worker groups": "worker groups",
+  "Trial ended": "Trial ended"
 }
