@@ -6,7 +6,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { getAccessTokenOrThrow, HttpError } from '@activepieces/pieces-common';
 import { typeformAuth } from '../auth';
 import { newSubmissionOutputSchema } from '../output-schemas';
 
@@ -92,11 +92,18 @@ export const typeformNewSubmission = createTrigger({
       '_new_submission_trigger'
     );
     if (response !== null && response !== undefined) {
-      await typeformCommon.unsubscribeWebhook(
-        context.propsValue['form_id']!,
-        response.tag,
-        getAccessTokenOrThrow(context.auth)
-      );
+      try {
+        await typeformCommon.unsubscribeWebhook(
+          context.propsValue['form_id']!,
+          response.tag,
+          getAccessTokenOrThrow(context.auth)
+        );
+      } catch (error) {
+        if (error instanceof HttpError && error.response.status === 404) {
+          return;
+        }
+        throw error;
+      }
     }
   },
   async run(context) {
