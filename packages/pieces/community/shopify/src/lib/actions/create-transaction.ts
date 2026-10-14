@@ -91,8 +91,16 @@ export const createTransactionAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { orderId, kind, currency, amount, parentId, source, test } =
-      propsValue;
+    const {
+      orderId,
+      kind,
+      currency,
+      amount,
+      authorization,
+      parentId,
+      source,
+      test,
+    } = propsValue;
 
     return await createTransaction(
       orderId,
@@ -100,6 +108,7 @@ export const createTransactionAction = createAction({
         amount,
         currency,
         kind,
+        authorization,
         parent_id: parentId,
         source,
         test,
