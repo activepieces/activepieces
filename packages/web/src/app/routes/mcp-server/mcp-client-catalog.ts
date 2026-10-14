@@ -427,7 +427,7 @@ function catalogEntries({
             },
             {
               body: t('Inside Gemini CLI, sign in and approve the project.'),
-              block: terminal(`/mcp auth ${slug}`),
+              block: code({ label: 'Gemini CLI', text: `/mcp auth ${slug}` }),
             },
           ],
         },
@@ -452,7 +452,7 @@ function catalogEntries({
             },
             {
               body: t('Inside Gemini CLI, sign in and approve the project.'),
-              block: terminal(`/mcp auth ${slug}`),
+              block: code({ label: 'Gemini CLI', text: `/mcp auth ${slug}` }),
             },
           ],
         },
