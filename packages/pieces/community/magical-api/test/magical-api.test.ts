@@ -140,6 +140,33 @@ describe('runJob', () => {
     expect(requests[0].body).toEqual({ request_id: 'r9' });
   });
 
+  it('rejects a whitespace-only request_id before any request', async () => {
+    respondWith({ status: 201, body: { data: { request_id: 'new-paid-job' } } });
+    await expect(
+      runJob({ apiKey: 'k', service: 'resume_parser', input: { url: 'https://x.io/a.pdf' }, requestId: '   ', sleep: noSleep }),
+    ).rejects.toThrow('Request ID is blank');
+    expect(requests).toHaveLength(0);
+  });
+
+  it.each(['parse_resume', 'review_resume', 'score_resume', 'get_profile_data', 'get_company_data'])(
+    '%s rejects a whitespace-only request_id even with valid new-job inputs',
+    async (actionName) => {
+      respondWith({ status: 201, body: { data: { request_id: 'new-paid-job' } } });
+      const action = magicalApi.actions()[actionName];
+      const propsValue = {
+        url: 'https://x.io/a.pdf',
+        job_description: 'jd',
+        profile_name: 'satyanadella',
+        company_name: 'Microsoft',
+        request_id: '   ',
+      };
+      await expect(
+        action.run({ auth: { secret_text: 'k' }, propsValue } as unknown as Parameters<typeof action.run>[0]),
+      ).rejects.toThrow('Request ID is blank');
+      expect(requests).toHaveLength(0);
+    },
+  );
+
   it('times out with the Request ID after the attempt budget', async () => {
     respondWith({ status: 201, body: { data: { request_id: 'slow' } } });
     await expect(

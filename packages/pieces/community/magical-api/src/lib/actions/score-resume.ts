@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { magicalApiAuth } from '../common/auth';
-import { isHttpUrl, runJob } from '../common/poll';
+import { isHttpUrl, runJob, normalizeRequestId } from '../common/poll';
 import { scoreResumeOutputSchema } from '../common/output-schemas';
 
 export const scoreResume = createAction({
@@ -34,7 +34,8 @@ export const scoreResume = createAction({
   },
   outputSchema: scoreResumeOutputSchema,
   async run(context) {
-    const { url, job_description, request_id } = context.propsValue;
+    const { url, job_description, request_id: rawRequestId } = context.propsValue;
+    const request_id = normalizeRequestId(rawRequestId);
     if (!request_id) {
       if (!url || !job_description || job_description.trim().length === 0) {
         throw new Error('To start a new request, you must provide both a Resume URL and a Job Description.');

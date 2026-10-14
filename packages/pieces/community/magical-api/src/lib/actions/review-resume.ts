@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { magicalApiAuth } from '../common/auth';
-import { isHttpUrl, runJob } from '../common/poll';
+import { isHttpUrl, runJob, normalizeRequestId } from '../common/poll';
 import { reviewResumeOutputSchema } from '../common/output-schemas';
 
 export const reviewResume = createAction({
@@ -29,7 +29,8 @@ export const reviewResume = createAction({
   },
   outputSchema: reviewResumeOutputSchema,
   async run(context) {
-    const { url, request_id } = context.propsValue;
+    const { url, request_id: rawRequestId } = context.propsValue;
+    const request_id = normalizeRequestId(rawRequestId);
     if (!request_id) {
       if (!url) {
         throw new Error('To start a new request, you must provide a Resume URL.');

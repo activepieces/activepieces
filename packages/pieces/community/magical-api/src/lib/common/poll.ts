@@ -30,7 +30,7 @@ export async function runJob({
   requestId: string | undefined;
   sleep?: (ms: number) => Promise<void>;
 }): Promise<Record<string, unknown>> {
-  const trimmedRequestId = requestId?.trim();
+  const trimmedRequestId = normalizeRequestId(requestId);
   let result: JobResult;
   if (trimmedRequestId) {
     result = await fetchJobResult({ apiKey, service, requestId: trimmedRequestId });
@@ -57,6 +57,19 @@ export async function runJob({
   throw new Error(
     `${SERVICES[service].label} is still processing after ${(POLL_MAX_ATTEMPTS * POLL_INTERVAL_MS) / 1000} seconds. Run the step again with Request ID ${pendingId} (or use Get Job Result) to get the result without starting (and paying for) a new job.`,
   );
+}
+
+export function normalizeRequestId(requestId: string | null | undefined): string | undefined {
+  if (requestId === undefined || requestId === null || requestId === '') {
+    return undefined;
+  }
+  const trimmed = requestId.trim();
+  if (trimmed.length === 0) {
+    throw new Error(
+      'Request ID is blank. Paste the Request ID from an earlier run to get its result, or clear the field to start a new (paid) request.',
+    );
+  }
+  return trimmed;
 }
 
 export function isHttpUrl(value: string): boolean {

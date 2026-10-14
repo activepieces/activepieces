@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { magicalApiAuth } from '../common/auth';
-import { runJob } from '../common/poll';
+import { runJob, normalizeRequestId } from '../common/poll';
 import { profileDataOutputSchema } from '../common/output-schemas';
 
 export const getProfileData = createAction({
@@ -29,7 +29,8 @@ export const getProfileData = createAction({
   },
   outputSchema: profileDataOutputSchema,
   async run(context) {
-    const { profile_name, request_id } = context.propsValue;
+    const { profile_name, request_id: rawRequestId } = context.propsValue;
+    const request_id = normalizeRequestId(rawRequestId);
     const slug = profile_name ? toProfileSlug(profile_name) : '';
     if (!request_id && !slug) {
       throw new Error('To start a new request, you must provide a LinkedIn Profile Username.');

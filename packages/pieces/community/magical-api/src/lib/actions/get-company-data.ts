@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { magicalApiAuth } from '../common/auth';
-import { runJob } from '../common/poll';
+import { runJob, normalizeRequestId } from '../common/poll';
 import { companyDataOutputSchema } from '../common/output-schemas';
 
 export const getCompanyData = createAction({
@@ -39,7 +39,8 @@ export const getCompanyData = createAction({
   },
   outputSchema: companyDataOutputSchema,
   async run(context) {
-    const { company_name, company_username, company_website, request_id } = context.propsValue;
+    const { company_name, company_username, company_website, request_id: rawRequestId } = context.propsValue;
+    const request_id = normalizeRequestId(rawRequestId);
     const input: Record<string, string> = {};
     if (company_name?.trim()) {
       input['company_name'] = company_name.trim();
