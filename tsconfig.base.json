@@ -226,6 +226,9 @@
       "@activepieces/piece-google-translate": [
         "packages/pieces/community/google-translate/src/index.ts"
       ],
+      "@activepieces/piece-google-document-ai": [
+        "packages/pieces/community/google-document-ai/src/index.ts"
+      ],
       "@activepieces/piece-rounded-studio": [
         "packages/pieces/community/rounded-studio/src/index.ts"
       ],
