@@ -12,7 +12,7 @@ import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { filterActionsByAudience, filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
+import { filterActionsByAudience, filterPieceBasedOnType, isChatOnlyAction, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
@@ -103,6 +103,39 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 ],
             )
             return rows.reduce<ActionExistence>((acc, row) => ({ ...acc, [row.pieceName]: { ...acc[row.pieceName], [row.actionName]: row.exists } }), {})
+        },
+        async findChatOnlyActions({ actions, platformId }: FindChatOnlyActionsParams): Promise<boolean[]> {
+            const exactVersions = await Promise.all(actions.map((action) => findExactVersion(log, { name: action.pieceName, version: action.pieceVersion, platformId })))
+            const devPieces = await loadDevPiecesIfEnabled(log)
+            const lookups = actions.flatMap((action, index) => {
+                const exact = exactVersions[index]
+                return isNil(exact) ? [] : [{ index, name: exact.name, version: exact.version, platformId: exact.platformId, actionName: action.actionName }]
+            })
+            const devLookups = lookups.filter((lookup) => devPieces.some((piece) => piece.name === lookup.name && piece.version === lookup.version))
+            const dbLookups = lookups.filter((lookup) => !devLookups.includes(lookup))
+            const chatOnlyInDev = devLookups
+                .filter((lookup) => isChatOnlyAction(devPieces.find((piece) => piece.name === lookup.name && piece.version === lookup.version)?.actions[lookup.actionName]))
+                .map((lookup) => lookup.index)
+            const dbRows: { index: number }[] = dbLookups.length === 0 ? [] : await pieceRepos().query(
+                `
+                SELECT lookup.idx AS "index"
+                FROM unnest($1::int[], $2::varchar[], $3::varchar[], $4::varchar[], $5::varchar[]) AS lookup(idx, piece_name, version, platform_id, action_name)
+                JOIN "piece_metadata" AS pm
+                  ON pm."name" = lookup.piece_name
+                 AND pm."version" = lookup.version
+                 AND pm."platformId" IS NOT DISTINCT FROM lookup.platform_id
+                WHERE (pm."actions" -> lookup.action_name ->> 'audience') = 'ai'
+                `,
+                [
+                    dbLookups.map((lookup) => lookup.index),
+                    dbLookups.map((lookup) => lookup.name),
+                    dbLookups.map((lookup) => lookup.version),
+                    dbLookups.map((lookup) => lookup.platformId ?? null),
+                    dbLookups.map((lookup) => lookup.actionName),
+                ],
+            )
+            const chatOnlyIndexes = new Set([...chatOnlyInDev, ...dbRows.map((row) => row.index)])
+            return actions.map((_action, index) => chatOnlyIndexes.has(index))
         },
         async getOrThrow({ version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
             const piece = await this.get({ version, name, platformId })
@@ -594,6 +627,11 @@ type ListParams = {
     suggestionType?: SuggestionType
     locale?: LocalesEnum
     audience?: PieceAudienceFilter
+}
+
+type FindChatOnlyActionsParams = {
+    actions: { pieceName: string, pieceVersion: string, actionName: string }[]
+    platformId: string | undefined
 }
 
 type CheckActionsExistParams = {

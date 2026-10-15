@@ -164,12 +164,8 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
 })
 
 async function findChatOnlyStepNames({ trigger, platformId, log }: { trigger: FlowTrigger, platformId: PlatformId | undefined, log: FastifyBaseLogger }): Promise<string[]> {
-    const validPieceSteps = flowStructureUtil.getAllSteps(trigger).filter((step) => step.type === FlowActionType.PIECE && step.valid)
-    const chatOnly = await Promise.all(validPieceSteps.map(async (step) => {
-        const { pieceName, pieceVersion, actionName } = step.settings
-        const piece = await pieceMetadataService(log).get({ name: pieceName, version: pieceVersion, platformId })
-        return !isNil(actionName) && isChatOnlyAction(piece?.actions[actionName])
-    }))
+    const validPieceSteps = flowStructureUtil.getAllSteps(trigger).flatMap((step) => step.type === FlowActionType.PIECE && step.valid && !isNil(step.settings.actionName) ? [{ name: step.name, pieceName: step.settings.pieceName, pieceVersion: step.settings.pieceVersion, actionName: step.settings.actionName }] : [])
+    const chatOnly = await pieceMetadataService(log).findChatOnlyActions({ actions: validPieceSteps, platformId })
     return validPieceSteps.filter((_step, index) => chatOnly[index]).map((step) => step.name)
 }
 

@@ -12,8 +12,8 @@ vi.mock('../../../../../src/app/pieces/metadata/piece-metadata-service', () => {
     }
     return {
         pieceMetadataService: vi.fn(() => ({
-            get: vi.fn().mockResolvedValue(piece),
             getOrThrow: vi.fn().mockResolvedValue(piece),
+            findChatOnlyActions: vi.fn(async ({ actions }: { actions: { actionName: string }[] }) => actions.map(({ actionName }) => actionName === 'create_record_ai')),
         })),
     }
 })
