@@ -199,26 +199,26 @@ describe('SSOPage', () => {
     expect(screen.queryByText('Connected')).toBeNull();
   });
 
-  it('adds a domain from its own dialog, not the SAML walkthrough', async () => {
+  it('starts verifying a domain from its own dialog, not the SAML walkthrough', async () => {
     mount();
 
-    click(findButton('Add domain'));
+    click(findButton('Verify domain'));
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('Add a domain')).toBeDefined();
+    expect(within(dialog).getByText('Verify a domain')).toBeDefined();
     fireEvent.change(within(dialog).getByRole('textbox'), {
       target: { value: ' Acme.com ' },
     });
     await waitFor(() =>
-      expect(findButton('Add domain', dialog)?.disabled).toBe(false),
+      expect(findButton('Continue', dialog)?.disabled).toBe(false),
     );
-    click(findButton('Add domain', dialog));
+    click(findButton('Continue', dialog));
 
     await waitFor(() =>
       expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith('acme.com'),
     );
   });
 
-  it('shows a pending domain and checks DNS again from its menu', async () => {
+  it('shows a domain being verified and continues verifying from its menu', async () => {
     setPlatform({
       ssoDomain: 'acme.com',
       ssoDomainVerification: pendingVerification,
@@ -230,8 +230,11 @@ describe('SSOPage', () => {
     mount();
 
     expect(screen.getByText('acme.com')).toBeDefined();
-    expect(screen.getByText('Pending DNS')).toBeDefined();
-    click(menuItem('Check DNS again'));
+    expect(screen.getByText('Verifying')).toBeDefined();
+    click(menuItem('Continue verifying'));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('Verify later')).toBeDefined();
+    click(findButton('Verify DNS', dialog));
 
     await waitFor(() =>
       expect(samlSsoApiMock.verifySsoDomain).toHaveBeenCalledTimes(1),
@@ -240,6 +243,25 @@ describe('SSOPage', () => {
       expect(toastMock.message).toHaveBeenCalledWith(
         'TXT record not found yet — DNS can take a few minutes.',
       ),
+    );
+  });
+
+  it('cancels a verification in progress', async () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: pendingVerification,
+    });
+    mount();
+
+    click(menuItem('Cancel verification'));
+    const dialog = screen.getByRole('dialog');
+    expect(
+      within(dialog).getByText('Cancel verifying acme.com?'),
+    ).toBeDefined();
+    click(findButton('Cancel verification', dialog));
+
+    await waitFor(() =>
+      expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith(null),
     );
   });
 
@@ -340,7 +362,7 @@ describe('SSOPage', () => {
   it('removes a domain that has no SAML connection', async () => {
     setPlatform({
       ssoDomain: 'acme.com',
-      ssoDomainVerification: pendingVerification,
+      ssoDomainVerification: verifiedVerification,
     });
     mount();
 
@@ -630,14 +652,18 @@ describe('SamlSetupPage', () => {
     expect(findButton('Next')).toBeDefined();
   });
 
-  it('sends the admin back to Authentication when there is no domain yet', () => {
+  it('verifies a domain inside the walkthrough when there is none yet', async () => {
     mountSetupPage();
 
-    expect(
-      screen
-        .getByRole('link', { name: 'Go to Authentication' })
-        .getAttribute('href'),
-    ).toBe('/platform/sso');
+    fireEvent.change(screen.getByLabelText('Domain'), {
+      target: { value: 'acme.com' },
+    });
+    await waitFor(() => expect(findButton('Continue')?.disabled).toBe(false));
+    click(findButton('Continue'));
+
+    await waitFor(() =>
+      expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith('acme.com'),
+    );
   });
 
   it('lets the admin move to the SAML step before the domain is verified, but not save', () => {
