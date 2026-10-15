@@ -21,6 +21,7 @@ import { EnterpriseGate } from '@/app/components/enterprise-gate';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import {
+  billingKeys,
   billingQueries,
   seatUtils,
   useEnterpriseGate,
@@ -121,7 +122,11 @@ export default function UsersPage() {
     (usersError && usersData === undefined) ||
     (invitationsError && invitationsData === undefined);
 
-  const invalidate = [platformUserKeys.users, platformUserKeys.invitations];
+  const invalidate = [
+    platformUserKeys.users,
+    platformUserKeys.invitations,
+    billingKeys.platformSubscription(platform.id),
+  ];
 
   const deleteRow = useAdminAction<UserRowData>({
     verb: 'delete',
