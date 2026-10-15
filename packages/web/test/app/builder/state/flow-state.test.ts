@@ -484,6 +484,43 @@ describe('flow state saving flag', () => {
   });
 });
 
+describe('flow state pending edits made during a save of pending edits', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('settles only after an edit made during the wait is saved', async () => {
+    const firstSave = Promise.withResolvers<PopulatedFlow>();
+    const laterSave = Promise.withResolvers<PopulatedFlow>();
+    flowsApiMock.update
+      .mockReturnValueOnce(firstSave.promise)
+      .mockReturnValueOnce(laterSave.promise);
+    const store = createStore(draftFlow('Order lookup'));
+    const settled = vi.fn();
+
+    store.getState().applyOperation(renameTrigger('New order'));
+    const savingEdits = store.getState().savePendingEdits().then(settled);
+    store.getState().applyOperation(renameTrigger('Newer order'));
+    firstSave.resolve(draftFlow('Order lookup'));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(sentOperations()).toEqual([
+      renameTrigger('New order'),
+      renameTrigger('Newer order'),
+    ]);
+    expect(settled).not.toHaveBeenCalled();
+
+    laterSave.resolve(draftFlow('Order lookup'));
+    await savingEdits;
+    expect(settled).toHaveBeenCalled();
+  });
+});
+
 function serverThatKeepsTheDraft({
   rejectedType,
 }: {

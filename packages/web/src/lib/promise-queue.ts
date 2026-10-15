@@ -23,12 +23,23 @@ export class PromiseQueue {
   }
 
   async drain(): Promise<void> {
+    const failure = await this.firstFailureUntilIdle();
+    if (failure) {
+      throw failure.reason;
+    }
+  }
+
+  private async firstFailureUntilIdle(): Promise<
+    PromiseRejectedResult | undefined
+  > {
     const results = await Promise.allSettled([...this.unsettled]);
     const failure = results.find(
       (result): result is PromiseRejectedResult => result.status === 'rejected',
     );
-    if (failure) {
-      throw failure.reason;
+    if (this.unsettled.size === 0) {
+      return failure;
     }
+    const laterFailure = await this.firstFailureUntilIdle();
+    return failure ?? laterFailure;
   }
 }

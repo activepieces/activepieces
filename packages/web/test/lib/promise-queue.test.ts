@@ -70,6 +70,37 @@ describe('PromiseQueue', () => {
       expect(drained.settled).toBe(true);
     });
 
+    it('settles only after a save added during the drain', async () => {
+      const queue = new PromiseQueue();
+      const firstSave = controlledSave();
+      const laterSave = controlledSave();
+      queue.add(firstSave.run);
+
+      const drained = trackSettled(queue.drain());
+      queue.add(laterSave.run);
+      firstSave.finish();
+      await flushPromises();
+      expect(drained.settled).toBe(false);
+
+      laterSave.finish();
+      await flushPromises();
+      expect(drained.settled).toBe(true);
+    });
+
+    it('rejects when a save added during the drain fails', async () => {
+      const queue = new PromiseQueue();
+      const firstSave = controlledSave();
+      queue.add(firstSave.run);
+
+      const drained = queue.drain();
+      queue.add(async () => {
+        throw new Error('later save failed');
+      });
+      firstSave.finish();
+
+      await expect(drained).rejects.toThrow('later save failed');
+    });
+
     it('ignores a failed save that settled before the drain', async () => {
       const queue = new PromiseQueue();
       queue.add(async () => {
