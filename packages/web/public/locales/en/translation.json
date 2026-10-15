@@ -3288,8 +3288,8 @@
   "Ask your admin to set an Embeddings model.": "Ask your admin to set an Embeddings model.",
   "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.": "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.",
   "Couldn't switch the model. Try again.": "Couldn't switch the model. Try again.",
-  "Connect an AI model to start chatting": "Connect an AI model to start chatting",
-  "Chat runs on your platform's AI keys. Add one from Anthropic, OpenAI, Google or another provider, and everyone here can start chatting.": "Chat runs on your platform's AI keys. Add one from Anthropic, OpenAI, Google or another provider, and everyone here can start chatting.",
   "Add an AI key": "Add an AI key",
-  "Ask your platform admin to add an AI key.": "Ask your platform admin to add an AI key."
+  "Ask your platform admin to add an AI key.": "Ask your platform admin to add an AI key.",
+  "Connect AI to start chatting": "Connect AI to start chatting",
+  "Add an API key from any provider once, and everyone on your platform can chat.": "Add an API key from any provider once, and everyone on your platform can chat."
 }
