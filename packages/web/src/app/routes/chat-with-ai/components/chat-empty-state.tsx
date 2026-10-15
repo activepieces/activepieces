@@ -108,7 +108,7 @@ export function SetupRequiredState() {
 
   return (
     <div className="flex h-full w-full min-w-0 flex-col items-center justify-center overflow-y-auto px-4 py-10 text-center">
-      <div className="relative flex size-72 shrink-0 items-center justify-center">
+      <div className="relative flex size-84 shrink-0 items-center justify-center">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute top-8 left-6 size-36 rounded-full bg-accent-9/20 blur-3xl" />
           <div className="absolute right-4 bottom-8 size-32 rounded-full bg-swatch-5-mark/20 blur-3xl" />
@@ -116,26 +116,26 @@ export function SetupRequiredState() {
         </div>
         <OrbitRing
           logos={logosOf(SETUP_OUTER_RING)}
-          radius={132}
+          radius={146}
           seconds={60}
           reverse
           reducedMotion={reducedMotion}
         />
         <OrbitRing
           logos={logosOf(SETUP_INNER_RING)}
-          radius={82}
+          radius={74}
           seconds={40}
           reducedMotion={reducedMotion}
         />
         <motion.div
-          className="relative flex size-20 items-center justify-center rounded-3xl border bg-panel shadow-xl ring-8 ring-accent-3/60"
+          className="relative flex size-16 items-center justify-center rounded-2xl border bg-panel shadow-xl ring-6 ring-accent-3/60"
           animate={reducedMotion ? undefined : { scale: [1, 1.04, 1] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         >
           <img
             src={branding.logos.logoIconUrl}
             alt={branding.websiteName}
-            className="size-10"
+            className="size-8"
             draggable={false}
           />
         </motion.div>
@@ -222,7 +222,7 @@ function OrbitRing({
                   ease: 'linear',
                 }}
               >
-                <LogoPlate src={info.logoUrl} alt={info.name} size="xs" />
+                <LogoPlate src={info.logoUrl} alt={info.name} size="sm" />
               </motion.div>
             </div>
           );
