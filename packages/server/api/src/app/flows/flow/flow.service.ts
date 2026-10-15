@@ -360,16 +360,17 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     })
                     break
                 }
-                const publishedFlow = await this.updatedPublishedVersionId({
+                const isRepublish = !isNil(previouslyPublishedVersion) && flowPublishUtils.isRepublish({
+                    previouslyPublished: previouslyPublishedVersion,
+                    toPublish: await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined }),
+                    requestedStatus,
+                })
+                await this.updatedPublishedVersionId({
                     id,
                     userId,
                     projectId,
                     platformId,
-                    previouslyPublishedVersion,
-                })
-                const isRepublish = !isNil(previouslyPublishedVersion) && flowPublishUtils.isSameTrigger({
-                    published: previouslyPublishedVersion.trigger,
-                    toPublish: publishedFlow.version.trigger,
+                    isRepublish,
                 })
                 await applyStatusChange({ id, projectId, newStatus: requestedStatus, isRepublish }, log)
                 break
@@ -479,7 +480,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         userId,
         projectId,
         platformId,
-        previouslyPublishedVersion,
+        isRepublish,
     }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
@@ -494,10 +495,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 projectId: flowToUpdate.projectId,
                 simulate: false,
                 ignoreError: true,
-                isRepublish: !isNil(previouslyPublishedVersion) && flowPublishUtils.isSameTrigger({
-                    published: previouslyPublishedVersion.trigger,
-                    toPublish: flowVersionToPublish.trigger,
-                }),
+                isRepublish,
             })
         }
 
@@ -552,8 +550,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus }): Promise<void> {
-        await applyStatusChange({ id, projectId, newStatus }, log)
+    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus, isRepublish }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus, isRepublish?: boolean }): Promise<void> {
+        await applyStatusChange({ id, projectId, newStatus, isRepublish }, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
@@ -935,7 +933,7 @@ type UpdatePublishedVersionIdParams = {
     userId: UserId | null
     platformId: PlatformId
     projectId: ProjectId
-    previouslyPublishedVersion?: FlowVersion
+    isRepublish?: boolean
 }
 
 type SetPublishedVersionParams = {

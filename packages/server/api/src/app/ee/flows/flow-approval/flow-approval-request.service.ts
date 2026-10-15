@@ -3,6 +3,7 @@ import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { flowExecutionCache } from '../../../flows/flow/flow-execution-cache'
+import { flowPublishUtils } from '../../../flows/flow/flow-publish-utils'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../../flows/flow-version/flow-version.service'
 import { applicationEvents } from '../../../helper/application-events'
@@ -93,6 +94,12 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             versionId: approval.flowVersionId,
         })
 
+        const isRepublish = flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId) && flowPublishUtils.isRepublish({
+            previouslyPublished: await flowVersionService(log).getFlowVersionOrThrow({ flowId: flow.id, versionId: flow.publishedVersionId }),
+            toPublish: lockedVersion,
+            requestedStatus: approval.requestedStatus,
+        })
+
         const decidedAt = new Date().toISOString()
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
 
@@ -118,6 +125,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                 projectId: flow.projectId,
                 simulate: false,
                 ignoreError: true,
+                isRepublish,
             })
         }
         await flowExecutionCache(log).invalidate(flow.id)
@@ -125,6 +133,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             id: flow.id,
             projectId: approval.projectId,
             newStatus: approval.requestedStatus,
+            isRepublish,
         })
         rejectedPromiseHandler(telemetry(log).trackProject({
             projectId: approval.projectId,
