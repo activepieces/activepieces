@@ -271,6 +271,9 @@ export const tablesCommon = {
   },
 
   async convertTableExternalIdToId(tableId: string, context: { server: { apiUrl: string, token: string }, project: { id: string } }) {
+    if (typeof tableId !== 'string' || tableId.trim().length === 0) {
+      throw new Error('Select a table for this step');
+    }
     const list: ListTablesRequest = {
       externalIds: [tableId],
       projectId: context.project.id,
