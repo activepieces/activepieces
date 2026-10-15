@@ -109,7 +109,6 @@ export const createRecords = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
-      retries: 5,
     });
 
     return response.body.map(tablesCommon.formatRecord);

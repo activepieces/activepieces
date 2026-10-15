@@ -1,12 +1,21 @@
 import { Popover as PopoverPrimitive } from 'radix-ui';
 import * as React from 'react';
 
+import { useInsideModalLayer } from '@/components/ui/modal-layer';
 import { cn } from '@/lib/utils';
 
 function Popover({
+  modal,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
-  return <PopoverPrimitive.Root data-slot="popover" {...props} />;
+  const insideModalLayer = useInsideModalLayer();
+  return (
+    <PopoverPrimitive.Root
+      data-slot="popover"
+      modal={modal ?? insideModalLayer}
+      {...props}
+    />
+  );
 }
 
 function PopoverTrigger({

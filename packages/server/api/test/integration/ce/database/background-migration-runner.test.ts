@@ -123,6 +123,17 @@ describe('backgroundMigrationRunner', () => {
         }
     })
 
+    it('withBackgroundMigrationLock does NOT require completion — safe for down()', async () => {
+        const neverRanBackfill = makeTestMigration({ name: `NeverRan${Date.now()}` })
+        let fnRan = false
+        await migrationHelpers.withBackgroundMigrationLock({
+            log: app!.log,
+            migration: neverRanBackfill,
+            fn: async () => { fnRan = true },
+        })
+        expect(fnRan).toBe(true)
+    })
+
     it('reports pending count via getStatus', async () => {
         const done = makeTestMigration({ name: `StatusDone${Date.now()}` })
         const pending = makeTestMigration({ name: `StatusPending${Date.now()}` })
@@ -187,6 +198,55 @@ describe('runMigrationsWithCatchup', () => {
     })
 })
 
+describe('withBackgroundMigrationLock', () => {
+    it('serializes a concurrent runOne against the lock', async () => {
+        let migrationStarted = false
+        let releaseMigration: () => void = () => undefined
+        const migrationGate = new Promise<void>(resolve => { releaseMigration = resolve })
+        const SlowMigration = makeTestMigration({
+            name: `SlowLockMigration${Date.now()}`,
+            up: async () => {
+                migrationStarted = true
+                await migrationGate
+            },
+        })
+        const runnerPromise = backgroundMigrationRunner.run({ log: app!.log, migrations: [SlowMigration] })
+        let gotLock = false
+        let lockWaiter: Promise<void> | null = null
+        try {
+            await waitFor(() => migrationStarted, 2_000)
+            lockWaiter = migrationHelpers.withBackgroundMigrationLock({
+                log: app!.log,
+                migration: SlowMigration,
+                fn: async () => { gotLock = true },
+            })
+            await new Promise(resolve => setTimeout(resolve, 100))
+            expect(gotLock).toBe(false)
+
+            releaseMigration()
+            await runnerPromise
+            await lockWaiter
+            expect(gotLock).toBe(true)
+        }
+        finally {
+            releaseMigration()
+            await Promise.allSettled([runnerPromise, lockWaiter ?? Promise.resolve()])
+        }
+    })
+
+    it('acquires immediately when no migration is in-flight', async () => {
+        const Any = makeTestMigration({ name: `IdleLock${Date.now()}` })
+        const start = Date.now()
+        await migrationHelpers.withBackgroundMigrationLock({
+            log: app!.log,
+            migration: Any,
+            fn: async () => { /* no-op */ },
+        })
+        const elapsed = Date.now() - start
+        expect(elapsed).toBeLessThan(500)
+    })
+})
+
 function makeTestMigration({
     name: migrationName,
     up: upFn = async () => { /* no-op */ },
@@ -200,6 +260,14 @@ function makeTestMigration({
         transaction = false as const
         public async up(queryRunner: QueryRunner): Promise<void> { await upFn(queryRunner) }
         public async down(): Promise<void> { /* no-op */ }
+    }
+}
+
+async function waitFor(predicate: () => boolean, timeoutMs: number): Promise<void> {
+    const started = Date.now()
+    while (!predicate()) {
+        if (Date.now() - started > timeoutMs) throw new Error(`waitFor timed out after ${timeoutMs}ms`)
+        await new Promise(resolve => setTimeout(resolve, 25))
     }
 }
 
