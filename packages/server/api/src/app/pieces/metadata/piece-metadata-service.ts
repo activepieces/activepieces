@@ -12,7 +12,7 @@ import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
-import { filterActionsByAudience, filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
+import { filterActionsByAudience, filterPieceBasedOnType, isChatOnlyAction, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
@@ -79,30 +79,31 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
         async checkActionsExist({ actions, platformId }: CheckActionsExistParams): Promise<ActionExistence> {
             const latestVersions = await Promise.all(Object.keys(actions).map((name) => findExactVersion(log, { name, version: undefined, platformId })))
-            const lookups = latestVersions.flatMap((latest) => isNil(latest) ? [] : actions[latest.name].map((actionName) => ({ ...latest, actionName })))
-            if (lookups.length === 0) {
-                return {}
-            }
-            const rows: { pieceName: string, actionName: string, exists: boolean }[] = await pieceRepos().query(
-                `
-                SELECT lookup.piece_name AS "pieceName",
-                       lookup.action_name AS "actionName",
-                       (pm."actions" -> lookup.action_name) IS NOT NULL
-                       AND (pm."actions" -> lookup.action_name ->> 'audience') IS DISTINCT FROM 'ai' AS "exists"
-                FROM unnest($1::varchar[], $2::varchar[], $3::varchar[], $4::varchar[]) AS lookup(piece_name, version, platform_id, action_name)
-                LEFT JOIN "piece_metadata" AS pm
-                  ON pm."name" = lookup.piece_name
-                 AND pm."version" = lookup.version
-                 AND pm."platformId" IS NOT DISTINCT FROM lookup.platform_id
-                `,
-                [
-                    lookups.map((lookup) => lookup.name),
-                    lookups.map((lookup) => lookup.version),
-                    lookups.map((lookup) => lookup.platformId ?? null),
-                    lookups.map((lookup) => lookup.actionName),
-                ],
-            )
-            return rows.reduce<ActionExistence>((acc, row) => ({ ...acc, [row.pieceName]: { ...acc[row.pieceName], [row.actionName]: row.exists } }), {})
+            const lookups = latestVersions.flatMap((latest) => isNil(latest) ? [] : actions[latest.name].map((actionName) => ({ ...latest, actionName, key: `${latest.name}/${actionName}` })))
+            const rowsByKey = new Map((await queryActionAudiences(lookups)).map((row) => [row.key, row]))
+            return lookups.reduce<ActionExistence>((acc, lookup) => {
+                const row = rowsByKey.get(lookup.key)
+                const exists = row?.exists === true && !isChatOnlyAction(row)
+                return { ...acc, [lookup.name]: { ...acc[lookup.name], [lookup.actionName]: exists } }
+            }, {})
+        },
+        async findChatOnlyActions({ actions, platformId }: FindChatOnlyActionsParams): Promise<string[]> {
+            const distinctVersions = [...new Map(actions.map((action) => [pieceVersionKey(action), action])).values()]
+            const resolvedVersions = await Promise.all(distinctVersions.map(async (action) => ({
+                versionKey: pieceVersionKey(action),
+                exact: await findExactVersion(log, { name: action.pieceName, version: action.pieceVersion, platformId }),
+            })))
+            const exactByVersionKey = new Map(resolvedVersions.map(({ versionKey, exact }) => [versionKey, exact]))
+            const devPieces = await loadDevPiecesIfEnabled(log)
+            const lookups = actions.flatMap((action) => {
+                const exact = exactByVersionKey.get(pieceVersionKey(action))
+                return isNil(exact) ? [] : [{ ...exact, key: action.key, actionName: action.actionName, devPiece: findDevPiece({ devPieces, name: exact.name, version: exact.version }) }]
+            })
+            const dbRows = await queryActionAudiences(lookups.filter((lookup) => isNil(lookup.devPiece)))
+            return [
+                ...lookups.filter((lookup) => isChatOnlyAction(lookup.devPiece?.actions[lookup.actionName])).map((lookup) => lookup.key),
+                ...dbRows.filter((row) => isChatOnlyAction(row)).map((row) => row.key),
+            ]
         },
         async getOrThrow({ version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
             const piece = await this.get({ version, name, platformId })
@@ -445,9 +446,42 @@ async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log
     return lastVersionOfEachPiece(merged)
 }
 
+async function queryActionAudiences(lookups: ActionAudienceLookup[]): Promise<ActionAudienceRow[]> {
+    if (lookups.length === 0) {
+        return []
+    }
+    return pieceRepos().query(
+        `
+        SELECT lookup.key AS "key",
+               (pm."actions" -> lookup.action_name) IS NOT NULL AS "exists",
+               pm."actions" -> lookup.action_name ->> 'audience' AS "audience"
+        FROM unnest($1::varchar[], $2::varchar[], $3::varchar[], $4::varchar[], $5::varchar[]) AS lookup(key, piece_name, version, platform_id, action_name)
+        LEFT JOIN "piece_metadata" AS pm
+          ON pm."name" = lookup.piece_name
+         AND pm."version" = lookup.version
+         AND pm."platformId" IS NOT DISTINCT FROM lookup.platform_id
+        `,
+        [
+            lookups.map((lookup) => lookup.key),
+            lookups.map((lookup) => lookup.name),
+            lookups.map((lookup) => lookup.version),
+            lookups.map((lookup) => lookup.platformId ?? null),
+            lookups.map((lookup) => lookup.actionName),
+        ],
+    )
+}
+
+function findDevPiece({ devPieces, name, version }: { devPieces: PieceMetadataSchema[], name: string, version: string }): PieceMetadataSchema | undefined {
+    return devPieces.find((piece) => piece.name === name && piece.version === version)
+}
+
+function pieceVersionKey({ pieceName, pieceVersion }: { pieceName: string, pieceVersion: string }): string {
+    return `${pieceName}@${pieceVersion}`
+}
+
 async function fetchPieceVersion({ pieceName, version, platformId, log }: FetchPieceVersionParams): Promise<PieceMetadataSchema | null> {
     const devPieces = await loadDevPiecesIfEnabled(log)
-    const devPiece = devPieces.find((p) => p.name === pieceName && p.version === version)
+    const devPiece = findDevPiece({ devPieces, name: pieceName, version })
     if (!isNil(devPiece)) {
         return devPiece
     }
@@ -594,6 +628,25 @@ type ListParams = {
     suggestionType?: SuggestionType
     locale?: LocalesEnum
     audience?: PieceAudienceFilter
+}
+
+type FindChatOnlyActionsParams = {
+    actions: { key: string, pieceName: string, pieceVersion: string, actionName: string }[]
+    platformId: string | undefined
+}
+
+type ActionAudienceLookup = {
+    key: string
+    name: string
+    version: string
+    platformId: string | undefined
+    actionName: string
+}
+
+type ActionAudienceRow = {
+    key: string
+    exists: boolean
+    audience: string | null
 }
 
 type CheckActionsExistParams = {

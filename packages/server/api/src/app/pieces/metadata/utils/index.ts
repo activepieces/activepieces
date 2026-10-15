@@ -22,6 +22,10 @@ export const pieceListUtils = (_log: FastifyBaseLogger) => ({
     },
 })
 
+export function isChatOnlyAction(action: { audience?: string | null } | undefined): boolean {
+    return action?.audience === 'ai'
+}
+
 export function filterActionsByAudience(
     actions: Record<string, ActionBase>,
     audience: PieceAudienceFilter | undefined,

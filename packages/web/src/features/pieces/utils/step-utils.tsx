@@ -97,19 +97,15 @@ export const stepUtils = {
           piece,
           type: step.type === FlowActionType.PIECE ? 'action' : 'trigger',
         });
-        const actionOrTriggerDisplayName =
+        const actionOrTrigger =
           step.type === FlowActionType.PIECE
-            ? piece.actions[step.settings.actionName!].displayName
-            : piece.triggers[step.settings.triggerName!].displayName;
-        const actionOrTriggerDescription =
-          step.type === FlowActionType.PIECE
-            ? piece.actions[step.settings.actionName!].description
-            : piece.triggers[step.settings.triggerName!].description;
+            ? piece.actions[step.settings.actionName ?? '']
+            : piece.triggers[step.settings.triggerName ?? ''];
         return {
           ...metadata,
           errorHandlingOptions: mapErrorHandlingOptions(piece, step),
-          actionOrTriggerOrAgentDescription: actionOrTriggerDescription,
-          actionOrTriggerOrAgentDisplayName: actionOrTriggerDisplayName,
+          actionOrTriggerOrAgentDescription: actionOrTrigger?.description ?? '',
+          actionOrTriggerOrAgentDisplayName: actionOrTrigger?.displayName ?? '',
         };
       }
     }

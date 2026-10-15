@@ -393,6 +393,8 @@
   "Items": "Items",
   "Select an array of items": "Select an array of items",
   "Piece not available": "Piece not available",
+  "Action not available": "Action not available",
+  "actionNotAvailableInFlowsNote": "The action {actionName} can't be used in flows. Delete this step and add another {pieceName} action instead.",
   "pieceNotAvailableOnInstanceNote": "The piece {pieceName} (version {pieceVersion}) is not installed on this instance or has been hidden by an admin. Install it or switch this step to an installed version.",
   "Select a connection": "Select a connection",
   "Permission needed": "Permission needed",

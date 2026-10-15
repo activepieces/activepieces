@@ -23,3 +23,21 @@ export const PieceNotAvailableAlert = ({
     </AlertDescription>
   </Alert>
 );
+
+export const ActionNotAvailableAlert = ({
+  actionName,
+  pieceName,
+}: ActionNotAvailableAlertProps) => (
+  <Alert variant="destructive">
+    <AlertTriangle className="size-4" />
+    <AlertTitle>{t('Action not available')}</AlertTitle>
+    <AlertDescription>
+      {t('actionNotAvailableInFlowsNote', { actionName, pieceName })}
+    </AlertDescription>
+  </Alert>
+);
+
+type ActionNotAvailableAlertProps = {
+  actionName: string;
+  pieceName: string;
+};
