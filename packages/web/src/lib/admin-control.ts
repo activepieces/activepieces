@@ -187,8 +187,6 @@ export enum AdminControl {
   SSO_SAML_DNS_NAME_COPY = 'sso.saml-dns-name.copy',
   SSO_SAML_DNS_VALUE_COPY = 'sso.saml-dns-value.copy',
   SSO_SAML_DNS_RUN = 'sso.saml-dns.run',
-  SSO_SAML_DOMAIN_UPDATE_CONFIRM = 'sso.saml-domain-update.confirm',
-  SSO_SAML_DOMAIN_UPDATE_SUBMIT = 'sso.saml-domain-update.submit',
   SSO_SAML_DOMAIN_SUBMIT = 'sso.saml-domain.submit',
   SSO_SAML_ENTITY_ID_COPY = 'sso.saml-entity-id.copy',
   SSO_SAML_OPEN = 'sso.saml.open',

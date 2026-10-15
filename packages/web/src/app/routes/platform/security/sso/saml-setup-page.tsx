@@ -12,7 +12,7 @@ import { t } from 'i18next';
 import { CheckCircle, Loader2, TriangleAlert } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -22,7 +22,6 @@ import {
   AdminPageHeader,
   SettingsPanel,
   SettingsRow,
-  adminLayout,
   adminPageResources,
 } from '@/app/components/admin';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
@@ -32,27 +31,18 @@ import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clip
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   Form,
   FormDescription,
   FormField,
   FormItem,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { samlSsoApi, ssoMutations } from '@/features/platform-admin';
+import { ssoMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export const SamlSetupPage = () => {
@@ -275,138 +265,43 @@ const DomainStep = ({
   onVerified: () => void;
   onNext: () => void;
 }) => {
-  const form = useForm<SsoDomainFormValues>({
-    resolver: zodResolver(SsoDomainFormValues),
-    defaultValues: { ssoDomain: platform.ssoDomain ?? '' },
-    mode: 'onChange',
-  });
-  const verification = platform.ssoDomainVerification ?? null;
-  const ssoDomainValue = form.watch('ssoDomain');
-  const isDirty =
-    ssoDomainValue.trim().toLowerCase() !== (platform.ssoDomain ?? '');
-  const [showUpdateWarning, setShowUpdateWarning] = useState(false);
-
-  const { mutate: saveDomain, isPending: isSaving } = useMutation({
-    mutationFn: async (values: SsoDomainFormValues) => {
-      await samlSsoApi.updateSsoDomain(values.ssoDomain.trim().toLowerCase());
-      await refetch();
-    },
-    onSuccess: () => {
-      toast.success(t('SSO domain saved'));
-      setShowUpdateWarning(false);
-    },
-    onError: (error) => {
-      form.setError('root.serverError', {
-        type: 'manual',
-        message: api.extractServerErrorMessage(
-          error,
-          t("Couldn't save domain"),
-        ),
-      });
-      setShowUpdateWarning(false);
-    },
-  });
-
   const { mutate: verifyDomain, isPending: isVerifying } =
     ssoMutations.useVerifySsoDomain({ refetch, onVerified });
 
-  const handleSubmit = (values: SsoDomainFormValues) => {
-    if (platform.ssoDomain) {
-      setShowUpdateWarning(true);
-      return;
-    }
-    saveDomain(values);
-  };
+  if (!platform.ssoDomain || !platform.ssoDomainVerification) {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-gray-11">
+          {t('Add and verify your company domain before setting up SAML.')}
+        </p>
+        <StepFooter>
+          <Button asChild>
+            <Link to={ssoPaths.authentication}>
+              {t('Go to Authentication')}
+            </Link>
+          </Button>
+        </StepFooter>
+      </div>
+    );
+  }
 
   return (
-    <Form {...form}>
-      <form
-        className="grid space-y-4"
-        onSubmit={form.handleSubmit(handleSubmit)}
-      >
-        <FormField
-          name="ssoDomain"
-          render={({ field }) => (
-            <FormItem className="grid space-y-2">
-              <Label htmlFor="ssoDomain">{t('Domain')}</Label>
-              <Input {...field} id="ssoDomain" placeholder="acme.com" />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {verification && !isDirty && (
-          <DomainVerificationPanel
-            verification={verification}
-            isVerifying={isVerifying}
-            onVerify={() => verifyDomain()}
-          />
-        )}
-
-        {form.formState.errors.root?.serverError && (
-          <FormMessage>
-            {form.formState.errors.root.serverError.message}
-          </FormMessage>
-        )}
-
-        <StepFooter>
-          {isDirty ? (
-            <Button
-              {...adminControl(
-                platform.ssoDomain
-                  ? AdminControl.SSO_SAML_DOMAIN_UPDATE_SUBMIT
-                  : AdminControl.SSO_SAML_DOMAIN_SUBMIT,
-              )}
-              type="submit"
-              loading={isSaving}
-              disabled={!form.formState.isValid}
-            >
-              {platform.ssoDomain ? t('Update domain') : t('Save domain')}
-            </Button>
-          ) : (
-            <Button type="button" onClick={onNext}>
-              {t('Next')}
-            </Button>
-          )}
-        </StepFooter>
-      </form>
-      <Dialog open={showUpdateWarning} onOpenChange={setShowUpdateWarning}>
-        <DialogContent
-          className={adminLayout.dialog.md}
-          onInteractOutside={(event) => event.preventDefault()}
-        >
-          <DialogHeader>
-            <DialogTitle>{t('Update SSO domain?')}</DialogTitle>
-          </DialogHeader>
-          <Alert variant="warning">
-            <TriangleAlert className="size-4" />
-            <AlertDescription>
-              {t(
-                "Users won't be able to sign in via SSO until you verify the new domain.",
-              )}
-            </AlertDescription>
-          </Alert>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              disabled={isSaving}
-              onClick={() => setShowUpdateWarning(false)}
-            >
-              {t('Cancel')}
-            </Button>
-            <Button
-              {...adminControl(AdminControl.SSO_SAML_DOMAIN_UPDATE_CONFIRM)}
-              type="button"
-              loading={isSaving}
-              onClick={() => saveDomain(form.getValues())}
-            >
-              {t('Update domain')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Form>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <Label>{t('Domain')}</Label>
+        <p className="text-sm font-medium text-gray-12">{platform.ssoDomain}</p>
+      </div>
+      <DomainVerificationPanel
+        verification={platform.ssoDomainVerification}
+        isVerifying={isVerifying}
+        onVerify={() => verifyDomain()}
+      />
+      <StepFooter>
+        <Button type="button" onClick={onNext}>
+          {t('Next')}
+        </Button>
+      </StepFooter>
+    </div>
   );
 };
 
@@ -643,14 +538,6 @@ const VerificationStatusBadge = ({
 };
 
 const SAML_ENTITY_ID = 'Activepieces';
-
-const SsoDomainFormValues = z.object({
-  ssoDomain: z
-    .hostname(formErrors.invalidDomain)
-    .max(253, formErrors.invalidDomain)
-    .refine((v) => v.includes('.'), formErrors.invalidDomain),
-});
-type SsoDomainFormValues = z.infer<typeof SsoDomainFormValues>;
 
 const Saml2FormValues = z.object({
   idpMetadata: z.string().min(1, formErrors.required),

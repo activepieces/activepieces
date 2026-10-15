@@ -199,6 +199,25 @@ describe('SSOPage', () => {
     expect(screen.queryByText('Connected')).toBeNull();
   });
 
+  it('adds a domain from its own dialog, not the SAML walkthrough', async () => {
+    mount();
+
+    click(findButton('Add domain'));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('Add a domain')).toBeDefined();
+    fireEvent.change(within(dialog).getByRole('textbox'), {
+      target: { value: ' Acme.com ' },
+    });
+    await waitFor(() =>
+      expect(findButton('Add domain', dialog)?.disabled).toBe(false),
+    );
+    click(findButton('Add domain', dialog));
+
+    await waitFor(() =>
+      expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith('acme.com'),
+    );
+  });
+
   it('shows a pending domain and checks DNS again from its menu', async () => {
     setPlatform({
       ssoDomain: 'acme.com',
@@ -596,6 +615,29 @@ describe('SamlSetupPage', () => {
 
     expect(findButton('Disable')).toBeUndefined();
     expect(screen.queryByText('Disable single sign-on')).toBeNull();
+  });
+
+  it('shows the domain read-only on the first step', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+      federatedAuthProviders: { saml: samlConfig },
+    });
+    mountSetupPage();
+
+    expect(screen.getByText('acme.com')).toBeDefined();
+    expect(screen.queryByDisplayValue('acme.com')).toBeNull();
+    expect(findButton('Next')).toBeDefined();
+  });
+
+  it('sends the admin back to Authentication when there is no domain yet', () => {
+    mountSetupPage();
+
+    expect(
+      screen
+        .getByRole('link', { name: 'Go to Authentication' })
+        .getAttribute('href'),
+    ).toBe('/platform/sso');
   });
 
   it('lets the admin move to the SAML step before the domain is verified, but not save', () => {
