@@ -483,6 +483,18 @@ describe('createTaskSubagentTools', () => {
         expect(JSON.stringify(modelOutput)).not.toContain('tokens')
     })
 
+    it('runs a task on the chat turn\'s own models, so its tokens bill through the same metered models as the chat', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
+            return turnResult()
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow']) })
+
+        await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
+
+        expect(runAgentTurn.mock.calls[0][0].models).toBe(MODELS)
+    })
+
     it('adds up the tokens of every researcher in deep research', async () => {
         runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
             await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)

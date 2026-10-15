@@ -41,7 +41,7 @@ describe('chatToolBilling.chargeForLatestTurn with task agents', () => {
         resolveChatProviderName.mockReset()
     })
 
-    it('charges a managed-key turn only for the paid calls its tasks made, since the tokens bill at cost', async () => {
+    it('charges a managed-key turn no message credit, only the paid calls its tasks made', async () => {
         resolveChatProviderName.mockResolvedValue(AIProviderName.ACTIVEPIECES)
 
         await chatToolBilling.chargeForLatestTurn({ conversation: conversationWithTwoTasks(), log: LOG })
