@@ -3288,8 +3288,7 @@
   "Ask your admin to set an Embeddings model.": "Ask your admin to set an Embeddings model.",
   "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.": "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.",
   "Couldn't switch the model. Try again.": "Couldn't switch the model. Try again.",
-  "Bring your AI to chat": "Bring your AI to chat",
-  "Connect an AI key": "Connect an AI key",
-  "One key, and your whole team can chat.": "One key, and your whole team can chat.",
-  "Ask your admin to connect an AI key.": "Ask your admin to connect an AI key."
+  "Set up an AI provider to get started": "Set up an AI provider to get started",
+  "AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.": "AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.",
+  "Go to AI Settings": "Go to AI Settings"
 }
