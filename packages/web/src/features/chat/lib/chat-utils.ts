@@ -53,6 +53,7 @@ const TOOL_LABELS: Record<string, { active: string; done: string }> = {
   },
   ap_build_flow: { active: 'Building automation', done: 'Built automation' },
   ap_run_task: { active: 'Working on a task', done: 'Finished a task' },
+  ap_deep_research: { active: 'Researching', done: 'Researched' },
   ap_create_flow: { active: 'Creating automation', done: 'Created automation' },
   ap_validate_step_config: {
     active: 'Validating setup',

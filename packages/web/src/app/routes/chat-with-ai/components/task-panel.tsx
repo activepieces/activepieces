@@ -1,6 +1,6 @@
-import { SubagentActivity } from '@activepieces/shared';
+import { SubagentActivity, SubagentTimelineEntry } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, Loader2, Maximize2, Minimize2, X } from 'lucide-react';
+import { Check, Loader2, Maximize2, Minimize2, Search, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { createContext, useEffect, useRef, useState } from 'react';
 
@@ -9,6 +9,11 @@ import {
   ChatContainerRoot,
 } from '@/components/prompt-kit/chat-container';
 import { Markdown } from '@/components/prompt-kit/markdown';
+import {
+  FaviconOrGlobe,
+  getDomain,
+  Source,
+} from '@/components/prompt-kit/source';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -16,7 +21,12 @@ import { useElementSize } from '@/hooks/use-element-size';
 import { cn } from '@/lib/utils';
 
 import { PreviewIconButton } from './previews/preview-card';
-import { Duration, LiveLine, StatusMark } from './subagent-primitives';
+import {
+  Duration,
+  LiveLine,
+  StatusMark,
+  subagentTimelineUtils,
+} from './subagent-primitives';
 
 export function TaskPanel({
   tasks,
@@ -153,6 +163,7 @@ function TaskDetails({
 }) {
   const timeline = activity.timeline ?? [];
   const artifacts = activity.artifacts ?? [];
+  const pages = subagentTimelineUtils.readPages(timeline);
   const running = activity.status === 'running';
 
   return (
@@ -172,9 +183,8 @@ function TaskDetails({
           <ol className="mt-5 flex flex-col gap-3">
             {timeline.map((entry, index) => (
               <TimelineItem
-                key={`${index}-${entry.text}`}
-                text={entry.text}
-                failed={entry.failed ?? false}
+                key={`${index}-${entry.kind}`}
+                entry={entry}
                 active={running && index === timeline.length - 1}
               />
             ))}
@@ -203,18 +213,35 @@ function TaskDetails({
             </div>
           </Section>
         )}
+
+        {pages.length > 0 && (
+          <Section
+            title={t('{count, plural, =1 {1 source} other {# sources}}', {
+              count: pages.length,
+            })}
+          >
+            <div
+              className={cn(
+                'grid grid-cols-1 gap-2',
+                wide ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
+              )}
+            >
+              {pages.map((page) => (
+                <SourceCard key={page.url} url={page.url} title={page.title} />
+              ))}
+            </div>
+          </Section>
+        )}
       </ChatContainerContent>
     </ChatContainerRoot>
   );
 }
 
 function TimelineItem({
-  text,
-  failed,
+  entry,
   active,
 }: {
-  text: string;
-  failed: boolean;
+  entry: SubagentTimelineEntry;
   active: boolean;
 }) {
   return (
@@ -225,16 +252,90 @@ function TimelineItem({
       className="flex gap-3"
     >
       <span className="flex size-5 shrink-0 items-center justify-center">
-        {failed ? (
-          <X className="size-3.5 text-danger-11" strokeWidth={2.5} />
-        ) : active ? (
-          <Loader2 className="size-3.5 animate-spin text-accent-10 motion-reduce:animate-none" />
-        ) : (
-          <Check className="size-3.5 text-success-10" strokeWidth={2.5} />
-        )}
+        <TimelineIcon entry={entry} active={active} />
       </span>
-      <p className="min-w-0 flex-1 text-sm text-gray-12">{text}</p>
+      <div className="min-w-0 flex-1 text-sm text-gray-12">
+        {entry.kind === 'status' && <p>{entry.text}</p>}
+        {entry.kind === 'search' && <SearchEntry entry={entry} />}
+        {entry.kind === 'read' && (
+          <a
+            href={entry.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block truncate hover:underline"
+          >
+            {t('Read {page}', { page: entry.title ?? getDomain(entry.url) })}
+          </a>
+        )}
+      </div>
     </motion.li>
+  );
+}
+
+function TimelineIcon({
+  entry,
+  active,
+}: {
+  entry: SubagentTimelineEntry;
+  active: boolean;
+}) {
+  if (entry.kind === 'status' && entry.failed) {
+    return <X className="size-3.5 text-danger-11" strokeWidth={2.5} />;
+  }
+  if (active) {
+    return (
+      <Loader2 className="size-3.5 animate-spin text-accent-10 motion-reduce:animate-none" />
+    );
+  }
+  if (entry.kind === 'search') {
+    return <Search className="size-3.5 text-gray-11" />;
+  }
+  if (entry.kind === 'read') {
+    return <FaviconOrGlobe url={entry.url} size="sm" />;
+  }
+  return <Check className="size-3.5 text-success-10" strokeWidth={2.5} />;
+}
+
+function SearchEntry({
+  entry,
+}: {
+  entry: Extract<SubagentTimelineEntry, { kind: 'search' }>;
+}) {
+  const shown = entry.results.slice(0, MAX_SEARCH_RESULTS);
+  const extra = entry.results.length - shown.length;
+  return (
+    <div>
+      <p className="truncate">
+        {t('Searched “{query}”', { query: entry.query })}
+      </p>
+      {shown.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          {shown.map((result) => (
+            <Source key={result.url} href={result.url} title={result.title} />
+          ))}
+          {extra > 0 && (
+            <span className="text-xs text-gray-11 tabular-nums">+{extra}</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SourceCard({ url, title }: { url: string; title?: string }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex flex-col gap-1.5 rounded-lg border p-3 transition-colors hover:bg-gray-3"
+    >
+      <span className="flex items-center gap-1.5 text-xs text-gray-11">
+        <FaviconOrGlobe url={url} size="sm" />
+        <span className="truncate">{getDomain(url)}</span>
+      </span>
+      <span className="line-clamp-2 text-sm text-gray-12">{title ?? url}</span>
+    </a>
   );
 }
 
@@ -254,3 +355,5 @@ function Section({
 }
 
 export const TaskPanelSlotContext = createContext<HTMLElement | null>(null);
+
+const MAX_SEARCH_RESULTS = 4;
