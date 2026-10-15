@@ -33,6 +33,7 @@ export const DomainVerification = ({
   refetch,
   onVerified,
   secondaryAction,
+  showIntro = true,
 }: DomainVerificationProps) => {
   const verification = platform.ssoDomainVerification;
   if (!platform.ssoDomain || !verification) {
@@ -48,6 +49,7 @@ export const DomainVerification = ({
       refetch={refetch}
       onVerified={onVerified}
       secondaryAction={secondaryAction}
+      showIntro={showIntro}
     />
   );
 };
@@ -127,12 +129,14 @@ const PendingDomain = ({
   refetch,
   onVerified,
   secondaryAction,
+  showIntro,
 }: {
   domain: string;
   record: SsoDomainVerificationRecord;
   refetch: () => Promise<void>;
   onVerified?: () => void;
   secondaryAction?: ReactNode;
+  showIntro: boolean;
 }) => {
   const { mutate: verifyDomain, isPending } = ssoMutations.useVerifySsoDomain({
     refetch,
@@ -141,12 +145,18 @@ const PendingDomain = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-gray-11">
-        {t(
-          'Add this TXT record for {domain} at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.',
-          { domain },
-        )}
-      </p>
+      {showIntro && (
+        <div className="flex flex-col gap-1">
+          <h3 className="text-sm font-semibold text-gray-12">
+            {t('Verify {domain}', { domain })}
+          </h3>
+          <p className="text-sm text-gray-11">
+            {t(
+              'Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.',
+            )}
+          </p>
+        </div>
+      )}
       <DomainDnsRecord record={record} />
       <Actions>
         {secondaryAction}
@@ -200,4 +210,5 @@ type DomainVerificationProps = {
   refetch: () => Promise<void>;
   onVerified?: () => void;
   secondaryAction?: ReactNode;
+  showIntro?: boolean;
 };

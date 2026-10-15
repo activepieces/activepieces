@@ -3334,7 +3334,6 @@
   "Remove domain and disable SAML": "Remove domain and disable SAML",
   "This disables single sign-on and deletes its SAML connection.": "This disables single sign-on and deletes its SAML connection.",
   "Verify later": "Verify later",
-  "Add this TXT record for {domain} at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.": "Add this TXT record for {domain} at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.",
   "Verify a domain": "Verify a domain",
   "Prove your company owns its email domain with a DNS record.": "Prove your company owns its email domain with a DNS record.",
   "Verify the domain your people sign in with.": "Verify the domain your people sign in with.",
@@ -3344,5 +3343,7 @@
   "Continue verifying": "Continue verifying",
   "Cancel verifying {domain}?": "Cancel verifying {domain}?",
   "The domain and its DNS record are discarded. You can start again anytime.": "The domain and its DNS record are discarded. You can start again anytime.",
-  "Cancel verification": "Cancel verification"
+  "Cancel verification": "Cancel verification",
+  "Verify {domain}": "Verify {domain}",
+  "Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.": "Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped."
 }
