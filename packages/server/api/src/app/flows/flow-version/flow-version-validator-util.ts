@@ -4,7 +4,7 @@ import {
     piecePropertiesUtils,
     PiecePropertyMap,
 } from '@activepieces/pieces-framework'
-import { AiRouterActionSettingsWithValidation, CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode, Step } from '@activepieces/shared'
+import { AiRouterActionSettingsWithValidation, CodeActionSettings, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, LoopOnItemsActionSettings, PieceActionSettings, PieceTriggerSettings, RouterActionSettingsWithValidation, SourceCode, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
@@ -25,10 +25,11 @@ type ValidationResult = {
     valid: boolean
     cleanInput?: Record<string, unknown>
     invalidInputs?: string[]
+    chatOnly?: boolean
 }
 
 export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
-    async prepareRequest({ platformId, request, userId }: PrepareRequestParams): Promise<FlowOperationRequest> {
+    async prepareRequest({ platformId, request, userId, flowVersion }: PrepareRequestParams): Promise<FlowOperationRequest> {
         const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
 
         switch (clonedRequest.type) {
@@ -44,6 +45,9 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         const result = await validateAction(
                             { settings: clonedRequest.request.action.settings, platformId, log },
                         )
+                        if (result.chatOnly) {
+                            throwChatOnlyAction(clonedRequest.request.action.settings)
+                        }
                         clonedRequest.request.action.valid = result.valid
                         if (!isNil(result.cleanInput)) {
                             clonedRequest.request.action.settings.input = result.cleanInput
@@ -79,6 +83,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         const result = await validateAction(
                             { settings: clonedRequest.request.settings, platformId, log },
                         )
+                        const previousStep = isNil(flowVersion) ? undefined : flowStructureUtil.getStep(clonedRequest.request.name, flowVersion.trigger)
+                        const previousActionName = previousStep?.type === FlowActionType.PIECE ? previousStep.settings.actionName : undefined
+                        if (result.chatOnly && previousActionName !== clonedRequest.request.settings.actionName) {
+                            throwChatOnlyAction(clonedRequest.request.settings)
+                        }
                         clonedRequest.request.valid = result.valid
                         if (!isNil(result.cleanInput)) {
                             clonedRequest.request.settings.input = result.cleanInput
@@ -147,6 +156,11 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
     },
 })
 
+function throwChatOnlyAction({ actionName, pieceName }: PieceActionSettings): never {
+    const message = `Action "${actionName}" of "${pieceName}" is only for chat and can't be a flow step. Use a non-agent action from the same piece.`
+    throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message } }, message)
+}
+
 function assertImportedStepNamesAreSafe(trigger: FlowTrigger): void {
     const invalidStep = flowStructureUtil.getAllSteps(trigger).find((step) => !STEP_NAME_REGEX.test(step.name))
     if (!isNil(invalidStep)) {
@@ -180,6 +194,9 @@ async function validateAction({ settings, platformId, log }: ValidateActionParam
     const action = piece.actions[settings.actionName]
     if (isNil(action)) {
         return { valid: false }
+    }
+    if (action.audience === 'ai') {
+        return { valid: false, chatOnly: true }
     }
 
     const props = { ...action.props }
@@ -249,6 +266,7 @@ type PrepareRequestParams = {
     platformId?: PlatformId
     request: FlowOperationRequest
     userId: UserId | null
+    flowVersion?: FlowVersion
 }
 
 type ValidateActionParams = {
