@@ -1,5 +1,5 @@
 import { apId, ProjectRole } from '@activepieces/core-utils'
-import { DefaultProjectRole, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { DefaultProjectRole, PlatformRole, PrincipalType, STORE_VALUE_MAX_SIZE } from '@activepieces/shared'
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
@@ -74,6 +74,30 @@ describe('Store-entries API', () => {
             expect(firstResponseBody.created).toEqual(secondResponseBody.created)
         })
 
+        it('should accept a value whose JSON is exactly the size limit, bare or inside an object', async () => {
+            const wrappedResponse = await makePostRequest(engineToken, 'wrapped', { v: 'a'.repeat(STORE_VALUE_MAX_SIZE - 8) })
+            expect(wrappedResponse?.statusCode).toBe(200)
+            const bareResponse = await makePostRequest(engineToken, 'bare', 'a'.repeat(STORE_VALUE_MAX_SIZE - 2))
+            expect(bareResponse?.statusCode).toBe(200)
+        })
+
+        it('should reject a string whose JSON is one byte over the size limit', async () => {
+            const value = 'a'.repeat(STORE_VALUE_MAX_SIZE - 1)
+            const response = await makePostRequest(engineToken, 'over_limit', value)
+            expect(response?.statusCode).toBe(413)
+        })
+
+        it('should count multi-byte characters by their UTF-8 size', async () => {
+            const value = 'é'.repeat(STORE_VALUE_MAX_SIZE / 2)
+            const response = await makePostRequest(engineToken, 'multi_byte', value)
+            expect(response?.statusCode).toBe(413)
+        })
+
+        it('should accept an entry without a value', async () => {
+            const response = await makePostRequest(engineToken, 'no_value', undefined)
+            expect(response?.statusCode).toBe(200)
+        })
+
         it('should return saved value', async () => {
             const key = 'new_key_2'
 
@@ -105,7 +129,7 @@ describe('Store-entries API', () => {
     })
 })
 
-function makePostRequest(testToken: string, key: string, value: string, projectId?: string): Promise<LightMyRequestResponse> | undefined {
+function makePostRequest(testToken: string, key: string, value: unknown, projectId?: string): Promise<LightMyRequestResponse> | undefined {
     return app?.inject({
         method: 'POST',
         url: '/api/v1/store-entries/',
