@@ -132,9 +132,9 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                 break
             case FlowOperationType.IMPORT_FLOW:{
                 assertImportedStepNamesAreSafe(clonedRequest.request.trigger)
-                const chatOnlyStepNames = await findChatOnlyStepNames({ trigger: clonedRequest.request.trigger, platformId, log })
+                const chatOnlyStepNames = new Set(await findChatOnlyStepNames({ trigger: clonedRequest.request.trigger, platformId, log }))
                 flowStructureUtil.getAllSteps(clonedRequest.request.trigger)
-                    .filter((step) => chatOnlyStepNames.includes(step.name))
+                    .filter((step) => chatOnlyStepNames.has(step.name))
                     .forEach((step) => {
                         step.valid = false
                     })
@@ -164,9 +164,13 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
 })
 
 async function findChatOnlyStepNames({ trigger, platformId, log }: { trigger: FlowTrigger, platformId: PlatformId | undefined, log: FastifyBaseLogger }): Promise<string[]> {
-    const validPieceSteps = flowStructureUtil.getAllSteps(trigger).flatMap((step) => step.type === FlowActionType.PIECE && step.valid && !isNil(step.settings.actionName) ? [{ name: step.name, pieceName: step.settings.pieceName, pieceVersion: step.settings.pieceVersion, actionName: step.settings.actionName }] : [])
-    const chatOnly = await pieceMetadataService(log).findChatOnlyActions({ actions: validPieceSteps, platformId })
-    return validPieceSteps.filter((_step, index) => chatOnly[index]).map((step) => step.name)
+    const actions = flowStructureUtil.getAllSteps(trigger).flatMap((step) => {
+        if (step.type !== FlowActionType.PIECE || !step.valid || isNil(step.settings.actionName)) {
+            return []
+        }
+        return [{ key: step.name, pieceName: step.settings.pieceName, pieceVersion: step.settings.pieceVersion, actionName: step.settings.actionName }]
+    })
+    return pieceMetadataService(log).findChatOnlyActions({ actions, platformId })
 }
 
 function throwChatOnlyAction({ actionName, pieceName }: PieceActionSettings): never {

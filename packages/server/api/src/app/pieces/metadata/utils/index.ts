@@ -22,7 +22,7 @@ export const pieceListUtils = (_log: FastifyBaseLogger) => ({
     },
 })
 
-export function isChatOnlyAction(action: { audience?: string } | undefined): boolean {
+export function isChatOnlyAction(action: { audience?: string | null } | undefined): boolean {
     return action?.audience === 'ai'
 }
 
