@@ -1,7 +1,13 @@
 import { AIProviderName } from '@activepieces/core-utils';
 import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Sparkles,
+} from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -98,56 +104,161 @@ function CollapseOnInput({
 export function SetupRequiredState() {
   const navigate = useNavigate();
   const isAdmin = useIsPlatformAdmin();
-  const logos = SETUP_PROVIDERS.flatMap((provider) =>
-    SUPPORTED_AI_PROVIDERS.filter((info) => info.provider === provider),
-  );
-  const moreCount = SUPPORTED_AI_PROVIDERS.length - logos.length;
+  const reducedMotion = useReducedMotion() === true;
+  const logosOf = (providers: AIProviderName[]) =>
+    providers.flatMap((provider) =>
+      SUPPORTED_AI_PROVIDERS.filter((info) => info.provider === provider),
+    );
+  const shown = SETUP_INNER_RING.length + SETUP_OUTER_RING.length;
 
   return (
-    <div className="flex h-full w-full min-w-0 flex-1 flex-col items-center justify-center gap-6 px-4 py-20 text-center">
-      <div className="flex items-center gap-1 rounded-full border bg-panel py-1 pr-3 pl-1 shadow-xs">
-        {logos.map((info) => (
-          <LogoPlate
-            key={info.provider}
-            src={info.logoUrl}
-            alt={info.name}
-            size="xs"
-            className="rounded-full"
-          />
-        ))}
-        {moreCount > 0 && (
-          <span className="pl-1 text-xs text-gray-11">
-            {t('+{count} more', { count: moreCount })}
-          </span>
-        )}
+    <div className="flex min-h-[70vh] w-full min-w-0 flex-1 flex-col items-center justify-center gap-10 overflow-hidden px-4 py-16 text-center">
+      <div className="relative flex size-80 items-center justify-center">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute top-8 left-6 size-40 rounded-full bg-accent-9/25 blur-3xl" />
+          <div className="absolute right-4 bottom-10 size-36 rounded-full bg-swatch-5-mark/25 blur-3xl" />
+          <div className="absolute top-4 right-16 size-28 rounded-full bg-swatch-8-mark/20 blur-3xl" />
+        </div>
+        <OrbitRing
+          logos={logosOf(SETUP_OUTER_RING)}
+          radius={150}
+          seconds={60}
+          reverse
+          reducedMotion={reducedMotion}
+        />
+        <OrbitRing
+          logos={logosOf(SETUP_INNER_RING)}
+          radius={95}
+          seconds={40}
+          reducedMotion={reducedMotion}
+        />
+        <motion.div
+          className="relative flex size-20 items-center justify-center rounded-3xl border bg-panel shadow-lg"
+          animate={
+            reducedMotion
+              ? undefined
+              : { scale: [1, 1.06, 1], rotate: [0, 4, -4, 0] }
+          }
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <Sparkles className="size-9 text-accent-10" />
+        </motion.div>
       </div>
-      <div className="flex max-w-sm flex-col gap-2">
-        <h2 className="text-2xl font-semibold tracking-tight text-gray-12">
-          {t('Connect AI to start chatting')}
+
+      <motion.div
+        className="flex max-w-md flex-col items-center gap-3"
+        initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <h2 className="text-4xl font-semibold tracking-tight text-gray-12">
+          {t('Bring your AI to chat')}
         </h2>
-        <p className="text-sm text-gray-11">
+        <p className="text-base text-gray-11">
           {isAdmin
             ? t(
-                'Add an API key from any provider once, and everyone on your platform can chat.',
+                'Connect a key from Anthropic, OpenAI, Google or {count} other providers. Everyone on your platform can start chatting right away.',
+                { count: SUPPORTED_AI_PROVIDERS.length - 3 },
               )
-            : t('Ask your platform admin to add an AI key.')}
+            : t(
+                'Chat needs an AI key. Ask your platform admin to connect one, and you can start right away.',
+              )}
         </p>
-      </div>
+        {SUPPORTED_AI_PROVIDERS.length > shown && (
+          <p className="text-xs text-gray-10">
+            {t('+{count} more providers supported', {
+              count: SUPPORTED_AI_PROVIDERS.length - shown,
+            })}
+          </p>
+        )}
+      </motion.div>
+
       {isAdmin && (
-        <Button className="gap-2" onClick={() => navigate('/platform/ai')}>
-          <Plus className="size-4" />
-          {t('Add an AI key')}
-        </Button>
+        <motion.div
+          initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
+        >
+          <Button
+            size="lg"
+            className="gap-2 rounded-full px-6 shadow-lg"
+            onClick={() => navigate('/platform/ai')}
+          >
+            <Plus className="size-4" />
+            {t('Connect an AI key')}
+          </Button>
+        </motion.div>
       )}
     </div>
   );
 }
 
-const SETUP_PROVIDERS = [
+function OrbitRing({
+  logos,
+  radius,
+  seconds,
+  reverse = false,
+  reducedMotion,
+}: {
+  logos: { provider: AIProviderName; logoUrl: string; name: string }[];
+  radius: number;
+  seconds: number;
+  reverse?: boolean;
+  reducedMotion: boolean;
+}) {
+  const turn = reverse ? -360 : 360;
+  return (
+    <>
+      <div
+        className="pointer-events-none absolute rounded-full border border-dashed border-gray-6"
+        style={{ width: radius * 2, height: radius * 2 }}
+      />
+      <motion.div
+        className="absolute inset-0"
+        animate={reducedMotion ? undefined : { rotate: turn }}
+        transition={{ duration: seconds, repeat: Infinity, ease: 'linear' }}
+      >
+        {logos.map((info, index) => {
+          const angle = (360 / logos.length) * index;
+          return (
+            <div
+              key={info.provider}
+              className="absolute top-1/2 left-1/2"
+              style={{
+                transform: `rotate(${angle}deg) translateX(${radius}px) rotate(${-angle}deg)`,
+              }}
+            >
+              <motion.div
+                className="flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl border bg-panel shadow-md"
+                animate={reducedMotion ? undefined : { rotate: -turn }}
+                transition={{
+                  duration: seconds,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+              >
+                <LogoPlate src={info.logoUrl} alt={info.name} size="xs" />
+              </motion.div>
+            </div>
+          );
+        })}
+      </motion.div>
+    </>
+  );
+}
+
+const SETUP_INNER_RING = [
   AIProviderName.ANTHROPIC,
   AIProviderName.OPENAI,
   AIProviderName.GOOGLE,
+];
+
+const SETUP_OUTER_RING = [
   AIProviderName.MISTRAL,
+  AIProviderName.AZURE,
+  AIProviderName.BEDROCK,
+  AIProviderName.DEEPSEEK,
+  AIProviderName.OPENROUTER,
 ];
 
 export function MessageSkeletons() {
