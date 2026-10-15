@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { tryCatch } from '@activepieces/core-utils';
 import {
   EmptyTrigger,
   FlowOperationRequest,
@@ -518,6 +519,76 @@ describe('flow state pending edits made during a save of pending edits', () => {
     laterSave.resolve(draftFlow('Order lookup'));
     await savingEdits;
     expect(settled).toHaveBeenCalled();
+  });
+});
+
+describe('flow state request timeout', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+    vi.spyOn(toast, 'error').mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('fails a save that gets no answer in 60 s', async () => {
+    flowsApiMock.update.mockReturnValue(new Promise(() => undefined));
+    flowsApiMock.get.mockResolvedValue(draftFlow('Order lookup'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(deleteSteps());
+    const savingEdits = tryCatch(() => store.getState().savePendingEdits());
+    await vi.advanceTimersByTimeAsync(59_999);
+    expect(toast.error).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    const { error } = await savingEdits;
+    expect(error?.message).toBe('timeout of 60000ms exceeded');
+    expect(toast.error).toHaveBeenCalledWith(
+      'Your change was not saved',
+      expect.anything(),
+    );
+    expect(store.getState().saving).toBe(false);
+  });
+
+  it('retries an idempotent save that gets no answer in 60 s', async () => {
+    flowsApiMock.update
+      .mockReturnValueOnce(new Promise(() => undefined))
+      .mockResolvedValue(draftFlow('New name'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('New name'));
+    await vi.advanceTimersByTimeAsync(60_999);
+    expect(flowsApiMock.update).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(flowsApiMock.update).toHaveBeenCalledTimes(2);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('fails a draft refetch that gets no answer in 60 s, and saves the next edit', async () => {
+    flowsApiMock.update
+      .mockRejectedValueOnce(httpError({ status: 400 }))
+      .mockResolvedValue(draftFlow('Second name'));
+    flowsApiMock.get.mockReturnValue(new Promise(() => undefined));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('First name'));
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(toast.error).toHaveBeenCalledWith(
+      'Something went wrong',
+      expect.anything(),
+    );
+
+    store.getState().applyOperation(changeName('Second name'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(sentOperations()).toEqual([
+      changeName('First name'),
+      changeName('Second name'),
+    ]);
   });
 });
 
