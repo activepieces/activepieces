@@ -3290,7 +3290,6 @@
   "Couldn't switch the model. Try again.": "Couldn't switch the model. Try again.",
   "Bring your AI to chat": "Bring your AI to chat",
   "Connect an AI key": "Connect an AI key",
-  "Connect one AI key and everyone on your platform can start chatting.": "Connect one AI key and everyone on your platform can start chatting.",
-  "Ask your platform admin to connect an AI key to start chatting.": "Ask your platform admin to connect an AI key to start chatting.",
-  "Works with Anthropic, OpenAI, Google and {count} more": "Works with Anthropic, OpenAI, Google and {count} more"
+  "One key, and your whole team can chat.": "One key, and your whole team can chat.",
+  "Ask your admin to connect an AI key.": "Ask your admin to connect an AI key."
 }

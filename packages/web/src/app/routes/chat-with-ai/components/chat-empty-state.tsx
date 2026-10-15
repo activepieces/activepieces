@@ -1,13 +1,7 @@
 import { AIProviderName } from '@activepieces/core-utils';
 import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Sparkles,
-} from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -32,6 +26,7 @@ import {
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
@@ -105,6 +100,7 @@ export function SetupRequiredState() {
   const navigate = useNavigate();
   const isAdmin = useIsPlatformAdmin();
   const reducedMotion = useReducedMotion() === true;
+  const branding = flagsHooks.useWebsiteBranding();
   const logosOf = (providers: AIProviderName[]) =>
     providers.flatMap((provider) =>
       SUPPORTED_AI_PROVIDERS.filter((info) => info.provider === provider),
@@ -132,11 +128,16 @@ export function SetupRequiredState() {
           reducedMotion={reducedMotion}
         />
         <motion.div
-          className="relative flex size-18 items-center justify-center rounded-3xl border bg-panel shadow-lg"
-          animate={reducedMotion ? undefined : { scale: [1, 1.05, 1] }}
+          className="relative flex size-20 items-center justify-center rounded-3xl border bg-panel shadow-xl ring-8 ring-accent-3/60"
+          animate={reducedMotion ? undefined : { scale: [1, 1.04, 1] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <Sparkles className="size-8 text-accent-10" />
+          <img
+            src={branding.logos.logoIconUrl}
+            alt={branding.websiteName}
+            className="size-10"
+            draggable={false}
+          />
         </motion.div>
       </div>
 
@@ -151,18 +152,14 @@ export function SetupRequiredState() {
         </h2>
         <p className="text-base text-gray-11">
           {isAdmin
-            ? t(
-                'Connect one AI key and everyone on your platform can start chatting.',
-              )
-            : t(
-                'Ask your platform admin to connect an AI key to start chatting.',
-              )}
+            ? t('One key, and your whole team can chat.')
+            : t('Ask your admin to connect an AI key.')}
         </p>
       </motion.div>
 
       {isAdmin && (
         <motion.div
-          className="mt-6 flex flex-col items-center gap-3"
+          className="mt-6"
           initial={reducedMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -175,11 +172,6 @@ export function SetupRequiredState() {
             <Plus className="size-4" />
             {t('Connect an AI key')}
           </Button>
-          <p className="text-xs text-gray-10">
-            {t('Works with Anthropic, OpenAI, Google and {count} more', {
-              count: SUPPORTED_AI_PROVIDERS.length - 3,
-            })}
-          </p>
         </motion.div>
       )}
     </div>
