@@ -11,6 +11,9 @@ import type {
 	WorkdayPage,
 	WorkdayRecord,
 	WorkdayReport,
+	WorkdayServerTimestampBody,
+	WorkdaySoapGetPage,
+	WorkdaySoapObject,
 	WorkdaySupplierInvoicesBody,
 } from './types';
 
@@ -132,6 +135,114 @@ async function listBusinessObjects({
 	return page.data ?? [];
 }
 
+async function listSoapObjects({
+	auth,
+	object,
+	ids,
+	updatedFrom,
+	updatedThrough,
+	limit,
+}: {
+	auth: WorkdayAuthValue;
+	object: WorkdaySoapObject;
+	ids?: string[];
+	updatedFrom?: string;
+	updatedThrough?: string;
+	limit?: number;
+}): Promise<WorkdayRecord[]> {
+	if (object.idsRequired && (!ids || ids.length === 0)) {
+		throw new Error(
+			`${object.label} can only be fetched by ID. Use Get Business Object Details.`,
+		);
+	}
+	const first = await getSoapObjectsPage({
+		auth,
+		object,
+		ids,
+		updatedFrom,
+		updatedThrough,
+	});
+	const maxPages = limit ? Math.ceil(limit / SOAP_PAGE_SIZE) : SOAP_MAX_PAGES;
+	const lastPage = Math.min(first.totalPages, maxPages);
+	const rest = [];
+	for (let page = 2; page <= lastPage; page++) {
+		const next = await getSoapObjectsPage({
+			auth,
+			object,
+			ids,
+			updatedFrom,
+			updatedThrough,
+			page,
+			asOfEntryDateTime: first.asOfEntryDateTime,
+		});
+		rest.push(...next.records);
+	}
+	const records = [...first.records, ...rest];
+	return limit ? records.slice(0, limit) : records;
+}
+
+async function listChangedSoapObjects({
+	auth,
+	object,
+	sinceEpochMS,
+}: {
+	auth: WorkdayAuthValue;
+	object: WorkdaySoapObject;
+	sinceEpochMS: number;
+}): Promise<{ records: WorkdayRecord[]; updatedThroughEpochMS: number }> {
+	if (!object.transactionLog) {
+		throw new Error(`Workday does not track changes for ${object.label}, so it can't be watched.`);
+	}
+	const isTest = sinceEpochMS === 0;
+	const updatedThrough = await getServerTime({ auth });
+	const updatedFrom = isTest ? updatedThrough.subtract(7, 'day') : dayjs(sinceEpochMS);
+	const records = await listSoapObjects({
+		auth,
+		object,
+		updatedFrom: updatedFrom.toISOString(),
+		updatedThrough: updatedThrough.toISOString(),
+		limit: isTest ? 10 : undefined,
+	});
+	return {
+		records,
+		updatedThroughEpochMS: updatedThrough.valueOf(),
+	};
+}
+
+async function getServerTime({ auth }: { auth: WorkdayAuthValue }): Promise<dayjs.Dayjs> {
+	const body = await workdayClient.soap<WorkdayServerTimestampBody>({
+		auth,
+		service: 'Human_Resources',
+		operationXml: '<bsvc:Server_Timestamp_Get xmlns:bsvc="urn:com.workday/bsvc"/>',
+	});
+	const serverTime = dayjs(body.Server_Timestamp?.Server_Timestamp_Data);
+	if (!serverTime.isValid()) {
+		throw new Error('Workday did not return its current time.');
+	}
+	return serverTime;
+}
+
+async function getSoapObjectsPage({
+	auth,
+	object,
+	...request
+}: {
+	auth: WorkdayAuthValue;
+	object: WorkdaySoapObject;
+	ids?: string[];
+	updatedFrom?: string;
+	updatedThrough?: string;
+	page?: number;
+	asOfEntryDateTime?: string;
+}): Promise<WorkdaySoapGetPage> {
+	const body = await workdayClient.soap({
+		auth,
+		service: object.service,
+		operationXml: workdayUtils.buildSoapGetRequest({ object, ...request }),
+	});
+	return workdayUtils.readSoapGetPage({ object, body });
+}
+
 async function updateBusinessObject({
 	auth,
 	businessObject,
@@ -172,12 +283,14 @@ async function callSoapOperation({
 	auth,
 	service,
 	operationXml,
+	version,
 }: {
 	auth: WorkdayAuthValue;
 	service: string;
 	operationXml: string;
+	version?: string;
 }): Promise<WorkdayRecord> {
-	return await workdayClient.soap({ auth, service, operationXml });
+	return await workdayClient.soap({ auth, service, operationXml, version });
 }
 
 async function runWql({
@@ -1085,6 +1198,8 @@ export const workdayApi = {
 	getBusinessObject,
 	searchBusinessObjects,
 	listBusinessObjects,
+	listSoapObjects,
+	listChangedSoapObjects,
 	updateBusinessObject,
 	callRestOperation,
 	callSoapOperation,
@@ -1112,3 +1227,5 @@ export const workdayApi = {
 };
 
 const WID_PATTERN = /^[0-9a-f]{32}$/i;
+const SOAP_MAX_PAGES = 50;
+const SOAP_PAGE_SIZE = 100;
