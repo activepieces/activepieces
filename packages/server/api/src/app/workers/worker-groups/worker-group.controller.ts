@@ -1,5 +1,5 @@
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/core-utils'
-import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, WorkerGroupScope } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -15,7 +15,7 @@ import { projectWorkerGroupService } from './project-worker-group.service'
 export const workerGroupController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListWorkerGroupsRequestOptions, async (request) => {
         await assertWorkerGroupsEnabled(request.principal.platform.id, request.log)
-        return machineService(request.log).listProjectWorkerGroups()
+        return machineService(request.log).listWorkerGroups()
     })
 
     app.post('/projects/:id', UpdateProjectWorkerGroupRequestOptions, async (request, reply) => {
@@ -81,6 +81,7 @@ const ListWorkerGroupsRequestOptions = {
                 groups: z.array(z.object({
                     label: z.string(),
                     slots: z.number(),
+                    scope: z.nativeEnum(WorkerGroupScope),
                 })),
                 sharedSlots: z.number(),
             }),

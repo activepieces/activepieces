@@ -20,7 +20,9 @@ export function ByGroupView({
   workerGroups,
   workers,
 }: ByGroupViewProps) {
-  const groupsFromLive = workerGroups.map((g) => g.label);
+  const groupsFromLive = workerGroups
+    .filter((g) => g.scope === WorkerGroupScope.PROJECT)
+    .map((g) => g.label);
   const groupsFromProjects = projects
     .map((p) => p.workerGroupId)
     .filter((id): id is string => id != null);

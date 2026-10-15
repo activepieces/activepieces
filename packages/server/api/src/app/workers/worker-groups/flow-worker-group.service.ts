@@ -4,6 +4,7 @@ import { WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
+import { machineService } from '../machine/machine-service'
 import { platformQueueMigrationService } from './queue-migration.service'
 import { NO_WORKER_GROUP_SENTINEL, workerGroupQueues } from './worker-group-queues'
 import { workerGroupRouting } from './worker-group-routing'
@@ -38,6 +39,17 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
                     message: `"${workerGroupId}" is not a valid worker group id`,
                 },
             })
+        }
+        if (!isNil(workerGroupId)) {
+            const groupScope = await machineService(log).getWorkerGroupScope({ workerGroupId })
+            if (!isNil(groupScope) && groupScope !== WorkerGroupScope.FLOW) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `"${workerGroupId}" is a ${groupScope} worker group and cannot be assigned to a flow`,
+                    },
+                })
+            }
         }
         const flow = await flowRepo().findOneOrFail({
             select: ['id', 'workerGroupId'],

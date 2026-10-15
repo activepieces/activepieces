@@ -1,4 +1,7 @@
-import { WorkerMachineWithStatus } from '@activepieces/shared';
+import {
+  WorkerGroupScope,
+  WorkerMachineWithStatus,
+} from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
@@ -24,6 +27,7 @@ export const workersApi = {
 export type WorkerGroupInfo = {
   label: string;
   slots: number;
+  scope: WorkerGroupScope;
 };
 
 export type WorkerPoolCapacity = {

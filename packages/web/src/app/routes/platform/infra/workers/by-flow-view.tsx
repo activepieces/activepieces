@@ -5,6 +5,7 @@ import {
   PopulatedFlow,
   ProjectType,
   ProjectWithLimits,
+  WorkerGroupScope,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -60,7 +61,15 @@ export function ByFlowView({ projects, workerGroups }: ByFlowViewProps) {
     name: flowName,
   });
 
-  const columns = useMemo(() => buildColumns({ workerGroups }), [workerGroups]);
+  const flowWorkerGroups = useMemo(
+    () => workerGroups.filter((group) => group.scope === WorkerGroupScope.FLOW),
+    [workerGroups],
+  );
+
+  const columns = useMemo(
+    () => buildColumns({ workerGroups: flowWorkerGroups }),
+    [flowWorkerGroups],
+  );
 
   const handleProjectChange = (projectId: string) => {
     setSelectedProjectId(projectId);
