@@ -1,4 +1,4 @@
-import { Permission, isNil } from '@activepieces/core-utils';
+import { Permission, isNil, tryCatch } from '@activepieces/core-utils';
 import {
   FlowDraftUpdatedEvent,
   FlowRunStatus,
@@ -11,6 +11,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useEffect, useRef } from 'react';
+import { NavigateFunction, useNavigate } from 'react-router-dom';
 import { useLocation, usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -22,7 +23,11 @@ import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { editorSession } from '@/lib/editor-session';
 
-import { useBuilderStateContext, useBuilderStore } from '../builder-hooks';
+import {
+  BuilderStore,
+  useBuilderStateContext,
+  useBuilderStore,
+} from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
@@ -183,40 +188,21 @@ const useRefreshDraftOnReconnectAndReturn = () => {
   }, [socket, refreshDraft]);
 };
 
-export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion, clearRun, setFlow] = useBuilderStateContext(
-    (state) => [
-      state.flowVersion,
-      state.setVersion,
-      state.clearRun,
-      state.setFlow,
-    ],
-  );
+const useOpenDraft = () => {
+  const store = useBuilderStore();
+  const navigate = useNavigate();
   const socket = useSocket();
   const { checkAccess } = useAuthorization();
-  const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
-
-  const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
-    useMutation({
-      mutationFn: async () => {
-        const flow = await flowsApi.get(flowVersion.flowId);
-        return flow;
-      },
-      onSuccess: (flow) => {
-        setFlow(flow);
-        setVersion(flow.version);
-        clearRun(userHasPermissionToEditFlow);
-        socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
-      },
-      // surface the failure instead of silently keeping a stale draft, which
-      // matters most on the lock take-over path where the refresh replaces a
-      // full-page reload
-      onError: () => internalErrorToast(),
-    });
-  return {
-    switchToDraft,
-    isSwitchingToDraftPending,
-  };
+  const canEditFlow = checkAccess(Permission.WRITE_FLOW);
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: () =>
+      openNewestVersionForEdit({ store, navigate, socket, canEditFlow }),
+  });
+  const openDraft = useCallback(
+    () => mutateAsync().catch(() => undefined),
+    [mutateAsync],
+  );
+  return { openDraft, isOpeningDraft: isPending };
 };
 
 const useIsFocusInsideListMapperModeInput = ({
@@ -323,6 +309,45 @@ export const flowCanvasHooks = {
   useIsFocusInsideListMapperModeInput,
   useFocusOnStep,
   useResizeCanvas,
-  useSwitchToDraft,
+  useOpenDraft,
   useListenToExistingRun,
 };
+
+async function openNewestVersionForEdit({
+  store,
+  navigate,
+  socket,
+  canEditFlow,
+}: {
+  store: BuilderStore;
+  navigate: NavigateFunction;
+  socket: Socket;
+  canEditFlow: boolean;
+}): Promise<void> {
+  const { run, flow, showsNewestVersion, refreshDraft } = store.getState();
+  if (!isNil(run)) {
+    navigate(`/flows/${flow.id}`);
+    return;
+  }
+  if (showsNewestVersion()) {
+    const applied = await refreshDraft();
+    if (applied) {
+      store.getState().setReadOnly(!canEditFlow);
+    }
+    return;
+  }
+  const { data: newestFlow, error } = await tryCatch(() =>
+    flowsApi.get(flow.id),
+  );
+  if (error !== null) {
+    internalErrorToast();
+    return;
+  }
+  const { setFlow, setVersion, clearRun } = store.getState();
+  setFlow(newestFlow);
+  setVersion(newestFlow.version);
+  clearRun(canEditFlow);
+  socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
+}
+
+type Socket = ReturnType<typeof useSocket>;

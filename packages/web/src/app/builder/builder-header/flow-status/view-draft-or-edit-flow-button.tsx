@@ -2,8 +2,6 @@ import { Permission } from '@activepieces/core-utils';
 import { FlowVersionState } from '@activepieces/shared';
 import { t } from 'i18next';
 import { EyeIcon, PencilIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-use';
 
 import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -13,26 +11,18 @@ import { flowCanvasHooks } from '../../flow-canvas/hooks';
 import { AboveTriggerButton } from '../../flow-canvas/widgets/above-trigger-button';
 
 const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const { checkAccess } = useAuthorization();
-  const { switchToDraft, isSwitchingToDraftPending } =
-    flowCanvasHooks.useSwitchToDraft();
-  const [flowVersion, flowId, readonly, run] = useBuilderStateContext(
-    (state) => [state.flowVersion, state.flow.id, state.readonly, state.run],
-  );
+  const { openDraft, isOpeningDraft } = flowCanvasHooks.useOpenDraft();
+  const [flowVersion, readonly, run] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.readonly,
+    state.run,
+  ]);
   const isViewingDraft = flowVersion.state === FlowVersionState.DRAFT;
   const permissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   if (!readonly || (isViewingDraft && !run)) {
     return null;
   }
-  const handleClick = () => {
-    if (location.pathname?.includes('/runs')) {
-      navigate(`/flows/${flowId}`);
-    } else {
-      switchToDraft();
-    }
-  };
   const { text, icon } = getButtonTextAndIcon({
     hasPermissionToEditFlow: permissionToEditFlow,
   });
@@ -43,7 +33,7 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
         <AboveTriggerButton
           shortCutIsEscape={true}
           showPrimaryBg={false}
-          onClick={handleClick}
+          onClick={openDraft}
           text={text}
         ></AboveTriggerButton>
       )}
@@ -52,15 +42,9 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
         <Button
           size={'sm'}
           variant={'basic'}
-          loading={isSwitchingToDraftPending}
+          loading={isOpeningDraft}
           className="gap-2"
-          onClick={() => {
-            if (location.pathname?.includes('/runs')) {
-              navigate(`/flows/${flowId}`);
-            } else {
-              switchToDraft();
-            }
-          }}
+          onClick={openDraft}
         >
           {icon}
           {text}

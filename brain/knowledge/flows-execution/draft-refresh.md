@@ -23,6 +23,7 @@ How an open builder tab takes a change that a different writer saved to the same
 ## Gotchas
 
 - **A tab refreshes only while it shows the newest version** (`showsNewestVersion()`): no run, and the version is a DRAFT, or it is both `flow.version` and `flow.publishedVersionId`. A run view and an older version from the version history never change. A pending approval version is LOCKED but not published, so it does not count.
+- **"Edit flow" and Take Over share one path**, `flowCanvasHooks.useOpenDraft`. A run view goes to the flow page. The newest version gets a Draft Refresh, keeps the open step, and becomes editable for a person with WRITE_FLOW. An older version switches to the draft and selects the first invalid step. The path decides from `run` in the store, not from the URL, because embed mounts a memory router.
 - **A refresh never applies over a pending edit.** `refreshDraft()` flushes the debounce, drains the save queue, then sends `GET /v1/flows/:id`. When the response finds a new pending edit, the tab waits for a pause in the typing and fetches again. `refreshDraft()` is coalesced: one run plus one shared queued run, and every caller of one run gets the same answer.
 - **The open step form remounts only when its step changed.** The form key holds `draftRefreshCount`, which goes up only when the selected step's type, display name, skip or settings (without `sampleData`, compared after `prune`) changed. A piece step whose input the server cleans remounts once, at the first Draft Refresh after the person's own save.
 - **Publish refetches the draft first when a save failed and no Draft Refresh applied since** (`refreshDraftAfterFailedSave`). The refresh after a failed save does not retry, so in an outage the builder can keep showing an edit that the server never got. Publish stops when this refetch fails too, so it never publishes a draft that differs from what the builder showed.
@@ -39,7 +40,7 @@ How an open builder tab takes a change that a different writer saved to the same
 ## Key files
 
 - `packages/web/src/app/builder/state/` — the store actions `refreshDraft`, `applyDraftRefresh`, `showsNewestVersion`
-- `packages/web/src/app/builder/flow-canvas/` — `flowCanvasHooks.useRefreshDraftOnPush`, `useRefreshDraftOnReconnectAndReturn`, `useFlowLock`
+- `packages/web/src/app/builder/flow-canvas/` — `flowCanvasHooks.useRefreshDraftOnPush`, `useRefreshDraftOnReconnectAndReturn`, `useOpenDraft`, `useFlowLock`
 - `packages/web/src/hooks/` — `useResourceLock`, with the `onLockFreed` and `beforeRelease` options
 - `packages/web/src/lib/` — `editorSession`, `KeyedDebounce`, `PromiseQueue`
 - `packages/server/api/src/app/flows/flow/` — `flowSideEffects(log).onDraftWritten`, the one push helper

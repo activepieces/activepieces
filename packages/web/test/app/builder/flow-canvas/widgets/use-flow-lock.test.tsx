@@ -13,7 +13,7 @@ import {
   PopulatedFlow,
   RunEnvironment,
 } from '@activepieces/shared';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { io } from 'socket.io-client';
@@ -31,7 +31,6 @@ const harness = vi.hoisted(() => {
   const captured: { onTakeOver?: () => void | Promise<void> } = {};
   return {
     navigate: vi.fn(),
-    switchToDraft: vi.fn(),
     getFlow: vi.fn(),
     canEditFlow: true,
     captured,
@@ -59,19 +58,6 @@ vi.mock('@/hooks/authorization-hooks', () => ({
   useAuthorization: () => ({ checkAccess: () => harness.canEditFlow }),
 }));
 
-vi.mock('@/app/builder/flow-canvas/hooks', async (importOriginal) => {
-  const original = await importOriginal<
-    typeof import('@/app/builder/flow-canvas/hooks')
-  >();
-  return {
-    ...original,
-    flowCanvasHooks: {
-      ...original.flowCanvasHooks,
-      useSwitchToDraft: () => ({ switchToDraft: harness.switchToDraft }),
-    },
-  };
-});
-
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => harness.navigate,
@@ -83,7 +69,6 @@ describe('useFlowLock take-over', () => {
 
   beforeEach(() => {
     harness.navigate.mockReset();
-    harness.switchToDraft.mockReset();
     harness.getFlow.mockReset();
     harness.captured.onTakeOver = undefined;
     harness.canEditFlow = true;
@@ -108,7 +93,6 @@ describe('useFlowLock take-over', () => {
 
     expect(harness.navigate).toHaveBeenCalledTimes(1);
     expect(harness.navigate).toHaveBeenCalledWith(`/flows/${flow.id}`);
-    expect(harness.switchToDraft).not.toHaveBeenCalled();
     expect(harness.getFlow).not.toHaveBeenCalled();
     expect(reloadSpy).not.toHaveBeenCalled();
   });
@@ -188,7 +172,10 @@ describe('useFlowLock take-over', () => {
     harness.getFlow.mockReturnValue(response.promise);
     renderFlowLock(store);
 
-    await takeOver();
+    const takeOverDone = startTakeOver();
+    await vi.waitFor(() => {
+      expect(harness.getFlow).toHaveBeenCalledTimes(1);
+    });
     act(() => {
       store.getState().setRun(flowRun(), store.getState().flowVersion);
     });
@@ -196,6 +183,7 @@ describe('useFlowLock take-over', () => {
       response.resolve(
         draftFlow({ customerEmail: '{{trigger.customerEmail}}' }),
       );
+      await takeOverDone;
     });
 
     expect(store.getState()).toMatchObject({
@@ -211,16 +199,21 @@ describe('useFlowLock take-over', () => {
     });
   });
 
-  it('switches to the draft when an older version is being viewed', async () => {
+  it('shows the newest draft when an older version is being viewed', async () => {
     const flow = draftFlow({ customerEmail: '{{trigger.email}}' });
-    renderFlowLock(
-      createStore({ flow, flowVersion: olderVersion(flow.version) }),
-    );
+    const store = createStore({
+      flow,
+      flowVersion: olderVersion(flow.version),
+    });
+    harness.getFlow.mockResolvedValue(flow);
+    renderFlowLock(store);
 
     await takeOver();
 
-    expect(harness.switchToDraft).toHaveBeenCalledTimes(1);
-    expect(harness.getFlow).not.toHaveBeenCalled();
+    expect(store.getState()).toMatchObject({
+      readonly: false,
+      flowVersion: { id: 'draft-1', state: FlowVersionState.DRAFT },
+    });
     expect(harness.navigate).not.toHaveBeenCalled();
     expect(reloadSpy).not.toHaveBeenCalled();
   });
@@ -229,9 +222,11 @@ describe('useFlowLock take-over', () => {
 function renderFlowLock(store: BuilderStore) {
   renderHook(() => useFlowLock(), {
     wrapper: ({ children }: { children: ReactNode }) => (
-      <BuilderStateContext.Provider value={store}>
-        {children}
-      </BuilderStateContext.Provider>
+      <QueryClientProvider client={new QueryClient()}>
+        <BuilderStateContext.Provider value={store}>
+          {children}
+        </BuilderStateContext.Provider>
+      </QueryClientProvider>
     ),
   });
 }
@@ -240,6 +235,14 @@ async function takeOver() {
   await act(async () => {
     await harness.captured.onTakeOver?.();
   });
+}
+
+function startTakeOver(): Promise<void> {
+  let takeOverDone: Promise<void> = Promise.resolve();
+  act(() => {
+    takeOverDone = Promise.resolve(harness.captured.onTakeOver?.());
+  });
+  return takeOverDone;
 }
 
 function createStore({
