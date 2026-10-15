@@ -53,7 +53,7 @@ export function EnterpriseTrialDialog() {
   const { payload, returnFocus, closeDialog } =
     billingDialogHooks.useEnterpriseTrialDialogStore();
   const queryClient = useQueryClient();
-  enterpriseTrialHooks.useStatus();
+  const { data: liveStatus } = enterpriseTrialHooks.useStatus();
   const offer = enterpriseTrialHooks.useOffer();
   const [resumeState, setResumeState] = useState<ResumeState>('idle');
   const resumeOnStart =
@@ -66,7 +66,10 @@ export function EnterpriseTrialDialog() {
     finishBlockedWork(resumeOnStart.current).catch(() => undefined);
   });
   const open = !isNil(payload);
-  const result = start.data?.state;
+  const startedAnyway =
+    start.isError && liveStatus?.state === 'active' ? liveStatus : undefined;
+  const outcome = start.data ?? startedAnyway;
+  const result = outcome?.state;
   const view = viewFor({ result, offer });
   const busy = start.isPending || resumeState === 'saving';
   const close = () => {
@@ -146,8 +149,8 @@ export function EnterpriseTrialDialog() {
               )}
               {view === 'started' && (
                 <TrialStarted
-                  endsAt={start.data?.endsAt ?? null}
-                  startedAt={start.data?.startedAt ?? null}
+                  endsAt={outcome?.endsAt ?? null}
+                  startedAt={outcome?.startedAt ?? null}
                   featureKey={payload?.featureKey}
                   resumeState={resumeState}
                   onRetry={() =>

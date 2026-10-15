@@ -13,6 +13,8 @@ let isEmbedded = false;
 let planTrialEndsAt: string | null = null;
 let status: EnterpriseTrialStatus;
 const getEnterpriseTrial = vi.fn(async () => status);
+const startEnterpriseTrial = vi.fn();
+const internalErrorToast = vi.fn();
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -46,11 +48,19 @@ vi.mock('@/hooks/platform-hooks', () => ({
 vi.mock('@/features/billing/api/billing-plans-api', () => ({
   platformBillingApi: {
     getEnterpriseTrial: () => getEnterpriseTrial(),
-    startEnterpriseTrial: vi.fn(),
+    startEnterpriseTrial: () => startEnterpriseTrial(),
   },
 }));
 
-import { enterpriseTrialHooks } from '@/features/billing/hooks/enterprise-trial-hooks';
+vi.mock('@/components/ui/sonner', () => ({
+  internalErrorToast: () => internalErrorToast(),
+}));
+
+import { queryClient as appQueryClient } from '@/app/query-client';
+import {
+  enterpriseTrialHooks,
+  enterpriseTrialKey,
+} from '@/features/billing/hooks/enterprise-trial-hooks';
 
 const wrapper = ({ children }: React.PropsWithChildren) => (
   <QueryClientProvider
@@ -150,5 +160,34 @@ describe('trial clock', () => {
       readers.every((reader) => reader.result.current.state !== 'active'),
     ).toBe(true);
     readers.forEach((reader) => reader.unmount());
+  });
+});
+
+describe('starting the trial fails', () => {
+  it('reports the failure only in the dialog and re-reads the real trial state', async () => {
+    startEnterpriseTrial.mockRejectedValueOnce(new Error('network lost'));
+    internalErrorToast.mockClear();
+    const invalidate = vi.spyOn(appQueryClient, 'invalidateQueries');
+    const app = ({ children }: React.PropsWithChildren) => (
+      <QueryClientProvider client={appQueryClient}>
+        {children}
+      </QueryClientProvider>
+    );
+    const { result } = renderHook(() => enterpriseTrialHooks.useStart(), {
+      wrapper: app,
+    });
+
+    await act(async () => {
+      result.current.mutate();
+    });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(internalErrorToast).not.toHaveBeenCalled();
+    const keys = invalidate.mock.calls.map(([filters]) =>
+      JSON.stringify(filters?.queryKey),
+    );
+    expect(keys).toContain(JSON.stringify(enterpriseTrialKey('platform-1')));
+    expect(keys).toContain(JSON.stringify(['platform']));
+    invalidate.mockRestore();
   });
 });

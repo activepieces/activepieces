@@ -14,6 +14,10 @@ let offer = false;
 let payload: { featureKey?: string; resume?: () => Promise<unknown> } | null =
   null;
 let startPending = false;
+let startFailed = false;
+let liveStatus:
+  | { state: string; startedAt: string | null; endsAt: string | null }
+  | undefined;
 let onStarted: ((status: { state: string }) => void) | undefined;
 const closeDialog = vi.fn();
 const mutate = vi.fn();
@@ -71,14 +75,14 @@ vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
 vi.mock('@/features/billing/hooks/enterprise-trial-hooks', () => ({
   ENTERPRISE_TRIAL_DAYS: 7,
   enterpriseTrialHooks: {
-    useStatus: () => ({ data: undefined }),
+    useStatus: () => ({ data: liveStatus }),
     useOffer: () => offer,
     useStart: (callback?: (status: { state: string }) => void) => {
       onStarted = callback;
       return {
         data: undefined,
         isPending: startPending,
-        isError: false,
+        isError: startFailed,
         mutate,
         reset: vi.fn(),
       };
@@ -129,6 +133,8 @@ beforeEach(() => {
   offer = false;
   payload = { featureKey: 'PROJECTS' };
   startPending = false;
+  startFailed = false;
+  liveStatus = undefined;
   closeDialog.mockClear();
   mutate.mockClear();
 });
@@ -193,5 +199,31 @@ describe('one trial dialog for every locked feature', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
     });
     expect(resume).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('a start whose response was lost', () => {
+  it('shows the trial as on when the re-read status says it started', () => {
+    offer = false;
+    access = 'trial_available';
+    startFailed = true;
+    liveStatus = {
+      state: 'active',
+      startedAt: new Date().toISOString(),
+      endsAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
+    };
+    renderDialog();
+    expect(screen.getByText('Your Enterprise plan trial is on')).toBeDefined();
+  });
+
+  it('keeps the start view with the inline error when the trial really did not start', () => {
+    offer = true;
+    access = 'trial_available';
+    startFailed = true;
+    liveStatus = { state: 'eligible', startedAt: null, endsAt: null };
+    renderDialog();
+    expect(
+      screen.getByText('We could not start your trial. Please try again.'),
+    ).toBeDefined();
   });
 });

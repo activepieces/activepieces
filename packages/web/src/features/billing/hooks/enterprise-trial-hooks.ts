@@ -56,6 +56,12 @@ export const enterpriseTrialHooks = {
         refreshBillingCaches(queryClient);
         onStarted?.(status);
       },
+      onError: () => {
+        queryClient
+          .invalidateQueries({ queryKey: enterpriseTrialKey(platform.id) })
+          .catch(() => undefined);
+        refreshBillingCaches(queryClient);
+      },
     });
   },
   useTrial: (): EnterpriseTrial => {
