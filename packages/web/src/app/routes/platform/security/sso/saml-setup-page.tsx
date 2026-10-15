@@ -265,11 +265,6 @@ const DomainStep = ({
             <FormItem className="grid space-y-2">
               <Label htmlFor="ssoDomain">{t('Domain')}</Label>
               <Input {...field} id="ssoDomain" placeholder="acme.com" />
-              <FormDescription>
-                {t(
-                  'When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.',
-                )}
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
