@@ -12,7 +12,7 @@ How an open builder tab takes a change that a different writer saved to the same
 
 **Draft Refresh** — a builder tab replaces its copy of the draft with the server draft, in place, with no page reload. It keeps the selected step, the open sidebar and the selected branch. _Avoid_: "sync" (git sync), "reload" (a full page reload).
 
-**Editor Session** — one page load of the web app (a builder tab, a window or an embedded builder; a reload makes a new one). Its id (`x-ap-editor-session-id`) is a label so that a tab skips the push of its own save; the server never checks it.
+**Editor Session** — one page load of the web app (a builder tab, a window or an embedded builder; a reload makes a new one). Its id (`x-ap-editor-session-id`) is a label so that a tab skips the push of its own save. The server keeps it only when it is an `ApId` (anything else becomes `null`) and never checks who sent it.
 
 **Resource Lock** — the existing per-user lock of a flow or a table (`lockService`, `LOCK_RESOURCE`, `useResourceLock`): acquire on mount, renew every 30 s, Take Over. _Avoid_: "Edit Lease" (the dropped design), "flow lock"; "lock" alone means a published version (`FlowVersionState.LOCKED`).
 
