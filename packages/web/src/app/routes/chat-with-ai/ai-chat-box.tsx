@@ -19,6 +19,7 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { ChatCreditsAlert } from '@/features/billing';
@@ -197,6 +198,8 @@ function ChatBoxContent({
     : chatUtils.choiceOf({ pick: modelPick, options: modelOptions }) ??
       modelOptions.defaultChoice ??
       null;
+  const awaitingSavedPick =
+    !isNil(initialConversationId) && (isNil(modelPick) || isLoadingHistory);
   const pickUnavailable =
     showsPicker &&
     !isNil(modelOptions) &&
@@ -510,7 +513,9 @@ function ChatBoxContent({
             onInputChange={setHasInput}
             recede={showOnboardingCard}
             modelPicker={
-              showsPicker && !isNil(chatProjectId) ? (
+              showsPicker && awaitingSavedPick ? (
+                <Skeleton className="h-8 w-24 rounded-full" />
+              ) : showsPicker && !isNil(chatProjectId) ? (
                 <ModelPicker
                   variant="pill"
                   surface="chat"
