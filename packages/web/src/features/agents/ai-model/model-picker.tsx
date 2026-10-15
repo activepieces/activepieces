@@ -38,7 +38,6 @@ export function ModelPicker({
   disabled = false,
   withTiers = true,
   variant = 'field',
-  footer,
   className,
 }: ModelPickerProps) {
   const [open, setOpen] = useState(false);
@@ -73,7 +72,6 @@ export function ModelPicker({
   return (
     <ModelPickerPopover
       matchTriggerWidth={variant === 'field'}
-      footer={footer}
       groups={view?.groups ?? []}
       notices={
         isError ? (
@@ -532,7 +530,10 @@ function TierBadges({
 function RecommendedMark() {
   return (
     <span title={t('Recommended')} className="flex shrink-0 items-center">
-      <Star className="size-3 text-gray-10" aria-hidden />
+      <Star
+        className="size-3 fill-warning-9 text-warning-9 opacity-70"
+        aria-hidden
+      />
       <span className="sr-only">{t('Recommended')}</span>
     </span>
   );
@@ -590,7 +591,6 @@ type ModelPickerProps = {
   disabled?: boolean;
   withTiers?: boolean;
   variant?: 'field' | 'pill';
-  footer?: ReactNode;
   className?: string;
 };
 

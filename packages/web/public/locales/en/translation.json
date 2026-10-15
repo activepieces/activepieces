@@ -920,7 +920,6 @@
   "Voice input": "Voice input",
   "Drop files here": "Drop files here",
   "Release to add files to your message": "Release to add files to your message",
-  "Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.": "Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.",
   "Expired": "Expired",
   "Using this {name} account": "Using this {name} account",
   "Reconnect {name}": "Reconnect {name}",

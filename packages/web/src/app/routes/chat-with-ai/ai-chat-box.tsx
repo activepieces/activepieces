@@ -1,7 +1,6 @@
-import { AIProviderName, isNil, SeekPage } from '@activepieces/core-utils';
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
   AgentConversation,
-  CHAT_CREDITS_PER_TOOL_CALL,
   AgentMessageSource,
   ChatPersonalizationStatus,
   ModelOptions,
@@ -519,17 +518,6 @@ function ChatBoxContent({
                   value={shownChoice}
                   onChange={(choice) =>
                     void setModelPick(chatUtils.pickOf({ choice }))
-                  }
-                  footer={
-                    shownChoice?.type === 'model' &&
-                    shownChoice.provider === AIProviderName.ACTIVEPIECES ? (
-                      <div className="border-t px-3 py-2 text-xs text-gray-11">
-                        {t(
-                          'Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.',
-                          { count: CHAT_CREDITS_PER_TOOL_CALL },
-                        )}
-                      </div>
-                    ) : undefined
                   }
                 />
               ) : null
