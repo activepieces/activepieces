@@ -63,7 +63,7 @@ export function ModelPicker({
     return (
       <Skeleton
         className={cn(
-          variant === 'pill' ? 'h-6 w-24 rounded-full' : 'h-9 w-full',
+          variant === 'pill' ? 'h-8 w-24 rounded-full' : 'h-9 w-full',
           className,
         )}
       />
@@ -109,7 +109,7 @@ export function ModelPicker({
         data-testid="model-picker-trigger"
         className={cn(
           variant === 'pill'
-            ? 'flex h-6 min-w-0 max-w-64 items-center gap-1.5 rounded-full px-2 text-left text-xs transition-colors hover:bg-gray-3 disabled:pointer-events-none disabled:opacity-50'
+            ? 'flex h-8 min-w-0 max-w-64 items-center gap-1.5 rounded-full px-2.5 text-left text-xs transition-colors hover:bg-gray-3 disabled:pointer-events-none disabled:opacity-50'
             : 'flex h-9 w-full min-w-0 items-center gap-2 rounded-md border bg-panel px-2.5 text-left text-sm transition-colors hover:bg-gray-2 disabled:pointer-events-none disabled:opacity-50',
           className,
         )}
@@ -205,7 +205,6 @@ export function modelPickerView({
       }));
   const keyGroups = options.keys.map((key) => {
     const info = modelMeta.providerInfoOf({ provider: key.provider });
-    const labelOf = recommendedLabels({ key, surface });
     const models = key.models.map((model) => {
       const optionModel: OptionModel = {
         provider: key.provider,
@@ -224,7 +223,14 @@ export function modelPickerView({
             modelId: model.id,
           } satisfies ModelChoice,
           name: model.name,
-          label: labelOf.get(model.id),
+          badges:
+            surface !== 'flow' &&
+            modelMeta.isRecommended({
+              provider: key.provider,
+              modelId: model.id,
+            }) ? (
+              <RecommendedMark />
+            ) : undefined,
           trailing: contextOf({ model: optionModel }),
           searchText: `${model.name} ${model.id} ${key.name} ${info.name}`,
           selected:
@@ -523,27 +529,13 @@ function TierBadges({
   );
 }
 
-function recommendedLabels({
-  key,
-  surface,
-}: {
-  key: ModelOptions['keys'][number];
-  surface: ModelOptionsSurface | undefined;
-}): Map<string, string> {
-  if (surface === 'flow') {
-    return new Map();
-  }
-  const isRecommended = (modelId: string) =>
-    modelMeta.isRecommended({ provider: key.provider, modelId });
-  const firstRecommended = key.models.find((model) => isRecommended(model.id));
-  const firstOther = key.models.find((model) => !isRecommended(model.id));
-  if (isNil(firstRecommended) || isNil(firstOther)) {
-    return new Map();
-  }
-  return new Map([
-    [firstRecommended.id, t('Recommended')],
-    [firstOther.id, t('More models')],
-  ]);
+function RecommendedMark() {
+  return (
+    <span title={t('Recommended')} className="flex shrink-0 items-center">
+      <Star className="size-3 text-gray-10" aria-hidden />
+      <span className="sr-only">{t('Recommended')}</span>
+    </span>
+  );
 }
 
 function contextOf({ model }: { model: OptionModel }): string | undefined {

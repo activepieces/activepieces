@@ -2,7 +2,6 @@ import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { Check, ChevronDown, ChevronRight } from 'lucide-react';
 import {
-  Fragment,
   ReactNode,
   useDeferredValue,
   useLayoutEffect,
@@ -159,27 +158,16 @@ export function ModelPickerPopover<T>({
     return (
       <>
         {shown.map((item) => (
-          <Fragment key={item.id}>
-            {search === '' && item.label !== undefined && (
-              <div
-                className={cn(
-                  'px-2 pt-2 pb-1 text-xs font-medium tracking-wider text-gray-10 uppercase',
-                  group.collapsible === true && 'pl-9',
-                )}
-              >
-                {item.label}
-              </div>
-            )}
-            <CommandItem
-              value={itemValue({ group, item })}
-              disabled={item.disabled}
-              aria-disabled={item.disabled}
-              onSelect={() => pick(item)}
-              className="group"
-            >
-              <PickerRow item={item} indented={group.collapsible === true} />
-            </CommandItem>
-          </Fragment>
+          <CommandItem
+            key={item.id}
+            value={itemValue({ group, item })}
+            disabled={item.disabled}
+            aria-disabled={item.disabled}
+            onSelect={() => pick(item)}
+            className="group"
+          >
+            <PickerRow item={item} indented={group.collapsible === true} />
+          </CommandItem>
         ))}
         {shown.length < group.items.length && (
           <CommandItem
@@ -463,7 +451,6 @@ export type ModelPickerItem<T> = {
   trailing?: string;
   badges?: ReactNode;
   leading?: ReactNode;
-  label?: string;
   note?: string;
   disabled?: boolean;
   selected?: boolean;

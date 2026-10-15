@@ -263,22 +263,16 @@ describe('recommended models', () => {
       },
     ],
   };
-  const labels = (surface: 'chat' | 'agent' | 'flow') =>
+  const starred = (surface: 'chat' | 'agent' | 'flow') =>
     modelPickerView({ options: withCurated, shown: null, surface })
       .groups.filter((group) => group.section === 'keys')
       .flatMap((group) => group.items)
-      .map((item) => [item.name, item.label]);
+      .filter((item) => item.badges !== undefined)
+      .map((item) => item.name);
 
-  it('splits a key into Recommended and More models in chat and agents, not in flows', () => {
-    const split = [
-      ['GPT-5.5', 'Recommended'],
-      ['GPT-4o', 'More models'],
-    ];
-    expect(labels('chat')).toEqual(split);
-    expect(labels('agent')).toEqual(split);
-    expect(labels('flow')).toEqual([
-      ['GPT-5.5', undefined],
-      ['GPT-4o', undefined],
-    ]);
+  it('stars curated models in chat and agents, not in flows', () => {
+    expect(starred('chat')).toEqual(['GPT-5.5']);
+    expect(starred('agent')).toEqual(['GPT-5.5']);
+    expect(starred('flow')).toEqual([]);
   });
 });
