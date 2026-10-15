@@ -20,7 +20,6 @@ import { platformApi } from '@/api/platforms-api';
 import {
   AdminPage,
   AdminPageHeader,
-  DangerZone,
   SettingsPanel,
   SettingsRow,
   adminLayout,
@@ -78,7 +77,7 @@ export const SamlSetupPage = () => {
         />
       </SettingsPanel>
       {connected && (
-        <DisableSamlZone
+        <DisableSamlRow
           platform={platform}
           refetch={refetch}
           onDisabled={() => navigate(ssoPaths.authentication)}
@@ -88,7 +87,7 @@ export const SamlSetupPage = () => {
   );
 };
 
-const DisableSamlZone = ({
+const DisableSamlRow = ({
   platform,
   refetch,
   onDisabled,
@@ -113,10 +112,12 @@ const DisableSamlZone = ({
   });
 
   return (
-    <DangerZone>
+    <SettingsPanel flush>
       <SettingsRow
         title={t('Disable single sign-on')}
-        description={t('Deletes your SAML connection.')}
+        description={t(
+          'Deletes the SAML connection. Your verified domain stays, so you can connect again later.',
+        )}
       >
         <Button
           {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
@@ -152,7 +153,7 @@ const DisableSamlZone = ({
         controlId={AdminControl.SSO_SAML_DISABLE_CONFIRM}
         onConfirm={() => disableSaml()}
       />
-    </DangerZone>
+    </SettingsPanel>
   );
 };
 
