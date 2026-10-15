@@ -26,8 +26,8 @@ import { baseUrl } from './lib/common/common';
 
 export const openai = createPiece({
   displayName: 'OpenAI',
-  description: 'Use the many tools ChatGPT has to offer.',
-  minimumSupportedRelease: '0.63.0',
+  description: 'Chat, images, audio and embeddings from OpenAI models.',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: openaiAuth,

@@ -6,6 +6,7 @@ import { customPropertiesProp, mergeCustomProperties } from '../common/custom-pr
 
 export const updateDealAction = createAction({
   name: 'update_deal',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Update Deal',
   description: 'Update an existing deal.',

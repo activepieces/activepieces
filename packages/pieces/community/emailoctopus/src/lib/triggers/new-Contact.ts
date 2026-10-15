@@ -21,6 +21,7 @@ interface EmailOctopusEvent {
 export const newContact = createTrigger({
   auth: emailOctopusAuth,
   name: 'newContact',
+  classification: 'READ',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is added to a particular list.',
   aiMetadata: {

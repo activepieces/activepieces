@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, AI_PROVIDER_ENTITY_TYPES } from '@activepieces/shared'
 import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
 
@@ -14,6 +14,12 @@ describe('isTransientFailureText', () => {
         for (const t of ['❌ failed: 429 Too Many Requests', '❌ 503 Service Unavailable', '❌ request timed out', '❌ ECONNRESET', '❌ rate limit exceeded']) {
             expect(isTransientFailureText(t), t).toBe(true)
         }
+    })
+
+    it('does not mask an actionable provider error just because it says to try again', () => {
+        const bedrockSetupRequired = 'Model use case details have not been submitted for this account. Fill out the Anthropic use case details form before using the model. If you have already filled out the form, try again in 15 minutes.'
+
+        expect(isTransientFailureText(bedrockSetupRequired)).toBe(false)
     })
 
     it('does not flag permanent errors (4xx validation/auth)', () => {
@@ -36,9 +42,12 @@ describe('looksEmptyResultText', () => {
 })
 
 describe('firstStepUsesFastModel', () => {
-    it('buys time to first token on the surfaces someone is watching', () => {
-        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, runsASavedAgent: false })).toBe(true)
+    it('buys time to first token for a saved agent someone is watching', () => {
         expect(firstStepUsesFastModel({ source: AgentRunSource.AGENT, runsASavedAgent: false })).toBe(true)
+    })
+
+    it('writes chat replies with the main model, which follows the writing rules the fast one ignores', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, runsASavedAgent: false })).toBe(false)
     })
 
     it('leaves a step that runs a saved agent on the model that agent names', () => {
@@ -60,7 +69,7 @@ describe('classifyAgentRunError', () => {
 
     it.each([
         [400, 'internal'], [401, 'user'], [402, 'credit'], [403, 'user'], [404, 'user'], [408, 'internal'],
-        [409, 'internal'], [413, 'internal'], [422, 'internal'], [429, 'internal'], [500, 'internal'], [503, 'internal'],
+        [409, 'internal'], [413, 'internal'], [422, 'internal'], [429, 'provider'], [500, 'provider'], [503, 'provider'],
     ])('classifies a provider %i as %s', (statusCode, expected) => {
         expect(classify(apiError({ statusCode, message: 'the provider said no' }))).toBe(expected)
     })
@@ -123,8 +132,20 @@ describe('classifyAgentRunError', () => {
     })
 
     it('does not let a 5xx error page mentioning credits masquerade as a billing failure', () => {
-        expect(classify(apiError({ statusCode: 500, message: 'Bad gateway', responseBody: '<html>Buy more credits</html>' }))).toBe('internal')
-        expect(classify(apiError({ statusCode: 503, message: 'Unavailable', responseBody: 'trace-id 402 upstream down' }))).toBe('internal')
+        expect(classify(apiError({ statusCode: 500, message: 'Bad gateway', responseBody: '<html>Buy more credits</html>' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
+        expect(classify(apiError({ statusCode: 503, message: 'Unavailable', responseBody: 'trace-id 402 upstream down' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
+    })
+
+    it('blames an outage at the customer\'s own provider on the provider, but keeps one at ours internal', () => {
+        const highDemand = new RetryError({
+            message: 'Failed after 4 attempts',
+            reason: 'maxRetriesExceeded',
+            errors: [apiError({ statusCode: 503, message: 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.' })],
+        })
+        expect(classify(highDemand, AIProviderName.GOOGLE)).toBe('provider')
+        expect(classify(highDemand, AIProviderName.ACTIVEPIECES)).toBe('internal')
+        expect(classify(apiError({ statusCode: 429, message: 'Too Many Requests' }), AIProviderName.OPENAI)).toBe('provider')
+        expect(classify(apiError({ statusCode: 429, message: 'Too Many Requests' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
     })
 
     it('reports a real quota rejection as credit, so the client can offer a top-up', () => {
@@ -147,12 +168,23 @@ describe('classifyAgentRunError', () => {
     })
 
     it('keeps a conversation stuck mid-stream visible instead of completing quietly', () => {
-        expect(classify(new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'An agent is already running for this conversation' } }))).toBe('internal')
+        expect(classify(new ActivepiecesError({ code: ErrorCode.AGENT_RUN_BUSY, params: { message: 'An agent is already running for this conversation' } }))).toBe('internal')
+    })
+
+    it('treats a rejection the server explains to the user as theirs, not ours', () => {
+        expect(classify(new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'No model in tier "Smart" can run' } }))).toBe('user')
+        expect(classify(new ActivepiecesError({ code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED, params: {} }))).toBe('user')
     })
 
     it('reads the error code an RPC failure now carries across the boundary', () => {
         expect(classify(Object.assign(new Error('RPC [getAgentConfig] handler threw: ENTITY_NOT_FOUND'), {
             apError: { code: ErrorCode.ENTITY_NOT_FOUND, entityType: 'AIProvider' },
+        }))).toBe('user')
+    })
+
+    it('treats a flow step naming a model our credits do not serve as user config, not an empty wallet', () => {
+        expect(classify(Object.assign(new Error('RPC [getAgentConfig] handler threw: ENTITY_NOT_FOUND: The model "openai/gpt-4o" is not available on Activepieces AI credits.'), {
+            apError: { code: ErrorCode.ENTITY_NOT_FOUND, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
         }))).toBe('user')
     })
 

@@ -8,7 +8,7 @@ export const airtableDeleteRecordAction = createAction({
   name: 'airtable_delete_record',
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Airtable Record',
-  description: 'Deletes a record in airtable',
+  description: 'Deletes a record from a table.',
   audience: 'human',
   outputSchema: deleteRecordActionOutputSchema,
   aiMetadata: {

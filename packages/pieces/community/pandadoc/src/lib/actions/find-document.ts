@@ -12,6 +12,7 @@ import {
 
 export const findDocument = createAction({
   name: 'findDocument',
+  classification: 'SEARCH',
   displayName: 'Find Document(s)',
   description: 'Finds documents based various filter.',
   audience: 'both',

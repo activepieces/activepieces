@@ -341,6 +341,168 @@ const orderNoteFields: Fields = [
   { key: 'date_created_gmt', label: 'Created At (GMT)', format: 'datetime' },
 ];
 
+const variationAttributeFields: Fields = [
+  { key: 'id', label: 'Attribute ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'slug', label: 'Slug' },
+  { key: 'option', label: 'Option' },
+];
+
+const variationFields: Fields = [
+  { key: 'id', label: 'Variation ID' },
+  { key: 'parent_id', label: 'Parent Product ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'type', label: 'Type' },
+  { key: 'status', label: 'Status' },
+  { key: 'description', label: 'Description', format: 'html' },
+  { key: 'permalink', label: 'Permalink', format: 'url' },
+  { key: 'sku', label: 'SKU' },
+  { key: 'global_unique_id', label: 'Global Unique ID' },
+  { key: 'price', label: 'Price' },
+  { key: 'regular_price', label: 'Regular Price' },
+  { key: 'sale_price', label: 'Sale Price' },
+  { key: 'date_on_sale_from', label: 'On Sale From', format: 'datetime' },
+  { key: 'date_on_sale_from_gmt', label: 'On Sale From (GMT)', format: 'datetime' },
+  { key: 'date_on_sale_to', label: 'On Sale To', format: 'datetime' },
+  { key: 'date_on_sale_to_gmt', label: 'On Sale To (GMT)', format: 'datetime' },
+  { key: 'on_sale', label: 'On Sale', format: 'boolean' },
+  { key: 'purchasable', label: 'Purchasable', format: 'boolean' },
+  { key: 'virtual', label: 'Virtual', format: 'boolean' },
+  { key: 'downloadable', label: 'Downloadable', format: 'boolean' },
+  { key: 'downloads', label: 'Downloads', listItems: downloadFields, labelKey: 'name' },
+  { key: 'download_limit', label: 'Download Limit', format: 'number' },
+  { key: 'download_expiry', label: 'Download Expiry (Days)', format: 'number' },
+  { key: 'tax_status', label: 'Tax Status' },
+  { key: 'tax_class', label: 'Tax Class' },
+  { key: 'manage_stock', label: 'Manage Stock' },
+  { key: 'stock_quantity', label: 'Stock Quantity', format: 'number' },
+  { key: 'stock_status', label: 'Stock Status' },
+  { key: 'backorders', label: 'Backorders' },
+  { key: 'backorders_allowed', label: 'Backorders Allowed', format: 'boolean' },
+  { key: 'backordered', label: 'Backordered', format: 'boolean' },
+  { key: 'low_stock_amount', label: 'Low Stock Amount', format: 'number' },
+  { key: 'weight', label: 'Weight' },
+  { key: 'dimensions', label: 'Dimensions', children: dimensionFields },
+  { key: 'shipping_class', label: 'Shipping Class' },
+  { key: 'shipping_class_id', label: 'Shipping Class ID' },
+  { key: 'image', label: 'Image', children: imageFields },
+  { key: 'gallery_image_ids', label: 'Gallery Image IDs' },
+  { key: 'attributes', label: 'Attributes', listItems: variationAttributeFields, labelKey: 'name' },
+  { key: 'menu_order', label: 'Menu Order', format: 'number' },
+  { key: 'date_created', label: 'Created At', format: 'datetime' },
+  { key: 'date_created_gmt', label: 'Created At (GMT)', format: 'datetime' },
+  { key: 'date_modified', label: 'Modified At', format: 'datetime' },
+  { key: 'date_modified_gmt', label: 'Modified At (GMT)', format: 'datetime' },
+  { key: 'meta_data', label: 'Meta Data', listItems: metaDataFields, labelKey: 'key' },
+];
+
+const categoryFields: Fields = [
+  { key: 'id', label: 'Category ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'slug', label: 'Slug' },
+  { key: 'parent', label: 'Parent Category ID' },
+  { key: 'description', label: 'Description', format: 'html' },
+  { key: 'display', label: 'Display Type' },
+  { key: 'image', label: 'Image' },
+  { key: 'menu_order', label: 'Menu Order', format: 'number' },
+  { key: 'count', label: 'Product Count', format: 'number' },
+];
+
+const tagFields: Fields = [
+  { key: 'id', label: 'Tag ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'slug', label: 'Slug' },
+  { key: 'description', label: 'Description' },
+  { key: 'count', label: 'Product Count', format: 'number' },
+];
+
+const reviewFields: Fields = [
+  { key: 'id', label: 'Review ID' },
+  { key: 'product_id', label: 'Product ID' },
+  { key: 'product_name', label: 'Product Name' },
+  { key: 'product_permalink', label: 'Product URL', format: 'url' },
+  { key: 'status', label: 'Status' },
+  { key: 'reviewer', label: 'Reviewer' },
+  { key: 'reviewer_email', label: 'Reviewer Email', format: 'email' },
+  { key: 'review', label: 'Review', format: 'html' },
+  { key: 'rating', label: 'Rating', format: 'number' },
+  { key: 'verified', label: 'Verified Owner', format: 'boolean' },
+  { key: 'reviewer_avatar_urls', label: 'Reviewer Avatar URLs', children: [
+    { key: '24', label: 'Avatar 24px', format: 'url' },
+    { key: '48', label: 'Avatar 48px', format: 'url' },
+    { key: '96', label: 'Avatar 96px', format: 'url' },
+  ] },
+  { key: 'date_created', label: 'Created At', format: 'datetime' },
+  { key: 'date_created_gmt', label: 'Created At (GMT)', format: 'datetime' },
+];
+
+const refundFields: Fields = [
+  { key: 'id', label: 'Refund ID' },
+  { key: 'amount', label: 'Amount' },
+  { key: 'reason', label: 'Reason' },
+  { key: 'refunded_by', label: 'Refunded By User ID' },
+  { key: 'refunded_payment', label: 'Refunded Through Gateway', format: 'boolean' },
+  { key: 'date_created', label: 'Created At', format: 'datetime' },
+  { key: 'date_created_gmt', label: 'Created At (GMT)', format: 'datetime' },
+  { key: 'line_items', label: 'Refunded Line Items', listItems: lineItemFields, labelKey: 'name' },
+  { key: 'shipping_lines', label: 'Refunded Shipping Lines', listItems: shippingLineFields, labelKey: 'method_title' },
+  { key: 'tax_lines', label: 'Refunded Tax Lines', listItems: taxLineFields, labelKey: 'label' },
+  { key: 'fee_lines', label: 'Refunded Fee Lines', listItems: feeLineFields, labelKey: 'name' },
+  { key: 'meta_data', label: 'Meta Data', listItems: metaDataFields, labelKey: 'key' },
+];
+
+const salesReportFields: Fields = [
+  { key: 'total_sales', label: 'Total Sales' },
+  { key: 'net_sales', label: 'Net Sales' },
+  { key: 'average_sales', label: 'Average Sales Per Day' },
+  { key: 'total_orders', label: 'Total Orders', format: 'number' },
+  { key: 'total_items', label: 'Total Items', format: 'number' },
+  { key: 'total_tax', label: 'Total Tax' },
+  { key: 'total_shipping', label: 'Total Shipping' },
+  { key: 'total_refunds', label: 'Total Refunds' },
+  { key: 'total_discount', label: 'Total Discount' },
+  { key: 'total_customers', label: 'New Customers', format: 'number' },
+  { key: 'totals_grouped_by', label: 'Grouped By' },
+  { key: 'totals', label: 'Totals By Period', dynamicKey: true, children: [
+    { key: 'sales', label: 'Sales' },
+    { key: 'orders', label: 'Orders', format: 'number' },
+    { key: 'items', label: 'Items', format: 'number' },
+    { key: 'tax', label: 'Tax' },
+    { key: 'shipping', label: 'Shipping' },
+    { key: 'discount', label: 'Discount' },
+    { key: 'customers', label: 'New Customers', format: 'number' },
+    { key: 'refunds', label: 'Refunds' },
+  ] },
+];
+
+const topSellerFields: Fields = [
+  { key: 'name', label: 'Product Name' },
+  { key: 'product_id', label: 'Product ID' },
+  { key: 'quantity', label: 'Quantity Sold', format: 'number' },
+];
+
+const orderTotalFields: Fields = [
+  { key: 'slug', label: 'Status' },
+  { key: 'name', label: 'Status Name' },
+  { key: 'total', label: 'Orders', format: 'number' },
+];
+
+const paymentGatewayFields: Fields = [
+  { key: 'id', label: 'Gateway ID' },
+  { key: 'title', label: 'Title' },
+  { key: 'description', label: 'Description' },
+  { key: 'order', label: 'Sort Order' },
+  { key: 'enabled', label: 'Enabled', format: 'boolean' },
+  { key: 'method_title', label: 'Method Title' },
+  { key: 'method_description', label: 'Method Description', format: 'html' },
+  { key: 'method_supports', label: 'Supported Features' },
+];
+
+const batchErrorFields: Fields = [
+  { key: 'code', label: 'Error Code' },
+  { key: 'message', label: 'Error Message' },
+];
+
 const listOf = (key: string, label: string, fields: Fields, itemLabel: string): OutputSchema => ({
   itemLabel,
   fields: [{ key, label, value: '', listItems: fields }],
@@ -365,6 +527,39 @@ export const getOrderOutputSchema: OutputSchema = { fields: orderFields };
 export const findOrdersOutputSchema: OutputSchema = listOf('orders', 'Orders', orderFields, '#{number} — {status}');
 
 export const addOrderNoteOutputSchema: OutputSchema = { fields: orderNoteFields };
+
+export const listProductsOutputSchema: OutputSchema = listOf('products', 'Products', productFields, '{name}');
+export const deleteProductOutputSchema: OutputSchema = { fields: productFields };
+export const batchUpdateProductsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'update', label: 'Updated Products', labelKey: 'name', listItems: [
+      ...productFields,
+      { key: 'error', label: 'Error', children: batchErrorFields },
+    ] },
+  ],
+};
+export const listProductVariationsOutputSchema: OutputSchema = listOf('variations', 'Variations', variationFields, '{sku}');
+export const productVariationOutputSchema: OutputSchema = { fields: variationFields };
+export const listProductCategoriesOutputSchema: OutputSchema = listOf('categories', 'Categories', categoryFields, '{name}');
+export const productCategoryOutputSchema: OutputSchema = { fields: categoryFields };
+export const listProductTagsOutputSchema: OutputSchema = listOf('tags', 'Tags', tagFields, '{name}');
+export const productTagOutputSchema: OutputSchema = { fields: tagFields };
+export const listProductReviewsOutputSchema: OutputSchema = listOf('reviews', 'Reviews', reviewFields, '{reviewer}');
+export const productReviewOutputSchema: OutputSchema = { fields: reviewFields };
+export const listOrdersOutputSchema: OutputSchema = listOf('orders', 'Orders', orderFields, '#{number} — {status}');
+export const deleteOrderOutputSchema: OutputSchema = { fields: orderFields };
+export const listOrderNotesOutputSchema: OutputSchema = listOf('notes', 'Notes', orderNoteFields, '{note}');
+export const deleteOrderNoteOutputSchema: OutputSchema = { fields: orderNoteFields };
+export const orderRefundOutputSchema: OutputSchema = { fields: refundFields };
+export const listOrderRefundsOutputSchema: OutputSchema = listOf('refunds', 'Refunds', refundFields, '{amount} — {reason}');
+export const listCustomersOutputSchema: OutputSchema = listOf('customers', 'Customers', customerFields, '{email}');
+export const deleteCustomerOutputSchema: OutputSchema = { fields: customerFields };
+export const listCouponsOutputSchema: OutputSchema = listOf('coupons', 'Coupons', couponFields, '{code}');
+export const deleteCouponOutputSchema: OutputSchema = { fields: couponFields };
+export const salesReportOutputSchema: OutputSchema = listOf('report', 'Sales Report', salesReportFields, '{total_sales}');
+export const topSellersReportOutputSchema: OutputSchema = listOf('top_sellers', 'Top Sellers', topSellerFields, '{name}');
+export const orderTotalsReportOutputSchema: OutputSchema = listOf('totals', 'Order Totals', orderTotalFields, '{name}');
+export const listPaymentGatewaysOutputSchema: OutputSchema = listOf('gateways', 'Payment Gateways', paymentGatewayFields, '{title}');
 
 export const productTriggerOutputSchema: OutputSchema = { fields: productFields };
 export const orderTriggerOutputSchema: OutputSchema = { fields: orderFields };

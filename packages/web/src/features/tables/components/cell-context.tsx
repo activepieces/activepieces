@@ -44,11 +44,7 @@ export const CellProvider = ({
   setIsEditing,
   disabled,
 }: CellProviderProps) => {
-  const [updateRecord, fields, records] = useTableState((state) => [
-    state.updateRecord,
-    state.fields,
-    state.records,
-  ]);
+  const updateRecord = useTableState((state) => state.updateRecord);
   const focustContainer = () => {
     // need to refocus container so keyboard navigation between cells works
     // if it was done immediately, the cell would be blurred and call handleRowChange
@@ -58,20 +54,8 @@ export const CellProvider = ({
   };
 
   const handleCellChange = (newCellValue: string) => {
-    const record = records[rowIdx];
-    const newRecrodValues = fields.map((_, fIndex) => {
-      // values order isn't guaranteed to be the same as fields order
-      const fieldValue = record.values.find(
-        (value) => value.fieldIndex === fIndex,
-      )?.value;
-      return {
-        fieldIndex: fIndex,
-        value: fieldValue ?? '',
-      };
-    });
-    newRecrodValues[columnIdx].value = newCellValue;
     updateRecord(rowIdx, {
-      values: newRecrodValues,
+      values: [{ fieldIndex: columnIdx, value: newCellValue }],
     });
     setIsEditing(false);
     focustContainer();

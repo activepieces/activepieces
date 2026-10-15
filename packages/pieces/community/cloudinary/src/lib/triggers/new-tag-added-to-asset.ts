@@ -16,6 +16,7 @@ import {
 import { cloudinaryAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import dayjs from 'dayjs';
+import { newTagAddedToAssetOutputSchema } from '../output-schemas';
 
 const props = {
     resource_type: Property.StaticDropdown({
@@ -77,6 +78,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof cloudinaryAuth>,
 export const newTagAddedToAsset = createTrigger({
     auth: cloudinaryAuth,
     name: 'new_tag_added_to_asset',
+    outputSchema: newTagAddedToAssetOutputSchema,
     classification: 'READ',
     displayName: 'New Tag Added to Asset',
     description: 'Triggers when a tag is added to an asset in Cloudinary.',

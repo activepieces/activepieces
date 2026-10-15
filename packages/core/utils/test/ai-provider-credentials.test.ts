@@ -28,6 +28,15 @@ describe('aiProviderCredentials', () => {
         expect(credentials.config).toEqual({})
     })
 
+    it('carries a bedrock session token through, so temporary credentials survive the read', () => {
+        const credentials = aiProviderCredentials({
+            provider: AIProviderName.BEDROCK,
+            auth: { accessKeyId: 'ASIA', secretAccessKey: 'secret', sessionToken: 'temporary' },
+            config: { region: 'us-east-1' },
+        })
+        expect(credentials.auth).toEqual({ accessKeyId: 'ASIA', secretAccessKey: 'secret', sessionToken: 'temporary' })
+    })
+
     it('returns an empty row when the auth itself cannot be parsed', () => {
         const credentials = aiProviderCredentials({
             provider: AIProviderName.CUSTOM,

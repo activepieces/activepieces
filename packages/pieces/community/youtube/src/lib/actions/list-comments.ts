@@ -10,7 +10,7 @@ export const youtubeListCommentsAction = createAction({
   classification: 'SEARCH',
   displayName: 'List Comments',
   description: 'List the top-level comment threads on a video.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists comment threads on a YouTube video using commentThreads.list, returning each top-level comment with its author, text, like count and reply count. Use it to read audience feedback on a video for triage, sentiment or moderation flows. Comments must be enabled on the video, otherwise YouTube answers 403. Read-only and idempotent.',
@@ -19,12 +19,13 @@ export const youtubeListCommentsAction = createAction({
   props: {
     videoId: Property.ShortText({
       displayName: 'Video ID',
-      description: 'The `v` parameter in a YouTube URL (e.g. `dQw4w9WgXcQ`).',
+      description: "The v= value in the video's URL.",
+      placeholder: 'dQw4w9WgXcQ',
       required: true,
     }),
     order: Property.StaticDropdown({
       displayName: 'Order',
-      description: 'Comment ordering.',
+      description: 'How to sort the comments. Empty: newest first.',
       required: false,
       options: {
         options: [
@@ -35,14 +36,19 @@ export const youtubeListCommentsAction = createAction({
     }),
     maxResults: Property.Number({
       displayName: 'Max Results',
-      description: 'Number of threads to return (1-100, default 20).',
+      description: 'How many comment threads to return, up to 100.',
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
       required: false,
       defaultValue: 20,
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
-      description: 'Token from a previous response, to fetch the next page.',
+      description: 'The nextPageToken from an earlier run, to get the next page.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {

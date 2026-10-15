@@ -46,7 +46,7 @@ jobs:
           # Sign in with the throwaway account. On cloud, an already-onboarded account
           # returns a USER token with a projectId; a fresh account returns an ONBOARDING
           # token (projectId null) which we complete by creating a platform. Mirrors
-          # benchmark/setup.sh.
+          # benchmark/setup.ts.
           SIGNIN=$(curl -s "${BASE_URL}/authentication/sign-in" \
             -H "Content-Type: application/json" \
             -d "{\"email\":\"${DAST_STG_EMAIL}\",\"password\":\"${DAST_STG_PASSWORD}\"}")

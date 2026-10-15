@@ -7,6 +7,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 export const deleteListItemAction = createAction({
   auth: microsoftSharePointAuth,
   name: 'microsoft_sharepoint_delete_list_item',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete List Item',
   description: 'Deletes an existing item from a list.',
   audience: 'both',

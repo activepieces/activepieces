@@ -40,6 +40,29 @@ export const slackSendMessageToMultipleUsersAction = createAction({
       'Sends a direct message to many Slack users in parallel and reports which sends succeeded and which failed. Replaces a loop of single Send Message To A User steps. Either one shared message for everyone, or a personal message per user. Each call posts new DMs, so it is not idempotent, and a retry re-sends to everyone.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'recipient_list',
+      display: 'section',
+      label: 'Recipients',
+      icon: 'users',
+      props: ['mode', 'recipients'],
+    },
+    {
+      key: 'formatting',
+      display: 'section',
+      label: 'Formatting',
+      icon: 'code',
+      props: ['blocks', 'unfurlLinks'],
+    },
+    {
+      key: 'delivery',
+      display: 'section',
+      label: 'Delivery',
+      icon: 'sliders',
+      props: ['concurrency'],
+    },
+  ],
   props: {
     mode: Property.StaticDropdown<BulkDmMode>({
       displayName: 'Message Mode',
@@ -119,9 +142,13 @@ export const slackSendMessageToMultipleUsersAction = createAction({
     }),
     concurrency: Property.Number({
       displayName: 'Parallel Sends',
-      description: `How many direct messages to send at the same time, between ${MIN_ACTION_CONCURRENCY_LIMIT} and ${MAX_ACTION_CONCURRENCY_LIMIT}. It also sets how many recipients one step accepts, because every send has to fit the flow time budget: ${slackConcurrency.roundsWithinFlowBudget()} recipients per parallel send, up to ${DEFAULT_MAX_RECIPIENTS}.`,
+      description: `Messages sent at once. Allows ${slackConcurrency.roundsWithinFlowBudget()} recipients per send, up to ${DEFAULT_MAX_RECIPIENTS}.`,
       required: false,
       defaultValue: DEFAULT_ACTION_CONCURRENCY_LIMIT,
+      display: 'stepper',
+      min: MIN_ACTION_CONCURRENCY_LIMIT,
+      max: MAX_ACTION_CONCURRENCY_LIMIT,
+      step: 1,
     }),
   },
   async run(context) {

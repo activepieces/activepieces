@@ -8,6 +8,7 @@ import { getAuthToken, CyberArkAuth } from '../common/auth-helper';
 export const addMemberToGroup = createAction({
   auth: cyberarkAuth,
   name: 'add_member_to_group',
+  classification: 'WRITE',
   displayName: 'Add Member to Group',
   description: 'Adds a user as a member to an existing Vault group (requires Add/Update users permissions)',
   audience: 'both',

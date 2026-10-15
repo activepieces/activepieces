@@ -7,6 +7,7 @@ import { CreateDocumentResponse, GetDocumentResponse } from '../common/types';
 
 export const convertPdfToTextAction = createAction({
 	name: 'convert-pdf-to-text',
+	classification: 'READ',
 	auth: doctlyAuth,
 	displayName: 'Convert PDF to Text',
 	description: 'Converts PDF document to text file with markdown formatting.',

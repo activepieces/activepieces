@@ -48,6 +48,7 @@ export const McpOAuthAuthorizationCode = z.object({
     codeChallengeMethod: z.string(),
     scopes: z.array(z.string()).nullable(),
     state: z.string().nullable(),
+    nonce: z.string().nullable(),
     expiresAt: z.string(),
     used: z.boolean(),
 })

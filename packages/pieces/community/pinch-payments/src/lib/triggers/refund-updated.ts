@@ -5,6 +5,7 @@ import { createWebhook, deleteWebhook, WebhookResponse } from '../common/client'
 export const refundUpdatedTrigger = createTrigger({
   auth: pinchPaymentsAuth,
   name: 'refund_updated',
+  classification: 'READ',
   displayName: 'Refund Updated',
   description: 'Triggers when a refund is updated (e.g., status change)',
   aiMetadata: {

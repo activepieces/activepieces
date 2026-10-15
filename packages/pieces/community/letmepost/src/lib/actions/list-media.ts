@@ -6,6 +6,7 @@ import { letmepostApiCall } from '../common';
 export const listMedia = createAction({
   auth: letmepostAuth,
   name: 'list_media',
+  classification: 'SEARCH',
   displayName: 'List Media',
   description: 'List previously uploaded media assets',
   audience: 'both',

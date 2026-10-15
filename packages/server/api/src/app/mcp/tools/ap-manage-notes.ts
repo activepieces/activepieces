@@ -42,9 +42,7 @@ export const apManageNotesTool = ({ mcp, userId }: McpToolContext, log: FastifyB
                 height: z.number(),
             }).optional().describe('Size of the note (optional, defaults to 200x200)'),
         },
-        // destructiveHint is false because ADD and UPDATE are the common paths;
-        // DELETE is possible but clients shouldn't over-restrict the whole tool.
-        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             const { flowId, operation: op, noteId, content, color, position, size } = manageNotesInput.parse(args)
 

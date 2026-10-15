@@ -9,6 +9,7 @@ import { assertIdPrefix } from '../../common/validation';
 export const getHighlight = createAction({
   auth: hedyAuth,
   name: 'get-highlight',
+  classification: 'READ',
   displayName: 'Get Highlight',
   description: 'Retrieve a specific highlight by ID.',
   audience: 'both',

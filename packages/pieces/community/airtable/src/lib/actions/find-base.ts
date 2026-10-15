@@ -19,8 +19,9 @@ export const airtableFindBaseAction = createAction({
   },
   props: {
     baseName: Property.ShortText({
-      displayName: 'Base Name or Keyword',
-      description: 'The name or keyword to search for within your base names.',
+      displayName: 'Base Name',
+      description: 'Bases whose name contains this text are returned.',
+      placeholder: 'e.g. CRM',
       required: true,
     }),
   },

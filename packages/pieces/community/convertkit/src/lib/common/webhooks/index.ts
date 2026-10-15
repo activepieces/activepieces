@@ -1,7 +1,7 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { EventType, EventOption } from '../types';
 import { fetchTags, fetchForms, fetchSequences } from '../service';
-import { convertkitAuth } from '../../..';
+import { convertkitAuth } from '../../auth';
 
 export const initiatorValue = Property.ShortText({
   displayName: 'Initiator Value URL',

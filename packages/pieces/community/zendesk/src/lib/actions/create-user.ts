@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import {
   organizationIdDropdown,
   customRoleIdDropdown,
@@ -12,14 +12,16 @@ import {
   groupIdDropdown,
   userFieldsDynamicProp,
 } from '../common/props';
+import { createUserOutputSchema } from '../output-schemas';
 
 export const createUserAction = createAction({
   auth: zendeskAuth,
   name: 'create-user',
+  outputSchema: createUserOutputSchema,
   classification: 'WRITE',
   displayName: 'Create User',
   description: 'Add a new user to the Zendesk instance.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new user (end-user, agent, or admin; defaults to end-user) in the Zendesk instance; only the name is required. Use to add a customer, agent, or admin account, optionally setting email, phone, role, organization (by ID or by new organization name), tags, custom user fields, and additional identities. A verification email is sent unless skipped. Not idempotent: each call creates a distinct user, and a duplicate email fails validation.', idempotent: false },
   props: {
     name: Property.ShortText({
@@ -292,13 +294,9 @@ export const createUserAction = createAction({
     if (user_fields && typeof user_fields === 'object') {
       try {
         const fieldsResponse = await httpClient.sendRequest({
-          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/user_fields.json`,
+          url: `${getZendeskBaseUrl(authentication)}/user_fields.json`,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const defs = (fieldsResponse.body as { user_fields: Array<{ id: number; key: string; type: string }> }).user_fields;
@@ -358,16 +356,12 @@ export const createUserAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users.json`,
+        url: `${getZendeskBaseUrl(authentication)}/users.json`,
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: requestBody,
       });
 

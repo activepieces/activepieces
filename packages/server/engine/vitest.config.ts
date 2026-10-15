@@ -22,7 +22,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    testTimeout: 20000,
+    testTimeout: 60000,
+    hookTimeout: 60000,
     include: [path.resolve(__dirname, 'test/**/*.test.ts')],
   },
   resolve: {

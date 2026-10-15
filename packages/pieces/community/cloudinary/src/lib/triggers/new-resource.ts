@@ -16,6 +16,7 @@ import {
 import { cloudinaryAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import dayjs from 'dayjs';
+import { newResourceOutputSchema } from '../output-schemas';
 
 const props = {
   asset_folder: Property.ShortText({
@@ -46,6 +47,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof cloudinaryAuth>,
 export const newResourceInFolder = createTrigger({
   auth: cloudinaryAuth,
   name: 'new_resource',
+  outputSchema: newResourceOutputSchema,
   classification: 'READ',
   displayName: 'New Resource',
   description: 'Triggers when a new image, video, or file is uploaded to a specific folder or account in Cloudinary.',

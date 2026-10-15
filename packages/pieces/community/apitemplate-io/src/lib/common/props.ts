@@ -109,6 +109,69 @@ export const templateIdDropdown = Property.Dropdown({
   },
 });
 
+export const pdfTemplateIdDropdown = Property.Dropdown({
+  auth: ApitemplateAuth,
+  displayName: 'Template ID',
+  description: 'Only PDF templates are shown; this endpoint does not support image templates.',
+  required: true,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please connect your account first',
+      };
+    }
+
+    const authConfig = auth.props;
+
+    if (!authConfig.apiKey || !authConfig.region) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Please complete authentication setup.',
+      };
+    }
+
+    try {
+      const response = await makeRequest(
+        authConfig.apiKey,
+        HttpMethod.GET,
+        '/list-templates?format=PDF',
+        undefined,
+        undefined,
+        authConfig.region as ApitemplateRegion
+      );
+
+      const templates = response?.templates || [];
+
+      if (!Array.isArray(templates) || templates.length === 0) {
+        return {
+          disabled: false,
+          options: [],
+          placeholder: 'No PDF templates found',
+        };
+      }
+
+      return {
+        disabled: false,
+        options: templates.map((template: any) => ({
+          label: `${template.name} - ${template.status}`,
+          value: template.template_id,
+        })),
+      };
+    } catch (error) {
+      console.error('Error loading templates:', error);
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'Error loading templates',
+      };
+    }
+  },
+});
+
 export const transactionRefDropdown = Property.Dropdown({
   auth: ApitemplateAuth,
   displayName: 'Transaction Reference',

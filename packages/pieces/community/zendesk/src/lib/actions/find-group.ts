@@ -1,10 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
+import { findGroupOutputSchema } from '../output-schemas';
 
 interface ZendeskGroup {
   id: number;
@@ -21,10 +22,11 @@ interface ZendeskGroupsResponse {
 export const findGroupAction = createAction({
   auth: zendeskAuth,
   name: 'find-group',
+  outputSchema: findGroupOutputSchema,
   classification: 'READ',
   displayName: 'Find a Group',
   description: 'Find a group by name.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Finds a support group in Zendesk by name. Returns the first matching group with its profile details. Useful for assigning tickets or routing work to specific support teams.', idempotent: true },
   props: {
     group_name: Property.ShortText({
@@ -42,7 +44,7 @@ export const findGroupAction = createAction({
     }
 
     try {
-      let url: string | undefined = `https://${authentication.props.subdomain}.zendesk.com/api/v2/groups.json?per_page=100`;
+      let url: string | undefined = `${getZendeskBaseUrl(authentication)}/groups.json?per_page=100`;
       let matchedGroup: ZendeskGroup | undefined;
 
       while (url && !matchedGroup) {
@@ -50,11 +52,7 @@ export const findGroupAction = createAction({
         const response = await httpClient.sendRequest<ZendeskGroupsResponse & { next_page?: string }>({
           url: currentUrl,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const groups = response.body.groups || [];

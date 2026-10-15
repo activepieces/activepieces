@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { PieceSelectionMode, PieceSet, PrincipalType } from '@activepieces/shared'
+import { PieceSelectionMode, PieceSet, PrincipalType, RequiredActionsMode } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -41,7 +41,7 @@ async function setupPlatformWithoutPieceSets() {
     return { mockOwner, mockPlatform, token }
 }
 
-const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
+const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {}, requiredActions: { mode: RequiredActionsMode.ANY, actions: {} } }
 
 describe('Piece Sets API', () => {
     describe('Feature Gate', () => {

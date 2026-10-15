@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const searchPeople = createAction({
   auth: villageAuth,
   name: 'search_people',
+  classification: 'SEARCH',
   displayName: 'Search People',
   description:
     'Search for people using natural language queries. Pass your search text in "prompt" (e.g. "engineers at Google"). Supports cursor-based pagination and structured filters.',

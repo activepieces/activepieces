@@ -46,17 +46,17 @@ beforeEach(() => {
   );
 });
 
-describe('useMultiplePieces, used by the MCP activity feed', () => {
+describe('usePiecesByName, used by the MCP activity feed', () => {
   it('requests every audience, so a saved MCP action can be resolved', async () => {
     const { result } = renderHook(
       () =>
-        piecesHooks.useMultiplePieces({
+        piecesHooks.usePiecesByName({
           names: ['slack'],
           audience: PieceAudienceFilter.ALL,
         }),
       { wrapper },
     );
-    await waitFor(() => expect(result.current[0].data).toBeDefined());
+    await waitFor(() => expect(result.current.get('slack')).toBeDefined());
     expect(get).toHaveBeenCalledWith(
       expect.objectContaining({ audience: PieceAudienceFilter.ALL }),
     );
@@ -65,20 +65,14 @@ describe('useMultiplePieces, used by the MCP activity feed', () => {
   it('resolves the display name of an action an MCP agent actually ran', async () => {
     const { result } = renderHook(
       () =>
-        piecesHooks.useMultiplePieces({
+        piecesHooks.usePiecesByName({
           names: ['slack'],
           audience: PieceAudienceFilter.ALL,
         }),
       { wrapper },
     );
-    await waitFor(() => expect(result.current[0].data).toBeDefined());
-    const piecesByName = new Map(
-      result.current
-        .map((query) => query.data)
-        .filter((piece) => piece !== undefined)
-        .map((piece) => [piece.name, piece]),
-    );
-    expect(piecesByName.get('slack')?.actions?.[AI_ACTION]?.displayName).toBe(
+    await waitFor(() => expect(result.current.get('slack')).toBeDefined());
+    expect(result.current.get('slack')?.actions?.[AI_ACTION]?.displayName).toBe(
       AI_ACTION_DISPLAY_NAME,
     );
   });
@@ -100,15 +94,15 @@ describe('useMultiplePieces, used by the MCP activity feed', () => {
 
     const { result: feedResult } = renderHook(
       () =>
-        piecesHooks.useMultiplePieces({
+        piecesHooks.usePiecesByName({
           names: ['slack'],
           audience: PieceAudienceFilter.ALL,
         }),
       { wrapper: sharedWrapper },
     );
-    await waitFor(() => expect(feedResult.current[0].data).toBeDefined());
+    await waitFor(() => expect(feedResult.current.get('slack')).toBeDefined());
 
-    expect(feedResult.current[0].data?.actions[AI_ACTION]).toBeDefined();
+    expect(feedResult.current.get('slack')?.actions[AI_ACTION]).toBeDefined();
     expect(get).toHaveBeenCalledTimes(2);
   });
 });

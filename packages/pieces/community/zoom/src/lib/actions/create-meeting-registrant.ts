@@ -1,12 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { RegistrationResponse } from '../common/models';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { getRegistarantProps } from '../common/props';
+import { zoomClient } from '../common/client';
+import { createRegistrantOutputSchema } from '../output-schemas';
 import { zoomAuth } from '../..';
 
 export const zoomCreateMeetingRegistrant = createAction({
@@ -17,6 +13,7 @@ export const zoomCreateMeetingRegistrant = createAction({
   description: "Create and submit a user's registration to a meeting.",
   audience: 'both',
   aiMetadata: { description: 'Registers an attendee for an existing Zoom meeting identified by its meeting ID, capturing their name, email, and optional profile/custom-question fields. Use to add a participant to a meeting that has registration enabled. Each call submits a new registration, so it is not idempotent.', idempotent: false },
+  outputSchema: createRegistrantOutputSchema,
   props: getRegistarantProps(),
   async run(context) {
     const body: Record<string, unknown> = {
@@ -47,23 +44,13 @@ export const zoomCreateMeetingRegistrant = createAction({
       ).map(([key, value]) => ({ title: key, value: value }));
     }
 
-    const request: HttpRequest = {
+    const meetingId = zoomClient.normalizeMeetingId(context.propsValue.meeting_id);
+    return zoomClient.requestObject({
+      accessToken: context.auth.access_token,
       method: HttpMethod.POST,
-      url: `https://api.zoom.us/v2/meetings/${context.propsValue.meeting_id}/registrants`,
+      path: `/meetings/${meetingId}/registrants`,
       body,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
-      queryParams: {},
-    };
-
-    const result = await httpClient.sendRequest<RegistrationResponse>(request);
-
-    if (result.status === 201) {
-      return result.body;
-    } else {
-      return result;
-    }
+      scope: 'meeting:write:registrant',
+    });
   },
 });

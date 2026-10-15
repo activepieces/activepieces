@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertEnergyAction = createAction({
   name: 'convert_energy',
+  classification: 'READ',
   displayName: 'Convert Energy',
   description: 'Convert energy measurements between different units',
   audience: 'both',

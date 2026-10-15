@@ -29,7 +29,7 @@ export const PieceRow = memo(function PieceRow({
       onOpenChange={setIsOpenedByUser}
       className={cn({ 'border-b': !isLastRow })}
     >
-      <CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/40">
+      <CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-3/40">
         <PieceIcon
           logoUrl={row.piece.logoUrl}
           displayName={row.piece.displayName}
@@ -42,33 +42,31 @@ export const PieceRow = memo(function PieceRow({
             <div className="text-sm font-medium">{row.piece.displayName}</div>
           </TextWithTooltip>
           <TextWithTooltip tooltipMessage={row.piece.description}>
-            <div className="text-xs text-muted-foreground">
-              {row.piece.description}
-            </div>
+            <div className="text-xs text-gray-11">{row.piece.description}</div>
           </TextWithTooltip>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-3">
           {row.destructiveActionCount > 0 && (
-            <Badge variant="destructive" className="py-0 text-xss font-normal">
+            <Badge variant="destructive" className="font-normal">
               {t('pieceDestructiveActionCount', {
                 count: row.destructiveActionCount,
               })}
             </Badge>
           )}
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-gray-11">
             {t('pieceActionCount', {
               count: row.actionCount,
             })}
           </span>
           <ChevronDown
-            className={cn('size-4 text-muted-foreground transition-transform', {
+            className={cn('size-4 text-gray-11 transition-transform', {
               'rotate-180': isOpen,
             })}
           />
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-7 border-t bg-muted/60 pt-4 pr-5 pb-5 pl-2 sm:grid-cols-2 lg:grid-cols-4 lg:pl-12.5">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-7 border-t bg-gray-3/60 pt-4 pr-5 pb-5 pl-2 sm:grid-cols-2 lg:grid-cols-4 lg:pl-12.5">
           {row.groups.map((group) => (
             <ActionGroupColumn
               key={group.classification}
@@ -91,17 +89,10 @@ function ActionGroupColumn({
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <div className="flex items-center gap-2 px-2">
-        <span
-          className={cn(
-            'text-xs font-semibold tracking-wider uppercase',
-            tone.label,
-          )}
-        >
+        <span className={cn('text-xs font-semibold', tone.label)}>
           {ACTION_CLASSIFICATION_BADGES[group.classification].label()}
         </span>
-        <Badge variant={tone.count} className="px-1.5 text-xss">
-          {group.actions.length}
-        </Badge>
+        <Badge variant={tone.count}>{group.actions.length}</Badge>
       </div>
       <div className={cn('flex min-w-0 flex-col', tone.frame)}>
         {group.actions.map((action) => (
@@ -109,13 +100,13 @@ function ActionGroupColumn({
             key={action.name}
             tooltipMessage={action.displayName}
           >
-            <div className="rounded-sm px-2 py-0.5 text-sm leading-5 hover:bg-muted">
+            <div className="rounded-md px-2 py-0.5 text-sm leading-5 hover:bg-gray-3">
               {action.displayName}
             </div>
           </TextWithTooltip>
         ))}
         {group.classification === 'DESTRUCTIVE' && (
-          <p className="px-2 pt-1.5 text-xs text-destructive-700 dark:text-destructive-300">
+          <p className="px-2 pt-1.5 text-xs text-danger-11">
             {t('Can delete or overwrite data in {pieceName}.', {
               pieceName: pieceDisplayName,
             })}
@@ -127,23 +118,22 @@ function ActionGroupColumn({
 }
 
 const CLASSIFICATION_TONES: Record<ActionClassification, ClassificationTone> = {
-  READ: { label: 'text-foreground', count: 'accent' },
-  SEARCH: { label: 'text-foreground', count: 'accent' },
+  READ: { label: 'text-gray-12', count: 'secondary' },
+  SEARCH: { label: 'text-gray-12', count: 'secondary' },
   WRITE: {
-    label: 'text-warning-700 dark:text-warning-300',
+    label: 'text-warning-11',
     count: 'warning',
   },
   DESTRUCTIVE: {
-    label: 'text-destructive-700 dark:text-destructive-300',
+    label: 'text-danger-11',
     count: 'destructive',
-    frame:
-      'gap-0.5 rounded-md border border-destructive-200 bg-destructive-50 py-1.5 dark:border-destructive-900 dark:bg-destructive-950/30',
+    frame: 'gap-0.5 rounded-md border border-danger-7 bg-danger-3 py-1.5',
   },
 };
 
 type ClassificationTone = {
   label: string;
-  count: 'accent' | 'warning' | 'destructive';
+  count: 'secondary' | 'warning' | 'destructive';
   frame?: string;
 };
 

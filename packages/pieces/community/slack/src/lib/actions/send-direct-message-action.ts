@@ -2,14 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
-import {
-  profilePicture,
-  userId,
-  username,
-  blocks,
-  mentionOriginFlow,
-  iconEmoji,
-} from '../common/props';
+import { profilePicture, userId, username, blocks, mentionOriginFlow, iconEmoji, unfurlLinks } from '../common/props';
 import { Block,KnownBlock } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { chatPostMessageOutputSchema } from '../output-schemas';
@@ -24,12 +17,27 @@ export const slackSendDirectMessageAction = createAction({
   audience: 'human',
   aiMetadata: { description: 'Send a direct message to a single user by user ID, with optional Block Kit blocks, custom username/icon, and link unfurling. Each call posts a new DM, so it is not idempotent. Use this to message one person privately; use Send Message To A Channel to post in a channel.', idempotent: false },
   outputSchema: chatPostMessageOutputSchema,
+  propertyGroups: [
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['userId'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['text', 'blocks'],
+    },
+  ],
   props: {
     userId: userId(true),
     text: Property.LongText({
       displayName: 'Message',
-      description:
-        'The text of your message. Renders as a section above any Block Kit blocks, and is used as the notification fallback. Leave empty to send blocks only.',
+      description: 'Slack mrkdwn is supported. Empty sends blocks only.',
       required: false,
     }),
     username,
@@ -37,12 +45,7 @@ export const slackSendDirectMessageAction = createAction({
     iconEmoji,
     mentionOriginFlow,
     blocks,
-    unfurlLinks: Property.Checkbox({
-      displayName: 'Unfurl Links',
-      description: 'Enable link unfurling for this message',
-      required: false,
-      defaultValue: true,
-    }),
+    unfurlLinks,
   },
   async run(context) {
     const token = getBotToken(context.auth as SlackAuthValue);

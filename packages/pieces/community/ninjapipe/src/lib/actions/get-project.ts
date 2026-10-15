@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from 
 export const getProject = createAction({
   auth: ninjapipeAuth,
   name: 'get_project',
+  classification: 'READ',
   displayName: 'Get Project',
   description: 'Retrieves a project by ID.',
   audience: 'both',

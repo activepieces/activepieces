@@ -15,7 +15,7 @@ export const createProductAction = createAction({
     name: 'create-product',
     classification: 'WRITE',
     displayName: 'Create Product',
-    description: 'Creates a product in Hubspot.',
+    description: 'Creates a product in HubSpot.',
     audience: 'both',
     aiMetadata: {
         description:
@@ -27,16 +27,15 @@ export const createProductAction = createAction({
         objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.PRODUCT,[]),
         markdown: Property.MarkDown({
             variant: MarkdownVariant.INFO,
-            value: `### Properties to retrieve:
-                                    
-                    createdate, description, name, price, tax, hs_lastmodifieddate
-                                            
-                    **Specify here a list of additional properties to retrieve**`,
+            value: `Returned by default: createdate, description, name, price, tax, hs_lastmodifieddate.
+
+Pick more under **Advanced**.`,
         }),
         additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
             objectType: OBJECT_TYPE.PRODUCT,
-            displayName: 'Additional properties to retrieve',
+            displayName: 'Additional Properties to Retrieve',
             required: false,
+            advanced: true,
         }),
     },
     async run(context) {

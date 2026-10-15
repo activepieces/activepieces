@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteShortlinkAction = createAction({
   name: 'delete_shortlink',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Shortlink',
   description: 'Delete an existing shortlink',
   audience: 'both',

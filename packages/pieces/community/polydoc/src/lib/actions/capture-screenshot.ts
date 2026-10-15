@@ -25,6 +25,7 @@ import type { PolyDocParams } from '../common/types';
 export const captureScreenshot = createAction({
   auth: polydocAuth,
   name: 'capture_screenshot',
+  classification: 'WRITE',
   displayName: 'Capture Screenshot',
   description: 'Capture a screenshot of a URL, inline HTML, or a saved template.',
   aiMetadata: {

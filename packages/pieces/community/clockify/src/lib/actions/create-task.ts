@@ -7,6 +7,7 @@ import { assigneeIds, projectId, workspaceId } from '../common/props';
 export const createTaskAction = createAction({
 	auth: clockifyAuth,
 	name: 'create-task',
+	classification: 'WRITE',
 	displayName: 'Create Task',
 	description: 'Creates a new in a specific project.',
 	audience: 'both',

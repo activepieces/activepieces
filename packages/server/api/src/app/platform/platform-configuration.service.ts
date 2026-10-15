@@ -1,8 +1,10 @@
 import { apId, chunk, isEmpty, isNil, spreadIfNotUndefined } from '@activepieces/core-utils'
-import { ApEdition, PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
+import { ApEdition, maxBarrierSignalsBounds, PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
+import { platformModelTierService } from '../ai/platform-model-tier-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { distributedLock } from '../database/redis-connections'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -39,6 +41,14 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
         }
         const configuration = await this.getOrCreateForPlatform({ platformId })
         return configuration.isProductTelemetryEnabled
+    },
+
+    async maxBarrierSignals({ platformId }: GetOrCreateParams): Promise<number> {
+        if (system.getEdition() === ApEdition.CLOUD) {
+            return clampBarrierSignalCap(system.getNumberOrThrow(AppSystemProp.MAX_BARRIER_SIGNALS))
+        }
+        const configuration = await this.getOrCreateForPlatform({ platformId })
+        return configuration.maxBarrierSignals
     },
 
     async filterProjectsWithProductTelemetryEnabled({ projectIds }: FilterProjectsParams): Promise<string[]> {
@@ -83,14 +93,21 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
         return platformIds.filter((platformId) => !optedOutIds.has(platformId))
     },
 
-    async update({ platformId, isProductTelemetryEnabled, isInfraSetupTelemetryEnabled }: UpdateParams): Promise<PlatformConfiguration> {
+    async update({ platformId, isProductTelemetryEnabled, isInfraSetupTelemetryEnabled, maxBarrierSignals, aiSpecificModelsVisible }: UpdateParams): Promise<PlatformConfiguration> {
         await this.getOrCreateForPlatform({ platformId })
         const patch = {
             ...spreadIfNotUndefined('isProductTelemetryEnabled', isProductTelemetryEnabled),
             ...spreadIfNotUndefined('isInfraSetupTelemetryEnabled', isInfraSetupTelemetryEnabled),
+            ...spreadIfNotUndefined('maxBarrierSignals', maxBarrierSignals),
+            ...spreadIfNotUndefined('aiSpecificModelsVisible', aiSpecificModelsVisible),
         }
         if (!isEmpty(patch)) {
-            await platformConfigurationRepo().update({ platformId }, patch)
+            await transaction(async (manager) => {
+                if (!isNil(aiSpecificModelsVisible)) {
+                    await platformModelTierService.assertSpecificModelsVisibilityAllowed({ manager, platformId, visible: aiSpecificModelsVisible })
+                }
+                await platformConfigurationRepo(manager).update({ platformId }, patch)
+            })
         }
         return platformConfigurationRepo().findOneByOrFail({ platformId })
     },
@@ -98,11 +115,18 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
 
 async function createInitialConfiguration({ platformId }: GetOrCreateParams): Promise<PlatformConfiguration> {
     const isProductTelemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
+    const configuredMaxBarrierSignals = system.getNumber(AppSystemProp.MAX_BARRIER_SIGNALS)
+    const maxBarrierSignals = isNil(configuredMaxBarrierSignals) ? undefined : clampBarrierSignalCap(configuredMaxBarrierSignals)
     return platformConfigurationRepo().save({
         id: apId(),
         platformId,
         ...spreadIfNotUndefined('isProductTelemetryEnabled', isProductTelemetryEnabled),
+        ...spreadIfNotUndefined('maxBarrierSignals', maxBarrierSignals),
     })
+}
+
+function clampBarrierSignalCap(configured: number): number {
+    return Math.min(Math.max(configured, maxBarrierSignalsBounds.min), maxBarrierSignalsBounds.max)
 }
 
 type GetOrCreateParams = {

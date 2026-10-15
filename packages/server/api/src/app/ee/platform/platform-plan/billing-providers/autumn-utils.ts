@@ -23,7 +23,8 @@ import { AppSystemProp } from '../../../../helper/system/system-props'
 import { AppSumoAction, CancellationFeedback, CreditUsage, CreditUsageSource } from '../../../../platform/billing-provider'
 import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
-import { platformPlanService } from '../platform-plan.service'
+import { platformPlanTelemetry } from '../platform-plan-telemetry'
+import { platformPlanRepo, platformPlanService } from '../platform-plan.service'
 
 const AUTUMN_CONSOLE_URL = system.getOrThrow(AppSystemProp.AUTUMN_CONSOLE_URL).replace(/\/+$/, '')
 const edition = system.getEdition()
@@ -162,10 +163,18 @@ export const autumnUtils = {
         }
         const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan'] })
         const entitlements = toAutumnEntitlements(customer)
+        const previousPlan = await platformPlanRepo().findOneBy({ platformId })
         await platformPlanService(log).update({ platformId, ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements) })
         await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
         await autumnUtils.invalidateBillingOverview(platformId)
         await autumnUtils.provisionLicenseKeyIfPaid(log, platformId, entitlements.planId)
+        const currentSubscription = autumnUtils.selectCurrentBaseSubscription(autumnUtils.toBaseSubscriptions(customer))
+        rejectedPromiseHandler(platformPlanTelemetry(log).onEntitlementsRefreshed({
+            platformId,
+            previousPlan: previousPlan?.plan ?? null,
+            plan: entitlements.planId,
+            trialEndsAt: isNil(currentSubscription?.trialEndsAt) ? null : new Date(currentSubscription.trialEndsAt).toISOString(),
+        }), log)
     },
     async provisionLicenseKeyIfPaid(log: FastifyBaseLogger, platformId: string, planId: string | null): Promise<void> {
         if (isNil(planId) || planId === PlanName.FREE || planId === PlanName.APPSUMO || planId === PlanName.FREE_LEGACY) {
@@ -384,6 +393,7 @@ function largestGrantResetAt(balance: Balance): number | null {
 
 function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
     const creditsItem = (plan.items ?? []).find((item) => item.featureId === ConsumableFeatureId.AP_CREDITS && isNil(item.price))
+    const creditTopUpPrice = (plan.items ?? []).find((item) => item.featureId === ConsumableFeatureId.AP_CREDITS && !isNil(item.price))?.price
     return {
         id: plan.id,
         name: plan.name,
@@ -395,6 +405,7 @@ function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
         includedSeats: (plan.items ?? []).find((item) => item.featureId === UnconsumableFeatureId.USERS_LIMIT)?.included ?? null,
         includedCredits: creditsItem?.included ?? null,
         creditsResetInterval: creditsItem?.reset?.interval ?? null,
+        creditTopUp: isNil(creditTopUpPrice?.amount) ? null : { price: creditTopUpPrice.amount, credits: creditTopUpPrice.billingUnits ?? 1 },
     }
 }
 

@@ -14,6 +14,7 @@ interface EmailAccount {
 export const enableWarmup = createAction({
   auth: ReachinboxAuth,
   name: 'enableWarmup',
+  classification: 'WRITE',
   displayName: 'Enable Warmup',
   description:
     'Enable warmup for specific email accounts where it is currently disabled.',

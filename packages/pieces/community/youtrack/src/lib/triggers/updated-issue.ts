@@ -87,6 +87,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof youtrackAuth>, R
 export const updatedIssueTrigger = createTrigger({
   auth: youtrackAuth,
   name: 'updated_issue',
+  classification: 'READ',
   outputSchema: updatedIssueTriggerOutputSchema,
   displayName: 'Updated Issue',
   description: 'Triggers when an existing issue is modified (summary, description, custom fields, etc.).',

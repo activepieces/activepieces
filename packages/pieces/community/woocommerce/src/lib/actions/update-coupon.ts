@@ -14,7 +14,7 @@ export const wooUpdateCoupon = createAction({
   classification: 'WRITE',
   displayName: 'Update Coupon',
   description: 'Update a coupon amount, description, expiry or usage limit',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Updates an existing WooCommerce coupon by ID. Can change the discount amount and type, description, expiry date, usage limit and minimum spend. Only the fields provided are changed. Idempotent: sending the same values twice leaves the coupon in the same state.',

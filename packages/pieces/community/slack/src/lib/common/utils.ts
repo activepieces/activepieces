@@ -1,5 +1,5 @@
 import { ApFile } from '@activepieces/pieces-framework';
-import { Block, KnownBlock, WebClient, WebClientOptions } from '@slack/web-api';
+import { Block, ConversationsRepliesResponse, KnownBlock, WebClient, WebClientOptions } from '@slack/web-api';
 
 const SLACK_SECTION_TEXT_MAX_LENGTH = 3000;
 
@@ -179,4 +179,40 @@ export function parseCommand(
    command,
    args,
  };
+}
+
+const THREAD_REPLIES_PAGE_SIZE = 200;
+const THREAD_REPLIES_MAX_PAGES = 50;
+
+export async function fetchAllThreadReplies({ client, channel, ts, cursor: startCursor }: { client: WebClient; channel: string; ts: string; cursor?: string }): Promise<ConversationsRepliesResponse> {
+  const firstPage = await client.conversations.replies({ channel, ts, limit: THREAD_REPLIES_PAGE_SIZE, ...(startCursor ? { cursor: startCursor } : {}) });
+  const seen = new Set<string>();
+  const messages: NonNullable<ConversationsRepliesResponse['messages']> = [];
+  const append = (page: ConversationsRepliesResponse) => {
+    for (const message of page.messages ?? []) {
+      const key = message.ts ?? '';
+      if (key && seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      messages.push(message);
+    }
+  };
+  append(firstPage);
+  let cursor = firstPage.response_metadata?.next_cursor;
+  const usedCursors = new Set<string>(startCursor ? [startCursor] : []);
+  let pages = 1;
+  while (cursor && !usedCursors.has(cursor) && pages < THREAD_REPLIES_MAX_PAGES) {
+    usedCursors.add(cursor);
+    const page = await client.conversations.replies({ channel, ts, limit: THREAD_REPLIES_PAGE_SIZE, cursor });
+    append(page);
+    cursor = page.response_metadata?.next_cursor;
+    pages += 1;
+  }
+  return {
+    ...firstPage,
+    messages,
+    has_more: Boolean(cursor),
+    response_metadata: { ...firstPage.response_metadata, next_cursor: cursor ?? '' },
+  };
 }

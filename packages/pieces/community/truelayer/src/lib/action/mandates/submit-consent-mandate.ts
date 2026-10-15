@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const submitConsentMandate = createAction({
   auth: trueLayerCommon.auth,
   name: 'submit-consent-mandate',
+  classification: 'WRITE',
   displayName: 'Submit consent',
   description: 'Submit the consent given by the user. This API can be called using either the mandate_token associated with the mandate or a backend bearer token.',
   audience: 'both',

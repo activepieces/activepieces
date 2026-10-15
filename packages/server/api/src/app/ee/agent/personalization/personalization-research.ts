@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { apId, isNil, tryCatch } from '@activepieces/core-utils'
 import {
     ApEdition,
     ChatPersonalization,
@@ -19,7 +19,7 @@ import { aiProviderService, ProviderScope } from '../../../ai/ai-provider-servic
 import { redisConnections } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { assertCreditsAndAppSumoNotExceeded } from '../../../platform/billing-provider'
+import { hasCreditsLeft } from '../../../platform/billing-provider'
 import { jobQueue, JobType } from '../../../workers/job-queue/job-queue'
 import { agentHelpers } from '../agent-helpers'
 import { findRow, IN_FLIGHT_STATUSES, personalizationRepo, ValidatedResult } from './personalization-rows'
@@ -194,16 +194,9 @@ export async function guardsAllowResearch({ platformId, log }: { platformId: str
         log.warn({ platform: { id: platformId } }, '[chatPersonalization] No chat AI provider configured, skipping research')
         return false
     }
-    const credits = await tryCatch(() => assertCreditsAndAppSumoNotExceeded({ platformId, log }))
-    if (credits.error) {
-        const exhausted = credits.error instanceof ActivepiecesError && credits.error.error.code === ErrorCode.QUOTA_EXCEEDED
-        if (!exhausted) {
-            log.warn({ platform: { id: platformId }, error: credits.error }, '[chatPersonalization] Credits check failed, allowing research')
-        }
-        else {
-            log.warn({ platform: { id: platformId } }, '[chatPersonalization] Credits exhausted, skipping research')
-            return false
-        }
+    if (!await hasCreditsLeft({ platformId, log })) {
+        log.warn({ platform: { id: platformId } }, '[chatPersonalization] Credits exhausted, skipping research')
+        return false
     }
     const { allowed, count } = await agentHelpers.incrementAndCheckLimit({
         key: `chat-personalization-runs:${platformId}`,

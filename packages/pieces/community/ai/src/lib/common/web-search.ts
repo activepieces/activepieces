@@ -21,8 +21,8 @@ function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSour
       required: false,
       defaultValue: 5,
       description: isOpenRouterProvider
-        ? 'For OpenRouter/Activepieces, this maps to OpenRouter web plugin max_results (1-10). Default is 5.'
-        : 'Maximum number of searches to use. Default is 5.',
+        ? 'How many search results to fetch, from 1 to 10.'
+        : 'Maximum number of web searches for one answer.',
     }),
   };
 
@@ -32,7 +32,7 @@ function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSour
       includeSources: Property.Checkbox({
         displayName: 'Include Sources',
         description:
-          'Whether to include the sources in the response. Useful for getting web search details (e.g. search queries, searched URLs, etc).',
+          'Returns text and sources as separate fields instead of plain text.',
         required: false,
         defaultValue: false,
       }),
@@ -44,25 +44,29 @@ function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSour
       displayName: 'User Location - City',
       required: false,
       description:
-        'The city name for localizing search results (e.g., San Francisco).',
+        'City to localize search results to.',
+      placeholder: 'San Francisco',
     }),
     userLocationRegion: Property.ShortText({
       displayName: 'User Location - Region',
       required: false,
       description:
-        'The region or state for localizing search results (e.g., California).',
+        'Region or state to localize search results to.',
+      placeholder: 'California',
     }),
     userLocationCountry: Property.ShortText({
       displayName: 'User Location - Country',
       required: false,
       description:
-        'The country code for localizing search results (e.g., US).',
+        'Two-letter country code to localize search results to.',
+      placeholder: 'US',
     }),
     userLocationTimezone: Property.ShortText({
       displayName: 'User Location - Timezone',
       required: false,
       description:
-        'The IANA timezone ID for localizing search results (e.g., America/Los_Angeles).',
+        'IANA time zone to localize search results to.',
+      placeholder: 'America/Los_Angeles',
     }),
   };
 
@@ -73,11 +77,12 @@ function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSour
         displayName: 'Allowed Domains',
         required: false,
         description:
-          'List of domains to search (e.g., example.com, docs.example.com/blog). Domains should not include HTTP/HTTPS scheme. Subdomains are automatically included unless more specific subpaths are provided. Overrides Blocked Domains if both are provided.',
+          'Search only these domains, without http://. Subdomains count too.',
         properties: {
           domain: Property.ShortText({
             displayName: 'Domain',
             required: true,
+            placeholder: 'example.com',
           }),
         },
       }),
@@ -85,11 +90,12 @@ function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSour
         displayName: 'Blocked Domains',
         required: false,
         description:
-          'List of domains to exclude from search (e.g., example.com, docs.example.com/blog). Domains should not include HTTP/HTTPS scheme. Subdomains are automatically included unless more specific subpaths are provided. Overrided by Allowed Domains if both are provided.',
+          'Never search these domains. Ignored when Allowed Domains is set.',
         properties: {
           domain: Property.ShortText({
             displayName: 'Domain',
             required: true,
+            placeholder: 'example.com',
           }),
         },
       }),
@@ -112,7 +118,7 @@ function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSour
           ],
         },
         description:
-          'High level guidance for the amount of context window space to use for the search.',
+          'How much search content the AI reads. Higher is slower and costs more.',
       }),
       ...userLocationOptions,
     };

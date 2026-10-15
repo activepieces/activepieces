@@ -6,6 +6,7 @@ import { folkProps } from '../common/props';
 export const personUpdated = createTrigger({
   auth: folkAuth,
   name: 'person_updated',
+  classification: 'READ',
   displayName: 'Person Updated',
   description: 'Fires when a person is updated in your Folk workspace.',
   aiMetadata: {

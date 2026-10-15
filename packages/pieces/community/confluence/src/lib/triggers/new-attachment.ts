@@ -63,6 +63,7 @@ const polling: Polling<confluenceAuthValue, { spaceId?: string; pageId?: string 
 
 export const newAttachmentTrigger = createTrigger({
   name: 'new-attachment',
+  classification: 'READ',
   displayName: 'New Attachment',
   description:
     'Triggers when a new attachment is uploaded to the selected page.',

@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon, toDate
 export const createBudget = createAction({
   auth: ninjapipeAuth,
   name: 'create_budget',
+  classification: 'WRITE',
   displayName: 'Create Budget',
   description: 'Creates a new budget.',
   audience: 'both',

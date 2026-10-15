@@ -5,6 +5,7 @@ import { villageAuth, VILLAGE_API_BASE_URL } from '../../common/auth';
 export const createList = createAction({
   auth: villageAuth,
   name: 'create_list',
+  classification: 'WRITE',
   displayName: 'Create a list',
   description:
     'Create a new list to organize people or companies. The creator becomes the list owner. List creation may be limited based on your subscription plan.',

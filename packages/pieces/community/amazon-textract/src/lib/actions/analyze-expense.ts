@@ -16,7 +16,7 @@ export const analyzeExpense = createAction({
   description:
     'Extract structured data from receipts and invoices: vendor name, totals, tax, line items, and more. Works best with clearly formatted receipts and invoices.',
   audience: 'both',
-  aiMetadata: { description: 'Synchronously analyze a receipt or invoice with AWS Textract to extract structured financial fields such as vendor name, totals, tax, dates, and line items. Choose it specifically for expense documents rather than the general Analyze Document action. The source can be an uploaded file (JPEG/PNG only) or an S3 object (also PDF/TIFF, single-page only). Idempotent: it is a stateless read-only inference that returns the same result for the same input.', idempotent: true },
+  aiMetadata: { description: 'Synchronously analyze a receipt or invoice with AWS Textract to extract structured financial fields such as vendor name, totals, tax, dates, and line items. Choose it specifically for expense documents rather than the general Analyze Document action. The source can be an uploaded file or an S3 object in JPEG, PNG, or single-page PDF/TIFF format. Idempotent: it is a stateless read-only inference that returns the same result for the same input.', idempotent: true },
   props: {
     source: Property.StaticDropdown({
       displayName: 'Document Source',
@@ -53,7 +53,7 @@ export const analyzeExpense = createAction({
         return {
           file: Property.File({
             displayName: 'File',
-            description: 'The receipt or invoice to analyze. Only JPEG and PNG are supported for direct upload (max 5 MB). For PDF or TIFF files, use the "From S3 bucket" option instead.',
+            description: 'The receipt or invoice to analyze: JPEG, PNG, or a single-page PDF or TIFF (max 10 MB).',
             required: true,
           }),
         };

@@ -41,6 +41,7 @@ const polling: Polling<
 export const newTaskCreated = createTrigger({
   auth: microsoft365PlannerAuth,
   name: 'newTaskCreated',
+  classification: 'READ',
   displayName: 'New Task Created',
   description: 'Triggers when a new Task is created in Microsoft 365 Planner.',
   aiMetadata: {

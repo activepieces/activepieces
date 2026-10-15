@@ -371,7 +371,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       ref={containerRef}
       tabIndex={0}
       className={cn(
-        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
+        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid overflow-x-hidden bg-gray-1 shadow-lg rounded-md',
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },
@@ -407,12 +407,12 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         >
           <TabsList
             variant="outline"
-            className="px-3 shrink-0 gap-1 border-b border-border w-full justify-start"
+            className="px-3 shrink-0 gap-1 border-b border-gray-6 w-full justify-start"
           >
             <TabsTrigger
               value="data"
               variant="outline"
-              className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
+              className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
             >
               <Database className="w-4 h-4" />
               {t('Data')}
@@ -420,7 +420,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
             <TabsTrigger
               value="variables"
               variant="outline"
-              className="gap-2 px-3 py-2 hover:text-foreground rounded-none"
+              className="gap-2 px-3 py-2 hover:text-gray-12 rounded-none"
             >
               <Variable className="w-4 h-4" />
               {t('Variables')}
@@ -440,11 +440,11 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                 value={viewMode}
                 onValueChange={(v) => setViewMode(v as 'friendly' | 'advanced')}
               >
-                <TabsList className="h-9 shrink-0">
-                  <TabsTrigger value="friendly" className="text-xs px-2.5 h-7">
+                <TabsList size="sm" className="shrink-0">
+                  <TabsTrigger value="friendly" size="sm">
                     {t('Friendly View')}
                   </TabsTrigger>
-                  <TabsTrigger value="advanced" className="text-xs px-2.5 h-7">
+                  <TabsTrigger value="advanced" size="sm">
                     {t('Advanced')}
                   </TabsTrigger>
                 </TabsList>
@@ -467,7 +467,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
               {filteredNodes.length === 0 && (
                 <div className="flex items-center justify-center gap-2 mt-5  flex-col">
                   <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
-                  <div className="text-center font-semibold text-md">
+                  <div className="text-center font-semibold">
                     {t('No matching data')}
                   </div>
                   <div className="text-center ">

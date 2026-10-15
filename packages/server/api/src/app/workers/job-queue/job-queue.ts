@@ -52,6 +52,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     priority: JOB_PRIORITY[getDefaultJobPriority(data)],
                     delay: params.delay,
                     jobId: params.id,
+                    ...(isNil(params.retryBackoffMs) ? {} : { backoff: { type: 'exponential', delay: params.retryBackoffMs } }),
                     ...(data.jobType === WorkerJobType.EVENT_DESTINATION ? { removeOnFail: true } : {}),
                     ...([WorkerJobType.EXECUTE_AGENT_RUN, WorkerJobType.EXECUTE_AI].includes(data.jobType) ? { attempts: 1 } : {}),
                     ...isUserInteractionJob(data.jobType) ? {
@@ -275,6 +276,8 @@ type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> 
 type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
 }
-type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData | ExecuteAgentRunJobData | ExecuteAiJobData | ExecutePersonalizationResearchJobData, JobType.ONE_TIME>
+type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData | ExecuteAgentRunJobData | ExecuteAiJobData | ExecutePersonalizationResearchJobData, JobType.ONE_TIME> & {
+    retryBackoffMs?: number
+}
 
 export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams

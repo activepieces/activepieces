@@ -46,5 +46,3 @@ export function App() {
     </GlobalErrorBoundary>
   );
 }
-
-export default App;

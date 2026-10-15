@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon, toDate
 export const createOrder = createAction({
   auth: ninjapipeAuth,
   name: 'create_order',
+  classification: 'WRITE',
   displayName: 'Create Order',
   description: 'Creates a new order. Line items, currency, and custom fields go in Settings JSON.',
   audience: 'both',
