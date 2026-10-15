@@ -16,6 +16,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { api } from '@/lib/api';
 import { chatDebug } from '@/lib/chat-debug-logger';
@@ -959,11 +960,20 @@ export function useAgentChat({
   });
 
   const setModelPick = useCallback(async (newPick: ChatModelPick) => {
+    const previousPick = modelPickRef.current;
     modelPickRef.current = newPick;
     setModelPickState(newPick);
     const convId = conversationIdRef.current;
-    if (convId) {
-      await chatApi.updateConversation(convId, newPick).catch(() => undefined);
+    if (isNil(convId)) {
+      return;
+    }
+    const { error } = await tryCatch(() =>
+      chatApi.updateConversation(convId, newPick),
+    );
+    if (!isNil(error)) {
+      modelPickRef.current = previousPick;
+      setModelPickState(previousPick);
+      toast.error(t("Couldn't switch the model. Try again."));
     }
   }, []);
 

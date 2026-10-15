@@ -3289,5 +3289,6 @@
   "No AI key can index files for this project yet.": "No AI key can index files for this project yet.",
   "Pick an embedding model": "Pick an embedding model",
   "Ask your admin to set an Embeddings model.": "Ask your admin to set an Embeddings model.",
-  "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.": "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin."
+  "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.": "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.",
+  "Couldn't switch the model. Try again.": "Couldn't switch the model. Try again."
 }
