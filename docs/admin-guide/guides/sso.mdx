@@ -22,7 +22,7 @@ Before configuring SSO, ensure you have:
 
 Go to **Platform admin** → **Security** → **Authentication**. The page has three sections:
 
-- **Domains**: the company domain your people sign in with.
+- **Domain**: the company domain your people sign in with.
 - **Sign-in methods**: single sign-on (SAML 2.0), Continue with Google, and email and password.
 - **Allowed domains**: the email domains allowed to sign in with email and password.
 
@@ -34,7 +34,7 @@ Single sign-on needs a verified company domain (for example `acme.com`).
 
 <Steps>
   <Step title="Enter the domain">
-    Under **Domains**, click **Verify domain** and enter your company domain. It must be a public hostname containing a dot, and on Cloud each domain can be claimed by only one platform.
+    Under **Domain**, click **Verify domain** and enter your company domain. It must be a public hostname containing a dot, and on Cloud each domain can be claimed by only one platform.
   </Step>
   <Step title="Add the TXT record">
     Copy the TXT record's **Name** and **Value** and add them at your DNS provider.
