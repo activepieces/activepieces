@@ -64,6 +64,7 @@ export type ChatStoreState = {
   dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
   taskPanelToolCallId: string | null;
+  taskPanelAutoOpen: boolean;
   chatAreaWidth: number;
 
   setConversationId: (conversationId: string | null) => void;
@@ -100,6 +101,7 @@ export const createChatStore = () =>
     dismissedGateIds: {},
     lastDismissedFormId: null,
     taskPanelToolCallId: null,
+    taskPanelAutoOpen: true,
     chatAreaWidth: 0,
 
     approveGate: (gateId: string, payload?: Record<string, unknown>) => {
@@ -117,7 +119,11 @@ export const createChatStore = () =>
       set({ lastDismissedFormId: messageId });
     },
     setConversationId: (conversationId: string | null) => {
-      set({ conversationId });
+      set((prev) =>
+        prev.conversationId === conversationId
+          ? { conversationId }
+          : { conversationId, taskPanelAutoOpen: true },
+      );
     },
     resetInteractions: () => {
       set({
@@ -136,7 +142,7 @@ export const createChatStore = () =>
       set({ taskPanelToolCallId: toolCallId });
     },
     closeTaskPanel: () => {
-      set({ taskPanelToolCallId: null });
+      set({ taskPanelToolCallId: null, taskPanelAutoOpen: false });
     },
     setChatAreaWidth: (width: number) => {
       set({ chatAreaWidth: width });

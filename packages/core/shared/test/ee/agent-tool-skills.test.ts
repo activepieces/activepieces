@@ -67,6 +67,10 @@ describe('agentToolSkills', () => {
         expect(CORE_TOOL_NAMES.CHAT).toContain('ap_run_task')
     })
 
+    it('ships deep research with the web research guide, so its schema arrives with the guide', () => {
+        expect(agentToolSkills.findSkill({ name: 'web_and_media' })?.toolNames).toContain('ap_deep_research')
+    })
+
     it('renders a sorted one-line catalog', () => {
         const catalog = agentToolSkills.renderToolCatalog({ tools: [{ name: 'b_tool', description: 'Does b. More text.' }, { name: 'a_tool' }] })
         expect(catalog).toBe('- a_tool — \n- b_tool — Does b.')
