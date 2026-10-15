@@ -18,7 +18,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { platformApi } from '@/api/platforms-api';
 import {
   AdminSection,
   SettingsPanel,
@@ -164,6 +163,7 @@ const DomainRow = ({
             title={t('Remove {domain}?', { domain })}
             message={
               <RemoveDomainConsequences
+                domain={domain}
                 samlConnected={samlConnected}
                 emailAuthEnabled={platform.emailAuthEnabled}
               />
@@ -175,10 +175,7 @@ const DomainRow = ({
             keepOpenOnOutsideClick
             showToast
             mutationFn={async () => {
-              await removeSsoDomain({
-                platformId: platform.id,
-                samlConnected,
-              });
+              await samlSsoApi.updateSsoDomain(null);
               await refetch();
             }}
             onError={(error) => {
@@ -223,9 +220,11 @@ const DomainRow = ({
 };
 
 const RemoveDomainConsequences = ({
+  domain,
   samlConnected,
   emailAuthEnabled,
 }: {
+  domain: string;
   samlConnected: boolean;
   emailAuthEnabled: boolean;
 }) => {
@@ -238,7 +237,8 @@ const RemoveDomainConsequences = ({
     <span className="flex flex-col gap-2">
       <span>
         {t(
-          'This deletes your SAML connection, so people who use single sign-on will have to sign in another way.',
+          'This removes {domain} and turns off single sign-on. People who use single sign-on will have to sign in another way.',
+          { domain },
         )}
       </span>
       {!emailAuthEnabled && (
@@ -249,22 +249,6 @@ const RemoveDomainConsequences = ({
     </span>
   );
 };
-
-async function removeSsoDomain({
-  platformId,
-  samlConnected,
-}: {
-  platformId: string;
-  samlConnected: boolean;
-}): Promise<void> {
-  if (samlConnected) {
-    await platformApi.update(
-      { federatedAuthProviders: { saml: null } },
-      platformId,
-    );
-  }
-  await samlSsoApi.updateSsoDomain(null);
-}
 
 type DomainsSectionProps = {
   platform: PlatformWithoutSensitiveData;

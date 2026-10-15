@@ -249,7 +249,7 @@ describe('SSOPage', () => {
     expect(within(dialog).getByText('TXT')).toBeDefined();
   });
 
-  it('turns SAML off before removing the domain', async () => {
+  it('removes the domain and turns off single sign-on in one request', async () => {
     setPlatform({
       id: 'platform-1',
       ssoDomain: 'acme.com',
@@ -262,7 +262,7 @@ describe('SSOPage', () => {
     const dialog = screen.getByRole('dialog');
     expect(
       within(dialog).getByText(
-        'This deletes your SAML connection, so people who use single sign-on will have to sign in another way.',
+        'This removes acme.com and turns off single sign-on. People who use single sign-on will have to sign in another way.',
       ),
     ).toBeDefined();
     click(findButton('Remove domain', dialog));
@@ -270,13 +270,8 @@ describe('SSOPage', () => {
     await waitFor(() =>
       expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith(null),
     );
-    expect(platformApiMock.update).toHaveBeenCalledWith(
-      { federatedAuthProviders: { saml: null } },
-      'platform-1',
-    );
-    expect(platformApiMock.update.mock.invocationCallOrder[0]).toBeLessThan(
-      samlSsoApiMock.updateSsoDomain.mock.invocationCallOrder[0],
-    );
+    expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledTimes(1);
+    expect(platformApiMock.update).not.toHaveBeenCalled();
   });
 
   it('warns that email sign-in is off before removing a domain with SAML connected', () => {
@@ -297,14 +292,15 @@ describe('SSOPage', () => {
     ).toBeDefined();
   });
 
-  it('keeps the domain when turning SAML off fails', async () => {
+  it('shows the server error when removing the domain fails', async () => {
     setPlatform({
-      id: 'platform-1',
       ssoDomain: 'acme.com',
       ssoDomainVerification: verifiedVerification,
       federatedAuthProviders: { saml: samlConfig },
     });
-    platformApiMock.update.mockRejectedValue(new Error('Request failed'));
+    samlSsoApiMock.updateSsoDomain.mockRejectedValue(
+      new Error('Request failed'),
+    );
     mount();
 
     click(menuItem('Remove domain'));
@@ -313,10 +309,9 @@ describe('SSOPage', () => {
     await waitFor(() =>
       expect(toastMock.error).toHaveBeenCalledWith('Request failed'),
     );
-    expect(samlSsoApiMock.updateSsoDomain).not.toHaveBeenCalled();
   });
 
-  it('removes the domain without touching SAML when SAML is not connected', async () => {
+  it('removes a domain that has no SAML connection', async () => {
     setPlatform({
       ssoDomain: 'acme.com',
       ssoDomainVerification: pendingVerification,
