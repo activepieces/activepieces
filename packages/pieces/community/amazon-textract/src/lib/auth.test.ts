@@ -176,6 +176,21 @@ describe('createTextractClient', () => {
     expect(sendMock).toHaveBeenCalledTimes(1);
   });
 
+  it('never shares cached credentials between runs that assume the same role', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ token: 'engine-oidc-token' }) });
+    sendMock
+      .mockResolvedValueOnce({ Credentials: { ...stsCredentials.Credentials, AccessKeyId: 'ASIARUNA' } })
+      .mockResolvedValueOnce({ Credentials: { ...stsCredentials.Credentials, AccessKeyId: 'ASIARUNB' } });
+    const auth = { roleArn: 'arn:aws:iam::123456789012:role/shared-role', region: 'us-east-1' };
+
+    const clientA = await createTextractClient({ auth, server: { ...runtimeServer, token: 'engine-token-run-a' } });
+    const clientB = await createTextractClient({ auth, server: { ...runtimeServer, token: 'engine-token-run-b' } });
+
+    await expect(clientA.config.credentials()).resolves.toMatchObject({ accessKeyId: 'ASIARUNA' });
+    await expect(clientB.config.credentials()).resolves.toMatchObject({ accessKeyId: 'ASIARUNB' });
+    expect(sendMock).toHaveBeenCalledTimes(2);
+  });
+
   it('refreshes credentials that are close to expiry so long-running actions keep working', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ token: 'engine-oidc-token' }) });
     sendMock
