@@ -167,7 +167,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             .getRawOne<{ count: string }>()
         return Number(result?.count ?? 0)
     },
-    async listPlatformInvitesReservingSeats({ platformId, cursor, limit }: ListPlatformInvitesReservingSeatsParams): Promise<SeekPage<UserInvitation>> {
+    async listInvitesReservingSeats({ platformId, cursor, limit }: ListInvitesReservingSeatsParams): Promise<SeekPage<UserInvitation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: UserInvitationEntity,
@@ -181,7 +181,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         })
         const query = withinReservationWindow(repo().createQueryBuilder('invitation'), platformId)
             .andWhere(EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER)
-            .andWhere('invitation.type = :type', { type: InvitationType.PLATFORM })
         const { data, cursor: nextCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<UserInvitation>(data, nextCursor)
     },
@@ -423,7 +422,7 @@ export type CountReservedSeatsParams = {
     entityManager?: EntityManager
 }
 
-type ListPlatformInvitesReservingSeatsParams = {
+type ListInvitesReservingSeatsParams = {
     platformId: string
     cursor: string | null
     limit: number

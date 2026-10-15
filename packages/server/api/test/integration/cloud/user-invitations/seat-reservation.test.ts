@@ -200,8 +200,8 @@ describe('Seat reservation (ADR-0010) + active-user floor (ADR-0009)', () => {
         })
     })
 
-    describe('Platform invites reserving seats', () => {
-        it('lists only the platform invites that hold a seat', async () => {
+    describe('Invites reserving seats', () => {
+        it('lists the platform and project invites that hold a seat', async () => {
             const { mockOwnerToken, mockPlatform, mockProject, ownerEmail } = await setupPlatform({ usersLimit: 10 })
             const pendingEmail = faker.internet.email().toLowerCase()
             const acceptedEmail = faker.internet.email().toLowerCase()
@@ -210,19 +210,20 @@ describe('Seat reservation (ADR-0010) + active-user floor (ADR-0009)', () => {
             await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.PENDING, createdDaysAgo: 8 })
             await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.PENDING, email: ownerEmail })
             const adminRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
-            await db.save('user_invitation', createMockUserInvitation({
+            const projectInvitation = createMockUserInvitation({
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
                 projectRole: adminRole,
                 status: InvitationStatus.PENDING,
-            }))
+            })
+            await db.save('user_invitation', projectInvitation)
 
             const response = await listReservingSeats({ token: mockOwnerToken })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
             const emails = response.json<SeekPage<UserInvitation>>().data.map((invitation) => invitation.email)
-            expect(emails.sort()).toEqual([acceptedEmail, pendingEmail].sort())
+            expect(emails.sort()).toEqual([acceptedEmail, pendingEmail, projectInvitation.email].sort())
         })
 
         it('pages through the invites with a cursor', async () => {
