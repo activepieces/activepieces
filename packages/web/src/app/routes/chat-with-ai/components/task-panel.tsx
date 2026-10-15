@@ -225,10 +225,10 @@ function TimelineItem({
       className="flex gap-3"
     >
       <span className="flex size-5 shrink-0 items-center justify-center">
-        {active ? (
-          <Loader2 className="size-3.5 animate-spin text-accent-10 motion-reduce:animate-none" />
-        ) : failed ? (
+        {failed ? (
           <X className="size-3.5 text-danger-11" strokeWidth={2.5} />
+        ) : active ? (
+          <Loader2 className="size-3.5 animate-spin text-accent-10 motion-reduce:animate-none" />
         ) : (
           <Check className="size-3.5 text-success-10" strokeWidth={2.5} />
         )}
