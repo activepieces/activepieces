@@ -6,6 +6,7 @@ import {
   BuildPlanEvent,
   FileProducedEvent,
   ImageGeneratedEvent,
+  SubagentActivity,
 } from '@activepieces/shared';
 import { StoreApi, create } from 'zustand';
 
@@ -49,6 +50,7 @@ export type ToolCallMeta = {
   actionReceipt?: ActionReceiptEvent;
   image?: ImageGeneratedEvent;
   files?: FileProducedEvent[];
+  subagent?: SubagentActivity;
 };
 
 export type BuildState = BuildPlanEvent;
@@ -156,9 +158,22 @@ function selectPendingActionPreview({
       return !!id && !!state.toolCallMeta[id]?.actionPreview;
     },
   });
-  if (!isNotDismissed(part, state)) return null;
+  if (!isNotDismissed(part, state)) return taskActionPreview(state);
   const toolCallId = chatPartUtils.getToolCallId(part);
   return state.toolCallMeta[toolCallId]?.actionPreview ?? null;
+}
+
+function taskActionPreview(state: ChatStoreState): ActionPreviewEvent | null {
+  const metas = Object.values(state.toolCallMeta);
+  const taskRunning = metas.some((meta) => meta.subagent?.status === 'running');
+  if (!taskRunning) return null;
+  const waiting = metas.find(
+    (meta) =>
+      meta.actionPreview?.taskTitle !== undefined &&
+      meta.actionReceipt === undefined &&
+      !state.dismissedGateIds[meta.actionPreview.toolCallId],
+  );
+  return waiting?.actionPreview ?? null;
 }
 
 function selectActiveQuestions({
@@ -223,7 +238,7 @@ function selectHasBlockingCard({
       return !!state.toolCallMeta[id]?.actionPreview;
     },
   });
-  return part !== null;
+  return part !== null || taskActionPreview(state) !== null;
 }
 
 function selectBatchProgress({

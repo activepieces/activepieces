@@ -9,6 +9,7 @@ export enum AgentEventType {
     IMAGE = 'IMAGE',
     FILE = 'FILE',
     BUILD_PLAN = 'BUILD_PLAN',
+    SUBAGENT_PROGRESS = 'SUBAGENT_PROGRESS',
 }
 
 export type ToolProgressEvent = {
@@ -34,6 +35,7 @@ export type ActionPreviewEvent = {
     isBatch: boolean
     batchCount?: number
     batchSamples?: Record<string, unknown>[]
+    taskTitle?: string
 }
 
 export type ActionReceiptEvent = {
@@ -91,6 +93,25 @@ export type BuildPlanEvent = {
     updatedAt: string
 }
 
+export type SubagentActivity = {
+    taskId?: string
+    title: string
+    status: 'running' | 'done' | 'blocked' | 'failed'
+    statusLine?: string
+    stepCount: number
+    pieces?: string[]
+    artifacts?: { type: string, id: string, name: string }[]
+    needs?: string
+    summary?: string
+    startedAt: string
+    durationMs?: number
+}
+
+export type SubagentProgressEvent = {
+    toolCallId: string
+    data: SubagentActivity
+}
+
 export type AgentEvent =
     | { type: AgentEventType.CHUNK, data: unknown }
     | { type: AgentEventType.FINISHED, data: { conversationId: string } }
@@ -102,3 +123,4 @@ export type AgentEvent =
     | { type: AgentEventType.IMAGE, data: ImageGeneratedEvent }
     | { type: AgentEventType.FILE, data: FileProducedEvent }
     | { type: AgentEventType.BUILD_PLAN, data: BuildPlanEvent }
+    | { type: AgentEventType.SUBAGENT_PROGRESS, data: SubagentProgressEvent }

@@ -3222,5 +3222,12 @@
   "No models available — ask your platform admin to add a provider.": "No models available — ask your platform admin to add a provider.",
   "{input} in · {output} out": "{input} in · {output} out",
   "Couldn't load {key} models": "Couldn't load {key} models",
-  "Flows and agents that use this key will fail.": "Flows and agents that use this key will fail."
+  "Flows and agents that use this key will fail.": "Flows and agents that use this key will fail.",
+  "Stopped early": "Stopped early",
+  "Getting started": "Getting started",
+  "{count, plural, =1 {Working on a task} other {Working on # tasks at once}}": "{count, plural, =1 {Working on a task} other {Working on # tasks at once}}",
+  "{count, plural, =1 {Task finished} other {# tasks finished}}": "{count, plural, =1 {Task finished} other {# tasks finished}}",
+  "Needs your input": "Needs your input",
+  "Task": "Task",
+  "Asked by {taskTitle}": "Asked by {taskTitle}"
 }
