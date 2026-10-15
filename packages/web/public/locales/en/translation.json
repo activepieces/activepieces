@@ -3289,8 +3289,8 @@
   "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.": "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.",
   "Couldn't switch the model. Try again.": "Couldn't switch the model. Try again.",
   "Bring your AI to chat": "Bring your AI to chat",
-  "Connect a key from Anthropic, OpenAI, Google or {count} other providers. Everyone on your platform can start chatting right away.": "Connect a key from Anthropic, OpenAI, Google or {count} other providers. Everyone on your platform can start chatting right away.",
-  "Chat needs an AI key. Ask your platform admin to connect one, and you can start right away.": "Chat needs an AI key. Ask your platform admin to connect one, and you can start right away.",
-  "+{count} more providers supported": "+{count} more providers supported",
-  "Connect an AI key": "Connect an AI key"
+  "Connect an AI key": "Connect an AI key",
+  "Connect one AI key and everyone on your platform can start chatting.": "Connect one AI key and everyone on your platform can start chatting.",
+  "Ask your platform admin to connect an AI key to start chatting.": "Ask your platform admin to connect an AI key to start chatting.",
+  "Works with Anthropic, OpenAI, Google and {count} more": "Works with Anthropic, OpenAI, Google and {count} more"
 }

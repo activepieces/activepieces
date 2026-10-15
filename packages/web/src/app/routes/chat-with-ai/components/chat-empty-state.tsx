@@ -109,84 +109,77 @@ export function SetupRequiredState() {
     providers.flatMap((provider) =>
       SUPPORTED_AI_PROVIDERS.filter((info) => info.provider === provider),
     );
-  const shown = SETUP_INNER_RING.length + SETUP_OUTER_RING.length;
 
   return (
-    <div className="flex min-h-[70vh] w-full min-w-0 flex-1 flex-col items-center justify-center gap-10 overflow-hidden px-4 py-16 text-center">
-      <div className="relative flex size-80 items-center justify-center">
+    <div className="flex h-full w-full min-w-0 flex-col items-center justify-center overflow-y-auto px-4 py-10 text-center">
+      <div className="relative flex size-72 shrink-0 items-center justify-center">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute top-8 left-6 size-40 rounded-full bg-accent-9/25 blur-3xl" />
-          <div className="absolute right-4 bottom-10 size-36 rounded-full bg-swatch-5-mark/25 blur-3xl" />
-          <div className="absolute top-4 right-16 size-28 rounded-full bg-swatch-8-mark/20 blur-3xl" />
+          <div className="absolute top-8 left-6 size-36 rounded-full bg-accent-9/20 blur-3xl" />
+          <div className="absolute right-4 bottom-8 size-32 rounded-full bg-swatch-5-mark/20 blur-3xl" />
+          <div className="absolute top-4 right-14 size-24 rounded-full bg-swatch-8-mark/15 blur-3xl" />
         </div>
         <OrbitRing
           logos={logosOf(SETUP_OUTER_RING)}
-          radius={150}
+          radius={132}
           seconds={60}
           reverse
           reducedMotion={reducedMotion}
         />
         <OrbitRing
           logos={logosOf(SETUP_INNER_RING)}
-          radius={95}
+          radius={82}
           seconds={40}
           reducedMotion={reducedMotion}
         />
         <motion.div
-          className="relative flex size-20 items-center justify-center rounded-3xl border bg-panel shadow-lg"
-          animate={
-            reducedMotion
-              ? undefined
-              : { scale: [1, 1.06, 1], rotate: [0, 4, -4, 0] }
-          }
+          className="relative flex size-18 items-center justify-center rounded-3xl border bg-panel shadow-lg"
+          animate={reducedMotion ? undefined : { scale: [1, 1.05, 1] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <Sparkles className="size-9 text-accent-10" />
+          <Sparkles className="size-8 text-accent-10" />
         </motion.div>
       </div>
 
       <motion.div
-        className="flex max-w-md flex-col items-center gap-3"
+        className="mt-8 flex max-w-sm flex-col items-center gap-2"
         initial={reducedMotion ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <h2 className="text-4xl font-semibold tracking-tight text-gray-12">
+        <h2 className="text-3xl font-semibold tracking-tight text-gray-12">
           {t('Bring your AI to chat')}
         </h2>
         <p className="text-base text-gray-11">
           {isAdmin
             ? t(
-                'Connect a key from Anthropic, OpenAI, Google or {count} other providers. Everyone on your platform can start chatting right away.',
-                { count: SUPPORTED_AI_PROVIDERS.length - 3 },
+                'Connect one AI key and everyone on your platform can start chatting.',
               )
             : t(
-                'Chat needs an AI key. Ask your platform admin to connect one, and you can start right away.',
+                'Ask your platform admin to connect an AI key to start chatting.',
               )}
         </p>
-        {SUPPORTED_AI_PROVIDERS.length > shown && (
-          <p className="text-xs text-gray-10">
-            {t('+{count} more providers supported', {
-              count: SUPPORTED_AI_PROVIDERS.length - shown,
-            })}
-          </p>
-        )}
       </motion.div>
 
       {isAdmin && (
         <motion.div
+          className="mt-6 flex flex-col items-center gap-3"
           initial={reducedMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.25 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Button
             size="lg"
-            className="gap-2 rounded-full px-6 shadow-lg"
+            className="gap-2 shadow-md"
             onClick={() => navigate('/platform/ai')}
           >
             <Plus className="size-4" />
             {t('Connect an AI key')}
           </Button>
+          <p className="text-xs text-gray-10">
+            {t('Works with Anthropic, OpenAI, Google and {count} more', {
+              count: SUPPORTED_AI_PROVIDERS.length - 3,
+            })}
+          </p>
         </motion.div>
       )}
     </div>
