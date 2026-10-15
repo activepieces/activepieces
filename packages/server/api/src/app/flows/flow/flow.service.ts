@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
@@ -17,6 +17,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { triggerUtils } from '../../trigger/trigger-source/trigger-utils'
 import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
@@ -359,6 +360,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     })
                 }
                 const requestedStatus = operation.request.status ?? FlowStatus.ENABLED
+                if (requestedStatus === FlowStatus.ENABLED) {
+                    assertTriggerIsSelected({ trigger: flowVersionToPublish.trigger })
+                    await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion: flowVersionToPublish, projectId })
+                }
                 const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
                 if (route === 'NEEDS_APPROVAL') {
                     await publishHooksFactory.get(log).submitForApproval({
@@ -763,6 +768,16 @@ async function assertRequiredActionsPresent({ projectId, platformId, flowVersion
     })
 }
 
+function assertTriggerIsSelected({ trigger }: { trigger: FlowTrigger }): void {
+    if (trigger.type === FlowTriggerType.PIECE && !isNil(trigger.settings.triggerName)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.FLOW_OPERATION_INVALID,
+        params: { message: 'Cannot enable a flow without a trigger, select a trigger first' },
+    })
+}
+
 const lockFlowVersionIfNotLocked = async ({
     flowVersion,
     userId,
@@ -814,6 +829,9 @@ async function applyStatusChange(params: {
                 flowId: flowToUpdate.id,
                 versionId: publishedFlowVersionId,
             })
+            if (params.newStatus === FlowStatus.ENABLED) {
+                assertTriggerIsSelected({ trigger: publishedFlowVersion.trigger })
+            }
 
             await flowSideEffects(log).preUpdateStatus({
                 flowToUpdate,
