@@ -11,6 +11,19 @@ describe('KeyedDebounce', () => {
     vi.useRealTimers();
   });
 
+  describe('isEmpty', () => {
+    it('is true only while no call waits', () => {
+      const debounce = new KeyedDebounce({ wait: 1000, maxWait: 5000 });
+      expect(debounce.isEmpty()).toBe(true);
+
+      debounce.schedule({ key: 'step_1', run: () => undefined });
+      expect(debounce.isEmpty()).toBe(false);
+
+      vi.advanceTimersByTime(1000);
+      expect(debounce.isEmpty()).toBe(true);
+    });
+  });
+
   describe('flush', () => {
     it('sends the pending call of every key at once', () => {
       const debounce = new KeyedDebounce({ wait: 1000, maxWait: 5000 });

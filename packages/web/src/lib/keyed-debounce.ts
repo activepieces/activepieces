@@ -26,6 +26,10 @@ export class KeyedDebounce {
     [...this.pending.keys()].forEach((key) => this.fire(key));
   }
 
+  isEmpty() {
+    return this.pending.size === 0;
+  }
+
   private fire(key: string) {
     const call = this.pending.get(key);
     if (isNil(call)) {

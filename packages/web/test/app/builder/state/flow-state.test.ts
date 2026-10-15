@@ -390,6 +390,37 @@ describe('flow state save retries', () => {
   );
 });
 
+describe('flow state saving flag', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+    vi.spyOn(toast, 'error').mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('stays on while an edit waits in the debounce after a save ends', async () => {
+    const nameSave = Promise.withResolvers<PopulatedFlow>();
+    flowsApiMock.update
+      .mockReturnValueOnce(nameSave.promise)
+      .mockResolvedValue(draftFlow('New name'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('New name'));
+    await vi.advanceTimersByTimeAsync(0);
+    store.getState().applyOperation(renameTrigger('New order'));
+    nameSave.resolve(draftFlow('New name'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.getState().saving).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(store.getState().saving).toBe(false);
+  });
+});
+
 function networkError() {
   return new AxiosError('Network Error', AxiosError.ERR_NETWORK, undefined, {});
 }
