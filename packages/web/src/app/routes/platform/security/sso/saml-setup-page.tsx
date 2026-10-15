@@ -116,20 +116,21 @@ const SamlWizard = ({
 
   return (
     <>
-      <StepIndicator step={step} />
+      <StepIndicator step={step} onSelect={setStep} />
       <div className={cn(step !== 'domain' && 'hidden')}>
         <DomainStep
           platform={platform}
           refetch={refetch}
           onVerified={() => setStep('saml')}
           onNext={() => setStep('saml')}
-          canProceed={domainVerified}
           disableAction={disableAction}
         />
       </div>
       <div className={cn(step !== 'saml' && 'hidden')}>
         <SamlStep
           platform={platform}
+          connected={connected}
+          domainVerified={domainVerified}
           refetch={refetch}
           onBack={() => setStep('domain')}
           onClose={onClose}
@@ -140,46 +141,60 @@ const SamlWizard = ({
   );
 };
 
-const StepIndicator = ({ step }: { step: WizardStep }) => (
+const StepIndicator = ({
+  step,
+  onSelect,
+}: {
+  step: WizardStep;
+  onSelect: (step: WizardStep) => void;
+}) => (
   <div className="flex items-center gap-3 text-xs text-gray-11">
-    <div
-      className={cn(
-        'flex items-center gap-2',
-        step === 'domain' && 'text-gray-12 font-medium',
-      )}
-    >
-      <span
-        className={cn(
-          'flex size-5 items-center justify-center rounded-full border text-xs',
-          step === 'domain'
-            ? 'border-accent-9 bg-accent-9 text-on-accent'
-            : 'border-gray-7',
-        )}
-      >
-        1
-      </span>
-      {t('SSO Domain')}
-    </div>
+    <StepButton
+      number={1}
+      label={t('SSO Domain')}
+      active={step === 'domain'}
+      onClick={() => onSelect('domain')}
+    />
     <div className="h-px w-6 bg-gray-6" />
-    <div
+    <StepButton
+      number={2}
+      label={t('SAML 2.0')}
+      active={step === 'saml'}
+      onClick={() => onSelect('saml')}
+    />
+  </div>
+);
+
+const StepButton = ({
+  number,
+  label,
+  active,
+  onClick,
+}: {
+  number: number;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    aria-current={active ? 'step' : undefined}
+    onClick={onClick}
+    className={cn(
+      'flex items-center gap-2 rounded-md hover:text-gray-12 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50',
+      active && 'font-medium text-gray-12',
+    )}
+  >
+    <span
       className={cn(
-        'flex items-center gap-2',
-        step === 'saml' && 'text-gray-12 font-medium',
+        'flex size-5 items-center justify-center rounded-full border text-xs',
+        active ? 'border-accent-9 bg-accent-9 text-on-accent' : 'border-gray-7',
       )}
     >
-      <span
-        className={cn(
-          'flex size-5 items-center justify-center rounded-full border text-xs',
-          step === 'saml'
-            ? 'border-accent-9 bg-accent-9 text-on-accent'
-            : 'border-gray-7',
-        )}
-      >
-        2
-      </span>
-      {t('SAML 2.0')}
-    </div>
-  </div>
+      {number}
+    </span>
+    {label}
+  </button>
 );
 
 const DomainStep = ({
@@ -187,14 +202,12 @@ const DomainStep = ({
   refetch,
   onVerified,
   onNext,
-  canProceed,
   disableAction,
 }: {
   platform: PlatformWithoutSensitiveData;
   refetch: () => Promise<void>;
   onVerified: () => void;
   onNext: () => void;
-  canProceed: boolean;
   disableAction: DisableAction;
 }) => {
   const form = useForm<SsoDomainFormValues>({
@@ -303,7 +316,7 @@ const DomainStep = ({
               {platform.ssoDomain ? t('Update domain') : t('Save domain')}
             </Button>
           ) : (
-            <Button type="button" onClick={onNext} disabled={!canProceed}>
+            <Button type="button" onClick={onNext}>
               {t('Next')}
             </Button>
           )}
@@ -351,12 +364,16 @@ const DomainStep = ({
 
 const SamlStep = ({
   platform,
+  connected,
+  domainVerified,
   refetch,
   onBack,
   onClose,
   disableAction,
 }: {
   platform: PlatformWithoutSensitiveData;
+  connected: boolean;
+  domainVerified: boolean;
   refetch: () => Promise<void>;
   onBack: () => void;
   onClose: () => void;
@@ -426,6 +443,11 @@ Activepieces
                   id="idpMetadata"
                   rows={6}
                   className="font-mono text-xs"
+                  placeholder={
+                    connected
+                      ? t('•••••••• Saved. Paste new metadata to replace it.')
+                      : undefined
+                  }
                 />
                 <FormDescription>
                   {t(
@@ -439,13 +461,34 @@ Activepieces
           <FormField
             name="idpCertificate"
             render={({ field }) => (
-              <FormItem className="grid space-y-4">
+              <FormItem className="grid space-y-2">
                 <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
-                <Textarea {...field} required id="idpCertificate" />
+                <Textarea
+                  {...field}
+                  required
+                  id="idpCertificate"
+                  placeholder={
+                    connected
+                      ? t(
+                          '•••••••• Saved. Paste a new certificate to replace it.',
+                        )
+                      : undefined
+                  }
+                />
                 <FormMessage />
               </FormItem>
             )}
           />
+          {!domainVerified && (
+            <Alert variant="warning">
+              <TriangleAlert className="size-4" />
+              <AlertDescription>
+                {t(
+                  'Verify your domain before saving. You can already copy the values above into your identity provider.',
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
           {form?.formState?.errors?.root?.serverError && (
             <FormMessage>
               {form.formState.errors.root.serverError.message}
@@ -471,7 +514,7 @@ Activepieces
             <Button
               {...adminControl(AdminControl.SSO_SAML_CONFIG_SUBMIT)}
               loading={isPending}
-              disabled={!form.formState.isValid}
+              disabled={!domainVerified || !form.formState.isValid}
               type="submit"
             >
               {t('Save')}
