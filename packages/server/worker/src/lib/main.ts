@@ -9,9 +9,11 @@ const workerToken = system.getOrThrow(WorkerSystemProp.WORKER_TOKEN)
 
 process.on('uncaughtException', (error) => {
     logger.error({ error }, 'Uncaught exception in worker')
+    process.exit(1)
 })
 process.on('unhandledRejection', (reason) => {
     logger.error({ error: reason }, 'Unhandled rejection in worker')
+    process.exit(1)
 })
 
 async function main(): Promise<void> {
