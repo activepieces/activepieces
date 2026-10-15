@@ -95,13 +95,15 @@ describe('PublishFlowReminderWidget', () => {
     vi.useRealTimers();
   });
 
-  it('publishes the edit that waits in the debounce', async () => {
+  it('shows Publish only after an edit in the debounce is saved, and publishes it', async () => {
     const store = createStore(validDraftFlow());
-    store.getState().applyOperation(renameTrigger('New order'));
     store.getState().applyOperation(changeName('Orders'));
-    await settle();
-
+    store.getState().applyOperation(renameTrigger('New order'));
     await act(async () => root.render(<Widget store={store} />));
+    await settle();
+    expect(findPublishButton()).toBeNull();
+
+    await act(() => vi.advanceTimersByTimeAsync(1000));
     await act(async () => publishButton().click());
     await settle();
 
@@ -112,27 +114,33 @@ describe('PublishFlowReminderWidget', () => {
     ]);
   });
 
-  it('does not publish when the edit fails to save', async () => {
-    flowsApiMock.update.mockImplementation(async (_flowId, operation) => {
-      if (operation.type === FlowOperationType.UPDATE_TRIGGER) {
-        throw new Error('Request failed with status code 400');
-      }
-      return validDraftFlow();
-    });
-    flowsApiMock.get.mockResolvedValue(validDraftFlow());
+  it('publishes only after the pending edits are saved', async () => {
+    const pendingEdits = Promise.withResolvers<void>();
     const store = createStore(validDraftFlow());
-    store.getState().applyOperation(renameTrigger('New order'));
-    store.getState().applyOperation(changeName('Orders'));
-    await settle();
-
+    store.setState({ savePendingEdits: () => pendingEdits.promise });
     await act(async () => root.render(<Widget store={store} />));
+
+    await act(async () => publishButton().click());
+    await settle();
+    expect(sentOperationTypes()).toEqual([]);
+
+    pendingEdits.resolve();
+    await settle();
+    expect(sentOperationTypes()).toEqual([FlowOperationType.LOCK_AND_PUBLISH]);
+  });
+
+  it('does not publish when a pending edit fails to save', async () => {
+    const store = createStore(validDraftFlow());
+    store.setState({
+      savePendingEdits: () =>
+        Promise.reject(new Error('Request failed with status code 400')),
+    });
+    await act(async () => root.render(<Widget store={store} />));
+
     await act(async () => publishButton().click());
     await settle();
 
-    expect(sentOperationTypes()).toEqual([
-      FlowOperationType.CHANGE_NAME,
-      FlowOperationType.UPDATE_TRIGGER,
-    ]);
+    expect(sentOperationTypes()).toEqual([]);
     expect(store.getState().isPublishing).toBe(false);
   });
 });
@@ -148,13 +156,15 @@ function Widget({ store }: { store: BuilderStore }) {
 }
 
 function publishButton(): HTMLButtonElement {
-  const button = document.querySelector<HTMLButtonElement>(
-    'button[name="Publish"]',
-  );
+  const button = findPublishButton();
   if (!button) {
     throw new Error('The Publish button is not on the page');
   }
   return button;
+}
+
+function findPublishButton(): HTMLButtonElement | null {
+  return document.querySelector<HTMLButtonElement>('button[name="Publish"]');
 }
 
 async function settle() {

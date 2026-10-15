@@ -93,16 +93,19 @@ export const createFlowState = (
   set: StoreApi<BuilderState>['setState'],
 ): FlowState => {
   const flowUpdatesQueue = new PromiseQueue();
+  const flowUpdatesDebounce = new KeyedDebounce({ wait: 1000, maxWait: 5000 });
   const addToFlowUpdatesQueue = (task: () => Promise<void>) => {
     flowUpdatesQueue.add(async () => {
       try {
         await task();
       } finally {
-        set({ saving: flowUpdatesQueue.size() !== 0 });
+        set({
+          saving:
+            flowUpdatesQueue.size() !== 0 || !flowUpdatesDebounce.isEmpty(),
+        });
       }
     });
   };
-  const flowUpdatesDebounce = new KeyedDebounce({ wait: 1000, maxWait: 5000 });
   return {
     saving: false,
     outputSampleData: initialState.outputSampleData,
