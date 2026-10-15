@@ -1,6 +1,12 @@
+import { AIProviderName } from '@activepieces/core-utils';
 import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -16,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SUPPORTED_AI_PROVIDERS } from '@/features/agents/ai-providers';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { DEFAULT_USE_CASES } from '@/features/chat/use-cases/default-use-cases';
 import {
@@ -23,6 +30,7 @@ import {
   UseCaseCard,
 } from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
@@ -94,29 +102,59 @@ function CollapseOnInput({
 
 export function SetupRequiredState() {
   const navigate = useNavigate();
+  const isAdmin = useIsPlatformAdmin();
+  const logos = SETUP_PROVIDERS.flatMap((provider) =>
+    SUPPORTED_AI_PROVIDERS.filter((info) => info.provider === provider),
+  );
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center gap-4 py-20 flex-1 min-w-0">
-      <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-gray-3">
-        <Settings className="h-8 w-8 text-gray-11" />
+    <div className="flex h-full min-w-0 flex-1 items-center justify-center px-4 py-20">
+      <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border bg-panel p-6">
+        <div className="flex items-center gap-1.5">
+          {logos.map((info) => (
+            <LogoPlate
+              key={info.provider}
+              src={info.logoUrl}
+              alt={info.name}
+              size="sm"
+              border
+            />
+          ))}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-lg font-semibold tracking-tight text-gray-12">
+            {t('Connect an AI model to start chatting')}
+          </h2>
+          <p className="text-sm text-gray-11">
+            {t(
+              "Chat runs on your platform's AI keys. Add one from Anthropic, OpenAI, Google or another provider, and everyone here can start chatting.",
+            )}
+          </p>
+        </div>
+        {isAdmin ? (
+          <Button
+            className="w-fit gap-2"
+            onClick={() => navigate('/platform/ai')}
+          >
+            {t('Add an AI key')}
+            <ArrowRight className="size-4" />
+          </Button>
+        ) : (
+          <p className="rounded-lg bg-gray-2 px-3 py-2 text-sm text-gray-11">
+            {t('Ask your platform admin to add an AI key.')}
+          </p>
+        )}
       </div>
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold">
-          {t('Set up an AI provider to get started')}
-        </h2>
-        <p className="text-gray-11 text-sm max-w-md">
-          {t(
-            'AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.',
-          )}
-        </p>
-      </div>
-      <Button onClick={() => navigate('/platform/ai')} className="gap-2">
-        <Settings className="h-4 w-4" />
-        {t('Go to AI Settings')}
-      </Button>
     </div>
   );
 }
+
+const SETUP_PROVIDERS = [
+  AIProviderName.ANTHROPIC,
+  AIProviderName.OPENAI,
+  AIProviderName.GOOGLE,
+  AIProviderName.MISTRAL,
+];
 
 export function MessageSkeletons() {
   return (

@@ -902,9 +902,6 @@
   "Skip these questions": "Skip these questions",
   "Or reply in your own words": "Or reply in your own words",
   "Reply...": "Reply...",
-  "Set up an AI provider to get started": "Set up an AI provider to get started",
-  "AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.": "AI Chat requires an AI provider. Add your provider in the AI settings to start chatting.",
-  "Go to AI Settings": "Go to AI Settings",
   "Private Chat": "Private Chat",
   "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.": "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.",
   "{count}+ apps": "{count}+ apps",
@@ -3290,5 +3287,9 @@
   "Pick an embedding model": "Pick an embedding model",
   "Ask your admin to set an Embeddings model.": "Ask your admin to set an Embeddings model.",
   "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.": "No AI key can index files yet. Set an Embeddings model in AI settings → Capabilities, or ask your admin.",
-  "Couldn't switch the model. Try again.": "Couldn't switch the model. Try again."
+  "Couldn't switch the model. Try again.": "Couldn't switch the model. Try again.",
+  "Connect an AI model to start chatting": "Connect an AI model to start chatting",
+  "Chat runs on your platform's AI keys. Add one from Anthropic, OpenAI, Google or another provider, and everyone here can start chatting.": "Chat runs on your platform's AI keys. Add one from Anthropic, OpenAI, Google or another provider, and everyone here can start chatting.",
+  "Add an AI key": "Add an AI key",
+  "Ask your platform admin to add an AI key.": "Ask your platform admin to add an AI key."
 }
