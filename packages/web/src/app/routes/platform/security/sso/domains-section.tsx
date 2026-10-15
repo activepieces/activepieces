@@ -55,7 +55,7 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
     <AdminSection
       title={t('Domains')}
       description={t(
-        'Verify the email domain your company owns. People at it can join using the sign-in methods below.',
+        "Verify your company's email domain to set up single sign-on.",
       )}
     >
       {platform.ssoDomain && platform.ssoDomainVerification ? (
