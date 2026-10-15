@@ -93,7 +93,7 @@ export type BuildPlanEvent = {
     updatedAt: string
 }
 
-export type SubagentTimelineEntry = { kind: 'status', text: string }
+export type SubagentTimelineEntry = { kind: 'status', text: string, failed?: boolean }
 
 export type SubagentActivity = {
     taskId?: string

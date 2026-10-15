@@ -63,7 +63,7 @@ describe('createTaskSubagentTools', () => {
         expect(finishTask).toHaveBeenCalledWith(expect.objectContaining({ status: 'BLOCKED' }))
     })
 
-    it('puts each titled tool step in the timeline, so a task without status updates still shows its steps', async () => {
+    it('puts each titled tool step in the timeline and marks the failed ones, so a task without status updates still shows its steps', async () => {
         runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
             await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'Built.', artifacts: [] }, EXECUTION_OPTIONS)
             return {
@@ -71,6 +71,7 @@ describe('createTaskSubagentTools', () => {
                 uiParts: [
                     { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'b1', toolName: 'ap_build_flow', title: 'Building your intake flow', input: {}, status: PersistedToolCallStatus.COMPLETED },
                     { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'v1', toolName: 'ap_validate_flow', input: {}, status: PersistedToolCallStatus.COMPLETED },
+                    { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 't1', toolName: 'ap_test_flow', title: 'Testing your intake flow', input: {}, status: PersistedToolCallStatus.ERROR },
                 ],
             }
         })
@@ -78,7 +79,7 @@ describe('createTaskSubagentTools', () => {
 
         const result = await tasks['ap_run_task'].execute?.({ title: 'Build', brief: 'Build it' }, EXECUTION_OPTIONS)
 
-        expect(result).toMatchObject({ activity: { statusLine: 'Building your intake flow', timeline: [{ kind: 'status', text: 'Building your intake flow' }] } })
+        expect(result).toMatchObject({ activity: { statusLine: 'Testing your intake flow', timeline: [{ kind: 'status', text: 'Building your intake flow', failed: false }, { kind: 'status', text: 'Testing your intake flow', failed: true }] } })
     })
 
     it('sends the growing timeline with every live update', async () => {
