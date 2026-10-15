@@ -3,10 +3,10 @@
  */
 import { ApEdition, EnterpriseTrialStatus } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
 import * as React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let isPlatformAdmin = true;
 let isEmbedded = false;
@@ -111,5 +111,44 @@ describe('useTrial', () => {
     });
     expect(result.current.state).toBe('none');
     expect(getEnterpriseTrial).not.toHaveBeenCalled();
+  });
+});
+
+describe('trial clock', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('refetches the platform once at the trial end however many components read the trial', async () => {
+    vi.useFakeTimers();
+    isPlatformAdmin = false;
+    planTrialEndsAt = new Date(Date.now() + 60 * 1000).toISOString();
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    const shared = ({ children }: React.PropsWithChildren) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const readers = Array.from({ length: 25 }, () =>
+      renderHook(() => enterpriseTrialHooks.useTrial(), { wrapper: shared }),
+    );
+    expect(
+      readers.every((reader) => reader.result.current.state === 'active'),
+    ).toBe(true);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2 * 60 * 1000);
+    });
+
+    const platformRefetches = invalidate.mock.calls.filter(
+      ([filters]) =>
+        JSON.stringify(filters?.queryKey) === JSON.stringify(['platform']),
+    );
+    expect(platformRefetches).toHaveLength(1);
+    expect(
+      readers.every((reader) => reader.result.current.state !== 'active'),
+    ).toBe(true);
+    readers.forEach((reader) => reader.unmount());
   });
 });

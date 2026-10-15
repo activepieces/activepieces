@@ -5,10 +5,16 @@ import {
   EnterpriseTrialState,
   EnterpriseTrialStatus,
 } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { useEffect, useReducer } from 'react';
+import { useEffect } from 'react';
+import { create } from 'zustand';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
@@ -131,26 +137,67 @@ function useCanManageEnterpriseTrial(): boolean {
 
 function useTrialClock(endsAt: string | Date | null | undefined): void {
   const queryClient = useQueryClient();
-  const [tick, rerender] = useReducer((count: number) => count + 1, 0);
+  useTrialClockTick((clock) => clock.tick);
   const end = isNil(endsAt) ? null : dayjs(endsAt).valueOf();
   useEffect(() => {
     if (isNil(end)) {
       return;
     }
-    const next = enterpriseTrialTime.nextBoundary({ end, now: Date.now() });
-    if (isNil(next) || next - Date.now() > MAX_TIMER_MS) {
+    return subscribeToTrialClock({ end, queryClient });
+  }, [end, queryClient]);
+}
+
+function subscribeToTrialClock({
+  end,
+  queryClient,
+}: {
+  end: number;
+  queryClient: QueryClient;
+}): () => void {
+  const clock = trialClocks.get(end) ?? { subscribers: 0, timer: null };
+  clock.subscribers += 1;
+  trialClocks.set(end, clock);
+  if (isNil(clock.timer)) {
+    scheduleTrialBoundary({ end, queryClient });
+  }
+  return () => {
+    clock.subscribers -= 1;
+    if (clock.subscribers > 0) {
       return;
     }
-    const timer = setTimeout(() => {
-      if (Date.now() >= end) {
-        queryClient
-          .invalidateQueries({ queryKey: ['platform'] })
-          .catch(() => undefined);
-      }
-      rerender();
-    }, next - Date.now() + BOUNDARY_GRACE_MS);
-    return () => clearTimeout(timer);
-  }, [end, tick, queryClient]);
+    if (!isNil(clock.timer)) {
+      clearTimeout(clock.timer);
+    }
+    trialClocks.delete(end);
+  };
+}
+
+function scheduleTrialBoundary({
+  end,
+  queryClient,
+}: {
+  end: number;
+  queryClient: QueryClient;
+}): void {
+  const clock = trialClocks.get(end);
+  if (isNil(clock)) {
+    return;
+  }
+  const next = enterpriseTrialTime.nextBoundary({ end, now: Date.now() });
+  if (isNil(next) || next - Date.now() > MAX_TIMER_MS) {
+    clock.timer = null;
+    return;
+  }
+  clock.timer = setTimeout(() => {
+    clock.timer = null;
+    if (Date.now() >= end) {
+      queryClient
+        .invalidateQueries({ queryKey: ['platform'] })
+        .catch(() => undefined);
+    }
+    useTrialClockTick.getState().advance();
+    scheduleTrialBoundary({ end, queryClient });
+  }, next - Date.now() + BOUNDARY_GRACE_MS);
 }
 
 function refetchAfterTrialEnds(
@@ -210,6 +257,23 @@ const NO_TRIAL: EnterpriseTrial = {
   extended: false,
   isPlatformAdmin: false,
   basePlanName: 'Free',
+};
+
+const useTrialClockTick = create<TrialClockTick>((set) => ({
+  tick: 0,
+  advance: () => set((clock) => ({ tick: clock.tick + 1 })),
+}));
+
+const trialClocks = new Map<number, TrialClock>();
+
+type TrialClockTick = {
+  tick: number;
+  advance: () => void;
+};
+
+type TrialClock = {
+  subscribers: number;
+  timer: ReturnType<typeof setTimeout> | null;
 };
 
 export const ENTERPRISE_TRIAL_DAYS = TRIAL_DAYS;
