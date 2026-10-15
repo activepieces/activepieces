@@ -226,6 +226,45 @@ describe('StepSettingsPanel', () => {
       selectedBranchIndex: 1,
     });
   });
+
+  it('makes the mention field read-only when the tab becomes read-only, and sends no save', async () => {
+    const store = createStore(
+      draftFlow({ lookUpOrderInput: { customerEmail: '{{trigger.email}}' } }),
+    );
+    store.getState().selectStepByName('step_1');
+    const { container } = renderPanel(store);
+    expect(mentionFieldEditableStates(container)).toEqual(['true']);
+
+    act(() => {
+      store.getState().setReadOnly(true);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(mentionFieldEditableStates(container)).toEqual(['false']);
+    expect(savedOperations).toEqual([]);
+  });
+
+  it('makes the mention field editable when the tab becomes editable, and sends no save', async () => {
+    const store = createStore(
+      draftFlow({ lookUpOrderInput: { customerEmail: '{{trigger.email}}' } }),
+    );
+    store.getState().setReadOnly(true);
+    store.getState().selectStepByName('step_1');
+    const { container } = renderPanel(store);
+    expect(mentionFieldEditableStates(container)).toEqual(['false']);
+
+    act(() => {
+      store.getState().setReadOnly(false);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(mentionFieldEditableStates(container)).toEqual(['true']);
+    expect(savedOperations).toEqual([]);
+  });
 });
 
 function createStore(flow: PopulatedFlow): BuilderStore {
@@ -243,12 +282,18 @@ function createStore(flow: PopulatedFlow): BuilderStore {
 }
 
 function renderPanel(store: BuilderStore) {
-  render(
+  return render(
     <QueryClientProvider client={new QueryClient()}>
       <BuilderStateContext.Provider value={store}>
         <StepSettingsPanel pieceModel={undefined} pieceModelNotFound={false} />
       </BuilderStateContext.Provider>
     </QueryClientProvider>,
+  );
+}
+
+function mentionFieldEditableStates(container: HTMLElement) {
+  return Array.from(container.querySelectorAll('.ProseMirror')).map((element) =>
+    element.getAttribute('contenteditable'),
   );
 }
 

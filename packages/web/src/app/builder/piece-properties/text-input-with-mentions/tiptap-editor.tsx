@@ -545,6 +545,10 @@ export const TiptapEditor = ({
   }, [editor]);
 
   useEffect(() => {
+    editor?.setEditable(!disabled, false);
+  }, [editor, disabled]);
+
+  useEffect(() => {
     if (!editor) return;
     setSlashCommandHandler({
       editor,
