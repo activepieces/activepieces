@@ -1725,7 +1725,6 @@
   "Domain verified": "Domain verified",
   "TXT record not found yet — DNS can take a few minutes.": "TXT record not found yet — DNS can take a few minutes.",
   "Couldn't verify domain": "Couldn't verify domain",
-  "When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.": "When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.",
   "Update SSO domain?": "Update SSO domain?",
   "Users won't be able to sign in via SSO until you verify the new domain.": "Users won't be able to sign in via SSO until you verify the new domain.",
   "\n**Setup Instructions**:\nPlease check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)\n\n**Single sign-on URL**:\n```text\n{samlAcs}\n```\n**Audience URI (SP Entity ID)**:\n```text\nActivepieces\n```\n": "\n**Setup Instructions**:\nPlease check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)\n\n**Single sign-on URL**:\n```text\n{samlAcs}\n```\n**Audience URI (SP Entity ID)**:\n```text\nActivepieces\n```\n",
