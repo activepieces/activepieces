@@ -11,6 +11,7 @@ import { type ReactNode, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 import { DetailRow } from '../detail-row';
@@ -21,6 +22,7 @@ export const AutoRechargeCard = ({
   feature,
   hasCard,
   note,
+  className,
 }: AutoRechargeCardProps) => {
   const autoTopUp = feature.autoTopUp;
   const queryClient = useQueryClient();
@@ -47,7 +49,12 @@ export const AutoRechargeCard = ({
   // "add payment method" CTA instead of the toggle. Once the card is saved, the toggle appears.
   if (!hasCard) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border bg-panel p-5">
+      <div
+        className={cn(
+          'flex flex-col gap-4 rounded-xl border bg-panel p-5',
+          className,
+        )}
+      >
         <span className="text-sm font-medium text-gray-12">
           {t('Enable auto recharge')}
         </span>
@@ -72,8 +79,13 @@ export const AutoRechargeCard = ({
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
-      <div className="flex items-center gap-3">
+    <div
+      className={cn(
+        'flex flex-col gap-4 rounded-xl border bg-panel p-5',
+        className,
+      )}
+    >
+      <div className="flex items-center gap-2">
         <Switch
           {...adminControl(AdminControl.BILLING_AUTO_RECHARGE_TOGGLE)}
           checked={enabled}
@@ -115,7 +127,7 @@ export const AutoRechargeCard = ({
             className="self-start"
             onClick={() => setIsDialogOpen(true)}
           >
-            <Pencil className="mr-2 size-4" />
+            <Pencil className="size-4" />
             {t('Edit')}
           </Button>
         </>
@@ -134,4 +146,5 @@ type AutoRechargeCardProps = {
   feature: ConsumableBillableFeature;
   hasCard: boolean;
   note?: ReactNode;
+  className?: string;
 };

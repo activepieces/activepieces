@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -93,13 +94,13 @@ export const AllowedDomainDialog = ({
           {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <DialogHeader>
           <DialogTitle>{t('Configure Allowed Domains')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
-            className="grid space-y-4"
+            className="flex flex-col gap-4"
             onSubmit={form.handleSubmit((data) => {
               mutate({
                 allowedAuthDomains: data.allowedAuthDomains.map(
@@ -110,34 +111,31 @@ export const AllowedDomainDialog = ({
               });
             })}
           >
-            <div className="flex flex-col gap-1">
-              <div className="text-gray-11 text-sm">
-                {t(
-                  'Enter the allowed domains for the users to authenticate with. An empty list will allow all domains.',
-                )}
-              </div>
-            </div>
+            <p className="text-sm text-gray-11">
+              {t(
+                'Enter the allowed domains for the users to authenticate with. An empty list will allow all domains.',
+              )}
+            </p>
             {fields.map((field, index) => (
               <FormField
                 key={field.id}
                 name={`allowedAuthDomains.${index}.domain`}
                 render={({ field }) => (
-                  <FormItem className="grid space-y-4">
-                    <div className="flex space-x-2">
+                  <FormItem className="space-y-0">
+                    <div className="flex gap-2">
                       <Input
                         {...field}
                         id={`allowedAuthDomains.${index}`}
                         placeholder={t('example.com')}
-                        className="rounded-sm"
                       />
                       <Button
                         type="button"
                         onClick={() => remove(index)}
                         variant="outline"
-                        size="sm"
-                        className="h-10"
+                        size="icon"
+                        aria-label={t('Remove')}
                       >
-                        <X className="w-4 h-4" />
+                        <X />
                       </Button>
                     </div>
                   </FormItem>
@@ -150,7 +148,7 @@ export const AllowedDomainDialog = ({
               variant="outline"
               size="sm"
             >
-              <Plus className="size-4" />
+              <Plus />
               {t('Add Domain')}
             </Button>
             {form?.formState?.errors?.root?.serverError && (
