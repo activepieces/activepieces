@@ -261,14 +261,16 @@ describe('SSOPage', () => {
     click(menuItem('Remove domain'));
     const dialog = screen.getByRole('dialog');
     expect(
-      within(dialog).getByText('Remove acme.com and disable SAML?'),
+      within(dialog).getByText(
+        'Remove acme.com and delete your SAML connection?',
+      ),
     ).toBeDefined();
     expect(
       within(dialog).getByText(
-        "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way. To use SAML again, you'll need to verify the domain again with a new DNS record.",
+        'Single sign-on will be disabled: your SAML connection (identity provider metadata and certificate) is deleted, so people who use single sign-on will have to sign in another way. To use SAML again, verify the domain with a new DNS record and connect your identity provider again.',
       ),
     ).toBeDefined();
-    click(findButton('Remove domain', dialog));
+    click(findButton('Remove domain and disable SAML', dialog));
 
     await waitFor(() =>
       expect(samlSsoApiMock.updateSsoDomain).toHaveBeenCalledWith(null),
@@ -307,7 +309,9 @@ describe('SSOPage', () => {
     mount();
 
     click(menuItem('Remove domain'));
-    click(findButton('Remove domain', screen.getByRole('dialog')));
+    click(
+      findButton('Remove domain and disable SAML', screen.getByRole('dialog')),
+    );
 
     await waitFor(() =>
       expect(toastMock.error).toHaveBeenCalledWith('Request failed'),
