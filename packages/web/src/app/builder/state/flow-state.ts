@@ -284,6 +284,9 @@ export const createFlowState = (
     savePendingEdits: async () => {
       get().flushPendingEdits();
       await flowUpdatesQueue.drain();
+      if (!flowUpdatesDebounce.isEmpty()) {
+        await get().savePendingEdits();
+      }
     },
     flushPendingEdits: () => {
       flowUpdatesDebounce.flush();
