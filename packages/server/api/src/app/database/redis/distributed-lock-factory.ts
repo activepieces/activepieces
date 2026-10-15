@@ -28,6 +28,8 @@ export const distributedLockFactory = (
         runExclusive: async <T>({
             key,
             timeoutInSeconds,
+            retryDelayMs = DEFAULT_RETRY_DELAY_MS,
+            retryJitterMs = DEFAULT_RETRY_JITTER_MS,
             fn,
         }: RunExclusiveParams<T>): Promise<T> => {
             const timeout = timeoutInSeconds * 1000
@@ -36,8 +38,9 @@ export const distributedLockFactory = (
                 [key],
                 timeout,
                 {
-                    retryCount: Math.ceil(timeout / 200),
-                    retryDelay: 200,
+                    retryCount: Math.ceil(timeout / retryDelayMs),
+                    retryDelay: retryDelayMs,
+                    retryJitter: retryJitterMs,
                     automaticExtensionThreshold: 2000,
                     driftFactor: 0.01,
                 },
@@ -56,5 +59,10 @@ export const distributedLockFactory = (
 type RunExclusiveParams<T> = {
     key: string
     timeoutInSeconds: number
+    retryDelayMs?: number
+    retryJitterMs?: number
     fn: () => Promise<T>
 }
+
+const DEFAULT_RETRY_DELAY_MS = 200
+const DEFAULT_RETRY_JITTER_MS = 100

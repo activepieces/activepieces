@@ -1073,6 +1073,8 @@ async function runDraftWriteExclusively<T>({
     return distributedLock(log).runExclusive({
         key: `flow-draft-write:${flowId}`,
         timeoutInSeconds: DRAFT_WRITE_LOCK_TIMEOUT_SECONDS,
+        retryDelayMs: DRAFT_WRITE_LOCK_RETRY_DELAY_MS,
+        retryJitterMs: DRAFT_WRITE_LOCK_RETRY_JITTER_MS,
         fn,
     })
 }
@@ -1177,3 +1179,5 @@ async function createDraftFromLockedVersion({
 }
 
 const DRAFT_WRITE_LOCK_TIMEOUT_SECONDS = 30
+const DRAFT_WRITE_LOCK_RETRY_DELAY_MS = 25
+const DRAFT_WRITE_LOCK_RETRY_JITTER_MS = 10
