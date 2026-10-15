@@ -128,7 +128,7 @@ export function SetupRequiredState() {
           reducedMotion={reducedMotion}
         />
         <motion.div
-          className="relative flex size-16 items-center justify-center rounded-2xl border bg-panel shadow-xl ring-6 ring-accent-3/60"
+          className="relative flex size-12 items-center justify-center rounded-xl border bg-panel shadow-xl ring-4 ring-accent-3/60"
           animate={reducedMotion ? undefined : { scale: [1, 1.04, 1] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         >
