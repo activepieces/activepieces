@@ -32,7 +32,7 @@ export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { ap
     }
 }
 
-export function createRepublishSafeStore(store: Store): Store {
+export function createInsertOnlyStore(store: Store): Store {
     return {
         async put<T>(key: string, value: T, scope?: StoreScope): Promise<T> {
             const existing = await store.get<T>(key, scope)

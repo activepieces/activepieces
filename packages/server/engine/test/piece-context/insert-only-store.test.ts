@@ -1,6 +1,6 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
 import { Store, StoreScope } from '@activepieces/pieces-framework'
-import { createRepublishSafeStore } from '../../src/lib/piece-context/store'
+import { createInsertOnlyStore } from '../../src/lib/piece-context/store'
 
 function fakeStore(initial: Record<string, unknown> = {}): Store {
     const data: Record<string, unknown> = { ...initial }
@@ -18,29 +18,29 @@ function fakeStore(initial: Record<string, unknown> = {}): Store {
     }
 }
 
-describe('createRepublishSafeStore', () => {
+describe('createInsertOnlyStore', () => {
     it('keeps the existing value when a key is already set', async () => {
         const store = fakeStore({ [`${StoreScope.FLOW}:lastPoll`]: 1000 })
-        const result = await createRepublishSafeStore(store).put('lastPoll', 2000)
+        const result = await createInsertOnlyStore(store).put('lastPoll', 2000)
         expect(result).toBe(1000)
         expect(await store.get('lastPoll')).toBe(1000)
     })
 
     it('writes a key that is not set yet', async () => {
         const store = fakeStore()
-        await createRepublishSafeStore(store).put('lastPoll', 2000)
+        await createInsertOnlyStore(store).put('lastPoll', 2000)
         expect(await store.get('lastPoll')).toBe(2000)
     })
 
     it('ignores deletes', async () => {
         const store = fakeStore({ [`${StoreScope.FLOW}:lastPoll`]: 1000 })
-        await createRepublishSafeStore(store).delete('lastPoll')
+        await createInsertOnlyStore(store).delete('lastPoll')
         expect(await store.get('lastPoll')).toBe(1000)
     })
 
     it('checks existence in the scope being written', async () => {
         const store = fakeStore({ [`${StoreScope.FLOW}:lastPoll`]: 1000 })
-        await createRepublishSafeStore(store).put('lastPoll', 2000, StoreScope.PROJECT)
+        await createInsertOnlyStore(store).put('lastPoll', 2000, StoreScope.PROJECT)
         expect(await store.get('lastPoll', StoreScope.PROJECT)).toBe(2000)
     })
 
@@ -48,10 +48,10 @@ describe('createRepublishSafeStore', () => {
         const timebased: Polling<undefined, unknown> = { strategy: DedupeStrategy.TIMEBASED, items: async () => [] }
         const lastItem: Polling<undefined, unknown> = { strategy: DedupeStrategy.LAST_ITEM, items: async () => [{ id: 'newest', data: {} }] }
         const store = fakeStore({ [`${StoreScope.FLOW}:lastPoll`]: 1000, [`${StoreScope.FLOW}:lastItem`]: 'previous' })
-        const safeStore = createRepublishSafeStore(store)
+        const insertOnlyStore = createInsertOnlyStore(store)
 
-        await pollingHelper.onEnable(timebased, { store: safeStore, auth: undefined, propsValue: {} })
-        await pollingHelper.onEnable(lastItem, { store: safeStore, auth: undefined, propsValue: {} })
+        await pollingHelper.onEnable(timebased, { store: insertOnlyStore, auth: undefined, propsValue: {} })
+        await pollingHelper.onEnable(lastItem, { store: insertOnlyStore, auth: undefined, propsValue: {} })
 
         expect(await store.get('lastPoll')).toBe(1000)
         expect(await store.get('lastItem')).toBe('previous')
@@ -66,8 +66,8 @@ describe('createRepublishSafeStore', () => {
             await s.put('_seenVideoIds', ['v1', 'v2', 'v3'])
         }
 
-        await onDisable(createRepublishSafeStore(store))
-        await onEnable(createRepublishSafeStore(store))
+        await onDisable(createInsertOnlyStore(store))
+        await onEnable(createInsertOnlyStore(store))
 
         expect(await store.get('_seenVideoIds')).toEqual(['v1', 'v2'])
     })
