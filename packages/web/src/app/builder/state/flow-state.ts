@@ -106,6 +106,12 @@ export const createFlowState = (
       }
     });
   };
+  const addToFlowUpdatesQueueAfterPendingEdits = (
+    task: () => Promise<void>,
+  ) => {
+    flowUpdatesDebounce.flush();
+    addToFlowUpdatesQueue(task);
+  };
   return {
     saving: false,
     outputSampleData: initialState.outputSampleData,
@@ -225,14 +231,14 @@ export const createFlowState = (
           } catch (error) {
             console.error(error);
             showFailedSaveToast(error);
-            addToFlowUpdatesQueue(() => refetchDraft(get));
+            addToFlowUpdatesQueueAfterPendingEdits(() => refetchDraft(get));
             throw error;
           }
         };
 
         switch (operation.type) {
           case FlowOperationType.SAVE_SAMPLE_DATA: {
-            addToFlowUpdatesQueue(updateRequest);
+            addToFlowUpdatesQueueAfterPendingEdits(updateRequest);
             break;
           }
           case FlowOperationType.UPDATE_TRIGGER:
@@ -265,11 +271,11 @@ export const createFlowState = (
                 outputSampleData,
               };
             });
-            addToFlowUpdatesQueue(updateRequest);
+            addToFlowUpdatesQueueAfterPendingEdits(updateRequest);
             break;
           }
           default: {
-            addToFlowUpdatesQueue(updateRequest);
+            addToFlowUpdatesQueueAfterPendingEdits(updateRequest);
           }
         }
 
