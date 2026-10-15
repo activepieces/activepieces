@@ -80,6 +80,20 @@ describe('chatToolBilling.countBillableToolCallsInLatestTurn', () => {
         expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(2)
     })
 
+    it('bills the paid calls every researcher made inside deep research', () => {
+        const researchPart: PersistedAgentPart = {
+            type: PersistedAgentPartType.TOOL_CALL,
+            toolCallId: 'research-1',
+            toolName: 'ap_deep_research',
+            input: {},
+            status: PersistedToolCallStatus.COMPLETED,
+            output: { tasks: [], billedToolCalls: [{ toolName: 'ap_scrape_url', output: {} }, { toolName: 'ap_scrape_url', output: {} }, { toolName: 'ap_fetch_url', output: {} }] },
+        }
+        const messages = [user('compare them'), assistant([researchPart])]
+
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(2)
+    })
+
     it('never bills inner calls reported by a tool that is not a task', () => {
         const connectedPart: PersistedAgentPart = {
             type: PersistedAgentPartType.TOOL_CALL,

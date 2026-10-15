@@ -13,6 +13,7 @@ import {
   ToolProgressEvent,
   AgentMessageSource,
   SubagentActivity,
+  subagentProgressId,
   SubagentProgressEvent,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -229,10 +230,13 @@ function appendTrailingPart({
   messages: ChatUIMessage[];
   part: ReturnType<typeof buildGatePart>;
 }): ChatUIMessage[] {
+  const baseToolCallId = subagentProgressId.baseOf(part.toolCallId);
   const alreadyAnchored = messages.some((m) =>
     m.parts.some(
       (existing) =>
-        'toolCallId' in existing && existing.toolCallId === part.toolCallId,
+        'toolCallId' in existing &&
+        (existing.toolCallId === part.toolCallId ||
+          existing.toolCallId === baseToolCallId),
     ),
   );
   if (alreadyAnchored) return messages;
@@ -421,6 +425,11 @@ export function useAgentChat({
         if (isStale) {
           return prev;
         }
+        const opensPanel =
+          prev.taskPanelAutoOpen &&
+          prev.taskPanelToolCallId === null &&
+          chatStoreSelectors.taskPanelDocks(prev) &&
+          (event.data.timeline ?? []).some((entry) => entry.kind === 'search');
         return {
           toolCallMeta: {
             ...prev.toolCallMeta,
@@ -429,6 +438,7 @@ export function useAgentChat({
               subagent: event.data,
             },
           },
+          ...(opensPanel ? { taskPanelToolCallId: event.toolCallId } : {}),
         };
       });
     },

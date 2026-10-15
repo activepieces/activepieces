@@ -78,6 +78,14 @@ describe('what each surface is told it can do', () => {
         expect(notesFor(AgentRunSource.AGENT)).not.toContain('Saved agents')
     })
 
+    it('only points the chat at deep research when it can search the web', () => {
+        const withSearch = agentSurfaceNotes.buildRunNotes({ source: AgentRunSource.CHAT, currentDate: 'Tuesday, August 18, 2026', ...EVERYTHING_AVAILABLE, userEmail: 'owner@acme.com', memory: { instructions: '', memories: [] } })
+        const withoutSearch = agentSurfaceNotes.buildRunNotes({ source: AgentRunSource.CHAT, currentDate: 'Tuesday, August 18, 2026', ...EVERYTHING_AVAILABLE, searchAvailable: false, userEmail: 'owner@acme.com', memory: { instructions: '', memories: [] } })
+
+        expect(withSearch).toContain('ap_deep_research')
+        expect(withoutSearch).not.toContain('ap_deep_research')
+    })
+
     it('tells a chat run about everything it has', () => {
         const notes = notesFor(AgentRunSource.CHAT)
 
