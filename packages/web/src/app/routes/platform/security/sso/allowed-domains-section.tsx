@@ -32,7 +32,7 @@ export const AllowedDomainsSection = ({
     <AdminSection
       title={t('Allowed domains')}
       description={t(
-        'Restrict email and password sign-in to the domains you add.',
+        'Limit who can join, and who can sign in with email and password, to the domains you add.',
       )}
       action={
         domains.length > 0 && (
@@ -55,7 +55,7 @@ export const AllowedDomainsSection = ({
             icon={<Globe />}
             title={t('No allowed domains')}
             description={t(
-              'Anyone can sign in with email and password until you add a domain.',
+              'Anyone can join or sign in with email and password until you add a domain.',
             )}
           >
             <AddAllowedDomainDialog platform={platform} refetch={refetch}>
@@ -90,10 +90,10 @@ export const AllowedDomainsSection = ({
                       message={
                         domains.length === 1
                           ? t(
-                              'With no domains left, any email address can sign in with email and password.',
+                              'With no domains left, anyone can join or sign in with email and password.',
                             )
                           : t(
-                              'People at {domain} can no longer sign in with email and password.',
+                              'People at {domain} can no longer join or sign in with email and password.',
                               {
                                 domain,
                               },
@@ -140,7 +140,7 @@ export const AllowedDomainsSection = ({
           </SettingsPanel>
           <p className="text-xs text-gray-11">
             {t(
-              "Add your company domain too, or people at your company can't sign in with email and password.",
+              "Add your company domain too, or people at your company can't join or sign in with email and password.",
             )}
           </p>
         </>

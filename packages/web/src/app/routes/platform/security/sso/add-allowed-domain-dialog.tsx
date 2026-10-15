@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
@@ -96,7 +97,9 @@ export const AddAllowedDomainDialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <FormLabel>{t('Domain')}</FormLabel>
-                  <Input {...field} placeholder="contractors.io" autoFocus />
+                  <FormControl>
+                    <Input {...field} placeholder="contractors.io" autoFocus />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -137,9 +140,9 @@ function describeAddingDomain({
 }): string {
   return isFirstDomain
     ? t(
-        'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.',
+        'Once a domain is on this list, only people at listed domains can join or sign in with email and password. Add your company domain too.',
       )
-    : t('People at this domain can sign in with email and password.');
+    : t('People at this domain can join and sign in with email and password.');
 }
 
 function normalizeDomain(domain: string): string {
