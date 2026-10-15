@@ -344,7 +344,7 @@ describe('SSOPage', () => {
     expect(findButton('Manage')).toBeDefined();
   });
 
-  it('toggles Google and email with the same requests as before', async () => {
+  it('asks before turning Google off and email on, then sends the same requests as before', async () => {
     setPlatform({
       id: 'platform-1',
       googleAuthEnabled: true,
@@ -353,6 +353,10 @@ describe('SSOPage', () => {
     mount();
 
     click(screen.getByRole('switch', { name: 'Continue with Google' }));
+    expect(platformApiMock.update).not.toHaveBeenCalled();
+    let dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('Turn off Google sign-in?')).toBeDefined();
+    click(findButton('Turn off', dialog));
     await waitFor(() =>
       expect(platformApiMock.update).toHaveBeenCalledWith(
         { googleAuthEnabled: false },
@@ -361,12 +365,32 @@ describe('SSOPage', () => {
     );
 
     click(screen.getByRole('switch', { name: 'Email and password' }));
+    dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Turn on email sign-in?')).toBeDefined();
+    click(findButton('Turn on', dialog));
     await waitFor(() =>
       expect(platformApiMock.update).toHaveBeenCalledWith(
         { emailAuthEnabled: true },
         'platform-1',
       ),
     );
+  });
+
+  it('changes nothing when a method change is cancelled', () => {
+    setPlatform({ emailAuthEnabled: true });
+    mount();
+
+    click(screen.getByRole('switch', { name: 'Email and password' }));
+    const dialog = screen.getByRole('dialog');
+    expect(
+      within(dialog).getByText(
+        'People can no longer sign in with email and password. Make sure another sign-in method works for you first.',
+      ),
+    ).toBeDefined();
+    click(findButton('Cancel', dialog));
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(platformApiMock.update).not.toHaveBeenCalled();
   });
 
   it('removes one allowed domain and keeps the list enforced', async () => {
@@ -543,6 +567,10 @@ describe('SamlSetupPage', () => {
 
     expect(screen.getByLabelText('Domain')).toBeDefined();
     click(findButton('Disable'));
+    expect(platformApiMock.update).not.toHaveBeenCalled();
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('Disable single sign-on?')).toBeDefined();
+    click(findButton('Disable', dialog));
 
     await waitFor(() =>
       expect(platformApiMock.update).toHaveBeenCalledWith(

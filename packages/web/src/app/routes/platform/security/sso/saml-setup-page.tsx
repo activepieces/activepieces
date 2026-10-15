@@ -25,6 +25,7 @@ import {
   adminPageResources,
 } from '@/app/components/admin';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
+import { MethodConfirmDialog } from '@/app/routes/platform/security/sso/method-confirm-dialog';
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -110,8 +111,9 @@ const SamlWizard = ({
     },
   });
 
+  const [confirmDisable, setConfirmDisable] = useState(false);
   const disableAction = connected
-    ? { onDisable: () => disableSaml(), isDisabling }
+    ? { onDisable: () => setConfirmDisable(true), isDisabling }
     : null;
 
   return (
@@ -137,6 +139,30 @@ const SamlWizard = ({
           disableAction={disableAction}
         />
       </div>
+      <MethodConfirmDialog
+        open={confirmDisable}
+        onOpenChange={setConfirmDisable}
+        title={t('Disable single sign-on?')}
+        description={
+          <span className="flex flex-col gap-2">
+            <span>
+              {t(
+                'Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.',
+              )}
+            </span>
+            {!platform.emailAuthEnabled && (
+              <span>
+                {t('Email sign-in is off. Turn it on first if they need it.')}
+              </span>
+            )}
+          </span>
+        }
+        confirmLabel={t('Disable')}
+        destructive
+        isPending={isDisabling}
+        controlId={AdminControl.SSO_SAML_DISABLE_CONFIRM}
+        onConfirm={() => disableSaml()}
+      />
     </>
   );
 };
@@ -425,7 +451,10 @@ const SamlStep = ({
             mutate({ federatedAuthProviders: { saml: data } });
           })}
         >
-          <StepSection title={t('Paste these from your identity provider')}>
+          <StepSection
+            title={t('Paste these from your identity provider')}
+            divided={!!samlAcs}
+          >
             <FormField
               name="idpMetadata"
               render={({ field }) => (
@@ -525,14 +554,16 @@ const SamlStep = ({
 
 const StepSection = ({
   title,
+  divided = false,
   children,
 }: {
   title: string;
+  divided?: boolean;
   children: ReactNode;
 }) => (
-  <section className="flex flex-col gap-3">
-    <h3 className="text-sm font-medium text-gray-12">{title}</h3>
-    <div className="flex flex-col gap-4 rounded-md border p-4">{children}</div>
+  <section className={cn('flex flex-col gap-4', divided && 'border-t pt-6')}>
+    <h3 className="text-sm font-semibold text-gray-12">{title}</h3>
+    {children}
   </section>
 );
 
