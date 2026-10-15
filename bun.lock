@@ -2981,6 +2981,17 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/emelia": {
+      "name": "@activepieces/piece-emelia",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/enrichlayer": {
       "name": "@activepieces/piece-enrichlayer",
       "version": "0.1.2",
@@ -11757,6 +11768,8 @@
     "@activepieces/piece-emailit": ["@activepieces/piece-emailit@workspace:packages/pieces/community/emailit"],
 
     "@activepieces/piece-emailoctopus": ["@activepieces/piece-emailoctopus@workspace:packages/pieces/community/emailoctopus"],
+
+    "@activepieces/piece-emelia": ["@activepieces/piece-emelia@workspace:packages/pieces/community/emelia"],
 
     "@activepieces/piece-enrichlayer": ["@activepieces/piece-enrichlayer@workspace:packages/pieces/community/enrichlayer"],
 
