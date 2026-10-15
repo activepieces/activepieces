@@ -1,4 +1,5 @@
 import {
+    apId,
     EDITOR_SESSION_ID_HEADER,
     FlowOperationRequest,
     FlowOperationType,
@@ -15,8 +16,8 @@ import { StatusCodes } from 'http-status-codes'
 import { websocketService } from '../../../../../src/app/core/websockets.service'
 import { flowService } from '../../../../../src/app/flows/flow/flow.service'
 import { db } from '../../../../helpers/db'
-import { draftPushes } from '../../../../helpers/draft-push'
 import { describeWithAuth } from '../../../../helpers/describe-with-auth'
+import { draftPushes } from '../../../../helpers/draft-push'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
@@ -45,13 +46,13 @@ describe('Draft Push', () => {
                 ctx,
                 flowId: flow.id,
                 operation: build(ctx),
-                editorSessionId: 'editor-session-1',
+                editorSessionId: savingTabSessionId,
             })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
             expect(pushes).toEqual([{
                 room: ctx.project.id,
-                payload: { flowId: flow.id, editorSessionId: 'editor-session-1' },
+                payload: { flowId: flow.id, editorSessionId: savingTabSessionId },
             }])
         })
 
@@ -73,6 +74,25 @@ describe('Draft Push', () => {
             }])
         })
 
+        it('sends a null editor session id when the header is not an ApId', async () => {
+            const ctx = await setup()
+            const flow = await createFlow(ctx)
+            const pushes = draftPushes.capture()
+
+            const response = await applyOperation({
+                ctx,
+                flowId: flow.id,
+                operation: { type: FlowOperationType.CHANGE_NAME, request: { displayName: 'Renamed' } },
+                editorSessionId: 'not-an-ap-id',
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(pushes).toEqual([{
+                room: ctx.project.id,
+                payload: { flowId: flow.id, editorSessionId: null },
+            }])
+        })
+
         it.each(nonDraftWrites)('sends no push for $type', async ({ build }) => {
             const ctx = await setup()
             const flow = await createFlow(ctx)
@@ -82,7 +102,7 @@ describe('Draft Push', () => {
                 ctx,
                 flowId: flow.id,
                 operation: build(ctx),
-                editorSessionId: 'editor-session-1',
+                editorSessionId: savingTabSessionId,
             })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
@@ -104,14 +124,14 @@ describe('Draft Push', () => {
                 ctx,
                 flowId: flow.id,
                 operation: { type: FlowOperationType.CHANGE_NAME, request: { displayName: 'Edited after publish' } },
-                editorSessionId: 'editor-session-1',
+                editorSessionId: savingTabSessionId,
             })
 
             expect(response.statusCode).toBe(StatusCodes.OK)
             expect(response.json().version.state).toBe(FlowVersionState.DRAFT)
             expect(pushes).toEqual([{
                 room: ctx.project.id,
-                payload: { flowId: flow.id, editorSessionId: 'editor-session-1' },
+                payload: { flowId: flow.id, editorSessionId: savingTabSessionId },
             }])
         })
 
@@ -214,6 +234,8 @@ describe('Draft Push', () => {
         })
     })
 })
+
+const savingTabSessionId = apId()
 
 const draftWrites: WriteCase[] = [
     { type: FlowOperationType.CHANGE_NAME, build: () => ({ type: FlowOperationType.CHANGE_NAME, request: { displayName: 'Renamed' } }) },

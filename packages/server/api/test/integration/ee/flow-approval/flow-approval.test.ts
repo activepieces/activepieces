@@ -336,6 +336,7 @@ describe('flow-approval — withdraw', () => {
                 projectRole: DefaultProjectRole.EDITOR,
             })
             const { flow, version, approval } = await seedPendingApproval(ctx, memberCtx.user.id)
+            const editorSessionId = apId()
             const pushes: DraftPush[] = []
             const versionStatesAtPush: Promise<FlowVersionState>[] = []
             draftPushes.observe((push) => {
@@ -346,14 +347,14 @@ describe('flow-approval — withdraw', () => {
             const response = await memberCtx.inject({
                 method: 'POST',
                 url: `/api/v1/flow-approval-requests/${approval.id}/withdraw`,
-                headers: { [EDITOR_SESSION_ID_HEADER]: 'editor-session-1' },
+                headers: { [EDITOR_SESSION_ID_HEADER]: editorSessionId },
                 body: {},
             })
 
             expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(pushes).toEqual([{
                 room: ctx.project.id,
-                payload: { flowId: flow.id, editorSessionId: 'editor-session-1' },
+                payload: { flowId: flow.id, editorSessionId },
             }])
             expect(await Promise.all(versionStatesAtPush)).toEqual([FlowVersionState.DRAFT])
         })
