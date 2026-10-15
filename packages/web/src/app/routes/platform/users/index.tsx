@@ -4,6 +4,7 @@ import {
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Gem, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -127,6 +128,15 @@ export default function UsersPage() {
     platformUserKeys.invitations,
     billingKeys.platformSubscription(platform.id),
   ];
+  const queryClient = useQueryClient();
+  const refreshAfterInvite = () => {
+    refetch();
+    queryClient
+      .invalidateQueries({
+        queryKey: billingKeys.platformSubscription(platform.id),
+      })
+      .catch(() => undefined);
+  };
 
   const deleteRow = useAdminAction<UserRowData>({
     verb: 'delete',
@@ -270,7 +280,7 @@ export default function UsersPage() {
       <InviteUserDialog
         open={inviteOpen}
         setOpen={setInviteOpen}
-        onInviteSuccess={refetch}
+        onInviteSuccess={refreshAfterInvite}
         adminFeedback
       />
       {seatLimitDialog}
