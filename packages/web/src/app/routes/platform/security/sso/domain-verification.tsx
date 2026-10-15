@@ -7,7 +7,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CheckCircle } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -23,7 +23,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { samlSsoApi, ssoMutations } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
@@ -174,14 +173,15 @@ const PendingDomain = ({
 };
 
 const VerifiedDomain = ({ domain }: { domain: string }) => (
-  <div className="flex flex-col gap-2">
-    <Label>{t('Domain')}</Label>
-    <div className="flex items-center gap-2">
-      <span className="text-sm font-medium text-gray-12">{domain}</span>
-      <span className="flex items-center gap-1 text-sm text-success-11">
-        <CheckCircle className="size-4" />
-        {t('Verified')}
+  <div className="flex items-center gap-3">
+    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success-3 text-success-11">
+      <Check className="size-5" />
+    </div>
+    <div className="flex min-w-0 flex-col">
+      <span className="truncate text-base font-semibold text-gray-12">
+        {domain}
       </span>
+      <span className="text-sm text-success-11">{t('Verified')}</span>
     </div>
   </div>
 );
