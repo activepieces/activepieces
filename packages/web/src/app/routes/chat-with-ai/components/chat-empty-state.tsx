@@ -108,22 +108,12 @@ export function SetupRequiredState() {
 
   return (
     <div className="flex h-full w-full min-w-0 flex-col items-center justify-center overflow-y-auto px-4 py-10 text-center">
-      <div className="relative flex size-112 shrink-0 items-center justify-center">
+      <div className="relative flex size-84 shrink-0 items-center justify-center">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute top-16 left-14 size-48 rounded-full bg-accent-9/20 blur-3xl" />
-          <div className="absolute right-12 bottom-16 size-44 rounded-full bg-swatch-5-mark/20 blur-3xl" />
-          <div className="absolute top-12 right-24 size-32 rounded-full bg-swatch-8-mark/15 blur-3xl" />
+          <div className="absolute top-8 left-6 size-36 rounded-full bg-accent-9/20 blur-3xl" />
+          <div className="absolute right-4 bottom-8 size-32 rounded-full bg-swatch-5-mark/20 blur-3xl" />
+          <div className="absolute top-4 right-14 size-24 rounded-full bg-swatch-8-mark/15 blur-3xl" />
         </div>
-        <OrbitRing
-          logos={SUPPORTED_AI_PROVIDERS.filter(
-            (info) =>
-              !SETUP_INNER_RING.includes(info.provider) &&
-              !SETUP_MIDDLE_RING.includes(info.provider),
-          )}
-          radius={200}
-          seconds={90}
-          reducedMotion={reducedMotion}
-        />
         <OrbitRing
           logos={logosOf(SETUP_MIDDLE_RING)}
           radius={136}
