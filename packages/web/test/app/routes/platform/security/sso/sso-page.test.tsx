@@ -261,8 +261,11 @@ describe('SSOPage', () => {
     click(menuItem('Remove domain'));
     const dialog = screen.getByRole('dialog');
     expect(
+      within(dialog).getByText('Remove acme.com and disable SAML?'),
+    ).toBeDefined();
+    expect(
       within(dialog).getByText(
-        'This removes acme.com and turns off single sign-on. People who use single sign-on will have to sign in another way.',
+        "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way. To use SAML again, you'll need to verify the domain again with a new DNS record.",
       ),
     ).toBeDefined();
     click(findButton('Remove domain', dialog));
@@ -322,7 +325,7 @@ describe('SSOPage', () => {
     const dialog = screen.getByRole('dialog');
     expect(
       within(dialog).getByText(
-        "To set up single sign-on later, you'll need to add and verify a domain again.",
+        "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.",
       ),
     ).toBeDefined();
     click(findButton('Remove domain', dialog));

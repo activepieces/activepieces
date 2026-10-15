@@ -1,4 +1,4 @@
-import { SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
+import { SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -53,6 +53,24 @@ describe('SSO domain API', () => {
             expect(platform.ssoDomain).toBeNull()
             expect(platform.ssoDomainVerification).toBeNull()
             expect(platform.federatedAuthProviders.saml).toBeNull()
+        })
+
+        it('adding a removed domain back needs a new DNS record', async () => {
+            const ctx = await createTestContext(app!, {
+                plan: { ssoEnabled: true },
+                platform: {
+                    ssoDomain: 're-add.example.com',
+                    ssoDomainVerification: verified('re-add.example.com'),
+                },
+            })
+
+            await ctx.post(SSO_DOMAIN, { ssoDomain: null })
+            const response = await ctx.post(SSO_DOMAIN, { ssoDomain: 're-add.example.com' })
+            const platform = await findPlatform(ctx.platform.id)
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(platform.ssoDomainVerification?.status).toBe(SsoDomainVerificationStatus.PENDING_VERIFICATION)
+            expect(platform.ssoDomainVerification?.record.value).not.toBe('activepieces-verify=test-token')
         })
 
         it('saving the same domain keeps its verification and SAML', async () => {
@@ -111,7 +129,7 @@ async function findPlatform(id: string): Promise<PlatformSsoRow> {
     })
 }
 
-function verified(domain: string) {
+function verified(domain: string): SsoDomainVerification {
     return {
         status: SsoDomainVerificationStatus.VERIFIED,
         record: {
@@ -133,6 +151,6 @@ const SAML = {
 type PlatformSsoRow = {
     id: string
     ssoDomain: string | null
-    ssoDomainVerification: { status: string } | null
+    ssoDomainVerification: { status: string, record: { value: string } } | null
     federatedAuthProviders: { saml: unknown }
 }

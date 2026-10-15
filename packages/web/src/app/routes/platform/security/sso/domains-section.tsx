@@ -160,10 +160,13 @@ const DomainRow = ({
           )}
           <DropdownMenuSeparator />
           <ConfirmationDeleteDialog
-            title={t('Remove {domain}?', { domain })}
+            title={
+              samlConnected
+                ? t('Remove {domain} and disable SAML?', { domain })
+                : t('Remove {domain}?', { domain })
+            }
             message={
               <RemoveDomainConsequences
-                domain={domain}
                 samlConnected={samlConnected}
                 emailAuthEnabled={platform.emailAuthEnabled}
               />
@@ -220,25 +223,22 @@ const DomainRow = ({
 };
 
 const RemoveDomainConsequences = ({
-  domain,
   samlConnected,
   emailAuthEnabled,
 }: {
-  domain: string;
   samlConnected: boolean;
   emailAuthEnabled: boolean;
 }) => {
   if (!samlConnected) {
     return t(
-      "To set up single sign-on later, you'll need to add and verify a domain again.",
+      "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.",
     );
   }
   return (
     <span className="flex flex-col gap-2">
       <span>
         {t(
-          'This removes {domain} and turns off single sign-on. People who use single sign-on will have to sign in another way.',
-          { domain },
+          "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way. To use SAML again, you'll need to verify the domain again with a new DNS record.",
         )}
       </span>
       {!emailAuthEnabled && (
