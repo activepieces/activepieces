@@ -43,7 +43,7 @@
     "@fastify/reply-from": "12.6.2",
     "@fastify/static": "10.1.2",
     "@fastify/swagger": "9.5.1",
-    "@modelcontextprotocol/sdk": "1.27.1",
+    "@modelcontextprotocol/sdk": "1.31.0",
     "@openrouter/ai-sdk-provider": "3.0.0",
     "@openrouter/sdk": "0.2.9",
     "@sentry/node": "7.120.0",
