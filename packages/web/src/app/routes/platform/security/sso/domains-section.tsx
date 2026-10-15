@@ -15,7 +15,6 @@ import {
   Trash,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import {
@@ -25,8 +24,8 @@ import {
   StatusDot,
   adminLayout,
 } from '@/app/components/admin';
+import { AddDomainDialog } from '@/app/routes/platform/security/sso/add-domain-dialog';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
-import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -75,15 +74,15 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
             title={t('No domains yet')}
             description={t('Add the domain your people sign in with.')}
           >
-            <Button asChild size="sm">
-              <Link
+            <AddDomainDialog platform={platform} refetch={refetch}>
+              <Button
                 {...adminControl(AdminControl.SSO_DOMAIN_ADD_OPEN)}
-                to={ssoPaths.samlSetup}
+                size="sm"
               >
                 <Plus />
                 {t('Add domain')}
-              </Link>
-            </Button>
+              </Button>
+            </AddDomainDialog>
           </SettingsRow>
         </SettingsPanel>
       )}

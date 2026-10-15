@@ -1721,12 +1721,9 @@
   "Single sign-on settings updated": "Single sign-on settings updated",
   "Configure SAML 2.0 SSO": "Configure SAML 2.0 SSO",
   "SSO Domain": "SSO Domain",
-  "SSO domain saved": "SSO domain saved",
   "Domain verified": "Domain verified",
   "TXT record not found yet — DNS can take a few minutes.": "TXT record not found yet — DNS can take a few minutes.",
   "Couldn't verify domain": "Couldn't verify domain",
-  "Update SSO domain?": "Update SSO domain?",
-  "Users won't be able to sign in via SSO until you verify the new domain.": "Users won't be able to sign in via SSO until you verify the new domain.",
   "IDP Metadata": "IDP Metadata",
   "Paste the metadata XML contents or the metadata URL provided by your identity provider.": "Paste the metadata XML contents or the metadata URL provided by your identity provider.",
   "IDP Certificate": "IDP Certificate",
@@ -3341,5 +3338,11 @@
   "Saved. Paste a new certificate to replace it.": "Saved. Paste a new certificate to replace it.",
   "Remove {domain} and delete your SAML connection?": "Remove {domain} and delete your SAML connection?",
   "Remove domain and disable SAML": "Remove domain and disable SAML",
-  "This disables single sign-on and deletes its SAML connection.": "This disables single sign-on and deletes its SAML connection."
+  "This disables single sign-on and deletes its SAML connection.": "This disables single sign-on and deletes its SAML connection.",
+  "Add a domain": "Add a domain",
+  "Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.": "Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.",
+  "Enter the email domain your company owns.": "Enter the email domain your company owns.",
+  "Verify later": "Verify later",
+  "Add and verify your company domain before setting up SAML.": "Add and verify your company domain before setting up SAML.",
+  "Go to Authentication": "Go to Authentication"
 }
