@@ -10,7 +10,6 @@ import {
   FileText,
   Globe,
   MoreHorizontal,
-  Plus,
   ShieldCheck,
   Trash,
 } from 'lucide-react';
@@ -73,7 +72,7 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
         <SettingsPanel flush>
           <SettingsRow
             icon={<Globe />}
-            title={t('No domains yet')}
+            title={t('No domain verified')}
             description={t('Verify the domain your people sign in with.')}
           >
             <Button
@@ -81,7 +80,7 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
               size="sm"
               onClick={() => setVerifyOpen(true)}
             >
-              <Plus />
+              <ShieldCheck />
               {t('Verify domain')}
             </Button>
           </SettingsRow>

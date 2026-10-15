@@ -200,7 +200,7 @@ describe('SSOPage', () => {
     mount();
 
     expect(screen.getByText('Authentication')).toBeDefined();
-    expect(screen.getByText('No domains yet')).toBeDefined();
+    expect(screen.getByText('No domain verified')).toBeDefined();
     expect(screen.getByText('No allowed domains')).toBeDefined();
     expect(findButton('Set up')).toBeDefined();
     expect(screen.queryByText('Connected')).toBeNull();
