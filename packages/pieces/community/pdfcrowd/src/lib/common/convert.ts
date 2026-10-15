@@ -57,6 +57,9 @@ export async function pdfcrowdConvertWithData({
     }
     throw new Error(`Could not reach Pdfcrowd: ${e instanceof Error ? e.message : String(e)}`);
   }
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`Pdfcrowd conversion failed (${response.status}): Unexpected response status.`);
+  }
   const data = Buffer.from(response.body);
   const headers = response.headers ?? {};
   const fileName = typeof filename === 'function' ? filename(headerValue(headers['content-type']) ?? '') : filename;
