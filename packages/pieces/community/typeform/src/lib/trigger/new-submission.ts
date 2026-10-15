@@ -8,6 +8,7 @@ import { newSubmissionOutputSchema } from '../output-schemas';
 export const typeformNewSubmission = createTrigger({
   auth: typeformAuth,
   name: 'new_submission',
+  classification: 'READ',
   displayName: 'New Submission',
   description: 'Triggers when Typeform receives a new submission',
   aiMetadata: {

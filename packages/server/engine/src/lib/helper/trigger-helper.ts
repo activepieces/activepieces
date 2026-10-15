@@ -228,7 +228,7 @@ export const triggerHelper = {
                     if (verifiedError) {
                         throw verifiedError
                     }
-                    if (isNil(verified)) {
+                    if (verified !== true) {
                         throw new Error('Webhook is not verified')
                     }
                 }

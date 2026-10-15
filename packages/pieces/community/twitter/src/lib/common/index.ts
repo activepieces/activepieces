@@ -1,4 +1,6 @@
-import { Property } from '@activepieces/pieces-framework';
+import { ApFile, Property, isNil } from '@activepieces/pieces-framework';
+import mime from 'mime-types';
+import { EUploadMimeType } from 'twitter-api-v2';
 
 function describeStatus({
   code,
@@ -29,6 +31,19 @@ function asTwitterError(value: unknown): TwitterErrorLike {
   return { message: String(value) };
 }
 
+function mediaMimeType(file: ApFile): string {
+  const detected = isNil(file.extension) ? false : mime.lookup(file.extension);
+  const accepted: string[] = [
+    EUploadMimeType.Jpeg,
+    EUploadMimeType.Png,
+    EUploadMimeType.Gif,
+    EUploadMimeType.Webp,
+    EUploadMimeType.Mp4,
+    EUploadMimeType.Mov,
+  ];
+  return detected && accepted.includes(detected) ? detected : EUploadMimeType.Png;
+}
+
 function buildError({
   error,
   notFoundHint,
@@ -53,34 +68,34 @@ function buildError({
 }
 
 export const twitterCommon = {
-    text: Property.LongText({
-        displayName: 'Text',
-        description: 'The text of the tweet',
-        required: true,
-      }),
-      image_1: Property.File({
-        displayName: 'Media (1)',
-        description:
-          'An image, video or GIF url or base64 to attach to the tweet',
-        required: false,
-      }),
-      image_2: Property.File({
-        displayName: 'Media (2)',
-        description:
-          'An image, video or GIF url or base64 to attach to the tweet',
-        required: false,
-      }),
-      image_3: Property.File({
-        displayName: 'Media (3)',
-        description:
-          'An image, video or GIF url or base64 to attach to the tweet',
-        required: false,
-      }),
-    };
+  text: Property.LongText({
+    displayName: 'Text',
+    description: 'Up to 280 characters, or more with X Premium.',
+    required: true,
+  }),
+  image_1: Property.File({
+    displayName: 'Media 1',
+    description: 'An image, GIF or video. Add more images under Advanced.',
+    required: false,
+  }),
+  image_2: Property.File({
+    displayName: 'Media 2',
+    description: 'Another image. GIFs and videos must be posted alone.',
+    required: false,
+    advanced: true,
+  }),
+  image_3: Property.File({
+    displayName: 'Media 3',
+    description: 'Another image. GIFs and videos must be posted alone.',
+    required: false,
+    advanced: true,
+  }),
+};
 
 export const twitterHelpers = {
   buildError,
   asTwitterError,
+  mediaMimeType,
 };
 
 export const twitterFieldSets = {

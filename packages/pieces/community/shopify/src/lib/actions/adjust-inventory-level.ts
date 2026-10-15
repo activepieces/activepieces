@@ -5,6 +5,7 @@ import { adjustInventoryLevel } from '../common';
 export const adjustInventoryLevelAction = createAction({
   auth: shopifyAuth,
   name: 'adjust_inventory_level',
+  classification: 'WRITE',
   displayName: 'Adjust Inventory Level',
   description: `Adjust inventory level of an item at a location.`,
   audience: 'both',

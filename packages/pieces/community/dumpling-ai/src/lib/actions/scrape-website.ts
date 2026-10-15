@@ -4,6 +4,7 @@ import { dumplingAuth } from '../auth';
 
 export const scrapeWebsite = createAction({
 	name: 'scrape_website',
+	classification: 'READ',
 	auth: dumplingAuth,
 	displayName: 'Scrape Website',
 	description: 'Scrapes data from a specified URL and format the result.',

@@ -578,6 +578,7 @@ describe('Platform API', () => {
             expect(Object.keys(responseBody).sort()).toStrictEqual([
                 'allowedAuthDomains',
                 'allowedEmbedOrigins',
+                'auditLogRetentionDays',
                 'autoCreatePersonalProjects',
                 'billingEnforced',
                 'cloudAuthEnabled',

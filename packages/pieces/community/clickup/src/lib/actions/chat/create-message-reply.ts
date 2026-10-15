@@ -9,30 +9,40 @@ export const createClickupMessageReply = createAction({
   auth: clickupAuth,
   name: 'create_message_reply',
   classification: 'WRITE',
-  description: 'Creates a reply to a message in a ClickUp channel',
+  description: 'Reply to a chat message in its thread.',
   audience: 'both',
   aiMetadata: { description: 'Post a reply to an existing Chat message in a ClickUp workspace, creating a threaded response under that message. Each call adds a new reply, so repeated calls create duplicates (not idempotent). Use Create Message to start a new top-level message in a channel instead.', idempotent: false },
   displayName: 'Create Message Reply',
   props: {
     workspace_id: clickupCommon.workspace_id(),
     message_id: Property.ShortText({
-      description: 'ID of the message to reply to',
+      description: 'Returned by Get Channel Messages or Create Message.',
       displayName: 'Message ID',
       required: true,
     }),
     content: Property.LongText({
-      description: 'Content of the message',
-      displayName: 'Message Content',
+      description: 'ClickUp formats Markdown in the message.',
+      displayName: 'Message',
       required: true,
+      placeholder: 'e.g. The release is live',
     }),
     type: Property.StaticDropdown({
-      description: 'Type of the message',
+      description: 'How the reply appears in the thread.',
       displayName: 'Message Type',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Message', value: 'message' },
-          { label: 'Post', value: 'post' },
+          {
+            label: 'Message',
+            value: 'message',
+            icon: 'text',
+          },
+          {
+            label: 'Post',
+            value: 'post',
+            icon: 'send',
+          },
         ],
       },
       defaultValue: 'message',

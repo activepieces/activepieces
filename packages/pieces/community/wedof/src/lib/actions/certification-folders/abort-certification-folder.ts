@@ -6,6 +6,7 @@ import { wedofCommon } from '../../common/wedof';
 export const abortCertificationFolder = createAction({
   auth: wedofAuth,
   name: 'abortCertificationFolder',
+  classification: 'DESTRUCTIVE',
   displayName: 'Passer un dossier de certification à l’état : Abandonné',
   description: "Change l'état d'un dossier de certification vers : Abandonné",
   audience: 'both',

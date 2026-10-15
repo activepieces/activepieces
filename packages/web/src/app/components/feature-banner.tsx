@@ -3,15 +3,17 @@ import { t } from 'i18next';
 import { ExternalLink } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useManagePlanDialogStore } from '@/features/billing';
+import { billingDialogHooks } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export function FeatureBanner({
   message,
   documentationUrl,
   className,
 }: FeatureBannerProps) {
-  const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
+  const { openDialog: openManagePlanDialog } =
+    billingDialogHooks.useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
   const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;
@@ -22,19 +24,21 @@ export function FeatureBanner({
         <span>{message}</span>
         {isCommunity ? (
           <a
+            {...adminControl(AdminControl.PLAN_BANNER_LINK)}
             href={docsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-1 font-medium text-accent-11 hover:underline"
           >
             {t('Read the docs')}
             <ExternalLink className="size-3.5" />
           </a>
         ) : (
           <button
+            {...adminControl(AdminControl.PLAN_BANNER_OPEN)}
             type="button"
             onClick={() => openManagePlanDialog()}
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-accent-11 hover:underline"
           >
             {t('Upgrade plan')}
           </button>

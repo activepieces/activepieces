@@ -142,6 +142,13 @@ export class EngineGenericError extends ExecutionError {
     }
 }
 
+export class RequireError extends ExecutionError {
+    constructor(piecePath: string, cause?: unknown) {
+        const causeMessage = cause instanceof Error ? cause.message : String(cause)
+        super('RequireError', formatMessage(`Failed to require piece module at ${piecePath}: ${causeMessage}`), ExecutionErrorType.ENGINE, cause)
+    }
+}
+
 export class SSRFBlockedError extends ExecutionError {
     constructor({ host, ip, cause }: { host: string, ip: string, cause?: unknown }) {
         super(

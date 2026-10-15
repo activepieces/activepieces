@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const contactUnsubscribedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_contact_unsubscribed',
+  classification: 'READ',
   displayName: 'Contact Unsubscribed',
   description: 'Triggers when a contact unsubscribes from an audience.',
   aiMetadata: {

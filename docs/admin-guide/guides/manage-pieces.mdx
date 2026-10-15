@@ -20,8 +20,8 @@ There are **two levels** of piece management:
 
 | Level | Who Can Manage | Scope |
 | --- | --- | --- |
-| **Platform Level** | Platform Admin | Install and remove across the entire platform |
-| **Project Level** | Project Admin | Show/hide specific pieces for specfic project |
+| **Platform Level** | Platform Admin | Install and remove pieces across the entire platform |
+| **Piece Sets** | Platform Admin | Choose which pieces, actions, and triggers each project can use, and which actions a flow must contain to publish |
 
 <Note>
   Pieces are standard npm packages — official pieces are **auto-synced from the registry hourly**, so you don't need to upgrade the server to get new versions. Each step in a flow is pinned to a specific piece version, and drafts can be upgraded from the builder. See [Piece Syncing & Versioning](/install/architecture/piece-syncing) for the full pipeline.
@@ -33,34 +33,81 @@ There are **two levels** of piece management:
 
 Platform administrators can manage pieces for the entire Activepieces instance from **Platform Admin → Catalogue → Pieces**.
 
-## Project-Level Management
+## Piece Sets
 
-Project administrators can further restrict which pieces are available within their specific project. This is useful when different teams or projects need access to different integrations.
+A piece set is a named list of the pieces, actions, and triggers that users can see in the builder. Every project uses exactly one piece set. Projects that you don't assign to a set use the **Default** set.
 
-### Show/Hide Pieces in a Project
+Manage piece sets from **Platform Admin → Catalogue → Pieces → Piece Sets**.
+
+### Create a Piece Set and Assign Projects
 
 <Steps>
-  <Step title="Open Project Settings">
-    Navigate to your project and go to **Settings → Pieces**.
+  <Step title="Create the set">
+    Click **New Piece Set**, give it a name, and open it.
   </Step>
-  <Step title="Configure Visibility">
-    You'll see a list of all pieces installed on the platform. Toggle the visibility for each piece:
-
-    - **Enabled**: Users in this project can use the piece
-    - **Disabled**: The piece is hidden from users in this project
-  </Step>
-  <Step title="Save Changes">
-    Changes take effect immediately — users will only see the enabled pieces when building their flows.
+  <Step title="Assign projects">
+    Click the **Assigned** button and select the projects that use this set. A project can use only one set, so a project that already uses another set moves to this one. The dialog shows each project's current set and warns you before a project moves.
   </Step>
 </Steps>
 
-<img src="/resources/screenshots/manage-pieces.png" alt="Manage Pieces" /> <img src="/resources/screenshots/manage-pieces-2.png" alt="Manage Pieces" />
+### Choose the Pieces
+
+- Turn a piece's switch off to hide it from the projects in this set.
+- Select several pieces and use **Include** to set what they show:
+  - **Actions and triggers**: all actions and all triggers.
+  - **Actions only**: all actions and no triggers.
+  - **Triggers only**: all triggers and no actions.
+
+  Use **Exclude** to remove them from the set.
+- **Auto-Include · New pieces** decides whether pieces installed later are visible in this set. It doesn't change the pieces you've already chosen.
+
+### Choose the Actions and Triggers of a Piece
+
+Click a piece row to open **Actions & triggers**:
+
+- **All** makes every current and future action and trigger of the piece available.
+- **Only selected** makes only the checked items available. Actions and triggers added to the piece later stay hidden until you check them. Use **Select all** to check or clear every item at once.
 
 <Note>
-  Project-level settings can only **hide** pieces that are installed at the platform level. You cannot add pieces at the project level that aren't already installed on the platform.
+  A piece set controls what users see in the builder. It does not stop a flow that already uses a hidden piece from running or being published.
 </Note>
 
-### Install Private Pieces
+### Required Actions
+
+Use required actions when every published flow must use your own app — for example, an embedded integration that must always write to your product.
+
+Open the piece set and go to the **Required actions** tab.
+
+<Steps>
+  <Step title="Choose the publishing rule">
+    Under **Publishing flows rule**, choose:
+
+    - **At least one** (default): a flow must contain at least one of the required actions.
+    - **All required actions**: a flow must contain every required action.
+  </Step>
+  <Step title="Add required actions">
+    Click **Add actions**, pick a piece, check the actions to require, and click **Save**. Only actions can be required, not triggers. The piece must be in the set.
+  </Step>
+  <Step title="Edit or remove them">
+    Each piece has its own card. Click **Edit** on a card to change its actions, click the **×** on an action to remove it, or click **Remove all** to remove every required action.
+  </Step>
+</Steps>
+
+Changes apply as soon as you make them.
+
+When a flow doesn't meet the rule, publishing is blocked. The builder shows the missing actions and can add them to the end of the flow for you. The same check runs when a flow is published through the API, MCP, project releases, or Git sync. Replacing a connection does not run the check. For a flow that needs approval, the check runs before the request goes to the approver.
+
+Good to know:
+
+- A **skipped** step doesn't count, and neither does any step inside a skipped loop or branch.
+- The **Pieces** tab shows how many required actions each piece has. In **Actions & triggers**, required actions have a **Required** badge.
+- If a new version of a piece removes a required action, publishing ignores it. Its card shows it crossed out, with a note and a **Remove** button.
+- Actions that only AI agents can use are ignored by the rule.
+- New actions that a piece adds later are never required until you add them.
+- Hiding a piece or an action that is required removes it from the required actions. The admin console asks you to confirm first.
+- Flows that are already published keep running. The rule applies the next time a flow is published.
+
+## Install Private Pieces
 
 <Tip>
   For detailed instructions on building custom pieces, check the [Building Pieces](/build-pieces/building-pieces/overview) documentation.

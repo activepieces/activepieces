@@ -5,6 +5,7 @@ import { PlanDropdown } from '../common/properties';
 export const findTask = createAction({
   auth: microsoft365PlannerAuth,
   name: 'findTask',
+  classification: 'SEARCH',
   displayName: 'Find Task',
   description: 'Find task by fields.',
   audience: 'both',

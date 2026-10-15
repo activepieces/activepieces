@@ -9,8 +9,7 @@ export const findPage = createAction({
   name: 'find_page',
   classification: 'SEARCH',
   displayName: 'Find Page',
-  description:
-    'Find pages by title, with exact or partial matching.',
+  description: 'Find pages by title, with exact or partial matching.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -26,8 +25,7 @@ export const findPage = createAction({
     }),
     exact_match: Property.Checkbox({
       displayName: 'Exact Match',
-      description:
-        'Only return pages whose title equals the search exactly.',
+      description: 'Only return pages whose title equals the search exactly.',
       required: false,
       defaultValue: false,
     }),

@@ -6,6 +6,7 @@ import { famulorCommon } from '../common';
 export const getCurrentUser = createAction({
   auth: famulorAuth,
   name: 'getCurrentUser',
+  classification: 'READ',
   displayName: 'Get User Information',
   description: 'Retrieve the authenticated user\'s profile and account balance.',
   audience: 'both',

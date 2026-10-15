@@ -7,6 +7,7 @@ import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 export const createLead = createAction({
     auth: salesforceAuth,
     name: 'create_lead',
+    classification: 'WRITE',
     displayName: 'Create Lead',
     description: 'Creates a new lead.',
     audience: 'human',

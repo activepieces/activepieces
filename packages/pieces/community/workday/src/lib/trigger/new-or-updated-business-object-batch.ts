@@ -101,6 +101,7 @@ const polling: Polling<
 export const newOrUpdatedBusinessObjectBatch = createTrigger({
 	auth: workdayAuth,
 	name: 'new_or_updated_business_object_batch',
+	classification: 'READ',
 	displayName: 'New/Updated Business Object (Batch)',
 	description:
 		'Triggers with a batch of new or updated business objects in a single poll cycle.',

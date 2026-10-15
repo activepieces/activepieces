@@ -137,7 +137,7 @@ export const newCompanyPropertyChangeTrigger = createTrigger({
 		propertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.COMPANY,
-				displayName: 'Property Name',
+				displayName: 'Property',
 				required: true,
 			},
 			true,

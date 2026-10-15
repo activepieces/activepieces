@@ -1,4 +1,4 @@
-import { PersistedAgentMessage, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, PersistedToolCallStatus } from '@activepieces/shared'
+import { chatBilling, PersistedAgentMessage, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, PersistedToolCallStatus } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { chatToolBilling } from '../../../../../src/app/ee/agent/chat-tool-billing'
 import { ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from '../../../../../src/app/mcp/tools'
@@ -9,30 +9,30 @@ const AP_NATIVE_TOOL_NAMES = [
     ...ALL_CONTROLLABLE_TOOL_NAMES,
 ]
 
-describe('chatToolBilling.isBillableChatToolCall', () => {
+describe('chatBilling.isFlatBilledToolCall', () => {
     it('never bills an AP-native MCP tool (they are free or already billed via the run)', () => {
-        const billable = AP_NATIVE_TOOL_NAMES.filter((name) => chatToolBilling.isBillableChatToolCall(name))
+        const billable = AP_NATIVE_TOOL_NAMES.filter((name) => chatBilling.isFlatBilledToolCall({ toolName: name, output: undefined }))
         expect(billable, `These AP-native tools must not be billed: ${billable.join(', ')}`).toEqual([])
     })
 
     it('bills piece integration calls (mcp__<connectorUuid>__action)', () => {
-        expect(chatToolBilling.isBillableChatToolCall('mcp__attio__list_records')).toBe(true)
+        expect(chatBilling.isFlatBilledToolCall({ toolName: 'mcp__attio__list_records', output: undefined })).toBe(true)
     })
 
     it('bills the paid external tools', () => {
-        expect(chatToolBilling.isBillableChatToolCall('ap_web_search')).toBe(true)
-        expect(chatToolBilling.isBillableChatToolCall('ap_scrape_url')).toBe(true)
-        expect(chatToolBilling.isBillableChatToolCall('ap_generate_image')).toBe(true)
+        expect(chatBilling.isFlatBilledToolCall({ toolName: 'ap_web_search', output: undefined })).toBe(true)
+        expect(chatBilling.isFlatBilledToolCall({ toolName: 'ap_scrape_url', output: undefined })).toBe(true)
+        expect(chatBilling.isFlatBilledToolCall({ toolName: 'ap_generate_image', output: undefined })).toBe(true)
     })
 
     it('bills chat-initiated ad-hoc executions (not separately metered)', () => {
-        expect(chatToolBilling.isBillableChatToolCall('ap_execute_action')).toBe(true)
-        expect(chatToolBilling.isBillableChatToolCall('ap_explore_data')).toBe(true)
-        expect(chatToolBilling.isBillableChatToolCall('ap_run_code')).toBe(true)
+        expect(chatBilling.isFlatBilledToolCall({ toolName: 'ap_execute_action', output: undefined })).toBe(true)
+        expect(chatBilling.isFlatBilledToolCall({ toolName: 'ap_explore_data', output: undefined })).toBe(true)
+        expect(chatBilling.isFlatBilledToolCall({ toolName: 'ap_run_code', output: undefined })).toBe(true)
     })
 
     it('does not bill an unknown tool (fail-safe default)', () => {
-        expect(chatToolBilling.isBillableChatToolCall('ap_some_tool_added_later')).toBe(false)
+        expect(chatBilling.isFlatBilledToolCall({ toolName: 'ap_some_tool_added_later', output: undefined })).toBe(false)
     })
 })
 
@@ -85,6 +85,28 @@ describe('chatToolBilling.countBillableToolCallsInLatestTurn', () => {
             assistant([toolCallPart({ toolName: 'ap_run_code', status: PersistedToolCallStatus.COMPLETED })]),
         ]
         expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
+    })
+
+    it('leaves out a call the worker already billed at cost', () => {
+        const messages = [
+            user('do it'),
+            assistant([
+                { ...toolCallPart({ toolName: 'ap_web_search', status: PersistedToolCallStatus.COMPLETED }), output: { billedAtCost: true } },
+                toolCallPart({ toolName: 'ap_web_search', status: PersistedToolCallStatus.COMPLETED }),
+            ]),
+        ]
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
+    })
+
+    it('bills an external tool that claims it was already billed', () => {
+        const messages = [
+            user('do it'),
+            assistant([
+                { ...toolCallPart({ toolName: 'mcp__evil__lookup', status: PersistedToolCallStatus.COMPLETED }), output: { billedAtCost: true } },
+                { ...toolCallPart({ toolName: 'ap_run_code', status: PersistedToolCallStatus.COMPLETED }), output: { billedAtCost: true } },
+            ]),
+        ]
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(2)
     })
 
     it('ignores non-billable tools regardless of status', () => {

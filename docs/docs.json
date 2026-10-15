@@ -428,7 +428,8 @@
                           "admin-guide/security/audit-logs/user-signed-up",
                           "admin-guide/security/audit-logs/user-email-verified",
                           "admin-guide/security/audit-logs/user-password-reset",
-                          "admin-guide/security/audit-logs/signing-key-created"
+                          "admin-guide/security/audit-logs/signing-key-created",
+                          "admin-guide/security/audit-logs/audit-log-retention-updated"
                         ]
                       }
                     ]
@@ -459,7 +460,8 @@
                           "admin-guide/security/audit-logs/user-signed-up",
                           "admin-guide/security/audit-logs/user-email-verified",
                           "admin-guide/security/audit-logs/user-password-reset",
-                          "admin-guide/security/audit-logs/signing-key-created"
+                          "admin-guide/security/audit-logs/signing-key-created",
+                          "admin-guide/security/audit-logs/audit-log-retention-updated"
                         ]
                       },
                       "admin-guide/guides/event-streaming"
@@ -484,24 +486,31 @@
                {
                   "group": "Build a Piece",
                   "pages": [
-                     "build-pieces/building-pieces/overview",
-                     "build-pieces/building-pieces/start-building",
-                     "build-pieces/building-pieces/setup-fork",
-                     "build-pieces/building-pieces/development-setup",
-                     "build-pieces/building-pieces/piece-definition",
-                     "build-pieces/building-pieces/piece-authentication",
-                     "build-pieces/building-pieces/create-action",
-                     "build-pieces/building-pieces/create-trigger",
-                     {
-                        "group": "Sharing Pieces",
-                        "icon": "circle-7",
-                        "pages": [
-                           "build-pieces/sharing-pieces/overview",
-                           "build-pieces/sharing-pieces/contribute",
-                           "build-pieces/sharing-pieces/community",
-                           "build-pieces/sharing-pieces/private"
-                        ]
-                     }
+                    "build-pieces/building-pieces/overview",
+                    "build-pieces/building-pieces/build-with-ai",
+                    {
+                      "group": "Build Manually",
+                      "pages": [
+                        "build-pieces/building-pieces/start-building",
+                        "build-pieces/building-pieces/setup-fork",
+                        "build-pieces/building-pieces/development-setup",
+                        "build-pieces/building-pieces/piece-definition",
+                        "build-pieces/building-pieces/piece-authentication",
+                        "build-pieces/building-pieces/create-action",
+                        "build-pieces/building-pieces/create-trigger"
+                      ],
+                      "icon": "hammer"
+                    },
+                    {
+                      "group": "Sharing Pieces",
+                      "icon": "share",
+                      "pages": [
+                        "build-pieces/sharing-pieces/overview",
+                        "build-pieces/sharing-pieces/contribute",
+                        "build-pieces/sharing-pieces/community",
+                        "build-pieces/sharing-pieces/private"
+                      ]
+                    }
                   ]
                },
                {
@@ -643,6 +652,17 @@
                            "endpoints/connections/list",
                            "endpoints/connections/get",
                            "endpoints/connections/delete"
+                        ]
+                     },
+                     {
+                        "group": "Variables",
+                        "icon": "key",
+                        "pages": [
+                           "endpoints/variables/schema",
+                           "endpoints/variables/create",
+                           "endpoints/variables/list",
+                           "endpoints/variables/update",
+                           "endpoints/variables/delete"
                         ]
                      },
                      {

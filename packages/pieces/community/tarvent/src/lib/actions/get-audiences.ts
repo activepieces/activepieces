@@ -5,6 +5,7 @@ import { makeClient } from '../common';
 export const getAudiences = createAction({
   auth: tarventAuth,
   name: 'tarvent_get_audiences',
+  classification: 'SEARCH',
   displayName: 'Find Audience',
   description: 'Finds an audience by name or tags.',
   audience: 'both',

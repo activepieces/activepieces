@@ -18,7 +18,14 @@ import {
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  StatusDot,
+  StatusTone,
+  adminPageResources,
+} from '@/app/components/admin';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
@@ -26,7 +33,6 @@ import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
-  DataTable,
   DataTableFilters,
   LIMIT_QUERY_PARAM,
   RowDataWithActions,
@@ -38,18 +44,17 @@ import {
   DefaultTag,
   DeleteConnectionWarning,
 } from '@/components/custom/global-connection-utils';
-import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   EditGlobalConnectionDialog,
   globalConnectionsMutations,
   globalConnectionsQueries,
-  appConnectionUtils,
 } from '@/features/connections';
 import { PieceIconWithPieceName } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
 
 import { sampleData } from '../../sample-data';
@@ -104,6 +109,7 @@ const GlobalConnectionsTable = () => {
           <CopyTextTooltip
             title={t('External ID')}
             text={row.original.externalId || ''}
+            controlId={AdminControl.CONNECTIONS_EXTERNAL_ID_COPY}
           >
             <div className="flex items-center gap-2 w-fit">
               <PieceIconWithPieceName
@@ -127,20 +133,11 @@ const GlobalConnectionsTable = () => {
           icon={Activity}
         />
       ),
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const { variant, icon: Icon } =
-          appConnectionUtils.getStatusIcon(status);
-        return (
-          <div className="text-left">
-            <StatusIconWithText
-              icon={Icon}
-              text={formatUtils.convertEnumToReadable(status)}
-              variant={variant}
-            />
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <StatusDot tone={CONNECTION_STATUS_TONE[row.original.status]}>
+          {formatUtils.convertEnumToReadable(row.original.status)}
+        </StatusDot>
+      ),
     },
     {
       accessorKey: 'updated',
@@ -258,6 +255,7 @@ const GlobalConnectionsTable = () => {
                 warning={<DeleteConnectionWarning />}
                 entityName="connections"
                 buttonText={t('Delete')}
+                controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}
                 mutationFn={async () => {
                   try {
                     await bulkDeleteGlobalConnections.mutateAsync(
@@ -274,8 +272,11 @@ const GlobalConnectionsTable = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-danger-11 hover:text-danger-11"
                     disabled={!userHasPermissionToWriteAppConnection}
+                    {...adminControl(
+                      AdminControl.CONNECTIONS_CONNECTION_DELETE_OPEN,
+                    )}
                   >
                     <Trash className="mr-1 w-4" />
                     {`${t('Delete')} (${selectedRows.length})`}
@@ -290,36 +291,35 @@ const GlobalConnectionsTable = () => {
     [bulkDeleteGlobalConnections, selectedRows],
   );
 
-  const toolbarButtons = useMemo(
-    () => [
-      <NewConnectionDialog
-        key="new-connection"
-        isGlobalConnection={true}
-        onConnectionCreated={() => {
-          setRefresh(refresh + 1);
-          refetchGlobalConnections();
-        }}
-      >
-        <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-          {t('New Connection')}
-        </AnimatedIconButton>
-      </NewConnectionDialog>,
-    ],
-    [refresh],
-  );
-
   return (
-    <div className="flex-col w-full">
-      <DashboardPageHeader
-        description={t('Manage platform-wide connections to external systems.')}
+    <AdminPage>
+      <AdminPageHeader
         title={t('Global Connections')}
-      />
-      <DataTable
+        description={t('Manage platform-wide connections to external systems.')}
+        resources={adminPageResources.globalConnections}
+      >
+        <NewConnectionDialog
+          isGlobalConnection={true}
+          onConnectionCreated={() => {
+            setRefresh(refresh + 1);
+            refetchGlobalConnections();
+          }}
+        >
+          <AnimatedIconButton
+            icon={PlusIcon}
+            iconSize={16}
+            {...adminControl(AdminControl.CONNECTIONS_CONNECTION_OPEN)}
+          >
+            {t('New Connection')}
+          </AnimatedIconButton>
+        </NewConnectionDialog>
+      </AdminPageHeader>
+      <AdminDataTable
         emptyStateTextTitle={t('No global connections found')}
         emptyStateTextDescription={t(
           'Create a global connection that can be shared to multiple projects',
         )}
-        emptyStateIcon={<Globe className="size-14" />}
+        emptyStateIcon={<Globe />}
         columns={columns}
         page={isSample ? sampleData.globalConnectionsPage() : globalConnections}
         isLoading={isSample ? false : isLoadingGlobalConnections}
@@ -330,10 +330,15 @@ const GlobalConnectionsTable = () => {
         selectColumn={true}
         onSelectedRowsChange={setSelectedRows}
         bulkActions={bulkActions}
-        toolbarButtons={toolbarButtons}
       />
-    </div>
+    </AdminPage>
   );
+};
+
+const CONNECTION_STATUS_TONE: Record<AppConnectionStatus, StatusTone> = {
+  [AppConnectionStatus.ACTIVE]: 'success',
+  [AppConnectionStatus.ERROR]: 'danger',
+  [AppConnectionStatus.MISSING]: 'neutral',
 };
 
 export { GlobalConnectionsTable };

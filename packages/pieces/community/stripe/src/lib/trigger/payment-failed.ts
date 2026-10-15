@@ -10,7 +10,7 @@ export const stripePaymentFailed = createTrigger({
   name: 'payment_failed',
   classification: 'READ',
   displayName: 'Payment Failed',
-  description: 'Triggers when a payment fails',
+  description: 'Fires when any charge fails, including renewals.',
   aiMetadata: {
     description:
       'Fires when a charge fails in Stripe (the charge.failed event), emitting the failed charge including its failure code and message. Use to react to declined payments, such as alerting the customer or triggering a retry/dunning flow.',

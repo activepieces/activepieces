@@ -6,6 +6,7 @@ import { podioApiCall, getAccessToken, dynamicSpaceProperty, dynamicOrgProperty 
 export const createStatusAction = createAction({
   auth: podioAuth,
   name: 'create_status',
+  classification: 'WRITE',
   displayName: 'Create Status Update',
   description: 'Add a status to an item or workspace stream.',
   audience: 'both',

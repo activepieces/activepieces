@@ -7,6 +7,7 @@ import { successOutputSchema } from '../output-schemas';
 export const deleteOpportunity = createAction({
     auth: salesforceAuth,
     name: 'delete_opportunity',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Opportunity',
     description: 'Deletes an opportunity.',
     audience: 'human',

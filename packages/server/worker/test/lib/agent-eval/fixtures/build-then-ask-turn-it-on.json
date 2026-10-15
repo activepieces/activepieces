@@ -1,0 +1,30 @@
+{
+    "id": "build-then-ask-turn-it-on",
+    "description": "After a validated, tested flow is built, chat ends with one 'Turn it on?' card and never auto-publishes or claims the flow is live. The build sits in initialMessages because the eval runner has no flow-building tools.",
+    "kind": "capability",
+    "initialMessages": [
+        { "role": "user", "content": "Every weekday at 9am, post a reminder in #standup on Slack asking the team for updates." },
+        { "role": "assistant", "content": "Built it: \"Standup reminder\" (flow flow_standup_1) runs on a weekday 9am schedule and posts to #standup. I validated every step and ran a test that posted the message successfully. The flow is a draft and has not been published." }
+    ],
+    "userTurns": [
+        "Nice, thanks."
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "askedToTurnItOn" },
+        { "type": "noLiveClaimWithoutPublish" }
+    ],
+    "judge": [
+        {
+            "dimension": "ends_with_turn_it_on_card",
+            "rubric": "A flow was built, validated and tested but is unpublished. PASS if the assistant asks once whether to turn it on (a single 'Turn it on?' choice) without publishing it first. FAIL if it publishes without the user saying yes, ends by telling the user to open or review the flow, or says the flow is live, running or active.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

@@ -47,6 +47,7 @@ const polling: Polling<
 export const newDeposit = createTrigger({
     auth: quickbooksAuth,
     name: 'new_deposit',
+    classification: 'READ',
     displayName: 'New Deposit',
     description: 'Triggers when a Deposit is created.',
     aiMetadata: {

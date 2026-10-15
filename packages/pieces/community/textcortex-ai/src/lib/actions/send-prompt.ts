@@ -7,6 +7,7 @@ import { API_ENDPOINTS, AI_MODELS, FORMALITY_LEVELS, LANGUAGES } from '../common
 export const sendPrompt = createAction({
   auth: textcortexAuth,
   name: 'send_prompt',
+  classification: 'READ',
   displayName: 'Send Prompt',
   description: 'Send a custom prompt to TextCortex AI and generate a completion.',
   audience: 'both',

@@ -7,6 +7,7 @@ import { greipAuth } from '../common/auth';
 
 export const fraudulentPaymentDetectedTrigger = createTrigger({
   name: 'fraudulent_payment_detected',
+  classification: 'READ',
   displayName: 'Fraudulent Payment Detected',
   description: 'Triggers when a new fraudulent payment is detected by Greip',
   aiMetadata: {

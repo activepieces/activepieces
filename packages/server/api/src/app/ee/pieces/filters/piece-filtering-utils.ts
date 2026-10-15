@@ -1,11 +1,10 @@
 import { isNil } from '@activepieces/core-utils'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ApEdition, isComponentVisible, isPieceVisible, PieceSet, PieceSetConfig } from '@activepieces/shared'
+import { ApEdition, isComponentVisible, isPieceVisible, PieceSetConfig } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
-import { projectRepo } from '../../../project/project-repo'
-import { pieceSetRepo, pieceSetService } from '../piece-set/piece-set.service'
+import { pieceSetService } from '../piece-set/piece-set.service'
 
 export async function resolveVisibility({ platformId, projectId, log }: ResolveVisibilityParams): Promise<VisibilityPolicy | null> {
     const edition = system.getEdition()
@@ -15,7 +14,7 @@ export async function resolveVisibility({ platformId, projectId, log }: ResolveV
     if (isNil(platformId) || isNil(projectId)) {
         return null
     }
-    const pieceSet = await resolvePieceSetForProject({ log, projectId, platformId })
+    const pieceSet = await pieceSetService(log).getForProject({ projectId, platformId })
     return buildPolicy(pieceSet.config)
 }
 
@@ -47,16 +46,6 @@ function buildPolicy(config: PieceSetConfig): VisibilityPolicy {
     }
 }
 
-async function resolvePieceSetForProject({ log, projectId, platformId }: ResolvePieceSetForProjectParams): Promise<PieceSet> {
-    const project = await projectRepo().findOneBy({ id: projectId })
-    const pieceSetId = project?.pieceSetId ?? null
-
-    return isNil(pieceSetId)
-        ? pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
-        : (await pieceSetRepo().findOneBy({ id: pieceSetId, platformId }))
-            ?? pieceSetService(log).getOrCreateDefaultPieceSet(platformId)
-}
-
 export type VisibilityPolicy = {
     isPieceVisible(name: string): boolean
     filterPieces(pieces: PieceMetadataSchema[]): PieceMetadataSchema[]
@@ -68,10 +57,4 @@ type ResolveVisibilityParams = {
     platformId: string | undefined
     projectId: string | undefined
     log: FastifyBaseLogger
-}
-
-type ResolvePieceSetForProjectParams = {
-    log: FastifyBaseLogger
-    projectId: string
-    platformId: string
 }

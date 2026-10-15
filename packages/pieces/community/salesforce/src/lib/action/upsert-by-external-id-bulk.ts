@@ -14,6 +14,7 @@ import { upsertByExternalIdBulkOutputSchema } from '../output-schemas';
 export const upsertByExternalIdBulk = createAction({
   auth: salesforceAuth,
   name: 'upsert_by_external_id_bulk',
+  classification: 'WRITE',
   displayName: 'Bulk Upsert (Advanced)',
   description: 'Bulk upsert a record by external id',
   audience: 'both',

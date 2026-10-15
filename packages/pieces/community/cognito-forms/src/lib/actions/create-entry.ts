@@ -7,6 +7,7 @@ import { formFields, formIdDropdown } from '../common/props';
 export const createEntryAction = createAction({
   auth: cognitoFormsAuth,
   name: 'create_entry',
+  classification: 'WRITE',
   displayName: 'Create Entry',
   description: 'Creates a new entry.',
   audience: 'both',

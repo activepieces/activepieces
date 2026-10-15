@@ -6,6 +6,7 @@ import { ninjapipeApiCall, extractItems, flattenArray, getAuth, ninjapipeCommon 
 export const listCompanies = createAction({
   auth: ninjapipeAuth,
   name: 'list_companies',
+  classification: 'SEARCH',
   displayName: 'List Companies',
   description: 'Retrieves a list of companies.',
   audience: 'both',

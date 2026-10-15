@@ -7,6 +7,7 @@ export const CreateListItem = createAction({
   auth: kizeoFormsAuth,
 
   name: 'create_list_item',
+  classification: 'WRITE',
   displayName: 'Create List Item',
   description: 'Create a new list item in Kizeo Forms',
   audience: 'both',

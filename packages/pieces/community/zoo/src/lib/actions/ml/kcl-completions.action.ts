@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const kclCompletionsAction = createAction({
   name: 'kcl_completions',
+  classification: 'READ',
   displayName: 'KCL Code Completions',
   description: 'Get code completions for KCL (Kernel Configuration Language)',
   audience: 'both',

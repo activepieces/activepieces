@@ -2,15 +2,43 @@ import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
+  HttpError,
   HttpRequest,
   httpClient,
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 
-export const props = {
-  tenant_id:   Property.Dropdown({
-        auth: xeroAuth,
+export function buildTenantOptions({
+  connections,
+}: {
+  connections: XeroTenantConnection[] | null | undefined;
+}) {
+  const tenants = Array.isArray(connections)
+    ? connections.filter((connection) => typeof connection?.tenantId === 'string' && connection.tenantId.length > 0)
+    : [];
+  if (tenants.length === 0) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: 'No Xero organizations are connected. Reconnect and select at least one organization.',
+    };
+  }
+  const organisationsFirst = [
+    ...tenants.filter((tenant) => tenant.tenantType === 'ORGANISATION'),
+    ...tenants.filter((tenant) => tenant.tenantType !== 'ORGANISATION'),
+  ];
+  return {
+    disabled: false,
+    options: organisationsFirst.map((tenant) => ({
+      label: tenantLabel({ tenant }),
+      value: tenant.tenantId,
+    })),
+  };
+}
 
+export const props = {
+  tenant_id: Property.Dropdown({
+    auth: xeroAuth,
     displayName: 'Organization',
     refreshers: [],
     required: true,
@@ -22,44 +50,26 @@ export const props = {
           placeholder: 'Please authenticate first',
         };
 
-      const request: HttpRequest = {
-        method: HttpMethod.GET,
-        url: 'https://api.xero.com/connections',
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: (auth as OAuth2PropertyValue).access_token,
-        },
-      };
-
-      const result = await httpClient.sendRequest<
-        {
-          id: string;
-          authEventId: string;
-          tenantId: string;
-          tenantType: string;
-          tenantName: string;
-          createdDateUtc: string;
-          updatedDateUtc: string;
-        }[]
-      >(request);
-
-      if (result.status === 200) {
-        return {
-          disabled: false,
-          options: [
-            {
-              label: result.body?.[0].tenantName,
-              value: result.body?.[0].tenantId,
-            },
-          ],
-        };
+      try {
+        const result = await httpClient.sendRequest<XeroTenantConnection[]>({
+          method: HttpMethod.GET,
+          url: 'https://api.xero.com/connections',
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: auth.access_token,
+          },
+        });
+        return buildTenantOptions({ connections: result.body });
+      } catch (error) {
+        if (error instanceof HttpError) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: `Could not load Xero organizations (HTTP ${error.response.status}). Reconnect the Xero connection and try again.`,
+          };
+        }
+        throw error;
       }
-
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Error processing tenant_id',
-      };
     },
   }),
   invoice_id: (required = false) =>
@@ -70,7 +80,8 @@ export const props = {
       description: 'Select an invoice',
       required,
       refreshers: ['tenant_id'],
-      options: async ({ auth, propsValue, tenant_id }) => {
+      refreshOnSearch: true,
+      options: async ({ auth, propsValue, tenant_id }, { searchValue }) => {
         if (!auth)
           return {
             disabled: true,
@@ -92,7 +103,7 @@ export const props = {
 
         const request: HttpRequest = {
           method: HttpMethod.GET,
-          url: 'https://api.xero.com/api.xro/2.0/Invoices?summaryOnly=true&page=1',
+          url: `https://api.xero.com/api.xro/2.0/Invoices?summaryOnly=true&page=1${searchParam({ searchValue })}`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: (auth as OAuth2PropertyValue).access_token,
@@ -105,7 +116,7 @@ export const props = {
         const result = await httpClient.sendRequest<Record<string, any>>(request);
         if (result.status === 200) {
           const invoices: any[] = result.body?.Invoices ?? [];
-          const options = invoices.slice(0, 50).map((inv) => {
+          const options = invoices.slice(0, 100).map((inv) => {
             const labelParts = [inv.InvoiceNumber || inv.InvoiceID];
             if (inv.Contact?.Name) labelParts.push(inv.Contact.Name);
             if (inv.Status) labelParts.push(inv.Status);
@@ -132,7 +143,8 @@ export const props = {
       description: 'Select an authorised invoice (sales or bill) to apply payment to.',
       required,
       refreshers: ['tenant_id'],
-      options: async ({ auth, propsValue, tenant_id }) => {
+      refreshOnSearch: true,
+      options: async ({ auth, propsValue, tenant_id }, { searchValue }) => {
         if (!auth)
           return {
             disabled: true,
@@ -153,7 +165,7 @@ export const props = {
           };
 
         const url =
-          'https://api.xero.com/api.xro/2.0/Invoices?summaryOnly=true&page=1&Statuses=AUTHORISED';
+          `https://api.xero.com/api.xro/2.0/Invoices?summaryOnly=true&page=1&Statuses=AUTHORISED${searchParam({ searchValue })}`;
 
         const request: HttpRequest = {
           method: HttpMethod.GET,
@@ -170,7 +182,7 @@ export const props = {
         const result = await httpClient.sendRequest<Record<string, any>>(request);
         if (result.status === 200) {
           const invoices: any[] = result.body?.Invoices ?? [];
-          const options = invoices.slice(0, 50).map((inv) => {
+          const options = invoices.slice(0, 100).map((inv) => {
             const labelParts = [
               inv.Type,
               inv.InvoiceNumber || inv.InvoiceID,
@@ -200,7 +212,8 @@ export const props = {
       description: 'Select a sales invoice with a valid status for sending email (SUBMITTED, AUTHORISED, or PAID).',
       required,
       refreshers: ['tenant_id'],
-      options: async ({ auth, propsValue, tenant_id }) => {
+      refreshOnSearch: true,
+      options: async ({ auth, propsValue, tenant_id }, { searchValue }) => {
         if (!auth)
           return {
             disabled: true,
@@ -221,7 +234,7 @@ export const props = {
           };
 
         const url =
-          'https://api.xero.com/api.xro/2.0/Invoices?summaryOnly=true&page=1&Statuses=SUBMITTED,AUTHORISED,PAID&where=Type%3d%3d%22ACCREC%22';
+          `https://api.xero.com/api.xro/2.0/Invoices?summaryOnly=true&page=1&Statuses=SUBMITTED,AUTHORISED,PAID&where=Type%3d%3d%22ACCREC%22${searchParam({ searchValue })}`;
 
         const request: HttpRequest = {
           method: HttpMethod.GET,
@@ -238,7 +251,7 @@ export const props = {
         const result = await httpClient.sendRequest<Record<string, any>>(request);
         if (result.status === 200) {
           const invoices: any[] = result.body?.Invoices ?? [];
-          const options = invoices.slice(0, 50).map((inv) => {
+          const options = invoices.slice(0, 100).map((inv) => {
             const labelParts = [inv.InvoiceNumber || inv.InvoiceID];
             if (inv.Contact?.Name) labelParts.push(inv.Contact.Name);
             if (inv.Status) labelParts.push(inv.Status);
@@ -265,7 +278,8 @@ export const props = {
       description: 'Select a sales invoice (ACCREC) with DRAFT or SUBMITTED status.',
       required,
       refreshers: ['tenant_id', 'allow_authorised'],
-      options: async ({ auth, propsValue, tenant_id, allow_authorised }) => {
+      refreshOnSearch: true,
+      options: async ({ auth, propsValue, tenant_id, allow_authorised }, { searchValue }) => {
         if (!auth)
           return {
             disabled: true,
@@ -294,7 +308,7 @@ export const props = {
           ? 'DRAFT,SUBMITTED,AUTHORISED'
           : 'DRAFT,SUBMITTED';
         const url =
-          `https://api.xero.com/api.xro/2.0/Invoices?summaryOnly=true&page=1&Statuses=${encodeURIComponent(statuses)}&where=Type%3d%3d%22ACCREC%22`;
+          `https://api.xero.com/api.xro/2.0/Invoices?summaryOnly=true&page=1&Statuses=${encodeURIComponent(statuses)}&where=Type%3d%3d%22ACCREC%22${searchParam({ searchValue })}`;
 
         const request: HttpRequest = {
           method: HttpMethod.GET,
@@ -311,7 +325,7 @@ export const props = {
         const result = await httpClient.sendRequest<Record<string, any>>(request);
         if (result.status === 200) {
           const invoices: any[] = result.body?.Invoices ?? [];
-          const options = invoices.slice(0, 50).map((inv) => {
+          const options = invoices.slice(0, 100).map((inv) => {
             const labelParts = [inv.InvoiceNumber || inv.InvoiceID];
             if (inv.Contact?.Name) labelParts.push(inv.Contact.Name);
             if (inv.Status) labelParts.push(inv.Status);
@@ -407,7 +421,8 @@ export const props = {
       description: 'Select a contact',
       required,
       refreshers: ['tenant_id'],
-      options: async ({ auth, propsValue, tenant_id }) => {
+      refreshOnSearch: true,
+      options: async ({ auth, propsValue, tenant_id }, { searchValue }) => {
         if (!auth)
           return {
             disabled: true,
@@ -429,7 +444,7 @@ export const props = {
 
         const request: HttpRequest = {
           method: HttpMethod.GET,
-          url: 'https://api.xero.com/api.xro/2.0/Contacts?summaryOnly=true&page=1',
+          url: `https://api.xero.com/api.xro/2.0/Contacts?summaryOnly=true&page=1${searchParam({ searchValue })}`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: (auth as OAuth2PropertyValue).access_token,
@@ -472,12 +487,12 @@ export const props = {
       description: 'Email address of the contact.',
       required: required,
     }),
-  bank_account_id: (required = false) =>
+  bank_account_id: (required = false, labels: { displayName: string; description: string } = { displayName: 'Bank Account', description: 'Select a bank account' }) =>
       Property.Dropdown({
         auth: xeroAuth,
 
-      displayName: 'Bank Account',
-      description: 'Select a bank account',
+      displayName: labels.displayName,
+      description: labels.description,
       required,
       refreshers: ['tenant_id'],
       options: async ({ auth, propsValue, tenant_id }) => {
@@ -842,4 +857,21 @@ export const props = {
         };
       },
     }),
+};
+
+function searchParam({ searchValue }: { searchValue?: string }): string {
+  const term = typeof searchValue === 'string' ? searchValue.trim() : '';
+  return term.length > 0 ? `&searchTerm=${encodeURIComponent(term)}` : '';
+}
+
+function tenantLabel({ tenant }: { tenant: XeroTenantConnection }) {
+  const name = tenant.tenantName && tenant.tenantName.trim().length > 0 ? tenant.tenantName : tenant.tenantId;
+  return tenant.tenantType === 'ORGANISATION' ? name : `${name} (${tenant.tenantType})`;
+}
+
+export type XeroTenantConnection = {
+  id: string;
+  tenantId: string;
+  tenantType: string;
+  tenantName: string | null;
 };

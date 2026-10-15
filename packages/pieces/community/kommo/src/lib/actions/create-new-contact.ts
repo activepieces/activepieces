@@ -13,6 +13,7 @@ interface KommoCustomFieldValue {
 export const createContactAction = createAction({
   auth: kommoAuth,
   name: 'create_contact',
+  classification: 'WRITE',
   displayName: 'Create New Contact',
   description: 'Add a new contact.',
   audience: 'both',

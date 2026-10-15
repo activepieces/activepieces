@@ -57,6 +57,22 @@ function connectFirst() {
 	};
 }
 
+function loadFailed(noun: string) {
+	return {
+		disabled: false,
+		options: [],
+		placeholder: `Could not load ${noun}. Check your connection.`,
+	};
+}
+
+function noneFound(noun: string) {
+	return {
+		disabled: false,
+		options: [],
+		placeholder: `No ${noun} found. Create one in Brevo first.`,
+	};
+}
+
 export const brevoProps = {
 	listIds: ({ displayName, description }: ListIdsPropParams) =>
 		Property.MultiSelectDropdown({
@@ -70,15 +86,23 @@ export const brevoProps = {
 					return connectFirst();
 				}
 
-				const lists = await fetchAllLists(auth.secret_text);
+				try {
+					const lists = await fetchAllLists(auth.secret_text);
 
-				return {
-					disabled: false,
-					options: lists.map((list) => ({
-						label: list.name,
-						value: String(list.id),
-					})),
-				};
+					if (lists.length === 0) {
+						return noneFound('lists');
+					}
+
+					return {
+						disabled: false,
+						options: lists.map((list) => ({
+							label: list.name,
+							value: String(list.id),
+						})),
+					};
+				} catch {
+					return loadFailed('lists');
+				}
 			},
 		}),
 	senderEmail: Property.Dropdown({
@@ -92,19 +116,29 @@ export const brevoProps = {
 				return connectFirst();
 			}
 
-			const response = await brevoCommon.apiCall<BrevoSendersResponse>({
-				apiKey: auth.secret_text,
-				method: HttpMethod.GET,
-				resourceUri: '/senders',
-			});
+			try {
+				const response = await brevoCommon.apiCall<BrevoSendersResponse>({
+					apiKey: auth.secret_text,
+					method: HttpMethod.GET,
+					resourceUri: '/senders',
+				});
 
-			return {
-				disabled: false,
-				options: (response.senders ?? []).map((sender) => ({
-					label: sender.name ? `${sender.name} <${sender.email}>` : sender.email,
-					value: sender.email,
-				})),
-			};
+				const senders = response.senders ?? [];
+
+				if (senders.length === 0) {
+					return noneFound('senders');
+				}
+
+				return {
+					disabled: false,
+					options: senders.map((sender) => ({
+						label: sender.name ? `${sender.name} <${sender.email}>` : sender.email,
+						value: sender.email,
+					})),
+				};
+			} catch {
+				return loadFailed('senders');
+			}
 		},
 	}),
 	emailTemplateId: Property.Dropdown({
@@ -119,15 +153,23 @@ export const brevoProps = {
 				return connectFirst();
 			}
 
-			const templates = await fetchAllTemplates(auth.secret_text);
+			try {
+				const templates = await fetchAllTemplates(auth.secret_text);
 
-			return {
-				disabled: false,
-				options: templates.map((template) => ({
-					label: template.name,
-					value: template.id,
-				})),
-			};
+				if (templates.length === 0) {
+					return noneFound('templates');
+				}
+
+				return {
+					disabled: false,
+					options: templates.map((template) => ({
+						label: template.name,
+						value: template.id,
+					})),
+				};
+			} catch {
+				return loadFailed('templates');
+			}
 		},
 	}),
 };

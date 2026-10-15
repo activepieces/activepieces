@@ -6,6 +6,7 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 export const deletePoints = createAction({
   auth: qdrantAuth,
   name: 'delete_points',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Points',
   description: 'Delete points of a specific collection',
   audience: 'both',

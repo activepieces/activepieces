@@ -1,6 +1,5 @@
 import {
 	DynamicPropsValue,
-	PiecePropValueSchema,
 	Property,
 	createAction,
 } from '@activepieces/pieces-framework';
@@ -13,7 +12,7 @@ export const updateRecordAction = createAction({
 	name: 'apitable_update_record',
 	classification: 'WRITE',
 	displayName: 'Update Record',
-	description: 'Updates an existing record in datasheet.',
+	description: 'Updates an existing record in a datasheet.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -25,10 +24,14 @@ export const updateRecordAction = createAction({
 		datasheet_id: APITableCommon.datasheet_id,
 		recordId: Property.ShortText({
 			displayName: 'Record ID',
-			description: 'The ID of the record to update.',
+			description: 'Map it from a trigger or a Find Records step.',
+			placeholder: 'rec2T5ppW1Mal',
 			required: true,
 		}),
-		fields: APITableCommon.fields,
+		fields: APITableCommon.fields({
+			description:
+				'Blank fields keep their value; unticked checkboxes are cleared.',
+		}),
 	},
 	outputSchema: updateRecordActionOutputSchema,
 	async run(context) {

@@ -6,6 +6,7 @@ import { jungleGridCommon } from '../common';
 export const getJobStatus = createAction({
   auth: jungleGridAuth,
   name: 'get_job_status',
+  classification: 'READ',
   displayName: 'Get Job Status',
   description: 'Get the current status and metadata for a submitted Jungle Grid job.',
   audience: 'both',

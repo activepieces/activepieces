@@ -18,6 +18,7 @@ import { newFieldHistoryEventTriggerOutputSchema } from '../output-schemas';
 export const newFieldHistoryEvent = createTrigger({
     auth: salesforceAuth,
     name: 'new_field_history_event',
+    classification: 'READ',
     displayName: 'New Field History Event',
     description: 'Fires when a tracked field is updated on a specified object.',
     aiMetadata: {

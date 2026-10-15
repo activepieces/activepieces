@@ -11,6 +11,7 @@ import { pastefyAuth } from '../..';
 export default createTrigger({
   auth: pastefyAuth,
   name: 'paste_changed',
+  classification: 'READ',
   displayName: 'Paste Changed',
   description: 'Triggers when the content (or title) of the paste changes',
   aiMetadata: {

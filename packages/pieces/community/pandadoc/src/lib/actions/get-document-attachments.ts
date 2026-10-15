@@ -5,6 +5,7 @@ import { documentDropdown, documentAttachmentDropdown } from '../common/dynamic-
 
 export const getDocumentAttachments = createAction({
   name: 'getDocumentAttachments',
+  classification: 'READ',
   displayName: 'Get Document Attachment',
   description: 'Retrieves details of a specific attachment from a document.',
   audience: 'both',

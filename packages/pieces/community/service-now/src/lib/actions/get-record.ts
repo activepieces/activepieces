@@ -16,6 +16,7 @@ const GetRecordInputSchema = z.object({
 export const getRecordAction = createAction({
   auth: servicenowAuth,
   name: 'get_record',
+  classification: 'READ',
   displayName: 'Get Record',
   description: 'Retrieve a specific record by its ID',
   audience: 'both',

@@ -13,8 +13,7 @@ export const updateDatabaseItem = createAction({
   name: 'update_database_item',
   classification: 'WRITE',
   displayName: 'Update Database Item',
-  description:
-    'Change field values on an existing database item.',
+  description: 'Change field values on an existing database item.',
   audience: 'human',
   aiMetadata: {
     description:
