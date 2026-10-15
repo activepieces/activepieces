@@ -112,7 +112,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
             websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_DRAFT_UPDATED, event)
         })
         if (!isNil(error)) {
-            log.error({ error, flow: { id: flowId }, project: { id: projectId } }, '[flowSideEffects#onDraftWritten] Could not send the Draft Push, the save is kept')
+            log.error({ error, flow: { id: flowId }, project: { id: projectId } }, '[flowSideEffects#onDraftWritten] Could not send the Draft Push, the write is kept')
         }
     },
 
