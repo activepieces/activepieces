@@ -578,6 +578,7 @@ function DisplayToolCard({
       ? (parsedOutput.data as Record<string, unknown>)
       : undefined;
   const toolCallId = chatPartUtils.getToolCallId(part);
+  if (toolOutput?.['notShown'] === true) return null;
 
   switch (toolName) {
     case 'ap_show_connection_required':
@@ -665,7 +666,7 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="max-w-[80%] bg-gray-3 rounded-2xl rounded-br-md px-4 py-3 space-y-3">
+      <div className="max-w-[80%] bg-gray-3 rounded-xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
           <div key={i} className="space-y-0.5">
             <p className="text-sm font-semibold">

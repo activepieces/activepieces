@@ -35,13 +35,25 @@ describe('re-sending a message while the first run has not started yet', () => {
         expect(stored.activeRunId).toBe('run-2')
     })
 
-    it('still reports busy when the same run finds the conversation already streaming', async () => {
+    it('reports a redelivered run as a duplicate and leaves the first delivery streaming', async () => {
         const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
-        const created = await ctx.post('/v1/agents/conversations', { title: 'Busy' })
+        const created = await ctx.post('/v1/agents/conversations', { title: 'Duplicate' })
         const conversationId = created.json().id
         await agentHelpers.claimConversationForRun({ conversationId, runId: 'run-1' })
 
         expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('acquired')
-        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('busy')
+        expect(await agentHelpers.acquireStreamingLock({ conversationId, runId: 'run-1' })).toBe('duplicate')
+        const stored = await db.findOneByOrFail<{ status: string, activeRunId: string }>('agent_conversation', { id: conversationId })
+        expect(stored.status).toBe(AgentConversationStatus.STREAMING)
+        expect(stored.activeRunId).toBe('run-1')
+    })
+
+    it('still reports busy when a run without an id finds the conversation already streaming', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const created = await ctx.post('/v1/agents/conversations', { title: 'Busy' })
+        const conversationId = created.json().id
+
+        expect(await agentHelpers.acquireStreamingLock({ conversationId })).toBe('acquired')
+        expect(await agentHelpers.acquireStreamingLock({ conversationId })).toBe('busy')
     })
 })

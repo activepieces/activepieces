@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/core-piece-types",
-  "version": "0.12.1",
+  "version": "0.12.3",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "scripts": {

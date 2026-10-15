@@ -1,4 +1,3 @@
-import { AIProviderName } from '@activepieces/core-utils';
 import { AgentToolType } from '@activepieces/shared';
 import type {
   AgentKnowledgeBaseTool,
@@ -35,7 +34,6 @@ const icons = [
 interface AgentToolsProps {
   toolsField: AgentFormField;
   disabled?: boolean;
-  selectedProvider?: AIProviderName;
   layout?: 'card' | 'rows';
 }
 
@@ -47,7 +45,6 @@ type AgentFormField = {
 export const AgentTools = ({
   disabled,
   toolsField: agentToolsField,
-  selectedProvider,
   layout = 'card',
 }: AgentToolsProps) => {
   const tools = Array.isArray(agentToolsField.value)
@@ -152,7 +149,7 @@ export const AgentTools = ({
                 </span>
               ))}
               <div
-                className="relative flex size-9 items-center justify-center rounded-full border text-[10px] bg-gray-1 text-gray-12 font-medium"
+                className="relative flex size-9 items-center justify-center rounded-full border text-xs bg-gray-1 text-gray-12 font-medium"
                 style={{ marginLeft: -10 }}
               >
                 <span>+500</span>
@@ -180,7 +177,6 @@ export const AgentTools = ({
           allTools={tools}
           removeTool={removeTool}
           onToolsUpdate={onToolsUpdate}
-          selectedProvider={selectedProvider}
         />
       )}
 

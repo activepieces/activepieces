@@ -23,6 +23,22 @@ export const findRowsAction = createAction({
 		idempotent: true,
 	},
 	displayName: 'Find Rows',
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'search',
+			display: 'section',
+			label: 'Search',
+			icon: 'filter',
+			props: ['columnName', 'searchValue', 'matchCase', 'numberOfRows', 'headerRow'],
+		},
+	],
 	props: {
 		...commonProps,
 		columnName: columnNameProp(),

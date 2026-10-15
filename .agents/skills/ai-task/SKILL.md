@@ -39,6 +39,7 @@ Run these checks before anything else, silently when they pass. If one fails, sh
    > Run `box new -n data` (first time: `npm i -g @abuaboud/box` and `box login --server https://box.abuaboud.me`). It opens Claude with ClickHouse and the production replica, so run the same `/ai-task` there.
    > For now I'll go with what the code shows.
 
+   - **Queue or job failures** also need the DevOps box over SSH, which `/debug-failed-run` drives. Ask for the host once.
    - **Rules for real data:** read only. Keep ClickHouse windows to 3 days or less. Copy only counts and ids into tickets, never customer content, emails or credentials.
 
 ## Help (no arguments, "help", or "?")
@@ -283,6 +284,8 @@ The cards below are examples of that voice, not forms to fill in word for word.
    - ClickHouse `default.otel_logs` for errors, with windows of 3 days or less;
    - the Postgres replica for the row in question, read only.
    - If the box isn't connected, say so and go on with code evidence alone.
+   - **Queue or job failure** (a "Queue Alerts" ticket, a BullMQ job, a failed run id, an `EngineError@...` or `RPC [...] handler threw` signature): run `/debug-failed-run` first. Use its Step 4 to find job ids for the signature across every queue, then Steps 1 to 3 on one of them. Its verdict (product bug, config or infra) drives the decision below. The signature is often a wrapper, so read `stacktrace[0]` before naming a cause.
+   - **Queue alerts are live incidents.** Each one opens a Better Stack incident (linked in the ticket) and a Linear ticket. When you pick one up, assign the ticket to yourself and remind the user to acknowledge the incident in Better Stack. It stays open until the fix is deployed, not just merged, or it fires again.
 3. **Decide one of these** and write a short comment with the evidence (files, functions, PRs, numbers). Don't post the comment without the user's go-ahead.
    - **Fixed already:** name the PR that fixed it, then move to Done.
    - **Duplicate:** link the original. Set the duplicate relation first, then the status.
