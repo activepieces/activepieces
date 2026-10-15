@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
+import { usageIndicatorClass } from '@/components/ui/progress';
 import {
   Tooltip,
   TooltipContent,
@@ -24,9 +25,8 @@ export function EnterpriseUsageMeter({
   if (isNil(limit) || limit <= 0) {
     return null;
   }
-  const atLimit = used >= limit;
   const usage = t('{used} of {limit} {label}', { used, limit, label });
-  const meter = <UsageBar used={used} limit={limit} atLimit={atLimit} />;
+  const meter = <UsageBar used={used} limit={limit} />;
 
   if (gate.access === 'ask_admin' || gate.access === 'community') {
     return (
@@ -71,15 +71,7 @@ export function EnterpriseUsageMeter({
   );
 }
 
-function UsageBar({
-  used,
-  limit,
-  atLimit,
-}: {
-  used: number;
-  limit: number;
-  atLimit: boolean;
-}) {
+function UsageBar({ used, limit }: { used: number; limit: number }) {
   const percent = Math.round(Math.min(1, used / limit) * 100);
   return (
     <span
@@ -89,7 +81,7 @@ function UsageBar({
       <span
         className={cn(
           'absolute inset-y-0 left-0 rounded-full',
-          atLimit ? 'bg-warning-9' : 'bg-accent-9',
+          usageIndicatorClass(used / limit),
         )}
         style={{ width: `${Math.max(percent, 8)}%` }}
       />
