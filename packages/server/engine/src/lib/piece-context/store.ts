@@ -32,19 +32,26 @@ export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { ap
     }
 }
 
-export function createInsertOnlyStore(store: Store): Store {
+export function createReadOnlyStore(store: Store): Store {
     return {
-        async put<T>(key: string, value: T, scope?: StoreScope): Promise<T> {
-            const existing = await store.get<T>(key, scope)
-            if (!isNil(existing)) {
-                return existing
-            }
-            return store.put(key, value, scope)
+        get: store.get,
+        async put<T>(_key: string, value: T): Promise<T> {
+            return value
         },
         async delete(): Promise<void> {
             return
         },
+    }
+}
+
+export function createNoOverwriteStore(store: Store): Store {
+    return {
         get: store.get,
+        delete: store.delete,
+        async put<T>(key: string, value: T, scope?: StoreScope): Promise<T> {
+            const existing = await store.get<T>(key, scope)
+            return isNil(existing) ? store.put(key, value, scope) : existing
+        },
     }
 }
 
