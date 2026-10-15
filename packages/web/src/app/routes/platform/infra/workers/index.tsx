@@ -78,7 +78,7 @@ export default function WorkersPage({ section }: WorkersPageProps) {
         isCloud &&
         fleetType === WorkerMachineType.SHARED && (
           <EnterpriseLockedSection
-            unlocked={false}
+            unlocked={platform.plan.workerGroupsEnabled}
             featureKey="DEDICATED_WORKERS"
             line={t(
               'Your automations run on shared workers. Dedicated workers start every flow faster.',
