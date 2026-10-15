@@ -44,15 +44,21 @@ export const flowsUtils = {
         switch (schedule?.type) {
           case TriggerSourceScheduleType.INTERVAL: {
             const minutes = Math.round(schedule.intervalMs / 60_000);
-            return trigger.settings.pieceName === '@activepieces/piece-schedule'
-              ? t(
-                  'Runs every {minutes, plural, =1 {minute} other {# minutes}}',
+            return trigger.settings.pieceName ===
+              '@activepieces/piece-schedule' ? (
+              t('Runs every {minutes, plural, =1 {minute} other {# minutes}}', {
+                minutes,
+              })
+            ) : (
+              <>
+                {t(
+                  'Checks for new data every {minutes, plural, =1 {minute} other {# minutes}}.',
                   { minutes },
-                )
-              : t(
-                  'Checks for new data every {minutes, plural, =1 {minute} other {# minutes}}. The flow runs only when there is new data.',
-                  { minutes },
-                );
+                )}
+                <br />
+                {t('The flow runs only when there is new data.')}
+              </>
+            );
           }
           case TriggerSourceScheduleType.CRON_EXPRESSION:
             return `${t('Runs')} ${cronstrue
