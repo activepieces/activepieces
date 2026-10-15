@@ -440,7 +440,9 @@ Activepieces
                   className="font-mono text-xs"
                   placeholder={
                     connected
-                      ? t('•••••••• Saved. Paste new metadata to replace it.')
+                      ? t(
+                          'Saved. To change it, paste the metadata and certificate again.',
+                        )
                       : undefined
                   }
                 />
@@ -465,7 +467,7 @@ Activepieces
                   placeholder={
                     connected
                       ? t(
-                          '•••••••• Saved. Paste a new certificate to replace it.',
+                          'Saved. To change it, paste the metadata and certificate again.',
                         )
                       : undefined
                   }
