@@ -553,14 +553,58 @@ describe('SamlSetupPage', () => {
     expect(await screen.findByText('authentication page')).toBeDefined();
   });
 
-  it('keeps Next disabled until the domain is verified', () => {
+  it('lets the admin move to the SAML step before the domain is verified, but not save', () => {
     setPlatform({
       ssoDomain: 'acme.com',
       ssoDomainVerification: pendingVerification,
     });
     mountSetupPage();
 
-    expect(findButton('Next')?.disabled).toBe(true);
+    click(findButton('Next'));
+
+    expect(
+      screen.getByText(
+        'Verify your domain before saving. You can already copy the values above into your identity provider.',
+      ),
+    ).toBeDefined();
+    expect(findButton('Save')?.disabled).toBe(true);
+  });
+
+  it('moves between steps from the step labels', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+    });
+    mountSetupPage();
+
+    click(findButton('1SSO Domain'));
+    expect(
+      screen
+        .getByRole('button', { name: '1 SSO Domain' })
+        .getAttribute('aria-current'),
+    ).toBe('step');
+    click(findButton('2SAML 2.0'));
+    expect(
+      screen
+        .getByRole('button', { name: '2 SAML 2.0' })
+        .getAttribute('aria-current'),
+    ).toBe('step');
+  });
+
+  it('shows saved SAML values as masked instead of empty', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+      federatedAuthProviders: { saml: samlConfig },
+    });
+    mountSetupPage();
+
+    expect(
+      screen.getByLabelText('IDP Metadata').getAttribute('placeholder'),
+    ).toBe('•••••••• Saved. Paste new metadata to replace it.');
+    expect(
+      screen.getByLabelText('IDP Certificate').getAttribute('placeholder'),
+    ).toBe('•••••••• Saved. Paste a new certificate to replace it.');
   });
 });
 

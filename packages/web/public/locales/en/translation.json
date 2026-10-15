@@ -3310,9 +3310,7 @@
   "invalidDomain": "Enter a domain like acme.com",
   "duplicateDomain": "This domain is already on the list",
   "Allowed domains": "Allowed domains",
-  "Only people with an email at these domains can sign in with email and password.": "Only people with an email at these domains can sign in with email and password.",
   "No allowed domains": "No allowed domains",
-  "Any email address can sign in with email and password. Add a domain to limit that.": "Any email address can sign in with email and password. Add a domain to limit that.",
   "With no domains left, any email address can sign in with email and password.": "With no domains left, any email address can sign in with email and password.",
   "People at {domain} can no longer sign in with email and password.": "People at {domain} can no longer sign in with email and password.",
   "Allowed domain added": "Allowed domain added",
@@ -3322,5 +3320,10 @@
   "Email sign-in is off. Turn it on first if they need it.": "Email sign-in is off. Turn it on first if they need it.",
   "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way. To use SAML again, you'll need to verify the domain again with a new DNS record.": "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way. To use SAML again, you'll need to verify the domain again with a new DNS record.",
   "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.": "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.",
-  "Remove {domain} and disable SAML?": "Remove {domain} and disable SAML?"
+  "Remove {domain} and disable SAML?": "Remove {domain} and disable SAML?",
+  "•••••••• Saved. Paste new metadata to replace it.": "•••••••• Saved. Paste new metadata to replace it.",
+  "•••••••• Saved. Paste a new certificate to replace it.": "•••••••• Saved. Paste a new certificate to replace it.",
+  "Verify your domain before saving. You can already copy the values above into your identity provider.": "Verify your domain before saving. You can already copy the values above into your identity provider.",
+  "Restrict email and password sign-in to the domains you add.": "Restrict email and password sign-in to the domains you add.",
+  "Anyone can sign in with email and password until you add a domain.": "Anyone can sign in with email and password until you add a domain."
 }

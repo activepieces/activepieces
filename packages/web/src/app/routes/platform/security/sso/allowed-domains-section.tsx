@@ -32,7 +32,7 @@ export const AllowedDomainsSection = ({
     <AdminSection
       title={t('Allowed domains')}
       description={t(
-        'Only people with an email at these domains can sign in with email and password.',
+        'Restrict email and password sign-in to the domains you add.',
       )}
       action={
         domains.length > 0 && (
@@ -55,7 +55,7 @@ export const AllowedDomainsSection = ({
             icon={<Globe />}
             title={t('No allowed domains')}
             description={t(
-              'Any email address can sign in with email and password. Add a domain to limit that.',
+              'Anyone can sign in with email and password until you add a domain.',
             )}
           >
             <AddAllowedDomainDialog platform={platform} refetch={refetch}>
