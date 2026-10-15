@@ -162,7 +162,9 @@ const DomainRow = ({
           <ConfirmationDeleteDialog
             title={
               samlConnected
-                ? t('Remove {domain} and disable SAML?', { domain })
+                ? t('Remove {domain} and delete your SAML connection?', {
+                    domain,
+                  })
                 : t('Remove {domain}?', { domain })
             }
             message={
@@ -172,7 +174,11 @@ const DomainRow = ({
               />
             }
             entityName={domain}
-            buttonText={t('Remove domain')}
+            buttonText={
+              samlConnected
+                ? t('Remove domain and disable SAML')
+                : t('Remove domain')
+            }
             controlId={AdminControl.SSO_DOMAIN_REMOVE_CONFIRM}
             contentClassName={adminLayout.dialog.md}
             keepOpenOnOutsideClick
@@ -238,7 +244,7 @@ const RemoveDomainConsequences = ({
     <span className="flex flex-col gap-2">
       <span>
         {t(
-          "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way. To use SAML again, you'll need to verify the domain again with a new DNS record.",
+          'Single sign-on will be disabled: your SAML connection (identity provider metadata and certificate) is deleted, so people who use single sign-on will have to sign in another way. To use SAML again, verify the domain with a new DNS record and connect your identity provider again.',
         )}
       </span>
       {!emailAuthEnabled && (
