@@ -187,8 +187,8 @@ const MethodIcon = ({ on, children }: { on: boolean; children: ReactNode }) => (
     className={cn(
       'flex size-9 items-center justify-center rounded-lg border [&_svg]:size-4',
       on
-        ? 'border-accent-7 bg-accent-3 text-accent-11'
-        : 'bg-gray-3 text-gray-11 opacity-60',
+        ? 'border-accent-7 bg-panel text-accent-11'
+        : 'bg-panel text-gray-9 opacity-60',
     )}
   >
     {children}
