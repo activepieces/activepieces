@@ -21,9 +21,11 @@ const {
   samlSsoApiMock,
   platformState,
   refetchMock,
+  flagState,
 } = vi.hoisted(() => {
   const state: { current: Record<string, unknown> } = { current: {} };
   return {
+    flagState: { edition: 'ee' },
     toastMock: { success: vi.fn(), error: vi.fn(), message: vi.fn() },
     platformApiMock: { update: vi.fn() },
     samlSsoApiMock: {
@@ -69,7 +71,11 @@ vi.mock('@/hooks/platform-hooks', () => ({
 }));
 
 vi.mock('@/hooks/flags-hooks', () => ({
-  flagsHooks: { useFlag: () => ({ data: 'https://cloud.test/acs' }) },
+  flagsHooks: {
+    useFlag: (id: string) => ({
+      data: id === 'EDITION' ? flagState.edition : 'https://cloud.test/acs',
+    }),
+  },
 }));
 
 vi.mock('@/components/ui/dropdown-menu', () => ({
@@ -187,6 +193,7 @@ describe('SSOPage', () => {
       ssoDomainVerification: null,
     });
     setPlatform({});
+    flagState.edition = 'ee';
   });
 
   it('shows the empty states when nothing is set up', () => {
@@ -437,6 +444,58 @@ describe('SSOPage', () => {
 
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(platformApiMock.update).not.toHaveBeenCalled();
+  });
+
+  it('says on self-hosted that allowed domains also limit who can join', () => {
+    mount();
+
+    expect(
+      screen.getByText(
+        'Limit who can join, and who can sign in with email and password, to the domains you add.',
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        'Anyone can join or sign in with email and password until you add a domain.',
+      ),
+    ).toBeDefined();
+  });
+
+  it('says on Cloud that allowed domains limit email and password sign-in only', () => {
+    flagState.edition = 'cloud';
+    setPlatform({ allowedAuthDomains: ['contractors.io', 'partners.io'] });
+    mount();
+
+    expect(
+      screen.getByText(
+        'Limit email and password sign-in to the domains you add.',
+      ),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "Add your company domain too, or people at your company can't sign in with email and password.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByText(/join/)).toBeNull();
+
+    click(menuItem('Remove domain'));
+    expect(
+      within(screen.getByRole('dialog')).getByText(
+        'People at contractors.io can no longer sign in with email and password.',
+      ),
+    ).toBeDefined();
+  });
+
+  it('describes adding the first allowed domain on Cloud without mentioning joining', () => {
+    flagState.edition = 'cloud';
+    mount();
+
+    click(findButton('Add domain'));
+    expect(
+      within(screen.getByRole('dialog')).getByText(
+        'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.',
+      ),
+    ).toBeDefined();
   });
 
   it('removes one allowed domain and keeps the list enforced', async () => {

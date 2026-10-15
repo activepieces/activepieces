@@ -3350,5 +3350,12 @@
   "Once a domain is on this list, only people at listed domains can join or sign in with email and password. Add your company domain too.": "Once a domain is on this list, only people at listed domains can join or sign in with email and password. Add your company domain too.",
   "People at this domain can join and sign in with email and password.": "People at this domain can join and sign in with email and password.",
   "Add your company domain too, or people at your company can't join or sign in with email and password.": "Add your company domain too, or people at your company can't join or sign in with email and password.",
-  "People at {domain} can no longer join or sign in with email and password.": "People at {domain} can no longer join or sign in with email and password."
+  "People at {domain} can no longer join or sign in with email and password.": "People at {domain} can no longer join or sign in with email and password.",
+  "Limit email and password sign-in to the domains you add.": "Limit email and password sign-in to the domains you add.",
+  "Anyone can sign in with email and password until you add a domain.": "Anyone can sign in with email and password until you add a domain.",
+  "With no domains left, anyone can sign in with email and password.": "With no domains left, anyone can sign in with email and password.",
+  "People at {domain} can no longer sign in with email and password.": "People at {domain} can no longer sign in with email and password.",
+  "Add your company domain too, or people at your company can't sign in with email and password.": "Add your company domain too, or people at your company can't sign in with email and password.",
+  "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.": "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.",
+  "People at this domain can sign in with email and password.": "People at this domain can sign in with email and password."
 }
