@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { AssignFlowsDialog } from './assign-flows-dialog';
 import { AssignProjectsDialog } from './assign-projects-dialog';
 import { ProjectAvatar } from './project-avatar';
 
@@ -144,11 +145,23 @@ function GroupCard({
 
         {isFlowGroup ? (
           <div className="border-t pt-4">
-            <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
-              {t('FLOWS')}
-            </span>
-            <p className="mt-2.5 text-xs text-gray-11">
-              {t('Assign flows to this group from the By flow tab')}
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+                {t('FLOWS')}
+              </span>
+              <Button
+                {...adminControl(AdminControl.WORKERS_ASSIGN_OPEN)}
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setDialogOpen(true)}
+              >
+                <Plus className="size-3.5" />
+                {t('Assign')}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-11">
+              {t('See every pinned flow per project in the By flow tab')}
             </p>
           </div>
         ) : (
@@ -187,7 +200,14 @@ function GroupCard({
         )}
       </div>
 
-      {!isFlowGroup && (
+      {isFlowGroup ? (
+        <AssignFlowsDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          groupLabel={groupLabel}
+          allProjects={allProjects}
+        />
+      ) : (
         <AssignProjectsDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
