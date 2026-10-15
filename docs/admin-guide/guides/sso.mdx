@@ -15,69 +15,103 @@ Single Sign-On (SSO) allows your team to authenticate using your organization's 
 Before configuring SSO, ensure you have:
 
 - **Admin access** to your Activepieces platform
-- **Admin access** to your identity provider (Google, GitHub, Okta, or JumpCloud)
-- The **redirect URL** from your Activepieces SSO configuration screen
+- **Admin access** to your identity provider (Okta, Microsoft Entra ID, JumpCloud, or any SAML 2.0 provider)
+- Access to your company domain's **DNS settings**, to verify the domain
 
-## Accessing SSO Configuration
+## The Authentication page
 
-Navigate to **Platform Settings** → **SSO** in your Activepieces admin dashboard to access the SSO configuration screen.
+Go to **Platform admin** → **Security** → **Authentication**. The page has three sections:
 
-![SSO Configuration](/resources/screenshots/sso.png)
+- **Domains**: the company domain your people sign in with.
+- **Sign-in methods**: single sign-on (SAML 2.0), Continue with Google, and email and password.
+- **Allowed domains**: the email domains allowed to sign in with email and password.
 
-## Enforcing SSO
+![Authentication page](/resources/screenshots/sso.png)
 
-You can enforce SSO by specifying your organization's email domain. When SSO enforcement is enabled:
+## Verify your domain
 
-- Users with matching email domains must authenticate through the SSO provider
-- Email/password login can be disabled for enhanced security
-- All authentication is routed through your designated identity provider
+Single sign-on needs a verified company domain (for example `acme.com`).
 
-<Tip>
-  We recommend testing SSO with a small group of users before enforcing it organization-wide.
-</Tip>
+<Steps>
+  <Step title="Enter the domain">
+    Under **Domains**, click **Verify domain** and enter your company domain. It must be a public hostname containing a dot, and on Cloud each domain can be claimed by only one platform.
+  </Step>
+  <Step title="Add the TXT record">
+    Copy the TXT record's **Name** and **Value** and add them at your DNS provider.
+  </Step>
+  <Step title="Verify DNS">
+    Click **Verify DNS**. DNS changes can take a few minutes to show up, so try again if the record isn't found yet. Verify within 3 hours, or the domain is dropped and you start again with a new record.
+  </Step>
+</Steps>
 
-## SSO Domain
+While a domain is being verified it shows as **Verifying**. Its menu lets you **Continue verifying** or **Cancel verification**. Once verified, use **View DNS record** to see the record again.
 
-The **SSO Domain** lets you map a public domain (e.g. `acme.com`) to your platform's SAML provider so users can discover the right IdP from the shared sign-in page.
+You can also verify the domain from the first step of the SAML setup, described below.
 
-You can set it in the SAML configuration dialog (**Platform Settings → SSO → SAML 2.0 → Enable**), in the **SSO Domain** field. Leave it empty to disable domain-based discovery.
+<Warning>
+  **Remove domain** also deletes your SAML connection, so single sign-on stops working. If email and password sign-in is off, turn it on first so people can still sign in.
+</Warning>
 
-**How it works on Cloud**
+## Set up SAML
 
-On the cloud sign-in page, clicking **Sign in with SAML** opens a dialog asking the user for their organization's domain. When they enter `acme.com`, the platform whose SSO Domain matches is looked up and the user is redirected to that platform's identity provider.
+Under **Sign-in methods**, click **Set up** next to **Single sign-on** (or **Manage** once it's connected). The setup has two steps:
 
-**Constraints**
+1. **SSO Domain**: verify your domain, or confirm the one you already verified.
+2. **SAML 2.0**:
+   - **Copy these into your identity provider**: the **Single sign-on URL** and the **Audience URI (SP Entity ID)**, which is `Activepieces`.
+   - **Paste these from your identity provider**: the **IDP Metadata** (the metadata XML, or a metadata URL) and the **IDP Certificate**.
 
-- Must be a valid public hostname containing a dot (e.g. `acme.com`, not `acme`).
-- Each domain can be claimed by only one platform on Cloud.
+You can move between the steps freely, but **Save** stays disabled until the domain is verified. Once saved, the fields say **Saved**; paste new values only to replace them.
+
+To turn single sign-on off, open **Manage** and click **Disable** under the SAML step. This deletes the SAML connection but keeps your verified domain, so you can connect again later.
+
+**Signing in with SAML on Cloud**
+
+On the cloud sign-in page, **Sign in with SAML** asks for the organization's domain. Entering `acme.com` sends the person to the identity provider of the platform that verified `acme.com`. The signed-in email must be at that domain.
 
 <Note>
-  On self-hosted Enterprise instances the SAML button on the sign-in page redirects directly to the configured identity provider, so the **SSO Domain** field is effectively ignored at login. You can still leave it empty.
+  On self-hosted Enterprise instances the SAML button on the sign-in page redirects directly to the configured identity provider.
 </Note>
+
+## Google and email and password
+
+Turn **Continue with Google** and **Email and password** on or off under **Sign-in methods**. Each change asks you to confirm. Before turning email and password off, make sure another sign-in method works for you.
+
+On self-hosted instances, the Google button only appears once `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` are set. See [Google sign-in on self-hosted](#google-sign-in-on-self-hosted).
+
+## Allowed domains
+
+**Allowed domains** limits sign-in to email addresses at the domains you list. Add your company domain too, or people at your company are refused.
+
+- **Cloud**: the list applies to email and password sign-in.
+- **Self-hosted Enterprise**: the list also applies to anyone creating an account, with any sign-in method.
+
+Removing the last domain turns the restriction off.
+
+<Tip>
+  We recommend testing SSO with a small group of users before turning other sign-in methods off.
+</Tip>
 
 ## Supported SSO Providers
 
 Activepieces supports multiple SSO providers to integrate with your existing identity management system.
 
-### Google
+### Google sign-in on self-hosted
+
+On Cloud, Continue with Google works without setup. On self-hosted instances, create a Google OAuth client and pass it to Activepieces with environment variables.
 
 <Steps>
   <Step title="Access Google Cloud Console">
     Go to the [Google Cloud Console](https://console.cloud.google.com/) and select your project (or create a new one).
   </Step>
   <Step title="Create OAuth2 Credentials">
-    Navigate to **APIs & Services** → **Credentials** → **Create Credentials** → **OAuth client ID**.
-
-    Select **Web application** as the application type.
+    Navigate to **APIs & Services** → **Credentials** → **Create Credentials** → **OAuth client ID**, and select **Web application**.
   </Step>
   <Step title="Configure Redirect URI">
-    Copy the **Redirect URL** from the Activepieces SSO configuration screen and add it to the **Authorized redirect URIs** in Google Cloud Console.
+    Add `<your Activepieces URL>/redirect` to the **Authorized redirect URIs**. If you set `AP_INTERNAL_URL`, use that URL instead.
   </Step>
-  <Step title="Copy Credentials to Activepieces">
-    Copy the **Client ID** and **Client Secret** from Google and paste them into the corresponding fields in Activepieces.
-  </Step>
-  <Step title="Save Configuration">
-    Click **Finish** to complete the setup.
+  <Step title="Set the environment variables">
+    Set `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` to the client's ID and secret, then restart Activepieces. See [environment variables](/install/reference/environment-variables).
   </Step>
 </Steps>
 
@@ -94,7 +128,7 @@ Activepieces supports multiple SSO providers to integrate with your existing ide
     Enter an **App name** (e.g., "Activepieces") and optionally upload a logo. Click **Next**.
   </Step>
   <Step title="Configure SAML Settings">
-    - **Single sign-on URL**: Copy the SSO URL from the Activepieces configuration screen
+    - **Single sign-on URL**: Copy the **Single sign-on URL** from step 2 of the SAML setup
     - **Audience URI (SP Entity ID)**: Enter `Activepieces`
     - **Name ID format**: Select `EmailAddress`
   </Step>
@@ -115,8 +149,7 @@ Activepieces supports multiple SSO providers to integrate with your existing ide
   </Step>
   <Step title="Configure Activepieces">
     - Paste the **IdP Metadata** XML into the corresponding field
-    - Copy the **X.509 Certificate** from Okta and paste it into the **Signing Key** field
-    - (Optional, Cloud) Set the **SSO Domain** to your organization's public domain (e.g. `acme.com`) so users can sign in by entering it on the cloud sign-in page. See [SSO Domain](#sso-domain) above.
+    - Copy the **X.509 Certificate** from Okta and paste it into the **IDP Certificate** field
   </Step>
   <Step title="Save Configuration">
     Click **Save** to complete the setup.
@@ -138,7 +171,7 @@ Activepieces supports multiple SSO providers to integrate with your existing ide
     Edit **Basic SAML Configuration**:
 
     - **Identifier (Entity ID)**: `Activepieces`
-    - **Reply URL (Assertion Consumer Service URL)**: paste the SSO URL from the Activepieces configuration screen
+    - **Reply URL (Assertion Consumer Service URL)**: paste the **Single sign-on URL** from step 2 of the SAML setup
   </Step>
   <Step title="Configure User Attributes & Claims">
     Edit **Attributes & Claims** and add these additional claims (leave **Namespace** empty):
@@ -155,7 +188,7 @@ Activepieces supports multiple SSO providers to integrate with your existing ide
     You can paste this URL directly into the **IdP Metadata** field in Activepieces — Activepieces will fetch the metadata XML automatically. Alternatively, open the URL in a browser, save the XML, and paste its contents.
   </Step>
   <Step title="Copy the Signing Certificate">
-    Download the **Certificate (Base64)** from the **SAML Certificates** section. Open the file and copy its contents (including the `-----BEGIN CERTIFICATE-----` / `-----END CERTIFICATE-----` markers) into the **Signing Key** field in Activepieces.
+    Download the **Certificate (Base64)** from the **SAML Certificates** section. Open the file and copy its contents (including the `-----BEGIN CERTIFICATE-----` / `-----END CERTIFICATE-----` markers) into the **IDP Certificate** field in Activepieces.
   </Step>
   <Step title="Assign Users">
     Go to **Users and groups** in the application and assign the users or groups that should be allowed to sign in.
@@ -172,7 +205,7 @@ Activepieces supports multiple SSO providers to integrate with your existing ide
     Go to the [JumpCloud Admin Portal](https://console.jumpcloud.com/) → **SSO Applications** → **Add New Application** → **Custom SAML App**.
   </Step>
   <Step title="Configure ACS URL">
-    Copy the **ACS URL** from the Activepieces configuration screen and paste it into the **ACS URLs** field in JumpCloud.
+    Copy the **Single sign-on URL** from step 2 of the SAML setup and paste it into the **ACS URLs** field in JumpCloud.
 
     ![JumpCloud ACS URL](/resources/screenshots/jumpcloud/acl-url.png)
   </Step>
@@ -220,7 +253,7 @@ Activepieces supports multiple SSO providers to integrate with your existing ide
     -----END CERTIFICATE-----
     ```
 
-    Paste this into the **Signing Key** field.
+    Paste this into the **IDP Certificate** field.
   </Step>
   <Step title="Assign Users to Application">
     In JumpCloud, assign the application to the appropriate users or user groups.
@@ -238,7 +271,8 @@ Activepieces supports multiple SSO providers to integrate with your existing ide
   <Accordion title="Users cannot log in after SSO configuration">
     - Verify the redirect URL is correctly configured in your identity provider
     - Ensure users are assigned to the application in your identity provider
-    - Check that email domains match the SSO enforcement settings
+    - Check that the user's email is at your verified domain
+    - If you use allowed domains, check that the user's domain is on the list
   </Accordion>
 
   <Accordion title="SAML authentication fails">
