@@ -10,6 +10,7 @@ import {
   NoteColorVariant,
   PopulatedFlow,
   SampleDataFileType,
+  flowOperations,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
 import { AxiosError, AxiosHeaders } from 'axios';
@@ -390,6 +391,47 @@ describe('flow state save retries', () => {
   );
 });
 
+describe('flow state edit order', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+    vi.spyOn(toast, 'error').mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('sends a step edit that waits in the debounce before a later operation', async () => {
+    flowsApiMock.update.mockResolvedValue(draftFlow('Order lookup'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(renameTrigger('New order'));
+    store.getState().applyOperation(changeName('New name'));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(sentOperations()).toEqual([
+      renameTrigger('New order'),
+      changeName('New name'),
+    ]);
+  });
+
+  it('saves a step edit that waits in the debounce before it refetches the draft after a failed save', async () => {
+    const server = serverThatKeepsTheDraft({
+      rejectedType: FlowOperationType.CHANGE_NAME,
+    });
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(renameTrigger('New order'));
+    store.getState().applyOperation(changeName('Bad name'));
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(server.draft().version.trigger.displayName).toBe('New order');
+    expect(store.getState().flowVersion.trigger.displayName).toBe('New order');
+  });
+});
+
 describe('flow state saving flag', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -419,7 +461,50 @@ describe('flow state saving flag', () => {
     await vi.advanceTimersByTimeAsync(1000);
     expect(store.getState().saving).toBe(false);
   });
+
+  it('stays on while a pending step edit saves after a failed save', async () => {
+    const triggerSave = Promise.withResolvers<PopulatedFlow>();
+    flowsApiMock.update.mockImplementation(
+      (_flowId: string, operation: FlowOperationRequest) =>
+        operation.type === FlowOperationType.CHANGE_NAME
+          ? Promise.reject(httpError({ status: 400 }))
+          : triggerSave.promise,
+    );
+    flowsApiMock.get.mockResolvedValue(draftFlow('Order lookup'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(renameTrigger('New order'));
+    store.getState().applyOperation(changeName('Bad name'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.getState().saving).toBe(true);
+
+    triggerSave.resolve(draftFlow('Order lookup'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.getState().saving).toBe(false);
+  });
 });
+
+function serverThatKeepsTheDraft({
+  rejectedType,
+}: {
+  rejectedType: FlowOperationType;
+}) {
+  let draft = draftFlow('Order lookup');
+  flowsApiMock.update.mockImplementation(
+    async (_flowId: string, operation: FlowOperationRequest) => {
+      if (operation.type === rejectedType) {
+        throw httpError({ status: 400 });
+      }
+      draft = {
+        ...draft,
+        version: flowOperations.apply(draft.version, operation),
+      };
+      return draft;
+    },
+  );
+  flowsApiMock.get.mockImplementation(async () => draft);
+  return { draft: () => draft };
+}
 
 function networkError() {
   return new AxiosError('Network Error', AxiosError.ERR_NETWORK, undefined, {});
