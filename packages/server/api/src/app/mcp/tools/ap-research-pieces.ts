@@ -4,6 +4,7 @@ import { McpToolDefinition, PieceAudienceFilter, PieceCategory, ProjectScopedMcp
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { isChatOnlyAction } from '../../pieces/metadata/utils'
 import { ActionCardinality, mcpUtils } from './mcp-utils'
 
 const BULK_LOOKUP_CAP = 20
@@ -74,12 +75,12 @@ function summarizeComponent(c: { name: string, displayName: string, description:
         // signal it lacks today (it grabs find_record when it meant to enumerate, then thrashes).
         cardinality: mcpUtils.classifyActionCardinality(c.name),
         ...(c.aiMetadata?.description && { aiDescription: c.aiMetadata.description }),
-        ...(c.audience === 'ai' && { chatOnly: true }),
+        chatOnly: isChatOnlyAction(c) || undefined,
     }
 }
 
 function nameOnly({ name, displayName, chatOnly }: ComponentSummary): Partial<ComponentSummary> {
-    return { name, displayName, ...(chatOnly && { chatOnly }) }
+    return { name, displayName, chatOnly }
 }
 
 function detailOnlyFor({ components, recommended, trim }: { components: ComponentSummary[], recommended: string[] | undefined, trim: ComponentTrim }): Partial<ComponentSummary>[] {
@@ -304,7 +305,7 @@ type ComponentSummary = {
     requiresAuth: boolean
     cardinality: ActionCardinality
     aiDescription?: string
-    chatOnly?: true
+    chatOnly?: boolean
 }
 
 type ComponentTrim = (component: ComponentSummary) => Partial<ComponentSummary>
@@ -336,3 +337,5 @@ type EnrichedPiece = {
     actions?: ComponentSummary[]
     triggers?: ComponentSummary[]
 }
+
+export const CHAT_ONLY_STEP_RULE = 'Never use an action marked chatOnly in ap_research_pieces as a flow step; pick a non-chatOnly action from the same piece.'

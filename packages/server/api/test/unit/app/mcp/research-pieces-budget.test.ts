@@ -57,7 +57,7 @@ describe('what ap_research_pieces is allowed to return', () => {
 
     it('keeps the chatOnly flag even when actions are trimmed to names', () => {
         const chatOnlyPieces = pieces({ count: 3, actionCount: 100, detailLength: 2_000, aiLength: 0 })
-            .map((found) => ({ ...found, actions: found.actions.map((action) => ({ ...action, chatOnly: true as const })) }))
+            .map((found) => ({ ...found, actions: found.actions.map((action) => ({ ...action, chatOnly: true })) }))
 
         const result = fit(chatOnlyPieces)
 

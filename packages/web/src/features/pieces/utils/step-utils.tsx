@@ -99,8 +99,8 @@ export const stepUtils = {
         });
         const actionOrTrigger =
           step.type === FlowActionType.PIECE
-            ? piece.actions[step.settings.actionName!]
-            : piece.triggers[step.settings.triggerName!];
+            ? piece.actions[step.settings.actionName ?? '']
+            : piece.triggers[step.settings.triggerName ?? ''];
         return {
           ...metadata,
           errorHandlingOptions: mapErrorHandlingOptions(piece, step),

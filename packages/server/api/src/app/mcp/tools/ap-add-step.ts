@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
+import { CHAT_ONLY_STEP_RULE } from './ap-research-pieces'
 import { mcpUtils } from './mcp-utils'
 
 const addStepInput = z.object({
@@ -28,7 +29,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
     return {
         title: 'ap_add_step',
         permission: Permission.WRITE_FLOW,
-        description: 'Add a new step to a flow. Optionally configure it in the same call by providing input/auth/sourceCode. Prefer PIECE actions and inline formula expressions over CODE. Never use an action marked chatOnly in ap_research_pieces as a flow step; pick a non-chatOnly action from the same piece.',
+        description: `Add a new step to a flow. Optionally configure it in the same call by providing input/auth/sourceCode. Prefer PIECE actions and inline formula expressions over CODE. ${CHAT_ONLY_STEP_RULE}`,
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             parentStepName: z.string().describe('The step name to insert after/into (e.g. "trigger", "step_1"). Use ap_flow_structure to get valid values.'),

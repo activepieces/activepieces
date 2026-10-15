@@ -39,16 +39,12 @@ describe('flowVersionValidationUtil.prepareRequest', () => {
         expect(prepared).toMatchObject({ type: FlowOperationType.UPDATE_ACTION, request: { valid: false } })
     })
 
-    it('marks an imported chat-only step invalid even when the import says valid', async () => {
-        const { trigger } = flowWithStep({ actionName: 'create_record_ai' })
-        const prepared = await prepare({ request: { type: FlowOperationType.IMPORT_FLOW, request: { displayName: 'Imported', trigger, schemaVersion: null, notes: null } } })
-        expect(prepared).toMatchObject({ type: FlowOperationType.IMPORT_FLOW, request: { trigger: { nextAction: { valid: false } } } })
-    })
-
-    it('keeps an imported normal step valid', async () => {
-        const { trigger } = flowWithStep({ actionName: 'create_record' })
-        const prepared = await prepare({ request: { type: FlowOperationType.IMPORT_FLOW, request: { displayName: 'Imported', trigger, schemaVersion: null, notes: null } } })
-        expect(prepared).toMatchObject({ type: FlowOperationType.IMPORT_FLOW, request: { trigger: { nextAction: { valid: true } } } })
+    it.each([
+        { actionName: 'create_record_ai', valid: false },
+        { actionName: 'create_record', valid: true },
+    ])('imports a step marked valid using $actionName as valid=$valid', async ({ actionName, valid }) => {
+        const prepared = await prepare({ request: importFlow({ actionName }) })
+        expect(prepared).toMatchObject({ type: FlowOperationType.IMPORT_FLOW, request: { trigger: { nextAction: { valid } } } })
     })
 
     it('accepts a normal action', async () => {
@@ -72,6 +68,10 @@ function flowWithStep({ actionName }: { actionName: string }): FlowVersion {
             nextAction: { ...pieceStep({ actionName }), valid: true },
         },
     })
+}
+
+function importFlow({ actionName }: { actionName: string }): FlowOperationRequest {
+    return { type: FlowOperationType.IMPORT_FLOW, request: { displayName: 'Imported', trigger: flowWithStep({ actionName }).trigger, schemaVersion: null, notes: null } }
 }
 
 function addPieceStep({ actionName }: { actionName: string }): FlowOperationRequest {

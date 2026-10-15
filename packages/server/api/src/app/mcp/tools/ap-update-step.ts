@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { CHAT_ONLY_STEP_RULE } from './ap-research-pieces'
 import { mcpUtils } from './mcp-utils'
 
 const updateStepInput = z.object({
@@ -26,7 +27,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
     return {
         title: 'ap_update_step',
         permission: Permission.WRITE_FLOW,
-        description: 'Update an existing step\'s settings. Provide only the fields you want to change. Never use an action marked chatOnly in ap_research_pieces as a flow step; pick a non-chatOnly action from the same piece.',
+        description: `Update an existing step's settings. Provide only the fields you want to change. ${CHAT_ONLY_STEP_RULE}`,
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to update (e.g. "step_1"). Use ap_flow_structure to get valid values.'),

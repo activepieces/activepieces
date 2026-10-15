@@ -6,6 +6,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionValidationUtil } from '../../flows/flow-version/flow-version-validator-util'
 import { domainHelper } from '../../helper/domain-helper'
 import { projectService } from '../../project/project-service'
+import { CHAT_ONLY_STEP_RULE } from './ap-research-pieces'
 import { mcpUtils } from './mcp-utils'
 
 const stepSpec = z.object({
@@ -44,7 +45,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
     return {
         title: 'ap_build_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Create a NEW flow from scratch in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP. ROUTER steps are NOT supported here (branches and conditions cannot be configured in one call) — build the rest of the flow first, then add the router with ap_add_step and configure branches with ap_add_branch / ap_update_branch. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead. Prefer PIECE actions and inline formula expressions (in a free-text/value input — never a dropdown/option field — wrapped `ap-formula-v1::{…}::ap-formula-v1`) over CODE steps — only emit a CODE step when no piece fits AND the logic exceeds the inline formula functions (see the build_flow guide expression ladder). Never use an action marked chatOnly in ap_research_pieces as a flow step; pick a non-chatOnly action from the same piece.',
+        description: `Create a NEW flow from scratch in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP. ROUTER steps are NOT supported here (branches and conditions cannot be configured in one call) — build the rest of the flow first, then add the router with ap_add_step and configure branches with ap_add_branch / ap_update_branch. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead. Prefer PIECE actions and inline formula expressions (in a free-text/value input — never a dropdown/option field — wrapped \`ap-formula-v1::{…}::ap-formula-v1\`) over CODE steps — only emit a CODE step when no piece fits AND the logic exceeds the inline formula functions (see the build_flow guide expression ladder). ${CHAT_ONLY_STEP_RULE}`,
         inputSchema: {
             flowName: z.string().describe('Name for the new flow'),
             trigger: z.object({

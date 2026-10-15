@@ -8,6 +8,7 @@ import { AiRouterActionSettingsWithValidation, CodeActionSettings, FlowActionTyp
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
+import { isChatOnlyAction } from '../../pieces/metadata/utils'
 
 const loopSettingsValidator = LoopOnItemsActionSettings.and(z.object({
     items: z.string().min(1),
@@ -131,7 +132,12 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                 break
             case FlowOperationType.IMPORT_FLOW:{
                 assertImportedStepNamesAreSafe(clonedRequest.request.trigger)
-                await invalidateChatOnlySteps({ trigger: clonedRequest.request.trigger, platformId, log })
+                const chatOnlyStepNames = await findChatOnlyStepNames({ trigger: clonedRequest.request.trigger, platformId, log })
+                flowStructureUtil.getAllSteps(clonedRequest.request.trigger)
+                    .filter((step) => chatOnlyStepNames.includes(step.name))
+                    .forEach((step) => {
+                        step.valid = false
+                    })
                 const notes = clonedRequest.request.notes
                 if (!isNil(notes)) {
                     clonedRequest.request.notes = notes.map(note => ({
@@ -157,15 +163,14 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function invalidateChatOnlySteps({ trigger, platformId, log }: { trigger: FlowTrigger, platformId: PlatformId | undefined, log: FastifyBaseLogger }): Promise<void> {
-    const pieceSteps = flowStructureUtil.getAllSteps(trigger).filter((step) => step.type === FlowActionType.PIECE)
-    await Promise.all(pieceSteps.map(async (step) => {
+async function findChatOnlyStepNames({ trigger, platformId, log }: { trigger: FlowTrigger, platformId: PlatformId | undefined, log: FastifyBaseLogger }): Promise<string[]> {
+    const validPieceSteps = flowStructureUtil.getAllSteps(trigger).filter((step) => step.type === FlowActionType.PIECE && step.valid)
+    const chatOnly = await Promise.all(validPieceSteps.map(async (step) => {
         const { pieceName, pieceVersion, actionName } = step.settings
         const piece = await pieceMetadataService(log).get({ name: pieceName, version: pieceVersion, platformId })
-        if (!isNil(actionName) && piece?.actions[actionName]?.audience === 'ai') {
-            step.valid = false
-        }
+        return !isNil(actionName) && isChatOnlyAction(piece?.actions[actionName])
     }))
+    return validPieceSteps.filter((_step, index) => chatOnly[index]).map((step) => step.name)
 }
 
 function throwChatOnlyAction({ actionName, pieceName }: PieceActionSettings): never {
@@ -207,7 +212,7 @@ async function validateAction({ settings, platformId, log }: ValidateActionParam
     if (isNil(action)) {
         return { valid: false }
     }
-    if (action.audience === 'ai') {
+    if (isChatOnlyAction(action)) {
         return { valid: false, chatOnly: true }
     }
 
