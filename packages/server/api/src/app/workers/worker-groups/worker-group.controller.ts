@@ -18,6 +18,14 @@ export const workerGroupController: FastifyPluginAsyncZod = async (app) => {
         return machineService(request.log).listWorkerGroups()
     })
 
+    app.get('/flows', ListWorkerGroupFlowsRequestOptions, async (request) => {
+        await assertWorkerGroupsEnabled(request.principal.platform.id, request.log)
+        return flowWorkerGroupService(request.log).listGroupFlows({
+            platformId: request.principal.platform.id,
+            workerGroupId: request.query.workerGroupId,
+        })
+    })
+
     app.post('/projects/:id', UpdateProjectWorkerGroupRequestOptions, async (request, reply) => {
         const platformId = request.principal.platform.id
         await assertWorkerGroupsEnabled(platformId, request.log)
@@ -84,6 +92,30 @@ const ListWorkerGroupsRequestOptions = {
                     scope: z.nativeEnum(WorkerGroupScope),
                 })),
                 sharedSlots: z.number(),
+            }),
+        },
+    },
+}
+
+const ListWorkerGroupFlowsRequestOptions = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['worker-groups'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List the flows assigned to a worker group',
+        querystring: z.object({
+            workerGroupId: z.string().min(1),
+        }),
+        response: {
+            [StatusCodes.OK]: z.object({
+                flows: z.array(z.object({
+                    id: z.string(),
+                    projectId: z.string(),
+                    displayName: z.string(),
+                })),
+                total: z.number(),
             }),
         },
     },

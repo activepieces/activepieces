@@ -3,13 +3,19 @@ import {
   WorkerGroupScope,
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Layers, Plus, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
-import { WorkerGroupInfo } from '@/features/platform-admin/api/workers-api';
+import {
+  WorkerGroupFlow,
+  WorkerGroupFlows,
+  WorkerGroupInfo,
+  workersApi,
+} from '@/features/platform-admin/api/workers-api';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { AssignFlowsDialog } from './assign-flows-dialog';
@@ -160,9 +166,7 @@ function GroupCard({
                 {t('Assign')}
               </Button>
             </div>
-            <p className="text-xs text-gray-11">
-              {t('See every pinned flow per project in the By flow tab')}
-            </p>
+            <AssignedFlowChips groupLabel={groupLabel} />
           </div>
         ) : (
           <div className="border-t pt-4">
@@ -216,6 +220,43 @@ function GroupCard({
         />
       )}
     </>
+  );
+}
+
+function AssignedFlowChips({ groupLabel }: { groupLabel: string }) {
+  const { data } = useQuery<WorkerGroupFlows>({
+    queryKey: ['worker-group-assigned-flows', groupLabel],
+    queryFn: () => workersApi.listGroupFlows(groupLabel),
+  });
+  const flows = data?.flows ?? [];
+  const total = data?.total ?? 0;
+
+  if (flows.length === 0) {
+    return <p className="text-xs text-gray-11">{t('No flows')}</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {flows.slice(0, 3).map((flow) => (
+        <FlowChip key={flow.id} flow={flow} />
+      ))}
+      {total > 3 && (
+        <span className="text-xs text-gray-11">
+          {t('+{count} more', { count: total - 3 })}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function FlowChip({ flow }: { flow: WorkerGroupFlow }) {
+  return (
+    <div className="inline-flex items-center gap-1 rounded-full border bg-gray-3/40 px-2 py-0.5 text-xs">
+      <Workflow className="size-3 shrink-0 text-gray-11" />
+      <TextWithTooltip tooltipMessage={flow.displayName}>
+        <span className="max-w-[100px] truncate">{flow.displayName}</span>
+      </TextWithTooltip>
+    </div>
   );
 }
 

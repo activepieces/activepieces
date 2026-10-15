@@ -114,6 +114,9 @@ function AssignFlowsContent({
         await queryClient.invalidateQueries({
           queryKey: ['worker-groups-flows'],
         });
+        await queryClient.invalidateQueries({
+          queryKey: ['worker-group-assigned-flows'],
+        });
         toast.success(t('Saved'));
       }
       onOpenChange(false);

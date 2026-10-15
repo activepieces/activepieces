@@ -4,6 +4,7 @@ import { WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { machineService } from '../machine/machine-service'
 import { platformQueueMigrationService } from './queue-migration.service'
 import { NO_WORKER_GROUP_SENTINEL, workerGroupQueues } from './worker-group-queues'
@@ -29,6 +30,39 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
 
     async invalidate({ flowId }: { flowId: string }): Promise<void> {
         await distributedStore.delete(getFlowWorkerGroupCacheKey(flowId))
+    },
+
+    async listGroupFlows({ platformId, workerGroupId }: ListGroupFlowsParams): Promise<WorkerGroupFlows> {
+        const groupFlowsQuery = flowRepo()
+            .createQueryBuilder('flow')
+            .innerJoin('project', 'project', 'project.id = flow."projectId"')
+            .where('project."platformId" = :platformId', { platformId })
+            .andWhere('flow."workerGroupId" = :workerGroupId', { workerGroupId })
+        const total = await groupFlowsQuery.getCount()
+        const flows = await groupFlowsQuery
+            .orderBy('flow.created', 'DESC')
+            .take(GROUP_FLOWS_LIMIT)
+            .getMany()
+        if (flows.length === 0) {
+            return { flows: [], total }
+        }
+        const latestVersions = await flowVersionRepo()
+            .createQueryBuilder('flowVersion')
+            .select(['flowVersion.flowId', 'flowVersion.displayName'])
+            .distinctOn(['flowVersion.flowId'])
+            .where('flowVersion."flowId" IN (:...flowIds)', { flowIds: flows.map((flow) => flow.id) })
+            .orderBy('flowVersion."flowId"')
+            .addOrderBy('flowVersion.created', 'DESC')
+            .getMany()
+        const displayNameByFlowId = new Map(latestVersions.map((version) => [version.flowId, version.displayName]))
+        return {
+            flows: flows.map((flow) => ({
+                id: flow.id,
+                projectId: flow.projectId,
+                displayName: displayNameByFlowId.get(flow.id) ?? flow.id,
+            })),
+            total,
+        }
     },
 
     async assignFlowToGroup({ flowId, projectId, platformId, workerGroupId }: AssignFlowToGroupParams): Promise<void> {
@@ -76,10 +110,25 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
 const getFlowWorkerGroupCacheKey = (flowId: string): string => `flow:${flowId}:worker_group`
 
 const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
+const GROUP_FLOWS_LIMIT = 10
 
 type AssignFlowToGroupParams = {
     flowId: string
     projectId: string
     platformId: string
     workerGroupId: string | null
+}
+
+type ListGroupFlowsParams = {
+    platformId: string
+    workerGroupId: string
+}
+
+type WorkerGroupFlows = {
+    flows: Array<{
+        id: string
+        projectId: string
+        displayName: string
+    }>
+    total: number
 }

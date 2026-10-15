@@ -22,6 +22,11 @@ export const workersApi = {
       workerGroupId,
     });
   },
+  listGroupFlows(workerGroupId: string) {
+    return api.get<WorkerGroupFlows>('/v1/worker-groups/flows', {
+      workerGroupId,
+    });
+  },
 };
 
 export type WorkerGroupInfo = {
@@ -33,4 +38,15 @@ export type WorkerGroupInfo = {
 export type WorkerPoolCapacity = {
   groups: WorkerGroupInfo[];
   sharedSlots: number;
+};
+
+export type WorkerGroupFlow = {
+  id: string;
+  projectId: string;
+  displayName: string;
+};
+
+export type WorkerGroupFlows = {
+  flows: WorkerGroupFlow[];
+  total: number;
 };
