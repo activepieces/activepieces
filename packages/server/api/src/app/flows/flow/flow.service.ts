@@ -360,17 +360,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     })
                     break
                 }
-                const isRepublish = !isNil(previouslyPublishedVersion) && flowPublishUtils.isRepublish({
-                    previouslyPublished: previouslyPublishedVersion,
-                    toPublish: await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined }),
-                    requestedStatus,
-                })
-                await this.updatedPublishedVersionId({
+                const { isRepublish } = await this.updatedPublishedVersionId({
                     id,
                     userId,
                     projectId,
                     platformId,
-                    isRepublish,
+                    previouslyPublishedVersion,
+                    requestedStatus,
                 })
                 await applyStatusChange({ id, projectId, newStatus: requestedStatus, isRepublish }, log)
                 break
@@ -480,13 +476,19 @@ export const flowService = (log: FastifyBaseLogger) => ({
         userId,
         projectId,
         platformId,
-        isRepublish,
-    }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
+        previouslyPublishedVersion,
+        requestedStatus,
+    }: UpdatePublishedVersionIdParams): Promise<UpdatePublishedVersionIdResult> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
         const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow({
             flowId: id,
             versionId: undefined,
+        })
+        const isRepublish = flowPublishUtils.isRepublish({
+            previouslyPublished: previouslyPublishedVersion,
+            toPublish: flowVersionToPublish,
+            requestedStatus,
         })
 
         if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
@@ -535,7 +537,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 payload: { flowId: id },
             },
         }), log)
-        return publishedFlow
+        return { publishedFlow, isRepublish }
     },
 
     async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<void> {
@@ -933,7 +935,13 @@ type UpdatePublishedVersionIdParams = {
     userId: UserId | null
     platformId: PlatformId
     projectId: ProjectId
-    isRepublish?: boolean
+    previouslyPublishedVersion: FlowVersion | undefined
+    requestedStatus: FlowStatus
+}
+
+type UpdatePublishedVersionIdResult = {
+    publishedFlow: PopulatedFlow
+    isRepublish: boolean
 }
 
 type SetPublishedVersionParams = {
