@@ -3338,7 +3338,6 @@
   "Cancel verification": "Cancel verification",
   "Verify {domain}": "Verify {domain}",
   "Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.": "Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.",
-  "Next, connect your identity provider.": "Next, connect your identity provider.",
   "Stopped early": "Stopped early",
   "Getting started": "Getting started",
   "{count, plural, =1 {Working on a task} other {Working on # tasks at once}}": "{count, plural, =1 {Working on a task} other {Working on # tasks at once}}",
@@ -3353,5 +3352,6 @@
   "Made": "Made",
   "{count, plural, =1 {1 source} other {# sources}}": "{count, plural, =1 {1 source} other {# sources}}",
   "Read {page}": "Read {page}",
-  "Searched “{query}”": "Searched “{query}”"
+  "Searched “{query}”": "Searched “{query}”",
+  "Your domain is verified. Next, connect your identity provider.": "Your domain is verified. Next, connect your identity provider."
 }
