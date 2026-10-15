@@ -43,7 +43,7 @@ export function EnterpriseTrialLine({ trial }: { trial: EnterpriseTrial }) {
     >
       <Gem
         className={cn(
-          'size-3.5 shrink-0',
+          'size-3.5 shrink-0 translate-y-px',
           trial.endsToday ? 'text-warning-11' : 'text-accent-11',
         )}
       />
