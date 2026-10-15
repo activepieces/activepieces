@@ -6,7 +6,7 @@
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "snowflake-sdk": "2.3.4",
+    "snowflake-sdk": "3.3.0",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
