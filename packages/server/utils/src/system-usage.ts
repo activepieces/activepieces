@@ -223,29 +223,14 @@ type CfsCounters = { throttled: number, periods: number }
 export type CpuPressure = { cpuStealPercentage?: number, cpuThrottledPercentage?: number }
 
 async function readProcessTreeMemoryBytes(rootPids: number[]): Promise<Map<number, number>> {
-    const processTable = await pidtree(-1, { advanced: true })
-    const childrenByParent = new Map<number, number[]>()
-    for (const { ppid, pid } of processTable) {
-        const siblings = childrenByParent.get(ppid) ?? []
-        siblings.push(pid)
-        childrenByParent.set(ppid, siblings)
+    const processTrees: { rootPid: number, selfAndDescendantPids: number[] }[] = []
+    for (const rootPid of rootPids) {
+        const { data: selfAndDescendantPids } = await tryCatch(() => pidtree(rootPid, { root: true }))
+        processTrees.push({ rootPid, selfAndDescendantPids: selfAndDescendantPids ?? [] })
     }
-    const treePidsByRoot = rootPids.map((rootPid) => ({ rootPid, treePids: collectTreePids({ rootPid, childrenByParent }) }))
-    const statsByPid = await pidusage([...new Set(treePidsByRoot.flatMap(({ treePids }) => treePids))])
-    return new Map(treePidsByRoot.map(({ rootPid, treePids }) => [
+    const statsByPid = await pidusage([...new Set(processTrees.flatMap(({ selfAndDescendantPids }) => selfAndDescendantPids))])
+    return new Map(processTrees.map(({ rootPid, selfAndDescendantPids }) => [
         rootPid,
-        treePids.reduce((total, pid) => total + (statsByPid[pid]?.memory ?? 0), 0),
+        selfAndDescendantPids.reduce((total, pid) => total + (statsByPid[pid]?.memory ?? 0), 0),
     ]))
-}
-
-function collectTreePids({ rootPid, childrenByParent }: { rootPid: number, childrenByParent: Map<number, number[]> }): number[] {
-    const visited = new Set<number>()
-    const queue = [rootPid]
-    while (queue.length > 0) {
-        const current = queue.shift()
-        if (current === undefined || visited.has(current)) continue
-        visited.add(current)
-        queue.push(...(childrenByParent.get(current) ?? []))
-    }
-    return [...visited]
 }
