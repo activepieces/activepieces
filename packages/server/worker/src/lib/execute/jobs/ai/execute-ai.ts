@@ -1,6 +1,6 @@
-import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
-import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
+import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
 import { JobContext, JobHandler, JobResult, JobResultKind } from '../../types'
 import { resolveAiFiles } from './ai-files'
@@ -118,14 +118,12 @@ async function runTextStep({ data, resolved, modelId, flowStep, billing, maxRetr
     const { provider } = credentials
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
-    const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: modelId })
     const tools = aiUtils.buildWebSearchToolsOrThrow({ provider, model: modelId, webSearchEnabled, options: webSearchOptions })
     const model = aiUtils.createModel({
         credentials,
         modelId,
         flowStep,
         billing,
-        openaiResponsesModel: webSearchEnabled && (effectiveProvider ?? provider) === AIProviderName.OPENAI,
         webSearchEnabled,
         webSearchOptions,
     })
@@ -138,7 +136,6 @@ async function runTextStep({ data, resolved, modelId, flowStep, billing, maxRetr
         ...spreadIfDefined('maxRetries', maxRetries),
         ...spreadIfDefined('maxOutputTokens', data.maxOutputTokens),
         ...spreadIfDefined('temperature', data.temperature),
-        ...spreadIfDefined('providerOptions', reasoningEffortFor({ action: data.action, provider })),
         ...spreadIfDefined('stopWhen', Object.keys(tools).length === 0 ? undefined : stepCountIs(webSearchOptions?.maxUses ?? DEFAULT_WEB_SEARCH_STEPS)),
     })
 
@@ -183,13 +180,6 @@ function buildMessages(data: ExecuteAiJobData): ModelMessage[] {
 function classificationPrompt(data: ClassifyTextJobData): string {
     return `As a text classifier, your task is to assign one of the following categories to the provided text: ${(data.categories ?? []).join(', ')}. Please respond with only the selected category as a single word, and nothing else.
       Text to classify: "${data.text ?? ''}"`
-}
-
-function reasoningEffortFor({ action, provider }: { action: AiStepAction, provider: AIProviderName }): Record<string, Record<string, string>> | undefined {
-    if (action !== AiStepAction.SUMMARIZE_TEXT || provider !== AIProviderName.OPENAI) {
-        return undefined
-    }
-    return { [AIProviderName.OPENAI]: { reasoning_effort: 'minimal' } }
 }
 
 function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: string, sources: unknown }): unknown {

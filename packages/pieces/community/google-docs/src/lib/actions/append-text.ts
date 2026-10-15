@@ -16,6 +16,22 @@ export const appendText = createAction({
       idempotent: false,
     },
     displayName: 'Append Text',
+    propertyGroups: [
+      {
+        key: 'document',
+        display: 'section',
+        label: 'Document',
+        icon: 'file',
+        props: ['documentId'],
+      },
+      {
+        key: 'content',
+        display: 'section',
+        label: 'Content',
+        icon: 'text',
+        props: ['text'],
+      },
+    ],
     props: {
       documentId: documentIdProp(),
       text: Property.LongText({

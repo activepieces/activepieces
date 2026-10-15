@@ -71,14 +71,15 @@ function ImportMemoryContent({ onClose }: { onClose: () => void }) {
           number={1}
           title={t('Copy this prompt into a chat with your other AI provider')}
         >
-          <div className="relative rounded-lg border bg-gray-3/40 p-4">
+          <div className="relative rounded-xl border bg-gray-3/40 p-4">
             <p className="max-h-28 overflow-hidden whitespace-pre-wrap pr-12 text-sm text-gray-11 [mask-image:linear-gradient(to_bottom,black_55%,transparent)]">
               {EXPORT_PROMPT}
             </p>
             <CopyButton
               textToCopy={EXPORT_PROMPT}
               variant="outline"
-              className="absolute right-3 top-3 h-8 w-8"
+              size="icon-sm"
+              className="absolute right-3 top-3"
             />
           </div>
         </Step>

@@ -32,7 +32,7 @@ const RadioGroupList = <T,>({
             <CardListItem
               key={index}
               className={cn(
-                `p-4 rounded-lg border block hover:border-accent-7 hover:bg-gray-3/50`,
+                `p-4 rounded-xl border block hover:border-accent-7 hover:bg-gray-3/50`,
                 {
                   'border-accent-9 bg-accent-3': selected,
                 },

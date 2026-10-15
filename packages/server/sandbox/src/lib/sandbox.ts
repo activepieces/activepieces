@@ -47,7 +47,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             const { error: provisionError } = await tryCatch(() => localExecutionCache(log, basePath, getSettings).provision({
                 pieces: provision.pieces,
                 codeSteps: provision.codes,
-                publicApiUrl: provision.publicApiUrl,
+                internalApiUrl: provision.internalApiUrl,
                 engineToken: provision.engineToken,
             }))
             if (provisionError) {
@@ -119,8 +119,8 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                     busy: info.busy,
                 }))
         },
-        async prewarm({ log, apiClient, publicApiUrl, flow }: PreWarmSandboxParams): Promise<void> {
-            if (isNil(apiClient) || isNil(publicApiUrl)) {
+        async prewarm({ log, apiClient, internalApiUrl, flow }: PreWarmSandboxParams): Promise<void> {
+            if (isNil(apiClient) || isNil(internalApiUrl)) {
                 return
             }
             const startedAt = Date.now()
@@ -146,11 +146,11 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                         resolver: createResolver({ apiClient, basePath, getSettings, log }),
                         flows: prewarmData.flows ?? [],
                         platformId,
-                        publicApiUrl,
+                        internalApiUrl,
                         engineToken,
                         log,
                     })
-                await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, publicApiUrl, engineToken, bestEffort: true })
+                await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, internalApiUrl, engineToken, bestEffort: true })
                 log.info({ pieceCount: pieces.length, codeStepCount: codeSteps.length, durationMs: Date.now() - startedAt }, 'Prewarmed sandbox cache')
             })
             if (error) {
@@ -184,9 +184,9 @@ async function fetchScopeFile({ apiClient, scopeFileId }: FetchScopeFileParams):
     return { pieces: content.pieces, codeSteps: content.codes }
 }
 
-async function resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUrl, engineToken, log }: ResolveFlowsForPrewarmParams): Promise<ResolvedPrewarmInputs> {
+async function resolveFlowsForPrewarm({ resolver, flows, platformId, internalApiUrl, engineToken, log }: ResolveFlowsForPrewarmParams): Promise<ResolvedPrewarmInputs> {
     const resolvedFlows = await Promise.all(flows.map(async (flow) => {
-        const { data: resolved, error: flowError } = await tryCatch(() => resolver.resolve({ flow, platformId, publicApiUrl, engineToken }))
+        const { data: resolved, error: flowError } = await tryCatch(() => resolver.resolve({ flow, platformId, internalApiUrl, engineToken }))
         if (flowError) {
             log.warn({ error: String(flowError), flow: { id: flow.id } }, 'Failed to resolve flow for prewarm')
             return null
@@ -217,7 +217,7 @@ type ResolveFlowsForPrewarmParams = {
     resolver: Resolver
     flows: { id: string, versionId: string, projectId: string }[]
     platformId: string
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
     log: ApLogger
 }

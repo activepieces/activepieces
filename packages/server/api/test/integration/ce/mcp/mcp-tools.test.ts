@@ -1,5 +1,5 @@
 import { apId, isObject } from '@activepieces/core-utils'
-import { EngineResponseStatus, FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, flowStructureUtil, FlowTriggerType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
+import { EngineResponseStatus, FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, flowStructureUtil, FlowTriggerType, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -30,6 +30,8 @@ import { apUpdateBranchTool } from '../../../../src/app/mcp/tools/ap-update-bran
 import { apListRunsTool } from '../../../../src/app/mcp/tools/ap-list-runs'
 import { apGetRunTool } from '../../../../src/app/mcp/tools/ap-get-run'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
+import { apListFoldersTool } from '../../../../src/app/mcp/tools/ap-list-folders'
+import { apMoveFlowToFolderTool } from '../../../../src/app/mcp/tools/ap-move-flow-to-folder'
 import { apReadStepSettingsTool } from '../../../../src/app/mcp/tools/ap-read-step-settings'
 import { apRunActionTool } from '../../../../src/app/mcp/tools/ap-run-action'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
@@ -328,6 +330,50 @@ describe('MCP Tools integration', () => {
         expect(text(structure)).toContain('Renamed Flow')
     })
 
+    it('ap_add_step and ap_update_step mark a list or JSON field holding one whole reference as dynamic, and a real value back as manual', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-test-containers',
+            displayName: 'Test Containers',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: {
+                locate: {
+                    name: 'locate',
+                    displayName: 'Locate',
+                    description: 'Locates assets',
+                    requireAuth: false,
+                    props: {
+                        assetIds: { type: 'ARRAY', displayName: 'Asset Ids', required: true },
+                        body: { type: 'JSON', displayName: 'Body', required: false },
+                    },
+                },
+            },
+            triggers: {},
+        }))
+        const flowId = await createFlowAndGetId(mcp, 'Whole reference flow')
+
+        await apAddStepTool({ mcp }, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PIECE,
+            displayName: 'Locate',
+            pieceName: '@activepieces/piece-test-containers',
+            actionName: 'locate',
+            input: { assetIds: '{{trigger.body.assetIds}}', body: '{{trigger.body}}' },
+        })
+        const added = flowStructureUtil.getStep('step_1', (await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })).version.trigger)
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', input: { assetIds: ['a', 'b'] } })
+        const updated = flowStructureUtil.getStep('step_1', (await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })).version.trigger)
+
+        expect(added?.settings.propertySettings).toMatchObject({ assetIds: { type: 'DYNAMIC' }, body: { type: 'DYNAMIC' } })
+        expect(updated?.settings.propertySettings).toMatchObject({ assetIds: { type: 'MANUAL' }, body: { type: 'DYNAMIC' } })
+    })
+
     it('8. ap_delete_step — removes a step from a flow', async () => {
         const ctx = await createTestContext(app)
         const mcp = makeMcp(ctx.project.id)
@@ -421,6 +467,22 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('send_email')
         expect(text(result)).toContain('to')
         expect(text(result)).toContain('subject')
+    })
+
+    it('11b. ap_get_piece_props — a guessed name that clearly means one action returns that action', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const resolved = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'sendEmail', type: 'action' })
+        const unclear = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'send', type: 'action' })
+        const ambiguous = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-email', actionOrTriggerName: 'email', type: 'trigger' })
+        const blank = await apGetPiecePropsTool(mcp, mockLog).execute({ pieceName: '@activepieces/piece-test-array', actionOrTriggerName: '__', type: 'action' })
+
+        expect(text(resolved)).toContain('✅')
+        expect(text(resolved)).toContain('/send_email')
+        expect(text(unclear)).toContain('❌')
+        expect(text(ambiguous)).toContain('❌')
+        expect(text(blank)).toContain('❌')
     })
 
     it('12. ap_get_piece_props — returns error for non-existent piece', async () => {
@@ -1270,6 +1332,77 @@ describe('MCP Tools integration', () => {
         expect(text(result)).toContain('⚠️')
         expect(text(result)).toContain('step_2')
         expect(text(result)).toContain('invalid')
+    })
+
+    it('47b. ap_build_flow — says why each invalid step is invalid', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Test Reasons',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{
+                type: FlowActionType.PIECE,
+                displayName: 'Send Email',
+                pieceName: '@activepieces/piece-test-email',
+                actionName: 'send_email',
+                input: { to: 'a@b.com' },
+            }],
+        })
+
+        expect(text(result)).toMatch(/step_1 \([^)]*subject is missing/)
+    })
+
+    it('47b2. ap_build_flow — says when only the connection is missing', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-test-keyed',
+            displayName: 'Test Keyed',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            auth: { type: 'SECRET_TEXT', displayName: 'API key', required: true },
+            actions: { ping: { name: 'ping', displayName: 'Ping', description: 'Ping', requireAuth: true, props: {} } },
+            triggers: {},
+        }))
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Test Connection Reason',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.PIECE, displayName: 'Ping', pieceName: '@activepieces/piece-test-keyed', actionName: 'ping', input: {} }],
+        })
+
+        expect(text(result)).toContain('step_1 (connection is missing)')
+    })
+
+    it('47c. ap_build_flow — explains an empty or incomplete required array', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const buildWithItems = (items: unknown[]) => apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Test Array Reasons',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.PIECE, displayName: 'With Array', pieceName: '@activepieces/piece-test-array', actionName: 'action_with_array', input: { items } }],
+        })
+
+        const incomplete = text(await buildWithItems([{}]))
+
+        expect(incomplete).toContain('step_1 (items has an invalid value)')
+    })
+
+    it('47d. ap_build_flow — never blames a dropdown that holds a step reference', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Build Test Reference Reasons',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.PIECE, displayName: 'Send Email', pieceName: '@activepieces/piece-test-email', actionName: 'send_email', input: { to: 'a@b.com', folder: "{{trigger['output'].folder}}" } }],
+        })
+
+        expect(text(result)).toMatch(/step_1 \([^)]*subject is missing/)
+        expect(text(result)).not.toContain('folder')
     })
 
     it('48. ap_build_flow — empty steps array creates trigger-only flow', async () => {
@@ -2526,6 +2659,43 @@ describe('MCP Tools integration', () => {
         expect(text(result)).not.toContain('@activepieces/piece-private-only-b')
     })
 
+    it('93. ap_research_pieces — with an intent, only the matching actions and triggers carry their full description', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const component = ({ name, displayName, description, aiDescription }: { name: string, displayName: string, description: string, aiDescription: string }) => ({ name, displayName, description, requireAuth: false, props: {}, aiMetadata: { description: aiDescription } })
+        const trigger = (fields: Parameters<typeof component>[0]) => ({ ...component(fields), type: TriggerStrategy.POLLING, sampleData: {}, testStrategy: TriggerTestStrategy.SIMULATION })
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-intent-mail',
+            displayName: 'Intent Mail',
+            version: '0.1.0',
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: {
+                send_email: component({ name: 'send_email', displayName: 'Send Email', description: 'Send an email to a recipient', aiDescription: 'AI hint for sending email' }),
+                archive_thread: component({ name: 'archive_thread', displayName: 'Archive Thread', description: 'Move a thread out of the inbox', aiDescription: 'AI hint for archiving' }),
+            },
+            triggers: {
+                new_email: trigger({ name: 'new_email', displayName: 'New Email', description: 'Fires when an email arrives', aiDescription: 'AI hint for incoming email' }),
+                new_label: trigger({ name: 'new_label', displayName: 'New Label', description: 'Fires when a label is created', aiDescription: 'AI hint for labels' }),
+            },
+        }))
+
+        const matched = text(await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-intent-mail'], forIntent: 'send an email' }))
+        const unmatched = text(await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-intent-mail'], forIntent: 'translate a document' }))
+        const noIntent = text(await apResearchPiecesTool(mcp, mockLog).execute({ pieceNames: ['@activepieces/piece-intent-mail'] }))
+
+        expect(matched).toContain('AI hint for sending email')
+        expect(matched).toContain('AI hint for incoming email')
+        expect(matched).toContain('archive_thread')
+        expect(matched).not.toContain('AI hint for archiving')
+        expect(matched).not.toContain('AI hint for labels')
+        expect(unmatched).toContain('new_label')
+        expect(unmatched).not.toContain('AI hint')
+        expect(noIntent).toContain('AI hint for archiving')
+        expect(noIntent).toContain('AI hint for labels')
+    })
+
     // ── Flow attribution (createdBy / ownerId) ───────────────────────
 
     it('ap_create_flow — stamps createdBy=MCP and ownerId=connected user', async () => {
@@ -2768,6 +2938,79 @@ describe('MCP Tools integration', () => {
 
         const folderIds = results.map((result) => structured({ result, schema: z.object({ folderId: z.string() }) }).folderId)
         expect(new Set(folderIds).size).toBe(1)
+    })
+
+    it('ap_move_flow_to_folder creates a folder by name, reuses it in any case, and takes the flow back out', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Folder flow')
+        const otherFlowId = await createFlowAndGetId(mcp, 'Folder flow 2')
+        const moveSchema = z.object({ folderId: z.string().nullable(), folderName: z.string().nullable(), moved: z.boolean() })
+        const move = apMoveFlowToFolderTool({ mcp }, mockLog).execute
+
+        const created = await move({ flowId, folderName: 'Order intake' })
+        const reused = await move({ flowId: otherFlowId, folderName: 'order INTAKE' })
+        const again = await move({ flowId, folderName: 'Order intake' })
+        const listed = await apListFoldersTool(mcp, mockLog).execute({})
+        const out = await move({ flowId, uncategorized: true })
+
+        const createdContent = structured({ result: created, schema: moveSchema })
+        const otherFlow = await flowService(mockLog).getOneOrThrow({ id: otherFlowId, projectId: ctx.project.id })
+        const flow = await flowService(mockLog).getOneOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(createdContent).toMatchObject({ folderName: 'Order intake', moved: true })
+        expect(text(created)).toContain('to folder "Order intake"')
+        expect(structured({ result: reused, schema: moveSchema })).toMatchObject({ folderId: createdContent.folderId, folderName: 'Order intake' })
+        expect(otherFlow.folderId).toBe(createdContent.folderId)
+        expect(structured({ result: again, schema: moveSchema }).moved).toBe(false)
+        expect(text(listed)).toContain('Order intake')
+        expect(text(listed)).toContain('2 flows')
+        expect(text(out)).toContain('out of its folder')
+        expect(flow.folderId).toBeNull()
+    })
+
+    it('ap_move_flow_to_folder called concurrently into a new name in different casing files both flows into one folder', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowIds = await Promise.all([createFlowAndGetId(mcp, 'Parallel move 1'), createFlowAndGetId(mcp, 'Parallel move 2')])
+
+        const results = await Promise.all([
+            apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId: flowIds[0], folderName: 'Parallel move' }),
+            apMoveFlowToFolderTool({ mcp }, mockLog).execute({ flowId: flowIds[1], folderName: 'PARALLEL move' }),
+        ])
+
+        const folderIds = results.map((result) => structured({ result, schema: z.object({ folderId: z.string() }) }).folderId)
+        const flows = await Promise.all(flowIds.map((id) => flowService(mockLog).getOneOrThrow({ id, projectId: ctx.project.id })))
+        expect(new Set(folderIds).size).toBe(1)
+        expect(flows.map((flow) => flow.folderId)).toEqual([folderIds[0], folderIds[0]])
+    })
+
+    it('ap_move_flow_to_folder needs exactly one target and only moves flows in its own project', async () => {
+        const ctx = await createTestContext(app)
+        const other = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Guarded flow')
+        const foreignFlowId = await createFlowAndGetId(makeMcp(other.project.id), 'Other project flow')
+        const move = apMoveFlowToFolderTool({ mcp }, mockLog).execute
+
+        const none = await move({ flowId })
+        const both = await move({ flowId, folderName: 'A', uncategorized: true })
+        const foreign = await move({ flowId: foreignFlowId, folderName: 'Mine' })
+
+        const foreignFlow = await flowService(mockLog).getOneOrThrow({ id: foreignFlowId, projectId: other.project.id })
+        expect(text(none)).toContain('exactly one')
+        expect(text(both)).toContain('exactly one')
+        expect(text(foreign)).toContain('Flow not found')
+        expect(foreignFlow.folderId).toBeNull()
+    })
+
+    it('ap_list_folders returns every folder past the first page', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        await Promise.all(Array.from({ length: 105 }, (_, i) => flowFolderService(mockLog).upsert({ projectId: ctx.project.id, request: { projectId: ctx.project.id, displayName: `Folder ${i}` } })))
+
+        const listed = await apListFoldersTool(mcp, mockLog).execute({})
+
+        expect(structured({ result: listed, schema: z.object({ count: z.number() }) }).count).toBe(105)
     })
 
     it('ap_create_flow without a folder leaves the flow unfiled', async () => {

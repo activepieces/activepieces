@@ -30,6 +30,29 @@ export const createDocumentBasedOnTemplate = createAction({
     idempotent: true,
   },
   displayName: 'Edit Template File',
+  propertyGroups: [
+    {
+      key: 'document',
+      display: 'section',
+      label: 'Document',
+      icon: 'file',
+      props: ['template'],
+    },
+    {
+      key: 'placeholders',
+      display: 'section',
+      label: 'Placeholders',
+      icon: 'tag',
+      props: ['placeholder_format', 'values'],
+    },
+    {
+      key: 'images',
+      display: 'section',
+      label: 'Images',
+      icon: 'paperclip',
+      props: ['images'],
+    },
+  ],
   props: {
     template: documentIdProp({
       description: 'Placeholders in this document are replaced in place.',
@@ -57,7 +80,6 @@ export const createDocumentBasedOnTemplate = createAction({
       displayName: 'Image Replacements',
       description: 'Each row swaps one image in the document for a new one.',
       required: false,
-      advanced: true,
       properties: {
         imageObjectId: Property.ShortText({
           displayName: 'Image Object ID',

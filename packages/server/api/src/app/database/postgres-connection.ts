@@ -24,6 +24,7 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { BackgroundMigration } from './background-migration'
 import { commonProperties } from './database-connection'
 import { Migration } from './migration'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
@@ -454,6 +455,7 @@ import { AddEventDestinationHeaders1863000000000 } from './migration/postgres/18
 import { AddPlatformTierFastAndConversationTier1864000000000 } from './migration/postgres/1864000000000-AddPlatformTierFastAndConversationTier'
 import { AddAuditLogRetentionDaysToPlatform1865000000000 } from './migration/postgres/1865000000000-AddAuditLogRetentionDaysToPlatform'
 import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from './migration/postgres/1866000000000-AddAiSpecificModelsVisibleToPlatformConfiguration'
+import { AddAgentTask1867000000000 } from './migration/postgres/1867000000000-AddAgentTask'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -463,6 +465,10 @@ const getSslConfig = (): boolean | TlsOptions => {
         }
     }
     return false
+}
+
+export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
+    return []
 }
 
 export const getMigrations = (): (new () => Migration)[] => {
@@ -923,6 +929,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddPlatformTierFastAndConversationTier1864000000000,
         AddAuditLogRetentionDaysToPlatform1865000000000,
         AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000,
+        AddAgentTask1867000000000,
     ]
     return migrations
 }
@@ -930,7 +937,7 @@ export const getMigrations = (): (new () => Migration)[] => {
 
 export const createPostgresDataSource = (): DataSource => {
     const migrationConfig: MigrationConfig = {
-        migrationsRun: true,
+        migrationsRun: false,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
         synchronize: false,

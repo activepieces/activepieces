@@ -46,11 +46,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
+import {
+  AgentStructuredOutput,
+  ModelPicker,
+  PROVIDER_EMBEDDING_MODELS,
+} from '@/features/agents';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { DeleteAgentDialog } from '@/features/agents/delete-agent-dialog';
 import { agentsMutations } from '@/features/agents/hooks/agents-hooks';
 import { MoveAgentDialog } from '@/features/agents/move-agent-dialog';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import {
   ApProjectDisplay,
   getProjectName,
@@ -105,7 +110,7 @@ const AgentProjectRow = ({ agent }: { agent: Agent }) => {
   return (
     <FormItem className="flex flex-col gap-2">
       <PanelSectionLabel label={t('Project')} />
-      <div className="flex items-center justify-between gap-3 rounded-[10px] border border-gray-6 px-3 py-2.5">
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-6 px-3 py-2.5">
         <ApProjectDisplay
           title={getProjectName(home)}
           icon={home.icon}
@@ -209,13 +214,18 @@ const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
 const ConfigureBehaviorTab = ({
   form,
   needsModel,
+  projectId,
 }: {
   form: ReturnType<
     typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
   >;
   needsModel: boolean;
+  projectId: string;
 }) => {
   const tools = form.watch('draft.tools') ?? [];
+  const draft = form.watch('draft');
+  const { data: chatProvider } = aiProviderQueries.useChatProvider();
+  const provider = chatProvider?.provider;
   const knowledgeCount = tools.filter(
     (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
   ).length;
@@ -236,7 +246,7 @@ const ConfigureBehaviorTab = ({
                 placeholder={t(
                   'Reply to refund requests. Check the order in Stripe first, and escalate anything over $200.',
                 )}
-                className="rounded-[10px] px-3 py-3 text-sm leading-relaxed"
+                className="px-3 py-3 text-sm leading-relaxed"
               />
             </FormControl>
             <FormMessage />
@@ -246,22 +256,16 @@ const ConfigureBehaviorTab = ({
       <FormItem className="flex flex-col gap-2">
         <PanelSectionLabel label={t('Model')} />
         {needsModel && (
-          <p className="text-[13px] leading-4 text-danger-11">
+          <p className="text-sm leading-4 text-danger-11">
             {t('Pick a model so this agent can answer.')}
           </p>
         )}
-        <AIModelSelector
-          hideLabel
-          showEmbeddingNote={knowledgeCount > 0}
-          defaultProvider={form.watch('draft.provider') ?? undefined}
-          defaultModel={form.watch('draft.modelName') ?? undefined}
-          defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
-          onChange={({ provider, model, configId, picked: pickedBy }) => {
-            const picked = {
-              provider: parseProvider(provider) ?? null,
-              modelName: model ?? null,
-              providerConfigId: configId ?? null,
-            };
+        <ModelPicker
+          projectId={projectId}
+          surface="agent"
+          value={agentEditState.modelChoiceOf({ config: draft })}
+          onChange={(choice) => {
+            const picked = agentEditState.modelPickOf({ choice });
             if (
               !agentEditState.modelPickChanged({
                 picked,
@@ -270,24 +274,42 @@ const ConfigureBehaviorTab = ({
             ) {
               return;
             }
-            const shouldDirty = pickedBy !== 'default';
-            form.setValue('draft.provider', picked.provider, { shouldDirty });
-            form.setValue('draft.modelName', picked.modelName, { shouldDirty });
-            form.setValue('draft.providerConfigId', picked.providerConfigId, {
-              shouldDirty,
+            form.setValue(
+              'draft.provider',
+              parseProvider(picked.provider ?? undefined),
+              { shouldDirty: true },
+            );
+            form.setValue('draft.modelName', picked.modelName ?? null, {
+              shouldDirty: true,
+            });
+            form.setValue(
+              'draft.providerConfigId',
+              picked.providerConfigId ?? null,
+              { shouldDirty: true },
+            );
+            form.setValue('draft.modelTierId', picked.modelTierId ?? null, {
+              shouldDirty: true,
             });
           }}
         />
+        {knowledgeCount > 0 && !isNil(provider) && (
+          <p className="text-xs text-gray-11">
+            {PROVIDER_EMBEDDING_MODELS[provider]
+              ? t('Embedding model for knowledge base: {model}', {
+                  model: PROVIDER_EMBEDDING_MODELS[provider],
+                })
+              : t(
+                  'Your chat provider does not support knowledge base embeddings.',
+                )}
+          </p>
+        )}
       </FormItem>
       <FormField
         control={form.control}
         name="draft.tools"
         render={({ field }) => (
           <FormItem className="flex flex-col gap-2">
-            <AgentTools
-              toolsField={field}
-              selectedProvider={form.watch('draft.provider') ?? undefined}
-            />
+            <AgentTools toolsField={field} />
             <FormMessage />
           </FormItem>
         )}
@@ -378,7 +400,7 @@ const ConfigureSettingsTab = ({
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Shape')} />
-          <div className="grid grid-cols-6 gap-2.5 rounded-[10px] border border-gray-6 p-3">
+          <div className="grid grid-cols-6 gap-2.5 rounded-lg border border-gray-6 p-3">
             {Object.values(AgentIcon).map((iconName) => (
               <button
                 key={iconName}
@@ -386,7 +408,7 @@ const ConfigureSettingsTab = ({
                 aria-label={iconName}
                 onClick={() => field.onChange(iconName)}
                 className={cn(
-                  'flex items-center justify-center rounded-[10px] p-[3px]',
+                  'flex items-center justify-center rounded-lg p-[3px]',
                   field.value === iconName && 'ring-2 ring-gray-12',
                 )}
               >
@@ -408,7 +430,7 @@ const ConfigureSettingsTab = ({
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Color')} />
-          <div className="grid grid-cols-6 gap-2.5 rounded-[10px] border border-gray-6 p-3">
+          <div className="grid grid-cols-6 gap-2.5 rounded-lg border border-gray-6 p-3">
             {PICKABLE_COLOR_NAMES.map((colorName) => (
               <button
                 key={colorName}
@@ -502,8 +524,9 @@ const AgentConfigurePanel = forwardRef<
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
 
   const values = form.watch();
-  const formNeedsModel =
-    isNil(values.draft?.modelName) || isNil(values.draft?.provider);
+  const formNeedsModel = !agentEditState.hasModel({
+    config: values.draft ?? {},
+  });
   const live = liveValuesOf(agent);
   const hasChanges =
     isNil(live) || !agentEditState.sameConfig({ left: values, right: live });
@@ -625,7 +648,7 @@ const AgentConfigurePanel = forwardRef<
         >
           <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-gray-6 px-[18px]">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
+              <span className="truncate text-base font-semibold leading-5 tracking-tight">
                 {t('Configure')}
               </span>
               {unsavedTyping && (
@@ -641,7 +664,6 @@ const AgentConfigurePanel = forwardRef<
                   type="button"
                   variant="outline"
                   onClick={takeTheirVersion}
-                  className="h-[34px] shrink-0 rounded-lg px-4"
                 >
                   {t('Changed in chat — reload')}
                 </Button>
@@ -650,7 +672,7 @@ const AgentConfigurePanel = forwardRef<
                   <Button
                     type="submit"
                     loading={updateAgent.isPending}
-                    className="h-[34px] shrink-0 rounded-lg px-4 animate-in fade-in duration-200"
+                    className="animate-in fade-in duration-200"
                   >
                     {t('Publish')}
                   </Button>
@@ -659,10 +681,10 @@ const AgentConfigurePanel = forwardRef<
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
+                size="icon-xs"
                 aria-label={t('Close')}
                 onClick={requestExit}
-                className="size-7 shrink-0 text-gray-11"
+                className="text-gray-11"
               >
                 <X size={16} />
               </Button>
@@ -692,7 +714,11 @@ const AgentConfigurePanel = forwardRef<
                 value="behavior"
                 className="mt-0 flex flex-col gap-6"
               >
-                <ConfigureBehaviorTab form={form} needsModel={formNeedsModel} />
+                <ConfigureBehaviorTab
+                  form={form}
+                  needsModel={formNeedsModel}
+                  projectId={agent.projectId}
+                />
               </TabsContent>
               <TabsContent
                 value="settings"

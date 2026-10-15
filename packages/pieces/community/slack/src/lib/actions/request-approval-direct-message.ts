@@ -22,6 +22,22 @@ export const requestApprovalDirectMessageAction = createAction({
     idempotent: false,
   },
   outputSchema: approvalActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['userId'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['text'],
+    },
+  ],
   props: {
     userId: userId(true),
     text,

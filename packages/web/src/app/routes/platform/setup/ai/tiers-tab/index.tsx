@@ -359,7 +359,7 @@ function TiersSkeleton() {
           className="rounded-xl border border-gray-6/60 bg-panel shadow-panel"
         >
           <div className="flex items-center gap-3 px-5 py-4">
-            <Skeleton className="size-10 shrink-0 rounded-lg" />
+            <Skeleton className="size-10 shrink-0 rounded-xl" />
             <div className="flex flex-1 flex-col gap-2">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-3 w-40" />
@@ -371,7 +371,7 @@ function TiersSkeleton() {
             {[0, 1, 2].map((row) => (
               <div key={row} className="flex items-center gap-3 px-2 py-2.5">
                 <Skeleton className="size-2 shrink-0 rounded-full" />
-                <Skeleton className="size-8 shrink-0 rounded-lg" />
+                <Skeleton className="size-8 shrink-0 rounded-xl" />
                 <div className="flex flex-1 flex-col gap-1.5">
                   <Skeleton className="h-3.5 w-40" />
                   <Skeleton className="h-3 w-24" />
@@ -401,7 +401,7 @@ function TiersSkeleton() {
             key={row}
             className="flex items-center gap-3 border-t border-gray-6/60 px-5 py-3"
           >
-            <Skeleton className="size-8 shrink-0 rounded-lg" />
+            <Skeleton className="size-8 shrink-0 rounded-xl" />
             <div className="flex flex-1 flex-col gap-1.5">
               <Skeleton className="h-3.5 w-32" />
               <Skeleton className="h-3 w-16" />
