@@ -13,6 +13,7 @@ import {
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import { useIsPanelChat } from '@/features/chat/lib/chat-variant-context';
 import { toolIconUtils } from '@/features/chat/lib/tool-icons';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
@@ -32,6 +33,7 @@ export function ThinkingBlock({
   onOpenChange?: (open: boolean) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const isPanel = useIsPanelChat();
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -67,7 +69,9 @@ export function ThinkingBlock({
               'hover:text-gray-12 transition-colors cursor-pointer',
           )}
         >
-          {isStreaming ? (
+          {isStreaming && isPanel ? (
+            <ThinkingDots />
+          ) : isStreaming ? (
             <TextShimmer className="text-sm" duration={2}>
               {t('Thinking...')}
             </TextShimmer>
@@ -99,6 +103,23 @@ export function ThinkingBlock({
         </CollapsibleContent>
       </Collapsible>
     </motion.div>
+  );
+}
+
+function ThinkingDots() {
+  return (
+    <span className="flex items-center gap-2 text-gray-9">
+      {t('Thinking')}
+      <span className="flex gap-1">
+        {[0, 150, 300].map((delay) => (
+          <span
+            key={delay}
+            className="size-1 animate-bounce rounded-full bg-gray-9"
+            style={{ animationDelay: `${delay}ms` }}
+          />
+        ))}
+      </span>
+    </span>
   );
 }
 

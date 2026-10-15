@@ -7,6 +7,8 @@ import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApNode, CanvasOrientation } from '../utils/types';
 
 const verticalPaddingOnFitView = 100;
+const MIN_FIT_ZOOM = 0.9;
+const MIN_FIT_ZOOM_WITH_CHAT = 0.7;
 
 const useFitToView = ({
   canvasWidth,
@@ -20,9 +22,10 @@ const useFitToView = ({
   selectedStep: string | null;
 }) => {
   const { setViewport, getNodes, getNode, getViewport } = useReactFlow();
-  const canvasOrientation = useBuilderStateContext(
-    (state) => state.canvasOrientation,
+  const [canvasOrientation, isBuilderChatOpen] = useBuilderStateContext(
+    (state) => [state.canvasOrientation, state.isBuilderChatOpen],
   );
+  const minFitZoom = minFitZoomFor({ isBuilderChatOpen });
 
   const handleFitToView = useCallback(
     ({
@@ -48,7 +51,7 @@ const useFitToView = ({
         const zoomRatio = Math.min(
           Math.max(
             Math.min(canvasWidth / graphWidth, canvasHeight / graphHeight),
-            0.9,
+            minFitZoom,
           ),
           1.25,
         );
@@ -75,7 +78,7 @@ const useFitToView = ({
         orientation: effectiveOrientation,
       }).height;
       const zoomRatio = Math.min(
-        Math.max(canvasHeight / graphHeight, 0.9),
+        Math.max(canvasHeight / graphHeight, minFitZoom),
         1.25,
       );
 
@@ -95,7 +98,14 @@ const useFitToView = ({
         },
       );
     },
-    [getNodes, canvasHeight, setViewport, canvasWidth, canvasOrientation],
+    [
+      getNodes,
+      canvasHeight,
+      setViewport,
+      canvasWidth,
+      canvasOrientation,
+      minFitZoom,
+    ],
   );
 
   const adjustViewportForSelectedStep = (stepId: string) => {
@@ -186,4 +196,14 @@ const calculateViewportDelta = (
       : 0,
 });
 
-export { useFitToView };
+function minFitZoomFor({
+  isBuilderChatOpen,
+}: {
+  isBuilderChatOpen: boolean;
+}): number {
+  return isBuilderChatOpen ? MIN_FIT_ZOOM_WITH_CHAT : MIN_FIT_ZOOM;
+}
+
+const fitToViewZoom = { minFitZoom: minFitZoomFor };
+
+export { useFitToView, fitToViewZoom };

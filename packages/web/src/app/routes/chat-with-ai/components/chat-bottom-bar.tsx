@@ -9,6 +9,7 @@ import {
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { useIsPanelChat } from '@/features/chat/lib/chat-variant-context';
 import { cn } from '@/lib/utils';
 
 import {
@@ -38,7 +39,9 @@ export function ChatBottomBar({
   placeholder,
   banner,
   recede,
+  leftActions,
 }: ChatBottomBarProps) {
+  const isPanel = useIsPanelChat();
   const [composerEngaged, setComposerEngaged] = useState(false);
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
@@ -122,11 +125,19 @@ export function ChatBottomBar({
 
   return (
     <div className="flex flex-col gap-2">
-      {activeCard}
+      {activeCard && isPanel ? (
+        <div className="chat-spotlight rounded-xl animate-in fade-in slide-in-from-bottom-2 duration-500">
+          {activeCard}
+        </div>
+      ) : (
+        activeCard
+      )}
       <div
         className={cn(
           'overflow-hidden rounded-xl border transition-colors',
-          minimal
+          isPanel
+            ? 'chat-panel-composer rounded-[10px] border-[1.5px] border-transparent'
+            : minimal
             ? 'border-transparent bg-transparent hover:bg-gray-3/30'
             : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',
         )}
@@ -144,6 +155,7 @@ export function ChatBottomBar({
               ? t('Or reply in your own words')
               : placeholder ?? t('Reply...')
           }
+          leftActions={leftActions}
           rightActions={
             hideModelSelector === true ? null : (
               <ChatModelSelector
@@ -232,4 +244,5 @@ type ChatBottomBarProps = {
   placeholder?: string;
   banner?: ReactNode;
   recede?: boolean;
+  leftActions?: ReactNode;
 };

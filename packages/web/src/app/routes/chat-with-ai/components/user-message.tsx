@@ -3,6 +3,7 @@ import { Paperclip } from 'lucide-react';
 import { motion } from 'motion/react';
 import { memo } from 'react';
 
+import { UserAvatar } from '@/components/custom/user-avatar';
 import {
   Message,
   MessageAction,
@@ -10,6 +11,8 @@ import {
   MessageContent as PromptKitMessageContent,
 } from '@/components/prompt-kit/message';
 import { ChatUIMessage } from '@/features/chat/lib/chat-types';
+import { useIsPanelChat } from '@/features/chat/lib/chat-variant-context';
+import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
 import { getTextFromParts } from '../lib/message-parsers';
@@ -39,6 +42,7 @@ export const UserMessage = memo(function UserMessage({
     .map((p) => p.filename);
 
   const isFromHistory = message.id.startsWith('hist-');
+  const isPanel = useIsPanelChat();
 
   return (
     <motion.div
@@ -47,9 +51,17 @@ export const UserMessage = memo(function UserMessage({
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="max-w-[80%]">
-        <Message className="flex-row-reverse">
-          <div className="bg-gray-3 rounded-xl rounded-br-md px-2.5 py-1 text-sm">
+      <div className={isPanel ? 'max-w-[90%]' : 'max-w-[80%]'}>
+        <Message className={cn('flex-row-reverse', isPanel && 'gap-2')}>
+          {isPanel && <CurrentUserAvatar />}
+          <div
+            className={cn(
+              'bg-gray-3 text-sm',
+              isPanel
+                ? 'rounded-lg p-3'
+                : 'rounded-xl rounded-br-md px-2.5 py-1',
+            )}
+          >
             {fileNames.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-1.5">
                 {fileNames.map((name, i) => (
@@ -84,3 +96,22 @@ export const UserMessage = memo(function UserMessage({
     </motion.div>
   );
 });
+
+function CurrentUserAvatar() {
+  const { data: user } = userHooks.useCurrentUser();
+  if (!user) {
+    return null;
+  }
+  return (
+    <span className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-3">
+      <UserAvatar
+        className="size-full object-cover"
+        name={`${user.firstName} ${user.lastName}`}
+        email={user.email}
+        imageUrl={user.imageUrl}
+        size={24}
+        disableTooltip={true}
+      />
+    </span>
+  );
+}

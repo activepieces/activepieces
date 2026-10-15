@@ -2,6 +2,7 @@ import { isNil, Permission } from '@activepieces/core-utils'
 import { FlowStatus, McpOAuthClientKey, McpProperty, McpServer as McpServerSchema, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
+import { chatFlowAwareness } from '../ee/agent/chat-flow-awareness'
 import { flowService } from '../flows/flow/flow.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
@@ -38,7 +39,7 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 - **CODE steps**: export a \`code\` fn; access inputs via \`inputs.key\`.
 - **Tables**: use field names, not IDs.`
 
-export async function buildMcpServer({ mcp, userId, platformId, platformDisabledTools, clientKey, clientId, isInAppChat, log, resolveProjectMcp }: {
+export async function buildMcpServer({ mcp, userId, platformId, platformDisabledTools, clientKey, clientId, isInAppChat, chatConversationId, log, resolveProjectMcp }: {
     mcp: PopulatedMcpServer
     userId?: string
     platformId?: string
@@ -46,6 +47,7 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
     clientKey: McpOAuthClientKey | null
     clientId: string
     isInAppChat: boolean
+    chatConversationId: string | null
     log: FastifyBaseLogger
     resolveProjectMcp?: (projectId: string) => Promise<McpServerSchema>
 }): Promise<McpServer> {
@@ -81,7 +83,7 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
             : ALLOW_ALL
         const activityContext: McpActivityContext | null = isNil(platformId) || isNil(userId) ? null : { platformId, projectId, userId, clientKey }
         registerFlowTools({ server, mcp, projectId, permissionChecker, billing, log })
-        registerStaticTools({ server, mcp, projectId, userId, platformDisabledTools, permissionChecker, activityContext, billing, log })
+        registerStaticTools({ server, mcp, projectId, userId, platformDisabledTools, permissionChecker, activityContext, billing, chatConversationId, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
         registerPlatformTools({ server, mcp, platformId: mcp.platformId, userId, clientKey, selectionScope: { platformId: mcp.platformId, userId, clientId }, resolveProjectMcp, billing, log })
@@ -289,7 +291,7 @@ export async function runFlowAsTool({ flow, properties, payload, returnsResponse
     return { content: [{ type: 'text', text }], ...(isOkay ? {} : { isError: true }) }
 }
 
-function registerStaticTools({ server, mcp, projectId, userId, platformDisabledTools, permissionChecker, activityContext, billing, log }: RegisterStaticToolsParams): void {
+function registerStaticTools({ server, mcp, projectId, userId, platformDisabledTools, permissionChecker, activityContext, billing, chatConversationId, log }: RegisterStaticToolsParams): void {
     const tools = filterEnabledTools({
         tools: activepiecesTools({ ...mcp, projectId }, userId, log),
         disabledTools: [...(mcp.disabledTools ?? []), ...platformDisabledTools],
@@ -301,7 +303,10 @@ function registerStaticTools({ server, mcp, projectId, userId, platformDisabledT
             permission: tool.permission,
             toolTitle: tool.title,
         })
-        const recordedExecute = withActivityRecording({ execute, tool, resolveContext: () => Promise.resolve(activityContext), log })
+        const awareExecute = isNil(chatConversationId)
+            ? execute
+            : chatFlowAwareness(log).wrap({ execute, toolTitle: tool.title, conversationId: chatConversationId, projectId })
+        const recordedExecute = withActivityRecording({ execute: awareExecute, tool, resolveContext: () => Promise.resolve(activityContext), log })
         server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => recordedExecute(args))
     })
 }
@@ -358,4 +363,5 @@ type RegisterStaticToolsParams = RegisterToolsParams & {
     userId?: string
     platformDisabledTools: string[]
     activityContext: McpActivityContext | null
+    chatConversationId: string | null
 }

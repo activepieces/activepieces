@@ -77,7 +77,8 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         const serverMcp = conversationProjectId
             ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
             : mcp
-        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, platformId, clientKey: identity.clientKey, clientId: identity.clientId, isInAppChat: isInAppChatIdentity(identity) })
+        const isInAppChat = isInAppChatIdentity(identity)
+        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, platformId, clientKey: identity.clientKey, clientId: identity.clientId, isInAppChat, chatConversationId: isInAppChat && !isNil(conversationProjectId) ? conversationId : null })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,

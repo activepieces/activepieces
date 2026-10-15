@@ -67,7 +67,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         return mcpServerService(log).getByPlatformId(platformId)
     },
 
-    buildServer: async ({ mcp, userId, platformId, clientKey, clientId, isInAppChat }: { mcp: PopulatedMcpServer, userId?: string, platformId?: string, clientKey?: McpOAuthClientKey | null, clientId: string, isInAppChat?: boolean }) => {
+    buildServer: async ({ mcp, userId, platformId, clientKey, clientId, isInAppChat, chatConversationId }: { mcp: PopulatedMcpServer, userId?: string, platformId?: string, clientKey?: McpOAuthClientKey | null, clientId: string, isInAppChat?: boolean, chatConversationId?: string | null }) => {
         return buildMcpServer({
             mcp,
             userId,
@@ -78,6 +78,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
             clientKey: clientKey ?? null,
             clientId,
             isInAppChat: isInAppChat ?? false,
+            chatConversationId: chatConversationId ?? null,
             log,
             resolveProjectMcp: (projectId: string) => mcpServerService(log).getByProjectId(projectId),
         })

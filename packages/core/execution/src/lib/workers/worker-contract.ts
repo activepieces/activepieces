@@ -135,6 +135,7 @@ export type GetAgentConfigRequest = {
     userId: string
     source?: AgentRunSource
     messageSource?: 'onboarding'
+    selectedStepName?: string
     agentId?: string
     flowRunId?: string
     projectId?: string | null

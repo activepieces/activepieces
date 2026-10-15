@@ -73,6 +73,9 @@ export const FlowCanvas = React.memo(
     useHandleKeyPressOnCanvas();
     flowCanvasHooks.useResizeCanvas(containerRef, setHasCanvasBeenInitialised);
     const reactFlowStore = useStoreApi();
+    const setFollowingChat = useBuilderStateContext(
+      (state) => state.setFollowingChat,
+    );
     const isShiftKeyPressed = useKeyPress('Shift');
     const inGrabPanningMode = !isShiftKeyPressed && panningMode === 'grab';
     const onSelectionChange = useCallback(
@@ -218,6 +221,11 @@ export const FlowCanvas = React.memo(
               onContextMenu={onContextMenu}
               onPaneClick={() => {
                 reactFlowStore.getState().unselectNodesAndEdges();
+              }}
+              onMoveStart={(event) => {
+                if (event) {
+                  setFollowingChat(false);
+                }
               }}
               translateExtent={translateExtent}
               nodeTypes={flowCanvasConsts.nodeTypes}

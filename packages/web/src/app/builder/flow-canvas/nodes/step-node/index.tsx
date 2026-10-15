@@ -11,6 +11,7 @@ import React, { useMemo } from 'react';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
+import { builderChatSelectors } from '@/app/builder/state/builder-chat-state';
 import { RightSideBarType } from '@/app/builder/types';
 import { stepsHooks } from '@/features/pieces';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { flowCanvasConsts } from '../../utils/consts';
 import { ApStepNode } from '../../utils/types';
 
+import { StepNodeChatBadge } from './step-node-chat-badge';
 import { StepNodeChevron } from './step-node-chevron';
 import { StepNodeDisplayName } from './step-node-display-name';
 import { StepNodeLogo } from './step-node-logo';
@@ -39,6 +41,10 @@ const ApStepCanvasNode = React.memo(
       setOpenedPieceSelectorStepNameOrAddButtonId,
       isRightSidebarOpen,
       canvasOrientation,
+      isRecentlyChanged,
+      isRecentlyAdded,
+      isChatEditing,
+      chatCameraStep,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.selectedStep === step.name,
@@ -50,7 +56,15 @@ const ApStepCanvasNode = React.memo(
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
       state.rightSidebar !== RightSideBarType.NONE,
       state.canvasOrientation,
+      state.recentlyChangedSteps.includes(step.name),
+      state.recentlyAddedSteps.includes(step.name),
+      state.chatActivity?.targets.some(
+        (target) => target.kind === 'editing' && target.stepName === step.name,
+      ) ?? false,
+      builderChatSelectors.cameraStepName(state),
     ]);
+    const isInChatSpotlight = chatCameraStep === step.name;
+    const isOutOfChatSpotlight = chatCameraStep !== null && !isInChatSpotlight;
     const isHorizontal = canvasOrientation === 'horizontal';
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
@@ -144,6 +158,10 @@ const ApStepCanvasNode = React.memo(
             'bg-gray-4': isSkipped,
             'rounded-tl-none': isTrigger && !isHorizontal,
             'hover:border-gray-8': !isSelected,
+            'border-accent-9 shadow-md': isRecentlyChanged || isChatEditing,
+            'chat-spotlight border-accent-9': isInChatSpotlight,
+            'opacity-40 duration-500': isOutOfChatSpotlight,
+            'animate-in fade-in zoom-in-75 duration-700': isRecentlyAdded,
           },
         )}
         onClick={(e) => handleStepClick(e)}
@@ -153,6 +171,10 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivListeners}
       >
         {isTrigger && <TriggerWidget isSelected={isSelected} />}
+        <StepNodeChatBadge
+          isEditing={isChatEditing}
+          isUpdated={isRecentlyChanged && !isRecentlyAdded}
+        />
         <LoopIterationInput stepName={step.name} />
         <ApStepNodeStatusInRun stepName={step.name} />
         <ApStepNodeSkippedStatus stepName={step.name} />

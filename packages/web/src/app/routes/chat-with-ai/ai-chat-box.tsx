@@ -26,8 +26,13 @@ import {
 } from '@/features/chat/lib/chat-store-context';
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
+import {
+  ChatVariant,
+  ChatVariantProvider,
+  useIsPanelChat,
+} from '@/features/chat/lib/chat-variant-context';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
-import { useAgentChat } from '@/features/chat/lib/use-chat';
+import { ChatFlowContext, useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
@@ -58,6 +63,7 @@ export function AIChatBox({
   initialPrompt,
   agentId,
   builder,
+  flowContext,
   onTurnEnd,
   emptyState,
   footerNote,
@@ -65,6 +71,8 @@ export function AIChatBox({
   conversationId,
   onTitleUpdate,
   onConversationCreated,
+  variant = 'page',
+  inputContext,
 }: AIChatBoxProps) {
   const { data: chatProvider, isLoading: isLoadingProviders } =
     aiProviderQueries.useChatProvider();
@@ -79,21 +87,25 @@ export function AIChatBox({
 
   return (
     <ChatStoreProvider>
-      <TaskPanelLayout>
-        <ChatBoxContent
-          incognito={incognito}
-          initialPrompt={initialPrompt}
-          agentId={agentId}
-          builder={builder}
-          onTurnEnd={onTurnEnd}
-          emptyState={emptyState}
-          footerNote={footerNote}
-          placeholder={placeholder}
-          conversationId={conversationId}
-          onTitleUpdate={onTitleUpdate}
-          onConversationCreated={onConversationCreated}
-        />
-      </TaskPanelLayout>
+      <ChatVariantProvider value={variant}>
+        <TaskPanelLayout>
+          <ChatBoxContent
+            incognito={incognito}
+            initialPrompt={initialPrompt}
+            agentId={agentId}
+            builder={builder}
+            flowContext={flowContext}
+            onTurnEnd={onTurnEnd}
+            emptyState={emptyState}
+            footerNote={footerNote}
+            placeholder={placeholder}
+            conversationId={conversationId}
+            onTitleUpdate={onTitleUpdate}
+            onConversationCreated={onConversationCreated}
+            inputContext={inputContext}
+          />
+        </TaskPanelLayout>
+      </ChatVariantProvider>
     </ChatStoreProvider>
   );
 }
@@ -103,6 +115,7 @@ function ChatBoxContent({
   initialPrompt,
   agentId,
   builder,
+  flowContext,
   onTurnEnd,
   emptyState,
   footerNote,
@@ -110,9 +123,11 @@ function ChatBoxContent({
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
+  inputContext,
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
+  const isPanel = useIsPanelChat();
   const { data: chatProvider } = aiProviderQueries.useChatProvider();
 
   const {
@@ -132,6 +147,7 @@ function ChatBoxContent({
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
     ...(builder === undefined ? {} : { builder }),
+    ...(flowContext === undefined ? {} : { flowContext }),
     defaultModelName:
       agentId === undefined
         ? chatUtils.newChatModelName({ provider: chatProvider?.provider })
@@ -230,6 +246,10 @@ function ChatBoxContent({
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
   );
 
+  useEffect(() => {
+    flowContext?.onWaitingForUser(hasBlockingCard);
+  }, [flowContext, hasBlockingCard]);
+
   const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
   const [hasInput, setHasInput] = useState(false);
@@ -253,10 +273,11 @@ function ChatBoxContent({
     (personalization.companyInput ?? '').trim().length > 0 &&
     currentUser?.platformRole !== PlatformRole.ADMIN;
   const showOnboardingCard =
-    isEmpty && !incognito && (isFirstRun || promptOpen);
+    isEmpty && !incognito && !isPanel && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
     isEmpty &&
     !incognito &&
+    !isPanel &&
     isNil(agentId) &&
     !showOnboardingCard &&
     !personalization.isResolving &&
@@ -347,7 +368,10 @@ function ChatBoxContent({
             transition={{ duration: 0.25 }}
           >
             <ChatContainerRoot
-              className="flex-1 relative h-full px-3 sm:px-6"
+              className={cn(
+                'flex-1 relative h-full',
+                isPanel ? 'px-4' : 'px-3 sm:px-6',
+              )}
               style={{
                 maskImage:
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
@@ -355,7 +379,12 @@ function ChatBoxContent({
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
+              <ChatContainerContent
+                className={cn(
+                  'max-w-3xl mx-auto pb-4 min-h-full',
+                  isPanel ? 'pt-2 gap-2' : 'pt-8 gap-0',
+                )}
+              >
                 {isLoadingHistory && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
@@ -438,7 +467,13 @@ function ChatBoxContent({
         )}
       </AnimatePresence>
 
-      <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div
+        className={
+          isPanel
+            ? 'px-3 pb-3'
+            : 'px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]'
+        }
+      >
         <div className="max-w-3xl mx-auto relative">
           {showOnboardingCard && (
             <div className="mb-3">
@@ -478,7 +513,8 @@ function ChatBoxContent({
             onModelChange={setModelName}
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}
-            hideModelSelector={agentId !== undefined}
+            hideModelSelector={agentId !== undefined || isPanel}
+            leftActions={inputContext}
             placeholder={
               placeholder ??
               (showOnboardingCard
@@ -541,6 +577,7 @@ type AIChatBoxProps = {
   initialPrompt?: string;
   agentId?: string;
   builder?: boolean;
+  flowContext?: ChatFlowContext;
   onTurnEnd?: () => void;
   emptyState?: React.ReactNode;
   footerNote?: string;
@@ -548,4 +585,6 @@ type AIChatBoxProps = {
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
   onTitleUpdate?: (title: string) => void;
+  variant?: ChatVariant;
+  inputContext?: React.ReactNode;
 };

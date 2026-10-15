@@ -39,6 +39,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             cursor: request.query.cursor,
             limit: request.query.limit ?? 20,
             ...spreadIfDefined('agentId', request.query.agentId),
+            ...spreadIfDefined('flowId', request.query.flowId),
         })
     })
 
@@ -188,6 +189,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 flowTools,
                 ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
+                ...spreadIfDefined('selectedStepName', request.body.selectedStepName),
                 ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),
                 ...(carriesConfiguredTools ? agentHelpers.jobFieldsFromConfig({ config: agentConfig }) : {}),
             },
@@ -402,6 +404,7 @@ const ListConversationsRoute = {
             cursor: z.string().optional(),
             limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
             agentId: z.string().optional(),
+            flowId: z.string().optional(),
         }),
     },
 }

@@ -17,9 +17,12 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Separator } from '@/components/ui/separator';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { isMac } from '@/lib/dom-utils';
 
+import { BuilderChatToggle } from '../../builder-chat/builder-chat-toggle';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { NoteDragOverlayMode } from '../../state/notes-state';
 import { flowCanvasConsts } from '../utils/consts';
@@ -27,6 +30,7 @@ import { flowScreenshotUtils } from '../utils/flow-screenshot-utils';
 
 import { CanvasControlButton } from './canvas-control-button';
 import { useFitToView } from './use-fit-to-view';
+import { useRefitOnLayoutChange } from './use-refit-on-layout-change';
 
 const CanvasControls = ({
   canvasWidth,
@@ -46,6 +50,7 @@ const CanvasControls = ({
     hasCanvasBeenInitialised,
     selectedStep,
   });
+  useRefitOnLayoutChange();
 
   const canvasOrientation = useBuilderStateContext(
     (state) => state.canvasOrientation,
@@ -72,6 +77,11 @@ const CanvasControls = ({
       state.flowVersion.displayName,
     ];
   });
+
+  const { embedState } = useEmbedding();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const showBuilderChatToggle =
+    platform.plan.chatEnabled && !embedState.isEmbedded;
 
   const [isCapturingImage, setIsCapturingImage] = useState(false);
   const handleDownloadFlowAsImage = async () => {
@@ -144,6 +154,14 @@ const CanvasControls = ({
       <div className="grow"></div>
 
       <div className="bg-gray-1 gap-2 flex items-center shadow-2xl justify-center border border-gray-6 p-1.5 rounded-xl pointer-events-auto">
+        {showBuilderChatToggle && (
+          <>
+            <BuilderChatToggle />
+            <div>
+              <Separator orientation="vertical" className="h-5"></Separator>
+            </div>
+          </>
+        )}
         <CanvasControlButton
           tooltip={t('Zoom in')}
           icon={Plus}

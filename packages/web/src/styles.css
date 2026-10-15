@@ -1242,15 +1242,65 @@
   .recurring-chip-gradient { animation: none; }
 }
 
+.chat-panel-composer {
+  background-image: linear-gradient(var(--gray-1), var(--gray-1)),
+    linear-gradient(90deg, #faadff 0%, #ffd68a 50%, #8ac8ff 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 4px 0 0 var(--chat-panel-composer-shadow);
+}
+
+.chat-spotlight {
+  box-shadow:
+    0 0 0 2px var(--accent-9),
+    0 0 24px 4px color-mix(in oklch, var(--accent-9) 40%, transparent);
+  animation: chat-spotlight-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes chat-spotlight-pulse {
+  50% {
+    box-shadow:
+      0 0 0 2px var(--accent-9),
+      0 0 40px 10px color-mix(in oklch, var(--accent-9) 20%, transparent);
+  }
+}
+
+.chat-settings-flash {
+  animation: chat-settings-flash 1.8s ease-out;
+}
+
+@keyframes chat-settings-flash {
+  0% {
+    background-color: var(--accent-3);
+    box-shadow: inset 0 0 0 2px var(--accent-8);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-spotlight,
+  .chat-settings-flash { animation: none; }
+}
+
+.chat-panel-composer:focus-within {
+  background-image: linear-gradient(var(--gray-1), var(--gray-1)),
+    linear-gradient(90deg, #8800f7 0%, #ef9c01 50%, #007dea 100%);
+}
+
 @layer base {
   :root,
   [data-theme='light'] {
     --admin-page: oklch(97.9% 0 0);
     --admin-surface: var(--panel);
     --admin-card-border: var(--gray-6);
+    --chat-panel-composer-shadow: #f7e2ff;
   }
 
   [data-theme='dark'] {
+    --chat-panel-composer-shadow: oklch(28% 0.07 305);
     --admin-page: var(--gray-1);
     --admin-surface: var(--panel);
     --admin-card-border: var(--gray-6);

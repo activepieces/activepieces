@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { databaseConnection } from '../../database/database-connection'
+import { flowRepo } from '../../flows/flow/flow.repo'
 import { FlowRunEntity } from '../../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -79,12 +80,15 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const builderProjectId = builder
             ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
             : null
-        const modelChoice = await modelChoiceFrom({ platformId, projectId: agent?.projectId ?? builderProjectId, modelName: request.modelName, modelTierId: request.modelTierId, log })
+        const flowProjectId = isNil(request.flowId)
+            ? null
+            : await resolveFlowProject({ flowId: request.flowId, platformId, userId, log })
+        const modelChoice = await modelChoiceFrom({ platformId, projectId: agent?.projectId ?? builderProjectId ?? flowProjectId, modelName: request.modelName, modelTierId: request.modelTierId, log })
         const conversation = await transaction(async (entityManager) => entityManager.getRepository(AgentConversationEntity).save({
             id: id ?? apId(),
             platformId,
             projectId: isNil(agent)
-                ? builderProjectId
+                ? builderProjectId ?? flowProjectId
                 : await projectStillHoldingAgent({ agentId: agent.id, authorisedProjectId: agent.projectId, entityManager }),
             userId,
             agentId: agent?.id ?? null,
@@ -93,12 +97,13 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             modelName: modelChoice.modelName ?? null,
             modelTierId: modelChoice.modelTierId ?? null,
             messages: [],
+            flowId: isNil(flowProjectId) ? null : request.flowId,
         }))
         log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[agentConversationService] Conversation created')
         return conversation
     },
 
-    async listConversations({ platformId, userId, cursor, limit, agentId }: ListConversationsParams): Promise<SeekPage<AgentRunListItem>> {
+    async listConversations({ platformId, userId, cursor, limit, agentId, flowId }: ListConversationsParams): Promise<SeekPage<AgentRunListItem>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: AgentConversationEntity,
@@ -125,12 +130,16 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
                 'agent_conversation.title',
                 'agent_conversation.modelName',
                 'agent_conversation.status',
+                'agent_conversation.flowId',
             ])
             .where({ platformId, userId })
             // Eval conversations are owned by the platform owner; keep them out of the regular list.
             .andWhere('agent_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
         if (isNil(agentId)) {
             queryBuilder.andWhere('agent_conversation.source = :chatSource', { chatSource: AgentRunSource.CHAT })
+            if (!isNil(flowId)) {
+                queryBuilder.andWhere('agent_conversation."flowId" = :flowId', { flowId })
+            }
         }
         else {
             queryBuilder
@@ -302,6 +311,26 @@ type ListConversationsParams = {
     cursor?: string
     limit: number
     agentId?: string
+    flowId?: string
+}
+
+async function resolveFlowProject({ flowId, platformId, userId, log }: {
+    flowId: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<string> {
+    const [flow, projects] = await Promise.all([
+        flowRepo().findOne({ where: { id: flowId }, select: ['id', 'projectId'] }),
+        agentHelpers.getUserProjects({ platformId, userId, log }),
+    ])
+    if (isNil(flow) || !projects.some((project) => project.id === flow.projectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: flowId, entityType: 'Flow' },
+        })
+    }
+    return flow.projectId
 }
 
 async function resolveBuilderProject({ agent, requestedProjectId, platformId, userId, log }: {
