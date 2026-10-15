@@ -3341,5 +3341,7 @@
   "People can sign in with email and password again.": "People can sign in with email and password again.",
   "People can no longer sign in with email and password. Make sure another sign-in method works for you first.": "People can no longer sign in with email and password. Make sure another sign-in method works for you first.",
   "Disable single sign-on?": "Disable single sign-on?",
-  "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.": "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way."
+  "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.": "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.",
+  "Disable single sign-on": "Disable single sign-on",
+  "Deletes your SAML connection.": "Deletes your SAML connection."
 }

@@ -581,6 +581,17 @@ describe('SamlSetupPage', () => {
     expect(await screen.findByText('authentication page')).toBeDefined();
   });
 
+  it('offers Disable only when SAML is connected, outside the steps', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+    });
+    mountSetupPage();
+
+    expect(findButton('Disable')).toBeUndefined();
+    expect(screen.queryByText('Disable single sign-on')).toBeNull();
+  });
+
   it('lets the admin move to the SAML step before the domain is verified, but not save', () => {
     setPlatform({
       ssoDomain: 'acme.com',
