@@ -1513,6 +1513,9 @@
       "@activepieces/piece-weekdone": [
         "packages/pieces/community/weekdone/src/index.ts"
       ],
+      "@activepieces/piece-weinc": [
+        "packages/pieces/community/weinc/src/index.ts"
+      ],
       "@activepieces/piece-what-converts": [
         "packages/pieces/community/what-converts/src/index.ts"
       ],
