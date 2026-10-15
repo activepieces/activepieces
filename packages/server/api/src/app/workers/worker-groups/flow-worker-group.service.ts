@@ -47,13 +47,14 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
             return { flows: [], total }
         }
         const latestVersions = await flowVersionRepo()
-            .createQueryBuilder('flowVersion')
-            .select(['flowVersion.flowId', 'flowVersion.displayName'])
-            .distinctOn(['flowVersion.flowId'])
-            .where('flowVersion."flowId" IN (:...flowIds)', { flowIds: flows.map((flow) => flow.id) })
-            .orderBy('flowVersion."flowId"')
-            .addOrderBy('flowVersion.created', 'DESC')
-            .getMany()
+            .createQueryBuilder('fv')
+            .select('fv."flowId"', 'flowId')
+            .addSelect('fv."displayName"', 'displayName')
+            .distinctOn(['fv."flowId"'])
+            .where('fv."flowId" IN (:...flowIds)', { flowIds: flows.map((flow) => flow.id) })
+            .orderBy('fv."flowId"')
+            .addOrderBy('fv.created', 'DESC')
+            .getRawMany<{ flowId: string, displayName: string }>()
         const displayNameByFlowId = new Map(latestVersions.map((version) => [version.flowId, version.displayName]))
         return {
             flows: flows.map((flow) => ({
