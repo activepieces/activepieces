@@ -56,4 +56,19 @@ describe('createRepublishSafeStore', () => {
         expect(await store.get('lastPoll')).toBe(1000)
         expect(await store.get('lastItem')).toBe('previous')
     })
+
+    it('keeps state across the disable then enable sequence of a republish', async () => {
+        const store = fakeStore({ [`${StoreScope.FLOW}:_seenVideoIds`]: ['v1', 'v2'] })
+        const onDisable = async (s: Store): Promise<void> => {
+            await s.delete('_seenVideoIds')
+        }
+        const onEnable = async (s: Store): Promise<void> => {
+            await s.put('_seenVideoIds', ['v1', 'v2', 'v3'])
+        }
+
+        await onDisable(createRepublishSafeStore(store))
+        await onEnable(createRepublishSafeStore(store))
+
+        expect(await store.get('_seenVideoIds')).toEqual(['v1', 'v2'])
+    })
 })

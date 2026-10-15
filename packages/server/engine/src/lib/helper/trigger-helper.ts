@@ -162,14 +162,15 @@ export const triggerHelper = {
                 pieceName,
             }),
         }
+        const preserveExistingState = pieceTrigger.type === TriggerStrategy.POLLING && params.isRepublish === true
+        const hookContext = preserveExistingState ? { ...context, store: createRepublishSafeStore(context.store) } : context
         switch (params.hookType) {
             case TriggerHookType.ON_DISABLE: {
-                await pieceTrigger.onDisable(context)
+                await pieceTrigger.onDisable(hookContext)
                 return {}
             }
             case TriggerHookType.ON_ENABLE: {
-                const preserveExistingState = pieceTrigger.type === TriggerStrategy.POLLING && params.isRepublish === true
-                await pieceTrigger.onEnable(preserveExistingState ? { ...context, store: createRepublishSafeStore(context.store) } : context)
+                await pieceTrigger.onEnable(hookContext)
                 return {
                     listeners: appListeners,
                     scheduleOptions: pieceTrigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,

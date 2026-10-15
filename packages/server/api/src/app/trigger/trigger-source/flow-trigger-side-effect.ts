@@ -75,7 +75,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             if (environment === ApEnvironment.TESTING) {
                 return
             }
-            const { flowId, flowVersionId, projectId, simulate, pieceTrigger } = params
+            const { flowId, flowVersionId, projectId, simulate, pieceTrigger, isRepublish } = params
             const platformId = await projectService(log).getPlatformId(projectId)
             const { error, data: engineHelperResponse } = await tryCatch(
                 () => userInteractionWatcher.submitAndWaitForResponse<EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_DISABLE>>>({
@@ -86,6 +86,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                     test: simulate,
                     projectId,
                     platformId,
+                    isRepublish,
                 }, log),
             )
             if (!isNil(error)) {
