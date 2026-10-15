@@ -7,13 +7,13 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check } from 'lucide-react';
 import { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { SettingsPanel, SettingsRow, StatusDot } from '@/app/components/admin';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
+import { DomainStatusIcon } from '@/app/routes/platform/security/sso/domain-status-icon';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -180,11 +180,7 @@ const VerifiedDomain = ({ domain }: { domain: string }) => (
     </p>
     <SettingsPanel flush>
       <SettingsRow
-        media={
-          <div className="flex size-9 items-center justify-center rounded-lg bg-success-3 text-success-11 [&_svg]:size-4">
-            <Check />
-          </div>
-        }
+        media={<DomainStatusIcon status="verified" />}
         title={domain}
       >
         <StatusDot tone="success" className="text-xs text-gray-11">

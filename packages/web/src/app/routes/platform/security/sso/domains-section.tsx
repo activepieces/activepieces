@@ -4,15 +4,7 @@ import {
   SsoDomainVerificationStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  Check,
-  Clock,
-  FileText,
-  Globe,
-  MoreHorizontal,
-  ShieldCheck,
-  Trash,
-} from 'lucide-react';
+import { FileText, MoreHorizontal, ShieldCheck, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -24,6 +16,7 @@ import {
   adminLayout,
 } from '@/app/components/admin';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
+import { DomainStatusIcon } from '@/app/routes/platform/security/sso/domain-status-icon';
 import { VerifyDomainDialog } from '@/app/routes/platform/security/sso/verify-domain-dialog';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -44,7 +37,6 @@ import {
 import { samlSsoApi } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
 
 export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
   const samlConnected = !!platform.federatedAuthProviders?.saml;
@@ -52,7 +44,7 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
 
   return (
     <AdminSection
-      title={t('Domains')}
+      title={t('Domain')}
       description={t(
         "Verify your company's email domain to set up single sign-on.",
       )}
@@ -71,7 +63,7 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
       ) : (
         <SettingsPanel flush>
           <SettingsRow
-            icon={<Globe />}
+            media={<DomainStatusIcon status="none" />}
             title={t('No domain verified')}
             description={t('Verify the domain your people sign in with.')}
           >
@@ -80,7 +72,6 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
               size="sm"
               onClick={() => setVerifyOpen(true)}
             >
-              <ShieldCheck />
               {t('Verify domain')}
             </Button>
           </SettingsRow>
@@ -109,18 +100,7 @@ const DomainRow = ({
 
   return (
     <SettingsRow
-      media={
-        <div
-          className={cn(
-            'flex size-9 items-center justify-center rounded-lg [&_svg]:size-4',
-            verified
-              ? 'bg-success-3 text-success-11'
-              : 'bg-warning-3 text-warning-11',
-          )}
-        >
-          {verified ? <Check /> : <Clock />}
-        </div>
-      }
+      media={<DomainStatusIcon status={verified ? 'verified' : 'pending'} />}
       title={domain}
       description={
         verified
