@@ -93,11 +93,14 @@ export type BuildPlanEvent = {
     updatedAt: string
 }
 
+export type SubagentTimelineEntry = { kind: 'status', text: string }
+
 export type SubagentActivity = {
     taskId?: string
     title: string
     status: 'running' | 'done' | 'blocked' | 'failed'
     statusLine?: string
+    timeline?: SubagentTimelineEntry[]
     stepCount: number
     pieces?: string[]
     artifacts?: { type: string, id: string, name: string }[]

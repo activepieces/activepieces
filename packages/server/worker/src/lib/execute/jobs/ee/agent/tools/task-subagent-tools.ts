@@ -1,5 +1,5 @@
 import { isNil, isObject, omit, tryCatch } from '@activepieces/core-utils'
-import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SkillSurface, SubagentActivity, SubagentTaskArtifact, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SkillSurface, SubagentActivity, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { hasToolCall, isLoopFinished, ModelMessage, tool, ToolSet } from 'ai'
 import { z } from 'zod'
 import { AgentTurnResult, runAgentTurn, RunAgentTurnParams } from '../run-agent-turn'
@@ -220,11 +220,13 @@ function fallbackResult(turn: AgentTurnResult): TaskResult {
 }
 
 function runningActivity({ title, uiParts, startedAt }: { title: string, uiParts: PersistedAgentPart[], startedAt: Date }): SubagentActivity {
-    const statuses = statusLines(uiParts)
+    const timeline = timelineFrom(uiParts)
+    const statuses = timeline.flatMap((entry) => entry.kind === 'status' ? [entry.text] : [])
     return {
         title,
         status: 'running',
-        statusLine: statuses[statuses.length - 1] ?? lastToolTitle(uiParts),
+        statusLine: statuses[statuses.length - 1],
+        timeline,
         stepCount: uiParts.filter((part) => part.type === PersistedAgentPartType.TOOL_CALL).length,
         pieces: piecesFrom(uiParts),
         startedAt: startedAt.toISOString(),
@@ -242,16 +244,21 @@ function finalActivity({ title, turn, result, startedAt }: { title: string, turn
     }
 }
 
-function lastToolTitle(parts: PersistedAgentPart[]): string | undefined {
-    return parts.filter(isTitledToolCall).at(-1)?.title.trim()
-}
-
 function isTitledToolCall(part: PersistedAgentPart): part is Extract<PersistedAgentPart, { type: PersistedAgentPartType.TOOL_CALL }> & { title: string } {
     return part.type === PersistedAgentPartType.TOOL_CALL && !isNil(part.title) && part.title.trim().length > 0
 }
 
-function statusLines(parts: PersistedAgentPart[]): string[] {
-    return parts.flatMap((part) => part.type === PersistedAgentPartType.THINKING_STATUS && part.text.trim().length > 0 ? [part.text.trim()] : [])
+function timelineFrom(parts: PersistedAgentPart[]): SubagentTimelineEntry[] {
+    return parts.flatMap((part): SubagentTimelineEntry[] => {
+        if (isTitledToolCall(part)) {
+            return [{ kind: 'status', text: part.title.trim() }]
+        }
+        if (part.type !== PersistedAgentPartType.THINKING_STATUS) {
+            return []
+        }
+        const text = part.text.trim()
+        return text.length > 0 ? [{ kind: 'status', text }] : []
+    })
 }
 
 function billedToolCalls(parts: PersistedAgentPart[]): { toolName: string, output: unknown }[] {
