@@ -11,7 +11,7 @@ import {
   Globe,
   MoreHorizontal,
   Plus,
-  RefreshCw,
+  ShieldCheck,
   Trash,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -24,8 +24,8 @@ import {
   StatusDot,
   adminLayout,
 } from '@/app/components/admin';
-import { AddDomainDialog } from '@/app/routes/platform/security/sso/add-domain-dialog';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
+import { VerifyDomainDialog } from '@/app/routes/platform/security/sso/verify-domain-dialog';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -42,13 +42,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { samlSsoApi, ssoMutations } from '@/features/platform-admin';
+import { samlSsoApi } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
   const samlConnected = !!platform.federatedAuthProviders?.saml;
+  const [verifyOpen, setVerifyOpen] = useState(false);
 
   return (
     <AdminSection
@@ -65,6 +66,7 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
             domain={platform.ssoDomain}
             verification={platform.ssoDomainVerification}
             samlConnected={samlConnected}
+            onContinueVerifying={() => setVerifyOpen(true)}
           />
         </SettingsPanel>
       ) : (
@@ -72,20 +74,25 @@ export const DomainsSection = ({ platform, refetch }: DomainsSectionProps) => {
           <SettingsRow
             icon={<Globe />}
             title={t('No domains yet')}
-            description={t('Add the domain your people sign in with.')}
+            description={t('Verify the domain your people sign in with.')}
           >
-            <AddDomainDialog platform={platform} refetch={refetch}>
-              <Button
-                {...adminControl(AdminControl.SSO_DOMAIN_ADD_OPEN)}
-                size="sm"
-              >
-                <Plus />
-                {t('Add domain')}
-              </Button>
-            </AddDomainDialog>
+            <Button
+              {...adminControl(AdminControl.SSO_DOMAIN_ADD_OPEN)}
+              size="sm"
+              onClick={() => setVerifyOpen(true)}
+            >
+              <Plus />
+              {t('Verify domain')}
+            </Button>
           </SettingsRow>
         </SettingsPanel>
       )}
+      <VerifyDomainDialog
+        platform={platform}
+        refetch={refetch}
+        open={verifyOpen}
+        onOpenChange={setVerifyOpen}
+      />
     </AdminSection>
   );
 };
@@ -96,11 +103,10 @@ const DomainRow = ({
   domain,
   verification,
   samlConnected,
+  onContinueVerifying,
 }: DomainRowProps) => {
   const [dnsRecordOpen, setDnsRecordOpen] = useState(false);
   const verified = verification.status === SsoDomainVerificationStatus.VERIFIED;
-  const { mutate: verifyDomain, isPending: isVerifying } =
-    ssoMutations.useVerifySsoDomain({ refetch });
 
   return (
     <SettingsRow
@@ -120,14 +126,16 @@ const DomainRow = ({
       description={
         verified
           ? undefined
-          : t("Add the TXT record within 3 hours or it's dropped.")
+          : t(
+              "Verification in progress. Add the TXT record within 3 hours or it's dropped.",
+            )
       }
     >
       <StatusDot
         tone={verified ? 'success' : 'warning'}
         className="text-xs text-gray-11"
       >
-        {verified ? t('Verified') : t('Pending DNS')}
+        {verified ? t('Verified') : t('Verifying')}
       </StatusDot>
       <DropdownMenu modal={true}>
         <DropdownMenuTrigger asChild>
@@ -140,48 +148,58 @@ const DomainRow = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            {...adminControl(AdminControl.SSO_DOMAIN_DNS_RECORD_OPEN)}
-            onSelect={() => setDnsRecordOpen(true)}
-          >
-            <FileText className="size-4" />
-            {t('View DNS record')}
-          </DropdownMenuItem>
-          {!verified && (
+          {verified ? (
             <DropdownMenuItem
-              {...adminControl(AdminControl.SSO_DOMAIN_DNS_RUN)}
-              disabled={isVerifying}
-              onSelect={() => verifyDomain()}
+              {...adminControl(AdminControl.SSO_DOMAIN_DNS_RECORD_OPEN)}
+              onSelect={() => setDnsRecordOpen(true)}
             >
-              <RefreshCw className="size-4" />
-              {t('Check DNS again')}
+              <FileText className="size-4" />
+              {t('View DNS record')}
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              {...adminControl(AdminControl.SSO_DOMAIN_VERIFY_OPEN)}
+              onSelect={onContinueVerifying}
+            >
+              <ShieldCheck className="size-4" />
+              {t('Continue verifying')}
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
           <ConfirmationDeleteDialog
             title={
-              samlConnected
+              !verified
+                ? t('Cancel verifying {domain}?', { domain })
+                : samlConnected
                 ? t('Remove {domain} and delete your SAML connection?', {
                     domain,
                   })
                 : t('Remove {domain}?', { domain })
             }
             message={
-              <RemoveDomainConsequences
-                samlConnected={samlConnected}
-                emailAuthEnabled={platform.emailAuthEnabled}
-              />
+              verified ? (
+                <RemoveDomainConsequences
+                  samlConnected={samlConnected}
+                  emailAuthEnabled={platform.emailAuthEnabled}
+                />
+              ) : (
+                t(
+                  'The domain and its DNS record are discarded. You can start again anytime.',
+                )
+              )
             }
             entityName={domain}
             buttonText={
-              samlConnected
+              !verified
+                ? t('Cancel verification')
+                : samlConnected
                 ? t('Remove domain and disable SAML')
                 : t('Remove domain')
             }
             controlId={AdminControl.SSO_DOMAIN_REMOVE_CONFIRM}
             contentClassName={adminLayout.dialog.md}
             keepOpenOnOutsideClick
-            showToast
+            showToast={verified}
             mutationFn={async () => {
               await samlSsoApi.updateSsoDomain(null);
               await refetch();
@@ -202,7 +220,7 @@ const DomainRow = ({
               onSelect={(e) => e.preventDefault()}
             >
               <Trash className="size-4" />
-              {t('Remove domain')}
+              {verified ? t('Remove domain') : t('Cancel verification')}
             </DropdownMenuItem>
           </ConfirmationDeleteDialog>
         </DropdownMenuContent>
@@ -264,4 +282,5 @@ type DomainRowProps = {
   domain: string;
   verification: SsoDomainVerification;
   samlConnected: boolean;
+  onContinueVerifying: () => void;
 };

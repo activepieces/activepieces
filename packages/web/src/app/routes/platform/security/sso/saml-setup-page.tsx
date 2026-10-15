@@ -2,17 +2,16 @@ import {
   ApFlagId,
   formErrors,
   PlatformWithoutSensitiveData,
-  SsoDomainVerification,
   SsoDomainVerificationStatus,
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CheckCircle, Loader2, TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -24,7 +23,7 @@ import {
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
-import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
+import { DomainVerification } from '@/app/routes/platform/security/sso/domain-verification';
 import { MethodConfirmDialog } from '@/app/routes/platform/security/sso/method-confirm-dialog';
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
@@ -39,7 +38,6 @@ import {
 } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ssoMutations } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -265,42 +263,32 @@ const DomainStep = ({
   onVerified: () => void;
   onNext: () => void;
 }) => {
-  const { mutate: verifyDomain, isPending: isVerifying } =
-    ssoMutations.useVerifySsoDomain({ refetch, onVerified });
-
-  if (!platform.ssoDomain || !platform.ssoDomainVerification) {
-    return (
-      <div className="flex flex-col gap-4">
-        <p className="text-sm text-gray-11">
-          {t('Add and verify your company domain before setting up SAML.')}
-        </p>
-        <StepFooter>
-          <Button asChild>
-            <Link to={ssoPaths.authentication}>
-              {t('Go to Authentication')}
-            </Link>
-          </Button>
-        </StepFooter>
-      </div>
-    );
-  }
+  const verified =
+    !!platform.ssoDomain &&
+    platform.ssoDomainVerification?.status ===
+      SsoDomainVerificationStatus.VERIFIED;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <Label>{t('Domain')}</Label>
-        <p className="text-sm font-medium text-gray-12">{platform.ssoDomain}</p>
-      </div>
-      <DomainVerificationPanel
-        verification={platform.ssoDomainVerification}
-        isVerifying={isVerifying}
-        onVerify={() => verifyDomain()}
+      <DomainVerification
+        platform={platform}
+        refetch={refetch}
+        onVerified={onVerified}
+        secondaryAction={
+          verified ? undefined : (
+            <Button type="button" variant="outline" onClick={onNext}>
+              {t('Next')}
+            </Button>
+          )
+        }
       />
-      <StepFooter>
-        <Button type="button" onClick={onNext}>
-          {t('Next')}
-        </Button>
-      </StepFooter>
+      {verified && (
+        <StepFooter>
+          <Button type="button" onClick={onNext}>
+            {t('Next')}
+          </Button>
+        </StepFooter>
+      )}
     </div>
   );
 };
@@ -476,66 +464,6 @@ const StepFooter = ({ children }: { children: ReactNode }) => (
     {children}
   </div>
 );
-
-const DomainVerificationPanel = ({
-  verification,
-  isVerifying,
-  onVerify,
-}: {
-  verification: SsoDomainVerification;
-  isVerifying: boolean;
-  onVerify: () => void;
-}) => {
-  const verified = verification.status === SsoDomainVerificationStatus.VERIFIED;
-  return (
-    <div className="flex flex-col gap-3">
-      <VerificationStatusBadge status={verification.status} />
-      {!verified && (
-        <>
-          <p className="text-xs text-gray-11">
-            {t(
-              "Add this TXT record at your DNS provider. We'll detect it once it propagates — this usually takes a few minutes.",
-            )}
-          </p>
-          <DomainDnsRecord record={verification.record} />
-          <div>
-            <Button
-              {...adminControl(AdminControl.SSO_SAML_DNS_RUN)}
-              type="button"
-              size="sm"
-              variant="outline"
-              loading={isVerifying}
-              onClick={onVerify}
-            >
-              {t('Verify DNS')}
-            </Button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-const VerificationStatusBadge = ({
-  status,
-}: {
-  status: SsoDomainVerificationStatus;
-}) => {
-  if (status === SsoDomainVerificationStatus.VERIFIED) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-success-11">
-        <CheckCircle className="size-4" />
-        {t('DNS verified — domain is ready')}
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-2 text-sm text-warning-11">
-      <Loader2 className="size-4 animate-spin" />
-      {t('Waiting for DNS')}
-    </div>
-  );
-};
 
 const SAML_ENTITY_ID = 'Activepieces';
 
