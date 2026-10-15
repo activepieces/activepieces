@@ -21,6 +21,7 @@ import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
 import { smtpEmailSender } from '../../helper/email/email-sender/smtp-email-sender'
 import { agentTaskService } from '../agent-task-service'
+import { taskAgentsRollout } from '../task-agents-rollout'
 
 import { chosenProviders } from './chosen-providers'
 import { CONNECTION_INVENTORY_LIMIT, loadOrStartConversation } from './rpc-shared'
@@ -167,7 +168,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // that is right there. Best-effort: a lookup failure must not block the turn.
         // Chat picks a connection mid-run; a configured surface had one pinned when it was set up,
         // so handing it the inventory only teaches it to renegotiate what it cannot change.
-        const tasksAvailable = !dryRun && carriesChatContext
+        const tasksAvailable = !dryRun && carriesChatContext && taskAgentsRollout.isOnForConversation({ conversationId })
         const [inventoryResult, conversationTasks] = await Promise.all([
             (!dryRun && carriesChatContext && !isNil(selectedProjectId))
                 ? tryCatch(() => appConnectionService(log).list({
