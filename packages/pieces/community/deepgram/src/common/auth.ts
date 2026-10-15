@@ -1,6 +1,6 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { BASE_URL } from './constants';
+import { DEEPGRAM_TIMEOUTS, DeepgramApiError, deepgramClient } from './client';
 
 export const deepgramAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -8,16 +8,26 @@ export const deepgramAuth = PieceAuth.SecretText({
   description: `You can obtain your API key from [Deepgram Console](https://console.deepgram.com/).`,
   validate: async ({ auth }) => {
     try {
-      await httpClient.sendRequest({
+      await deepgramClient.request({
+        apiKey: auth,
         method: HttpMethod.GET,
-        url: BASE_URL + '/projects',
-        headers: {
-          Authorization: `Token ${auth}`,
-        },
+        path: '/projects',
+        timeoutMs: DEEPGRAM_TIMEOUTS.manage,
+        operation: 'check the API key',
       });
       return { valid: true };
     } catch (e) {
-      return { valid: false, error: 'Invalid API key.' };
+      if (
+        e instanceof DeepgramApiError &&
+        (e.status === 401 || e.status === 403)
+      ) {
+        return { valid: false, error: 'Invalid API key.' };
+      }
+      const status = e instanceof DeepgramApiError ? ` (HTTP ${e.status})` : '';
+      return {
+        valid: false,
+        error: `Could not reach Deepgram to check the API key${status}. Try again in a moment.`,
+      };
     }
   },
 });

@@ -20,6 +20,36 @@ export const newCommand = createTrigger({
     description:
       'Fires when a channel or group message addressed to the bot contains one of the configured commands (e.g., "@bot help" or "@bot ocr"). Can be optionally filtered to specific channels, and bot messages can be ignored. The event payload includes the original message plus a parsed_command object with the recognized command and its arguments.',
   },
+  propertyGroups: [
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['webhookInfo', 'user'],
+    },
+    {
+      key: 'command',
+      display: 'section',
+      label: 'Command',
+      icon: 'code',
+      props: ['commands'],
+    },
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channels'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['ignoreBots'],
+    },
+  ],
   props: {
     webhookInfo: appWebhookSetupInfo,
     info: multiSelectChannelInfo,

@@ -19,6 +19,22 @@ export const gmailCreateDraftReplyAction = createAction({
     idempotent: false,
   },
   displayName: 'Create Draft Reply',
+  propertyGroups: [
+    {
+      key: 'reply_target',
+      display: 'section',
+      label: 'Reply to',
+      icon: 'reply',
+      props: ['message_id', 'reply_type'],
+    },
+    {
+      key: 'reply_content',
+      display: 'section',
+      label: 'Your Reply',
+      icon: 'text',
+      props: ['body_type', 'body', 'include_original_message', 'attachment'],
+    },
+  ],
   props: {
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({

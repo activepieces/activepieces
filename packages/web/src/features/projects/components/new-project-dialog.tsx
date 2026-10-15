@@ -7,7 +7,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Crown } from 'lucide-react';
+import { Gem } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -209,7 +209,6 @@ const NewProjectForm = ({
                   {...field}
                   id="displayName"
                   placeholder={t('Project Name')}
-                  className="rounded-sm"
                 />
               </FormItem>
             )}
@@ -226,7 +225,6 @@ const NewProjectForm = ({
                   id="alertReceiverEmail"
                   type="email"
                   placeholder="alerts@example.com"
-                  className="rounded-sm"
                   value={field.value ?? ''}
                 />
                 <span className="text-xs text-gray-11">
@@ -322,7 +320,9 @@ const NewProjectForm = ({
                 form.handleSubmit(handleCreate)(e);
               }}
             >
-              {gate?.locked === true && <Crown className="size-3.5 shrink-0" />}
+              {gate?.locked === true && (
+                <Gem className="size-3.5 shrink-0 text-on-accent/90" />
+              )}
               {t('Create Project')}
             </Button>
           </DialogFooter>

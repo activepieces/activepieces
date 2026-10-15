@@ -271,7 +271,7 @@ function OnboardingPill({
         autoFocus={autoFocus}
         autoComplete="off"
         spellCheck={false}
-        className="col-start-1 row-start-1 w-full min-w-0 max-w-full rounded-lg bg-gray-3/60 px-3.5 py-1.5 text-gray-12 caret-accent-9 ring-1 ring-transparent transition-[background-color,box-shadow] placeholder:text-gray-11 focus:bg-accent-3 focus:outline-none focus:ring-accent-8/50"
+        className="col-start-1 row-start-1 w-full min-w-0 max-w-full rounded-xl bg-gray-3/60 px-3.5 py-1.5 text-gray-12 caret-accent-9 ring-1 ring-transparent transition-[background-color,box-shadow] placeholder:text-gray-11 focus:bg-accent-3 focus:outline-none focus:ring-accent-8/50"
       />
       {rotating && (
         <span className="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-3.5">
@@ -310,7 +310,7 @@ function OnboardingPill({
                 }}
                 onMouseEnter={() => setHighlighted(index)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left',
+                  'flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left',
                   index === activeIndex && 'bg-gray-4 text-gray-12',
                 )}
               >
@@ -319,7 +319,7 @@ function OnboardingPill({
                     src={suggestion.logo}
                     alt=""
                     size="xxs"
-                    className="rounded-sm"
+                    className="rounded-md"
                   />
                 )}
                 <span className="truncate">{suggestion.value}</span>

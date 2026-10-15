@@ -233,7 +233,7 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
     'google-vertex-ai': AIProviderName.GOOGLE,
 }
 
-const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
+const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
 const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
 const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
 const GOOGLE_CHAT_MODELS = ['gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
@@ -245,7 +245,10 @@ const DEPRECATED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonl
     [AIProviderName.VERTEX]: DEPRECATED_GOOGLE_CHAT_MODELS,
 }
 
-const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`)
+const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = [
+    ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`),
+    'deepseek/deepseek-v4.1-flash',
+]
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
@@ -262,6 +265,9 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
 
 const CHAT_MODEL_LABELS: Record<string, string> = {
     'gpt-5.5': 'GPT-5.5',
+    'gpt-5.6-sol': 'GPT-5.6 Sol',
+    'gpt-5.6-terra': 'GPT-5.6 Terra',
+    'gpt-5.6-luna': 'GPT-5.6 Luna',
     'gpt-5.4-mini': 'GPT-5.4 mini',
     'gpt-5.4-nano': 'GPT-5.4 nano',
     'gpt-4.1': 'GPT-4.1',
