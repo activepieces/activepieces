@@ -4,7 +4,7 @@ import {
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Layers, Plus } from 'lucide-react';
+import { Layers, Plus, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -20,51 +20,91 @@ export function ByGroupView({
   workerGroups,
   workers,
 }: ByGroupViewProps) {
-  const groupsFromLive = workerGroups
+  const liveProjectGroups = workerGroups
     .filter((g) => g.scope === WorkerGroupScope.PROJECT)
     .map((g) => g.label);
   const groupsFromProjects = projects
     .map((p) => p.workerGroupId)
     .filter((id): id is string => id != null);
-
-  const allGroupLabels = Array.from(
-    new Set([...groupsFromLive, ...groupsFromProjects]),
+  const projectGroupLabels = Array.from(
+    new Set([...liveProjectGroups, ...groupsFromProjects]),
   ).sort();
 
-  if (allGroupLabels.length === 0) {
+  const flowGroupLabels = Array.from(
+    new Set(
+      workerGroups
+        .filter((g) => g.scope === WorkerGroupScope.FLOW)
+        .map((g) => g.label),
+    ),
+  ).sort();
+
+  if (projectGroupLabels.length === 0 && flowGroupLabels.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-11">
         <Layers className="size-10" strokeWidth={1.5} />
-        <p className="text-sm">{t('No projects')}</p>
+        <p className="text-sm">{t('No worker groups')}</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-4">
-      {allGroupLabels.map((label) => (
-        <GroupCard
-          key={label}
-          groupLabel={label}
-          allProjects={projects}
-          workers={workers}
-        />
-      ))}
+    <div className="flex flex-col gap-6">
+      {projectGroupLabels.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+            {t('Project worker groups')}
+          </span>
+          <div className="flex flex-wrap gap-4">
+            {projectGroupLabels.map((label) => (
+              <GroupCard
+                key={label}
+                groupLabel={label}
+                scope={WorkerGroupScope.PROJECT}
+                allProjects={projects}
+                workers={workers}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {flowGroupLabels.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+            {t('Flow worker groups')}
+          </span>
+          <div className="flex flex-wrap gap-4">
+            {flowGroupLabels.map((label) => (
+              <GroupCard
+                key={label}
+                groupLabel={label}
+                scope={WorkerGroupScope.FLOW}
+                allProjects={projects}
+                workers={workers}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
 
-function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
+function GroupCard({
+  groupLabel,
+  scope,
+  allProjects,
+  workers,
+}: GroupCardProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const isFlowGroup = scope === WorkerGroupScope.FLOW;
 
   const assignedProjects = allProjects.filter(
     (p) => p.workerGroupId === groupLabel,
   );
 
   const groupWorkers = workers.filter(
-    (w) =>
-      w.workerGroupScope === WorkerGroupScope.PROJECT &&
-      w.workerGroupId === groupLabel,
+    (w) => w.workerGroupScope === scope && w.workerGroupId === groupLabel,
   );
   const onlineWorkerCount = groupWorkers.length;
   const totalSlots = groupWorkers.reduce((sum, worker) => {
@@ -77,7 +117,11 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
       <div className="flex w-full flex-col rounded-lg border bg-gray-1 p-5 gap-4 sm:w-[475px]">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
-            <Layers className="size-4" />
+            {isFlowGroup ? (
+              <Workflow className="size-4" />
+            ) : (
+              <Layers className="size-4" />
+            )}
           </div>
           <TextWithTooltip tooltipMessage={groupLabel}>
             <span className="text-sm font-semibold truncate min-w-0">
@@ -98,46 +142,59 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
           </span>
         </div>
 
-        <div className="border-t pt-4">
-          <div className="flex items-center justify-between mb-2.5">
+        {isFlowGroup ? (
+          <div className="border-t pt-4">
             <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
-              {t('PROJECTS')}
+              {t('FLOWS')}
             </span>
-            <Button
-              {...adminControl(AdminControl.WORKERS_ASSIGN_OPEN)}
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setDialogOpen(true)}
-            >
-              <Plus className="size-3.5" />
-              {t('Assign')}
-            </Button>
+            <p className="mt-2.5 text-xs text-gray-11">
+              {t('Assign flows to this group from the By flow tab')}
+            </p>
           </div>
-
-          {assignedProjects.length === 0 ? (
-            <p className="text-xs text-gray-11">{t('No projects')}</p>
-          ) : (
-            <div className="flex flex-wrap items-center gap-1.5">
-              {assignedProjects.slice(0, 3).map((project) => (
-                <ProjectChip key={project.id} project={project} />
-              ))}
-              {assignedProjects.length > 3 && (
-                <span className="text-xs text-gray-11">
-                  {t('+{count} more', { count: assignedProjects.length - 3 })}
-                </span>
-              )}
+        ) : (
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
+                {t('PROJECTS')}
+              </span>
+              <Button
+                {...adminControl(AdminControl.WORKERS_ASSIGN_OPEN)}
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setDialogOpen(true)}
+              >
+                <Plus className="size-3.5" />
+                {t('Assign')}
+              </Button>
             </div>
-          )}
-        </div>
+
+            {assignedProjects.length === 0 ? (
+              <p className="text-xs text-gray-11">{t('No projects')}</p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {assignedProjects.slice(0, 3).map((project) => (
+                  <ProjectChip key={project.id} project={project} />
+                ))}
+                {assignedProjects.length > 3 && (
+                  <span className="text-xs text-gray-11">
+                    {t('+{count} more', { count: assignedProjects.length - 3 })}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <AssignProjectsDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        groupLabel={groupLabel}
-        allProjects={allProjects}
-      />
+      {!isFlowGroup && (
+        <AssignProjectsDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          groupLabel={groupLabel}
+          allProjects={allProjects}
+        />
+      )}
     </>
   );
 }
@@ -161,6 +218,7 @@ type ByGroupViewProps = {
 
 type GroupCardProps = {
   groupLabel: string;
+  scope: WorkerGroupScope;
   allProjects: ProjectWithLimits[];
   workers: WorkerMachineWithStatus[];
 };
