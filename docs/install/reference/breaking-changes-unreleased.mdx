@@ -14,7 +14,7 @@ A code step without an explicit `useDeno` flag now executes in the Deno runtime 
 
 #### What you need to do
 
-Nothing for most installations — Deno ships in the official Docker images and code steps keep Node-compatible semantics through Deno's compatibility layer. Review code steps that relied on Node-runtime specifics (hardcoded `/tmp` paths are subject to Deno's permission grants; top-level `await` runs the step as a strict ES module). If a specific step misbehaves on Deno, set `useDeno: false` on it (or use the admin `revert-from-deno` endpoint) to pin it to the legacy runtime while you fix it. Custom deployments that do not use the official images must provide a Deno binary via `AP_DENO_PATH`.
+Nothing for most installations — Deno ships in the official Docker images and code steps keep Node-compatible semantics through Deno's compatibility layer. Review code steps that relied on Node-runtime specifics (hardcoded `/tmp` paths are subject to Deno's permission grants; top-level `await` runs the step as a strict ES module). If a specific step misbehaves on Deno, pin it to the legacy runtime while you fix it: set `AP_API_KEY` in your environment and call `POST /v1/admin/flows/revert-from-deno` (body: one of `flowIds`, `projectId`, or `platformId`), which sets `useDeno: false` on the affected steps; `migrate-to-deno` moves them back. Custom deployments that do not use the official images must provide a Deno binary via `AP_DENO_PATH`.
 
 #### SmartSuite 0.3.0: Upload File returns the file list, and record and selector actions are builder-only
 
