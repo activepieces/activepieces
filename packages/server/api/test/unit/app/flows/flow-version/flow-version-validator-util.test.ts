@@ -2,17 +2,21 @@ import { FlowActionType, FlowOperationType, FlowTriggerType } from '@activepiece
 import type { FlowOperationRequest, FlowVersion, UpdateActionRequest } from '@activepieces/shared'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../../../../src/app/pieces/metadata/piece-metadata-service', () => ({
-    pieceMetadataService: vi.fn(() => ({
-        getOrThrow: vi.fn().mockResolvedValue({
-            auth: undefined,
-            actions: {
-                create_record: { name: 'create_record', props: {}, requireAuth: false },
-                create_record_ai: { name: 'create_record_ai', props: {}, requireAuth: false, audience: 'ai' },
-            },
-        }),
-    })),
-}))
+vi.mock('../../../../../src/app/pieces/metadata/piece-metadata-service', () => {
+    const piece = {
+        auth: undefined,
+        actions: {
+            create_record: { name: 'create_record', props: {}, requireAuth: false },
+            create_record_ai: { name: 'create_record_ai', props: {}, requireAuth: false, audience: 'ai' },
+        },
+    }
+    return {
+        pieceMetadataService: vi.fn(() => ({
+            get: vi.fn().mockResolvedValue(piece),
+            getOrThrow: vi.fn().mockResolvedValue(piece),
+        })),
+    }
+})
 
 import { flowVersionValidationUtil } from '../../../../../src/app/flows/flow-version/flow-version-validator-util'
 import { createMockFlowVersion } from '../../../../helpers/mocks'
@@ -33,6 +37,18 @@ describe('flowVersionValidationUtil.prepareRequest', () => {
         const flowVersion = flowWithStep({ actionName: 'create_record_ai' })
         const prepared = await prepare({ request: updatePieceStep({ actionName: 'create_record_ai' }), flowVersion })
         expect(prepared).toMatchObject({ type: FlowOperationType.UPDATE_ACTION, request: { valid: false } })
+    })
+
+    it('marks an imported chat-only step invalid even when the import says valid', async () => {
+        const { trigger } = flowWithStep({ actionName: 'create_record_ai' })
+        const prepared = await prepare({ request: { type: FlowOperationType.IMPORT_FLOW, request: { displayName: 'Imported', trigger, schemaVersion: null, notes: null } } })
+        expect(prepared).toMatchObject({ type: FlowOperationType.IMPORT_FLOW, request: { trigger: { nextAction: { valid: false } } } })
+    })
+
+    it('keeps an imported normal step valid', async () => {
+        const { trigger } = flowWithStep({ actionName: 'create_record' })
+        const prepared = await prepare({ request: { type: FlowOperationType.IMPORT_FLOW, request: { displayName: 'Imported', trigger, schemaVersion: null, notes: null } } })
+        expect(prepared).toMatchObject({ type: FlowOperationType.IMPORT_FLOW, request: { trigger: { nextAction: { valid: true } } } })
     })
 
     it('accepts a normal action', async () => {

@@ -131,6 +131,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                 break
             case FlowOperationType.IMPORT_FLOW:{
                 assertImportedStepNamesAreSafe(clonedRequest.request.trigger)
+                await invalidateChatOnlySteps({ trigger: clonedRequest.request.trigger, platformId, log })
                 const notes = clonedRequest.request.notes
                 if (!isNil(notes)) {
                     clonedRequest.request.notes = notes.map(note => ({
@@ -155,6 +156,17 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
         return []
     },
 })
+
+async function invalidateChatOnlySteps({ trigger, platformId, log }: { trigger: FlowTrigger, platformId: PlatformId | undefined, log: FastifyBaseLogger }): Promise<void> {
+    const pieceSteps = flowStructureUtil.getAllSteps(trigger).filter((step) => step.type === FlowActionType.PIECE)
+    await Promise.all(pieceSteps.map(async (step) => {
+        const { pieceName, pieceVersion, actionName } = step.settings
+        const piece = await pieceMetadataService(log).get({ name: pieceName, version: pieceVersion, platformId })
+        if (!isNil(actionName) && piece?.actions[actionName]?.audience === 'ai') {
+            step.valid = false
+        }
+    }))
+}
 
 function throwChatOnlyAction({ actionName, pieceName }: PieceActionSettings): never {
     const message = `Action "${actionName}" of "${pieceName}" is only for chat and can't be a flow step. Use a non-agent action from the same piece.`
