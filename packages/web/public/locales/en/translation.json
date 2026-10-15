@@ -1727,7 +1727,6 @@
   "Couldn't verify domain": "Couldn't verify domain",
   "Update SSO domain?": "Update SSO domain?",
   "Users won't be able to sign in via SSO until you verify the new domain.": "Users won't be able to sign in via SSO until you verify the new domain.",
-  "\n**Setup Instructions**:\nPlease check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)\n\n**Single sign-on URL**:\n```text\n{samlAcs}\n```\n**Audience URI (SP Entity ID)**:\n```text\nActivepieces\n```\n": "\n**Setup Instructions**:\nPlease check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)\n\n**Single sign-on URL**:\n```text\n{samlAcs}\n```\n**Audience URI (SP Entity ID)**:\n```text\nActivepieces\n```\n",
   "IDP Metadata": "IDP Metadata",
   "Paste the metadata XML contents or the metadata URL provided by your identity provider.": "Paste the metadata XML contents or the metadata URL provided by your identity provider.",
   "IDP Certificate": "IDP Certificate",
@@ -3323,5 +3322,7 @@
   "Verify your domain before saving. You can already copy the values above into your identity provider.": "Verify your domain before saving. You can already copy the values above into your identity provider.",
   "Restrict email and password sign-in to the domains you add.": "Restrict email and password sign-in to the domains you add.",
   "Anyone can sign in with email and password until you add a domain.": "Anyone can sign in with email and password until you add a domain.",
-  "Saved. To change it, paste the metadata and certificate again.": "Saved. To change it, paste the metadata and certificate again."
+  "Saved. To change it, paste the metadata and certificate again.": "Saved. To change it, paste the metadata and certificate again.",
+  "Single sign-on URL": "Single sign-on URL",
+  "Audience URI (SP Entity ID)": "Audience URI (SP Entity ID)"
 }

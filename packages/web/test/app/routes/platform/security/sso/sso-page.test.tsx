@@ -591,6 +591,31 @@ describe('SamlSetupPage', () => {
     ).toBe('step');
   });
 
+  it('shows the values to copy into the identity provider', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+    });
+    mountSetupPage();
+
+    expect(screen.getByDisplayValue('https://cloud.test/acs')).toBeDefined();
+    expect(screen.getByDisplayValue('Activepieces')).toBeDefined();
+  });
+
+  it('says a cleared SAML field is required', async () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+    });
+    mountSetupPage();
+
+    const metadata = screen.getByLabelText('IDP Metadata');
+    fireEvent.change(metadata, { target: { value: 'x' } });
+    fireEvent.change(metadata, { target: { value: '' } });
+
+    expect(await screen.findByText('required')).toBeDefined();
+  });
+
   it('says the SAML values are saved instead of looking empty', () => {
     setPlatform({
       ssoDomain: 'acme.com',
