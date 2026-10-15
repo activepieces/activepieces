@@ -11,6 +11,7 @@ import {
   FlowTriggerType,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 import { StoreApi } from 'zustand';
@@ -457,7 +458,7 @@ export const createFlowState = (
 async function refetchDraft(get: StoreApi<BuilderState>['getState']) {
   const { flow, setFlow, setVersion } = get();
   const { data: serverFlow, error } = await tryCatch(() =>
-    flowsApi.get(flow.id),
+    failAfterTimeout(() => flowsApi.get(flow.id)),
   );
   if (error !== null) {
     internalErrorToast();
@@ -475,7 +476,7 @@ function saveOperation({
   operation: FlowOperationRequest;
 }): Promise<PopulatedFlow> {
   return sendWithRetries({
-    send: () => flowsApi.update(flowId, operation),
+    send: () => failAfterTimeout(() => flowsApi.update(flowId, operation)),
     retryDelaysMs: IDEMPOTENT_OPERATION_TYPES.includes(operation.type)
       ? SAVE_RETRY_DELAYS_MS
       : [],
@@ -499,6 +500,27 @@ async function sendWithRetries({
   }
   await wait(delayMs);
   return sendWithRetries({ send, retryDelaysMs: laterDelaysMs });
+}
+
+async function failAfterTimeout<T>(send: () => Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timedOut = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () =>
+        reject(
+          new AxiosError(
+            `timeout of ${FLOW_REQUEST_TIMEOUT_MS}ms exceeded`,
+            AxiosError.ETIMEDOUT,
+          ),
+        ),
+      FLOW_REQUEST_TIMEOUT_MS,
+    );
+  });
+  try {
+    return await Promise.race([send(), timedOut]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function isTransientSaveError(error: unknown) {
@@ -560,6 +582,8 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
 };
 
 const SAVE_RETRY_DELAYS_MS = [1000, 2000, 4000];
+
+const FLOW_REQUEST_TIMEOUT_MS = 60_000;
 
 const IDEMPOTENT_OPERATION_TYPES = [
   FlowOperationType.UPDATE_ACTION,
