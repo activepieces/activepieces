@@ -591,7 +591,7 @@ describe('SamlSetupPage', () => {
     ).toBe('step');
   });
 
-  it('shows saved SAML values as masked instead of empty', () => {
+  it('says the SAML values are saved instead of looking empty', () => {
     setPlatform({
       ssoDomain: 'acme.com',
       ssoDomainVerification: verifiedVerification,
@@ -601,10 +601,10 @@ describe('SamlSetupPage', () => {
 
     expect(
       screen.getByLabelText('IDP Metadata').getAttribute('placeholder'),
-    ).toBe('•••••••• Saved. Paste new metadata to replace it.');
+    ).toBe('Saved. To change it, paste the metadata and certificate again.');
     expect(
       screen.getByLabelText('IDP Certificate').getAttribute('placeholder'),
-    ).toBe('•••••••• Saved. Paste a new certificate to replace it.');
+    ).toBe('Saved. To change it, paste the metadata and certificate again.');
   });
 });
 
