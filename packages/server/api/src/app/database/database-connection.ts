@@ -12,6 +12,7 @@ import { OtpEntity } from '../authentication/otp/otp-entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AgentConversationEntity } from '../ee/agent/agent-conversation-entity'
 import { AgentEntity } from '../ee/agent/agent-entity'
+import { AgentTaskEntity } from '../ee/agent/agent-task-entity'
 import { ChatRolloutUserEntity } from '../ee/agent/chat-rollout-user-entity'
 import { ChatPersonalizationEntity } from '../ee/agent/personalization/chat-personalization-entity'
 import { UserMemoryEntity } from '../ee/agent/user-memory-entity'
@@ -115,6 +116,7 @@ function getEntities(): EntitySchema<unknown>[] {
         ToolSearchIndexEntity,
         AgentEntity,
         AgentConversationEntity,
+        AgentTaskEntity,
         ChatPersonalizationEntity,
         ChatRolloutUserEntity,
         UserMemoryEntity,
