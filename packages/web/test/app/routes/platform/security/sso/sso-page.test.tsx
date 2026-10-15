@@ -267,7 +267,7 @@ describe('SSOPage', () => {
     ).toBeDefined();
     expect(
       within(dialog).getByText(
-        'Single sign-on will be disabled: your SAML connection (identity provider metadata and certificate) is deleted, so people who use single sign-on will have to sign in another way. To use SAML again, verify the domain with a new DNS record and connect your identity provider again.',
+        'This disables single sign-on and deletes its SAML connection.',
       ),
     ).toBeDefined();
     click(findButton('Remove domain and disable SAML', dialog));
