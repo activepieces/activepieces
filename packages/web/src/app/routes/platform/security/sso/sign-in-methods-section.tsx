@@ -89,7 +89,7 @@ export const SignInMethodsSection = ({
             <MethodIcon on={platform.googleAuthEnabled}>
               <img
                 className={cn(
-                  'size-4',
+                  'size-5',
                   !platform.googleAuthEnabled && 'grayscale',
                 )}
                 src={GoogleIcon}
@@ -185,10 +185,8 @@ export const SignInMethodsSection = ({
 const MethodIcon = ({ on, children }: { on: boolean; children: ReactNode }) => (
   <div
     className={cn(
-      'flex size-9 items-center justify-center rounded-lg border [&_svg]:size-4',
-      on
-        ? 'border-accent-7 bg-panel text-accent-11'
-        : 'bg-panel text-gray-9 opacity-60',
+      'flex size-9 items-center justify-center [&_svg]:size-5',
+      on ? 'text-accent-11' : 'text-gray-9 opacity-60',
     )}
   >
     {children}
