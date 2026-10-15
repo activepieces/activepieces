@@ -3307,7 +3307,6 @@
   "Remove {domain}?": "Remove {domain}?",
   "Set up": "Set up",
   "Sign-in methods": "Sign-in methods",
-  "Verify the email domain your company owns. People at it can join using the sign-in methods below.": "Verify the email domain your company owns. People at it can join using the sign-in methods below.",
   "View DNS record": "View DNS record",
   "invalidDomain": "Enter a domain like acme.com",
   "duplicateDomain": "This domain is already on the list",
@@ -3328,5 +3327,6 @@
   "Anyone can sign in with email and password until you add a domain.": "Anyone can sign in with email and password until you add a domain.",
   "Saved. To change it, paste the metadata and certificate again.": "Saved. To change it, paste the metadata and certificate again.",
   "Single sign-on URL": "Single sign-on URL",
-  "Audience URI (SP Entity ID)": "Audience URI (SP Entity ID)"
+  "Audience URI (SP Entity ID)": "Audience URI (SP Entity ID)",
+  "Verify your company's email domain to set up single sign-on.": "Verify your company's email domain to set up single sign-on."
 }
