@@ -13,6 +13,7 @@ const state = vi.hoisted(() => ({
   create: vi.fn(),
   success: vi.fn(),
   error: vi.fn(),
+  gateResult: Promise.resolve() as Promise<unknown>,
 }));
 
 vi.mock('i18next', () => ({
@@ -63,7 +64,8 @@ vi.mock('@/features/billing', async (importOriginal) => ({
     access: 'entitled',
     locked: false,
     run: (action: () => unknown) => {
-      Promise.resolve(action()).catch(() => undefined);
+      state.gateResult = Promise.resolve(action());
+      state.gateResult.catch(() => undefined);
     },
     explain: vi.fn(),
   }),
@@ -154,6 +156,15 @@ describe('ProjectRoleDialog create', () => {
     expect(
       screen.getByPlaceholderText<HTMLInputElement>('Role name').value,
     ).toBe('Ops');
+  });
+
+  it('hands the gate a save that fails when the create fails', async () => {
+    state.create.mockRejectedValue(new Error('boom'));
+    renderDialog();
+    typeName('Ops');
+    fireEvent.click(createButton());
+
+    await expect(state.gateResult).rejects.toThrow('boom');
   });
 
   it('closes and shows a created toast on success', async () => {

@@ -138,7 +138,7 @@ function RoleDialogBody({
     unlocked: platform.plan.customRolesEnabled,
     featureKey: 'CUSTOM_ROLES',
   });
-  const { mutate: upsertRole, isPending: isSaving } = save;
+  const { mutateAsync: upsertRole, isPending: isSaving } = save;
   const { mutateAsync: deleteRole } = useAdminAction<string>({
     verb: 'delete',
     name: (roleName) => roleName,
@@ -196,7 +196,7 @@ function RoleDialogBody({
     gate.run(
       () => {
         submitting.current = true;
-        upsertRole(
+        return upsertRole(
           {
             mode,
             roleId: projectRole?.id,
