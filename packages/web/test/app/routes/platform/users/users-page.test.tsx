@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-/* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
+/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-to-have-attribute -- @testing-library/jest-dom is not a dependency of packages/web */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as React from 'react';
@@ -124,5 +124,33 @@ describe('UsersPage seat count', () => {
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: billingKeys.platformSubscription('platform-1'),
     });
+  });
+
+  it('meters and gates against the scheduled seat cap the server enforces, not the current plan limit', () => {
+    state.planUsersLimit = 10;
+    state.subscription = {
+      plan: { usersLimit: 10, scheduledUsersLimit: 3 },
+      usage: { users: 5 },
+      scheduledPlanName: 'Plus',
+      cancelAt: null,
+    };
+    renderPage();
+    const gate = screen.getByTestId('seat-gate');
+    expect(gate.getAttribute('data-limit')).toBe('3');
+    expect(gate.getAttribute('data-used')).toBe('5');
+    expect(gate.getAttribute('data-unlocked')).toBe('false');
+  });
+
+  it('keeps the plan limit when no downgrade is scheduled', () => {
+    state.planUsersLimit = 10;
+    state.subscription = {
+      plan: { usersLimit: 10, scheduledUsersLimit: null },
+      usage: { users: 5 },
+      cancelAt: null,
+    };
+    renderPage();
+    const gate = screen.getByTestId('seat-gate');
+    expect(gate.getAttribute('data-limit')).toBe('10');
+    expect(gate.getAttribute('data-unlocked')).toBe('true');
   });
 });

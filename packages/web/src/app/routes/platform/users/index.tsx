@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import {
   billingKeys,
   billingQueries,
+  billingUtils,
   seatUtils,
   useEnterpriseGate,
   useSeatLimitGuard,
@@ -112,7 +113,9 @@ export default function UsersPage() {
       users: usersData?.data ?? [],
       invitations: invitationsData ?? [],
     });
-  const usersLimit = platform.plan.usersLimit;
+  const usersLimit = isNil(subscription)
+    ? platform.plan.usersLimit
+    : billingUtils.resolveSeatCap(subscription).effectiveLimit;
   const usersGate = useEnterpriseGate({
     unlocked: isNil(usersLimit) || activeUsers < usersLimit,
     featureKey: 'USERS',
