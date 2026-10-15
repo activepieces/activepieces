@@ -1,12 +1,21 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PlatformAdminSurface,
+} from '@activepieces/shared';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { FeatureKey } from '../components/request-trial';
 import { enterpriseDocs } from '../utils/enterprise-docs';
+import { planTiers } from '../utils/plan-tiers';
 
-import { billingDialogHooks } from './billing-dialog-hooks';
+import {
+  billingDialogHooks,
+  EnterpriseTrialDialogPayload,
+} from './billing-dialog-hooks';
 import { enterpriseTrialHooks } from './enterprise-trial-hooks';
+import { useUpgradeClick } from './use-upgrade-click';
 
 export function useEnterpriseAccess({
   unlocked,
@@ -42,7 +51,7 @@ export function useEnterpriseGate({
   featureKey: FeatureKey;
 }): EnterpriseGate {
   const access = useEnterpriseAccess({ unlocked });
-  const { openDialog } = billingDialogHooks.useEnterpriseTrialDialogStore();
+  const openDialog = useOpenLockedFeature();
   const locked = access !== 'entitled' && access !== 'trialing';
 
   const run = (
@@ -67,6 +76,25 @@ export function useEnterpriseGate({
   const explain = () => openDialog({ featureKey });
 
   return { access, locked, run, explain };
+}
+
+export function useOpenLockedFeature() {
+  const access = useEnterpriseAccess({ unlocked: false });
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { openDialog } = billingDialogHooks.useEnterpriseTrialDialogStore();
+  const upgradeClick = useUpgradeClick();
+
+  return (payload: EnterpriseTrialDialogPayload) => {
+    if (access === 'trial_used') {
+      upgradeClick({
+        feature: payload.featureKey,
+        tier: planTiers.namedTier({ featureKey: payload.featureKey, edition }),
+        surface: PlatformAdminSurface.DIALOG,
+      });
+      return;
+    }
+    openDialog(payload);
+  };
 }
 
 export type EnterpriseAccess =

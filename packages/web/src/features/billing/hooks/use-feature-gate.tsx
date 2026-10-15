@@ -2,10 +2,10 @@ import { LockedGem } from '../components/locked-gem';
 import { FeatureKey } from '../components/request-trial';
 import { FeatureTier } from '../utils/feature-tier';
 
-import { billingDialogHooks } from './billing-dialog-hooks';
+import { useOpenLockedFeature } from './use-enterprise-gate';
 
 export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
-  const { openDialog } = billingDialogHooks.useEnterpriseTrialDialogStore();
+  const openDialog = useOpenLockedFeature();
 
   return {
     locked,
