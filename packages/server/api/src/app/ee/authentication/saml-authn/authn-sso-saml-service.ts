@@ -1,5 +1,5 @@
 import { resolveTxt } from 'dns/promises'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { ApEdition, AuthenticationResponse, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -104,7 +104,13 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const current = await platformService(log).getOneOrThrow(platformId)
             const verification = computeNextVerification({ nextDomain: value, currentDomain: current.ssoDomain ?? null, currentVerification: current.ssoDomainVerification ?? null })
 
-            await platformService(log).update({ id: platformId, ssoDomain: value, ssoDomainVerification: verification })
+            const removesSaml = isNil(value) && await platformService(log).hasSamlConfigured(platformId)
+            await platformService(log).update({
+                id: platformId,
+                ssoDomain: value,
+                ssoDomainVerification: verification,
+                ...spreadIfDefined('federatedAuthProviders', removesSaml ? { saml: null } : undefined),
+            })
             return { ssoDomain: value, ssoDomainVerification: verification }
         },
         async verifySsoDomain({ platformId }: VerifySsoDomainParams): Promise<SsoDomainState> {
