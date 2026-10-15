@@ -1,5 +1,5 @@
 import { isNil, isObject, omit, tryCatch } from '@activepieces/core-utils'
-import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SkillSurface, SubagentActivity, SubagentTaskArtifact, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { AGENT_SURFACE_TOOLS, AgentPhase, BeginAgentTaskResponse, chatBilling, FinishAgentTaskRequest, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, SkillSurface, SubagentActivity, SubagentTaskArtifact, SubagentTimelineEntry, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { hasToolCall, isLoopFinished, ModelMessage, tool, ToolSet } from 'ai'
 import { z } from 'zod'
 import { AgentTurnResult, runAgentTurn, RunAgentTurnParams } from '../run-agent-turn'
@@ -20,7 +20,7 @@ export function createTaskSubagentTools({ tools, taskPrompt, ...rest }: Omit<Tas
     }
     return {
         [TASK_TOOL_NAME]: tool({
-            description: 'Hand one self-contained goal to a focused sub-agent with its own fresh context and the same tools you have (read, search, build, update, execute; risky actions still ask the user for approval). Use it when it buys something: independent goals that can run in parallel (several calls in one step run at once), or noisy preparation with a short answer (going through many records or runs, investigating a failure). Build flows yourself, even several at once, and make small edits yourself. It cannot ask the user anything: when it needs something only the user can give it finishes as blocked and says what. Pass taskId to continue a task you started earlier in this conversation (after a block, or for a follow-up on what it built).',
+            description: 'Hand one self-contained goal to a focused sub-agent with its own fresh context and the same tools you have (read, search, build, update, execute; risky actions still ask the user for approval). Use it when it buys something: independent goals that can run in parallel (several calls in one step run at once), or noisy preparation with a short answer (going through many records or runs, investigating a failure). Build flows yourself, even several at once, and make small edits yourself. It cannot ask the user anything: when it needs something only the user can give it finishes as blocked and says what; ask the user for it in your own words, then pass their answer back. Pass taskId to continue a task you started earlier in this conversation (after a block, or for a follow-up on what it built).',
             inputSchema: taskInput,
             toModelOutput: ({ output }) => ({ type: 'text', value: JSON.stringify(omit(output, ['activity', 'billedToolCalls'])) }),
             execute: async ({ title, brief, taskId }, { toolCallId }) => runTask({ deps, title, brief, taskId, progressId: toolCallId }),
@@ -220,11 +220,13 @@ function fallbackResult(turn: AgentTurnResult): TaskResult {
 }
 
 function runningActivity({ title, uiParts, startedAt }: { title: string, uiParts: PersistedAgentPart[], startedAt: Date }): SubagentActivity {
-    const statuses = statusLines(uiParts)
+    const timeline = timelineFrom(uiParts)
+    const statuses = timeline.flatMap((entry) => entry.kind === 'status' ? [entry.text] : [])
     return {
         title,
         status: 'running',
-        statusLine: statuses[statuses.length - 1] ?? lastToolTitle(uiParts),
+        statusLine: statuses[statuses.length - 1],
+        timeline,
         stepCount: uiParts.filter((part) => part.type === PersistedAgentPartType.TOOL_CALL).length,
         pieces: piecesFrom(uiParts),
         startedAt: startedAt.toISOString(),
@@ -242,16 +244,21 @@ function finalActivity({ title, turn, result, startedAt }: { title: string, turn
     }
 }
 
-function lastToolTitle(parts: PersistedAgentPart[]): string | undefined {
-    return parts.filter(isTitledToolCall).at(-1)?.title.trim()
-}
-
 function isTitledToolCall(part: PersistedAgentPart): part is Extract<PersistedAgentPart, { type: PersistedAgentPartType.TOOL_CALL }> & { title: string } {
     return part.type === PersistedAgentPartType.TOOL_CALL && !isNil(part.title) && part.title.trim().length > 0
 }
 
-function statusLines(parts: PersistedAgentPart[]): string[] {
-    return parts.flatMap((part) => part.type === PersistedAgentPartType.THINKING_STATUS && part.text.trim().length > 0 ? [part.text.trim()] : [])
+function timelineFrom(parts: PersistedAgentPart[]): SubagentTimelineEntry[] {
+    return parts.flatMap((part): SubagentTimelineEntry[] => {
+        if (isTitledToolCall(part)) {
+            return [{ kind: 'status', text: part.title.trim() }]
+        }
+        if (part.type !== PersistedAgentPartType.THINKING_STATUS) {
+            return []
+        }
+        const text = part.text.trim()
+        return text.length > 0 ? [{ kind: 'status', text }] : []
+    })
 }
 
 function billedToolCalls(parts: PersistedAgentPart[]): { toolName: string, output: unknown }[] {

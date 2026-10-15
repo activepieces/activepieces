@@ -63,6 +63,8 @@ export type ChatStoreState = {
   builds: Record<string, BuildState>;
   dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
+  taskPanelToolCallId: string | null;
+  chatAreaWidth: number;
 
   setConversationId: (conversationId: string | null) => void;
   approveGate: (gateId: string, payload?: Record<string, unknown>) => void;
@@ -71,6 +73,9 @@ export type ChatStoreState = {
   dismissForm: (messageId: string) => void;
   resetInteractions: () => void;
   resetBuilds: () => void;
+  openTaskPanel: (toolCallId: string) => void;
+  setChatAreaWidth: (width: number) => void;
+  closeTaskPanel: () => void;
 };
 
 export type ChatStore = ReturnType<typeof createChatStore>;
@@ -94,6 +99,8 @@ export const createChatStore = () =>
     builds: {},
     dismissedGateIds: {},
     lastDismissedFormId: null,
+    taskPanelToolCallId: null,
+    chatAreaWidth: 0,
 
     approveGate: (gateId: string, payload?: Record<string, unknown>) => {
       set((prev) => dismissAndCleanup(prev, gateId));
@@ -119,12 +126,26 @@ export const createChatStore = () =>
         toolCallMeta: {},
         dismissedGateIds: {},
         lastDismissedFormId: null,
+        taskPanelToolCallId: null,
       });
     },
     resetBuilds: () => {
       set({ builds: {} });
     },
+    openTaskPanel: (toolCallId: string) => {
+      set({ taskPanelToolCallId: toolCallId });
+    },
+    closeTaskPanel: () => {
+      set({ taskPanelToolCallId: null });
+    },
+    setChatAreaWidth: (width: number) => {
+      set({ chatAreaWidth: width });
+    },
   }));
+
+function selectTaskPanelDocks(state: ChatStoreState): boolean {
+  return state.chatAreaWidth >= TASK_PANEL_MIN_CHAT_AREA;
+}
 
 function selectActiveDisplayTool({
   state,
@@ -286,7 +307,10 @@ export const chatStoreSelectors = {
   hasBlockingCard: selectHasBlockingCard,
   batchProgress: selectBatchProgress,
   buildById: selectBuildById,
+  taskPanelDocks: selectTaskPanelDocks,
 };
+
+const TASK_PANEL_MIN_CHAT_AREA = 1024;
 
 export const chatBuildUtils = {
   mergeBuildPlan,

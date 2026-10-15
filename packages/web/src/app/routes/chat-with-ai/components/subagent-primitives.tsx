@@ -15,7 +15,7 @@ export function LiveLine({ activity }: { activity: SubagentActivity }) {
   if (activity.status === 'blocked') {
     return (
       <p className="text-xs leading-4 text-accent-11">
-        {t('Needs your input')}
+        {t('Paused, reply in the chat')}
       </p>
     );
   }
