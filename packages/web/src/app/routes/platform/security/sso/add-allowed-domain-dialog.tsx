@@ -34,6 +34,7 @@ import { api } from '@/lib/api';
 export const AddAllowedDomainDialog = ({
   platform,
   refetch,
+  restrictsJoining,
   children,
 }: AddAllowedDomainDialogProps) => {
   const [open, setOpen] = useState(false);
@@ -83,7 +84,10 @@ export const AddAllowedDomainDialog = ({
         <DialogHeader>
           <DialogTitle>{t('Add domain')}</DialogTitle>
           <DialogDescription>
-            {describeAddingDomain({ isFirstDomain: existing.length === 0 })}
+            {describeAddingDomain({
+              isFirstDomain: existing.length === 0,
+              restrictsJoining,
+            })}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -135,14 +139,23 @@ export const AddAllowedDomainDialog = ({
 
 function describeAddingDomain({
   isFirstDomain,
+  restrictsJoining,
 }: {
   isFirstDomain: boolean;
+  restrictsJoining: boolean;
 }): string {
-  return isFirstDomain
-    ? t(
-        'Once a domain is on this list, only people at listed domains can join or sign in with email and password. Add your company domain too.',
-      )
-    : t('People at this domain can join and sign in with email and password.');
+  if (isFirstDomain) {
+    return restrictsJoining
+      ? t(
+          'Once a domain is on this list, only people at listed domains can join or sign in with email and password. Add your company domain too.',
+        )
+      : t(
+          'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.',
+        );
+  }
+  return restrictsJoining
+    ? t('People at this domain can join and sign in with email and password.')
+    : t('People at this domain can sign in with email and password.');
 }
 
 function normalizeDomain(domain: string): string {
@@ -172,5 +185,6 @@ type AllowedDomainFormValues = { domain: string };
 type AddAllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;
   refetch: () => Promise<void>;
+  restrictsJoining: boolean;
   children: ReactNode;
 };
