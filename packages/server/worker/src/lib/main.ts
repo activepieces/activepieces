@@ -7,6 +7,13 @@ import { worker } from './worker'
 
 const workerToken = system.getOrThrow(WorkerSystemProp.WORKER_TOKEN)
 
+process.on('uncaughtException', (error) => {
+    logger.error({ error }, 'Uncaught exception in worker')
+})
+process.on('unhandledRejection', (reason) => {
+    logger.error({ error: reason }, 'Unhandled rejection in worker')
+})
+
 async function main(): Promise<void> {
     await aiDevtools.register({ enabled: system.get(WorkerSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT })
     workerSystemSnapshot.start()
