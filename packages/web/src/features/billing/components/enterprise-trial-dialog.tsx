@@ -70,7 +70,7 @@ export function EnterpriseTrialDialog() {
     start.isError && liveStatus?.state === 'active' ? liveStatus : undefined;
   const outcome = start.data ?? startedAnyway;
   const result = outcome?.state;
-  const view = viewFor({ result, offer });
+  const view = viewFor({ result, offer: offer || start.isError });
   const busy = start.isPending || resumeState === 'saving';
   const close = () => {
     if (busy) {

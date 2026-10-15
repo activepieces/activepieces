@@ -216,11 +216,11 @@ describe('a start whose response was lost', () => {
     expect(screen.getByText('Your Enterprise plan trial is on')).toBeDefined();
   });
 
-  it('keeps the start view with the inline error when the trial really did not start', () => {
-    offer = true;
+  it('keeps the start view with the inline error when the trial really did not start, even if the offer is gone', () => {
+    offer = false;
     access = 'trial_available';
     startFailed = true;
-    liveStatus = { state: 'eligible', startedAt: null, endsAt: null };
+    liveStatus = { state: 'unavailable', startedAt: null, endsAt: null };
     renderDialog();
     expect(
       screen.getByText('We could not start your trial. Please try again.'),
