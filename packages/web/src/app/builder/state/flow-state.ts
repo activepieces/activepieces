@@ -53,6 +53,7 @@ export type FlowState = {
   refreshDraft: () => Promise<boolean>;
   showsNewestVersion: () => boolean;
   draftRefreshCount: number;
+  noteRefreshCounts: Record<string, number>;
   setSampleDataLocally: (params: {
     stepName: string;
     type: 'input' | 'output';
@@ -160,6 +161,11 @@ export const createFlowState = (
           return {
             flow,
             flowVersion: flow.version,
+            noteRefreshCounts: countNoteRefreshes({
+              counts: state.noteRefreshCounts,
+              currentVersion: state.flowVersion,
+              refreshedVersion: flow.version,
+            }),
             selectedStep: null,
             selectedBranchIndex: null,
             rightSidebar:
@@ -178,9 +184,15 @@ export const createFlowState = (
           })
             ? state.draftRefreshCount + 1
             : state.draftRefreshCount,
+          noteRefreshCounts: countNoteRefreshes({
+            counts: state.noteRefreshCounts,
+            currentVersion: state.flowVersion,
+            refreshedVersion: flow.version,
+          }),
         };
       }),
     draftRefreshCount: 0,
+    noteRefreshCounts: {},
     setSampleDataLocally: ({
       stepName,
       value,
@@ -762,6 +774,30 @@ function isSelectedStepGone({
     !isNil(selectedStep) &&
     isNil(flowStructureUtil.getStep(selectedStep, refreshedVersion.trigger))
   );
+}
+
+function countNoteRefreshes({
+  counts,
+  currentVersion,
+  refreshedVersion,
+}: {
+  counts: Record<string, number>;
+  currentVersion: FlowVersion;
+  refreshedVersion: FlowVersion;
+}): Record<string, number> {
+  const currentContent = new Map(
+    currentVersion.notes.map((note) => [note.id, note.content]),
+  );
+  return refreshedVersion.notes
+    .filter(
+      (note) =>
+        currentContent.has(note.id) &&
+        currentContent.get(note.id) !== note.content,
+    )
+    .reduce(
+      (next, note) => ({ ...next, [note.id]: (next[note.id] ?? 0) + 1 }),
+      counts,
+    );
 }
 
 function hasSelectedStepChanged({

@@ -21,14 +21,14 @@ import { NoteFooter } from './note-footer';
 import { NoteTools } from './note-tools';
 
 const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
-  const [draggedNote, resizeNote, note, readonly] = useBuilderStateContext(
-    (state) => [
+  const [draggedNote, resizeNote, note, readonly, noteRefreshCount] =
+    useBuilderStateContext((state) => [
       state.draggedNote,
       state.resizeNote,
       state.getNoteById(props.id),
       state.readonly,
-    ],
-  );
+      state.noteRefreshCounts[props.id] ?? 0,
+    ]);
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: props.id,
     data: {
@@ -103,6 +103,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
         )}
       >
         <NoteContent
+          key={noteRefreshCount}
           note={{
             ...note,
             size,
