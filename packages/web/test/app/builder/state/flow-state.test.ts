@@ -1,15 +1,20 @@
 // @vitest-environment jsdom
 import { tryCatch } from '@activepieces/core-utils';
 import {
+  CodeAction,
   EmptyTrigger,
+  FlowActionType,
   FlowOperationRequest,
   FlowOperationStatus,
   FlowOperationType,
+  FlowRun,
+  FlowRunStatus,
   FlowStatus,
   FlowTriggerType,
   FlowVersionState,
   NoteColorVariant,
   PopulatedFlow,
+  RunEnvironment,
   SampleDataFileType,
   flowOperations,
 } from '@activepieces/shared';
@@ -20,6 +25,7 @@ import { io } from 'socket.io-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BuilderStore, createBuilderStore } from '@/app/builder/builder-hooks';
+import { RightSideBarType } from '@/app/builder/types';
 
 const flowsApiMock = vi.hoisted(() => ({
   update: vi.fn(),
@@ -363,9 +369,7 @@ describe('flow state save retries', () => {
       'Your change was not saved',
       expect.anything(),
     );
-    expect(store.getState().flowVersion.displayName).toBe(
-      'Name on the server',
-    );
+    expect(store.getState().flowVersion.displayName).toBe('Name on the server');
 
     await vi.advanceTimersByTimeAsync(10_000);
     expect(toast.error).toHaveBeenCalledTimes(1);
@@ -416,20 +420,6 @@ describe('flow state edit order', () => {
       renameTrigger('New order'),
       changeName('New name'),
     ]);
-  });
-
-  it('saves a step edit that waits in the debounce before it refetches the draft after a failed save', async () => {
-    const server = serverThatKeepsTheDraft({
-      rejectedType: FlowOperationType.CHANGE_NAME,
-    });
-    const store = createStore(draftFlow('Order lookup'));
-
-    store.getState().applyOperation(renameTrigger('New order'));
-    store.getState().applyOperation(changeName('Bad name'));
-    await vi.advanceTimersByTimeAsync(5000);
-
-    expect(server.draft().version.trigger.displayName).toBe('New order');
-    expect(store.getState().flowVersion.trigger.displayName).toBe('New order');
   });
 });
 
@@ -592,26 +582,388 @@ describe('flow state request timeout', () => {
   });
 });
 
-function serverThatKeepsTheDraft({
-  rejectedType,
+describe('flow state draft check before Publish', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+    vi.spyOn(toast, 'error').mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('sends no request when no save failed', async () => {
+    const store = createStore(draftFlow('Order lookup'));
+
+    await store.getState().refreshDraftAfterFailedSave();
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('refetches the draft when the refetch after a failed save failed', async () => {
+    flowsApiMock.update.mockRejectedValue(httpError({ status: 400 }));
+    flowsApiMock.get
+      .mockRejectedValueOnce(networkError())
+      .mockResolvedValue(draftFlow('Name on the server'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('Bad name'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.getState().flowVersion.displayName).toBe('Bad name');
+
+    await store.getState().refreshDraftAfterFailedSave();
+
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Name on the server',
+    );
+  });
+
+  it('fails when the draft cannot be refetched after a failed save', async () => {
+    flowsApiMock.update.mockRejectedValue(httpError({ status: 400 }));
+    flowsApiMock.get.mockRejectedValue(networkError());
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('Bad name'));
+    await vi.advanceTimersByTimeAsync(0);
+    const { error } = await tryCatch(() =>
+      store.getState().refreshDraftAfterFailedSave(),
+    );
+
+    expect(error?.message).toBe('Network Error');
+  });
+
+  it('sends no request after a Draft Refresh showed the failed save', async () => {
+    flowsApiMock.update.mockRejectedValue(httpError({ status: 400 }));
+    flowsApiMock.get.mockResolvedValue(draftFlow('Name on the server'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('Bad name'));
+    await vi.advanceTimersByTimeAsync(0);
+    await store.getState().refreshDraftAfterFailedSave();
+
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('flow state draft refresh after a failed save', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+    vi.spyOn(toast, 'error').mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('keeps the open step panel', async () => {
+    serveDraft(flowWithLookUpOrderStep());
+    const store = createStore(flowWithLookUpOrderStep());
+    store.getState().selectStepByName('step_1');
+
+    store.getState().applyOperation(changeName(NAME_THE_SERVER_REJECTS));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState()).toMatchObject({
+      selectedStep: 'step_1',
+      rightSidebar: RightSideBarType.PIECE_SETTINGS,
+    });
+    expect(store.getState().flowVersion.displayName).toBe('Order lookup');
+  });
+
+  it('saves an edit inside the debounce before the refetch, and shows it', async () => {
+    serveDraft(flowWithLookUpOrderStep());
+    const store = createStore(flowWithLookUpOrderStep());
+
+    store.getState().applyOperation(renameTrigger('New order'));
+    store.getState().applyOperation(changeName(NAME_THE_SERVER_REJECTS));
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(store.getState().flowVersion).toMatchObject({
+      displayName: 'Order lookup',
+      trigger: { displayName: 'New order' },
+    });
+  });
+
+  it('does not apply a refetched draft while an edit waits, and fetches again', async () => {
+    const server = serveDraft(flowWithLookUpOrderStep());
+    const firstResponse = Promise.withResolvers<void>();
+    flowsApiMock.get.mockImplementationOnce(async () => {
+      const draftWithoutTheEdit = server.currentFlow();
+      await firstResponse.promise;
+      return draftWithoutTheEdit;
+    });
+    const store = createStore(flowWithLookUpOrderStep());
+
+    store.getState().applyOperation(changeName(NAME_THE_SERVER_REJECTS));
+    await vi.advanceTimersByTimeAsync(0);
+    store.getState().applyOperation(renameTrigger('New order'));
+    firstResponse.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState().flowVersion.trigger.displayName).toBe('New order');
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
+    expect(store.getState().flowVersion).toMatchObject({
+      displayName: 'Order lookup',
+      trigger: { displayName: 'New order' },
+    });
+  });
+
+  it('does not apply a refetched draft when a save ends during the request, and fetches again', async () => {
+    const server = serveDraft(flowWithLookUpOrderStep());
+    const firstResponse = Promise.withResolvers<void>();
+    flowsApiMock.get.mockImplementationOnce(async () => {
+      const draftWithoutTheSave = server.currentFlow();
+      await firstResponse.promise;
+      return draftWithoutTheSave;
+    });
+    const store = createStore(flowWithLookUpOrderStep());
+
+    store.getState().applyOperation(changeName(NAME_THE_SERVER_REJECTS));
+    await vi.advanceTimersByTimeAsync(0);
+    store.getState().applyOperation(changeName('Order lookup by email'));
+    await vi.advanceTimersByTimeAsync(0);
+    firstResponse.resolve();
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Order lookup by email',
+    );
+  });
+});
+
+describe('flow state draft refresh', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('waits for a pause in the typing before it fetches the draft again', async () => {
+    const server = serveDraft(
+      withDisplayName({
+        flow: flowWithLookUpOrderStep(),
+        displayName: 'Order lookup by an agent',
+      }),
+    );
+    const firstResponse = Promise.withResolvers<void>();
+    flowsApiMock.get.mockImplementationOnce(async () => {
+      const draftBeforeTheTyping = server.currentFlow();
+      await firstResponse.promise;
+      return draftBeforeTheTyping;
+    });
+    const store = createStore(flowWithLookUpOrderStep());
+
+    const refresh = store.getState().refreshDraft();
+    await vi.advanceTimersByTimeAsync(0);
+    store.getState().applyOperation(renameTrigger('N'));
+    firstResponse.resolve();
+    for (const displayName of ['Ne', 'New', 'New o', 'New order']) {
+      await vi.advanceTimersByTimeAsync(300);
+      store.getState().applyOperation(renameTrigger(displayName));
+    }
+    await vi.advanceTimersByTimeAsync(300);
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await refresh;
+
+    expect(sentOperations()).toEqual([renameTrigger('New order')]);
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
+    expect(store.getState().flowVersion).toMatchObject({
+      displayName: 'Order lookup by an agent',
+      trigger: { displayName: 'New order' },
+    });
+  });
+
+  it('does not replace a run that the tab opens while the draft request runs', async () => {
+    const response = Promise.withResolvers<PopulatedFlow>();
+    flowsApiMock.get.mockReturnValue(response.promise);
+    const store = createStore(flowWithLookUpOrderStep());
+
+    const refresh = store.getState().refreshDraft();
+    await vi.advanceTimersByTimeAsync(0);
+    store.getState().setRun(testRun(), {
+      ...store.getState().flowVersion,
+      displayName: 'Order lookup at the time of the run',
+    });
+    response.resolve(
+      withDisplayName({
+        flow: flowWithLookUpOrderStep(),
+        displayName: 'Order lookup by an agent',
+      }),
+    );
+
+    await expect(refresh).resolves.toBe(false);
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Order lookup at the time of the run',
+    );
+  });
+
+  it('ignores the published version that the tab opens after its own save created the draft', async () => {
+    const published = publishedFlowWithNoDraft();
+    flowsApiMock.update.mockResolvedValue(flowWithLookUpOrderStep());
+    flowsApiMock.get.mockResolvedValue(flowWithLookUpOrderStep());
+    const store = createStore(published);
+
+    store.getState().applyOperation(changeName('Order lookup by email'));
+    await vi.advanceTimersByTimeAsync(0);
+    store.getState().setVersion(published.version);
+
+    await expect(store.getState().refreshDraft()).resolves.toBe(false);
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('ignores the published version that the tab opens after it showed a new draft', async () => {
+    const published = publishedFlowWithNoDraft();
+    flowsApiMock.get.mockResolvedValue(flowWithLookUpOrderStep());
+    const store = createStore(published);
+
+    store.getState().setVersion(flowWithLookUpOrderStep().version);
+    store.getState().setVersion(published.version);
+
+    await expect(store.getState().refreshDraft()).resolves.toBe(false);
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('ignores a version under review that the tab opened by its id', async () => {
+    const published = publishedFlowWithNoDraft();
+    const underReview: PopulatedFlow = {
+      ...published,
+      version: { ...published.version, id: 'version-2' },
+    };
+    flowsApiMock.get.mockResolvedValue(flowWithLookUpOrderStep());
+    const store = createStore(underReview);
+
+    await expect(store.getState().refreshDraft()).resolves.toBe(false);
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('sends one GET at a time when a refresh starts as the previous refresh ends', async () => {
+    const server = serveDraft(flowWithLookUpOrderStep());
+    let getsInFlight = 0;
+    let mostGetsInFlight = 0;
+    flowsApiMock.get.mockImplementation(async () => {
+      getsInFlight++;
+      mostGetsInFlight = Math.max(mostGetsInFlight, getsInFlight);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      getsInFlight--;
+      return server.currentFlow();
+    });
+    const store = createStore(flowWithLookUpOrderStep());
+
+    const firstRefresh = store.getState().refreshDraft();
+    const queuedRefresh = store.getState().refreshDraft();
+    const refreshAsTheFirstEnds = firstRefresh.then(() =>
+      store.getState().refreshDraft(),
+    );
+    await vi.advanceTimersByTimeAsync(1000);
+    await Promise.all([queuedRefresh, refreshAsTheFirstEnds]);
+
+    expect(mostGetsInFlight).toBe(1);
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
+  });
+});
+
+function testRun(): FlowRun {
+  return {
+    id: 'run-1',
+    created: '2026-01-01T00:00:00.000Z',
+    updated: '2026-01-01T00:00:00.000Z',
+    projectId: 'project-1',
+    flowId: 'flow-1',
+    flowVersionId: 'draft-1',
+    failParentOnFailure: false,
+    logsFileId: null,
+    status: FlowRunStatus.SUCCEEDED,
+    environment: RunEnvironment.TESTING,
+    steps: {},
+    tags: [],
+    archivedAt: null,
+  };
+}
+
+function withDisplayName({
+  flow,
+  displayName,
 }: {
-  rejectedType: FlowOperationType;
-}) {
-  let draft = draftFlow('Order lookup');
+  flow: PopulatedFlow;
+  displayName: string;
+}): PopulatedFlow {
+  return { ...flow, version: { ...flow.version, displayName } };
+}
+
+function serveDraft(flow: PopulatedFlow) {
+  let draft = flow.version;
+  const currentFlow = (): PopulatedFlow => ({ ...flow, version: draft });
   flowsApiMock.update.mockImplementation(
     async (_flowId: string, operation: FlowOperationRequest) => {
-      if (operation.type === rejectedType) {
+      if (
+        operation.type === FlowOperationType.CHANGE_NAME &&
+        operation.request.displayName === NAME_THE_SERVER_REJECTS
+      ) {
         throw httpError({ status: 400 });
       }
-      draft = {
-        ...draft,
-        version: flowOperations.apply(draft.version, operation),
-      };
-      return draft;
+      draft = flowOperations.apply(draft, operation);
+      return currentFlow();
     },
   );
-  flowsApiMock.get.mockImplementation(async () => draft);
-  return { draft: () => draft };
+  flowsApiMock.get.mockImplementation(async () => currentFlow());
+  return { currentFlow };
+}
+
+function publishedFlowWithNoDraft(): PopulatedFlow {
+  const flow = flowWithLookUpOrderStep();
+  return {
+    ...flow,
+    publishedVersionId: 'version-1',
+    version: {
+      ...flow.version,
+      id: 'version-1',
+      state: FlowVersionState.LOCKED,
+    },
+  };
+}
+
+function flowWithLookUpOrderStep(): PopulatedFlow {
+  const flow = draftFlow('Order lookup');
+  return {
+    ...flow,
+    version: {
+      ...flow.version,
+      trigger: { ...flow.version.trigger, nextAction: lookUpOrderStep() },
+    },
+  };
+}
+
+function lookUpOrderStep(): CodeAction {
+  return {
+    name: 'step_1',
+    valid: true,
+    displayName: 'Look up order',
+    lastUpdatedDate: '2026-01-01T00:00:00.000Z',
+    type: FlowActionType.CODE,
+    settings: {
+      sourceCode: {
+        code: 'export const code = async (inputs) => inputs;',
+        packageJson: '{}',
+      },
+      input: {},
+      errorHandlingOptions: {},
+    },
+  };
 }
 
 function networkError() {
@@ -777,3 +1129,5 @@ function draftFlow(displayName: string): PopulatedFlow {
     },
   };
 }
+
+const NAME_THE_SERVER_REJECTS = 'Name the server rejects';

@@ -1,7 +1,8 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, Permission } from '@activepieces/core-utils';
 import { useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { useResourceLock } from '@/hooks/use-resource-lock';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -14,9 +15,19 @@ function useFlowLock() {
     state.setReadOnly,
   ]);
   const run = useBuilderStateContext((state) => state.run);
+  const [showsNewestVersion, refreshDraft, savePendingEdits] =
+    useBuilderStateContext((state) => [
+      state.showsNewestVersion(),
+      state.refreshDraft,
+      state.savePendingEdits,
+    ]);
   const readonlySetByLock = useRef(false);
   const navigate = useNavigate();
   const { switchToDraft } = flowCanvasHooks.useSwitchToDraft();
+  const refreshDraftAndMakeNewDraftEditable =
+    flowCanvasHooks.useRefreshDraftAndMakeNewDraftEditable();
+  const { checkAccess } = useAuthorization();
+  const canEditFlow = checkAccess(Permission.WRITE_FLOW);
 
   // refresh the flow in place after a successful take-over; a full-page
   // reload would break the embed SDK handshake inside an iframe. When viewing
@@ -27,14 +38,40 @@ function useFlowLock() {
   const onTakeOver = useCallback(() => {
     if (!isNil(run)) {
       navigate(`/flows/${flowId}`);
+    } else if (showsNewestVersion) {
+      refreshDraft()
+        .then((applied) => {
+          if (applied) {
+            setReadOnly(!canEditFlow);
+          }
+        })
+        .catch(() => undefined);
     } else {
       switchToDraft();
     }
-  }, [run, navigate, flowId, switchToDraft]);
+  }, [
+    run,
+    navigate,
+    flowId,
+    showsNewestVersion,
+    refreshDraft,
+    setReadOnly,
+    canEditFlow,
+    switchToDraft,
+  ]);
+
+  const onLockFreed = useCallback(async () => {
+    const applied = await refreshDraftAndMakeNewDraftEditable();
+    if (!applied) {
+      readonlySetByLock.current = false;
+    }
+  }, [refreshDraftAndMakeNewDraftEditable]);
 
   const { lockedBy, takeOver } = useResourceLock({
     resourceId: flowId,
     onTakeOver,
+    onLockFreed,
+    beforeRelease: savePendingEdits,
   });
 
   useEffect(() => {

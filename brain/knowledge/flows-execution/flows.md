@@ -15,6 +15,7 @@ Flows are the core automation primitive: a versioned directed graph of trigger +
 ### How it works
 - **All 26 modification types** dispatch through one endpoint `POST /v1/flows/:id` with a `FlowOperationRequest` discriminated union (ADD/UPDATE/DELETE/MOVE_ACTION, branch ops, UPDATE_TRIGGER, LOCK_AND_PUBLISH, CHANGE_STATUS, CHANGE_FOLDER, IMPORT_FLOW, SAVE_SAMPLE_DATA, notes, etc.).
 - **Draft vs published**: editing always hits DRAFT. `LOCK_AND_PUBLISH` snapshots to a LOCKED version + sets `publishedVersionId`; `USE_AS_DRAFT` copies it back. Only published flows can be enabled.
+- **Open tabs stay current**: every Draft Write sends a Draft Push to the project room, and each open builder tab that shows the newest version refreshes the draft in place. See [Draft Refresh](draft-refresh.md).
 - **Publish/enable side effects**: lock version → register trigger source (webhook/polling/app-event) → invalidate execution cache → emit WebSocket event → fire-and-forget telemetry. Disable unregisters the trigger source.
 - Sample data is captured per step (input+output) as File entities per flow version.
 

@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 
 export class KeyedDebounce {
   private readonly pending = new Map<string, PendingCall>();
+  private emptyWaiters: Array<() => void> = [];
   private readonly wait: number;
   private readonly maxWait: number;
 
@@ -30,6 +31,15 @@ export class KeyedDebounce {
     return this.pending.size === 0;
   }
 
+  whenEmpty(): Promise<void> {
+    if (this.isEmpty()) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      this.emptyWaiters = [...this.emptyWaiters, resolve];
+    });
+  }
+
   private fire(key: string) {
     const call = this.pending.get(key);
     if (isNil(call)) {
@@ -38,6 +48,11 @@ export class KeyedDebounce {
     clearTimeout(call.timer);
     this.pending.delete(key);
     call.run();
+    if (this.isEmpty()) {
+      const waiters = this.emptyWaiters;
+      this.emptyWaiters = [];
+      waiters.forEach((resolve) => resolve());
+    }
   }
 }
 

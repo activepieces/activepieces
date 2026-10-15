@@ -23,7 +23,11 @@ import {
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
-import { NoteContent } from '@/app/builder/flow-canvas/nodes/note-node';
+import {
+  ApNoteCanvasNode,
+  NoteContent,
+} from '@/app/builder/flow-canvas/nodes/note-node';
+import { ApNodeType } from '@/app/builder/flow-canvas/utils/types';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -54,10 +58,21 @@ vi.mock('@/features/flows/api/flows-api', () => ({
 }));
 
 vi.mock('@/components/custom/markdown-input', () => ({
-  MarkdownInput: ({ onChange }: { onChange: (value: string) => void }) => {
+  MarkdownInput: ({
+    onChange,
+    initialValue,
+  }: {
+    onChange: (value: string) => void;
+    initialValue: string;
+  }) => {
     noteEditor.type = onChange;
-    return null;
+    return <div data-testid="note-editor">{initialValue}</div>;
   },
+}));
+
+vi.mock('@xyflow/react', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@xyflow/react')>()),
+  NodeResizeControl: () => null,
 }));
 
 describe('NoteContent', () => {
@@ -103,6 +118,92 @@ describe('NoteContent', () => {
       },
     ]);
   });
+});
+
+describe('ApNoteCanvasNode', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    container.remove();
+    vi.useRealTimers();
+  });
+
+  it('shows the saved text again when a note edit fails to save', async () => {
+    flowsApiMock.update.mockRejectedValue(
+      new Error('Request failed with status code 400'),
+    );
+    flowsApiMock.get.mockResolvedValue(flowWithNote(note()));
+    const store = createStore(flowWithNote(note()));
+    renderNoteNode(store);
+
+    act(() => noteEditor.type('Text the server rejects'));
+    expect(shownNoteText()).toBe('Text the server rejects');
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+
+    expect(store.getState().flowVersion.notes[0].content).toBe(
+      'Check the order',
+    );
+    expect(shownNoteText()).toBe('Check the order');
+  });
+
+  it('keeps the note editor when a Draft Refresh does not change the note', () => {
+    const store = createStore(flowWithNote(note()));
+    renderNoteNode(store);
+    const editorBefore = noteEditorElement();
+
+    act(() => {
+      const refreshedFlow = flowWithNote(note());
+      store.getState().applyDraftRefresh({
+        ...refreshedFlow,
+        version: { ...refreshedFlow.version, displayName: 'Renamed flow' },
+      });
+    });
+
+    expect(noteEditorElement()).toBe(editorBefore);
+  });
+
+  function renderNoteNode(store: BuilderStore) {
+    act(() => {
+      root.render(
+        <BuilderStateContext.Provider value={store}>
+          <ApNoteCanvasNode
+            id="note-1"
+            type={ApNodeType.NOTE}
+            data={{
+              content: note().content,
+              ownerId: null,
+              color: NoteColorVariant.YELLOW,
+              size: note().size,
+            }}
+            dragging={false}
+            zIndex={0}
+            isConnectable={false}
+            positionAbsoluteX={0}
+            positionAbsoluteY={0}
+          />
+        </BuilderStateContext.Provider>,
+      );
+    });
+  }
+
+  function noteEditorElement(): Element | null {
+    return container.querySelector('[data-testid="note-editor"]');
+  }
+
+  function shownNoteText(): string | null | undefined {
+    return noteEditorElement()?.textContent;
+  }
 });
 
 function BuilderWithNote() {
