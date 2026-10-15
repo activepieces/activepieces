@@ -1549,7 +1549,7 @@
     },
     "packages/pieces/community/canva": {
       "name": "@activepieces/piece-canva",
-      "version": "0.1.2",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3062,7 +3062,7 @@
     },
     "packages/pieces/community/facebook-leads": {
       "name": "@activepieces/piece-facebook-leads",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3075,7 +3075,7 @@
     },
     "packages/pieces/community/facebook-pages": {
       "name": "@activepieces/piece-facebook-pages",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8910,7 +8910,7 @@
     },
     "packages/pieces/community/surveymonkey": {
       "name": "@activepieces/piece-surveymonkey",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9444,7 +9444,7 @@
     },
     "packages/pieces/community/typeform": {
       "name": "@activepieces/piece-typeform",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
