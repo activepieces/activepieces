@@ -233,6 +233,7 @@ describe('SSOPage', () => {
     expect(screen.getByText('Verifying')).toBeDefined();
     click(menuItem('Continue verifying'));
     const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('Verify acme.com')).toBeDefined();
     expect(within(dialog).getByText('Verify later')).toBeDefined();
     click(findButton('Verify DNS', dialog));
 
@@ -287,7 +288,7 @@ describe('SSOPage', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText('DNS record for acme.com')).toBeDefined();
-    expect(within(dialog).getByText('TXT')).toBeDefined();
+    expect(within(dialog).getByDisplayValue('ap-verify=1')).toBeDefined();
   });
 
   it('removes the domain and turns off single sign-on in one request', async () => {
@@ -650,6 +651,17 @@ describe('SamlSetupPage', () => {
     expect(screen.getByText('acme.com')).toBeDefined();
     expect(screen.queryByDisplayValue('acme.com')).toBeNull();
     expect(findButton('Next')).toBeDefined();
+  });
+
+  it('names the domain being verified in the walkthrough', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: pendingVerification,
+    });
+    mountSetupPage();
+
+    expect(screen.getByText('Verify acme.com')).toBeDefined();
+    expect(screen.getByDisplayValue('_activepieces.acme.com')).toBeDefined();
   });
 
   it('verifies a domain inside the walkthrough when there is none yet', async () => {

@@ -37,15 +37,26 @@ export const VerifyDomainDialog = ({
         onInteractOutside={(event) => event.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>{t('Verify a domain')}</DialogTitle>
+          <DialogTitle>
+            {pending
+              ? t('Verify {domain}', { domain: platform.ssoDomain })
+              : t('Verify a domain')}
+          </DialogTitle>
           <DialogDescription>
-            {t('Prove your company owns its email domain with a DNS record.')}
+            {pending
+              ? t(
+                  'Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.',
+                )
+              : t(
+                  'Prove your company owns its email domain with a DNS record.',
+                )}
           </DialogDescription>
         </DialogHeader>
         <DomainVerification
           platform={platform}
           refetch={refetch}
           onVerified={() => onOpenChange(false)}
+          showIntro={false}
           secondaryAction={
             <Button
               type="button"
