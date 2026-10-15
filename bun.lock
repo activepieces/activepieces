@@ -9329,6 +9329,19 @@
         "vitest": "3.2.6",
       },
     },
+    "packages/pieces/community/transcriptfetch": {
+      "name": "@activepieces/piece-transcriptfetch",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/trello": {
       "name": "@activepieces/piece-trello",
       "version": "0.7.1",
@@ -12708,6 +12721,8 @@
     "@activepieces/piece-toggl-track": ["@activepieces/piece-toggl-track@workspace:packages/pieces/community/toggl-track"],
 
     "@activepieces/piece-totalcms": ["@activepieces/piece-totalcms@workspace:packages/pieces/community/totalcms"],
+
+    "@activepieces/piece-transcriptfetch": ["@activepieces/piece-transcriptfetch@workspace:packages/pieces/community/transcriptfetch"],
 
     "@activepieces/piece-trello": ["@activepieces/piece-trello@workspace:packages/pieces/community/trello"],
 
