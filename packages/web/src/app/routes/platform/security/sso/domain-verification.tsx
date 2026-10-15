@@ -7,11 +7,11 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check } from 'lucide-react';
 import { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { StatusDot } from '@/app/components/admin';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
 import { Button } from '@/components/ui/button';
 import {
@@ -173,15 +173,20 @@ const PendingDomain = ({
 };
 
 const VerifiedDomain = ({ domain }: { domain: string }) => (
-  <div className="flex items-center gap-3">
-    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success-3 text-success-11">
-      <Check className="size-5" />
+  <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-1">
+      <h3 className="text-sm font-semibold text-gray-12">{t('Domain')}</h3>
+      <p className="text-sm text-gray-11">
+        {t('Next, connect your identity provider.')}
+      </p>
     </div>
-    <div className="flex min-w-0 flex-col">
-      <span className="truncate text-base font-semibold text-gray-12">
+    <div className="flex h-9 items-center justify-between gap-3 rounded-md border bg-gray-2 px-3">
+      <span className="truncate text-sm font-medium text-gray-12">
         {domain}
       </span>
-      <span className="text-sm text-success-11">{t('Verified')}</span>
+      <StatusDot tone="success" className="shrink-0 text-xs text-gray-11">
+        {t('Verified')}
+      </StatusDot>
     </div>
   </div>
 );
