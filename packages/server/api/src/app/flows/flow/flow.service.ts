@@ -357,41 +357,49 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
-                const flow = await this.getOneOrThrow({ id, projectId })
-                const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined })
-                if (!skipRequiredActionsCheck) {
-                    await assertRequiredActionsPresent({
-                        projectId,
-                        platformId,
-                        flowVersion: flowVersionToPublish,
-                        log,
-                    })
-                }
                 const requestedStatus = operation.request.status ?? FlowStatus.ENABLED
-                const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
-                if (route === 'NEEDS_APPROVAL') {
-                    await publishHooksFactory.get(log).submitForApproval({
-                        flow,
-                        flowVersionToPublish,
-                        userId,
-                        projectId,
-                        platformId,
-                        requestedStatus,
+                const publishedFlow = await runDraftWriteExclusively({
+                    flowId: id,
+                    log,
+                    fn: async () => {
+                        const flow = await this.getOneOrThrow({ id, projectId })
+                        const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: undefined })
+                        if (!skipRequiredActionsCheck) {
+                            await assertRequiredActionsPresent({
+                                projectId,
+                                platformId,
+                                flowVersion: flowVersionToPublish,
+                                log,
+                            })
+                        }
+                        const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
+                        if (route === 'NEEDS_APPROVAL') {
+                            await publishHooksFactory.get(log).submitForApproval({
+                                flow,
+                                flowVersionToPublish,
+                                userId,
+                                projectId,
+                                platformId,
+                                requestedStatus,
+                            })
+                            return null
+                        }
+                        return this.updatedPublishedVersionId({
+                            id,
+                            userId,
+                            projectId,
+                            platformId,
+                            flowVersionToPublish,
+                        })
+                    },
+                })
+                if (!isNil(publishedFlow)) {
+                    const isRepublish = !isNil(previouslyPublishedVersion) && flowPublishUtils.isSameTrigger({
+                        published: previouslyPublishedVersion.trigger,
+                        toPublish: publishedFlow.version.trigger,
                     })
-                    break
+                    await applyStatusChange({ id, projectId, newStatus: requestedStatus, isRepublish }, log)
                 }
-                const publishedFlow = await this.updatedPublishedVersionId({
-                    id,
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersionToPublish,
-                })
-                const isRepublish = !isNil(previouslyPublishedVersion) && flowPublishUtils.isSameTrigger({
-                    published: previouslyPublishedVersion.trigger,
-                    toPublish: publishedFlow.version.trigger,
-                })
-                await applyStatusChange({ id, projectId, newStatus: requestedStatus, isRepublish }, log)
                 break
             }
 
@@ -437,42 +445,54 @@ export const flowService = (log: FastifyBaseLogger) => ({
             case FlowOperationType.ADD_NOTE:
             case FlowOperationType.UPDATE_NOTE:
             case FlowOperationType.DELETE_NOTE: {
-                const lastVersion = await flowVersionService(
-                    log,
-                ).getFlowVersionOrThrow({
+                await runDraftWriteExclusively({
                     flowId: id,
-                    versionId: undefined,
-                })
-                await flowVersionService(log).applyOperation({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersion: lastVersion,
-                    userOperation: operation,
+                    log,
+                    fn: async () => {
+                        const lastVersion = await flowVersionService(
+                            log,
+                        ).getFlowVersionOrThrow({
+                            flowId: id,
+                            versionId: undefined,
+                        })
+                        await flowVersionService(log).applyOperation({
+                            userId,
+                            projectId,
+                            platformId,
+                            flowVersion: lastVersion,
+                            userOperation: operation,
+                        })
+                    },
                 })
                 break
             }
             default: {
-                const { version: lastVersion, createdNewDraft } = await createNewDraftIfVersionIsPublished({
+                await runDraftWriteExclusively({
                     flowId: id,
-                    projectId,
-                    platformId,
-                    userId,
                     log,
+                    fn: async () => {
+                        const { version: lastVersion, createdNewDraft } = await createNewDraftIfVersionIsPublished({
+                            flowId: id,
+                            projectId,
+                            platformId,
+                            userId,
+                            log,
+                        })
+                        const { error } = await tryCatch(() => flowVersionService(log).applyOperation({
+                            userId,
+                            projectId,
+                            platformId,
+                            flowVersion: lastVersion,
+                            userOperation: operation,
+                        }))
+                        if (!isNil(error)) {
+                            if (createdNewDraft) {
+                                await tryCatch(() => flowVersionRepo().delete({ id: lastVersion.id, flowId: id }))
+                            }
+                            throw error
+                        }
+                    },
                 })
-                const { error } = await tryCatch(() => flowVersionService(log).applyOperation({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersion: lastVersion,
-                    userOperation: operation,
-                }))
-                if (!isNil(error)) {
-                    if (createdNewDraft) {
-                        await tryCatch(() => flowVersionRepo().delete({ id: lastVersion.id, flowId: id }))
-                    }
-                    throw error
-                }
             }
         }
 
@@ -1041,6 +1061,24 @@ type UpdateLastModifiedParams = {
     entityManager?: EntityManager
 }
 
+async function runDraftWriteExclusively<T>({
+    flowId,
+    log,
+    fn,
+}: {
+    flowId: FlowId
+    log: FastifyBaseLogger
+    fn: () => Promise<T>
+}): Promise<T> {
+    return distributedLock(log).runExclusive({
+        key: `flow-draft-write:${flowId}`,
+        timeoutInSeconds: DRAFT_WRITE_LOCK_TIMEOUT_SECONDS,
+        retryDelayMs: DRAFT_WRITE_LOCK_RETRY_DELAY_MS,
+        retryJitterMs: DRAFT_WRITE_LOCK_RETRY_JITTER_MS,
+        fn,
+    })
+}
+
 /** When the latest version is locked (published snapshot), creates a new draft and imports it. */
 async function createNewDraftIfVersionIsPublished({
     flowId,
@@ -1055,49 +1093,91 @@ async function createNewDraftIfVersionIsPublished({
     userId: UserId | null
     log: FastifyBaseLogger
 }): Promise<{ version: FlowVersion, createdNewDraft: boolean }> {
-    let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
+    const lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
         flowId,
         versionId: undefined,
     })
-    const createdNewDraft = lastVersion.state === FlowVersionState.LOCKED
-    if (lastVersion.state === FlowVersionState.LOCKED) {
-        const lockedVersion = lastVersion
-        const operations: FlowOperationRequest[] = [{
-            type: FlowOperationType.IMPORT_FLOW,
-            request: lockedVersion,
-        }]
-        if (
-            lockedVersion.trigger.type === FlowTriggerType.PIECE &&
-            !isNil(lockedVersion.trigger.settings.sampleData)
-        ) {
-            operations.push({
-                type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
-                request: {
-                    stepName: lockedVersion.trigger.name,
-                    sampleDataSettings: lockedVersion.trigger.settings.sampleData,
-                },
-            })
+    if (lastVersion.state !== FlowVersionState.LOCKED) {
+        return { version: lastVersion, createdNewDraft: false }
+    }
+    return transaction(async (entityManager) => {
+        await flowRepo(entityManager)
+            .createQueryBuilder('flow')
+            .setLock('for_no_key_update')
+            .select('flow.id')
+            .where({ id: flowId, projectId })
+            .getOne()
+        const lastVersionUnderLock = await flowVersionService(log).getFlowVersionOrThrow({
+            flowId,
+            versionId: undefined,
+            entityManager,
+        })
+        if (lastVersionUnderLock.state !== FlowVersionState.LOCKED) {
+            return { version: lastVersionUnderLock, createdNewDraft: false }
         }
-        lastVersion = await transaction(async (entityManager) => {
-            let draftVersion = await flowVersionService(log).createEmptyVersion({
-                flowId,
-                displayName: lockedVersion.displayName,
-                notes: lockedVersion.notes,
-                schemaVersion: lockedVersion.schemaVersion,
-                entityManager,
-            })
-            for (const operation of operations) {
-                draftVersion = await flowVersionService(log).applyOperation({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersion: draftVersion,
-                    userOperation: operation,
-                    entityManager,
-                })
-            }
-            return draftVersion
+        const draftVersion = await createDraftFromLockedVersion({
+            lockedVersion: lastVersionUnderLock,
+            projectId,
+            platformId,
+            userId,
+            entityManager,
+            log,
+        })
+        return { version: draftVersion, createdNewDraft: true }
+    })
+}
+
+async function createDraftFromLockedVersion({
+    lockedVersion,
+    projectId,
+    platformId,
+    userId,
+    entityManager,
+    log,
+}: {
+    lockedVersion: FlowVersion
+    projectId: ProjectId
+    platformId: PlatformId
+    userId: UserId | null
+    entityManager: EntityManager
+    log: FastifyBaseLogger
+}): Promise<FlowVersion> {
+    const operations: FlowOperationRequest[] = [{
+        type: FlowOperationType.IMPORT_FLOW,
+        request: lockedVersion,
+    }]
+    if (
+        lockedVersion.trigger.type === FlowTriggerType.PIECE &&
+        !isNil(lockedVersion.trigger.settings.sampleData)
+    ) {
+        operations.push({
+            type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
+            request: {
+                stepName: lockedVersion.trigger.name,
+                sampleDataSettings: lockedVersion.trigger.settings.sampleData,
+            },
         })
     }
-    return { version: lastVersion, createdNewDraft }
+    let draftVersion = await flowVersionService(log).createEmptyVersion({
+        flowId: lockedVersion.flowId,
+        displayName: lockedVersion.displayName,
+        notes: lockedVersion.notes,
+        schemaVersion: lockedVersion.schemaVersion,
+        entityManager,
+    })
+    for (const operation of operations) {
+        draftVersion = await flowVersionService(log).applyOperation({
+            userId,
+            projectId,
+            platformId,
+            flowVersion: draftVersion,
+            userOperation: operation,
+            entityManager,
+        })
+    }
+    return draftVersion
 }
+
+const DRAFT_WRITE_LOCK_TIMEOUT_SECONDS = 30
+const DRAFT_WRITE_LOCK_RETRY_DELAY_MS = 25
+const DRAFT_WRITE_LOCK_RETRY_JITTER_MS = 10

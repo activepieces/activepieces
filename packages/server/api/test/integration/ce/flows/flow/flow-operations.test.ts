@@ -1,20 +1,29 @@
 import {
+    Flow,
     FlowActionType,
+    FlowOperationRequest,
     flowOperations,
     FlowOperationType,
     FlowStatus,
+    flowStructureUtil,
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
     LATEST_FLOW_SCHEMA_VERSION,
+    NoteColorVariant,
     PackageType,
     PieceType,
     PopulatedFlow,
     StepLocationRelativeToParent,
     UncategorizedFolderId,
+    UpdateActionRequest,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { SelectQueryBuilder } from 'typeorm'
+import { MockInstance } from 'vitest'
+import { flowService } from '../../../../../src/app/flows/flow/flow.service'
+import { flowVersionRepo } from '../../../../../src/app/flows/flow-version/flow-version.service'
 import { db } from '../../../../helpers/db'
 import { describeWithAuth } from '../../../../helpers/describe-with-auth'
 import {
@@ -24,7 +33,7 @@ import {
     createMockPieceMetadata,
     createMockProject,
 } from '../../../../helpers/mocks'
-import { createTestContext } from '../../../../helpers/test-context'
+import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -932,6 +941,275 @@ describe('Flow Operations API', () => {
         })
     })
 
+    describe('two Draft Writes on a flow with no draft', () => {
+        it('applies the write to a draft that a different writer created after its first read', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await seedFlowWithOnlyALockedVersion(ctx)
+            const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+            const differentWriteSpy = insertADraftAfterTheNextRead({ flowId: flow.id, displayName: 'Draft of a different writer' })
+
+            try {
+                const updated = await flowService(app!.log).update({
+                    id: flow.id,
+                    userId: ctx.user.id,
+                    projectId: ctx.project.id,
+                    platformId: ctx.platform.id,
+                    operation: {
+                        type: FlowOperationType.CHANGE_NAME,
+                        request: { displayName: 'Renamed by this write' },
+                    },
+                    previousFlow,
+                })
+
+                const drafts = await db.findBy<FlowVersion>('flow_version', {
+                    flowId: flow.id,
+                    state: FlowVersionState.DRAFT,
+                })
+                expect(drafts).toHaveLength(1)
+                expect(drafts[0].displayName).toBe('Renamed by this write')
+                expect(updated.version.id).toBe(drafts[0].id)
+            }
+            finally {
+                differentWriteSpy.mockRestore()
+            }
+        })
+
+        it('never deletes the draft that a different writer created when its own operation fails', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await seedFlowWithOnlyALockedVersion(ctx)
+            const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+            const differentWriteSpy = insertADraftAfterTheNextRead({ flowId: flow.id, displayName: 'Draft of a different writer' })
+            const applySpy = failTheRenameTo({ displayName: 'Rejected rename' })
+
+            try {
+                await expect(flowService(app!.log).update({
+                    id: flow.id,
+                    userId: ctx.user.id,
+                    projectId: ctx.project.id,
+                    platformId: ctx.platform.id,
+                    operation: {
+                        type: FlowOperationType.CHANGE_NAME,
+                        request: { displayName: 'Rejected rename' },
+                    },
+                    previousFlow,
+                })).rejects.toThrow('user operation failed')
+
+                const drafts = await db.findBy<FlowVersion>('flow_version', {
+                    flowId: flow.id,
+                    state: FlowVersionState.DRAFT,
+                })
+                expect(drafts).toHaveLength(1)
+                expect(drafts[0].displayName).toBe('Draft of a different writer')
+            }
+            finally {
+                applySpy.mockRestore()
+                differentWriteSpy.mockRestore()
+            }
+        })
+
+        it('locks the flow row FOR NO KEY UPDATE when it creates a draft, so a second write waits and reads that draft', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await seedFlowWithOnlyALockedVersion(ctx)
+            const setLock = vi.spyOn(SelectQueryBuilder.prototype, 'setLock')
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.CHANGE_NAME,
+                request: { displayName: 'Renamed' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(setLock.mock.calls.map(([mode]) => mode)).toContain('for_no_key_update')
+            setLock.mockRestore()
+        })
+    })
+
+    describe('two saves at the same moment', () => {
+        it('keeps both changes when an agent and a person save different steps of one flow', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await createFlowWithTwoCodeSteps(ctx)
+            const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+            const agentRead = pauseAfterTheNextVersionRead({ flowId: flow.id })
+
+            try {
+                const [, personResponse] = await runASecondSaveWhileTheFirstIsPaused({
+                    pause: agentRead,
+                    firstSave: () => updateThroughTheService({
+                        ctx,
+                        previousFlow,
+                        operation: renameCodeStep({ stepName: 'step_2', displayName: 'Renamed by the agent' }),
+                    }),
+                    secondSave: () => ctx.post(`/v1/flows/${flow.id}`, renameCodeStep({ stepName: 'step_1', displayName: 'Renamed by the person' })),
+                })
+
+                expect(personResponse?.statusCode).toBe(StatusCodes.OK)
+                const saved = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+                expect(stepDisplayName({ version: saved.version, stepName: 'step_1' })).toBe('Renamed by the person')
+                expect(stepDisplayName({ version: saved.version, stepName: 'step_2' })).toBe('Renamed by the agent')
+            }
+            finally {
+                agentRead.spy.mockRestore()
+            }
+        })
+
+        it('keeps both changes when an agent saves a step and a person adds a note at the same moment', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await createFlowWithTwoCodeSteps(ctx)
+            const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+            const agentRead = pauseAfterTheNextVersionRead({ flowId: flow.id })
+
+            try {
+                const [, personResponse] = await runASecondSaveWhileTheFirstIsPaused({
+                    pause: agentRead,
+                    firstSave: () => updateThroughTheService({
+                        ctx,
+                        previousFlow,
+                        operation: renameCodeStep({ stepName: 'step_1', displayName: 'Renamed by the agent' }),
+                    }),
+                    secondSave: () => ctx.post(`/v1/flows/${flow.id}`, {
+                        type: FlowOperationType.ADD_NOTE,
+                        request: {
+                            id: 'note-of-the-person',
+                            content: 'Added by the person',
+                            color: NoteColorVariant.YELLOW,
+                            position: { x: 0, y: 0 },
+                            size: { width: 200, height: 100 },
+                        },
+                    }),
+                })
+
+                expect(personResponse?.statusCode).toBe(StatusCodes.OK)
+                const saved = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+                expect(stepDisplayName({ version: saved.version, stepName: 'step_1' })).toBe('Renamed by the agent')
+                expect(saved.version.notes.map((note) => note.content)).toEqual(['Added by the person'])
+            }
+            finally {
+                agentRead.spy.mockRestore()
+            }
+        })
+
+        it('keeps a save that lands during a publish in the next draft', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await createFlowWithTwoCodeSteps(ctx)
+            const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+            const publishRead = pauseAfterTheNextVersionRead({ flowId: flow.id })
+
+            try {
+                const [publishedFlow, agentResponse] = await runASecondSaveWhileTheFirstIsPaused({
+                    pause: publishRead,
+                    firstSave: () => updateThroughTheService({ ctx, previousFlow, operation: publishWithoutEnabling() }),
+                    secondSave: () => ctx.post(`/v1/flows/${flow.id}`, renameCodeStep({ stepName: 'step_2', displayName: 'Renamed by the agent' })),
+                })
+
+                expect(agentResponse?.statusCode).toBe(StatusCodes.OK)
+                const published = await db.findOneByOrFail<FlowVersion>('flow_version', { id: publishedFlow.publishedVersionId })
+                expect(published.state).toBe(FlowVersionState.LOCKED)
+                expect(stepDisplayName({ version: published, stepName: 'step_2' })).toBe('Code Step')
+                const latest = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+                expect(latest.version.state).toBe(FlowVersionState.DRAFT)
+                expect(stepDisplayName({ version: latest.version, stepName: 'step_2' })).toBe('Renamed by the agent')
+            }
+            finally {
+                publishRead.spy.mockRestore()
+            }
+        })
+
+        it('publishes a save that started before the publish and keeps the published version locked', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await createFlowWithTwoCodeSteps(ctx)
+            const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+            const agentRead = pauseAfterTheNextVersionRead({ flowId: flow.id })
+
+            try {
+                const [, publishResponse] = await runASecondSaveWhileTheFirstIsPaused({
+                    pause: agentRead,
+                    firstSave: () => updateThroughTheService({
+                        ctx,
+                        previousFlow,
+                        operation: renameCodeStep({ stepName: 'step_2', displayName: 'Renamed by the agent' }),
+                    }),
+                    secondSave: () => ctx.post(`/v1/flows/${flow.id}`, publishWithoutEnabling()),
+                })
+
+                expect(publishResponse?.statusCode).toBe(StatusCodes.OK)
+                const publishedFlow: PopulatedFlow = publishResponse?.json()
+                const published = await db.findOneByOrFail<FlowVersion>('flow_version', { id: publishedFlow.publishedVersionId })
+                expect(published.state).toBe(FlowVersionState.LOCKED)
+                expect(stepDisplayName({ version: published, stepName: 'step_2' })).toBe('Renamed by the agent')
+            }
+            finally {
+                agentRead.spy.mockRestore()
+            }
+        })
+
+        it('keeps the change of a second save when the first save creates a draft and then fails', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await seedFlowWithOnlyALockedVersion(ctx)
+            const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: flow.id, projectId: ctx.project.id })
+            const applySpy = failTheRenameTo({ displayName: 'Rejected rename' })
+            const firstSaveCleanUp = pauseBeforeTheNextVersionDelete({ flowId: flow.id })
+
+            try {
+                const [, secondResponse] = await runASecondSaveWhileTheFirstIsPaused({
+                    pause: firstSaveCleanUp,
+                    firstSave: () => expect(updateThroughTheService({
+                        ctx,
+                        previousFlow,
+                        operation: {
+                            type: FlowOperationType.CHANGE_NAME,
+                            request: { displayName: 'Rejected rename' },
+                        },
+                    })).rejects.toThrow('user operation failed'),
+                    secondSave: () => ctx.post(`/v1/flows/${flow.id}`, {
+                        type: FlowOperationType.CHANGE_NAME,
+                        request: { displayName: 'Renamed by the second save' },
+                    }),
+                })
+
+                expect(secondResponse?.statusCode).toBe(StatusCodes.OK)
+                const drafts = await db.findBy<FlowVersion>('flow_version', {
+                    flowId: flow.id,
+                    state: FlowVersionState.DRAFT,
+                })
+                expect(drafts).toHaveLength(1)
+                expect(drafts[0].displayName).toBe('Renamed by the second save')
+            }
+            finally {
+                firstSaveCleanUp.spy.mockRestore()
+                applySpy.mockRestore()
+            }
+        })
+
+        it('does not make a save of a different flow wait', async () => {
+            const ctx = await createTestContext(app!)
+            const busyFlow = await createFlowWithTwoCodeSteps(ctx)
+            const otherFlow = await createFlowWithTwoCodeSteps(ctx)
+            const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: busyFlow.id, projectId: ctx.project.id })
+            const busyRead = pauseAfterTheNextVersionRead({ flowId: busyFlow.id })
+
+            try {
+                const busySave = updateThroughTheService({
+                    ctx,
+                    previousFlow,
+                    operation: renameCodeStep({ stepName: 'step_1', displayName: 'Renamed on the busy flow' }),
+                })
+                await busyRead.reached
+                const otherSave = ctx.post(`/v1/flows/${otherFlow.id}`, renameCodeStep({ stepName: 'step_1', displayName: 'Renamed on the other flow' }))
+                const firstToFinish = await Promise.race([
+                    otherSave.then(() => 'the other flow'),
+                    sleep(OTHER_FLOW_SAVE_LIMIT_MS).then(() => 'the time limit'),
+                ])
+                busyRead.resume()
+                await busySave
+
+                expect(firstToFinish).toBe('the other flow')
+                expect((await otherSave)?.statusCode).toBe(StatusCodes.OK)
+            }
+            finally {
+                busyRead.spy.mockRestore()
+            }
+        })
+    })
+
     describe('GET /v1/flows/:flowId/versions', () => {
         it('should list flow versions', async () => {
             const ctx = await createTestContext(app!)
@@ -954,3 +1232,190 @@ describe('Flow Operations API', () => {
         })
     })
 })
+
+async function seedFlowWithOnlyALockedVersion(ctx: TestContext): Promise<Flow> {
+    const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+    await db.save('flow', flow)
+    await db.save('flow_version', createMockFlowVersion({
+        flowId: flow.id,
+        state: FlowVersionState.LOCKED,
+        valid: true,
+    }))
+    return flow
+}
+
+function insertADraftAfterTheNextRead({ flowId, displayName }: { flowId: string, displayName: string }): MockInstance {
+    return onTheNextVersionRead({
+        flowId,
+        run: async () => {
+            await db.save('flow_version', createMockFlowVersion({
+                flowId,
+                displayName,
+                state: FlowVersionState.DRAFT,
+                created: new Date().toISOString(),
+            }))
+        },
+    })
+}
+
+function pauseAfterTheNextVersionRead({ flowId }: { flowId: string }): PausedCall {
+    const pause = createPause()
+    return { reached: pause.reached, resume: pause.resume, spy: onTheNextVersionRead({ flowId, run: pause.hold }) }
+}
+
+function pauseBeforeTheNextVersionDelete({ flowId }: { flowId: string }): PausedCall {
+    const repo = flowVersionRepo()
+    const realDelete = repo.delete.bind(repo)
+    const pause = createPause()
+    let paused = false
+    const spy = vi.spyOn(repo, 'delete').mockImplementation(async (criteria) => {
+        if (!paused && typeof criteria === 'object' && 'flowId' in criteria && criteria.flowId === flowId) {
+            paused = true
+            await pause.hold()
+        }
+        return realDelete(criteria)
+    })
+    return { reached: pause.reached, resume: pause.resume, spy }
+}
+
+function onTheNextVersionRead({ flowId, run }: { flowId: string, run: () => Promise<void> }): MockInstance {
+    const repo = flowVersionRepo()
+    const realFindOne = repo.findOne.bind(repo)
+    let ran = false
+    return vi.spyOn(repo, 'findOne').mockImplementation(async (options) => {
+        const row = await realFindOne(options)
+        if (!ran && row?.flowId === flowId) {
+            ran = true
+            await run()
+        }
+        return row
+    })
+}
+
+function createPause(): Pause {
+    let markReached: () => void = () => undefined
+    let resume: () => void = () => undefined
+    const reached = new Promise<void>((resolve) => {
+        markReached = resolve
+    })
+    const resumed = new Promise<void>((resolve) => {
+        resume = resolve
+    })
+    return {
+        reached,
+        resume: () => resume(),
+        hold: async (): Promise<void> => {
+            markReached()
+            await resumed
+        },
+    }
+}
+
+async function runASecondSaveWhileTheFirstIsPaused<First, Second>({ pause, firstSave, secondSave }: {
+    pause: PausedCall
+    firstSave: () => Promise<First>
+    secondSave: () => Promise<Second>
+}): Promise<[First, Second]> {
+    const first = firstSave()
+    await pause.reached
+    const second = secondSave()
+    await Promise.race([second.then(() => undefined, () => undefined), sleep(HEAD_START_MS)])
+    pause.resume()
+    return Promise.all([first, second])
+}
+
+function updateThroughTheService({ ctx, previousFlow, operation }: {
+    ctx: TestContext
+    previousFlow: PopulatedFlow
+    operation: FlowOperationRequest
+}): Promise<PopulatedFlow> {
+    return flowService(app!.log).update({
+        id: previousFlow.id,
+        userId: ctx.user.id,
+        projectId: ctx.project.id,
+        platformId: ctx.platform.id,
+        operation,
+        previousFlow,
+    })
+}
+
+function failTheRenameTo({ displayName }: { displayName: string }): MockInstance {
+    const originalApply = flowOperations.apply
+    return vi.spyOn(flowOperations, 'apply').mockImplementation((flowVersion, operation) => {
+        if (operation.type === FlowOperationType.CHANGE_NAME && operation.request.displayName === displayName) {
+            throw new Error('user operation failed')
+        }
+        return originalApply(flowVersion, operation)
+    })
+}
+
+async function createFlowWithTwoCodeSteps(ctx: TestContext): Promise<PopulatedFlow> {
+    const createResponse = await ctx.post('/v1/flows', {
+        displayName: 'test flow',
+        projectId: ctx.project.id,
+    }, { query: { projectId: ctx.project.id } })
+    const flow: PopulatedFlow = createResponse?.json()
+    for (const [parentStep, stepName] of [['trigger', 'step_1'], ['step_1', 'step_2']]) {
+        const response = await ctx.post(`/v1/flows/${flow.id}`, {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep,
+                action: codeStep({ stepName, displayName: 'Code Step' }),
+            },
+        })
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+    }
+    return flow
+}
+
+function renameCodeStep({ stepName, displayName }: { stepName: string, displayName: string }): FlowOperationRequest {
+    return {
+        type: FlowOperationType.UPDATE_ACTION,
+        request: codeStep({ stepName, displayName }),
+    }
+}
+
+function publishWithoutEnabling(): FlowOperationRequest {
+    return {
+        type: FlowOperationType.LOCK_AND_PUBLISH,
+        request: { status: FlowStatus.DISABLED },
+    }
+}
+
+function codeStep({ stepName, displayName }: { stepName: string, displayName: string }): UpdateActionRequest {
+    return {
+        type: FlowActionType.CODE,
+        name: stepName,
+        displayName,
+        settings: {
+            input: {},
+            sourceCode: {
+                code: 'export const code = async () => { return true; }',
+                packageJson: '{}',
+            },
+        },
+        valid: true,
+        skip: false,
+    }
+}
+
+function stepDisplayName({ version, stepName }: { version: FlowVersion, stepName: string }): string | undefined {
+    return flowStructureUtil.getStep(stepName, version.trigger)?.displayName
+}
+
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+const HEAD_START_MS = 500
+const OTHER_FLOW_SAVE_LIMIT_MS = 5000
+
+type Pause = {
+    reached: Promise<void>
+    resume: () => void
+    hold: () => Promise<void>
+}
+
+type PausedCall = Pick<Pause, 'reached' | 'resume'> & {
+    spy: MockInstance
+}
