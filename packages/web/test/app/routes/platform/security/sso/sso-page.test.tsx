@@ -469,7 +469,7 @@ describe('SSOPage', () => {
     const dialog = screen.getByRole('dialog');
     expect(
       within(dialog).getByText(
-        'With no domains left, any email address can sign in with email and password.',
+        'With no domains left, anyone can join or sign in with email and password.',
       ),
     ).toBeDefined();
     click(findButton('Remove domain', dialog));
@@ -493,10 +493,10 @@ describe('SSOPage', () => {
     const dialog = screen.getByRole('dialog');
     expect(
       within(dialog).getByText(
-        'Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.',
+        'Once a domain is on this list, only people at listed domains can join or sign in with email and password. Add your company domain too.',
       ),
     ).toBeDefined();
-    fireEvent.change(within(dialog).getByRole('textbox'), {
+    fireEvent.change(within(dialog).getByLabelText('Domain'), {
       target: { value: ' Contractors.IO ' },
     });
     await submitWhenValid(dialog);
