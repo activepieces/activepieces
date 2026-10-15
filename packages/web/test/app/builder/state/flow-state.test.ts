@@ -582,6 +582,72 @@ describe('flow state request timeout', () => {
   });
 });
 
+describe('flow state draft check before Publish', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    flowsApiMock.update.mockReset();
+    flowsApiMock.get.mockReset();
+    vi.spyOn(toast, 'error').mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('sends no request when no save failed', async () => {
+    const store = createStore(draftFlow('Order lookup'));
+
+    await store.getState().refreshDraftAfterFailedSave();
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('refetches the draft when the refetch after a failed save failed', async () => {
+    flowsApiMock.update.mockRejectedValue(httpError({ status: 400 }));
+    flowsApiMock.get
+      .mockRejectedValueOnce(networkError())
+      .mockResolvedValue(draftFlow('Name on the server'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('Bad name'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.getState().flowVersion.displayName).toBe('Bad name');
+
+    await store.getState().refreshDraftAfterFailedSave();
+
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Name on the server',
+    );
+  });
+
+  it('fails when the draft cannot be refetched after a failed save', async () => {
+    flowsApiMock.update.mockRejectedValue(httpError({ status: 400 }));
+    flowsApiMock.get.mockRejectedValue(networkError());
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('Bad name'));
+    await vi.advanceTimersByTimeAsync(0);
+    const { error } = await tryCatch(() =>
+      store.getState().refreshDraftAfterFailedSave(),
+    );
+
+    expect(error?.message).toBe('Network Error');
+  });
+
+  it('sends no request after a Draft Refresh showed the failed save', async () => {
+    flowsApiMock.update.mockRejectedValue(httpError({ status: 400 }));
+    flowsApiMock.get.mockResolvedValue(draftFlow('Name on the server'));
+    const store = createStore(draftFlow('Order lookup'));
+
+    store.getState().applyOperation(changeName('Bad name'));
+    await vi.advanceTimersByTimeAsync(0);
+    await store.getState().refreshDraftAfterFailedSave();
+
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('flow state draft refresh after a failed save', () => {
   beforeEach(() => {
     vi.useFakeTimers();
