@@ -26,7 +26,7 @@ import {
 } from '@/app/components/admin';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
-import { ApMarkdown } from '@/components/custom/markdown';
+import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -398,25 +398,27 @@ const SamlStep = ({
   return (
     <>
       {samlAcs && (
-        <div className="mb-4">
-          <ApMarkdown
-            markdown={t(
-              `
-**Setup Instructions**:
-Please check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)
-
-**Single sign-on URL**:
-\`\`\`text
-{samlAcs}
-\`\`\`
-**Audience URI (SP Entity ID)**:
-\`\`\`text
-Activepieces
-\`\`\`
-`,
-              { samlAcs: samlAcs ?? '' },
-            )}
-          />
+        <div className="grid gap-3 rounded-md border p-4">
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <Label className="text-xs text-gray-11">
+              {t('Single sign-on URL')}
+            </Label>
+            <CopyToClipboardInput
+              textToCopy={samlAcs}
+              useInput={true}
+              controlId={AdminControl.SSO_SAML_ACS_URL_COPY}
+            />
+          </div>
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <Label className="text-xs text-gray-11">
+              {t('Audience URI (SP Entity ID)')}
+            </Label>
+            <CopyToClipboardInput
+              textToCopy={SAML_ENTITY_ID}
+              useInput={true}
+              controlId={AdminControl.SSO_SAML_ENTITY_ID_COPY}
+            />
+          </div>
         </div>
       )}
 
@@ -589,6 +591,8 @@ const VerificationStatusBadge = ({
   );
 };
 
+const SAML_ENTITY_ID = 'Activepieces';
+
 const SsoDomainFormValues = z.object({
   ssoDomain: z
     .hostname(formErrors.invalidDomain)
@@ -598,8 +602,8 @@ const SsoDomainFormValues = z.object({
 type SsoDomainFormValues = z.infer<typeof SsoDomainFormValues>;
 
 const Saml2FormValues = z.object({
-  idpMetadata: z.string().min(1),
-  idpCertificate: z.string().min(1),
+  idpMetadata: z.string().min(1, formErrors.required),
+  idpCertificate: z.string().min(1, formErrors.required),
 });
 type Saml2FormValues = z.infer<typeof Saml2FormValues>;
 
