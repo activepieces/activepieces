@@ -100,6 +100,7 @@ const CORE_TOOL_NAMES: Record<SkillSurface, readonly string[]> = {
         'ap_get_piece_props',
         'ap_resolve_property_options',
         'ap_resolve_property_chain',
+        'ap_run_task',
     ],
     AGENT: [
         LOAD_SKILL_NAME,
