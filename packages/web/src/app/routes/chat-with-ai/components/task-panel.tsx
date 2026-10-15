@@ -174,6 +174,7 @@ function TaskDetails({
               <TimelineItem
                 key={`${index}-${entry.text}`}
                 text={entry.text}
+                failed={entry.failed ?? false}
                 active={running && index === timeline.length - 1}
               />
             ))}
@@ -207,7 +208,15 @@ function TaskDetails({
   );
 }
 
-function TimelineItem({ text, active }: { text: string; active: boolean }) {
+function TimelineItem({
+  text,
+  failed,
+  active,
+}: {
+  text: string;
+  failed: boolean;
+  active: boolean;
+}) {
   return (
     <motion.li
       initial={{ opacity: 0, y: 6 }}
@@ -216,7 +225,9 @@ function TimelineItem({ text, active }: { text: string; active: boolean }) {
       className="flex gap-3"
     >
       <span className="flex size-5 shrink-0 items-center justify-center">
-        {active ? (
+        {failed ? (
+          <X className="size-3.5 text-danger-11" strokeWidth={2.5} />
+        ) : active ? (
           <Loader2 className="size-3.5 animate-spin text-accent-10 motion-reduce:animate-none" />
         ) : (
           <Check className="size-3.5 text-success-10" strokeWidth={2.5} />
