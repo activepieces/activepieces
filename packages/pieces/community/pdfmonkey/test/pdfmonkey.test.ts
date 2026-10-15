@@ -173,4 +173,26 @@ describe('documentGenerated trigger', () => {
     expect(calls[0].query).toMatchObject({ 'q[status]': 'success', 'q[updated_since]': String(lastPoll / 1000), 'page[number]': '1' });
     expect(items).toEqual([CARD]);
   });
+
+  it('reads every page past the dropdown cap so no document is skipped', async () => {
+    const pages = 25;
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      const page = Number(request.queryParams?.['page[number]']);
+      return { status: 200, headers: {}, body: { document_cards: [{ ...CARD, id: `doc-${page}`, updated_at: new Date(Date.parse('2026-10-15T12:00:00Z') + page * 1000).toISOString() }], meta: { next_page: page < pages ? page + 1 : null } } };
+    });
+    const store = { get: vi.fn(async () => Date.parse('2026-10-15T11:00:00Z')), put: vi.fn(async () => undefined), delete: vi.fn() };
+    const items = await Reflect.apply(documentGeneratedTrigger.run, undefined, [{ auth, store, propsValue: {}, files: {} }]);
+    expect(items).toHaveLength(pages);
+    expect(store.put).toHaveBeenCalledWith('lastPoll', Date.parse('2026-10-15T12:00:00Z') + pages * 1000);
+  });
+
+  it('fails without moving the checkpoint when the backlog exceeds the safety cap', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      const page = Number(request.queryParams?.['page[number]']);
+      return { status: 200, headers: {}, body: { document_cards: [{ ...CARD, id: `doc-${page}` }], meta: { next_page: page + 1 } } };
+    });
+    const store = { get: vi.fn(async () => Date.parse('2026-10-15T11:00:00Z')), put: vi.fn(async () => undefined), delete: vi.fn() };
+    await expect(Reflect.apply(documentGeneratedTrigger.run, undefined, [{ auth, store, propsValue: {}, files: {} }])).rejects.toThrow('without moving its checkpoint');
+    expect(store.put).not.toHaveBeenCalled();
+  });
 });

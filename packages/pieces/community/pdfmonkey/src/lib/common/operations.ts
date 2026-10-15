@@ -142,9 +142,17 @@ async function listDocuments({
   return { documents, page: meta.current_page ?? pageNumber, total_pages: meta.total_pages ?? pageNumber, has_more: meta.next_page !== null && meta.next_page !== undefined };
 }
 
-async function listAllDocumentCards({ auth, query }: { auth: unknown; query: Record<string, string | undefined> }): Promise<{ items: DocumentCard[]; truncated: boolean }> {
+async function listAllDocumentCards({
+  auth,
+  query,
+  maxPages = MAX_LIST_PAGES,
+}: {
+  auth: unknown;
+  query: Record<string, string | undefined>;
+  maxPages?: number;
+}): Promise<{ items: DocumentCard[]; truncated: boolean }> {
   const items: DocumentCard[] = [];
-  for (let page = 1; page <= MAX_LIST_PAGES; page++) {
+  for (let page = 1; page <= maxPages; page++) {
     const response = await pdfmonkeyClient.request<Record<string, unknown>>({
       auth,
       method: HttpMethod.GET,

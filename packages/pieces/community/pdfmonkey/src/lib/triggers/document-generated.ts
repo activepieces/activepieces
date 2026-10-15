@@ -19,13 +19,24 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof pdfmonkeyAuth>, 
 		};
 		const documents = isTest
 			? (await pdfmonkeyOperations.listDocuments({ auth, status: 'success' })).documents.slice(0, 5)
-			: (await pdfmonkeyOperations.listAllDocumentCards({ auth, query })).items;
+			: await listSincePoll({ auth, query });
 		return documents.map((document) => ({
 			epochMilliSeconds: dayjs(String(document['updated_at'] ?? document['created_at'])).valueOf(),
 			data: document,
 		}));
 	},
 };
+
+async function listSincePoll({ auth, query }: { auth: unknown; query: Record<string, string | undefined> }) {
+	const { items, truncated } = await pdfmonkeyOperations.listAllDocumentCards({ auth, query, maxPages: MAX_POLL_PAGES });
+	if (truncated) {
+		throw new Error(`More than ${MAX_POLL_PAGES * PAGE_SIZE} documents finished since the last check. The trigger stopped without moving its checkpoint so no document is skipped; it retries on the next poll.`);
+	}
+	return items;
+}
+
+const MAX_POLL_PAGES = 400;
+const PAGE_SIZE = 24;
 
 export const documentGeneratedTrigger = createTrigger({
 	auth: pdfmonkeyAuth,
