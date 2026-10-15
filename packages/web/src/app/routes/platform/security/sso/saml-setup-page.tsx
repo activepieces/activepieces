@@ -485,9 +485,7 @@ const SamlStep = ({
                     className="font-mono text-xs"
                     placeholder={
                       connected
-                        ? t(
-                            'Saved. To change it, paste the metadata and certificate again.',
-                          )
+                        ? t('Saved. Paste new metadata to replace it.')
                         : undefined
                     }
                   />
@@ -511,9 +509,7 @@ const SamlStep = ({
                     id="idpCertificate"
                     placeholder={
                       connected
-                        ? t(
-                            'Saved. To change it, paste the metadata and certificate again.',
-                          )
+                        ? t('Saved. Paste a new certificate to replace it.')
                         : undefined
                     }
                   />

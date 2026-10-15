@@ -3321,7 +3321,6 @@
   "Verify your domain before saving. You can already copy the values above into your identity provider.": "Verify your domain before saving. You can already copy the values above into your identity provider.",
   "Restrict email and password sign-in to the domains you add.": "Restrict email and password sign-in to the domains you add.",
   "Anyone can sign in with email and password until you add a domain.": "Anyone can sign in with email and password until you add a domain.",
-  "Saved. To change it, paste the metadata and certificate again.": "Saved. To change it, paste the metadata and certificate again.",
   "Single sign-on URL": "Single sign-on URL",
   "Audience URI (SP Entity ID)": "Audience URI (SP Entity ID)",
   "Verify your company's email domain to set up single sign-on.": "Verify your company's email domain to set up single sign-on.",
@@ -3339,5 +3338,7 @@
   "Disable single sign-on?": "Disable single sign-on?",
   "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.": "Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.",
   "Disable single sign-on": "Disable single sign-on",
-  "Deletes the SAML connection. Your verified domain stays, so you can connect again later.": "Deletes the SAML connection. Your verified domain stays, so you can connect again later."
+  "Deletes the SAML connection. Your verified domain stays, so you can connect again later.": "Deletes the SAML connection. Your verified domain stays, so you can connect again later.",
+  "Saved. Paste new metadata to replace it.": "Saved. Paste new metadata to replace it.",
+  "Saved. Paste a new certificate to replace it.": "Saved. Paste a new certificate to replace it."
 }

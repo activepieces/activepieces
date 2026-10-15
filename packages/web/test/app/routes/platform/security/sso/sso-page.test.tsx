@@ -666,10 +666,10 @@ describe('SamlSetupPage', () => {
 
     expect(
       screen.getByLabelText('IDP Metadata').getAttribute('placeholder'),
-    ).toBe('Saved. To change it, paste the metadata and certificate again.');
+    ).toBe('Saved. Paste new metadata to replace it.');
     expect(
       screen.getByLabelText('IDP Certificate').getAttribute('placeholder'),
-    ).toBe('Saved. To change it, paste the metadata and certificate again.');
+    ).toBe('Saved. Paste a new certificate to replace it.');
   });
 });
 
