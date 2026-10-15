@@ -501,6 +501,19 @@ describe('SOAP business object paging', () => {
 		);
 	});
 
+	it('fetches every page when no limit is given, so triggers never drop changes', async () => {
+		sendRequest.mockImplementation(async (request: HttpRequest) => {
+			const page = Number(/<bsvc:Page>(\d+)<\/bsvc:Page>/.exec(String(request.body))?.[1] ?? 1);
+			return resp(workersPage({ page, totalPages: 51 }));
+		});
+		const records = await workdayApi.listSoapObjects({
+			auth: ISU_AUTH,
+			object: workdayUtils.resolveSoapObject({ value: 'workers' }),
+		});
+		expect(sendRequest).toHaveBeenCalledTimes(51);
+		expect(records.at(-1)?.['id']).toBe('w51');
+	});
+
 	it("ends the change window at Workday's own clock, not ours", async () => {
 		sendRequest
 			.mockResolvedValueOnce(

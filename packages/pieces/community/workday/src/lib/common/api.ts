@@ -162,8 +162,9 @@ async function listSoapObjects({
 		updatedFrom,
 		updatedThrough,
 	});
-	const maxPages = limit ? Math.ceil(limit / SOAP_PAGE_SIZE) : SOAP_MAX_PAGES;
-	const lastPage = Math.min(first.totalPages, maxPages);
+	const lastPage = limit
+		? Math.min(first.totalPages, Math.ceil(limit / SOAP_PAGE_SIZE))
+		: first.totalPages;
 	const rest = [];
 	for (let page = 2; page <= lastPage; page++) {
 		const next = await getSoapObjectsPage({
@@ -1227,5 +1228,4 @@ export const workdayApi = {
 };
 
 const WID_PATTERN = /^[0-9a-f]{32}$/i;
-const SOAP_MAX_PAGES = 50;
 const SOAP_PAGE_SIZE = 100;

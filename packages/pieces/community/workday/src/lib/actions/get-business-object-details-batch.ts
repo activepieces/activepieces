@@ -42,6 +42,9 @@ export const getBusinessObjectDetailsBatchAction = createAction({
 		const ids = propsValue.objectIds.flatMap((item) =>
 			typeof item === 'object' && item !== null && 'id' in item ? [String(item.id)] : [],
 		);
+		if (ids.length === 0) {
+			return { total_count: 0, records: [] };
+		}
 		if (propsValue.source === 'wws') {
 			const soapRecords = await workdayApi.listSoapObjects({
 				auth,
