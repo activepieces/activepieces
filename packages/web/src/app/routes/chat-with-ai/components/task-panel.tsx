@@ -180,18 +180,11 @@ function TaskDetails({
           </ol>
         )}
 
-        {!running && (activity.summary || activity.needs) && (
+        {!running && activity.summary && (
           <Section title={t('Findings')}>
-            {activity.summary && (
-              <div className="text-sm text-gray-12">
-                <Markdown>{activity.summary}</Markdown>
-              </div>
-            )}
-            {activity.status === 'blocked' && activity.needs && (
-              <div className="mt-3 rounded-lg bg-accent-3 px-3 py-2 text-sm text-gray-12">
-                <Markdown>{activity.needs}</Markdown>
-              </div>
-            )}
+            <div className="text-sm text-gray-12">
+              <Markdown>{activity.summary}</Markdown>
+            </div>
           </Section>
         )}
 

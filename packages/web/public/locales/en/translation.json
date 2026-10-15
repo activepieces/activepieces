@@ -3277,7 +3277,7 @@
   "Getting started": "Getting started",
   "{count, plural, =1 {Working on a task} other {Working on # tasks at once}}": "{count, plural, =1 {Working on a task} other {Working on # tasks at once}}",
   "{count, plural, =1 {Task finished} other {# tasks finished}}": "{count, plural, =1 {Task finished} other {# tasks finished}}",
-  "Needs your input": "Needs your input",
+  "Paused, reply in the chat": "Paused, reply in the chat",
   "Task": "Task",
   "Asked by {taskTitle}": "Asked by {taskTitle}",
   "{count} tasks": "{count} tasks",
