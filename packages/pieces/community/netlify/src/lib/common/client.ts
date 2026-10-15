@@ -17,6 +17,26 @@ export type NetlifyAuthValue = unknown;
 
 type QueryValue = string | number | boolean | undefined | null;
 
+function withoutAuthHeaders(headers: Record<string, string> | undefined): Record<string, string> {
+  return Object.fromEntries(Object.entries(headers ?? {}).filter(([key]) => !['authorization', 'host', 'cookie'].includes(key.toLowerCase())));
+}
+
+function apiPath(url: unknown): string {
+  const text = typeof url === 'string' ? url.trim() : '';
+  if (text === '') {
+    throw new Error('URL is required.');
+  }
+  const base = new URL(`${NETLIFY_API_BASE}/`);
+  const target = /^[a-z][a-z0-9+.-]*:/i.test(text) || text.startsWith('//') ? new URL(text) : new URL(text.replace(/^\/+/, ''), base);
+  if (target.origin !== base.origin || target.username !== '' || target.password !== '' || !`${target.pathname}/`.startsWith(base.pathname)) {
+    throw new Error(`URL must be a path under ${NETLIFY_API_BASE}, e.g. /sites.`);
+  }
+  if (target.pathname.split('/').some((part) => part === '..' || decodeURIComponent(part) === '..')) {
+    throw new Error('URL must not contain "..".');
+  }
+  return `${target.pathname.slice(base.pathname.length - 1)}${target.search}`;
+}
+
 function verifiedTls(): Promise<unknown> {
   verifiedTlsAgent ??= import('undici').then(({ Agent }) => new Agent({ connect: { rejectUnauthorized: true } }));
   return verifiedTlsAgent;
@@ -87,6 +107,7 @@ async function request<T = unknown>({
   query,
   body,
   redactBody,
+  extraHeaders,
 }: {
   auth: NetlifyAuthValue;
   method: HttpMethod;
@@ -94,11 +115,13 @@ async function request<T = unknown>({
   query?: Record<string, QueryValue>;
   body?: Record<string, unknown> | Record<string, unknown>[];
   redactBody?: boolean;
+  extraHeaders?: Record<string, string>;
 }): Promise<{ status: number; body: T }> {
   const hasBody = body !== undefined && method !== HttpMethod.GET && method !== HttpMethod.DELETE;
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${tokenOf(auth)}`,
     Accept: 'application/json',
+    ...withoutAuthHeaders(extraHeaders),
+    Authorization: `Bearer ${tokenOf(auth)}`,
   };
   if (hasBody) headers['Content-Type'] = 'application/json';
   const dispatcher = await verifiedTls();
@@ -167,4 +190,4 @@ function pageNumber(value: unknown): number | undefined {
   return number;
 }
 
-export const netlifyClient = { request, listAll, segment, pageSize, pageNumber, isRecord, toApiError };
+export const netlifyClient = { request, listAll, segment, pageSize, pageNumber, isRecord, toApiError, apiPath };

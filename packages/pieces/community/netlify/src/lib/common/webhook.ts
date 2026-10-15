@@ -1,12 +1,14 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
 import { netlifyClient, NetlifyApiError, NetlifyAuthValue } from './client';
 
 const STORE_KEY = 'webhook_id';
 const SECRET_KEY = 'webhook_signature_secret';
-const SEEN_KEY = 'recent_event_ids';
+const SLOT_KEY_PREFIX = 'netlify_seen_events_';
+const SLOT_COUNT = 64;
+const MAX_PER_SLOT = 100;
 const DEDUPE_WINDOW_MS = 15 * 60 * 1000;
-const MAX_SEEN = 500;
 
 async function enable({
   auth,
@@ -54,7 +56,7 @@ async function disable({ auth, store }: { auth: NetlifyAuthValue; store: Webhook
   }
   await store.delete(STORE_KEY);
   await store.delete(SECRET_KEY);
-  await store.delete(SEEN_KEY);
+  await Promise.all(Array.from({ length: SLOT_COUNT }, (_, slot) => store.delete(`${SLOT_KEY_PREFIX}${slot}`)));
 }
 
 async function receive({ payload, store, now = Date.now() }: { payload: WebhookPayload; store: WebhookStore; now?: number }): Promise<unknown[]> {
@@ -69,12 +71,49 @@ async function receive({ payload, store, now = Date.now() }: { payload: WebhookP
   if (eventId === null) {
     return [payload.body];
   }
-  const seen = pruneSeen({ seen: await store.get<Record<string, number>>(SEEN_KEY), now });
-  if (seen[eventId] !== undefined) {
+  const claimed = await claimEvent({ store, eventId, now });
+  if (!claimed) {
     return [];
   }
-  await store.put(SEEN_KEY, { ...seen, [eventId]: now });
-  return [payload.body];
+  return [withDedupeKey({ body: payload.body, eventId })];
+}
+
+async function claimEvent({ store, eventId, now }: { store: WebhookStore; eventId: string; now: number }): Promise<boolean> {
+  const key = slotKey(eventId);
+  const before = await readSlot({ store, key, now });
+  if (before.some((entry) => entry.id === eventId)) {
+    return false;
+  }
+  const mine: SeenEvent = { id: eventId, at: now, token: randomBytes(16).toString('hex') };
+  await store.put(key, [...before.slice(-(MAX_PER_SLOT - 1)), mine]);
+  const after = await readSlot({ store, key, now });
+  const winner = after.find((entry) => entry.id === eventId);
+  if (winner !== undefined) {
+    return winner.token === mine.token;
+  }
+  await store.put(key, [...after.slice(-(MAX_PER_SLOT - 1)), mine]);
+  return true;
+}
+
+async function readSlot({ store, key, now }: { store: WebhookStore; key: string; now: number }): Promise<SeenEvent[]> {
+  const stored = await store.get<unknown>(key);
+  return (Array.isArray(stored) ? stored : []).filter(
+    (entry): entry is SeenEvent =>
+      netlifyClient.isRecord(entry) &&
+      typeof entry['id'] === 'string' &&
+      typeof entry['token'] === 'string' &&
+      typeof entry['at'] === 'number' &&
+      now - entry['at'] < DEDUPE_WINDOW_MS,
+  );
+}
+
+function slotKey(eventId: string): string {
+  return `${SLOT_KEY_PREFIX}${createHash('sha256').update(eventId).digest().readUInt32BE(0) % SLOT_COUNT}`;
+}
+
+function withDedupeKey({ body, eventId }: { body: unknown; eventId: string }): unknown {
+  if (!netlifyClient.isRecord(body)) return body;
+  return { ...body, [DEDUPE_KEY_PROPERTY]: `netlify:${eventId}` };
 }
 
 function verifySignature({ token, secret, rawBody }: { token: string | undefined; secret: string; rawBody: string | null }): boolean {
@@ -123,14 +162,6 @@ function eventIdOf(body: unknown): string | null {
   return `${body['id']}${state}`;
 }
 
-function pruneSeen({ seen, now }: { seen: Record<string, number> | null; now: number }): Record<string, number> {
-  const fresh = Object.entries(seen ?? {})
-    .filter(([, at]) => typeof at === 'number' && now - at < DEDUPE_WINDOW_MS)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, MAX_SEEN - 1);
-  return Object.fromEntries(fresh);
-}
-
 async function deleteHook({ auth, hookId }: { auth: NetlifyAuthValue; hookId: string }): Promise<void> {
   try {
     await netlifyClient.request({ auth, method: HttpMethod.DELETE, path: `/hooks/${netlifyClient.segment({ value: hookId, label: 'Webhook ID' })}` });
@@ -149,6 +180,8 @@ type WebhookStore = {
   get: <T>(key: string) => Promise<T | null>;
   delete: (key: string) => Promise<void>;
 };
+
+type SeenEvent = { id: string; at: number; token: string };
 
 type WebhookPayload = {
   body: unknown;

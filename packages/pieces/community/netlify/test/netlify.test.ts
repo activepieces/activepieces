@@ -1,5 +1,5 @@
 import { createHash, createHmac } from 'crypto';
-import { httpClient, HttpError } from '@activepieces/pieces-common';
+import { httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { netlifyClient, NetlifyApiError } from '../src/lib/common/client';
 import { netlifyOperations } from '../src/lib/common/operations';
@@ -26,6 +26,22 @@ function memoryStore(initial: Record<string, unknown> = {}) {
     get: async <T>(key: string): Promise<T | null> => (key in data ? Reflect.get(data, key) : null),
     delete: async (key: string) => {
       delete data[key];
+    },
+  };
+}
+
+function slowStore() {
+  const base = memoryStore();
+  const tick = () => new Promise((resolve) => setTimeout(resolve, Math.random() * 5));
+  return {
+    ...base,
+    put: async (key: string, value: unknown) => {
+      await tick();
+      return base.put(key, value);
+    },
+    get: async <T>(key: string): Promise<T | null> => {
+      await tick();
+      return base.get<T>(key);
     },
   };
 }
@@ -83,9 +99,10 @@ describe('webhook receive', () => {
   it('emits a signed delivery once and drops the retry inside 15 minutes', async () => {
     const store = memoryStore({ webhook_signature_secret: secret });
     const payload = { body, rawBody, headers: { 'X-Webhook-Signature': sign({ secret, body: rawBody }) } };
-    expect(await netlifyWebhook.receive({ payload, store, now: 1_000 })).toEqual([body]);
+    const emitted = { ...body, _dedupe_key: 'netlify:dep-1:ready' };
+    expect(await netlifyWebhook.receive({ payload, store, now: 1_000 })).toEqual([emitted]);
     expect(await netlifyWebhook.receive({ payload, store, now: 1_000 + 60_000 })).toEqual([]);
-    expect(await netlifyWebhook.receive({ payload, store, now: 1_000 + 16 * 60_000 })).toEqual([body]);
+    expect(await netlifyWebhook.receive({ payload, store, now: 1_000 + 16 * 60_000 })).toEqual([emitted]);
   });
   it('treats another state of the same deploy as a new event', async () => {
     const store = memoryStore();
@@ -94,7 +111,24 @@ describe('webhook receive', () => {
   });
   it('accepts unsigned deliveries for hooks created before signing existed', async () => {
     const store = memoryStore();
-    expect(await netlifyWebhook.receive({ payload: { body } , store })).toEqual([body]);
+    expect(await netlifyWebhook.receive({ payload: { body }, store })).toHaveLength(1);
+  });
+  it('tags parallel deliveries of the same event with one platform dedupe key', async () => {
+    const store = slowStore();
+    const payload = { body: { id: 'sub-1' } };
+    const results = await Promise.all([netlifyWebhook.receive({ payload, store }), netlifyWebhook.receive({ payload, store })]);
+    const emitted = results.flat();
+    expect(emitted.length).toBeGreaterThanOrEqual(1);
+    expect(new Set(emitted.map((item) => Reflect.get(Object(item), '_dedupe_key')))).toEqual(new Set(['netlify:sub-1']));
+    expect(await netlifyWebhook.receive({ payload, store })).toEqual([]);
+  });
+  it('never drops parallel deliveries of different events', async () => {
+    const store = slowStore();
+    const ids = Array.from({ length: 20 }, (_, i) => `sub-${i}`);
+    const results = await Promise.all(ids.map((id) => netlifyWebhook.receive({ payload: { body: { id } }, store })));
+    expect(results.every((items) => items.length === 1)).toBe(true);
+    const again = await Promise.all(ids.map((id) => netlifyWebhook.receive({ payload: { body: { id } }, store })));
+    expect(again.flat().every((item) => Reflect.get(Object(item), '_dedupe_key') !== undefined)).toBe(true);
   });
 });
 
@@ -180,5 +214,33 @@ describe('sites and builds', () => {
       { method: 'POST', path: '/sites/site-1/builds', status: 404, body: { message: 'Not Found' } },
     ]);
     await expect(netlifyOperations.startBuild({ auth, siteId: 'site-1' })).rejects.toThrow('not linked to a Git repository');
+  });
+});
+
+describe('custom api call paths', () => {
+  it('accepts relative paths and same-origin URLs', () => {
+    expect(netlifyClient.apiPath('/sites')).toBe('/sites');
+    expect(netlifyClient.apiPath('sites/abc/deploys?page=2')).toBe('/sites/abc/deploys?page=2');
+    expect(netlifyClient.apiPath('https://api.netlify.com/api/v1/hooks')).toBe('/hooks');
+  });
+  it.each([
+    'https://api.netlify.com.evil.io/api/v1/sites',
+    'https://evil.io/api/v1/sites',
+    '//evil.io/sites',
+    'http://api.netlify.com/api/v1/sites',
+    'https://user@api.netlify.com/api/v1/sites',
+    'https://api.netlify.com/other',
+    '',
+  ])('refuses %s', (url) => {
+    expect(() => netlifyClient.apiPath(url)).toThrow();
+  });
+  it('never lets a header replace the connection token', async () => {
+    const calls: { headers: unknown }[] = [];
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      calls.push({ headers: request.headers });
+      return { status: 200, headers: {}, body: {} };
+    });
+    await netlifyClient.request({ auth, method: HttpMethod.GET, path: '/user', extraHeaders: { authorization: 'Bearer other', 'X-Extra': '1' } });
+    expect(calls[0].headers).toEqual({ Accept: 'application/json', 'X-Extra': '1', Authorization: 'Bearer token-123' });
   });
 });

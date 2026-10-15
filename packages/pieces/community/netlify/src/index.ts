@@ -1,6 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { cancelDeploy } from './lib/actions/cancel-deploy';
+import { customApiCall } from './lib/actions/custom-api-call';
 import { deleteEnvVar, deleteEnvVarById, listEnvVars, listEnvVarsById, setEnvVar, setEnvVarById } from './lib/actions/env-vars';
 import { getDeploy } from './lib/actions/get-deploy';
 import { getSite, getSiteById } from './lib/actions/get-site';
@@ -13,7 +13,6 @@ import { lockDeploy, unlockDeploy } from './lib/actions/lock-deploy';
 import { restoreDeploy } from './lib/actions/restore-deploy';
 import { startDeploy, startDeployById } from './lib/actions/start-deploy';
 import { netlifyAuth } from './lib/common/auth';
-import { NETLIFY_API_BASE } from './lib/common/client';
 import { newDeployFailed } from './lib/triggers/new-deploy-failed';
 import { newDeployStarted } from './lib/triggers/new-deploy-started';
 import { newDeploySucceeded } from './lib/triggers/new-deploy-succeeded';
@@ -52,11 +51,7 @@ export const netlify = createPiece({
     setEnvVarById,
     deleteEnvVar,
     deleteEnvVarById,
-    createCustomApiCallAction({
-      auth: netlifyAuth,
-      baseUrl: () => NETLIFY_API_BASE,
-      authMapping: async (auth) => ({ Authorization: `Bearer ${auth.access_token}` }),
-    }),
+    customApiCall,
   ],
   triggers: [newDeployStarted, newDeploySucceeded, newDeployFailed, newFormSubmission],
 });
