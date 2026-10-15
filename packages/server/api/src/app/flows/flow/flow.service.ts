@@ -31,6 +31,14 @@ import { flowRepo } from './flow.repo'
 
 const notDeleting = { operationStatus: Not(FlowOperationStatus.DELETING) }
 
+const nonDraftOperationTypes: FlowOperationType[] = [
+    FlowOperationType.CHANGE_STATUS,
+    FlowOperationType.CHANGE_FOLDER,
+    FlowOperationType.UPDATE_METADATA,
+    FlowOperationType.UPDATE_MINUTES_SAVED,
+    FlowOperationType.UPDATE_OWNER,
+]
+
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
         await assertExternalIdIsUnique({ projectId, externalId })
@@ -330,6 +338,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         ip,
         emitEvents = true,
         skipRequiredActionsCheck = false,
+        editorSessionId = null,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowBeforeOperation = emitEvents
             ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
@@ -465,6 +474,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     throw error
                 }
             }
+        }
+
+        if (isDraftWrite(operation.type)) {
+            await flowSideEffects(log).onDraftWritten({ flowId: id, projectId, editorSessionId })
         }
 
         const updatedFlow = await this.getOnePopulatedOrThrow({
@@ -746,6 +759,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
 })
 
 
+function isDraftWrite(type: FlowOperationType): boolean {
+    return !nonDraftOperationTypes.includes(type)
+}
+
 async function assertRequiredActionsPresent({ projectId, platformId, flowVersion, log }: AssertRequiredActionsParams): Promise<void> {
     const result = await flowPublishHooks.get(log).findMissingRequiredActions({ projectId, platformId, flowVersion })
     if (isNil(result)) {
@@ -953,6 +970,7 @@ type UpdateParams = EventEmissionParams & {
     platformId: PlatformId
     previousFlow?: PopulatedFlow
     skipRequiredActionsCheck?: boolean
+    editorSessionId?: string | null
 }
 
 type UpdatePublishedVersionIdParams = {
