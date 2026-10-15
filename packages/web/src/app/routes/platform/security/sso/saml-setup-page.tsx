@@ -59,6 +59,12 @@ export const SamlSetupPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const connected = !!platform.federatedAuthProviders?.saml;
+  const domainVerified =
+    platform.ssoDomainVerification?.status ===
+    SsoDomainVerificationStatus.VERIFIED;
+  const [step, setStep] = useState<WizardStep>(
+    connected || !domainVerified ? 'domain' : 'saml',
+  );
 
   return (
     <AdminPage width="content">
@@ -72,11 +78,14 @@ export const SamlSetupPage = () => {
         <SamlWizard
           platform={platform}
           connected={connected}
+          domainVerified={domainVerified}
+          step={step}
+          onStepChange={setStep}
           refetch={refetch}
           onClose={() => navigate(ssoPaths.authentication)}
         />
       </SettingsPanel>
-      {connected && (
+      {connected && step === 'saml' && (
         <DisableSamlRow
           platform={platform}
           refetch={refetch}
@@ -160,21 +169,20 @@ const DisableSamlRow = ({
 const SamlWizard = ({
   platform,
   connected,
+  domainVerified,
+  step,
+  onStepChange: setStep,
   refetch,
   onClose,
 }: {
   platform: PlatformWithoutSensitiveData;
   connected: boolean;
+  domainVerified: boolean;
+  step: WizardStep;
+  onStepChange: (step: WizardStep) => void;
   refetch: () => Promise<void>;
   onClose: () => void;
 }) => {
-  const domainVerified =
-    platform.ssoDomainVerification?.status ===
-    SsoDomainVerificationStatus.VERIFIED;
-  const [step, setStep] = useState<WizardStep>(
-    connected || !domainVerified ? 'domain' : 'saml',
-  );
-
   return (
     <>
       <StepIndicator step={step} onSelect={setStep} />

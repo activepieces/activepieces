@@ -556,7 +556,7 @@ describe('SamlSetupPage', () => {
     expect(await screen.findByText('authentication page')).toBeDefined();
   });
 
-  it('disables single sign-on from the row below the walkthrough after confirming, then returns to Authentication', async () => {
+  it('offers Disable on the SAML step only, and disables after confirming', async () => {
     setPlatform({
       id: 'platform-1',
       ssoDomain: 'acme.com',
@@ -565,7 +565,8 @@ describe('SamlSetupPage', () => {
     });
     mountSetupPage();
 
-    expect(findButton('Next')).toBeDefined();
+    expect(screen.queryByText('Disable single sign-on')).toBeNull();
+    click(findButton('Next'));
     expect(screen.getByText('Disable single sign-on')).toBeDefined();
     click(findButton('Disable'));
     expect(platformApiMock.update).not.toHaveBeenCalled();
