@@ -3,6 +3,7 @@ import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { flowExecutionCache } from '../../../flows/flow/flow-execution-cache'
+import { flowPublishUtils } from '../../../flows/flow/flow-publish-utils'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../../flows/flow-version/flow-version.service'
 import { applicationEvents } from '../../../helper/application-events'
@@ -88,6 +89,9 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             flowId: flow.id,
             versionId: approval.flowVersionId,
         })
+        const previouslyPublishedVersion = flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)
+            ? await flowVersionService(log).getFlowVersionOrThrow({ flowId: flow.id, versionId: flow.publishedVersionId })
+            : null
 
         const decidedAt = new Date().toISOString()
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
@@ -108,7 +112,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
         })
 
-        if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
+        if (!isNil(previouslyPublishedVersion)) {
             await triggerSourceService(log).disable({
                 flowId: flow.id,
                 projectId: flow.projectId,
@@ -121,6 +125,10 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             id: flow.id,
             projectId: approval.projectId,
             newStatus: approval.requestedStatus,
+            isRepublish: !isNil(previouslyPublishedVersion) && flowPublishUtils.isSameTrigger({
+                published: previouslyPublishedVersion.trigger,
+                toPublish: lockedVersion.trigger,
+            }),
         })
         rejectedPromiseHandler(telemetry(log).trackProject({
             projectId: approval.projectId,
