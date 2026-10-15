@@ -3350,5 +3350,5 @@
   "Cancel verification": "Cancel verification",
   "Verify {domain}": "Verify {domain}",
   "Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.": "Add this TXT record at your DNS provider, then verify. Verify within 3 hours or the domain is dropped.",
-  "Next, connect your identity provider.": "Next, connect your identity provider."
+  "Your domain is verified. Next, connect your identity provider.": "Your domain is verified. Next, connect your identity provider."
 }
