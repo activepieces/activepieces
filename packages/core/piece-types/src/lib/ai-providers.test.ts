@@ -139,7 +139,7 @@ describe('canDisableReasoning', () => {
 describe('tier native model ids', () => {
     it('names a model the native Anthropic list actually offers, so no tier resolves to an id that does not exist', () => {
         for (const tier of ACTIVEPIECES_CHAT_TIERS) {
-            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ANTHROPIC], tier.id).toContain(tier.nativeModelId)
+            expect(aiProviderUtils.runnableChatModelIds({ provider: AIProviderName.ANTHROPIC }), tier.id).toContain(tier.nativeModelId)
         }
     })
 

@@ -14,7 +14,6 @@ import {
   Rocket,
   Sparkles,
   Star,
-  ThumbsUp,
   TriangleAlert,
   Zap,
 } from 'lucide-react';
@@ -206,6 +205,7 @@ export function modelPickerView({
       }));
   const keyGroups = options.keys.map((key) => {
     const info = modelMeta.providerInfoOf({ provider: key.provider });
+    const labelOf = recommendedLabels({ key, surface });
     const models = key.models.map((model) => {
       const optionModel: OptionModel = {
         provider: key.provider,
@@ -214,9 +214,6 @@ export function modelPickerView({
         keyName: key.name,
         ...(isNil(model.metadata) ? {} : { metadata: model.metadata }),
       };
-      const recommended =
-        surface !== 'flow' &&
-        modelMeta.isRecommended({ provider: key.provider, modelId: model.id });
       return {
         item: {
           id: `model:${key.providerConfigId}:${model.id}`,
@@ -227,7 +224,7 @@ export function modelPickerView({
             modelId: model.id,
           } satisfies ModelChoice,
           name: model.name,
-          badges: recommended ? <RecommendedBadge /> : undefined,
+          label: labelOf.get(model.id),
           trailing: contextOf({ model: optionModel }),
           searchText: `${model.name} ${model.id} ${key.name} ${info.name}`,
           selected:
@@ -526,13 +523,27 @@ function TierBadges({
   );
 }
 
-function RecommendedBadge() {
-  return (
-    <span className="flex shrink-0 items-center gap-1 rounded-full bg-success-3 px-1.5 py-0.5 text-xs leading-none text-success-11">
-      <ThumbsUp className="size-3 text-success-11" />
-      {t('Recommended')}
-    </span>
-  );
+function recommendedLabels({
+  key,
+  surface,
+}: {
+  key: ModelOptions['keys'][number];
+  surface: ModelOptionsSurface | undefined;
+}): Map<string, string> {
+  if (surface === 'flow') {
+    return new Map();
+  }
+  const isRecommended = (modelId: string) =>
+    modelMeta.isRecommended({ provider: key.provider, modelId });
+  const firstRecommended = key.models.find((model) => isRecommended(model.id));
+  const firstOther = key.models.find((model) => !isRecommended(model.id));
+  if (isNil(firstRecommended) || isNil(firstOther)) {
+    return new Map();
+  }
+  return new Map([
+    [firstRecommended.id, t('Recommended')],
+    [firstOther.id, t('More models')],
+  ]);
 }
 
 function contextOf({ model }: { model: OptionModel }): string | undefined {

@@ -248,7 +248,7 @@ describe('modelPickerUtils.isUnavailable', () => {
   });
 });
 
-describe('the Recommended badge', () => {
+describe('recommended models', () => {
   const withCurated: ModelOptions = {
     ...options,
     keys: [
@@ -263,16 +263,22 @@ describe('the Recommended badge', () => {
       },
     ],
   };
-  const badged = (surface: 'chat' | 'agent' | 'flow') =>
+  const labels = (surface: 'chat' | 'agent' | 'flow') =>
     modelPickerView({ options: withCurated, shown: null, surface })
       .groups.filter((group) => group.section === 'keys')
       .flatMap((group) => group.items)
-      .filter((item) => item.badges !== undefined)
-      .map((item) => item.name);
+      .map((item) => [item.name, item.label]);
 
-  it('marks curated models in chat and agents, not in flows', () => {
-    expect(badged('chat')).toEqual(['GPT-5.5']);
-    expect(badged('agent')).toEqual(['GPT-5.5']);
-    expect(badged('flow')).toEqual([]);
+  it('splits a key into Recommended and More models in chat and agents, not in flows', () => {
+    const split = [
+      ['GPT-5.5', 'Recommended'],
+      ['GPT-4o', 'More models'],
+    ];
+    expect(labels('chat')).toEqual(split);
+    expect(labels('agent')).toEqual(split);
+    expect(labels('flow')).toEqual([
+      ['GPT-5.5', undefined],
+      ['GPT-4o', undefined],
+    ]);
   });
 });
