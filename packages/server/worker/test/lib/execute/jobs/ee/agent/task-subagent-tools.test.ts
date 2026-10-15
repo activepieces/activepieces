@@ -10,8 +10,9 @@ vi.mock('../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn', () => 
 }))
 
 import { RunAgentTurnParams } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
-import { createTaskSubagentTools } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/task-subagent-tools'
+import { buildSkillSurface } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/skill-tools'
 import { taskContext } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/task-context'
+import { createTaskSubagentTools, taskTokensOf } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/task-subagent-tools'
 
 describe('createTaskSubagentTools', () => {
     beforeEach(() => {
@@ -466,6 +467,66 @@ describe('createTaskSubagentTools', () => {
         expect(Object.keys(runAgentTurn.mock.calls[0][0].tools).filter((name) => name.includes('agent'))).toEqual([])
     })
 
+    it('reports the tokens it used, adding up the turns it continued after a cut-off, and keeps them out of what the main model reads', async () => {
+        runAgentTurn
+            .mockResolvedValueOnce({ ...turnResult(), streamError: new Error('stream dropped') })
+            .mockImplementationOnce(async (params: { tools: ToolSet }) => {
+                await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
+                return { ...turnResult(), totalInputTokens: 400, totalOutputTokens: 40 }
+            })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_web_search']) })
+
+        const result = await tasks['ap_run_task'].execute?.({ title: 'Research', brief: 'Find out' }, EXECUTION_OPTIONS)
+        const modelOutput = await tasks['ap_run_task'].toModelOutput?.({ toolCallId: 'call-1', input: {}, output: result })
+
+        expect(result).toMatchObject({ tokens: { input: 1400, output: 140 } })
+        expect(JSON.stringify(modelOutput)).not.toContain('tokens')
+    })
+
+    it('adds up the tokens of every researcher in deep research', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
+            return turnResult()
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_web_search', 'ap_fetch_url']) })
+
+        const result = await tasks['ap_deep_research'].execute?.({ question: 'Pricing', subjects: ['Asana', 'ClickUp', 'Monday'] }, EXECUTION_OPTIONS)
+
+        expect(result).toMatchObject({ tokens: { input: 3000, output: 300 } })
+    })
+
+    it('adds up task and research tokens from a turn, ignoring other tools and calls without tokens', () => {
+        const parts = [
+            { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'a', toolName: 'ap_run_task', input: {}, status: PersistedToolCallStatus.COMPLETED, output: { tokens: { input: 1000, output: 100 } } },
+            { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'b', toolName: 'ap_deep_research', input: {}, status: PersistedToolCallStatus.COMPLETED, output: { tokens: { input: 3000, output: 300 } } },
+            { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'c', toolName: 'ap_web_search', input: {}, status: PersistedToolCallStatus.COMPLETED, output: { tokens: { input: 99, output: 9 } } },
+            { type: PersistedAgentPartType.TOOL_CALL, toolCallId: 'd', toolName: 'ap_run_task', input: {}, status: PersistedToolCallStatus.ERROR },
+        ] as const
+
+        expect(taskTokensOf({ parts: [...parts] })).toEqual({ input: 4000, output: 400 })
+    })
+
+    it('lets a task load a skill and use its tools, but never attaches a tool the task does not have', async () => {
+        runAgentTurn.mockImplementation(async (params: { tools: ToolSet }) => {
+            await params.tools[TASK_COMPLETION_TOOL_NAME].execute?.({ status: 'done', summary: 'ok', artifacts: [] }, EXECUTION_OPTIONS)
+            return turnResult()
+        })
+        const tasks = createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_web_search', 'ap_fetch_url', 'ap_scrape_url', 'ap_send_email', 'ap_build_flow', 'ap_add_step', 'ap_test_flow']) })
+        await tasks['ap_run_task'].execute?.({ title: 'Research', brief: 'Find out' }, EXECUTION_OPTIONS)
+        const params: RunAgentTurnParams = runAgentTurn.mock.calls[0][0]
+        if (params.skills === undefined) {
+            throw new Error('a task runs without skills')
+        }
+        const surface = buildSkillSurface({ tools: params.tools, surface: params.skills.surface, guides: params.skills.guides, onSkillLoaded: vi.fn(), canAffordPaidTool: () => true })
+
+        await surface.tools['ap_load_skill']?.execute?.({ skills: ['web_and_media', 'flow_building'] }, EXECUTION_OPTIONS)
+
+        expect(surface.attachedToolNames()).toEqual(expect.arrayContaining(['ap_fetch_url', 'ap_build_flow', 'ap_add_step']))
+        expect(surface.attachedToolNames()).not.toContain('ap_send_email')
+        expect(surface.attachedToolNames()).not.toContain('ap_deep_research')
+        expect(surface.attachedToolNames()).not.toContain('ap_run_task')
+    })
+
     it('offers research only when web search is available', () => {
         expect(createTaskSubagentTools({ ...BASE_PARAMS, tools: toolSet(['ap_build_flow']) })).not.toHaveProperty('ap_deep_research')
     })
@@ -490,6 +551,8 @@ function turnResult(): Record<string, unknown> {
         creditsExhausted: false,
         budgetExceeded: false,
         truncatedAfterRetries: false,
+        totalInputTokens: 1000,
+        totalOutputTokens: 100,
     }
 }
 
