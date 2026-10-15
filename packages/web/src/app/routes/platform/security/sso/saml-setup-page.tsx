@@ -396,88 +396,86 @@ const SamlStep = ({
   });
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       {samlAcs && (
-        <div className="grid gap-3 rounded-md border p-4">
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <Label className="text-xs text-gray-11">
-              {t('Single sign-on URL')}
-            </Label>
+        <StepSection title={t('Copy these into your identity provider')}>
+          <div className="flex min-w-0 flex-col gap-2">
+            <Label>{t('Single sign-on URL')}</Label>
             <CopyToClipboardInput
               textToCopy={samlAcs}
               useInput={true}
               controlId={AdminControl.SSO_SAML_ACS_URL_COPY}
             />
           </div>
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <Label className="text-xs text-gray-11">
-              {t('Audience URI (SP Entity ID)')}
-            </Label>
+          <div className="flex min-w-0 flex-col gap-2">
+            <Label>{t('Audience URI (SP Entity ID)')}</Label>
             <CopyToClipboardInput
               textToCopy={SAML_ENTITY_ID}
               useInput={true}
               controlId={AdminControl.SSO_SAML_ENTITY_ID_COPY}
             />
           </div>
-        </div>
+        </StepSection>
       )}
 
       <Form {...form}>
         <form
-          className="grid space-y-4"
+          className="flex flex-col gap-6"
           onSubmit={form.handleSubmit((data) => {
             mutate({ federatedAuthProviders: { saml: data } });
           })}
         >
-          <FormField
-            name="idpMetadata"
-            render={({ field }) => (
-              <FormItem className="grid space-y-2">
-                <Label htmlFor="idpMetadata">{t('IDP Metadata')}</Label>
-                <Textarea
-                  {...field}
-                  required
-                  id="idpMetadata"
-                  rows={6}
-                  className="font-mono text-xs"
-                  placeholder={
-                    connected
-                      ? t(
-                          'Saved. To change it, paste the metadata and certificate again.',
-                        )
-                      : undefined
-                  }
-                />
-                <FormDescription>
-                  {t(
-                    'Paste the metadata XML contents or the metadata URL provided by your identity provider.',
-                  )}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="idpCertificate"
-            render={({ field }) => (
-              <FormItem className="grid space-y-2">
-                <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
-                <Textarea
-                  {...field}
-                  required
-                  id="idpCertificate"
-                  placeholder={
-                    connected
-                      ? t(
-                          'Saved. To change it, paste the metadata and certificate again.',
-                        )
-                      : undefined
-                  }
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <StepSection title={t('Paste these from your identity provider')}>
+            <FormField
+              name="idpMetadata"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="idpMetadata">{t('IDP Metadata')}</Label>
+                  <Textarea
+                    {...field}
+                    required
+                    id="idpMetadata"
+                    rows={6}
+                    className="font-mono text-xs"
+                    placeholder={
+                      connected
+                        ? t(
+                            'Saved. To change it, paste the metadata and certificate again.',
+                          )
+                        : undefined
+                    }
+                  />
+                  <FormDescription>
+                    {t(
+                      'Paste the metadata XML contents or the metadata URL provided by your identity provider.',
+                    )}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="idpCertificate"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
+                  <Textarea
+                    {...field}
+                    required
+                    id="idpCertificate"
+                    placeholder={
+                      connected
+                        ? t(
+                            'Saved. To change it, paste the metadata and certificate again.',
+                          )
+                        : undefined
+                    }
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </StepSection>
           {!domainVerified && (
             <Alert variant="warning">
               <TriangleAlert className="size-4" />
@@ -521,9 +519,22 @@ const SamlStep = ({
           </StepFooter>
         </form>
       </Form>
-    </>
+    </div>
   );
 };
+
+const StepSection = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) => (
+  <section className="flex flex-col gap-3">
+    <h3 className="text-sm font-medium text-gray-12">{title}</h3>
+    <div className="flex flex-col gap-4 rounded-md border p-4">{children}</div>
+  </section>
+);
 
 const StepFooter = ({ children }: { children: ReactNode }) => (
   <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
