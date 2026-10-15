@@ -20,7 +20,9 @@ import { platformApi } from '@/api/platforms-api';
 import {
   AdminPage,
   AdminPageHeader,
+  DangerZone,
   SettingsPanel,
+  SettingsRow,
   adminLayout,
   adminPageResources,
 } from '@/app/components/admin';
@@ -75,7 +77,82 @@ export const SamlSetupPage = () => {
           onClose={() => navigate(ssoPaths.authentication)}
         />
       </SettingsPanel>
+      {connected && (
+        <DisableSamlZone
+          platform={platform}
+          refetch={refetch}
+          onDisabled={() => navigate(ssoPaths.authentication)}
+        />
+      )}
     </AdminPage>
+  );
+};
+
+const DisableSamlZone = ({
+  platform,
+  refetch,
+  onDisabled,
+}: {
+  platform: PlatformWithoutSensitiveData;
+  refetch: () => Promise<void>;
+  onDisabled: () => void;
+}) => {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { mutate: disableSaml, isPending } = useMutation({
+    mutationFn: async () => {
+      await platformApi.update(
+        { federatedAuthProviders: { saml: null } },
+        platform.id,
+      );
+      await refetch();
+    },
+    onSuccess: () => {
+      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
+      onDisabled();
+    },
+  });
+
+  return (
+    <DangerZone>
+      <SettingsRow
+        title={t('Disable single sign-on')}
+        description={t('Deletes your SAML connection.')}
+      >
+        <Button
+          {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
+          type="button"
+          variant="destructive"
+          size="sm"
+          onClick={() => setConfirmOpen(true)}
+        >
+          {t('Disable')}
+        </Button>
+      </SettingsRow>
+      <MethodConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={t('Disable single sign-on?')}
+        description={
+          <span className="flex flex-col gap-2">
+            <span>
+              {t(
+                'Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.',
+              )}
+            </span>
+            {!platform.emailAuthEnabled && (
+              <span>
+                {t('Email sign-in is off. Turn it on first if they need it.')}
+              </span>
+            )}
+          </span>
+        }
+        confirmLabel={t('Disable')}
+        destructive
+        isPending={isPending}
+        controlId={AdminControl.SSO_SAML_DISABLE_CONFIRM}
+        onConfirm={() => disableSaml()}
+      />
+    </DangerZone>
   );
 };
 
@@ -97,25 +174,6 @@ const SamlWizard = ({
     connected || !domainVerified ? 'domain' : 'saml',
   );
 
-  const { mutate: disableSaml, isPending: isDisabling } = useMutation({
-    mutationFn: async () => {
-      await platformApi.update(
-        { federatedAuthProviders: { saml: null } },
-        platform.id,
-      );
-      await refetch();
-    },
-    onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
-      onClose();
-    },
-  });
-
-  const [confirmDisable, setConfirmDisable] = useState(false);
-  const disableAction = connected
-    ? { onDisable: () => setConfirmDisable(true), isDisabling }
-    : null;
-
   return (
     <>
       <StepIndicator step={step} onSelect={setStep} />
@@ -125,7 +183,6 @@ const SamlWizard = ({
           refetch={refetch}
           onVerified={() => setStep('saml')}
           onNext={() => setStep('saml')}
-          disableAction={disableAction}
         />
       </div>
       <div className={cn(step !== 'saml' && 'hidden')}>
@@ -136,33 +193,8 @@ const SamlWizard = ({
           refetch={refetch}
           onBack={() => setStep('domain')}
           onClose={onClose}
-          disableAction={disableAction}
         />
       </div>
-      <MethodConfirmDialog
-        open={confirmDisable}
-        onOpenChange={setConfirmDisable}
-        title={t('Disable single sign-on?')}
-        description={
-          <span className="flex flex-col gap-2">
-            <span>
-              {t(
-                'Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.',
-              )}
-            </span>
-            {!platform.emailAuthEnabled && (
-              <span>
-                {t('Email sign-in is off. Turn it on first if they need it.')}
-              </span>
-            )}
-          </span>
-        }
-        confirmLabel={t('Disable')}
-        destructive
-        isPending={isDisabling}
-        controlId={AdminControl.SSO_SAML_DISABLE_CONFIRM}
-        onConfirm={() => disableSaml()}
-      />
     </>
   );
 };
@@ -228,13 +260,11 @@ const DomainStep = ({
   refetch,
   onVerified,
   onNext,
-  disableAction,
 }: {
   platform: PlatformWithoutSensitiveData;
   refetch: () => Promise<void>;
   onVerified: () => void;
   onNext: () => void;
-  disableAction: DisableAction;
 }) => {
   const form = useForm<SsoDomainFormValues>({
     resolver: zodResolver(SsoDomainFormValues),
@@ -311,18 +341,6 @@ const DomainStep = ({
         )}
 
         <StepFooter>
-          {disableAction && (
-            <Button
-              {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
-              type="button"
-              variant="basic"
-              className="text-danger-11"
-              loading={disableAction.isDisabling}
-              onClick={disableAction.onDisable}
-            >
-              {t('Disable')}
-            </Button>
-          )}
           {isDirty ? (
             <Button
               {...adminControl(
@@ -390,7 +408,6 @@ const SamlStep = ({
   refetch,
   onBack,
   onClose,
-  disableAction,
 }: {
   platform: PlatformWithoutSensitiveData;
   connected: boolean;
@@ -398,7 +415,6 @@ const SamlStep = ({
   refetch: () => Promise<void>;
   onBack: () => void;
   onClose: () => void;
-  disableAction: DisableAction;
 }) => {
   const form = useForm<Saml2FormValues>({
     resolver: zodResolver(Saml2FormValues),
@@ -522,18 +538,6 @@ const SamlStep = ({
           )}
 
           <StepFooter>
-            {disableAction && (
-              <Button
-                {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
-                type="button"
-                variant="basic"
-                className="text-danger-11 mr-auto"
-                loading={disableAction.isDisabling}
-                onClick={disableAction.onDisable}
-              >
-                {t('Disable')}
-              </Button>
-            )}
             <Button variant="outline" type="button" onClick={onBack}>
               {t('Back')}
             </Button>
@@ -650,8 +654,3 @@ const Saml2FormValues = z.object({
 type Saml2FormValues = z.infer<typeof Saml2FormValues>;
 
 type WizardStep = 'domain' | 'saml';
-
-type DisableAction = {
-  onDisable: () => void;
-  isDisabling: boolean;
-} | null;
