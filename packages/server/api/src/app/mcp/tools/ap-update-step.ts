@@ -26,7 +26,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
     return {
         title: 'ap_update_step',
         permission: Permission.WRITE_FLOW,
-        description: 'Update an existing step\'s settings. Provide only the fields you want to change.',
+        description: 'Update an existing step\'s settings. Provide only the fields you want to change. Never use an action marked chatOnly in ap_research_pieces as a flow step; pick a non-chatOnly action from the same piece.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to update (e.g. "step_1"). Use ap_flow_structure to get valid values.'),

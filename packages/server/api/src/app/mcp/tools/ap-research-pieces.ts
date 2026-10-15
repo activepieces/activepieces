@@ -22,7 +22,7 @@ const researchPiecesSchema = z.object({
 export const apResearchPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_research_pieces',
-        description: 'Research available pieces. Use pieceNames for bulk exact lookup (always returns actions and triggers, each with an AI guidance hint). Use searchQuery for fuzzy discovery. Pass forIntent with what you are trying to do to get recommendedActions ranked by AI guidance, so you pick the right action in one shot.',
+        description: 'Research available pieces. Use pieceNames for bulk exact lookup (always returns actions and triggers, each with an AI guidance hint). Use searchQuery for fuzzy discovery. Pass forIntent with what you are trying to do to get recommendedActions ranked by AI guidance, so you pick the right action in one shot. Actions marked chatOnly can be run once with ap_run_action but can never be flow steps.',
         inputSchema: {
             pieceNames: researchPiecesSchema.shape.pieceNames,
             categories: researchPiecesSchema.shape.categories,
@@ -64,7 +64,7 @@ export const apResearchPiecesTool = (mcp: ProjectScopedMcpServer, log: FastifyBa
     }
 }
 
-function summarizeComponent(c: { name: string, displayName: string, description: string, requireAuth: boolean, aiMetadata?: { description?: string, idempotent?: boolean } }): ComponentSummary {
+function summarizeComponent(c: { name: string, displayName: string, description: string, requireAuth: boolean, audience?: string, aiMetadata?: { description?: string, idempotent?: boolean } }): ComponentSummary {
     return {
         name: c.name,
         displayName: c.displayName,
@@ -74,11 +74,16 @@ function summarizeComponent(c: { name: string, displayName: string, description:
         // signal it lacks today (it grabs find_record when it meant to enumerate, then thrashes).
         cardinality: mcpUtils.classifyActionCardinality(c.name),
         ...(c.aiMetadata?.description && { aiDescription: c.aiMetadata.description }),
+        ...(c.audience === 'ai' && { chatOnly: true }),
     }
 }
 
+function nameOnly({ name, displayName, chatOnly }: ComponentSummary): Partial<ComponentSummary> {
+    return { name, displayName, ...(chatOnly && { chatOnly }) }
+}
+
 function detailOnlyFor({ components, recommended, trim }: { components: ComponentSummary[], recommended: string[] | undefined, trim: ComponentTrim }): Partial<ComponentSummary>[] {
-    return components.map((component) => isNil(recommended) || recommended.includes(component.name) ? trim(component) : { name: component.name, displayName: component.displayName })
+    return components.map((component) => isNil(recommended) || recommended.includes(component.name) ? trim(component) : nameOnly(component))
 }
 
 async function bulkLookup({ pieceNames, forIntent, projectId, platformId, log }: {
@@ -235,7 +240,7 @@ async function searchPieces({ params, projectId, platformId, log }: {
 const DETAIL_LADDER: ComponentTrim[] = [
     (component) => component,
     ({ aiDescription: _aiDescription, ...rest }) => rest,
-    ({ name, displayName }) => ({ name, displayName }),
+    nameOnly,
 ]
 
 export function fitEnrichedResponse({ pieces, overflowHint, totalCount }: {
@@ -299,6 +304,7 @@ type ComponentSummary = {
     requiresAuth: boolean
     cardinality: ActionCardinality
     aiDescription?: string
+    chatOnly?: true
 }
 
 type ComponentTrim = (component: ComponentSummary) => Partial<ComponentSummary>

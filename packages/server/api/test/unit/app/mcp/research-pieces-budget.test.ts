@@ -55,6 +55,18 @@ describe('what ap_research_pieces is allowed to return', () => {
         }
     })
 
+    it('keeps the chatOnly flag even when actions are trimmed to names', () => {
+        const chatOnlyPieces = pieces({ count: 3, actionCount: 100, detailLength: 2_000, aiLength: 0 })
+            .map((found) => ({ ...found, actions: found.actions.map((action) => ({ ...action, chatOnly: true as const })) }))
+
+        const result = fit(chatOnlyPieces)
+
+        const actions = (result.structuredContent.pieces as Array<{ actions?: Record<string, unknown>[] }>).flatMap((found) => found.actions ?? [])
+        expect(result.structuredContent.trimmed).toBe(true)
+        expect(actions.length).toBeGreaterThan(0)
+        expect(actions.every((action) => action.chatOnly === true)).toBe(true)
+    })
+
     it('still names every piece it found, so the model can look one up', () => {
         const input = pieces({ count: 10, actionCount: 60, detailLength: 1_200, aiLength: 1_200 })
 
