@@ -243,9 +243,7 @@ const RemoveDomainConsequences = ({
   return (
     <span className="flex flex-col gap-2">
       <span>
-        {t(
-          'Single sign-on will be disabled: your SAML connection (identity provider metadata and certificate) is deleted, so people who use single sign-on will have to sign in another way. To use SAML again, verify the domain with a new DNS record and connect your identity provider again.',
-        )}
+        {t('This disables single sign-on and deletes its SAML connection.')}
       </span>
       {!emailAuthEnabled && (
         <span>
