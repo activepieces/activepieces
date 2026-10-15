@@ -251,7 +251,7 @@ function isTitledToolCall(part: PersistedAgentPart): part is Extract<PersistedAg
 function timelineFrom(parts: PersistedAgentPart[]): SubagentTimelineEntry[] {
     return parts.flatMap((part): SubagentTimelineEntry[] => {
         if (isTitledToolCall(part)) {
-            return [{ kind: 'status', text: part.title.trim() }]
+            return [{ kind: 'status', text: part.title.trim(), failed: part.status === PersistedToolCallStatus.ERROR }]
         }
         if (part.type !== PersistedAgentPartType.THINKING_STATUS) {
             return []
