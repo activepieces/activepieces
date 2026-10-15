@@ -129,6 +129,21 @@ describe('PublishFlowReminderWidget', () => {
     expect(sentOperationTypes()).toEqual([FlowOperationType.LOCK_AND_PUBLISH]);
   });
 
+  it('does not publish when the draft cannot be refetched after a failed save', async () => {
+    const store = createStore(validDraftFlow());
+    store.setState({
+      refreshDraftAfterFailedSave: () =>
+        Promise.reject(new Error('Network Error')),
+    });
+    await act(async () => root.render(<Widget store={store} />));
+
+    await act(async () => publishButton().click());
+    await settle();
+
+    expect(sentOperationTypes()).toEqual([]);
+    expect(store.getState().isPublishing).toBe(false);
+  });
+
   it('does not publish when a pending edit fails to save', async () => {
     const store = createStore(validDraftFlow());
     store.setState({

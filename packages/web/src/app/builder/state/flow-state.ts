@@ -51,6 +51,7 @@ export type FlowState = {
   setFlow: (flow: PopulatedFlow) => void;
   applyDraftRefresh: (flow: PopulatedFlow) => void;
   refreshDraft: () => Promise<boolean>;
+  refreshDraftAfterFailedSave: () => Promise<void>;
   showsNewestVersion: () => boolean;
   draftRefreshCount: number;
   noteRefreshCounts: Record<string, number>;
@@ -120,9 +121,20 @@ export const createFlowState = (
     flowUpdatesDebounce.flush();
     addToFlowUpdatesQueue(task);
   };
-  const refreshDraft = coalesceRuns(() =>
-    saveThenRefreshDraft({ get, flowUpdatesQueue, flowUpdatesDebounce }),
-  );
+  let failedSaves = 0;
+  let failedSavesShownByRefresh = 0;
+  const refreshDraft = coalesceRuns(async () => {
+    const failedSavesAtStart = failedSaves;
+    const applied = await saveThenRefreshDraft({
+      get,
+      flowUpdatesQueue,
+      flowUpdatesDebounce,
+    });
+    if (applied) {
+      failedSavesShownByRefresh = failedSavesAtStart;
+    }
+    return applied;
+  });
   return {
     saving: false,
     outputSampleData: initialState.outputSampleData,
@@ -289,6 +301,7 @@ export const createFlowState = (
           } catch (error) {
             console.error(error);
             showFailedSaveToast(error);
+            failedSaves += 1;
             get()
               .refreshDraft()
               .catch(() => undefined);
@@ -352,6 +365,12 @@ export const createFlowState = (
       flowUpdatesDebounce.flush();
     },
     refreshDraft,
+    refreshDraftAfterFailedSave: async () => {
+      if (failedSaves === failedSavesShownByRefresh) {
+        return;
+      }
+      await refreshDraft();
+    },
     showsNewestVersion: () => {
       const { run, flow, flowVersion } = get();
       const isPublishedVersionWithNoDraft =

@@ -46,6 +46,7 @@ const PublishFlowReminderWidget = () => {
     flowVersion,
     run,
     savePendingEdits,
+    refreshDraftAfterFailedSave,
   ] = useBuilderStateContext((state) => [
     state.saving,
     state.isPublishing,
@@ -58,6 +59,7 @@ const PublishFlowReminderWidget = () => {
     state.flowVersion,
     state.run,
     state.savePendingEdits,
+    state.refreshDraftAfterFailedSave,
   ]);
   const showShouldPublishButton = useShouldShowPublishButton({
     flowVersion,
@@ -108,7 +110,10 @@ const PublishFlowReminderWidget = () => {
   });
   const handlePublish = async () => {
     setIsPublishing(true);
-    const { error: saveError } = await tryCatch(savePendingEdits);
+    const { error: saveError } = await tryCatch(async () => {
+      await savePendingEdits();
+      await refreshDraftAfterFailedSave();
+    });
     if (!isNil(saveError)) {
       setIsPublishing(false);
       return;
