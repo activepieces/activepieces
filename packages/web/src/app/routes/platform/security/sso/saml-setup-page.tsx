@@ -373,7 +373,6 @@ const SamlStep = ({
                     required
                     id="idpMetadata"
                     rows={6}
-                    className="font-mono text-xs"
                     placeholder={
                       connected
                         ? t('Saved. Paste new metadata to replace it.')
