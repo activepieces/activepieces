@@ -22,8 +22,22 @@ import { pieceSetsApi } from '../api/piece-sets-api';
 
 export const pieceSetKeys = {
   all: ['piece-sets'] as const,
-  page: (cursor: string | undefined, limit: number | undefined) =>
-    ['piece-sets', 'page', cursor ?? null, limit ?? null] as const,
+  page: ({
+    cursor,
+    limit,
+    name,
+  }: {
+    cursor: string | undefined;
+    limit: number | undefined;
+    name: string | undefined;
+  }) =>
+    [
+      'piece-sets',
+      'page',
+      cursor ?? null,
+      limit ?? null,
+      name ?? null,
+    ] as const,
   one: (id: string) => ['piece-sets', id] as const,
   project: (projectId: string) => ['piece-sets', 'project', projectId] as const,
   update: ['piece-sets', 'update'] as const,
@@ -40,11 +54,12 @@ export const pieceSetQueries = {
   usePieceSets: ({
     cursor,
     limit,
-  }: { cursor?: string; limit?: number } = {}) => {
+    name,
+  }: { cursor?: string; limit?: number; name?: string } = {}) => {
     const { platform } = platformHooks.useCurrentPlatform();
     return useQuery({
-      queryKey: pieceSetKeys.page(cursor, limit),
-      queryFn: () => pieceSetsApi.list({ cursor, limit }),
+      queryKey: pieceSetKeys.page({ cursor, limit, name }),
+      queryFn: () => pieceSetsApi.list({ cursor, limit, name }),
       enabled: platform.plan.managePiecesEnabled,
     });
   },
