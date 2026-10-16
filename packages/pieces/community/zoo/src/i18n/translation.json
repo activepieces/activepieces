@@ -333,5 +333,16 @@
   "Liters": "Liters",
   "Gallons": "Gallons",
   "Milliliters": "Milliliters",
-  "Fluid Ounces": "Fluid Ounces"
+  "Fluid Ounces": "Fluid Ounces",
+  "Material Density": "Material Density",
+  "Density of the material the part is made of, in the unit below": "Density of the material the part is made of, in the unit below",
+  "Material Density Unit": "Material Density Unit",
+  "kg/m³": "kg/m³",
+  "lb/ft³": "lb/ft³",
+  "Material Mass": "Material Mass",
+  "Mass of the part, in the unit below": "Mass of the part, in the unit below",
+  "Material Mass Unit": "Material Mass Unit",
+  "g": "g",
+  "kg": "kg",
+  "lb": "lb"
 }
