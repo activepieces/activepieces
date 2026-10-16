@@ -1,6 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  newMemberSettingsUtils,
   PlatformWithoutSensitiveData,
   ProjectWithLimits,
   ProjectType,
@@ -45,12 +44,8 @@ export const projectsTableColumns = ({
       cell: ({ row }) => {
         const locked = row.original.plan.locked;
         const isPersonal = row.original.type === ProjectType.PERSONAL;
-        const isDefault = newMemberSettingsUtils
-          .activeDefaultProjectIds({
-            defaultProjectIds: platform.defaultProjectIds,
-            projectRolesEnabled: platform.plan.projectRolesEnabled,
-          })
-          .includes(row.original.id);
+        const isDefault =
+          platform.plan.projectRolesEnabled && row.original.isDefault;
 
         return (
           <div className="text-left flex items-center justify-start ">

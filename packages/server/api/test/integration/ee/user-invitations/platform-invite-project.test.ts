@@ -43,7 +43,7 @@ describe('A platform invite can name a project', () => {
 
     it('keeps the picked role when the project is also a default project', async () => {
         const { mockPlatform, mockProject, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
-        await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { defaultProjectIds: [mockProject.id] })
+        await databaseConnection().getRepository('project').update({ id: mockProject.id }, { isDefault: true })
         const email = faker.internet.email().toLowerCase()
 
         const response = await invite({ token: ownerToken, email, projectId: mockProject.id, projectRole: DefaultProjectRole.VIEWER })
