@@ -105,7 +105,18 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             nullable: false,
             default: false,
         },
+        isDefault: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
     },
+    checks: [
+        {
+            name: 'chk_project_is_default_team',
+            expression: '"type" = \'TEAM\' OR "isDefault" = false',
+        },
+    ],
     indices: [
         {
             name: 'idx_project_owner_id',
