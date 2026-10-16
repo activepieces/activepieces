@@ -3,11 +3,11 @@ import { apVersionUtil } from '@activepieces/server-utils'
 import { ExecutionMode, NetworkMode, WorkerGroupScope, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
 
 import { FastifyBaseLogger } from 'fastify'
-import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { domainHelper } from '../../helper/domain-helper'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { WorkerGroupAssignment } from '../job'
+import { platformWorkerGroupService } from '../worker-groups/platform-worker-group.service'
+import { WorkerGroupAssignment } from '../worker-groups/worker-group-queues'
 import { workerMachineCache } from './machine-cache'
 import { parseWorkerConcurrency, workerCapacity } from './worker-capacity'
 import { workerLiveness } from './worker-liveness'
@@ -95,7 +95,7 @@ export const machineService = (log: FastifyBaseLogger) => {
 
             await workerMachineCache().delete(offlineWorkers.map(worker => worker.id))
 
-            const platformWorkerGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
+            const platformWorkerGroupId = await platformWorkerGroupService(log).getWorkerGroupId({ platformId })
             return onlineWorkers
                 .filter(worker => {
                     if (worker.workerGroupScope === WorkerGroupScope.PLATFORM) {

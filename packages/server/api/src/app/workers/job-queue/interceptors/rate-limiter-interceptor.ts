@@ -7,12 +7,12 @@ import { z } from 'zod'
 import { getConcurrencyPoolParkedKey, getConcurrencyPoolSetKey, getPlatformPlanNameKey, PLATFORM_PLAN_NAME_TTL_SECONDS } from '../../../database/redis/keys'
 import { distributedStore, redisConnections } from '../../../database/redis-connections'
 import { concurrencyPoolService } from '../../../ee/platform/concurrency-pool/concurrency-pool.service'
-import { workerGroupService } from '../../../ee/platform/platform-plan/worker-group.service'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
-import { projectWorkerGroupService } from '../../../project/project-worker-group.service'
 import { workerCapacity } from '../../machine/worker-capacity'
+import { platformWorkerGroupService } from '../../worker-groups/platform-worker-group.service'
+import { projectWorkerGroupService } from '../../worker-groups/project-worker-group.service'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
 import { jobQueue } from '../job-queue'
 
@@ -82,7 +82,7 @@ async function getMaxConcurrentJobs({ poolId, platformId, projectId, log }: { po
     const planLimit = await getMaxConcurrentJobsForPlatformPlan({ platformId, log })
     // When worker groups are enabled, an unassigned-limit project is capped by the physical capacity
     // of the pool its runs route to (the group pool if the project has one, else shared).
-    const { data: workerGroupsEnabled } = await tryCatch(() => workerGroupService(log).isWorkerGroupsEnabled({ platformId }))
+    const { data: workerGroupsEnabled } = await tryCatch(() => platformWorkerGroupService(log).isWorkerGroupsEnabled({ platformId }))
     if (workerGroupsEnabled !== true) {
         return planLimit
     }

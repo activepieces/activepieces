@@ -13,9 +13,9 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { isToolSearchEnabled } from '../../../tool-search/tool-search-flag'
 import { toolSearchReindexJob } from '../../../tool-search/tool-search-reindex.job'
+import { CANARY_WORKER_GROUP_ID, platformWorkerGroupService } from '../../../workers/worker-groups/platform-worker-group.service'
 import { AgentConversationEntity } from '../../agent/agent-conversation-entity'
 import { chatAnalyticsBulkSync } from '../../agent/chat-analytics-sync'
-import { CANARY_WORKER_GROUP_ID, workerGroupService } from '../platform-plan/worker-group.service'
 import { adminPlatformService } from './admin-platform.service'
 import { denoMigrationService } from './deno-migration.service'
 
@@ -74,15 +74,15 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 
     app.post('/platforms/worker-group', UpdateWorkerGroupRequest, async (req, res) => {
         const { platformId, workerGroupId } = req.body
-        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
-        await workerGroupService(req.log).updateWorkerGroup({ platformId, workerGroupId })
+        await platformWorkerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
+        await platformWorkerGroupService(req.log).updateWorkerGroup({ platformId, workerGroupId })
         return res.status(StatusCodes.OK).send()
     })
 
     app.post('/platforms/canary', UpdateCanaryRequest, async (req, res) => {
         const { platformId, canary } = req.body
-        await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
-        await workerGroupService(req.log).updateCanary({ platformId, canary })
+        await platformWorkerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
+        await platformWorkerGroupService(req.log).updateCanary({ platformId, canary })
         return res.status(StatusCodes.OK).send()
     })
 
