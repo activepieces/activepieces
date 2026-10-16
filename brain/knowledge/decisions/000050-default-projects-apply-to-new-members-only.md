@@ -18,4 +18,4 @@ New-members-only solves the stranding problem with one hook at user creation and
 
 ## Consequences
 
-"Include current members" would be a separate, explicit, confirmed action, not the list's behaviour. "Everyone can see this project" is a different feature (public projects) and must not reuse `defaultProjectIds`.
+"Include current members" would be a separate, explicit, confirmed action, not the list's behaviour. "Everyone can see this project" is a different feature (public projects) and must not reuse `project.isDefault`.

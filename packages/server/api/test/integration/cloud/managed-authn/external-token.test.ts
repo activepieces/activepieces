@@ -470,7 +470,8 @@ describe('Managed Authentication API', () => {
                 plan: { projectRolesEnabled: true },
                 project: { type: ProjectType.TEAM },
             })
-            await db.update('platform', mockPlatform.id, { defaultProjectIds: [mockProject.id], autoCreatePersonalProjects: true })
+            await db.update('platform', mockPlatform.id, { autoCreatePersonalProjects: true })
+            await db.update('project', mockProject.id, { isDefault: true })
             const mockSigningKey = createMockSigningKey({ platformId: mockPlatform.id })
             await db.save('signing_key', mockSigningKey)
             const { mockExternalToken } = generateMockExternalToken({ platformId: mockPlatform.id, signingKeyId: mockSigningKey.id })
