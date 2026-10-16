@@ -130,6 +130,54 @@ describe('Piece Sets API', () => {
             const backBody = backToFirstPage.json()
             expect(backBody.data.map((s: PieceSet) => s.id)).toEqual(firstBody.data.map((s: PieceSet) => s.id))
         })
+
+        it('finds sets past page one when filtering by name', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            for (let i = 0; i < 5; i++) {
+                await app!.inject({
+                    method: 'POST',
+                    url: '/api/v1/piece-sets',
+                    headers: { authorization: `Bearer ${token}` },
+                    body: { name: `Filterable Set ${i}` },
+                })
+            }
+            await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Needle In Haystack' },
+            })
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/piece-sets?limit=2&name=Needle',
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json()
+            expect(body.data.length).toBe(1)
+            expect(body.data[0].name).toBe('Needle In Haystack')
+        })
+
+        it('matches names case-insensitively and partially', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${token}` },
+                body: { name: 'Marketing Automation' },
+            })
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/piece-sets?name=marketing',
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json()
+            expect(body.data.length).toBe(1)
+            expect(body.data[0].name).toBe('Marketing Automation')
+        })
     })
 
     describe('Create', () => {
