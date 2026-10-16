@@ -1,9 +1,10 @@
-import { apId } from '@activepieces/core-utils'
+import { apId, spreadIfDefined } from '@activepieces/core-utils'
 import { CodeAction, Flow, FlowAction, FlowActionType, FlowStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
+import { draftPushes } from '../../../helpers/draft-push'
 import { createMockFlow, createMockFlowVersion } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -18,7 +19,11 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-function buildTriggerWithCodeStep(): FlowTrigger {
+afterEach(() => {
+    vi.restoreAllMocks()
+})
+
+function buildTriggerWithCodeStep({ useDeno }: { useDeno?: boolean } = {}): FlowTrigger {
     const codeStep: FlowAction = {
         type: FlowActionType.CODE,
         name: 'step_1',
@@ -31,6 +36,7 @@ function buildTriggerWithCodeStep(): FlowTrigger {
             },
             input: {},
             errorHandlingOptions: {},
+            ...spreadIfDefined('useDeno', useDeno),
         },
     }
     return {
@@ -90,6 +96,33 @@ async function setupFlowWithPublishedLatestVersion(ctx: TestContext) {
     flow.publishedVersionId = publishedVersion.id
     await db.save('flow', flow)
     return { flow, publishedVersion }
+}
+
+async function setupFlowWithMigratedDraftAndLegacyPublishedVersion(ctx: TestContext) {
+    const flowId = apId()
+    const publishedVersion = createMockFlowVersion({
+        flowId,
+        state: FlowVersionState.LOCKED,
+        trigger: buildTriggerWithCodeStep(),
+        created: dayjs().subtract(1, 'hour').toISOString(),
+    })
+    const draftVersion = createMockFlowVersion({
+        flowId,
+        state: FlowVersionState.DRAFT,
+        trigger: buildTriggerWithCodeStep({ useDeno: true }),
+        created: dayjs().toISOString(),
+    })
+    const flow = createMockFlow({
+        id: flowId,
+        projectId: ctx.project.id,
+        status: FlowStatus.DISABLED,
+        publishedVersionId: null,
+    })
+    await db.save('flow', flow)
+    await db.save('flow_version', publishedVersion)
+    await db.save('flow_version', draftVersion)
+    await db.update('flow', flowId, { publishedVersionId: publishedVersion.id })
+    return { flow, draftVersion, publishedVersion }
 }
 
 function getCodeStep(flowVersion: FlowVersion): CodeAction | undefined {
@@ -209,5 +242,69 @@ describe('POST /v1/admin/flows/migrate-to-deno', () => {
     it('rejects a wrong api key', async () => {
         const response = await postMigrateToDeno({ flowIds: [apId()] }, 'wrong-key')
         expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+    })
+})
+
+describe('Draft Push after the Deno migration', () => {
+    it('sends a Draft Push with a null editor session id for each flow whose draft it changes', async () => {
+        const ctx = await createTestContext(app!)
+        const { flow: firstFlow } = await setupFlowWithDraftAndPublishedVersions(ctx)
+        const { flow: secondFlow } = await setupFlowWithDraftAndPublishedVersions(ctx)
+        const pushes = draftPushes.capture()
+
+        const response = await postMigrateToDeno({ projectId: ctx.project.id })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(pushes).toHaveLength(2)
+        expect(pushes).toEqual(expect.arrayContaining([
+            { room: ctx.project.id, payload: { flowId: firstFlow.id, editorSessionId: null } },
+            { room: ctx.project.id, payload: { flowId: secondFlow.id, editorSessionId: null } },
+        ]))
+    })
+
+    it('sends a Draft Push when the latest version is the published version', async () => {
+        const ctx = await createTestContext(app!)
+        const { flow } = await setupFlowWithPublishedLatestVersion(ctx)
+        const pushes = draftPushes.capture()
+
+        const response = await postMigrateToDeno({ flowIds: [flow.id] })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null } }])
+    })
+
+    it('sends no push when the migration changes only the published version', async () => {
+        const ctx = await createTestContext(app!)
+        const { flow } = await setupFlowWithMigratedDraftAndLegacyPublishedVersion(ctx)
+        const pushes = draftPushes.capture()
+
+        const response = await postMigrateToDeno({ flowIds: [flow.id] })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json()).toEqual({ flowsProcessed: 1, flowVersionsMigrated: 1, notifiedFlows: 1 })
+        expect(pushes).toEqual([])
+    })
+
+    it('sends a Draft Push when revert-from-deno changes the draft', async () => {
+        const ctx = await createTestContext(app!)
+        const { flow } = await setupFlowWithDraftAndPublishedVersions(ctx)
+        await postMigrateToDeno({ flowIds: [flow.id] })
+        const pushes = draftPushes.capture()
+
+        const response = await postRevertFromDeno({ flowIds: [flow.id] })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null } }])
+    })
+
+    it('sends no push when a second run changes nothing', async () => {
+        const ctx = await createTestContext(app!)
+        const { flow } = await setupFlowWithDraftAndPublishedVersions(ctx)
+        await postMigrateToDeno({ flowIds: [flow.id] })
+        const pushes = draftPushes.capture()
+
+        await postMigrateToDeno({ flowIds: [flow.id] })
+
+        expect(pushes).toEqual([])
     })
 })
