@@ -82,12 +82,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: false,
             default: true,
         },
-        defaultProjectIds: {
-            type: String,
-            array: true,
-            nullable: false,
-            default: [],
-        },
         federatedAuthProviders: {
             type: 'jsonb',
             select: false,

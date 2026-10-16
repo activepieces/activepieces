@@ -138,8 +138,11 @@ async function assertProjectIsNotADefaultProject({ principal, projectId, log }: 
     if (principal.type !== PrincipalType.USER) {
         return
     }
-    const platform = await platformService(log).getOneWithPlanOrThrow(principal.platform.id)
-    if (!platform.plan.projectRolesEnabled || !platform.defaultProjectIds.includes(projectId)) {
+    const [platform, project] = await Promise.all([
+        platformService(log).getOneWithPlanOrThrow(principal.platform.id),
+        projectService(log).getOne(projectId),
+    ])
+    if (!platform.plan.projectRolesEnabled || project?.isDefault !== true) {
         return
     }
     throw new ActivepiecesError({

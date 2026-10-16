@@ -63,6 +63,7 @@ export const Project = z.object({
     workerGroupId: Nullable(z.string()),
     executionDataRetentionDays: Nullable(z.number()),
     sensitive: z.boolean(),
+    isDefault: z.boolean(),
 })
 
 const projectAnalytics = z.object({
