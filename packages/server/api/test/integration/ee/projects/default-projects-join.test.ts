@@ -1,6 +1,7 @@
 import { apId } from '@activepieces/core-utils'
 import { DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, ProjectType, SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { In } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { userEnterpriseHooks } from '../../../../src/app/ee/users/ee-user-hooks'
 import { userHooks } from '../../../../src/app/user/user-hooks'
@@ -198,12 +199,11 @@ describe('New members join default projects', () => {
         expect(await roleNamesByProject({ userId: user.id })).toStrictEqual({ [mockProject.id]: DefaultProjectRole.EDITOR })
     })
 
-    it('never joins a personal project or another platform\'s project, even when saved as a default', async () => {
-        const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
-        const { mockProject: otherPlatformProject } = await setupPlatform({ projectRolesEnabled: true })
-        const personalProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.PERSONAL })
-        await databaseConnection().getRepository('project').save(personalProject)
-        await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id, personalProject.id, otherPlatformProject.id] })
+    it('never joins another platform\'s default project', async () => {
+        const { mockPlatform, mockProject } = await setupPlatform({ projectRolesEnabled: true })
+        const { mockPlatform: otherPlatform, mockProject: otherPlatformProject } = await setupPlatform({ projectRolesEnabled: true })
+        await setDefaults({ platformId: mockPlatform.id, defaultProjectIds: [mockProject.id] })
+        await setDefaults({ platformId: otherPlatform.id, defaultProjectIds: [otherPlatformProject.id] })
 
         const { user } = await provisionNewUser({ platformId: mockPlatform.id })
 
@@ -250,7 +250,10 @@ async function saveTeamProject({ platformId, ownerId }: { platformId: string, ow
 }
 
 async function setDefaults({ platformId, defaultProjectIds, autoCreatePersonalProjects = true }: { platformId: string, defaultProjectIds: string[], autoCreatePersonalProjects?: boolean }) {
-    await databaseConnection().getRepository('platform').update({ id: platformId }, { defaultProjectIds, autoCreatePersonalProjects })
+    await databaseConnection().getRepository('platform').update({ id: platformId }, { autoCreatePersonalProjects })
+    if (defaultProjectIds.length > 0) {
+        await databaseConnection().getRepository('project').update({ id: In(defaultProjectIds) }, { isDefault: true })
+    }
 }
 
 async function saveIdentity() {

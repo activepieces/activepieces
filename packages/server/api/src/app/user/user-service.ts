@@ -42,7 +42,7 @@ export const userService = (log: FastifyBaseLogger) => ({
         if (isNil(user)) {
             const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
             const defaultProjectIds = newMemberSettingsUtils.activeDefaultProjectIds({
-                defaultProjectIds: platform.defaultProjectIds,
+                defaultProjectIds: await platformService(log).listDefaultProjectIds({ platformId }),
                 projectRolesEnabled: platform.plan.projectRolesEnabled,
             })
             const createsPersonalProject = platform.autoCreatePersonalProjects
