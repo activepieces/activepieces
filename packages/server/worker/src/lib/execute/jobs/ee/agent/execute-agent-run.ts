@@ -396,6 +396,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 model: { id: turn.answeredBy.modelId },
                 finishReason: turn.finishReason,
                 truncatedAfterRetries,
+                tasksEnabled: !isNil(config.taskSystemPrompt),
             }, 'Chat message completed')
 
             const thinkingDurationMs = Date.now() - thinkingStartTime
