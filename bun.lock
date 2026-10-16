@@ -9221,7 +9221,7 @@
     },
     "packages/pieces/community/tidycal": {
       "name": "@activepieces/piece-tidycal",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
