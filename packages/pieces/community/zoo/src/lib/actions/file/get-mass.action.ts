@@ -17,6 +17,7 @@ export const getMassAction = createAction({
       required: true,
       description: 'The CAD file to analyze',
     }),
+    sourceFormat: cadFileAnalysis.sourceFormat,
     materialDensity: Property.Number({
       displayName: 'Material Density',
       description: 'Density of the material the part is made of, in the unit below',
@@ -39,6 +40,7 @@ export const getMassAction = createAction({
       token: auth.secret_text,
       endpoint: 'mass',
       file: propsValue.file,
+      sourceFormat: propsValue.sourceFormat,
       queryParams: {
         material_density: String(propsValue.materialDensity),
         material_density_unit: propsValue.materialDensityUnit,

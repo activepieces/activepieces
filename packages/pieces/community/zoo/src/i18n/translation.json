@@ -344,5 +344,13 @@
   "Material Mass Unit": "Material Mass Unit",
   "g": "g",
   "kg": "kg",
-  "lb": "lb"
+  "lb": "lb",
+  "Format of the CAD file. Leave empty to detect it from the file name.": "Format of the CAD file. Leave empty to detect it from the file name.",
+  "ACIS": "ACIS",
+  "CATIA": "CATIA",
+  "CREO": "CREO",
+  "INVENTOR": "INVENTOR",
+  "NX": "NX",
+  "PARASOLID": "PARASOLID",
+  "SLDPRT": "SLDPRT"
 }

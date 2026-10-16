@@ -1,5 +1,5 @@
 import { wedofAuth } from '../auth';
-import { ApFile, createAction, DynamicPropsValue, isNil, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, isNil, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { wedofCommon } from '../common/wedof';
 
@@ -153,7 +153,7 @@ export const sendFile = createAction({
       if (!isNil(title)) {
         formData.append('title', title);
       }
-      if (file instanceof ApFile) {
+      if (isUploadedFile(file)) {
         formData.append('file', new Blob([new Uint8Array(file.data)]), file.filename);
       } else if (!isNil(file)) {
         formData.append('file', String(file));
@@ -177,3 +177,14 @@ export const sendFile = createAction({
       ).body;
   },
 });
+
+function isUploadedFile(value: unknown): value is { filename: string; data: Buffer } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'filename' in value &&
+    typeof value.filename === 'string' &&
+    'data' in value &&
+    Buffer.isBuffer(value.data)
+  );
+}

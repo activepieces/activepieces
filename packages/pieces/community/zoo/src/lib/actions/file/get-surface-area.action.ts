@@ -17,8 +17,9 @@ export const getSurfaceAreaAction = createAction({
       required: true,
       description: 'The CAD file to analyze',
     }),
+    sourceFormat: cadFileAnalysis.sourceFormat,
   },
   async run({ auth, propsValue }) {
-    return cadFileAnalysis.analyze({ token: auth.secret_text, endpoint: 'surface-area', file: propsValue.file });
+    return cadFileAnalysis.analyze({ token: auth.secret_text, endpoint: 'surface-area', file: propsValue.file, sourceFormat: propsValue.sourceFormat });
   },
 });

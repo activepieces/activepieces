@@ -17,8 +17,9 @@ export const getCenterOfMassAction = createAction({
       required: true,
       description: 'The CAD file to analyze',
     }),
+    sourceFormat: cadFileAnalysis.sourceFormat,
   },
   async run({ auth, propsValue }) {
-    return cadFileAnalysis.analyze({ token: auth.secret_text, endpoint: 'center-of-mass', file: propsValue.file });
+    return cadFileAnalysis.analyze({ token: auth.secret_text, endpoint: 'center-of-mass', file: propsValue.file, sourceFormat: propsValue.sourceFormat });
   },
 });
