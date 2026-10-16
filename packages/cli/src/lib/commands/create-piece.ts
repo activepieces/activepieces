@@ -63,6 +63,7 @@ const scaffoldPiece = async (
   const packageJson = {
     name: packageName,
     version: '0.0.1',
+    license: 'MIT',
     type: 'commonjs',
     main: './dist/src/index.js',
     types: './dist/src/index.d.ts',
