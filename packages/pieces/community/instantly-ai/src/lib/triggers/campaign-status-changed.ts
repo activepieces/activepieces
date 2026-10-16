@@ -1,8 +1,8 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { instantlyAiAuth } from '../auth';
+import { instantlyAuth } from '../auth';
 
 export const campaignStatusChangedTrigger = createTrigger({
-  auth: instantlyAiAuth,
+  auth: instantlyAuth,
   name: 'campaign_status_changed',
   classification: 'READ',
   displayName: 'Campaign Status Changed',
@@ -29,17 +29,17 @@ export const campaignStatusChangedTrigger = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
-    timestamp: "2023-08-22T15:45:30.123Z",
-    event_type: "campaign_completed",
-    campaign_name: "Product Demo Campaign",
-    workspace: "workspace_123456",
-    campaign_id: "campaign_789012"
+    timestamp: '2023-08-22T15:45:30.123Z',
+    event_type: 'campaign_completed',
+    campaign_name: 'Product Demo Campaign',
+    workspace: 'workspace_123456',
+    campaign_id: 'campaign_789012',
   },
-  async onEnable(context) {
-    // Empty
+  async onEnable() {
+    return;
   },
-  async onDisable(context) {
-    // Empty
+  async onDisable() {
+    return;
   },
   async run(context) {
     return [context.payload.body];
