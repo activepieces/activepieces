@@ -7,7 +7,7 @@ export const airtableAddCommentToRecordAiAction = createAction({
   auth: airtableAuth,
   name: 'add_comment_to_record_ai',
   classification: 'WRITE',
-  displayName: 'Add Comment to Record (Agent)',
+  displayName: 'Add Comment to Record',
   description: 'Post a comment on an Airtable record.',
   audience: 'ai',
   outputSchema: addCommentToRecordAiActionOutputSchema,
@@ -20,13 +20,13 @@ export const airtableAddCommentToRecordAiAction = createAction({
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     table_id_or_name: Property.ShortText({
       displayName: 'Table ID or Name',
       description:
-        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema (Agent).',
+        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema.',
       required: true,
     }),
     record_id: Property.ShortText({
@@ -44,7 +44,7 @@ export const airtableAddCommentToRecordAiAction = createAction({
     parent_comment_id: Property.ShortText({
       displayName: 'Parent Comment ID',
       description:
-        'Optional ID of a parent comment to reply to (creates a threaded reply). Find IDs with List Record Comments (Agent).',
+        'Optional ID of a parent comment to reply to (creates a threaded reply). Find IDs with List Record Comments.',
       required: false,
     }),
   },
