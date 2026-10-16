@@ -255,6 +255,13 @@ export const platformService = (log: FastifyBaseLogger) => ({
         }
         return stripFederatedAuth(saved)
     },
+    async runWithPlatformSettingsLock<T>({ platformId, fn }: RunWithPlatformSettingsLockParams<T>): Promise<T> {
+        return distributedLock(log).runExclusive({
+            key: `platform-settings-${platformId}`,
+            timeoutInSeconds: 30,
+            fn,
+        })
+    },
     async listDefaultProjectIds({ platformId, entityManager }: ListDefaultProjectIdsParams): Promise<string[]> {
         return readDefaultProjectIdPages({ platformId, entityManager, afterCursor: null })
     },
@@ -574,6 +581,11 @@ type PlatformMembershipWithPlatform = {
 type AssertPersonalProjectsCanBeTurnedOffParams = {
     platform: PlatformWithoutFederatedAuth
     log: FastifyBaseLogger
+}
+
+type RunWithPlatformSettingsLockParams<T> = {
+    platformId: string
+    fn: () => Promise<T>
 }
 
 type ListDefaultProjectIdsParams = {

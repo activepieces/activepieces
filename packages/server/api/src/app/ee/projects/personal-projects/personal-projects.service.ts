@@ -30,7 +30,7 @@ export const personalProjectsService = (log: FastifyBaseLogger) => ({
         return { personalProjectCount, membersWithoutPersonalProject }
     },
     async turnOnAndCreateMissing({ platformId }: PlatformParams): Promise<void> {
-        await platformService(log).runWithDefaultProjectsLock({
+        await platformService(log).runWithPlatformSettingsLock({
             platformId,
             fn: async () => {
                 const platform = await platformService(log).getOneOrThrow(platformId)
