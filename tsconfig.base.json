@@ -994,6 +994,9 @@
       "@activepieces/piece-parseur": [
         "packages/pieces/community/parseur/src/index.ts"
       ],
+      "@activepieces/piece-pastdotdev": [
+        "packages/pieces/community/pastdotdev/src/index.ts"
+      ],
       "@activepieces/piece-pastebin": [
         "packages/pieces/community/pastebin/src/index.ts"
       ],

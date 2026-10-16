@@ -6883,6 +6883,20 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/pastdotdev": {
+      "name": "@activepieces/piece-pastdotdev",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/pastebin": {
       "name": "@activepieces/piece-pastebin",
       "version": "0.2.8",
@@ -12331,6 +12345,8 @@
     "@activepieces/piece-parser-expert": ["@activepieces/piece-parser-expert@workspace:packages/pieces/community/parser-expert"],
 
     "@activepieces/piece-parseur": ["@activepieces/piece-parseur@workspace:packages/pieces/community/parseur"],
+
+    "@activepieces/piece-pastdotdev": ["@activepieces/piece-pastdotdev@workspace:packages/pieces/community/pastdotdev"],
 
     "@activepieces/piece-pastebin": ["@activepieces/piece-pastebin@workspace:packages/pieces/community/pastebin"],
 
