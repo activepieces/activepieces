@@ -1,5 +1,5 @@
 import { wedofAuth } from '../auth';
-import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, DynamicPropsValue, isNil, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { wedofCommon } from '../common/wedof';
 
@@ -146,12 +146,21 @@ export const sendFile = createAction({
   }),
   },
   async run(context) {
-     const message = {
-        title: context.propsValue.title ?? null,
-        typeId: String(context.propsValue.typeId['undefined'])?? null,
-        file:context.propsValue.files['file'] ?? null,
-        fileToDownload: context.propsValue.files['fileToDownload'] ?? null,
-      };
+      const { title, typeId, files } = context.propsValue;
+      const file = files['file'];
+      const formData = new FormData();
+      formData.append('typeId', String(typeId['undefined']));
+      if (!isNil(title)) {
+        formData.append('title', title);
+      }
+      if (file instanceof ApFile) {
+        formData.append('file', new Blob([new Uint8Array(file.data)]), file.filename);
+      } else if (!isNil(file)) {
+        formData.append('file', String(file));
+      }
+      if (!isNil(files['fileToDownload'])) {
+        formData.append('fileToDownload', String(files['fileToDownload']));
+      }
       return (
         await httpClient.sendRequest({
           method: HttpMethod.POST,
@@ -160,9 +169,8 @@ export const sendFile = createAction({
             '/' +
             context.propsValue.entityClass +
             '/'+ context.propsValue.externalId + '/files',
-          body: message,
+          body: formData,
           headers: {
-            'Content-Type': 'multipart/form-data',
             'X-Api-Key': context.auth.secret_text,
           },
         })
