@@ -1,4 +1,4 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleCloudStorageAuth } from '../common/auth';
 import { gcsCommon } from '../common/client';
 import { bucketDropdown, objectDropdown, projectIdProperty } from '../common/props';
@@ -29,7 +29,7 @@ export const cloneObject = createAction({
   },
   async run(context) {
     const { sourceBucket, sourceObject, destBucket, destObject, metadataOverrides } = context.propsValue;
-    const auth = context.auth as OAuth2PropertyValue;
+    const accessToken = await gcsCommon.getAccessToken({ auth: context.auth, server: context.server });
 
     const body = metadataOverrides || undefined;
     
@@ -37,7 +37,7 @@ export const cloneObject = createAction({
       const response = await gcsCommon.makeRequest(
         HttpMethod.POST,
         `/b/${sourceBucket}/o/${encodeURIComponent(sourceObject as string)}/copyTo/b/${destBucket}/o/${encodeURIComponent(destObject as string)}`,
-        auth.access_token,
+        accessToken,
         body
       );
 
