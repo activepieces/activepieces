@@ -20,9 +20,9 @@ afterAll(async () => {
 describe('Personal projects on Community', () => {
     it('creates a personal project even when personal projects are saved off with a default project', async () => {
         const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup()
-        const teamProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.TEAM })
+        const teamProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.TEAM, isDefault: true })
         await databaseConnection().getRepository('project').save(teamProject)
-        await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { autoCreatePersonalProjects: false, defaultProjectIds: [teamProject.id] })
+        await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { autoCreatePersonalProjects: false })
         const identity = createMockUserIdentity({ verified: true })
         await databaseConnection().getRepository('user_identity').save(identity)
 
