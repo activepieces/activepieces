@@ -210,7 +210,6 @@ export const Platform = z.object({
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: z.boolean(),
     autoCreatePersonalProjects: z.boolean(),
-    defaultProjectIds: z.array(z.string()),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
     auditLogRetentionDays: Nullable(z.number().int()),
@@ -242,12 +241,16 @@ export const PlatformWithoutSensitiveData = z.object({
     ssoDomainVerification: Nullable(SsoDomainVerification),
     emailAuthEnabled: z.boolean(),
     autoCreatePersonalProjects: z.boolean(),
-    defaultProjectIds: z.array(z.string()),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
     auditLogRetentionDays: Nullable(z.number().int()),
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
+
+export const PlatformResponse = PlatformWithoutSensitiveData.extend({
+    defaultProjectIds: z.array(z.string()),
+})
+export type PlatformResponse = z.infer<typeof PlatformResponse>
 
 export const AutoTopUpConfig = z.object({
     featureId: z.enum(ConsumableFeatureId),

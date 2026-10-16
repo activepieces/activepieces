@@ -1,5 +1,5 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, omit, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, unique, UserId } from '@activepieces/core-utils'
-import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, unique, UserId } from '@activepieces/core-utils'
+import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformResponse, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { EntityManager, In } from 'typeorm'
@@ -63,7 +63,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             emailAuthEnabled: true,
             autoCreatePersonalProjects: true,
-            defaultProjectIds: [],
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
             federatedAuthProviders: { saml: null },
@@ -185,7 +184,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             }
             : undefined
         const updatedPlatform = {
-            ...omit(platform, ['defaultProjectIds']),
+            ...platform,
             ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('primaryColor', params.primaryColor),
@@ -197,7 +196,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('googleAuthEnabled', params.googleAuthEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
             ...spreadIfDefined('autoCreatePersonalProjects', params.autoCreatePersonalProjects),
-            ...spreadIfDefined('defaultProjectIds', defaultProjectIds),
             ...spreadIfDefined(
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
@@ -221,6 +219,9 @@ export const platformService = (log: FastifyBaseLogger) => ({
         log.info({ platform: { id: params.id } }, 'Platform updated')
         const { saved, previousRetentionDays } = await transaction(async (entityManager) => {
             const lockedRetentionDays = await lockAuditLogRetentionDays({ entityManager, platformId: params.id })
+            if (!isNil(defaultProjectIds)) {
+                await setDefaultProjects({ platformId: params.id, projectIds: defaultProjectIds, entityManager })
+            }
             const savedPlatform = await platformRepo(entityManager).save({
                 ...updatedPlatform,
                 auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedRetentionDays : params.auditLogRetentionDays,
@@ -239,21 +240,13 @@ export const platformService = (log: FastifyBaseLogger) => ({
         }
         return stripFederatedAuth({ ...platform, ...saved })
     },
-    async runWithDefaultProjectsLock<T>({ platformId, fn }: RunWithDefaultProjectsLockParams<T>): Promise<T> {
-        return distributedLock(log).runExclusive({
-            key: `default-projects-${platformId}`,
-            timeoutInSeconds: 30,
-            fn,
+    async listDefaultProjectIds({ platformId, entityManager }: ListDefaultProjectIdsParams): Promise<string[]> {
+        const projects = await projectRepo(entityManager).find({
+            where: { platformId, type: ProjectType.TEAM, isDefault: true },
+            select: { id: true },
+            order: { created: 'ASC' },
         })
-    },
-    async removeDefaultProject({ platformId, projectId, entityManager }: RemoveDefaultProjectParams): Promise<void> {
-        await platformRepo(entityManager)
-            .createQueryBuilder()
-            .update()
-            .set({ defaultProjectIds: () => 'array_remove("defaultProjectIds", :projectId)' })
-            .where('"id" = :platformId', { platformId })
-            .setParameter('projectId', projectId)
-            .execute()
+        return projects.map((project) => project.id)
     },
     async getOneOrThrow(id: PlatformId): Promise<PlatformWithoutFederatedAuth> {
         return platformRepo().findOneByOrFail({ id })
@@ -305,13 +298,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
             plan,
         }
     },
-    async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
+    async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformResponse> {
         const platform = await this.getOneOrThrow(id)
-        const [samlConfigured, usage, plan, billingEnforced] = await Promise.all([
+        const [samlConfigured, usage, plan, billingEnforced, defaultProjectIds] = await Promise.all([
             this.hasSamlConfigured(id),
             getUsage(log, platform),
             getPlan(log, platform),
             getBillingEnforced(log, id),
+            this.listDefaultProjectIds({ platformId: id }),
         ])
         return {
             ...platform,
@@ -319,6 +313,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             usage,
             billingEnforced,
             plan,
+            defaultProjectIds,
         }
     },
 })
@@ -502,8 +497,19 @@ async function validateDefaultProjectIds({ platform, defaultProjectIds, log }: V
             },
         })
     }
-    const liveIds = new Set(platformProjects.filter((project) => isNil(project.deleted)).map((project) => project.id))
-    return uniqueIds.filter((id) => liveIds.has(id))
+    return uniqueIds
+}
+
+async function setDefaultProjects({ platformId, projectIds, entityManager }: SetDefaultProjectsParams): Promise<void> {
+    await projectRepo(entityManager)
+        .createQueryBuilder()
+        .update()
+        .set({ isDefault: () => '"id" = ANY(:projectIds)' })
+        .where('"platformId" = :platformId', { platformId })
+        .andWhere('"type" = :team', { team: ProjectType.TEAM })
+        .andWhere('"deleted" IS NULL')
+        .andWhere('("isDefault" = true OR "id" = ANY(:projectIds))', { projectIds })
+        .execute()
 }
 
 function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
@@ -538,15 +544,15 @@ type ValidateDefaultProjectIdsParams = {
     log: FastifyBaseLogger
 }
 
-type RunWithDefaultProjectsLockParams<T> = {
-    platformId: string
-    fn: () => Promise<T>
+type ListDefaultProjectIdsParams = {
+    platformId: PlatformId
+    entityManager?: EntityManager
 }
 
-type RemoveDefaultProjectParams = {
+type SetDefaultProjectsParams = {
     platformId: PlatformId
-    projectId: string
-    entityManager?: EntityManager
+    projectIds: string[]
+    entityManager: EntityManager
 }
 
 type UpdateParams = UpdatePlatformRequestBody & {

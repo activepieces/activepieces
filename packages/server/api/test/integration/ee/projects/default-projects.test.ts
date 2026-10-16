@@ -2,6 +2,7 @@ import { apId, ErrorCode } from '@activepieces/core-utils'
 import { PrincipalType, ProjectType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { In } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockApiKey, createMockProject, mockAndSaveBasicSetup } from '../../../helpers/mocks'
@@ -18,9 +19,11 @@ afterAll(async () => {
 })
 
 describe('Default projects', () => {
-    it('stores team projects of the platform as default projects', async () => {
+    it('stores team projects of the platform as default projects, oldest first', async () => {
         const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
         const secondProject = await saveProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.TEAM })
+        await databaseConnection().getRepository('project').update({ id: mockProject.id }, { created: '2026-01-01T00:00:00.000Z' })
+        await databaseConnection().getRepository('project').update({ id: secondProject.id }, { created: '2026-02-01T00:00:00.000Z' })
 
         const response = await updateDefaultProjects({
             platformId: mockPlatform.id,
@@ -34,7 +37,7 @@ describe('Default projects', () => {
 
     it('empties the list', async () => {
         const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
-        await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { defaultProjectIds: [mockProject.id] })
+        await markDefault({ projectIds: [mockProject.id] })
 
         const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: [] })
 
@@ -162,13 +165,41 @@ describe('Default projects', () => {
             headers: { authorization: `Bearer ${apiKey.value}` },
             body: { schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'], displayName: 'Sales', externalId: apId(), members: [] },
         })
-        await databaseConnection().getRepository('platform').update({ id: mockPlatform.id }, { defaultProjectIds: [group?.json().id] })
+        await markDefault({ projectIds: [group?.json().id] })
 
         const response = await app?.inject({ method: 'DELETE', url: `/api/v1/scim/v2/Groups/${group?.json().id}`, headers: { authorization: `Bearer ${apiKey.value}` } })
 
         expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-        const platform = await databaseConnection().getRepository('platform').findOneByOrFail({ id: mockPlatform.id })
-        expect(platform.defaultProjectIds).toStrictEqual([])
+        expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toStrictEqual([])
+    })
+
+    it('replaces the whole list in one save, adding and removing defaults', async () => {
+        const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
+        const secondProject = await saveProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.TEAM })
+        await markDefault({ projectIds: [mockProject.id] })
+
+        const response = await updateDefaultProjects({ platformId: mockPlatform.id, userId: mockOwner.id, defaultProjectIds: [secondProject.id] })
+
+        expect(response?.json().defaultProjectIds).toStrictEqual([secondProject.id])
+        expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toStrictEqual([secondProject.id])
+    })
+
+    it('leaves out a soft-deleted default project', async () => {
+        const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
+        await markDefault({ projectIds: [mockProject.id] })
+        await databaseConnection().getRepository('project').update({ id: mockProject.id }, { deleted: new Date().toISOString() })
+        const token = await generateMockToken({ id: mockOwner.id, type: PrincipalType.USER, platform: { id: mockPlatform.id } })
+
+        const response = await app?.inject({ method: 'GET', url: `/api/v1/platforms/${mockPlatform.id}`, headers: { authorization: `Bearer ${token}` } })
+
+        expect(response?.json().defaultProjectIds).toStrictEqual([])
+    })
+
+    it('never lets a personal project be a default, even when written directly', async () => {
+        const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
+        const personalProject = await saveProject({ platformId: mockPlatform.id, ownerId: mockOwner.id, type: ProjectType.PERSONAL })
+
+        await expect(markDefault({ projectIds: [personalProject.id] })).rejects.toThrow()
     })
 })
 
@@ -196,7 +227,15 @@ async function updateDefaultProjects({ platformId, userId, defaultProjectIds }: 
 }
 
 async function setPlatformState({ platformId, defaultProjectIds, autoCreatePersonalProjects }: { platformId: string, defaultProjectIds: string[], autoCreatePersonalProjects: boolean }) {
-    await databaseConnection().getRepository('platform').update({ id: platformId }, { defaultProjectIds, autoCreatePersonalProjects })
+    await databaseConnection().getRepository('platform').update({ id: platformId }, { autoCreatePersonalProjects })
+    await markDefault({ projectIds: defaultProjectIds })
+}
+
+async function markDefault({ projectIds }: { projectIds: string[] }) {
+    if (projectIds.length === 0) {
+        return
+    }
+    await databaseConnection().getRepository('project').update({ id: In(projectIds) }, { isDefault: true })
 }
 
 async function deleteProject({ platformId, userId, projectId }: { platformId: string, userId: string, projectId: string }) {
@@ -209,8 +248,11 @@ async function deleteProject({ platformId, userId, projectId }: { platformId: st
 }
 
 async function defaultProjectIdsOf({ platformId }: { platformId: string }) {
-    const platform = await databaseConnection().getRepository('platform').findOneByOrFail({ id: platformId })
-    return platform.defaultProjectIds
+    const projects = await databaseConnection().getRepository('project').find({
+        where: { platformId, isDefault: true },
+        order: { created: 'ASC' },
+    })
+    return projects.map((project) => project.id)
 }
 
 async function isLive({ projectId }: { projectId: string }) {
