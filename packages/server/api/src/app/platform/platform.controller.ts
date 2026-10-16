@@ -1,6 +1,6 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
+import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformResponse, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -78,17 +78,14 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             }),
         ])
 
-        await platformService(req.log).runWithDefaultProjectsLock({
-            platformId,
-            fn: () => platformService(req.log).update({
-                id: platformId,
-                ...req.body,
-                logoIconUrl,
-                fullLogoUrl,
-                favIconUrl,
-                userId: req.principal.id,
-                ip: networkUtils.clientIp(req),
-            }),
+        await platformService(req.log).update({
+            id: platformId,
+            ...req.body,
+            logoIconUrl,
+            fullLogoUrl,
+            favIconUrl,
+            userId: req.principal.id,
+            ip: networkUtils.clientIp(req),
         })
         return platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
     })
@@ -213,7 +210,7 @@ const UpdatePlatformRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: PlatformWithoutSensitiveData,
+            [StatusCodes.OK]: PlatformResponse,
         },
     },
 }
@@ -231,7 +228,7 @@ const GetPlatformRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: PlatformWithoutSensitiveData,
+            [StatusCodes.OK]: PlatformResponse,
         },
     },
 }

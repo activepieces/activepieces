@@ -22,6 +22,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             releasesEnabled: false,
             notifyFlowOwnerOnFailure: false,
             sensitive: params.sensitive ?? false,
+            isDefault: false,
         }
         const savedProject = await projectRepo(entityManager).save(newProject)
         if (callPostCreateHooks) {
