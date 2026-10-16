@@ -63,7 +63,7 @@ describe('rewriteManifestForBundle', () => {
         }
     })
 
-    function setup(dependencies: Record<string, string>): { distPath: string, repoRoot: string } {
+    function setup({ dependencies, extra = {} }: { dependencies: Record<string, string>, extra?: Record<string, unknown> }): { distPath: string, repoRoot: string } {
         root = mkdtempSync(join(tmpdir(), 'ap-manifest-'))
         const repoRoot = join(root, 'repo')
         const distPath = join(repoRoot, 'packages', 'pieces', 'community', 'demo', 'dist')
@@ -73,6 +73,7 @@ describe('rewriteManifestForBundle', () => {
             name: '@activepieces/piece-demo',
             version: '1.0.0',
             dependencies,
+            ...extra,
         }))
         return { distPath, repoRoot }
     }
@@ -82,7 +83,7 @@ describe('rewriteManifestForBundle', () => {
     }
 
     it('declares an external dependency it can resolve from the piece manifest', () => {
-        const { distPath, repoRoot } = setup({ pg: '8.11.3' })
+        const { distPath, repoRoot } = setup({ dependencies: { pg: '8.11.3' } })
 
         rewriteManifestForBundle({ distPath, external: ['pg'], repoRoot })
 
@@ -90,7 +91,7 @@ describe('rewriteManifestForBundle', () => {
     })
 
     it('publishes forked entry bundles alongside the main bundle', () => {
-        const { distPath, repoRoot } = setup({ oracledb: '6.10.0' })
+        const { distPath, repoRoot } = setup({ dependencies: { oracledb: '6.10.0' } })
 
         rewriteManifestForBundle({ distPath, external: ['oracledb'], repoRoot, extraBundleFiles: ['src/oracle-runner.js'] })
 
@@ -100,7 +101,7 @@ describe('rewriteManifestForBundle', () => {
     })
 
     it('leaves an optional peer dependency out instead of failing on it', () => {
-        const { distPath, repoRoot } = setup({ pg: '8.11.3' })
+        const { distPath, repoRoot } = setup({ dependencies: { pg: '8.11.3' } })
 
         rewriteManifestForBundle({ distPath, external: ['pg', 'pg-native'], repoRoot })
 
@@ -108,7 +109,7 @@ describe('rewriteManifestForBundle', () => {
     })
 
     it('omits an optional peer dependency even when one is installed locally', () => {
-        const { distPath, repoRoot } = setup({ mongodb: '6.15.0', kerberos: '2.0.1' })
+        const { distPath, repoRoot } = setup({ dependencies: { mongodb: '6.15.0', kerberos: '2.0.1' } })
 
         rewriteManifestForBundle({ distPath, external: ['mongodb', 'kerberos'], repoRoot })
 
@@ -116,7 +117,7 @@ describe('rewriteManifestForBundle', () => {
     })
 
     it('omits every optional dep the mongodb driver loads behind a guard', () => {
-        const { distPath, repoRoot } = setup({ mongodb: '6.15.0' })
+        const { distPath, repoRoot } = setup({ dependencies: { mongodb: '6.15.0' } })
 
         rewriteManifestForBundle({
             distPath,
@@ -128,9 +129,25 @@ describe('rewriteManifestForBundle', () => {
     })
 
     it('still fails loudly on an external dependency that is simply missing', () => {
-        const { distPath, repoRoot } = setup({})
+        const { distPath, repoRoot } = setup({ dependencies: {} })
 
         expect(() => rewriteManifestForBundle({ distPath, external: ['not-a-real-package-xyz'], repoRoot }))
             .toThrow(/has no resolvable version/)
+    })
+
+    it('sets the license to MIT on the published manifest when the source has none', () => {
+        const { distPath, repoRoot } = setup({ dependencies: { pg: '8.11.3' } })
+
+        rewriteManifestForBundle({ distPath, external: ['pg'], repoRoot })
+
+        expect(manifestOf(distPath).license).toBe('MIT')
+    })
+
+    it('keeps an explicit license declared by the piece', () => {
+        const { distPath, repoRoot } = setup({ dependencies: { pg: '8.11.3' }, extra: { license: 'Apache-2.0' } })
+
+        rewriteManifestForBundle({ distPath, external: ['pg'], repoRoot })
+
+        expect(manifestOf(distPath).license).toBe('Apache-2.0')
     })
 })

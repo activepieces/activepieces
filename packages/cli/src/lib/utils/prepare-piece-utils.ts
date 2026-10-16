@@ -74,6 +74,7 @@ function rewriteManifestForBundle({ distPath, external, repoRoot, extraBundleFil
     }
 
     json.main = `./${bundlePieceUtils.BUNDLE_FILENAME}`
+    json.license = json.license ?? 'MIT'
     json.dependencies = externalDeps
     delete json.devDependencies
     delete json.peerDependencies
