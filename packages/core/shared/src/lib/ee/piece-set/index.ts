@@ -93,5 +93,6 @@ export type AssignProjectsRequestBody = z.infer<typeof AssignProjectsRequestBody
 export const ListPieceSetsRequestQuery = z.object({
     cursor: z.string().optional(),
     limit: z.number().int().min(1).max(100).optional().default(10),
+    name: z.string().optional(),
 })
 export type ListPieceSetsRequestQuery = z.infer<typeof ListPieceSetsRequestQuery>
