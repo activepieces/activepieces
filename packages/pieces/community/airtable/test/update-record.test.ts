@@ -3,17 +3,23 @@ import { describe, expect, it } from 'vitest';
 import { airtableCommon } from '../src/lib/common';
 import { AirtableField, AirtableFieldType } from '../src/lib/common/models';
 
-function field(id: string, type: AirtableFieldType): AirtableField {
+function field({
+  id,
+  type,
+}: {
+  id: string;
+  type: AirtableFieldType;
+}): AirtableField {
   return { id, name: id, description: '', type };
 }
 
 const tableFields: AirtableField[] = [
-  field('fldName', 'singleLineText'),
-  field('fldDone', 'checkbox'),
-  field('fldTags', 'multipleSelects'),
-  field('fldOwner', 'multipleRecordLinks'),
-  field('fldPhoto', 'multipleAttachments'),
-  field('fldNotes', 'aiText'),
+  field({ id: 'fldName', type: 'singleLineText' }),
+  field({ id: 'fldDone', type: 'checkbox' }),
+  field({ id: 'fldTags', type: 'multipleSelects' }),
+  field({ id: 'fldOwner', type: 'multipleRecordLinks' }),
+  field({ id: 'fldPhoto', type: 'multipleAttachments' }),
+  field({ id: 'fldNotes', type: 'aiText' }),
 ];
 
 const toggle = airtableCommon.updateToggleKey;

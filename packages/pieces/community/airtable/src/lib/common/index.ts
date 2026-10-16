@@ -503,7 +503,7 @@ function buildFieldValueProperty({
       : {}),
   };
 
-  if (isNil(AirtableFieldMapping[field.type])) {
+  if (!hasMappedProperty(field)) {
     return Property.ShortText({ ...params });
   }
 
@@ -524,6 +524,12 @@ function buildFieldValueProperty({
   }
 
   return AirtableFieldMapping[field.type](params);
+}
+
+function hasMappedProperty(
+  field: AirtableField
+): field is AirtableField & { type: keyof typeof AirtableFieldMapping } {
+  return Object.keys(AirtableFieldMapping).includes(field.type);
 }
 
 function updateToggleKey(fieldId: string) {
