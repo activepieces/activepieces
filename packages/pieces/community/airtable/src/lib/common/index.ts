@@ -562,7 +562,7 @@ function valueToWrite({
     return clearedValueFor(field);
   }
   if (field.type === 'multipleAttachments') {
-    return [{ url: value as string }];
+    return [{ url: value }];
   }
   return value;
 }
@@ -847,13 +847,13 @@ export const airtableCommon = {
 
     props: async ({ auth, base, tableId }) => {
       if (!auth) return {};
-      if (!base) return {};
-      if (!tableId) return {};
+      if (typeof base !== 'string' || !base) return {};
+      if (typeof tableId !== 'string' || !tableId) return {};
 
       const airtable: AirtableTable = await fetchTable({
         token: auth.secret_text,
-        baseId: base as unknown as string,
-        tableId: tableId as unknown as string,
+        baseId: base,
+        tableId,
       });
 
       return Object.fromEntries(

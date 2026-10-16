@@ -39,8 +39,8 @@ export const airtableUpdateRecordAction = createAction({
 
     const table = await airtableCommon.fetchTable({
       token: personalToken.secret_text,
-      baseId: baseId as string,
-      tableId: tableId as string,
+      baseId,
+      tableId,
     });
 
     const updatedFields = airtableCommon.buildUpdateFields({
@@ -50,9 +50,9 @@ export const airtableUpdateRecordAction = createAction({
 
     return await airtableCommon.updateRecord({
       personalToken: personalToken.secret_text,
-      baseId: baseId as string,
-      tableId: tableId as string,
-      recordId: recordId as string,
+      baseId,
+      tableId,
+      recordId,
       fields: updatedFields,
       typecast: true,
     });
