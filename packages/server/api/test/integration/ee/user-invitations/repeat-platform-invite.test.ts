@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { ObjectLiteral, Repository } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockApiKey, createMockProject, createMockUserInvitation, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { createMockApiKey, createMockProject, createMockProjectMember, createMockUserInvitation, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -358,6 +358,53 @@ describe('Removing a platform invite from a project', () => {
         expect(after.projectId).toBe(projectId)
     })
 
+    it('lets a Member invite lose its project when they accepted an invite to another project', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        await turnOffPersonalProjects({ platformId })
+        const sales = await saveTeamProject({ platformId })
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        await inviteProject({ token: ownerToken, email, projectId: sales.id, projectRole: DefaultProjectRole.VIEWER })
+        await databaseConnection().getRepository('user_invitation').update({ email, platformId, type: InvitationType.PROJECT }, { status: InvitationStatus.ACCEPTED })
+        const [invitation] = await platformInvitesOf({ email, platformId })
+
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        const [after] = await platformInvitesOf({ email, platformId })
+        expect(after.projectId).toBeNull()
+    })
+
+    it('still refuses when their invite to another project is only pending', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        await turnOffPersonalProjects({ platformId })
+        const sales = await saveTeamProject({ platformId })
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        await inviteProject({ token: ownerToken, email, projectId: sales.id, projectRole: DefaultProjectRole.VIEWER })
+        const [invitation] = await platformInvitesOf({ email, platformId })
+
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
+
+        expect(response?.json().code).toBe(ErrorCode.LAST_PROJECT)
+    })
+
+    it('lets a Member invite lose its project when they already belong to another project', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        await turnOffPersonalProjects({ platformId })
+        const sales = await saveTeamProject({ platformId })
+        const email = faker.internet.email().toLowerCase()
+        const { mockUser } = await mockBasicUser({ userIdentity: { email }, user: { platformId, platformRole: PlatformRole.MEMBER } })
+        const editor = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.EDITOR })
+        await databaseConnection().getRepository('project_member').save(createMockProjectMember({ userId: mockUser.id, platformId, projectId: sales.id, projectRoleId: editor.id }))
+        const invitation = createMockUserInvitation({ email, platformId, type: InvitationType.PLATFORM, platformRole: PlatformRole.MEMBER, projectId, status: InvitationStatus.PENDING })
+        await databaseConnection().getRepository('user_invitation').save(invitation)
+
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+    })
+
     it('still lets an API key leave a Member invite with no project', async () => {
         const { platformId, projectId, ownerToken } = await setupPlatform()
         await databaseConnection().getRepository('platform').update({ id: platformId }, { autoCreatePersonalProjects: false })
@@ -439,6 +486,27 @@ describe('Listing the platform invites that name a project', () => {
         expect(await platformInvitesOf({ email: unnamed, platformId })).toHaveLength(1)
     })
 
+    it('flags the Member invites for which this project is the only place to land', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        await turnOffPersonalProjects({ platformId })
+        const sales = await saveTeamProject({ platformId })
+        const onlyHere = faker.internet.email().toLowerCase()
+        const alsoInSales = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email: onlyHere, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        await invitePlatform({ token: ownerToken, email: alsoInSales, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        await inviteProject({ token: ownerToken, email: alsoInSales, projectId: sales.id, projectRole: DefaultProjectRole.VIEWER })
+        await databaseConnection().getRepository('user_invitation').update({ email: alsoInSales, platformId, type: InvitationType.PROJECT }, { status: InvitationStatus.ACCEPTED })
+
+        const response = await app?.inject({
+            method: 'GET',
+            url: `/api/v1/user-invitations?type=${InvitationType.PLATFORM}&projectId=${projectId}`,
+            headers: { authorization: `Bearer ${ownerToken}` },
+        })
+
+        const flags = Object.fromEntries(response?.json().data.map((invitation: { email: string, isOnlyProject: boolean }) => [invitation.email, invitation.isOnlyProject]))
+        expect(flags).toStrictEqual({ [onlyHere]: true, [alsoInSales]: false })
+    })
+
     it('treats an empty project filter as no filter, as the web client sends it', async () => {
         const { ownerToken } = await setupPlatform()
         await invitePlatform({ token: ownerToken, email: faker.internet.email().toLowerCase(), platformRole: PlatformRole.OPERATOR })
@@ -510,6 +578,16 @@ async function roleNameOf({ projectRoleId }: { projectRoleId: string }) {
 async function ownerOf({ platformId }: { platformId: string }) {
     const platform = await databaseConnection().getRepository('platform').findOneByOrFail({ id: platformId })
     return platform.ownerId
+}
+
+async function turnOffPersonalProjects({ platformId }: { platformId: string }) {
+    await databaseConnection().getRepository('platform').update({ id: platformId }, { autoCreatePersonalProjects: false })
+}
+
+async function saveTeamProject({ platformId }: { platformId: string }) {
+    const project = createMockProject({ platformId, ownerId: await ownerOf({ platformId }), type: ProjectType.TEAM })
+    await databaseConnection().getRepository('project').save(project)
+    return project
 }
 
 async function removeProject({ token, invitationId, projectId }: { token: string, invitationId: string, projectId: string }) {

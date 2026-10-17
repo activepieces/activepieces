@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, ListUserInvitationsRequest, newMemberSettingsUtils, PlatformRole, Principal, PrincipalType, ProjectType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -15,7 +15,6 @@ import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
-import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { INVITATION_EXPIRY_SECONDS, userInvitationsService } from './user-invitation.service'
@@ -108,7 +107,19 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             cursor: request.query.cursor ?? null,
             limit: request.query.limit ?? 10,
         })
-        await reply.status(StatusCodes.OK).send(invitations)
+        if (request.principal.type !== PrincipalType.USER || request.query.type !== InvitationType.PLATFORM || isNil(projectId)) {
+            await reply.status(StatusCodes.OK).send(invitations)
+            return
+        }
+        const leftWithoutProject = await userInvitationsService(request.log).invitesLeftWithoutProject({
+            invitations: invitations.data,
+            platformId: request.principal.platform.id,
+            projectId,
+        })
+        await reply.status(StatusCodes.OK).send({
+            ...invitations,
+            data: invitations.data.map((invitation) => ({ ...invitation, isOnlyProject: leftWithoutProject.has(invitation.id) })),
+        })
     })
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
@@ -187,19 +198,8 @@ async function assertInviteKeepsAProject({ principal, invitationId, projectId, p
         return
     }
     const invitation = await userInvitationsService(log).getOneOrThrow({ id: invitationId, platformId })
-    if (invitation.type !== InvitationType.PLATFORM || invitation.platformRole !== PlatformRole.MEMBER || invitation.projectId !== projectId) {
-        return
-    }
-    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
-    const projectRolesEnabled = platform.plan.projectRolesEnabled
-    if (newMemberSettingsUtils.personalProjectsActive({ autoCreatePersonalProjects: platform.autoCreatePersonalProjects, projectRolesEnabled })) {
-        return
-    }
-    const defaultProjectIds = newMemberSettingsUtils.activeDefaultProjectIds({
-        defaultProjectIds: await platformService(log).listDefaultProjectIds({ platformId }),
-        projectRolesEnabled,
-    })
-    if (defaultProjectIds.length > 0) {
+    const leftWithoutProject = await userInvitationsService(log).invitesLeftWithoutProject({ invitations: [invitation], platformId, projectId })
+    if (!leftWithoutProject.has(invitation.id)) {
         return
     }
     throw new ActivepiecesError({
