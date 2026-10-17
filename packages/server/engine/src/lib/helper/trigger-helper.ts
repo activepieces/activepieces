@@ -1,12 +1,12 @@
 import { assertEqual, isNil } from '@activepieces/core-utils'
-import { PiecePropertyMap, SetScheduleRequest, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
+import { PiecePropertyMap, SetScheduleRequest, StaticPropsValue, Store, TriggerStrategy } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, InvalidScheduleIntervalError, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants, ResolvedExecuteTriggerOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
-import { createContextStore } from '../piece-context/store'
+import { createContextStore, createNoOverwriteStore, createReadOnlyStore } from '../piece-context/store'
 import { utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { createPropsResolver } from '../variables/props-resolver'
@@ -98,11 +98,15 @@ export const triggerHelper = {
         const prefix = params.test ? 'test' : ''
         let scheduleOptions: ScheduleOptions | undefined = undefined
         const context = {
-            store: createContextStore({
-                apiUrl: constants.internalApiUrl,
-                prefix,
-                flowId: params.flowVersion.flowId,
-                engineToken: params.engineToken,
+            store: storeForHook({
+                store: createContextStore({
+                    apiUrl: constants.internalApiUrl,
+                    prefix,
+                    flowId: params.flowVersion.flowId,
+                    engineToken: params.engineToken,
+                }),
+                hookType: params.hookType,
+                isPollingRepublish: pieceTrigger.type === TriggerStrategy.POLLING && params.isRepublish === true,
             }),
             step: {
                 name: triggerName,
@@ -258,6 +262,20 @@ type ExecuteTriggerParams = {
     constants: EngineConstants
 }
 
+function storeForHook({ store, hookType, isPollingRepublish }: StoreForHookParams): Store {
+    if (!isPollingRepublish) {
+        return store
+    }
+    switch (hookType) {
+        case TriggerHookType.ON_DISABLE:
+            return createReadOnlyStore(store)
+        case TriggerHookType.ON_ENABLE:
+            return createNoOverwriteStore(store)
+        default:
+            return store
+    }
+}
+
 async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, propertySettings, projectId, apiUrl, engineToken, devPieces, stepNames }: PrepareTriggerExecutionParams) {
     const { piece, pieceTrigger } = await pieceLoader.getPieceAndTriggerOrThrow({
         pieceName,
@@ -298,4 +316,10 @@ type PrepareTriggerExecutionParams = {
     engineToken: string
     devPieces: string[]
     stepNames: string[]
+}
+
+type StoreForHookParams = {
+    store: Store
+    hookType: TriggerHookType
+    isPollingRepublish: boolean
 }
