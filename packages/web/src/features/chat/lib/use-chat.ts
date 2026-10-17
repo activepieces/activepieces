@@ -381,6 +381,8 @@ export function useAgentChat({
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
   const modelPickRef = useRef<ChatModelPick | null>(null);
+  const savedPickRef = useRef<ChatModelPick | null>(null);
+  const pickSaveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
   const projectIdRef = useRef(projectId ?? null);
   projectIdRef.current = projectId ?? null;
   const onTitleUpdateRef = useRef(onTitleUpdate);
@@ -767,6 +769,7 @@ export function useAgentChat({
         ...(builder === undefined ? {} : { builder }),
       });
       setConversationProjectId(conv.projectId ?? null);
+      savedPickRef.current = pick ?? null;
       conversationIdRef.current = conv.id;
       setConversationIdState(conv.id);
       return conv;
@@ -968,6 +971,7 @@ export function useAgentChat({
         modelName: convResult.data.modelName ?? null,
       };
       modelPickRef.current = savedPick;
+      savedPickRef.current = savedPick;
       setModelPickState(savedPick);
       setConversationProjectId(convResult.data.projectId ?? null);
       if (convResult.data.status === AgentConversationStatus.STREAMING) {
@@ -1067,19 +1071,26 @@ export function useAgentChat({
   });
 
   const setModelPick = useCallback(async (newPick: ChatModelPick) => {
-    const previousPick = modelPickRef.current;
     modelPickRef.current = newPick;
     setModelPickState(newPick);
     const convId = conversationIdRef.current;
     if (isNil(convId)) {
       return;
     }
-    const { error } = await tryCatch(() =>
-      chatApi.updateConversation(convId, newPick),
+    const save = pickSaveQueueRef.current.then(() =>
+      tryCatch(() => chatApi.updateConversation(convId, newPick)),
     );
-    if (!isNil(error)) {
-      modelPickRef.current = previousPick;
-      setModelPickState(previousPick);
+    pickSaveQueueRef.current = save;
+    const { error } = await save;
+    if (isNil(error)) {
+      savedPickRef.current = newPick;
+      return;
+    }
+    const stillLatest =
+      modelPickRef.current === newPick && conversationIdRef.current === convId;
+    if (stillLatest) {
+      modelPickRef.current = savedPickRef.current;
+      setModelPickState(savedPickRef.current);
       toast.error(t("Couldn't switch the model. Try again."));
     }
   }, []);
