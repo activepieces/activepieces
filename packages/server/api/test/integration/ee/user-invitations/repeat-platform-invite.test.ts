@@ -1,4 +1,4 @@
-import { ErrorCode } from '@activepieces/core-utils'
+import { ErrorCode, isNil } from '@activepieces/core-utils'
 import { DefaultProjectRole, InvitationStatus, InvitationType, PlatformRole, PrincipalType, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
@@ -161,17 +161,16 @@ describe('Re-inviting someone who already accepted', () => {
         }
     })
 
-    it('keeps an acceptance that lands while a re-send is in progress', async () => {
+    it('keeps an acceptance made during a re-send', async () => {
         const { platformId, ownerToken } = await setupPlatform()
         const email = faker.internet.email().toLowerCase()
         await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.OPERATOR })
         const originalFind = Repository.prototype.find
-        let accepted = false
+        let acceptance: Promise<unknown> | null = null
         const find = vi.spyOn(Repository.prototype, 'find').mockImplementation(async function (this: Repository<ObjectLiteral>, ...args: Parameters<Repository<ObjectLiteral>['find']>) {
             const rows = await originalFind.apply(this, args)
-            if (this.metadata.tableName === 'user_invitation' && !accepted) {
-                accepted = true
-                await databaseConnection().getRepository('user_invitation').update({ email, platformId }, { status: InvitationStatus.ACCEPTED })
+            if (this.metadata.tableName === 'user_invitation' && isNil(acceptance)) {
+                acceptance = databaseConnection().getRepository('user_invitation').update({ email, platformId }, { status: InvitationStatus.ACCEPTED })
             }
             return rows
         })
@@ -183,7 +182,8 @@ describe('Re-inviting someone who already accepted', () => {
             find.mockRestore()
         }
 
-        expect(accepted).toBe(true)
+        expect(acceptance).not.toBeNull()
+        await acceptance
         expect((await platformInvitesOf({ email, platformId }))[0].status).toBe(InvitationStatus.ACCEPTED)
     })
 
