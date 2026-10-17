@@ -43,7 +43,7 @@ function toOptionLabel({ comment }: { comment: JiraComment }): string {
 	const text = truncate({ text: toPlainText({ html: comment.renderedBody ?? '' }) });
 	const author = comment.author?.displayName?.trim();
 	const parts = [author, text].filter((part): part is string => !!part && part.length > 0);
-	return parts.length > 0 ? parts.join(': ') : comment.id;
+	return parts.length > 0 ? `${parts.join(': ')} (${comment.id})` : comment.id;
 }
 
 function toPlainText({ html }: { html: string }): string {
