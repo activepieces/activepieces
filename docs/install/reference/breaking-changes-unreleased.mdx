@@ -8,6 +8,34 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Background migrations need a dedicated Postgres role when a `statement_timeout` applies
+
+The app's background migration track (slow data backfills, `CREATE INDEX CONCURRENTLY`, `DROP INDEX CONCURRENTLY`) runs through whichever database connection the app itself uses. When a `statement_timeout` applies to that connection, every long DDL statement a background migration issues is cancelled at that cap and never completes. The retry loop leaves `INVALID` index artifacts behind that an `IF NOT EXISTS` on the next deploy silently skips.
+
+The app now reads `AP_POSTGRES_MIGRATION_URL` and, when set, runs background migrations through that connection instead of the main one. The connection string should point at a Postgres role whose `statement_timeout` is `0`.
+
+A `SET statement_timeout = 0` at runtime from the app can't substitute: in transaction-pooling mode (the default on managed poolers) the `SET` lands on one backend and the actual DDL on another, so the cap stays in force on the DDL and the `SET` leaks to normal app traffic on the first backend. The role-level default stays with the backend from its startup and never leaks.
+
+#### What you need to do
+
+Nothing if no `statement_timeout` applies to the app's connection (`SHOW statement_timeout;` as the app returns `0` — the Postgres default and the common self-host case). Background migrations keep running on the main connection.
+
+If a `statement_timeout` applies, provision a dedicated migration role and tell the app about it:
+
+```sql
+CREATE ROLE ap_migrator WITH LOGIN PASSWORD '<generated>';
+ALTER  ROLE ap_migrator SET  statement_timeout = 0;
+
+-- Make ap_migrator a member of the role that owns the app's tables (usually
+-- the same role your AP_POSTGRES_URL connects as — call it <app_role>).
+-- Membership gives ap_migrator ownership privileges on every table <app_role>
+-- owns, including CREATE INDEX / DROP INDEX / REINDEX, which GRANT ALL does
+-- NOT. Covers future tables too, since they inherit the same ownership.
+GRANT  <app_role> TO ap_migrator;
+```
+
+Then set `AP_POSTGRES_MIGRATION_URL=postgres://ap_migrator:<password>@<host>:<port>/<database>` on the API deployment. On managed Postgres with a connection pooler, create a small pool (size 3) scoped to this role and use that pool's URL.
+
 #### Firecrawl's Scrape Website stops reusing cached pages, and Crawl keeps its pages when a screenshot fails
 
 Three changes in Firecrawl 0.6.0 alter what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
