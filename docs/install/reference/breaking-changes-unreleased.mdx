@@ -34,7 +34,7 @@ ALTER  ROLE ap_migrator SET  statement_timeout = 0;
 GRANT  <app_role> TO ap_migrator;
 ```
 
-Then set `AP_POSTGRES_MIGRATION_URL=postgres://ap_migrator:<password>@<host>:<port>/<database>` on the API deployment. On managed Postgres with a connection pooler (DO, Supabase), create a small pool (size 3) scoped to this role in **session** pooling mode and use that pool's URL. Session mode preserves `pg_advisory_lock` and temp-table semantics that a future migration author may reach for; the cost of holding a backend per client is negligible at this pool size, and the main app pool stays on transaction mode.
+Then set `AP_POSTGRES_MIGRATION_URL=postgres://ap_migrator:<password>@<host>:<port>/<database>` on the API deployment. On managed Postgres with a connection pooler (DO, Supabase), create a small pool (size 3) scoped to this role and use that pool's URL.
 
 #### Firecrawl's Scrape Website stops reusing cached pages, and Crawl keeps its pages when a screenshot fails
 
