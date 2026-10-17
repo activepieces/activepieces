@@ -94,10 +94,13 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
-        await assertProjectIsSafeToDelete(req.params.id, req.principal.platform.id, req.log)
         await platformProjectService(req.log).markForDeletion({
             id: req.params.id,
             platformId: req.principal.platform.id,
+            refuseIfDefault: await defaultProjectsBlockDeletion({ principal: req.principal, log: req.log }),
+            assertCanDelete: async () => {
+                await assertProjectIsSafeToDelete(req.params.id, req.principal.platform.id, req.log)
+            },
         })
 
         return res.status(StatusCodes.NO_CONTENT).send()
@@ -143,6 +146,14 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
             },
         })
     }
+}
+
+async function defaultProjectsBlockDeletion({ principal, log }: DefaultProjectsBlockDeletionParams): Promise<boolean> {
+    if (principal.type !== PrincipalType.USER) {
+        return false
+    }
+    const platform = await platformService(log).getOneWithPlanOrThrow(principal.platform.id)
+    return platform.plan.projectRolesEnabled
 }
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string, log: FastifyBaseLogger): Promise<void> {
@@ -260,4 +271,9 @@ const DeleteProjectRequest = {
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
+}
+
+type DefaultProjectsBlockDeletionParams = {
+    principal: Principal & { platform: { id: string } }
+    log: FastifyBaseLogger
 }

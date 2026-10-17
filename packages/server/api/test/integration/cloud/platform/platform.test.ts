@@ -583,6 +583,7 @@ describe('Platform API', () => {
                 'billingEnforced',
                 'cloudAuthEnabled',
                 'created',
+                'defaultProjectIds',
                 'emailAuthEnabled',
                 'enforceAllowedAuthDomains',
                 'favIconUrl',

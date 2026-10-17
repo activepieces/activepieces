@@ -247,6 +247,11 @@ export const PlatformWithoutSensitiveData = z.object({
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 
+export const PlatformResponse = PlatformWithoutSensitiveData.extend({
+    defaultProjectIds: z.array(z.string()),
+})
+export type PlatformResponse = z.infer<typeof PlatformResponse>
+
 export const AutoTopUpConfig = z.object({
     featureId: z.enum(ConsumableFeatureId),
     enabled: z.boolean(),
