@@ -38,6 +38,7 @@ import { userInvitationApi } from '@/features/members/api/user-invitation';
 import { PlatformRoleSelect } from '@/features/members/components/platform-role-select';
 import { ProjectRoleSelect } from '@/features/members/components/project-role-select';
 import { projectMembersHooks } from '@/features/members/hooks/project-members-hooks';
+import { inviteDefaults } from '@/features/members/lib/invite-defaults';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -138,7 +139,7 @@ const InviteUserDialogInternal = ({
     ApFlagId.SMTP_CONFIGURED,
   );
   const { refetch } = userInvitationsHooks.useInvitations();
-  const { project } = projectCollectionUtils.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProjectOrNull();
   const { checkAccess } = useAuthorization();
   const location = useLocation();
   const isPlatformPage = location.pathname.includes('/platform/');
@@ -167,10 +168,10 @@ const InviteUserDialogInternal = ({
   >({
     mutationFn: async (data) => {
       const promises = data.emails.map((email) =>
-        data.type === InvitationType.PLATFORM
+        data.type === InvitationType.PLATFORM || isNil(project)
           ? userInvitationApi.invite({
               email: email.trim().toLowerCase(),
-              type: data.type,
+              type: InvitationType.PLATFORM,
               platformRole: data.platformRole,
               ...invitedProjectFields({
                 data,
@@ -205,7 +206,7 @@ const InviteUserDialogInternal = ({
         addedCount,
         invitedCount,
         sentCount: results.length - addedCount - invitedCount,
-        projectName: project.displayName,
+        projectName: project?.displayName ?? platform.name,
       });
       if (toastMessage) {
         toast.success(toastMessage, { duration: 3000 });
@@ -227,11 +228,11 @@ const InviteUserDialogInternal = ({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       emails: [],
-      type: isPlatformPage
-        ? InvitationType.PLATFORM
-        : platform.plan.projectRolesEnabled && project.type === ProjectType.TEAM
-        ? InvitationType.PROJECT
-        : InvitationType.PLATFORM,
+      type: inviteDefaults.invitationType({
+        isPlatformPage,
+        projectRolesEnabled: platform.plan.projectRolesEnabled,
+        projectType: project?.type ?? null,
+      }),
       platformRole: PlatformRole.OPERATOR,
       projectRole: undefined,
       projectId: personalProjectsActive
@@ -353,7 +354,7 @@ const InviteUserDialogInternal = ({
     resultsWithLinksCount: resultsWithLinks.length,
     invitationType,
     isSmtpConfigured: isSmtpConfigured ?? false,
-    projectName: project.displayName,
+    projectName: project?.displayName ?? platform.name,
   });
 
   return (
@@ -455,7 +456,7 @@ const InviteUserDialogInternal = ({
                     <DefaultProjectsNote
                       invitedProjectId={
                         invitationType === InvitationType.PROJECT
-                          ? project.id
+                          ? project?.id
                           : selectedProjectId
                       }
                       includesPersonalProject={isPlatformInvite}
