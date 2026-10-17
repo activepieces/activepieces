@@ -168,7 +168,13 @@ export const autumnUtils = {
         await platformPlanService(log).update({ platformId, ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements) })
         const previousTrialEndsAt = previousPlan?.enterpriseTrialEndsAt ?? null
         if (!isNil(previousTrialEndsAt) && isNil(entitlements.enterpriseTrial)) {
-            rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialEnded({ platformId, endedAt: new Date(previousTrialEndsAt).toISOString() }), log)
+            const trialEndsAt = new Date(previousTrialEndsAt)
+            const endedAt = new Date(Math.min(Date.now(), trialEndsAt.getTime()))
+            rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialEnded({
+                platformId,
+                trialEndsAt: trialEndsAt.toISOString(),
+                endedAt: endedAt.toISOString(),
+            }), log)
         }
         await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
         await autumnUtils.invalidateBillingOverview(platformId)
