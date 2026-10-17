@@ -316,5 +316,15 @@
   "Fires when a card is created on the board or in the list.": "Se déclenche lorsqu'une carte est créée sur le tableau ou dans la liste.",
   "Fires a set time before each card's due date.": "Se déclenche à un délai défini avant la date d'échéance de chaque carte.",
   "Leave empty to use every list on the board.": "Laissez vide pour utiliser toutes les listes du tableau.",
-  "How long before the due date to fire.": "Délai avant la date d'échéance pour le déclenchement."
+  "How long before the due date to fire.": "Délai avant la date d'échéance pour le déclenchement.",
+  "Where to Add": "Où ajouter",
+  "Card Details": "Détails de la carte",
+  "Card to Update": "Carte à mettre à jour",
+  "Changes": "Modifications",
+  "Card": "Carte",
+  "Attachment": "Pièce jointe",
+  "Request": "Requête",
+  "Data to send": "Données à envoyer",
+  "Where to Watch": "Quoi surveiller",
+  "Timing": "Délai"
 }

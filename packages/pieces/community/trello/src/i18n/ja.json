@@ -316,5 +316,15 @@
   "Fires when a card is created on the board or in the list.": "ボードまたはリストでカードが作成されたときに実行されます。",
   "Fires a set time before each card's due date.": "各カードの期日の設定した時間前に実行されます。",
   "Leave empty to use every list on the board.": "ボードのすべてのリストを使用する場合は空欄のままにしてください。",
-  "How long before the due date to fire.": "期日のどれくらい前に実行するか。"
+  "How long before the due date to fire.": "期日のどれくらい前に実行するか。",
+  "Where to Add": "追加先",
+  "Card Details": "カードの詳細",
+  "Card to Update": "更新するカード",
+  "Changes": "変更内容",
+  "Card": "カード",
+  "Attachment": "添付ファイル",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ",
+  "Where to Watch": "監視対象",
+  "Timing": "タイミング"
 }

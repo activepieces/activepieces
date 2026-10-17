@@ -316,5 +316,15 @@
   "Fires when a card is created on the board or in the list.": "Wird ausgelöst, wenn eine Karte auf dem Board oder in der Liste erstellt wird.",
   "Fires a set time before each card's due date.": "Wird eine festgelegte Zeit vor dem Fälligkeitsdatum jeder Karte ausgelöst.",
   "Leave empty to use every list on the board.": "Leer lassen, um alle Listen des Boards zu verwenden.",
-  "How long before the due date to fire.": "Wie lange vor dem Fälligkeitsdatum ausgelöst werden soll."
+  "How long before the due date to fire.": "Wie lange vor dem Fälligkeitsdatum ausgelöst werden soll.",
+  "Where to Add": "Wo hinzufügen",
+  "Card Details": "Kartendetails",
+  "Card to Update": "Zu aktualisierende Karte",
+  "Changes": "Änderungen",
+  "Card": "Karte",
+  "Attachment": "Anhang",
+  "Request": "Anfrage",
+  "Data to send": "Zu sendende Daten",
+  "Where to Watch": "Was überwachen",
+  "Timing": "Zeitpunkt"
 }

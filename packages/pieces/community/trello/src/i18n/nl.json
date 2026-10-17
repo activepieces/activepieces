@@ -316,5 +316,15 @@
   "Fires when a card is created on the board or in the list.": "Wordt geactiveerd wanneer een kaart op het bord of in de lijst wordt aangemaakt.",
   "Fires a set time before each card's due date.": "Wordt een ingestelde tijd voor de vervaldatum van elke kaart geactiveerd.",
   "Leave empty to use every list on the board.": "Laat leeg om alle lijsten op het bord te gebruiken.",
-  "How long before the due date to fire.": "Hoe lang voor de vervaldatum er moet worden geactiveerd."
+  "How long before the due date to fire.": "Hoe lang voor de vervaldatum er moet worden geactiveerd.",
+  "Where to Add": "Waar toevoegen",
+  "Card Details": "Kaartgegevens",
+  "Card to Update": "Bij te werken kaart",
+  "Changes": "Wijzigingen",
+  "Card": "Kaart",
+  "Attachment": "Bijlage",
+  "Request": "Verzoek",
+  "Data to send": "Te verzenden gegevens",
+  "Where to Watch": "Wat volgen",
+  "Timing": "Timing"
 }

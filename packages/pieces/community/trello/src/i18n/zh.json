@@ -316,5 +316,15 @@
   "Fires when a card is created on the board or in the list.": "当在看板或列表中创建卡片时触发。",
   "Fires a set time before each card's due date.": "在每张卡片截止日期前的设定时间触发。",
   "Leave empty to use every list on the board.": "留空则使用看板上的所有列表。",
-  "How long before the due date to fire.": "在截止日期前多久触发。"
+  "How long before the due date to fire.": "在截止日期前多久触发。",
+  "Where to Add": "添加位置",
+  "Card Details": "卡片详情",
+  "Card to Update": "要更新的卡片",
+  "Changes": "更改",
+  "Card": "卡片",
+  "Attachment": "附件",
+  "Request": "请求",
+  "Data to send": "要发送的数据",
+  "Where to Watch": "监视对象",
+  "Timing": "时间"
 }

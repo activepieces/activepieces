@@ -316,5 +316,15 @@
   "Fires when a card is created on the board or in the list.": "Dispara quando um cartão é criado no quadro ou na lista.",
   "Fires a set time before each card's due date.": "Dispara um tempo definido antes da data de vencimento de cada cartão.",
   "Leave empty to use every list on the board.": "Deixe vazio para usar todas as listas do quadro.",
-  "How long before the due date to fire.": "Quanto tempo antes da data de vencimento disparar."
+  "How long before the due date to fire.": "Quanto tempo antes da data de vencimento disparar.",
+  "Where to Add": "Onde adicionar",
+  "Card Details": "Detalhes do cartão",
+  "Card to Update": "Cartão a atualizar",
+  "Changes": "Alterações",
+  "Card": "Cartão",
+  "Attachment": "Anexo",
+  "Request": "Requisição",
+  "Data to send": "Dados a enviar",
+  "Where to Watch": "O que monitorar",
+  "Timing": "Momento"
 }

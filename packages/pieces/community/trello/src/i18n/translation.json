@@ -371,6 +371,14 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Where to Add": "Where to Add",
+  "Card Details": "Card Details",
+  "Card to Update": "Card to Update",
+  "Changes": "Changes",
+  "Card": "Card",
+  "Attachment": "Attachment",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Card Moved to List": "Card Moved to List",
   "New Card": "New Card",
   "Card Deadline": "Card Deadline",
@@ -382,5 +390,7 @@
   "Leave empty to use every list on the board.": "Leave empty to use every list on the board.",
   "How long before the due date to fire.": "How long before the due date to fire.",
   "Minutes": "Minutes",
-  "Hours": "Hours"
+  "Hours": "Hours",
+  "Where to Watch": "Where to Watch",
+  "Timing": "Timing"
 }

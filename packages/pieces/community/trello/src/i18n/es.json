@@ -316,5 +316,15 @@
   "Fires when a card is created on the board or in the list.": "Se activa cuando se crea una tarjeta en el tablero o en la lista.",
   "Fires a set time before each card's due date.": "Se activa un tiempo determinado antes de la fecha de vencimiento de cada tarjeta.",
   "Leave empty to use every list on the board.": "Déjalo vacío para usar todas las listas del tablero.",
-  "How long before the due date to fire.": "Cuánto tiempo antes de la fecha de vencimiento se activa."
+  "How long before the due date to fire.": "Cuánto tiempo antes de la fecha de vencimiento se activa.",
+  "Where to Add": "Dónde añadir",
+  "Card Details": "Detalles de la tarjeta",
+  "Card to Update": "Tarjeta a actualizar",
+  "Changes": "Cambios",
+  "Card": "Tarjeta",
+  "Attachment": "Adjunto",
+  "Request": "Solicitud",
+  "Data to send": "Datos a enviar",
+  "Where to Watch": "Qué vigilar",
+  "Timing": "Momento"
 }

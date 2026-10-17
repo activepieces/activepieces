@@ -70,5 +70,15 @@
   "Leave empty to use every list on the board.": "Оставьте пустым, чтобы использовать все списки доски.",
   "How long before the due date to fire.": "За сколько времени до срока выполнения срабатывать.",
   "Card Name": "Название карты",
-  "Card Description": "Описание карты"
+  "Card Description": "Описание карты",
+  "Where to Add": "Куда добавить",
+  "Card Details": "Сведения о карте",
+  "Card to Update": "Карта для обновления",
+  "Changes": "Изменения",
+  "Card": "Карта",
+  "Attachment": "Вложение",
+  "Request": "Запрос",
+  "Data to send": "Отправляемые данные",
+  "Where to Watch": "Что отслеживать",
+  "Timing": "Время"
 }
