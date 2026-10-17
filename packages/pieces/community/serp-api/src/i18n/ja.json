@@ -1088,5 +1088,6 @@
   "gs (S. Georgia & S. Sandwich Islands)": "gs (サウスジョージア・サウスサンドウィッチ諸島)",
   "kp (North Korea)": "kp (北朝鮮)",
   "mk (North Macedonia)": "mk (北マケドニア)",
-  "um (US Minor Outlying Islands)": "um (合衆国領有小離島)"
+  "um (US Minor Outlying Islands)": "um (合衆国領有小離島)",
+  "Every new search counts against your SerpApi plan. Repeating the same search within an hour is free if cached results are allowed.": "新しい検索はすべて SerpApi のプランにカウントされます。キャッシュされた結果を許可している場合、1時間以内に同じ検索を繰り返すと無料です。"
 }

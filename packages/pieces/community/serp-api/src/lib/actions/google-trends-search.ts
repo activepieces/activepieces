@@ -26,7 +26,7 @@ export const googleTrendsSearch = createAction({
   ],
   props: {
     cost_note: Property.MarkDown({
-      value: 'Every new search counts against your SerpApi plan. Repeating the same search within an hour is free.',
+      value: 'Every new search counts against your SerpApi plan. Repeating the same search within an hour is free if cached results are allowed.',
       variant: MarkdownVariant.INFO,
     }),
 

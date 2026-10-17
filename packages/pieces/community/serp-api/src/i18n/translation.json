@@ -988,7 +988,7 @@
   "Response Format": "Response Format",
   "Region": "Region",
   "Search Source": "Search Source",
-  "Every new search counts against your SerpApi plan. Repeating the same search within an hour is free.": "Every new search counts against your SerpApi plan. Repeating the same search within an hour is free.",
+  "Every new search counts against your SerpApi plan. Repeating the same search within an hour is free if cached results are allowed.": "Every new search counts against your SerpApi plan. Repeating the same search within an hour is free if cached results are allowed.",
   "What to search for on Google.": "What to search for on Google.",
   "Type a city or region, then pick the match in Location.": "Type a city or region, then pick the match in Location.",
   "Results as seen from this place.": "Results as seen from this place.",

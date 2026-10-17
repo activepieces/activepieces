@@ -1088,5 +1088,6 @@
   "gs (S. Georgia & S. Sandwich Islands)": "gs (Geórgia do Sul e Sandwich do Sul)",
   "kp (North Korea)": "kp (Coreia do Norte)",
   "mk (North Macedonia)": "mk (Macedônia do Norte)",
-  "um (US Minor Outlying Islands)": "um (Ilhas Menores dos EUA)"
+  "um (US Minor Outlying Islands)": "um (Ilhas Menores dos EUA)",
+  "Every new search counts against your SerpApi plan. Repeating the same search within an hour is free if cached results are allowed.": "Cada nova pesquisa conta no seu plano da SerpApi. Repetir a mesma pesquisa em até uma hora é gratuito se resultados em cache forem permitidos."
 }

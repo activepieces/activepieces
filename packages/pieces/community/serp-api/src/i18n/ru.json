@@ -959,5 +959,6 @@
   "gs (S. Georgia & S. Sandwich Islands)": "gs (Южная Георгия и Южные Сандвичевы о-ва)",
   "kp (North Korea)": "kp (Северная Корея)",
   "mk (North Macedonia)": "mk (Северная Македония)",
-  "um (US Minor Outlying Islands)": "um (Внешние малые о-ва (США))"
+  "um (US Minor Outlying Islands)": "um (Внешние малые о-ва (США))",
+  "Every new search counts against your SerpApi plan. Repeating the same search within an hour is free if cached results are allowed.": "Каждый новый поиск учитывается в вашем тарифе SerpApi. Повтор того же поиска в течение часа бесплатен, если разрешены кэшированные результаты."
 }
