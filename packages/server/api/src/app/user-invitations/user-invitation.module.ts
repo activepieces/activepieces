@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, ListUserInvitationsRequest, newMemberSettingsUtils, PlatformRole, Principal, PrincipalType, ProjectType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -15,6 +15,7 @@ import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
+import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { INVITATION_EXPIRY_SECONDS, userInvitationsService } from './user-invitation.service'
@@ -122,6 +123,13 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/:id/remove-project', RemoveProjectFromInvitationRequestParams, async (request, reply) => {
         await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+        await assertInviteKeepsAProject({
+            principal: request.principal,
+            invitationId: request.params.id,
+            projectId: request.body.projectId,
+            platformId: request.principal.platform.id,
+            log: request.log,
+        })
         const invitation = await userInvitationsService(request.log).removeProjectFromPlatformInvite({
             id: request.params.id,
             platformId: request.principal.platform.id,
@@ -172,6 +180,32 @@ async function landNextSignInOnInvitedPlatform({ email, platformId, log }: LandN
         return
     }
     await userIdentityService(log).updateLastLoggedInPlatformId({ id: identity.id, lastLoggedInPlatformId: platformId })
+}
+
+async function assertInviteKeepsAProject({ principal, invitationId, projectId, platformId, log }: AssertInviteKeepsAProjectParams): Promise<void> {
+    if (principal.type !== PrincipalType.USER) {
+        return
+    }
+    const invitation = await userInvitationsService(log).getOneOrThrow({ id: invitationId, platformId })
+    if (invitation.type !== InvitationType.PLATFORM || invitation.platformRole !== PlatformRole.MEMBER || invitation.projectId !== projectId) {
+        return
+    }
+    const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+    const projectRolesEnabled = platform.plan.projectRolesEnabled
+    if (newMemberSettingsUtils.personalProjectsActive({ autoCreatePersonalProjects: platform.autoCreatePersonalProjects, projectRolesEnabled })) {
+        return
+    }
+    const defaultProjectIds = newMemberSettingsUtils.activeDefaultProjectIds({
+        defaultProjectIds: await platformService(log).listDefaultProjectIds({ platformId }),
+        projectRolesEnabled,
+    })
+    if (defaultProjectIds.length > 0) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.LAST_PROJECT,
+        params: {},
+    })
 }
 
 async function assertPlatformInviteProject({ app, request, reply, invitation, platformId }: AssertPlatformInviteProjectParams): Promise<void> {
@@ -353,6 +387,14 @@ const UpsertUserInvitationRequestParams = {
 
 type LandNextSignInOnInvitedPlatformParams = {
     email: string
+    platformId: string
+    log: FastifyBaseLogger
+}
+
+type AssertInviteKeepsAProjectParams = {
+    principal: Principal & { platform: { id: string } }
+    invitationId: string
+    projectId: string
     platformId: string
     log: FastifyBaseLogger
 }
