@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, ProjectType, RemoveProjectFromInvitationResponse, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -107,19 +107,7 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             cursor: request.query.cursor ?? null,
             limit: request.query.limit ?? 10,
         })
-        if (request.principal.type !== PrincipalType.USER || request.query.type !== InvitationType.PLATFORM || isNil(projectId)) {
-            await reply.status(StatusCodes.OK).send(invitations)
-            return
-        }
-        const leftWithoutProject = await userInvitationsService(request.log).invitesLeftWithoutProject({
-            invitations: invitations.data,
-            platformId: request.principal.platform.id,
-            projectId,
-        })
-        await reply.status(StatusCodes.OK).send({
-            ...invitations,
-            data: invitations.data.map((invitation) => ({ ...invitation, isOnlyProject: leftWithoutProject.has(invitation.id) })),
-        })
+        await reply.status(StatusCodes.OK).send(invitations)
     })
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
@@ -134,19 +122,12 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/:id/remove-project', RemoveProjectFromInvitationRequestParams, async (request, reply) => {
         await platformMustBeOwnedByCurrentUser.call(app, request, reply)
-        await assertInviteKeepsAProject({
-            principal: request.principal,
-            invitationId: request.params.id,
-            projectId: request.body.projectId,
-            platformId: request.principal.platform.id,
-            log: request.log,
-        })
-        const invitation = await userInvitationsService(request.log).removeProjectFromPlatformInvite({
+        const result = await userInvitationsService(request.log).removeProjectFromPlatformInvite({
             id: request.params.id,
             platformId: request.principal.platform.id,
             projectId: request.body.projectId,
         })
-        await reply.status(StatusCodes.OK).send(invitation)
+        await reply.status(StatusCodes.OK).send(result)
     })
 
     app.delete('/:id', DeleteInvitationRequestParams, async (request, reply) => {
@@ -191,21 +172,6 @@ async function landNextSignInOnInvitedPlatform({ email, platformId, log }: LandN
         return
     }
     await userIdentityService(log).updateLastLoggedInPlatformId({ id: identity.id, lastLoggedInPlatformId: platformId })
-}
-
-async function assertInviteKeepsAProject({ principal, invitationId, projectId, platformId, log }: AssertInviteKeepsAProjectParams): Promise<void> {
-    if (principal.type !== PrincipalType.USER) {
-        return
-    }
-    const invitation = await userInvitationsService(log).getOneOrThrow({ id: invitationId, platformId })
-    const leftWithoutProject = await userInvitationsService(log).invitesLeftWithoutProject({ invitations: [invitation], platformId, projectId })
-    if (!leftWithoutProject.has(invitation.id)) {
-        return
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.LAST_PROJECT,
-        params: {},
-    })
 }
 
 async function assertPlatformInviteProject({ app, request, reply, invitation, platformId }: AssertPlatformInviteProjectParams): Promise<void> {
@@ -355,7 +321,7 @@ const RemoveProjectFromInvitationRequestParams = {
     schema: {
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Take the project off a platform invitation. The person still joins the platform when they accept.',
+        description: 'Take the project off a platform invitation. When it is a Member invite and new members get no personal project and no default projects, the invitation is revoked instead, since they would have nowhere to land; their project invitations are not affected.',
         params: z.object({
             id: z.string(),
         }),
@@ -363,7 +329,7 @@ const RemoveProjectFromInvitationRequestParams = {
             projectId: z.string(),
         }),
         response: {
-            [StatusCodes.OK]: UserInvitation,
+            [StatusCodes.OK]: RemoveProjectFromInvitationResponse,
         },
     },
 }
@@ -387,14 +353,6 @@ const UpsertUserInvitationRequestParams = {
 
 type LandNextSignInOnInvitedPlatformParams = {
     email: string
-    platformId: string
-    log: FastifyBaseLogger
-}
-
-type AssertInviteKeepsAProjectParams = {
-    principal: Principal & { platform: { id: string } }
-    invitationId: string
-    projectId: string
     platformId: string
     log: FastifyBaseLogger
 }
