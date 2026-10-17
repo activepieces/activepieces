@@ -20,4 +20,4 @@ If deleting a default silently removed it, an admin could empty the defaults wit
 
 ## Consequences
 
-The Projects page skips default projects when deleting and says why, with a link to Roles & Access. When auto-provisioning lands, the guard can extend to API keys behind the same check, `assertProjectIsNotADefaultProject`, which reads `project.isDefault`.
+The Projects page skips default projects when deleting and says why, with a link to Roles & Access. The guard lives in the soft delete itself (`refuseIfDefault`, `AND "isDefault" = false`), so a project made a default mid-delete is still refused. When auto-provisioning lands, it can extend to API keys by passing the same flag.
