@@ -104,7 +104,8 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             const current = await platformService(log).getOneOrThrow(platformId)
             const verification = computeNextVerification({ nextDomain: value, currentDomain: current.ssoDomain ?? null, currentVerification: current.ssoDomainVerification ?? null })
 
-            const removesSaml = isNil(value) && await platformService(log).hasSamlConfigured(platformId)
+            const removesVerifiedDomain = isNil(value) && current.ssoDomainVerification?.status === SsoDomainVerificationStatus.VERIFIED
+            const removesSaml = removesVerifiedDomain && await platformService(log).hasSamlConfigured(platformId)
             await platformService(log).update({
                 id: platformId,
                 ssoDomain: value,

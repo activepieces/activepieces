@@ -55,6 +55,25 @@ describe('SSO domain API', () => {
             expect(platform.federatedAuthProviders.saml).toBeNull()
         })
 
+        it('cancelling a pending domain keeps SAML, like an expired one', async () => {
+            const ctx = await createTestContext(app!, {
+                plan: { ssoEnabled: true },
+                platform: {
+                    ssoDomain: 'cancel-pending.example.com',
+                    ssoDomainVerification: pending('cancel-pending.example.com'),
+                    federatedAuthProviders: { saml: SAML },
+                },
+            })
+
+            const response = await ctx.post(SSO_DOMAIN, { ssoDomain: null })
+            const platform = await findPlatform(ctx.platform.id)
+
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(platform.ssoDomain).toBeNull()
+            expect(platform.ssoDomainVerification).toBeNull()
+            expect(platform.federatedAuthProviders.saml).toEqual(SAML)
+        })
+
         it('adding a removed domain back needs a new DNS record', async () => {
             const ctx = await createTestContext(app!, {
                 plan: { ssoEnabled: true },
@@ -138,6 +157,13 @@ function verified(domain: string): SsoDomainVerification {
             value: 'activepieces-verify=test-token',
         },
         createdAt: new Date().toISOString(),
+    }
+}
+
+function pending(domain: string): SsoDomainVerification {
+    return {
+        ...verified(domain),
+        status: SsoDomainVerificationStatus.PENDING_VERIFICATION,
     }
 }
 
