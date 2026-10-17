@@ -6,7 +6,7 @@ import { facebookLeadsProps } from '../common/props';
 import { facebookLeadsUtils } from '../common/utils';
 import { facebookLeadsGetLeadOutputSchema } from '../output-schemas';
 
-import type { FacebookLeadsWebhookPayload } from '../common/types';
+import type { FacebookLeadsLead, FacebookLeadsWebhookPayload } from '../common/types';
 
 export const newLeadTrigger = createTrigger({
 	auth: facebookLeadsAuth,
@@ -75,21 +75,13 @@ export const newLeadTrigger = createTrigger({
 		return;
 	},
 	async test(context) {
-		let form = selectedFormId({ form: context.propsValue.form });
+		const form = selectedFormId({ form: context.propsValue.form });
 		const page = context.propsValue.page;
-		if (form === undefined) {
-			const forms = await facebookLeadsApi.getPageForms({
-				pageId: page.id,
-				accessToken: page.accessToken,
-			});
-
-			form = forms[0].id;
-		}
-
-		const leads = await facebookLeadsApi.listFormLeads({
-			formId: form,
-			accessToken: context.auth.access_token,
-		});
+		const accessToken = context.auth.access_token;
+		const leads =
+			form !== undefined
+				? await facebookLeadsApi.listFormLeads({ formId: form, accessToken })
+				: await firstFormLeads({ pageId: page.id, pageAccessToken: page.accessToken, accessToken });
 		return leads.map((lead) => facebookLeadsUtils.transformLeadData({ lead }));
 	},
 
@@ -118,6 +110,25 @@ export const newLeadTrigger = createTrigger({
 
 function isWebhookPayload(body: unknown): body is FacebookLeadsWebhookPayload {
 	return typeof body === 'object' && body !== null && 'entry' in body && Array.isArray(body.entry);
+}
+
+async function firstFormLeads({
+	pageId,
+	pageAccessToken,
+	accessToken,
+}: {
+	pageId: string;
+	pageAccessToken: string;
+	accessToken: string;
+}): Promise<FacebookLeadsLead[]> {
+	const forms = await facebookLeadsApi.getPageForms({ pageId, accessToken: pageAccessToken });
+	for (const form of forms) {
+		const leads = await facebookLeadsApi.listFormLeads({ formId: form.id, accessToken });
+		if (leads.length > 0) {
+			return leads;
+		}
+	}
+	return [];
 }
 
 function selectedFormId({ form }: { form: string | undefined }): string | undefined {
