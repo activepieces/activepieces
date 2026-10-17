@@ -73,6 +73,17 @@ describe('A platform invite can name a project', () => {
         expect(response?.json().code).toBe(ErrorCode.VALIDATION)
     })
 
+    it.each([PlatformRole.ADMIN, PlatformRole.OPERATOR])('refuses a project on a platform invite for an %s', async (platformRole) => {
+        const { mockPlatform, mockProject, ownerToken } = await setupPlatform({ projectRolesEnabled: true })
+        const email = faker.internet.email().toLowerCase()
+
+        const response = await invite({ token: ownerToken, email, projectId: mockProject.id, projectRole: DefaultProjectRole.VIEWER, platformRole })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+        expect(await databaseConnection().getRepository('user_invitation').countBy({ email, platformId: mockPlatform.id })).toBe(0)
+    })
+
     it('refuses a project of another platform', async () => {
         const { ownerToken } = await setupPlatform({ projectRolesEnabled: true })
         const { mockProject: otherProject } = await setupPlatform({ projectRolesEnabled: true })
@@ -341,7 +352,7 @@ async function setupPlatform({ projectRolesEnabled }: { projectRolesEnabled: boo
     return { ...setup, ownerToken }
 }
 
-async function invite({ token, email, projectId, projectRole }: { token: string, email: string, projectId?: string, projectRole?: string }) {
+async function invite({ token, email, projectId, projectRole, platformRole = PlatformRole.MEMBER }: { token: string, email: string, projectId?: string, projectRole?: string, platformRole?: PlatformRole }) {
     return app?.inject({
         method: 'POST',
         url: '/api/v1/user-invitations',
@@ -349,7 +360,7 @@ async function invite({ token, email, projectId, projectRole }: { token: string,
         body: {
             email,
             type: InvitationType.PLATFORM,
-            platformRole: PlatformRole.MEMBER,
+            platformRole,
             projectId,
             projectRole,
         },
