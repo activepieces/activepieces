@@ -132,7 +132,8 @@ function chatModels({ row, textModels, toolModels, lookup }: { row: AIProviderSc
             ...spreadIfDefined('metadata', lookup({ provider: row.provider, modelId: model.id })),
         })
     const recommendedIds = new Set(recommended.map((model) => model.id))
-    return [...recommended, ...toolModels.filter((model) => !recommendedIds.has(model.id))]
+    const knownToCallTools = toolModels.filter((model) => !recommendedIds.has(model.id) && lookup({ provider: row.provider, modelId: model.id })?.supportsToolCalling === true)
+    return [...recommended, ...knownToCallTools]
 }
 
 function curatedFirst({ provider, models }: { provider: AIProviderName, models: AIProviderModel[] }): AIProviderModel[] {
