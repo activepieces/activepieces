@@ -210,7 +210,6 @@ export const crawl = createAction({
       description: 'Firecrawl posts each event to your URL as the crawl runs.',
       required: false,
       defaultValue: false,
-      reveals: ['webhookProperties'],
     }),
     webhookProperties: Property.DynamicProperties({
       displayName: 'Webhook Properties',
@@ -259,7 +258,7 @@ export const crawl = createAction({
     { key: 'site', display: 'section', label: 'Site', icon: 'file', props: ['url', 'prompt'] },
     { key: 'limits', display: 'section', label: 'Limits', icon: 'sliders', props: ['limit', 'timeout'] },
     { key: 'output', display: 'section', label: 'Output', icon: 'code', props: ['cache_note', 'formats', 'onlyMainContent', 'extractMode', 'extractSchema'] },
-    { key: 'webhook', display: 'section', label: 'Webhook', icon: 'send', props: ['useWebhook'] },
+    { key: 'webhook', display: 'section', label: 'Webhook', icon: 'send', props: ['useWebhook', 'webhookProperties'] },
   ],
   async run(context) {
     const { auth, propsValue } = context;

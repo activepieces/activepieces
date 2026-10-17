@@ -32,7 +32,6 @@ export const scrape = createAction({
       description: 'Click, type or wait on the page before it is read.',
       required: false,
       defaultValue: false,
-      reveals: ['actionProperties'],
     }),
     actionProperties: Property.DynamicProperties({
       displayName: 'Action Properties',
@@ -250,7 +249,7 @@ export const scrape = createAction({
     }),
   },
   propertyGroups: [
-    { key: 'page', display: 'section', label: 'Page', icon: 'file', props: ['url', 'useActions'] },
+    { key: 'page', display: 'section', label: 'Page', icon: 'file', props: ['url', 'useActions', 'actionProperties'] },
     { key: 'output', display: 'section', label: 'Output', icon: 'code', props: ['screenshot_note', 'formats', 'extractPrompt', 'extractMode', 'extractSchema'] },
   ],
   async run(context) {
