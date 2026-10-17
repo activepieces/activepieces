@@ -1,7 +1,6 @@
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  OAuth2PropertyValue,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import {
@@ -11,19 +10,19 @@ import {
 } from '@activepieces/pieces-common';
 import { createGoogleClient, googleContactsAuth } from '../auth';
 import { newOrUpdatedContactOutputSchema } from '../output-schemas';
-import { people as googlePeople } from '@googleapis/people';
+import { people as googlePeople, people_v1 } from '@googleapis/people';
 import dayjs from 'dayjs';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof googleContactsAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ store, auth }) => {
+  items: async ({ auth, lastFetchEpochMS }) => {
     const contactsClient = googlePeople({ version: 'v1', auth: createGoogleClient(auth) });
 
-    let nextPageToken;
-    const contactItems: Array<{ data: any; epochMilliSeconds: number }> = [];
+    let nextPageToken: string | undefined;
+    let contactItems: ContactItem[] = [];
 
     do {
-      const response: any = await contactsClient.people.connections.list({
+      const response = await contactsClient.people.connections.list({
         resourceName: 'people/me',
         pageToken: nextPageToken,
         pageSize: 100,
@@ -61,18 +60,19 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleContactsAu
         ].join(),
       });
 
-      for (const contact of response.data.connections || []) {
-        if (contact.metadata?.deleted !== true) {
-          contactItems.push({
-            data: contact,
-            epochMilliSeconds: dayjs(
-              contact.metadata?.sources?.[0].updateTime
-            ).valueOf(),
-          });
-        }
-      }
+      const pageItems = (response.data.connections ?? [])
+        .filter((contact) => contact.metadata?.deleted !== true)
+        .flatMap((contact) => toContactItems(contact));
+      contactItems = [...contactItems, ...pageItems];
 
-      nextPageToken = response.data.nextPageToken;
+      const lastPageItem = pageItems[pageItems.length - 1];
+      const reachedSeenContacts =
+        lastFetchEpochMS > 0 &&
+        lastPageItem !== undefined &&
+        lastPageItem.epochMilliSeconds < lastFetchEpochMS;
+      nextPageToken = reachedSeenContacts
+        ? undefined
+        : response.data.nextPageToken ?? undefined;
     } while (nextPageToken);
 
     return contactItems;
@@ -158,7 +158,7 @@ export const googleContactNewOrUpdatedContact = createTrigger({
     });
   },
   async onDisable(ctx) {
-    return await pollingHelper.onEnable(polling, {
+    return await pollingHelper.onDisable(polling, {
       store: ctx.store,
       auth: ctx.auth,
       propsValue: {},
@@ -181,3 +181,36 @@ export const googleContactNewOrUpdatedContact = createTrigger({
     });
   },
 });
+
+function toContactItems(contact: people_v1.Schema$Person): ContactItem[] {
+  const epochMilliSeconds = contactUpdateTime(contact);
+  return epochMilliSeconds === undefined ? [] : [{ data: contact, epochMilliSeconds }];
+}
+
+function contactUpdateTime(contact: people_v1.Schema$Person): number | undefined {
+  const sources = contact.metadata?.sources ?? [];
+  const contactSourceTimes = sourceUpdateTimes(
+    sources.filter((source) => source.type === 'CONTACT')
+  );
+  if (contactSourceTimes.length > 0) {
+    return Math.max(...contactSourceTimes);
+  }
+  const otherSourceTimes = sourceUpdateTimes(
+    sources.filter((source) => source.type !== 'CONTACT')
+  );
+  return otherSourceTimes.length > 0 ? Math.max(...otherSourceTimes) : undefined;
+}
+
+function sourceUpdateTimes(sources: people_v1.Schema$Source[]): number[] {
+  return sources
+    .map((source) => source.updateTime)
+    .filter((updateTime): updateTime is string => typeof updateTime === 'string' && updateTime.length > 0)
+    .map((updateTime) => dayjs(updateTime))
+    .filter((time) => time.isValid())
+    .map((time) => time.valueOf());
+}
+
+type ContactItem = {
+  data: people_v1.Schema$Person;
+  epochMilliSeconds: number;
+};
