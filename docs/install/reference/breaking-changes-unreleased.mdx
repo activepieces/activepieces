@@ -10,7 +10,7 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 #### Background migrations need a dedicated Postgres role when a `statement_timeout` applies
 
-The app's background migration track (slow data backfills, `CREATE INDEX CONCURRENTLY`, `DROP INDEX CONCURRENTLY`) runs through whichever database connection the app itself uses. When a `statement_timeout` applies to that connection — however it got there — every long DDL statement a background migration issues is cancelled at that cap and never completes. The retry loop leaves `INVALID` index artifacts behind that an `IF NOT EXISTS` on the next deploy silently skips.
+The app's background migration track (slow data backfills, `CREATE INDEX CONCURRENTLY`, `DROP INDEX CONCURRENTLY`) runs through whichever database connection the app itself uses. When a `statement_timeout` applies to that connection, every long DDL statement a background migration issues is cancelled at that cap and never completes. The retry loop leaves `INVALID` index artifacts behind that an `IF NOT EXISTS` on the next deploy silently skips.
 
 The app now reads `AP_POSTGRES_MIGRATION_URL` and, when set, runs background migrations through that connection instead of the main one. The connection string should point at a Postgres role whose `statement_timeout` is `0`.
 
