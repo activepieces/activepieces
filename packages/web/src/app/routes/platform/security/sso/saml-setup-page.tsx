@@ -171,13 +171,19 @@ const SamlWizard = ({
   refetch: () => Promise<void>;
   onClose: () => void;
 }) => {
+  const samlUnlocked = domainVerified || connected;
   return (
     <>
-      <StepIndicator step={step} onSelect={setStep} />
+      <StepIndicator
+        step={step}
+        samlLocked={!samlUnlocked}
+        onSelect={setStep}
+      />
       <div className={cn(step !== 'domain' && 'hidden')}>
         <DomainStep
           platform={platform}
           refetch={refetch}
+          canContinue={samlUnlocked}
           onVerified={() => setStep('saml')}
           onNext={() => setStep('saml')}
         />
@@ -198,9 +204,11 @@ const SamlWizard = ({
 
 const StepIndicator = ({
   step,
+  samlLocked,
   onSelect,
 }: {
   step: WizardStep;
+  samlLocked: boolean;
   onSelect: (step: WizardStep) => void;
 }) => (
   <div className="flex items-center gap-3 text-xs text-gray-11">
@@ -215,6 +223,7 @@ const StepIndicator = ({
       number={2}
       label={t('SAML 2.0')}
       active={step === 'saml'}
+      disabled={samlLocked}
       onClick={() => onSelect('saml')}
     />
   </div>
@@ -224,19 +233,22 @@ const StepButton = ({
   number,
   label,
   active,
+  disabled = false,
   onClick,
 }: {
   number: number;
   label: string;
   active: boolean;
+  disabled?: boolean;
   onClick: () => void;
 }) => (
   <button
     type="button"
     aria-current={active ? 'step' : undefined}
+    disabled={disabled}
     onClick={onClick}
     className={cn(
-      'flex items-center gap-2 rounded-md hover:text-gray-12 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50',
+      'flex items-center gap-2 rounded-md hover:text-gray-12 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50 disabled:pointer-events-none disabled:opacity-50',
       active && 'font-medium text-gray-12',
     )}
   >
@@ -255,11 +267,13 @@ const StepButton = ({
 const DomainStep = ({
   platform,
   refetch,
+  canContinue,
   onVerified,
   onNext,
 }: {
   platform: PlatformWithoutSensitiveData;
   refetch: () => Promise<void>;
+  canContinue: boolean;
   onVerified: () => void;
   onNext: () => void;
 }) => {
@@ -269,27 +283,21 @@ const DomainStep = ({
       SsoDomainVerificationStatus.VERIFIED;
 
   return (
-    <div className="flex flex-col gap-4">
-      <DomainVerification
-        platform={platform}
-        refetch={refetch}
-        onVerified={onVerified}
-        secondaryAction={
-          verified ? undefined : (
-            <Button type="button" variant="outline" onClick={onNext}>
-              {t('Next')}
-            </Button>
-          )
-        }
-      />
-      {verified && (
-        <StepFooter>
-          <Button type="button" onClick={onNext}>
-            {t('Next')}
-          </Button>
-        </StepFooter>
-      )}
-    </div>
+    <DomainVerification
+      platform={platform}
+      refetch={refetch}
+      onVerified={onVerified}
+      nextAction={
+        <Button
+          type="button"
+          variant={verified ? 'default' : 'outline'}
+          disabled={!canContinue}
+          onClick={onNext}
+        >
+          {t('Next')}
+        </Button>
+      }
+    />
   );
 };
 

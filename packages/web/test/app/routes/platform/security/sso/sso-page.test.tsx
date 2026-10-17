@@ -737,20 +737,33 @@ describe('SamlSetupPage', () => {
     );
   });
 
-  it('lets the admin move to the SAML step before the domain is verified, but not save', () => {
+  it('keeps the SAML step locked until the domain is verified', () => {
     setPlatform({
       ssoDomain: 'acme.com',
       ssoDomainVerification: pendingVerification,
     });
     mountSetupPage();
 
-    click(findButton('Next'));
+    expect(findButton('Next')?.disabled).toBe(true);
+    expect(findButton('Verify DNS')?.disabled).toBe(false);
+    expect(findButton('2SAML 2.0')?.disabled).toBe(true);
+  });
 
+  it('opens the SAML step while the domain is pending when SAML is already connected', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: pendingVerification,
+      federatedAuthProviders: { saml: {} },
+    });
+    mountSetupPage();
+
+    expect(findButton('2SAML 2.0')?.disabled).toBe(false);
+    click(findButton('Next'));
     expect(
-      screen.getByText(
-        'Verify your domain before saving. You can already copy the values above into your identity provider.',
-      ),
-    ).toBeDefined();
+      screen
+        .getByRole('button', { name: '2 SAML 2.0' })
+        .getAttribute('aria-current'),
+    ).toBe('step');
     expect(findButton('Save')?.disabled).toBe(true);
   });
 

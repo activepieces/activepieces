@@ -33,14 +33,23 @@ export const DomainVerification = ({
   refetch,
   onVerified,
   secondaryAction,
+  nextAction,
   showIntro = true,
 }: DomainVerificationProps) => {
   const verification = platform.ssoDomainVerification;
   if (!platform.ssoDomain || !verification) {
-    return <DomainEntry refetch={refetch} secondaryAction={secondaryAction} />;
+    return (
+      <DomainEntry
+        refetch={refetch}
+        secondaryAction={secondaryAction}
+        nextAction={nextAction}
+      />
+    );
   }
   if (verification.status === SsoDomainVerificationStatus.VERIFIED) {
-    return <VerifiedDomain domain={platform.ssoDomain} />;
+    return (
+      <VerifiedDomain domain={platform.ssoDomain} nextAction={nextAction} />
+    );
   }
   return (
     <PendingDomain
@@ -49,6 +58,7 @@ export const DomainVerification = ({
       refetch={refetch}
       onVerified={onVerified}
       secondaryAction={secondaryAction}
+      nextAction={nextAction}
       showIntro={showIntro}
     />
   );
@@ -57,9 +67,11 @@ export const DomainVerification = ({
 const DomainEntry = ({
   refetch,
   secondaryAction,
+  nextAction,
 }: {
   refetch: () => Promise<void>;
   secondaryAction?: ReactNode;
+  nextAction?: ReactNode;
 }) => {
   const form = useForm<DomainFormValues>({
     defaultValues: { domain: '' },
@@ -107,7 +119,7 @@ const DomainEntry = ({
             {form.formState.errors.root.serverError.message}
           </FormMessage>
         )}
-        <Actions>
+        <Actions next={nextAction}>
           {secondaryAction}
           <Button
             {...adminControl(AdminControl.SSO_SAML_DOMAIN_SUBMIT)}
@@ -129,6 +141,7 @@ const PendingDomain = ({
   refetch,
   onVerified,
   secondaryAction,
+  nextAction,
   showIntro,
 }: {
   domain: string;
@@ -136,6 +149,7 @@ const PendingDomain = ({
   refetch: () => Promise<void>;
   onVerified?: () => void;
   secondaryAction?: ReactNode;
+  nextAction?: ReactNode;
   showIntro: boolean;
 }) => {
   const { mutate: verifyDomain, isPending } = ssoMutations.useVerifySsoDomain({
@@ -158,7 +172,7 @@ const PendingDomain = ({
         </div>
       )}
       <DomainDnsRecord record={record} />
-      <Actions>
+      <Actions next={nextAction}>
         {secondaryAction}
         <Button
           {...adminControl(AdminControl.SSO_DOMAIN_DNS_RUN)}
@@ -173,7 +187,13 @@ const PendingDomain = ({
   );
 };
 
-const VerifiedDomain = ({ domain }: { domain: string }) => (
+const VerifiedDomain = ({
+  domain,
+  nextAction,
+}: {
+  domain: string;
+  nextAction?: ReactNode;
+}) => (
   <div className="flex flex-col gap-3">
     <p className="text-sm text-gray-11">
       {t('Your domain is verified. Next, connect your identity provider.')}
@@ -188,14 +208,27 @@ const VerifiedDomain = ({ domain }: { domain: string }) => (
         </StatusDot>
       </SettingsRow>
     </SettingsPanel>
+    {nextAction && <Actions next={nextAction} />}
   </div>
 );
 
-const Actions = ({ children }: { children: ReactNode }) => (
-  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-    {children}
-  </div>
-);
+const Actions = ({
+  children,
+  next,
+}: {
+  children?: ReactNode;
+  next?: ReactNode;
+}) =>
+  next ? (
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row">{children}</div>
+      {next}
+    </div>
+  ) : (
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      {children}
+    </div>
+  );
 
 const DomainFormValues = z.object({
   domain: z
@@ -215,5 +248,6 @@ type DomainVerificationProps = {
   refetch: () => Promise<void>;
   onVerified?: () => void;
   secondaryAction?: ReactNode;
+  nextAction?: ReactNode;
   showIntro?: boolean;
 };
