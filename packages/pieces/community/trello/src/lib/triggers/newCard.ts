@@ -11,11 +11,14 @@ export const newCardTrigger = createTrigger({
 	name: 'new_card',
 	classification: 'READ',
 	displayName: 'New Card',
-	description: 'Trigger when a new card is created',
+	description: 'Fires when a card is created on the board or in the list.',
 	outputSchema: newCardTriggerOutputSchema,
 	aiMetadata: {
 		description: 'Fires when a new card is created on the selected board, or within a specific list if one is provided. Represents a newly added task or item; emits the created card with its full details.',
 	},
+	propertyGroups: [
+		{ key: 'watch', display: 'section', label: 'Where to Watch', icon: 'inbox', props: ['board_id', 'list_id_opt'] },
+	],
 	props: {
 		board_id: trelloCommon.board_id,
 		list_id_opt: trelloCommon.list_id_opt,
