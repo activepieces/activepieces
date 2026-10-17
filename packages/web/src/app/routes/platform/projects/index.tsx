@@ -47,7 +47,13 @@ export default function ProjectsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
-  const projectRolesEnabled = platform.plan.projectRolesEnabled;
+  const defaultProjectIds = useMemo(
+    () =>
+      new Set(
+        platform.plan.projectRolesEnabled ? platform.defaultProjectIds : [],
+      ),
+    [platform.plan.projectRolesEnabled, platform.defaultProjectIds],
+  );
 
   useEffect(() => {
     if (!searchParams.has('type')) {
@@ -254,11 +260,10 @@ export default function ProjectsPage() {
         ) => {
           const deletableProjects = selectedRows.filter(
             (row) =>
-              row.id !== currentProject?.id &&
-              !(projectRolesEnabled && row.isDefault),
+              row.id !== currentProject?.id && !defaultProjectIds.has(row.id),
           );
-          const selectedDefaultProjects = selectedRows.filter(
-            (row) => projectRolesEnabled && row.isDefault,
+          const selectedDefaultProjects = selectedRows.filter((row) =>
+            defaultProjectIds.has(row.id),
           );
           const onlyDefaultProjectsBlockDelete =
             deletableProjects.length === 0 &&
@@ -349,7 +354,7 @@ export default function ProjectsPage() {
         },
       },
     ],
-    [selectedRows, currentProject, projectRolesEnabled],
+    [selectedRows, currentProject, defaultProjectIds],
   );
 
   const errorToastMessage = (error: unknown): string | undefined => {
