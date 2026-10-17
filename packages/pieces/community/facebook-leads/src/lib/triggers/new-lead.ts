@@ -121,8 +121,13 @@ async function firstFormLeads({
 	pageAccessToken: string;
 	accessToken: string;
 }): Promise<FacebookLeadsLead[]> {
-	const forms = await facebookLeadsApi.getPageForms({ pageId, accessToken: pageAccessToken });
-	for (const form of forms) {
+	const forms = await facebookLeadsApi.listLeadForms({
+		pageId,
+		accessToken: pageAccessToken,
+		detailed: true,
+	});
+	const formsWithLeads = forms.filter((form) => form.leads_count === undefined || form.leads_count > 0);
+	for (const form of formsWithLeads) {
 		const leads = await facebookLeadsApi.listFormLeads({ formId: form.id, accessToken });
 		if (leads.length > 0) {
 			return leads;
