@@ -177,8 +177,7 @@ const ActionsCell = ({
 }) => {
   const { checkAccess } = useAuthorization();
   const { project } = projectCollectionUtils.useCurrentProject();
-  const { activeDefaultProjectIds, personalProjectsActive } =
-    platformHooks.useNewMemberSettings();
+  const { activeDefaultProjectIds } = platformHooks.useNewMemberSettings();
   const { data: currentUser } = userHooks.useCurrentUser();
   const isPlatformAdmin = currentUser?.platformRole === PlatformRole.ADMIN;
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -211,10 +210,7 @@ const ActionsCell = ({
 
   const leavesInviteWithoutProject =
     row.original.type === 'invitation' &&
-    row.original.data.type === InvitationType.PLATFORM &&
-    row.original.data.platformRole === PlatformRole.MEMBER &&
-    !personalProjectsActive &&
-    activeDefaultProjectIds.length === 0;
+    row.original.data.isOnlyProject === true;
 
   const deleteMember = async () => {
     if (row.original.type === 'member') {
