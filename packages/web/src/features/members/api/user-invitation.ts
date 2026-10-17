@@ -1,6 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
   ListUserInvitationsRequest,
+  RemoveProjectFromInvitationResponse,
   SendUserInvitationRequest,
   UserInvitation,
   UserInvitationWithLink,
@@ -19,7 +20,7 @@ export const userInvitationApi = {
     return listAllPages({ request, cursor: undefined });
   },
   removeProject({ id, projectId }: { id: string; projectId: string }) {
-    return api.post<UserInvitation>(
+    return api.post<RemoveProjectFromInvitationResponse>(
       `/v1/user-invitations/${id}/remove-project`,
       { projectId },
     );
