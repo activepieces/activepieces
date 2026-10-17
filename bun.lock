@@ -3229,7 +3229,7 @@
     },
     "packages/pieces/community/firecrawl": {
       "name": "@activepieces/piece-firecrawl",
-      "version": "0.6.1",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
