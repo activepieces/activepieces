@@ -9333,7 +9333,7 @@
     },
     "packages/pieces/community/trello": {
       "name": "@activepieces/piece-trello",
-      "version": "0.7.1",
+      "version": "0.8.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
