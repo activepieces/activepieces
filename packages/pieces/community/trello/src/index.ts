@@ -172,7 +172,19 @@ export const trello = createPiece({
           key: auth.username,
           token: auth.password
         }
-      }
+      },
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://api.trello.com/1',
+          placeholder: '/members/me/boards',
+        },
+        headers: {
+          description: 'Extra headers to send. Trello needs none for sign-in.',
+        },
+        queryParams: {
+          description: 'Appended as ?key=value. Your API key and token are added for you.',
+        },
+      },
     })
   ],
   triggers: [cardMovedTrigger, newCardTrigger, deadlineTrigger],
