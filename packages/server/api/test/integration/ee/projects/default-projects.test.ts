@@ -2,7 +2,7 @@ import { apId, ErrorCode } from '@activepieces/core-utils'
 import { PrincipalType, ProjectType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { In } from 'typeorm'
+import { In, ObjectLiteral, UpdateQueryBuilder } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockApiKey, createMockProject, mockAndSaveBasicSetup } from '../../../helpers/mocks'
@@ -113,6 +113,31 @@ describe('Default projects', () => {
         const response = await deleteProject({ platformId: mockPlatform.id, userId: mockOwner.id, projectId: mockProject.id })
 
         expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+        expect(await isLive({ projectId: mockProject.id })).toBe(true)
+        expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toStrictEqual([mockProject.id])
+    })
+
+    it('refuses to delete a project another admin makes a default while the delete is running', async () => {
+        const { mockPlatform, mockOwner, mockProject } = await setupPlatform({ projectRolesEnabled: true })
+        const originalExecute = UpdateQueryBuilder.prototype.execute
+        let madeDefault = false
+        const execute = vi.spyOn(UpdateQueryBuilder.prototype, 'execute').mockImplementation(async function (this: UpdateQueryBuilder<ObjectLiteral>) {
+            if (!madeDefault && this.expressionMap.mainAlias?.metadata.tableName === 'project') {
+                madeDefault = true
+                await markDefault({ projectIds: [mockProject.id] })
+            }
+            return originalExecute.apply(this)
+        })
+
+        try {
+            const response = await deleteProject({ platformId: mockPlatform.id, userId: mockOwner.id, projectId: mockProject.id })
+            expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+        }
+        finally {
+            execute.mockRestore()
+        }
+
+        expect(madeDefault).toBe(true)
         expect(await isLive({ projectId: mockProject.id })).toBe(true)
         expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toStrictEqual([mockProject.id])
     })

@@ -83,9 +83,9 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
         await platformProjectService(req.log).markForDeletion({
             id: req.params.id,
             platformId: req.principal.platform.id,
+            refuseIfDefault: await defaultProjectsBlockDeletion({ principal: req.principal, log: req.log }),
             assertCanDelete: async () => {
                 await assertProjectIsSafeToDelete(req.params.id, req.principal.platform.id, req.log)
-                await assertProjectIsNotADefaultProject({ principal: req.principal, projectId: req.params.id, log: req.log })
             },
         })
 
@@ -134,23 +134,12 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
     }
 }
 
-async function assertProjectIsNotADefaultProject({ principal, projectId, log }: AssertProjectIsNotADefaultProjectParams): Promise<void> {
+async function defaultProjectsBlockDeletion({ principal, log }: DefaultProjectsBlockDeletionParams): Promise<boolean> {
     if (principal.type !== PrincipalType.USER) {
-        return
+        return false
     }
-    const [platform, project] = await Promise.all([
-        platformService(log).getOneWithPlanOrThrow(principal.platform.id),
-        projectService(log).getOne(projectId),
-    ])
-    if (!platform.plan.projectRolesEnabled || project?.isDefault !== true) {
-        return
-    }
-    throw new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: {
-            message: 'Remove this project from default projects before deleting it',
-        },
-    })
+    const platform = await platformService(log).getOneWithPlanOrThrow(principal.platform.id)
+    return platform.plan.projectRolesEnabled
 }
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string, log: FastifyBaseLogger): Promise<void> {
@@ -251,8 +240,7 @@ const DeleteProjectRequest = {
     },
 }
 
-type AssertProjectIsNotADefaultProjectParams = {
+type DefaultProjectsBlockDeletionParams = {
     principal: Principal & { platform: { id: string } }
-    projectId: string
     log: FastifyBaseLogger
 }

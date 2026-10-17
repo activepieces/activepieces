@@ -26,7 +26,7 @@ A **Project** is the workspace within a platform where flows, connections, table
 - Soft-deleted projects stay in DB; a background job hard-deletes them.
 - **A default project is a flag on the project**, `project.isDefault` (see decision 000051). The database only allows it on team projects (`chk_project_is_default_team`). The platform API still takes and returns `defaultProjectIds`: a save sets exactly that set in one `UPDATE` (adding and removing defaults in one go), and the response lists the live team projects with the flag, oldest first. The order matters, because the invite dialog preselects the first default.
 - A save refuses (409 `VALIDATION`) a personal project of the platform, and ignores ids with no live team project on the platform, so a page opened before a delete still saves.
-- Soft-deleting a project clears its flag in the same statement. A default project can't be deleted from the app while it is a default: remove it on Roles & Access first (see decision 000049). API-key deletes, SCIM group deletes, and plans without project roles still delete it.
+- Soft-deleting a project clears its flag in the same statement. A default project can't be deleted from the app while it is a default: remove it on Roles & Access first (see decision 000049). API-key deletes, SCIM group deletes, and plans without project roles still delete it. The app check is part of the soft delete (`AND "isDefault" = false`), not a read before it, so a project another admin makes a default mid-delete is still refused.
 
 ### Key files
 Entry point: `projectService`, a log-taking factory in `project-service.ts` that every project read and write routes through.
