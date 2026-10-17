@@ -157,7 +157,7 @@ describe('resolveModelIdForAnalytics', () => {
 
     it('reports a pinned model as stored, even on a key with no curated list', () => {
         expect(forAnalytics({ provider: AIProviderName.CUSTOM, selectedModel: 'my-model', pinned: true })).toBe('my-model')
-        expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'premium', pinned: true })).toBe(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'premium' }))
+        expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'smart', pinned: true })).toBe('gpt-5.5')
     })
 
     it('reports nothing instead of throwing when the provider has no model to name', () => {
