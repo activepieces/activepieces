@@ -6,12 +6,13 @@ function baseUrl(): string {
 	return BASE_URL;
 }
 
-async function request<T>({ method, path, query, body }: RequestParams): Promise<T> {
+async function request<T>({ method, path, query, body, timeout }: RequestParams): Promise<T> {
 	const response = await httpClient.sendRequest<T>({
 		method,
 		url: `${BASE_URL}${path}`,
 		queryParams: query,
 		body,
+		timeout,
 	});
 	return response.body;
 }
@@ -42,6 +43,7 @@ type RequestParams = {
 	path: string;
 	query?: QueryParams;
 	body?: unknown;
+	timeout?: number;
 };
 
 type PaginateParams = {

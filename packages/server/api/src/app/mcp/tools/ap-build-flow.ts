@@ -61,7 +61,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
             let flowId: string | undefined
             const projectId = mcp.projectId
             try {
-                const { flowName, trigger, steps, folderName } = buildFlowInput.parse(args)
+                const parsed = buildFlowInput.parse(args)
+                const { flowName, folderName } = parsed
+                const trigger = { ...parsed.trigger, auth: mcpUtils.normalizeAuth(parsed.trigger.auth) }
+                const steps = parsed.steps.map((step) => ({ ...step, auth: mcpUtils.normalizeAuth(step.auth) }))
                 const triggerAuthError = mcpUtils.validateAuth(trigger.auth)
                 if (triggerAuthError) {
                     return triggerAuthError

@@ -49,16 +49,14 @@ export const convertCadFileAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const formData = new FormData();
-    formData.append('file', new Blob([propsValue.file.data as any]), propsValue.file.filename);
-
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://api.zoo.dev/file/conversion/${propsValue.sourceFormat}/${propsValue.outputFormat}`,
       headers: {
         Authorization: `Bearer ${auth.secret_text}`,
+        'Content-Type': 'application/octet-stream',
       },
-      body: formData,
+      body: propsValue.file.data,
     });
     return response.body;
   },

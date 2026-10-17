@@ -64,13 +64,13 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
     return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
 }
 
-export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
     let creditsExhausted = false
     let paidToolsAffordable = true
-    let earlierAttemptToolCalls: ChatToolCall[] = []
+    let earlierAttemptToolCalls: ChatToolCall[] = priorToolCalls ?? []
     const creditsRanOut: StopCondition<ToolSet> = async ({ steps }) => {
         if (isNil(creditsLeft)) {
             return false
@@ -172,7 +172,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             const stepModel = isFirstStep && !isNil(fast) ? fast : current()
             const usesFastModel = stepModel !== current()
             const stepBudget = stepModel.budget
-            const visibleTools = skillSurface?.coreToolNames ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
+            const visibleTools = skillSurface?.attachedToolNames() ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
             const phaseTools = isNil(skillSurface) ? visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)) : visibleTools
             const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
             const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider: stepModel.provider })
@@ -655,6 +655,7 @@ export type RunAgentTurnParams = {
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
     stepCeiling?: number
     creditsLeft?: (pendingCredits: number) => Promise<number | null>
+    priorToolCalls?: ChatToolCall[]
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
     onStepModel?: (turnModel: TurnModel) => void
     skills?: { surface: SkillSurface, guides: Record<string, string> }

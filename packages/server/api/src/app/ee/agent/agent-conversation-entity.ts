@@ -110,6 +110,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             columns: ['updated'],
             where: `status = '${AgentConversationStatus.STREAMING}'`,
         },
+        {
+            name: 'idx_agent_conversation_platform_provider_config',
+            columns: ['platformId', 'providerConfigId'],
+            where: '"providerConfigId" IS NOT NULL',
+        },
     ],
     relations: {
         platform: {

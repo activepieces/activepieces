@@ -247,7 +247,10 @@ const DEPRECATED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonl
     [AIProviderName.VERTEX]: DEPRECATED_GOOGLE_CHAT_MODELS,
 }
 
-const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`)
+const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = [
+    ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`),
+    'deepseek/deepseek-v4.1-flash',
+]
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,

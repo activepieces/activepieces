@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream'
 import { buffer as streamToBuffer } from 'node:stream/consumers'
+import { setTimeout as delay } from 'node:timers/promises'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isMultipartFile, isNil, ProjectId } from '@activepieces/core-utils'
 import { File, FileCompression, FileId, FileLocation, FileType, Project } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -22,6 +23,7 @@ const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 const FILE_CLEANUP_STATEMENT_TIMEOUT_MS = 5 * 60 * 1000
+const FILE_CLEANUP_PAUSE_BETWEEN_ITERATIONS_MS = 1000
 
 type BaseFile = Pick<File, 'id' | 'projectId' | 'platformId' | 'type' | 'fileName' | 'compression' | 'size' | 'metadata' | 'created' | 'updated'>
 
@@ -225,6 +227,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
                         counts: affected,
                         type,
                     }, '[FileService#deleteStaleBulk] iteration completed')
+                    await delay(FILE_CLEANUP_PAUSE_BETWEEN_ITERATIONS_MS)
                 }
             }
         }

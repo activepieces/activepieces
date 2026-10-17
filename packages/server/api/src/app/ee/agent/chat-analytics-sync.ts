@@ -198,7 +198,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
         userId: conversation.userId,
         userEmail,
         title: conversation.title,
-        modelName: tierModel?.modelId ?? agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider, surface: 'chat' }),
+        modelName: tierModel?.modelId ?? agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider, surface: 'chat', pinned: !isNil(conversation.providerConfigId) }),
         provider,
         messages,
         messageCount: messages.length,

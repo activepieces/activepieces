@@ -1,11 +1,14 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AI_PROVIDER_ENTITY_TYPES, GetProviderConfigResponse } from '@activepieces/shared'
+import { AgentConversation, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, GetProviderConfigResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
-import { ProviderScope } from '../../ai/ai-key-scope'
+import { aiKeyScope, ProviderScope } from '../../ai/ai-key-scope'
 import { aiModelOptionsService } from '../../ai/ai-model-options-service'
+import { AIProviderEntity, AIProviderSchema } from '../../ai/ai-provider-entity'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { platformModelTierService } from '../../ai/platform-model-tier-service'
+import { transaction } from '../../core/db/transaction'
+import { AgentConversationEntity } from './agent-conversation-entity'
 import { agentHelpers } from './agent-helpers'
 import { agentModelResolution } from './agent-model-resolution'
 import { agentModelTier } from './agent-model-tier'
@@ -52,6 +55,9 @@ export const agentChatModel = (log: FastifyBaseLogger) => ({
         if (isNil(config) || isNil(modelId)) {
             throw unavailableError()
         }
+        if (await keyNoLongerListsModel({ platformId, configId, provider: config.provider, modelId, scope, log })) {
+            throw unavailableError()
+        }
         return { config, modelId }
     },
 
@@ -80,18 +86,47 @@ export const agentChatModel = (log: FastifyBaseLogger) => ({
     },
 
     legacyPin({ config, selectedModel, runTierId, resolvedModelId }: { config: GetProviderConfigResponse, selectedModel: string | null, runTierId: string, resolvedModelId: string }): ChatPick {
-        const followsManagedTier = (config.provider === AIProviderName.ACTIVEPIECES || config.provider === AIProviderName.OPENROUTER)
-            && (isNil(selectedModel) || agentModelResolution.isTierId({ modelName: selectedModel }))
-        return { modelTierId: null, providerConfigId: config.configId, modelName: followsManagedTier ? selectedModel ?? runTierId : resolvedModelId }
+        const managed = config.provider === AIProviderName.ACTIVEPIECES || config.provider === AIProviderName.OPENROUTER
+        const keepsTier = isNil(selectedModel)
+            ? managed
+            : managed
+                ? agentModelResolution.isTierId({ modelName: selectedModel })
+                : !isNil(agentModelResolution.findTier({ tierId: selectedModel, surface: 'chat' }))
+        return { modelTierId: null, providerConfigId: config.configId, modelName: keepsTier ? runTierId : resolvedModelId }
     },
 
-    async persistPick({ conversationId, loadedModelName, pick }: { conversationId: string, loadedModelName: string | null, pick: ChatPick }): Promise<void> {
-        await agentHelpers.conversationRepo().update(
-            { id: conversationId, providerConfigId: IsNull(), modelTierId: IsNull(), modelName: isNil(loadedModelName) ? IsNull() : loadedModelName },
-            pick,
-        )
+    keyServes({ key, conversation }: { key: AIProviderSchema, conversation: Pick<AgentConversation, 'projectId' | 'modelName'> }): boolean {
+        const servesProject = isNil(conversation.projectId)
+            ? key.projectScope === 'all'
+            : aiKeyScope.rowAllowsScope({ row: key, scope: { type: 'project', projectId: conversation.projectId } })
+        const servesModel = isNil(conversation.modelName)
+            || !isNil(agentModelResolution.resolvePinnedModelId({ provider: key.provider, modelName: conversation.modelName, config: key.config, modelScope: key.modelScope, modelIds: key.modelIds, log }))
+        return servesProject && servesModel
+    },
+
+    async persistPick({ platformId, projectId, conversationId, loadedModelName, pick }: { platformId: string, projectId: string, conversationId: string, loadedModelName: string | null, pick: ChatPick }): Promise<void> {
+        await transaction(async (manager) => {
+            if (!isNil(pick.providerConfigId)) {
+                const key = await manager.getRepository(AIProviderEntity).findOne({ where: { platformId, id: pick.providerConfigId }, lock: { mode: 'pessimistic_read' } })
+                if (isNil(key) || !this.keyServes({ key, conversation: { projectId, modelName: pick.modelName } })) {
+                    return
+                }
+            }
+            await manager.getRepository(AgentConversationEntity).update(
+                { id: conversationId, providerConfigId: IsNull(), modelTierId: IsNull(), modelName: isNil(loadedModelName) ? IsNull() : loadedModelName },
+                pick,
+            )
+        })
     },
 })
+
+async function keyNoLongerListsModel({ platformId, configId, provider, modelId, scope, log }: { platformId: string, configId: string, provider: AIProviderName, modelId: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<boolean> {
+    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
+        return false
+    }
+    const { data: models } = await tryCatch(() => aiProviderService(log).listModels({ platformId, provider, scope, configId }))
+    return !isNil(models) && !models.some((model) => model.id === modelId) && !aiProviderUtils.runnableChatModelIds({ provider }).includes(modelId)
+}
 
 function unavailableError(): ActivepiecesError {
     return new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: CHAT_MODEL_UNAVAILABLE_MESSAGE } })

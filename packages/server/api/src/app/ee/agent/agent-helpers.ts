@@ -8,7 +8,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
 import { z } from 'zod'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
-import { platformModelTierService } from '../../ai/platform-model-tier-service'
+import { platformModelTierService, TierForRun } from '../../ai/platform-model-tier-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
@@ -136,13 +136,16 @@ async function resolvePlatformWorkModel({ platformId, log }: { platformId: strin
     if (defaultKey?.enabledForChat === true) {
         return { config: await aiProviderService(log).configForTierKey({ platformId, key: defaultKey }), modelId: null }
     }
-    const defaultTier = await platformModelTierService.getDefaultForRun({ platformId, scope })
-    const main = defaultTier?.tier.entries[0]
-    const mainEntry = isNil(main) ? undefined : defaultTier?.entries.find((entry) => entry.key.id === main.configId && entry.modelId === main.modelId && entry.key.projectScope === 'all')
+    const mainEntry = allProjectsMainEntry({ forRun: await platformModelTierService.getDefaultForRun({ platformId, scope }) })
     if (!isNil(mainEntry)) {
         return { config: await aiProviderService(log).configForTierKey({ platformId, key: mainEntry.key }), modelId: mainEntry.modelId }
     }
     return isNil(defaultKey) ? null : { config: await aiProviderService(log).configForTierKey({ platformId, key: defaultKey }), modelId: null }
+}
+
+function allProjectsMainEntry({ forRun }: { forRun: TierForRun | null }): TierForRun['entries'][number] | undefined {
+    const main = forRun?.tier.entries[0]
+    return isNil(main) ? undefined : forRun?.entries.find((entry) => entry.key.id === main.configId && entry.modelId === main.modelId && entry.key.projectScope === 'all')
 }
 
 async function resolvePlatformWorkModelOrThrow({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<PlatformWorkModel> {
@@ -157,8 +160,15 @@ async function resolvePlatformWorkModelOrThrow({ platformId, log }: { platformId
 }
 
 async function resolvePlatformFastModel({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
-    const { config, modelId } = await resolvePlatformWorkModelOrThrow({ platformId, log })
-    const fastModelId = modelId ?? await resolveFastModelId({ platformId, providerConfig: config, surface: 'chat', scope: { type: 'platform' }, log })
+    const scope: ProviderScope = { type: 'platform' }
+    const defaultKey = await aiProviderService(log).getChatKey({ platformId, scope })
+    const fastEntry = defaultKey?.enabledForChat === true ? undefined : allProjectsMainEntry({ forRun: await platformModelTierService.getFastForRun({ platformId, scope }) })
+    const { config, modelId } = !isNil(fastEntry)
+        ? { config: await aiProviderService(log).configForTierKey({ platformId, key: fastEntry.key }), modelId: fastEntry.modelId }
+        : !isNil(defaultKey)
+            ? { config: await aiProviderService(log).configForTierKey({ platformId, key: defaultKey }), modelId: null }
+            : await resolvePlatformWorkModelOrThrow({ platformId, log })
+    const fastModelId = modelId ?? await resolveFastModelId({ platformId, providerConfig: config, surface: 'chat', scope, log })
     return aiUtils.createModel({ credentials: config, modelId: fastModelId, platformId, providerConfigId: config.configId })
 }
 
