@@ -83,6 +83,16 @@ export const googleContactsSearchContactsAction = createAction({
   ],
   async run(context) {
     const readMask = context.propsValue['readMask'].join(',');
+    const warmUpRequest: HttpRequest<Record<string, unknown>> = {
+      method: HttpMethod.GET,
+      url: `${googleContactsCommon.baseUrl}:searchContacts`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth.access_token,
+      },
+      queryParams: { query: '', readMask, pageSize: '1' },
+    };
+    await httpClient.sendRequest(warmUpRequest);
     const qs: QueryParams = {
       query: context.propsValue['query'],
       readMask,
