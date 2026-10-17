@@ -22,6 +22,7 @@ export const UserInvitation = z.object({
     projectId: Nullable(z.string()),
     projectRoleId: Nullable(z.string()),
     projectRole: Nullable(ProjectRole),
+    isOnlyProject: z.boolean().optional(),
 })
 
 export type UserInvitation = z.infer<typeof UserInvitation>
