@@ -67,9 +67,10 @@ async function modelChoiceFrom({ platformId, projectId, request, log }: { platfo
         if (isNil(modelName)) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'A model picked on a key needs its model name' } })
         }
-        if (!isNil(projectId)) {
-            await agentChatModel(log).assertOffered({ platformId, projectId, providerConfigId, modelName })
+        if (isNil(projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'A chat needs a project before it can use a model on a key' } })
         }
+        await agentChatModel(log).assertOffered({ platformId, projectId, providerConfigId, modelName })
         return { providerConfigId, modelName, modelTierId: null }
     }
     if (!isNil(modelName)) {

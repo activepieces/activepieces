@@ -152,8 +152,17 @@ describe('resolveModelIdForProvider', () => {
 })
 
 describe('resolveModelIdForAnalytics', () => {
-    const forAnalytics = ({ provider, selectedModel, surface = 'chat' }: { provider: AIProviderName | null, selectedModel: string | null, surface?: ModelTierSurface }) =>
-        agentModelResolution.resolveModelIdForAnalytics({ provider, selectedModel, surface })
+    const forAnalytics = ({ provider, selectedModel, surface = 'chat', pinned = false }: { provider: AIProviderName | null, selectedModel: string | null, surface?: ModelTierSurface, pinned?: boolean }) =>
+        agentModelResolution.resolveModelIdForAnalytics({ provider, selectedModel, surface, pinned })
+
+    it('reports a pinned model as stored, even on a key with no curated list', () => {
+        expect(forAnalytics({ provider: AIProviderName.CUSTOM, selectedModel: 'my-model', pinned: true })).toBe('my-model')
+        expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'premium', pinned: true })).toBe(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'premium' }))
+    })
+
+    it('reports nothing instead of throwing when the provider has no model to name', () => {
+        expect(forAnalytics({ provider: AIProviderName.CUSTOM, selectedModel: 'my-model' })).toBeNull()
+    })
 
     it('reports the model the turn ran on when the provider is known', () => {
         expect(forAnalytics({ provider: AIProviderName.OPENAI, selectedModel: 'gpt-4.1' })).toBe('gpt-4.1')

@@ -176,7 +176,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 ? agentChatModel(log).legacyPin({ config: providerConfig, selectedModel, runTierId: tier.id, resolvedModelId })
                 : null
         if (!dryRun && !isNil(pickToPersist)) {
-            await agentChatModel(log).persistPick({ conversationId, loadedModelName: conversation.modelName ?? null, pick: pickToPersist })
+            await agentChatModel(log).persistPick({ platformId, projectId: runScope.projectId, conversationId, loadedModelName: conversation.modelName ?? null, pick: pickToPersist })
         }
 
         // Inject an inventory of the project's existing connections into context so the agent

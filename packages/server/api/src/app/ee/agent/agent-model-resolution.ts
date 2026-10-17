@@ -97,12 +97,23 @@ function resolvePinnedModelId({ provider, modelName, config, modelScope, modelId
     if (provider === AIProviderName.OPENROUTER && isTierId({ modelName })) {
         return findTier({ tierId: modelName, surface: 'chat' })?.modelId ?? null
     }
+    if (provider !== AIProviderName.ACTIVEPIECES && !isNil(findTier({ tierId: modelName, surface: 'chat' }))) {
+        const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: modelName, surface: 'chat', config, modelScope, modelIds }))
+        return data ?? null
+    }
     const catalog = manualTextModelCatalog({ config })
     if (!isNil(catalog) && !catalog.includes(modelName)) {
         return null
     }
+    if (isNil(catalog) && isRetiredCuratedModel({ provider, modelId: modelName })) {
+        return null
+    }
     const { data } = tryCatchSync(() => resolveNamedModelId({ provider, modelName, surface: 'chat', modelScope, modelIds, log }))
     return data ?? null
+}
+
+function isRetiredCuratedModel({ provider, modelId }: { provider: AIProviderName, modelId: string }): boolean {
+    return !isNil(aiProviderUtils.getCuratedChatModels({ provider })) && !aiProviderUtils.runnableChatModelIds({ provider }).includes(modelId)
 }
 
 function resolveModelIdForProvider({ provider, selectedModel, surface, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, surface: ModelTierSurface, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
@@ -124,17 +135,22 @@ function defaultModelIdForProvider({ provider, surface, config, modelScope, mode
     return data
 }
 
-// Analytics and billing report the model a turn ran on. The provider is unknown when a platform's
-// chat provider no longer resolves, so fall back to the stored selection — but only when it is one
-// of our own ids, never echoing an arbitrary stored string out to the analytics sink.
-function resolveModelIdForAnalytics({ provider, selectedModel, surface }: { provider: AIProviderName | null, selectedModel: string | null, surface: ModelTierSurface }): string | null {
+// Analytics and billing report the model a turn ran on. A pinned chat stored a model id that was
+// checked when it was picked, so it is reported as is. Otherwise the provider is unknown when a
+// platform's chat provider no longer resolves, so fall back to the stored selection, but only when it
+// is one of our own ids, never echoing an arbitrary stored string out to the analytics sink.
+function resolveModelIdForAnalytics({ provider, selectedModel, surface, pinned }: { provider: AIProviderName | null, selectedModel: string | null, surface: ModelTierSurface, pinned: boolean }): string | null {
     if (isNil(selectedModel)) {
         return null
     }
-    if (!isNil(provider)) {
-        return resolveModelIdForProvider({ provider, selectedModel, surface })
-    }
     const tier = findTier({ tierId: selectedModel, surface })
+    if (pinned && isNil(tier)) {
+        return selectedModel
+    }
+    if (!isNil(provider)) {
+        const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel, surface }))
+        return data ?? null
+    }
     if (!isNil(tier)) {
         return tier.modelId
     }

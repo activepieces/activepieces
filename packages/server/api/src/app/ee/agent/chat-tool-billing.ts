@@ -42,7 +42,7 @@ async function chargeForLatestTurn({ conversation, runId, answeredBy, log }: Cha
         log,
     })
     const surface = agentHelpers.surfaceOf({ source: conversation.source })
-    const model = tierModel?.modelId ?? agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider, surface })
+    const model = tierModel?.modelId ?? agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider, surface, pinned: !isNil(conversation.providerConfigId) })
     const tier = agentHelpers.resolveTier({ tierId: conversation.modelName ?? null, surface })
     const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)
 

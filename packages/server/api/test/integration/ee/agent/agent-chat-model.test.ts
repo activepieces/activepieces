@@ -1,11 +1,12 @@
-import { AIProviderName, ErrorCode } from '@activepieces/core-utils'
-import { aiUtils } from '@activepieces/server-utils'
+import { AIProviderName, assertNotNullOrUndefined, ErrorCode } from '@activepieces/core-utils'
+import { aiUtils, modelTierCatalog } from '@activepieces/server-utils'
 import { AgentConversation, AIProviderModelType, aiProviderUtils, AiToolCapability, AiToolProvider, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { aiToolConfigService } from '../../../../src/app/ai/ai-tool-config-service'
+import { agentChatModel } from '../../../../src/app/ee/agent/agent-chat-model'
 import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
 import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
 import { knowledgeBaseService } from '../../../../src/app/knowledge-base/knowledge-base.service'
@@ -51,6 +52,24 @@ describe('a chat pinned to a key', () => {
         const response = await ctx.post(CONVERSATIONS_URL, { projectId: ctx.project.id, providerConfigId: key.id, modelName: 'team-model' })
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('is refused on a chat that has no project yet', async () => {
+        const ctx = await context()
+        const key = await customKey({ ctx, name: 'Team', models: ['team-model'] })
+
+        const response = await ctx.post(CONVERSATIONS_URL, { providerConfigId: key.id, modelName: 'team-model' })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('fails clearly when its curated model is retired, instead of sending it to the vendor', async () => {
+        const ctx = await context()
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const conversation = await createConversation({ ctx, body: { projectId: ctx.project.id } })
+        await db.update('agent_conversation', conversation.id, { providerConfigId: key.id, modelName: 'gpt-retired-model' })
+
+        await expect(getConfig({ ctx, conversationId: conversation.id })).rejects.toMatchObject({ error: { code: ErrorCode.VALIDATION } })
     })
 
     it('is refused for a model the key does not offer', async () => {
@@ -131,18 +150,48 @@ describe('a legacy chat that stores only a model name', () => {
         expect([first.modelId, second.modelId]).toEqual([model, model])
     })
 
-    it('pins a tier name to the real model it resolved to, so the next turn runs the same model', async () => {
+    it('keeps a tier name on an own key, so later turns keep its model and thinking', async () => {
         const ctx = await context()
         await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
-        const conversation = await createConversation({ ctx, body: { modelName: 'smart' } })
+        const tierId = nonDefaultChatTierId()
+        const conversation = await createConversation({ ctx, body: { modelName: tierId } })
 
         const first = await getConfig({ ctx, conversationId: conversation.id, dryRun: false })
         await releaseRun({ conversationId: conversation.id })
-        const second = await getConfig({ ctx, conversationId: conversation.id })
+        const second = await getConfig({ ctx, conversationId: conversation.id, dryRun: false })
 
         const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
-        expect(stored.modelName).toBe(first.modelId)
+        expect(stored.modelName).toBe(tierId)
         expect(second.modelId).toBe(first.modelId)
+        expect(second.tier).toEqual(first.tier)
+        expect(first.tier.id).toBe(tierId)
+    })
+
+    it('pins the tier that ran when an OpenRouter chat\'s model name is unknown, so the next turn still works', async () => {
+        const ctx = await context()
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
+        const conversation = await createConversation({ ctx, body: { modelName: 'a-retired-tier' } })
+
+        const first = await getConfig({ ctx, conversationId: conversation.id, dryRun: false })
+        await releaseRun({ conversationId: conversation.id })
+        const second = await getConfig({ ctx, conversationId: conversation.id, dryRun: false })
+
+        const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
+        expect(stored.modelName).toBe(first.tier.id)
+        expect(second.modelId).toBe(first.modelId)
+    })
+
+    it('is not pinned to a key deleted while its turn was being set up', async () => {
+        const ctx = await context()
+        const chatKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
+        const model = curatedOpenAiModel()
+        const conversation = await createConversation({ ctx, body: { modelName: model } })
+        await aiProviderService(app.log).delete(ctx.platform.id, chatKey.id)
+
+        await agentChatModel(app.log).persistPick({ platformId: ctx.platform.id, projectId: ctx.project.id, conversationId: conversation.id, loadedModelName: model, pick: { modelTierId: null, providerConfigId: chatKey.id, modelName: model } })
+
+        const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
+        expect(stored.providerConfigId).toBeNull()
     })
 
     it('moves to the Default tier when the platform no longer has a Default AI key', async () => {
@@ -205,6 +254,19 @@ describe('platform-wide AI work', () => {
         const work = await agentHelpers.resolvePlatformWorkModel({ platformId: ctx.platform.id, log: app.log })
 
         expect(work).toMatchObject({ config: { configId: key.id }, modelId: 'team-model' })
+    })
+
+    it('runs memory on the Fast tier\'s main model, not the Default tier\'s', async () => {
+        const ctx = await context()
+        const key = await customKey({ ctx, name: 'Team', models: ['big-model', 'small-model'] })
+        await createTier({ ctx, entries: [{ configId: key.id, modelId: 'big-model' }] })
+        const fast = await createTier({ ctx, name: 'Quick', entries: [{ configId: key.id, modelId: 'small-model' }] })
+        expect((await ctx.post(`/v1/platform-model-tiers/${fast.id}`, { isFast: true })).statusCode).toBe(StatusCodes.OK)
+        const createModel = vi.spyOn(aiUtils, 'createModel')
+
+        await agentHelpers.resolvePlatformFastModel({ platformId: ctx.platform.id, log: app.log })
+
+        expect(createModel).toHaveBeenCalledWith(expect.objectContaining({ providerConfigId: key.id, modelId: 'small-model' }))
     })
 
     it('does not use a Default tier whose main key is limited to some projects', async () => {
@@ -270,8 +332,8 @@ async function customKey({ ctx, name, models, projectScope, projectIds }: { ctx:
     })
 }
 
-async function createTier({ ctx, entries }: { ctx: TestContext, entries: { configId: string, modelId: string }[] }): Promise<{ id: string }> {
-    const response = await ctx.post('/v1/platform-model-tiers', { name: 'Expert', emoji: '🧠', description: null, entries })
+async function createTier({ ctx, entries, name = 'Expert' }: { ctx: TestContext, entries: { configId: string, modelId: string }[], name?: string }): Promise<{ id: string }> {
+    const response = await ctx.post('/v1/platform-model-tiers', { name, emoji: '🧠', description: null, entries })
     expect(response.statusCode).toBe(StatusCodes.OK)
     return response.json()
 }
@@ -295,6 +357,13 @@ async function getConfig({ ctx, conversationId, dryRun = true, modelName = null 
 
 async function releaseRun({ conversationId }: { conversationId: string }): Promise<void> {
     await db.update('agent_conversation', conversationId, { status: 'IDLE', activeRunId: null })
+}
+
+function nonDefaultChatTierId(): string {
+    const catalog = modelTierCatalog.current('chat')
+    const tier = catalog.tiers.find((candidate) => candidate.id !== catalog.defaultTierId)
+    assertNotNullOrUndefined(tier, 'chat tier other than the default')
+    return tier.id
 }
 
 function curatedOpenAiModel(): string {

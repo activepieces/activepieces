@@ -264,8 +264,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
         const deleted = await transaction(async (manager) => {
             await platformModelTierService.removeKeyFromTiers({ manager, platformId, configId: providerId })
+            const row = await deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
             await aiUsageHooks.get(log).unpinConversationsFromKey({ manager, platformId, configId: providerId, key: null })
-            return deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
+            return row
         })
         await revokeKeyIfManaged({ row: deleted, log })
     },
@@ -273,6 +274,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const deleted = await transaction(async (manager) => {
             await lockPlatformForUpdate({ manager, platformId })
             const row = await deleteRowForUpdate({ manager, where: { platformId, provider: AIProviderName.ACTIVEPIECES } })
+            if (!isNil(row)) {
+                await aiUsageHooks.get(log).unpinConversationsFromKey({ manager, platformId, configId: row.id, key: null })
+            }
             await inSameTransaction?.(manager)
             return row
         })

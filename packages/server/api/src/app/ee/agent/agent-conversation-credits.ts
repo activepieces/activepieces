@@ -1,13 +1,11 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { AgentConversation } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
-import { aiKeyScope } from '../../ai/ai-key-scope'
-import { AIProviderSchema } from '../../ai/ai-provider-entity'
 import { AddConversationCreditsParams, AiUsageHooks, UnpinConversationsFromKeyParams } from '../../ai/ai-usage-hooks'
+import { agentChatModel } from './agent-chat-model'
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { agentHelpers } from './agent-helpers'
 
-export const agentConversationCreditsHooks = (_log: FastifyBaseLogger): AiUsageHooks => ({
+export const agentConversationCreditsHooks = (log: FastifyBaseLogger): AiUsageHooks => ({
     async addConversationCredits({ conversationId, credits }: AddConversationCreditsParams): Promise<void> {
         const wholeCredits = Math.round(credits)
         if (wholeCredits === 0) {
@@ -27,7 +25,7 @@ export const agentConversationCreditsHooks = (_log: FastifyBaseLogger): AiUsageH
             where: { platformId, providerConfigId: configId },
             select: { id: true, projectId: true, modelName: true },
         })
-        const stale = isNil(key) ? pinned : pinned.filter((conversation) => !keyStillServes({ key, conversation }))
+        const stale = isNil(key) ? pinned : pinned.filter((conversation) => !agentChatModel(log).keyServes({ key, conversation }))
         if (stale.length === 0) {
             return
         }
@@ -46,12 +44,3 @@ export const agentConversationCreditsHooks = (_log: FastifyBaseLogger): AiUsageH
     },
 })
 
-function keyStillServes({ key, conversation }: { key: AIProviderSchema, conversation: Pick<AgentConversation, 'projectId' | 'modelName'> }): boolean {
-    const servesProject = isNil(conversation.projectId)
-        ? key.projectScope === 'all'
-        : aiKeyScope.rowAllowsScope({ row: key, scope: { type: 'project', projectId: conversation.projectId } })
-    const servesModel = isNil(conversation.modelName)
-        || key.provider === AIProviderName.ACTIVEPIECES
-        || aiKeyScope.keyOffersModel({ key, modelId: conversation.modelName })
-    return servesProject && servesModel
-}
