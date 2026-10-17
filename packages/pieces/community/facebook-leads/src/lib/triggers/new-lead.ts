@@ -1,4 +1,4 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { MarkdownVariant, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 
 import { facebookLeadsAuth } from '../auth';
 import { facebookLeadsApi } from '../common/api';
@@ -14,7 +14,7 @@ export const newLeadTrigger = createTrigger({
 	outputSchema: facebookLeadsGetLeadOutputSchema,
 	classification: 'READ',
 	displayName: 'New Lead',
-	description: 'Triggers when a new lead is created.',
+	description: 'Triggers when someone fills in one of your lead ad forms.',
 	aiMetadata: {
 		description:
 			'Fires when a person submits a Facebook/Instagram Lead Ad form on the connected Page. Emits the new lead, including the submitted field answers (such as name, email, and phone) and form/page context. If a specific form is selected, only submissions to that form fire the trigger; otherwise any form on the Page does.',
@@ -22,9 +22,28 @@ export const newLeadTrigger = createTrigger({
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData: {},
 	props: {
-		page: facebookLeadsProps.page({ required: true }),
-		form: facebookLeadsProps.form({ required: false }),
+		page: facebookLeadsProps.page({
+			required: true,
+			description: 'The Facebook Page that runs your lead ads.',
+		}),
+		form: facebookLeadsProps.form({
+			required: false,
+			description: 'Pick one form, or All Forms for leads from every form on the Page.',
+		}),
+		info: Property.MarkDown({
+			value: 'Runs once for each new lead. Test Trigger loads recent leads from the chosen form, or from the first form on the Page that has any.',
+			variant: MarkdownVariant.INFO,
+		}),
 	},
+	propertyGroups: [
+		{
+			key: 'source',
+			display: 'section',
+			label: 'Watch',
+			icon: 'inbox',
+			props: ['page', 'form', 'info'],
+		},
+	],
 
 	async onEnable(context) {
 		const page = context.propsValue.page;
