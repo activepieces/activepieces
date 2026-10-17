@@ -20,7 +20,23 @@ export const newLeadTrigger = createTrigger({
 			'Fires when a person submits a Facebook/Instagram Lead Ad form on the connected Page. Emits the new lead, including the submitted field answers (such as name, email, and phone) and form/page context. If a specific form is selected, only submissions to that form fire the trigger; otherwise any form on the Page does.',
 	},
 	type: TriggerStrategy.APP_WEBHOOK,
-	sampleData: {},
+	sampleData: {
+		lead_id: '1234567890123456',
+		form_id: '2345678901234567',
+		platform: 'fb',
+		ad_id: '3456789012345678',
+		ad_name: 'Spring Promo Ad',
+		adset_id: '4567890123456789',
+		adset_name: 'Spring Promo Audience',
+		campaign_id: '5678901234567890',
+		campaign_name: 'Spring Promo Campaign',
+		created_time: '2026-01-15T10:30:00+0000',
+		data: {
+			full_name: 'Jane Doe',
+			email: 'jane.doe@example.com',
+			phone_number: '+15555550100',
+		},
+	},
 	props: {
 		page: facebookLeadsProps.page({
 			required: true,
