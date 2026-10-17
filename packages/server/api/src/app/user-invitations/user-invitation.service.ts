@@ -1,14 +1,14 @@
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { InvitationStatus, InvitationType, PlatformRole, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { EntityManager, In, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
-import { projectRoleService } from '../ee/projects/project-role/project-role.service'
+import { projectRoleRepo, projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { domainHelper } from '../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
@@ -16,12 +16,13 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
-import { projectService } from '../project/project-service'
+import { ProjectEntity } from '../project/project-entity'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
 
 export const userInvitationRepo = repoFactory(UserInvitationEntity)
 const repo = userInvitationRepo
+const projectRepo = repoFactory(ProjectEntity)
 
 export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation> {
@@ -58,6 +59,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         if (isNil(identity)) return
 
         log.info({ count: invitations.length }, '[provisionUserInvitation] list invitations')
+        const context = await loadProvisioningContext({ invitations, log })
         for (const invitation of invitations) {
             log.info({ invitation }, '[provisionUserInvitation] provision')
             const { user } = await userService(log).getOrCreateWithProject({
@@ -67,6 +69,9 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
                     assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
+                    if (!isNil(invitation.projectId) && !isNil(invitation.projectRoleId)) {
+                        await addToInvitedProject({ invitation, userId: user.id, log, context, failsWithoutProjectRoles: false })
+                    }
                     await userService(log).update({
                         id: user.id,
                         platformId: invitation.platformId,
@@ -75,27 +80,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     break
                 }
                 case InvitationType.PROJECT: {
-                    const { projectId, projectRoleId } = invitation
-                    assertNotNullOrUndefined(projectId, 'projectId')
-                    assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
-                    const platform = await platformService(log).getOneWithPlanOrThrow(invitation.platformId)
-                    assertEqual(platform.plan.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
-
-                    const projectRole = await projectRoleService.getOneOrThrowById({
-                        id: projectRoleId,
-                    })
-
-                    const project = await projectService(log).exists({
-                        projectId,
-                        isSoftDeleted: false,
-                    })
-                    if (!isNil(project)) {
-                        await projectMemberService(log).upsert({
-                            projectId,
-                            userId: user.id,
-                            projectRoleName: projectRole.name,
-                        })
-                    }
+                    await addToInvitedProject({ invitation, userId: user.id, log, context, failsWithoutProjectRoles: true })
                     break
                 }
             }
@@ -103,6 +88,12 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 id: invitation.id,
             })
         }
+    },
+    async detachProjectFromPlatformInvites({ projectId, entityManager }: DetachProjectFromPlatformInvitesParams): Promise<void> {
+        await repo(entityManager).update({ type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null })
+    },
+    async detachProjectRoleFromPlatformInvites({ projectRoleId, entityManager }: DetachProjectRoleFromPlatformInvitesParams): Promise<void> {
+        await repo(entityManager).update({ type: InvitationType.PLATFORM, projectRoleId }, { projectId: null, projectRoleId: null })
     },
     async createInvitationRecord({
         email,
@@ -114,16 +105,18 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         status,
         entityManager,
     }: CreateInvitationRecordParams): Promise<UserInvitation> {
+        const normalizedEmail = email.toLowerCase().trim()
+        const invitedProject = await claimInvitedProject({ email: normalizedEmail, platformId, projectId, type, entityManager })
         const id = apId()
         await repo(entityManager).upsert({
             id,
             status,
             type,
-            email: email.toLowerCase().trim(),
+            email: normalizedEmail,
             platformId,
-            projectRoleId: type === InvitationType.PLATFORM ? undefined : projectRoleId!,
+            projectRoleId: invitedProject.keepsProject ? projectRoleId ?? undefined : undefined,
             platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
-            projectId: type === InvitationType.PLATFORM ? undefined : projectId!,
+            projectId: invitedProject.keepsProject ? projectId ?? undefined : undefined,
         }, ['email', 'platformId', 'projectId'])
 
         return this.getOneOrThrow({
@@ -336,6 +329,77 @@ const EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER = `NOT EXISTS (
     WHERE LOWER(identity.email) = LOWER(invitation.email)
 )`
 
+
+async function loadProvisioningContext({ invitations, log }: LoadProvisioningContextParams): Promise<ProvisioningContext> {
+    const withProject = invitations.filter((invitation) => !isNil(invitation.projectId) && !isNil(invitation.projectRoleId))
+    const projectRoleIds = unique(withProject.map((invitation) => invitation.projectRoleId).filter((id): id is string => !isNil(id)))
+    const projectIds = unique(withProject.map((invitation) => invitation.projectId).filter((id): id is string => !isNil(id)))
+    const platformIds = unique(withProject.map((invitation) => invitation.platformId))
+    const [projectRoles, liveProjects, platforms] = await Promise.all([
+        projectRoleIds.length === 0 ? [] : projectRoleRepo().findBy([
+            { id: In(projectRoleIds), platformId: In(platformIds) },
+            { id: In(projectRoleIds), type: RoleType.DEFAULT },
+        ]),
+        projectIds.length === 0 ? [] : projectRepo().findBy({ id: In(projectIds), platformId: In(platformIds) }),
+        Promise.all(platformIds.map((platformId) => platformService(log).getOneWithPlanOrThrow(platformId))),
+    ])
+    return {
+        projectRoleById: new Map(projectRoles.map((projectRole) => [projectRole.id, projectRole])),
+        liveProjectPlatformIdById: new Map(liveProjects.map((project) => [project.id, project.platformId])),
+        projectRolesEnabledByPlatformId: new Map(platforms.map((platform) => [platform.id, platform.plan.projectRolesEnabled])),
+    }
+}
+
+async function addToInvitedProject({ invitation, userId, log, context, failsWithoutProjectRoles }: AddToInvitedProjectParams): Promise<void> {
+    const { projectId, projectRoleId } = invitation
+    assertNotNullOrUndefined(projectId, 'projectId')
+    assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
+    const projectRolesEnabled = context.projectRolesEnabledByPlatformId.get(invitation.platformId) === true
+    if (!projectRolesEnabled && !failsWithoutProjectRoles) {
+        return
+    }
+    assertEqual(projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
+    const projectRole = context.projectRoleById.get(projectRoleId)
+    if (isNil(projectRole) || !isRoleOfPlatform({ projectRole, platformId: invitation.platformId })) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityType: 'project_role', entityId: projectRoleId },
+        })
+    }
+    if (context.liveProjectPlatformIdById.get(projectId) !== invitation.platformId) {
+        return
+    }
+    await projectMemberService(log).upsert({
+        projectId,
+        userId,
+        projectRoleName: projectRole.name,
+    })
+}
+
+function isRoleOfPlatform({ projectRole, platformId }: { projectRole: ProjectRole, platformId: string }): boolean {
+    return projectRole.type === RoleType.DEFAULT || projectRole.platformId === platformId
+}
+
+async function claimInvitedProject({ email, platformId, projectId, type, entityManager }: ClaimInvitedProjectParams): Promise<{ keepsProject: boolean }> {
+    if (isNil(projectId)) {
+        return { keepsProject: true }
+    }
+    switch (type) {
+        case InvitationType.PROJECT: {
+            await repo(entityManager).update(
+                { type: InvitationType.PLATFORM, email, platformId, projectId },
+                { projectId: null, projectRoleId: null },
+            )
+            return { keepsProject: true }
+        }
+        case InvitationType.PLATFORM: {
+            await repo(entityManager).delete({ type: InvitationType.PROJECT, email, platformId, projectId, status: InvitationStatus.PENDING })
+            const coveredByAcceptedProjectInvite = await repo(entityManager).existsBy({ type: InvitationType.PROJECT, email, platformId, projectId })
+            return { keepsProject: !coveredByAcceptedProjectInvite }
+        }
+    }
+}
+
 async function generateInvitationLink(userInvitation: UserInvitation, expireyInSeconds: number): Promise<string> {
     const token = await jwtUtils.sign({
         payload: {
@@ -364,6 +428,35 @@ const enrichWithInvitationLink = async (userInvitation: UserInvitation, expireyI
     })
     return userInvitation
 }
+type DetachProjectFromPlatformInvitesParams = {
+    projectId: string
+    entityManager: EntityManager
+}
+
+type DetachProjectRoleFromPlatformInvitesParams = {
+    projectRoleId: string
+    entityManager: EntityManager
+}
+
+type LoadProvisioningContextParams = {
+    invitations: UserInvitation[]
+    log: FastifyBaseLogger
+}
+
+type ProvisioningContext = {
+    projectRoleById: Map<string, ProjectRole>
+    liveProjectPlatformIdById: Map<string, string>
+    projectRolesEnabledByPlatformId: Map<string, boolean>
+}
+
+type AddToInvitedProjectParams = {
+    invitation: UserInvitation
+    userId: string
+    log: FastifyBaseLogger
+    context: ProvisioningContext
+    failsWithoutProjectRoles: boolean
+}
+
 type ListUserParams = {
     platformId: string
     type: InvitationType
@@ -440,5 +533,13 @@ type DeleteAcceptedPlatformInvitesParams = {
 type GetAcceptedAdminOrOperatorInviteRoleParams = {
     email: string
     platformId: string
+    entityManager?: EntityManager
+}
+
+type ClaimInvitedProjectParams = {
+    email: string
+    platformId: string
+    projectId: string | null
+    type: InvitationType
     entityManager?: EntityManager
 }

@@ -183,6 +183,21 @@ export const projectCollectionUtils = {
       project: data!,
     };
   },
+  useCurrentProjectOrNull: () => {
+    const projectId = authenticationSession.getProjectId();
+    const { data } = useLiveSuspenseQuery(
+      (q) =>
+        q
+          .from({ project: projectCollection })
+          .where(({ project }) => eq(project.id, projectId))
+          .select(({ project }) => ({ ...project }))
+          .findOne(),
+      [projectId],
+    );
+    return {
+      project: data ?? null,
+    };
+  },
   useAll: () => {
     const currentUserId = authenticationSession.getCurrentUserId();
     return useLiveSuspenseQuery(
