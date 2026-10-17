@@ -37,7 +37,7 @@ export const newCardTrigger = createTrigger({
 			(webhook) => webhook.idModel === element_id && webhook.callbackURL === context.webhookUrl,
 		);
 		if (webhook) {
-			context.webhookUrl = webhook.callbackURL;
+			await context.store.put('webhook_id', webhook.id);
 			return;
 		}
 		const response = await trelloCommon.create_webhook(
