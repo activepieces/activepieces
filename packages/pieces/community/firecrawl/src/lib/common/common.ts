@@ -163,7 +163,9 @@ export async function followCrawlPages({
 }): Promise<CrawlStatusPage> {
   let data = firstPage.data ?? [];
   let next = firstPage.next;
-  while (isFirecrawlApiUrl(next)) {
+  const visited = new Set<string>();
+  while (isFirecrawlApiUrl(next) && !visited.has(next)) {
+    visited.add(next);
     const response = await httpClient.sendRequest<CrawlStatusPage>({
       method: HttpMethod.GET,
       url: next,
@@ -172,9 +174,6 @@ export async function followCrawlPages({
       },
     });
     data = [...data, ...(response.body.data ?? [])];
-    if (response.body.next === next) {
-      break;
-    }
     next = response.body.next;
   }
   return { ...firstPage, data, next: null };
