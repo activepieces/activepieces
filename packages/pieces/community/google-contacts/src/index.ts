@@ -60,6 +60,12 @@ export const googleContacts = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth).access_token}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path after ${googleContactsCommon.baseUrl}`,
+          placeholder: '/me/connections?personFields=names',
+        },
+      },
     }),
   ],
   displayName: 'Google Contacts',
