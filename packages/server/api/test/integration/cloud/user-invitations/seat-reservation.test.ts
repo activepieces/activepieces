@@ -98,6 +98,16 @@ describe('Seat reservation (ADR-0010) + active-user floor (ADR-0009)', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
         })
 
+        it('refuses re-sending an expired invite when the seats are full', async () => {
+            const { mockOwnerToken, mockPlatform, mockProject } = await setupPlatform({ usersLimit: 1 })
+            const expiredEmail = faker.internet.email().toLowerCase()
+            await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.PENDING, email: expiredEmail, createdDaysAgo: 8 })
+
+            const response = await invite({ token: mockOwnerToken, projectId: mockProject.id, email: expiredEmail })
+
+            expectSeatQuotaExceeded(response)
+        })
+
         it('counts accepted-but-not-yet-provisioned invitations toward the seat limit', async () => {
             const { mockOwnerToken, mockPlatform, mockProject } = await setupPlatform({ usersLimit: 2 })
             await seedInvitation({ platformId: mockPlatform.id, status: InvitationStatus.ACCEPTED })
