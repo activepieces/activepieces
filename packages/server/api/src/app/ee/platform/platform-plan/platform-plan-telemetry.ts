@@ -30,9 +30,9 @@ export const platformPlanTelemetry = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async onEnterpriseTrialEnded({ platformId, endedAt }: EnterpriseTrialEndedParams): Promise<void> {
+    async onEnterpriseTrialEnded({ platformId, trialEndsAt, endedAt }: EnterpriseTrialEndedParams): Promise<void> {
         await distributedStore.runOnceWithin(
-            `enterprise_trial_ended_${platformId}_${endedAt}`,
+            `enterprise_trial_ended_${platformId}_${trialEndsAt}`,
             PLAN_CHANGE_ONCE_SECONDS,
             () => telemetry(log).trackPlatform({
                 platformId,
@@ -155,5 +155,6 @@ type EnterpriseTrialStartedParams = {
 
 type EnterpriseTrialEndedParams = {
     platformId: string
+    trialEndsAt: string
     endedAt: string
 }
