@@ -456,6 +456,8 @@ import { AddPlatformTierFastAndConversationTier1864000000000 } from './migration
 import { AddAuditLogRetentionDaysToPlatform1865000000000 } from './migration/postgres/1865000000000-AddAuditLogRetentionDaysToPlatform'
 import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from './migration/postgres/1866000000000-AddAiSpecificModelsVisibleToPlatformConfiguration'
 import { AddAgentTask1867000000000 } from './migration/postgres/1867000000000-AddAgentTask'
+import { AddProviderConfigIdToAgentConversation1868000000000 } from './migration/postgres/1868000000000-AddProviderConfigIdToAgentConversation'
+import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -468,7 +470,9 @@ const getSslConfig = (): boolean | TlsOptions => {
 }
 
 export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
-    return []
+    return [
+        AddAgentConversationProviderConfigIdIndex1869000000000,
+    ]
 }
 
 export const getMigrations = (): (new () => Migration)[] => {
@@ -930,6 +934,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAuditLogRetentionDaysToPlatform1865000000000,
         AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000,
         AddAgentTask1867000000000,
+        AddProviderConfigIdToAgentConversation1868000000000,
     ]
     return migrations
 }

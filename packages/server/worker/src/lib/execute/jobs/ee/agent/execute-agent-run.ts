@@ -356,7 +356,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         ...(config.previousUiMessages as PersistedAgentMessage[]),
                         ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
                     ],
-                    ...answeredByOf({ config, answeredBy: turn.answeredBy }),
+                    ...answeredByOf({ answeredBy: turn.answeredBy }),
                 }
                 const { error: cancelSaveError } = await tryCatch(() => ctx.apiClient.saveAgentMessages(cancelSavePayload))
                 if (cancelSaveError) {
@@ -409,7 +409,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ],
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) && isNil(config.platformTier) ? config.tier.id : undefined),
-                ...answeredByOf({ config, answeredBy: turn.answeredBy }),
+                ...answeredByOf({ answeredBy: turn.answeredBy }),
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
@@ -504,8 +504,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
     },
 }
 
-function answeredByOf({ config, answeredBy }: { config: AgentConfigResponse, answeredBy: TurnModel }): Pick<SaveAgentMessagesRequest, 'answeredBy'> {
-    return isNil(config.platformTier) ? {} : { answeredBy: { provider: answeredBy.provider, modelId: answeredBy.modelId } }
+function answeredByOf({ answeredBy }: { answeredBy: TurnModel }): Pick<SaveAgentMessagesRequest, 'answeredBy'> {
+    return { answeredBy: { provider: answeredBy.provider, modelId: answeredBy.modelId } }
 }
 
 function turnModelsFor({ config, model, billing, metadata }: { config: AgentConfigResponse, model: LanguageModel, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): [TurnModel, ...TurnModel[]] {

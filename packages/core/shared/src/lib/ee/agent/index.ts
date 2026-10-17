@@ -206,6 +206,7 @@ export const AgentConversation = z.object({
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
     modelTierId: Nullable(ApId),
+    providerConfigId: Nullable(ApId),
     status: z.nativeEnum(AgentConversationStatus).default(AgentConversationStatus.IDLE),
     activeRunId: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
@@ -225,6 +226,7 @@ export const CreateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
     modelTierId: z.optional(Nullable(ApId)),
+    providerConfigId: z.optional(Nullable(ApId)),
     agentId: z.optional(z.string()),
     builder: z.optional(z.boolean()),
     projectId: z.optional(z.string()),
@@ -235,6 +237,7 @@ export const UpdateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
     modelTierId: z.optional(Nullable(ApId)),
+    providerConfigId: z.optional(Nullable(ApId)),
 })
 export type UpdateAgentConversationRequest = z.infer<typeof UpdateAgentConversationRequest>
 
