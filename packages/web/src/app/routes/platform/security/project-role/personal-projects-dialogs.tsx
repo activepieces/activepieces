@@ -1,3 +1,4 @@
+import { ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
@@ -99,7 +100,7 @@ export function TurnOffPersonalProjectsDialog({
             <p className="text-sm text-gray-11">
               {t('Members keep their existing personal projects.')}{' '}
               <Link
-                to="/platform/projects"
+                to={`/platform/projects?type=${ProjectType.PERSONAL}`}
                 className="whitespace-nowrap font-medium text-accent-11 hover:underline"
               >
                 {t('manageAllPersonalProjectsInProjects', {
