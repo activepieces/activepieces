@@ -144,5 +144,13 @@
   "Enable for files like PDFs, images, etc.": "Aktifkan untuk file seperti PDF, gambar, dll.",
   "On a failed request, output the error instead of failing the step.": "Jika permintaan gagal, keluarkan error sebagai output alih-alih menggagalkan langkah.",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Detik untuk menunggu respons. Kosong: hingga batas alur (10 menit).",
-  "Follow 3xx redirects instead of returning them as the response.": "Ikuti pengalihan 3xx alih-alih mengembalikannya sebagai respons."
+  "Follow 3xx redirects instead of returning them as the response.": "Ikuti pengalihan 3xx alih-alih mengembalikannya sebagai respons.",
+  "Work": "Pekerjaan",
+  "Contact Info": "Info Kontak",
+  "Contact to Update": "Kontak yang Diperbarui",
+  "What Changes": "Yang Berubah",
+  "Search": "Pencarian",
+  "Results": "Hasil",
+  "Request": "Permintaan",
+  "Data to send": "Data yang Dikirim"
 }

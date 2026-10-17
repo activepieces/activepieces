@@ -144,5 +144,13 @@
   "Enable for files like PDFs, images, etc.": "Включите для файлов, таких как PDF, изображения и т. д.",
   "On a failed request, output the error instead of failing the step.": "При неудачном запросе выводить ошибку, а не завершать шаг с ошибкой.",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Сколько секунд ждать ответа. Пусто: до лимита потока (10 мин).",
-  "Follow 3xx redirects instead of returning them as the response.": "Следовать перенаправлениям 3xx, а не возвращать их в качестве ответа."
+  "Follow 3xx redirects instead of returning them as the response.": "Следовать перенаправлениям 3xx, а не возвращать их в качестве ответа.",
+  "Work": "Работа",
+  "Contact Info": "Контактная информация",
+  "Contact to Update": "Контакт для обновления",
+  "What Changes": "Что изменится",
+  "Search": "Поиск",
+  "Results": "Результаты",
+  "Request": "Запрос",
+  "Data to send": "Отправляемые данные"
 }

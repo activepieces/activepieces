@@ -214,5 +214,13 @@
   "Websites": "Websites",
   "Custom Fields": "Benutzerdefinierte Felder",
   "New or Updated Contact": "Neuer oder aktualisierter Kontakt",
-  "Runs when a contact is added or edited in Google Contacts.": "Wird ausgeführt, wenn ein Kontakt in Google Contacts hinzugefügt oder bearbeitet wird."
+  "Runs when a contact is added or edited in Google Contacts.": "Wird ausgeführt, wenn ein Kontakt in Google Contacts hinzugefügt oder bearbeitet wird.",
+  "Work": "Arbeit",
+  "Contact Info": "Kontaktinfo",
+  "Contact to Update": "Zu aktualisierender Kontakt",
+  "What Changes": "Was sich ändert",
+  "Search": "Suche",
+  "Results": "Ergebnisse",
+  "Request": "Anfrage",
+  "Data to send": "Zu sendende Daten"
 }

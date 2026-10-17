@@ -144,5 +144,13 @@
   "Enable for files like PDFs, images, etc.": "Bật cho các tệp như PDF, hình ảnh, v.v.",
   "On a failed request, output the error instead of failing the step.": "Khi yêu cầu thất bại, xuất lỗi thay vì làm bước thất bại.",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Số giây chờ phản hồi. Để trống: tối đa đến giới hạn của luồng (10 phút).",
-  "Follow 3xx redirects instead of returning them as the response.": "Theo các chuyển hướng 3xx thay vì trả về chúng làm phản hồi."
+  "Follow 3xx redirects instead of returning them as the response.": "Theo các chuyển hướng 3xx thay vì trả về chúng làm phản hồi.",
+  "Work": "Công việc",
+  "Contact Info": "Thông tin liên hệ",
+  "Contact to Update": "Liên hệ cần cập nhật",
+  "What Changes": "Nội dung thay đổi",
+  "Search": "Tìm kiếm",
+  "Results": "Kết quả",
+  "Request": "Yêu cầu",
+  "Data to send": "Dữ liệu cần gửi"
 }

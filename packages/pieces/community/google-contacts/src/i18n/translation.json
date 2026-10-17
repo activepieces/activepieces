@@ -160,6 +160,14 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Work": "Work",
+  "Contact Info": "Contact Info",
+  "Contact to Update": "Contact to Update",
+  "What Changes": "What Changes",
+  "Search": "Search",
+  "Results": "Results",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New or Updated Contact": "New or Updated Contact",
   "Runs when a contact is added or edited in Google Contacts.": "Runs when a contact is added or edited in Google Contacts."
 }

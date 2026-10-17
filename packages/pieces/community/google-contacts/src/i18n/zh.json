@@ -214,5 +214,13 @@
   "Websites": "网站",
   "Custom Fields": "自定义字段",
   "New or Updated Contact": "新的或更新的联系人",
-  "Runs when a contact is added or edited in Google Contacts.": "在 Google Contacts 中添加或编辑联系人时运行。"
+  "Runs when a contact is added or edited in Google Contacts.": "在 Google Contacts 中添加或编辑联系人时运行。",
+  "Work": "工作",
+  "Contact Info": "联系方式",
+  "Contact to Update": "要更新的联系人",
+  "What Changes": "更改内容",
+  "Search": "搜索",
+  "Results": "结果",
+  "Request": "请求",
+  "Data to send": "要发送的数据"
 }

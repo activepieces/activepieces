@@ -214,5 +214,13 @@
   "Websites": "Websites",
   "Custom Fields": "Aangepaste velden",
   "New or Updated Contact": "Nieuwe of bijgewerkte contactpersoon",
-  "Runs when a contact is added or edited in Google Contacts.": "Wordt uitgevoerd wanneer een contactpersoon in Google Contacts wordt toegevoegd of bewerkt."
+  "Runs when a contact is added or edited in Google Contacts.": "Wordt uitgevoerd wanneer een contactpersoon in Google Contacts wordt toegevoegd of bewerkt.",
+  "Work": "Werk",
+  "Contact Info": "Contactgegevens",
+  "Contact to Update": "Bij te werken contactpersoon",
+  "What Changes": "Wat er verandert",
+  "Search": "Zoeken",
+  "Results": "Resultaten",
+  "Request": "Verzoek",
+  "Data to send": "Te verzenden gegevens"
 }

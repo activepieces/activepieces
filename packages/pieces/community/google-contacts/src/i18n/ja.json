@@ -214,5 +214,13 @@
   "Websites": "ウェブサイト",
   "Custom Fields": "カスタムフィールド",
   "New or Updated Contact": "新規または更新された連絡先",
-  "Runs when a contact is added or edited in Google Contacts.": "Google Contacts で連絡先が追加または編集されたときに実行されます。"
+  "Runs when a contact is added or edited in Google Contacts.": "Google Contacts で連絡先が追加または編集されたときに実行されます。",
+  "Work": "勤務先",
+  "Contact Info": "連絡先情報",
+  "Contact to Update": "更新する連絡先",
+  "What Changes": "変更内容",
+  "Search": "検索",
+  "Results": "結果",
+  "Request": "リクエスト",
+  "Data to send": "送信するデータ"
 }
