@@ -150,12 +150,6 @@ const InviteUserDialogInternal = ({
   const platformUserEmails = new Set(
     platformUsersData?.data.map((u) => u.email.toLowerCase()) ?? [],
   );
-  const { data: platformInvitations } =
-    platformUserHooks.usePlatformInvitations();
-  const platformInviteEmails = new Set(
-    platformInvitations?.map((invitation) => invitation.email.toLowerCase()) ??
-      [],
-  );
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const projectMemberEmails = new Set(
     projectMembers?.map((m) => m.user.email.toLowerCase()) ?? [],
@@ -249,6 +243,14 @@ const InviteUserDialogInternal = ({
 
   const invitationType = form.getValues().type;
   const isPlatformInvite = invitationType === InvitationType.PLATFORM;
+  const { data: platformInvitations } =
+    platformUserHooks.usePlatformInvitations({
+      enabled: open && isPlatformInvite,
+    });
+  const platformInviteEmails = new Set(
+    platformInvitations?.map((invitation) => invitation.email.toLowerCase()) ??
+      [],
+  );
   const selectedPlatformRole = form.watch('platformRole');
   const enteredEmails = form.watch('emails');
   const invitesSomeoneNew =

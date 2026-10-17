@@ -38,7 +38,7 @@ export const platformUserHooks = {
       enabled: canListUsers,
     });
   },
-  usePlatformInvitations: () => {
+  usePlatformInvitations: ({ enabled = true }: { enabled?: boolean } = {}) => {
     return useQuery({
       queryFn: () => {
         return userInvitationApi.listAll({
@@ -49,6 +49,7 @@ export const platformUserHooks = {
       },
       queryKey: platformUserKeys.invitations,
       staleTime: 0,
+      enabled,
     });
   },
 };
