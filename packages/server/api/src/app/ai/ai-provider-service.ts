@@ -118,25 +118,30 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         await assertDisplayNameIsFree({ platformId, provider: request.provider, displayName: request.displayName })
         await this.validateProviderCredentials(request.provider, request.auth, request.config)
-        const isFirstKey = !await aiProviderRepo().existsBy({ platformId, provider: Not(AIProviderName.ACTIVEPIECES) })
-        if (isFirstKey) {
-            await aiProviderRepo().update({ platformId }, { enabledForChat: false })
-        }
-        const saved = await aiProviderRepo().save({
-            id: apId(),
-            enabledForChat: isFirstKey,
-            auth: await encryptUtils.encryptObject(request.auth),
-            config: request.config,
-            provider: request.provider,
-            displayName: request.displayName,
-            platformId,
-            modelScope: 'all',
-            modelIds: [],
-            projectScope: 'all',
-            projectIds: [],
-            status: 'active',
-            statusReason: null,
-            statusUpdated: new Date().toISOString(),
+        const auth = await encryptUtils.encryptObject(request.auth)
+        const { saved, isFirstKey } = await transaction(async (manager) => {
+            await platformModelTierService.lockPlatform({ manager, platformId })
+            const firstKey = !await aiProviderRepo(manager).existsBy({ platformId, provider: Not(AIProviderName.ACTIVEPIECES) })
+            if (firstKey) {
+                await aiProviderRepo(manager).update({ platformId }, { enabledForChat: false })
+            }
+            const row = await aiProviderRepo(manager).save({
+                id: apId(),
+                enabledForChat: firstKey,
+                auth,
+                config: request.config,
+                provider: request.provider,
+                displayName: request.displayName,
+                platformId,
+                modelScope: 'all',
+                modelIds: [],
+                projectScope: 'all',
+                projectIds: [],
+                status: 'active',
+                statusReason: null,
+                statusUpdated: new Date().toISOString(),
+            })
+            return { saved: row, isFirstKey: firstKey }
         })
         return toConfigResponse({ row: saved, enabledForChat: isFirstKey })
     },
