@@ -41,6 +41,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/format-utils';
 
+import { InviteOnlyProjectDialog } from './invite-only-project-dialog';
 import { LastProjectDialog } from './last-project-dialog';
 
 export type MemberRowData =
@@ -176,11 +177,13 @@ const ActionsCell = ({
 }) => {
   const { checkAccess } = useAuthorization();
   const { project } = projectCollectionUtils.useCurrentProject();
-  const { activeDefaultProjectIds } = platformHooks.useNewMemberSettings();
+  const { activeDefaultProjectIds, personalProjectsActive } =
+    platformHooks.useNewMemberSettings();
   const { data: currentUser } = userHooks.useCurrentUser();
   const isPlatformAdmin = currentUser?.platformRole === PlatformRole.ADMIN;
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLastProjectOpen, setIsLastProjectOpen] = useState(false);
+  const [isInviteOnlyProjectOpen, setIsInviteOnlyProjectOpen] = useState(false);
   const isLastProject =
     row.original.type === 'member' && row.original.data.isLastProject === true;
 
@@ -205,6 +208,13 @@ const ActionsCell = ({
     row.original.data.type === InvitationType.PLATFORM &&
     row.original.data.platformRole === PlatformRole.MEMBER &&
     activeDefaultProjectIds.includes(project.id);
+
+  const leavesInviteWithoutProject =
+    row.original.type === 'invitation' &&
+    row.original.data.type === InvitationType.PLATFORM &&
+    row.original.data.platformRole === PlatformRole.MEMBER &&
+    !personalProjectsActive &&
+    activeDefaultProjectIds.length === 0;
 
   const deleteMember = async () => {
     if (row.original.type === 'member') {
@@ -242,12 +252,20 @@ const ActionsCell = ({
             setIsLastProjectOpen(true);
             return;
           }
+          if (open && leavesInviteWithoutProject) {
+            setIsInviteOnlyProjectOpen(true);
+            return;
+          }
           setIsConfirmOpen(open);
         }}
         onError={(error) => {
           setIsConfirmOpen(false);
           if (api.isApError(error, ErrorCode.LAST_PROJECT)) {
-            setIsLastProjectOpen(true);
+            if (isPlatformInvitation) {
+              setIsInviteOnlyProjectOpen(true);
+            } else {
+              setIsLastProjectOpen(true);
+            }
             refetch();
             return;
           }
@@ -291,6 +309,16 @@ const ActionsCell = ({
         onOpenChange={setIsLastProjectOpen}
         memberName={displayName}
       />
+      {row.original.type === 'invitation' && (
+        <InviteOnlyProjectDialog
+          open={isInviteOnlyProjectOpen}
+          onOpenChange={setIsInviteOnlyProjectOpen}
+          invitationId={row.original.data.id}
+          email={displayName}
+          projectName={project.displayName}
+          onRevoked={refetch}
+        />
+      )}
     </PermissionNeededTooltip>
   );
 };
