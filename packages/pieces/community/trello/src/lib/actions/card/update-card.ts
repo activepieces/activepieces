@@ -89,8 +89,9 @@ export const updateCard = createAction({
       body.pos = context.propsValue['position'];
     }
     
-    if (context.propsValue['labels']) {
-      body.idLabels = context.propsValue['labels'];
+    const labels = context.propsValue['labels'];
+    if (Array.isArray(labels) && labels.length > 0) {
+      body.idLabels = labels;
     }
     
     if (context.propsValue['closed'] !== undefined) {
