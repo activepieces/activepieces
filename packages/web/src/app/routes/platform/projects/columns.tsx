@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  PlatformWithoutSensitiveData,
+  PlatformResponse,
   ProjectWithLimits,
   ProjectType,
 } from '@activepieces/shared';
@@ -45,7 +45,8 @@ export const projectsTableColumns = ({
         const locked = row.original.plan.locked;
         const isPersonal = row.original.type === ProjectType.PERSONAL;
         const isDefault =
-          platform.plan.projectRolesEnabled && row.original.isDefault;
+          platform.plan.projectRolesEnabled &&
+          platform.defaultProjectIds.includes(row.original.id);
 
         return (
           <div className="text-left flex items-center justify-start ">
@@ -192,5 +193,5 @@ function DefaultProjectBadge() {
 }
 
 type ProjectsTableColumnsProps = {
-  platform: PlatformWithoutSensitiveData;
+  platform: PlatformResponse;
 };
