@@ -75,6 +75,7 @@ async function loadModules() {
 
 describe('enterprise trial', () => {
     beforeEach(() => {
+        vi.useRealTimers()
         vi.clearAllMocks()
         vi.resetModules()
         mockGetEdition.mockReturnValue('cloud')
@@ -169,7 +170,34 @@ describe('enterprise trial', () => {
             await expect(autumnUtils.refreshEntitlements(log, PLATFORM_ID)).rejects.toThrow('redis down')
 
             expect(mockPlanUpdate).toHaveBeenCalled()
-            expect(mockOnTrialEnded).toHaveBeenCalledWith({ platformId: PLATFORM_ID, endedAt: '2026-10-13T16:51:01.835Z' })
+            expect(mockOnTrialEnded).toHaveBeenCalledWith({
+                platformId: PLATFORM_ID,
+                trialEndsAt: '2026-10-13T16:51:01.835Z',
+                endedAt: '2026-10-13T16:51:01.835Z',
+            })
+        })
+
+        it('reports an early-ended trial as ending when the refresh noticed it', async () => {
+            vi.useFakeTimers({ now: new Date('2026-10-17T17:20:40.000Z'), toFake: ['Date'] })
+            const { autumnUtils } = await loadModules()
+            const freeOnly = {
+                subscriptions: [{ planId: PlanName.FREE, status: 'active', addOn: false, trialEndsAt: null, plan: { addOn: false, items: [] } }],
+                purchases: [],
+                balances: {},
+            }
+            vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue({ getCustomer: async () => freeOnly } as never)
+            vi.spyOn(autumnUtils, 'writeCustomerStateCaches').mockResolvedValue(undefined)
+            vi.spyOn(autumnUtils, 'invalidateBillingOverview').mockResolvedValue(undefined)
+            vi.spyOn(autumnUtils, 'provisionLicenseKeyIfPaid').mockResolvedValue(undefined)
+            mockFindPlan.mockResolvedValue({ plan: PlanName.FREE, enterpriseTrialEndsAt: '2026-10-24T17:15:30.022Z' })
+
+            await autumnUtils.refreshEntitlements(log, PLATFORM_ID)
+
+            expect(mockOnTrialEnded).toHaveBeenCalledWith({
+                platformId: PLATFORM_ID,
+                trialEndsAt: '2026-10-24T17:15:30.022Z',
+                endedAt: '2026-10-17T17:20:40.000Z',
+            })
         })
     })
 })
