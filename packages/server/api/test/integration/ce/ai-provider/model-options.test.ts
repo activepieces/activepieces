@@ -1,9 +1,10 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { modelCatalog } from '@activepieces/server-utils'
-import { AIProviderModelType, ModelOptions, PlatformModelTier } from '@activepieces/shared'
+import { AIProviderModelType, aiProviderUtils, ModelOptions, PlatformModelTier } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { vi } from 'vitest'
+import { aiProviders } from '../../../../src/app/ai/providers'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
@@ -101,6 +102,26 @@ describe('GET /v1/ai-providers/model-options', () => {
         const options = await listOptions({ surface: 'chat' })
 
         expect(options.keys.flatMap((key) => key.models.map((model) => model.id))).toEqual(['gemini-2.5-flash'])
+    })
+
+    it('offers chat the recommended models first, then only models the catalog says call tools', async () => {
+        vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockResolvedValue([
+            { id: 'gpt-4o', name: 'GPT-4o', type: AIProviderModelType.TEXT },
+            { id: 'no-tools', name: 'No tools', type: AIProviderModelType.TEXT },
+            { id: 'gpt-5.5', name: 'GPT-5.5', type: AIProviderModelType.TEXT },
+            { id: 'gpt-4o-2024-05-13', name: 'Dated snapshot', type: AIProviderModelType.TEXT },
+        ])
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue({
+            lookup: (model) => model.modelId === 'no-tools' ? { supportsToolCalling: false } : model.modelId === 'gpt-4o' ? { supportsToolCalling: true } : undefined,
+        })
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, displayName: 'OpenAI' })
+        const recommended = (aiProviderUtils.getCuratedChatModels({ provider: AIProviderName.OPENAI }) ?? []).map((model) => model.id)
+
+        const chat = (await listOptions({ surface: 'chat' })).keys[0].models.map((model) => model.id)
+        const agent = (await listOptions({ surface: 'agent' })).keys[0].models.map((model) => model.id)
+
+        expect(chat).toEqual([...recommended, 'gpt-4o'])
+        expect(agent).toEqual(['gpt-5.5', 'gpt-4o', 'gpt-4o-2024-05-13'])
     })
 
     it('defaults to the Default tier, else credits, else the first option', async () => {

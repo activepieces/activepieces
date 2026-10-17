@@ -19,6 +19,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { api } from '@/lib/api';
 import { chatDebug } from '@/lib/chat-debug-logger';
@@ -32,7 +33,7 @@ import {
 } from './chat-store';
 import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
-import { chatUtils } from './chat-utils';
+import { ChatModelPick, chatUtils } from './chat-utils';
 import { useStreamingReducer } from './use-streaming-reducer';
 
 function applyQuickRepliesToStore({
@@ -333,7 +334,7 @@ type SendStatus =
 export function useAgentChat({
   agentId,
   builder,
-  defaultModelName,
+  projectId,
   onTitleUpdate,
   onConversationCreated,
   onCreditsExhausted,
@@ -341,7 +342,7 @@ export function useAgentChat({
 }: {
   agentId?: string;
   builder?: boolean;
-  defaultModelName?: string | null;
+  projectId?: string | null;
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
@@ -353,7 +354,10 @@ export function useAgentChat({
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
   );
-  const [modelName, setModelNameState] = useState<string | null>(null);
+  const [modelPick, setModelPickState] = useState<ChatModelPick | null>(null);
+  const [conversationProjectId, setConversationProjectId] = useState<
+    string | null
+  >(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isPollingForAgentReply, setIsPollingForAgentReply] = useState(false);
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
@@ -376,9 +380,11 @@ export function useAgentChat({
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
-  const modelNameRef = useRef<string | null>(null);
-  const defaultModelNameRef = useRef(defaultModelName ?? null);
-  defaultModelNameRef.current = defaultModelName ?? null;
+  const modelPickRef = useRef<ChatModelPick | null>(null);
+  const savedPickRef = useRef<ChatModelPick | null>(null);
+  const pickSaveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+  const projectIdRef = useRef(projectId ?? null);
+  projectIdRef.current = projectId ?? null;
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -749,14 +755,21 @@ export function useAgentChat({
   const createConversation = useCallback(
     async ({
       title,
-      modelName,
-    }: { title?: string | null; modelName?: string | null } = {}) => {
+      pick,
+    }: { title?: string | null; pick?: ChatModelPick | null } = {}) => {
+      const chatProjectId = projectIdRef.current;
       const conv = await chatApi.createConversation({
         title: title ?? null,
-        modelName: modelName ?? null,
-        ...(agentId === undefined ? {} : { agentId }),
+        ...(agentId === undefined
+          ? {
+              ...(pick ?? {}),
+              ...(isNil(chatProjectId) ? {} : { projectId: chatProjectId }),
+            }
+          : { agentId }),
         ...(builder === undefined ? {} : { builder }),
       });
+      setConversationProjectId(conv.projectId ?? null);
+      savedPickRef.current = pick ?? null;
       conversationIdRef.current = conv.id;
       setConversationIdState(conv.id);
       return conv;
@@ -822,7 +835,7 @@ export function useAgentChat({
         const { error: convError } = await tryCatch(async () => {
           const conv = await createConversation({
             title: content.slice(0, 100),
-            modelName: modelNameRef.current ?? defaultModelNameRef.current,
+            pick: modelPickRef.current,
           });
           onConversationCreatedRef.current?.(conv.id);
         });
@@ -952,8 +965,15 @@ export function useAgentChat({
         data: historyResult.data.data,
         setState: store.setState,
       });
-      modelNameRef.current = convResult.data.modelName ?? null;
-      setModelNameState(convResult.data.modelName ?? null);
+      const savedPick: ChatModelPick = {
+        modelTierId: convResult.data.modelTierId ?? null,
+        providerConfigId: convResult.data.providerConfigId ?? null,
+        modelName: convResult.data.modelName ?? null,
+      };
+      modelPickRef.current = savedPick;
+      savedPickRef.current = savedPick;
+      setModelPickState(savedPick);
+      setConversationProjectId(convResult.data.projectId ?? null);
       if (convResult.data.status === AgentConversationStatus.STREAMING) {
         const lastAssistantIdx = mapped.findLastIndex(
           (m) => m.role === 'assistant',
@@ -1050,20 +1070,35 @@ export function useAgentChat({
     refetchInterval: AGENT_POLL_INTERVAL_MS,
   });
 
-  const setModelName = useCallback(async (newModelName: string) => {
-    modelNameRef.current = newModelName;
-    setModelNameState(newModelName);
+  const setModelPick = useCallback(async (newPick: ChatModelPick) => {
+    modelPickRef.current = newPick;
+    setModelPickState(newPick);
     const convId = conversationIdRef.current;
-    if (convId) {
-      await chatApi
-        .updateConversation(convId, { modelName: newModelName })
-        .catch(() => undefined);
+    if (isNil(convId)) {
+      return;
+    }
+    const save = pickSaveQueueRef.current.then(() =>
+      tryCatch(() => chatApi.updateConversation(convId, newPick)),
+    );
+    pickSaveQueueRef.current = save;
+    const { error } = await save;
+    if (isNil(error)) {
+      savedPickRef.current = newPick;
+      return;
+    }
+    const stillLatest =
+      modelPickRef.current === newPick && conversationIdRef.current === convId;
+    if (stillLatest) {
+      modelPickRef.current = savedPickRef.current;
+      setModelPickState(savedPickRef.current);
+      toast.error(t("Couldn't switch the model. Try again."));
     }
   }, []);
 
   return {
     conversationId,
-    modelName,
+    conversationProjectId,
+    modelPick,
     messages,
     isStreaming,
     isResumedStream,
@@ -1074,6 +1109,6 @@ export function useAgentChat({
     sendMessage,
     cancelStream,
     setConversationId,
-    setModelName,
+    setModelPick,
   };
 }

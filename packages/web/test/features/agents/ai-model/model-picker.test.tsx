@@ -14,7 +14,10 @@ vi.mock('i18next', () => ({
   t: (key: string) => key,
 }));
 
-import { modelPickerView } from '@/features/agents/ai-model/model-picker';
+import {
+  modelPickerUtils,
+  modelPickerView,
+} from '@/features/agents/ai-model/model-picker';
 
 const optionModel = (modelId: string) => ({
   provider: AIProviderName.OPENAI,
@@ -217,5 +220,59 @@ describe('modelPickerView', () => {
         shown: shownAs({ modelId: supported }),
       }).current,
     ).toMatchObject({ kind: 'unavailable' });
+  });
+});
+
+describe('modelPickerUtils.isUnavailable', () => {
+  it('blocks a pick that is gone, but not one the admin hid or a live one', () => {
+    const gone = {
+      type: 'model',
+      provider: AIProviderName.CUSTOM,
+      providerConfigId: 'deleted-key',
+      modelId: 'old',
+    } as const;
+
+    expect(modelPickerUtils.isUnavailable({ options, value: gone })).toBe(true);
+    expect(
+      modelPickerUtils.isUnavailable({
+        options: { ...options, keys: [], specificModelsHidden: true },
+        value: gone,
+      }),
+    ).toBe(false);
+    expect(
+      modelPickerUtils.isUnavailable({
+        options,
+        value: { type: 'tier', tierId: 'tier-expert' },
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('recommended models', () => {
+  const withCurated: ModelOptions = {
+    ...options,
+    keys: [
+      {
+        providerConfigId: 'key-a',
+        provider: AIProviderName.OPENAI,
+        name: 'Team key',
+        models: [
+          { id: 'gpt-5.5', name: 'GPT-5.5', type: AIProviderModelType.TEXT },
+          { id: 'gpt-4o', name: 'GPT-4o', type: AIProviderModelType.TEXT },
+        ],
+      },
+    ],
+  };
+  const starred = (surface: 'chat' | 'agent' | 'flow') =>
+    modelPickerView({ options: withCurated, shown: null, surface })
+      .groups.filter((group) => group.section === 'keys')
+      .flatMap((group) => group.items)
+      .filter((item) => item.badges !== undefined)
+      .map((item) => item.name);
+
+  it('stars curated models in chat and agents, not in flows', () => {
+    expect(starred('chat')).toEqual(['GPT-5.5']);
+    expect(starred('agent')).toEqual(['GPT-5.5']);
+    expect(starred('flow')).toEqual([]);
   });
 });

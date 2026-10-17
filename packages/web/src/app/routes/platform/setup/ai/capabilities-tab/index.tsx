@@ -14,6 +14,7 @@ import {
   Search,
   Trash2,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import {
   AdminPageHeader,
@@ -127,6 +128,14 @@ function CapabilityCard({
   onSaved: () => void;
 }) {
   const Icon = CAPABILITY_ICON[capabilityInfo.capability];
+  const isEmbeddings =
+    capabilityInfo.capability === AiToolCapability.EMBEDDINGS;
+  const needsProviderKey =
+    isEmbeddings &&
+    aiCapabilitySources.eligibleProviders({
+      capability: capabilityInfo.capability,
+      providers,
+    }).length === 0;
   const connectedProvider = capabilityInfo.providers.find(
     (provider) => provider.id === config?.provider,
   );
@@ -173,9 +182,13 @@ function CapabilityCard({
             title={t('Reset {name}', { name: capabilityInfo.name })}
             message={
               chatProviderFallback
-                ? t('Chat goes back to using {provider}.', {
-                    provider: chatProviderFallback.name,
-                  })
+                ? isEmbeddings
+                  ? t('Knowledge bases go back to using {provider}.', {
+                      provider: chatProviderFallback.name,
+                    })
+                  : t('Chat goes back to using {provider}.', {
+                      provider: chatProviderFallback.name,
+                    })
                 : t(
                     'This removes the saved API key and disables this capability.',
                   )
@@ -200,24 +213,34 @@ function CapabilityCard({
       </p>
       <div className="mt-auto flex items-center justify-between gap-4 border-t px-5 py-3">
         <span className="text-xs text-gray-11">
-          {inUse
+          {isEmbeddings
+            ? inUse
+              ? t('Knowledge bases can index files')
+              : t("Knowledge bases can't index files yet")
+            : inUse
             ? t('Available to the assistant')
             : t("The assistant can't do this yet")}
         </span>
-        <AiCapabilityDialog
-          capabilityInfo={capabilityInfo}
-          existingConfig={config}
-          defaultProviderId={chatProviderFallback?.id}
-          onSaved={onSaved}
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
-          >
-            {inUse ? t('Change') : t('Connect')}
+        {needsProviderKey ? (
+          <Button asChild variant="outline" size="sm">
+            <Link to="/platform/ai">{t('Add a provider key')}</Link>
           </Button>
-        </AiCapabilityDialog>
+        ) : (
+          <AiCapabilityDialog
+            capabilityInfo={capabilityInfo}
+            existingConfig={config}
+            defaultProviderId={chatProviderFallback?.id}
+            onSaved={onSaved}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
+            >
+              {inUse ? t('Change') : t('Connect')}
+            </Button>
+          </AiCapabilityDialog>
+        )}
       </div>
     </div>
   );

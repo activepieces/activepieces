@@ -14,7 +14,7 @@ import {
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { KeyRound, RefreshCw, Trash2 } from 'lucide-react';
+import { KeyRound, RefreshCw, Star, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { z } from 'zod';
 
@@ -71,6 +71,8 @@ export function ConfigDetail({
   onReplaceCredentials,
   isRechecking,
   onRecheck,
+  isSettingDefault,
+  onSetDefault,
   onBack,
 }: {
   config: AIProviderWithoutSensitiveData;
@@ -82,6 +84,8 @@ export function ConfigDetail({
   onReplaceCredentials: () => void;
   isRechecking: boolean;
   onRecheck: () => void;
+  isSettingDefault: boolean;
+  onSetDefault: () => void;
   onBack: () => void;
 }) {
   const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
@@ -146,7 +150,7 @@ export function ConfigDetail({
   const metaLine = [
     info.name,
     usedByTierCount > 0 && t('usedByTiersCount', { count: usedByTierCount }),
-    config.enabledForChat && t('Chat provider'),
+    config.enabledForChat && t('Default AI key'),
     statusDetail,
   ]
     .filter(Boolean)
@@ -243,6 +247,18 @@ export function ConfigDetail({
           <RefreshCw className="size-4" />
           {t('Recheck')}
         </Button>
+        {!config.enabledForChat && (
+          <Button
+            variant="outline"
+            size="sm"
+            loading={isSettingDefault}
+            onClick={onSetDefault}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_SET_DEFAULT_RUN)}
+          >
+            <Star className="size-4" />
+            {t('Set as default')}
+          </Button>
+        )}
       </AdminPageHeader>
 
       <Tabs defaultValue="models" className="flex flex-col gap-6">

@@ -3,7 +3,7 @@ import { modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
 import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AIProviderModelType, AiProviderProjectScope, AiProviderToolConfig, aiProviderUtils, AIProviderWithoutSensitiveData, AiToolCapability, AiToolProvider, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
-import { EntityManager, FindOptionsWhere } from 'typeorm'
+import { EntityManager, FindOptionsWhere, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { getAiProviderConfirmKey, getManagedAiProviderKeyLockKey } from '../database/redis/keys'
@@ -118,22 +118,32 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         await assertDisplayNameIsFree({ platformId, provider: request.provider, displayName: request.displayName })
         await this.validateProviderCredentials(request.provider, request.auth, request.config)
-        const saved = await aiProviderRepo().save({
-            id: apId(),
-            auth: await encryptUtils.encryptObject(request.auth),
-            config: request.config,
-            provider: request.provider,
-            displayName: request.displayName,
-            platformId,
-            modelScope: 'all',
-            modelIds: [],
-            projectScope: 'all',
-            projectIds: [],
-            status: 'active',
-            statusReason: null,
-            statusUpdated: new Date().toISOString(),
+        const auth = await encryptUtils.encryptObject(request.auth)
+        const { saved, isFirstKey } = await transaction(async (manager) => {
+            await platformModelTierService.lockPlatform({ manager, platformId })
+            const firstKey = !await aiProviderRepo(manager).existsBy({ platformId, provider: Not(AIProviderName.ACTIVEPIECES) })
+            if (firstKey) {
+                await aiProviderRepo(manager).update({ platformId }, { enabledForChat: false })
+            }
+            const row = await aiProviderRepo(manager).save({
+                id: apId(),
+                enabledForChat: firstKey,
+                auth,
+                config: request.config,
+                provider: request.provider,
+                displayName: request.displayName,
+                platformId,
+                modelScope: 'all',
+                modelIds: [],
+                projectScope: 'all',
+                projectIds: [],
+                status: 'active',
+                statusReason: null,
+                statusUpdated: new Date().toISOString(),
+            })
+            return { saved: row, isFirstKey: firstKey }
         })
-        return toConfigResponse({ row: saved, enabledForChat: false })
+        return toConfigResponse({ row: saved, enabledForChat: isFirstKey })
     },
     async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
         const aiProvider = await aiProviderRepo().findOneBy({
@@ -520,7 +530,7 @@ async function assertCapabilitiesKeepKey({ manager, platformId, providerId, requ
             return []
         }
         const losesProjects = next.projectScope !== 'all'
-        const losesModel = !isNil(choice.data.modelId) && !aiKeyScope.keyOffersModel({ key: next, modelId: choice.data.modelId })
+        const losesModel = toolConfig.capability !== AiToolCapability.EMBEDDINGS && !isNil(choice.data.modelId) && !aiKeyScope.keyOffersModel({ key: next, modelId: choice.data.modelId })
         return losesProjects || losesModel ? [CAPABILITY_LABELS[toolConfig.capability]] : []
     })
     if (broken.length > 0) {

@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AI_PROVIDER_ENTITY_TYPES, GetProviderConfigResponse } from '@activepieces/shared'
+import { AgentConversation, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, GetProviderConfigResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
 import { aiKeyScope, ProviderScope } from '../../ai/ai-key-scope'
@@ -23,10 +23,12 @@ export const agentChatModel = (log: FastifyBaseLogger) => ({
                 return { modelTierId: defaultTier.tier.id, providerConfigId: null, modelName: null }
             }
         }
-        if (!isNil(await aiProviderService(log).getChatKey({ platformId, scope }))) {
+        const chatKey = await aiProviderService(log).getChatKey({ platformId, scope })
+        const { defaultChoice } = await aiModelOptionsService(log).list({ platformId, projectId, surface: 'chat' })
+        const onChatKey = defaultChoice?.type === 'model' && defaultChoice.providerConfigId === chatKey?.id
+        if (!isNil(chatKey) && !onChatKey) {
             return null
         }
-        const { defaultChoice } = await aiModelOptionsService(log).list({ platformId, projectId, surface: 'chat' })
         if (isNil(defaultChoice)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -51,6 +53,9 @@ export const agentChatModel = (log: FastifyBaseLogger) => ({
             ? null
             : agentModelResolution.resolvePinnedModelId({ provider: config.provider, modelName, config: config.config, modelScope: config.modelScope, modelIds: config.modelIds, log })
         if (isNil(config) || isNil(modelId)) {
+            throw unavailableError()
+        }
+        if (await keyNoLongerListsModel({ platformId, configId, provider: config.provider, modelId, scope, log })) {
             throw unavailableError()
         }
         return { config, modelId }
@@ -114,6 +119,14 @@ export const agentChatModel = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+async function keyNoLongerListsModel({ platformId, configId, provider, modelId, scope, log }: { platformId: string, configId: string, provider: AIProviderName, modelId: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<boolean> {
+    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
+        return false
+    }
+    const { data: models } = await tryCatch(() => aiProviderService(log).listModels({ platformId, provider, scope, configId }))
+    return !isNil(models) && !models.some((model) => model.id === modelId) && !aiProviderUtils.runnableChatModelIds({ provider }).includes(modelId)
+}
 
 function unavailableError(): ActivepiecesError {
     return new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: CHAT_MODEL_UNAVAILABLE_MESSAGE } })

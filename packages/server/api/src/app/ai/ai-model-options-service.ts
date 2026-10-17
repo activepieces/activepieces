@@ -109,18 +109,21 @@ function toKeyOption({ key, surface, lookup, callsTools }: { key: ProjectKeyMode
         return []
     }
     const textModels = models.filter((model) => model.type === AIProviderModelType.TEXT)
-    const offered = surface === 'chat'
-        ? chatModels({ row, textModels, lookup, callsTools })
-        : textModels.filter((model) => callsTools({ provider: row.provider, modelId: model.id }))
+    const toolModels = textModels.filter((model) => callsTools({ provider: row.provider, modelId: model.id }))
+    const offered = surface === 'flow'
+        ? toolModels
+        : surface === 'chat'
+            ? chatModels({ row, textModels, toolModels, lookup })
+            : curatedFirst({ provider: row.provider, models: toolModels })
     return offered.length === 0 ? [] : [{ providerConfigId: row.id, provider: row.provider, name: row.displayName, models: offered }]
 }
 
-function chatModels({ row, textModels, lookup, callsTools }: { row: AIProviderSchema, textModels: AIProviderModel[], lookup: Lookup, callsTools: CallsTools }): AIProviderModel[] {
+function chatModels({ row, textModels, toolModels, lookup }: { row: AIProviderSchema, textModels: AIProviderModel[], toolModels: AIProviderModel[], lookup: Lookup }): AIProviderModel[] {
     const curated = aiProviderUtils.getCuratedChatModels({ provider: row.provider })
     if (isNil(curated) || !isNil(aiKeyScope.manualModelIdsOf({ config: row.config }))) {
-        return textModels.filter((model) => callsTools({ provider: row.provider, modelId: model.id }))
+        return toolModels
     }
-    return curated
+    const recommended = curated
         .filter((model) => aiKeyScope.scopeAllows({ modelScope: row.modelScope, modelIds: row.modelIds, modelId: model.id }))
         .map((model) => textModels.find((listed) => listed.id === model.id) ?? {
             id: model.id,
@@ -128,6 +131,18 @@ function chatModels({ row, textModels, lookup, callsTools }: { row: AIProviderSc
             type: AIProviderModelType.TEXT,
             ...spreadIfDefined('metadata', lookup({ provider: row.provider, modelId: model.id })),
         })
+    const recommendedIds = new Set(recommended.map((model) => model.id))
+    const knownToCallTools = toolModels.filter((model) => !recommendedIds.has(model.id) && lookup({ provider: row.provider, modelId: model.id })?.supportsToolCalling === true)
+    return [...recommended, ...knownToCallTools]
+}
+
+function curatedFirst({ provider, models }: { provider: AIProviderName, models: AIProviderModel[] }): AIProviderModel[] {
+    const curatedIds = (aiProviderUtils.getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
+    const rank = (modelId: string): number => {
+        const index = curatedIds.indexOf(modelId)
+        return index === -1 ? curatedIds.length : index
+    }
+    return [...models].sort((a, b) => rank(a.id) - rank(b.id))
 }
 
 function modelChoiceOf({ key, modelId }: { key: ModelOptionsKey, modelId: string }): ModelChoice {

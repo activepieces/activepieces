@@ -431,14 +431,25 @@ function toolsVerdict({
   if (model?.metadata?.supportsToolCalling === false) {
     return 'noTools';
   }
-  const curated =
-    config === undefined
-      ? undefined
-      : aiProviderUtils.getCuratedChatModels({ provider: config.provider });
-  return entry !== undefined &&
-    curated?.some((curatedModel) => curatedModel.id === entry.modelId) === true
+  return config !== undefined &&
+    entry !== undefined &&
+    isRecommended({ provider: config.provider, modelId: entry.modelId })
     ? 'recommended'
     : null;
+}
+
+function isRecommended({
+  provider,
+  modelId,
+}: {
+  provider: AIProviderName;
+  modelId: string;
+}): boolean {
+  return (
+    aiProviderUtils
+      .getCuratedChatModels({ provider })
+      ?.some((curatedModel) => curatedModel.id === modelId) === true
+  );
 }
 
 export const modelMeta = {
@@ -464,6 +475,7 @@ export const modelMeta = {
   projectsWithoutTier,
   keyScopeImpact,
   toolsVerdict,
+  isRecommended,
 };
 
 export type KeyModelsById = Record<
