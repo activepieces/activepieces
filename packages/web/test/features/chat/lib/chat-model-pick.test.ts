@@ -65,7 +65,21 @@ describe('a chat model pick', () => {
     ).toMatchObject({ type: 'model', providerConfigId: 'gone', modelId: 'x' });
   });
 
-  it('shows the default for a legacy chat that stores only a model name', () => {
+  it('shows an older chat that stores only a model name on the key that lists it', () => {
+    expect(
+      chatUtils.choiceOf({
+        pick: { modelTierId: null, providerConfigId: null, modelName: 'gpt-6' },
+        options,
+      }),
+    ).toEqual({
+      type: 'model',
+      provider: AIProviderName.OPENAI,
+      providerConfigId: 'key-a',
+      modelId: 'gpt-6',
+    });
+  });
+
+  it('shows the default for an older chat whose model no key lists', () => {
     expect(
       chatUtils.choiceOf({
         pick: { modelTierId: null, providerConfigId: null, modelName: 'smart' },

@@ -1,4 +1,5 @@
 import {
+  ApFlagId,
   KnowledgeBaseEmbeddingSource,
   KnowledgeBaseFile,
 } from '@activepieces/shared';
@@ -6,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { validationUtils } from '@/lib/validation-utils';
 
@@ -21,10 +23,13 @@ export const useKnowledgeBaseFiles = () => {
 
 export const useKnowledgeBaseEmbeddingSource = () => {
   const projectId = authenticationSession.getProjectId();
+  const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
+    ApFlagId.PGVECTOR_AVAILABLE,
+  );
   return useQuery<KnowledgeBaseEmbeddingSource>({
     queryKey: ['knowledge-base-embedding-source', projectId],
     queryFn: () => knowledgeBaseApi.embeddingSource(),
-    enabled: projectId !== null,
+    enabled: projectId !== null && pgvectorAvailable === true,
   });
 };
 

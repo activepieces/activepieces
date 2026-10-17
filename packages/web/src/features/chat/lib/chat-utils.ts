@@ -594,8 +594,11 @@ function choiceOf({
   if (!isNil(pick.modelTierId)) {
     return { type: 'tier', tierId: pick.modelTierId };
   }
-  if (isNil(pick.providerConfigId) || isNil(pick.modelName)) {
+  if (isNil(pick.modelName)) {
     return null;
+  }
+  if (isNil(pick.providerConfigId)) {
+    return legacyChoiceOf({ modelName: pick.modelName, options });
   }
   const provider =
     pick.providerConfigId === options.credits?.providerConfigId
@@ -609,6 +612,35 @@ function choiceOf({
     providerConfigId: pick.providerConfigId,
     modelId: pick.modelName,
   };
+}
+
+function legacyChoiceOf({
+  modelName,
+  options,
+}: {
+  modelName: string;
+  options: ModelOptions;
+}): ModelChoice | null {
+  const credits = options.credits;
+  if (!isNil(credits) && credits.tiers.some((tier) => tier.id === modelName)) {
+    return {
+      type: 'model',
+      provider: AIProviderName.ACTIVEPIECES,
+      providerConfigId: credits.providerConfigId,
+      modelId: modelName,
+    };
+  }
+  const key = options.keys.find((candidate) =>
+    candidate.models.some((model) => model.id === modelName),
+  );
+  return isNil(key)
+    ? null
+    : {
+        type: 'model',
+        provider: key.provider,
+        providerConfigId: key.providerConfigId,
+        modelId: modelName,
+      };
 }
 
 function pickOf({ choice }: { choice: ModelChoice }): ChatModelPick {

@@ -194,6 +194,7 @@ function ChatBoxContent({
   const { data: modelOptions } = aiModelHooks.useModelOptions({
     projectId: chatProjectId ?? '',
     surface: 'chat',
+    tierId: modelPick?.modelTierId ?? undefined,
     enabled: showsPicker,
   });
   const shownChoice = isNil(modelOptions)
