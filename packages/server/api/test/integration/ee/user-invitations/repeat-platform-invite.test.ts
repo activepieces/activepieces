@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { ObjectLiteral, Repository } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockProject, createMockUserInvitation, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { createMockApiKey, createMockProject, createMockUserInvitation, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -341,6 +341,67 @@ describe('Removing a platform invite from a project', () => {
         const response = await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
 
         expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+    })
+
+    it('refuses to leave a Member invite with no project when new members get no personal project and there are no default projects', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        await databaseConnection().getRepository('platform').update({ id: platformId }, { autoCreatePersonalProjects: false })
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        const [invitation] = await platformInvitesOf({ email, platformId })
+
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response?.json().code).toBe(ErrorCode.LAST_PROJECT)
+        const [after] = await platformInvitesOf({ email, platformId })
+        expect(after.projectId).toBe(projectId)
+    })
+
+    it('still lets an API key leave a Member invite with no project', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        await databaseConnection().getRepository('platform').update({ id: platformId }, { autoCreatePersonalProjects: false })
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        const [invitation] = await platformInvitesOf({ email, platformId })
+        const apiKey = createMockApiKey({ platformId })
+        await databaseConnection().getRepository('api_key').save(apiKey)
+
+        const response = await removeProject({ token: apiKey.value, invitationId: invitation.id, projectId })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        const [after] = await platformInvitesOf({ email, platformId })
+        expect(after.projectId).toBeNull()
+    })
+
+    it('lets a Member invite lose its project when a default project is still there for them', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        await databaseConnection().getRepository('platform').update({ id: platformId }, { autoCreatePersonalProjects: false })
+        const defaultProject = createMockProject({ platformId, ownerId: (await ownerOf({ platformId })), type: ProjectType.TEAM })
+        await databaseConnection().getRepository('project').save({ ...defaultProject, isDefault: true })
+        const email = faker.internet.email().toLowerCase()
+        await invitePlatform({ token: ownerToken, email, platformRole: PlatformRole.MEMBER, projectId, projectRole: DefaultProjectRole.EDITOR })
+        const [invitation] = await platformInvitesOf({ email, platformId })
+
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        const [after] = await platformInvitesOf({ email, platformId })
+        expect(after.projectId).toBeNull()
+    })
+
+    it('does not guard an invite that is not for a Member', async () => {
+        const { platformId, projectId, ownerToken } = await setupPlatform()
+        await databaseConnection().getRepository('platform').update({ id: platformId }, { autoCreatePersonalProjects: false })
+        const email = faker.internet.email().toLowerCase()
+        const invitation = createMockUserInvitation({ email, platformId, type: InvitationType.PLATFORM, platformRole: PlatformRole.OPERATOR, projectId, status: InvitationStatus.PENDING })
+        await databaseConnection().getRepository('user_invitation').save(invitation)
+
+        const response = await removeProject({ token: ownerToken, invitationId: invitation.id, projectId })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        const [after] = await platformInvitesOf({ email, platformId })
+        expect(after.projectId).toBeNull()
     })
 
     it('does not find another platform\'s invite', async () => {
