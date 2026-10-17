@@ -151,6 +151,23 @@ describe('resolveModelIdForProvider', () => {
     })
 })
 
+describe('resolvePinnedModelId', () => {
+    const pinned = ({ provider, modelName, modelScope, modelIds }: { provider: AIProviderName, modelName: string, modelScope?: 'all' | 'selected', modelIds?: string[] }) =>
+        agentModelResolution.resolvePinnedModelId({ provider, modelName, modelScope, modelIds, log })
+
+    it('refuses a managed tier the catalog no longer publishes, instead of running the default', () => {
+        expect(pinned({ provider: AIProviderName.ACTIVEPIECES, modelName: 'a-retired-tier' })).toBeNull()
+        expect(pinned({ provider: AIProviderName.OPENROUTER, modelName: 'a-retired-tier' })).toBeNull()
+    })
+
+    it('refuses a managed tier whose model the key no longer allows', () => {
+        const modelId = pinned({ provider: AIProviderName.OPENROUTER, modelName: 'smart' })
+        expect(modelId).not.toBeNull()
+        expect(pinned({ provider: AIProviderName.OPENROUTER, modelName: 'smart', modelScope: 'selected', modelIds: ['some/other-model'] })).toBeNull()
+        expect(pinned({ provider: AIProviderName.OPENROUTER, modelName: 'smart', modelScope: 'selected', modelIds: [modelId ?? ''] })).toBe(modelId)
+    })
+})
+
 describe('resolveModelIdForAnalytics', () => {
     const forAnalytics = ({ provider, selectedModel, surface = 'chat', pinned = false }: { provider: AIProviderName | null, selectedModel: string | null, surface?: ModelTierSurface, pinned?: boolean }) =>
         agentModelResolution.resolveModelIdForAnalytics({ provider, selectedModel, surface, pinned })

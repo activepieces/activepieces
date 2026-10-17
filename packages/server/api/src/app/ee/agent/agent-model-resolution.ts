@@ -94,10 +94,13 @@ function resolveNamedModelId({ provider, modelName, surface, modelScope, modelId
 }
 
 function resolvePinnedModelId({ provider, modelName, config, modelScope, modelIds, log }: { provider: AIProviderName, modelName: string, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[], log: FastifyBaseLogger }): string | null {
-    if (provider === AIProviderName.OPENROUTER && isTierId({ modelName })) {
-        return findTier({ tierId: modelName, surface: 'chat' })?.modelId ?? null
+    const managed = provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER
+    if (managed && isTierId({ modelName })) {
+        const modelId = findTier({ tierId: modelName, surface: 'chat' })?.modelId
+        const excluded = modelScope === 'selected' && !isNil(modelIds) && !isNil(modelId) && !modelIds.includes(modelId)
+        return isNil(modelId) || excluded ? null : modelId
     }
-    if (provider !== AIProviderName.ACTIVEPIECES && !isNil(findTier({ tierId: modelName, surface: 'chat' }))) {
+    if (!managed && !isNil(findTier({ tierId: modelName, surface: 'chat' }))) {
         const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: modelName, surface: 'chat', config, modelScope, modelIds }))
         return data ?? null
     }
