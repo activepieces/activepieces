@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, ProjectRole, RoleType, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, newMemberSettingsUtils, PlatformRole, ProjectType, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ApEdition, InvitationStatus, InvitationType, PlatformRole, RemoveProjectFromInvitationResponse, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
@@ -14,6 +14,7 @@ import { JwtAudience, jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { ProjectEntity } from '../project/project-entity'
@@ -87,37 +88,44 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             await deleteIfUnchanged({ invitation })
         }
     },
-    async invitesLeftWithoutProject({ invitations, platformId, projectId }: InvitesLeftWithoutProjectParams): Promise<Set<string>> {
-        const candidates = invitations.filter((invitation) =>
-            invitation.type === InvitationType.PLATFORM
-            && invitation.platformRole === PlatformRole.MEMBER
-            && invitation.projectId === projectId,
-        )
-        if (candidates.length === 0) {
-            return new Set()
-        }
-        const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
-        const projectRolesEnabled = platform.plan.projectRolesEnabled
-        if (newMemberSettingsUtils.personalProjectsActive({ autoCreatePersonalProjects: platform.autoCreatePersonalProjects, projectRolesEnabled })) {
-            return new Set()
-        }
-        const defaultProjectIds = newMemberSettingsUtils.activeDefaultProjectIds({
-            defaultProjectIds: await platformService(log).listDefaultProjectIds({ platformId }),
-            projectRolesEnabled,
-        })
-        if (defaultProjectIds.length > 0) {
-            return new Set()
-        }
-        const checked = await Promise.all(candidates.map(async (invitation) => ({
-            id: invitation.id,
-            hasAnotherProject: await hasAnotherProject({ email: invitation.email, platformId, exceptProjectId: projectId, log }),
-        })))
-        return new Set(checked.filter((invitation) => !invitation.hasAnotherProject).map((invitation) => invitation.id))
-    },
     async detachProjectFromPlatformInvites({ projectId, entityManager }: DetachProjectFromPlatformInvitesParams): Promise<void> {
         await repo(entityManager).update({ type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null })
     },
-    async removeProjectFromPlatformInvite({ id, platformId, projectId }: RemoveProjectFromPlatformInviteParams): Promise<UserInvitation> {
+    async removeProjectFromPlatformInvite({ id, platformId, projectId }: RemoveProjectFromPlatformInviteParams): Promise<RemoveProjectFromInvitationResponse> {
+        if (system.getEdition() !== ApEdition.COMMUNITY) {
+            const deleted = await repo().createQueryBuilder()
+                .delete()
+                .where('"id" = :id AND "platformId" = :platformId AND "type" = :type AND "platformRole" = :platformRole AND "projectId" = :projectId', {
+                    id,
+                    platformId,
+                    type: InvitationType.PLATFORM,
+                    platformRole: PlatformRole.MEMBER,
+                    projectId,
+                })
+                .andWhere('EXISTS (SELECT 1 FROM "platform" WHERE "platform"."id" = :platformId AND "platform"."autoCreatePersonalProjects" = false)')
+                .andWhere('EXISTS (SELECT 1 FROM "platform_plan" WHERE "platform_plan"."platformId" = :platformId AND "platform_plan"."projectRolesEnabled" = true)')
+                .andWhere('NOT EXISTS (SELECT 1 FROM "project" "default_project" WHERE "default_project"."platformId" = :platformId AND "default_project"."isDefault" = true AND "default_project"."deleted" IS NULL)')
+                .returning('id')
+                .execute()
+            if (rowsOf(deleted).length > 0) {
+                return { revoked: true, invitation: null }
+            }
+        }
+        const cleared = await repo().createQueryBuilder()
+            .update()
+            .set({ projectId: null, projectRoleId: null, updated: () => '"updated"' })
+            .where('"id" = :id AND "platformId" = :platformId AND "type" = :type AND "projectId" = :projectId', {
+                id,
+                platformId,
+                type: InvitationType.PLATFORM,
+                projectId,
+            })
+            .returning('*')
+            .execute()
+        const [clearedRow] = rowsOf(cleared)
+        if (!isNil(clearedRow)) {
+            return { revoked: false, invitation: { ...repo().create(clearedRow), projectRole: null } }
+        }
         const invitation = await this.getOneOrThrow({ id, platformId })
         if (invitation.type !== InvitationType.PLATFORM) {
             throw new ActivepiecesError({
@@ -127,8 +135,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        await repo().update({ id, platformId, type: InvitationType.PLATFORM, projectId }, { projectId: null, projectRoleId: null, updated: () => '"updated"' })
-        return this.getOneOrThrow({ id, platformId })
+        return { revoked: false, invitation }
     },
     async detachProjectRoleFromPlatformInvites({ projectRoleId, entityManager }: DetachProjectRoleFromPlatformInvitesParams): Promise<void> {
         await repo(entityManager).update({ type: InvitationType.PLATFORM, projectRoleId }, { projectId: null, projectRoleId: null })
@@ -423,34 +430,8 @@ async function deleteIfUnchanged({ invitation }: { invitation: UserInvitation })
     })
 }
 
-async function hasAnotherProject({ email, platformId, exceptProjectId, log }: HasAnotherProjectParams): Promise<boolean> {
-    const normalizedEmail = email.toLowerCase().trim()
-    const hasAcceptedProjectInvite = await repo().createQueryBuilder('invitation')
-        .innerJoin('project', 'project', 'project.id = invitation."projectId" AND project.deleted IS NULL')
-        .where('LOWER(invitation.email) = :email', { email: normalizedEmail })
-        .andWhere({ platformId, type: InvitationType.PROJECT, status: InvitationStatus.ACCEPTED })
-        .andWhere('invitation."projectId" != :exceptProjectId', { exceptProjectId })
-        .getExists()
-    if (hasAcceptedProjectInvite) {
-        return true
-    }
-    const identity = await userIdentityService(log).getIdentityByEmail(normalizedEmail)
-    if (isNil(identity)) {
-        return false
-    }
-    const user = await userService(log).getOneByIdentityAndPlatform({ identityId: identity.id, platformId })
-    if (isNil(user)) {
-        return false
-    }
-    return projectRepo().createQueryBuilder('project')
-        .where('project."platformId" = :platformId', { platformId })
-        .andWhere('project.id != :exceptProjectId', { exceptProjectId })
-        .andWhere('project.deleted IS NULL')
-        .andWhere(`(
-            (project."ownerId" = :userId AND project.type = :personal)
-            OR EXISTS (SELECT 1 FROM project_member WHERE project_member."projectId" = project.id AND project_member."userId" = :userId)
-        )`, { userId: user.id, personal: ProjectType.PERSONAL })
-        .getExists()
+function rowsOf(result: { raw: unknown }): ObjectLiteral[] {
+    return Array.isArray(result.raw) ? result.raw : []
 }
 
 async function loadProvisioningContext({ invitations, log }: LoadProvisioningContextParams): Promise<ProvisioningContext> {
@@ -561,19 +542,6 @@ type ReplacePlatformInvitesParams = {
     email: string
     platformId: string
     entityManager?: EntityManager
-}
-
-type InvitesLeftWithoutProjectParams = {
-    invitations: UserInvitation[]
-    platformId: string
-    projectId: string
-}
-
-type HasAnotherProjectParams = {
-    email: string
-    platformId: string
-    exceptProjectId: string
-    log: FastifyBaseLogger
 }
 
 type DetachProjectFromPlatformInvitesParams = {
