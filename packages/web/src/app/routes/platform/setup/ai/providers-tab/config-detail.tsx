@@ -253,7 +253,7 @@ export function ConfigDetail({
             size="sm"
             loading={isSettingDefault}
             onClick={onSetDefault}
-            {...adminControl(AdminControl.AI_PROVIDER_KEY_SET_DEFAULT)}
+            {...adminControl(AdminControl.AI_PROVIDER_KEY_SET_DEFAULT_RUN)}
           >
             <Star className="size-4" />
             {t('Set as default')}
