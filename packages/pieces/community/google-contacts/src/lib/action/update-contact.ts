@@ -105,7 +105,9 @@ export const googleContactsUpdateContactAction = createAction({
     { key: 'contactInfo', display: 'section', label: 'Contact Info', icon: 'inbox', props: ['email', 'phoneNumber'] },
   ],
   async run(context) {
-    const resourceName = context.propsValue['resourceName'].substring(6);
+    const contactId = context.propsValue['resourceName']
+      .trim()
+      .replace(/^people\//, '');
     const requestBody: Record<string, unknown> = {
       etag: context.propsValue['etag'],
     };
@@ -143,7 +145,7 @@ export const googleContactsUpdateContactAction = createAction({
     }
     const request: HttpRequest<Record<string, unknown>> = {
       method: HttpMethod.PATCH,
-      url: `${googleContactsCommon.baseUrl}${resourceName}:updateContact`,
+      url: `${googleContactsCommon.baseUrl}/${contactId}:updateContact`,
       body: requestBody,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
