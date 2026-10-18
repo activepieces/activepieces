@@ -44,7 +44,7 @@ const newSwipefileAd = createTrigger({
     return foreplayPolling.testAds({ fetchAds: fetcher({ auth, propsValue }) });
   },
   async run({ auth, propsValue, store }) {
-    return foreplayPolling.pollNewAds({ store, fetchAds: fetcher({ auth, propsValue }) });
+    return foreplayPolling.pollNewAds({ store, fetchAds: fetcher({ auth, propsValue }), shifting: true });
   },
 });
 

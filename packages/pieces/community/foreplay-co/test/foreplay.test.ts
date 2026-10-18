@@ -444,7 +444,7 @@ describe('triggers', () => {
     const props = { brand_id: 'b1', page_size: 1 };
     const first = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: props }) });
     expect(first.map((a: { id: string }) => a.id)).toEqual(['n4', 'n3', 'n2', 'n1', 'n0']);
-    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: 'c5', before: null, delivered: [] });
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: 'c5', anchorId: null, before: null, boundaryId: 'old' });
     const second = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: props }) });
     expect(nthUrl({ spy, index: 5 }).searchParams.get('cursor')).toBe('c5');
     expect(second.map((a: { id: string }) => a.id)).toEqual(['n5']);
@@ -487,45 +487,34 @@ describe('triggers', () => {
     const second = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
     expect(second).toEqual([]);
   });
-  it('backlog IDs never push the newest-page boundary out of the seen list', async () => {
+  it('swipe-file backlog resumes at its anchor ad, so new saves that shift offsets cause no repeats', async () => {
     const store = memoryStore();
-    const top = Array.from({ length: 1000 }, (_, i) => `t${i}`);
-    await store.put('foreplay_seen_ad_ids', top);
-    await store.put('foreplay_backlog_cursor', { cursor: 'c9', before: null });
-    mock(okWith({ data: [rawAd('b1')], metadata: { cursor: 'c10' } }), okWith({ data: [rawAd('t999')], metadata: { cursor: 'c11' } }), okWith({ data: [rawAd('t0')], metadata: { cursor: 'c1' } }));
-    const out = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: { brand_id: 'b1', page_size: 1 } }) });
-    expect(out.map((a: { id: string }) => a.id)).toEqual(['b1']);
-    const seen = store.data.get('foreplay_seen_ad_ids');
-    expect(Array.isArray(seen) ? seen[0] : null).toBe('t0');
-    expect(seen).toHaveLength(1000);
-  });
-  it('swipe-file backlog never re-emits delivered ads when new saves shift the offset', async () => {
-    const store = memoryStore();
-    await store.put('foreplay_seen_ad_ids', Array.from({ length: 1000 }, (_, i) => `t${i}`));
-    await store.put('foreplay_backlog_cursor', { cursor: '5', before: null, delivered: [] });
+    await store.put('foreplay_seen_ad_ids', ['old']);
     const props = { page_size: 1 };
-    const pages = (ids: string[]) => ids.map((id) => ok([rawAd(id)]));
-    const spy = mock(...pages(['b5', 'b6', 'b7', 'b8', 'b9']), ...pages(['b8', 'b9', 'b10', 't999']), ok([rawAd('new2')]), ok([rawAd('new1')]), ok([rawAd('t0')]), ok([rawAd('new2')]));
+    const feed1 = ['s9', 's8', 's7', 's6', 's5', 's4', 's3', 'old'];
+    const feed2 = ['n2', 'n1', ...feed1];
+    const at = ({ feed, offsets }: { feed: string[]; offsets: number[] }) => offsets.map((o) => ok([rawAd(feed[o])]));
+    const spy = mock(...at({ feed: feed1, offsets: [0, 1, 2, 3, 4] }), ...at({ feed: feed2, offsets: [4, 5, 6, 7, 8] }), ...at({ feed: feed2, offsets: [8, 9, 0, 1, 2] }));
     const first = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: props }) });
-    expect(first.map((a: { id: string }) => a.id)).toEqual(['b9', 'b8', 'b7', 'b6', 'b5']);
-    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '10', before: null, delivered: ['b5', 'b6', 'b7', 'b8', 'b9'] });
+    expect(first.map((a: { id: string }) => a.id)).toEqual(['s5', 's6', 's7', 's8', 's9']);
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '4', anchorId: 's5', before: null, boundaryId: 'old' });
     const second = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: props }) });
-    expect(nthUrl({ spy, index: 5 }).searchParams.get('offset')).toBe('10');
-    expect(second.map((a: { id: string }) => a.id)).toEqual(['b10', 'new2']);
-    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '1', before: null, delivered: [] });
+    expect(second.map((a: { id: string }) => a.id)).toEqual(['s3', 's4']);
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '8', anchorId: 's3', before: null, boundaryId: 'old' });
     const third = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: props }) });
-    expect(third.map((a: { id: string }) => a.id)).toEqual(['new1']);
+    expect(third.map((a: { id: string }) => a.id)).toEqual(['n1', 'n2']);
     expect(store.data.has('foreplay_backlog_cursor')).toBe(false);
+    expect(spy.mock.calls.map((c) => new URL(String(c[0].url)).searchParams.get('offset'))).toEqual(['0', '1', '2', '3', '4', '4', '5', '6', '7', '8', '8', '9', '0', '1', '2']);
   });
-  it('keeps every ID delivered during a long backlog drain', async () => {
+  it('every stored value stays far below the 512 KiB store limit', async () => {
     const store = memoryStore();
-    await store.put('foreplay_seen_ad_ids', ['top']);
-    const delivered = Array.from({ length: 6000 }, (_, i) => `d${i}`);
-    await store.put('foreplay_backlog_cursor', { cursor: 'c1', before: null, delivered });
-    mock(okWith({ data: [rawAd('d0')], metadata: { cursor: 'c2' } }), okWith({ data: [rawAd('x1')], metadata: { cursor: 'c3' } }), okWith({ data: [rawAd('x2')], metadata: { cursor: 'c4' } }), okWith({ data: [rawAd('x3')], metadata: { cursor: 'c5' } }), okWith({ data: [rawAd('x4')], metadata: { cursor: 'c6' } }));
-    const out = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: { brand_id: 'b1', page_size: 1 } }) });
-    expect(out.map((a: { id: string }) => a.id)).toEqual(['x4', 'x3', 'x2', 'x1']);
-    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: 'c6', before: null, delivered: [...delivered, 'x1', 'x2', 'x3', 'x4'] });
+    const longId = ({ prefix, i }: { prefix: string; i: number }) => `${prefix}${String(i).padStart(63, '0')}`;
+    await store.put('foreplay_seen_ad_ids', Array.from({ length: 1000 }, (_, i) => longId({ prefix: 'o', i })));
+    const pages = Array.from({ length: 5 }, (_, p) => okWith({ data: Array.from({ length: 50 }, (_, i) => rawAd(longId({ prefix: 'n', i: p * 50 + i }))), metadata: { cursor: `c${p + 1}` } }));
+    mock(...pages);
+    await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1', page_size: 50 } }) });
+    expect(store.data.get('foreplay_seen_ad_ids')).toHaveLength(1000);
+    for (const value of store.data.values()) expect(JSON.stringify(value).length).toBeLessThan(100 * 1024);
   });
   it('a run without stored state (upgrade from 0.1.x) seeds silently', async () => {
     const store = memoryStore();

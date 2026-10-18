@@ -27,7 +27,7 @@ function legacyPollingIntervalProp() {
 function pageSizeProp() {
   return Property.Number({
     displayName: 'Ads Checked per Poll',
-    description: `How many of the newest ads to check per page (1 to 50, default 10). Foreplay charges 1 credit per ad returned. A quiet poll costs one page; if a whole page is new, the trigger reads further pages until it reaches an ad it has already seen, up to ${MAX_POLL_PAGES} pages per poll, and carries on from where it stopped on the next poll so no ad is skipped.`,
+    description: `How many of the newest ads to check per page (1 to 50, default 10). Foreplay charges 1 credit per ad returned. A quiet poll costs one page; if a whole page is new, the trigger reads further pages until it reaches an ad it has already seen, up to ${MAX_POLL_PAGES} pages per poll (worst case ${MAX_POLL_PAGES} × this many credits), and carries on from where it stopped on the next poll so no ad is skipped.`,
     required: false,
     defaultValue: 10,
   });
@@ -52,29 +52,44 @@ function epochMsOf(raw: unknown): number | null {
   return null;
 }
 
-async function scan({ fetchAds, start, pages, seenBefore, known, before }: ScanParams): Promise<ScanResult> {
+async function scan({ fetchAds, start, pages, seenBefore, known, before, anchorId, boundaryId, shifting }: ScanParams): Promise<ScanResult> {
   const fresh: unknown[] = [];
   const scannedIds: string[] = [];
   let cursor = start;
+  let anchorPending = anchorId !== null;
   for (let page = 1; page <= pages; page++) {
     const result = await fetchAds({ limit: undefined, cursor });
+    const pageIds = idsOf(result.ads);
+    scannedIds.push(...pageIds);
     let reachedBoundary = false;
-    scannedIds.push(...idsOf(result.ads));
     for (const ad of result.ads) {
       const id = idOf(ad);
       const ms = epochMsOf(ad);
-      if ((id !== null && seenBefore.has(id)) || (before !== null && ms !== null && ms <= before)) {
+      const pastBoundary = id !== null && (id === boundaryId || (!anchorPending && seenBefore.has(id)));
+      if (pastBoundary || (!anchorPending && before !== null && ms !== null && ms <= before)) {
         reachedBoundary = true;
         break;
+      }
+      if (anchorPending) {
+        if (id === anchorId) anchorPending = false;
+        continue;
       }
       if (id === null || known.has(id) || (before !== null && ms === null)) continue;
       known.add(id);
       fresh.push(ad);
     }
     if (reachedBoundary || result.next === null || result.ads.length === 0) return { fresh, scannedIds, resume: null, pagesUsed: page };
+    if (page === pages) return { fresh, scannedIds, resume: resumePoint({ next: result.next, current: cursor, lastId: pageIds[pageIds.length - 1] ?? null, anchorId, anchorPending, shifting }), pagesUsed: page };
     cursor = result.next;
   }
-  return { fresh, scannedIds, resume: cursor ?? null, pagesUsed: pages };
+  return { fresh, scannedIds, resume: null, pagesUsed: pages };
+}
+
+function resumePoint({ next, current, lastId, anchorId, anchorPending, shifting }: { next: string; current: string | undefined; lastId: string | null; anchorId: string | null; anchorPending: boolean; shifting: boolean }): Resume {
+  if (!shifting) return { cursor: next, anchorId: null };
+  if (anchorPending) return { cursor: next, anchorId };
+  if (lastId === null) return { cursor: next, anchorId: null };
+  return { cursor: current ?? '0', anchorId: lastId };
 }
 
 function idsOf(ads: unknown[]): string[] {
@@ -92,16 +107,18 @@ function backlogOf(value: unknown): Backlog | null {
   const record = foreplayMappers.recordOf(value);
   const cursor = record['cursor'];
   const before = record['before'];
+  const anchorId = record['anchorId'];
+  const boundaryId = record['boundaryId'];
   if (typeof cursor !== 'string' || cursor === '') return null;
-  const delivered = record['delivered'];
   return {
     cursor,
     before: typeof before === 'number' && Number.isFinite(before) ? before : null,
-    delivered: Array.isArray(delivered) ? delivered.filter((v): v is string => typeof v === 'string') : [],
+    anchorId: typeof anchorId === 'string' && anchorId !== '' ? anchorId : null,
+    boundaryId: typeof boundaryId === 'string' && boundaryId !== '' ? boundaryId : null,
   };
 }
 
-async function pollNewAds({ store, fetchAds }: { store: Store; fetchAds: FetchAds }): Promise<unknown[]> {
+async function pollNewAds({ store, fetchAds, shifting = false }: { store: Store; fetchAds: FetchAds; shifting?: boolean }): Promise<unknown[]> {
   let seen = await seenIds(store);
   let legacyBefore: number | null = null;
   if (seen === null) {
@@ -122,26 +139,21 @@ async function pollNewAds({ store, fetchAds }: { store: Store; fetchAds: FetchAd
   let nextBacklog: Backlog | null = null;
   const backlog = backlogOf(await store.get<unknown>(BACKLOG_KEY));
   if (backlog !== null) {
-    for (const id of backlog.delivered) known.add(id);
-    const result = await scan({ fetchAds, start: backlog.cursor, pages: budget, seenBefore, known, before: backlog.before });
+    const result = await scan({ fetchAds, start: backlog.cursor, pages: budget, seenBefore, known, before: backlog.before, anchorId: backlog.anchorId, boundaryId: backlog.boundaryId, shifting });
     olderFresh = result.fresh;
     budget -= result.pagesUsed;
-    if (result.resume !== null) nextBacklog = { cursor: result.resume, before: backlog.before, delivered: [...backlog.delivered, ...idsOf(result.fresh)] };
+    if (result.resume !== null) nextBacklog = { ...result.resume, before: backlog.before, boundaryId: backlog.boundaryId };
   }
   if (nextBacklog === null && budget > 0) {
-    const result = await scan({ fetchAds, start: undefined, pages: budget, seenBefore, known, before: legacyBefore });
+    const result = await scan({ fetchAds, start: undefined, pages: budget, seenBefore, known, before: legacyBefore, anchorId: null, boundaryId: null, shifting });
     newerFresh = result.fresh;
     if (legacyBefore !== null) legacyBoundaryIds = result.scannedIds;
-    if (result.resume !== null) nextBacklog = { cursor: result.resume, before: legacyBefore, delivered: [] };
+    if (result.resume !== null) nextBacklog = { ...result.resume, before: legacyBefore, boundaryId: seen[0] ?? null };
   }
   if (nextBacklog === null) await store.delete(BACKLOG_KEY);
   else await store.put(BACKLOG_KEY, nextBacklog);
   const newerIds = idsOf(newerFresh);
-  const olderIds = idsOf(olderFresh);
-  if (newerIds.length > 0 || olderIds.length > 0 || legacyBefore !== null) {
-    const ordered = [...newerIds, ...legacyBoundaryIds, ...seen, ...olderIds];
-    await store.put(SEEN_KEY, [...new Set(ordered)].slice(0, MAX_SEEN));
-  }
+  if (newerIds.length > 0 || legacyBefore !== null) await store.put(SEEN_KEY, [...new Set([...newerIds, ...legacyBoundaryIds, ...seen])].slice(0, MAX_SEEN));
   if (legacyBefore !== null) await store.delete(LEGACY_LAST_POLL_KEY);
   return [...olderFresh.reverse(), ...newerFresh.reverse()];
 }
@@ -165,11 +177,13 @@ async function fetchAdPage({ auth, path, query, pageSize }: { auth: ForeplayAuth
   return { ads, next: ads.length >= pageSize ? next : null };
 }
 
-type Backlog = { cursor: string; before: number | null; delivered: string[] };
+type Resume = { cursor: string; anchorId: string | null };
 
-type ScanParams = { fetchAds: FetchAds; start: string | undefined; pages: number; seenBefore: Set<string>; known: Set<string>; before: number | null };
+type Backlog = Resume & { before: number | null; boundaryId: string | null };
 
-type ScanResult = { fresh: unknown[]; scannedIds: string[]; resume: string | null; pagesUsed: number };
+type ScanParams = { fetchAds: FetchAds; start: string | undefined; pages: number; seenBefore: Set<string>; known: Set<string>; before: number | null; anchorId: string | null; boundaryId: string | null; shifting: boolean };
+
+type ScanResult = { fresh: unknown[]; scannedIds: string[]; resume: Resume | null; pagesUsed: number };
 
 type AdPage = { ads: unknown[]; next: string | null };
 
