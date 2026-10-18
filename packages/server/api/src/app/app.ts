@@ -436,6 +436,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
             break
         case ApEdition.COMMUNITY:
+            await app.register(denoMigrationModule)
             await app.register(platformProjectModule)
             await app.register(communityPiecesModule)
             await app.register(otpModule)

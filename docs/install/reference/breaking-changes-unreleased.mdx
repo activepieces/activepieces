@@ -18,7 +18,7 @@ Most code steps keep working unchanged: sources are transpiled to CommonJS, so N
 
 **If you run `UNSANDBOXED` or `SANDBOX_PROCESS`** — the legacy sandbox here was an unrestricted Node child process, so this is where restrictions are new:
 
-- **Environment variables are no longer inherited.** The legacy sandbox exposed the worker container's entire environment to `process.env`; the Deno sandbox exposes only `PATH`. A code step that reads a custom env var now gets `undefined`. List the variables your steps need in `AP_SANDBOX_PROPAGATED_ENV_VARS` (comma-separated) to pass them through.
+- **Environment variables are no longer inherited.** The legacy sandbox exposed the worker container's entire environment to `process.env`; the Deno sandbox exposes only `PATH`. A code step that reads a custom env var now gets `undefined`. To pass variables through, set `AP_SANDBOX_PROPAGATED_ENV_VARS` (a comma-separated list of names) on the **API** container — it ships the list to workers — and make sure the variables themselves are set in the **worker** container's environment, where their values are read. In a single-container deployment, set both on that container.
 - **Filesystem access is confined to the OS temp directory.** Legacy code steps could read and write any path the worker could; Deno grants read/write only under `os.tmpdir()`. Reads or writes elsewhere fail with a `NotCapable` permission error. Write scratch files with `os.tmpdir()` + `path.join` instead of hardcoded absolute paths.
 - **Spawning processes is denied.** `child_process` (`spawn`, `exec`, …) worked before; the Deno sandbox has no run permission, so it fails with `NotCapable`.
 - Network access and memory stay as they were: outbound requests are allowed, and the step's heap is uncapped.
@@ -31,7 +31,7 @@ Most code steps keep working unchanged: sources are transpiled to CommonJS, so N
 
 **In every mode:**
 
-- **Steps using top-level `await` run as strict ES modules** (they cannot be transpiled to CommonJS). Inside such a step: assigning to an undeclared variable throws `ReferenceError` instead of creating a global, and `require`, `exports`, `module`, `__dirname`, `__filename` are unavailable. For example, this step ran on the legacy sandbox and now fails — the `await` outside `code` is what forces strict ES module mode, and the first undeclared assignment then throws:
+- **Steps using top-level `await` run as strict ES modules** (they cannot be transpiled to CommonJS). Inside such a step: assigning to an undeclared variable throws `ReferenceError` instead of creating a global, and `exports`, `module`, `__dirname`, `__filename` are unavailable (`require` keeps working — the sandbox provides it as a global). For example, this step ran on the legacy sandbox and now fails — the `await` outside `code` is what forces strict ES module mode, and the first undeclared assignment then throws:
 
   ```ts
   const settings = await fetch('https://example.com/settings.json').then((res) => res.json())
@@ -39,7 +39,7 @@ Most code steps keep working unchanged: sources are transpiled to CommonJS, so N
   export const code = async (inputs) => {
     total = settings.base + inputs.amount    // ReferenceError: total is not defined
     const where = __dirname                  // ReferenceError: __dirname is not defined
-    const fs = require('node:fs')            // ReferenceError: require is not defined
+    module.exports.extra = total             // ReferenceError: module is not defined
     return { total }
   }
   ```
@@ -56,7 +56,7 @@ Most code steps keep working unchanged: sources are transpiled to CommonJS, so N
 - **Exotic Node internals may be missing.** Deno's Node compatibility layer covers the standard library that pieces and typical steps use, but low-level APIs (`process.binding`, `node:vm`, `node:cluster`, parts of `node:worker_threads`) and native addons that predate Node-API are not guaranteed. Steps or dependencies relying on them need review.
 - **Custom deployments** that do not use the official Docker images must provide a Deno binary and point `AP_DENO_PATH` at it; without it every code step fails at spawn.
 
-To find affected steps after upgrading, search your logs for the structured `Code step failed` warning — it carries the flow run, flow version, project, step name, the runtime that executed the step (`codeRuntime: deno|legacy`), and the error message, so you can group failures by step and error. To pin a misbehaving step to the legacy runtime while you fix it, set `AP_API_KEY` in your environment and call `POST /v1/admin/flows/revert-from-deno` with the `api-key` header and a body of exactly one of `flowIds`, `projectId`, or `platformId`; this sets `useDeno: false` on the affected steps, and `migrate-to-deno` moves them back.
+To find affected steps after upgrading, search your logs for the structured `Code step failed` warning — it carries the flow run, flow version, project, step name, the runtime that executed the step (`codeRuntime: deno|legacy`), and the error message, so you can group failures by step and error. To pin a misbehaving step to the legacy runtime while you fix it (available on every edition), set `AP_API_KEY` in your environment and call `POST /v1/admin/flows/revert-from-deno` with the `api-key` header and a body of exactly one of `flowIds`, `projectId`, or `platformId`; this sets `useDeno: false` on the affected steps, and `migrate-to-deno` moves them back.
 
 #### SmartSuite 0.3.0: Upload File returns the file list, and record and selector actions are builder-only
 
