@@ -130,6 +130,47 @@ describe('Piece Sets API', () => {
             const backBody = backToFirstPage.json()
             expect(backBody.data.map((s: PieceSet) => s.id)).toEqual(firstBody.data.map((s: PieceSet) => s.id))
         })
+
+        it('filters by name across all sets, not only the first page', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            for (const name of ['Set 0', 'Set 1', 'Set 2', 'Set 3', 'Finance Tools']) {
+                await app!.inject({
+                    method: 'POST',
+                    url: '/api/v1/piece-sets',
+                    headers: { authorization: `Bearer ${token}` },
+                    body: { name },
+                })
+            }
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/piece-sets?limit=2&name=finance',
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            const body = response.json()
+            expect(body.data.map((s: PieceSet) => s.name)).toEqual(['Finance Tools'])
+            expect(body.next).toBeNull()
+        })
+
+        it('does not return matching sets from another platform', async () => {
+            const { token: otherToken } = await setupPlatformWithPieceSets()
+            await app!.inject({
+                method: 'POST',
+                url: '/api/v1/piece-sets',
+                headers: { authorization: `Bearer ${otherToken}` },
+                body: { name: 'Finance Tools' },
+            })
+            const { token } = await setupPlatformWithPieceSets()
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: '/api/v1/piece-sets?name=finance',
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(response.statusCode).toBe(StatusCodes.OK)
+            expect(response.json().data).toEqual([])
+        })
     })
 
     describe('Create', () => {
