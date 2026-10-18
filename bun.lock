@@ -167,7 +167,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.201.1",
+      "version": "0.202.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -216,7 +216,7 @@
     },
     "packages/pieces/common": {
       "name": "@activepieces/pieces-common",
-      "version": "0.15.0",
+      "version": "0.15.1",
       "dependencies": {
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -631,16 +631,18 @@
     },
     "packages/pieces/community/amazon-textract": {
       "name": "@activepieces/piece-amazon-textract",
-      "version": "0.3.8",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "@aws-sdk/client-sts": "3.974.0",
         "@aws-sdk/client-textract": "^3.0.0",
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/aminos": {
@@ -1549,7 +1551,7 @@
     },
     "packages/pieces/community/canva": {
       "name": "@activepieces/piece-canva",
-      "version": "0.1.2",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1667,7 +1669,7 @@
     },
     "packages/pieces/community/chaindesk": {
       "name": "@activepieces/piece-chaindesk",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2036,7 +2038,7 @@
     },
     "packages/pieces/community/cloudconvert": {
       "name": "@activepieces/piece-cloudconvert",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2398,7 +2400,7 @@
     },
     "packages/pieces/community/customgpt": {
       "name": "@activepieces/piece-customgpt",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2730,7 +2732,7 @@
     },
     "packages/pieces/community/documentpro": {
       "name": "@activepieces/piece-documentpro",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2955,7 +2957,7 @@
     },
     "packages/pieces/community/emailit": {
       "name": "@activepieces/piece-emailit",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3049,7 +3051,7 @@
     },
     "packages/pieces/community/extracta-ai": {
       "name": "@activepieces/piece-extracta-ai",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3062,7 +3064,7 @@
     },
     "packages/pieces/community/facebook-leads": {
       "name": "@activepieces/piece-facebook-leads",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3075,7 +3077,7 @@
     },
     "packages/pieces/community/facebook-pages": {
       "name": "@activepieces/piece-facebook-pages",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3227,7 +3229,7 @@
     },
     "packages/pieces/community/firecrawl": {
       "name": "@activepieces/piece-firecrawl",
-      "version": "0.5.0",
+      "version": "0.6.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3254,7 +3256,7 @@
     },
     "packages/pieces/community/flipando": {
       "name": "@activepieces/piece-flipando",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3305,7 +3307,7 @@
     },
     "packages/pieces/community/flow-parser": {
       "name": "@activepieces/piece-flow-parser",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3729,7 +3731,7 @@
     },
     "packages/pieces/community/gitlab": {
       "name": "@activepieces/piece-gitlab",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3771,7 +3773,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.18.0",
+      "version": "0.18.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3887,7 +3889,7 @@
     },
     "packages/pieces/community/google-document-ai": {
       "name": "@activepieces/piece-google-document-ai",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -3899,7 +3901,7 @@
     },
     "packages/pieces/community/google-drive": {
       "name": "@activepieces/piece-google-drive",
-      "version": "0.12.0",
+      "version": "0.12.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4000,7 +4002,7 @@
     },
     "packages/pieces/community/google-sheets": {
       "name": "@activepieces/piece-google-sheets",
-      "version": "0.18.1",
+      "version": "0.18.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4064,7 +4066,7 @@
     },
     "packages/pieces/community/google-vertexai": {
       "name": "@activepieces/piece-google-vertexai",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4120,7 +4122,7 @@
     },
     "packages/pieces/community/gptzero-detect-ai": {
       "name": "@activepieces/piece-gptzero-detect-ai",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4240,7 +4242,7 @@
     },
     "packages/pieces/community/groq": {
       "name": "@activepieces/piece-groq",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4402,7 +4404,7 @@
     },
     "packages/pieces/community/housecall-pro": {
       "name": "@activepieces/piece-housecall-pro",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4682,7 +4684,7 @@
     },
     "packages/pieces/community/intercom": {
       "name": "@activepieces/piece-intercom",
-      "version": "0.9.1",
+      "version": "0.9.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4789,7 +4791,7 @@
     },
     "packages/pieces/community/jotform": {
       "name": "@activepieces/piece-jotform",
-      "version": "0.5.2",
+      "version": "0.5.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4814,7 +4816,7 @@
     },
     "packages/pieces/community/json": {
       "name": "@activepieces/piece-json",
-      "version": "0.1.13",
+      "version": "0.1.14",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4828,7 +4830,7 @@
     },
     "packages/pieces/community/jumpcloud": {
       "name": "@activepieces/piece-jumpcloud",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -5138,7 +5140,7 @@
     },
     "packages/pieces/community/lemon-squeezy": {
       "name": "@activepieces/piece-lemon-squeezy",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5627,7 +5629,7 @@
     },
     "packages/pieces/community/matomo": {
       "name": "@activepieces/piece-matomo",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5945,7 +5947,7 @@
     },
     "packages/pieces/community/microsoft-outlook": {
       "name": "@activepieces/piece-microsoft-outlook",
-      "version": "0.7.2",
+      "version": "0.7.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6022,7 +6024,7 @@
     },
     "packages/pieces/community/microsoft-teams": {
       "name": "@activepieces/piece-microsoft-teams",
-      "version": "0.7.2",
+      "version": "0.7.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6313,7 +6315,7 @@
     },
     "packages/pieces/community/murf-api": {
       "name": "@activepieces/piece-murf-api",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6450,7 +6452,7 @@
     },
     "packages/pieces/community/ninox": {
       "name": "@activepieces/piece-ninox",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6678,7 +6680,7 @@
     },
     "packages/pieces/community/openai": {
       "name": "@activepieces/piece-openai",
-      "version": "0.13.1",
+      "version": "0.13.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6817,7 +6819,7 @@
     },
     "packages/pieces/community/pandadoc": {
       "name": "@activepieces/piece-pandadoc",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6870,7 +6872,7 @@
     },
     "packages/pieces/community/parseur": {
       "name": "@activepieces/piece-parseur",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7021,7 +7023,7 @@
     },
     "packages/pieces/community/personal-ai": {
       "name": "@activepieces/piece-personal-ai",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7061,7 +7063,7 @@
     },
     "packages/pieces/community/photoroom": {
       "name": "@activepieces/piece-photoroom",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8028,7 +8030,7 @@
     },
     "packages/pieces/community/salesforce": {
       "name": "@activepieces/piece-salesforce",
-      "version": "0.9.3",
+      "version": "0.9.4",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8110,7 +8112,7 @@
     },
     "packages/pieces/community/scrapegrapghai": {
       "name": "@activepieces/piece-scrapegrapghai",
-      "version": "0.2.1",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8390,7 +8392,7 @@
     },
     "packages/pieces/community/short-io": {
       "name": "@activepieces/piece-short-io",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8527,7 +8529,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.23.0",
+      "version": "0.23.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8610,7 +8612,7 @@
     },
     "packages/pieces/community/smartsheet": {
       "name": "@activepieces/piece-smartsheet",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8623,7 +8625,7 @@
     },
     "packages/pieces/community/smartsuite": {
       "name": "@activepieces/piece-smartsuite",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8910,7 +8912,7 @@
     },
     "packages/pieces/community/surveymonkey": {
       "name": "@activepieces/piece-surveymonkey",
-      "version": "0.2.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9056,7 +9058,7 @@
     },
     "packages/pieces/community/tavily": {
       "name": "@activepieces/piece-tavily",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9125,7 +9127,7 @@
     },
     "packages/pieces/community/telegram-bot": {
       "name": "@activepieces/piece-telegram-bot",
-      "version": "0.9.0",
+      "version": "0.9.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9246,7 +9248,7 @@
     },
     "packages/pieces/community/timelines-ai": {
       "name": "@activepieces/piece-timelines-ai",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9444,7 +9446,7 @@
     },
     "packages/pieces/community/typeform": {
       "name": "@activepieces/piece-typeform",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9902,7 +9904,7 @@
     },
     "packages/pieces/community/wedof": {
       "name": "@activepieces/piece-wedof",
-      "version": "1.4.7",
+      "version": "1.4.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10089,7 +10091,7 @@
     },
     "packages/pieces/community/workday": {
       "name": "@activepieces/piece-workday",
-      "version": "0.1.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10297,7 +10299,7 @@
     },
     "packages/pieces/community/zoho-bookings": {
       "name": "@activepieces/piece-zoho-bookings",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10396,7 +10398,7 @@
     },
     "packages/pieces/community/zoo": {
       "name": "@activepieces/piece-zoo",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10790,7 +10792,7 @@
     },
     "packages/pieces/core/tables": {
       "name": "@activepieces/piece-tables",
-      "version": "0.5.2",
+      "version": "0.5.3",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10802,6 +10804,7 @@
       "devDependencies": {
         "@types/qs": "6.14.0",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/core/tags": {
@@ -11892,6 +11895,7 @@
     "@activepieces/piece-google-docs": ["@activepieces/piece-google-docs@workspace:packages/pieces/community/google-docs"],
 
     "@activepieces/piece-google-document-ai": ["@activepieces/piece-google-document-ai@workspace:packages/pieces/community/google-document-ai"],
+
     "@activepieces/piece-google-drive": ["@activepieces/piece-google-drive@workspace:packages/pieces/community/google-drive"],
 
     "@activepieces/piece-google-forms": ["@activepieces/piece-google-forms@workspace:packages/pieces/community/google-forms"],

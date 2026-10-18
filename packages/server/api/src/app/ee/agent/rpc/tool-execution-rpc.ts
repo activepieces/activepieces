@@ -72,13 +72,10 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         await markTurnAsHavingRead({ conversationId: input.conversationId, ...spreadIfDefined('runId', input.runId) })
         const { projectId, platformId } = conversation
         const file = await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
-        const embeddingModel = () => agentHelpers.resolveEmbeddingModel({
+        const embeddingModel = () => knowledgeBaseService(log).embeddingModelFor({
             platformId,
-            scope: { type: 'project', projectId },
+            projectId,
             billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: input.conversationId },
-            log,
-            ...spreadIfDefined('provider', input.provider),
-            ...spreadIfDefined('providerConfigId', input.providerConfigId),
         })
         const { error: backfillError } = await tryCatch(() => knowledgeBaseService(log).embedMissingChunks({
             projectId,
@@ -194,7 +191,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             return { result: decision }
         }
         if (input.toolName === '__store_pending_gate') {
-            const { conversationId: convId, runId: gateRunId, gateId, toolName: gateTool, displayName, toolInput: gateInput } = input.toolInput
+            const { conversationId: convId, runId: gateRunId, gateId, toolName: gateTool, displayName, toolInput: gateInput, taskTitle } = input.toolInput
             if (typeof convId === 'string' && typeof gateId === 'string' && typeof gateTool === 'string') {
                 await agentApprovalGate.storePendingGate({
                     conversationId: convId,
@@ -204,6 +201,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
                         displayName: typeof displayName === 'string' ? displayName : gateTool,
                         toolInput: typeof gateInput === 'object' && gateInput !== null ? gateInput as Record<string, unknown> : {},
                         ...(typeof gateRunId === 'string' ? { runId: gateRunId } : {}),
+                        ...(typeof taskTitle === 'string' ? { taskTitle } : {}),
                     },
                 })
             }

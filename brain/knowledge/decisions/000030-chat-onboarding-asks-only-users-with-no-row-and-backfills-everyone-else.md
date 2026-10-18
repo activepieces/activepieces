@@ -8,7 +8,7 @@ status: accepted
 The first-run onboarding card ("Who am I teaming up with?") renders when the caller has **no `chat_personalization` row at all**, a state the service synthesizes as `UNSET` and never persists. To keep that from firing for the entire existing user base on ship day, the shipping migration **backfills one terminal row per existing user** rather than gating the card on a hardcoded ship date.
 
 ## Context
-The card's gate is `isEmpty && !incognito && (isFirstRun || promptOpen)`, where `isFirstRun` is `status === UNSET`. `UNSET` means "no row exists", not "new account", so on first deploy every user who had never answered would have met it, including the grandfathered cloud users from the 200-user chat rollout cap. Those people have been chatting for months and would have opened a normal new chat to find a new-user welcome takeover where their greeting used to be.
+The card's gate is `isEmpty && !incognito && (isFirstRun || promptOpen)`, where `isFirstRun` is `status === UNSET`. `UNSET` means "no row exists", not "new account", so on first deploy every user who had never answered would have met it, including users who have been chatting since the beta. Those people have been chatting for months and would have opened a normal new chat to find a new-user welcome takeover where their greeting used to be.
 
 The obvious fix is `user.created > SHIP_DATE`. It works, and it leaves a date constant in the code that nobody ever deletes and no one dares change.
 
