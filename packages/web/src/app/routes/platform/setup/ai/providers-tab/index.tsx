@@ -1,13 +1,12 @@
 import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import {
   AIProviderWithoutSensitiveData,
-  PlatformAdminSurface,
   PlatformModelTier,
   Project,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Bot, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
+import { Bot, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -23,7 +22,6 @@ import {
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -32,11 +30,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
-import {
-  PLATFORM_FEATURES,
-  TIER_LABELS,
-  useUpgradeClick,
-} from '@/features/billing';
+import { EnterpriseLockedRow } from '@/features/billing';
 import {
   aiProviderKeys,
   aiProviderMutations,
@@ -249,7 +243,13 @@ export function ProvidersTab() {
         <EmptyProviders onConnect={openConnect} />
       ) : (
         <>
-          {locked && <LockedProvidersAlert />}
+          {locked && (
+            <EnterpriseLockedRow
+              unlocked={false}
+              featureKey="UNIVERSAL_AI"
+              line={t('Adding or changing AI keys is locked.')}
+            />
+          )}
           {connectedProviders.map((provider) => (
             <ProviderGroup
               key={provider}
@@ -307,39 +307,6 @@ export function ProvidersTab() {
     );
   }
   return page;
-}
-
-function LockedProvidersAlert() {
-  const upgradeClick = useUpgradeClick();
-  const { featureKey, tier } = PLATFORM_FEATURES.aiProviders;
-
-  return (
-    <Alert variant="primary">
-      <Lock />
-      <AlertTitle>
-        {t('Your plan does not include Bring your own AI keys')}
-      </AlertTitle>
-      <AlertDescription className="flex flex-col items-start gap-3">
-        <p>
-          {t(
-            'You can still delete the keys below. Upgrade your plan to add new keys or change existing ones.',
-          )}
-        </p>
-        <Button
-          size="sm"
-          onClick={() =>
-            upgradeClick({
-              feature: featureKey,
-              tier,
-              surface: PlatformAdminSurface.SAMPLE,
-            })
-          }
-        >
-          {t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
-        </Button>
-      </AlertDescription>
-    </Alert>
-  );
 }
 
 function ProviderGroup({

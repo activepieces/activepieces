@@ -25,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LockedGem, useEnterpriseGate } from '@/features/billing';
 import { roleCopy } from '@/features/members/lib/role-copy';
 import {
   ROLE_BASES,
@@ -32,6 +33,7 @@ import {
   rolePermissionModel,
 } from '@/features/members/lib/role-permissions';
 import { projectRoleMutations } from '@/features/platform-admin';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -105,7 +107,12 @@ function RoleDialogBody({
   const [tab, setTab] = useState<RoleDialogTab>(initialTab);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const { mutate: upsertRole, isPending: isSaving } =
+  const { platform } = platformHooks.useCurrentPlatform();
+  const gate = useEnterpriseGate({
+    unlocked: platform.plan.customRolesEnabled,
+    featureKey: 'CUSTOM_ROLES',
+  });
+  const { mutateAsync: upsertRole, isPending: isSaving } =
     projectRoleMutations.useUpsertProjectRole({
       onSave: onSaved,
       onError: (error) =>
@@ -155,13 +162,17 @@ function RoleDialogBody({
 
   const submit = () => {
     setSaveError(null);
-    upsertRole({
-      mode,
-      roleId: projectRole?.id,
-      name: name.trim(),
-      permissions,
-      type: RoleType.CUSTOM,
-    });
+    gate.run(
+      () =>
+        upsertRole({
+          mode,
+          roleId: projectRole?.id,
+          name: name.trim(),
+          permissions,
+          type: RoleType.CUSTOM,
+        }),
+      { resumable: isCreate },
+    );
   };
 
   const counter = (
@@ -417,6 +428,7 @@ function RoleDialogBody({
                   : AdminControl.ROLES_EDIT_SUBMIT,
               )}
             >
+              {gate.locked && <LockedGem />}
               {isCreate ? t('Create role') : t('Save changes')}
             </Button>
           </div>
