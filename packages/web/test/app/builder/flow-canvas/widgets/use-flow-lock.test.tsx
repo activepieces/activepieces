@@ -214,6 +214,23 @@ describe('useFlowLock take-over', () => {
     });
   });
 
+  it('keeps the newest version read-only when it awaits approval and an older version is being viewed', async () => {
+    const flow = draftFlow({ customerEmail: '{{trigger.email}}' });
+    const store = createStore({
+      flow,
+      flowVersion: olderVersion(flow.version),
+    });
+    harness.getFlow.mockResolvedValue(withLockedVersion(flow));
+    renderFlowLock(store);
+
+    await takeOver();
+
+    expect(store.getState()).toMatchObject({
+      readonly: true,
+      flowVersion: { id: 'draft-1', state: FlowVersionState.LOCKED },
+    });
+  });
+
   it('shows the newest draft when an older version is being viewed', async () => {
     const flow = draftFlow({ customerEmail: '{{trigger.email}}' });
     const store = createStore({

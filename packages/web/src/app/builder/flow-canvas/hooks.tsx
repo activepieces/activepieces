@@ -346,6 +346,9 @@ async function openNewestVersionForEdit({
   setFlow(newestFlow);
   setVersion(newestFlow.version);
   clearRun(canEditFlow);
+  if (!store.getState().showsNewestVersion()) {
+    store.getState().setReadOnly(true);
+  }
   socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
 }
 
