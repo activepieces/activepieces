@@ -137,6 +137,28 @@ describe('Signing Key API', () => {
             expect(responseBody.publicKey).toBe(mockSigningKey.publicKey)
             expect(responseBody.algorithm).toBe(mockSigningKey.algorithm)
         })
+
+        it('Does not find another platform\'s Signing Key by id', async () => {
+            const { mockOwner, mockPlatform } = await setupEnabledPlatform()
+            const { mockPlatform: otherPlatform } = await setupEnabledPlatform()
+            const otherPlatformKey = createMockSigningKey({ platformId: otherPlatform.id })
+            await db.save('signing_key', otherPlatformKey)
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/signing-keys/${otherPlatformKey.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
     })
 
     describe('Delete Signing Key endpoint', () => {
