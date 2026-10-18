@@ -107,7 +107,7 @@ function setUseDenoOnCodeSteps({ flowVersion, useDeno }: { flowVersion: FlowVers
 
 function hasCodeStepToChange({ flowVersion, useDeno }: { flowVersion: FlowVersion, useDeno: boolean }): boolean {
     return flowStructureUtil.getAllSteps(flowVersion.trigger)
-        .some((step) => step.type === FlowActionType.CODE && (step.settings.useDeno === true) !== useDeno)
+        .some((step) => step.type === FlowActionType.CODE && step.settings.useDeno !== useDeno)
 }
 
 type MigrateToDenoParams = {
