@@ -25,7 +25,10 @@ const {
 } = vi.hoisted(() => {
   const state: { current: Record<string, unknown> } = { current: {} };
   return {
-    flagState: { edition: 'ee' },
+    flagState: {
+      edition: 'ee',
+      thirdPartyProviders: { google: false } as Record<string, boolean>,
+    },
     toastMock: { success: vi.fn(), error: vi.fn(), message: vi.fn() },
     platformApiMock: { update: vi.fn() },
     samlSsoApiMock: {
@@ -73,7 +76,12 @@ vi.mock('@/hooks/platform-hooks', () => ({
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
     useFlag: (id: string) => ({
-      data: id === 'EDITION' ? flagState.edition : 'https://cloud.test/acs',
+      data:
+        id === 'EDITION'
+          ? flagState.edition
+          : id === 'THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP'
+          ? flagState.thirdPartyProviders
+          : 'https://cloud.test/acs',
     }),
   },
 }));
@@ -194,6 +202,7 @@ describe('SSOPage', () => {
     });
     setPlatform({});
     flagState.edition = 'ee';
+    flagState.thirdPartyProviders = { google: false };
   });
 
   it('shows the empty states when nothing is set up', () => {
@@ -354,6 +363,7 @@ describe('SSOPage', () => {
       emailAuthEnabled: false,
       googleAuthEnabled: true,
     });
+    flagState.thirdPartyProviders = { google: true };
     mount();
 
     click(menuItem('Remove domain'));
@@ -363,6 +373,25 @@ describe('SSOPage', () => {
         'Email and Google sign-in are off. Turn one on first so people can still sign in.',
       ),
     ).toBeNull();
+  });
+
+  it('still warns when the Google switch is on but Google sign-in is not set up', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+      federatedAuthProviders: { saml: samlConfig },
+      emailAuthEnabled: false,
+      googleAuthEnabled: true,
+    });
+    mount();
+
+    click(menuItem('Remove domain'));
+
+    expect(
+      within(screen.getByRole('dialog')).getByText(
+        'Email and Google sign-in are off. Turn one on first so people can still sign in.',
+      ),
+    ).toBeDefined();
   });
 
   it('drops the add-your-company-domain hint once the company domain is listed', () => {
@@ -655,6 +684,8 @@ describe('SamlSetupPage', () => {
     vi.clearAllMocks();
     platformApiMock.update.mockResolvedValue(undefined);
     setPlatform({});
+    flagState.edition = 'ee';
+    flagState.thirdPartyProviders = { google: false };
   });
 
   it('is opened from the sign-in methods row as a page, not a dialog', () => {

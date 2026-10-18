@@ -17,6 +17,7 @@ import {
 } from '@/app/components/admin';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
 import { DomainStatusIcon } from '@/app/routes/platform/security/sso/domain-status-icon';
+import { useGoogleSignInAvailable } from '@/app/routes/platform/security/sso/use-google-sign-in-available';
 import { VerifyDomainDialog } from '@/app/routes/platform/security/sso/verify-domain-dialog';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -95,6 +96,7 @@ const DomainRow = ({
   samlConnected,
   onContinueVerifying,
 }: DomainRowProps) => {
+  const googleSignInAvailable = useGoogleSignInAvailable();
   const [dnsRecordOpen, setDnsRecordOpen] = useState(false);
   const verified = verification.status === SsoDomainVerificationStatus.VERIFIED;
 
@@ -160,7 +162,7 @@ const DomainRow = ({
                 <RemoveDomainConsequences
                   samlConnected={samlConnected}
                   otherMethodsOff={
-                    !platform.emailAuthEnabled && !platform.googleAuthEnabled
+                    !platform.emailAuthEnabled && !googleSignInAvailable
                   }
                 />
               ) : (

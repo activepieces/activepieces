@@ -26,6 +26,7 @@ import {
 import { DomainVerification } from '@/app/routes/platform/security/sso/domain-verification';
 import { MethodConfirmDialog } from '@/app/routes/platform/security/sso/method-confirm-dialog';
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
+import { useGoogleSignInAvailable } from '@/app/routes/platform/security/sso/use-google-sign-in-available';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -96,6 +97,7 @@ const DisableSamlRow = ({
   onDisabled: () => void;
 }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const googleSignInAvailable = useGoogleSignInAvailable();
   const { mutate: disableSaml, isPending } = useMutation({
     mutationFn: async () => {
       await platformApi.update(
@@ -139,7 +141,7 @@ const DisableSamlRow = ({
                 'Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.',
               )}
             </span>
-            {!platform.emailAuthEnabled && !platform.googleAuthEnabled && (
+            {!platform.emailAuthEnabled && !googleSignInAvailable && (
               <span>
                 {t(
                   'Email and Google sign-in are off. Turn one on first so people can still sign in.',
