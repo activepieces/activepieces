@@ -6,6 +6,18 @@ import { posthogOutputSchemas } from '../../common/output-schemas';
 
 const MAX_ROWS = 10_000;
 
+// Two result columns can share a name (unaliased expressions, joined tables); suffix the
+// later ones (_2, _3 ...) so every value survives in the row objects.
+function uniqueNames(names: string[]): string[] {
+  const used = new Set<string>();
+  return names.map((name) => {
+    let candidate = name;
+    for (let n = 2; used.has(candidate); n++) candidate = `${name}_${n}`;
+    used.add(candidate);
+    return candidate;
+  });
+}
+
 export const runHogqlQuery = createAction({
   auth: posthogAuth,
   name: 'run_hogql_query',
@@ -14,7 +26,7 @@ export const runHogqlQuery = createAction({
   description: 'Run a read-only HogQL (SQL) query against your PostHog data.',
   audience: 'ai',
   aiMetadata: {
-    description: 'Runs one HogQL SELECT query (PostHog SQL dialect over ClickHouse) on the connected project and returns rows as objects keyed by column name. Tables: events (uuid, event, distinct_id, timestamp, properties.$current_url, person.properties.email ...), persons, sessions, groups, cohort_people. Always add a WHERE on timestamp and a LIMIT (PostHog caps results at 100 rows without LIMIT, max 10000); hasMore=true means the result was cut at the limit. Example: SELECT event, count() FROM events WHERE timestamp > now() - INTERVAL 7 DAY GROUP BY event ORDER BY count() DESC LIMIT 20. Read-only; INSERT/ALTER are rejected by PostHog.',
+    description: 'Runs one HogQL SELECT query (PostHog SQL dialect over ClickHouse) on the connected project and returns rows as objects keyed by column name (a repeated column name gets a _2, _3 ... suffix; alias columns to control the keys). Tables: events (uuid, event, distinct_id, timestamp, properties.$current_url, person.properties.email ...), persons, sessions, groups, cohort_people. Always add a WHERE on timestamp and a LIMIT (PostHog caps results at 100 rows without LIMIT, max 10000); hasMore=true means the result was cut at the limit. Example: SELECT event, count() FROM events WHERE timestamp > now() - INTERVAL 7 DAY GROUP BY event ORDER BY count() DESC LIMIT 20. Read-only; INSERT/ALTER are rejected by PostHog.',
     idempotent: true,
   },
   outputSchema: posthogOutputSchemas.query,
@@ -37,7 +49,7 @@ export const runHogqlQuery = createAction({
     if (typeof body['error'] === 'string' && body['error'] !== '') {
       throw new Error(`PostHog query error: ${body['error']}`);
     }
-    const columns = posthogClient.arrayOf(body['columns']).map((c) => String(c));
+    const columns = uniqueNames(posthogClient.arrayOf(body['columns']).map((c) => String(c)));
     const results = posthogClient.arrayOf(body['results']).slice(0, MAX_ROWS);
     const rows = results.map((row) => {
       const values = posthogClient.arrayOf(row);

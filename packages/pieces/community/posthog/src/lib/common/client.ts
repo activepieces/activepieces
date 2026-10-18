@@ -286,6 +286,7 @@ export const posthogClient = {
   uuid,
   userName,
   toApiError,
+  verifiedTls,
 };
 
 type SendParams = {

@@ -1,4 +1,3 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { posthogCreateEvent } from './lib/actions/create-event';
 import { posthogCreateProject } from './lib/actions/create-project';
@@ -42,7 +41,8 @@ import { getExperimentResults } from './lib/actions/ai/get-experiment-results';
 import { listGroups } from './lib/actions/ai/list-groups';
 import { listSessionRecordings } from './lib/actions/ai/list-session-recordings';
 import { posthogAuth } from './lib/auth';
-import { posthogClient, PostHogAuthValue } from './lib/common/client';
+import { PostHogAuthValue } from './lib/common/client';
+import { posthogCustomApiCall } from './lib/actions/custom-api-call';
 import { posthogNewEvent } from './lib/triggers/new-event';
 
 export { posthogAuth };
@@ -97,22 +97,7 @@ export const posthog = createPiece({
     getExperimentResults,
     listGroups,
     listSessionRecordings,
-    createCustomApiCallAction({
-      auth: posthogAuth,
-      baseUrl: (auth) => (auth ? posthogClient.apiHostOf(auth.props) : ''),
-      authMapping: async (auth, propsValue) => {
-        const baseUrl = posthogClient.apiHostOf(auth.props);
-        const urlProp = propsValue['url'];
-        const url = posthogClient.isRecord(urlProp) && typeof urlProp['url'] === 'string' ? urlProp['url'].trim() : '';
-        if ((/^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith('//')) && !posthogClient.isSameOrigin({ url, baseUrl })) {
-          throw new Error('The URL must be on the API Host of the PostHog connection.');
-        }
-        if (url.split(/[/?#]/).some((part) => part === '..' || part.toLowerCase() === '%2e%2e')) {
-          throw new Error('The URL must not contain ".." segments.');
-        }
-        return { Authorization: `Bearer ${posthogClient.keyOf(auth.props)}` };
-      },
-    }),
+    posthogCustomApiCall,
   ],
   authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'Tosh94', 'OdaiAhmed99'],
   triggers: [posthogNewEvent],

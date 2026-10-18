@@ -171,9 +171,39 @@ describe('actions', () => {
     mockSeq({ filters: { groups: [{}, {}] } });
     await expect(run({ name: 'update_feature_flag', propsValue: { flagId: '9', rolloutPercentage: 10 } })).rejects.toThrow(/exactly one/);
     vi.restoreAllMocks();
-    spy = mockSeq({ filters: { groups: [{ properties: [{ key: 'x' }], rollout_percentage: 5 }] } }, { id: 9 });
+    const flag = { version: 4, filters: { groups: [{ properties: [{ key: 'x' }], rollout_percentage: 5 }] } };
+    spy = mockSeq(flag, flag, { id: 9, version: 5 });
     await run({ name: 'update_feature_flag', propsValue: { flagId: '9', rolloutPercentage: 50 } });
-    expect(req({ spy, i: 1 }).body).toEqual({ filters: { groups: [{ properties: [{ key: 'x' }], rollout_percentage: 50 }] } });
+    expect(req({ spy, i: 2 }).body).toEqual({ version: 4, filters: { groups: [{ properties: [{ key: 'x' }], rollout_percentage: 50 }] } });
+  });
+  it('update flag rollout refuses when the flag changed between reads', async () => {
+    const flag = { version: 4, filters: { groups: [{ rollout_percentage: 5 }] } };
+    const spy = mockSeq(flag, { version: 5, filters: { groups: [{ properties: [{ key: 'new' }], rollout_percentage: 5 }] } });
+    await expect(run({ name: 'update_feature_flag', propsValue: { flagId: '9', rolloutPercentage: 50 } })).rejects.toThrow(/changed in PostHog/);
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+  it('update flag rollout reports a write that raced another edit', async () => {
+    const flag = { version: 4, filters: { groups: [{ rollout_percentage: 5 }] } };
+    mockSeq(flag, flag, { id: 9, version: 6 });
+    await expect(run({ name: 'update_feature_flag', propsValue: { flagId: '9', rolloutPercentage: 50 } })).rejects.toThrow(/same time/);
+  });
+  it('hogql query keeps every value when column names repeat', async () => {
+    mockSeq({ columns: ['count()', 'count()', 'count()_2'], types: [], results: [[1, 2, 3]] });
+    const out = await run({ name: 'run_hogql_query', propsValue: { query: 'select count(), count(), 3' } });
+    expect(out.columns).toEqual(['count()', 'count()_2', 'count()_2_2']);
+    expect(out.rows).toEqual([{ 'count()': 1, 'count()_2': 2, 'count()_2_2': 3 }]);
+  });
+  it('custom api call uses the certificate-checked dispatcher and same-host guard', async () => {
+    const spy = mockSeq({ ok: true });
+    const out = await run({ name: 'custom_api_call', propsValue: { method: HttpMethod.GET, url: { url: '/api/projects/123/' }, headers: { x: '1' }, queryParams: {} } });
+    expect(out).toMatchObject({ status: 200, body: { ok: true } });
+    expect(req({ spy })).toMatchObject({ url: 'https://eu.posthog.com/api/projects/123/', headers: { x: '1', Authorization: 'Bearer phx_secret' } });
+    expect(spy.mock.calls[0][1]?.dispatcher).toBe(await posthogClient.verifiedTls());
+    await expect(run({ name: 'custom_api_call', propsValue: { method: HttpMethod.GET, url: { url: 'https://evil.example/x' } } })).rejects.toThrow(/API Host/);
+    await expect(run({ name: 'custom_api_call', propsValue: { method: HttpMethod.GET, url: { url: '/api/../x' } } })).rejects.toThrow(/\.\./);
+    mockSeq(httpFailure({ status: 500, body: 'boom' }));
+    const failed = await run({ name: 'custom_api_call', propsValue: { method: HttpMethod.POST, url: { url: '/x' }, failsafe: true, body_type: 'json', body: { data: { a: 1 } } } });
+    expect(failed).toBeDefined();
   });
   it('delete flag soft-deletes via PATCH', async () => {
     const spy = mockSeq({});

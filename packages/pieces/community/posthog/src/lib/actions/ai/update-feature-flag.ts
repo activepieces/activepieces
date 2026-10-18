@@ -5,6 +5,8 @@ import { posthogClient } from '../../common/client';
 import { posthogMappers } from '../../common/mappers';
 import { posthogOutputSchemas } from '../../common/output-schemas';
 
+const CHANGED_MESSAGE = 'The flag was changed in PostHog while this update ran. Run the action again.';
+
 export const updateFeatureFlag = createAction({
   auth: posthogAuth,
   name: 'update_feature_flag',
@@ -40,6 +42,7 @@ export const updateFeatureFlag = createAction({
     }
     const path = posthogClient.projectPath({ auth: auth.props, segments: ['feature_flags', flagId] });
     const patch: Record<string, unknown> = {};
+    let readVersion: number | undefined;
     if (active !== undefined) patch['active'] = active;
     if (name !== undefined) patch['name'] = name;
     if (rollout !== undefined) {
@@ -50,8 +53,20 @@ export const updateFeatureFlag = createAction({
         throw new Error('Rollout % can only be changed on a flag with exactly one release condition and no variants. Edit this flag in PostHog.');
       }
       patch['filters'] = { ...filters, groups: [{ ...posthogClient.recordOf(groups[0]), rollout_percentage: rollout }] };
+      readVersion = posthogClient.num(current['version']) ?? undefined;
+      // PostHog has no conditional PATCH (it ignores a stale version), so re-read just before
+      // writing and refuse if the release conditions moved since the first read.
+      const latest = posthogClient.recordOf(await posthogClient.request({ auth: auth.props, method: HttpMethod.GET, path }));
+      if (posthogClient.num(latest['version']) !== (readVersion ?? null) || JSON.stringify(latest['filters']) !== JSON.stringify(current['filters'])) {
+        throw new Error(CHANGED_MESSAGE);
+      }
+      if (readVersion !== undefined) patch['version'] = readVersion;
     }
     const body = await posthogClient.request({ auth: auth.props, method: HttpMethod.PATCH, path, body: patch });
+    const written = posthogClient.num(posthogClient.recordOf(body)['version']);
+    if (readVersion !== undefined && written !== null && written > readVersion + 1) {
+      throw new Error(`${CHANGED_MESSAGE} This update was saved over a change made at the same time; check the flag's release conditions in PostHog.`);
+    }
     return posthogMappers.flag({ raw: body, auth: auth.props });
   },
 });
