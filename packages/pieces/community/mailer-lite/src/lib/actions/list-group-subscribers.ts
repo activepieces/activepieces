@@ -55,15 +55,13 @@ export const listGroupSubscribersAction = createAction({
 			description: 'How many subscribers to return per page, up to 1000.',
 			required: false,
 			defaultValue: 25,
-			display: 'stepper',
-			min: 1,
-			max: 1000,
-			step: 1,
+			width: 'half',
 		}),
 		cursor: Property.ShortText({
 			displayName: 'Cursor',
 			description: 'meta.next_cursor from the previous run. Empty: first page.',
 			required: false,
+			width: 'half',
 		}),
 	},
 	async run(context) {

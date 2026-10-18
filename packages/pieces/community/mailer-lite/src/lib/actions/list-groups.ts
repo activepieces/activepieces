@@ -31,16 +31,14 @@ export const listGroupsAction = createAction({
 			description: 'How many groups to return per page, up to 1000.',
 			required: false,
 			defaultValue: 100,
-			display: 'stepper',
-			min: 1,
-			max: 1000,
-			step: 1,
+			width: 'half',
 		}),
 		page: Property.Number({
 			displayName: 'Page',
 			description: 'Page number, starting at 1; meta.last_page in the response is last.',
 			required: false,
 			defaultValue: 1,
+			width: 'half',
 		}),
 	},
 	async run(context) {
