@@ -162,22 +162,18 @@ const useRefreshDraftOnReconnectAndReturn = () => {
   const socket = useSocket();
   const refreshDraft = useRefreshDraftAndMakeNewDraftEditable();
   useEffect(() => {
-    let socketHasConnected = socket.connected;
-    const refreshOnReconnect = () => {
-      if (socketHasConnected) {
-        refreshDraft().catch(() => undefined);
-      }
-      socketHasConnected = true;
+    const refreshOnConnect = () => {
+      refreshDraft().catch(() => undefined);
     };
     const refreshWhenVisible = () => {
       if (document.visibilityState === 'visible') {
         refreshDraft().catch(() => undefined);
       }
     };
-    socket.on('connect', refreshOnReconnect);
+    socket.on('connect', refreshOnConnect);
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
-      socket.off('connect', refreshOnReconnect);
+      socket.off('connect', refreshOnConnect);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
   }, [socket, refreshDraft]);

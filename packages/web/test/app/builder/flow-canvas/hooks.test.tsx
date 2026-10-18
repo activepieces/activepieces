@@ -488,22 +488,10 @@ describe('useRefreshDraftOnReconnectAndReturn', () => {
     expect(shownToasts()).toHaveLength(0);
   });
 
-  it('does not refresh on the first connect of a page load', async () => {
+  it('shows a draft saved before the first connect of a page load', async () => {
     const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
     mount(store);
 
-    connectSocket();
-    await vi.advanceTimersByTimeAsync(0);
-
-    expect(flowsApiMock.get).not.toHaveBeenCalled();
-  });
-
-  it('refreshes on a reconnect that follows the first connect of a page load', async () => {
-    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
-    mount(store);
-
-    connectSocket();
-    await vi.advanceTimersByTimeAsync(0);
     connectSocket();
     await vi.advanceTimersByTimeAsync(0);
 
