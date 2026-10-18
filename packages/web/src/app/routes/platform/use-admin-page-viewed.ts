@@ -2,7 +2,7 @@ import { TelemetryEventName } from '@activepieces/shared';
 import { useEffect } from 'react';
 import { useLatest } from 'react-use';
 
-import { useInsideFeatureSample } from '@/app/components/feature-sample';
+import { useInsideFeatureSample } from '@/app/components/enterprise-gate';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 
 export function useAdminPageViewed(page: string) {

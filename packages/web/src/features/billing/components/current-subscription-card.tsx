@@ -1,5 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import { PlatformBillingInformation } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
+import { Gem } from 'lucide-react';
 
 import nonFreePlanBg from '@/assets/img/custom/non-free-plan-bg.jpg';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +10,11 @@ import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
+import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
 import { billingUtils } from '../utils/billing-utils';
+import { enterpriseTrialCopy } from '../utils/enterprise-trial-copy';
+
+import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
 
 type CurrentSubscriptionCardProps = {
   info: PlatformBillingInformation;
@@ -20,6 +27,42 @@ export const CurrentSubscriptionCard = ({
 }: CurrentSubscriptionCardProps) => {
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const isYearly = billingUtils.isYearlyPlan(info);
+  const trial = enterpriseTrialHooks.useTrial();
+  const trialEndsAt = trial.state === 'active' ? trial.endsAt : null;
+
+  if (!isNil(trialEndsAt) && !isPaid) {
+    return (
+      <div className="flex flex-col gap-4 rounded-xl border bg-panel p-5">
+        <div className="flex items-center gap-2 text-sm text-gray-11">
+          <Gem className="size-4 text-accent-11" />
+          {t('Current plan')}
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className="flex items-center gap-2">
+            <span className="text-2xl font-semibold">
+              {t('Enterprise plan trial')}
+            </span>
+            <Badge variant="outline" className="rounded-full">
+              {enterpriseTrialCopy.daysLeftLabel(trial)}
+            </Badge>
+          </span>
+          <span className="text-sm text-gray-11">
+            {t(
+              'Ends {date}, then you are back on the {plan} plan. Your credits are not affected.',
+              {
+                date: dayjs(trialEndsAt).format('MMM D'),
+                plan: trial.basePlanName,
+              },
+            )}
+          </span>
+        </div>
+        <EnterpriseTrialSalesLink
+          surface="enterprise_trial_billing"
+          variant="default"
+        />
+      </div>
+    );
+  }
 
   if (isPaid) {
     return (
