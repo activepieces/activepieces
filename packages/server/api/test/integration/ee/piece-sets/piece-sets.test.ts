@@ -153,6 +153,34 @@ describe('Piece Sets API', () => {
             expect(body.next).toBeNull()
         })
 
+        it('matches a backslash in the name literally and keeps % and _ as wildcards', async () => {
+            const { token } = await setupPlatformWithPieceSets()
+            for (const name of ['Ops\\Finance', 'OpsFinance', 'Set-1', 'set_1']) {
+                await app!.inject({
+                    method: 'POST',
+                    url: '/api/v1/piece-sets',
+                    headers: { authorization: `Bearer ${token}` },
+                    body: { name },
+                })
+            }
+
+            const backslashSearch = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/piece-sets?name=${encodeURIComponent('ops\\f')}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(backslashSearch.statusCode).toBe(StatusCodes.OK)
+            expect(backslashSearch.json().data.map((s: PieceSet) => s.name)).toEqual(['Ops\\Finance'])
+
+            const wildcardSearch = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/piece-sets?name=${encodeURIComponent('set_1')}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+            expect(wildcardSearch.statusCode).toBe(StatusCodes.OK)
+            expect(wildcardSearch.json().data.map((s: PieceSet) => s.name).sort()).toEqual(['Set-1', 'set_1'])
+        })
+
         it('does not return matching sets from another platform', async () => {
             const { token: otherToken } = await setupPlatformWithPieceSets()
             await app!.inject({

@@ -103,7 +103,7 @@ export const pieceSetService = (log: FastifyBaseLogger) => ({
         })
         const queryBuilder = pieceSetRepo().createQueryBuilder('piece_set').where({ platformId })
         if (name) {
-            queryBuilder.andWhere('piece_set.name ILIKE :name', { name: `%${name}%` })
+            queryBuilder.andWhere('piece_set.name ILIKE :name', { name: `%${escapeLikeBackslashes(name)}%` })
         }
         const { data, cursor: newCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<PieceSet>(data, newCursor)
@@ -240,6 +240,10 @@ function resolveKey({ key, name }: { key?: string | null, name: string }): strin
         return key
     }
     return `${kebabCase(name)}-${apId().slice(0, 8)}`
+}
+
+function escapeLikeBackslashes(value: string): string {
+    return value.replace(/\\/g, '\\\\')
 }
 
 function rethrowKeyConflict(error: unknown): never {
