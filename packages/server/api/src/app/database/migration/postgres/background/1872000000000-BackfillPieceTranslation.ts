@@ -12,7 +12,7 @@ export class BackfillPieceTranslation1872000000000 implements BackgroundMigratio
         while (true) {
             const rows = await queryRunner.query(`
                 WITH batch AS (
-                    SELECT "id", regexp_replace("i18n"::text, $2, '', 'g')::json AS "i18n" FROM "piece_metadata"
+                    SELECT "id", CASE WHEN "i18n"::text ~* $3 THEN regexp_replace("i18n"::text, $2, '', 'g')::json ELSE "i18n" END AS "i18n" FROM "piece_metadata"
                      WHERE "id" > $1
                      ORDER BY "id"
                      LIMIT ${BATCH_SIZE}
@@ -25,7 +25,7 @@ export class BackfillPieceTranslation1872000000000 implements BackgroundMigratio
                     ON CONFLICT DO NOTHING
                 )
                 SELECT max("id") AS "lastId" FROM batch
-            `, [lastId, JSONB_INVALID_ESCAPES]) as [{ lastId: string | null }]
+            `, [lastId, JSONB_INVALID_ESCAPES, MAYBE_JSONB_INVALID_ESCAPE]) as [{ lastId: string | null }]
             if (isNil(rows[0].lastId)) {
                 return
             }
@@ -39,4 +39,5 @@ export class BackfillPieceTranslation1872000000000 implements BackgroundMigratio
 }
 
 const BATCH_SIZE = 200
+const MAYBE_JSONB_INVALID_ESCAPE = String.raw`\\u(0000|d[89a-f])`
 const JSONB_INVALID_ESCAPES = String.raw`\\u0000|\\u[dD][89abAB][0-9a-fA-F]{2}(?!\\u[dD][c-fC-F][0-9a-fA-F]{2})|(?<!\\u[dD][89abAB][0-9a-fA-F]{2})\\u[dD][c-fC-F][0-9a-fA-F]{2}`
