@@ -45,7 +45,7 @@ describe('piece translation migrations', () => {
         await initializeDatabase({ runMigrations: true })
         ds = databaseConnection()
         await ds.getRepository('piece_metadata').save([translated, emptyTranslations, noTranslations, brokenTranslations, dirtyTranslations])
-        await ds.query(String.raw`UPDATE "piece_metadata" SET "i18n" = '{"ja": {"Se\u0000nd": "送\u0000信 \ud800 \ud83d\ude00"}}' WHERE "id" = $1`, [dirtyTranslations.id])
+        await ds.query(String.raw`UPDATE "piece_metadata" SET "i18n" = '{"ja": {"Se\u0000nd": "送\u0000信 \ud800 \ud83d\ude00", "Literal": "a \\u0000 b"}}' WHERE "id" = $1`, [dirtyTranslations.id])
         await ds.query('UPDATE "piece_metadata" SET "i18n" = \'"not an object"\' WHERE "id" = $1', [brokenTranslations.id])
     })
 
@@ -61,7 +61,7 @@ describe('piece translation migrations', () => {
         expect(await translationRows(ds)).toEqual([
             { pieceMetadataId: translated.id, locale: LocalesEnum.GERMAN, translations: { 'Send a message': 'Eine Nachricht senden' } },
             { pieceMetadataId: translated.id, locale: LocalesEnum.FRENCH, translations: { 'Send a message': 'Envoyer un message' } },
-            { pieceMetadataId: dirtyTranslations.id, locale: LocalesEnum.JAPANESE, translations: { 'Send': '送信  😀' } },
+            { pieceMetadataId: dirtyTranslations.id, locale: LocalesEnum.JAPANESE, translations: { 'Send': '送信  😀', 'Literal': 'a \\u0000 b' } },
         ])
     })
 

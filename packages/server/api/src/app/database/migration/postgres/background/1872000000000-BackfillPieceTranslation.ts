@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, isObject, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { QueryRunner } from 'typeorm'
 import { BackgroundMigration } from '../../../background-migration'
 
@@ -10,9 +10,9 @@ export class BackfillPieceTranslation1872000000000 implements BackgroundMigratio
     public async up(queryRunner: QueryRunner): Promise<void> {
         let lastId = ''
         while (true) {
-            const rows = await queryRunner.query(`
+            const [batch] = await queryRunner.query(`
                 WITH batch AS (
-                    SELECT "id", CASE WHEN "i18n"::text ~* $3 THEN regexp_replace("i18n"::text, $2, '', 'g')::json ELSE "i18n" END AS "i18n" FROM "piece_metadata"
+                    SELECT "id", "i18n", "i18n"::text ~* $2 AS "hasUnicodeEscapes" FROM "piece_metadata"
                      WHERE "id" > $1
                      ORDER BY "id"
                      LIMIT ${BATCH_SIZE}
@@ -20,16 +20,19 @@ export class BackfillPieceTranslation1872000000000 implements BackgroundMigratio
                 inserted AS (
                     INSERT INTO "piece_translation" ("pieceMetadataId", "locale", "translations")
                     SELECT batch."id", entry.key, entry.value::jsonb
-                      FROM batch, json_each(CASE WHEN json_typeof(batch."i18n") = 'object' THEN batch."i18n" END) AS entry
+                      FROM batch, json_each(CASE WHEN NOT batch."hasUnicodeEscapes" AND json_typeof(batch."i18n") = 'object' THEN batch."i18n" END) AS entry
                      WHERE json_typeof(entry.value) = 'object'
                     ON CONFLICT DO NOTHING
                 )
-                SELECT max("id") AS "lastId" FROM batch
-            `, [lastId, JSONB_INVALID_ESCAPES, MAYBE_JSONB_INVALID_ESCAPE]) as [{ lastId: string | null }]
-            if (isNil(rows[0].lastId)) {
+                SELECT max("id") AS "lastId",
+                       array_remove(array_agg(CASE WHEN "hasUnicodeEscapes" THEN "id" END), NULL) AS "escapedIds"
+                  FROM batch
+            `, [lastId, UNICODE_ESCAPE_POSTGRES_CANNOT_DECODE]) as [{ lastId: string | null, escapedIds: string[] }]
+            if (isNil(batch.lastId)) {
                 return
             }
-            lastId = rows[0].lastId
+            await backfillPiecesWithUnicodeEscapes({ queryRunner, ids: batch.escapedIds })
+            lastId = batch.lastId
         }
     }
 
@@ -38,6 +41,49 @@ export class BackfillPieceTranslation1872000000000 implements BackgroundMigratio
     }
 }
 
+async function backfillPiecesWithUnicodeEscapes({ queryRunner, ids }: BackfillPiecesWithUnicodeEscapesParams): Promise<void> {
+    if (ids.length === 0) {
+        return
+    }
+    const pieces = await queryRunner.query(
+        'SELECT "id", "i18n"::text AS "i18n" FROM "piece_metadata" WHERE "id" = ANY($1)',
+        [ids],
+    ) as StoredPiece[]
+    for (const row of pieces.flatMap(toTranslationRows)) {
+        await queryRunner.query(
+            'INSERT INTO "piece_translation" ("pieceMetadataId", "locale", "translations") VALUES ($1, $2, $3::jsonb) ON CONFLICT DO NOTHING',
+            [row.pieceMetadataId, row.locale, JSON.stringify(row.translations)],
+        )
+    }
+}
+
+function toTranslationRows({ id, i18n }: StoredPiece): TranslationRow[] {
+    const parsed: unknown = JSON.parse(i18n)
+    if (!isObject(parsed)) {
+        return []
+    }
+    return Object.entries(parsed).flatMap(([locale, translations]) =>
+        isObject(translations)
+            ? [{ pieceMetadataId: id, locale, translations: Object.fromEntries(sanitizeObjectForPostgresql(Object.entries(translations))) }]
+            : [],
+    )
+}
+
 const BATCH_SIZE = 200
-const MAYBE_JSONB_INVALID_ESCAPE = String.raw`\\u(0000|d[89a-f])`
-const JSONB_INVALID_ESCAPES = String.raw`\\u0000|\\u[dD][89abAB][0-9a-fA-F]{2}(?!\\u[dD][c-fC-F][0-9a-fA-F]{2})|(?<!\\u[dD][89abAB][0-9a-fA-F]{2})\\u[dD][c-fC-F][0-9a-fA-F]{2}`
+const UNICODE_ESCAPE_POSTGRES_CANNOT_DECODE = String.raw`\\u(0000|d[89a-f])`
+
+type BackfillPiecesWithUnicodeEscapesParams = {
+    queryRunner: QueryRunner
+    ids: string[]
+}
+
+type StoredPiece = {
+    id: string
+    i18n: string
+}
+
+type TranslationRow = {
+    pieceMetadataId: string
+    locale: string
+    translations: Record<string, unknown>
+}

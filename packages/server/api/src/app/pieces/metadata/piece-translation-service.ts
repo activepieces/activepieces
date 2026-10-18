@@ -23,7 +23,7 @@ export const pieceTranslationService = {
             .createQueryBuilder(PieceMetadataEntity, 'pm')
             .leftJoin(PieceTranslationEntity.options.name, 'pt', 'pt."pieceMetadataId" = pm."id" AND pt."locale" = :locale')
             .select('pm."id"', 'id')
-            .addSelect(`COALESCE(pt."translations", CASE WHEN NOT EXISTS (${PIECE_HAS_TRANSLATION_ROWS}) THEN (pm."i18n" -> :locale)::jsonb END)`, 'translations')
+            .addSelect(`COALESCE(pt."translations"::json, CASE WHEN NOT EXISTS (${PIECE_HAS_TRANSLATION_ROWS}) THEN pm."i18n" -> :locale END)`, 'translations')
             .where('pm."id" IN (:...pieceIds)', { pieceIds })
             .setParameter('locale', locale)
             .getRawMany<{ id: string, translations: Record<string, string> | null }>()
