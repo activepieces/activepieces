@@ -277,7 +277,6 @@ const ActionsCell = ({
             : revokesInvite
             ? t('removePlatformInviteRevokesIt', {
                 email: displayName,
-                projectName: project.displayName,
               })
             : isPlatformInvitation
             ? t('removePlatformInviteFromProject', {
@@ -290,6 +289,7 @@ const ActionsCell = ({
         }
         mutationFn={() => deleteMember()}
         entityName={displayName}
+        buttonText={revokesInvite ? t('Revoke invite') : undefined}
       >
         <Button
           variant="ghost"
