@@ -3356,5 +3356,6 @@
   "People at {domain} can no longer sign in with email and password.": "People at {domain} can no longer sign in with email and password.",
   "Add your company domain too, or people at your company can't sign in with email and password.": "Add your company domain too, or people at your company can't sign in with email and password.",
   "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.": "Once a domain is on this list, only people at listed domains can sign in with email and password. Add your company domain too.",
-  "People at this domain can sign in with email and password.": "People at this domain can sign in with email and password."
+  "People at this domain can sign in with email and password.": "People at this domain can sign in with email and password.",
+  "Type {text} to confirm": "Type {text} to confirm"
 }

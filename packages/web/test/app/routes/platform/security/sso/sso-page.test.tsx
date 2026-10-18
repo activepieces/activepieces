@@ -748,6 +748,14 @@ describe('SamlSetupPage', () => {
     expect(platformApiMock.update).not.toHaveBeenCalled();
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText('Disable single sign-on?')).toBeDefined();
+    expect(findButton('Disable', dialog)?.disabled).toBe(true);
+    fireEvent.change(within(dialog).getByLabelText('Type disable to confirm'), {
+      target: { value: 'Disable' },
+    });
+    expect(findButton('Disable', dialog)?.disabled).toBe(true);
+    fireEvent.change(within(dialog).getByLabelText('Type disable to confirm'), {
+      target: { value: 'disable' },
+    });
     click(findButton('Disable', dialog));
 
     await waitFor(() =>

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export const MethodConfirmDialog = ({
@@ -22,39 +24,63 @@ export const MethodConfirmDialog = ({
   destructive,
   isPending,
   controlId,
+  confirmText,
   onConfirm,
-}: MethodConfirmDialogProps) => (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent
-      className={adminLayout.dialog.md}
-      onInteractOutside={(event) => event.preventDefault()}
+}: MethodConfirmDialogProps) => {
+  const [typed, setTyped] = useState('');
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setTyped('');
+        onOpenChange(next);
+      }}
     >
-      <DialogHeader>
-        <DialogTitle>{title}</DialogTitle>
-        <DialogDescription>{description}</DialogDescription>
-      </DialogHeader>
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isPending}
-          onClick={() => onOpenChange(false)}
-        >
-          {t('Cancel')}
-        </Button>
-        <Button
-          {...adminControl(controlId)}
-          type="button"
-          variant={destructive ? 'destructive' : 'default'}
-          loading={isPending}
-          onClick={onConfirm}
-        >
-          {confirmLabel}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-);
+      <DialogContent
+        className={adminLayout.dialog.md}
+        onInteractOutside={(event) => event.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        {confirmText && (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="method-confirm-text">
+              {t('Type {text} to confirm', { text: confirmText })}
+            </Label>
+            <Input
+              id="method-confirm-text"
+              value={typed}
+              onChange={(event) => setTyped(event.target.value)}
+              autoComplete="off"
+            />
+          </div>
+        )}
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isPending}
+            onClick={() => onOpenChange(false)}
+          >
+            {t('Cancel')}
+          </Button>
+          <Button
+            {...adminControl(controlId)}
+            type="button"
+            variant={destructive ? 'destructive' : 'default'}
+            loading={isPending}
+            disabled={!!confirmText && typed !== confirmText}
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 type MethodConfirmDialogProps = {
   open: boolean;
@@ -65,5 +91,6 @@ type MethodConfirmDialogProps = {
   destructive: boolean;
   isPending: boolean;
   controlId: AdminControl;
+  confirmText?: string;
   onConfirm: () => void;
 };

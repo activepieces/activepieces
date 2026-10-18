@@ -154,6 +154,7 @@ const DisableSamlRow = ({
         destructive
         isPending={isPending}
         controlId={AdminControl.SSO_SAML_DISABLE_CONFIRM}
+        confirmText="disable"
         onConfirm={() => disableSaml()}
       />
     </SettingsPanel>
