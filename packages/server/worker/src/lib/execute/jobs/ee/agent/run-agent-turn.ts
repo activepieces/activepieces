@@ -68,13 +68,13 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
     return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
 }
 
-export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
     let creditsExhausted = false
     let paidToolsAffordable = true
-    let earlierAttemptToolCalls: ChatToolCall[] = []
+    let earlierAttemptToolCalls: ChatToolCall[] = priorToolCalls ?? []
     const creditsRanOut: StopCondition<ToolSet> = async ({ steps }) => {
         if (isNil(creditsLeft)) {
             return false
@@ -176,7 +176,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             const stepModel = isFirstStep && !isNil(fast) ? fast : current()
             const usesFastModel = stepModel !== current()
             const stepBudget = stepModel.budget
-            const visibleTools = skillSurface?.coreToolNames ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
+            const visibleTools = skillSurface?.attachedToolNames() ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
             const phaseTools = isNil(skillSurface) ? visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)) : visibleTools
             const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
             const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider: stepModel.provider })
@@ -246,7 +246,9 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 log.warn({ tool: { name: toolCall.toolName, durationMs: toolExecutionMs }, error: toolOutput.error }, 'Tool call failed')
             }
         },
-        onStepEnd: ({ content, response }) => {
+        onStepEnd: ({ content, response, usage: stepUsage }) => {
+            totalInputTokens += stepUsage.inputTokens ?? 0
+            totalOutputTokens += stepUsage.outputTokens ?? 0
             uiParts.push(...agentAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
             currentAttemptMessages = [...currentAttemptMessages, ...agentAiUtils.collectStepMessages([{ response }])]
             const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
@@ -319,8 +321,6 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         const stepMessages = agentAiUtils.collectStepMessages(steps)
         earlierAttemptToolCalls = [...earlierAttemptToolCalls, ...completedToolCalls(steps)]
         usage = attemptUsage
-        totalInputTokens += attemptUsage.inputTokens ?? 0
-        totalOutputTokens += attemptUsage.outputTokens ?? 0
         lastFinishReason = finishReason
         logTurnPerformance({ performance: finalStep.performance, modelId: current().modelId, stepCount: steps.length, log })
 
@@ -660,6 +660,7 @@ export type RunAgentTurnParams = {
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
     stepCeiling?: number
     creditsLeft?: (pendingCredits: number) => Promise<number | null>
+    priorToolCalls?: ChatToolCall[]
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
     onStepModel?: (turnModel: TurnModel) => void
     skills?: { surface: SkillSurface, guides: Record<string, string> }

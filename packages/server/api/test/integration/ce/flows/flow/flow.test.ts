@@ -1,3 +1,4 @@
+import { ErrorCode } from '@activepieces/core-utils'
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     FlowOperationType,
@@ -190,6 +191,35 @@ describe('Flow API', () => {
             expect(responseBody?.templateId).toBeNull()
             expect(Object.keys(responseBody?.version)).toHaveLength(14)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
+        })
+
+        it('Rejects enabling a never published Flow with a 400', async () => {
+            const ctx = await createTestContext(app!)
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'never published flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
+            const flowId = createResponse?.json().id
+
+            const response = await ctx.post(`/v1/flows/${flowId}`, {
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status: 'ENABLED' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.json()).toMatchObject({
+                code: ErrorCode.FLOW_OPERATION_INVALID,
+                params: { message: 'Publish the flow before turning it on' },
+            })
+
+            const disableResponse = await ctx.post(`/v1/flows/${flowId}`, {
+                type: FlowOperationType.CHANGE_STATUS,
+                request: { status: 'DISABLED' },
+            })
+            expect(disableResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(disableResponse?.json().status).toBe(FlowStatus.DISABLED)
         })
     })
 

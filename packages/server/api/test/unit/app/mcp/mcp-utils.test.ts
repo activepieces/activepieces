@@ -650,3 +650,19 @@ describe('mcpUtils.normalizeFormulaText — double braces around a formula', () 
         expect(mcpUtils.normalizeFormulaText(correct)).toBe(correct)
     })
 })
+
+describe('mcpUtils.normalizeAuth', () => {
+    it('unwraps the connection template the research tools hand out', () => {
+        expect(mcpUtils.normalizeAuth('{{connections[\'conn_test_id\']}}')).toBe('conn_test_id')
+    })
+
+    it('leaves a plain externalId and undefined alone', () => {
+        expect(mcpUtils.normalizeAuth('conn_test_id')).toBe('conn_test_id')
+        expect(mcpUtils.normalizeAuth(undefined)).toBeUndefined()
+    })
+
+    it('still lets validateAuth reject anything that is not a clean id', () => {
+        const garbage = mcpUtils.normalizeAuth('{{trigger[\'output\'].auth}}')
+        expect(mcpUtils.validateAuth(garbage)).not.toBeNull()
+    })
+})
