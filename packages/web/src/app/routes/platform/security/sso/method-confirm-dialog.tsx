@@ -27,6 +27,7 @@ export const MethodConfirmDialog = ({
   isPending,
   controlId,
   warning,
+  confirmDisabled = false,
   confirmText,
   onConfirm,
 }: MethodConfirmDialogProps) => {
@@ -80,7 +81,9 @@ export const MethodConfirmDialog = ({
             type="button"
             variant={destructive ? 'destructive' : 'default'}
             loading={isPending}
-            disabled={!!confirmText && typed !== confirmText}
+            disabled={
+              confirmDisabled || (!!confirmText && typed !== confirmText)
+            }
             onClick={onConfirm}
           >
             {confirmLabel}
@@ -101,6 +104,7 @@ type MethodConfirmDialogProps = {
   isPending: boolean;
   controlId: AdminControl;
   warning?: ReactNode;
+  confirmDisabled?: boolean;
   confirmText?: string;
   onConfirm: () => void;
 };

@@ -15,6 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 interface ConfirmationDeleteDialogProps {
@@ -31,6 +33,7 @@ interface ConfirmationDeleteDialogProps {
   onError?: (error: Error) => void;
   warning?: React.ReactNode | string;
   confirmDisabled?: boolean;
+  confirmText?: string;
   controlId?: AdminControl;
   contentClassName?: string;
   keepOpenOnOutsideClick?: boolean;
@@ -50,6 +53,7 @@ export const ConfirmationDeleteDialog = ({
   onOpenChange,
   warning,
   confirmDisabled,
+  confirmText,
   controlId,
   contentClassName,
   keepOpenOnOutsideClick = false,
@@ -58,6 +62,7 @@ export const ConfirmationDeleteDialog = ({
     open !== undefined && onOpenChange !== undefined,
   );
   const [isUncontrolledOpen, setIsUncontrolledOpen] = useState(false);
+  const [typed, setTyped] = useState('');
 
   const { mutate, isPending } = useMutation({
     mutationFn,
@@ -70,7 +75,19 @@ export const ConfirmationDeleteDialog = ({
     onError,
   });
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      setTyped('');
+    }
+    if (isControlled) {
+      onOpenChange?.(next);
+    } else {
+      setIsUncontrolledOpen(next);
+    }
+  };
+
   const handleClose = () => {
+    setTyped('');
     if (isControlled) {
       onOpenChange?.(false);
     } else {
@@ -81,10 +98,7 @@ export const ConfirmationDeleteDialog = ({
   const isOpen = isControlled ? open : isUncontrolledOpen;
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={isControlled ? onOpenChange : setIsUncontrolledOpen}
-    >
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
       <DialogContent
@@ -108,6 +122,19 @@ export const ConfirmationDeleteDialog = ({
             <AlertDescription>{warning}</AlertDescription>
           </Alert>
         )}
+        {confirmText && (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="delete-confirm-text">
+              {t('Type {text} to confirm', { text: confirmText })}
+            </Label>
+            <Input
+              id="delete-confirm-text"
+              value={typed}
+              onChange={(event) => setTyped(event.target.value)}
+              autoComplete="off"
+            />
+          </div>
+        )}
         <DialogFooter className="mt-3">
           <Button
             variant="outline"
@@ -119,7 +146,9 @@ export const ConfirmationDeleteDialog = ({
           <Button
             variant="destructive"
             loading={isPending}
-            disabled={confirmDisabled}
+            disabled={
+              confirmDisabled || (!!confirmText && typed !== confirmText)
+            }
             onClick={() => mutate()}
             {...adminControl(controlId)}
           >

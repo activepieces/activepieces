@@ -98,6 +98,7 @@ const DomainRow = ({
   onContinueVerifying,
 }: DomainRowProps) => {
   const googleSignInAvailable = useGoogleSignInAvailable();
+  const otherMethodsOff = !platform.emailAuthEnabled && !googleSignInAvailable;
   const [dnsRecordOpen, setDnsRecordOpen] = useState(false);
   const verified = verification.status === SsoDomainVerificationStatus.VERIFIED;
 
@@ -173,13 +174,11 @@ const DomainRow = ({
             }
             warning={
               verified && samlConnected ? (
-                <SamlDeletionWarning
-                  otherMethodsOff={
-                    !platform.emailAuthEnabled && !googleSignInAvailable
-                  }
-                />
+                <SamlDeletionWarning otherMethodsOff={otherMethodsOff} />
               ) : undefined
             }
+            confirmText={verified ? domain : undefined}
+            confirmDisabled={verified && samlConnected && otherMethodsOff}
             entityName={domain}
             buttonText={
               !verified

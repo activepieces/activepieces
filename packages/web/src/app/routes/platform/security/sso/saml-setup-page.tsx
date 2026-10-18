@@ -99,6 +99,7 @@ const DisableSamlRow = ({
 }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const googleSignInAvailable = useGoogleSignInAvailable();
+  const otherMethodsOff = !platform.emailAuthEnabled && !googleSignInAvailable;
   const { mutate: disableSaml, isPending } = useMutation({
     mutationFn: async () => {
       await platformApi.update(
@@ -138,13 +139,8 @@ const DisableSamlRow = ({
         description={t(
           'People who use single sign-on will have to sign in another way.',
         )}
-        warning={
-          <SamlDeletionWarning
-            otherMethodsOff={
-              !platform.emailAuthEnabled && !googleSignInAvailable
-            }
-          />
-        }
+        warning={<SamlDeletionWarning otherMethodsOff={otherMethodsOff} />}
+        confirmDisabled={otherMethodsOff}
         confirmLabel={t('Disable')}
         destructive
         isPending={isPending}

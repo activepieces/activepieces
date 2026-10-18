@@ -328,6 +328,10 @@ describe('SSOPage', () => {
         'This disables single sign-on and deletes its SAML connection.',
       ),
     ).toBeDefined();
+    expect(findButton('Remove domain and disable SAML', dialog)?.disabled).toBe(
+      true,
+    );
+    typeToConfirm(dialog, 'acme.com');
     click(findButton('Remove domain and disable SAML', dialog));
 
     await waitFor(() =>
@@ -353,6 +357,24 @@ describe('SSOPage', () => {
         'Email and Google sign-in are off. Turn one on first so people can still sign in.',
       ),
     ).toBeDefined();
+  });
+
+  it('blocks removing the domain when SAML is the only working sign-in method', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+      federatedAuthProviders: { saml: samlConfig },
+      emailAuthEnabled: false,
+    });
+    mount();
+
+    click(menuItem('Remove domain'));
+    const dialog = screen.getByRole('dialog');
+    typeToConfirm(dialog, 'acme.com');
+
+    expect(findButton('Remove domain and disable SAML', dialog)?.disabled).toBe(
+      true,
+    );
   });
 
   it('does not warn about other sign-in methods while Google sign-in is on', () => {
@@ -421,6 +443,7 @@ describe('SSOPage', () => {
     mount();
 
     click(menuItem('Remove domain'));
+    typeToConfirm(screen.getByRole('dialog'), 'acme.com');
     click(
       findButton('Remove domain and disable SAML', screen.getByRole('dialog')),
     );
@@ -444,6 +467,7 @@ describe('SSOPage', () => {
         "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.",
       ),
     ).toBeDefined();
+    typeToConfirm(dialog, 'acme.com');
     click(findButton('Remove domain', dialog));
 
     await waitFor(() =>
@@ -767,6 +791,21 @@ describe('SamlSetupPage', () => {
     expect(await screen.findByText('authentication page')).toBeDefined();
   });
 
+  it('blocks disabling single sign-on when it is the only working sign-in method', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+      federatedAuthProviders: { saml: samlConfig },
+      emailAuthEnabled: false,
+    });
+    mountSetupPage();
+
+    click(findButton('Disable'));
+    const dialog = screen.getByRole('dialog');
+    typeToConfirm(dialog, 'disable');
+
+    expect(findButton('Disable', dialog)?.disabled).toBe(true);
+  });
   it('shows no Disable when SAML is not connected', () => {
     setPlatform({
       ssoDomain: 'acme.com',
@@ -918,6 +957,12 @@ async function submitWhenValid(dialog: HTMLElement) {
     expect(findButton('Add domain', dialog)?.disabled).toBe(false),
   );
   click(findButton('Add domain', dialog));
+}
+
+function typeToConfirm(dialog: HTMLElement, text: string) {
+  fireEvent.change(within(dialog).getByLabelText(`Type ${text} to confirm`), {
+    target: { value: text },
+  });
 }
 
 function setPlatform(overrides: Record<string, unknown>) {
