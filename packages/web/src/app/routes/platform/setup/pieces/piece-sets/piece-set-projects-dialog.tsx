@@ -233,6 +233,7 @@ export const PieceSetProjectsDialog = ({
           {...adminControl(AdminControl.PIECE_SETS_PROJECTS_OPEN)}
           variant="outline"
           role="combobox"
+          aria-label={t('Assigned projects')}
           disabled={isLoading}
           className="font-normal"
         >

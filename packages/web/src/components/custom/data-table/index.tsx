@@ -168,6 +168,7 @@ export function DataTable<
       <div className="flex items-center h-full">
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
+          aria-label={t('Select all')}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         />
       </div>
@@ -177,6 +178,7 @@ export function DataTable<
         <Checkbox
           checked={row.getIsSelected()}
           disabled={!row.getCanSelect()}
+          aria-label={t('Select row')}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
         />
       </div>
@@ -240,6 +242,8 @@ export function DataTable<
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
   const startingLimit = searchParams.get('limit') || '10';
+  const rowsPerPageLabelId = React.useId();
+  const rowsPerPageTriggerId = React.useId();
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
     startingCursor,
   );
@@ -712,7 +716,9 @@ export function DataTable<
       {!hidePagination && !virtualizeRows && (
         <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
           <div className="flex items-center gap-2">
-            <span className="text-gray-11">{t('Rows per page')}</span>
+            <span id={rowsPerPageLabelId} className="text-gray-11">
+              {t('Rows per page')}
+            </span>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
@@ -722,7 +728,12 @@ export function DataTable<
                 }
               }}
             >
-              <SelectTrigger size="sm" className="w-[70px]">
+              <SelectTrigger
+                id={rowsPerPageTriggerId}
+                size="sm"
+                className="w-[70px]"
+                aria-labelledby={`${rowsPerPageLabelId} ${rowsPerPageTriggerId}`}
+              >
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />

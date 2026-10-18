@@ -357,6 +357,7 @@ function SecretInput({
         variant="ghost"
         size="icon-xs"
         tabIndex={-1}
+        aria-label={visible ? t('Hide key') : t('Show key')}
         onClick={() => setVisible(!visible)}
         className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-11 hover:text-gray-12"
       >

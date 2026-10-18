@@ -238,6 +238,9 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
                 <Switch
                   {...adminControl(AdminControl.PIECE_SETS_PIECE_TOGGLE)}
                   checked={included}
+                  aria-label={t('Include {name}', {
+                    name: row.original.displayName,
+                  })}
                   disabled={saving}
                   aria-busy={saving}
                   onCheckedChange={() => togglePiece(row.original.name)}

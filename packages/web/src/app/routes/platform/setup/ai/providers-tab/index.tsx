@@ -16,7 +16,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -649,11 +649,13 @@ function ChatProviderRow({
   isSwitching: boolean;
   onChange: (configId: string) => void;
 }) {
+  const labelId = useId();
+  const triggerId = useId();
   return (
     <SettingsPanel flush>
       <SettingsRow
         icon={<MessageSquare />}
-        title={t('Chat provider')}
+        title={<span id={labelId}>{t('Chat provider')}</span>}
         description={t(
           'Powers the built-in chat for everyone on this platform',
         )}
@@ -663,7 +665,11 @@ function ChatProviderRow({
           onValueChange={onChange}
           disabled={isSwitching}
         >
-          <SelectTrigger className="w-52">
+          <SelectTrigger
+            id={triggerId}
+            className="w-52"
+            aria-labelledby={`${labelId} ${triggerId}`}
+          >
             <SelectValue placeholder={t('Select provider')} />
           </SelectTrigger>
           <SelectContent>
