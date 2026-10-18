@@ -25,19 +25,23 @@ const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous st
 
 const FINAL_STEP_MESSAGE: ModelMessage = { role: 'user', content: FINAL_STEP_NOTE }
 
-export function decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations }: {
+export function decideLoopAction({ finishReason, endedWithReply, continuations, emptyContinuations }: {
     finishReason: string
-    producedVisibleOutput: boolean
+    endedWithReply: boolean
     continuations: number
     emptyContinuations: number
 }): LoopDecision {
     if (finishReason === 'length') {
         return continuations >= MAX_AUTO_CONTINUATIONS ? 'finish' : 'continue_truncation'
     }
-    if (!producedVisibleOutput && emptyContinuations < MAX_EMPTY_CONTINUATIONS) {
+    if (!endedWithReply && emptyContinuations < MAX_EMPTY_CONTINUATIONS) {
         return 'continue_empty'
     }
     return 'finish'
+}
+
+export function stepEndsWithReply({ text, toolCallCount }: { text: string, toolCallCount: number }): boolean {
+    return text.trim().length > 0 || toolCallCount > 0
 }
 
 export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
@@ -333,7 +337,8 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             break
         }
 
-        const decision = decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations })
+        const endedWithReply = stepEndsWithReply({ text: finalStep.text, toolCallCount: finalStep.toolCalls.length })
+        const decision = decideLoopAction({ finishReason, endedWithReply, continuations, emptyContinuations })
 
         if (decision === 'finish') {
             accumulatedResponseMessages.push(...stepMessages)
