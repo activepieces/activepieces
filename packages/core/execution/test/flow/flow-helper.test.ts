@@ -818,6 +818,15 @@ describe('Paste remaps references to copied steps (GIT-1075)', () => {
         expect(pastedPiece.settings.input.key).toBe(`{{ ${pastedCode.name}['output'].id }}`)
     })
 
+    it('copies steps in flow order whatever order they were selected in', () => {
+        const flowVersion = flowWith({ codeStepName: 'step_2', secondStep: routerReferencing('step_2', 'step_1') })
+
+        const copiedNames = (selection: string[]) => flowOperations.getActionsForCopy(selection, flowVersion).map((action) => action.name)
+
+        expect(copiedNames(['step_1', 'step_2'])).toEqual(['step_2', 'step_1'])
+        expect(copiedNames(['step_2', 'step_1'])).toEqual(['step_2', 'step_1'])
+    })
+
     it('remaps correctly when a pasted step takes over another copied step name', () => {
         const sourceFlow = flowWith({ codeStepName: 'step_2', secondStep: routerReferencing('step_2', 'step_1') })
         const emptyFlow: FlowVersion = { ...sourceFlow, trigger: { ...sourceFlow.trigger, nextAction: undefined } }
