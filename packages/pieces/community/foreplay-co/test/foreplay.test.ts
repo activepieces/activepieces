@@ -444,7 +444,7 @@ describe('triggers', () => {
     const props = { brand_id: 'b1', page_size: 1 };
     const first = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: props }) });
     expect(first.map((a: { id: string }) => a.id)).toEqual(['n4', 'n3', 'n2', 'n1', 'n0']);
-    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: 'c5', before: null });
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: 'c5', before: null, delivered: [] });
     const second = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: props }) });
     expect(nthUrl({ spy, index: 5 }).searchParams.get('cursor')).toBe('c5');
     expect(second.map((a: { id: string }) => a.id)).toEqual(['n5']);
@@ -498,6 +498,24 @@ describe('triggers', () => {
     const seen = store.data.get('foreplay_seen_ad_ids');
     expect(Array.isArray(seen) ? seen[0] : null).toBe('t0');
     expect(seen).toHaveLength(1000);
+  });
+  it('swipe-file backlog never re-emits delivered ads when new saves shift the offset', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', Array.from({ length: 1000 }, (_, i) => `t${i}`));
+    await store.put('foreplay_backlog_cursor', { cursor: '5', before: null, delivered: [] });
+    const props = { page_size: 1 };
+    const pages = (ids: string[]) => ids.map((id) => ok([rawAd(id)]));
+    const spy = mock(...pages(['b5', 'b6', 'b7', 'b8', 'b9']), ...pages(['b8', 'b9', 'b10', 't999']), ok([rawAd('new2')]), ok([rawAd('new1')]), ok([rawAd('t0')]), ok([rawAd('new2')]));
+    const first = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: props }) });
+    expect(first.map((a: { id: string }) => a.id)).toEqual(['b9', 'b8', 'b7', 'b6', 'b5']);
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '10', before: null, delivered: ['b5', 'b6', 'b7', 'b8', 'b9'] });
+    const second = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: props }) });
+    expect(nthUrl({ spy, index: 5 }).searchParams.get('offset')).toBe('10');
+    expect(second.map((a: { id: string }) => a.id)).toEqual(['b10', 'new2']);
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '1', before: null, delivered: [] });
+    const third = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: props }) });
+    expect(third.map((a: { id: string }) => a.id)).toEqual(['new1']);
+    expect(store.data.has('foreplay_backlog_cursor')).toBe(false);
   });
   it('a run without stored state (upgrade from 0.1.x) seeds silently', async () => {
     const store = memoryStore();

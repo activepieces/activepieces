@@ -9,6 +9,7 @@ const TEST_LIMIT = 5;
 const MAX_POLL_PAGES = 5;
 const LEGACY_LAST_POLL_KEY = 'lastPoll';
 const BACKLOG_KEY = 'foreplay_backlog_cursor';
+const MAX_BACKLOG_DELIVERED = 5000;
 
 function idOf(raw: unknown): string | null {
   const record = foreplayMappers.recordOf(raw);
@@ -93,7 +94,12 @@ function backlogOf(value: unknown): Backlog | null {
   const cursor = record['cursor'];
   const before = record['before'];
   if (typeof cursor !== 'string' || cursor === '') return null;
-  return { cursor, before: typeof before === 'number' && Number.isFinite(before) ? before : null };
+  const delivered = record['delivered'];
+  return {
+    cursor,
+    before: typeof before === 'number' && Number.isFinite(before) ? before : null,
+    delivered: Array.isArray(delivered) ? delivered.filter((v): v is string => typeof v === 'string') : [],
+  };
 }
 
 async function pollNewAds({ store, fetchAds }: { store: Store; fetchAds: FetchAds }): Promise<unknown[]> {
@@ -117,16 +123,17 @@ async function pollNewAds({ store, fetchAds }: { store: Store; fetchAds: FetchAd
   let nextBacklog: Backlog | null = null;
   const backlog = backlogOf(await store.get<unknown>(BACKLOG_KEY));
   if (backlog !== null) {
+    for (const id of backlog.delivered) known.add(id);
     const result = await scan({ fetchAds, start: backlog.cursor, pages: budget, seenBefore, known, before: backlog.before });
     olderFresh = result.fresh;
     budget -= result.pagesUsed;
-    if (result.resume !== null) nextBacklog = { cursor: result.resume, before: backlog.before };
+    if (result.resume !== null) nextBacklog = { cursor: result.resume, before: backlog.before, delivered: [...backlog.delivered, ...idsOf(result.fresh)].slice(-MAX_BACKLOG_DELIVERED) };
   }
   if (nextBacklog === null && budget > 0) {
     const result = await scan({ fetchAds, start: undefined, pages: budget, seenBefore, known, before: legacyBefore });
     newerFresh = result.fresh;
     if (legacyBefore !== null) legacyBoundaryIds = result.scannedIds;
-    if (result.resume !== null) nextBacklog = { cursor: result.resume, before: legacyBefore };
+    if (result.resume !== null) nextBacklog = { cursor: result.resume, before: legacyBefore, delivered: [] };
   }
   if (nextBacklog === null) await store.delete(BACKLOG_KEY);
   else await store.put(BACKLOG_KEY, nextBacklog);
@@ -159,7 +166,7 @@ async function fetchAdPage({ auth, path, query, pageSize }: { auth: ForeplayAuth
   return { ads, next: ads.length >= pageSize ? next : null };
 }
 
-type Backlog = { cursor: string; before: number | null };
+type Backlog = { cursor: string; before: number | null; delivered: string[] };
 
 type ScanParams = { fetchAds: FetchAds; start: string | undefined; pages: number; seenBefore: Set<string>; known: Set<string>; before: number | null };
 
