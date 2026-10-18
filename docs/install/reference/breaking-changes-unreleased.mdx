@@ -31,7 +31,28 @@ Most code steps keep working unchanged: sources are transpiled to CommonJS, so N
 
 **In every mode:**
 
-- **Steps using top-level `await` run as strict ES modules** (they cannot be transpiled to CommonJS). Inside such a step: assigning to an undeclared variable throws `ReferenceError` instead of creating a global, and `require`, `exports`, `module`, `__dirname`, `__filename` are unavailable. Declare variables (`const`/`let`) and use `import` syntax in these steps, or move the awaited call inside the exported `code` function so the step can be transpiled.
+- **Steps using top-level `await` run as strict ES modules** (they cannot be transpiled to CommonJS). Inside such a step: assigning to an undeclared variable throws `ReferenceError` instead of creating a global, and `require`, `exports`, `module`, `__dirname`, `__filename` are unavailable. For example, this step ran on the legacy sandbox and now fails — the `await` outside `code` is what forces strict ES module mode, and the first undeclared assignment then throws:
+
+  ```ts
+  const settings = await fetch('https://example.com/settings.json').then((res) => res.json())
+
+  export const code = async (inputs) => {
+    total = settings.base + inputs.amount    // ReferenceError: total is not defined
+    const where = __dirname                  // ReferenceError: __dirname is not defined
+    const fs = require('node:fs')            // ReferenceError: require is not defined
+    return { total }
+  }
+  ```
+
+  Moving the awaited call inside `code` lets the step transpile to CommonJS again, where all of the above keep working; declaring the variable is the fix that works in both modes:
+
+  ```ts
+  export const code = async (inputs) => {
+    const settings = await fetch('https://example.com/settings.json').then((res) => res.json())
+    const total = settings.base + inputs.amount
+    return { total }
+  }
+  ```
 - **Exotic Node internals may be missing.** Deno's Node compatibility layer covers the standard library that pieces and typical steps use, but low-level APIs (`process.binding`, `node:vm`, `node:cluster`, parts of `node:worker_threads`) and native addons that predate Node-API are not guaranteed. Steps or dependencies relying on them need review.
 - **Custom deployments** that do not use the official Docker images must provide a Deno binary and point `AP_DENO_PATH` at it; without it every code step fails at spawn.
 
