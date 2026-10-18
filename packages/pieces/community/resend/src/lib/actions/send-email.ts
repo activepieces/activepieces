@@ -31,7 +31,7 @@ export const sendEmail = createAction({
       displayName: 'Sender Name',
       description: 'Name shown in the inbox instead of your address.',
       placeholder: 'Jane at Acme',
-      required: true,
+      required: false,
     }),
     from: Property.ShortText({
       displayName: 'Sender Email',
@@ -100,7 +100,7 @@ export const sendEmail = createAction({
     const requestBody: Record<string, unknown> = {
       to,
       from: from_name ? `${from_name} <${from}>` : from,
-      reply_to: reply_to ?? from,
+      reply_to: reply_to || from,
       cc,
       bcc,
       subject: subject,
