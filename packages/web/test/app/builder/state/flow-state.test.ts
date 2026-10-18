@@ -12,10 +12,12 @@ import {
   FlowStatus,
   FlowTriggerType,
   FlowVersionState,
+  GetSampleDataRequest,
   NoteColorVariant,
   PopulatedFlow,
   RunEnvironment,
   SampleDataFileType,
+  SampleDataSettings,
   flowOperations,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
@@ -32,10 +34,18 @@ const flowsApiMock = vi.hoisted(() => ({
   get: vi.fn(),
 }));
 
+const sampleDataApiMock = vi.hoisted(() => ({
+  get: vi.fn<(request: GetSampleDataRequest) => Promise<unknown>>(),
+}));
+
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('@/features/flows/api/flows-api', () => ({
   flowsApi: flowsApiMock,
+}));
+
+vi.mock('@/features/flows/api/sample-data-api', () => ({
+  sampleDataApi: sampleDataApiMock,
 }));
 
 describe('flow state save path', () => {
@@ -745,6 +755,7 @@ describe('flow state draft refresh', () => {
     vi.useFakeTimers();
     flowsApiMock.update.mockReset();
     flowsApiMock.get.mockReset();
+    sampleDataApiMock.get.mockReset();
   });
 
   afterEach(() => {
@@ -880,6 +891,81 @@ describe('flow state draft refresh', () => {
     });
   });
 
+  it('shows the test data that a different tab saved for a step', async () => {
+    flowsApiMock.get.mockResolvedValue(
+      withLookUpOrderTestData({
+        sampleDataFileId: 'output-2',
+        sampleDataInputFileId: 'input-2',
+        lastTestDate: '2026-01-02T00:00:00.000Z',
+      }),
+    );
+    sampleDataApiMock.get.mockImplementation(async ({ type }) =>
+      type === SampleDataFileType.OUTPUT
+        ? { orderId: 'order-2' }
+        : { email: 'buyer@example.com' },
+    );
+    const store = createStore(
+      withLookUpOrderTestData({
+        sampleDataFileId: 'output-1',
+        lastTestDate: '2026-01-01T00:00:00.000Z',
+      }),
+    );
+    store.getState().setSampleDataLocally({
+      stepName: 'step_1',
+      type: 'output',
+      value: { orderId: 'order-1' },
+    });
+
+    await store.getState().refreshDraft();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState()).toMatchObject({
+      outputSampleData: { step_1: { orderId: 'order-2' } },
+      inputSampleData: { step_1: { email: 'buyer@example.com' } },
+    });
+    expect(sampleDataApiMock.get).toHaveBeenCalledWith(
+      expect.objectContaining({ stepName: 'step_1', flowVersionId: 'draft-1' }),
+    );
+  });
+
+  it('fetches no test data when the refresh changes no test data', async () => {
+    const tested = withLookUpOrderTestData({ sampleDataFileId: 'output-1' });
+    flowsApiMock.get.mockResolvedValue(
+      withDisplayName({ flow: tested, displayName: 'Order lookup by email' }),
+    );
+    const store = createStore(tested);
+
+    await store.getState().refreshDraft();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Order lookup by email',
+    );
+    expect(sampleDataApiMock.get).not.toHaveBeenCalled();
+  });
+
+  it('keeps the shown test data when the fetch of the new test data fails', async () => {
+    flowsApiMock.get.mockResolvedValue(
+      withLookUpOrderTestData({ sampleDataFileId: 'output-2' }),
+    );
+    sampleDataApiMock.get.mockRejectedValue(networkError());
+    const store = createStore(
+      withLookUpOrderTestData({ sampleDataFileId: 'output-1' }),
+    );
+    store.getState().setSampleDataLocally({
+      stepName: 'step_1',
+      type: 'output',
+      value: { orderId: 'order-1' },
+    });
+
+    await store.getState().refreshDraft();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(store.getState().outputSampleData.step_1).toEqual({
+      orderId: 'order-1',
+    });
+  });
+
   it('sends one GET at a time when a refresh starts as the previous refresh ends', async () => {
     const server = serveDraft(flowWithLookUpOrderStep());
     let getsInFlight = 0;
@@ -980,6 +1066,23 @@ function flowWithLookUpOrderStep(): PopulatedFlow {
     version: {
       ...flow.version,
       trigger: { ...flow.version.trigger, nextAction: lookUpOrderStep() },
+    },
+  };
+}
+
+function withLookUpOrderTestData(
+  sampleData: SampleDataSettings,
+): PopulatedFlow {
+  const flow = flowWithLookUpOrderStep();
+  const step = lookUpOrderStep();
+  return {
+    ...flow,
+    version: {
+      ...flow.version,
+      trigger: {
+        ...flow.version.trigger,
+        nextAction: { ...step, settings: { ...step.settings, sampleData } },
+      },
     },
   };
 }

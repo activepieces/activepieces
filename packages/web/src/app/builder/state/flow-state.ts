@@ -7,6 +7,7 @@ import {
   FlowVersion,
   FlowVersionState,
   PopulatedFlow,
+  SampleDataFileType,
   flowOperations,
   flowStructureUtil,
   StepSettings,
@@ -21,7 +22,7 @@ import { StoreApi } from 'zustand';
 
 import { RightSideBarType } from '@/app/builder/types';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { flowsApi, sampleDataHooks } from '@/features/flows';
+import { flowsApi, sampleDataApi, sampleDataHooks } from '@/features/flows';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
@@ -636,7 +637,97 @@ async function fetchDraftAndApplyWithNoPendingEdits({
     });
   }
   applyDraftRefresh(serverFlow);
+  refreshChangedSampleData({
+    get,
+    previousVersion: flowVersion,
+    refreshedFlow: serverFlow,
+  }).catch(() => undefined);
   return true;
+}
+
+async function refreshChangedSampleData({
+  get,
+  previousVersion,
+  refreshedFlow,
+}: {
+  get: StoreApi<BuilderState>['getState'];
+  previousVersion: FlowVersion;
+  refreshedFlow: PopulatedFlow;
+}): Promise<void> {
+  const changedSteps = flowStructureUtil
+    .getAllSteps(refreshedFlow.version.trigger)
+    .filter((step) => hasSampleDataChanged({ step, previousVersion }));
+  await Promise.all(
+    changedSteps.map((step) =>
+      refreshStepSampleData({ get, flow: refreshedFlow, step }),
+    ),
+  );
+}
+
+function hasSampleDataChanged({
+  step,
+  previousVersion,
+}: {
+  step: FlowAction | FlowTrigger;
+  previousVersion: FlowVersion;
+}): boolean {
+  return !deepEquals({
+    a: flowStructureUtil.getStep(step.name, previousVersion.trigger)?.settings
+      .sampleData,
+    b: step.settings.sampleData,
+  });
+}
+
+async function refreshStepSampleData({
+  get,
+  flow,
+  step,
+}: {
+  get: StoreApi<BuilderState>['getState'];
+  flow: PopulatedFlow;
+  step: FlowAction | FlowTrigger;
+}): Promise<void> {
+  const request = {
+    flowId: flow.id,
+    flowVersionId: flow.version.id,
+    stepName: step.name,
+    projectId: flow.projectId,
+  };
+  const inputFileId = step.settings.sampleData?.sampleDataInputFileId;
+  const [output, input] = await Promise.all([
+    tryCatch(() =>
+      sampleDataApi.get({ ...request, type: SampleDataFileType.OUTPUT }),
+    ),
+    tryCatch(async () =>
+      isNil(inputFileId)
+        ? undefined
+        : sampleDataApi.get({ ...request, type: SampleDataFileType.INPUT }),
+    ),
+  ]);
+  const { flowVersion, setSampleDataLocally } = get();
+  const shownStep = flowStructureUtil.getStep(step.name, flowVersion.trigger);
+  if (
+    !deepEquals({
+      a: shownStep?.settings.sampleData,
+      b: step.settings.sampleData,
+    })
+  ) {
+    return;
+  }
+  if (output.error === null) {
+    setSampleDataLocally({
+      stepName: step.name,
+      type: 'output',
+      value: output.data,
+    });
+  }
+  if (input.error === null) {
+    setSampleDataLocally({
+      stepName: step.name,
+      type: 'input',
+      value: input.data,
+    });
+  }
 }
 
 async function waitForPendingEditsToSave({
