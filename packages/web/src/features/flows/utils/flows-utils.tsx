@@ -44,7 +44,7 @@ export const flowsUtils = {
         switch (schedule?.type) {
           case TriggerSourceScheduleType.INTERVAL: {
             const minutes = Math.round(schedule.intervalMs / 60_000);
-            return trigger.settings.pieceName ===
+            return flow.triggerSource?.pieceName ===
               '@activepieces/piece-schedule' ? (
               t('Runs every {minutes, plural, =1 {minute} other {# minutes}}', {
                 minutes,
@@ -61,9 +61,11 @@ export const flowsUtils = {
             );
           }
           case TriggerSourceScheduleType.CRON_EXPRESSION:
-            return `${t('Runs')} ${cronstrue
-              .toString(schedule.cronExpression, { locale: 'en' })
-              .toLocaleLowerCase()}`;
+            return t('Runs {schedule}', {
+              schedule: cronstrue
+                .toString(schedule.cronExpression, { locale: 'en' })
+                .toLocaleLowerCase(),
+            });
           default:
             return t('Runs as soon as new data arrives');
         }

@@ -3011,6 +3011,7 @@
   "Checks for new data every {minutes, plural, =1 {minute} other {# minutes}}.": "Checks for new data every {minutes, plural, =1 {minute} other {# minutes}}.",
   "The flow runs only when there is new data.": "The flow runs only when there is new data.",
   "Runs as soon as new data arrives": "Runs as soon as new data arrives",
+  "Runs {schedule}": "Runs {schedule}",
   "Flow can't be published with empty trigger {name}": "Flow can't be published with empty trigger {name}",
   "Please contact support as your published flow has a problem": "Please contact support as your published flow has a problem",
   "This field is required": "This field is required",
