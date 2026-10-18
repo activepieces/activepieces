@@ -166,6 +166,20 @@ describe('useFlowLock take-over', () => {
     });
   });
 
+  it('keeps the tab read-only when the newest version awaits approval', async () => {
+    const flow = draftFlow({ customerEmail: '{{trigger.email}}' });
+    const store = createStore({ flow });
+    harness.getFlow.mockResolvedValue(withLockedVersion(flow));
+    renderFlowLock(store);
+
+    await takeOver();
+
+    expect(store.getState()).toMatchObject({
+      readonly: true,
+      flowVersion: { id: 'draft-1', state: FlowVersionState.LOCKED },
+    });
+  });
+
   it('keeps the tab read-only for a person who cannot edit the flow', async () => {
     harness.canEditFlow = false;
     const store = createStore({
@@ -269,6 +283,13 @@ function publishedFlow(flow: PopulatedFlow): PopulatedFlow {
     ...flow,
     publishedVersionId: 'version-1',
     version: olderVersion(flow.version),
+  };
+}
+
+function withLockedVersion(flow: PopulatedFlow): PopulatedFlow {
+  return {
+    ...flow,
+    version: { ...flow.version, state: FlowVersionState.LOCKED },
   };
 }
 

@@ -851,6 +851,35 @@ describe('flow state draft refresh', () => {
     expect(flowsApiMock.get).not.toHaveBeenCalled();
   });
 
+  it('makes the tab read-only when a different tab submits the draft for approval', async () => {
+    const draft = flowWithLookUpOrderStep();
+    flowsApiMock.get.mockResolvedValue(withLockedVersion(draft));
+    const store = createStore(draft);
+
+    await expect(store.getState().refreshDraft()).resolves.toBe(true);
+
+    expect(store.getState()).toMatchObject({
+      readonly: true,
+      flowVersion: { id: 'draft-1', state: FlowVersionState.LOCKED },
+    });
+  });
+
+  it('keeps the tab editable when a different tab publishes the draft', async () => {
+    const draft = flowWithLookUpOrderStep();
+    flowsApiMock.get.mockResolvedValue({
+      ...withLockedVersion(draft),
+      publishedVersionId: 'draft-1',
+    });
+    const store = createStore(draft);
+
+    await expect(store.getState().refreshDraft()).resolves.toBe(true);
+
+    expect(store.getState()).toMatchObject({
+      readonly: false,
+      flowVersion: { id: 'draft-1', state: FlowVersionState.LOCKED },
+    });
+  });
+
   it('sends one GET at a time when a refresh starts as the previous refresh ends', async () => {
     const server = serveDraft(flowWithLookUpOrderStep());
     let getsInFlight = 0;
@@ -903,6 +932,13 @@ function withDisplayName({
   displayName: string;
 }): PopulatedFlow {
   return { ...flow, version: { ...flow.version, displayName } };
+}
+
+function withLockedVersion(flow: PopulatedFlow): PopulatedFlow {
+  return {
+    ...flow,
+    version: { ...flow.version, state: FlowVersionState.LOCKED },
+  };
 }
 
 function serveDraft(flow: PopulatedFlow) {

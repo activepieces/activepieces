@@ -174,6 +174,7 @@ export const createFlowState = (
           return {
             flow,
             flowVersion: flow.version,
+            readonly: state.readonly || isLockedAndUnpublished(flow),
             noteRefreshCounts: countNoteRefreshes({
               counts: state.noteRefreshCounts,
               currentVersion: state.flowVersion,
@@ -190,6 +191,7 @@ export const createFlowState = (
         return {
           flow,
           flowVersion: flow.version,
+          readonly: state.readonly || isLockedAndUnpublished(flow),
           selectedBranchIndex: haveSelectedStepBranchesChanged({
             selectedStep: state.selectedStep,
             currentVersion: state.flowVersion,
@@ -879,6 +881,13 @@ function routerBranches(step: FlowAction | FlowTrigger | undefined) {
     return undefined;
   }
   return step.settings.branches;
+}
+
+function isLockedAndUnpublished(flow: PopulatedFlow): boolean {
+  return (
+    flow.version.state === FlowVersionState.LOCKED &&
+    flow.version.id !== flow.publishedVersionId
+  );
 }
 
 function stepFormContent(step: FlowAction | FlowTrigger | undefined) {

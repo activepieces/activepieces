@@ -243,6 +243,22 @@ describe('useFlowLock when the holder frees the Resource Lock', () => {
     expect(flowsApiMock.get).not.toHaveBeenCalled();
   });
 
+  it('takes the freed lock and keeps a version that awaits approval read-only', async () => {
+    const flow = draftFlow({ displayName: 'Order lookup' });
+    const store = createStore(flow);
+    renderFlowLock(store);
+    await answerLockRequest({ acquired: false, lock: HOLDER });
+    flowsApiMock.get.mockResolvedValue(withLockedVersion(flow));
+
+    await holderLeaves();
+    await answerLockRequest({ acquired: true, lock: null });
+
+    expect(store.getState()).toMatchObject({
+      readonly: true,
+      flowVersion: { id: 'draft-1', state: FlowVersionState.LOCKED },
+    });
+  });
+
   it('shows a draft that the holder made while the tab showed the published version, and makes the tab editable', async () => {
     const store = createStore(publishedFlowWithNoDraft());
     renderFlowLock(store);
@@ -424,6 +440,13 @@ function publishedFlowWithNoDraft(): PopulatedFlow {
     ...flow,
     publishedVersionId: 'version-1',
     version: olderVersion(flow),
+  };
+}
+
+function withLockedVersion(flow: PopulatedFlow): PopulatedFlow {
+  return {
+    ...flow,
+    version: { ...flow.version, state: FlowVersionState.LOCKED },
   };
 }
 

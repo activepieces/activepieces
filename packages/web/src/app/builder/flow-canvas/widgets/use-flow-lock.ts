@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { useResourceLock } from '@/hooks/use-resource-lock';
 
-import { useBuilderStateContext } from '../../builder-hooks';
+import { useBuilderStateContext, useBuilderStore } from '../../builder-hooks';
 import { flowCanvasHooks } from '../hooks';
 
 function useFlowLock() {
@@ -21,6 +21,7 @@ function useFlowLock() {
       state.refreshDraft,
       state.savePendingEdits,
     ]);
+  const store = useBuilderStore();
   const readonlySetByLock = useRef(false);
   const navigate = useNavigate();
   const { switchToDraft } = flowCanvasHooks.useSwitchToDraft();
@@ -41,7 +42,7 @@ function useFlowLock() {
     } else if (showsNewestVersion) {
       refreshDraft()
         .then((applied) => {
-          if (applied) {
+          if (applied && store.getState().showsNewestVersion()) {
             setReadOnly(!canEditFlow);
           }
         })
@@ -55,6 +56,7 @@ function useFlowLock() {
     flowId,
     showsNewestVersion,
     refreshDraft,
+    store,
     setReadOnly,
     canEditFlow,
     switchToDraft,
@@ -81,9 +83,9 @@ function useFlowLock() {
     }
     if (!lockedBy && readonlySetByLock.current) {
       readonlySetByLock.current = false;
-      setReadOnly(false);
+      setReadOnly(!store.getState().showsNewestVersion());
     }
-  }, [lockedBy, readonly, setReadOnly]);
+  }, [lockedBy, readonly, setReadOnly, store]);
 
   return { lockedBy, takeOver };
 }
