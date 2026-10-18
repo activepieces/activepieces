@@ -3854,7 +3854,7 @@
     },
     "packages/pieces/community/google-contacts": {
       "name": "@activepieces/piece-google-contacts",
-      "version": "0.5.4",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10877,7 +10877,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.40.0",
+      "version": "0.40.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
