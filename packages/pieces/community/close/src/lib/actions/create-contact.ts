@@ -1,3 +1,4 @@
+import { closeOutputSchemas } from '../common/output-schemas';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { closeAuth } from '../auth';
@@ -16,6 +17,7 @@ export const createContact = createAction({
 		description: 'Creates a new contact attached to an existing lead in Close CRM, with optional phones, emails, URL, and custom fields. Use to add a person to a known lead. Requires the target lead ID and a contact name. Not idempotent; each call creates a new contact and repeating produces duplicates.',
 		idempotent: false,
 	},
+	outputSchema: closeOutputSchemas.raw.contact,
 	props: {
 		lead_id: leadId(),
 		name: Property.ShortText({

@@ -183,6 +183,137 @@ const legacySearch: OutputSchema = {
   ],
 };
 
+
+const rawEmailFields: OutputSchemaField[] = [
+  { key: 'email', label: 'Email', format: 'email' },
+  { key: 'type', label: 'Type' },
+  { key: 'is_unsubscribed', label: 'Unsubscribed', format: 'boolean' },
+];
+
+const rawPhoneFields: OutputSchemaField[] = [
+  { key: 'phone', label: 'Phone' },
+  { key: 'phone_formatted', label: 'Formatted' },
+  { key: 'country', label: 'Country' },
+  { key: 'type', label: 'Type' },
+];
+
+const rawUrlFields: OutputSchemaField[] = [
+  { key: 'url', label: 'URL', format: 'url' },
+  { key: 'type', label: 'Type' },
+];
+
+const rawIntegrationLinkFields: OutputSchemaField[] = [
+  { key: 'name', label: 'Name' },
+  { key: 'url', label: 'URL', format: 'url' },
+];
+
+const rawAuditFields: OutputSchemaField[] = [
+  { key: 'organization_id', label: 'Organization ID' },
+  { key: 'created_by', label: 'Created By (user ID)' },
+  { key: 'updated_by', label: 'Updated By (user ID)' },
+  { key: 'date_created', label: 'Created', format: 'datetime' },
+  { key: 'date_updated', label: 'Updated', format: 'datetime' },
+];
+
+const rawContactFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Contact ID', description: 'Close contact ID (cont_...).' },
+  { key: 'lead_id', label: 'Lead ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'display_name', label: 'Display Name' },
+  { key: 'title', label: 'Title' },
+  { key: 'emails', label: 'Emails', labelKey: 'email', listItems: rawEmailFields },
+  { key: 'phones', label: 'Phones', labelKey: 'phone', listItems: rawPhoneFields },
+  { key: 'urls', label: 'URLs', labelKey: 'url', listItems: rawUrlFields },
+  { key: 'integration_links', label: 'Integration Links', labelKey: 'name', listItems: rawIntegrationLinkFields },
+  ...rawAuditFields,
+];
+
+const rawLeadFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Lead ID', description: 'Close lead ID (lead_...).' },
+  { key: 'name', label: 'Name' },
+  { key: 'display_name', label: 'Display Name' },
+  { key: 'description', label: 'Description' },
+  { key: 'url', label: 'Website', format: 'url' },
+  { key: 'status_id', label: 'Status ID' },
+  { key: 'status_label', label: 'Status' },
+  { key: 'contacts', label: 'Contacts', labelKey: 'name', listItems: rawContactFields },
+  { key: 'opportunities', label: 'Opportunities' },
+  { key: 'tasks', label: 'Tasks' },
+  { key: 'addresses', label: 'Addresses' },
+  { key: 'custom', label: 'Custom Fields', dynamicKey: true, description: 'Custom field values keyed by field name.' },
+  { key: 'integration_links', label: 'Integration Links', labelKey: 'name', listItems: rawIntegrationLinkFields },
+  { key: 'created_by_name', label: 'Created By' },
+  { key: 'updated_by_name', label: 'Updated By' },
+  ...rawAuditFields,
+];
+
+const rawOpportunityFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Opportunity ID', description: 'Close opportunity ID (oppo_...).' },
+  { key: 'lead_id', label: 'Lead ID' },
+  { key: 'lead_name', label: 'Lead Name' },
+  { key: 'contact_id', label: 'Contact ID' },
+  { key: 'contact_name', label: 'Contact Name' },
+  { key: 'user_id', label: 'Owner User ID' },
+  { key: 'user_name', label: 'Owner' },
+  { key: 'status_id', label: 'Status ID' },
+  { key: 'status_label', label: 'Status' },
+  { key: 'status_display_name', label: 'Status Display Name' },
+  { key: 'status_type', label: 'Status Type', description: 'active, won or lost.' },
+  { key: 'pipeline_id', label: 'Pipeline ID' },
+  { key: 'pipeline_name', label: 'Pipeline' },
+  { key: 'value', label: 'Value (cents)', format: 'number' },
+  { key: 'value_currency', label: 'Currency' },
+  { key: 'value_formatted', label: 'Value (formatted)' },
+  { key: 'value_period', label: 'Value Period' },
+  { key: 'expected_value', label: 'Expected Value', format: 'number' },
+  { key: 'annualized_value', label: 'Annualized Value', format: 'number' },
+  { key: 'annualized_expected_value', label: 'Annualized Expected Value', format: 'number' },
+  { key: 'confidence', label: 'Confidence %', format: 'number' },
+  { key: 'note', label: 'Note' },
+  { key: 'date_won', label: 'Won Date', format: 'date' },
+  { key: 'date_lost', label: 'Lost Date', format: 'date' },
+  { key: 'attachments', label: 'Attachments' },
+  { key: 'integration_links', label: 'Integration Links', labelKey: 'name', listItems: rawIntegrationLinkFields },
+  { key: 'created_by_name', label: 'Created By' },
+  { key: 'updated_by_name', label: 'Updated By' },
+  ...rawAuditFields,
+];
+
+const rawSearchLeadFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Lead ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'status_label', label: 'Status' },
+  {
+    key: 'contacts',
+    label: 'Contacts',
+    labelKey: 'name',
+    listItems: [
+      { key: 'id', label: 'Contact ID' },
+      { key: 'name', label: 'Name' },
+      { key: 'emails', label: 'Emails', labelKey: 'email', listItems: rawEmailFields },
+      { key: 'phones', label: 'Phones', labelKey: 'phone', listItems: rawPhoneFields },
+    ],
+  },
+];
+
+const rawSearchContactFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Contact ID' },
+  { key: 'lead_id', label: 'Lead ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'title', label: 'Title' },
+  { key: 'emails', label: 'Emails', labelKey: 'email', listItems: rawEmailFields },
+  { key: 'phones', label: 'Phones', labelKey: 'phone', listItems: rawPhoneFields },
+];
+
+function rawSearch({ labelKey, items }: { labelKey: string; items: OutputSchemaField[] }): OutputSchema {
+  return {
+    fields: [
+      { key: 'found', label: 'Found', format: 'boolean' },
+      { key: 'result', label: 'Results', labelKey, listItems: items },
+    ],
+  };
+}
+
 export const closeOutputSchemas = {
   fields: {
     lead: leadFields,
@@ -217,6 +348,13 @@ export const closeOutputSchemas = {
   customFields: offsetPage({ itemsLabel: 'Custom Fields', labelKey: 'name', items: customFieldFields }),
   deleted,
   legacySearch,
+  raw: {
+    lead: single({ fields: rawLeadFields }),
+    contact: single({ fields: rawContactFields }),
+    opportunity: single({ fields: rawOpportunityFields }),
+    leadSearch: rawSearch({ labelKey: 'name', items: rawSearchLeadFields }),
+    contactSearch: rawSearch({ labelKey: 'name', items: rawSearchContactFields }),
+  },
   offsetPage,
   cursorPage,
 };

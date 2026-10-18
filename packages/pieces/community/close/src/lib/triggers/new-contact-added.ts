@@ -1,3 +1,4 @@
+import { closeOutputSchemas } from '../common/output-schemas';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { closeAuth } from '../auth';
 import { closeCreatedTriggerHooks } from './helpers';
@@ -11,6 +12,7 @@ export const newContactAdded = createTrigger({
 	classification: 'READ',
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
+	outputSchema: closeOutputSchemas.raw.contact,
 	...closeCreatedTriggerHooks({ storeKey: 'new-contact-trigger', objectType: 'contact' }),
 	sampleData: {
 		created_by: 'user_QO3f0LQE6fMbrokdE2awZLgT7pRv57S1C8Zv5Uo30TN',

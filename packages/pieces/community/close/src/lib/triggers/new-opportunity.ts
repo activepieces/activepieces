@@ -1,3 +1,4 @@
+import { closeOutputSchemas } from '../common/output-schemas';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { closeAuth } from '../auth';
 import { closeCreatedTriggerHooks } from './helpers';
@@ -11,6 +12,7 @@ export const newOpportunityAdded = createTrigger({
 	classification: 'READ',
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
+	outputSchema: closeOutputSchemas.raw.opportunity,
 	...closeCreatedTriggerHooks({ storeKey: 'new-opportunity-trigger', objectType: 'opportunity' }),
 	sampleData: {
 		annualized_expected_value: 500,

@@ -1,3 +1,4 @@
+import { closeOutputSchemas } from '../common/output-schemas';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { closeAuth } from '../auth';
@@ -15,6 +16,7 @@ export const findContact = createAction({
 		description: 'Searches contacts in Close CRM and returns all matching records (auto-paginated). The search type selects which field to match on — contact name, email, phone, or parent lead ID — and the match mode controls comparison. Use to resolve a contact by a known attribute (e.g. find a contact ID before attaching an opportunity). Read-only and idempotent. Requires a search query value.',
 		idempotent: true,
 	},
+	outputSchema: closeOutputSchemas.raw.contactSearch,
 	props: {
 		search_type: Property.StaticDropdown({
 			displayName: 'Search Type',

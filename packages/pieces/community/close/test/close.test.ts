@@ -52,6 +52,16 @@ describe('metadata', () => {
       }
     }
   });
+  it('every action and trigger declares a non-empty outputSchema (except the generated custom API call)', () => {
+    const actions = Object.values(close.actions()).filter((a) => a.name !== 'custom_api_call');
+    const items = [...actions, ...Object.values(close.triggers())];
+    expect(actions.length).toBe(Object.keys(close.actions()).length - 1);
+    expect(items.length).toBeGreaterThan(0);
+    for (const item of items) {
+      expect(item.outputSchema?.fields?.length, item.name).toBeGreaterThan(0);
+    }
+  });
+
   it('legacy actions are human only', () => {
     for (const name of ['create_lead', 'create_contact', 'create_opportunity', 'find_lead', 'find_contact']) {
       expect(action(name).audience, name).toBe('human');

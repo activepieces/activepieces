@@ -1,3 +1,4 @@
+import { closeOutputSchemas } from '../common/output-schemas';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { closeAuth } from '../auth';
@@ -15,6 +16,7 @@ export const createOpportunity = createAction({
 		description: 'Creates a new opportunity (deal) on an existing lead in Close CRM, with optional value, value period, confidence, status, contact, and custom fields. Use to log a sales deal against a lead. Requires the lead ID and an opportunity status. Not idempotent; each call creates a separate opportunity.',
 		idempotent: false,
 	},
+	outputSchema: closeOutputSchemas.raw.opportunity,
 	props: {
 		lead_id: leadId(),
 		status_id: statusId('opportunity', true),
