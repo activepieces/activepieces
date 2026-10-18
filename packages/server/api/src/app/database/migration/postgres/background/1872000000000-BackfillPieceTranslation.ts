@@ -10,7 +10,7 @@ export class BackfillPieceTranslation1872000000000 implements BackgroundMigratio
     public async up(queryRunner: QueryRunner): Promise<void> {
         let lastId = ''
         while (true) {
-            const [batch] = await queryRunner.query(`
+            const [progress] = await queryRunner.query(`
                 WITH batch AS (
                     SELECT "id", "i18n", "i18n"::text ~* $2 AS "hasUnicodeEscapes" FROM "piece_metadata"
                      WHERE "id" > $1
@@ -28,11 +28,11 @@ export class BackfillPieceTranslation1872000000000 implements BackgroundMigratio
                        array_remove(array_agg(CASE WHEN "hasUnicodeEscapes" THEN "id" END), NULL) AS "escapedIds"
                   FROM batch
             `, [lastId, UNICODE_ESCAPE_POSTGRES_CANNOT_DECODE]) as [{ lastId: string | null, escapedIds: string[] }]
-            if (isNil(batch.lastId)) {
+            if (isNil(progress.lastId)) {
                 return
             }
-            await backfillPiecesWithUnicodeEscapes({ queryRunner, ids: batch.escapedIds })
-            lastId = batch.lastId
+            await backfillPiecesWithUnicodeEscapes({ queryRunner, ids: progress.escapedIds })
+            lastId = progress.lastId
         }
     }
 
@@ -49,27 +49,22 @@ async function backfillPiecesWithUnicodeEscapes({ queryRunner, ids }: BackfillPi
         'SELECT "id", "i18n"::text AS "i18n" FROM "piece_metadata" WHERE "id" = ANY($1)',
         [ids],
     ) as StoredPiece[]
-    const rows = pieces.flatMap(toTranslationRows)
-    if (rows.length === 0) {
-        return
-    }
     await queryRunner.query(`
         INSERT INTO "piece_translation" ("pieceMetadataId", "locale", "translations")
         SELECT row."pieceMetadataId", row."locale", row."translations"
           FROM jsonb_to_recordset($1::jsonb) AS row("pieceMetadataId" varchar, "locale" varchar, "translations" jsonb)
         ON CONFLICT DO NOTHING
-    `, [JSON.stringify(rows)])
+    `, [JSON.stringify(pieces.flatMap(toTranslationRows))])
 }
 
 function toTranslationRows({ id, i18n }: StoredPiece): TranslationRow[] {
     const parsed: unknown = JSON.parse(i18n)
-    if (!isObject(parsed)) {
+    const sanitized = sanitizeObjectForPostgresql(parsed)
+    if (!isObject(sanitized)) {
         return []
     }
-    return Object.entries(parsed).flatMap(([locale, translations]) =>
-        isObject(translations)
-            ? [{ pieceMetadataId: id, locale, translations: Object.fromEntries(sanitizeObjectForPostgresql(Object.entries(translations))) }]
-            : [],
+    return Object.entries(sanitized).flatMap(([locale, translations]) =>
+        isObject(translations) ? [{ pieceMetadataId: id, locale, translations }] : [],
     )
 }
 

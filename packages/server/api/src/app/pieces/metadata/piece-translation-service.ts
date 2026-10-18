@@ -21,9 +21,9 @@ export const pieceTranslationService = {
         }
         const rows = await pieceTranslationRepos().manager
             .createQueryBuilder(PieceMetadataEntity, 'pm')
-            .leftJoin(PieceTranslationEntity.options.name, 'pt', 'pt."pieceMetadataId" = pm."id" AND pt."locale" = :locale')
+            .leftJoin(TABLE, 'pt', 'pt."pieceMetadataId" = pm."id" AND pt."locale" = :locale')
             .select('pm."id"', 'id')
-            .addSelect(`COALESCE(pt."translations"::json, CASE WHEN NOT EXISTS (${PIECE_HAS_TRANSLATION_ROWS}) THEN pm."i18n" -> :locale END)`, 'translations')
+            .addSelect(TRANSLATIONS_WITH_LEGACY_FALLBACK, 'translations')
             .where('pm."id" IN (:...pieceIds)', { pieceIds })
             .setParameter('locale', locale)
             .getRawMany<{ id: string, translations: Record<string, string> | null }>()
@@ -31,13 +31,17 @@ export const pieceTranslationService = {
     },
 }
 
-function toRows({ pieceMetadataId, i18n }: ToRowsParams): PieceTranslationSchema[] {
-    return Object.entries(i18n ?? {}).flatMap(([locale, translations]) =>
-        isNil(translations) ? [] : [{ pieceMetadataId, locale, translations: Object.fromEntries(sanitizeObjectForPostgresql(Object.entries(translations))) }],
+function toRows({ pieceMetadataId, i18n }: Pick<SaveParams, 'pieceMetadataId' | 'i18n'>): PieceTranslationSchema[] {
+    return Object.entries(sanitizeObjectForPostgresql(i18n ?? {})).flatMap(([locale, translations]) =>
+        isNil(translations) ? [] : [{ pieceMetadataId, locale, translations }],
     )
 }
 
-const PIECE_HAS_TRANSLATION_ROWS = `SELECT 1 FROM "${PieceTranslationEntity.options.name}" stored WHERE stored."pieceMetadataId" = pm."id"`
+const TABLE = PieceTranslationEntity.options.name
+const TRANSLATIONS_WITH_LEGACY_FALLBACK = `COALESCE(
+    pt."translations"::json,
+    CASE WHEN NOT EXISTS (SELECT 1 FROM "${TABLE}" stored WHERE stored."pieceMetadataId" = pm."id") THEN pm."i18n" -> :locale END
+)`
 
 type SaveParams = {
     pieceMetadataId: string
@@ -48,9 +52,4 @@ type SaveParams = {
 type GetForLocaleParams = {
     pieceIds: string[]
     locale: LocalesEnum
-}
-
-type ToRowsParams = {
-    pieceMetadataId: string
-    i18n: I18nForPiece
 }
