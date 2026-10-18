@@ -282,6 +282,21 @@ describe('webhook triggers', () => {
     expect(Object.keys(store.data).filter((k) => k.includes('-seen'))).toEqual([]);
   });
 
+  it('onDisable clears buckets left by a trigger that went quiet long ago', async () => {
+    const trigger = close.triggers()['new_lead_created'];
+    const hour = Math.floor(Date.now() / 3600000);
+    const store = makeStore({
+      'new-lead-trigger': { id: 'whsub_1', signatureKey: key },
+      'new-lead-trigger-seen:ev_q': true,
+      [`new-lead-trigger-seen-hour:${hour - 500}`]: ['ev_q'],
+      'new-lead-trigger-seen-pruned': hour - 560,
+      'new-lead-trigger-seen-latest': hour - 500,
+    });
+    mockSeq({});
+    await Reflect.apply(trigger.onDisable, undefined, [{ auth, store }]);
+    expect(Object.keys(store.data).filter((k) => k.includes('-seen'))).toEqual([]);
+  });
+
   it('a failing index write does not block the run', async () => {
     const trigger = close.triggers()['new_lead_created'];
     const store = makeStore({ 'new-lead-trigger': { id: 'whsub_1', signatureKey: key } });

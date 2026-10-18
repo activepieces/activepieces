@@ -74,6 +74,7 @@ async function recordSeen({ store, storeKey, eventId, now }: { store: CloseStore
   const hour = hourOf(now);
   const ids = idsOf(await store.get<unknown>(bucketKey({ storeKey, hour })));
   if (!ids.includes(eventId)) await store.put(bucketKey({ storeKey, hour }), [...ids, eventId]);
+  if ((await store.get<unknown>(`${storeKey}-seen-latest`)) !== hour) await store.put(`${storeKey}-seen-latest`, hour);
   const cutoff = hour - SEEN_RETENTION_HOURS;
   const pruned = await store.get<unknown>(`${storeKey}-seen-pruned`);
   if (typeof pruned !== 'number') {
@@ -90,11 +91,14 @@ async function recordSeen({ store, storeKey, eventId, now }: { store: CloseStore
 async function clearSeen({ store, storeKey, now }: { store: CloseStore; storeKey: string; now: number }): Promise<void> {
   const hour = hourOf(now);
   const pruned = await store.get<unknown>(`${storeKey}-seen-pruned`);
-  const first = Math.max(typeof pruned === 'number' ? pruned + 1 : hour - SEEN_RETENTION_HOURS, hour - SEEN_RETENTION_HOURS - MAX_BUCKETS_PER_RUN);
-  for (let h = first; h <= hour; h++) {
+  const latest = await store.get<unknown>(`${storeKey}-seen-latest`);
+  const last = typeof latest === 'number' ? Math.min(latest, hour) : hour;
+  const first = typeof pruned === 'number' ? pruned + 1 : last - SEEN_RETENTION_HOURS;
+  for (let h = first; h <= last; h++) {
     await deleteBucket({ store, storeKey, hour: h });
   }
   await store.delete(`${storeKey}-seen-pruned`);
+  await store.delete(`${storeKey}-seen-latest`);
 }
 
 async function deleteBucket({ store, storeKey, hour }: { store: CloseStore; storeKey: string; hour: number }): Promise<void> {
