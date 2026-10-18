@@ -518,6 +518,60 @@ describe('SSOPage', () => {
     );
   });
 
+  it('says Google is not set up on a self-hosted server without Google credentials', () => {
+    setPlatform({ googleAuthEnabled: true });
+    mount();
+
+    expect(screen.getByText('Not set up')).toBeDefined();
+    expect(
+      screen.getByText('Needs a Google OAuth client on this server.'),
+    ).toBeDefined();
+    expect(
+      screen.getByRole('link', { name: 'Setup guide' }).getAttribute('href'),
+    ).toBe(
+      'https://www.activepieces.com/docs/admin-guide/guides/sso#google-sign-in-on-self-hosted',
+    );
+  });
+
+  it('shows no Google note once Google sign-in works', () => {
+    setPlatform({ googleAuthEnabled: true });
+    flagState.thirdPartyProviders = { google: true };
+    mount();
+
+    expect(screen.queryByText('Not set up')).toBeNull();
+  });
+
+  it('never shows the Google note on Cloud', () => {
+    flagState.edition = 'cloud';
+    setPlatform({ googleAuthEnabled: true });
+    mount();
+
+    expect(screen.queryByText('Not set up')).toBeNull();
+  });
+
+  it('says what self-hosted needs when turning Google on', () => {
+    mount();
+    click(screen.getByRole('switch', { name: 'Continue with Google' }));
+    expect(
+      within(screen.getByRole('dialog')).getByText(
+        'On a self-hosted server it also needs a Google OAuth client.',
+        { exact: false },
+      ),
+    ).toBeDefined();
+  });
+
+  it('does not mention self-hosted setup when turning Google on in Cloud', () => {
+    flagState.edition = 'cloud';
+    mount();
+    click(screen.getByRole('switch', { name: 'Continue with Google' }));
+    expect(
+      within(screen.getByRole('dialog')).queryByText(
+        'On a self-hosted server it also needs a Google OAuth client.',
+        { exact: false },
+      ),
+    ).toBeNull();
+  });
+
   it('changes nothing when a method change is cancelled', () => {
     setPlatform({ emailAuthEnabled: true });
     mount();

@@ -145,3 +145,6 @@ export const adminPageResources = {
     }),
   ],
 } satisfies Record<string, AdminResource[]>;
+
+export const adminDocsUrl = (path: string): string =>
+  `${DOCS_BASE_URL}/${path}`;

@@ -1,11 +1,16 @@
-import { PlatformWithoutSensitiveData } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PlatformWithoutSensitiveData,
+} from '@activepieces/shared';
 import { t } from 'i18next';
-import { LockKeyhole, MailIcon } from 'lucide-react';
+import { ArrowUpRight, LockKeyhole, MailIcon } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import {
+  adminDocsUrl,
   AdminSection,
   SettingsPanel,
   SettingsRow,
@@ -13,10 +18,12 @@ import {
 } from '@/app/components/admin';
 import { MethodConfirmDialog } from '@/app/routes/platform/security/sso/method-confirm-dialog';
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
+import { useGoogleSignInAvailable } from '@/app/routes/platform/security/sso/use-google-sign-in-available';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ssoMutations } from '@/features/platform-admin';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +36,11 @@ export const SignInMethodsSection = ({
   const samlConnected = !!platform.federatedAuthProviders?.saml;
   const [googleChange, setGoogleChange] = useState<boolean | null>(null);
   const [emailChange, setEmailChange] = useState<boolean | null>(null);
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const selfHosted = edition !== ApEdition.CLOUD;
+  const googleSignInAvailable = useGoogleSignInAvailable();
+  const googleNotSetUp =
+    selfHosted && platform.googleAuthEnabled && !googleSignInAvailable;
 
   const { mutate: toggleGoogleAuth, isPending: isGoogleAuthPending } =
     ssoMutations.useUpdatePlatformSso({
@@ -101,7 +113,20 @@ export const SignInMethodsSection = ({
             <>
               {t('Continue with Google')}
               <Badge variant="outline">{t('OAuth 2.0')}</Badge>
+              {googleNotSetUp && (
+                <StatusDot tone="warning" className="text-xs text-gray-11">
+                  {t('Not set up')}
+                </StatusDot>
+              )}
             </>
+          }
+          description={
+            googleNotSetUp && (
+              <>
+                {t('Needs a Google OAuth client on this server.')}{' '}
+                <GoogleSetupGuideLink />
+              </>
+            )
           }
         >
           <Switch
@@ -140,9 +165,22 @@ export const SignInMethodsSection = ({
             : t('Turn off Google sign-in?')
         }
         description={
-          googleChange
-            ? t('Google sign-in will be on for this platform.')
-            : t('Google sign-in will be off for this platform.')
+          googleChange ? (
+            <>
+              {t('Google sign-in will be on for this platform.')}
+              {selfHosted && (
+                <>
+                  {' '}
+                  {t(
+                    'On a self-hosted server it also needs a Google OAuth client.',
+                  )}{' '}
+                  <GoogleSetupGuideLink />
+                </>
+              )}
+            </>
+          ) : (
+            t('Google sign-in will be off for this platform.')
+          )
         }
         confirmLabel={googleChange ? t('Turn on') : t('Turn off')}
         destructive={googleChange === false}
@@ -181,6 +219,18 @@ export const SignInMethodsSection = ({
     </AdminSection>
   );
 };
+
+const GoogleSetupGuideLink = () => (
+  <a
+    href={adminDocsUrl('admin-guide/guides/sso#google-sign-in-on-self-hosted')}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="inline-flex items-center gap-0.5 font-medium text-accent-11 hover:underline"
+  >
+    {t('Setup guide')}
+    <ArrowUpRight className="size-3.5" />
+  </a>
+);
 
 const MethodIcon = ({ on, children }: { on: boolean; children: ReactNode }) => (
   <div
