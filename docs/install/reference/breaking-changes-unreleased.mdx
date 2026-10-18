@@ -57,6 +57,29 @@ Most code steps keep working unchanged: sources are transpiled to CommonJS, so N
 - **Custom deployments** that do not use the official Docker images must provide a Deno binary and point `AP_DENO_PATH` at it; without it every code step fails at spawn.
 
 To find affected steps after upgrading, search your logs for the structured `Code step failed` warning — it carries the flow run, flow version, project, step name, the runtime that executed the step (`codeRuntime: deno|legacy`), and the error message, so you can group failures by step and error. To pin a misbehaving step to the legacy runtime while you fix it (available on every edition), set `AP_API_KEY` in your environment and call `POST /v1/admin/flows/revert-from-deno` with the `api-key` header and a body of exactly one of `flowIds`, `projectId`, or `platformId`; this sets `useDeno: false` on the affected steps, and `migrate-to-deno` moves them back.
+#### Each chat keeps the AI model and key it started on
+
+A chat used to run on whatever key was the **Default AI key** at the time of each message. Now a chat remembers the key and model it first ran on. Changing the Default AI key affects new chats only. An existing chat moves to the new default only when its key is deleted, or no longer covers the chat's project or model.
+
+Message credits for AI agent turns, in chat, agents and flow steps, now follow the key that actually answered the turn. A turn answered by your own key costs one message credit, and a turn answered by Activepieces AI credits costs none (its AI usage is billed as before), whatever the Default AI key is.
+
+#### What you need to do
+
+Nothing to configure or migrate. To move an existing chat to another model, pick it in the chat. If you switch the Default AI key to stop using a key, delete that key or narrow its projects so existing chats move too.
+
+#### Firecrawl's Scrape Website stops reusing cached pages, and Crawl keeps its pages when a screenshot fails
+
+Three changes in Firecrawl 0.6.0 alter what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+Scrape Website has a new **Store In Cache** checkbox, off by default. When it is off, the step asks Firecrawl for a fresh copy of the page and tells Firecrawl not to keep one. A step upgraded from 0.5.0 or earlier keeps its saved inputs, which have no value for the checkbox, so it is treated as off: a step that used to be served Firecrawl's cached copy of a page now scrapes it fresh on every run. Runs are slower, and each one costs a full scrape in Firecrawl credits.
+
+Crawl with the Screenshot output format used to leave the raw Firecrawl screenshot link in a page's `screenshot` when saving that screenshot failed, and logged the failure only to the server console. That page now has no `screenshot` and carries a `screenshotError` saying why. The rest of the crawl is returned as before.
+
+Saved screenshot files are now named `firecrawl-<id>.png` instead of `screenshot-<id>.png`. The `fileName` and `fileUrl` keys are unchanged.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no existing step stops working. If a Scrape Website step scrapes the same pages repeatedly and does not need them fresh, tick **Store In Cache** to get the old speed and cost back. If a flow reads `screenshot` from Crawl's pages, check `screenshotError` on pages where it is missing. Only a flow that matches on a saved file's name needs changing.
 
 #### SmartSuite 0.3.0: Upload File returns the file list, and record and selector actions are builder-only
 
