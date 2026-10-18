@@ -141,7 +141,7 @@ export const updateWordPressPost = createAction({
         ? 'open'
         : 'closed';
     }
-    if (context.propsValue.categories) {
+    if (context.propsValue.categories?.length) {
       requestBody['categories'] = context.propsValue.categories;
     }
     if (context.propsValue.slug) {
@@ -150,7 +150,7 @@ export const updateWordPressPost = createAction({
     if (context.propsValue.excerpt) {
       requestBody['excerpt'] = context.propsValue.excerpt;
     }
-    if (context.propsValue.tags) {
+    if (context.propsValue.tags?.length) {
       requestBody['tags'] = context.propsValue.tags;
     }
     if (context.propsValue.ping_status) {
