@@ -49,13 +49,13 @@ export const createBlogPostAction = createAction({
 					{
 						label: 'Draft',
 						value: 'DRAFT',
-						description: 'Kept unpublished',
+						description: 'Not published',
 						icon: 'file',
 					},
 					{
 						label: 'Publish',
 						value: 'PUBLISHED',
-						description: 'Live once created',
+						description: 'Goes live now',
 						icon: 'send',
 					},
 				],
