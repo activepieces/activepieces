@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { useState } from 'react';
 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,5 +34,21 @@ export const TypeToConfirm = ({
     </div>
   );
 };
+
+export function useTypeToConfirm({
+  open,
+  text,
+}: {
+  open: boolean;
+  text?: string;
+}) {
+  const [value, setValue] = useState('');
+  const [openSeen, setOpenSeen] = useState(open);
+  if (open !== openSeen) {
+    setOpenSeen(open);
+    setValue('');
+  }
+  return { value, setValue, confirmed: !text || value === text };
+}
 
 const TEXT_SLOT = '\u0000';

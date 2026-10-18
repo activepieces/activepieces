@@ -1,5 +1,4 @@
 import {
-  formErrors,
   PlatformWithoutSensitiveData,
   SsoDomainVerificationRecord,
   SsoDomainVerificationStatus,
@@ -13,7 +12,9 @@ import { z } from 'zod';
 
 import { SettingsPanel, SettingsRow, StatusDot } from '@/app/components/admin';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
+import { domainSchema } from '@/app/routes/platform/security/sso/domain-schema';
 import { DomainStatusIcon } from '@/app/routes/platform/security/sso/domain-status-icon';
+import { FormActions } from '@/app/routes/platform/security/sso/form-actions';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -119,7 +120,7 @@ const DomainEntry = ({
             {form.formState.errors.root.serverError.message}
           </FormMessage>
         )}
-        <Actions next={nextAction}>
+        <FormActions trailing={nextAction}>
           {secondaryAction}
           <Button
             {...adminControl(AdminControl.SSO_SAML_DOMAIN_SUBMIT)}
@@ -129,7 +130,7 @@ const DomainEntry = ({
           >
             {t('Continue')}
           </Button>
-        </Actions>
+        </FormActions>
       </form>
     </Form>
   );
@@ -172,7 +173,7 @@ const PendingDomain = ({
         </div>
       )}
       <DomainDnsRecord record={record} />
-      <Actions next={nextAction}>
+      <FormActions trailing={nextAction}>
         {secondaryAction}
         <Button
           {...adminControl(AdminControl.SSO_DOMAIN_DNS_RUN)}
@@ -182,7 +183,7 @@ const PendingDomain = ({
         >
           {t('Verify DNS')}
         </Button>
-      </Actions>
+      </FormActions>
     </div>
   );
 };
@@ -208,39 +209,11 @@ const VerifiedDomain = ({
         </StatusDot>
       </SettingsRow>
     </SettingsPanel>
-    {nextAction && <Actions next={nextAction} />}
+    {nextAction && <FormActions trailing={nextAction} />}
   </div>
 );
 
-const Actions = ({
-  children,
-  next,
-}: {
-  children?: ReactNode;
-  next?: ReactNode;
-}) =>
-  next ? (
-    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col-reverse gap-2 sm:flex-row">{children}</div>
-      {next}
-    </div>
-  ) : (
-    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-      {children}
-    </div>
-  );
-
-const DomainFormValues = z.object({
-  domain: z
-    .string()
-    .transform((value) => value.trim().toLowerCase())
-    .pipe(
-      z
-        .hostname(formErrors.invalidDomain)
-        .max(253, formErrors.invalidDomain)
-        .refine((value) => value.includes('.'), formErrors.invalidDomain),
-    ),
-});
+const DomainFormValues = z.object({ domain: domainSchema });
 type DomainFormValues = { domain: string };
 
 type DomainVerificationProps = {

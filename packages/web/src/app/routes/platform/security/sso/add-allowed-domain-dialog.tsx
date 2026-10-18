@@ -9,6 +9,7 @@ import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
 import { adminLayout } from '@/app/components/admin';
+import { domainSchema } from '@/app/routes/platform/security/sso/domain-schema';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -49,7 +50,7 @@ export const AddAllowedDomainDialog = ({
     mutationFn: async ({ domain }: AllowedDomainFormValues) => {
       await platformApi.update(
         {
-          allowedAuthDomains: [...existing, normalizeDomain(domain)],
+          allowedAuthDomains: [...existing, domain],
           enforceAllowedAuthDomains: true,
         },
         platform.id,
@@ -158,25 +159,12 @@ function describeAddingDomain({
     : t('People at this domain can sign in with email and password.');
 }
 
-function normalizeDomain(domain: string): string {
-  return domain.trim().toLowerCase();
-}
-
 function allowedDomainSchema(existing: string[]) {
   return z.object({
-    domain: z
-      .string()
-      .transform(normalizeDomain)
-      .pipe(
-        z
-          .hostname(formErrors.invalidDomain)
-          .max(253, formErrors.invalidDomain)
-          .refine((value) => value.includes('.'), formErrors.invalidDomain)
-          .refine(
-            (value) => !existing.includes(value),
-            formErrors.duplicateDomain,
-          ),
-      ),
+    domain: domainSchema.refine(
+      (value) => !existing.includes(value),
+      formErrors.duplicateDomain,
+    ),
   });
 }
 

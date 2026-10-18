@@ -1,9 +1,12 @@
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 
 import { adminLayout } from '@/app/components/admin';
-import { TypeToConfirm } from '@/components/custom/type-to-confirm';
+import {
+  TypeToConfirm,
+  useTypeToConfirm,
+} from '@/components/custom/type-to-confirm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,13 +33,9 @@ export const MethodConfirmDialog = ({
   confirmText,
   onConfirm,
 }: MethodConfirmDialogProps) => {
-  const [typed, setTyped] = useState('');
-  const handleOpenChange = (next: boolean) => {
-    setTyped('');
-    onOpenChange(next);
-  };
+  const typed = useTypeToConfirm({ open, text: confirmText });
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={adminLayout.dialog.md}
         onInteractOutside={(event) => event.preventDefault()}
@@ -55,8 +54,8 @@ export const MethodConfirmDialog = ({
           <TypeToConfirm
             id="method-confirm-text"
             text={confirmText}
-            value={typed}
-            onChange={setTyped}
+            value={typed.value}
+            onChange={typed.setValue}
           />
         )}
         <DialogFooter>
@@ -64,7 +63,7 @@ export const MethodConfirmDialog = ({
             type="button"
             variant="outline"
             disabled={isPending}
-            onClick={() => handleOpenChange(false)}
+            onClick={() => onOpenChange(false)}
           >
             {t('Cancel')}
           </Button>
@@ -73,9 +72,7 @@ export const MethodConfirmDialog = ({
             type="button"
             variant={destructive ? 'destructive' : 'default'}
             loading={isPending}
-            disabled={
-              confirmDisabled || (!!confirmText && typed !== confirmText)
-            }
+            disabled={confirmDisabled || !typed.confirmed}
             onClick={onConfirm}
           >
             {confirmLabel}

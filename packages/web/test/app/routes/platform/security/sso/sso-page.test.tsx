@@ -23,12 +23,15 @@ const {
   refetchMock,
   flagState,
 } = vi.hoisted(() => {
+  function initialFlagState(): {
+    edition: string;
+    thirdPartyProviders: Record<string, boolean>;
+  } {
+    return { edition: 'ee', thirdPartyProviders: { google: false } };
+  }
   const state: { current: Record<string, unknown> } = { current: {} };
   return {
-    flagState: {
-      edition: 'ee',
-      thirdPartyProviders: { google: false } as Record<string, boolean>,
-    },
+    flagState: initialFlagState(),
     toastMock: { success: vi.fn(), error: vi.fn(), message: vi.fn() },
     platformApiMock: { update: vi.fn() },
     samlSsoApiMock: {
@@ -646,6 +649,31 @@ describe('SSOPage', () => {
     expect(findButton('Turn off', dialog)?.disabled).toBe(false);
   });
 
+  it('does not count single sign-on as working on Cloud without a verified domain', () => {
+    flagState.edition = 'cloud';
+    setPlatform({
+      emailAuthEnabled: true,
+      federatedAuthProviders: { saml: samlConfig },
+    });
+    mount();
+
+    click(screen.getByRole('switch', { name: 'Email and password' }));
+
+    expect(
+      within(screen.getByRole('dialog')).getByText(
+        "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.",
+      ),
+    ).toBeDefined();
+  });
+
+  it('shows no Google note while the edition is still loading', () => {
+    flagState.edition = '';
+    setPlatform({ googleAuthEnabled: true });
+    mount();
+
+    expect(screen.queryByText('Not set up')).toBeNull();
+  });
+
   it('changes nothing when a method change is cancelled', () => {
     setPlatform({ emailAuthEnabled: true });
     mount();
@@ -878,6 +906,32 @@ describe('SamlSetupPage', () => {
       ),
     );
     expect(await screen.findByText('authentication page')).toBeDefined();
+  });
+
+  it('shows the server error when saving the SAML connection fails', async () => {
+    platformApiMock.update.mockRejectedValue(
+      new Error('SSO domain must be verified before configuring SAML'),
+    );
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+    });
+    mountSetupPage();
+
+    fireEvent.change(screen.getByLabelText('IDP Metadata'), {
+      target: { value: '<xml />' },
+    });
+    fireEvent.change(screen.getByLabelText('IDP Certificate'), {
+      target: { value: 'cert' },
+    });
+    await waitFor(() => expect(findButton('Save')?.disabled).toBe(false));
+    click(findButton('Save'));
+
+    expect(
+      await screen.findByText(
+        'SSO domain must be verified before configuring SAML',
+      ),
+    ).toBeDefined();
   });
 
   it('offers Disable on the SAML step only, and disables after confirming', async () => {

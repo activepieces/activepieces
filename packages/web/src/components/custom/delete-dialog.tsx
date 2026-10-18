@@ -4,7 +4,10 @@ import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { TypeToConfirm } from '@/components/custom/type-to-confirm';
+import {
+  TypeToConfirm,
+  useTypeToConfirm,
+} from '@/components/custom/type-to-confirm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,7 +64,8 @@ export const ConfirmationDeleteDialog = ({
     open !== undefined && onOpenChange !== undefined,
   );
   const [isUncontrolledOpen, setIsUncontrolledOpen] = useState(false);
-  const [typed, setTyped] = useState('');
+  const isOpen = isControlled ? open : isUncontrolledOpen;
+  const typed = useTypeToConfirm({ open: !!isOpen, text: confirmText });
 
   const { mutate, isPending } = useMutation({
     mutationFn,
@@ -74,19 +78,7 @@ export const ConfirmationDeleteDialog = ({
     onError,
   });
 
-  const handleOpenChange = (next: boolean) => {
-    if (!next) {
-      setTyped('');
-    }
-    if (isControlled) {
-      onOpenChange?.(next);
-    } else {
-      setIsUncontrolledOpen(next);
-    }
-  };
-
   const handleClose = () => {
-    setTyped('');
     if (isControlled) {
       onOpenChange?.(false);
     } else {
@@ -94,10 +86,11 @@ export const ConfirmationDeleteDialog = ({
     }
   };
 
-  const isOpen = isControlled ? open : isUncontrolledOpen;
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={isControlled ? onOpenChange : setIsUncontrolledOpen}
+    >
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
 
       <DialogContent
@@ -125,8 +118,8 @@ export const ConfirmationDeleteDialog = ({
           <TypeToConfirm
             id="delete-confirm-text"
             text={confirmText}
-            value={typed}
-            onChange={setTyped}
+            value={typed.value}
+            onChange={typed.setValue}
           />
         )}
         <DialogFooter className="mt-3">
@@ -140,9 +133,7 @@ export const ConfirmationDeleteDialog = ({
           <Button
             variant="destructive"
             loading={isPending}
-            disabled={
-              confirmDisabled || (!!confirmText && typed !== confirmText)
-            }
+            disabled={confirmDisabled || !typed.confirmed}
             onClick={() => mutate()}
             {...adminControl(controlId)}
           >

@@ -1,8 +1,4 @@
-import {
-  ApEdition,
-  ApFlagId,
-  PlatformWithoutSensitiveData,
-} from '@activepieces/shared';
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Globe, MoreHorizontal, Plus, Trash } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,6 +11,7 @@ import {
   adminLayout,
 } from '@/app/components/admin';
 import { AddAllowedDomainDialog } from '@/app/routes/platform/security/sso/add-allowed-domain-dialog';
+import { useSignInMethods } from '@/app/routes/platform/security/sso/use-sign-in-methods';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,7 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
@@ -32,8 +28,7 @@ export const AllowedDomainsSection = ({
   refetch,
 }: AllowedDomainsSectionProps) => {
   const domains = platform.allowedAuthDomains;
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const restrictsJoining = edition === ApEdition.ENTERPRISE;
+  const restrictsJoining = useSignInMethods(platform).selfHosted;
   const listsCompanyDomain =
     !!platform.ssoDomain && domains.includes(platform.ssoDomain);
 

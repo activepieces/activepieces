@@ -3361,5 +3361,7 @@
   "Needs a Google OAuth client on this server.": "Needs a Google OAuth client on this server.",
   "On a self-hosted server it also needs a Google OAuth client.": "On a self-hosted server it also needs a Google OAuth client.",
   "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.": "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.",
-  "People can no longer sign in with email and password.": "People can no longer sign in with email and password."
+  "People can no longer sign in with email and password.": "People can no longer sign in with email and password.",
+  "Couldn't disable single sign-on": "Couldn't disable single sign-on",
+  "Couldn't save single sign-on settings": "Couldn't save single sign-on settings"
 }

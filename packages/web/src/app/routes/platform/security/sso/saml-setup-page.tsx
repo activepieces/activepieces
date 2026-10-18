@@ -24,10 +24,11 @@ import {
   adminPageResources,
 } from '@/app/components/admin';
 import { DomainVerification } from '@/app/routes/platform/security/sso/domain-verification';
+import { FormActions } from '@/app/routes/platform/security/sso/form-actions';
 import { MethodConfirmDialog } from '@/app/routes/platform/security/sso/method-confirm-dialog';
 import { SamlDeletionWarning } from '@/app/routes/platform/security/sso/saml-deletion-warning';
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
-import { useGoogleSignInAvailable } from '@/app/routes/platform/security/sso/use-google-sign-in-available';
+import { useSignInMethods } from '@/app/routes/platform/security/sso/use-sign-in-methods';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export const SamlSetupPage = () => {
@@ -98,8 +100,8 @@ const DisableSamlRow = ({
   onDisabled: () => void;
 }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const googleSignInAvailable = useGoogleSignInAvailable();
-  const otherMethodsOff = !platform.emailAuthEnabled && !googleSignInAvailable;
+  const samlIsOnlyMethod =
+    useSignInMethods(platform).isOnlyWorkingMethod('saml');
   const { mutate: disableSaml, isPending } = useMutation({
     mutationFn: async () => {
       await platformApi.update(
@@ -111,6 +113,14 @@ const DisableSamlRow = ({
     onSuccess: () => {
       toast.success(t('Single sign-on settings updated'), { duration: 3000 });
       onDisabled();
+    },
+    onError: (error) => {
+      toast.error(
+        api.extractServerErrorMessage(
+          error,
+          t("Couldn't disable single sign-on"),
+        ),
+      );
     },
   });
 
@@ -139,8 +149,8 @@ const DisableSamlRow = ({
         description={t(
           'People who use single sign-on will have to sign in another way.',
         )}
-        warning={<SamlDeletionWarning otherMethodsOff={otherMethodsOff} />}
-        confirmDisabled={otherMethodsOff}
+        warning={<SamlDeletionWarning blocked={samlIsOnlyMethod} />}
+        confirmDisabled={samlIsOnlyMethod}
         confirmLabel={t('Disable')}
         destructive
         isPending={isPending}
@@ -333,6 +343,15 @@ const SamlStep = ({
       toast.success(t('Single sign-on settings updated'), { duration: 3000 });
       onClose();
     },
+    onError: (error) => {
+      form.setError('root.serverError', {
+        type: 'manual',
+        message: api.extractServerErrorMessage(
+          error,
+          t("Couldn't save single sign-on settings"),
+        ),
+      });
+    },
   });
 
   return (
@@ -432,7 +451,7 @@ const SamlStep = ({
             </FormMessage>
           )}
 
-          <StepFooter>
+          <FormActions>
             <Button variant="outline" type="button" onClick={onBack}>
               {t('Back')}
             </Button>
@@ -444,7 +463,7 @@ const SamlStep = ({
             >
               {t('Save')}
             </Button>
-          </StepFooter>
+          </FormActions>
         </form>
       </Form>
     </div>
@@ -464,12 +483,6 @@ const StepSection = ({
     <h3 className="text-sm font-semibold text-gray-12">{title}</h3>
     {children}
   </section>
-);
-
-const StepFooter = ({ children }: { children: ReactNode }) => (
-  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-    {children}
-  </div>
 );
 
 const SAML_ENTITY_ID = 'Activepieces';

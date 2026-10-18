@@ -1,8 +1,4 @@
-import {
-  ApEdition,
-  ApFlagId,
-  PlatformWithoutSensitiveData,
-} from '@activepieces/shared';
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUpRight, LockKeyhole, MailIcon } from 'lucide-react';
 import { ReactNode, useState } from 'react';
@@ -10,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import {
-  adminDocsUrl,
+  adminDocs,
   AdminSection,
   SettingsPanel,
   SettingsRow,
@@ -18,12 +14,11 @@ import {
 } from '@/app/components/admin';
 import { MethodConfirmDialog } from '@/app/routes/platform/security/sso/method-confirm-dialog';
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
-import { useGoogleSignInAvailable } from '@/app/routes/platform/security/sso/use-google-sign-in-available';
+import { useSignInMethods } from '@/app/routes/platform/security/sso/use-sign-in-methods';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ssoMutations } from '@/features/platform-admin';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
@@ -36,15 +31,12 @@ export const SignInMethodsSection = ({
   const samlConnected = !!platform.federatedAuthProviders?.saml;
   const [googleChange, setGoogleChange] = useState<boolean | null>(null);
   const [emailChange, setEmailChange] = useState<boolean | null>(null);
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const selfHosted = edition !== ApEdition.CLOUD;
-  const googleSignInAvailable = useGoogleSignInAvailable();
+  const { selfHosted, working, isOnlyWorkingMethod } =
+    useSignInMethods(platform);
   const googleNotSetUp =
-    selfHosted && platform.googleAuthEnabled && !googleSignInAvailable;
-  const emailIsLastMethod =
-    platform.emailAuthEnabled && !samlConnected && !googleSignInAvailable;
-  const googleIsLastMethod =
-    googleSignInAvailable && !platform.emailAuthEnabled && !samlConnected;
+    selfHosted && platform.googleAuthEnabled && !working.google;
+  const emailIsLastMethod = isOnlyWorkingMethod('email');
+  const googleIsLastMethod = isOnlyWorkingMethod('google');
 
   const { mutate: toggleGoogleAuth, isPending: isGoogleAuthPending } =
     ssoMutations.useUpdatePlatformSso({
@@ -241,7 +233,7 @@ const LastMethodWarning = () =>
 
 const GoogleSetupGuideLink = () => (
   <a
-    href={adminDocsUrl('admin-guide/guides/sso#google')}
+    href={adminDocs.url('admin-guide/guides/sso#google')}
     target="_blank"
     rel="noopener noreferrer"
     className="inline-flex items-center gap-0.5 font-medium text-accent-11 hover:underline"

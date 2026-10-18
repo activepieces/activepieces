@@ -18,7 +18,7 @@ import {
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
 import { DomainStatusIcon } from '@/app/routes/platform/security/sso/domain-status-icon';
 import { SamlDeletionWarning } from '@/app/routes/platform/security/sso/saml-deletion-warning';
-import { useGoogleSignInAvailable } from '@/app/routes/platform/security/sso/use-google-sign-in-available';
+import { useSignInMethods } from '@/app/routes/platform/security/sso/use-sign-in-methods';
 import { VerifyDomainDialog } from '@/app/routes/platform/security/sso/verify-domain-dialog';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -97,8 +97,8 @@ const DomainRow = ({
   samlConnected,
   onContinueVerifying,
 }: DomainRowProps) => {
-  const googleSignInAvailable = useGoogleSignInAvailable();
-  const otherMethodsOff = !platform.emailAuthEnabled && !googleSignInAvailable;
+  const samlIsOnlyMethod =
+    useSignInMethods(platform).isOnlyWorkingMethod('saml');
   const [dnsRecordOpen, setDnsRecordOpen] = useState(false);
   const verified = verification.status === SsoDomainVerificationStatus.VERIFIED;
 
@@ -174,11 +174,11 @@ const DomainRow = ({
             }
             warning={
               verified && samlConnected ? (
-                <SamlDeletionWarning otherMethodsOff={otherMethodsOff} />
+                <SamlDeletionWarning blocked={samlIsOnlyMethod} />
               ) : undefined
             }
             confirmText={verified ? domain : undefined}
-            confirmDisabled={verified && samlConnected && otherMethodsOff}
+            confirmDisabled={verified && samlConnected && samlIsOnlyMethod}
             entityName={domain}
             buttonText={
               !verified

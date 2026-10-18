@@ -2,6 +2,7 @@ import { t } from 'i18next';
 
 import { AdminControl } from '@/lib/admin-control';
 
+import { adminDocs } from './admin-docs';
 import { AdminResource } from './admin-resources';
 
 const docs = ({
@@ -15,11 +16,9 @@ const docs = ({
 }): AdminResource => ({
   kind: 'doc',
   label,
-  url: `${DOCS_BASE_URL}/${path}`,
+  url: adminDocs.url(path),
   control,
 });
-
-const DOCS_BASE_URL = 'https://www.activepieces.com/docs';
 
 export const adminPageResources = {
   projects: [
@@ -145,6 +144,3 @@ export const adminPageResources = {
     }),
   ],
 } satisfies Record<string, AdminResource[]>;
-
-export const adminDocsUrl = (path: string): string =>
-  `${DOCS_BASE_URL}/${path}`;
