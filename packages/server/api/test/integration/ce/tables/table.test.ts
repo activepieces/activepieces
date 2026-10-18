@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FieldType, Table } from '@activepieces/shared'
+import { FieldType, Table, UncategorizedFolderId } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
@@ -331,6 +331,28 @@ describe('Table API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(response?.json()).toBe(0)
+        })
+
+        it('should count only uncategorized tables for folderId=NULL, matching the list', async () => {
+            const ctx = await createTestContext(app!)
+            const otherProject = createMockProject({ platformId: ctx.platform.id, ownerId: ctx.user.id })
+            await db.save('project', otherProject)
+            const folder = createMockFolder({ projectId: ctx.project.id })
+            await db.save('folder', folder)
+            const unfiledIds = [(await createAndSaveTable(ctx)).id, (await createAndSaveTable(ctx)).id]
+            await db.save('table', [
+                { ...createMockTable({ projectId: ctx.project.id }), folderId: folder.id },
+                createMockTable({ projectId: otherProject.id }),
+            ])
+
+            const listed = await ctx.get('/v1/tables', { projectId: ctx.project.id, folderId: UncategorizedFolderId })
+            const uncategorized = await ctx.get('/v1/tables/count', { projectId: ctx.project.id, folderId: UncategorizedFolderId })
+            const inFolder = await ctx.get('/v1/tables/count', { projectId: ctx.project.id, folderId: folder.id })
+            const all = await ctx.get('/v1/tables/count', { projectId: ctx.project.id })
+
+            expect([listed, uncategorized, inFolder, all].map((response) => response?.statusCode)).toEqual(Array(4).fill(StatusCodes.OK))
+            expect(listed?.json().data.map((table: Table) => table.id).sort()).toEqual(unfiledIds.sort())
+            expect({ uncategorized: uncategorized?.json(), inFolder: inFolder?.json(), all: all?.json() }).toEqual({ uncategorized: 2, inFolder: 1, all: 3 })
         })
     })
 
