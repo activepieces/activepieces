@@ -22,6 +22,7 @@ function useResourceLock({
   const socket = useSocket();
   const currentUserId = authenticationSession.getCurrentUserId();
   const isOwner = useRef(false);
+  const currentAcquire = useRef<symbol | null>(null);
   // bumped after a successful take-over so the acquire effect re-runs and
   // registers ownership on this socket, replacing the previous full-page
   // reload (which broke the embed SDK handshake inside an iframe)
@@ -75,10 +76,21 @@ function useResourceLock({
       if (event.resourceId !== resourceId) {
         return;
       }
+      const acquire = currentAcquire.current;
       socket.emit(
         WebsocketServerEvent.LOCK_RESOURCE,
         { resourceId },
         (response: LockResourceResponse) => {
+          if (isNil(acquire) || currentAcquire.current !== acquire) {
+            releaseLateAcquire({
+              acquired: response.acquired,
+              acquire,
+              resourceId,
+              socket,
+              beforeRelease: beforeReleaseRef.current,
+            });
+            return;
+          }
           if (!isNil(response.lock)) {
             setLockedBy(response.lock);
             return;
@@ -106,10 +118,21 @@ function useResourceLock({
   useEffect(() => {
     const acquire = Symbol(resourceId);
     latestAcquireByResource.set(resourceId, acquire);
+    currentAcquire.current = acquire;
     socket.emit(
       WebsocketServerEvent.LOCK_RESOURCE,
       { resourceId },
       (response: LockResourceResponse) => {
+        if (currentAcquire.current !== acquire) {
+          releaseLateAcquire({
+            acquired: response.acquired,
+            acquire,
+            resourceId,
+            socket,
+            beforeRelease: beforeReleaseRef.current,
+          });
+          return;
+        }
         if (response.acquired) {
           isOwner.current = true;
         } else if (response.lock) {
@@ -135,28 +158,35 @@ function useResourceLock({
     }, 30_000);
 
     return () => {
+      currentAcquire.current = null;
       clearInterval(heartbeat);
       if (isOwner.current) {
         isOwner.current = false;
         releaseAfter({
           beforeRelease: beforeReleaseRef.current,
-          release: () => {
-            if (latestAcquireByResource.get(resourceId) !== acquire) {
-              return;
-            }
-            latestAcquireByResource.delete(resourceId);
-            socket.emit(WebsocketServerEvent.UNLOCK_RESOURCE, { resourceId });
-          },
+          release: () =>
+            releaseIfLatestAcquire({ acquire, resourceId, socket }),
         });
       }
     };
   }, [resourceId, socket, lockSession]);
 
   const takeOver = useCallback(() => {
+    const acquire = currentAcquire.current;
     socket.emit(
       WebsocketServerEvent.LOCK_RESOURCE,
       { resourceId, force: true },
       (response: LockResourceResponse) => {
+        if (isNil(acquire) || currentAcquire.current !== acquire) {
+          releaseLateAcquire({
+            acquired: response.acquired,
+            acquire,
+            resourceId,
+            socket,
+            beforeRelease: beforeReleaseRef.current,
+          });
+          return;
+        }
         if (response.acquired) {
           isOwner.current = false;
           setLockedBy(null);
@@ -168,6 +198,44 @@ function useResourceLock({
   }, [resourceId, socket, onTakeOver]);
 
   return { lockedBy, takeOver };
+}
+
+function releaseLateAcquire({
+  acquired,
+  acquire,
+  resourceId,
+  socket,
+  beforeRelease,
+}: {
+  acquired: boolean;
+  acquire: symbol | null;
+  resourceId: string;
+  socket: Socket;
+  beforeRelease: (() => Promise<void>) | undefined;
+}) {
+  if (!acquired || isNil(acquire)) {
+    return;
+  }
+  releaseAfter({
+    beforeRelease,
+    release: () => releaseIfLatestAcquire({ acquire, resourceId, socket }),
+  });
+}
+
+function releaseIfLatestAcquire({
+  acquire,
+  resourceId,
+  socket,
+}: {
+  acquire: symbol;
+  resourceId: string;
+  socket: Socket;
+}) {
+  if (latestAcquireByResource.get(resourceId) !== acquire) {
+    return;
+  }
+  latestAcquireByResource.delete(resourceId);
+  socket.emit(WebsocketServerEvent.UNLOCK_RESOURCE, { resourceId });
 }
 
 function releaseAfter({
@@ -196,3 +264,5 @@ type UseResourceLockParams = {
 };
 
 type LockHolder = NonNullable<LockResourceResponse['lock']>;
+
+type Socket = ReturnType<typeof useSocket>;

@@ -214,6 +214,32 @@ describe('useResourceLock takeOver', () => {
     expect(reloadSpy).not.toHaveBeenCalled();
   });
 
+  it('releases a lock that a take over gets after the tab left, and does not refresh', async () => {
+    const onTakeOver = vi.fn();
+    await act(async () => {
+      root.render(<Probe onTakeOver={onTakeOver} />);
+    });
+    await act(async () => {
+      lockEmits()[0].ack?.({ acquired: false, lock: OTHER_USER });
+    });
+    await act(async () => {
+      latestHookResult?.takeOver();
+    });
+    const forceAcquire = lockEmits().find((call) => call.payload.force);
+
+    await act(async () => {
+      root.unmount();
+    });
+    await act(async () => {
+      forceAcquire?.ack?.({ acquired: true, lock: null });
+    });
+
+    expect(unlockEmits()).toEqual([
+      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+    ]);
+    expect(onTakeOver).not.toHaveBeenCalled();
+  });
+
   it('keeps the locked state when the force acquire is rejected', async () => {
     const onTakeOver = vi.fn();
     await act(async () => {
@@ -391,6 +417,25 @@ describe('useResourceLock with onLockFreed', () => {
     expect(unlockEmits()).toEqual([
       expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
     ]);
+  });
+
+  it('releases a freed lock whose answer arrives after the tab left, and does not call the callback', async () => {
+    const onLockFreed = vi.fn(() => Promise.resolve());
+    await mountWaitingFor({ onLockFreed, holder: OTHER_USER });
+    await freeTheLock();
+    const freedLockAcquire = lockEmits()[1];
+
+    await act(async () => {
+      root.unmount();
+    });
+    await act(async () => {
+      freedLockAcquire.ack?.({ acquired: true, lock: null });
+    });
+
+    expect(unlockEmits()).toEqual([
+      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+    ]);
+    expect(onLockFreed).not.toHaveBeenCalled();
   });
 
   it('shows the user who took the freed lock first, and does not call the callback', async () => {
@@ -605,6 +650,42 @@ describe('useResourceLock with beforeRelease', () => {
       root.unmount();
     });
     expect(unlockEmits()).toHaveLength(1);
+  });
+
+  it('releases the lock when its first answer arrives after the tab left', async () => {
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} />);
+    });
+    await act(async () => {
+      root.unmount();
+    });
+
+    await act(async () => {
+      lockEmits()[0].ack?.({ acquired: true, lock: null });
+    });
+
+    expect(unlockEmits()).toEqual([
+      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+    ]);
+  });
+
+  it('keeps the lock when a late answer arrives after the same resource mounted again', async () => {
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} />);
+    });
+    await act(async () => {
+      root.unmount();
+    });
+    root = createRoot(container);
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} />);
+    });
+
+    await act(async () => {
+      lockEmits()[0].ack?.({ acquired: true, lock: null });
+    });
+
+    expect(unlockEmits()).toHaveLength(0);
   });
 
   it('does not run beforeRelease when the tab does not own the lock', async () => {
