@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
 import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -811,7 +811,12 @@ async function applyStatusChange(params: {
             }
 
             const publishedFlowVersionId = flowToUpdate.publishedVersionId
-            assertNotNullOrUndefined(publishedFlowVersionId, 'publishedFlowVersionId is required')
+            if (isNil(publishedFlowVersionId)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.FLOW_OPERATION_INVALID,
+                    params: { message: 'Publish the flow before turning it on' },
+                })
+            }
             const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flowToUpdate.id,
                 versionId: publishedFlowVersionId,
