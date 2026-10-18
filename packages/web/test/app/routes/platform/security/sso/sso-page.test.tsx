@@ -845,6 +845,24 @@ describe('SamlSetupPage', () => {
     expect(await screen.findByText('authentication page')).toBeDefined();
   });
 
+  it('clears the typed confirmation when the Disable dialog is cancelled', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+      federatedAuthProviders: { saml: samlConfig },
+    });
+    mountSetupPage();
+
+    click(findButton('Disable'));
+    typeToConfirm(screen.getByRole('dialog'), 'disable');
+    click(findButton('Cancel', screen.getByRole('dialog')));
+    click(findButton('Disable'));
+
+    expect(findButton('Disable', screen.getByRole('dialog'))?.disabled).toBe(
+      true,
+    );
+  });
+
   it('blocks disabling single sign-on when it is the only working sign-in method', () => {
     setPlatform({
       ssoDomain: 'acme.com',

@@ -31,14 +31,12 @@ export const MethodConfirmDialog = ({
   onConfirm,
 }: MethodConfirmDialogProps) => {
   const [typed, setTyped] = useState('');
+  const handleOpenChange = (next: boolean) => {
+    setTyped('');
+    onOpenChange(next);
+  };
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        setTyped('');
-        onOpenChange(next);
-      }}
-    >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className={adminLayout.dialog.md}
         onInteractOutside={(event) => event.preventDefault()}
@@ -66,7 +64,7 @@ export const MethodConfirmDialog = ({
             type="button"
             variant="outline"
             disabled={isPending}
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
           >
             {t('Cancel')}
           </Button>
