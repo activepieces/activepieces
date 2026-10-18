@@ -18,10 +18,10 @@ function ResourceLockWidget({
     >
       <div
         data-theme="light"
-        className="pointer-events-auto absolute top-0 left-1/2 flex h-10 -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-b-lg bg-accent-9 pl-4 pr-1.5 text-sm font-medium text-on-accent"
+        className="pointer-events-auto absolute top-0 left-1/2 flex h-10 max-w-[calc(100%-1rem)] -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-b-lg bg-accent-9 pl-4 pr-1.5 text-sm font-medium text-on-accent"
       >
-        <Lock className="size-3.5" />
-        <span>
+        <Lock className="size-3.5 shrink-0" />
+        <span className="min-w-0 truncate">
           {t('{name} is editing', { name: lockedBy.userDisplayName })}
           {' · '}
           {t('View only')}
@@ -29,7 +29,7 @@ function ResourceLockWidget({
         <Button
           variant="outline"
           size="xs"
-          className="h-7 rounded-md border-0 bg-panel px-3 font-medium text-accent-11 enabled:hover:bg-accent-3 enabled:hover:text-accent-11"
+          className="h-7 shrink-0 rounded-md border-0 bg-panel px-3 font-medium text-accent-11 enabled:hover:bg-accent-3 enabled:hover:text-accent-11"
           onClick={takeOver}
         >
           {t('Take Over')}
