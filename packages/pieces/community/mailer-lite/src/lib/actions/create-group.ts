@@ -19,6 +19,7 @@ export const createGroupAction = createAction({
 	props: {
 		name: Property.ShortText({
 			displayName: 'Group Name',
+			placeholder: 'Newsletter readers',
 			required: true,
 		}),
 	},
