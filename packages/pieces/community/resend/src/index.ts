@@ -102,7 +102,7 @@ export const resend = createPiece({
   displayName: 'Resend',
   description: 'The email API for developers',
   auth: resendAuth,
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/resend.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ['Tosh94'],
