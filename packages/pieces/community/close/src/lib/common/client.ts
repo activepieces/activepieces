@@ -215,6 +215,11 @@ function optionalText(value: unknown): string | undefined {
   return text === '' ? undefined : text;
 }
 
+function clearableText(value: unknown): string | undefined {
+  if (typeof value === 'string') return value.trim();
+  return optionalText(value);
+}
+
 function requiredText({ value, label }: { value: unknown; label: string }): string {
   const text = optionalText(value);
   if (text === undefined) throw new Error(`${label} is required.`);
@@ -315,6 +320,7 @@ export const closeClient = {
   toApiError,
   normalizePath,
   optionalText,
+  clearableText,
   requiredText,
   closeId,
   optionalCloseId,

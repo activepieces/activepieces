@@ -5,6 +5,7 @@ import { close } from '../src';
 import { closeAuth } from '../src/lib/auth';
 import { CloseApiError, closeClient } from '../src/lib/common/client';
 import { closeMappers } from '../src/lib/common/mappers';
+import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
 import { verifySignature } from '../src/lib/triggers/helpers';
 
 const auth = { secret_text: 'api_secret' };
@@ -222,10 +223,66 @@ describe('webhook triggers', () => {
     const payload = { body, rawBody: raw, headers: { 'close-sig-timestamp': '1', 'close-sig-hash': sign({ ts: '1', body: raw }) } };
     const spy = mockSeq({ id: 'lead_1' });
     const first = await Reflect.apply(trigger.run, undefined, [{ auth, store, payload }]);
-    expect(first).toEqual([{ id: 'lead_1' }]);
+    expect(first).toEqual([{ id: 'lead_1', [DEDUPE_KEY_PROPERTY]: 'close:lead:ev_1' }]);
+    expect(store.data['new-lead-trigger-seen:ev_1']).toBe(true);
     expect(spy.mock.calls[0][0].url).toBe('https://api.close.com/api/v1/lead/lead_1/');
     const second = await Reflect.apply(trigger.run, undefined, [{ auth, store, payload }]);
     expect(second).toEqual([]);
+  });
+
+  function delivery({ eventId, objectType, objectId }: { eventId: string; objectType: string; objectId: string }) {
+    const body = { event: { id: eventId, object_type: objectType, action: 'created', object_id: objectId } };
+    const raw = JSON.stringify(body);
+    return { body, rawBody: raw, headers: { 'close-sig-timestamp': '1', 'close-sig-hash': sign({ ts: '1', body: raw }) } };
+  }
+
+  it('overlapping deliveries of different events keep both seen markers', async () => {
+    const trigger = close.triggers()['new_lead_created'];
+    const store = makeStore({ 'new-lead-trigger': { id: 'whsub_1', signatureKey: key } });
+    mockSeq({ id: 'lead_1' }, { id: 'lead_2' });
+    await Promise.all([
+      Reflect.apply(trigger.run, undefined, [{ auth, store, payload: delivery({ eventId: 'ev_a', objectType: 'lead', objectId: 'lead_1' }) }]),
+      Reflect.apply(trigger.run, undefined, [{ auth, store, payload: delivery({ eventId: 'ev_b', objectType: 'lead', objectId: 'lead_2' }) }]),
+    ]);
+    expect(store.data['new-lead-trigger-seen:ev_a']).toBe(true);
+    expect(store.data['new-lead-trigger-seen:ev_b']).toBe(true);
+    const retry = await Reflect.apply(trigger.run, undefined, [{ auth, store, payload: delivery({ eventId: 'ev_a', objectType: 'lead', objectId: 'lead_1' }) }]);
+    expect(retry).toEqual([]);
+  });
+
+  it('a retry is still ignored after more than 200 newer events', async () => {
+    const trigger = close.triggers()['new_lead_created'];
+    const store = makeStore({ 'new-lead-trigger': { id: 'whsub_1', signatureKey: key } });
+    mockSeq(...Array.from({ length: 202 }, (_, i) => ({ id: `lead_${i}` })));
+    for (let i = 0; i < 202; i++) {
+      await Reflect.apply(trigger.run, undefined, [{ auth, store, payload: delivery({ eventId: `ev_${i}`, objectType: 'lead', objectId: `lead_${i}` }) }]);
+    }
+    const retry = await Reflect.apply(trigger.run, undefined, [{ auth, store, payload: delivery({ eventId: 'ev_0', objectType: 'lead', objectId: 'lead_0' }) }]);
+    expect(retry).toEqual([]);
+  });
+
+  it('opportunity and contact records expose custom.cf_ values under custom', async () => {
+    const trigger = close.triggers()['new_opportunity_added'];
+    const store = makeStore({ 'new-opportunity-trigger': { id: 'whsub_1', signatureKey: key } });
+    mockSeq({ id: 'oppo_1', 'custom.cf_abc': 'Gold' });
+    const out = await Reflect.apply(trigger.run, undefined, [{ auth, store, payload: delivery({ eventId: 'ev_o', objectType: 'opportunity', objectId: 'oppo_1' }) }]);
+    expect(out[0]['custom.cf_abc']).toBe('Gold');
+    expect(out[0].custom).toEqual({ cf_abc: 'Gold' });
+    const fields = (schema: unknown) => (Reflect.get(Object(schema), 'fields') ?? []).map((f: { key: string }) => f.key);
+    expect(fields(trigger.outputSchema)).toContain('custom');
+    expect(fields(close.triggers()['new_contact_added'].outputSchema)).toContain('custom');
+    expect(closeMappers.withCustomMap({ objectType: 'contact', record: { id: 'cont_1', 'custom.cf_x': 1 } })).toEqual({ id: 'cont_1', 'custom.cf_x': 1, custom: { cf_x: 1 } });
+  });
+
+  it('update actions send an explicit empty string to clear text fields', async () => {
+    const spy = mockSeq({ id: 'lead_1' }, { id: 'cont_1' }, { id: 'oppo_1' });
+    await run({ name: 'update_lead', propsValue: { leadId: 'lead_1', description: '', url: '' } });
+    await run({ name: 'update_contact', propsValue: { contactId: 'cont_1', title: '' } });
+    await run({ name: 'update_opportunity', propsValue: { opportunityId: 'oppo_1', note: '' } });
+    expect(spy.mock.calls[0][0].body).toEqual({ description: '', url: '' });
+    expect(spy.mock.calls[1][0].body).toEqual({ title: '' });
+    expect(spy.mock.calls[2][0].body).toEqual({ note: '' });
+    await expect(run({ name: 'update_lead', propsValue: { leadId: 'lead_1' } })).rejects.toThrow('Pass at least one field');
   });
 
   it('onDisable treats 404 as deleted and keeps state on other errors', async () => {

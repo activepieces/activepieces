@@ -1,3 +1,4 @@
+import { closeMappers } from '../common/mappers';
 import { closeOutputSchemas } from '../common/output-schemas';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -97,7 +98,7 @@ export const createOpportunity = createAction({
 				body: opportunityData,
 			});
 
-			return response;
+			return closeMappers.withCustomMap({ objectType: 'opportunity', record: response });
 		} catch (error) {
 			if (error instanceof CloseApiError && error.status === 404) {
 				throw new Error(`Lead or related resource not found. ${error.message}`);

@@ -1,3 +1,4 @@
+import { closeMappers } from '../common/mappers';
 import { closeOutputSchemas } from '../common/output-schemas';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -134,7 +135,7 @@ export const createContact = createAction({
 				body: payload,
 			});
 
-			return response;
+			return closeMappers.withCustomMap({ objectType: 'contact', record: response });
 		} catch (error) {
 			if (error instanceof CloseApiError && error.status === 404) {
 				throw new Error(`Lead not found with ID: ${lead_id}. ${error.message}`);

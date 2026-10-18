@@ -1,10 +1,9 @@
 import crypto from 'crypto';
-import { TriggerHookContext, TriggerStrategy } from '@activepieces/pieces-framework';
+import { DEDUPE_KEY_PROPERTY, TriggerHookContext, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { closeAuth } from '../auth';
 import { CloseApiError, closeClient } from '../common/client';
-
-const MAX_SEEN_EVENTS = 200;
+import { closeMappers } from '../common/mappers';
 
 export const verifySignature = ({ signatureKey, timestamp, rawBody, signatureHash }: { signatureKey?: string; timestamp?: string; rawBody?: unknown; signatureHash?: string }): boolean => {
   if (!signatureKey || !timestamp || !signatureHash || rawBody === undefined || rawBody === null) return false;
@@ -55,11 +54,12 @@ export function closeCreatedTriggerHooks({ storeKey, objectType }: CreatedTrigge
       const objectId = typeof event['object_id'] === 'string' ? event['object_id'] : closeClient.isRecord(event['data']) && typeof event['data']['id'] === 'string' ? event['data']['id'] : undefined;
       if (!objectId) return [];
       const eventId = typeof event['id'] === 'string' ? event['id'] : objectId;
-      const seen = (await context.store.get<string[]>(`${storeKey}-seen`)) ?? [];
-      if (seen.includes(eventId)) return [];
+      const seenKey = `${storeKey}-seen:${eventId}`;
+      if (await context.store.get<boolean>(seenKey)) return [];
       const record = await closeClient.request({ auth: context.auth, method: HttpMethod.GET, path: `/${objectType}/${closeClient.pathId(objectId)}/` });
-      await context.store.put(`${storeKey}-seen`, [...seen, eventId].slice(-MAX_SEEN_EVENTS));
-      return [record];
+      await context.store.put(seenKey, true);
+      const output = closeMappers.withCustomMap({ objectType, record });
+      return [closeClient.isRecord(output) ? { ...output, [DEDUPE_KEY_PROPERTY]: `close:${objectType}:${eventId}` } : output];
     },
   };
 }

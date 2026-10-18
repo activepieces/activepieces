@@ -31,6 +31,11 @@ function customOf(raw: Record<string, unknown>): Record<string, unknown> {
   return { ...fromPrefixed };
 }
 
+function withCustomMap({ objectType, record }: { objectType: 'lead' | 'contact' | 'opportunity'; record: unknown }): unknown {
+  if (objectType === 'lead' || !closeClient.isRecord(record)) return record;
+  return { ...record, custom: customOf(record) };
+}
+
 function emails(value: unknown) {
   return arrayOf(value).map((e) => {
     const r = recordOf(e);
@@ -207,6 +212,7 @@ function cursorPage<T>({ items, hasMore, nextCursor, map }: { items: unknown[]; 
 }
 
 export const closeMappers = {
+  withCustomMap,
   lead,
   contact,
   opportunity,

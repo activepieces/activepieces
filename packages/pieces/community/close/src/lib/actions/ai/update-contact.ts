@@ -13,14 +13,14 @@ const updateContact = createAction({
   description: 'Change the name, title, email, phone or custom fields of a contact.',
   audience: 'ai',
   aiMetadata: {
-    description: 'Updates an existing Close contact by contact id (cont_...). Only the fields you pass change. Passing an email, phone or website replaces all of that kind on the contact with the single value given. Custom fields take cf_ ids from List Custom Fields; a null value clears that field. Returns the updated contact.',
+    description: 'Updates an existing Close contact by contact id (cont_...). Only the fields you pass change; an empty Title clears it. Passing an email, phone or website replaces all of that kind on the contact with the single value given. Custom fields take cf_ ids from List Custom Fields; a null value clears that field. Returns the updated contact.',
     idempotent: true,
   },
   outputSchema: closeOutputSchemas.contact,
   props: {
     contactId: Property.ShortText({ displayName: 'Contact ID', description: 'cont_...', required: true }),
     name: Property.ShortText({ displayName: 'Name', required: false }),
-    title: Property.ShortText({ displayName: 'Title', required: false }),
+    title: Property.ShortText({ displayName: 'Title', description: 'Pass an empty string to clear it.', required: false }),
     email: Property.ShortText({ displayName: 'Email', description: 'Replaces all emails on the contact.', required: false }),
     phone: Property.ShortText({ displayName: 'Phone', description: 'Replaces all phones on the contact.', required: false }),
     url: Property.ShortText({ displayName: 'Website', description: 'Replaces all URLs on the contact.', required: false }),
@@ -30,7 +30,7 @@ const updateContact = createAction({
     const contactId = closeClient.closeId({ value: propsValue.contactId, label: 'Contact ID', prefix: 'cont' });
     const body: Record<string, unknown> = { ...closeClient.customFieldsBody({ value: propsValue.customFields }) };
     const name = closeClient.optionalText(propsValue.name);
-    const title = closeClient.optionalText(propsValue.title);
+    const title = closeClient.clearableText(propsValue.title);
     const email = closeClient.optionalText(propsValue.email);
     const phone = closeClient.optionalText(propsValue.phone);
     const url = closeClient.optionalText(propsValue.url);

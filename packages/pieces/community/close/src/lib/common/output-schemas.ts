@@ -224,6 +224,7 @@ const rawContactFields: OutputSchemaField[] = [
   { key: 'emails', label: 'Emails', labelKey: 'email', listItems: rawEmailFields },
   { key: 'phones', label: 'Phones', labelKey: 'phone', listItems: rawPhoneFields },
   { key: 'urls', label: 'URLs', labelKey: 'url', listItems: rawUrlFields },
+  { key: 'custom', label: 'Custom Fields', dynamicKey: true, description: 'Custom field values keyed by field ID (cf_...).' },
   { key: 'integration_links', label: 'Integration Links', labelKey: 'name', listItems: rawIntegrationLinkFields },
   ...rawAuditFields,
 ];
@@ -273,6 +274,7 @@ const rawOpportunityFields: OutputSchemaField[] = [
   { key: 'date_won', label: 'Won Date', format: 'date' },
   { key: 'date_lost', label: 'Lost Date', format: 'date' },
   { key: 'attachments', label: 'Attachments' },
+  { key: 'custom', label: 'Custom Fields', dynamicKey: true, description: 'Custom field values keyed by field ID (cf_...).' },
   { key: 'integration_links', label: 'Integration Links', labelKey: 'name', listItems: rawIntegrationLinkFields },
   { key: 'created_by_name', label: 'Created By' },
   { key: 'updated_by_name', label: 'Updated By' },

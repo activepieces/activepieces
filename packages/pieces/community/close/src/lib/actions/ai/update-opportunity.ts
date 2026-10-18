@@ -20,7 +20,7 @@ function opportunityBody({ props }: { props: Record<string, unknown> }): Record<
     value: closeClient.parseInteger({ value: props['valueCents'], label: 'Value (cents)', min: 0, max: Number.MAX_SAFE_INTEGER }),
     value_period: valuePeriodOf(props['valuePeriod']),
     confidence: closeClient.parseInteger({ value: props['confidence'], label: 'Confidence %', min: 0, max: 100 }),
-    note: closeClient.optionalText(props['note']),
+    note: closeClient.clearableText(props['note']),
     date_won: closeClient.isoDate({ value: props['expectedCloseDate'], label: 'Close Date' }),
     ...closeClient.customFieldsBody({ value: props['customFields'] }),
   };
@@ -35,7 +35,7 @@ const updateOpportunity = createAction({
   description: 'Change fields on an opportunity.',
   audience: 'ai',
   aiMetadata: {
-    description: 'Updates a Close opportunity (oppo_...). Only the fields you pass change. Value is a whole number of cents. Set Status ID to a won or lost status (from List Pipelines) to close the deal. Repeating the same update gives the same result.',
+    description: 'Updates a Close opportunity (oppo_...). Only the fields you pass change; an empty Note clears it. Value is a whole number of cents. Set Status ID to a won or lost status (from List Pipelines) to close the deal. Repeating the same update gives the same result.',
     idempotent: true,
   },
   outputSchema: closeOutputSchemas.opportunity,
@@ -47,7 +47,7 @@ const updateOpportunity = createAction({
     valueCents: Property.Number({ displayName: 'Value (cents)', description: 'Whole number of cents, e.g. 340000 for 3,400.00.', required: false }),
     valuePeriod: Property.ShortText({ displayName: 'Value Period', description: 'one_time, monthly or annual.', required: false }),
     confidence: Property.Number({ displayName: 'Confidence %', description: '0 to 100.', required: false }),
-    note: Property.LongText({ displayName: 'Note', required: false }),
+    note: Property.LongText({ displayName: 'Note', description: 'Pass an empty string to clear it.', required: false }),
     expectedCloseDate: Property.ShortText({ displayName: 'Close Date', description: 'Expected (or won) close date, e.g. 2026-11-30.', required: false }),
     customFields: Property.Json({ displayName: 'Custom Fields', description: 'Object of custom field ID (cf_...) to value.', required: false }),
   },

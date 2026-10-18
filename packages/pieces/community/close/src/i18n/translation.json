@@ -281,5 +281,6 @@
   "New Opportunity Added": "New Opportunity Added",
   "Triggers when a new lead is created.": "Triggers when a new lead is created.",
   "Triggers when a new contact is created.": "Triggers when a new contact is created.",
-  "Triggers when a new opportunity is created.": "Triggers when a new opportunity is created."
+  "Triggers when a new opportunity is created.": "Triggers when a new opportunity is created.",
+  "Pass an empty string to clear it.": "Pass an empty string to clear it."
 }
