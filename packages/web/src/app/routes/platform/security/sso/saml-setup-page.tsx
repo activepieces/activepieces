@@ -31,9 +31,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Form,
+  FormControl,
   FormDescription,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
@@ -51,7 +53,7 @@ export const SamlSetupPage = () => {
     platform.ssoDomainVerification?.status ===
     SsoDomainVerificationStatus.VERIFIED;
   const [step, setStep] = useState<WizardStep>(
-    connected || !domainVerified ? 'domain' : 'saml',
+    connected || domainVerified ? 'saml' : 'domain',
   );
 
   return (
@@ -137,9 +139,11 @@ const DisableSamlRow = ({
                 'Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.',
               )}
             </span>
-            {!platform.emailAuthEnabled && (
+            {!platform.emailAuthEnabled && !platform.googleAuthEnabled && (
               <span>
-                {t('Email sign-in is off. Turn it on first if they need it.')}
+                {t(
+                  'Email and Google sign-in are off. Turn one on first so people can still sign in.',
+                )}
               </span>
             )}
           </span>
@@ -375,18 +379,19 @@ const SamlStep = ({
               name="idpMetadata"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="idpMetadata">{t('IDP Metadata')}</Label>
-                  <Textarea
-                    {...field}
-                    required
-                    id="idpMetadata"
-                    rows={6}
-                    placeholder={
-                      connected
-                        ? t('Saved. Paste new metadata to replace it.')
-                        : undefined
-                    }
-                  />
+                  <FormLabel>{t('IDP Metadata')}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      required
+                      rows={6}
+                      placeholder={
+                        connected
+                          ? t('Saved. Paste new metadata to replace it.')
+                          : undefined
+                      }
+                    />
+                  </FormControl>
                   <FormDescription>
                     {t(
                       'Paste the metadata XML contents or the metadata URL provided by your identity provider.',
@@ -400,17 +405,18 @@ const SamlStep = ({
               name="idpCertificate"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
-                  <Textarea
-                    {...field}
-                    required
-                    id="idpCertificate"
-                    placeholder={
-                      connected
-                        ? t('Saved. Paste a new certificate to replace it.')
-                        : undefined
-                    }
-                  />
+                  <FormLabel>{t('IDP Certificate')}</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      required
+                      placeholder={
+                        connected
+                          ? t('Saved. Paste a new certificate to replace it.')
+                          : undefined
+                      }
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -3303,7 +3303,7 @@
   "Allowed domains": "Allowed domains",
   "No allowed domains": "No allowed domains",
   "Allowed domain added": "Allowed domain added",
-  "Email sign-in is off. Turn it on first if they need it.": "Email sign-in is off. Turn it on first if they need it.",
+  "Email and Google sign-in are off. Turn one on first so people can still sign in.": "Email and Google sign-in are off. Turn one on first so people can still sign in.",
   "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.": "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.",
   "Verify your domain before saving. You can already copy the values above into your identity provider.": "Verify your domain before saving. You can already copy the values above into your identity provider.",
   "Single sign-on URL": "Single sign-on URL",

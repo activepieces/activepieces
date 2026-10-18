@@ -34,6 +34,8 @@ export const AllowedDomainsSection = ({
   const domains = platform.allowedAuthDomains;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const restrictsJoining = edition === ApEdition.ENTERPRISE;
+  const listsCompanyDomain =
+    !!platform.ssoDomain && domains.includes(platform.ssoDomain);
 
   return (
     <AdminSection
@@ -156,15 +158,17 @@ export const AllowedDomainsSection = ({
               </SettingsRow>
             ))}
           </SettingsPanel>
-          <p className="text-xs text-gray-11">
-            {restrictsJoining
-              ? t(
-                  "Add your company domain too, or people at your company can't join or sign in with email and password.",
-                )
-              : t(
-                  "Add your company domain too, or people at your company can't sign in with email and password.",
-                )}
-          </p>
+          {!listsCompanyDomain && (
+            <p className="text-xs text-gray-11">
+              {restrictsJoining
+                ? t(
+                    "Add your company domain too, or people at your company can't join or sign in with email and password.",
+                  )
+                : t(
+                    "Add your company domain too, or people at your company can't sign in with email and password.",
+                  )}
+            </p>
+          )}
         </>
       )}
     </AdminSection>

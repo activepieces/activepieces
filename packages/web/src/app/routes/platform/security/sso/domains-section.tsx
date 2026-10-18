@@ -159,7 +159,9 @@ const DomainRow = ({
               verified ? (
                 <RemoveDomainConsequences
                   samlConnected={samlConnected}
-                  emailAuthEnabled={platform.emailAuthEnabled}
+                  otherMethodsOff={
+                    !platform.emailAuthEnabled && !platform.googleAuthEnabled
+                  }
                 />
               ) : (
                 t(
@@ -226,10 +228,10 @@ const DomainRow = ({
 
 const RemoveDomainConsequences = ({
   samlConnected,
-  emailAuthEnabled,
+  otherMethodsOff,
 }: {
   samlConnected: boolean;
-  emailAuthEnabled: boolean;
+  otherMethodsOff: boolean;
 }) => {
   if (!samlConnected) {
     return t(
@@ -241,9 +243,11 @@ const RemoveDomainConsequences = ({
       <span>
         {t('This disables single sign-on and deletes its SAML connection.')}
       </span>
-      {!emailAuthEnabled && (
+      {otherMethodsOff && (
         <span>
-          {t('Email sign-in is off. Turn it on first if they need it.')}
+          {t(
+            'Email and Google sign-in are off. Turn one on first so people can still sign in.',
+          )}
         </span>
       )}
     </span>

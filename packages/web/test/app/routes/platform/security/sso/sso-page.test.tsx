@@ -328,7 +328,7 @@ describe('SSOPage', () => {
     expect(platformApiMock.update).not.toHaveBeenCalled();
   });
 
-  it('warns that email sign-in is off before removing a domain with SAML connected', () => {
+  it('warns that no other sign-in method is on before removing a domain with SAML connected', () => {
     setPlatform({
       ssoDomain: 'acme.com',
       ssoDomainVerification: verifiedVerification,
@@ -341,9 +341,43 @@ describe('SSOPage', () => {
 
     expect(
       within(screen.getByRole('dialog')).getByText(
-        'Email sign-in is off. Turn it on first if they need it.',
+        'Email and Google sign-in are off. Turn one on first so people can still sign in.',
       ),
     ).toBeDefined();
+  });
+
+  it('does not warn about other sign-in methods while Google sign-in is on', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+      federatedAuthProviders: { saml: samlConfig },
+      emailAuthEnabled: false,
+      googleAuthEnabled: true,
+    });
+    mount();
+
+    click(menuItem('Remove domain'));
+
+    expect(
+      within(screen.getByRole('dialog')).queryByText(
+        'Email and Google sign-in are off. Turn one on first so people can still sign in.',
+      ),
+    ).toBeNull();
+  });
+
+  it('drops the add-your-company-domain hint once the company domain is listed', () => {
+    setPlatform({
+      ssoDomain: 'acme.com',
+      ssoDomainVerification: verifiedVerification,
+      allowedAuthDomains: ['acme.com', 'contractors.io'],
+    });
+    mount();
+
+    expect(
+      screen.queryByText(
+        "Add your company domain too, or people at your company can't join or sign in with email and password.",
+      ),
+    ).toBeNull();
   });
 
   it('shows the server error when removing the domain fails', async () => {
@@ -670,9 +704,15 @@ describe('SamlSetupPage', () => {
     });
     mountSetupPage();
 
-    expect(screen.queryByText('Disable single sign-on')).toBeNull();
-    click(findButton('Next'));
+    expect(
+      screen
+        .getByRole('button', { name: '2 SAML 2.0' })
+        .getAttribute('aria-current'),
+    ).toBe('step');
     expect(screen.getByText('Disable single sign-on')).toBeDefined();
+    click(findButton('1SSO Domain'));
+    expect(screen.queryByText('Disable single sign-on')).toBeNull();
+    click(findButton('2SAML 2.0'));
     click(findButton('Disable'));
     expect(platformApiMock.update).not.toHaveBeenCalled();
     const dialog = screen.getByRole('dialog');
@@ -810,7 +850,11 @@ describe('SamlSetupPage', () => {
     fireEvent.change(metadata, { target: { value: 'x' } });
     fireEvent.change(metadata, { target: { value: '' } });
 
-    expect(await screen.findByText('required')).toBeDefined();
+    const error = await screen.findByText('required');
+    await waitFor(() =>
+      expect(metadata.getAttribute('aria-invalid')).toBe('true'),
+    );
+    expect(metadata.getAttribute('aria-describedby')).toContain(error.id);
   });
 
   it('says the SAML values are saved instead of looking empty', () => {
