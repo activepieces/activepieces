@@ -784,6 +784,7 @@ export function useAgentChat({
       options?: { messageSource?: AgentMessageSource },
     ) => {
       updateSendStatus({ type: 'submitting' });
+      await pickSaveQueueRef.current;
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;

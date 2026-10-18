@@ -71,7 +71,8 @@ export function AIChatBox({
   onConversationCreated,
 }: AIChatBoxProps) {
   const projectId = authenticationSession.getProjectId();
-  const gated = agentId === undefined && !isNil(projectId);
+  const gated =
+    agentId === undefined && isNil(conversationId) && !isNil(projectId);
   const { data: options, isLoading } = aiModelHooks.useModelOptions({
     projectId: projectId ?? '',
     surface: 'chat',
