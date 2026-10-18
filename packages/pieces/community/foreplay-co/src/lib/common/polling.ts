@@ -60,7 +60,7 @@ async function scan({ fetchAds, start, pages, seenBefore, known, before, anchorI
   const anchors = new Set(anchorIds);
   let anchorPending = anchors.size > 0;
   const finish = ({ resume, pagesUsed }: { resume: Resume | null; pagesUsed: number }): ScanResult => {
-    if (anchorPending) {
+    if (anchorPending && resume === null) {
       for (const ad of skipped) {
         const id = idOf(ad);
         if (id === null || anchors.has(id) || known.has(id)) continue;
@@ -79,15 +79,15 @@ async function scan({ fetchAds, start, pages, seenBefore, known, before, anchorI
     for (const ad of result.ads) {
       const id = idOf(ad);
       const ms = epochMsOf(ad);
-      const pastBoundary = id !== null && (id === boundaryId || (!anchorPending && seenBefore.has(id)));
-      if (pastBoundary || (!anchorPending && before !== null && ms !== null && ms <= before)) {
-        reachedBoundary = true;
-        break;
-      }
       if (id !== null && anchors.has(id)) {
         anchorPending = false;
         skipped.length = 0;
         continue;
+      }
+      const pastBoundary = id !== null && (id === boundaryId || (!anchorPending && seenBefore.has(id)));
+      if (pastBoundary || (!anchorPending && before !== null && ms !== null && ms <= before)) {
+        reachedBoundary = true;
+        break;
       }
       if (anchorPending) {
         skipped.push(ad);
@@ -98,10 +98,17 @@ async function scan({ fetchAds, start, pages, seenBefore, known, before, anchorI
       fresh.push(ad);
     }
     if (reachedBoundary || result.next === null || result.ads.length === 0) return finish({ resume: null, pagesUsed: page });
-    if (page === pages) return finish({ resume: shifting && pageIds.length > 0 ? { cursor: cursor ?? '0', anchorIds: pageIds } : { cursor: result.next, anchorIds: [] }, pagesUsed: page });
+    if (page === pages) return finish({ resume: resumeAfterCap({ shifting, anchorPending, anchorIds, pageIds, current: cursor, next: result.next }), pagesUsed: page });
     cursor = result.next;
   }
   return finish({ resume: null, pagesUsed: pages });
+}
+
+function resumeAfterCap({ shifting, anchorPending, anchorIds, pageIds, current, next }: { shifting: boolean; anchorPending: boolean; anchorIds: string[]; pageIds: string[]; current: string | undefined; next: string }): Resume {
+  if (!shifting) return { cursor: next, anchorIds: [] };
+  if (anchorPending) return { cursor: next, anchorIds };
+  if (pageIds.length === 0) return { cursor: next, anchorIds: [] };
+  return { cursor: current ?? '0', anchorIds: pageIds };
 }
 
 function idsOf(ads: unknown[]): string[] {

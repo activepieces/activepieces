@@ -516,6 +516,32 @@ describe('triggers', () => {
     expect(out.map((a: { id: string }) => a.id)).toEqual(['s3', 's4']);
     expect(store.data.has('foreplay_backlog_cursor')).toBe(false);
   });
+  it('a swipe-file backlog with page size 3 resumes past every anchor instead of stopping at a seen one', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', ['old']);
+    const feed = Array.from({ length: 17 }, (_, i) => `s${17 - i}`).concat('old');
+    const page = (offset: number) => ok(feed.slice(offset, offset + 3).map((id) => rawAd(id)));
+    mock(...[0, 3, 6, 9, 12].map(page), ...[12, 15, 0].map(page));
+    const first = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: { page_size: 3 } }) });
+    expect(first).toHaveLength(15);
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '12', anchorIds: ['s5', 's4', 's3'], before: null, boundaryId: 'old' });
+    const second = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: { page_size: 3 } }) });
+    expect(second.map((a: { id: string }) => a.id)).toEqual(['s1', 's2']);
+    expect(store.data.has('foreplay_backlog_cursor')).toBe(false);
+  });
+  it('keeps searching for its anchors across capped polls instead of replaying skipped ads', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', ['d0', 'd1', 'd2', 'd3', 'd4', 'd5', 'old']);
+    await store.put('foreplay_backlog_cursor', { cursor: '0', anchorIds: ['a'], before: null, boundaryId: 'old' });
+    const feed = ['d0', 'd1', 'd2', 'd3', 'd4', 'd5', 'a', 'p1', 'old'];
+    const at = (offsets: number[]) => offsets.map((o) => ok([rawAd(feed[o])]));
+    mock(...at([0, 1, 2, 3, 4]), ...at([5, 6, 7, 8, 0]));
+    const first = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: { page_size: 1 } }) });
+    expect(first).toEqual([]);
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '5', anchorIds: ['a'], before: null, boundaryId: 'old' });
+    const second = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: { page_size: 1 } }) });
+    expect(second.map((a: { id: string }) => a.id)).toEqual(['p1']);
+  });
   it('every stored value stays far below the 512 KiB store limit', async () => {
     const store = memoryStore();
     const longId = ({ prefix, i }: { prefix: string; i: number }) => `${prefix}${String(i).padStart(63, '0')}`;
