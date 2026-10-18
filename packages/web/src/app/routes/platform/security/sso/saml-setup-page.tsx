@@ -23,6 +23,7 @@ import {
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
+import { DialogCallout } from '@/app/routes/platform/security/sso/dialog-callout';
 import { DomainVerification } from '@/app/routes/platform/security/sso/domain-verification';
 import { MethodConfirmDialog } from '@/app/routes/platform/security/sso/method-confirm-dialog';
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
@@ -136,18 +137,17 @@ const DisableSamlRow = ({
         title={t('Disable single sign-on?')}
         description={
           <span className="flex flex-col gap-2">
-            <span className="flex items-start gap-2 rounded-lg border border-danger-7 bg-danger-3 p-3 font-medium text-danger-11">
-              <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+            <DialogCallout tone="danger">
               {t(
                 'Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.',
               )}
-            </span>
+            </DialogCallout>
             {!platform.emailAuthEnabled && !googleSignInAvailable && (
-              <span>
+              <DialogCallout tone="warning">
                 {t(
                   'Email and Google sign-in are off. Turn one on first so people can still sign in.',
                 )}
-              </span>
+              </DialogCallout>
             )}
           </span>
         }

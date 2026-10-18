@@ -15,6 +15,7 @@ import {
   StatusDot,
   adminLayout,
 } from '@/app/components/admin';
+import { DialogCallout } from '@/app/routes/platform/security/sso/dialog-callout';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
 import { DomainStatusIcon } from '@/app/routes/platform/security/sso/domain-status-icon';
 import { useGoogleSignInAvailable } from '@/app/routes/platform/security/sso/use-google-sign-in-available';
@@ -242,15 +243,15 @@ const RemoveDomainConsequences = ({
   }
   return (
     <span className="flex flex-col gap-2">
-      <span>
+      <DialogCallout tone="danger">
         {t('This disables single sign-on and deletes its SAML connection.')}
-      </span>
+      </DialogCallout>
       {otherMethodsOff && (
-        <span>
+        <DialogCallout tone="warning">
           {t(
             'Email and Google sign-in are off. Turn one on first so people can still sign in.',
           )}
-        </span>
+        </DialogCallout>
       )}
     </span>
   );
