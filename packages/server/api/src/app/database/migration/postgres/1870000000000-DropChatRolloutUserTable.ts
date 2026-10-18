@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class DropChatRolloutUserTable1868000000000 implements Migration {
-    name = 'DropChatRolloutUserTable1868000000000'
+export class DropChatRolloutUserTable1870000000000 implements Migration {
+    name = 'DropChatRolloutUserTable1870000000000'
     breaking = true
     release = '0.93.0'
     transaction = true
