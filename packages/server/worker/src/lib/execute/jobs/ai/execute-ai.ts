@@ -124,6 +124,7 @@ async function runTextStep({ data, resolved, modelId, flowStep, billing, maxRetr
         modelId,
         flowStep,
         billing,
+        providerConfigId: resolved.providerConfigId,
         webSearchEnabled,
         webSearchOptions,
     })
@@ -148,6 +149,7 @@ function billingFor(data: ExecuteAiJobData): ActivepiecesAiBilling {
         platformId: data.platformId,
         projectId: data.projectId,
         flowRun: { flowId: data.flowId, flowRunId: data.flowRunId },
+        ...spreadIfDefined('context', data.callContext),
     }
 }
 

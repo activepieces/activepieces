@@ -1,4 +1,4 @@
-import { ActivepiecesAiConsumerSource, AiCallTokens, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiConsumerSource, AiCallTokens, AiChargeBasis, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { isAppSumoCreditedPlan, ReportAiUsageRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -6,9 +6,14 @@ import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
 import { AiCreditConsumptionProperties, ChatAppSumoConsumptionProperties, ChatCreditConsumptionProperties, CreditUsageSource } from '../platform/billing-provider'
 import { chargeFor, CostBasis, costBasisOf } from './ai-credits'
 import { aiUsageHooks } from './ai-usage-hooks'
+import { aiUsageRollup } from './ai-usage-rollup'
 
 export const aiUsageService = (log: FastifyBaseLogger) => ({
     async report(input: ReportAiUsageRequest): Promise<void> {
+        await recordUsage({ input, log })
+        if (input.usage.type === AiChargeBasis.USAGE_ONLY) {
+            return
+        }
         const toolCalls = input.toolCalls ?? 0
         const credits = chargeFor({ usage: input.usage, toolCalls })
         const costBasis = costBasisOf(input.usage)
@@ -36,6 +41,13 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
         await addConversationCredits({ input, credits, log })
     },
 })
+
+async function recordUsage({ input, log }: { input: ReportAiUsageRequest, log: FastifyBaseLogger }): Promise<void> {
+    const { error } = await tryCatch(() => aiUsageRollup.record(input))
+    if (!isNil(error)) {
+        log.warn({ error, provider: input.provider, model: { id: input.modelId } }, '[aiUsageService] Could not record this call in the AI usage rollup')
+    }
+}
 
 async function addConversationCredits({ input, credits, log }: { input: ReportAiUsageRequest, credits: number, log: FastifyBaseLogger }): Promise<void> {
     if (input.billing.source !== ActivepiecesAiConsumerSource.CHAT) {

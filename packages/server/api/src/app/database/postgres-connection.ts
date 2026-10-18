@@ -458,6 +458,7 @@ import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from '
 import { AddAgentTask1867000000000 } from './migration/postgres/1867000000000-AddAgentTask'
 import { AddProviderConfigIdToAgentConversation1868000000000 } from './migration/postgres/1868000000000-AddProviderConfigIdToAgentConversation'
 import { DropChatRolloutUserTable1870000000000 } from './migration/postgres/1870000000000-DropChatRolloutUserTable'
+import { AddAiUsageDaily1871000000000 } from './migration/postgres/1871000000000-AddAiUsageDaily'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -937,6 +938,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentTask1867000000000,
         AddProviderConfigIdToAgentConversation1868000000000,
         DropChatRolloutUserTable1870000000000,
+        AddAiUsageDaily1871000000000,
     ]
     return migrations
 }

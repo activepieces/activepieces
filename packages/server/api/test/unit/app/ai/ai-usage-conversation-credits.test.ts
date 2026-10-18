@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const addConversationCredits = vi.fn<(params: { conversationId: string, credits: number }) => Promise<void>>()
 const trackBillingAndSendTelemetry = vi.fn<() => Promise<void>>()
+const recordRollup = vi.fn<(input: ReportAiUsageRequest) => Promise<void>>()
 
 vi.mock('../../../../src/app/helper/system/system', () => ({
     system: { getDecimalOrThrow: () => 0.0005 },
@@ -21,6 +22,10 @@ vi.mock('../../../../src/app/platform/billing-and-telemetry', () => ({
 
 vi.mock('../../../../src/app/ai/ai-usage-hooks', () => ({
     aiUsageHooks: { get: () => ({ addConversationCredits }) },
+}))
+
+vi.mock('../../../../src/app/ai/ai-usage-rollup', () => ({
+    aiUsageRollup: { record: (input: ReportAiUsageRequest) => recordRollup(input) },
 }))
 
 const { aiUsageService } = await import('../../../../src/app/ai/ai-usage-service')
@@ -43,7 +48,33 @@ describe('aiUsageService.report — the conversation credit total', () => {
         addConversationCredits.mockResolvedValue(undefined)
         trackBillingAndSendTelemetry.mockReset()
         trackBillingAndSendTelemetry.mockResolvedValue(undefined)
+        recordRollup.mockReset()
+        recordRollup.mockResolvedValue(undefined)
         noopLogger.warn.mockReset()
+    })
+
+    it('records a usage-only call for analytics and never bills it', async () => {
+        const report: ReportAiUsageRequest = {
+            ...reportOf({ source: ActivepiecesAiConsumerSource.CHAT, platformId: 'platform-1', projectId: 'project-1', conversationId: 'conversation-1' }),
+            provider: AIProviderName.OPENAI,
+            usage: { type: AiChargeBasis.USAGE_ONLY },
+        }
+
+        await aiUsageService(noopLogger as never).report(report)
+
+        expect(recordRollup).toHaveBeenCalledWith(report)
+        expect(trackBillingAndSendTelemetry).not.toHaveBeenCalled()
+        expect(addConversationCredits).not.toHaveBeenCalled()
+    })
+
+    it('still bills the call when the usage rollup cannot be written', async () => {
+        recordRollup.mockRejectedValue(new Error('db down'))
+
+        await aiUsageService(noopLogger as never).report(reportOf({ source: ActivepiecesAiConsumerSource.CHAT, platformId: 'platform-1', projectId: 'project-1', conversationId: 'conversation-1' }))
+
+        expect(trackBillingAndSendTelemetry).toHaveBeenCalledTimes(1)
+        expect(addConversationCredits).toHaveBeenCalledWith({ conversationId: 'conversation-1', credits: 10 })
+        expect(noopLogger.warn).toHaveBeenCalled()
     })
 
     it('adds what a conversation-scoped call cost to that conversation, so a run shows its own total', async () => {

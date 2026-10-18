@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, AiUsageEnvironment, AiUsageOrigin, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
 import { FileCompression, FileType, KnowledgeBaseFile } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
@@ -151,7 +151,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         const { model, providerOptions } = await this.embeddingModelFor({
             platformId,
             projectId,
-            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: KNOWLEDGE_BASE_BILLING_CONVERSATION },
+            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: KNOWLEDGE_BASE_BILLING_CONVERSATION, context: { origin: AiUsageOrigin.KNOWLEDGE_BASE, environment: AiUsageEnvironment.PRODUCTION } },
         })
         return this.embedFnOf({ model, providerOptions })
     },

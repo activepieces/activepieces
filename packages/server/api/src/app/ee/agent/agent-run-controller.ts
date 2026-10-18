@@ -6,9 +6,10 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { aiUsageRollup } from '../../ai/ai-usage-rollup'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { redisConnections } from '../../database/redis-connections'
-import { flowRunService } from '../../flows/flow-run/flow-run-service'
+import { flowRunRepo, flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
@@ -75,6 +76,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId: runFields.providerConfigId, modelTierId: runFields.modelTierId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
+        const flowRun = await flowRunRepo().findOne({ where: { id: flowRunId, projectId }, select: { flowId: true, environment: true } })
 
         const conversationId = apId()
         const runId = apId()
@@ -96,6 +98,8 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 userMessage: instruction,
                 source: AgentRunSource.FLOW_STEP,
                 flowRunId,
+                ...spreadIfDefined('flowId', flowRun?.flowId),
+                environment: aiUsageRollup.environmentOf(flowRun?.environment),
                 waitpointId,
                 flowTools,
                 ...spreadIfDefined('agentId', linked?.id),

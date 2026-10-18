@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiConsumerSource, AiUsageEnvironment, AiUsageOrigin, isNil, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
 import { EngineResponseStatus, ExecutePersonalizationResearchJobData, WorkerJobType } from '@activepieces/shared'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
@@ -59,6 +59,8 @@ export const executePersonalizationResearchJob: JobHandler<ExecutePersonalizatio
     },
 }
 
+const PERSONALIZATION_USAGE_CONVERSATION = 'personalization'
+
 type ProgressFn = (input: { phase: string, message: string }) => Promise<void>
 
 type ResearchOutput = {
@@ -77,6 +79,14 @@ async function runResearch({ data, config, progress, log }: {
     const { credentials } = config
     const fastModel = aiUtils.createModel({
         credentials, modelId: config.fastModelId,
+        billing: {
+            source: ActivepiecesAiConsumerSource.CHAT,
+            platformId: data.platformId,
+            projectId: data.projectId,
+            conversationId: PERSONALIZATION_USAGE_CONVERSATION,
+            context: { origin: AiUsageOrigin.CHAT, environment: AiUsageEnvironment.PRODUCTION },
+        },
+        usageOnly: true,
     })
 
     if (data.scope === 'user') {

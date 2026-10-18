@@ -4,8 +4,8 @@ import { EmbeddingModel, LanguageModel, wrapEmbeddingModel, wrapLanguageModel } 
 import { z } from 'zod'
 import { lookupGeneration } from './openrouter-generation'
 
-export function billedLanguageModel({ model, provider, modelId, billing, charge }: BilledLanguageModelParams): LanguageModel {
-    const context = billingContextOf({ provider, modelId, billing, charge })
+export function billedLanguageModel({ model, provider, providerConfigId, modelId, billing, charge }: BilledLanguageModelParams): LanguageModel {
+    const context = billingContextOf({ provider, providerConfigId, modelId, billing, charge })
     if (isNil(context) || typeof model === 'string') {
         return model
     }
@@ -18,11 +18,12 @@ export function billedLanguageModel({ model, provider, modelId, billing, charge 
     })
 }
 
-export function billedEmbeddingModel({ model, provider, modelId, billing }: BilledEmbeddingModelParams): EmbeddingModel {
-    if (isNil(billing) || provider !== AIProviderName.ACTIVEPIECES || typeof model === 'string' || model.specificationVersion !== 'v4') {
+export function billedEmbeddingModel({ model, provider, providerConfigId, modelId, billing }: BilledEmbeddingModelParams): EmbeddingModel {
+    if (isNil(billing) || typeof model === 'string' || model.specificationVersion !== 'v4') {
         return model
     }
-    const context: BillingContext = { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId }
+    const basis = provider === AIProviderName.ACTIVEPIECES ? AiChargeBasis.PROVIDER_REPORTED_COST : AiChargeBasis.USAGE_ONLY
+    const context: BillingContext = { basis, billing, provider, providerConfigId, modelId }
     return wrapEmbeddingModel({
         model,
         middleware: {
@@ -31,15 +32,15 @@ export function billedEmbeddingModel({ model, provider, modelId, billing }: Bill
     })
 }
 
-export function reportFixedCredits({ billing, provider, modelId, generationId }: ReportFixedCreditsParams): void {
+export function reportFixedCredits({ billing, provider, providerConfigId, modelId, generationId }: ReportFixedCreditsParams): void {
     report({
-        context: { basis: AiChargeBasis.FIXED_CREDITS, billing, provider, modelId },
+        context: { basis: AiChargeBasis.FIXED_CREDITS, billing, provider, providerConfigId, modelId },
         call: createFixedCreditChargeInfo({ generationId }),
     })
 }
 
-export function reportProviderCost({ billing, provider, modelId, costUsd, inputTokens, outputTokens, generationId }: ReportProviderCostParams): void {
-    const context: BillingContext = { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId }
+export function reportProviderCost({ billing, provider, providerConfigId, modelId, costUsd, inputTokens, outputTokens, generationId }: ReportProviderCostParams): void {
+    const context: BillingContext = { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, providerConfigId, modelId }
     if (isNil(costUsd)) {
         report({ context, generationId, call: undefined })
         return
@@ -47,18 +48,18 @@ export function reportProviderCost({ billing, provider, modelId, costUsd, inputT
     report({
         context,
         generationId,
-        call: { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, inputTokens, outputTokens },
+        call: { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, inputTokens, outputTokens, observedCostUsd: costUsd },
     })
 }
 
-function billingContextOf({ provider, modelId, billing, charge }: BillingContextParams): BillingContext | undefined {
+function billingContextOf({ provider, providerConfigId, modelId, billing, charge }: BillingContextParams): BillingContext | undefined {
     if (isNil(billing) || isNil(charge)) {
         return undefined
     }
-    if (charge.basis === AiChargeBasis.FIXED_CREDITS) {
-        return { basis: AiChargeBasis.FIXED_CREDITS, billing, provider, modelId }
+    if (charge.basis !== AiChargeBasis.PROVIDER_REPORTED_COST) {
+        return { basis: charge.basis, billing, provider, providerConfigId, modelId }
     }
-    return { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId, apiKey: charge.managedApiKey }
+    return { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, providerConfigId, modelId, apiKey: charge.managedApiKey }
 }
 
 async function billGenerate({ doGenerate, context }: BillGenerateParams): Promise<LanguageModelV4GenerateResult> {
@@ -76,7 +77,7 @@ async function billStream({ doStream, context }: BillStreamParams): Promise<Lang
 async function billEmbed({ doEmbed, context }: BillEmbedParams): Promise<EmbeddingModelV4Result> {
     const result = await doEmbed()
     const generationId = parseOrUndefined(EmbeddingResponseBody, result.response?.body)?.id
-    report({ context, generationId, call: createEmbeddingBillingInfo({ result, generationId }) })
+    report({ context, generationId, call: createEmbeddingBillingInfo({ context, result, generationId }) })
     return result
 }
 
@@ -112,6 +113,10 @@ function settleStream({ state, context }: SettleStreamParams): void {
         report({ context, generationId: state.generationId, call: createFixedCreditChargeInfo({ generationId: state.generationId }) })
         return
     }
+    if (context.basis === AiChargeBasis.USAGE_ONLY) {
+        report({ context, generationId: state.generationId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId: state.generationId } })
+        return
+    }
     recoverCostAndReport({ state, context }).catch(() => report({ context, generationId: state.generationId, call: undefined }))
 }
 
@@ -136,28 +141,36 @@ async function recoverCostAndReport({ state, context }: SettleStreamParams): Pro
             costUsd: generation.costUsd,
             inputTokens: generation.inputTokens,
             outputTokens: generation.outputTokens,
+            observedCostUsd: generation.costUsd,
         },
     })
 }
 
 function createBillingInfo({ context, generationId, providerMetadata, usage }: CreateBillingInfoParams): ActivepiecesAiCall | undefined {
-    const tokens = tokensOf(usage)
+    const costUsd = openRouterCostOf(providerMetadata)
+    const tokens = { ...tokensOf(usage), observedCostUsd: costUsd }
     if (context.basis === AiChargeBasis.FIXED_CREDITS) {
         return { ...createFixedCreditChargeInfo({ generationId }), ...tokens }
     }
-    const costUsd = openRouterCostOf(providerMetadata)
+    if (context.basis === AiChargeBasis.USAGE_ONLY) {
+        return { charge: AiChargeBasis.USAGE_ONLY, generationId, ...tokens }
+    }
     if (isNil(costUsd)) {
         return undefined
     }
     return { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, ...tokens }
 }
 
-function createEmbeddingBillingInfo({ result, generationId }: CreateEmbeddingBillingInfoParams): ActivepiecesAiCall | undefined {
+function createEmbeddingBillingInfo({ context, result, generationId }: CreateEmbeddingBillingInfoParams): ActivepiecesAiCall | undefined {
     const costUsd = openRouterCostOf(result.providerMetadata)
+    const tokens = { inputTokens: result.usage?.tokens, observedCostUsd: costUsd }
+    if (context.basis === AiChargeBasis.USAGE_ONLY) {
+        return { charge: AiChargeBasis.USAGE_ONLY, generationId, ...tokens }
+    }
     if (isNil(costUsd)) {
         return undefined
     }
-    return { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, inputTokens: result.usage?.tokens }
+    return { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, ...tokens }
 }
 
 function createFixedCreditChargeInfo({ generationId }: { generationId?: string }): ActivepiecesAiCall {
@@ -168,6 +181,9 @@ function tokensOf(usage: LanguageModelV4Usage | undefined): AiCallTokens {
     return {
         inputTokens: usage?.inputTokens?.total,
         outputTokens: usage?.outputTokens?.total,
+        cacheReadTokens: usage?.inputTokens?.cacheRead,
+        cacheWriteTokens: usage?.inputTokens?.cacheWrite,
+        reasoningTokens: usage?.outputTokens?.reasoning,
     }
 }
 
@@ -197,7 +213,7 @@ function report({ context, call, generationId }: ReportParams): void {
         recordUnbilledCall({ context, generationId: call.generationId ?? generationId, reason: UnbilledCallReason.NO_REPORTER_INSTALLED })
         return
     }
-    reporter({ billing: context.billing, provider: context.provider, modelId: context.modelId, call })
+    reporter({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call })
 }
 
 function recordUnbilledCall({ context, generationId, reason }: RecordUnbilledCallParams): void {
@@ -257,12 +273,14 @@ type BillingContext = {
     basis: AiChargeBasis
     billing: ActivepiecesAiBilling
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
     apiKey?: string
 }
 
 type BillingContextParams = {
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
     billing: ActivepiecesAiBilling | undefined
     charge: AiCharge | undefined
@@ -271,6 +289,7 @@ type BillingContextParams = {
 type BilledLanguageModelParams = {
     model: LanguageModel
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
     billing: ActivepiecesAiBilling | undefined
     charge: AiCharge | undefined
@@ -279,6 +298,7 @@ type BilledLanguageModelParams = {
 type BilledEmbeddingModelParams = {
     model: EmbeddingModel
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
     billing: ActivepiecesAiBilling | undefined
 }
@@ -286,6 +306,7 @@ type BilledEmbeddingModelParams = {
 type ReportFixedCreditsParams = {
     billing: ActivepiecesAiBilling
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
     generationId?: string
 }
@@ -340,6 +361,7 @@ type ReportParams = {
 }
 
 type CreateEmbeddingBillingInfoParams = {
+    context: BillingContext
     result: EmbeddingModelV4Result
     generationId: string | undefined
 }

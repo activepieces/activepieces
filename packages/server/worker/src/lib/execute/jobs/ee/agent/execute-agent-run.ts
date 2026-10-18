@@ -1,6 +1,6 @@
-import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiCallContext, AIProviderName, AiUsageEnvironment, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
@@ -131,17 +131,20 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 projectId: projectId ?? null,
                 conversationId,
                 chat: { userId, turnIndex: config.previousUiMessages.length, tier: config.tier.id },
+                context: usageContextOf({ source, data }),
             }
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
                 billing,
                 turnAlreadyCharged: true,
+                ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
             const fastModel = aiUtils.createModel({
                 credentials, modelId: config.fastModelId,
                 billing,
                 turnAlreadyCharged: true,
+                ...spreadIfDefined('providerConfigId', config.providerConfigId),
             })
             const turnModels = turnModelsFor({ config, model, billing, metadata: { platformId, conversationId, runId } })
             const fastTurnModel: TurnModel | undefined = isNil(config.platformTier)
@@ -511,6 +514,12 @@ function answeredByOf({ answeredBy }: { answeredBy: TurnModel }): Pick<SaveAgent
     return { answeredBy: { provider: answeredBy.provider, modelId: answeredBy.modelId } }
 }
 
+function usageContextOf({ source, data }: { source: AgentRunSource, data: ExecuteAgentRunJobData }): AiCallContext {
+    const origin = AGENT_RUN_USAGE_ORIGIN[source]
+    const environment = source === AgentRunSource.AGENT_BUILDER ? AiUsageEnvironment.TESTING : data.environment ?? AiUsageEnvironment.PRODUCTION
+    return { origin, environment, ...spreadIfDefined('agentId', data.agentId), ...spreadIfDefined('flowId', data.flowId) }
+}
+
 function turnModelsFor({ config, model, billing, metadata }: { config: AgentConfigResponse, model: LanguageModel, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): [TurnModel, ...TurnModel[]] {
     const single: TurnModel = { model, provider: config.credentials.provider, modelId: config.modelId, thinkingBudget: config.tier.thinkingBudget }
     if (isNil(config.candidates) || config.candidates.length === 0) {
@@ -525,7 +534,7 @@ function turnModelsFor({ config, model, billing, metadata }: { config: AgentConf
 
 function candidateTurnModel({ candidate, billing, metadata }: { candidate: AgentModelCandidate, billing: ActivepiecesAiBilling, metadata?: ModelMetadata }): TurnModel {
     return {
-        model: aiUtils.createModel({ credentials: candidate, modelId: candidate.modelId, billing, turnAlreadyCharged: true, ...spreadIfDefined('metadata', metadata) }),
+        model: aiUtils.createModel({ credentials: candidate, modelId: candidate.modelId, billing, turnAlreadyCharged: true, providerConfigId: candidate.providerConfigId, ...spreadIfDefined('metadata', metadata) }),
         provider: candidate.provider,
         modelId: candidate.modelId,
         thinkingBudget: candidate.thinkingBudget,

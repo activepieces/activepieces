@@ -21,6 +21,10 @@ vi.mock('../../../../src/app/platform/billing-provider', () => ({
     assertCreditsAndAppSumoNotExceeded: assertCredits,
 }))
 
+vi.mock('../../../../src/app/ai/ai-usage-rollup', () => ({
+    aiUsageRollup: { callContextForFlowRun: async () => ({ origin: 'FLOW_STEP', environment: 'PRODUCTION' }) },
+}))
+
 const { aiRouterService } = await import('../../../../src/app/ai/ai-router.service')
 
 const log = { info: vi.fn(), warn: vi.fn() }

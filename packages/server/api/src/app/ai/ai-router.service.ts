@@ -1,16 +1,18 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, AiCallContext, AIProviderName, apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { AiStepAction, ChooseAiRouteRequest, ChooseAiRouteResponse, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, StartAiRouteResponse, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
 import { aiExecution } from './ai-execution'
 import { aiProviderService } from './ai-provider-service'
+import { aiUsageRollup } from './ai-usage-rollup'
 
 export const aiRouterService = (log: FastifyBaseLogger) => ({
     async start({ platformId, projectId, waitpointId, ...request }: StartParams): Promise<StartAiRouteResponse> {
         const provider = await pickProvider({ platformId, projectId, log })
         await assertHasCredits({ platformId, log })
         const requestId = apId()
-        await aiExecution(log).enqueue(routeJob({ request, requestId, platformId, projectId, provider, waitpointId }))
+        const callContext = await aiUsageRollup.callContextForFlowRun({ flowRunId: request.flowRunId, projectId })
+        await aiExecution(log).enqueue(routeJob({ request, requestId, platformId, projectId, provider, waitpointId, callContext }))
         log.info({ requestId, flowRun: { id: request.flowRunId }, provider }, 'Started the AI router decision for a paused step')
         return { requestId }
     },
@@ -21,8 +23,9 @@ export const aiRouterService = (log: FastifyBaseLogger) => ({
 
         const execution = aiExecution(log)
         const requestId = apId()
+        const callContext = await aiUsageRollup.callContextForFlowRun({ flowRunId: request.flowRunId, projectId })
         const answer = execution.waitForAnswer({ requestId, timeoutMs: WAIT_MS })
-        await execution.enqueue(routeJob({ request, requestId, platformId, projectId, provider, webserverId: execution.serverId() }))
+        await execution.enqueue(routeJob({ request, requestId, platformId, projectId, provider, webserverId: execution.serverId(), callContext }))
 
         const { output, failure } = await answer
         if (!isNil(failure)) {
@@ -37,7 +40,7 @@ export const aiRouterService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function routeJob({ request, requestId, platformId, projectId, provider, waitpointId, webserverId }: RouteJobParams): ExecuteAiJobData {
+function routeJob({ request, requestId, platformId, projectId, provider, waitpointId, webserverId, callContext }: RouteJobParams): ExecuteAiJobData {
     return {
         schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
         jobType: WorkerJobType.EXECUTE_AI,
@@ -55,6 +58,7 @@ function routeJob({ request, requestId, platformId, projectId, provider, waitpoi
         question: request.question,
         options: request.options,
         matchMode: request.matchMode,
+        callContext,
     }
 }
 
@@ -108,4 +112,5 @@ type RouteJobParams = {
     provider: AIProviderName
     waitpointId?: string
     webserverId?: string
+    callContext: AiCallContext
 }

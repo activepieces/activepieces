@@ -1,8 +1,8 @@
 import { setTimeout as delay } from 'node:timers/promises'
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
-import { ActivepiecesError, AIProviderName, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesError, AiCallContext, AIProviderName, AiUsageEnvironment, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiUtils, modelTierCatalog, ModelTierSurface } from '@activepieces/server-utils'
-import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
+import { AGENT_RUN_USAGE_ORIGIN, AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
@@ -159,7 +159,7 @@ async function resolvePlatformWorkModelOrThrow({ platformId, log }: { platformId
     return work
 }
 
-async function resolvePlatformFastModel({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
+async function resolvePlatformFastModel({ platformId, billing, log }: { platformId: string, billing?: ActivepiecesAiBilling, log: FastifyBaseLogger }): Promise<LanguageModel> {
     const scope: ProviderScope = { type: 'platform' }
     const defaultKey = await aiProviderService(log).getChatKey({ platformId, scope })
     const fastEntry = defaultKey?.enabledForChat === true ? undefined : allProjectsMainEntry({ forRun: await platformModelTierService.getFastForRun({ platformId, scope }) })
@@ -169,7 +169,7 @@ async function resolvePlatformFastModel({ platformId, log }: { platformId: strin
             ? { config: await aiProviderService(log).configForTierKey({ platformId, key: defaultKey }), modelId: null }
             : await resolvePlatformWorkModelOrThrow({ platformId, log })
     const fastModelId = modelId ?? await resolveFastModelId({ platformId, providerConfig: config, surface: 'chat', scope, log })
-    return aiUtils.createModel({ credentials: config, modelId: fastModelId, platformId, providerConfigId: config.configId })
+    return aiUtils.createModel({ credentials: config, modelId: fastModelId, platformId, providerConfigId: config.configId, billing, usageOnly: true })
 }
 
 async function assertRunProviderConfigured({ platformId, provider, providerConfigId, modelTierId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, modelTierId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
@@ -256,10 +256,17 @@ async function resolveFastModelId({ platformId, providerConfig, surface, scope, 
     return resolveModelId({ platformId, providerConfig, selectedModel: modelTierCatalog.current(surface).fastTierId, surface, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
 }
 
-async function resolveFastModel({ platformId, provider, providerConfigId, surface, scope, fallbackModelId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, surface: ModelTierSurface, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
+function usageContextOf({ source }: { source: AgentRunSource }): AiCallContext {
+    return {
+        origin: AGENT_RUN_USAGE_ORIGIN[source],
+        environment: source === AgentRunSource.AGENT_BUILDER ? AiUsageEnvironment.TESTING : AiUsageEnvironment.PRODUCTION,
+    }
+}
+
+async function resolveFastModel({ platformId, provider, providerConfigId, surface, scope, fallbackModelId, billing, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, surface: ModelTierSurface, scope: ProviderScope, fallbackModelId?: string, billing?: ActivepiecesAiBilling, log: FastifyBaseLogger }): Promise<LanguageModel> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
     const modelId = await resolveFastModelId({ platformId, providerConfig, surface, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
-    return aiUtils.createModel({ credentials: providerConfig, modelId, platformId, providerConfigId: providerConfig.configId })
+    return aiUtils.createModel({ credentials: providerConfig, modelId, platformId, providerConfigId: providerConfig.configId, billing, usageOnly: true })
 }
 
 
@@ -489,6 +496,7 @@ export const agentHelpers = {
     assertRunProviderConfigured,
     ...agentModelResolution,
     resolveFastModel,
+    usageContextOf,
     resolveFastModelId,
     resolveImageModelId,
     resolveModelId,
