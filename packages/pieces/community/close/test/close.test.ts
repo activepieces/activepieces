@@ -263,21 +263,37 @@ describe('webhook triggers', () => {
 
   it('drops event markers older than the retry window and clears them on disable', async () => {
     const trigger = close.triggers()['new_lead_created'];
-    const old = Date.now() - 74 * 60 * 60 * 1000;
+    const hour = Math.floor(Date.now() / 3600000);
     const store = makeStore({
       'new-lead-trigger': { id: 'whsub_1', signatureKey: key },
       'new-lead-trigger-seen:ev_old': true,
-      'new-lead-trigger-seen-index': [{ id: 'ev_old', at: old }],
+      [`new-lead-trigger-seen-hour:${hour - 74}`]: ['ev_old'],
+      'new-lead-trigger-seen-pruned': hour - 75,
     });
     mockSeq({ id: 'lead_1' });
     await Reflect.apply(trigger.run, undefined, [{ auth, store, payload: delivery({ eventId: 'ev_new', objectType: 'lead', objectId: 'lead_1' }) }]);
     expect(store.data['new-lead-trigger-seen:ev_old']).toBeUndefined();
+    expect(store.data[`new-lead-trigger-seen-hour:${hour - 74}`]).toBeUndefined();
     expect(store.data['new-lead-trigger-seen:ev_new']).toBe(true);
-    expect(store.data['new-lead-trigger-seen-index']).toEqual([{ id: 'ev_new', at: expect.any(Number) }]);
+    expect(store.data[`new-lead-trigger-seen-hour:${hour}`]).toEqual(['ev_new']);
+    expect(store.data['new-lead-trigger-seen-pruned']).toBe(hour - 73);
     mockSeq({});
     await Reflect.apply(trigger.onDisable, undefined, [{ auth, store }]);
-    expect(store.data['new-lead-trigger-seen:ev_new']).toBeUndefined();
-    expect(store.data['new-lead-trigger-seen-index']).toBeUndefined();
+    expect(Object.keys(store.data).filter((k) => k.includes('-seen'))).toEqual([]);
+  });
+
+  it('a failing index write does not block the run', async () => {
+    const trigger = close.triggers()['new_lead_created'];
+    const store = makeStore({ 'new-lead-trigger': { id: 'whsub_1', signatureKey: key } });
+    const put = store.put;
+    store.put = async (k: string, v: unknown) => {
+      if (k.includes('-seen-hour:')) throw new Error('value too large');
+      await put(k, v);
+    };
+    mockSeq({ id: 'lead_1' });
+    const out = await Reflect.apply(trigger.run, undefined, [{ auth, store, payload: delivery({ eventId: 'ev_x', objectType: 'lead', objectId: 'lead_1' }) }]);
+    expect(out).toHaveLength(1);
+    expect(store.data['new-lead-trigger-seen:ev_x']).toBe(true);
   });
 
   it('opportunity and contact records expose custom.cf_ values under custom', async () => {

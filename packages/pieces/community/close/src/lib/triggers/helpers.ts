@@ -5,8 +5,9 @@ import { closeAuth } from '../auth';
 import { CloseApiError, closeClient } from '../common/client';
 import { closeMappers } from '../common/mappers';
 
-const SEEN_RETENTION_MS = 73 * 60 * 60 * 1000;
-const MAX_PRUNE_PER_RUN = 100;
+const HOUR_MS = 60 * 60 * 1000;
+const SEEN_RETENTION_HOURS = 73;
+const MAX_BUCKETS_PER_RUN = 24;
 
 export const verifySignature = ({ signatureKey, timestamp, rawBody, signatureHash }: { signatureKey?: string; timestamp?: string; rawBody?: unknown; signatureHash?: string }): boolean => {
   if (!signatureKey || !timestamp || !signatureHash || rawBody === undefined || rawBody === null) return false;
@@ -43,9 +44,7 @@ export function closeCreatedTriggerHooks({ storeKey, objectType }: CreatedTrigge
     async onDisable(context: CloseHookContext) {
       const state = await context.store.get<WebhookState>(storeKey);
       if (state?.id) await deleteWebhook({ auth: context.auth, id: state.id });
-      const index = seenIndexOf(await context.store.get<unknown>(`${storeKey}-seen-index`));
-      await Promise.all(index.map((entry) => context.store.delete(`${storeKey}-seen:${entry.id}`)));
-      await context.store.delete(`${storeKey}-seen-index`);
+      await clearSeen({ store: context.store, storeKey, now: Date.now() });
       await context.store.delete(storeKey);
       await context.store.delete(`${storeKey}-seen`);
     },
@@ -64,25 +63,56 @@ export function closeCreatedTriggerHooks({ storeKey, objectType }: CreatedTrigge
       if (await context.store.get<boolean>(seenKey)) return [];
       const record = await closeClient.request({ auth: context.auth, method: HttpMethod.GET, path: `/${objectType}/${closeClient.pathId(objectId)}/` });
       await context.store.put(seenKey, true);
-      await recordSeen({ store: context.store, storeKey, eventId, now: Date.now() });
+      await recordSeen({ store: context.store, storeKey, eventId, now: Date.now() }).catch(() => undefined);
       const output = closeMappers.withCustomMap({ objectType, record });
       return [closeClient.isRecord(output) ? { ...output, [DEDUPE_KEY_PROPERTY]: `close:${objectType}:${eventId}` } : output];
     },
   };
 }
 
-async function recordSeen({ store, storeKey, eventId, now }: { store: CloseHookContext['store']; storeKey: string; eventId: string; now: number }): Promise<void> {
-  const index = seenIndexOf(await store.get<unknown>(`${storeKey}-seen-index`));
-  const expired = index.filter((entry) => now - entry.at > SEEN_RETENTION_MS).slice(0, MAX_PRUNE_PER_RUN);
-  const expiredIds = new Set(expired.map((entry) => entry.id));
-  await Promise.all(expired.map((entry) => store.delete(`${storeKey}-seen:${entry.id}`)));
-  const kept = index.filter((entry) => !expiredIds.has(entry.id) && entry.id !== eventId);
-  await store.put(`${storeKey}-seen-index`, [...kept, { id: eventId, at: now }]);
+async function recordSeen({ store, storeKey, eventId, now }: { store: CloseStore; storeKey: string; eventId: string; now: number }): Promise<void> {
+  const hour = hourOf(now);
+  const ids = idsOf(await store.get<unknown>(bucketKey({ storeKey, hour })));
+  if (!ids.includes(eventId)) await store.put(bucketKey({ storeKey, hour }), [...ids, eventId]);
+  const cutoff = hour - SEEN_RETENTION_HOURS;
+  const pruned = await store.get<unknown>(`${storeKey}-seen-pruned`);
+  if (typeof pruned !== 'number') {
+    await store.put(`${storeKey}-seen-pruned`, cutoff);
+    return;
+  }
+  const last = Math.min(cutoff, pruned + MAX_BUCKETS_PER_RUN);
+  for (let h = pruned + 1; h <= last; h++) {
+    await deleteBucket({ store, storeKey, hour: h });
+  }
+  if (last > pruned) await store.put(`${storeKey}-seen-pruned`, last);
 }
 
-function seenIndexOf(value: unknown): SeenEntry[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((entry) => (closeClient.isRecord(entry) && typeof entry['id'] === 'string' && typeof entry['at'] === 'number' ? [{ id: entry['id'], at: entry['at'] }] : []));
+async function clearSeen({ store, storeKey, now }: { store: CloseStore; storeKey: string; now: number }): Promise<void> {
+  const hour = hourOf(now);
+  const pruned = await store.get<unknown>(`${storeKey}-seen-pruned`);
+  const first = Math.max(typeof pruned === 'number' ? pruned + 1 : hour - SEEN_RETENTION_HOURS, hour - SEEN_RETENTION_HOURS - MAX_BUCKETS_PER_RUN);
+  for (let h = first; h <= hour; h++) {
+    await deleteBucket({ store, storeKey, hour: h });
+  }
+  await store.delete(`${storeKey}-seen-pruned`);
+}
+
+async function deleteBucket({ store, storeKey, hour }: { store: CloseStore; storeKey: string; hour: number }): Promise<void> {
+  const ids = idsOf(await store.get<unknown>(bucketKey({ storeKey, hour })));
+  await Promise.all(ids.map((id) => store.delete(`${storeKey}-seen:${id}`)));
+  await store.delete(bucketKey({ storeKey, hour }));
+}
+
+function hourOf(now: number): number {
+  return Math.floor(now / HOUR_MS);
+}
+
+function bucketKey({ storeKey, hour }: { storeKey: string; hour: number }): string {
+  return `${storeKey}-seen-hour:${hour}`;
+}
+
+function idsOf(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [];
 }
 
 async function deleteWebhook({ auth, id }: { auth: { secret_text: string }; id: string }): Promise<void> {
@@ -94,7 +124,7 @@ async function deleteWebhook({ auth, id }: { auth: { secret_text: string }; id: 
   }
 }
 
-type SeenEntry = { id: string; at: number };
+type CloseStore = CloseHookContext['store'];
 
 type WebhookState = { id: string; signatureKey: string };
 
