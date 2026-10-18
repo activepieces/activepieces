@@ -38,7 +38,7 @@ How an open builder tab takes a change that a different writer saved to the same
 - **The push goes out also with `emitEvents: false`**, so a project release and a project replace reach open tabs. A push that throws logs one error line and the save still succeeds.
 - **The web client sends the Editor Session header only to the Activepieces API**, never to a third-party URL such as the npm registry lookup.
 - **Every socket `connect` refreshes, the first one of a page load too.** The page loads the flow over HTTP before the socket joins the project room, so a save in that gap sends a push that the tab never gets. The cost is one more `GET` per page load.
-- **`SocketProvider` cleanup calls `socket.off('connect')` with no handler**, which removes every `connect` listener, the reconnect refresh included. When its effect runs again (a new `token` or `projectId`) while the builder stays mounted, the tab stops refreshing on reconnect until the builder mounts again.
+- **`SocketProvider` removes only its own socket listeners.** Its cleanup used to call `socket.off('connect')` with no handler, which removed every `connect` listener, the reconnect refresh included, when its effect ran again for a new `token` or `projectId`. Pass the handler to `off`.
 - **Known gaps:** the accepted same-step race (see the decision); a tab that misses a push (socket drop, deploy) catches up on reconnect or on return; an API Writer that writes from an older read still wins.
 
 ## Key files
