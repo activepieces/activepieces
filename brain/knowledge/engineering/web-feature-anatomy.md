@@ -64,6 +64,8 @@ Every customer-facing surface must be checked on all five edition paths — CE, 
 
 A default local dev instance runs `edition=ce` (check `/api/v1/flags`), and most of the platform-admin surface is unreachable there — Global Connections, Pieces, Templates, Billing, Usage, Embedding, SSO, Project Roles, API Keys, Secret Managers, Audit Logs and Event Streaming all render `LockedFeatureGuard` instead of their body, and the AI Center's Capabilities tab is not rendered at all. So a change to any of those cannot be seen locally without first flipping the `platform_plan` flags in the dev Postgres; Embedding needs more than that, since `useEmbedSubdomain` is gated on `edition === CLOUD` and so needs `AP_EDITION=cloud` and a restart. Plan for that before promising a screenshot of a gated page.
 
+To switch a local backend's edition without editing `.env.dev`, prefix the command: `AP_EDITION=cloud npm run dev:backend`. Turbo passes `AP_EDITION` through (`globalPassThroughEnv`) and `bootstrap.ts` loads `.env.dev` without overriding variables already set, so the shell value wins; the startup log says `Activepieces Edition … edition: cloud`. Stop the old backend first, or the new one dies with `EADDRINUSE :3000` while the old edition keeps answering.
+
 Running one frontend per edition side by side (a vite port each against its own backend) is the quickest
 way to check all of them, but **every port serves the same working tree**, so checking out another branch
 changes the code under all three at once. Comparing editions and comparing branches are therefore the same
