@@ -23,6 +23,7 @@ export const posthogCustomApiCall = createAction({
   props: base.props,
   propertyGroups: base.propertyGroups,
   classification: 'WRITE',
+  audience: 'human',
   async run({ auth, propsValue, files }) {
     const method = methodOf(propsValue['method']);
     const url = urlOf(propsValue['url']);
