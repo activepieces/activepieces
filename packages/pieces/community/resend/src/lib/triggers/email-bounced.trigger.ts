@@ -1,5 +1,5 @@
 import { createTrigger, MarkdownVariant, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import crypto from 'crypto';
 import { resendAuth } from '../..';
 import { resendClient } from '../common/client';
@@ -112,11 +112,17 @@ export const emailBounced = createTrigger({
   async onDisable(context) {
     const data = await context.store.get<{ id: string; signingSecret: string }>(STORE_KEY);
     if (data?.id) {
-      await resendClient.sendRequest({
-        auth: context.auth.secret_text,
-        method: HttpMethod.DELETE,
-        path: `/webhooks/${data.id}`,
-      });
+      try {
+        await resendClient.sendRequest({
+          auth: context.auth.secret_text,
+          method: HttpMethod.DELETE,
+          path: `/webhooks/${data.id}`,
+        });
+      } catch (error) {
+        if (!(error instanceof HttpError) || error.response.status !== 404) {
+          throw error;
+        }
+      }
     }
   },
   async run(context) {
@@ -143,6 +149,11 @@ export const emailBounced = createTrigger({
       from: 'onboarding@resend.dev',
       to: ['john@example.com'],
       subject: 'Re: Follow up',
+      bounce: {
+        message: "The recipient's mailbox does not exist.",
+        type: 'Permanent',
+        subType: 'General',
+      },
     },
   },
 });
