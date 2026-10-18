@@ -222,7 +222,7 @@ export const SignInMethodsSection = ({
 
 const GoogleSetupGuideLink = () => (
   <a
-    href={adminDocsUrl('admin-guide/guides/sso#google-sign-in-on-self-hosted')}
+    href={adminDocsUrl('admin-guide/guides/sso#google')}
     target="_blank"
     rel="noopener noreferrer"
     className="inline-flex items-center gap-0.5 font-medium text-accent-11 hover:underline"

@@ -528,9 +528,7 @@ describe('SSOPage', () => {
     ).toBeDefined();
     expect(
       screen.getByRole('link', { name: 'Setup guide' }).getAttribute('href'),
-    ).toBe(
-      'https://www.activepieces.com/docs/admin-guide/guides/sso#google-sign-in-on-self-hosted',
-    );
+    ).toBe('https://www.activepieces.com/docs/admin-guide/guides/sso#google');
   });
 
   it('shows no Google note once Google sign-in works', () => {
