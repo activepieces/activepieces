@@ -10,7 +10,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Cpu, Search, Workflow } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -35,6 +35,7 @@ import { ProjectAvatar } from './project-avatar';
 
 const DEFAULT_SENTINEL = '__default__';
 const FLOW_NAME_QUERY_PARAM = 'flowName';
+const FLOW_PROJECT_QUERY_PARAM = 'flowsProject';
 
 export function ByFlowView({ projects, workerGroups }: ByFlowViewProps) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -45,9 +46,11 @@ export function ByFlowView({ projects, workerGroups }: ByFlowViewProps) {
   const defaultProject =
     projects.find((project) => project.type === ProjectType.TEAM) ??
     projects[0];
-  const [selectedProjectId, setSelectedProjectId] = useState<
-    string | undefined
-  >(defaultProject?.id);
+  const projectParam = searchParams.get(FLOW_PROJECT_QUERY_PARAM);
+  const selectedProjectId =
+    projectParam && projects.some((project) => project.id === projectParam)
+      ? projectParam
+      : defaultProject?.id;
 
   const {
     data: page,
@@ -72,10 +75,10 @@ export function ByFlowView({ projects, workerGroups }: ByFlowViewProps) {
   );
 
   const handleProjectChange = (projectId: string) => {
-    setSelectedProjectId(projectId);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
+        next.set(FLOW_PROJECT_QUERY_PARAM, projectId);
         next.delete('cursor');
         return next;
       },

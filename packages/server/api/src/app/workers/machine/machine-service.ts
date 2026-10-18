@@ -128,8 +128,9 @@ export const machineService = (log: FastifyBaseLogger) => {
                 if (![WorkerGroupScope.PROJECT, WorkerGroupScope.FLOW].includes(scope)) {
                     continue
                 }
-                const existing = groupsByLabel.get(worker.workerGroupId!)
-                groupsByLabel.set(worker.workerGroupId!, {
+                const groupKey = `${scope}:${worker.workerGroupId!}`
+                const existing = groupsByLabel.get(groupKey)
+                groupsByLabel.set(groupKey, {
                     label: worker.workerGroupId!,
                     slots: (existing?.slots ?? 0) + slots,
                     scope,
@@ -140,13 +141,13 @@ export const machineService = (log: FastifyBaseLogger) => {
                 sharedSlots,
             }
         },
-        async getWorkerGroupScope({ workerGroupId }: { workerGroupId: string }): Promise<WorkerGroupScope | null> {
+        async getWorkerGroupScopes({ workerGroupId }: { workerGroupId: string }): Promise<WorkerGroupScope[]> {
             const { online: onlineWorkers } = workerLiveness.partitionByLiveness(await workerMachineCache().find())
-            const groupWorker = onlineWorkers.find(worker => worker.workerGroupId === workerGroupId)
-            if (isNil(groupWorker)) {
-                return null
-            }
-            return resolveDedicatedScope(groupWorker)
+            const scopes = onlineWorkers
+                .filter(worker => worker.workerGroupId === workerGroupId)
+                .map(resolveDedicatedScope)
+                .filter((scope): scope is WorkerGroupScope => !isNil(scope))
+            return [...new Set(scopes)]
         },
     }
 }

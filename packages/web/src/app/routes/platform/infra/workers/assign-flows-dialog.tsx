@@ -11,6 +11,7 @@ import { Search, Workflow } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -76,8 +77,14 @@ function AssignFlowsContent({
   const [pendingChanges, setPendingChanges] = useState<Map<string, boolean>>(
     new Map(),
   );
+  const [saving, setSaving] = useState(false);
 
-  const { data: page, isLoading } = useQuery<SeekPage<PopulatedFlow>>({
+  const {
+    data: page,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<SeekPage<PopulatedFlow>>({
     queryKey: ['assign-flows-dialog', selectedProjectId, search],
     queryFn: () =>
       api.get<SeekPage<PopulatedFlow>>('/v1/flows', {
@@ -93,6 +100,9 @@ function AssignFlowsContent({
     pendingChanges.get(flow.id) ?? flow.workerGroupId === groupLabel;
 
   const toggleFlow = (flow: PopulatedFlow) => {
+    if (saving) {
+      return;
+    }
     setPendingChanges((prev) => {
       const next = new Map(prev);
       const desired = !isInGroup(flow);
@@ -106,6 +116,10 @@ function AssignFlowsContent({
   };
 
   const handleSave = async () => {
+    if (saving) {
+      return;
+    }
+    setSaving(true);
     try {
       for (const [flowId, assign] of pendingChanges) {
         await workersApi.assignFlow(flowId, assign ? groupLabel : null);
@@ -122,6 +136,8 @@ function AssignFlowsContent({
       onOpenChange(false);
     } catch {
       toast.error(t('Failed to save'));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -182,7 +198,10 @@ function AssignFlowsContent({
 
         <ScrollArea className="h-64 rounded-md border">
           <div className="p-1">
-            {!isLoading && flows.length === 0 && (
+            {isError && (
+              <DataFetchErrorState entity={t('flows')} onRetry={refetch} />
+            )}
+            {!isError && !isLoading && flows.length === 0 && (
               <p className="py-8 text-center text-sm text-gray-11">
                 {t('No flows')}
               </p>
@@ -197,10 +216,12 @@ function AssignFlowsContent({
                   key={flow.id}
                   type="button"
                   className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-4 cursor-pointer"
+                  disabled={saving}
                   onClick={() => toggleFlow(flow)}
                 >
                   <Checkbox
                     checked={isChecked}
+                    disabled={saving}
                     onCheckedChange={() => toggleFlow(flow)}
                     onClick={(e) => e.stopPropagation()}
                   />
@@ -243,6 +264,7 @@ function AssignFlowsContent({
           <Button
             type="button"
             variant="outline"
+            disabled={saving}
             onClick={() => onOpenChange(false)}
           >
             {t('Cancel')}
@@ -250,6 +272,7 @@ function AssignFlowsContent({
           <Button
             {...adminControl(AdminControl.WORKERS_ASSIGN_SUBMIT)}
             type="button"
+            loading={saving}
             onClick={handleSave}
           >
             {t('Save')}

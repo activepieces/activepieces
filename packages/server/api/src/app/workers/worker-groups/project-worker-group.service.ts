@@ -49,12 +49,12 @@ export const projectWorkerGroupService = (log: FastifyBaseLogger) => ({
             })
         }
         if (!isNil(workerGroupId)) {
-            const groupScope = await machineService(log).getWorkerGroupScope({ workerGroupId })
-            if (!isNil(groupScope) && groupScope !== WorkerGroupScope.PROJECT) {
+            const groupScopes = await machineService(log).getWorkerGroupScopes({ workerGroupId })
+            if (groupScopes.length > 0 && !groupScopes.includes(WorkerGroupScope.PROJECT)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
-                        message: `"${workerGroupId}" is a ${groupScope} worker group and cannot be assigned to a project`,
+                        message: `"${workerGroupId}" has no project-scope workers and cannot be assigned to a project`,
                     },
                 })
             }

@@ -8,6 +8,7 @@ import { t } from 'i18next';
 import { Layers, Plus, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -224,12 +225,16 @@ function GroupCard({
 }
 
 function AssignedFlowChips({ groupLabel }: { groupLabel: string }) {
-  const { data } = useQuery<WorkerGroupFlows>({
+  const { data, isError, refetch } = useQuery<WorkerGroupFlows>({
     queryKey: ['worker-group-assigned-flows', groupLabel],
     queryFn: () => workersApi.listGroupFlows(groupLabel),
   });
   const flows = data?.flows ?? [];
   const total = data?.total ?? 0;
+
+  if (isError) {
+    return <DataFetchErrorState entity={t('flows')} onRetry={refetch} />;
+  }
 
   if (flows.length === 0) {
     return <p className="text-xs text-gray-11">{t('No flows')}</p>;

@@ -89,7 +89,7 @@ const ListWorkerGroupsRequestOptions = {
                 groups: z.array(z.object({
                     label: z.string(),
                     slots: z.number(),
-                    scope: z.nativeEnum(WorkerGroupScope),
+                    scope: z.enum(WorkerGroupScope),
                 })),
                 sharedSlots: z.number(),
             }),

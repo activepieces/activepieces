@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
+import { FlowOperationStatus, WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
@@ -38,6 +38,7 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
             .innerJoin('project', 'project', 'project.id = flow."projectId"')
             .where('project."platformId" = :platformId', { platformId })
             .andWhere('flow."workerGroupId" = :workerGroupId', { workerGroupId })
+            .andWhere('flow."operationStatus" != :deleting', { deleting: FlowOperationStatus.DELETING })
         const total = await groupFlowsQuery.getCount()
         const flows = await groupFlowsQuery
             .orderBy('flow.created', 'DESC')
@@ -76,12 +77,12 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
             })
         }
         if (!isNil(workerGroupId)) {
-            const groupScope = await machineService(log).getWorkerGroupScope({ workerGroupId })
-            if (!isNil(groupScope) && groupScope !== WorkerGroupScope.FLOW) {
+            const groupScopes = await machineService(log).getWorkerGroupScopes({ workerGroupId })
+            if (groupScopes.length > 0 && !groupScopes.includes(WorkerGroupScope.FLOW)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
-                        message: `"${workerGroupId}" is a ${groupScope} worker group and cannot be assigned to a flow`,
+                        message: `"${workerGroupId}" has no flow-scope workers and cannot be assigned to a flow`,
                     },
                 })
             }
