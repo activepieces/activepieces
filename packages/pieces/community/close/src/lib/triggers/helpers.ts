@@ -44,7 +44,7 @@ export function closeCreatedTriggerHooks({ storeKey, objectType }: CreatedTrigge
     async onDisable(context: CloseHookContext) {
       const state = await context.store.get<WebhookState>(storeKey);
       if (state?.id) await deleteWebhook({ auth: context.auth, id: state.id });
-      await clearSeen({ store: context.store, storeKey, now: Date.now() });
+      await clearSeen({ store: context.store, storeKey });
       await context.store.delete(storeKey);
       await context.store.delete(`${storeKey}-seen`);
     },
@@ -74,31 +74,21 @@ async function recordSeen({ store, storeKey, eventId, now }: { store: CloseStore
   const hour = hourOf(now);
   const ids = idsOf(await store.get<unknown>(bucketKey({ storeKey, hour })));
   if (!ids.includes(eventId)) await store.put(bucketKey({ storeKey, hour }), [...ids, eventId]);
-  if ((await store.get<unknown>(`${storeKey}-seen-latest`)) !== hour) await store.put(`${storeKey}-seen-latest`, hour);
-  const cutoff = hour - SEEN_RETENTION_HOURS;
-  const pruned = await store.get<unknown>(`${storeKey}-seen-pruned`);
-  if (typeof pruned !== 'number') {
-    await store.put(`${storeKey}-seen-pruned`, cutoff);
-    return;
-  }
-  const last = Math.min(cutoff, pruned + MAX_BUCKETS_PER_RUN);
-  for (let h = pruned + 1; h <= last; h++) {
+  const hours = hoursOf(await store.get<unknown>(`${storeKey}-seen-hours`));
+  const expired = hours.filter((h) => h < hour - SEEN_RETENTION_HOURS).slice(0, MAX_BUCKETS_PER_RUN);
+  for (const h of expired) {
     await deleteBucket({ store, storeKey, hour: h });
   }
-  if (last > pruned) await store.put(`${storeKey}-seen-pruned`, last);
+  const kept = hours.filter((h) => !expired.includes(h) && h !== hour);
+  if (expired.length > 0 || !hours.includes(hour)) await store.put(`${storeKey}-seen-hours`, [...kept, hour]);
 }
 
-async function clearSeen({ store, storeKey, now }: { store: CloseStore; storeKey: string; now: number }): Promise<void> {
-  const hour = hourOf(now);
-  const pruned = await store.get<unknown>(`${storeKey}-seen-pruned`);
-  const latest = await store.get<unknown>(`${storeKey}-seen-latest`);
-  const last = typeof latest === 'number' ? Math.min(latest, hour) : hour;
-  const first = typeof pruned === 'number' ? pruned + 1 : last - SEEN_RETENTION_HOURS;
-  for (let h = first; h <= last; h++) {
+async function clearSeen({ store, storeKey }: { store: CloseStore; storeKey: string }): Promise<void> {
+  const hours = hoursOf(await store.get<unknown>(`${storeKey}-seen-hours`));
+  for (const h of hours) {
     await deleteBucket({ store, storeKey, hour: h });
   }
-  await store.delete(`${storeKey}-seen-pruned`);
-  await store.delete(`${storeKey}-seen-latest`);
+  await store.delete(`${storeKey}-seen-hours`);
 }
 
 async function deleteBucket({ store, storeKey, hour }: { store: CloseStore; storeKey: string; hour: number }): Promise<void> {
@@ -113,6 +103,10 @@ function hourOf(now: number): number {
 
 function bucketKey({ storeKey, hour }: { storeKey: string; hour: number }): string {
   return `${storeKey}-seen-hour:${hour}`;
+}
+
+function hoursOf(value: unknown): number[] {
+  return Array.isArray(value) ? value.filter((h): h is number => Number.isInteger(h)) : [];
 }
 
 function idsOf(value: unknown): string[] {

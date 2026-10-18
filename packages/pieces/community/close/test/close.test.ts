@@ -268,7 +268,7 @@ describe('webhook triggers', () => {
       'new-lead-trigger': { id: 'whsub_1', signatureKey: key },
       'new-lead-trigger-seen:ev_old': true,
       [`new-lead-trigger-seen-hour:${hour - 74}`]: ['ev_old'],
-      'new-lead-trigger-seen-pruned': hour - 75,
+      'new-lead-trigger-seen-hours': [hour - 74],
     });
     mockSeq({ id: 'lead_1' });
     await Reflect.apply(trigger.run, undefined, [{ auth, store, payload: delivery({ eventId: 'ev_new', objectType: 'lead', objectId: 'lead_1' }) }]);
@@ -276,7 +276,7 @@ describe('webhook triggers', () => {
     expect(store.data[`new-lead-trigger-seen-hour:${hour - 74}`]).toBeUndefined();
     expect(store.data['new-lead-trigger-seen:ev_new']).toBe(true);
     expect(store.data[`new-lead-trigger-seen-hour:${hour}`]).toEqual(['ev_new']);
-    expect(store.data['new-lead-trigger-seen-pruned']).toBe(hour - 73);
+    expect(store.data['new-lead-trigger-seen-hours']).toEqual([hour]);
     mockSeq({});
     await Reflect.apply(trigger.onDisable, undefined, [{ auth, store }]);
     expect(Object.keys(store.data).filter((k) => k.includes('-seen'))).toEqual([]);
@@ -289,12 +289,14 @@ describe('webhook triggers', () => {
       'new-lead-trigger': { id: 'whsub_1', signatureKey: key },
       'new-lead-trigger-seen:ev_q': true,
       [`new-lead-trigger-seen-hour:${hour - 500}`]: ['ev_q'],
-      'new-lead-trigger-seen-pruned': hour - 560,
-      'new-lead-trigger-seen-latest': hour - 500,
+      'new-lead-trigger-seen-hours': [hour - 500],
     });
+    const get = vi.fn(store.get);
+    store.get = get;
     mockSeq({});
     await Reflect.apply(trigger.onDisable, undefined, [{ auth, store }]);
     expect(Object.keys(store.data).filter((k) => k.includes('-seen'))).toEqual([]);
+    expect(get.mock.calls.length).toBeLessThan(5);
   });
 
   it('a failing index write does not block the run', async () => {
