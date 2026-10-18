@@ -15,9 +15,9 @@ import {
   StatusDot,
   adminLayout,
 } from '@/app/components/admin';
-import { DialogCallout } from '@/app/routes/platform/security/sso/dialog-callout';
 import { DomainDnsRecord } from '@/app/routes/platform/security/sso/domain-dns-record';
 import { DomainStatusIcon } from '@/app/routes/platform/security/sso/domain-status-icon';
+import { SamlDeletionWarning } from '@/app/routes/platform/security/sso/saml-deletion-warning';
 import { useGoogleSignInAvailable } from '@/app/routes/platform/security/sso/use-google-sign-in-available';
 import { VerifyDomainDialog } from '@/app/routes/platform/security/sso/verify-domain-dialog';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -159,18 +159,26 @@ const DomainRow = ({
                 : t('Remove {domain}?', { domain })
             }
             message={
-              verified ? (
-                <RemoveDomainConsequences
-                  samlConnected={samlConnected}
+              verified
+                ? samlConnected
+                  ? t(
+                      'People who use single sign-on will have to sign in another way.',
+                    )
+                  : t(
+                      "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.",
+                    )
+                : t(
+                    'The domain and its DNS record are discarded. You can start again anytime.',
+                  )
+            }
+            warning={
+              verified && samlConnected ? (
+                <SamlDeletionWarning
                   otherMethodsOff={
                     !platform.emailAuthEnabled && !googleSignInAvailable
                   }
                 />
-              ) : (
-                t(
-                  'The domain and its DNS record are discarded. You can start again anytime.',
-                )
-              )
+              ) : undefined
             }
             entityName={domain}
             buttonText={
@@ -226,34 +234,6 @@ const DomainRow = ({
         </DialogContent>
       </Dialog>
     </SettingsRow>
-  );
-};
-
-const RemoveDomainConsequences = ({
-  samlConnected,
-  otherMethodsOff,
-}: {
-  samlConnected: boolean;
-  otherMethodsOff: boolean;
-}) => {
-  if (!samlConnected) {
-    return t(
-      "To set up single sign-on later, you'll need to verify the domain again with a new DNS record.",
-    );
-  }
-  return (
-    <span className="flex flex-col gap-2">
-      <DialogCallout tone="danger">
-        {t('This disables single sign-on and deletes its SAML connection.')}
-      </DialogCallout>
-      {otherMethodsOff && (
-        <DialogCallout tone="warning">
-          {t(
-            'Email and Google sign-in are off. Turn one on first so people can still sign in.',
-          )}
-        </DialogCallout>
-      )}
-    </span>
   );
 };
 

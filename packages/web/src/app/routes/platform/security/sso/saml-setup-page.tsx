@@ -23,9 +23,9 @@ import {
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
-import { DialogCallout } from '@/app/routes/platform/security/sso/dialog-callout';
 import { DomainVerification } from '@/app/routes/platform/security/sso/domain-verification';
 import { MethodConfirmDialog } from '@/app/routes/platform/security/sso/method-confirm-dialog';
+import { SamlDeletionWarning } from '@/app/routes/platform/security/sso/saml-deletion-warning';
 import { ssoPaths } from '@/app/routes/platform/security/sso/sso-paths';
 import { useGoogleSignInAvailable } from '@/app/routes/platform/security/sso/use-google-sign-in-available';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
@@ -135,21 +135,15 @@ const DisableSamlRow = ({
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title={t('Disable single sign-on?')}
-        description={
-          <span className="flex flex-col gap-2">
-            <DialogCallout tone="danger">
-              {t(
-                'Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.',
-              )}
-            </DialogCallout>
-            {!platform.emailAuthEnabled && !googleSignInAvailable && (
-              <DialogCallout tone="warning">
-                {t(
-                  'Email and Google sign-in are off. Turn one on first so people can still sign in.',
-                )}
-              </DialogCallout>
-            )}
-          </span>
+        description={t(
+          'People who use single sign-on will have to sign in another way.',
+        )}
+        warning={
+          <SamlDeletionWarning
+            otherMethodsOff={
+              !platform.emailAuthEnabled && !googleSignInAvailable
+            }
+          />
         }
         confirmLabel={t('Disable')}
         destructive

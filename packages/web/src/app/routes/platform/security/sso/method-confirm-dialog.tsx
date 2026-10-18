@@ -1,7 +1,9 @@
 import { t } from 'i18next';
+import { TriangleAlert } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { adminLayout } from '@/app/components/admin';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,6 +26,7 @@ export const MethodConfirmDialog = ({
   destructive,
   isPending,
   controlId,
+  warning,
   confirmText,
   onConfirm,
 }: MethodConfirmDialogProps) => {
@@ -44,6 +47,12 @@ export const MethodConfirmDialog = ({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {warning && (
+          <Alert variant="warning">
+            <TriangleAlert className="h-4 w-4" />
+            <AlertDescription>{warning}</AlertDescription>
+          </Alert>
+        )}
         {confirmText && (
           <div className="flex flex-col gap-2">
             <Label htmlFor="method-confirm-text">
@@ -91,6 +100,7 @@ type MethodConfirmDialogProps = {
   destructive: boolean;
   isPending: boolean;
   controlId: AdminControl;
+  warning?: ReactNode;
   confirmText?: string;
   onConfirm: () => void;
 };
