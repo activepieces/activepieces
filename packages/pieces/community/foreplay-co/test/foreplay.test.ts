@@ -444,7 +444,7 @@ describe('triggers', () => {
     const props = { brand_id: 'b1', page_size: 1 };
     const first = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: props }) });
     expect(first.map((a: { id: string }) => a.id)).toEqual(['n4', 'n3', 'n2', 'n1', 'n0']);
-    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: 'c5', anchorId: null, before: null, boundaryId: 'old' });
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: 'c5', anchorIds: [], before: null, boundaryId: 'old' });
     const second = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: props }) });
     expect(nthUrl({ spy, index: 5 }).searchParams.get('cursor')).toBe('c5');
     expect(second.map((a: { id: string }) => a.id)).toEqual(['n5']);
@@ -497,14 +497,24 @@ describe('triggers', () => {
     const spy = mock(...at({ feed: feed1, offsets: [0, 1, 2, 3, 4] }), ...at({ feed: feed2, offsets: [4, 5, 6, 7, 8] }), ...at({ feed: feed2, offsets: [8, 9, 0, 1, 2] }));
     const first = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: props }) });
     expect(first.map((a: { id: string }) => a.id)).toEqual(['s5', 's6', 's7', 's8', 's9']);
-    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '4', anchorId: 's5', before: null, boundaryId: 'old' });
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '4', anchorIds: ['s5'], before: null, boundaryId: 'old' });
     const second = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: props }) });
     expect(second.map((a: { id: string }) => a.id)).toEqual(['s3', 's4']);
-    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '8', anchorId: 's3', before: null, boundaryId: 'old' });
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: '8', anchorIds: ['s3'], before: null, boundaryId: 'old' });
     const third = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: props }) });
     expect(third.map((a: { id: string }) => a.id)).toEqual(['n1', 'n2']);
     expect(store.data.has('foreplay_backlog_cursor')).toBe(false);
     expect(spy.mock.calls.map((c) => new URL(String(c[0].url)).searchParams.get('offset'))).toEqual(['0', '1', '2', '3', '4', '4', '5', '6', '7', '8', '8', '9', '0', '1', '2']);
+  });
+  it('a swipe-file backlog whose anchor ads vanished still delivers the unread ads', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', ['s9', 'old']);
+    await store.put('foreplay_backlog_cursor', { cursor: '1', anchorIds: ['gone'], before: null, boundaryId: 'old' });
+    const feed = ['s9', 's4', 's3', 'old'];
+    mock(...[1, 2, 3].map((o) => ok([rawAd(feed[o])])), ok([rawAd('s9')]));
+    const out = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: { page_size: 1 } }) });
+    expect(out.map((a: { id: string }) => a.id)).toEqual(['s3', 's4']);
+    expect(store.data.has('foreplay_backlog_cursor')).toBe(false);
   });
   it('every stored value stays far below the 512 KiB store limit', async () => {
     const store = memoryStore();
