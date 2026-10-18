@@ -242,7 +242,9 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 log.warn({ tool: { name: toolCall.toolName, durationMs: toolExecutionMs }, error: toolOutput.error }, 'Tool call failed')
             }
         },
-        onStepEnd: ({ content, response }) => {
+        onStepEnd: ({ content, response, usage: stepUsage }) => {
+            totalInputTokens += stepUsage.inputTokens ?? 0
+            totalOutputTokens += stepUsage.outputTokens ?? 0
             uiParts.push(...agentAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
             currentAttemptMessages = [...currentAttemptMessages, ...agentAiUtils.collectStepMessages([{ response }])]
             const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
@@ -315,8 +317,6 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         const stepMessages = agentAiUtils.collectStepMessages(steps)
         earlierAttemptToolCalls = [...earlierAttemptToolCalls, ...completedToolCalls(steps)]
         usage = attemptUsage
-        totalInputTokens += attemptUsage.inputTokens ?? 0
-        totalOutputTokens += attemptUsage.outputTokens ?? 0
         lastFinishReason = finishReason
         logTurnPerformance({ performance: finalStep.performance, modelId: current().modelId, stepCount: steps.length, log })
 
