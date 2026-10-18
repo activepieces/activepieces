@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { attachMultipartFieldsToBody } from '../../helper/multipart-body'
 import { pieceInstallService } from '../../pieces/piece-install-service'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -36,6 +37,7 @@ const installPieceParams = {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     preValidation: attachMultipartFieldsToBody,
+    preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.managePiecesEnabled),
     schema: {
         tags: ['pieces'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
