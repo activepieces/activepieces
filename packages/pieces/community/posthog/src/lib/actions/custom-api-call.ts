@@ -67,7 +67,12 @@ function methodOf(value: unknown): HttpMethod {
 
 function stringMap(value: unknown): Record<string, string> {
   if (!posthogClient.isRecord(value)) return {};
-  return Object.fromEntries(Object.entries(value).filter((e): e is [string, string] => typeof e[1] === 'string'));
+  const entries: [string, string][] = [];
+  for (const [key, item] of Object.entries(value)) {
+    if (typeof item === 'string') entries.push([key, item]);
+    else if (typeof item === 'number' || typeof item === 'boolean' || typeof item === 'bigint') entries.push([key, String(item)]);
+  }
+  return Object.fromEntries(entries);
 }
 
 function authHeaders({ auth, url }: { auth: PostHogAuthValue; url: string }): Record<string, string> {

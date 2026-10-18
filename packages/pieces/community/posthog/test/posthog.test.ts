@@ -198,6 +198,9 @@ describe('actions', () => {
     const out = await run({ name: 'custom_api_call', propsValue: { method: HttpMethod.GET, url: { url: '/api/projects/123/' }, headers: { x: '1' }, queryParams: {} } });
     expect(out).toMatchObject({ status: 200, body: { ok: true } });
     expect(req({ spy })).toMatchObject({ url: 'https://eu.posthog.com/api/projects/123/', headers: { x: '1', Authorization: 'Bearer phx_secret' } });
+    const paged = mockSeq({ ok: true });
+    await run({ name: 'custom_api_call', propsValue: { method: HttpMethod.GET, url: { url: '/x' }, queryParams: { limit: 10, flag: true, skip: null, q: 'a' } } });
+    expect(req({ spy: paged }).queryParams).toEqual({ limit: '10', flag: 'true', q: 'a' });
     expect(spy.mock.calls[0][1]?.dispatcher).toBe(await posthogClient.verifiedTls());
     await expect(run({ name: 'custom_api_call', propsValue: { method: HttpMethod.GET, url: { url: 'https://evil.example/x' } } })).rejects.toThrow(/API Host/);
     await expect(run({ name: 'custom_api_call', propsValue: { method: HttpMethod.GET, url: { url: '/api/../x' } } })).rejects.toThrow(/\.\./);
