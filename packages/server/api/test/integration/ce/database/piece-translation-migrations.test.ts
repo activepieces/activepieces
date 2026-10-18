@@ -16,7 +16,8 @@ const translated = createMockPieceMetadata({
 const emptyTranslations = createMockPieceMetadata({ name: 'backfill-empty', i18n: {} })
 const noTranslations = createMockPieceMetadata({ name: 'backfill-none', i18n: undefined })
 const brokenTranslations = createMockPieceMetadata({ name: 'backfill-broken', i18n: undefined })
-const seededIds = [translated.id, emptyTranslations.id, noTranslations.id, brokenTranslations.id]
+const dirtyTranslations = createMockPieceMetadata({ name: 'backfill-dirty', i18n: undefined })
+const seededIds = [translated.id, emptyTranslations.id, noTranslations.id, brokenTranslations.id, dirtyTranslations.id]
 
 async function withQueryRunner(ds: DataSource, fn: (queryRunner: QueryRunner) => Promise<void>): Promise<void> {
     const queryRunner = ds.createQueryRunner()
@@ -43,7 +44,8 @@ describe('piece translation migrations', () => {
         resetDatabaseConnection()
         await initializeDatabase({ runMigrations: true })
         ds = databaseConnection()
-        await ds.getRepository('piece_metadata').save([translated, emptyTranslations, noTranslations, brokenTranslations])
+        await ds.getRepository('piece_metadata').save([translated, emptyTranslations, noTranslations, brokenTranslations, dirtyTranslations])
+        await ds.query(String.raw`UPDATE "piece_metadata" SET "i18n" = '{"ja": {"Se\u0000nd": "送\u0000信 \ud800 \ud83d\ude00"}}' WHERE "id" = $1`, [dirtyTranslations.id])
         await ds.query('UPDATE "piece_metadata" SET "i18n" = \'"not an object"\' WHERE "id" = $1', [brokenTranslations.id])
     })
 
@@ -59,6 +61,7 @@ describe('piece translation migrations', () => {
         expect(await translationRows(ds)).toEqual([
             { pieceMetadataId: translated.id, locale: LocalesEnum.GERMAN, translations: { 'Send a message': 'Eine Nachricht senden' } },
             { pieceMetadataId: translated.id, locale: LocalesEnum.FRENCH, translations: { 'Send a message': 'Envoyer un message' } },
+            { pieceMetadataId: dirtyTranslations.id, locale: LocalesEnum.JAPANESE, translations: { 'Send': '送信  😀' } },
         ])
     })
 
@@ -71,6 +74,6 @@ describe('piece translation migrations', () => {
         await withQueryRunner(ds, (queryRunner) => migration.up(queryRunner))
         await runBackfill(ds)
 
-        expect(await translationRows(ds)).toHaveLength(2)
+        expect(await translationRows(ds)).toHaveLength(3)
     })
 })

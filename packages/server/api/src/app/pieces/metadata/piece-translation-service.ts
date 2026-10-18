@@ -32,8 +32,8 @@ export const pieceTranslationService = {
 }
 
 function toRows({ pieceMetadataId, i18n }: ToRowsParams): PieceTranslationSchema[] {
-    return Object.entries(sanitizeObjectForPostgresql(i18n ?? {})).flatMap(([locale, translations]) =>
-        isNil(translations) ? [] : [{ pieceMetadataId, locale, translations }],
+    return Object.entries(i18n ?? {}).flatMap(([locale, translations]) =>
+        isNil(translations) ? [] : [{ pieceMetadataId, locale, translations: Object.fromEntries(sanitizeObjectForPostgresql(Object.entries(translations))) }],
     )
 }
 

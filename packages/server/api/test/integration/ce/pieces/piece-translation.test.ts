@@ -57,6 +57,20 @@ describe('piece translations stored per locale', () => {
         expect(germanSingle?.json().i18n).toBeUndefined()
     })
 
+    it('are saved with characters Postgres jsonb rejects stripped from keys and values', async () => {
+        const saved = await pieceMetadataService(mockLog).create({
+            pieceMetadata: createMockPieceMetadata({
+                name: 'translations-with-nul',
+                i18n: { [LocalesEnum.GERMAN]: { 'Send\u0000 a message': 'Eine\u0000 Nachricht senden' } },
+            }),
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+
+        const [row] = await databaseConnection().query('SELECT "translations" FROM "piece_translation" WHERE "pieceMetadataId" = $1', [saved.id])
+        expect(row.translations).toEqual({ 'Send a message': 'Eine Nachricht senden' })
+    })
+
     it('are removed with their piece', async () => {
         const piece = createMockPieceMetadata({
             name: 'deleted-with-translations',
