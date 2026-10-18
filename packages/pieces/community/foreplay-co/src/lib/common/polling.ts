@@ -54,10 +54,12 @@ function epochMsOf(raw: unknown): number | null {
 
 async function scan({ fetchAds, start, pages, seenBefore, known, before }: ScanParams): Promise<ScanResult> {
   const fresh: unknown[] = [];
+  const scannedIds: string[] = [];
   let cursor = start;
   for (let page = 1; page <= pages; page++) {
     const result = await fetchAds({ limit: undefined, cursor });
     let reachedBoundary = false;
+    scannedIds.push(...idsOf(result.ads));
     for (const ad of result.ads) {
       const id = idOf(ad);
       const ms = epochMsOf(ad);
@@ -69,10 +71,10 @@ async function scan({ fetchAds, start, pages, seenBefore, known, before }: ScanP
       known.add(id);
       fresh.push(ad);
     }
-    if (reachedBoundary || result.next === null || result.ads.length === 0) return { fresh, resume: null, pagesUsed: page };
+    if (reachedBoundary || result.next === null || result.ads.length === 0) return { fresh, scannedIds, resume: null, pagesUsed: page };
     cursor = result.next;
   }
-  return { fresh, resume: cursor ?? null, pagesUsed: pages };
+  return { fresh, scannedIds, resume: cursor ?? null, pagesUsed: pages };
 }
 
 function idsOf(ads: unknown[]): string[] {
@@ -111,6 +113,7 @@ async function pollNewAds({ store, fetchAds }: { store: Store; fetchAds: FetchAd
   let budget = MAX_POLL_PAGES;
   let olderFresh: unknown[] = [];
   let newerFresh: unknown[] = [];
+  let legacyBoundaryIds: string[] = [];
   let nextBacklog: Backlog | null = null;
   const backlog = backlogOf(await store.get<unknown>(BACKLOG_KEY));
   if (backlog !== null) {
@@ -122,12 +125,17 @@ async function pollNewAds({ store, fetchAds }: { store: Store; fetchAds: FetchAd
   if (nextBacklog === null && budget > 0) {
     const result = await scan({ fetchAds, start: undefined, pages: budget, seenBefore, known, before: legacyBefore });
     newerFresh = result.fresh;
+    if (legacyBefore !== null) legacyBoundaryIds = result.scannedIds;
     if (result.resume !== null) nextBacklog = { cursor: result.resume, before: legacyBefore };
   }
   if (nextBacklog === null) await store.delete(BACKLOG_KEY);
   else await store.put(BACKLOG_KEY, nextBacklog);
-  const freshIds = idsOf([...newerFresh, ...olderFresh]);
-  if (freshIds.length > 0 || legacyBefore !== null) await store.put(SEEN_KEY, [...freshIds, ...seen].slice(0, MAX_SEEN));
+  const newerIds = idsOf(newerFresh);
+  const olderIds = idsOf(olderFresh);
+  if (newerIds.length > 0 || olderIds.length > 0 || legacyBefore !== null) {
+    const ordered = [...newerIds, ...legacyBoundaryIds, ...seen, ...olderIds];
+    await store.put(SEEN_KEY, [...new Set(ordered)].slice(0, MAX_SEEN));
+  }
   if (legacyBefore !== null) await store.delete(LEGACY_LAST_POLL_KEY);
   return [...olderFresh.reverse(), ...newerFresh.reverse()];
 }
@@ -155,7 +163,7 @@ type Backlog = { cursor: string; before: number | null };
 
 type ScanParams = { fetchAds: FetchAds; start: string | undefined; pages: number; seenBefore: Set<string>; known: Set<string>; before: number | null };
 
-type ScanResult = { fresh: unknown[]; resume: string | null; pagesUsed: number };
+type ScanResult = { fresh: unknown[]; scannedIds: string[]; resume: string | null; pagesUsed: number };
 
 type AdPage = { ads: unknown[]; next: string | null };
 

@@ -471,10 +471,33 @@ describe('triggers', () => {
     mock(ok(ads), ok(ads));
     const out = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
     expect(out.map((a: { id: string }) => a.id)).toEqual(['a2', 'a3']);
-    expect(store.data.get('foreplay_seen_ad_ids')).toEqual(['a3', 'a2']);
+    expect(store.data.get('foreplay_seen_ad_ids')).toEqual(['a3', 'a2', 'a1']);
     expect(store.data.has('lastPoll')).toBe(false);
     const again = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
     expect(again).toEqual([]);
+  });
+  it('a quiet upgrade keeps the boundary IDs so old ads are not replayed', async () => {
+    const store = memoryStore();
+    await store.put('lastPoll', Date.parse('2026-10-10T00:00:00Z'));
+    const ads = [{ ...rawAd('a2'), created_at: '2026-10-09T00:00:00Z' }, { ...rawAd('a1'), created_at: '2026-10-08T00:00:00Z' }];
+    mock(ok(ads), ok(ads));
+    const first = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
+    expect(first).toEqual([]);
+    expect(store.data.get('foreplay_seen_ad_ids')).toEqual(['a2', 'a1']);
+    const second = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
+    expect(second).toEqual([]);
+  });
+  it('backlog IDs never push the newest-page boundary out of the seen list', async () => {
+    const store = memoryStore();
+    const top = Array.from({ length: 1000 }, (_, i) => `t${i}`);
+    await store.put('foreplay_seen_ad_ids', top);
+    await store.put('foreplay_backlog_cursor', { cursor: 'c9', before: null });
+    mock(okWith({ data: [rawAd('b1')], metadata: { cursor: 'c10' } }), okWith({ data: [rawAd('t999')], metadata: { cursor: 'c11' } }), okWith({ data: [rawAd('t0')], metadata: { cursor: 'c1' } }));
+    const out = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: { brand_id: 'b1', page_size: 1 } }) });
+    expect(out.map((a: { id: string }) => a.id)).toEqual(['b1']);
+    const seen = store.data.get('foreplay_seen_ad_ids');
+    expect(Array.isArray(seen) ? seen[0] : null).toBe('t0');
+    expect(seen).toHaveLength(1000);
   });
   it('a run without stored state (upgrade from 0.1.x) seeds silently', async () => {
     const store = memoryStore();
