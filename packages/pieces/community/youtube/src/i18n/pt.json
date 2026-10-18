@@ -276,5 +276,8 @@
   "List Playlist Videos": "List Playlist Videos",
   "List Comment Threads": "List Comment Threads",
   "List Caption Tracks": "List Caption Tracks",
-  "Download Caption Track": "Download Caption Track"
+  "Download Caption Track": "Download Caption Track",
+  "Fill in Playlist ID or Item IDs, not both.": "Preencha “Playlist ID” ou “Item IDs”, não ambos.",
+  "Fill in Channel ID or Handle.": "Preencha “ID do canal” ou “Tratar”.",
+  "Sent as ?key=value. Most YouTube calls need part, like part=snippet.": "Enviado como ?key=value. A maioria das chamadas do YouTube precisa de part, por exemplo part=snippet."
 }
