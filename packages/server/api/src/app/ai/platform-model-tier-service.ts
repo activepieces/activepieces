@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, partition, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, unique } from '@activepieces/core-utils'
 import { AiProviderModelScope, CreatePlatformModelTierRequest, PlatformModelTier, PlatformModelTierEntry, PlatformModelTierSummary, UpdatePlatformModelTierRequest } from '@activepieces/shared'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -33,6 +33,24 @@ export const platformModelTierService = {
 
     async list({ platformId }: { platformId: PlatformId }): Promise<PlatformModelTier[]> {
         return listLive({ platformId })
+    },
+
+    async listForPicker({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun[]> {
+        const tiers = await listLive({ platformId })
+        const configIds = unique(tiers.flatMap((tier) => tier.entries.map((entry) => entry.configId)))
+        const keys = configIds.length === 0 ? [] : await aiProviderRepo().findBy({ platformId, id: In(configIds) })
+        const keyById = new Map(keys.map((key) => [key.id, key]))
+        return tiers
+            .filter((tier) => mainRunsIn({ tier, keyById, scope }))
+            .map((tier) => ({ tier, entries: entriesThatRun({ tier, keyById, scope }) }))
+    },
+
+    async movedTiers({ platformId, tierId }: { platformId: PlatformId, tierId: string | undefined }): Promise<Record<string, string>> {
+        if (isNil(tierId)) {
+            return {}
+        }
+        const live = (await followReplacementsInBulk({ platformId, ids: [tierId] })).get(tierId)
+        return isNil(live) || live.id === tierId ? {} : { [tierId]: live.id }
     },
 
     async create({ platformId, request }: { platformId: PlatformId, request: CreatePlatformModelTierRequest }): Promise<PlatformModelTier> {
@@ -154,12 +172,53 @@ export const platformModelTierService = {
         }
     },
 
-    async assertKeyCanBeDeleted({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
+    async removeKeyFromTiers({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
         await lockPlatform({ manager, platformId })
         const tiers = await findLiveTiersUsingKey({ manager, platformId, configId })
-        if (tiers.length > 0) {
-            throw keyInUseError({ tierNames: tiers.map((tier) => tier.name) })
+        const trimmed = tiers.map((tier) => ({ ...tier, entries: tier.entries.filter((entry) => entry.configId !== configId) }))
+        const [emptied, kept] = partition(trimmed, (tier) => tier.entries.length === 0)
+        if (kept.length > 0) {
+            await manager.query(
+                `
+                UPDATE "platform_model_tier"
+                SET "entries" = (
+                    SELECT jsonb_agg(entry ORDER BY position)
+                    FROM jsonb_array_elements("entries") WITH ORDINALITY AS kept_entries(entry, position)
+                    WHERE entry->>'configId' <> $3
+                )
+                WHERE "platformId" = $1 AND "id" = ANY($2)
+                `,
+                [platformId, kept.map((tier) => tier.id), configId],
+            )
         }
+        if (emptied.length === 0) {
+            return
+        }
+        const emptiedIds = emptied.map((tier) => tier.id)
+        await tierRepo(manager).update({ platformId, id: In(emptiedIds) }, { isDefault: false, isFast: false })
+        await tierRepo(manager).softDelete({ platformId, id: In(emptiedIds) })
+        const replacement = (await listLive({ platformId, manager }))[0]
+        if (isNil(replacement)) {
+            await platformConfigurationRepo(manager).update({ platformId }, { aiSpecificModelsVisible: true })
+            return
+        }
+        await manager.query(
+            'UPDATE "platform_model_tier" SET "replacedBy" = $1 WHERE "platformId" = $2 AND ("id" = ANY($3) OR "replacedBy" = ANY($3))',
+            [replacement.id, platformId, emptiedIds],
+        )
+        await tierRepo(manager).update({ platformId, id: replacement.id }, {
+            ...(emptied.some((tier) => tier.isDefault) ? { isDefault: true } : {}),
+            ...(emptied.some((tier) => tier.isFast) ? { isFast: true } : {}),
+        })
+    },
+
+    async getDefaultForRun({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun | null> {
+        const defaultTier = await tierRepo().findOneBy({ platformId, isDefault: true })
+        if (isNil(defaultTier)) {
+            return null
+        }
+        const { data } = await tryCatch(() => platformModelTierService.getForRun({ platformId, id: defaultTier.id, scope }))
+        return data ?? null
     },
 
     async getFastForRun({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun | null> {
@@ -240,11 +299,15 @@ function entryRunsIn({ entry, key, scope }: { entry: PlatformModelTierEntry, key
         && aiKeyScope.rowAllowsScope({ row: key, scope })
 }
 
-function runnableEntries({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): TierForRun['entries'] {
-    const runnable = tier.entries.flatMap((entry) => {
+function entriesThatRun({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): TierForRun['entries'] {
+    return tier.entries.flatMap((entry) => {
         const key = keyById.get(entry.configId)
         return isNil(key) || !entryRunsIn({ entry, key, scope }) ? [] : [{ modelId: entry.modelId, key }]
     })
+}
+
+function runnableEntries({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): TierForRun['entries'] {
+    const runnable = entriesThatRun({ tier, keyById, scope })
     return [
         ...runnable.filter((entry) => entry.key.status === 'active'),
         ...runnable.filter((entry) => entry.key.status !== 'active'),

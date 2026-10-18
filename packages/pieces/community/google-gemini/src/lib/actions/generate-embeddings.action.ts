@@ -16,6 +16,10 @@ export const generateEmbeddingsAction = createAction({
       'Converts input text into a numerical embedding vector for semantic search, similarity comparison, clustering, or classification. Set Task Type to the intended use (e.g. retrieval_document when indexing content, retrieval_query when searching it) for a better-tuned vector. Idempotent: the same text and settings always produce the same vector.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'content', display: 'section', label: 'Content', icon: 'text', props: ['text'] },
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'taskType'] },
+  ],
   props: {
     text: Property.LongText({
       displayName: 'Text',

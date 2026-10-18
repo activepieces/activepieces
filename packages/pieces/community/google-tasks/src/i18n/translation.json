@@ -22,7 +22,7 @@
   "Hide all completed tasks in a task list.": "Hide all completed tasks in a task list.",
   "List the authenticated user's task lists (id and title).": "List the authenticated user's task lists (id and title).",
   "Make a custom API call to a specific endpoint": "Make a custom API call to a specific endpoint",
-  "Tasks List": "Tasks List",
+  "Task List": "Task List",
   "Title": "Title",
   "Notes": "Notes",
   "Due Date": "Due Date",
@@ -49,8 +49,8 @@
   "Return Error as Output": "Return Error as Output",
   "Timeout": "Timeout",
   "Follow redirects": "Follow redirects",
-  "Due date of the task (YYYY-MM-DD)": "Due date of the task (YYYY-MM-DD)",
-  "Mark task as completed": "Mark task as completed",
+  "Google Tasks keeps the date only; the time is ignored.": "Google Tasks keeps the date only; the time is ignored.",
+  "Add the task already checked off.": "Add the task already checked off.",
   "Include completed tasks in results. Defaults to true.": "Include completed tasks in results. Defaults to true.",
   "Include hidden tasks (tasks that have been completed and a day has passed). Defaults to false.": "Include hidden tasks (tasks that have been completed and a day has passed). Defaults to false.",
   "Return tasks due on or after this date. RFC 3339 timestamp, e.g. 2026-06-01T00:00:00Z.": "Return tasks due on or after this date. RFC 3339 timestamp, e.g. 2026-06-01T00:00:00Z.",
@@ -88,5 +88,7 @@
   "DELETE": "DELETE",
   "HEAD": "HEAD",
   "New Task": "New Task",
-  "Triggers when a task is created": "Triggers when a task is created"
+  "Triggers when a task is added or edited in a list.": "Triggers when a task is added or edited in a list.",
+  "Markdown": "Markdown",
+  "Edits to a task fire this trigger again, so the same task can arrive more than once.": "Edits to a task fire this trigger again, so the same task can arrive more than once."
 }

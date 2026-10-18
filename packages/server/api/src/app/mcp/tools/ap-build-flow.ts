@@ -1,8 +1,9 @@
-import { isNil, Permission } from '@activepieces/core-utils'
+import { isNil, Permission, tryCatch } from '@activepieces/core-utils'
 import { FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
+import { flowVersionValidationUtil } from '../../flows/flow-version/flow-version-validator-util'
 import { domainHelper } from '../../helper/domain-helper'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
@@ -60,7 +61,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
             let flowId: string | undefined
             const projectId = mcp.projectId
             try {
-                const { flowName, trigger, steps, folderName } = buildFlowInput.parse(args)
+                const parsed = buildFlowInput.parse(args)
+                const { flowName, folderName } = parsed
+                const trigger = { ...parsed.trigger, auth: mcpUtils.normalizeAuth(parsed.trigger.auth) }
+                const steps = parsed.steps.map((step) => ({ ...step, auth: mcpUtils.normalizeAuth(step.auth) }))
                 const triggerAuthError = mcpUtils.validateAuth(trigger.auth)
                 if (triggerAuthError) {
                     return triggerAuthError
@@ -193,7 +197,12 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
 
                 const allSteps = flowStructureUtil.getAllSteps(currentFlow.version.trigger)
                 const validCount = allSteps.filter(s => s.valid).length
-                const invalidSteps = allSteps.filter(s => !s.valid).map(s => s.name)
+                const invalidStepList = allSteps.filter(s => !s.valid)
+                const invalidSteps = invalidStepList.map(s => s.name)
+                const describedInvalidSteps = await Promise.all(invalidStepList.map(async (step) => {
+                    const { data: reasons } = await tryCatch(() => flowVersionValidationUtil(log).invalidPieceInputs({ platformId, step }))
+                    return describeInvalidStep({ name: step.name, reasons: reasons ?? [] })
+                }))
                 const stepWord = allSteps.length === 1 ? 'step' : 'steps'
 
                 const skippedHint = skippedSteps.length > 0 ? ` Skipped: ${skippedSteps.join(', ')}.` : ''
@@ -216,7 +225,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 if (invalidSteps.length === 0 && skippedSteps.length === 0) {
                     return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord}, all valid. Open: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
                 }
-                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${invalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix. Open: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
+                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${describedInvalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix. Open: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
             }
             catch (err) {
                 if (flowId) {
@@ -226,6 +235,10 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
             }
         },
     }
+}
+
+function describeInvalidStep({ name, reasons }: { name: string, reasons: string[] }): string {
+    return reasons.length === 0 ? name : `${name} (${reasons.join('; ')})`
 }
 
 async function stepPropertySettings({ actionName, pieceName, pieceVersion, input, projectId, platformId, log }: {

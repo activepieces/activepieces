@@ -36,6 +36,7 @@ The per-project endpoint that exposes Activepieces tools to an external AI assis
 
 - **AI Providers** — configuring backends, credential storage, credit metering
 - **AI Agents** — the Agent step and its tool types
+- **Model Picker** — the builder's tier / credits / key picker and its options endpoint
 - **MCP Server** — the per-project endpoint, tool exposure, visibility rules
 - **AI & MCP** — how the AI and MCP surfaces fit together
 

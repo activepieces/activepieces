@@ -17,12 +17,18 @@ const tabsListVariants = cva('inline-flex', {
   variants: {
     variant: {
       default:
-        'items-center justify-center h-9 rounded-md bg-gray-3 p-1 text-gray-11',
+        'items-center justify-center h-9 rounded-lg bg-gray-3 p-0.5 text-gray-11',
       outline: '',
     },
+    size: {
+      default: '',
+      sm: '',
+    },
   },
+  compoundVariants: [{ variant: 'default', size: 'sm', class: 'h-8' }],
   defaultVariants: {
     variant: 'default',
+    size: 'default',
   },
 });
 
@@ -30,26 +36,35 @@ const tabsTriggerVariants = cva('inline-flex items-center justify-center', {
   variants: {
     variant: {
       default:
-        'whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium ring-offset-gray-1 transition-all focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-panel data-[state=active]:text-gray-12 data-[state=active]:shadow-xs',
+        'h-full whitespace-nowrap rounded-md px-3 text-sm font-medium ring-offset-gray-1 transition-all focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-panel data-[state=active]:text-gray-12 data-[state=active]:shadow-xs',
       outline:
         'px-3 py-1 text-sm font-medium ring-offset-gray-1 transition-all border-b-2 border-transparent data-[state=active]:border-gray-12 data-[state=active]:text-gray-12 text-gray-12',
     },
+    size: {
+      default: '',
+      sm: '',
+    },
   },
+  compoundVariants: [
+    { variant: 'default', size: 'sm', class: 'px-2.5 text-xs' },
+  ],
   defaultVariants: {
     variant: 'default',
+    size: 'default',
   },
 });
 
 function TabsList({
   className,
   variant,
+  size,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List> &
   VariantProps<typeof tabsListVariants>) {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
-      className={cn(tabsListVariants({ variant, className }))}
+      className={cn(tabsListVariants({ variant, size, className }))}
       {...props}
     />
   );
@@ -58,13 +73,14 @@ function TabsList({
 function TabsTrigger({
   className,
   variant,
+  size,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Trigger> &
   VariantProps<typeof tabsTriggerVariants>) {
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
-      className={cn(tabsTriggerVariants({ variant, className }))}
+      className={cn(tabsTriggerVariants({ variant, size, className }))}
       {...props}
     />
   );
@@ -78,7 +94,7 @@ function TabsContent({
     <TabsPrimitive.Content
       data-slot="tabs-content"
       className={cn(
-        'mt-5 ring-offset-gray-1 focus-visible:outline-hidden',
+        'mt-4 ring-offset-gray-1 focus-visible:outline-hidden',
         className,
       )}
       {...props}

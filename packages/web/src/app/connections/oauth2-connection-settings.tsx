@@ -279,7 +279,7 @@ function OAuth2ConnectionSettings({
                 <FormControl>
                   <input type="hidden" {...field} />
                 </FormControl>
-                <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
+                <div className="border border-solid p-2 rounded-xl gap-2 flex text-center items-center justify-center h-full">
                   <LogoPlate
                     src={piece.logoUrl}
                     alt=""

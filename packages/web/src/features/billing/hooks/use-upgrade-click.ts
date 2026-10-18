@@ -3,12 +3,13 @@ import { PlatformAdminSurface, TelemetryEventName } from '@activepieces/shared';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 
 import { FeatureKey } from '../components/request-trial';
-import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 import { FeatureTier } from '../utils/feature-tier';
+
+import { billingDialogHooks } from './billing-dialog-hooks';
 
 export function useUpgradeClick() {
   const { capture } = useTelemetry();
-  const { openDialog } = useManagePlanDialogStore();
+  const { openDialog } = billingDialogHooks.useManagePlanDialogStore();
 
   return ({ feature, tier, surface }: UpgradeClickParams) => {
     capture({

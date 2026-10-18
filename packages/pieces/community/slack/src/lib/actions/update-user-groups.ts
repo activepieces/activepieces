@@ -17,6 +17,22 @@ export const updateGroupUsersAction = createAction({
     idempotent: false,
   },
   outputSchema: updateGroupUsersActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'user_group',
+      display: 'section',
+      label: 'User group',
+      icon: 'tag',
+      props: ['handle'],
+    },
+    {
+      key: 'members',
+      display: 'section',
+      label: 'Members',
+      icon: 'users',
+      props: ['userIds', 'appendUsers'],
+    },
+  ],
   props: {
     handle: Property.ShortText({
       displayName: 'Group Handle',

@@ -162,11 +162,9 @@ export const platformRoutes = [
       <PlatformLayout>
         <PageTitle title="AI Center">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <PlanFeatureSample feature="aiProviders">
-              <SuspenseWrapper>
-                <AIProvidersPage section="providers" />
-              </SuspenseWrapper>
-            </PlanFeatureSample>
+            <SuspenseWrapper>
+              <AIProvidersPage section="providers" />
+            </SuspenseWrapper>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>

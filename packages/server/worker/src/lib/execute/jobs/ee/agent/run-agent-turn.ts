@@ -18,6 +18,7 @@ const CONTENT_CHUNK_TYPES = new Set(['text-delta', 'reasoning-delta', 'tool-inpu
 const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
 const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
 const USER_CONFIG_ENTITY_TYPES = new Set<string>(Object.values(AI_PROVIDER_ENTITY_TYPES))
+const USER_FACING_ERROR_CODES = new Set<string>([ErrorCode.VALIDATION, ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED])
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
 const FINAL_STEP_NOTE = '[system note — not from the user] This is the last step of this run. Finish now with what you have: say what you finished and what is still left to do, and offer to carry on. Do not mention steps, tools or this note.'
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
@@ -63,13 +64,13 @@ export function drainOf({ state }: { state: StepContentState }): StreamDrain {
     return { lastStepSentContent: state.sentWhenFailed ?? state.sentInStep }
 }
 
-export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ models, fastModel, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, creditsLeft, priorToolCalls, onModelOutcome, onStepModel, skills }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? ((result: ReturnType<typeof streamText>) => result.consumeStream())
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
     let creditsExhausted = false
     let paidToolsAffordable = true
-    let earlierAttemptToolCalls: ChatToolCall[] = []
+    let earlierAttemptToolCalls: ChatToolCall[] = priorToolCalls ?? []
     const creditsRanOut: StopCondition<ToolSet> = async ({ steps }) => {
         if (isNil(creditsLeft)) {
             return false
@@ -171,7 +172,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             const stepModel = isFirstStep && !isNil(fast) ? fast : current()
             const usesFastModel = stepModel !== current()
             const stepBudget = stepModel.budget
-            const visibleTools = skillSurface?.coreToolNames ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
+            const visibleTools = skillSurface?.attachedToolNames() ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
             const phaseTools = isNil(skillSurface) ? visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)) : visibleTools
             const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
             const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider: stepModel.provider })
@@ -506,9 +507,9 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
         return 'credit'
     }
     if (isNil(apiError)) {
-        return apError?.code === ErrorCode.ENTITY_NOT_FOUND && USER_CONFIG_ENTITY_TYPES.has(apError.entityType ?? '')
-            ? 'user'
-            : 'internal'
+        const missingUserConfig = apError?.code === ErrorCode.ENTITY_NOT_FOUND && USER_CONFIG_ENTITY_TYPES.has(apError.entityType ?? '')
+        const rejectedWithReason = USER_FACING_ERROR_CODES.has(apError?.code ?? '')
+        return missingUserConfig || rejectedWithReason ? 'user' : 'internal'
     }
     if (apiError.statusCode === 400 && provider !== AIProviderName.ACTIVEPIECES && MODEL_UNAVAILABLE_PATTERNS.some((pattern) => pattern.test(message))) {
         return 'user'
@@ -654,6 +655,7 @@ export type RunAgentTurnParams = {
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
     stepCeiling?: number
     creditsLeft?: (pendingCredits: number) => Promise<number | null>
+    priorToolCalls?: ChatToolCall[]
     onModelOutcome?: (outcome: { turnModel: TurnModel, signal: ProviderOutcomeSignal }) => void
     onStepModel?: (turnModel: TurnModel) => void
     skills?: { surface: SkillSurface, guides: Record<string, string> }

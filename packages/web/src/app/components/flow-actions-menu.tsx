@@ -371,7 +371,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                         )}
                       </div>
                       {isDevelopmentBranch && (
-                        <div className="font-bold mt-2">
+                        <div className="font-semibold mt-2">
                           {t(
                             'You are on a development branch, this will also delete the flow from the remote repository.',
                           )}

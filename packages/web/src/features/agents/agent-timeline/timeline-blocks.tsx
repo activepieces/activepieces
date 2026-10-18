@@ -110,7 +110,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
         <LogoPlate
           src={metadata.logoUrl}
           alt="Tool logo"
-          className="size-4 rounded-sm p-px"
+          className="size-4 rounded-md p-px"
         />
       );
     return <Wrench className="h-4 w-4 shrink-0" />;

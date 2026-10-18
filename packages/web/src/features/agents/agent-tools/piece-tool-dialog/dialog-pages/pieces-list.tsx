@@ -26,7 +26,7 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b">
-        <div className="relative border rounded-sm">
+        <div className="relative border rounded-md">
           <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
           <Input
             placeholder={t('Search')}
@@ -41,7 +41,7 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
         {isPiecesLoading ? (
           <div className="grid grid-cols-3 gap-4">
             {Array.from({ length: 22 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-lg" />
+              <Skeleton key={i} className="h-12 w-full rounded-xl" />
             ))}
           </div>
         ) : isEmpty ? (
@@ -54,10 +54,10 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
               <div
                 key={index}
                 onClick={() => handlePieceSelect(piece)}
-                className="p-2 flex items-center gap-x-2 hover:bg-gray-4 cursor-pointer rounded-lg"
+                className="p-2 flex items-center gap-x-2 hover:bg-gray-4 cursor-pointer rounded-xl"
               >
                 <LogoPlate
-                  className="size-9 rounded-sm p-1.5"
+                  className="size-9 rounded-md p-1.5"
                   border
                   src={piece.logoUrl}
                   alt={piece.displayName}
