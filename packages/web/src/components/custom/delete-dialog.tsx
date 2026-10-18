@@ -4,6 +4,7 @@ import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { TypeToConfirm } from '@/components/custom/type-to-confirm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,8 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 interface ConfirmationDeleteDialogProps {
@@ -122,18 +121,13 @@ export const ConfirmationDeleteDialog = ({
             <AlertDescription>{warning}</AlertDescription>
           </Alert>
         )}
-        {confirmText && (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="delete-confirm-text">
-              {t('Type {text} to confirm', { text: confirmText })}
-            </Label>
-            <Input
-              id="delete-confirm-text"
-              value={typed}
-              onChange={(event) => setTyped(event.target.value)}
-              autoComplete="off"
-            />
-          </div>
+        {confirmText && !confirmDisabled && (
+          <TypeToConfirm
+            id="delete-confirm-text"
+            text={confirmText}
+            value={typed}
+            onChange={setTyped}
+          />
         )}
         <DialogFooter className="mt-3">
           <Button

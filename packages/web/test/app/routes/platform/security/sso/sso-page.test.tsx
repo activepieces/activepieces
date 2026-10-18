@@ -354,7 +354,7 @@ describe('SSOPage', () => {
 
     expect(
       within(screen.getByRole('dialog')).getByText(
-        'Email and Google sign-in are off. Turn one on first so people can still sign in.',
+        "You can't do this while single sign-on is the only way to sign in. Turn on email or Google sign-in first.",
       ),
     ).toBeDefined();
   });
@@ -370,8 +370,10 @@ describe('SSOPage', () => {
 
     click(menuItem('Remove domain'));
     const dialog = screen.getByRole('dialog');
-    typeToConfirm(dialog, 'acme.com');
 
+    expect(
+      within(dialog).queryByLabelText('Type acme.com to confirm'),
+    ).toBeNull();
     expect(findButton('Remove domain and disable SAML', dialog)?.disabled).toBe(
       true,
     );
@@ -392,7 +394,7 @@ describe('SSOPage', () => {
 
     expect(
       within(screen.getByRole('dialog')).queryByText(
-        'Email and Google sign-in are off. Turn one on first so people can still sign in.',
+        "You can't do this while single sign-on is the only way to sign in. Turn on email or Google sign-in first.",
       ),
     ).toBeNull();
   });
@@ -411,7 +413,7 @@ describe('SSOPage', () => {
 
     expect(
       within(screen.getByRole('dialog')).getByText(
-        'Email and Google sign-in are off. Turn one on first so people can still sign in.',
+        "You can't do this while single sign-on is the only way to sign in. Turn on email or Google sign-in first.",
       ),
     ).toBeDefined();
   });
@@ -802,8 +804,10 @@ describe('SamlSetupPage', () => {
 
     click(findButton('Disable'));
     const dialog = screen.getByRole('dialog');
-    typeToConfirm(dialog, 'disable');
 
+    expect(
+      within(dialog).queryByLabelText('Type disable to confirm'),
+    ).toBeNull();
     expect(findButton('Disable', dialog)?.disabled).toBe(true);
   });
   it('shows no Disable when SAML is not connected', () => {

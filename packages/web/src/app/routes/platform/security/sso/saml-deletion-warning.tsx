@@ -12,7 +12,7 @@ export const SamlDeletionWarning = ({
     {otherMethodsOff && (
       <span>
         {t(
-          'Email and Google sign-in are off. Turn one on first so people can still sign in.',
+          "You can't do this while single sign-on is the only way to sign in. Turn on email or Google sign-in first.",
         )}
       </span>
     )}

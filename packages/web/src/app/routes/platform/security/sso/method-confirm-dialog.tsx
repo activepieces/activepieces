@@ -3,6 +3,7 @@ import { TriangleAlert } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { adminLayout } from '@/app/components/admin';
+import { TypeToConfirm } from '@/components/custom/type-to-confirm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,8 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export const MethodConfirmDialog = ({
@@ -54,18 +53,13 @@ export const MethodConfirmDialog = ({
             <AlertDescription>{warning}</AlertDescription>
           </Alert>
         )}
-        {confirmText && (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="method-confirm-text">
-              {t('Type {text} to confirm', { text: confirmText })}
-            </Label>
-            <Input
-              id="method-confirm-text"
-              value={typed}
-              onChange={(event) => setTyped(event.target.value)}
-              autoComplete="off"
-            />
-          </div>
+        {confirmText && !confirmDisabled && (
+          <TypeToConfirm
+            id="method-confirm-text"
+            text={confirmText}
+            value={typed}
+            onChange={setTyped}
+          />
         )}
         <DialogFooter>
           <Button
