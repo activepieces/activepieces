@@ -23,7 +23,7 @@ const newSwipefileAd = createTrigger({
   displayName: 'New Swipefile Ad',
   description: 'Triggers when a new ad is saved to your swipe file.',
   aiMetadata: {
-    description: 'Fires when an ad is newly saved to the Foreplay user\'s swipe file (checked newest saved first), optionally narrowed by ad date range, platform, format, niche, market, language and live status. Each event is one ad. Costs 1 Foreplay credit per ad checked on every poll.',
+    description: 'Fires when an ad is newly saved to the Foreplay user\'s swipe file (checked newest saved first), optionally narrowed by ad date range, platform, format, niche, market, language and live status. Each event is one ad. Costs 1 Foreplay credit per ad checked on every poll (at most 5 pages per poll). Known limit: Foreplay pages the swipe file only by offset, with no stable cursor or saved-after filter, so if ads are saved or removed while a burst larger than 5 pages is still being worked through, one ad may be missed or repeated.',
   },
   classification: 'READ',
   type: TriggerStrategy.POLLING,
