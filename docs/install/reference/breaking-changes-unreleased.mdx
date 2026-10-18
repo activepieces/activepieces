@@ -14,13 +14,24 @@ A code step without an explicit `useDeno` flag now executes in the Deno runtime 
 
 #### What you need to do
 
-Most code steps keep working unchanged: sources are transpiled to CommonJS, so Node-style code (`require`, `exports`, `module.exports`, `__dirname`, even undeclared variable assignments) runs as before, and dependencies from the step's `package.json` install and resolve as before. Review your code steps against this list of what actually changes — these are the cases that break, observed while migrating the cloud fleet:
+Most code steps keep working unchanged: sources are transpiled to CommonJS, so Node-style code (`require`, `exports`, `module.exports`, `__dirname`, even undeclared variable assignments) runs as before, and dependencies from the step's `package.json` install and resolve as before. What actually changes depends on your `AP_EXECUTION_MODE` — the two legacy sandboxes were very different, so the review lists differ.
 
-- **Environment variables are no longer inherited.** The legacy Node sandbox (in `UNSANDBOXED` and `SANDBOX_PROCESS` modes) exposed the worker container's entire environment to `process.env`; the Deno sandbox exposes only `PATH`. A code step that reads a custom env var now gets `undefined`. List the variables your steps need in `AP_SANDBOX_PROPAGATED_ENV_VARS` (comma-separated) to pass them through.
-- **Filesystem access is confined to the OS temp directory.** Legacy code steps in `UNSANDBOXED`/`SANDBOX_PROCESS` could read and write any path the worker could; Deno grants read/write only under `os.tmpdir()`. Reads or writes elsewhere fail with a `NotCapable` permission error. Write scratch files with `os.tmpdir()` + `path.join` instead of hardcoded absolute paths. (In the `SANDBOX_CODE_ONLY`/`SANDBOX_CODE_AND_PROCESS` modes nothing changes: the v8 isolate had no filesystem at all, and the locked Deno sandbox also denies it.)
-- **Spawning processes is denied.** `child_process` (`spawn`, `exec`, …) worked in legacy `UNSANDBOXED`/`SANDBOX_PROCESS`; the Deno sandbox has no run permission, so it fails with `NotCapable`.
+**If you run `UNSANDBOXED` or `SANDBOX_PROCESS`** — the legacy sandbox here was an unrestricted Node child process, so this is where restrictions are new:
+
+- **Environment variables are no longer inherited.** The legacy sandbox exposed the worker container's entire environment to `process.env`; the Deno sandbox exposes only `PATH`. A code step that reads a custom env var now gets `undefined`. List the variables your steps need in `AP_SANDBOX_PROPAGATED_ENV_VARS` (comma-separated) to pass them through.
+- **Filesystem access is confined to the OS temp directory.** Legacy code steps could read and write any path the worker could; Deno grants read/write only under `os.tmpdir()`. Reads or writes elsewhere fail with a `NotCapable` permission error. Write scratch files with `os.tmpdir()` + `path.join` instead of hardcoded absolute paths.
+- **Spawning processes is denied.** `child_process` (`spawn`, `exec`, …) worked before; the Deno sandbox has no run permission, so it fails with `NotCapable`.
+- Network access and memory stay as they were: outbound requests are allowed, and the step's heap is uncapped.
+
+**If you run `SANDBOX_CODE_ONLY` or `SANDBOX_CODE_AND_PROCESS`** — the legacy sandbox here was a v8 isolate with no Node APIs at all, so little is newly restricted and steps gain capabilities:
+
+- Filesystem, network, environment and process access stay denied, exactly as in the isolate.
+- The 128MB heap cap is unchanged, but an over-limit step now dies with a process signal error instead of an isolate memory error — update any alerting that matches on the old message.
+- Steps gain working `require` of their installed `package.json` dependencies and of Node built-ins for pure computation (`node:crypto`, `node:path`, …), which the isolate could not do.
+
+**In every mode:**
+
 - **Steps using top-level `await` run as strict ES modules** (they cannot be transpiled to CommonJS). Inside such a step: assigning to an undeclared variable throws `ReferenceError` instead of creating a global, and `require`, `exports`, `module`, `__dirname`, `__filename` are unavailable. Declare variables (`const`/`let`) and use `import` syntax in these steps, or move the awaited call inside the exported `code` function so the step can be transpiled.
-- **Memory limits:** in `SANDBOX_CODE_ONLY`/`SANDBOX_CODE_AND_PROCESS` a step's JavaScript heap is capped at 128MB — the same cap the v8 isolate enforced, now failing with a process signal instead of an isolate error. `UNSANDBOXED`/`SANDBOX_PROCESS` stay uncapped.
 - **Exotic Node internals may be missing.** Deno's Node compatibility layer covers the standard library that pieces and typical steps use, but low-level APIs (`process.binding`, `node:vm`, `node:cluster`, parts of `node:worker_threads`) and native addons that predate Node-API are not guaranteed. Steps or dependencies relying on them need review.
 - **Custom deployments** that do not use the official Docker images must provide a Deno binary and point `AP_DENO_PATH` at it; without it every code step fails at spawn.
 
