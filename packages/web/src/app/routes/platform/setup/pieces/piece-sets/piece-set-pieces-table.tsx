@@ -196,12 +196,12 @@ export const PieceSetPiecesTable = ({ pieceSet }: PieceSetPiecesTableProps) => {
                           : undefined,
                       )}
                       type="button"
-                      className={cn(
-                        'cursor-pointer',
-                        !included && 'opacity-50',
-                      )}
+                      className="cursor-pointer"
                     >
-                      <Badge variant="secondary">
+                      <Badge
+                        variant="secondary"
+                        className={cn(!included && 'text-gray-11')}
+                      >
                         {curated
                           ? t('{count} of {total} included', {
                               count: selectedCount,
