@@ -1,3 +1,4 @@
+import { partition } from '@activepieces/core-utils'
 import { ToolExecutionOptions, ToolSet } from 'ai'
 import { toolHasExecute } from './tool-primitives'
 
@@ -10,10 +11,11 @@ export function wrapToolsWithUserWaitBarrier({ tools }: { tools: ToolSet }): Too
         const originalExecute = tool.execute.bind(tool)
         const claimKind = ASKS_USER_TOOLS.has(toolName) ? 'ask' : MAY_WAIT_FOR_USER_TOOLS.has(toolName) ? 'gate' : null
         const execute = async (args: unknown, options?: ToolExecutionOptions<undefined>) => {
-            const until = claimKind === 'gate' ? 'questions-answered' : 'all-answered'
-            const waited = claimKind === 'ask' || barrier.isAnswered(until) ? 'clear' : await barrier.waitForUser({ until })
-            if (waited === 'after-question') {
-                return { content: [{ type: 'text', text: HELD_BEHIND_QUESTION_MESSAGE }] }
+            if (claimKind !== 'ask') {
+                const until = claimKind === 'gate' ? 'questions-answered' : 'all-answered'
+                if (!barrier.isAnswered(until) && await barrier.waitForUser({ until }) === 'after-question') {
+                    return { content: [{ type: 'text', text: HELD_BEHIND_QUESTION_MESSAGE }] }
+                }
             }
             if (claimKind === null) {
                 return originalExecute(args, options)
@@ -48,7 +50,7 @@ function createBarrier(): Barrier {
                 }
                 released = true
                 openClaims[kind] -= 1
-                const [ready, stillWaiting] = partitionWaiters({ waiters, isAnswered })
+                const [ready, stillWaiting] = partition(waiters, (waiter) => isAnswered(waiter.until))
                 waiters = stillWaiting
                 ready.forEach((waiter) => waiter.wake(waiter.sawQuestion ? 'after-question' : 'after-approval'))
             }
@@ -57,10 +59,6 @@ function createBarrier(): Barrier {
             waiters = [...waiters, { until, sawQuestion: openClaims.ask > 0, wake }]
         }),
     }
-}
-
-function partitionWaiters({ waiters, isAnswered }: { waiters: Waiter[], isAnswered: (until: WaitUntil) => boolean }): [Waiter[], Waiter[]] {
-    return [waiters.filter((waiter) => isAnswered(waiter.until)), waiters.filter((waiter) => !isAnswered(waiter.until))]
 }
 
 const ASKS_USER_TOOLS = new Set([
@@ -95,7 +93,7 @@ const NEVER_HELD_TOOLS = new Set([
 
 const HELD_BEHIND_QUESTION_MESSAGE = 'Not run: you asked the user a question in the same step. Their answer is in that question\'s result now. Redo this change if it still fits the answer.'
 
-type WaitResult = 'clear' | 'after-question' | 'after-approval'
+type WaitResult = 'after-question' | 'after-approval'
 
 type WaitUntil = 'questions-answered' | 'all-answered'
 
