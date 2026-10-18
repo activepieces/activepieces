@@ -325,6 +325,14 @@ function injectFilePartsIntoLastUserMessage({
   return result;
 }
 
+function isSendCancelled({
+  statusRef,
+}: {
+  statusRef: { current: SendStatus };
+}): boolean {
+  return statusRef.current.type === 'cancelled';
+}
+
 type SendStatus =
   | { type: 'idle' }
   | { type: 'submitting' }
@@ -785,6 +793,9 @@ export function useAgentChat({
     ) => {
       updateSendStatus({ type: 'submitting' });
       await pickSaveQueueRef.current;
+      if (isSendCancelled({ statusRef: sendStatusRef })) {
+        return;
+      }
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
@@ -848,7 +859,7 @@ export function useAgentChat({
           });
           return;
         }
-        if (sendStatusRef.current.type === 'cancelled') {
+        if (isSendCancelled({ statusRef: sendStatusRef })) {
           setOptimisticUserMessage(null);
           return;
         }
