@@ -19,7 +19,11 @@ export { CancelSubscriptionDialog } from './components/cancel-subscription-dialo
 export { Error } from './components/error';
 export { LicenseKey } from './components/license-key';
 export { Success } from './components/success';
-export { billingMutations, billingQueries } from './hooks/billing-hooks';
+export {
+  billingKeys,
+  billingMutations,
+  billingQueries,
+} from './hooks/billing-hooks';
 export { billingUtils } from './utils/billing-utils';
 export { useSeatLimitGuard } from './hooks/use-seat-limit-guard';
 export { useTeamProjectLimitGuard } from './hooks/use-team-project-limit-guard';
@@ -30,11 +34,24 @@ export {
 } from './components/plan-selector-utils';
 export { billingDialogHooks } from './hooks/billing-dialog-hooks';
 export { AutomaticTrialActivation } from './components/automatic-trial-activation';
-export { useFeatureGate, UpgradeFeatureDialog } from './hooks/use-feature-gate';
 export { useUpgradeClick } from './hooks/use-upgrade-click';
-export type { PlatformFeature } from './hooks/use-feature-gate';
-export { RequestTrial } from './components/request-trial';
 export type { FeatureKey } from './components/request-trial';
-export { TIER_LABELS } from './utils/feature-tier';
 export type { FeatureTier } from './utils/feature-tier';
 export { PLATFORM_FEATURES } from './utils/platform-features';
+export { EnterpriseTrialBillingStatus } from './components/enterprise-trial-billing-status';
+export { EnterpriseTrialDialog } from './components/enterprise-trial-dialog';
+export { EnterpriseTrialEndingAlert } from './components/enterprise-trial-ending-alert';
+export { EnterprisePlanIndicator } from './components/enterprise-trial-pill';
+export { enterpriseTrialHooks } from './hooks/enterprise-trial-hooks';
+export { LockedGem } from './components/locked-gem';
+export { PlanBadge } from './components/plan-badge';
+export { seatUtils } from './utils/seat-utils';
+export { EnterpriseLockedRow } from './components/enterprise-locked-row';
+export { EnterpriseTrialSalesLink } from './components/enterprise-trial-sales-link';
+export { EnterpriseLockedCard } from './components/enterprise-locked-card';
+export { EnterpriseUsageMeter } from './components/enterprise-usage-meter';
+export { useEnterpriseGate } from './hooks/use-enterprise-gate';
+export type { EnterpriseGate as EnterpriseGateState } from './hooks/use-enterprise-gate';
+export { planTiers } from './utils/plan-tiers';
+export { enterpriseDocs } from './utils/enterprise-docs';
+export { usePlanTier } from './hooks/use-plan-tier';

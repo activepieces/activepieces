@@ -9,6 +9,7 @@ export function SettingsPanel({
   title,
   description,
   action,
+  meta,
   flush = false,
   className,
   children,
@@ -28,7 +29,12 @@ export function SettingsPanel({
         >
           <div className="flex min-w-0 flex-col gap-1">
             {title && (
-              <h2 className="text-sm font-semibold text-gray-12">{title}</h2>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <h2 className="min-w-0 text-sm font-semibold text-gray-12">
+                  {title}
+                </h2>
+                {meta}
+              </div>
             )}
             {description && (
               <p className="text-sm text-gray-11">{description}</p>
@@ -122,6 +128,7 @@ type SettingsPanelProps = {
   title?: ReactNode;
   description?: ReactNode;
   action?: ReactNode;
+  meta?: ReactNode;
   flush?: boolean;
   className?: string;
   children: ReactNode;
