@@ -8,6 +8,20 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### PostHog requires https hosts, and agents can no longer create projects
+
+PostHog 0.7.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+The PostHog host on a connection must now start with `https://`. A plain `http://` host is accepted only for `localhost`, so a connection that points at a self-hosted PostHog over plain http fails on upgraded steps. Inputs are also validated more strictly before the request is sent, so a step that used to send an empty or malformed value now stops with a clear error instead.
+
+**Create Project** is no longer offered as a tool to AI agents. It still works as a normal flow step.
+
+The **New Event** trigger now follows up to 10 pages of new events per poll instead of only the first 100 events, so a busy project can start more runs per poll. **Capture Event** returns extra fields next to the unchanged `status`.
+
+#### What you need to do
+
+If your PostHog host uses plain http, serve it over https and update the connection's host. Remove Create Project from any agent's tool list and use a flow step instead.
+
 #### Each chat keeps the AI model and key it started on
 
 A chat used to run on whatever key was the **Default AI key** at the time of each message. Now a chat remembers the key and model it first ran on. Changing the Default AI key affects new chats only. An existing chat moves to the new default only when its key is deleted, or no longer covers the chat's project or model.
