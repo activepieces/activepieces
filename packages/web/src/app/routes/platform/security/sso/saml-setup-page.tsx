@@ -136,7 +136,8 @@ const DisableSamlRow = ({
         title={t('Disable single sign-on?')}
         description={
           <span className="flex flex-col gap-2">
-            <span>
+            <span className="flex items-start gap-2 rounded-lg border border-danger-7 bg-danger-3 p-3 font-medium text-danger-11">
+              <TriangleAlert className="mt-0.5 size-4 shrink-0" />
               {t(
                 'Your SAML connection will be deleted, so people who use single sign-on will have to sign in another way.',
               )}
