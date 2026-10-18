@@ -1,70 +1,34 @@
 import { isNil } from '@activepieces/core-utils';
-import {
-  PlatformAdminSurface,
-  TelemetryEventName,
-  UserWithMetaInformation,
-} from '@activepieces/shared';
-import { t } from 'i18next';
+import { UserWithMetaInformation } from '@activepieces/shared';
 
-import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { SendIcon } from '@/components/icons/send';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { userHooks } from '@/hooks/user-hooks';
 import { telemetryUtils } from '@/lib/telemetry-utils';
 
-export const RequestTrial = ({
-  featureKey,
-  surface,
-  buttonVariant = 'default',
-  buttonSize = 'default',
-}: RequestTrialProps) => {
+export function useSalesUrl(featureKey?: FeatureKey): string {
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { capture } = useTelemetry();
-
-  const handleClick = () => {
-    if (surface !== undefined) {
-      capture({
-        name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
-        payload: { feature: featureKey, surface },
-      });
-    }
-    capture({
-      name: TelemetryEventName.SALES_HANDOFF_CLICKED,
-      payload: { featureKey, surface: 'locked_feature' },
-    });
-    window.open(
-      buildSalesUrl({ currentUser, featureKey }),
-      '_blank',
-      'noopener noreferrer',
-    );
-  };
-
-  return (
-    <AnimatedIconButton
-      variant={buttonVariant}
-      size={buttonSize}
-      onClick={handleClick}
-      icon={SendIcon}
-      iconSize={14}
-    >
-      {t('Contact Sales')}
-    </AnimatedIconButton>
-  );
-};
+  return buildSalesUrl({ currentUser, featureKey });
+}
 
 function buildSalesUrl({
   currentUser,
   featureKey,
 }: {
   currentUser: UserWithMetaInformation | null | undefined;
-  featureKey: FeatureKey;
+  featureKey: FeatureKey | undefined;
 }): string {
   const url = new URL(SALES_URL);
   url.searchParams.set('email', currentUser?.email ?? '');
   url.searchParams.set('firstName', currentUser?.firstName ?? '');
   url.searchParams.set('lastName', currentUser?.lastName ?? '');
-  url.searchParams.set('featureKey', featureKey);
-  url.searchParams.set('ap_cta', `app_${featureKey.toLowerCase()}`);
+  if (!isNil(featureKey)) {
+    url.searchParams.set('featureKey', featureKey);
+  }
+  url.searchParams.set(
+    'ap_cta',
+    isNil(featureKey)
+      ? 'app_enterprise_trial'
+      : `app_${featureKey.toLowerCase()}`,
+  );
   const sessionId = telemetryUtils.getSessionId();
   if (!isNil(sessionId)) {
     url.searchParams.set('ap_sid', sessionId);
@@ -101,11 +65,3 @@ export type FeatureKey =
   | 'MCPS'
   | 'SECRET_MANAGERS'
   | 'DEDICATED_WORKERS';
-
-type RequestTrialProps = {
-  featureKey: FeatureKey;
-  surface?: Exclude<PlatformAdminSurface, PlatformAdminSurface.DIALOG>;
-  customButton?: React.ReactNode;
-  buttonVariant?: 'default' | 'basic';
-  buttonSize?: 'default' | 'sm' | 'xs';
-};

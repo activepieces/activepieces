@@ -3,8 +3,10 @@
  */
 /* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 /* eslint-disable testing-library/no-container, testing-library/no-node-access -- <video> has no implicit ARIA role */
+import { ErrorCode } from '@activepieces/core-utils';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
+import { AxiosError, AxiosHeaders } from 'axios';
 import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,6 +14,7 @@ let teamProjectsLimit: number | null = 0;
 let aiProvidersEnabled = false;
 let edition = 'cloud';
 const createProject = vi.fn();
+const createProjectHandlers: { onError?: (error: unknown) => void } = {};
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -49,17 +52,6 @@ vi.mock('@/hooks/flags-hooks', () => ({
     useFlags: () => ({ data: {} }),
   },
 }));
-vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
-  billingDialogHooks: {
-    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
-  },
-}));
-vi.mock('@/features/billing', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  billingDialogHooks: {
-    useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
-  },
-}));
 vi.mock('@/features/connections', () => ({
   globalConnectionsQueries: {
     useGlobalConnections: () => ({ data: { data: [] }, isLoading: false }),
@@ -68,7 +60,13 @@ vi.mock('@/features/connections', () => ({
 vi.mock('@/features/projects', () => ({
   projectCollectionUtils: {
     invalidate: vi.fn(),
-    useCreateProject: () => ({ mutate: createProject, isPending: false }),
+    useCreateProject: (
+      _onSuccess: unknown,
+      onError: (error: unknown) => void,
+    ) => {
+      createProjectHandlers.onError = onError;
+      return { mutate: createProject, isPending: false };
+    },
   },
 }));
 vi.mock('@/components/custom/global-connection-utils', () => ({
@@ -100,14 +98,14 @@ vi.mock('@/components/ui/sidebar-shadcn', () => ({
   ),
 }));
 
-import { FeatureSample } from '@/app/components/feature-sample';
-import { FeatureTeaser } from '@/app/components/feature-teaser';
+import { FeatureSample } from '@/app/components/enterprise-gate';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
+import { billingDialogHooks } from '@/features/billing/hooks/billing-dialog-hooks';
 import { CreateProjectButton } from '@/features/projects/components/create-project-button';
 
-const LIMIT_REACHED_COPY = "You've reached your team project limit";
-const SHOWCASE_VIDEO =
-  'https://cdn.activepieces.com/videos/showcase/api-keys.mp4';
+const useEnterpriseTrialDialogStore =
+  billingDialogHooks.useEnterpriseTrialDialogStore;
 
 const renderWithQueryClient = (ui: React.ReactElement) =>
   render(
@@ -123,7 +121,19 @@ const renderWithQueryClient = (ui: React.ReactElement) =>
 const usedTeamProjects = (count: number) =>
   Array.from({ length: count }, () => ({ type: 'TEAM' })) as never;
 
+const quotaExceededError = () => {
+  const config = { headers: new AxiosHeaders() };
+  return new AxiosError('quota', 'ERR_BAD_REQUEST', config, undefined, {
+    data: { code: ErrorCode.QUOTA_EXCEEDED, params: {} },
+    status: 402,
+    statusText: 'Payment Required',
+    headers: {},
+    config,
+  });
+};
+
 beforeEach(() => {
+  useEnterpriseTrialDialogStore.getState().closeDialog();
   teamProjectsLimit = 0;
   aiProvidersEnabled = false;
   edition = 'cloud';
@@ -155,37 +165,43 @@ describe('create project gating', () => {
     expect(screen.getByTestId('gem')).toBeDefined();
   });
 
-  it('refuses on the click instead of after the form is filled in', () => {
-    teamProjectsLimit = 3;
-    renderWithQueryClient(
-      <CreateProjectButton variant="full" projects={usedTeamProjects(3)} />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.getByText(LIMIT_REACHED_COPY)).toBeDefined();
-    expect(screen.queryAllByRole('textbox')).toHaveLength(0);
-    expect(createProject).not.toHaveBeenCalled();
-  });
+  it.each([
+    { edition: 'cloud', limit: 3 },
+    { edition: 'ce', limit: 1 },
+  ])(
+    'refuses on the click and opens the trial dialog for team projects on $edition',
+    ({ edition: currentEdition, limit }) => {
+      edition = currentEdition;
+      teamProjectsLimit = limit;
+      renderWithQueryClient(
+        <CreateProjectButton
+          variant="full"
+          projects={usedTeamProjects(limit)}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: /new project/i }));
+      const payload = useEnterpriseTrialDialogStore.getState().payload;
+      expect(payload?.featureKey).toBe('PROJECTS');
+      expect(payload?.resume).toBeUndefined();
+      expect(screen.queryAllByRole('textbox')).toHaveLength(0);
+      expect(createProject).not.toHaveBeenCalled();
+    },
+  );
 
-  it('offers contact sales instead of a dead upgrade button on community', () => {
-    edition = 'ce';
-    teamProjectsLimit = 1;
-    renderWithQueryClient(
-      <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
-    expect(screen.queryByRole('button', { name: /explore plans/i })).toBeNull();
-  });
-
-  it('keeps explore plans where the plan dialog is actually mounted', () => {
+  it('shows the limit instead of a generic error when the server refuses the project', () => {
     edition = 'cloud';
-    teamProjectsLimit = 1;
+    teamProjectsLimit = null;
     renderWithQueryClient(
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.getByRole('button', { name: /explore plans/i })).toBeDefined();
-    expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
+    act(() => {
+      createProjectHandlers.onError?.(quotaExceededError());
+    });
+    expect(useEnterpriseTrialDialogStore.getState().payload?.featureKey).toBe(
+      'PROJECTS',
+    );
+    expect(screen.queryAllByRole('textbox')).toHaveLength(0);
   });
 
   it('still opens the form when the plan has room', () => {
@@ -194,95 +210,49 @@ describe('create project gating', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(screen.queryByText(LIMIT_REACHED_COPY)).toBeNull();
+    expect(useEnterpriseTrialDialogStore.getState().payload).toBeNull();
     expect(screen.queryAllByRole('textbox').length).toBeGreaterThan(0);
   });
 });
 
-describe('feature teaser', () => {
-  it('plays the showcase video on community, same as every other edition', () => {
+describe('locked feature guard', () => {
+  it('offers talk to sales on community', () => {
     edition = 'ce';
-    const { container } = render(
-      <FeatureTeaser
+    renderWithQueryClient(
+      <LockedFeatureGuard
+        locked
         featureKey="API"
-        title="Enable API Keys"
-        description=""
-        videoUrl={SHOWCASE_VIDEO}
-      />,
+        lockTitle="Enable API Keys"
+        lockDescription=""
+      >
+        <div />
+      </LockedFeatureGuard>,
     );
-    expect(container.querySelector('video')?.getAttribute('src')).toBe(
-      SHOWCASE_VIDEO,
-    );
-  });
-
-  it('offers contact sales on community, as the locked page did before', () => {
-    edition = 'ce';
-    render(
-      <FeatureTeaser featureKey="API" title="Enable API Keys" description="" />,
-    );
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
-  });
-
-  it('drops contact sales only where the caller opts out', () => {
-    edition = 'ce';
-    render(
-      <FeatureTeaser
-        featureKey="BILLING"
-        title="Enable Billing"
-        description=""
-        showContactSales={false}
-      />,
-    );
-    expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
-  });
-
-  it('plays the showcase video on cloud', () => {
-    edition = 'cloud';
-    const { container } = render(
-      <FeatureTeaser
-        featureKey="API"
-        title="Enable API Keys"
-        description=""
-        videoUrl={SHOWCASE_VIDEO}
-      />,
-    );
-    expect(container.querySelector('video')?.getAttribute('src')).toBe(
-      SHOWCASE_VIDEO,
-    );
+    expect(screen.getByRole('link', { name: /talk to sales/i })).toBeDefined();
   });
 });
 
 describe('feature sample', () => {
-  it('offers contact sales on community', () => {
+  it('offers talk to sales on community', () => {
     edition = 'ce';
-    render(
+    renderWithQueryClient(
       <FeatureSample locked title="Unlock Audit Logs" featureKey="AUDIT_LOGS">
         <div />
       </FeatureSample>,
     );
-    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
-  });
-
-  it('shows no sales form for a surface with no feature key', () => {
-    edition = 'ce';
-    render(
-      <FeatureSample locked title="Unlock Audit Logs">
-        <div />
-      </FeatureSample>,
-    );
-    expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
+    expect(screen.getByRole('link', { name: /talk to sales/i })).toBeDefined();
   });
 });
 
 describe('AI providers plan lock', () => {
   it('locks the providers page when the plan lacks aiProvidersEnabled', () => {
-    render(
+    renderWithQueryClient(
       <PlanFeatureSample feature="aiProviders">
         <h1>AI Center providers</h1>
       </PlanFeatureSample>,
     );
     expect(
-      screen.getByRole('heading', { name: 'Unlock AI Center' }),
+      screen.getByRole('heading', { name: 'Bring your own AI providers' }),
     ).toBeDefined();
     expect(
       screen.queryByRole('heading', { name: 'AI Center providers' }),
@@ -291,7 +261,7 @@ describe('AI providers plan lock', () => {
 
   it('renders the providers page untouched when aiProvidersEnabled is on', () => {
     aiProvidersEnabled = true;
-    render(
+    renderWithQueryClient(
       <PlanFeatureSample feature="aiProviders">
         <h1>AI Center providers</h1>
       </PlanFeatureSample>,
@@ -300,7 +270,7 @@ describe('AI providers plan lock', () => {
       screen.getByRole('heading', { name: 'AI Center providers' }),
     ).toBeDefined();
     expect(
-      screen.queryByRole('heading', { name: 'Unlock AI Center' }),
+      screen.queryByRole('heading', { name: 'Bring your own AI providers' }),
     ).toBeNull();
   });
 });

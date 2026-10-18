@@ -9,7 +9,6 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   ChevronDownIcon,
-  Gem,
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
@@ -55,7 +54,17 @@ import {
   SortableDragHandle,
   SortableItem,
 } from '@/components/ui/sortable';
-import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  EnterpriseGateState,
+  LockedGem,
+  useEnterpriseGate,
+  usePlanTier,
+} from '@/features/billing';
 import {
   PieceIcon,
   pieceSelectorCustomization,
@@ -76,36 +85,11 @@ export const CustomizeSelectorDialog = ({
   isEnabled: boolean;
 }) => {
   const [open, setOpen] = useState(false);
-  const gate = useFeatureGate({
-    locked: !isEnabled,
-    feature: PLATFORM_FEATURES.pieces,
+  const gate = useEnterpriseGate({
+    unlocked: isEnabled,
+    featureKey: 'PIECES',
   });
   const { capture } = useTelemetry();
-
-  if (gate.locked) {
-    return (
-      <>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            capture({
-              name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
-              payload: {
-                feature: PLATFORM_FEATURES.pieces.featureKey,
-                control: AdminControl.PIECES_SELECTOR_OPEN,
-              },
-            });
-            gate.open();
-          }}
-        >
-          <Gem className="size-3.5 shrink-0 text-accent-11" />
-          {t('Customize Selector')}
-        </Button>
-        {gate.dialog}
-      </>
-    );
-  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -114,8 +98,23 @@ export const CustomizeSelectorDialog = ({
           {...adminControl(AdminControl.PIECES_SELECTOR_OPEN)}
           variant="outline"
           size="sm"
+          onClick={() => {
+            if (gate.locked) {
+              capture({
+                name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
+                payload: {
+                  feature: 'PIECES',
+                  control: AdminControl.PIECES_SELECTOR_OPEN,
+                },
+              });
+            }
+          }}
         >
-          <Settings2Icon />
+          {gate.locked ? (
+            <LockedGem className="text-accent-11" />
+          ) : (
+            <Settings2Icon />
+          )}
           {t('Customize Selector')}
         </Button>
       </SheetTrigger>
@@ -125,6 +124,7 @@ export const CustomizeSelectorDialog = ({
       >
         <SelectorTabsEditor
           key={open ? 'open' : 'closed'}
+          gate={gate}
           onClose={() => setOpen(false)}
         />
       </SheetContent>
@@ -132,8 +132,17 @@ export const CustomizeSelectorDialog = ({
   );
 };
 
-const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
+const SelectorTabsEditor = ({
+  gate,
+  onClose,
+}: {
+  gate: EnterpriseGateState;
+  onClose: () => void;
+}) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const plan = usePlanTier('PIECES');
+  const saveLockedOnCommunity = gate.access === 'community';
+  const communityLockedReason = t('Contact sales to unlock the piece selector');
   const [tabs, setTabs] = useState<PieceSelectorTabConfig[]>(
     platform.pieceSelectorConfig?.tabs.length
       ? platform.pieceSelectorConfig.tabs
@@ -197,7 +206,9 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
       toast.error(t('Sections must have a name'));
       return;
     }
-    saveMutation.mutate({ tabs: normalizedTabs }, { onSuccess: onClose });
+    gate.run(() =>
+      saveMutation.mutateAsync({ tabs: normalizedTabs }).then(onClose),
+    );
   };
 
   return (
@@ -243,38 +254,76 @@ const SelectorTabsEditor = ({ onClose }: { onClose: () => void }) => {
       </ScrollArea>
 
       <SheetFooter className="flex-row justify-between px-6 py-4 border-t">
-        <ConfirmationDeleteDialog
-          title={t('Reset to default?')}
-          message={t('The piece selector will return to its default layout.')}
-          warning={t(
-            'All your custom tabs and sections will be permanently removed.',
-          )}
-          buttonText={t('Reset')}
-          entityName={t('customization')}
-          controlId={AdminControl.PIECES_SELECTOR_RESET_CONFIRM}
-          mutationFn={async () => {
-            await saveMutation.mutateAsync(null);
-            onClose();
-          }}
-        >
-          <Button
-            {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
-            variant="ghost"
+        {gate.locked ? (
+          <LockedReason
+            reason={saveLockedOnCommunity ? communityLockedReason : plan.label}
           >
-            {t('Reset to default')}
+            <Button variant="ghost" disabled>
+              {saveLockedOnCommunity && <LockedGem />}
+              {t('Reset to default')}
+            </Button>
+          </LockedReason>
+        ) : (
+          <ConfirmationDeleteDialog
+            title={t('Reset to default?')}
+            message={t('The piece selector will return to its default layout.')}
+            warning={t(
+              'All your custom tabs and sections will be permanently removed.',
+            )}
+            buttonText={t('Reset')}
+            entityName={t('customization')}
+            controlId={AdminControl.PIECES_SELECTOR_RESET_CONFIRM}
+            mutationFn={async () => {
+              await saveMutation.mutateAsync(null);
+              onClose();
+            }}
+          >
+            <Button
+              {...adminControl(AdminControl.PIECES_SELECTOR_RESET_OPEN)}
+              variant="ghost"
+            >
+              {t('Reset to default')}
+            </Button>
+          </ConfirmationDeleteDialog>
+        )}
+        {saveLockedOnCommunity ? (
+          <LockedReason reason={communityLockedReason}>
+            <Button disabled>
+              <LockedGem />
+              {t('Save')}
+            </Button>
+          </LockedReason>
+        ) : (
+          <Button
+            {...adminControl(AdminControl.PIECES_SELECTOR_SUBMIT)}
+            onClick={handleSave}
+            loading={saveMutation.isPending}
+          >
+            {gate.locked && <LockedGem />}
+            {t('Save')}
           </Button>
-        </ConfirmationDeleteDialog>
-        <Button
-          {...adminControl(AdminControl.PIECES_SELECTOR_SUBMIT)}
-          onClick={handleSave}
-          loading={saveMutation.isPending}
-        >
-          {t('Save')}
-        </Button>
+        )}
       </SheetFooter>
     </>
   );
 };
+
+function LockedReason({
+  reason,
+  children,
+}: {
+  reason: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span tabIndex={0}>{children}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top">{reason}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 const TabCard = ({
   tab,

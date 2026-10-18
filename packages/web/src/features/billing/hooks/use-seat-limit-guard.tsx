@@ -87,6 +87,7 @@ export const useSeatLimitGuard = () => {
 
   return {
     isOutOfSeats,
+    canBuySeats: isPlatformAdmin && !isNil(info) && !isNil(seatFeature),
     handleSeatLimitError,
     ensureSeatsAvailable,
     seatLimitDialog,

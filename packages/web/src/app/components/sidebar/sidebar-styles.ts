@@ -23,7 +23,7 @@ const fadeEdges =
   'snap-y snap-mandatory scroll-py-1.5 py-1.5 [mask-image:linear-gradient(to_bottom,transparent,black_6px,black_calc(100%-6px),transparent)] [&>li]:snap-start';
 
 const fadeBottom =
-  'pt-2 pb-3 [mask-image:linear-gradient(to_bottom,transparent,black_8px,black_calc(100%-20px),transparent)]';
+  'pt-2 pb-6 [mask-image:linear-gradient(to_bottom,transparent,black_8px,black_calc(100%-20px),transparent)]';
 
 export const sidebarStyles = {
   labelFade,

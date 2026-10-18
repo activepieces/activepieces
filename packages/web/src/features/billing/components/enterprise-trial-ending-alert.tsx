@@ -1,0 +1,143 @@
+import { isNil } from '@activepieces/core-utils';
+import { PlatformAdminSurface } from '@activepieces/shared';
+import dayjs from 'dayjs';
+import { t } from 'i18next';
+import { Gem, X } from 'lucide-react';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
+import { authenticationSession } from '@/lib/authentication-session';
+import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
+
+import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
+import { useUpgradeClick } from '../hooks/use-upgrade-click';
+import { enterpriseMotion } from '../utils/enterprise-motion';
+import { enterpriseTrialCopy } from '../utils/enterprise-trial-copy';
+import { enterpriseTrialUi } from '../utils/enterprise-trial-ui';
+
+import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
+
+export function EnterpriseTrialEndingAlert() {
+  const trial = enterpriseTrialHooks.useTrial();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const upgradeClick = useUpgradeClick();
+  const trialId = enterpriseTrialUi.trialStorageId({
+    platformId: platform.id,
+    userId: authenticationSession.getCurrentUserId(),
+    endsAt: trial.endsAt,
+  });
+  const dismissKey = trial.ending
+    ? `${ENDING_DISMISS_KEY_PREFIX}${trialId}-${dayjs().format('YYYY-MM-DD')}`
+    : `${STARTED_DISMISS_KEY_PREFIX}${trialId}`;
+  const [dismissedKey, setDismissedKey] = useState<string | null>(null);
+  const dismissed =
+    dismissedKey === dismissKey || enterpriseTrialUi.readFlag(dismissKey);
+  const visible =
+    trial.isPlatformAdmin &&
+    trial.state === 'active' &&
+    !isNil(trial.endsAt) &&
+    (trial.ending || trial.justStarted || trial.extended) &&
+    !dismissed;
+
+  if (!visible) {
+    return null;
+  }
+
+  const ending = trial.ending;
+  const tone = trial.endsToday ? TONE.today : TONE.soon;
+  const date = dayjs(trial.endsAt).format('MMM D');
+
+  const title = ending
+    ? enterpriseTrialCopy.endsSentence(trial)
+    : trial.extended
+    ? t('Your Enterprise plan trial was extended until {date}.', { date })
+    : t('You are on a free trial of the Enterprise plan until {date}.', {
+        date,
+      });
+  const detail = ending
+    ? t(
+        'Want to keep the Enterprise plan? Talk to our team. Nothing is deleted either way.',
+      )
+    : t(
+        'Single sign-on, audit logs, your own AI providers and every other Enterprise plan feature are on for your whole platform.',
+      );
+
+  return (
+    <div className={cn(DASHBOARD_CONTENT_PADDING_X, 'w-full pt-3')}>
+      <div
+        role="status"
+        data-slot="enterprise-trial-banner"
+        className={cn(
+          'flex items-start gap-3 rounded-xl border py-3 pr-2 pl-4 text-sm',
+          tone.surface,
+          enterpriseMotion.appear,
+        )}
+      >
+        <Gem className={cn('mt-0.5 size-4 shrink-0', tone.icon)} />
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex min-w-0 flex-1 basis-72 flex-col gap-0.5">
+            <p className="font-medium text-gray-12">{title}</p>
+            <p className="text-pretty text-gray-11">{detail}</p>
+          </div>
+          {ending && (
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                {...adminControl(AdminControl.TRIAL_PLANS_OPEN)}
+                variant="outline"
+                size="sm"
+                className={tone.secondary}
+                onClick={() =>
+                  upgradeClick({ surface: PlatformAdminSurface.BANNER })
+                }
+              >
+                {t('Explore plans')}
+              </Button>
+              <EnterpriseTrialSalesLink
+                surface="enterprise_trial_ending"
+                size="sm"
+                variant="default"
+                className={tone.primary}
+              />
+            </div>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          aria-label={ending ? t('Dismiss for today') : t('Dismiss')}
+          className={cn('shrink-0', tone.dismiss)}
+          onClick={() => {
+            enterpriseTrialUi.writeFlag(dismissKey);
+            setDismissedKey(dismissKey);
+          }}
+        >
+          <X className="size-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+const TONE = {
+  soon: {
+    surface: 'border-accent-7 bg-accent-3',
+    icon: 'text-accent-11',
+    secondary:
+      'border-accent-7 bg-transparent text-accent-11 hover:bg-accent-4',
+    primary: '',
+    dismiss: 'text-accent-11 hover:bg-accent-4 hover:text-accent-12',
+  },
+  today: {
+    surface: 'border-warning-7 bg-warning-3',
+    icon: 'text-warning-11',
+    secondary:
+      'border-warning-7 bg-transparent text-warning-11 hover:bg-warning-4',
+    primary: 'bg-warning-9 text-on-warning hover:bg-warning-10',
+    dismiss: 'text-warning-11 hover:bg-warning-4 hover:text-warning-12',
+  },
+};
+
+const ENDING_DISMISS_KEY_PREFIX = 'ap-enterprise-trial-ending-dismissed-';
+const STARTED_DISMISS_KEY_PREFIX = 'ap-enterprise-trial-started-dismissed-';

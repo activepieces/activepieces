@@ -3,7 +3,11 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { ManagePlanDialog } from '@/features/billing';
+import {
+  EnterpriseTrialDialog,
+  EnterpriseTrialEndingAlert,
+  ManagePlanDialog,
+} from '@/features/billing';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -32,6 +36,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
                     id="dashboard-content-container"
                     className="relative flex flex-col h-full bg-(--admin-page) rounded-xl shadow-panel border overflow-clip"
                   >
+                    <EnterpriseTrialEndingAlert />
                     <div className="flex flex-col flex-1 overflow-auto [scrollbar-gutter:stable]">
                       {children}
                     </div>
@@ -44,6 +49,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
           <Navigate to="/" />
         )}
         {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+        <EnterpriseTrialDialog />
       </GlobalSearchProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );

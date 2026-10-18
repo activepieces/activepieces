@@ -1,8 +1,10 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   UserInvitation,
   UserStatus,
   UserWithMetaInformation,
 } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Gem, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -13,15 +15,24 @@ import {
   AdminPageHeader,
   adminPageResources,
 } from '@/app/components/admin';
+import { EnterpriseGate } from '@/app/components/enterprise-gate';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { useSeatLimitGuard } from '@/features/billing';
+import {
+  billingKeys,
+  billingQueries,
+  billingUtils,
+  seatUtils,
+  useEnterpriseGate,
+  useSeatLimitGuard,
+} from '@/features/billing';
 import { InviteUserDialog } from '@/features/members';
 import {
   platformUserHooks,
   platformUserMutations,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserActions } from './actions/user-actions';
@@ -43,6 +54,7 @@ export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const {
     isOutOfSeats,
+    canBuySeats,
     ensureSeatsAvailable,
     handleSeatLimitError,
     seatLimitDialog,
@@ -85,19 +97,50 @@ export default function UsersPage() {
     return [...users, ...pendingInvitations];
   }, [usersData, invitationsData]);
 
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: subscription } = billingQueries.usePlatformSubscription(
+    platform.id,
+    true,
+  );
+  const activeUsers =
+    subscription?.usage.users ??
+    seatUtils.reservedSeats({
+      users: usersData?.data ?? [],
+      invitations: invitationsData ?? [],
+    });
+  const usersLimit = isNil(subscription)
+    ? platform.plan.usersLimit
+    : billingUtils.resolveSeatCap(subscription).effectiveLimit;
+  const usersGate = useEnterpriseGate({
+    unlocked: isNil(usersLimit) || activeUsers < usersLimit,
+    featureKey: 'USERS',
+  });
+
   const isLoading = usersLoading || invitationsLoading;
   const isError = usersError || invitationsError;
 
+  const queryClient = useQueryClient();
+  const refreshUsersAndSeats = () => {
+    refetch();
+    queryClient
+      .invalidateQueries({
+        queryKey: billingKeys.platformSubscription(platform.id),
+      })
+      .catch(() => undefined);
+  };
+
   const { mutate: deleteUser } = platformUserMutations.useDeleteUser({
-    onSuccess: refetch,
+    onSuccess: refreshUsersAndSeats,
   });
 
   const { mutate: deleteInvitation } =
-    platformUserMutations.useDeleteInvitation({ onSuccess: refetch });
+    platformUserMutations.useDeleteInvitation({
+      onSuccess: refreshUsersAndSeats,
+    });
 
   const { mutate: updateUserStatus, isPending: isUpdatingStatus } =
     platformUserMutations.useUpdateUserStatus({
-      onSuccess: refetch,
+      onSuccess: refreshUsersAndSeats,
       onError: (error) => {
         if (!handleSeatLimitError(error)) {
           internalErrorToast();
@@ -134,21 +177,35 @@ export default function UsersPage() {
         )}
         resources={adminPageResources.users}
       >
-        <Button
-          {...adminControl(AdminControl.USERS_INVITE_OPEN)}
-          onClick={() => {
-            if (ensureSeatsAvailable(1)) {
-              setInviteOpen(true);
-            }
-          }}
+        <EnterpriseGate
+          featureKey="USERS"
+          unlocked={!usersGate.locked}
+          used={activeUsers}
+          limit={usersLimit}
+          label={t('users')}
         >
-          {isOutOfSeats ? (
-            <Gem className="text-on-accent/90" />
-          ) : (
-            <UserRoundPlusIcon size={16} />
-          )}
-          {t('Invite')}
-        </Button>
+          <Button
+            {...adminControl(AdminControl.USERS_INVITE_OPEN)}
+            onClick={() => {
+              if (usersGate.access === 'trial_available' && !canBuySeats) {
+                usersGate.run(() => setInviteOpen(true), {
+                  resumable: false,
+                });
+                return;
+              }
+              if (ensureSeatsAvailable(1)) {
+                setInviteOpen(true);
+              }
+            }}
+          >
+            {isOutOfSeats || usersGate.locked ? (
+              <Gem className="text-on-accent/90" />
+            ) : (
+              <UserRoundPlusIcon size={16} />
+            )}
+            {t('Invite')}
+          </Button>
+        </EnterpriseGate>
       </AdminPageHeader>
       <AdminDataTable
         emptyStateTextTitle={t('No users found')}
@@ -180,7 +237,7 @@ export default function UsersPage() {
       <InviteUserDialog
         open={inviteOpen}
         setOpen={setInviteOpen}
-        onInviteSuccess={refetch}
+        onInviteSuccess={refreshUsersAndSeats}
       />
       {seatLimitDialog}
     </AdminPage>
