@@ -54,8 +54,6 @@ export const updateFeatureFlag = createAction({
       }
       patch['filters'] = { ...filters, groups: [{ ...posthogClient.recordOf(groups[0]), rollout_percentage: rollout }] };
       readVersion = posthogClient.num(current['version']) ?? undefined;
-      // PostHog has no conditional PATCH (it ignores a stale version), so re-read just before
-      // writing and refuse if the release conditions moved since the first read.
       const latest = posthogClient.recordOf(await posthogClient.request({ auth: auth.props, method: HttpMethod.GET, path }));
       if (posthogClient.num(latest['version']) !== (readVersion ?? null) || JSON.stringify(latest['filters']) !== JSON.stringify(current['filters'])) {
         throw new Error(CHANGED_MESSAGE);

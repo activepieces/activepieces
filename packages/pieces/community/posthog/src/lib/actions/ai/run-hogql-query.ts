@@ -6,8 +6,6 @@ import { posthogOutputSchemas } from '../../common/output-schemas';
 
 const MAX_ROWS = 10_000;
 
-// Two result columns can share a name (unaliased expressions, joined tables); suffix the
-// later ones (_2, _3 ...) so every value survives in the row objects.
 function uniqueNames(names: string[]): string[] {
   const used = new Set<string>();
   return names.map((name) => {

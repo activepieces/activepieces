@@ -1,15 +1,73 @@
 import {
   createCustomApiCallAction,
-  HttpHeaders,
   HttpMethod,
   HttpRequest,
   httpClient,
-  QueryParams,
   toFailsafeOutput,
 } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { posthogAuth } from '../auth';
 import { posthogClient, PostHogAuthValue } from '../common/client';
+
+const base = createCustomApiCallAction({
+  auth: posthogAuth,
+  baseUrl: (auth) => (auth ? posthogClient.apiHostOf(auth.props) : ''),
+  authMapping: async (auth, propsValue) => authHeaders({ auth: auth.props, url: urlOf(propsValue['url']) }),
+});
+
+export const posthogCustomApiCall = createAction({
+  auth: posthogAuth,
+  name: 'custom_api_call',
+  displayName: base.displayName,
+  description: base.description,
+  props: base.props,
+  propertyGroups: base.propertyGroups,
+  classification: 'WRITE',
+  async run({ auth, propsValue, files }) {
+    const method = methodOf(propsValue['method']);
+    const url = urlOf(propsValue['url']);
+    if (url === '') throw new Error('URL is required.');
+    const timeout = propsValue['timeout'];
+    const request: HttpRequest = {
+      method,
+      url: fullUrlOf({ auth: auth.props, url }),
+      headers: { ...stringMap(propsValue['headers']), ...authHeaders({ auth: auth.props, url }) },
+      queryParams: stringMap(propsValue['queryParams']),
+      timeout: typeof timeout === 'number' && timeout > 0 ? timeout * 1000 : 0,
+      followRedirects: propsValue['followRedirects'] === true,
+      body: bodyOf({ body: propsValue['body'], bodyType: propsValue['body_type'] }),
+    };
+    const binary = propsValue['response_is_binary'] === true;
+    if (binary) request.responseType = 'arraybuffer';
+    try {
+      const response = await httpClient.sendRequest(request, { dispatcher: await posthogClient.verifiedTls() });
+      const data: unknown = response.body;
+      if (binary && (data instanceof ArrayBuffer || Buffer.isBuffer(data))) {
+        const buffer = Buffer.isBuffer(data) ? data : Buffer.from(new Uint8Array(data));
+        return { status: response.status, headers: response.headers, body: await files.write({ fileName: 'output.bin', data: buffer }) };
+      }
+      return { status: response.status, headers: response.headers, body: data };
+    } catch (error) {
+      if (propsValue['failsafe'] === true) return toFailsafeOutput({ error, requestBody: request.body });
+      throw error;
+    }
+  },
+});
+
+function urlOf(value: unknown): string {
+  return posthogClient.isRecord(value) && typeof value['url'] === 'string' ? value['url'].trim() : '';
+}
+
+function methodOf(value: unknown): HttpMethod {
+  const method = Object.values(HttpMethod).find((m) => m === value);
+  if (!method) throw new Error('Method is required.');
+  return method;
+}
+
+function stringMap(value: unknown): Record<string, string> {
+  if (!posthogClient.isRecord(value)) return {};
+  return Object.fromEntries(Object.entries(value).filter((e): e is [string, string] => typeof e[1] === 'string'));
+}
 
 function authHeaders({ auth, url }: { auth: PostHogAuthValue; url: string }): Record<string, string> {
   const baseUrl = posthogClient.apiHostOf(auth);
@@ -27,72 +85,21 @@ function fullUrlOf({ auth, url }: { auth: PostHogAuthValue; url: string }): stri
   return `${posthogClient.apiHostOf(auth)}/${url.replace(/^\/+/, '')}`;
 }
 
-type FormField = { fieldName: string; fieldType: 'text' | 'file'; textFieldValue?: string; fileFieldValue?: { data: Buffer; filename?: string } };
-
-function bodyOf({ body, bodyType }: { body: unknown; bodyType: unknown }): unknown {
+function bodyOf({ body, bodyType }: { body: unknown; bodyType: unknown }): HttpRequest['body'] {
   if (body === undefined || body === null) return undefined;
-  if (!bodyType) return body;
+  if (!bodyType) return posthogClient.isRecord(body) || Array.isArray(body) || typeof body === 'string' ? body : undefined;
   if (bodyType === 'none' || !posthogClient.isRecord(body)) return undefined;
   const data = body['data'];
-  if (bodyType !== 'form_data') return data;
+  if (bodyType !== 'form_data') return posthogClient.isRecord(data) || Array.isArray(data) || typeof data === 'string' ? data : undefined;
   const form = new FormData();
-  for (const field of posthogClient.arrayOf(data) as FormField[]) {
-    if (field.fieldType === 'text' && field.textFieldValue) form.append(field.fieldName, field.textFieldValue);
-    else if (field.fieldType === 'file' && field.fileFieldValue) {
-      form.append(field.fieldName, new Blob([new Uint8Array(field.fileFieldValue.data)]), field.fileFieldValue.filename);
+  for (const field of posthogClient.arrayOf(data)) {
+    if (!posthogClient.isRecord(field) || typeof field['fieldName'] !== 'string') continue;
+    const text = field['textFieldValue'];
+    const file = posthogClient.recordOf(field['fileFieldValue']);
+    if (field['fieldType'] === 'text' && typeof text === 'string' && text !== '') form.append(field['fieldName'], text);
+    else if (field['fieldType'] === 'file' && Buffer.isBuffer(file['data'])) {
+      form.append(field['fieldName'], new Blob([new Uint8Array(file['data'])]), typeof file['filename'] === 'string' ? file['filename'] : undefined);
     }
   }
   return form;
 }
-
-const base = createCustomApiCallAction({
-  auth: posthogAuth,
-  baseUrl: (auth) => (auth ? posthogClient.apiHostOf(auth.props) : ''),
-  authMapping: async (auth, propsValue) => {
-    const urlProp = propsValue['url'];
-    const url = posthogClient.isRecord(urlProp) && typeof urlProp['url'] === 'string' ? urlProp['url'].trim() : '';
-    return authHeaders({ auth: auth.props, url });
-  },
-});
-
-// Same props as the shared Custom API Call, but the request goes through the
-// certificate-checked dispatcher: the shared helper's httpClient call runs with
-// NODE_TLS_REJECT_UNAUTHORIZED=0 and would send the API key without TLS checks.
-export const posthogCustomApiCall = createAction({
-  auth: posthogAuth,
-  name: base.name,
-  displayName: base.displayName,
-  description: base.description,
-  props: base.props,
-  propertyGroups: base.propertyGroups,
-  classification: base.classification,
-  async run({ auth, propsValue, files }) {
-    const { method, url, headers, queryParams, body, body_type, failsafe, timeout, response_is_binary, followRedirects } = propsValue;
-    if (!method) throw new Error('Method is required.');
-    const urlValue = posthogClient.isRecord(url) && typeof url['url'] === 'string' ? url['url'].trim() : '';
-    if (urlValue === '') throw new Error('URL is required.');
-    const request: HttpRequest = {
-      method: method as HttpMethod,
-      url: fullUrlOf({ auth: auth.props, url: urlValue }),
-      headers: { ...((headers ?? {}) as HttpHeaders), ...authHeaders({ auth: auth.props, url: urlValue }) },
-      queryParams: (queryParams ?? {}) as QueryParams,
-      timeout: typeof timeout === 'number' && timeout > 0 ? timeout * 1000 : 0,
-      followRedirects: followRedirects === true,
-      body: bodyOf({ body, bodyType: body_type }) as HttpRequest['body'],
-    };
-    if (response_is_binary) request.responseType = 'arraybuffer';
-    try {
-      const dispatcher = await posthogClient.verifiedTls();
-      const response = await httpClient.sendRequest(request, { dispatcher });
-      const data = response.body as unknown;
-      if (response_is_binary && (data instanceof ArrayBuffer || Buffer.isBuffer(data))) {
-        const buffer = Buffer.isBuffer(data) ? data : Buffer.from(new Uint8Array(data));
-        return { status: response.status, headers: response.headers, body: await files.write({ fileName: 'output.bin', data: buffer }) };
-      }
-      return { status: response.status, headers: response.headers, body: data };
-    } catch (error) {
-      if (failsafe) return toFailsafeOutput({ error, requestBody: request.body });
-      throw error;
-    }
-  },
-});
