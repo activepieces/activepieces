@@ -49,7 +49,7 @@ While a domain is being verified it shows as **Verifying**. Its menu lets you **
 You can also verify the domain from the first step of the SAML setup, described below.
 
 <Warning>
-  **Remove domain** also deletes your SAML connection, so single sign-on stops working. If email and password sign-in is off, turn it on first so people can still sign in.
+  **Remove domain** also deletes your SAML connection, so single sign-on stops working. To confirm, type the domain name. You can't remove it while single sign-on is the only way to sign in: turn on email and password or Google sign-in first.
 </Warning>
 
 ## Set up SAML
@@ -63,7 +63,7 @@ Under **Sign-in methods**, click **Set up** next to **Single sign-on** (or **Man
 
 The **SAML 2.0** step opens once the domain is verified. Once saved, the fields say **Saved**; paste new values only to replace them.
 
-To turn single sign-on off, open **Manage** and click **Disable** under the SAML step. This deletes the SAML connection but keeps your verified domain, so you can connect again later.
+To turn single sign-on off, open **Manage**, click **Disable** under the SAML step and type `disable` to confirm. This deletes the SAML connection but keeps your verified domain, so you can connect again later. As with removing the domain, it's blocked while single sign-on is the only way to sign in.
 
 **Signing in with SAML on Cloud**
 
