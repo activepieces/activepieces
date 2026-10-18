@@ -5,6 +5,7 @@ import {
   FlowOperationType,
   FlowStatus,
   FlowTriggerType,
+  FlowVersion,
   FlowVersionState,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -39,6 +40,10 @@ const flowsApiMock = vi.hoisted(() => ({
   get: vi.fn<(flowId: string) => Promise<PopulatedFlow>>(),
 }));
 
+const requiredActionsMock = vi.hoisted(() => ({
+  checkRequiredActions: vi.fn<(flowVersion: FlowVersion) => Promise<null>>(),
+}));
+
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('@/features/flows/api/flows-api', () => ({
@@ -70,7 +75,7 @@ vi.mock('@/features/projects', async (importOriginal) => ({
 
 vi.mock('@/app/builder/flow-canvas/widgets/required-actions-dialog', () => ({
   useRequiredActionsCheck: () => ({
-    checkRequiredActions: async () => null,
+    checkRequiredActions: requiredActionsMock.checkRequiredActions,
     explainServerRejection: async () => null,
   }),
   RequiredActionsDialog: () => null,
@@ -84,6 +89,8 @@ describe('PublishFlowReminderWidget', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
     flowsApiMock.update.mockReset();
     flowsApiMock.update.mockResolvedValue(validDraftFlow());
+    requiredActionsMock.checkRequiredActions.mockReset();
+    requiredActionsMock.checkRequiredActions.mockResolvedValue(null);
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -142,6 +149,28 @@ describe('PublishFlowReminderWidget', () => {
 
     expect(sentOperationTypes()).toEqual([]);
     expect(store.getState().isPublishing).toBe(false);
+  });
+
+  it('checks the required actions on the draft that the refetch after a failed save shows', async () => {
+    const store = createStore(validDraftFlow());
+    store.setState({
+      refreshDraftAfterFailedSave: async () => {
+        store.getState().applyDraftRefresh(
+          withDisplayName({
+            flow: validDraftFlow(),
+            displayName: 'Orders on the server',
+          }),
+        );
+      },
+    });
+    await act(async () => root.render(<Widget store={store} />));
+
+    await act(async () => publishButton().click());
+    await settle();
+
+    expect(requiredActionsMock.checkRequiredActions).toHaveBeenCalledWith(
+      expect.objectContaining({ displayName: 'Orders on the server' }),
+    );
   });
 
   it('does not publish when a pending edit fails to save', async () => {
@@ -208,6 +237,16 @@ function renameTrigger(displayName: string): FlowOperationRequest {
       settings: {},
     },
   };
+}
+
+function withDisplayName({
+  flow,
+  displayName,
+}: {
+  flow: PopulatedFlow;
+  displayName: string;
+}): PopulatedFlow {
+  return { ...flow, version: { ...flow.version, displayName } };
 }
 
 function createStore(flow: PopulatedFlow): BuilderStore {

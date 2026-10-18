@@ -23,7 +23,7 @@ import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { useBuilderStateContext } from '../../builder-hooks';
+import { useBuilderStateContext, useBuilderStore } from '../../builder-hooks';
 
 import { runDiscard } from './discard-draft';
 import LargeWidgetWrapper from './large-widget-wrapper';
@@ -61,6 +61,7 @@ const PublishFlowReminderWidget = () => {
     state.savePendingEdits,
     state.refreshDraftAfterFailedSave,
   ]);
+  const store = useBuilderStore();
   const showShouldPublishButton = useShouldShowPublishButton({
     flowVersion,
     isPublishing,
@@ -118,7 +119,9 @@ const PublishFlowReminderWidget = () => {
       setIsPublishing(false);
       return;
     }
-    const failedCheck = await checkRequiredActions(flowVersion);
+    const failedCheck = await checkRequiredActions(
+      store.getState().flowVersion,
+    );
     if (failedCheck) {
       setIsPublishing(false);
       setFailedRequiredActionsCheck(failedCheck);
