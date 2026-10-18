@@ -9,6 +9,7 @@ import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-author
 import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
+import { planFeatures } from '../platform/plan-features'
 import { platformService } from '../platform/platform.service'
 import { communityTemplates } from './community-templates.service'
 import { templateService } from './template.service'
@@ -66,6 +67,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
         switch (type) {
             case TemplateType.CUSTOM: {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                await planFeatures(request.log).assertEnabled({ platformId: request.principal.platform.id, feature: 'manageTemplatesEnabled', message: CUSTOM_TEMPLATES_NOT_ON_PLAN })
                 platformId = request.principal.platform.id
             }
                 break
@@ -101,6 +103,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
                 })
             case TemplateType.CUSTOM: {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                await planFeatures(request.log).assertEnabled({ platformId: request.principal.platform.id, feature: 'manageTemplatesEnabled', message: CUSTOM_TEMPLATES_NOT_ON_PLAN })
                 assertTemplateBelongsToPlatform({
                     templatePlatformId: template.platformId,
                     principalPlatformId: request.principal.platform.id,
@@ -125,6 +128,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
                 })
             case TemplateType.CUSTOM: {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                await planFeatures(request.log).assertEnabled({ platformId: request.principal.platform.id, feature: 'manageTemplatesEnabled', message: CUSTOM_TEMPLATES_NOT_ON_PLAN })
                 assertTemplateBelongsToPlatform({
                     templatePlatformId: template.platformId,
                     principalPlatformId: request.principal.platform.id,
@@ -267,3 +271,5 @@ async function loadCustomTemplatesOrReturnEmpty(
     const customTemplates = await templateService(log).list({ platformId, type: TemplateType.CUSTOM, ...query })
     return customTemplates.data
 }
+
+const CUSTOM_TEMPLATES_NOT_ON_PLAN = 'Custom templates are not on this platform\'s plan'
