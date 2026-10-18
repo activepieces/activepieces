@@ -386,6 +386,11 @@ const SamlStep = ({
         >
           <StepSection
             title={t('Paste these from your identity provider')}
+            description={
+              connected
+                ? t('To change the connection, paste both values again.')
+                : undefined
+            }
             divided={!!samlAcs}
           >
             <FormField
@@ -472,15 +477,20 @@ const SamlStep = ({
 
 const StepSection = ({
   title,
+  description,
   divided = false,
   children,
 }: {
   title: string;
+  description?: string;
   divided?: boolean;
   children: ReactNode;
 }) => (
   <section className={cn('flex flex-col gap-4', divided && 'border-t pt-6')}>
-    <h3 className="text-sm font-semibold text-gray-12">{title}</h3>
+    <div className="flex flex-col gap-1">
+      <h3 className="text-sm font-semibold text-gray-12">{title}</h3>
+      {description && <p className="text-sm text-gray-11">{description}</p>}
+    </div>
     {children}
   </section>
 );

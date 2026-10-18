@@ -78,6 +78,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
 
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
+    queryKey: ['flags'],
     useFlag: (id: string) => ({
       data:
         id === 'EDITION'
@@ -519,6 +520,20 @@ describe('SSOPage', () => {
         'platform-1',
       ),
     );
+  });
+
+  it('refreshes the flags after changing Google so the sign-in checks use the new state', async () => {
+    const invalidate = vi.spyOn(QueryClient.prototype, 'invalidateQueries');
+    setPlatform({ id: 'platform-1' });
+    mount();
+
+    click(screen.getByRole('switch', { name: 'Continue with Google' }));
+    click(findButton('Turn on', screen.getByRole('dialog')));
+
+    await waitFor(() =>
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['flags'] }),
+    );
+    invalidate.mockRestore();
   });
 
   it('says Google is not set up on a self-hosted server without Google credentials', () => {
@@ -1146,6 +1161,10 @@ describe('SamlSetupPage', () => {
       federatedAuthProviders: { saml: samlConfig },
     });
     mountSetupPage();
+
+    expect(
+      screen.getByText('To change the connection, paste both values again.'),
+    ).toBeDefined();
 
     expect(
       screen.getByLabelText('IDP Metadata').getAttribute('placeholder'),
