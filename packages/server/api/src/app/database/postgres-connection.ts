@@ -458,7 +458,9 @@ import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from '
 import { AddAgentTask1867000000000 } from './migration/postgres/1867000000000-AddAgentTask'
 import { AddProviderConfigIdToAgentConversation1868000000000 } from './migration/postgres/1868000000000-AddProviderConfigIdToAgentConversation'
 import { DropChatRolloutUserTable1870000000000 } from './migration/postgres/1870000000000-DropChatRolloutUserTable'
+import { AddPieceTranslationTable1871000000000 } from './migration/postgres/1871000000000-AddPieceTranslationTable'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
+import { BackfillPieceTranslation1872000000000 } from './migration/postgres/background/1872000000000-BackfillPieceTranslation'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -473,6 +475,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
     return [
         AddAgentConversationProviderConfigIdIndex1869000000000,
+        BackfillPieceTranslation1872000000000,
     ]
 }
 
@@ -937,6 +940,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentTask1867000000000,
         AddProviderConfigIdToAgentConversation1868000000000,
         DropChatRolloutUserTable1870000000000,
+        AddPieceTranslationTable1871000000000,
     ]
     return migrations
 }
