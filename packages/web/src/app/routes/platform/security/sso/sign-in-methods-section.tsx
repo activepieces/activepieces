@@ -41,6 +41,10 @@ export const SignInMethodsSection = ({
   const googleSignInAvailable = useGoogleSignInAvailable();
   const googleNotSetUp =
     selfHosted && platform.googleAuthEnabled && !googleSignInAvailable;
+  const emailIsLastMethod =
+    platform.emailAuthEnabled && !samlConnected && !googleSignInAvailable;
+  const googleIsLastMethod =
+    googleSignInAvailable && !platform.emailAuthEnabled && !samlConnected;
 
   const { mutate: toggleGoogleAuth, isPending: isGoogleAuthPending } =
     ssoMutations.useUpdatePlatformSso({
@@ -184,6 +188,12 @@ export const SignInMethodsSection = ({
         }
         confirmLabel={googleChange ? t('Turn on') : t('Turn off')}
         destructive={googleChange === false}
+        warning={
+          googleChange === false && googleIsLastMethod ? (
+            <LastMethodWarning />
+          ) : undefined
+        }
+        confirmDisabled={googleChange === false && googleIsLastMethod}
         isPending={isGoogleAuthPending}
         controlId={AdminControl.SSO_GOOGLE_TOGGLE_CONFIRM}
         onConfirm={() =>
@@ -203,12 +213,16 @@ export const SignInMethodsSection = ({
         description={
           emailChange
             ? t('People can sign in with email and password again.')
-            : t(
-                'People can no longer sign in with email and password. Make sure another sign-in method works for you first.',
-              )
+            : t('People can no longer sign in with email and password.')
         }
         confirmLabel={emailChange ? t('Turn on') : t('Turn off')}
         destructive={emailChange === false}
+        warning={
+          emailChange === false && emailIsLastMethod ? (
+            <LastMethodWarning />
+          ) : undefined
+        }
+        confirmDisabled={emailChange === false && emailIsLastMethod}
         isPending={isEmailAuthPending}
         controlId={AdminControl.SSO_EMAIL_LOGIN_TOGGLE_CONFIRM}
         onConfirm={() =>
@@ -219,6 +233,11 @@ export const SignInMethodsSection = ({
     </AdminSection>
   );
 };
+
+const LastMethodWarning = () =>
+  t(
+    "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.",
+  );
 
 const GoogleSetupGuideLink = () => (
   <a

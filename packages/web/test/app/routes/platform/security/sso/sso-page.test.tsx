@@ -570,6 +570,82 @@ describe('SSOPage', () => {
     ).toBeNull();
   });
 
+  it('blocks turning email off when it is the last working sign-in method', () => {
+    setPlatform({ emailAuthEnabled: true, googleAuthEnabled: true });
+    mount();
+
+    click(screen.getByRole('switch', { name: 'Email and password' }));
+    const dialog = screen.getByRole('dialog');
+
+    expect(
+      within(dialog).getByText(
+        "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.",
+      ),
+    ).toBeDefined();
+    expect(findButton('Turn off', dialog)?.disabled).toBe(true);
+  });
+
+  it('lets email be turned off when single sign-on is connected', () => {
+    setPlatform({
+      emailAuthEnabled: true,
+      federatedAuthProviders: { saml: samlConfig },
+    });
+    mount();
+
+    click(screen.getByRole('switch', { name: 'Email and password' }));
+    const dialog = screen.getByRole('dialog');
+
+    expect(
+      within(dialog).queryByText(
+        "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.",
+      ),
+    ).toBeNull();
+    expect(findButton('Turn off', dialog)?.disabled).toBe(false);
+  });
+
+  it('lets email be turned off when Google sign-in works', () => {
+    setPlatform({ emailAuthEnabled: true, googleAuthEnabled: true });
+    flagState.thirdPartyProviders = { google: true };
+    mount();
+
+    click(screen.getByRole('switch', { name: 'Email and password' }));
+
+    expect(findButton('Turn off', screen.getByRole('dialog'))?.disabled).toBe(
+      false,
+    );
+  });
+
+  it('blocks turning Google off when it works and is the last sign-in method', () => {
+    setPlatform({ emailAuthEnabled: false, googleAuthEnabled: true });
+    flagState.thirdPartyProviders = { google: true };
+    mount();
+
+    click(screen.getByRole('switch', { name: 'Continue with Google' }));
+    const dialog = screen.getByRole('dialog');
+
+    expect(
+      within(dialog).getByText(
+        "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.",
+      ),
+    ).toBeDefined();
+    expect(findButton('Turn off', dialog)?.disabled).toBe(true);
+  });
+
+  it('lets Google be turned off when it does not actually work', () => {
+    setPlatform({ emailAuthEnabled: false, googleAuthEnabled: true });
+    mount();
+
+    click(screen.getByRole('switch', { name: 'Continue with Google' }));
+    const dialog = screen.getByRole('dialog');
+
+    expect(
+      within(dialog).queryByText(
+        "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.",
+      ),
+    ).toBeNull();
+    expect(findButton('Turn off', dialog)?.disabled).toBe(false);
+  });
+
   it('changes nothing when a method change is cancelled', () => {
     setPlatform({ emailAuthEnabled: true });
     mount();
@@ -578,7 +654,7 @@ describe('SSOPage', () => {
     const dialog = screen.getByRole('dialog');
     expect(
       within(dialog).getByText(
-        'People can no longer sign in with email and password. Make sure another sign-in method works for you first.',
+        'People can no longer sign in with email and password.',
       ),
     ).toBeDefined();
     click(findButton('Cancel', dialog));

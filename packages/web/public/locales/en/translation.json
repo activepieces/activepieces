@@ -3319,7 +3319,6 @@
   "Turn on email sign-in?": "Turn on email sign-in?",
   "Turn off email sign-in?": "Turn off email sign-in?",
   "People can sign in with email and password again.": "People can sign in with email and password again.",
-  "People can no longer sign in with email and password. Make sure another sign-in method works for you first.": "People can no longer sign in with email and password. Make sure another sign-in method works for you first.",
   "Disable single sign-on?": "Disable single sign-on?",
   "Disable single sign-on": "Disable single sign-on",
   "Deletes the SAML connection. Your verified domain stays, so you can connect again later.": "Deletes the SAML connection. Your verified domain stays, so you can connect again later.",
@@ -3360,5 +3359,7 @@
   "People who use single sign-on will have to sign in another way.": "People who use single sign-on will have to sign in another way.",
   "Not set up": "Not set up",
   "Needs a Google OAuth client on this server.": "Needs a Google OAuth client on this server.",
-  "On a self-hosted server it also needs a Google OAuth client.": "On a self-hosted server it also needs a Google OAuth client."
+  "On a self-hosted server it also needs a Google OAuth client.": "On a self-hosted server it also needs a Google OAuth client.",
+  "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.": "You can't turn this off while it's the only way to sign in. Turn on another sign-in method first.",
+  "People can no longer sign in with email and password.": "People can no longer sign in with email and password."
 }
