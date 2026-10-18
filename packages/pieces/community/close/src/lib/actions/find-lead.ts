@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { closeAuth } from '../auth';
 import { CloseCRMSearchQuery } from '../common/types';
-import { closeApiCall } from '../common/client';
+import { CloseApiError, closeApiCall } from '../common/client';
 
 export const findLead = createAction({
 	auth: closeAuth,
@@ -10,7 +10,7 @@ export const findLead = createAction({
 	classification: 'SEARCH',
 	displayName: 'Find Lead',
 	description: 'Search for leads with advanced filtering options',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Searches leads in Close CRM and returns all matching records (auto-paginated). The search type selects which field to match on — lead name, a related contact email, or status label — and the match mode controls how the query string is compared. Use to look up leads by a known attribute before creating or updating related records. Read-only and idempotent. Requires a search query value.',
 		idempotent: true,
@@ -36,10 +36,9 @@ export const findLead = createAction({
 			required: false,
 			options: {
 				options: [
-					{ label: 'Contains', value: 'contains' },
-					{ label: 'Exact Match', value: 'exact' },
-					{ label: 'Starts With', value: 'starts' },
-					{ label: 'Ends With', value: 'ends' },
+					{ label: 'All Words (any order)', value: 'contains' },
+					{ label: 'Exact Phrase', value: 'exact' },
+					
 				],
 			},
 			defaultValue: 'contains',
@@ -50,10 +49,22 @@ export const findLead = createAction({
 
 		try {
 			// Build the search query
+			const statusIds =
+				search_type === 'status'
+					? await resolveLeadStatusIds({
+							accessToken: context.auth.secret_text,
+							label: search_query,
+							exact: match_type === 'exact',
+						})
+					: [];
+			if (search_type === 'status' && statusIds.length === 0) {
+				return { found: false, result: [] };
+			}
 			const searchQuery = buildLeadSearchQuery({
 				search_type,
 				search_query,
 				match_type: match_type || 'contains',
+				status_ids: statusIds,
 			});
 
 			let cursor: string | undefined;
@@ -63,7 +74,7 @@ export const findLead = createAction({
 			do {
 				const response = await closeApiCall<{
 					cursor?: string;
-					data: Record<string, any>[];
+					data: Record<string, unknown>[];
 				}>({
 					accessToken: context.auth.secret_text,
 					method: HttpMethod.POST,
@@ -86,29 +97,40 @@ export const findLead = createAction({
 				found: result.length > 0,
 				result,
 			};
-		} catch (error: any) {
-			if (error.response?.status === 400) {
-				throw new Error(`Invalid search query: ${error.response.body?.error || 'Unknown error'}`);
+		} catch (error) {
+			if (error instanceof CloseApiError && error.status === 400) {
+				throw new Error(`Invalid search query. ${error.message}`);
 			}
-			if (error.response?.status === 401) {
-				throw new Error('Authentication failed. Please check your API key.');
-			}
-			if (error.response?.status === 404) {
-				throw new Error('No leads found matching your criteria.');
-			}
-			throw new Error(`Failed to search leads: ${error.message}`);
+			
+			throw error;
 		}
 	},
 });
 
-// Helper function to build the lead search query
+async function resolveLeadStatusIds({ accessToken, label, exact }: { accessToken: string; label: string; exact: boolean }): Promise<string[]> {
+	const response = await closeApiCall<{ data?: { id: string; label: string }[] }>({
+		accessToken,
+		method: HttpMethod.GET,
+		resourceUri: '/status/lead/',
+	});
+	const wanted = label.trim().toLowerCase();
+	return (response.data ?? [])
+		.filter((status) => {
+			const current = status.label.toLowerCase();
+			return exact ? current === wanted : current.includes(wanted);
+		})
+		.map((status) => status.id);
+}
+
 function buildLeadSearchQuery(params: {
 	search_type: string;
 	search_query: string;
 	match_type: string;
 	custom_field_name?: string;
+	status_ids?: string[];
 }): CloseCRMSearchQuery {
-	const { search_type, search_query, match_type, custom_field_name } = params;
+	const { search_type, search_query, match_type, custom_field_name, status_ids } = params;
+	const textMode = match_type === 'exact' ? 'phrase' : 'full_words';
 
 	const baseQuery = {
 		type: 'object_type',
@@ -128,7 +150,7 @@ function buildLeadSearchQuery(params: {
 				},
 				condition: {
 					type: 'text',
-					mode: 'full_words',
+					mode: textMode,
 					value: search_query,
 				},
 			};
@@ -152,7 +174,7 @@ function buildLeadSearchQuery(params: {
 						},
 						condition: {
 							type: 'text',
-							mode: 'phrase',
+							mode: textMode,
 							value: search_query,
 						},
 					},
@@ -166,12 +188,12 @@ function buildLeadSearchQuery(params: {
 				field: {
 					type: 'regular_field',
 					object_type: 'lead',
-					field_name: 'status_label',
+					field_name: 'status_id',
 				},
 				condition: {
-					type: 'text',
-					mode: 'phrase',
-					value: search_query,
+					type: 'reference',
+					reference_type: 'status.lead',
+					object_ids: status_ids ?? [],
 				},
 			};
 			break;
@@ -186,7 +208,7 @@ function buildLeadSearchQuery(params: {
 				},
 				condition: {
 					type: 'text',
-					mode: 'full_words',
+					mode: textMode,
 					value: search_query,
 				},
 			};

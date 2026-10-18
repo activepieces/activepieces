@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { closeAuth } from '../auth';
 import { CloseCRMSearchQuery } from '../common/types';
-import { closeApiCall } from '../common/client';
+import { CloseApiError, closeApiCall } from '../common/client';
 
 export const findContact = createAction({
 	auth: closeAuth,
@@ -10,7 +10,7 @@ export const findContact = createAction({
 	classification: 'SEARCH',
 	displayName: 'Find Contact',
 	description: 'Search for contacts by name, email, or other criteria with advanced filtering',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Searches contacts in Close CRM and returns all matching records (auto-paginated). The search type selects which field to match on — contact name, email, phone, or parent lead ID — and the match mode controls comparison. Use to resolve a contact by a known attribute (e.g. find a contact ID before attaching an opportunity). Read-only and idempotent. Requires a search query value.',
 		idempotent: true,
@@ -37,10 +37,9 @@ export const findContact = createAction({
 			required: false,
 			options: {
 				options: [
-					{ label: 'Contains', value: 'contains' },
-					{ label: 'Exact Match', value: 'exact' },
-					{ label: 'Starts With', value: 'starts' },
-					{ label: 'Ends With', value: 'ends' },
+					{ label: 'All Words (any order)', value: 'contains' },
+					{ label: 'Exact Phrase', value: 'exact' },
+					
 				],
 			},
 			defaultValue: 'contains',
@@ -65,7 +64,7 @@ export const findContact = createAction({
 			do {
 				const response = await closeApiCall<{
 					cursor?: string;
-					data: Record<string, any>[];
+					data: Record<string, unknown>[];
 				}>({
 					accessToken: context.auth.secret_text,
 					method: HttpMethod.POST,
@@ -88,14 +87,11 @@ export const findContact = createAction({
 				found: result.length > 0,
 				result,
 			};
-		} catch (error: any) {
-			if (error.response?.status === 400) {
-				throw new Error(`Invalid search query: ${error.response.body?.error || 'Unknown error'}`);
+		} catch (error) {
+			if (error instanceof CloseApiError && error.status === 400) {
+				throw new Error(`Invalid search query. ${error.message}`);
 			}
-			if (error.response?.status === 401) {
-				throw new Error('Authentication failed. Please check your API key.');
-			}
-			throw new Error(`Failed to search contacts: ${error.message}`);
+			throw error;
 		}
 	},
 });
@@ -108,6 +104,7 @@ function buildSearchQuery(params: {
 	include_fields: string[];
 }): CloseCRMSearchQuery {
 	const { search_type, search_query, match_type, include_fields } = params;
+	const textMode = match_type === 'exact' ? 'phrase' : 'full_words';
 
 	const baseQuery = {
 		type: 'object_type',
@@ -127,7 +124,7 @@ function buildSearchQuery(params: {
 				},
 				condition: {
 					type: 'text',
-					mode: 'full_words',
+					mode: textMode,
 					value: search_query,
 				},
 			};
@@ -147,7 +144,7 @@ function buildSearchQuery(params: {
 					},
 					condition: {
 						type: 'text',
-						mode: 'phrase',
+						mode: textMode,
 						value: search_query,
 					},
 				},
@@ -168,7 +165,7 @@ function buildSearchQuery(params: {
 					},
 					condition: {
 						type: 'text',
-						mode: 'phrase',
+						mode: textMode,
 						value: search_query,
 					},
 				},
@@ -184,9 +181,9 @@ function buildSearchQuery(params: {
 					field_name: 'lead_id',
 				},
 				condition: {
-					type: 'text',
-					mode: 'phrase', // Always exact match for IDs
-					value: search_query,
+					type: 'reference',
+					reference_type: 'lead',
+					object_ids: [search_query.trim()],
 				},
 			};
 			break;
@@ -202,7 +199,7 @@ function buildSearchQuery(params: {
 		},
 		_fields: {
 			lead: ['id', 'name', 'status_label', 'contacts'],
-			contact: ['id', 'name', 'emails', 'phones'],
+			contact: Array.from(new Set([...include_fields, 'lead_id', 'phones'])),
 		},
 	};
 }
