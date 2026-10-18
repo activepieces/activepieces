@@ -5,6 +5,7 @@ import {
   AgentEventType,
   FileProducedEvent,
   ImageGeneratedEvent,
+  SubagentProgressEvent,
   ToolProgressEvent,
   WebsocketClientEvent,
 } from '@activepieces/shared';
@@ -28,6 +29,7 @@ export function useStreamingReducer({
   onImageGenerated,
   onFileProduced,
   onBuildPlan,
+  onSubagentProgress,
   onStreamFinished,
   onStreamError,
   onStaleCheck,
@@ -39,6 +41,7 @@ export function useStreamingReducer({
   onImageGenerated: (event: ImageGeneratedEvent) => void;
   onFileProduced: (event: FileProducedEvent) => void;
   onBuildPlan: (event: BuildPlanEvent) => void;
+  onSubagentProgress: (event: SubagentProgressEvent) => void;
   onStreamFinished: (conversationId: string) => void;
   onStreamError: (params: {
     conversationId: string;
@@ -76,6 +79,8 @@ export function useStreamingReducer({
   onFileProducedRef.current = onFileProduced;
   const onBuildPlanRef = useRef(onBuildPlan);
   onBuildPlanRef.current = onBuildPlan;
+  const onSubagentProgressRef = useRef(onSubagentProgress);
+  onSubagentProgressRef.current = onSubagentProgress;
   const onStreamFinishedRef = useRef(onStreamFinished);
   onStreamFinishedRef.current = onStreamFinished;
   const onStreamErrorRef = useRef(onStreamError);
@@ -289,6 +294,12 @@ export function useStreamingReducer({
         } else if (event.type === AgentEventType.BUILD_PLAN) {
           lastChunkTimeRef.current = Date.now();
           onBuildPlanRef.current(event.data as BuildPlanEvent);
+        } else if (
+          event.type === AgentEventType.SUBAGENT_PROGRESS &&
+          isSubagentProgressEvent(event.data)
+        ) {
+          lastChunkTimeRef.current = Date.now();
+          onSubagentProgressRef.current(event.data);
         }
       };
 
@@ -366,3 +377,14 @@ type SocketEvent = {
 type StreamPhase = 'idle' | 'awaiting-stream' | 'streaming' | 'reconciling';
 
 export type { StreamPhase };
+
+function isSubagentProgressEvent(data: unknown): data is SubagentProgressEvent {
+  if (typeof data !== 'object' || data === null) return false;
+  return (
+    'toolCallId' in data &&
+    typeof data.toolCallId === 'string' &&
+    'data' in data &&
+    typeof data.data === 'object' &&
+    data.data !== null
+  );
+}

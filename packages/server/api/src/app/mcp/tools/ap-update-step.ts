@@ -32,7 +32,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             stepName: z.string().describe('The name of the step to update (e.g. "step_1"). Use ap_flow_structure to get valid values.'),
             displayName: z.string().optional().describe('New display name for the step'),
             input: z.record(z.string(), z.unknown()).optional().describe(`Input settings for the step (key-value pairs matching the action schema). ${mcpUtils.STEP_REFERENCE_HINT}`),
-            auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
+            auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. Pass the plain id, not a template.'),
             actionName: z.string().optional().describe('For PIECE steps: the action to perform. Use ap_research_pieces to get valid values.'),
             loopItems: z.string().optional().describe('For LOOP steps: expression for the items to iterate over'),
             skip: z.boolean().optional().describe('Whether to skip this step during execution'),
@@ -43,7 +43,8 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
         },
         annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip, sourceCode, packageJson, continueOnFailure, retryOnFailure } = updateStepInput.parse(args)
+            const { flowId, stepName, displayName, input, auth: rawAuth, actionName, loopItems, skip, sourceCode, packageJson, continueOnFailure, retryOnFailure } = updateStepInput.parse(args)
+            const auth = mcpUtils.normalizeAuth(rawAuth)
 
             const [flow, project] = await Promise.all([
                 flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
