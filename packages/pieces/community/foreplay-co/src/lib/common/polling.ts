@@ -9,7 +9,6 @@ const TEST_LIMIT = 5;
 const MAX_POLL_PAGES = 5;
 const LEGACY_LAST_POLL_KEY = 'lastPoll';
 const BACKLOG_KEY = 'foreplay_backlog_cursor';
-const MAX_BACKLOG_DELIVERED = 5000;
 
 function idOf(raw: unknown): string | null {
   const record = foreplayMappers.recordOf(raw);
@@ -127,7 +126,7 @@ async function pollNewAds({ store, fetchAds }: { store: Store; fetchAds: FetchAd
     const result = await scan({ fetchAds, start: backlog.cursor, pages: budget, seenBefore, known, before: backlog.before });
     olderFresh = result.fresh;
     budget -= result.pagesUsed;
-    if (result.resume !== null) nextBacklog = { cursor: result.resume, before: backlog.before, delivered: [...backlog.delivered, ...idsOf(result.fresh)].slice(-MAX_BACKLOG_DELIVERED) };
+    if (result.resume !== null) nextBacklog = { cursor: result.resume, before: backlog.before, delivered: [...backlog.delivered, ...idsOf(result.fresh)] };
   }
   if (nextBacklog === null && budget > 0) {
     const result = await scan({ fetchAds, start: undefined, pages: budget, seenBefore, known, before: legacyBefore });

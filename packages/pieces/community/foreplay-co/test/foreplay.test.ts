@@ -517,6 +517,16 @@ describe('triggers', () => {
     expect(third.map((a: { id: string }) => a.id)).toEqual(['new1']);
     expect(store.data.has('foreplay_backlog_cursor')).toBe(false);
   });
+  it('keeps every ID delivered during a long backlog drain', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', ['top']);
+    const delivered = Array.from({ length: 6000 }, (_, i) => `d${i}`);
+    await store.put('foreplay_backlog_cursor', { cursor: 'c1', before: null, delivered });
+    mock(okWith({ data: [rawAd('d0')], metadata: { cursor: 'c2' } }), okWith({ data: [rawAd('x1')], metadata: { cursor: 'c3' } }), okWith({ data: [rawAd('x2')], metadata: { cursor: 'c4' } }), okWith({ data: [rawAd('x3')], metadata: { cursor: 'c5' } }), okWith({ data: [rawAd('x4')], metadata: { cursor: 'c6' } }));
+    const out = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: { brand_id: 'b1', page_size: 1 } }) });
+    expect(out.map((a: { id: string }) => a.id)).toEqual(['x4', 'x3', 'x2', 'x1']);
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: 'c6', before: null, delivered: [...delivered, 'x1', 'x2', 'x3', 'x4'] });
+  });
   it('a run without stored state (upgrade from 0.1.x) seeds silently', async () => {
     const store = memoryStore();
     mock(ok([rawAd('a1')]));
