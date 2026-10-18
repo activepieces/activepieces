@@ -432,14 +432,24 @@ describe('triggers', () => {
     expect(nthUrl({ spy, index: 1 }).searchParams.get('cursor')).toBe('c2');
     expect(nthUrl({ spy, index: 2 }).searchParams.get('cursor')).toBe('c3');
   });
-  it('stops paging after the page cap', async () => {
+  it('stops at the page cap and resumes the backlog on the next poll without losing ads', async () => {
     const store = memoryStore();
     await store.put('foreplay_seen_ad_ids', ['old']);
-    const pages = Array.from({ length: 8 }, (_, i) => okWith({ data: [rawAd(`n${i}`)], metadata: { cursor: `c${i + 1}` } }));
-    const spy = mock(...pages);
-    const out = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: { brand_id: 'b1', page_size: 1 } }) });
-    expect(spy).toHaveBeenCalledTimes(5);
-    expect(out).toHaveLength(5);
+    const page = ({ id, cursor }: { id: string; cursor: string }) => okWith({ data: [rawAd(id)], metadata: { cursor } });
+    const spy = mock(
+      page({ id: 'n0', cursor: 'c1' }), page({ id: 'n1', cursor: 'c2' }), page({ id: 'n2', cursor: 'c3' }), page({ id: 'n3', cursor: 'c4' }), page({ id: 'n4', cursor: 'c5' }),
+      page({ id: 'n5', cursor: 'c6' }), page({ id: 'old', cursor: 'c7' }),
+      page({ id: 'n0', cursor: 'c1' }),
+    );
+    const props = { brand_id: 'b1', page_size: 1 };
+    const first = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: props }) });
+    expect(first.map((a: { id: string }) => a.id)).toEqual(['n4', 'n3', 'n2', 'n1', 'n0']);
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: 'c5', before: null });
+    const second = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: props }) });
+    expect(nthUrl({ spy, index: 5 }).searchParams.get('cursor')).toBe('c5');
+    expect(second.map((a: { id: string }) => a.id)).toEqual(['n5']);
+    expect(store.data.has('foreplay_backlog_cursor')).toBe(false);
+    expect(spy).toHaveBeenCalledTimes(8);
   });
   it('swipefile trigger pages by offset', async () => {
     const store = memoryStore();
@@ -461,7 +471,7 @@ describe('triggers', () => {
     mock(ok(ads), ok(ads));
     const out = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
     expect(out.map((a: { id: string }) => a.id)).toEqual(['a2', 'a3']);
-    expect(store.data.get('foreplay_seen_ad_ids')).toEqual(['a3', 'a2', 'a1']);
+    expect(store.data.get('foreplay_seen_ad_ids')).toEqual(['a3', 'a2']);
     expect(store.data.has('lastPoll')).toBe(false);
     const again = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
     expect(again).toEqual([]);
