@@ -1,6 +1,7 @@
 import { isNil, tryCatch, deepEquals, prune } from '@activepieces/core-utils';
 import {
   FlowAction,
+  FlowActionType,
   FlowOperationRequest,
   FlowOperationType,
   FlowVersion,
@@ -189,6 +190,13 @@ export const createFlowState = (
         return {
           flow,
           flowVersion: flow.version,
+          selectedBranchIndex: haveSelectedStepBranchesChanged({
+            selectedStep: state.selectedStep,
+            currentVersion: state.flowVersion,
+            refreshedVersion: flow.version,
+          })
+            ? null
+            : state.selectedBranchIndex,
           draftRefreshCount: hasSelectedStepChanged({
             selectedStep: state.selectedStep,
             currentVersion: state.flowVersion,
@@ -839,6 +847,38 @@ function hasSelectedStepChanged({
       flowStructureUtil.getStep(selectedStep, refreshedVersion.trigger),
     ),
   });
+}
+
+function haveSelectedStepBranchesChanged({
+  selectedStep,
+  currentVersion,
+  refreshedVersion,
+}: {
+  selectedStep: string | null;
+  currentVersion: FlowVersion;
+  refreshedVersion: FlowVersion;
+}): boolean {
+  if (isNil(selectedStep)) {
+    return false;
+  }
+  return !deepEquals({
+    a: routerBranches(
+      flowStructureUtil.getStep(selectedStep, currentVersion.trigger),
+    ),
+    b: routerBranches(
+      flowStructureUtil.getStep(selectedStep, refreshedVersion.trigger),
+    ),
+  });
+}
+
+function routerBranches(step: FlowAction | FlowTrigger | undefined) {
+  if (
+    step?.type !== FlowActionType.ROUTER &&
+    step?.type !== FlowActionType.AI_ROUTER
+  ) {
+    return undefined;
+  }
+  return step.settings.branches;
 }
 
 function stepFormContent(step: FlowAction | FlowTrigger | undefined) {

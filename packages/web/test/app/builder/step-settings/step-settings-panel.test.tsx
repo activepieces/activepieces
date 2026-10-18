@@ -226,6 +226,56 @@ describe('StepSettingsPanel', () => {
       selectedBranchIndex: 1,
     });
   });
+
+  it('shows the router settings when a different writer deletes a branch before the selected branch', () => {
+    const store = createStore(flowWithEuropeAndAsiaRoutes());
+    store.getState().selectStepByName('step_3');
+    store.getState().setSelectedBranchIndex(1);
+
+    store.getState().applyDraftRefresh(
+      flowWithEuropeAndAsiaRoutes({
+        operations: [
+          {
+            type: FlowOperationType.DELETE_BRANCH,
+            request: { stepName: 'step_3', branchIndex: 0 },
+          },
+        ],
+      }),
+    );
+
+    expect(store.getState()).toMatchObject({
+      selectedStep: 'step_3',
+      rightSidebar: RightSideBarType.PIECE_SETTINGS,
+      selectedBranchIndex: null,
+    });
+  });
+
+  it('shows the router settings when a different writer moves the branches', () => {
+    const store = createStore(flowWithEuropeAndAsiaRoutes());
+    store.getState().selectStepByName('step_3');
+    store.getState().setSelectedBranchIndex(1);
+
+    store.getState().applyDraftRefresh(
+      flowWithEuropeAndAsiaRoutes({
+        operations: [
+          {
+            type: FlowOperationType.MOVE_BRANCH,
+            request: {
+              stepName: 'step_3',
+              sourceBranchIndex: 0,
+              targetBranchIndex: 1,
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(store.getState()).toMatchObject({
+      selectedStep: 'step_3',
+      rightSidebar: RightSideBarType.PIECE_SETTINGS,
+      selectedBranchIndex: null,
+    });
+  });
 });
 
 function createStore(flow: PopulatedFlow): BuilderStore {
@@ -383,6 +433,28 @@ function flowWithRouter({
           },
         },
       },
+    ],
+  });
+}
+
+function flowWithEuropeAndAsiaRoutes({
+  operations = [],
+}: {
+  operations?: FlowOperationRequest[];
+} = {}): PopulatedFlow {
+  return draftFromServer({
+    flow: flowWithRouter({ routerDisplayName: 'Route by country' }),
+    operations: [
+      {
+        type: FlowOperationType.ADD_BRANCH,
+        request: {
+          stepName: 'step_3',
+          branchIndex: 1,
+          branchName: 'Asia',
+          conditions: [[]],
+        },
+      },
+      ...operations,
     ],
   });
 }
