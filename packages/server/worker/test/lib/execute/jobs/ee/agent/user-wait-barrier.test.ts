@@ -77,4 +77,50 @@ describe('wrapToolsWithUserWaitBarrier', () => {
 
         expect(await tools.ap_update_step.execute?.({}, OPTIONS)).toBe('updated')
     })
+
+    it('hands an agent edit back when a question is already open, instead of saving it unanswered', async () => {
+        const answer = deferred()
+        let saved = false
+        const tools = wrapToolsWithUserWaitBarrier({ tools: {
+            ap_show_questions: tool({ inputSchema: z.object({}), execute: async () => answer.promise }),
+            ap_update_agent: tool({ inputSchema: z.object({}), execute: async () => {
+                saved = true
+                return 'saved'
+            } }),
+        } })
+
+        const question = tools.ap_show_questions.execute?.({}, OPTIONS)
+        const update = tools.ap_update_agent.execute?.({}, OPTIONS)
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        expect(saved).toBe(false)
+
+        answer.resolve('in Arabic')
+        const [, updateResult] = await Promise.all([question, update])
+        expect(saved).toBe(false)
+        expect(JSON.stringify(updateResult)).toContain('Redo this change')
+    })
+
+    it('hands back an edit queued behind an approval when a question opens while it waits', async () => {
+        const approval = deferred()
+        const answer = deferred()
+        let ran = false
+        const tools = wrapToolsWithUserWaitBarrier({ tools: {
+            ap_remember: tool({ inputSchema: z.object({}), execute: async () => approval.promise }),
+            ap_show_questions: tool({ inputSchema: z.object({}), execute: async () => answer.promise }),
+            ap_update_step: tool({ inputSchema: z.object({}), execute: async () => {
+                ran = true
+                return 'updated'
+            } }),
+        } })
+
+        const remember = tools.ap_remember.execute?.({}, OPTIONS)
+        const update = tools.ap_update_step.execute?.({}, OPTIONS)
+        const question = tools.ap_show_questions.execute?.({}, OPTIONS)
+        approval.resolve('approved')
+        answer.resolve('weekly')
+        const [, updateResult] = await Promise.all([remember, update, question])
+
+        expect(ran).toBe(false)
+        expect(JSON.stringify(updateResult)).toContain('Redo this change')
+    })
 })

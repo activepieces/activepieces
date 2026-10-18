@@ -9,34 +9,38 @@ export function wrapToolsWithUserWaitBarrier({ tools }: { tools: ToolSet }): Too
         }
         const originalExecute = tool.execute.bind(tool)
         const claimKind = ASKS_USER_TOOLS.has(toolName) ? 'ask' : MAY_WAIT_FOR_USER_TOOLS.has(toolName) ? 'gate' : null
-        const execute = claimKind !== null
-            ? async (args: unknown, options?: ToolExecutionOptions<undefined>) => {
-                const release = barrier.claim(claimKind)
-                try {
-                    return await originalExecute(args, options)
-                }
-                finally {
-                    release()
-                }
+        const execute = async (args: unknown, options?: ToolExecutionOptions<undefined>) => {
+            const until = claimKind === 'gate' ? 'questions-answered' : 'all-answered'
+            const waited = claimKind === 'ask' || barrier.isAnswered(until) ? 'clear' : await barrier.waitForUser({ until })
+            if (waited === 'after-question') {
+                return { content: [{ type: 'text', text: HELD_BEHIND_QUESTION_MESSAGE }] }
             }
-            : async (args: unknown, options?: ToolExecutionOptions<undefined>) => {
-                const waited = await barrier.waitForUser()
-                if (waited === 'after-question') {
-                    return { content: [{ type: 'text', text: HELD_BEHIND_QUESTION_MESSAGE }] }
-                }
+            if (claimKind === null) {
                 return originalExecute(args, options)
             }
+            const release = barrier.claim(claimKind)
+            try {
+                return await originalExecute(args, options)
+            }
+            finally {
+                release()
+            }
+        }
         return [toolName, Object.assign({}, tool, { execute })]
     }))
 }
 
 function createBarrier(): Barrier {
     const openClaims = { ask: 0, gate: 0 }
-    let waiters: Array<() => void> = []
-    const isOpen = () => openClaims.ask + openClaims.gate > 0
+    let waiters: Waiter[] = []
+    const isAnswered = (until: WaitUntil) => until === 'questions-answered' ? openClaims.ask === 0 : openClaims.ask + openClaims.gate === 0
     return {
+        isAnswered,
         claim: (kind) => {
             openClaims[kind] += 1
+            if (kind === 'ask') {
+                waiters = waiters.map((waiter) => ({ ...waiter, sawQuestion: true }))
+            }
             let released = false
             return () => {
                 if (released) {
@@ -44,21 +48,19 @@ function createBarrier(): Barrier {
                 }
                 released = true
                 openClaims[kind] -= 1
-                if (!isOpen()) {
-                    waiters.forEach((wake) => wake())
-                    waiters = []
-                }
+                const [ready, stillWaiting] = partitionWaiters({ waiters, isAnswered })
+                waiters = stillWaiting
+                ready.forEach((waiter) => waiter.wake(waiter.sawQuestion ? 'after-question' : 'after-approval'))
             }
         },
-        waitForUser: async () => {
-            if (!isOpen()) {
-                return 'clear'
-            }
-            const waitedBehindQuestion = openClaims.ask > 0
-            await new Promise<void>((resolve) => waiters.push(resolve))
-            return waitedBehindQuestion ? 'after-question' : 'after-approval'
-        },
+        waitForUser: ({ until }) => new Promise((wake) => {
+            waiters = [...waiters, { until, sawQuestion: openClaims.ask > 0, wake }]
+        }),
     }
+}
+
+function partitionWaiters({ waiters, isAnswered }: { waiters: Waiter[], isAnswered: (until: WaitUntil) => boolean }): [Waiter[], Waiter[]] {
+    return [waiters.filter((waiter) => isAnswered(waiter.until)), waiters.filter((waiter) => !isAnswered(waiter.until))]
 }
 
 const ASKS_USER_TOOLS = new Set([
@@ -93,7 +95,18 @@ const NEVER_HELD_TOOLS = new Set([
 
 const HELD_BEHIND_QUESTION_MESSAGE = 'Not run: you asked the user a question in the same step. Their answer is in that question\'s result now. Redo this change if it still fits the answer.'
 
+type WaitResult = 'clear' | 'after-question' | 'after-approval'
+
+type WaitUntil = 'questions-answered' | 'all-answered'
+
+type Waiter = {
+    until: WaitUntil
+    sawQuestion: boolean
+    wake: (result: WaitResult) => void
+}
+
 type Barrier = {
+    isAnswered: (until: WaitUntil) => boolean
     claim: (kind: 'ask' | 'gate') => () => void
-    waitForUser: () => Promise<'clear' | 'after-question' | 'after-approval'>
+    waitForUser: (params: { until: WaitUntil }) => Promise<WaitResult>
 }

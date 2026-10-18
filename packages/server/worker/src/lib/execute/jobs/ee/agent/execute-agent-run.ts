@@ -264,7 +264,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 skip: (dryRun ?? false) || (discoveryOnly ?? false),
                 log,
                 run: (stepMcpToolSet) => {
-                    const baseTools = { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) }
+                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) } })
                     const taskTools = createTaskSubagentTools({
                         tools: baseTools, guides: config.guides, models: turnModels, researchModels: isNil(fastTurnModel) ? turnModels : [fastTurnModel], tier: config.tier,
                         taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
@@ -844,7 +844,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
     const completionTool = structuredOutput.length === 0
         ? {}
         : agentWorkerTools.createStructuredOutputTool({ fields: structuredOutput, capture: captureStructured })
-    return agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: agentToolPolicy.selectToolsForSource({
+    return agentToolPolicy.selectToolsForSource({
         source,
         groups: {
             local: localTools,
@@ -861,7 +861,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             knowledgeBase: knowledgeBaseTools,
             completion: completionTool,
         },
-    }) })
+    })
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle, holdErrorChunks }: {
