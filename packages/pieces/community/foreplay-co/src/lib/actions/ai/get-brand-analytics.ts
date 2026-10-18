@@ -13,7 +13,7 @@ const getBrandAnalytics = createAction({
   description: 'Daily active/inactive ad counts and formats for a brand Facebook page.',
   audience: 'ai',
   aiMetadata: {
-    description: 'Returns one row per day with the number of active and inactive ads and the ads per display format for a brand, i.e. its creative velocity. Pass the numeric Facebook page ID (the pageId field from search_brands or ads; a Foreplay brand ID is rejected by the API), plus an optional date range (YYYY-MM-DD). Costs 1 credit per call.',
+    description: 'Returns one row per day with the number of active and inactive ads and the ads per display format for a brand, i.e. its creative velocity. Pass the numeric Facebook page ID (the pageId field from search_brands; a Foreplay brand ID is rejected by the API), plus an optional date range (YYYY-MM-DD). Costs 1 credit per call.',
     idempotent: true,
   },
   outputSchema: foreplayOutputSchemas.analytics,

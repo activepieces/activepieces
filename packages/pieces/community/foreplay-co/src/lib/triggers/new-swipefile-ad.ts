@@ -9,8 +9,12 @@ import { sampleAd } from './sample-ad';
 function fetcher({ auth, propsValue }: { auth: ForeplayAuthInput; propsValue: Record<string, unknown> }) {
   const filters = foreplayProps.adFilterQuery(foreplayProps.humanAdFilterInput(propsValue));
   const pageSize = foreplayPolling.pageSizeOf(propsValue['page_size']);
-  return async ({ limit }: { limit: number | undefined }) =>
-    foreplayPolling.fetchAdList({ auth, path: '/api/swipefile/ads', query: { ...filters, order: 'saved_newest', limit: limit ?? pageSize, offset: 0 } });
+  return async ({ limit, cursor }: { limit: number | undefined; cursor: string | undefined }) => {
+    const size = limit ?? pageSize;
+    const offset = cursor === undefined ? 0 : Number(cursor);
+    const { ads } = await foreplayPolling.fetchAdPage({ auth, path: '/api/swipefile/ads', query: { ...filters, order: 'saved_newest', limit: size, offset }, pageSize: size });
+    return { ads, next: ads.length >= size ? String(offset + ads.length) : null };
+  };
 }
 
 const newSwipefileAd = createTrigger({

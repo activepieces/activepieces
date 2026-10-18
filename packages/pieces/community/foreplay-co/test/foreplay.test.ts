@@ -51,12 +51,16 @@ function mock(...responses: unknown[]) {
   return spy;
 }
 
-function httpFailure({ status, body, headers = {} }: { status: number; body: unknown; headers?: Record<string, string> }) {
-  return Object.assign(new Error('http failure'), { response: { status, body, headers } });
+function httpFailure({ status, body }: { status: number; body: unknown }) {
+  return Object.assign(new Error('http failure'), { response: { status, body } });
 }
 
 function urlOf(spy: ReturnType<typeof mock>): URL {
-  return new URL(String(spy.mock.calls[0][0].url));
+  return nthUrl({ spy, index: 0 });
+}
+
+function nthUrl({ spy, index }: { spy: ReturnType<typeof mock>; index: number }): URL {
+  return new URL(String(spy.mock.calls[index][0].url));
 }
 
 function memoryStore() {
@@ -138,18 +142,28 @@ describe('client', () => {
     mock({ status: 200, headers: {}, body: { metadata: { success: false, status_code: 404, message: 'Ad not found' }, data: [] } });
     await expect(run({ action: getAd, propsValue: { adId: 'a1' } })).rejects.toThrow('Foreplay API error (404): Ad not found');
   });
-  it('retries a 429 then succeeds', async () => {
+  it('retries a 429 after a fixed backoff (HttpError has no headers) then succeeds', async () => {
+    vi.useFakeTimers();
     const spy = vi.spyOn(httpClient, 'sendRequest');
-    spy.mockRejectedValueOnce(httpFailure({ status: 429, body: { error: { message: 'slow down' } }, headers: { 'retry-after': '0' } }));
+    spy.mockRejectedValueOnce(httpFailure({ status: 429, body: { error: { message: 'slow down' } } }));
     spy.mockResolvedValueOnce(Object(ok([])));
-    const out = await run({ action: listBoards, propsValue: {} });
+    const pending = run({ action: listBoards, propsValue: {} });
+    await vi.advanceTimersByTimeAsync(1_999);
+    expect(spy).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    const out = await pending;
+    vi.useRealTimers();
     expect(spy).toHaveBeenCalledTimes(2);
     expect(out).toMatchObject({ items: [], count: 0 });
   });
   it('gives up after repeated 429s with the vendor text', async () => {
     const spy = vi.spyOn(httpClient, 'sendRequest');
-    for (let i = 0; i < 3; i++) spy.mockRejectedValueOnce(httpFailure({ status: 429, body: { error: { message: 'rate limited' } }, headers: { 'retry-after': '0' } }));
-    await expect(run({ action: listBoards, propsValue: {} })).rejects.toThrow('Foreplay API error (429): rate limited');
+    vi.useFakeTimers();
+    for (let i = 0; i < 3; i++) spy.mockRejectedValueOnce(httpFailure({ status: 429, body: { error: { message: 'rate limited' } } }));
+    const pending = expect(run({ action: listBoards, propsValue: {} })).rejects.toThrow('Foreplay API error (429): rate limited');
+    await vi.advanceTimersByTimeAsync(6_000);
+    await pending;
+    vi.useRealTimers();
     expect(spy).toHaveBeenCalledTimes(3);
   });
   it('rejects a missing key before calling Foreplay', async () => {
@@ -234,6 +248,14 @@ describe('ai actions', () => {
     await run({ action: discoverBrandsByAds, propsValue: { niches: ['beauty'], publisherPlatforms: ['tiktok'] } });
     expect(urlOf(spy).pathname).toBe('/api/discovery/brands/explore');
     expect(urlOf(spy).searchParams.get('publisher_platform')).toBe('tiktok');
+  });
+  it('discover_brands_by_ads does not offer running-day filters the endpoint ignores', () => {
+    expect(discoverBrandsByAds.props).not.toHaveProperty('runningDurationMinDays');
+    expect(discoverBrandsByAds.props).not.toHaveProperty('runningDurationMaxDays');
+    expect(listBoardAds.props).toHaveProperty('runningDurationMinDays');
+  });
+  it('get_brand_analytics only points agents at search_brands for pageId', () => {
+    expect(getBrandAnalytics.aiMetadata?.description).not.toContain('or ads');
   });
   it('get_brand_analytics', async () => {
     const spy = mock(ok([{ date: '2026-10-01', active_count: 3, inactive_count: 1, video: 2, image: 1 }]));
@@ -395,6 +417,54 @@ describe('triggers', () => {
     expect(first[0]).toMatchObject({ board_id: 'bd1' });
     const second = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue }) });
     expect(second).toEqual([]);
+  });
+  it('pages past a busy feed until it reaches a seen ad', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', ['a1']);
+    const spy = mock(
+      okWith({ data: [rawAd('a5'), rawAd('a4')], metadata: { cursor: 'c2' } }),
+      okWith({ data: [rawAd('a3'), rawAd('a2')], metadata: { cursor: 'c3' } }),
+      okWith({ data: [rawAd('a1'), rawAd('a0')], metadata: { cursor: 'c4' } }),
+    );
+    const out = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1', page_size: 2 } }) });
+    expect(out.map((a: { id: string }) => a.id)).toEqual(['a2', 'a3', 'a4', 'a5']);
+    expect(spy).toHaveBeenCalledTimes(3);
+    expect(nthUrl({ spy, index: 1 }).searchParams.get('cursor')).toBe('c2');
+    expect(nthUrl({ spy, index: 2 }).searchParams.get('cursor')).toBe('c3');
+  });
+  it('stops paging after the page cap', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', ['old']);
+    const pages = Array.from({ length: 8 }, (_, i) => okWith({ data: [rawAd(`n${i}`)], metadata: { cursor: `c${i + 1}` } }));
+    const spy = mock(...pages);
+    const out = await call({ target: newAdInSpyder, method: 'run', args: triggerArgs({ store, propsValue: { brand_id: 'b1', page_size: 1 } }) });
+    expect(spy).toHaveBeenCalledTimes(5);
+    expect(out).toHaveLength(5);
+  });
+  it('swipefile trigger pages by offset', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', ['s0']);
+    const spy = mock(ok([rawAd('s2')]), ok([rawAd('s1')]), ok([rawAd('s0')]));
+    const out = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store, propsValue: { page_size: 1 } }) });
+    expect(out.map((a: { id: string }) => a.id)).toEqual(['s1', 's2']);
+    expect([0, 1, 2].map((i) => nthUrl({ spy, index: i }).searchParams.get('offset'))).toEqual(['0', '1', '2']);
+  });
+  it('an upgraded trigger with only the old lastPoll emits ads newer than it, then dedupes by ID', async () => {
+    const store = memoryStore();
+    const lastPoll = Date.parse('2026-10-10T00:00:00Z');
+    await store.put('lastPoll', lastPoll);
+    const ads = [
+      { ...rawAd('a3'), created_at: '2026-10-12T00:00:00Z' },
+      { ...rawAd('a2'), created_at: '2026-10-11T00:00:00Z' },
+      { ...rawAd('a1'), created_at: '2026-10-09T00:00:00Z' },
+    ];
+    mock(ok(ads), ok(ads));
+    const out = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
+    expect(out.map((a: { id: string }) => a.id)).toEqual(['a2', 'a3']);
+    expect(store.data.get('foreplay_seen_ad_ids')).toEqual(['a3', 'a2', 'a1']);
+    expect(store.data.has('lastPoll')).toBe(false);
+    const again = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
+    expect(again).toEqual([]);
   });
   it('a run without stored state (upgrade from 0.1.x) seeds silently', async () => {
     const store = memoryStore();

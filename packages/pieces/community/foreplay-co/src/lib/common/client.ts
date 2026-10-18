@@ -4,7 +4,7 @@ const FOREPLAY_API_URL = 'https://public.api.foreplay.co';
 const REQUEST_TIMEOUT_MS = 60_000;
 const MAX_RATE_LIMIT_RETRIES = 2;
 const MAX_RATE_LIMIT_WAIT_MS = 30_000;
-const DEFAULT_RATE_LIMIT_WAIT_MS = 2_000;
+const RATE_LIMIT_BASE_WAIT_MS = 2_000;
 
 class ForeplayApiError extends Error {
   constructor(
@@ -65,12 +65,12 @@ function toApiError({ status, body }: { status: number; body: unknown }): Forepl
   return new ForeplayApiError(`Foreplay API error (${status}): ${text.replace(/\.+$/, '')}.${hintFor(status)}`, status, body);
 }
 
-function failureOf(error: unknown): { status: number; body: unknown; headers: unknown } | null {
+function failureOf(error: unknown): { status: number; body: unknown } | null {
   if (error === null || typeof error !== 'object') return null;
   const response = Reflect.get(error, 'response');
   if (!isRecord(response)) return null;
   const status = response['status'];
-  return typeof status === 'number' ? { status, body: response['body'], headers: response['headers'] } : null;
+  return typeof status === 'number' ? { status, body: response['body'] } : null;
 }
 
 function headerOf({ headers, name }: { headers: unknown; name: string }): string | undefined {
@@ -83,10 +83,8 @@ function headerOf({ headers, name }: { headers: unknown; name: string }): string
   return undefined;
 }
 
-function rateLimitWaitMs(headers: unknown): number {
-  const seconds = Number(headerOf({ headers, name: 'retry-after' }));
-  if (Number.isFinite(seconds) && seconds >= 0) return Math.min(Math.ceil(seconds * 1000), MAX_RATE_LIMIT_WAIT_MS);
-  return DEFAULT_RATE_LIMIT_WAIT_MS;
+function rateLimitWaitMs(attempt: number): number {
+  return Math.min(RATE_LIMIT_BASE_WAIT_MS * 2 ** attempt, MAX_RATE_LIMIT_WAIT_MS);
 }
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -149,7 +147,7 @@ async function request({ auth, path, query }: ForeplayRequest): Promise<Foreplay
       const failure = failureOf(error);
       if (!failure) throw error;
       if (failure.status === 429 && attempt < MAX_RATE_LIMIT_RETRIES) {
-        await sleep(rateLimitWaitMs(failure.headers));
+        await sleep(rateLimitWaitMs(attempt));
         continue;
       }
       throw toApiError(failure);

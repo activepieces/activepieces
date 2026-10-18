@@ -11,9 +11,10 @@ function fetcher({ auth, propsValue }: { auth: ForeplayAuthInput; propsValue: Re
   const boardId = foreplayProps.foreplayId({ value: propsValue['board_id'], label: 'Board' });
   const filters = foreplayProps.adFilterQuery(foreplayProps.humanAdFilterInput(propsValue));
   const pageSize = foreplayPolling.pageSizeOf(propsValue['page_size']);
-  return async ({ limit }: { limit: number | undefined }) => {
-    const ads = await foreplayPolling.fetchAdList({ auth, path: '/api/board/ads', query: { board_id: boardId, ...filters, order: 'newest', limit: limit ?? pageSize } });
-    return ads.map((ad) => ({ ...foreplayMappers.recordOf(ad), board_id: boardId }));
+  return async ({ limit, cursor }: { limit: number | undefined; cursor: string | undefined }) => {
+    const size = limit ?? pageSize;
+    const page = await foreplayPolling.fetchAdPage({ auth, path: '/api/board/ads', query: { board_id: boardId, ...filters, order: 'newest', limit: size, cursor }, pageSize: size });
+    return { ...page, ads: page.ads.map((ad) => ({ ...foreplayMappers.recordOf(ad), board_id: boardId })) };
   };
 }
 

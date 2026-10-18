@@ -13,18 +13,16 @@ const discoverBrandsByAds = createAction({
   description: 'Find brands whose ads match filters such as niche, format or platform.',
   audience: 'ai',
   aiMetadata: {
-    description: 'Discovers brands by the characteristics of their ads, e.g. brands running live video ads on TikTok in the beauty niche. At least one filter is required. Costs 1 credit per call regardless of how many brands come back (limit default 10, max 100 here).',
+    description: 'Discovers brands by the characteristics of their ads, e.g. brands running live video ads on TikTok in the beauty niche. At least one filter is required (running-day filters are not supported by this endpoint). Costs 1 credit per call regardless of how many brands come back (limit default 10, max 100 here).',
     idempotent: true,
   },
   outputSchema: foreplayOutputSchemas.brandList,
   props: {
-    ...foreplayProps.aiAdFilterProps(),
+    ...foreplayProps.aiAdFilterProps({ withRunningDays: false }),
     limit: Property.Number({ displayName: 'Limit', description: '1 to 100, default 10.', required: false }),
   },
   async run({ auth, propsValue }) {
-    const filters = foreplayProps.adFilterQuery(foreplayProps.aiAdFilterInput(propsValue));
-    delete filters['running_duration_min_days'];
-    delete filters['running_duration_max_days'];
+    const filters = foreplayProps.adFilterQuery({ ...foreplayProps.aiAdFilterInput(propsValue), runningDurationMinDays: undefined, runningDurationMaxDays: undefined });
     if (Object.values(filters).every((v) => v === undefined)) throw new Error('Set at least one filter (date, live status, format, platform, niche, market target, language or video length).');
     const response = await foreplayClient.request({
       auth,

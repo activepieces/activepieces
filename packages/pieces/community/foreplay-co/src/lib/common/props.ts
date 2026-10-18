@@ -166,7 +166,7 @@ function adFilterQuery(filters: AdFilterInput): ForeplayQuery {
   return query;
 }
 
-function aiAdFilterProps({ withDates = true }: { withDates?: boolean } = {}) {
+function aiAdFilterProps({ withDates = true, withRunningDays = true }: { withDates?: boolean; withRunningDays?: boolean } = {}) {
   return {
     ...(withDates
       ? {
@@ -182,8 +182,12 @@ function aiAdFilterProps({ withDates = true }: { withDates?: boolean } = {}) {
     languages: Property.StaticMultiSelectDropdown({ displayName: 'Languages', required: false, options: { options: LANGUAGES.map((l) => ({ label: l, value: l })) } }),
     videoDurationMin: Property.Number({ displayName: 'Min Video Duration (seconds)', required: false }),
     videoDurationMax: Property.Number({ displayName: 'Max Video Duration (seconds)', required: false }),
-    runningDurationMinDays: Property.Number({ displayName: 'Min Running Days', required: false }),
-    runningDurationMaxDays: Property.Number({ displayName: 'Max Running Days', required: false }),
+    ...(withRunningDays
+      ? {
+          runningDurationMinDays: Property.Number({ displayName: 'Min Running Days', required: false }),
+          runningDurationMaxDays: Property.Number({ displayName: 'Max Running Days', required: false }),
+        }
+      : {}),
   };
 }
 

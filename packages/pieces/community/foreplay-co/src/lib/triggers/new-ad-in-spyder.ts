@@ -13,8 +13,10 @@ function fetcher({ auth, propsValue }: { auth: ForeplayAuthInput; propsValue: Re
   const brandId = foreplayProps.foreplayId({ value: propsValue['brand_id'], label: 'Brand' });
   const filters = foreplayProps.adFilterQuery(foreplayProps.humanAdFilterInput(propsValue));
   const pageSize = foreplayPolling.pageSizeOf(propsValue['page_size']);
-  return async ({ limit }: { limit: number | undefined }) =>
-    foreplayPolling.fetchAdList({ auth, path: '/api/spyder/brand/ads', query: { brand_id: brandId, ...filters, order: 'newest', limit: limit ?? pageSize } });
+  return async ({ limit, cursor }: { limit: number | undefined; cursor: string | undefined }) => {
+    const size = limit ?? pageSize;
+    return foreplayPolling.fetchAdPage({ auth, path: '/api/spyder/brand/ads', query: { brand_id: brandId, ...filters, order: 'newest', limit: size, cursor }, pageSize: size });
+  };
 }
 
 const newAdInSpyder = createTrigger({
