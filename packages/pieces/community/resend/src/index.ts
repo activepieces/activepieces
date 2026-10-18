@@ -168,8 +168,14 @@ export const resend = createPiece({
       baseUrl: () => RESEND_BASE_URL,
       auth: resendAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { secret_text: string }).secret_text}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${RESEND_BASE_URL}`,
+          placeholder: '/emails',
+        },
+      },
     }),
   ],
   triggers: [emailBounced],
