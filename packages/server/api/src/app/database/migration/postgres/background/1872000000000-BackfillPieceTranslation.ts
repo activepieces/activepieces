@@ -49,12 +49,16 @@ async function backfillPiecesWithUnicodeEscapes({ queryRunner, ids }: BackfillPi
         'SELECT "id", "i18n"::text AS "i18n" FROM "piece_metadata" WHERE "id" = ANY($1)',
         [ids],
     ) as StoredPiece[]
-    for (const row of pieces.flatMap(toTranslationRows)) {
-        await queryRunner.query(
-            'INSERT INTO "piece_translation" ("pieceMetadataId", "locale", "translations") VALUES ($1, $2, $3::jsonb) ON CONFLICT DO NOTHING',
-            [row.pieceMetadataId, row.locale, JSON.stringify(row.translations)],
-        )
+    const rows = pieces.flatMap(toTranslationRows)
+    if (rows.length === 0) {
+        return
     }
+    await queryRunner.query(`
+        INSERT INTO "piece_translation" ("pieceMetadataId", "locale", "translations")
+        SELECT row."pieceMetadataId", row."locale", row."translations"
+          FROM jsonb_to_recordset($1::jsonb) AS row("pieceMetadataId" varchar, "locale" varchar, "translations" jsonb)
+        ON CONFLICT DO NOTHING
+    `, [JSON.stringify(rows)])
 }
 
 function toTranslationRows({ id, i18n }: StoredPiece): TranslationRow[] {
