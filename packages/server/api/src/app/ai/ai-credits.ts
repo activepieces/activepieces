@@ -8,10 +8,14 @@ export function chargeFor({ usage, toolCalls = 0 }: { usage: AiUsageCharge, tool
 }
 
 function creditsForModelCall(usage: AiUsageCharge): number {
-    if (usage.type === AiChargeBasis.FIXED_CREDITS) {
-        return usage.credits
+    switch (usage.type) {
+        case AiChargeBasis.FIXED_CREDITS:
+            return usage.credits
+        case AiChargeBasis.USAGE_ONLY:
+            return 0
+        case AiChargeBasis.PROVIDER_REPORTED_COST:
+            return usage.costUsd / dollarsPerCredit()
     }
-    return usage.costUsd / dollarsPerCredit()
 }
 
 export function costBasisOf(usage: AiUsageCharge): CostBasis | undefined {

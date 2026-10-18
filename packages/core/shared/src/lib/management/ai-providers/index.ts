@@ -172,6 +172,8 @@ export const AIProviderModelMetadata = z.object({
     releaseDate: z.string().optional(),
     inputCostPerMillionTokens: z.number().optional(),
     outputCostPerMillionTokens: z.number().optional(),
+    cacheReadCostPerMillionTokens: z.number().optional(),
+    cacheWriteCostPerMillionTokens: z.number().optional(),
     supportsToolCalling: z.boolean().optional(),
     supportsReasoning: z.boolean().optional(),
     supportsVision: z.boolean().optional(),

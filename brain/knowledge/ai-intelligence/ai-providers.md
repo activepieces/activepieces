@@ -24,6 +24,11 @@ Lets platform admins configure one or more LLM backends for AI pieces in flows. 
 - There is no monthly credit-reset job and no direct Stripe invoicing; the only "monthly" mechanism is the key's `limit_reset`.
 - Model lists are cached in memory, cleared daily at midnight via cron.
 
+### AI usage (analytics)
+- Every reported model call lands in `ai_usage_daily` via `aiUsageRollup.record` (`app/ai/ai-usage-rollup.ts`), all editions. Decision 000050.
+- `AiChargeBasis.USAGE_ONLY` = recorded, never billed. Own-key agent/chat calls and internal calls (memory, compaction, piece-tool filler, personalization) report with it.
+- `AiCallContext` (`origin`, `environment`, `agentId`, `flowId`) rides on the billing object. AI steps get it from `aiUsageRollup.callContextForFlowRun`; agent runs from `AGENT_RUN_USAGE_ORIGIN`.
+
 ### Provider visibility
 - `isActivepiecesAiProviderHidden` hides the managed provider when the `aiCreditsEnabled` flag is off (`OPENROUTER_PROVISION_KEY` unset — typical self-hosted) or when `shouldHideActivepiecesAiProvider` returns true, which is gated only on `plan.embeddingEnabled`.
 - Hidden means treated as absent everywhere: `listProviders()` omits the row and `getChatProvider()`/`getChatProviderName()` return null (`findAvailableChatProviderRow`). This keeps a stale `enabledForChat` (e.g. from the 0.82.1 migration) from pinning chat to a provider that 402s with no top-up path (GIT-1620).
@@ -75,6 +80,8 @@ after a file without chat keys it seeds the chat list from the live flow list.
 **Specific model** — a model a builder picks directly from one key (`{provider, configId, model}`), as opposed to a tier. The admin switch `platform_configuration.aiSpecificModelsVisible` (Tiers tab, "Visible to builders") hides them from builders. _Avoid_: "Advanced" (an early mockup word for the same section)
 
 ### Gotchas
+- **AI usage cost order: provider-reported → catalog estimate → unpriced.** Own OpenRouter keys now ask for `usage: { include: true }` so their cost is real. Azure deployment names and custom models have no catalog price and only count tokens.
+- **An AI step whose flow run row isn't written yet is tagged PRODUCTION.** `callContextForFlowRun` looks the run up by id; a missing row means production. MCP / agent-tool action runs are spotted by `DEFAULT_MCP_DATA.flowRunId` and drop the placeholder flow id.
 - **`enabledForChat` now means "the Default AI key", not "the key every chat runs on".** Chats pin their own key (see `ai-agents.md`); the flag only seeds the legacy and default paths, knowledge-base embeddings (when no Embeddings capability is set), and platform-wide work. Memory and personalization run on it, else on the Default tier's main model when that key serves every project, else on Credits (`agentHelpers.resolvePlatformWorkModel`). `listForProject` still reports the flag because the pre-7b chat page gates on it.
 - **The replay eval can't judge a model swap where the new model takes a different tool path.** Two separate things cause it:
   - **Replay divergence.** Every fixture gets the same tool set from `buildEvalToolSet` (local, display, cross-project and thinking tools). The recording only fixes which results come back and in what order. Calling a registered tool out of the recorded order returns `__evalDivergence`.

@@ -5,6 +5,7 @@ import {
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
+import { AiUsageDailyEntity } from '../ai/ai-usage-daily-entity'
 import { PlatformModelTierEntity } from '../ai/platform-model-tier-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
@@ -98,6 +99,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AIProviderEntity,
         AiToolConfigEntity,
         PlatformModelTierEntity,
+        AiUsageDailyEntity,
         ProjectRoleEntity,
         TableEntity,
         FieldEntity,
