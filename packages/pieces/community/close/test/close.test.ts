@@ -261,6 +261,25 @@ describe('webhook triggers', () => {
     expect(retry).toEqual([]);
   });
 
+  it('drops event markers older than the retry window and clears them on disable', async () => {
+    const trigger = close.triggers()['new_lead_created'];
+    const old = Date.now() - 74 * 60 * 60 * 1000;
+    const store = makeStore({
+      'new-lead-trigger': { id: 'whsub_1', signatureKey: key },
+      'new-lead-trigger-seen:ev_old': true,
+      'new-lead-trigger-seen-index': [{ id: 'ev_old', at: old }],
+    });
+    mockSeq({ id: 'lead_1' });
+    await Reflect.apply(trigger.run, undefined, [{ auth, store, payload: delivery({ eventId: 'ev_new', objectType: 'lead', objectId: 'lead_1' }) }]);
+    expect(store.data['new-lead-trigger-seen:ev_old']).toBeUndefined();
+    expect(store.data['new-lead-trigger-seen:ev_new']).toBe(true);
+    expect(store.data['new-lead-trigger-seen-index']).toEqual([{ id: 'ev_new', at: expect.any(Number) }]);
+    mockSeq({});
+    await Reflect.apply(trigger.onDisable, undefined, [{ auth, store }]);
+    expect(store.data['new-lead-trigger-seen:ev_new']).toBeUndefined();
+    expect(store.data['new-lead-trigger-seen-index']).toBeUndefined();
+  });
+
   it('opportunity and contact records expose custom.cf_ values under custom', async () => {
     const trigger = close.triggers()['new_opportunity_added'];
     const store = makeStore({ 'new-opportunity-trigger': { id: 'whsub_1', signatureKey: key } });
