@@ -1,7 +1,6 @@
-import { createAction, PieceAuth } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, PopulatedRecord, Table } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PopulatedRecord } from '@activepieces/pieces-framework';
 import { getRecordActionOutputSchema } from '../output-schemas';
 
 export const getRecord = createAction({
@@ -18,9 +17,9 @@ export const getRecord = createAction({
   },
   outputSchema: getRecordActionOutputSchema,
   async run(context) {
-    const { record_id } = context.propsValue;
+    const { table_id: tableExternalId, record_id } = context.propsValue;
 
-    const response = await httpClient.sendRequest({
+    const { body: record } = await httpClient.sendRequest<PopulatedRecord>({
       method: HttpMethod.GET,
       url: `${context.server.apiUrl}v1/records/${record_id}`,
       authentication: {
@@ -30,6 +29,20 @@ export const getRecord = createAction({
       retries: 5,
     });
 
-    return tablesCommon.formatRecord(response.body as PopulatedRecord);
+    const { body: table } = await httpClient.sendRequest<Table>({
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/tables/${record.tableId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.server.token,
+      },
+      retries: 5,
+    });
+
+    if (table.externalId !== tableExternalId) {
+      throw new Error(`Record ${record_id} not found in the selected table`);
+    }
+
+    return tablesCommon.formatRecord(record);
   },
 });
