@@ -1,8 +1,8 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, UpdateProjectPlatformRequest } from '@activepieces/shared'
+import { AppConnectionScope, MAX_DEFAULT_PROJECTS, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains, Equal, ILike, In, IsNull } from 'typeorm'
+import { ArrayContains, EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -12,7 +12,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
-import { platformService } from '../../platform/platform.service'
+import { platformRepo, platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -139,6 +139,9 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         const { globalConnectionExternalIds, maxConcurrentJobs, ...rest } = request
         let resolvedPoolId: string | null | undefined
         await transaction(async (entityManager) => {
+            if (request.isDefault === true && !project.isDefault) {
+                await assertDefaultProjectsBelowCap({ platformId: project.platformId, entityManager })
+            }
             resolvedPoolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
             await projectService(log).update(projectId, {
                 type: project.type,
@@ -260,6 +263,23 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         await scheduleHardDeleteProjectJob({ id, platformId, log })
     },
 })
+
+async function assertDefaultProjectsBelowCap({ platformId, entityManager }: AssertDefaultProjectsBelowCapParams): Promise<void> {
+    await platformRepo(entityManager).findOneOrFail({
+        where: { id: platformId },
+        select: { id: true },
+        lock: { mode: 'pessimistic_write' },
+    })
+    const defaultCount = await projectRepo(entityManager).countBy({ platformId, type: ProjectType.TEAM, isDefault: true })
+    if (defaultCount >= MAX_DEFAULT_PROJECTS) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `A platform can have at most ${MAX_DEFAULT_PROJECTS} default projects`,
+            },
+        })
+    }
+}
 
 async function projectRolesEnabled({ platformId, log }: ProjectRolesEnabledParams): Promise<boolean> {
     const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
@@ -415,6 +435,11 @@ type DeleteProjectParams = {
     id: ProjectId
     platformId: PlatformId
     enforceDefaultGuard?: boolean
+}
+
+type AssertDefaultProjectsBelowCapParams = {
+    platformId: PlatformId
+    entityManager: EntityManager
 }
 
 type ProjectRolesEnabledParams = {

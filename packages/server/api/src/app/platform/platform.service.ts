@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
-import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformResponse, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
+import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, MAX_DEFAULT_PROJECTS, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformResponse, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { EntityManager } from 'typeorm'
@@ -250,6 +250,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             where: { platformId, type: ProjectType.TEAM, isDefault: true },
             select: { id: true },
             order: { created: 'ASC' },
+            take: MAX_DEFAULT_PROJECTS,
         })
         return projects.map((project) => project.id)
     },

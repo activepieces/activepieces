@@ -13,7 +13,7 @@ export class AddIsDefaultToProject1875000000000 implements Migration {
         `)
         await queryRunner.query(`
             ALTER TABLE "project"
-            ADD CONSTRAINT "chk_project_is_default_team" CHECK ("type" = 'TEAM' OR "isDefault" = false)
+            ADD CONSTRAINT "chk_project_is_default_team" CHECK ("type" = 'TEAM' OR "isDefault" = false) NOT VALID
         `)
     }
 
