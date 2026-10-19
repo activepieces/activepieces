@@ -35,7 +35,7 @@ export const ConnectionDropdown = React.memo(
       isRefetching: isRefetchingConnections,
     } = appConnectionsQueries.useAppConnections({
       request: {
-        pieceName: piece?.name || '',
+        pieceName: [piece?.name || ''],
         projectId: authenticationSession.getProjectId()!,
         limit: 1000,
       },

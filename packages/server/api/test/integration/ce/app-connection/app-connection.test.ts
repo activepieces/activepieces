@@ -373,6 +373,18 @@ describe('AppConnection CE API', () => {
             const body = response?.json()
             expect(body.data).toHaveLength(1)
             expect(body.data[0].pieceName).toBe(mockPieceA.name)
+
+            const multiResponse = await ctx.get('/v1/app-connections', {
+                projectId: ctx.project.id,
+                pieceName: [mockPieceA.name, mockPieceB.name],
+            })
+
+            expect(multiResponse?.statusCode).toBe(StatusCodes.OK)
+            const multiBody = multiResponse?.json()
+            expect(multiBody.data).toHaveLength(2)
+            expect(multiBody.data.map((c: { pieceName: string }) => c.pieceName).sort()).toEqual(
+                [mockPieceA.name, mockPieceB.name].sort(),
+            )
         })
     })
 

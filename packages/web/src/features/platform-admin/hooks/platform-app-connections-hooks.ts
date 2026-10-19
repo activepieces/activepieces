@@ -26,13 +26,14 @@ export const platformAppConnectionsQueries = {
         const cursor = searchParams.get(CURSOR_QUERY_PARAM);
         const limit = searchParams.get(LIMIT_QUERY_PARAM);
         const status = searchParams.getAll('status') as AppConnectionStatus[];
+        const pieceName = searchParams.getAll('pieceName');
         const projectIds = searchParams.getAll('projectIds');
         const ownerIds = searchParams.getAll('ownerIds');
         return platformAppConnectionsApi.list({
           cursor: cursor ?? undefined,
           limit: limit ? parseInt(limit) : undefined,
           displayName: searchParams.get('displayName') ?? undefined,
-          pieceName: searchParams.get('pieceName') ?? undefined,
+          pieceName: pieceName.length > 0 ? pieceName : undefined,
           status: status.length > 0 ? status : undefined,
           projectIds: projectIds.length > 0 ? projectIds : undefined,
           ownerIds: ownerIds.length > 0 ? ownerIds : undefined,

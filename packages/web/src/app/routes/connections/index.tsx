@@ -85,7 +85,7 @@ function AppConnectionsPage() {
     ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
     : 10;
   const status = (searchParams.getAll('status') as AppConnectionStatus[]) ?? [];
-  const pieceName = searchParams.get('pieceName') ?? undefined;
+  const pieceName = searchParams.getAll('pieceName');
   const displayName = searchParams.get('displayName') ?? undefined;
 
   const {

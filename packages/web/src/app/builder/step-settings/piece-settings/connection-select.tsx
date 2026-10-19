@@ -79,7 +79,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
     refetch,
   } = appConnectionsQueries.useAppConnections({
     request: {
-      pieceName: params.piece.name,
+      pieceName: [params.piece.name],
       projectId: authenticationSession.getProjectId()!,
       limit: 1000,
     },

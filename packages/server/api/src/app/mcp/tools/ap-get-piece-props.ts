@@ -209,7 +209,7 @@ async function discoverAvailableConnections({ pieceName, projectId, platformId, 
         const connections = await appConnectionService(log).list({
             projectId,
             platformId,
-            pieceName,
+            pieceName: [pieceName],
             cursorRequest: null,
             scope: undefined,
             displayName: undefined,
@@ -241,7 +241,7 @@ async function validateAuthOwnership({ auth, pieceName, projectId, platformId, l
         const connections = await appConnectionService(log).list({
             projectId,
             platformId,
-            pieceName,
+            pieceName: [pieceName],
             cursorRequest: null,
             scope: undefined,
             displayName: undefined,

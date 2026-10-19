@@ -388,7 +388,7 @@ export const appConnectionsQueries = {
         displayName: sp.get('displayName') ?? undefined,
         ownerEmails: sp.getAll('owner'),
         status: sp.getAll('status') as AppConnectionStatus[],
-        pieceName: sp.get('pieceName') ?? undefined,
+        pieceName: sp.getAll('pieceName'),
       };
     }, [search]);
   },
