@@ -13,7 +13,7 @@ import { creditLedger } from './credit-ledger'
 import { declinedActions } from './declined-actions'
 import { classifyAgentRunError, delayWithJitter, drainOf, firstStepUsesFastModel, isTransientFailureText, NO_STEP_CONTENT, runAgentTurn, StreamDrain, trackStepContent, TurnModel } from './run-agent-turn'
 import { taskContext } from './tools/task-context'
-import { createTaskSubagentTools } from './tools/task-subagent-tools'
+import { createTaskSubagentTools, taskTokensOf } from './tools/task-subagent-tools'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -264,7 +264,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 skip: (dryRun ?? false) || (discoveryOnly ?? false),
                 log,
                 run: (stepMcpToolSet) => {
-                    const baseTools = { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) }
+                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) } })
                     const taskTools = createTaskSubagentTools({
                         tools: baseTools, guides: config.guides, models: turnModels, researchModels: isNil(fastTurnModel) ? turnModels : [fastTurnModel], tier: config.tier,
                         taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
@@ -384,6 +384,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
 
             const autoTitle = await autoTitlePromise
+            const taskTokens = taskTokensOf({ parts: uiParts })
 
             log.info({
                 conversation: { id: conversationId },
@@ -396,6 +397,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 model: { id: turn.answeredBy.modelId },
                 finishReason: turn.finishReason,
                 truncatedAfterRetries,
+                taskInputTokens: taskTokens.input,
+                taskOutputTokens: taskTokens.output,
             }, 'Chat message completed')
 
             const thinkingDurationMs = Date.now() - thinkingStartTime

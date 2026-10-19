@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 
 import { sendMessageOutputSchema } from '../../output-schemas';
 import { instagramCommon, FacebookPageDropdown } from '../../common';
@@ -17,14 +17,28 @@ export const sendPrivateReply = createAction({
       'Sends a direct message to the author of a comment, given the comment id rather than a user id, which is how Instagram supports the comment-to-DM pattern. Allowed once per comment and only within 7 days of it, and unlike Send Message it does not need an existing conversation. Not idempotent, and a second private reply to the same comment is rejected.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'account', display: 'section', label: 'Account', icon: 'user', props: ['page'] },
+    { key: 'comment', display: 'section', label: 'Reply to', icon: 'reply', props: ['reply_info', 'comment_id'] },
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['text'] },
+  ],
   props: {
     page: instagramCommon.page,
+    reply_info: Property.MarkDown({
+      value: 'You can send one private reply per comment, within 7 days of it.',
+      variant: MarkdownVariant.INFO,
+    }),
     comment_id: Property.ShortText({
       displayName: 'Comment ID',
-      description: 'The comment whose author should receive the direct message.',
+      description: 'The comment whose author gets the message.',
+      placeholder: '17858893269000001',
       required: true,
     }),
-    text: Property.LongText({ displayName: 'Message', required: true }),
+    text: Property.LongText({
+      displayName: 'Text',
+      placeholder: 'Thanks for your comment! Here are the details.',
+      required: true,
+    }),
   },
   async run({ propsValue }) {
     const page: FacebookPageDropdown = propsValue.page;

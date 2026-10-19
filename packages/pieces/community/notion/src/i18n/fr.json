@@ -218,5 +218,7 @@
   "Triggers when an item is added to a database.": "Déclenche lorsqu'un élément est ajouté à une base de données.",
   "Triggers when an item is updated in a database.": "Déclenche lorsqu'un élément est mis à jour dans une base de données.",
   "Triggers when a comment is added to a page.": "Triggers when a comment is added to a page.",
-  "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited."
+  "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited.",
+  "Empty fields keep their current value. Checkboxes are always saved as shown.": "Les champs vides conservent leur valeur actuelle. Les cases à cocher sont toujours enregistrées telles qu'affichées.",
+  "Add Notion-Version, e.g. 2022-02-22. Authorization is added for you.": "Ajoutez Notion-Version, par ex. 2022-02-22. L'autorisation est ajoutée automatiquement."
 }
