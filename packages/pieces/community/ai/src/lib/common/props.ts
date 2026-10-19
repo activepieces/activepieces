@@ -118,7 +118,7 @@ export const aiProps = <T extends AIModelType>({
         return {
           disabled: true,
           options: [],
-          placeholder: 'Select AI Provider',
+          placeholder: 'Select a provider first',
         };
       }
 

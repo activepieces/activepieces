@@ -10,6 +10,7 @@ import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -29,8 +30,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { pieceSetMutations } from '@/features/piece-sets';
+import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { projectHooks } from '@/features/projects';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type PieceSetProjectsDialogProps = {
   pieceSet: PieceSet;
@@ -49,6 +51,19 @@ const isAssignedToSet = ({
   return project.pieceSetId === pieceSet.id;
 };
 
+function findCurrentSetName({
+  project,
+  pieceSets,
+}: {
+  project: ProjectWithLimits;
+  pieceSets: PieceSet[];
+}): string {
+  const currentSet = isNil(project.pieceSetId)
+    ? pieceSets.find((set) => set.isDefault)
+    : pieceSets.find((set) => set.id === project.pieceSetId);
+  return currentSet?.name ?? '';
+}
+
 const AssignProjectsForm = ({
   pieceSet,
   allProjects,
@@ -61,6 +76,11 @@ const AssignProjectsForm = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const [selected, setSelected] = useState<string[]>(serverAssignedIds);
+  const { data: pieceSetsPage } = pieceSetQueries.usePieceSets({ limit: 100 });
+  const pieceSets = pieceSetsPage?.data ?? [];
+  const movingCount = selected.filter(
+    (id) => !serverAssignedIds.includes(id),
+  ).length;
   const assignMutation = pieceSetMutations.useAssignProjects();
   const removeMutation = pieceSetMutations.useBulkRemoveProjects();
 
@@ -134,12 +154,24 @@ const AssignProjectsForm = ({
                 >
                   <Checkbox checked={checked} className="pointer-events-none" />
                   <span className="truncate">{project.displayName}</span>
+                  {!isAssignedToSet({ pieceSet, project }) && (
+                    <span className="ml-auto shrink-0 text-xs text-gray-11">
+                      {t('Currently: {name}', {
+                        name: findCurrentSetName({ project, pieceSets }),
+                      })}
+                    </span>
+                  )}
                 </CommandItem>
               );
             })}
           </CommandGroup>
         </CommandList>
       </Command>
+      {movingCount > 0 && (
+        <p className="text-xs text-warning-11">
+          {t('projectsMovingFromOtherSets', { count: movingCount })}
+        </p>
+      )}
       <DialogFooter>
         <Button
           type="button"
@@ -148,7 +180,12 @@ const AssignProjectsForm = ({
         >
           {t('Cancel')}
         </Button>
-        <Button type="button" loading={isSaving} onClick={handleSave}>
+        <Button
+          {...adminControl(AdminControl.PIECE_SETS_PROJECTS_SUBMIT)}
+          type="button"
+          loading={isSaving}
+          onClick={handleSave}
+        >
           {t('Save')}
         </Button>
       </DialogFooter>
@@ -183,22 +220,21 @@ export const PieceSetProjectsDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
+          {...adminControl(AdminControl.PIECE_SETS_PROJECTS_OPEN)}
           variant="outline"
           role="combobox"
           disabled={isLoading}
-          className="h-9 gap-2 rounded-lg pl-2.5 pr-2 font-normal"
+          className="font-normal"
         >
           {assignedProjects.length === 0 ? (
-            <span className="text-muted-foreground">
-              {t('No projects assigned')}
-            </span>
+            <span className="text-gray-11">{t('No projects assigned')}</span>
           ) : (
             <span className="flex items-center gap-2">
               <span className="flex items-center gap-0.5">
                 {assignedProjects.slice(0, 3).map((project) => (
                   <span
                     key={project.id}
-                    className="flex size-5 items-center justify-center rounded-[5px] text-[9px] font-bold"
+                    className="flex size-5 items-center justify-center rounded-md text-xs font-semibold"
                     style={{
                       backgroundColor:
                         PROJECT_COLOR_PALETTE[project.icon.color].color,
@@ -217,10 +253,10 @@ export const PieceSetProjectsDialog = ({
               </span>
             </span>
           )}
-          <ChevronDown className="size-3.5 text-muted-foreground shrink-0" />
+          <ChevronDown className="size-3.5 text-gray-11 shrink-0" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         <AssignProjectsForm
           key={open ? 'open' : 'closed'}
           pieceSet={pieceSet}

@@ -90,10 +90,10 @@ export const ConnectionDropdown = React.memo(
             loading={connectionsLoading || isRefetchingConnections}
             disabled={disabled}
             showDeselect={!disabled && value !== null}
-            triggerClassName={showError ? 'border-destructive' : undefined}
+            triggerClassName={showError ? 'border-danger-9' : undefined}
           />
           {showError && (
-            <p className="text-sm font-medium text-destructive break-words">
+            <p className="text-sm font-medium text-danger-11 break-words">
               {t('Connection is required')}
             </p>
           )}

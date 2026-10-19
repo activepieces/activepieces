@@ -24,6 +24,7 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { BackgroundMigration } from './background-migration'
 import { commonProperties } from './database-connection'
 import { Migration } from './migration'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
@@ -446,6 +447,18 @@ import { UniqueProjectRoleNamePerPlatform1852000000000 } from './migration/postg
 import { FlowExternalIdUniqueIgnoresDeleting1855000000000 } from './migration/postgres/1855000000000-FlowExternalIdUniqueIgnoresDeleting'
 import { AddFlowTombstoneIndex1856000000000 } from './migration/postgres/1856000000000-AddFlowTombstoneIndex'
 import { AddWaitpointDeadLetteredAt1857000000000 } from './migration/postgres/1857000000000-AddWaitpointDeadLetteredAt'
+import { AddAgentFolderId1858000000000 } from './migration/postgres/1858000000000-AddAgentFolderId'
+import { AddPlatformModelTier1859000000000 } from './migration/postgres/1859000000000-AddPlatformModelTier'
+import { AddPieceSetRequiredActions1860000000000 } from './migration/postgres/1860000000000-AddPieceSetRequiredActions'
+import { AddEventDestinationEnabledAndFormat1862000000000 } from './migration/postgres/1862000000000-AddEventDestinationEnabledAndFormat'
+import { AddEventDestinationHeaders1863000000000 } from './migration/postgres/1863000000000-AddEventDestinationHeaders'
+import { AddPlatformTierFastAndConversationTier1864000000000 } from './migration/postgres/1864000000000-AddPlatformTierFastAndConversationTier'
+import { AddAuditLogRetentionDaysToPlatform1865000000000 } from './migration/postgres/1865000000000-AddAuditLogRetentionDaysToPlatform'
+import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from './migration/postgres/1866000000000-AddAiSpecificModelsVisibleToPlatformConfiguration'
+import { AddAgentTask1867000000000 } from './migration/postgres/1867000000000-AddAgentTask'
+import { AddProviderConfigIdToAgentConversation1868000000000 } from './migration/postgres/1868000000000-AddProviderConfigIdToAgentConversation'
+import { DropChatRolloutUserTable1870000000000 } from './migration/postgres/1870000000000-DropChatRolloutUserTable'
+import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -455,6 +468,12 @@ const getSslConfig = (): boolean | TlsOptions => {
         }
     }
     return false
+}
+
+export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
+    return [
+        AddAgentConversationProviderConfigIdIndex1869000000000,
+    ]
 }
 
 export const getMigrations = (): (new () => Migration)[] => {
@@ -907,6 +926,17 @@ export const getMigrations = (): (new () => Migration)[] => {
         FlowExternalIdUniqueIgnoresDeleting1855000000000,
         AddFlowTombstoneIndex1856000000000,
         AddWaitpointDeadLetteredAt1857000000000,
+        AddAgentFolderId1858000000000,
+        AddPlatformModelTier1859000000000,
+        AddPieceSetRequiredActions1860000000000,
+        AddEventDestinationEnabledAndFormat1862000000000,
+        AddEventDestinationHeaders1863000000000,
+        AddPlatformTierFastAndConversationTier1864000000000,
+        AddAuditLogRetentionDaysToPlatform1865000000000,
+        AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000,
+        AddAgentTask1867000000000,
+        AddProviderConfigIdToAgentConversation1868000000000,
+        DropChatRolloutUserTable1870000000000,
     ]
     return migrations
 }
@@ -914,7 +944,7 @@ export const getMigrations = (): (new () => Migration)[] => {
 
 export const createPostgresDataSource = (): DataSource => {
     const migrationConfig: MigrationConfig = {
-        migrationsRun: true,
+        migrationsRun: false,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
         synchronize: false,
@@ -955,6 +985,20 @@ export const createPostgresDataSource = (): DataSource => {
         extra: {
             idleTimeoutMillis,
         },
+    })
+}
+
+export const createPostgresMigrationDataSource = (): DataSource | null => {
+    const url = system.get(AppSystemProp.POSTGRES_MIGRATION_URL)
+    if (isNil(url)) return null
+    return new DataSource({
+        type: 'postgres',
+        url,
+        ssl: getSslConfig(),
+        poolSize: 2,
+        migrationsRun: false,
+        synchronize: false,
+        ...commonProperties,
     })
 }
 

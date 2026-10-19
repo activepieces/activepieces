@@ -8,36 +8,60 @@ export const askAI = createAction({
   name: 'askAi',
   classification: 'READ',
   displayName: 'Ask AI',
-  description: 'A flexible AI step. ask it to analyze data, explain, draft, or decide based on your flow\'s data.',
+  description: 'Ask AI to analyze, explain, draft or decide using your flow data.',
   aiMetadata: { description: 'Sends a free-form prompt to a text model and returns its answer, optionally continuing a multi-turn thread via a Conversation Key or grounding the reply with web search. Pick it for open-ended reasoning, drafting, or judgement over flow data; prefer summarizeText to condense text, classifyText for a fixed label set, extractStructuredData for typed fields, or run_agent when the task needs tools and multiple steps. Requires a provider/model plus a prompt; not idempotent, since each call generates a fresh answer and a Conversation Key appends the exchange to stored history.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'ai_model',
+      display: 'section',
+      label: 'AI Model',
+      icon: 'sliders',
+      props: ['provider', 'model'],
+    },
+    {
+      key: 'request',
+      display: 'section',
+      label: 'Request',
+      icon: 'text',
+      props: ['prompt', 'conversationKey', 'webSearch', 'webSearchOptions'],
+    },
+  ],
   props: {
     provider: aiProps({ modelType: 'text' }).provider,
     model: aiProps({ modelType: 'text' }).model,
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
+      placeholder: 'e.g. Draft a friendly reply to this customer email',
     }),
     conversationKey: Property.ShortText({
       displayName: 'Conversation Key',
       required: false,
+      description: 'Same key in this flow continues the chat. Empty starts fresh.',
+      placeholder: 'e.g. support-chat',
     }),
     creativity: Property.Number({
       displayName: 'Creativity',
       required: false,
-      description:
-        'Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.',
+      description: 'From 0 to 100. Lower is focused, higher is creative.',
+      display: 'stepper',
+      min: 0,
+      max: 100,
+      step: 10,
+      advanced: true,
     }),
     maxOutputTokens: Property.Number({
       displayName: 'Max Tokens',
       required: false,
       defaultValue: 2000,
+      description: 'Longest reply allowed, in tokens. Raise it if a long reply fails or stops short.',
+      advanced: true,
     }),
     webSearch: Property.Checkbox({
       displayName: 'Web Search',
       required: false,
       defaultValue: false,
-      description:
-        'Whether to use web search to find information for the AI to use in its response.',
+      description: 'Let the AI search the web before it answers.',
     }),
     webSearchOptions: buildWebSearchOptionsProperty(
       (propsValue) => ({

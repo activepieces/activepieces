@@ -233,13 +233,22 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
     'google-vertex-ai': AIProviderName.GOOGLE,
 }
 
-const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
+const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
 const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
 const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
-const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const GOOGLE_CHAT_MODELS = ['gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const DEPRECATED_GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash'] as const
 const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20'] as const
 
-const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`)
+const DEPRECATED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
+    [AIProviderName.GOOGLE]: DEPRECATED_GOOGLE_CHAT_MODELS,
+    [AIProviderName.VERTEX]: DEPRECATED_GOOGLE_CHAT_MODELS,
+}
+
+const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = [
+    ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`),
+    'deepseek/deepseek-v4.1-flash',
+]
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
@@ -249,13 +258,16 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
     [AIProviderName.ACTIVEPIECES]: [
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
         ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
-        ...GOOGLE_CHAT_MODELS.map((m) => `${AIProviderName.GOOGLE}/${m}`),
+        ...[...GOOGLE_CHAT_MODELS, ...DEPRECATED_GOOGLE_CHAT_MODELS].map((m) => `${AIProviderName.GOOGLE}/${m}`),
         ...X_AI_OPENROUTER_CHAT_MODELS.map((m) => `x-ai/${m}`),
     ],
 }
 
 const CHAT_MODEL_LABELS: Record<string, string> = {
     'gpt-5.5': 'GPT-5.5',
+    'gpt-5.6-sol': 'GPT-5.6 Sol',
+    'gpt-5.6-terra': 'GPT-5.6 Terra',
+    'gpt-5.6-luna': 'GPT-5.6 Luna',
     'gpt-5.4-mini': 'GPT-5.4 mini',
     'gpt-5.4-nano': 'GPT-5.4 nano',
     'gpt-4.1': 'GPT-4.1',
@@ -278,6 +290,11 @@ function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id:
     return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
 }
 
+function runnableChatModelIds({ provider }: { provider: AIProviderName }): string[] {
+    const offered = (getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
+    return unique([...offered, ...(DEPRECATED_CHAT_MODELS_BY_PROVIDER[provider] ?? [])])
+}
+
 function canDisableReasoning({ modelId }: { modelId: string }): boolean {
     return REASONING_OPTIONAL_CHAT_MODELS.includes(modelId)
 }
@@ -297,6 +314,7 @@ function curatedChatModelIds(): string[] {
     return unique([
         ...ACTIVEPIECES_CHAT_TIERS.flatMap((tier) => [tier.id, tier.modelId]),
         ...Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).flatMap((curatedIds) => curatedIds ?? []),
+        ...Object.values(DEPRECATED_CHAT_MODELS_BY_PROVIDER).flatMap((deprecatedIds) => deprecatedIds ?? []),
     ])
 }
 
@@ -453,7 +471,7 @@ const DEFAULT_IMAGE_MODELS: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.ACTIVEPIECES]: ACTIVEPIECES_IMAGE_TIERS[0].modelId,
     [AIProviderName.OPENROUTER]: 'google/gemini-3.1-flash-lite-image',
     [AIProviderName.OPENAI]: 'gpt-image-1.5',
-    [AIProviderName.GOOGLE]: 'gemini-2.5-flash-image',
+    [AIProviderName.GOOGLE]: 'gemini-3.1-flash-image',
 }
 
 export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabilities> = {
@@ -479,6 +497,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
 export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
+    runnableChatModelIds,
     isCuratedChatModelId,
     managedChatModelIds,
     isManagedChatModelId,

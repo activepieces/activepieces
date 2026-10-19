@@ -9,14 +9,14 @@ export const askGroq = createAction({
 	name: 'ask-ai',
 	classification: 'READ',
 	displayName: 'Ask AI',
-	description: 'Ask Groq anything using fast language models.',
+	description: 'Send a question or instruction to a Groq model and get a text reply.',
 	aiMetadata: { description: 'Sends a prompt to a Groq-hosted chat model (Whisper speech models are excluded from the model list) and returns the generated text, with optional sampling controls and a roles array for system instructions. Runs stateless by default, or shares conversation history across runs and flows when a memory key is set. This is the only text-generation action in the piece - pick the sibling Transcribe Audio or Translate Audio actions when the input is a sound file rather than text. Requires a model, a question, and a maximum token count; not idempotent: each call produces a fresh completion and, when a memory key is set, appends to the stored project-scoped history.', idempotent: false },
 	props: {
 		model: Property.Dropdown({
 			auth: groqAuth,
 			displayName: 'Model',
 			required: true,
-			description: 'The model which will generate the completion.',
+			description: 'Speech models are left out; use the audio actions for them.',
 			refreshers: [],
 			defaultValue: 'llama-3.1-70b-versatile',
 			options: async ({ auth }) => {
@@ -53,60 +53,62 @@ export const askGroq = createAction({
 					return {
 						disabled: true,
 						options: [],
-						placeholder: "Couldn't load models, API key is invalid",
+						placeholder: "Couldn't load models. Check your API key or try again.",
 					};
 				}
 			},
 		}),
 		prompt: Property.LongText({
 			displayName: 'Question',
+			description: 'What you want the model to answer or do.',
+			placeholder: 'e.g. Summarize this email in three bullet points',
 			required: true,
 		}),
 		temperature: Property.Number({
 			displayName: 'Temperature',
 			required: false,
-			description:
-				'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
+			description: 'From 0 to 2. Lower is more focused, higher is more varied.',
 			defaultValue: 0.9,
+			advanced: true,
 		}),
 		maxTokens: Property.Number({
 			displayName: 'Maximum Tokens',
 			required: true,
-			description:
-				"The maximum number of tokens to generate. The total length of input tokens and generated tokens is limited by the model's context length.",
+			description: 'Longest reply in tokens, about 4 characters each.',
 			defaultValue: 2048,
 		}),
 		topP: Property.Number({
 			displayName: 'Top P',
 			required: false,
-			description:
-				'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
+			description: 'From 0 to 1. Adjust this or Temperature, not both.',
 			defaultValue: 1,
+			advanced: true,
 		}),
 		frequencyPenalty: Property.Number({
-			displayName: 'Frequency penalty',
+			displayName: 'Frequency Penalty',
 			required: false,
-			description:
-				"Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.",
+			description: 'From -2 to 2. Groq models do not support this yet.',
 			defaultValue: 0,
+			advanced: true,
 		}),
 		presencePenalty: Property.Number({
-			displayName: 'Presence penalty',
+			displayName: 'Presence Penalty',
 			required: false,
-			description:
-				"Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.",
+			description: 'From -2 to 2. Groq models do not support this yet.',
 			defaultValue: 0.6,
+			advanced: true,
 		}),
 		memoryKey: Property.ShortText({
-			displayName: 'Memory Key',
-			description:
-				'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave Groq without memory of previous messages.',
+			displayName: 'Conversation Memory ID',
+			description: 'Runs that share this ID continue one conversation. Empty: no memory.',
+			placeholder: 'e.g. support-chat-42',
 			required: false,
 		}),
 		roles: Property.Json({
 			displayName: 'Roles',
 			required: false,
-			description: 'Array of roles to specify more accurate response',
+			description: 'Messages sent before the question, such as a system instruction.',
+			advanced: true,
 			defaultValue: [{ role: 'system', content: 'You are a helpful assistant.' }],
 		}),
 	},

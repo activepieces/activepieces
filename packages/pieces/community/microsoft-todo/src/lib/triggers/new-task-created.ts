@@ -6,6 +6,7 @@ import { microsoftToDoAuth } from '../auth';
 import { PageCollection } from '@microsoft/microsoft-graph-client';
 import dayjs from 'dayjs';
 import { TodoTask } from '@microsoft/microsoft-graph-types';
+import { newOrUpdatedTaskOutputSchema } from '../output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAuth>, { task_list_id: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -51,6 +52,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAut
 
 export const newTaskCreatedTrigger = createTrigger({
 	name: 'new_task_created',
+	outputSchema: newOrUpdatedTaskOutputSchema,
 	classification: 'READ',
 	displayName: 'New Task',
 	description: 'Triggers when a new task is created.',

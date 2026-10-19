@@ -1,6 +1,9 @@
 import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { intercomClient } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { intercomRequest } from '../common';
+import { findCompanyBy } from '../common/lookups';
+import { findOrCreateCompanyOutputSchema } from '../output-schemas';
 
 export const findOrCreateCompanyAction = createAction({
 	auth: intercomAuth,
@@ -11,8 +14,8 @@ export const findOrCreateCompanyAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'Resolve a company to a single record: looks it up by Company ID (preferred) or name and returns the match, or creates a new company when none exists. Returns the company plus a "created" flag. Effectively idempotent when a Company ID is supplied.',
-		idempotent: true,
+			'Resolve a company to a single record: looks it up by your Company ID (preferred) or exact name and returns the match, or creates a new company when none exists. Returns the company plus a "created" flag. With a Company ID a retry finds the same company; with only a name, a company that has no contact yet is not found by name, so a duplicate can be created.',
+		idempotent: false,
 	},
 	props: {
 		companyId: Property.ShortText({
@@ -46,6 +49,7 @@ export const findOrCreateCompanyAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: findOrCreateCompanyOutputSchema,
 	async run(context) {
 		const { companyId, name, plan, size, website, industry, customAttributes } =
 			context.propsValue;
@@ -54,26 +58,28 @@ export const findOrCreateCompanyAction = createAction({
 			throw new Error('Provide a Company ID or a Name to find or create a company.');
 		}
 
-		const client = intercomClient(context.auth);
+		const existing = companyId
+			? await findCompanyBy({ auth: context.auth, field: 'company_id', value: companyId })
+			: await findCompanyBy({ auth: context.auth, field: 'name', value: name ?? '' });
 
-		const existing = await client.companies.retrieve({
-			company_id: companyId || undefined,
-			name: companyId ? undefined : name || undefined,
-			per_page: 1,
-		});
-
-		if (existing.data.length > 0) {
-			return { created: false, company: existing.data[0] };
+		if (existing !== undefined) {
+			return { created: false, company: existing };
 		}
 
-		const company = await client.companies.createOrUpdate({
-			company_id: companyId,
-			name,
-			plan,
-			size,
-			website,
-			industry,
-			custom_attributes: customAttributes,
+		const company = await intercomRequest<Record<string, unknown>>({
+			auth: context.auth,
+			method: HttpMethod.POST,
+			path: ['companies'],
+			body: {
+				company_id: companyId || undefined,
+				name: name || undefined,
+				plan,
+				size,
+				website,
+				industry,
+				custom_attributes: customAttributes,
+			},
+			operation: 'create the company',
 		});
 
 		return { created: true, company };

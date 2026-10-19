@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroCreateBill = createAction({
   auth: xeroAuth,
@@ -14,12 +15,13 @@ export const xeroCreateBill = createAction({
   classification: 'WRITE',
   displayName: 'Create Bill',
   description: 'Creates a new bill (Accounts Payable).',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Create a new accounts-payable (ACCPAY) bill from a supplier contact, with at least one line item (Description required) and optional dates, reference, and status. Pick this for money the organization owes a supplier; for customer-facing sales invoices use Create or Update Invoice instead. Not idempotent: each call creates another bill.',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.invoiceEnvelope,
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_dropdown(true),

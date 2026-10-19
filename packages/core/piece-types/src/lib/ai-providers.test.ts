@@ -117,14 +117,14 @@ describe('managed chat model vocabulary', () => {
 })
 
 describe('canDisableReasoning', () => {
-    it('is true for every tier model, so the default path keeps its zero-reasoning first step', () => {
-        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
-            expect(aiProviderUtils.canDisableReasoning({ modelId: tier.modelId }), tier.modelId).toBe(true)
+    it('is true for the models observed accepting a disable directive', () => {
+        for (const id of ['anthropic/claude-haiku-4.5', 'anthropic/claude-sonnet-4.6', 'deepseek/deepseek-v4.1-flash']) {
+            expect(aiProviderUtils.canDisableReasoning({ modelId: id }), id).toBe(true)
         }
     })
 
-    it('is false for the reasoning-native models that rejected a disable directive in production', () => {
-        for (const id of ['google/gemini-3.8-flash', 'openai/gpt-6-astra', 'openai/gpt-6-astra-pro', 'anthropic/claude-fable-5.1']) {
+    it('is false for the reasoning-native models that rejected a disable directive', () => {
+        for (const id of ['google/gemini-3.8-flash', 'openai/gpt-6-astra', 'openai/gpt-6-astra-pro', 'anthropic/claude-fable-5.1', 'minimax/minimax-m3', 'z-ai/glm-5.3']) {
             expect(aiProviderUtils.canDisableReasoning({ modelId: id }), id).toBe(false)
         }
     })
@@ -242,5 +242,41 @@ describe('aiProviderUtils.isChatModelId', () => {
     it('ignores case and surrounding space, so a provider echoing an odd id still filters', () => {
         expect(isChat(' WHISPER-1 ')).toBe(false)
         expect(isChat(' GPT-4O ')).toBe(true)
+    })
+})
+
+describe('Google models that Google has deprecated', () => {
+    const deprecated = ['gemini-2.5-pro', 'gemini-2.5-flash']
+
+    it('are not offered to someone using their own Google key, since new Google projects cannot call them', () => {
+        for (const provider of [AIProviderName.GOOGLE, AIProviderName.VERTEX]) {
+            const offered = (aiProviderUtils.getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
+            expect(offered.some((id) => deprecated.includes(id))).toBe(false)
+            expect(offered.length).toBeGreaterThan(0)
+        }
+    })
+
+    it('still run for a step or key that chose them, but only after every current model', () => {
+        const runnable = aiProviderUtils.runnableChatModelIds({ provider: AIProviderName.GOOGLE })
+        const offered = (aiProviderUtils.getCuratedChatModels({ provider: AIProviderName.GOOGLE }) ?? []).map((model) => model.id)
+
+        expect(runnable.slice(0, offered.length)).toEqual(offered)
+        expect(runnable.slice(offered.length)).toEqual(deprecated)
+    })
+
+    it('still run on Activepieces credits, so steps saved with them keep working', () => {
+        for (const model of deprecated) {
+            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES]).toContain(`google/${model}`)
+        }
+    })
+
+    it('are still recognised as our own model ids, so analytics and billing keep the name', () => {
+        for (const model of deprecated) {
+            expect(aiProviderUtils.isCuratedChatModelId({ modelId: model })).toBe(true)
+        }
+    })
+
+    it('are never the default for image generation with a Google key', () => {
+        expect(AI_PROVIDER_CAPABILITIES[AIProviderName.GOOGLE].defaultImageModel).toBe('gemini-3.1-flash-image')
     })
 })

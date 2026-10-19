@@ -75,8 +75,8 @@ export const newOrUpdatedCompanyTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-company',
 	classification: 'READ',
-	displayName: 'Company Recently Created or Updated',
-	description: 'Triggers when a company recently created or updated.',
+	displayName: 'New or Updated Company',
+	description: 'Triggers when a company is created or updated.',
 	aiMetadata: {
 		description:
 			'Fires when a company is created or modified in HubSpot. Each event represents one company record with properties such as name, domain, industry, address, employee count, revenue, and lifecycle stage. Polls by last-modified date, so both new and edited companies trigger it.',
@@ -84,15 +84,13 @@ export const newOrUpdatedCompanyTrigger = createTrigger({
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                    
-                    name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies
-                                    
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies.
+
+Pick more below.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.COMPANY,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
 		}),
 	},

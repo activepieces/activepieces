@@ -1,15 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-import { ghostAuth } from '../..';
+import { ghostAuth } from '../auth';
 import { common } from '../common';
+import { ghostOriginalMembersOutputSchema } from '../output-schemas';
 
 export const updateMember = createAction({
   name: 'update_member',
+  outputSchema: ghostOriginalMembersOutputSchema,
   classification: 'WRITE',
   displayName: 'Update Member',
   description: 'Update a member',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Updates an existing Ghost member identified by member id, changing any supplied fields (email, name, note, newsletter subscriptions); omitted fields are left unchanged. Use to edit a known member. Requires the target member id. Idempotent: re-applying the same field values yields the same member state.', idempotent: true },
   auth: ghostAuth,
   props: {
@@ -50,7 +52,7 @@ export const updateMember = createAction({
     if (context.propsValue.name) data.name = context.propsValue.name;
     if (context.propsValue.note) data.note = context.propsValue.note;
     if (context.propsValue.newsletters)
-      data.newsletters = context.propsValue.newsletters;
+      data.newsletters = newsletters;
 
     const response = await httpClient.sendRequest({
       url: `${context.auth.props.baseUrl}/ghost/api/admin/members/${context.propsValue.member}`,

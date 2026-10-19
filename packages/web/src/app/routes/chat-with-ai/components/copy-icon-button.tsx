@@ -34,7 +34,7 @@ export const CopyIconButton = forwardRef<
         if (!event.defaultPrevented) handleCopy();
       }}
       className={cn(
-        'flex items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+        'flex items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12',
         className,
       )}
     >

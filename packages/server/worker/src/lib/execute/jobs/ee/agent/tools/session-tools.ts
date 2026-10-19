@@ -1,8 +1,8 @@
-import { spreadIfDefined } from '@activepieces/core-utils'
-import { AgentOutputField, AgentOutputFieldType, AgentPhase, apId, BuildPlanEvent, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
-import { tool, ToolSet } from 'ai'
+import { spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { AgentOutputField, AgentOutputFieldType, apId, BuildPlanEvent, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
-import { AgentEventEmitter, QUESTION_ICON_NAMES, TaintState } from './tool-primitives'
+import { AgentEventEmitter, GateDecision, gateNoResponseMessage, QUESTION_ICON_NAMES, TaintState } from './tool-primitives'
 
 export function createLocalTools({ onSetProjectContext, projects }: {
     onSetProjectContext: (projectId: string | null) => Promise<{ success: boolean, error?: string }>
@@ -43,15 +43,25 @@ export function createLocalTools({ onSetProjectContext, projects }: {
     }
 }
 
-export function createAgentSurfaceTools({ executeTool, taintState }: {
+export function createAgentSurfaceTools({ executeTool, taintState, eventEmitter, waitForApproval, onGateOpened }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     taintState: TaintState
+    eventEmitter: AgentEventEmitter
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
+    onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
 }): ToolSet {
-    const runUnlessTainted = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => {
+    const runAfterApprovalIfTainted = async ({ toolName, toolInput, toolCallId }: { toolName: string, toolInput: Record<string, unknown>, toolCallId: string }): Promise<unknown> => {
         if (taintState.tainted) {
-            return { error: 'You read the user\'s data in this reply or the one before it, so you cannot change a saved agent now. Say what you would have changed, and offer to do it if they send that request as its own message after a reply that reads no data. The Configure panel is the other way.' }
+            const label = AGENT_CHANGE_LABELS[toolName] ?? toolName
+            eventEmitter.emitActionPreview({ toolCallId, pieceName: '', actionName: toolName, actionDisplayName: label, input: toolInput, isBatch: false })
+            await tryCatch(async () => onGateOpened?.({ gateId: toolCallId, toolName, displayName: label, toolInput }))
+            const decision = await waitForApproval({ gateId: toolCallId })
+            if (decision.outcome !== 'approved') {
+                const text = decision.outcome === 'timeout' ? gateNoResponseMessage('agent change approval') : 'The user declined this change to the agent. Do not retry it; ask what they want instead.'
+                return { error: text }
+            }
         }
-        return executeTool(toolName, toolInput)
+        return executeTool(toolName, taintState.tainted ? { ...toolInput, approvedGateId: toolCallId } : toolInput)
     }
     return {
         ap_list_agents: tool({
@@ -71,8 +81,8 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
                 connectionExternalId: z.string().optional().describe('externalId from ap_list_connections, for a piece that needs an account'),
                 publish: z.boolean().optional().describe('Make the agent live with these tools in the same step'),
             }),
-            execute: async (toolInput) => {
-                return runUnlessTainted('ap_add_agent_tool', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_add_agent_tool', toolInput, toolCallId })
             },
         }),
 
@@ -84,8 +94,8 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
                 pieceName: z.string().optional().describe('Full piece name, only needed when the same action name is on two of the agent\'s pieces'),
                 publish: z.boolean().optional().describe('Make the agent live without these tools in the same step'),
             }),
-            execute: async (toolInput) => {
-                return runUnlessTainted('ap_remove_agent_tool', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_remove_agent_tool', toolInput, toolCallId })
             },
         }),
 
@@ -98,20 +108,20 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
                 instructions: z.string().optional().describe('The agent\'s full new standing brief, in second person'),
                 publish: z.boolean().optional().describe('Make the change live for flows and chats in the same step'),
             }),
-            execute: async (toolInput) => {
-                return runUnlessTainted('ap_update_agent', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_update_agent', toolInput, toolCallId })
             },
         }),
 
         ap_create_agent: tool({
-            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do. Call it before you read any of the user\'s data in this reply: afterwards it is refused until their next message, so stand the agent up first and refine it with ap_update_agent once you have looked at their data.',
+            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do. If you have read the user\'s data in this reply, they are asked to approve it first.',
             inputSchema: z.object({
                 displayName: z.string().describe('Short name the user will recognise, e.g. "Inbox triage"'),
                 instructions: z.string().describe('The agent\'s standing brief, in second person'),
                 description: z.string().optional().describe('One line on what it is for'),
             }),
-            execute: async (toolInput) => {
-                return runUnlessTainted('ap_create_agent', toolInput)
+            execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                return runAfterApprovalIfTainted({ toolName: 'ap_create_agent', toolInput, toolCallId })
             },
         }),
     }
@@ -138,7 +148,7 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
     const buildId = apId()
     return {
         ap_set_build_plan: tool({
-            description: 'Publish and maintain the live build plan shown to the user as a single contained, celebratory build card (silent, internal — no thinking status).\n\nUSE THIS ONLY when building a brand-new, multi-step recurring automation (a flow with a trigger + steps the user will keep) — i.e. you are actively going through the build_flow guide. That is the ONLY valid trigger.\n\nDo NOT call it for anything else: a one-time "do it now" task (the one_time_task path — running/sending/cleaning/scoring now), a single quick action or lookup, answering or explaining something, exploring/reading data, or a small tweak / rename / status change / single-step edit to an existing automation. If you are not actively running build_flow to construct a new automation, do NOT call this tool — there should be no card.\n\nWhen it applies: call it ONCE the moment you commit to the build, BEFORE constructing anything, with phase "detecting", a bold celebratory tagline, and the full list of steps you intend to build (all status "pending"). Then call it again to patch the plan as you work: set a step to "in_progress" before you build it and "done" after it validates. Set flowId as soon as ap_create_flow or ap_build_flow returns it. Use phase "building" while constructing, "testing" while running test cases, and finally "done" with the flowId once the automation is built and verified — this reveals the Open / Test / Run actions. Reuse the same step ids and the same tagline across calls so the card updates in place instead of resetting.',
+            description: 'The live build card for a brand-new recurring automation (silent, internal — no thinking status). Use it only while following the build_flow guide; never for a one-time task, a lookup, an answer or a small edit to an existing automation. Call it once with phase "detecting" and every step "pending" before building, then update it as you work, reusing the same tagline, iconName and step ids so the card updates in place. Send each update alongside the next step\'s real tool calls instead of as a step on its own, but only with states you already know: mark a step done or failed, or set phase done or failed, only after the result that decides it has come back, never in the same step as the call that produces it.',
             inputSchema: z.object({
                 phase: z.enum(['detecting', 'building', 'testing', 'done', 'failed']).describe('"detecting" = just decided to build (celebrate); "building" = constructing steps; "testing" = running test cases; "done" = built & verified; "failed" = gave up'),
                 flowName: z.string().describe('Human-readable automation name shown on the card'),
@@ -165,28 +175,6 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
                 }
                 eventEmitter.emitBuildPlan(event)
                 return { ok: true, buildId }
-            },
-        }),
-    }
-}
-
-export function createPhaseTools({ onPhaseChange }: {
-    onPhaseChange: (phase: AgentPhase) => void
-}): ToolSet {
-    let lastPhase: AgentPhase | null = null
-    return {
-        ap_set_phase: tool({
-            description: 'Switch your working phase (silent, internal — no thinking status). Start in "discovery" (understanding the goal, reading data). Call this with "build" the moment you begin constructing, editing, testing, or running an automation — e.g. right after you load the build_flow or one_time_task guide. This unlocks the build/execution tools.',
-            inputSchema: z.object({
-                phase: z.enum(['discovery', 'build']).describe('"discovery" while scoping/reading; "build" once you start building or executing'),
-            }),
-            execute: async (input) => {
-                if (lastPhase === input.phase) {
-                    return { phase: input.phase, note: 'Already in this phase — no change.' }
-                }
-                lastPhase = input.phase
-                onPhaseChange(input.phase)
-                return { phase: input.phase }
             },
         }),
     }
@@ -219,3 +207,10 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
     }
 }
 
+
+const AGENT_CHANGE_LABELS: Record<string, string> = {
+    ap_add_agent_tool: 'Add tools to a saved agent',
+    ap_remove_agent_tool: 'Remove tools from a saved agent',
+    ap_update_agent: 'Change a saved agent',
+    ap_create_agent: 'Create a saved agent',
+}

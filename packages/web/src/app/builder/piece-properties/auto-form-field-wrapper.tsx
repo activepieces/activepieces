@@ -126,7 +126,7 @@ function AutoFormFielWrapperErrorBoundary({
     <ErrorBoundary
       fallbackRender={() => (
         <div className="text-sm  flex items-center justify-between">
-          <div className="text-destructive">
+          <div className="text-danger-11">
             {t('input value is invalid, please contact support')}
           </div>
           <Button
@@ -265,10 +265,10 @@ function PropertyTypeTooltip({ property }: { property: PieceProperty }) {
     <Tooltip>
       <TooltipTrigger asChild>
         {property.type === PropertyType.FILE ? (
-          <File className="w-4 h-4 stroke-foreground/55"></File>
+          <File className="w-4 h-4 stroke-gray-12/55"></File>
         ) : (
           property.type === PropertyType.DATE_TIME && (
-            <Calendar className="w-4 h-4 stroke-foreground/55"></Calendar>
+            <Calendar className="w-4 h-4 stroke-gray-12/55"></Calendar>
           )
         )}
       </TooltipTrigger>

@@ -1,11 +1,57 @@
+import { describe, expect, it } from 'vitest';
 import { LocalesEnum } from '@activepieces/core-utils';
 import { PackageType, PieceType } from '@activepieces/core-piece-types';
-import { describe, expect, it } from 'vitest';
 import { createAction } from '../src/lib/action/action';
 import { pieceTranslation } from '../src/lib/i18n';
 import { createPiece } from '../src/lib/piece';
 import { PieceMetadataModel } from '../src/lib/piece-metadata';
 import { PieceAuth, Property } from '../src/lib/property';
+
+const buildPiece = (): PieceMetadataModel => JSON.parse(JSON.stringify({
+  ...createPiece({
+    displayName: 'Mailer',
+    description: 'Send mail',
+    logoUrl: 'https://example.com/logo.png',
+    auth: PieceAuth.SecretText({ displayName: 'API key', description: 'Your API key', required: true }),
+    actions: [
+      createAction({
+        name: 'send',
+        displayName: 'Send email',
+        description: 'Sends an email',
+        props: {
+          to: Property.ShortText({ displayName: 'To', required: true }),
+          format: Property.StaticDropdown({
+            displayName: 'Format',
+            required: true,
+            options: { options: [{ label: 'Plain', value: 'plain' }, { label: 'HTML', value: 'html' }] },
+          }),
+        },
+        run: async () => undefined,
+      }),
+      createAction({
+        name: 'archive',
+        displayName: 'Archive',
+        props: {},
+        run: async () => undefined,
+      }),
+    ],
+    triggers: [],
+  }).metadata(),
+  name: '@activepieces/piece-mailer',
+  version: '0.1.0',
+  projectUsage: 0,
+  pieceType: PieceType.OFFICIAL,
+  packageType: PackageType.REGISTRY,
+  i18n: {
+    [LocalesEnum.JAPANESE]: {
+      'Send mail': 'メール送信',
+      'Your API key': 'あなたのAPIキー',
+      'Send email': 'メールを送信',
+      'To': '宛先',
+      'HTML': 'HTML形式',
+    },
+  },
+}));
 
 const databaseTokenAuth = () =>
   PieceAuth.CustomAuth({
@@ -98,14 +144,51 @@ const build = (auth: Parameters<typeof createPiece>[0]['auth']): PieceMetadataMo
   i18n: { [LocalesEnum.FRENCH]: french },
 });
 
-const translate = (auth: Parameters<typeof createPiece>[0]['auth'], mutate = false) =>
+const translate = (auth: Parameters<typeof createPiece>[0]['auth']) =>
   pieceTranslation.translatePiece<PieceMetadataModel>({
     piece: build(auth),
     locale: LocalesEnum.FRENCH,
-    mutate,
   });
 
 const methods = (auth: PieceMetadataModel['auth']) => (Array.isArray(auth) ? auth : []);
+
+describe('pieceTranslation.translatePiece', () => {
+  it('translates every configured path', () => {
+    const translated = pieceTranslation.translatePiece({ piece: buildPiece(), locale: LocalesEnum.JAPANESE });
+
+    expect(translated.description).toBe('メール送信');
+    expect(translated.auth).toMatchObject({ displayName: 'API key', description: 'あなたのAPIキー' });
+    expect(translated.actions['send'].displayName).toBe('メールを送信');
+    expect(translated.actions['send'].props['to'].displayName).toBe('宛先');
+    expect(translated.actions['send'].props['format']).toMatchObject({
+      options: { options: [{ label: 'Plain', value: 'plain' }, { label: 'HTML形式', value: 'html' }] },
+    });
+  });
+
+  it('never mutates the input piece', () => {
+    const piece = buildPiece();
+    const snapshot = structuredClone(piece);
+
+    pieceTranslation.translatePiece({ piece, locale: LocalesEnum.JAPANESE });
+
+    expect(piece).toEqual(snapshot);
+  });
+
+  it('shares untranslated subtrees with the input instead of copying them', () => {
+    const piece = buildPiece();
+
+    const translated = pieceTranslation.translatePiece({ piece, locale: LocalesEnum.JAPANESE });
+
+    expect(translated.actions['archive']).toBe(piece.actions['archive']);
+    expect(translated.triggers).toBe(piece.triggers);
+  });
+
+  it('returns the same piece when the locale has no translations', () => {
+    const piece = buildPiece();
+
+    expect(pieceTranslation.translatePiece({ piece, locale: LocalesEnum.GERMAN })).toBe(piece);
+  });
+});
 
 describe('translatePiece on a piece exposing several auth methods', () => {
   it('translates the display name of every method', () => {
@@ -153,11 +236,6 @@ describe('translatePiece on a piece exposing several auth methods', () => {
       },
     });
   });
-
-  it('translates every method when the metadata is mutated in place', () => {
-    expect(methods(translate([databaseTokenAuth(), emailPasswordAuth()], true).auth).map((method) => method.displayName))
-      .toStrictEqual(['Jeton de base de données (recommandé)', 'E-mail et mot de passe (JWT)']);
-  });
 });
 
 describe('translatePiece on a piece exposing a single auth method', () => {
@@ -171,8 +249,24 @@ describe('translatePiece on a piece exposing a single auth method', () => {
     });
   });
 
-  it('walks past the non-object values of the auth when the metadata is mutated in place', () => {
-    expect(translate(databaseTokenAuth(), true).actions['list_rows'].displayName).toBe('Lister les lignes');
+  it('translates every prop of a custom auth whose props are named username and password', () => {
+    const auth = PieceAuth.CustomAuth({
+      displayName: 'Database Token (recommended)',
+      description: 'Scoped, per-table access that works with 2FA.',
+      required: true,
+      props: {
+        apiUrl: Property.ShortText({ displayName: 'API URL', required: true }),
+        username: Property.ShortText({ displayName: 'Email', required: true }),
+        password: PieceAuth.SecretText({ displayName: 'Password', required: true }),
+      },
+    });
+    expect(translate(auth).auth).toMatchObject({
+      props: {
+        apiUrl: { displayName: "URL de l'API" },
+        username: { displayName: 'E-mail' },
+        password: { displayName: 'Mot de passe' },
+      },
+    });
   });
 
   it('walks past an auth prop named after a path segment', () => {

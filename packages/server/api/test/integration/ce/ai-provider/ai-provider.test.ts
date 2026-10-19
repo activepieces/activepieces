@@ -3,6 +3,7 @@ import { AIProviderModelType, DefaultProjectRole, PrincipalType, ProviderModelCo
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
+import { aiRpcHandlers } from '../../../../src/app/ai/ai-rpc-handlers'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockProject, mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -962,5 +963,114 @@ describe('AI Providers API', () => {
 
             expect(serves).toBe(false)
         })
+    })
+})
+
+describe('key scope hardening', () => {
+    it('prefers a key open to every project for platform-wide work, and the most specific key inside a project', async () => {
+        const open = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const limited = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, projectScope: 'selected', projectIds: [ctx.project.id] })
+
+        const platformPick = await aiProviderService(app!.log).getConfigOrThrow({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, scope: { type: 'platform' } })
+        const projectPick = await aiProviderService(app!.log).getConfigOrThrow({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, scope: { type: 'project', projectId: ctx.project.id } })
+
+        expect(platformPick.configId).toBe(open.id)
+        expect(projectPick.configId).toBe(limited.id)
+    })
+
+    it('refuses at run time a model the key stopped allowing after the step was queued', async () => {
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, modelScope: 'selected', modelIds: ['gpt-4o'] })
+        const resolve = (modelId?: string) => aiRpcHandlers(app!.log).resolveAiProvider({ projectId: ctx.project.id, platformId: ctx.platform.id, provider: AIProviderName.OPENAI, providerConfigId: key.id, ...(modelId ? { modelId } : {}) })
+
+        await expect(resolve('gpt-4o-mini')).rejects.toMatchObject({ error: { code: 'VALIDATION' } })
+        expect((await resolve('gpt-4o')).providerConfigId).toBe(key.id)
+        expect((await resolve()).providerConfigId).toBe(key.id)
+    })
+
+    it('refuses to limit the projects of a key a capability uses for every project', async () => {
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        await db.save('ai_tool_config', {
+            id: apId(),
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            platformId: ctx.platform.id,
+            capability: 'WEB_SEARCH',
+            provider: 'ai_provider',
+            config: { aiProviderId: key.id },
+            auth: { iv: 'unused', data: 'unused' },
+            enabled: true,
+        })
+
+        const narrowed = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: key.displayName, projectScope: 'selected', projectIds: [ctx.project.id] })
+        const renamed = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: 'Renamed key' })
+
+        expect(narrowed.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(narrowed.body).toContain('web search')
+        expect(renamed.statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('refuses to drop the model a capability uses from its key', async () => {
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        await db.save('ai_tool_config', {
+            id: apId(),
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            platformId: ctx.platform.id,
+            capability: 'IMAGE_GENERATION',
+            provider: 'ai_provider',
+            config: { aiProviderId: key.id, modelId: 'gpt-image-1' },
+            auth: { iv: 'unused', data: 'unused' },
+            enabled: true,
+        })
+
+        const dropping = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: key.displayName, modelScope: 'selected', modelIds: ['gpt-4o'] })
+        const keeping = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: key.displayName, modelScope: 'selected', modelIds: ['gpt-4o', 'gpt-image-1'] })
+
+        expect(dropping.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(dropping.body).toContain('image generation')
+        expect(keeping.statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('refuses to drop a typed-in model that a capability uses, even when the key allows all models', async () => {
+        const models = [
+            { modelId: 'chat-model', modelName: 'Chat', modelType: AIProviderModelType.TEXT },
+            { modelId: 'image-model', modelName: 'Image', modelType: AIProviderModelType.IMAGE },
+        ]
+        const config = { baseUrl: 'https://api.example.com/v1', apiKeyHeader: 'Authorization', models }
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.CUSTOM, config })
+        await db.save('ai_tool_config', {
+            id: apId(),
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            platformId: ctx.platform.id,
+            capability: 'IMAGE_GENERATION',
+            provider: 'ai_provider',
+            config: { aiProviderId: key.id, modelId: 'image-model' },
+            auth: { iv: 'unused', data: 'unused' },
+            enabled: true,
+        })
+
+        const dropping = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: key.displayName, config: { ...config, models: [models[0]] } })
+        const keeping = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: key.displayName, config: { ...config, models: [...models, { modelId: 'new-model', modelName: 'New', modelType: AIProviderModelType.TEXT }] } })
+
+        expect(dropping.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(dropping.body).toContain('image generation')
+        expect(keeping.statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('refuses to drop a typed-in model that a tier uses, even when the key allows all models', async () => {
+        const models = [
+            { modelId: 'kept-model', modelName: 'Kept', modelType: AIProviderModelType.TEXT },
+            { modelId: 'tier-model', modelName: 'Tier', modelType: AIProviderModelType.TEXT },
+        ]
+        const config = { baseUrl: 'https://api.example.com/v1', apiKeyHeader: 'Authorization', models }
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.CUSTOM, config })
+        const tier = await ctx.post('/v1/platform-model-tiers', { name: 'Typed', emoji: '⚡', description: null, entries: [{ configId: key.id, modelId: 'tier-model' }] })
+        expect(tier.statusCode).toBe(StatusCodes.OK)
+
+        const dropped = await ctx.post(`/v1/ai-providers/${key.id}`, { displayName: key.displayName, config: { ...config, models: [models[0]] } })
+
+        expect(dropped.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(dropped.body).toContain('Typed')
     })
 })

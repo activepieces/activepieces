@@ -7,6 +7,7 @@ import { websocketService } from '../../core/websockets.service'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
+import { eventDestinationRpcHandlers } from '../../event-destinations/event-destinations-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
@@ -355,6 +356,12 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async saveAgentMessages(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).saveAgentMessages(input)
         },
+        async beginAgentTask(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).beginAgentTask(input)
+        },
+        async finishAgentTask(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).finishAgentTask(input)
+        },
 
         async saveAgentFile(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).saveAgentFile(input)
@@ -403,6 +410,15 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
 
         async resolveAiProvider(input) {
             return aiRpcHandlers(log).resolveAiProvider(input)
+        },
+        async resolveAiModelCandidates(input) {
+            return aiRpcHandlers(log).resolveAiModelCandidates(input)
+        },
+        async reportAiKeyOutcome(input) {
+            return aiRpcHandlers(log).reportAiKeyOutcome(input)
+        },
+        async resolveEventDestinationHeaders(input) {
+            return eventDestinationRpcHandlers(log).resolveEventDestinationHeaders(input)
         },
         async saveFlowStepFile(input) {
             return aiRpcHandlers(log).saveFlowStepFile(input)

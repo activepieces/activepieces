@@ -21,7 +21,7 @@ export function McpFlows({ mcpServer }: McpFlowsProps) {
   }
 
   return (
-    <div className="border rounded-lg overflow-hidden divide-y">
+    <div className="border rounded-xl overflow-hidden divide-y">
       {flows.map((flow) => {
         const isEnabled = flow.status === FlowStatus.ENABLED;
         return (
@@ -39,7 +39,7 @@ export function McpFlows({ mcpServer }: McpFlowsProps) {
               <div
                 className={cn(
                   'w-2 h-2 rounded-full',
-                  isEnabled ? 'bg-success' : 'bg-gray-400',
+                  isEnabled ? 'bg-success-10' : 'bg-gray-9',
                 )}
               />
               <span>{isEnabled ? t('On') : t('Off')}</span>

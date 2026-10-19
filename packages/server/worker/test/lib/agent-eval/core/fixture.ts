@@ -9,6 +9,7 @@ export type ChatEvalAssertion =
     | { type: 'reachedToolWithin', toolName: string, n: number }
     | { type: 'maxQuestionCards', n: number, toolNames?: string[] }
     | { type: 'neverCalledTool', toolName: string }
+    | { type: 'noToolArgMatches', pattern: string, toolName?: string }
     | { type: 'askedToTurnItOn' }
     | { type: 'noLiveClaimWithoutPublish' }
 
@@ -25,7 +26,7 @@ export type ChatEvalRecordedToolCall = {
     output: unknown
 }
 
-type ChatEvalFixtureModel = {
+export type ChatEvalFixtureModel = {
     provider: AIProviderName
     modelId: string
     tier: { id: string, thinkingBudget: number, modelId: string }

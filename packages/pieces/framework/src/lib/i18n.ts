@@ -1,30 +1,16 @@
 import { I18nForPiece, PieceMetadataModel, PieceMetadataModelSummary } from "./piece-metadata"
-import { isNil, LocalesEnum } from "@activepieces/core-utils"
+import { LocalesEnum } from "@activepieces/core-utils"
 import { MAX_KEY_LENGTH_FOR_CORWDIN } from "@activepieces/core-piece-types"
 import path from 'path';
 import fs from 'fs/promises';
 
 export const pieceTranslation = {
-  translatePiece: <T extends PieceMetadataModelSummary | PieceMetadataModel>(params: TranslatePieceParams<T>): T => {
-    const { piece, locale, mutate = false } = params
-    if (!locale) {
+  translatePiece: <T extends PieceMetadataModelSummary | PieceMetadataModel>({ piece, locale }: TranslatePieceParams<T>): T => {
+    const translations = locale ? piece.i18n?.[locale] : undefined
+    if (!translations) {
       return piece
     }
-    try {
-      const target = piece.i18n?.[locale]
-      if (!target) {
-        return piece
-      }
-      const translatedPiece: T = mutate ? piece : JSON.parse(JSON.stringify(piece))
-      pieceTranslation.pathsToValuesToTranslate.forEach(key => {
-        translateProperty(translatedPiece, key, target)
-      })
-      return translatedPiece
-    }
-    catch (err) {
-      console.error(`error translating piece ${piece.name}:`, err)
-      return piece
-    }
+    return translateNode({ node: piece, tree: translationTree, translations })
   },
 
   /**Gets the piece metadata regardles of piece location (node_modules or dist), wasn't included inside piece.metadata() for backwards compatibility issues (if an old ap version installs a new piece it would fail)*/
@@ -80,36 +66,40 @@ export const pieceTranslation = {
   ]
 }
 
+const translationTree = pieceTranslation.pathsToValuesToTranslate.reduce<TranslationTree>((tree, path) => addPath({ tree, keys: path.split('.') }), {})
 
-/**This function translates a property inside a piece, i.e description, displayName, etc... 
- * 
- * @param pieceModelOrProperty - The piece model or property to translate
- * @param path - The path to the property to translate, i.e auth.username.displayName
- * @param i18n - The i18n object
- */
-function translateProperty(pieceModelOrProperty: Record<string, unknown>, path: string, i18n: Record<string, string>) {
-  if (isNil(pieceModelOrProperty) || typeof pieceModelOrProperty !== 'object') {
-    return;
+function addPath({ tree, keys: [key, ...rest] }: AddPathParams): TranslationTree {
+  return { ...tree, [key]: rest.length === 0 ? null : addPath({ tree: tree[key] ?? {}, keys: rest }) }
+}
+
+function translateNode<N>({ node, tree, translations }: TranslateNodeParams<N>): N {
+  if (!isRecord(node)) {
+    return node
   }
-  const parsedKeys = path.split('.');
-  if (parsedKeys[0] === '*') {
-    return Object.values(pieceModelOrProperty).forEach(item => translateProperty(item as Record<string, unknown>, parsedKeys.slice(1).join('.'), i18n))
+  const changes: Record<string, unknown> = {}
+  let changed = false
+  for (const [key, subtree] of Object.entries(tree)) {
+    for (const childKey of key === '*' ? Object.keys(node) : [key]) {
+      const child = childKey in changes ? changes[childKey] : node[childKey]
+      const translated = subtree === null ? translateValue({ value: child, translations }) : translateNode({ node: child, tree: subtree, translations })
+      if (translated !== child) {
+        changes[childKey] = translated
+        changed = true
+      }
+    }
   }
-  const nextObject = pieceModelOrProperty[parsedKeys[0]] as Record<string, unknown>;
-  if (!nextObject) {
-    return;
+  return changed ? Object.assign(Array.isArray(node) ? [] : {}, node, changes) : node
+}
+
+function translateValue({ value, translations }: TranslateValueParams): unknown {
+  if (typeof value !== 'string') {
+    return value
   }
-  if (parsedKeys.length > 1) {
-    return translateProperty(nextObject, parsedKeys.slice(1).join('.'), i18n);
-  }
-  const propertyValue = pieceModelOrProperty[parsedKeys[0]]
-  if (typeof propertyValue !== 'string') {
-    return;
-  }
-  const valueInI18n = i18n[propertyValue.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)]
-  if (valueInI18n) {
-    pieceModelOrProperty[parsedKeys[0]] = valueInI18n
-  }
+  return translations[value.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)] || value
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
 }
 
 async function fileExists(filePath: string) {
@@ -143,5 +133,24 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
 type TranslatePieceParams<T extends PieceMetadataModelSummary | PieceMetadataModel> = {
   piece: T
   locale?: LocalesEnum
-  mutate?: boolean
+}
+
+type TranslationTree = {
+  [key: string]: TranslationTree | null
+}
+
+type AddPathParams = {
+  tree: TranslationTree
+  keys: string[]
+}
+
+type TranslateNodeParams<N> = {
+  node: N
+  tree: TranslationTree
+  translations: Record<string, string>
+}
+
+type TranslateValueParams = {
+  value: unknown
+  translations: Record<string, string>
 }

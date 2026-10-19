@@ -14,8 +14,8 @@ export const addContactToWorkflowAction = createAction({
     props:{
         workflowId : workflowIdDropdown,
         email:Property.ShortText({
-            displayName:"Contact's Email",
-            description:'The email of the contact to add to the workflow.',
+            displayName:'Contact Email',
+            placeholder:'jane@example.com',
             required:true
         }),
     },

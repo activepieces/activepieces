@@ -35,7 +35,7 @@ export const projectsTableColumns = ({
   >[] = [
     {
       accessorKey: 'displayName',
-      size: 270,
+      size: 220,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
@@ -58,7 +58,7 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'users',
-      size: 120,
+      size: 110,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -73,7 +73,7 @@ export const projectsTableColumns = ({
             <span className="font-medium">
               {row.original.analytics.activeUsers}
             </span>
-            <span className="text-muted-foreground">
+            <span className="text-gray-11">
               {` / ${row.original.analytics.totalUsers}`}
             </span>
           </div>
@@ -82,7 +82,7 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'flows',
-      size: 120,
+      size: 110,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -97,7 +97,7 @@ export const projectsTableColumns = ({
             <span className="font-medium">
               {row.original.analytics.activeFlows}
             </span>
-            <span className="text-muted-foreground">
+            <span className="text-gray-11">
               {` / ${row.original.analytics.totalFlows}`}
             </span>
           </div>
@@ -109,7 +109,7 @@ export const projectsTableColumns = ({
   if (platform.plan.embeddingEnabled) {
     columns.push({
       accessorKey: 'externalId',
-      size: 150,
+      size: 130,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -130,7 +130,7 @@ export const projectsTableColumns = ({
   if (platform.plan.globalConnectionsEnabled) {
     columns.push({
       accessorKey: 'globalConnectionsCount',
-      size: 135,
+      size: 170,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}

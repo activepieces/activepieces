@@ -10,6 +10,7 @@ import {
   ApEdition,
   FlowActionType,
   flowPieceUtil,
+  PieceAudienceFilter,
   PieceOptionRequest,
   PlatformWithoutSensitiveData,
   FlowTriggerType,
@@ -25,6 +26,7 @@ import {
   usePrefetchQuery,
   useQueries,
   useQuery,
+  UseQueryResult,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo } from 'react';
@@ -73,10 +75,15 @@ type UsePieceProps = {
   version?: string;
   enabled?: boolean;
   projectId?: string;
+  audience?: PieceAudienceFilter;
 };
 
-type UseMultiplePiecesProps = {
+type UsePieceNamesProps = {
   names: string[];
+};
+
+type UseMultiplePiecesProps = UsePieceNamesProps & {
+  audience?: PieceAudienceFilter;
 };
 
 type UsePiecesProps = {
@@ -99,17 +106,44 @@ type UsePiecesSearchProps = {
   shouldCaptureEvent: boolean;
 };
 
+export const pieceQueryKey = ({
+  name,
+  version,
+  locale,
+  projectId,
+  audience,
+}: {
+  name: string;
+  version: string | undefined;
+  locale: string;
+  projectId?: string;
+  audience?: PieceAudienceFilter;
+}): QueryKey => ['piece', name, version, locale, projectId, audience];
+
 export const piecesHooks = {
-  usePiece: ({ name, version, enabled = true, projectId }: UsePieceProps) => {
+  usePiece: ({
+    name,
+    version,
+    enabled = true,
+    projectId,
+    audience,
+  }: UsePieceProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
-      queryKey: ['piece', name, version, i18n.language, projectId],
+      queryKey: pieceQueryKey({
+        name,
+        version,
+        locale: i18n.language,
+        projectId,
+        audience,
+      }),
       queryFn: () =>
         piecesApi.get({
           name,
           version,
           locale: i18n.language as LocalesEnum,
           projectId,
+          audience,
         }),
       staleTime: Infinity,
       enabled,
@@ -141,6 +175,7 @@ export const piecesHooks = {
       name,
       version: exactVersion,
       enabled,
+      audience: PieceAudienceFilter.ALL,
     });
     return {
       pieceModel: pieceQuery.pieceModel,
@@ -150,22 +185,24 @@ export const piecesHooks = {
       refetch: pieceQuery.refetch,
     };
   },
-  useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
+  useMultiplePieces: ({ names, audience }: UseMultiplePiecesProps) => {
     const { i18n } = useTranslation();
     return useQueries({
-      queries: names.map((name) => ({
-        queryKey: ['piece', name, undefined, i18n.language],
-        queryFn: () =>
-          piecesApi.get({
-            name,
-            version: undefined,
-            locale: i18n.language as LocalesEnum,
-          }),
-        staleTime: Infinity,
-      })),
+      queries: names.map((name) =>
+        latestPieceQueryOptions({ name, language: i18n.language, audience }),
+      ),
     });
   },
-  usePieceSummariesByNames: ({ names }: UseMultiplePiecesProps) => {
+  usePiecesByName: ({ names, audience }: UseMultiplePiecesProps) => {
+    const { i18n } = useTranslation();
+    return useQueries({
+      queries: names.map((name) =>
+        latestPieceQueryOptions({ name, language: i18n.language, audience }),
+      ),
+      combine: piecesByNameFromResults,
+    });
+  },
+  usePieceSummariesByNames: ({ names }: UsePieceNamesProps) => {
     const { pieces, isLoading } = piecesHooks.usePieces({});
     const summaries = useMemo(() => {
       if (!pieces) return [];
@@ -587,6 +624,46 @@ const getExploreTabContent = (
   return [popularCategory, hightlightedPiecesCategory];
 };
 
+function latestPieceQueryOptions({
+  name,
+  language,
+  audience,
+}: {
+  name: string;
+  language: string;
+  audience?: PieceAudienceFilter;
+}) {
+  return {
+    queryKey: pieceQueryKey({
+      name,
+      version: undefined,
+      locale: language,
+      audience,
+    }),
+    queryFn: () =>
+      piecesApi.get({
+        name,
+        version: undefined,
+        locale: Object.values(LocalesEnum).find(
+          (locale) => locale === language,
+        ),
+        audience,
+      }),
+    staleTime: Infinity,
+  };
+}
+
+function piecesByNameFromResults(
+  results: UseQueryResult<PieceMetadataModel>[],
+): Map<string, PieceMetadataModel> {
+  return new Map(
+    results
+      .map((result) => result.data)
+      .filter((piece) => piece !== undefined)
+      .map((piece) => [piece.name, piece]),
+  );
+}
+
 function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
   const pieceDerivedQueryKeys = [
     ['pieces'],
@@ -660,3 +737,5 @@ function piecesQueryOptions({
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
+
+export const pieceQueryOptions = { latest: latestPieceQueryOptions };

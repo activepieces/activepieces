@@ -34,7 +34,7 @@ export const googleAuth = PieceAuth.OAuth2({
 export const googleBusiness = createPiece({
   auth: googleAuth,
   displayName: 'Google My Business',
-  description: 'Manage your business on Google',
+  description: 'Publish posts and reply to reviews on Google Business Profile.',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/google-business.png',
   authors: ["kishanprmr","MoShizzle","abuaboud"],

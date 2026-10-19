@@ -1,5 +1,5 @@
 import { PropertyType } from '@activepieces/pieces-framework'
-import { AiRouterAction, BranchExecutionType, EmptyTrigger, FlowActionType, FlowTriggerType } from '@activepieces/shared'
+import { AiRouterAction, BranchExecutionType, EmptyTrigger, FlowActionType, FlowTriggerType, PropertyExecutionType } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { mcpUtils } from '../../../../src/app/mcp/tools/mcp-utils'
 
@@ -506,5 +506,163 @@ describe('mcpUtils.resolveRouterStep', () => {
         expect(text).toMatchObject({ type: 'text' })
         expect(text && 'text' in text ? text.text : '').toContain('ROUTER or AI_ROUTER')
         expect(text && 'text' in text ? text.text : '').toContain('ai_router')
+    })
+})
+
+describe('mcpUtils.syncContainerExecutionTypes', () => {
+    const props = {
+        assetIds: arrayProp({ displayName: 'Asset Ids', required: true }),
+        headers: objectProp({ displayName: 'Headers', required: false }),
+        body: { type: PropertyType.JSON, displayName: 'Body', required: false },
+        rows: { type: PropertyType.ARRAY, displayName: 'Rows', required: false, properties: { name: shortText('Name') } },
+        note: shortText('Note'),
+    }
+
+    it('marks a list, object or JSON field holding one whole reference as dynamic', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props,
+            input: { assetIds: '{{step_3.output.assetIds}}', headers: ' {{trigger.headers}} ', body: '{{ step_1.body }}', note: '{{trigger.note}}' },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({
+            assetIds: { type: PropertyExecutionType.DYNAMIC },
+            headers: { type: PropertyExecutionType.DYNAMIC },
+            body: { type: PropertyExecutionType.DYNAMIC },
+        })
+    })
+
+    it('leaves a value that mixes a reference with other text, or holds two references, as it was', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props,
+            input: { assetIds: '[{{step_1.a}}]', headers: '{{step_1.a}}{{step_1.b}}' },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({})
+    })
+
+    it('puts a real array or object back to manual and keeps the stored schema', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props,
+            input: { assetIds: ['a', 'b'], headers: { a: '1' } },
+            propertySettings: {
+                assetIds: { type: PropertyExecutionType.DYNAMIC, schema: { kept: true } },
+                headers: { type: PropertyExecutionType.DYNAMIC },
+            },
+        })
+        expect(settings).toEqual({
+            assetIds: { type: PropertyExecutionType.MANUAL, schema: { kept: true } },
+            headers: { type: PropertyExecutionType.MANUAL },
+        })
+    })
+
+    it('leaves a list of fields alone, including one with an empty field list, where dynamic means inline item mode', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { ...props, emptyRows: { type: PropertyType.ARRAY, displayName: 'Empty Rows', required: false, properties: {} } },
+            input: { rows: '{{step_1.rows}}', emptyRows: '{{step_1.rows}}' },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({})
+    })
+
+    it('marks a list field inside a dynamic field, keyed by its own name as the builder reads it', () => {
+        const rowDataSchema = {
+            tags: { type: PropertyType.ARRAY, displayName: 'Tags', required: false },
+            meta: { type: PropertyType.JSON, displayName: 'Meta', required: false },
+            name: { type: PropertyType.SHORT_TEXT, displayName: 'Name', required: false },
+        }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { tags: '{{trigger.body.tags}}', meta: { a: 1 }, name: '{{trigger.body.name}}' } },
+            propertySettings: { row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema }, meta: { type: PropertyExecutionType.DYNAMIC } },
+        })
+        expect(settings).toEqual({
+            row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema },
+            tags: { type: PropertyExecutionType.DYNAMIC },
+            meta: { type: PropertyExecutionType.MANUAL },
+        })
+    })
+
+    it('never lets a field inside a dynamic field overwrite the setting of a top-level field with the same name', () => {
+        const updateDataSchema = { filter_values: { type: PropertyType.ARRAY, displayName: 'Filter Values', required: false } }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: {
+                filter_values: arrayProp({ displayName: 'Filter Values', required: false }),
+                update_data: { type: PropertyType.DYNAMIC, displayName: 'Update Data', required: true, refreshers: [], props: async () => ({}) },
+            },
+            input: { filter_values: '{{trigger.body.ids}}', update_data: { filter_values: ['a'] } },
+            propertySettings: { filter_values: { type: PropertyExecutionType.DYNAMIC }, update_data: { type: PropertyExecutionType.MANUAL, schema: updateDataSchema } },
+        })
+        expect(settings.filter_values).toEqual({ type: PropertyExecutionType.DYNAMIC })
+    })
+
+    it('lets a field inside a dynamic field set the shared setting when the top-level field with the same name does not need one', () => {
+        const updateDataSchema = { filter_value: { type: PropertyType.ARRAY, displayName: 'Filter Value', required: false } }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: {
+                filter_value: shortText('Filter Value'),
+                update_data: { type: PropertyType.DYNAMIC, displayName: 'Update Data', required: true, refreshers: [], props: async () => ({}) },
+            },
+            input: { filter_value: 'abc', update_data: { filter_value: '{{trigger.body.tags}}' } },
+            propertySettings: { update_data: { type: PropertyExecutionType.MANUAL, schema: updateDataSchema } },
+        })
+        expect(settings.filter_value).toEqual({ type: PropertyExecutionType.DYNAMIC })
+    })
+
+    it('syncs a field inside a dynamic field named like an inherited object key', () => {
+        const rowDataSchema = { constructor: { type: PropertyType.ARRAY, displayName: 'Constructor', required: false } }
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { constructor: '{{trigger.body.tags}}' } },
+            propertySettings: { row_data: { type: PropertyExecutionType.MANUAL, schema: rowDataSchema } },
+        })
+        expect(settings.constructor).toEqual({ type: PropertyExecutionType.DYNAMIC })
+    })
+
+    it('skips a dynamic field whose schema has not been resolved', () => {
+        const settings = mcpUtils.syncContainerExecutionTypes({
+            props: { row_data: { type: PropertyType.DYNAMIC, displayName: 'Row Data', required: true, refreshers: [], props: async () => ({}) } },
+            input: { row_data: { tags: '{{trigger.body.tags}}' } },
+            propertySettings: {},
+        })
+        expect(settings).toEqual({})
+    })
+})
+
+describe('mcpUtils.normalizeFormulaText — double braces around a formula', () => {
+    it('turns ap-formula-v1::{{fn(...)}}::ap-formula-v1 into single braces and keeps the references inside', () => {
+        const fixed = mcpUtils.normalizeFormulaText('ap-formula-v1::{{formatDate(addDays(now(); -7); "YYYY-MM-DD")}}::ap-formula-v1')
+
+        expect(fixed).toBe('ap-formula-v1::{formatDate(addDays(now(); -7); "YYYY-MM-DD")}::ap-formula-v1')
+    })
+
+    it('fixes double braces in router conditions too', () => {
+        const trigger: EmptyTrigger = { name: 'trigger', displayName: 'Trigger', type: FlowTriggerType.EMPTY, valid: false, lastUpdatedDate: '2026-10-11T00:00:00.000Z', settings: {} }
+        const conditions = [[{ firstValue: 'ap-formula-v1::{{count(1; 2)}}::ap-formula-v1' }]]
+
+        const rewritten = mcpUtils.rewriteAllReferences({ conditions, trigger })
+
+        expect(rewritten.conditions).toEqual([[{ firstValue: 'ap-formula-v1::{count(1; 2)}::ap-formula-v1' }]])
+    })
+
+    it('leaves a correct formula and a plain reference untouched', () => {
+        const correct = 'ap-formula-v1::{count({{step_1[\'output\'].rows}})}::ap-formula-v1 and {{step_1[\'output\'].id}}'
+
+        expect(mcpUtils.normalizeFormulaText(correct)).toBe(correct)
+    })
+})
+
+describe('mcpUtils.normalizeAuth', () => {
+    it('unwraps the connection template the research tools hand out', () => {
+        expect(mcpUtils.normalizeAuth('{{connections[\'conn_test_id\']}}')).toBe('conn_test_id')
+    })
+
+    it('leaves a plain externalId and undefined alone', () => {
+        expect(mcpUtils.normalizeAuth('conn_test_id')).toBe('conn_test_id')
+        expect(mcpUtils.normalizeAuth(undefined)).toBeUndefined()
+    })
+
+    it('still lets validateAuth reject anything that is not a clean id', () => {
+        const garbage = mcpUtils.normalizeAuth('{{trigger[\'output\'].auth}}')
+        expect(mcpUtils.validateAuth(garbage)).not.toBeNull()
     })
 })

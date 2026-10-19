@@ -106,6 +106,7 @@ export const facebookPagesCommon = {
   page: Property.Dropdown<FacebookPageDropdown, true, typeof facebookPagesAuth>({
     auth: facebookPagesAuth,
     displayName: 'Page',
+    description: 'Pages you gave access to when connecting your account.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -116,43 +117,54 @@ export const facebookPagesCommon = {
       if (pages === null) {
         return { disabled: true, options: [], placeholder: 'Could not load your Pages, reconnect your account' };
       }
+      if (pages.length === 0) {
+        return { disabled: false, options: [], placeholder: 'No Pages found. Reconnect and select at least one Page.' };
+      }
       return {
         options: pages.map((page) => ({
           label: page.name,
           value: { id: page.id, accessToken: page.access_token },
         })),
-        placeholder: 'Choose a page',
+        placeholder: 'Choose a Page',
       };
     },
   }),
   message: Property.LongText({
     displayName: 'Message',
+    placeholder: 'What do you want to share?',
     required: true,
   }),
   link: Property.ShortText({
     displayName: 'Link',
+    description: 'Facebook adds a preview card for this link below the post.',
+    placeholder: 'https://example.com/article',
     required: false,
   }),
   caption: Property.LongText({
     displayName: 'Caption',
+    description: 'Post text shown with the photo.',
     required: false,
   }),
   photo: Property.ShortText({
-    displayName: 'Photo',
-    description: 'A URL we can access for the photo',
+    displayName: 'Photo URL',
+    description: 'Public URL of the image, so Facebook can download it.',
+    placeholder: 'https://example.com/photo.jpg',
     required: true,
   }),
   title: Property.ShortText({
     displayName: 'Title',
+    description: "Name of the video, shown on the Page's Videos tab.",
     required: false,
   }),
   description: Property.LongText({
     displayName: 'Description',
+    description: 'Post text shown with the video.',
     required: false,
   }),
   video: Property.ShortText({
-    displayName: 'Video',
-    description: 'A URL we can access for the video (Limit: 1GB or 20 minutes)',
+    displayName: 'Video URL',
+    description: 'Public URL of the video file, up to 1 GB or 20 minutes.',
+    placeholder: 'https://example.com/video.mp4',
     required: true,
   }),
   pageId: Property.ShortText({

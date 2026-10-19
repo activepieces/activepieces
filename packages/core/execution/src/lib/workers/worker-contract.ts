@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, AiChargeBasis, AIProviderName, AiProviderCredentials } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, AiChargeBasis, AIProviderName, AiProviderCredentials, AiProviderKeyStatus, ProviderOutcomeSignal } from '@activepieces/core-utils'
 import { AgentPieceToolMetadata, PiecePackage } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
@@ -89,6 +89,8 @@ export type WorkerToApiContract = {
     sendAgentEvent(input: SendAgentEventRequest): Promise<void>
     getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse>
     saveAgentMessages(input: SaveAgentMessagesRequest): Promise<void>
+    beginAgentTask(input: BeginAgentTaskRequest): Promise<BeginAgentTaskResponse>
+    finishAgentTask(input: FinishAgentTaskRequest): Promise<void>
     saveAgentFile(input: SaveAgentFileRequest): Promise<SaveAgentFileResponse>
     readAgentFile(input: ReadAgentFileRequest): Promise<ReadFlowStepFileResponse>
     updateAgentProgress(input: UpdateAgentProgressRequest): Promise<void>
@@ -98,6 +100,9 @@ export type WorkerToApiContract = {
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
     resolveAiProvider(input: ResolveAiProviderRequest): Promise<ResolveAiProviderResponse>
+    resolveAiModelCandidates(input: ResolveAiModelCandidatesRequest): Promise<ResolveAiModelCandidatesResponse>
+    reportAiKeyOutcome(input: ReportAiKeyOutcomeRequest): Promise<void>
+    resolveEventDestinationHeaders(input: ResolveEventDestinationHeadersRequest): Promise<ResolveEventDestinationHeadersResponse>
     saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse>
     readFlowStepFile(input: ReadFlowStepFileRequest): Promise<ReadFlowStepFileResponse>
     reportAiUsage(input: ReportAiUsageRequest): Promise<void>
@@ -135,6 +140,7 @@ export type GetAgentConfigRequest = {
     projectId?: string | null
     userMessage: string
     modelName: string | null
+    modelTierId?: string
     files?: Array<{ name: string, mimeType: string, data: string }>
     promptOverride?: AgentPromptOverride
     dryRun?: boolean
@@ -170,11 +176,19 @@ export type AgentConfigResponse = {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
     projects: Array<{ id: string, displayName: string, type: string }>
     guides: Record<string, string>
+    taskSystemPrompt?: string
     aiTools: AgentAiToolsConfig
     emailEnabled: boolean
     agentsAvailable: boolean
     userEmail: string
     source: AgentRunSource
+    platformTier?: { id: string, name: string }
+    candidates?: AgentModelCandidate[]
+    fastCandidate?: AgentModelCandidate
+}
+
+export type AgentModelCandidate = AiModelCandidate & {
+    thinkingBudget: number
 }
 
 export type SaveAgentMessagesRequest = {
@@ -184,7 +198,37 @@ export type SaveAgentMessagesRequest = {
     uiMessages: unknown[]
     title?: string
     modelName?: string
+    answeredBy?: AgentTurnModel
     failure?: { message: string, userMessage?: string }
+}
+
+export type BeginAgentTaskRequest = {
+    platformId: string
+    conversationId: string
+    title: string
+    taskId?: string
+}
+
+export type BeginAgentTaskResponse = {
+    taskId: string
+    claimId: string
+    messages: unknown[]
+}
+
+export type FinishAgentTaskRequest = {
+    platformId: string
+    conversationId: string
+    taskId: string
+    claimId: string
+    status: 'DONE' | 'BLOCKED' | 'FAILED'
+    messages: unknown[]
+    summary: string | null
+    artifacts: { type: string, id: string, name: string }[]
+}
+
+export type AgentTurnModel = {
+    provider: AIProviderName
+    modelId: string
 }
 
 export type SaveAgentFileRequest = {
@@ -437,11 +481,44 @@ export type ResolveAiProviderRequest = {
     platformId: string
     provider: AIProviderName
     providerConfigId?: string
+    modelId?: string
 }
 
 export type ResolveAiProviderResponse = AiProviderCredentials & {
     providerConfigId: string
 }
+
+export type ResolveAiModelCandidatesRequest = {
+    projectId: string
+    platformId: string
+    modelTierId: string
+}
+
+export type AiModelCandidate = ResolveAiProviderResponse & {
+    modelId: string
+    status: AiProviderKeyStatus
+}
+
+export type ResolveAiModelCandidatesResponse = {
+    tierName: string
+    candidates: AiModelCandidate[]
+}
+
+export type ReportAiKeyOutcomeRequest = {
+    platformId: string
+    providerConfigId: string
+    signal: ProviderOutcomeSignal
+}
+
+export type ResolveEventDestinationHeadersRequest = {
+    platformId: string
+    destinationId: string
+    destinationUrl: string
+}
+
+export type ResolveEventDestinationHeadersResponse = {
+    headers: Record<string, string>
+} | null
 
 export type SaveFlowStepFileRequest = {
     projectId: string
