@@ -461,11 +461,10 @@ import { DropChatRolloutUserTable1870000000000 } from './migration/postgres/1870
 import { AddBarrierChildAttribution1871000000000 } from './migration/postgres/1871000000000-AddBarrierChildAttribution'
 import { AddPieceTranslationTable1873000000000 } from './migration/postgres/1873000000000-AddPieceTranslationTable'
 import { AddDefaultChatModelToPlatformConfiguration1875000000000 } from './migration/postgres/1875000000000-AddDefaultChatModelToPlatformConfiguration'
+import { AddIsDefaultToProject1875000000000 } from './migration/postgres/1875000000000-AddIsDefaultToProject'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
-import { AddDefaultProjectIdsToPlatform1867000000000 } from './migration/postgres/1867000000000-AddDefaultProjectIdsToPlatform'
-import { AddIsDefaultToProject1871000000000 } from './migration/postgres/1871000000000-AddIsDefaultToProject'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -951,6 +950,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddDefaultChatModelToPlatformConfiguration1875000000000,
         AddDefaultProjectIdsToPlatform1867000000000,
         AddIsDefaultToProject1871000000000,
+        AddIsDefaultToProject1875000000000,
     ]
     return migrations
 }
