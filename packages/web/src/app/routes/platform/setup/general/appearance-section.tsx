@@ -15,9 +15,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Gem, ExternalLink } from 'lucide-react';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, RefObject, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
@@ -25,6 +24,7 @@ import {
   AdminPage,
   SaveBar,
   SaveBarLock,
+  adminFeedback,
   SettingsPanel,
   SettingsRow,
 } from '@/app/components/admin';
@@ -45,6 +45,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { brandSeed } from '@/lib/brand-seed';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { BrandImageField } from './brand-image-field';
 import { ColorPreview, ColorTone } from './color-preview';
@@ -62,6 +63,7 @@ export const AppearanceSection = ({
   );
   const upgradeClick = useUpgradeClick();
   const brandingLocked = !platform.plan.customAppearanceEnabled;
+  const leavingOnPurpose = useRef(false);
   const initialColor =
     !brandingLocked && HEX_COLOR_PATTERN.test(platform.primaryColor)
       ? platform.primaryColor
@@ -168,7 +170,7 @@ export const AppearanceSection = ({
       ]);
     },
     onSuccess: () => {
-      toast.success(t('Your changes have been saved.'), { duration: 3000 });
+      adminFeedback.done({ verb: 'save' });
       if (brandingLocked) {
         form.resetField('name', { defaultValue: form.getValues('name') });
         return;
@@ -176,10 +178,10 @@ export const AppearanceSection = ({
       clearImages();
       form.reset(form.getValues());
     },
-    onError: () => {
+    onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message: t('Failed to save changes. Please try again.'),
+        message: mutationFeedback.message(error),
       });
     },
   });
@@ -246,13 +248,7 @@ export const AppearanceSection = ({
               canDiscard={hasChanges}
               saving={isPending}
               disabled={brandingLocked ? !!errors.name : hasFieldErrors}
-              status={
-                form.formState.errors.root?.serverError ? (
-                  <FormMessage>
-                    {form.formState.errors.root.serverError.message}
-                  </FormMessage>
-                ) : undefined
-              }
+              error={form.formState.errors.root?.serverError?.message}
               locked={lockedSave}
               saveLabel={previewingLockedBranding ? t('Save name') : undefined}
               onDiscard={() => {
@@ -260,6 +256,7 @@ export const AppearanceSection = ({
                 clearImages();
               }}
               saveControl={AdminControl.GENERAL_APPEARANCE_SUBMIT}
+              standDown={leavingOnPurpose}
             />
           }
         >
@@ -404,7 +401,7 @@ export const AppearanceSection = ({
               </div>
             </div>
           </SettingsPanel>
-          {children}
+          {children?.({ standDown: leavingOnPurpose })}
         </AdminPage>
       </form>
     </Form>
@@ -473,7 +470,10 @@ function withStatusColors({
 }
 
 const PlatformAppearanceSchema = z.object({
-  name: z.string().min(1, formErrors.required),
+  name: z
+    .string()
+    .min(1, formErrors.required)
+    .refine((value) => value.trim().length > 0, formErrors.required),
   color: ThemeHexColor,
   statusColors: PlatformThemeColors.shape.status.unwrap(),
 });
@@ -524,7 +524,7 @@ type BrandImageSpec = {
 
 type AppearanceSectionProps = {
   header?: ReactNode;
-  children?: ReactNode;
+  children?: (props: { standDown: RefObject<boolean> }) => ReactNode;
 };
 
 type ColorRowProps = {

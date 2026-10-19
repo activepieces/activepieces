@@ -1,7 +1,7 @@
 import { hasActiveSubscription } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { RefObject, useState } from 'react';
 
 import { DangerZone, SettingsRow } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,10 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { DeletePlatformDialog } from './delete-platform-dialog';
 
-export const DangerZoneSection = ({ platformName }: DangerZoneSectionProps) => {
+export const DangerZoneSection = ({
+  platformName,
+  standDown,
+}: DangerZoneSectionProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const hasSubscription = hasActiveSubscription(platform.plan.plan);
@@ -46,6 +49,7 @@ export const DangerZoneSection = ({ platformName }: DangerZoneSectionProps) => {
         platformName={platformName}
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
+        standDown={standDown}
       />
     </DangerZone>
   );
@@ -53,4 +57,5 @@ export const DangerZoneSection = ({ platformName }: DangerZoneSectionProps) => {
 
 type DangerZoneSectionProps = {
   platformName: string;
+  standDown: RefObject<boolean>;
 };

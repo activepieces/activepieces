@@ -13,10 +13,15 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 
 type PieceActionsProps = {
   pieceName: string;
+  displayName: string;
   isEnabled: boolean;
 };
 
-const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
+const PieceActions = ({
+  pieceName,
+  displayName,
+  isEnabled,
+}: PieceActionsProps) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
 
   const { mutate: togglePin, isPending: isPinPending } =
@@ -38,12 +43,13 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
             size={'sm'}
             loading={isPinPending}
             disabled={!isEnabled}
+            aria-label={pinned ? t('Unpin this piece') : t('Pin this piece')}
             onClick={(e) => {
               if (!isEnabled) {
                 e.preventDefault();
                 return;
               }
-              togglePin(pieceName);
+              togglePin({ pieceName, displayName });
             }}
           >
             {pinned ? (

@@ -22,9 +22,12 @@ import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
+  ConfirmDialog,
   StatusDot,
   StatusTone,
+  adminBulk,
   adminPageResources,
+  useAdminAction,
 } from '@/app/components/admin';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
@@ -38,7 +41,6 @@ import {
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import {
   DefaultTag,
@@ -48,9 +50,9 @@ import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
   EditGlobalConnectionDialog,
-  globalConnectionsMutations,
   globalConnectionsQueries,
 } from '@/features/connections';
+import { globalConnectionsApi } from '@/features/connections/api/global-connections';
 import { PieceIconWithPieceName } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -188,6 +190,7 @@ const GlobalConnectionsTable = () => {
                 row.original.preSelectForNewProjects ?? false
               }
               userHasPermissionToEdit={true}
+              adminFeedback
               onEdit={() => {
                 refetchGlobalConnections();
               }}
@@ -233,10 +236,25 @@ const GlobalConnectionsTable = () => {
     Permission.WRITE_APP_CONNECTION,
   );
 
-  const bulkDeleteGlobalConnections =
-    globalConnectionsMutations.useBulkDeleteGlobalConnections(
-      refetchGlobalConnections,
-    );
+  const bulkDeleteGlobalConnections = useAdminAction<
+    AppConnectionWithoutSensitiveData[]
+  >({
+    verb: 'delete',
+    name: (rows) => connectionsLabel(rows.length),
+    run: async (rows) => {
+      try {
+        await adminBulk.runEach({
+          items: rows,
+          run: (row) => globalConnectionsApi.delete(row.id),
+          verb: 'delete',
+          label: connectionsLabel,
+          nameOf: (row) => row.displayName,
+        });
+      } finally {
+        await refetchGlobalConnections().catch(() => undefined);
+      }
+    },
+  });
 
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
     () => [
@@ -247,25 +265,31 @@ const GlobalConnectionsTable = () => {
         ) => {
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
-                title={t('Delete Connections')}
-                message={t(
-                  'The selected connections will be permanently deleted.',
-                )}
-                warning={<DeleteConnectionWarning />}
-                entityName="connections"
-                buttonText={t('Delete')}
+              <ConfirmDialog
+                title={t('Delete {name}?', {
+                  name: connectionsLabel(selectedRows.length),
+                })}
+                description={
+                  selectedRows.length === 1
+                    ? t('This connection will be permanently deleted.')
+                    : t('The selected connections will be permanently deleted.')
+                }
+                consequence={<DeleteConnectionWarning />}
+                confirmLabel={t('Delete')}
                 controlId={AdminControl.CONNECTIONS_CONNECTION_DELETE_CONFIRM}
-                mutationFn={async () => {
-                  try {
-                    await bulkDeleteGlobalConnections.mutateAsync(
-                      selectedRows.map((row) => row.id),
-                    );
-                    resetSelection();
-                    setSelectedRows([]);
-                  } catch (error) {
-                    console.error('Error deleting connections:', error);
-                  }
+                onConfirm={async () => {
+                  await bulkDeleteGlobalConnections
+                    .mutateAsync(selectedRows)
+                    .catch((error: unknown) => {
+                      if (adminBulk.isPartialFailure(error)) {
+                        setSelectedRows(
+                          adminBulk.failedItems({ error, items: selectedRows }),
+                        );
+                      }
+                      throw error;
+                    });
+                  resetSelection();
+                  setSelectedRows([]);
                 }}
               >
                 {selectedRows.length > 0 && (
@@ -282,7 +306,7 @@ const GlobalConnectionsTable = () => {
                     {`${t('Delete')} (${selectedRows.length})`}
                   </Button>
                 )}
-              </ConfirmationDeleteDialog>
+              </ConfirmDialog>
             </div>
           );
         },
@@ -342,3 +366,9 @@ const CONNECTION_STATUS_TONE: Record<AppConnectionStatus, StatusTone> = {
 };
 
 export { GlobalConnectionsTable };
+
+function connectionsLabel(count: number): string {
+  return t('{count, plural, =1 {# connection} other {# connections}}', {
+    count,
+  });
+}

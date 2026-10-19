@@ -44,6 +44,7 @@ type EditGlobalConnectionDialogProps = {
   preSelectForNewProjects: boolean;
   onEdit: () => void;
   userHasPermissionToEdit: boolean;
+  adminFeedback?: boolean;
 };
 
 const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
@@ -53,6 +54,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
   preSelectForNewProjects,
   onEdit,
   userHasPermissionToEdit,
+  adminFeedback = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -72,11 +74,25 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
     onEdit,
     setIsOpen,
     editConnectionForm,
+    { adminFeedback },
   );
+  const changeOpen = (open: boolean) => {
+    if (adminFeedback && !open && isUpdatingGlobalConnection) {
+      return;
+    }
+    if (adminFeedback && open) {
+      editConnectionForm.reset({
+        displayName: currentName,
+        projectIds: projectIds,
+        preSelectForNewProjects: preSelectForNewProjects,
+      });
+    }
+    setIsOpen(open);
+  };
 
   return (
     <Tooltip>
-      <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
+      <Dialog open={isOpen} onOpenChange={changeOpen}>
         <DialogTrigger asChild>
           <>
             <TooltipTrigger asChild>
@@ -87,7 +103,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  setIsOpen(true);
+                  changeOpen(true);
                 }}
                 {...adminControl(AdminControl.CONNECTIONS_CONNECTION_EDIT_OPEN)}
               >
@@ -99,7 +115,20 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
             </TooltipContent>
           </>
         </DialogTrigger>
-        <DialogContent onInteractOutside={(event) => event.preventDefault()}>
+        <DialogContent
+          onInteractOutside={(event) => event.preventDefault()}
+          {...(adminFeedback
+            ? {
+                showCloseButton: !isUpdatingGlobalConnection,
+                'aria-describedby': undefined,
+                onEscapeKeyDown: (event: KeyboardEvent) => {
+                  if (isUpdatingGlobalConnection) {
+                    event.preventDefault();
+                  }
+                },
+              }
+            : {})}
+        >
           <DialogHeader>
             <DialogTitle>{t('Edit Global Connection')}</DialogTitle>
           </DialogHeader>

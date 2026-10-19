@@ -1,17 +1,26 @@
+import {
+  useIsMutating,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import {
   AdminPage,
   AdminPageHeader,
+  AdminQueryState,
   adminPageResources,
 } from '@/app/components/admin';
 import { McpToolTierList } from '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tier-list';
+import { mcpToolTiers } from '@/app/components/project-settings/mcp-server/tool-tiers/mcp-tool-tiers';
 import { ActivityFeed } from '@/app/routes/mcp-server/activity/activity-feed';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { LoadingSpinner } from '@/components/custom/spinner';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
+import { platformMcpApi } from './platform-mcp-api';
 import { platformMcpHooks } from './platform-mcp-hooks';
 
 export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
@@ -58,30 +67,96 @@ function AccessContent() {
     isError,
     refetch,
   } = platformMcpHooks.usePlatformMcpServer();
-  const { mutate: updateTools } = platformMcpHooks.useUpdatePlatformMcpTools();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (isError || !mcpServer) {
-    return (
-      <DataFetchErrorState entity={t('the MCP server')} onRetry={refetch} />
-    );
-  }
+  const queryClient = useQueryClient();
+  const undoing = useRef(false);
+  const { mutateAsync: updateTools } =
+    platformMcpHooks.useUpdatePlatformMcpTools();
+  const { mutateAsync: undoToolsChange } = useMutation({
+    mutationKey: MCP_UNDO_KEY,
+    scope: { id: MCP_TOOLS_SCOPE },
+    mutationFn: async ({
+      disabled,
+      enabled,
+    }: {
+      disabled: string[];
+      enabled: string[];
+    }) => {
+      const current = await platformMcpApi.get();
+      const currentTools = current.disabledTools ?? [];
+      await platformMcpApi.update({
+        disabledTools: [
+          ...currentTools.filter((tool) => !disabled.includes(tool)),
+          ...enabled.filter((tool) => !currentTools.includes(tool)),
+        ],
+      });
+    },
+    onSuccess: () => refetch(),
+    onError: (error) =>
+      mutationFeedback.error({ error, title: t("Couldn't undo") }),
+  });
+  const undoingChange = useIsMutating({ mutationKey: MCP_UNDO_KEY }) > 0;
 
   return (
-    <McpToolTierList
-      disabledTools={mcpServer.disabledTools}
-      scope="platform"
-      onUpdateDisabledTools={({ tools, onSettled }) =>
-        updateTools({ disabledTools: tools }, { onSettled })
-      }
-    />
+    <AdminQueryState
+      isLoading={isLoading}
+      isError={isError || (!isLoading && !mcpServer)}
+      hasData={mcpServer !== undefined && mcpServer !== null}
+      onRetry={refetch}
+      entity={t('the MCP server')}
+      skeleton={<SkeletonList numberOfItems={4} className="h-24 rounded-xl" />}
+    >
+      {mcpServer && (
+        <McpToolTierList
+          disabledTools={mcpServer.disabledTools}
+          scope="platform"
+          locked={undoingChange}
+          onUpdateDisabledTools={({
+            tools,
+            lastSaved,
+            hasPendingChange,
+            onSaved,
+            onSettled,
+          }) => {
+            updateTools({ disabledTools: tools })
+              .then(() => {
+                const baseline = lastSaved();
+                onSaved();
+                const disabled = tools.filter(
+                  (tool) => !baseline.includes(tool),
+                );
+                const enabled = baseline.filter(
+                  (tool) => !tools.includes(tool),
+                );
+                mutationFeedback.undo({
+                  message: toolsChangeMessage({ disabled, enabled }),
+                  onUndo: async () => {
+                    if (
+                      undoing.current ||
+                      hasPendingChange() ||
+                      queryClient.isMutating({
+                        predicate: (mutation) =>
+                          mutation.options.scope?.id === MCP_TOOLS_SCOPE,
+                      }) > 0
+                    ) {
+                      throw mutationFeedback.userError(
+                        t('Wait for the current change to finish, then undo.'),
+                      );
+                    }
+                    undoing.current = true;
+                    try {
+                      await undoToolsChange({ disabled, enabled });
+                    } finally {
+                      undoing.current = false;
+                    }
+                  },
+                });
+              })
+              .catch(() => undefined)
+              .finally(onSettled);
+          }}
+        />
+      )}
+    </AdminQueryState>
   );
 }
 
@@ -97,6 +172,35 @@ function ActivityContent() {
     </div>
   );
 }
+
+function toolsChangeMessage({
+  disabled,
+  enabled,
+}: {
+  disabled: string[];
+  enabled: string[];
+}): string {
+  const changed = disabled.length > 0 ? disabled : enabled;
+  if (changed.length === 0 || (disabled.length > 0 && enabled.length > 0)) {
+    return t('Changes saved');
+  }
+  const tiers = new Set(
+    changed.map((name) => mcpToolTiers.tierOf({ name, locked: false })),
+  );
+  if (changed.length > 1 && tiers.size > 1) {
+    return t('Changes saved');
+  }
+  const name =
+    changed.length === 1
+      ? mcpToolTiers.titleOf(changed[0])
+      : mcpToolTiers.copyOf([...tiers][0]).label;
+  return disabled.length > 0
+    ? t('{name} turned off', { name })
+    : t('{name} turned on', { name });
+}
+
+const MCP_TOOLS_SCOPE = 'platform-mcp-server-tools';
+const MCP_UNDO_KEY = ['platform-mcp-server-tools', 'undo'];
 
 type PlatformMcpSection = 'access' | 'activity';
 

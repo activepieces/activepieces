@@ -6,22 +6,15 @@ import {
   UpdatePieceSetRequestBody,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  Info,
-  ListChecks,
-  Loader2,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Info, ListChecks, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
 import {
   AdminEmpty,
   AdminSection,
-  adminSurface,
+  adminFeedback,
   adminLayout,
+  adminSurface,
 } from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +29,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SkeletonList } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -139,9 +133,7 @@ export function RequiredActionsTab({ pieceSet }: { pieceSet: PieceSet }) {
         }
       >
         {isLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="size-6 animate-spin text-gray-11" />
-          </div>
+          <SkeletonList numberOfItems={3} className="h-24 rounded-xl" />
         ) : requiredActionsGroupedByPiece.length > 0 ? (
           <ScrollArea className="flex-1 min-h-0">
             <div className="flex flex-col gap-4 pr-3">
@@ -334,8 +326,10 @@ function EditRequiredActionsDialogContent({
     name: pieceName ?? '',
     enabled: pieceName !== null,
   });
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutateAsync: updateSet, isPending } =
+    pieceSetMutations.useUpdatePieceSet({
+      announce: false,
+    });
 
   const isEditing = initialPieceName !== null;
   const description =
@@ -378,17 +372,19 @@ function EditRequiredActionsDialogContent({
     if (!pieceName) {
       return;
     }
-    updateSet(
-      {
-        id: pieceSet.id,
-        request: buildSaveRequest({
-          pieceName,
-          requiredActionsOfPiece,
-          selectedActionsOfPiece,
-        }),
-      },
-      { onSuccess: onClose },
-    );
+    updateSet({
+      id: pieceSet.id,
+      request: buildSaveRequest({
+        pieceName,
+        requiredActionsOfPiece,
+        selectedActionsOfPiece,
+      }),
+    })
+      .then(() => {
+        adminFeedback.done({ verb: 'save' });
+        onClose();
+      })
+      .catch(() => undefined);
   };
 
   return (
@@ -446,9 +442,7 @@ function EditRequiredActionsDialogContent({
               )}
             </div>
             {pieceLoading ? (
-              <div className="flex justify-center rounded-xl border py-6">
-                <Loader2 className="size-5 animate-spin text-gray-11" />
-              </div>
+              <SkeletonList numberOfItems={3} className="h-8" />
             ) : actions.length === 0 ? (
               <span className="rounded-xl border px-3 py-4 text-sm text-gray-11">
                 {t('This piece has no actions.')}

@@ -4,12 +4,22 @@ import { t } from 'i18next';
 
 import { StatusDot, StatusTone } from '@/app/components/admin';
 
-export function KeyStatusBadge({ status }: { status: AiProviderKeyStatus }) {
+export function KeyStatusBadge({
+  status,
+  className,
+}: {
+  status: AiProviderKeyStatus;
+  className?: string;
+}) {
   const badge = badgeOf({ status });
   if (isNil(badge)) {
     return null;
   }
-  return <StatusDot tone={badge.tone}>{badge.text}</StatusDot>;
+  return (
+    <StatusDot tone={badge.tone} className={className}>
+      {badge.text}
+    </StatusDot>
+  );
 }
 
 export function keyStatusText({

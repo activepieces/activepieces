@@ -326,6 +326,20 @@ describe('McpToolTierList saving', () => {
     root = createRoot(container);
   });
 
+  it('reports no pending change once the save settles, even after unmount', () => {
+    debounce.deferred = true;
+    const onUpdateDisabledTools = vi.fn();
+    render({ onUpdateDisabledTools });
+    toggle('Edit flows');
+    act(() => root.unmount());
+    const [{ hasPendingChange, onSettled }] =
+      onUpdateDisabledTools.mock.calls[0];
+    expect(hasPendingChange()).toBe(true);
+    onSettled();
+    expect(hasPendingChange()).toBe(false);
+    root = createRoot(container);
+  });
+
   it('shows the middle state when only some of a tier is on', () => {
     render({ disabledTools: ['ap_delete_flow'] });
 

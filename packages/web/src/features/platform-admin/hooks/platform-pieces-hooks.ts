@@ -1,10 +1,10 @@
 import { PieceSelectorConfig } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import { pieceCacheUtils, piecesApi } from '@/features/pieces';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 export const platformPiecesMutations = {
   useTogglePiecePin: ({
@@ -18,16 +18,30 @@ export const platformPiecesMutations = {
   }) => {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: async (pieceName: string) => {
-        const newPinnedPieces = pinnedPieces.includes(pieceName)
+      mutationFn: async ({
+        pieceName,
+      }: {
+        pieceName: string;
+        displayName: string;
+      }) => {
+        const wasPinned = pinnedPieces.includes(pieceName);
+        const newPinnedPieces = wasPinned
           ? pinnedPieces.filter((name) => name !== pieceName)
           : [...pinnedPieces, pieceName];
         await platformApi.update({ pinnedPieces: newPinnedPieces }, platformId);
         await refetch();
+        return !wasPinned;
       },
-      onSuccess: () => {
+      onSuccess: (pinned, { displayName }) => {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+        mutationFeedback.success(
+          pinned
+            ? t('{name} pinned', { name: displayName })
+            : t('{name} unpinned', { name: displayName }),
+        );
+      },
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't save changes") });
       },
     });
   },
@@ -46,10 +60,10 @@ export const platformPiecesMutations = {
       },
       onSuccess: () => {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
-        toast.success(t('Your changes have been saved.'), { duration: 3000 });
+        mutationFeedback.success(t('Changes saved'));
       },
-      onError: () => {
-        toast.error(t('Failed to save changes. Please try again.'));
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't save changes") });
       },
     });
   },
@@ -61,11 +75,13 @@ export const platformPiecesMutations = {
       },
       onSuccess: () => {
         pieceCacheUtils.invalidatePieceCaches(queryClient);
-        toast.success(t('Pieces synced'), {
-          description: t(
-            'Pieces have been synced from the activepieces cloud.',
-          ),
-        });
+        mutationFeedback.success(
+          t('Pieces synced'),
+          t('Pieces have been synced from the activepieces cloud.'),
+        );
+      },
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't sync pieces") });
       },
     });
   },

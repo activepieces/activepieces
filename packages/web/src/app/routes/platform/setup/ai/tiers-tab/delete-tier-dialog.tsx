@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -81,7 +82,7 @@ function DeleteTierForm({
 
   const confirm = () =>
     remove(
-      { id: tier.id, replacedBy },
+      { id: tier.id, name: tier.name, replacedBy },
       {
         onSuccess: () => {
           queryClient
@@ -96,7 +97,7 @@ function DeleteTierForm({
 
   return (
     <DialogContent
-      className="sm:max-w-md"
+      className={adminLayout.dialog.sm}
       showCloseButton={!busy}
       onEscapeKeyDown={keepOpen}
       onPointerDownOutside={keepOpen}

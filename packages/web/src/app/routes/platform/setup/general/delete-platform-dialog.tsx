@@ -2,6 +2,7 @@ import { PLATFORM_PURGE_DELAY_DAYS } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
+import { RefObject } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -31,12 +32,14 @@ export const DeletePlatformDialog = ({
   platformName,
   open,
   onOpenChange,
+  standDown,
 }: DeletePlatformDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className={adminLayout.dialog.sm}>
       <DeletePlatformForm
         key={open ? 'open' : 'closed'}
         platformName={platformName}
+        standDown={standDown}
         onCancel={() => onOpenChange(false)}
       />
     </DialogContent>
@@ -45,6 +48,7 @@ export const DeletePlatformDialog = ({
 
 const DeletePlatformForm = ({
   platformName,
+  standDown,
   onCancel,
 }: DeletePlatformFormProps) => {
   const confirmationTarget =
@@ -66,7 +70,7 @@ const DeletePlatformForm = ({
     defaultValues: { confirmation: '' },
     mode: 'onChange',
   });
-  const { mutate: deletePlatform, isPending } =
+  const { mutateAsync: deletePlatform, isPending } =
     platformHooks.useDeletePlatform();
   const purgeDate = dayjs()
     .add(PLATFORM_PURGE_DELAY_DAYS, 'day')
@@ -77,7 +81,12 @@ const DeletePlatformForm = ({
       <form
         onSubmit={(event) => {
           event.stopPropagation();
-          form.handleSubmit(() => deletePlatform())(event);
+          form.handleSubmit(() => {
+            standDown.current = true;
+            deletePlatform().catch(() => {
+              standDown.current = false;
+            });
+          })(event);
         }}
       >
         <DialogHeader>
@@ -146,11 +155,13 @@ const FALLBACK_CONFIRMATION = 'delete platform';
 
 type DeletePlatformFormProps = {
   platformName: string;
+  standDown: RefObject<boolean>;
   onCancel: () => void;
 };
 
 type DeletePlatformDialogProps = {
   platformName: string;
+  standDown: RefObject<boolean>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };

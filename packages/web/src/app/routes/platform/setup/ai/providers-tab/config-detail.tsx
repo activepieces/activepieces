@@ -19,18 +19,16 @@ import { useRef, useState } from 'react';
 import { z } from 'zod';
 
 import {
+  AdminPageFooter,
   AdminPageHeader,
   AdminSection,
+  ConfirmDialog,
   DangerZone,
+  SaveBar,
   SettingsPanel,
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import {
-  LeaveWithoutSavingDialog,
-  useWarnBeforeLosingChanges,
-} from '@/components/custom/leave-without-saving';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +51,7 @@ import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-h
 import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { KeyModelList } from './key-model-list';
 import { KeyStatusBadge } from './key-status';
@@ -87,6 +86,7 @@ export function ConfigDetail({
   const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [scopeImpact, setScopeImpact] = useState<KeyScopeImpact[]>([]);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const { data: tiers } = platformModelTierQueries.useAdminList();
   const { data: allConfigs } = aiProviderQueries.useAiProviderConfigs();
   const leavingOnPurpose = useRef(false);
@@ -129,11 +129,6 @@ export function ConfigDetail({
     ...new Set([...modelIds, ...tiersByModel.keys()]),
   ];
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
-  const leaveBlocker = useWarnBeforeLosingChanges({
-    hasChanges: dirty,
-    standDown: leavingOnPurpose,
-    blockSearchChanges: true,
-  });
   const statusDetail = [
     config.statusReason,
     config.statusUpdated &&
@@ -187,7 +182,9 @@ export function ConfigDetail({
     return save();
   };
 
-  const save = async (): Promise<boolean> => {
+  const save = async ({
+    reportInline = true,
+  }: { reportInline?: boolean } = {}): Promise<unknown> => {
     const manualConfigParse = manualModels
       ? ManualProviderConfig.safeParse(config.config)
       : undefined;
@@ -195,7 +192,7 @@ export function ConfigDetail({
       ? manualConfigParse.data
       : undefined;
     if (nameMissing || saveInFlight.current) {
-      return false;
+      return null;
     }
     saveInFlight.current = true;
     try {
@@ -213,9 +210,25 @@ export function ConfigDetail({
             }
           : {}),
       });
-      return error === null || error === undefined;
+      setSaveError(
+        error && reportInline ? mutationFeedback.message(error) : null,
+      );
+      return error ?? null;
     } finally {
       saveInFlight.current = false;
+    }
+  };
+
+  const confirmSave = async () => {
+    if (nameMissing) {
+      throw mutationFeedback.userError(t('Give this key a name first.'));
+    }
+    if (saveInFlight.current) {
+      throw mutationFeedback.userError(t('A save is already in progress.'));
+    }
+    const error = await save({ reportInline: false });
+    if (error !== null) {
+      throw error;
     }
   };
 
@@ -432,16 +445,14 @@ export function ConfigDetail({
                 {t('Delete')}
               </Button>
             </SettingsRow>
-            <ConfirmationDeleteDialog
+            <ConfirmDialog
               open={deleteOpen}
               onOpenChange={setDeleteOpen}
-              title={t('Delete {name}', { name: config.name })}
-              message={t('Flows and agents that use this key will fail.')}
-              entityName={config.name}
-              showToast={true}
-              onError={() => undefined}
+              title={t('Delete {name}?', { name: config.name })}
+              description={t('Flows and agents that use this key will fail.')}
+              confirmLabel={t('Delete key')}
               controlId={AdminControl.AI_PROVIDER_KEY_DELETE_CONFIRM}
-              mutationFn={async () => {
+              onConfirm={async () => {
                 await onDelete();
                 leavingOnPurpose.current = true;
                 onBack();
@@ -451,33 +462,26 @@ export function ConfigDetail({
         </TabsContent>
       </Tabs>
 
-      {dirty && (
-        <div className="sticky bottom-4 z-20 mt-auto flex justify-center px-4">
-          <div className="flex animate-in items-center gap-3 rounded-xl border bg-gray-1/95 px-4 py-2.5 shadow-lg backdrop-blur-sm duration-200 fade-in slide-in-from-bottom-4">
-            <span className="text-sm">{t('You have unsaved changes')}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDraft(draftOf(config))}
-            >
-              {t('Discard')}
-            </Button>
-            <Button
-              size="sm"
-              loading={isSaving}
-              disabled={nameMissing || isSaving}
-              keyboardShortcut="S"
-              onKeyboardShortcut={requestSave}
-              onClick={requestSave}
-              {...adminControl(AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT)}
-            >
-              {t('Save')}
-            </Button>
-          </div>
-        </div>
-      )}
+      <AdminPageFooter>
+        <SaveBar
+          width="content"
+          dirty={dirty}
+          saving={isSaving}
+          disabled={nameMissing}
+          error={saveError}
+          onSave={requestSave}
+          onDiscard={() => {
+            setDraft(draftOf(config));
+            setSaveError(null);
+          }}
+          canDiscard={dirty || saveError !== null}
+          standDown={leavingOnPurpose}
+          guardSearchChanges
+          saveControl={AdminControl.AI_PROVIDER_KEY_SETTINGS_SUBMIT}
+        />
+      </AdminPageFooter>
 
-      <ConfirmationDeleteDialog
+      <ConfirmDialog
         open={scopeImpact.length > 0}
         onOpenChange={(open) => {
           if (!open) {
@@ -487,28 +491,16 @@ export function ConfigDetail({
         title={t('Change which projects can use {name}?', {
           name: config.name,
         })}
-        message={
+        description={
           <ul className="flex list-disc flex-col gap-1 pl-5">
             {scopeImpact.map((impact) => (
               <li key={impact.tierName}>{scopeImpactText(impact)}</li>
             ))}
           </ul>
         }
-        entityName={config.name}
-        isDanger={false}
-        buttonText={t('Save anyway')}
-        showToast={false}
-        mutationFn={async () => {
-          if (!(await save())) {
-            throw new Error('Saving the key failed');
-          }
-        }}
-      />
-
-      <LeaveWithoutSavingDialog
-        open={leaveBlocker.state === 'blocked'}
-        onKeepEditing={() => leaveBlocker.reset?.()}
-        onDiscard={() => leaveBlocker.proceed?.()}
+        confirmLabel={t('Save anyway')}
+        destructive={false}
+        onConfirm={confirmSave}
       />
     </>
   );

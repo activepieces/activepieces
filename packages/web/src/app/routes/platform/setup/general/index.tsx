@@ -27,7 +27,14 @@ export const GeneralPage = () => {
         />
       }
     >
-      {canDeletePlatform && <DangerZoneSection platformName={platform.name} />}
+      {({ standDown }) =>
+        canDeletePlatform && (
+          <DangerZoneSection
+            platformName={platform.name}
+            standDown={standDown}
+          />
+        )
+      }
     </AppearanceSection>
   );
 };

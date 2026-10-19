@@ -48,6 +48,7 @@ import {
   aiToolConfigMutations,
 } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { aiCapabilitySources, AiToolCapabilityInfo } from './catalog';
 
@@ -175,10 +176,12 @@ function CapabilityForm({
     onError: (error) => {
       form.setError('root.serverError', {
         type: 'manual',
-        message:
-          error.response?.data?.params?.message ??
-          error.response?.data?.message ??
-          t('Failed to save. Please check the API key and try again.'),
+        message: mutationFeedback.messageOr({
+          error,
+          fallback: t(
+            'Failed to save. Please check the API key and try again.',
+          ),
+        }),
       });
     },
   };
@@ -329,6 +332,7 @@ function CapabilityForm({
                     }
                   />
                 </FormControl>
+                <FormMessage />
                 {selectedProvider && (
                   <a
                     href={selectedProvider.signupUrl}
@@ -343,7 +347,6 @@ function CapabilityForm({
                     <ExternalLink className="size-3" />
                   </a>
                 )}
-                <FormMessage />
               </FormItem>
             )}
           />

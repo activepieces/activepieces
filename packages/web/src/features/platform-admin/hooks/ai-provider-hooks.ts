@@ -10,8 +10,10 @@ import {
 } from '@activepieces/shared';
 import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
+import { t } from 'i18next';
 
 import { authenticationSession } from '@/lib/authentication-session';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import {
   aiProviderApi,
@@ -75,60 +77,17 @@ export const aiProviderMutations = {
   useRecheckAiProvider: ({
     onSuccess,
   }: {
-    onSuccess: (result: { status: AiProviderKeyStatus }) => void;
+    onSuccess: (
+      result: { status: AiProviderKeyStatus },
+      providerId: string,
+    ) => void;
   }) => {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
       onSuccess,
-    });
-  },
-  useDeleteAiProvider: ({
-    onSuccess,
-    onError,
-  }: {
-    onSuccess: () => void;
-    onError?: (
-      error: AxiosError<{ message?: string; params?: { message: string } }>,
-    ) => void;
-  }) => {
-    return useMutation({
-      mutationFn: (providerId: string) => aiProviderApi.delete(providerId),
-      onSuccess,
-      onError,
-    });
-  },
-  useUpdateAiProvider: ({
-    onSuccess,
-    onError,
-  }: {
-    onSuccess: () => void;
-    onError?: (
-      error: AxiosError<{ message?: string; params?: { message: string } }>,
-    ) => void;
-  }) => {
-    return useMutation({
-      mutationFn: ({
-        providerId,
-        request,
-      }: {
-        providerId: string;
-        request: UpdateAIProviderRequest;
-      }) => aiProviderApi.update(providerId, request),
-      onSuccess,
-      onError,
-    });
-  },
-  useToggleChatProvider: ({ onSuccess }: { onSuccess: () => void }) => {
-    return useMutation({
-      mutationFn: ({
-        providerId,
-        displayName,
-      }: {
-        providerId: string;
-        displayName: string;
-      }) =>
-        aiProviderApi.update(providerId, { displayName, enabledForChat: true }),
-      onSuccess,
+      onError: (error) => {
+        mutationFeedback.error({ error, title: t("Couldn't recheck the key") });
+      },
     });
   },
   useUpsertAiProvider: ({

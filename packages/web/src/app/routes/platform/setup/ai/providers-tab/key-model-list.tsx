@@ -192,7 +192,7 @@ export function KeyModelList({
         )}
       </div>
 
-      <div className="flex flex-col border-t border-gray-6/60">
+      <div className="@container flex flex-col border-t border-gray-6/60">
         {isLoading &&
           [0, 1, 2].map((row) => (
             <div

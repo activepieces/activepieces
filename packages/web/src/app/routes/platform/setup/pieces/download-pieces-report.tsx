@@ -1,22 +1,23 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 const DownloadPiecesReportButton = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
-      const blob = await api.get<Blob>(
-        '/v1/platform/pieces-report.csv',
-        undefined,
-        {
+      const blob = await api
+        .get<Blob>('/v1/platform/pieces-report.csv', undefined, {
           responseType: 'blob',
-        },
-      );
+        })
+        .catch(async (error: unknown) => {
+          await mutationFeedback.parseBlobError(error);
+          throw error;
+        });
       const filename = `pieces-report-${new Date()
         .toISOString()
         .slice(0, 10)}.csv`;
@@ -27,8 +28,11 @@ const DownloadPiecesReportButton = () => {
       anchor.click();
       URL.revokeObjectURL(url);
     },
-    onError: () => {
-      toast.error(t('Failed to download pieces report'));
+    onError: (error) => {
+      mutationFeedback.error({
+        error,
+        title: t("Couldn't download the pieces report"),
+      });
     },
   });
 
