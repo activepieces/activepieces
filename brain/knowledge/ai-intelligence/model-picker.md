@@ -13,14 +13,15 @@ The one picker a builder uses to choose what an agent, chat or AI step runs on. 
 - **Credits tiers:** shown whenever the managed provider is visible.
 - **Your keys:** one group per key that serves the project, empty when the admin hides specific models.
 
-On `agent` and `chat` a tier whose main model can't call tools is hidden, and so is a key model without tool calling. On `chat`, keys with a curated list offer only that list.
+On `agent` and `chat` a tier whose main model can't call tools is hidden, and so is a key model without tool calling. On `chat`, keys of a provider with a curated list offer, in the key's own order, only ids on that list or ids the catalog confirms call tools. Manual-list keys (Vertex, Custom) offer every typed-in tool model. Nothing is reordered or starred: there is no "recommended" in the UI.
 
 **Default choice** — `aiModelOptionsUtils.defaultChoice`, tried in this order:
-1. The Default tier.
-2. On chat only, the Default AI key's first model.
-3. The credits default.
-4. The first tier.
-5. The first key model.
+1. On chat only, the platform **Default chat model** (`platform_configuration.defaultChatModel`), if it can run in the project.
+2. The Default tier.
+3. On chat only, the Default AI key's first known chat model.
+4. The credits default.
+5. The first tier.
+6. The first key model.
 
 ## Gotchas
 - An agent model with no `providerConfigId` follows whichever key ranks first (`findEligibleRow` → `rankRows`), so adding a key could silently move it. Agent create and save now pin the key (`withDefaultModel` takes the chat key's id, `withPinnedKey` stores the key a run would use today). Agents saved before this stay unpinned until their next save. The default model follows the pinned chat key's model scope and typed-in list, or the run would reject it. Moving an agent keeps its key only if the target project can use it; otherwise it re-pins to the key a run there would pick (`findRunKeyId` with `preferredConfigId`).
@@ -43,11 +44,10 @@ On `agent` and `chat` a tier whose main model can't call tools is hidden, and so
 - **Don't use `defaultChoice` on a hot run path.** `aiModelOptionsService.list` fetches every key's model list and skips a key whose list fails, so a flaky provider API (or a fake test key) can leave `defaultChoice` null, or point it somewhere else. The chat run path (`agentChatModel.defaultPick`) checks the Default tier and the Default AI key without listing models, and only falls back to `list` when neither exists.
 - The picker never writes a default by itself. An agent gets its default model from the server when it is created. An unknown pick shows an amber "Unavailable" and is never silently swapped (S11).
 - **Builder-facing picker copy says "Tiers" and "Models", never "Your …".** Builders don't own the keys, the admin does (Kareem, 2026-10-14). Only the admin tier editor (`admin-model-picker.tsx`) keeps "Your keys".
-- **Chat and agents list every tool-calling model a key has, curated ones first with a small filled amber star (tooltip "Recommended")** (`modelMeta.isRecommended`, from `getCuratedChatModels`). Louai rejected both a green pill and section headings as too loud. Flows show no star. For curated providers, chat lists the curated models plus only models whose catalog entry says `supportsToolCalling: true`, so dated snapshots and ids the catalog doesn't know stay out of chat; agents still show every tool-capable-or-unknown model, so old agent picks don't turn Unavailable.
 - **A chat pinned to a key model fails only when the key no longer lists it and it is not a curated or deprecated id** (`agentChatModel.pinnedConfig` → `keyNoLongerListsModel`; a failed listing never blocks). Don't gate pins on the curated list alone: chat offers non-curated models, so that check would refuse them at run.
 - **Chat model saves are queued, and send waits for the queue** (`use-chat.ts` `pickSaveQueueRef`): a failed save rolls back only if it is the newest pick, and a message sent right after a switch never runs on the old model. Anything that awaits before sending must re-check Stop afterwards (`isSendCancelled`), or a stopped message still goes out. The "set up an AI provider" gate runs only for new chats; a reopened chat uses its own project.
 - **Anything that judges a saved tier pick must load model-options with that `tierId`.** `movedTiers` is only filled for the tier you ask about, so a call without it treats a replaced tier as gone (the chat send check blocked a pick the picker showed as "Moved").
-- **The platform's first own AI key becomes the Default AI key on create** (`aiProviderService.create`, inside the platform lock, flag cleared on every other row first, so two keys added at once can't both win). Later keys never take it automatically; use "Set as default" on the key page. Retired curated ids go in `DEPRECATED_CHAT_MODELS_BY_PROVIDER`: still runnable for Credits tiers and old chats, no longer recommended. The curated list only orders and labels; it no longer limits what chat can pick, and a non-curated pick runs as that exact model (`resolveNamedModelId`).
+- **The Default AI key follows the Default chat model.** Saving the setting (`platformConfigurationService.update`, checked against `listForPlatform` outside the lock, then under the platform lock) sets `enabledForChat` on the pick's key: a key model's key, a tier's main entry key, or the Credits row. There is no "Set as default" button any more. Before any setting exists, the platform's first own key still gets the flag on create, and that step is skipped once a Default chat model is set so the derived key doesn't drift. Credits is matched by `provider === ACTIVEPIECES`, never by its row id, because that row can be recreated.
 
 ## Key files
 - `packages/web/src/features/agents/ai-model/`: `ModelPicker`, `ModelPickerPopover`, `ModelDetailCard`
