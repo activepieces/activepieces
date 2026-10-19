@@ -15,8 +15,8 @@ next unclaimed signals `FOR UPDATE SKIP LOCKED`, claims them (`refId` = the new 
 transaction that holds the barrier `FOR SHARE` while it is still `PENDING`, with its run id as its job id. A child
 whose barrier closed in between is cancelled instead.
 
-When dispatch gives up for good, the handler deletes the source key and then marks the **unclaimed** signals
-`NOT_DISPATCHED`. Claimed signals keep their live children, and the barrier releases when those report.
+When dispatch gives up for good, a `fan-out-give-up` job deletes the source key and then marks the **unclaimed**
+signals `NOT_DISPATCHED`. Claimed signals keep their live children, and the barrier releases when those report.
 
 ## Context
 The loop was first planned inside the parent's engine sandbox, which is killed at `FLOW_TIMEOUT_SECONDS`. A killed
