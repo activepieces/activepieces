@@ -132,23 +132,31 @@ describe('rateLimiterInterceptor', () => {
     })
 
     describe('flow worker group pin', () => {
-        it('should ALLOW a pinned flow even at capacity and not take a slot', async () => {
+        it('should ignore the project pool limit but still enforce the plan limit', async () => {
             const redis = await redisConnections.useExisting()
             vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
                 if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
-                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 1
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 2
                 return 0
             })
-            const jobData = createFlowJobData()
+            const projectId = `proj-${crypto.randomUUID()}`
+            const poolId = `pool-${crypto.randomUUID()}`
+            const jobData = createFlowJobData({ projectId })
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId)
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 1)
+
             const first = await rateLimiterInterceptor.preDispatch({ jobId: 'pin-a', jobData, job: createMockJob(), log: mockLog })
             expect(first.verdict).toBe(InterceptorVerdict.ALLOW)
+            const secondUnpinned = await rateLimiterInterceptor.preDispatch({ jobId: 'pin-b', jobData, job: createMockJob(), log: mockLog })
+            expect(secondUnpinned.verdict).toBe(InterceptorVerdict.REJECT)
 
             mockGetFlowWorkerGroup.mockResolvedValue('g1')
-            const pinned = await rateLimiterInterceptor.preDispatch({ jobId: 'pin-b', jobData, job: createMockJob(), log: mockLog })
+            const pinned = await rateLimiterInterceptor.preDispatch({ jobId: 'pin-c', jobData, job: createMockJob(), log: mockLog })
             expect(pinned.verdict).toBe(InterceptorVerdict.ALLOW)
+            expect(await redis.zcard(getConcurrencyPoolSetKey(poolId))).toBe(2)
 
-            const setSize = await redis.zcard(getConcurrencyPoolSetKey(jobData.projectId))
-            expect(setSize).toBe(1)
+            const pinnedOverPlan = await rateLimiterInterceptor.preDispatch({ jobId: 'pin-d', jobData, job: createMockJob(), log: mockLog })
+            expect(pinnedOverPlan.verdict).toBe(InterceptorVerdict.REJECT)
         })
 
         it('should rate limit normally when the flow group lookup fails', async () => {
@@ -165,16 +173,16 @@ describe('rateLimiterInterceptor', () => {
             expect(second.verdict).toBe(InterceptorVerdict.REJECT)
         })
 
-        it('should skip slot release for a pinned flow', async () => {
+        it('should release the slot of a pinned flow on finish', async () => {
             const redis = await redisConnections.useExisting()
+            mockGetFlowWorkerGroup.mockResolvedValue('g1')
             const jobData = createFlowJobData()
             const first = await rateLimiterInterceptor.preDispatch({ jobId: 'rel-a', jobData, job: createMockJob(), log: mockLog })
             expect(first.verdict).toBe(InterceptorVerdict.ALLOW)
+            expect(await redis.zcard(getConcurrencyPoolSetKey(jobData.projectId))).toBe(1)
 
-            mockGetFlowWorkerGroup.mockResolvedValue('g1')
             await rateLimiterInterceptor.onJobFinished({ jobId: 'rel-a', jobData, failed: false, log: mockLog })
-            const setSize = await redis.zcard(getConcurrencyPoolSetKey(jobData.projectId))
-            expect(setSize).toBe(1)
+            expect(await redis.zcard(getConcurrencyPoolSetKey(jobData.projectId))).toBe(0)
         })
     })
 
