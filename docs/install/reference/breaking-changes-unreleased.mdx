@@ -15,6 +15,15 @@ Update Customer sent **Verified Email**, **Send Email Invite** and **Accepts Mar
 #### What you need to do
 
 Nothing for flows that only ever verify or subscribe customers. A flow that relied on Update Customer to unsubscribe a customer or mark their email as unverified can no longer do it from this action; use **Custom API Call** with `PUT /customers/{id}.json` and a body of `{"customer": {"email_marketing_consent": {"state": "unsubscribed", "opt_in_level": "unknown"}}}` (or `"verified_email": false`). Steps keep running on the version they were built with until you upgrade them.
+
+#### WordPress Update Post keeps a post's categories and tags when those fields are empty
+
+Update Post used to send an empty list when **Categories** or **Tags** was cleared or mapped to an empty list. WordPress then reset the post to the default category and removed all of its tags. From WordPress 0.9.0, an empty Categories or Tags field leaves the post's current categories and tags as they are, like every other empty field on the form. Steps keep running on the version they were built with until you upgrade them.
+
+#### What you need to do
+
+Nothing for most flows. If a flow cleared a post's tags or categories by sending an empty list, it no longer does: pick the categories to keep instead, or use the Custom API Call with `POST /posts/<id>` and `{"tags": []}` in the body.
+
 #### Background migrations need a dedicated Postgres role when a `statement_timeout` applies
 
 The app's background migration track (slow data backfills, `CREATE INDEX CONCURRENTLY`, `DROP INDEX CONCURRENTLY`) runs through whichever database connection the app itself uses. When a `statement_timeout` applies to that connection, every long DDL statement a background migration issues is cancelled at that cap and never completes. The retry loop leaves `INVALID` index artifacts behind that an `IF NOT EXISTS` on the next deploy silently skips.
