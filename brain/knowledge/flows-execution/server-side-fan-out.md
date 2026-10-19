@@ -6,8 +6,8 @@ icon: 🪓
 # Server-side fan-out
 
 The barrier's own child dispatcher. A batch step hands the server its items in one `POST /v1/waitpoints`, and a
-`fan-out-dispatch` job on the barrier queue creates one child run per signal. The step that calls it
-(`PROCESS_IN_BATCHES`) ships with the batch-step layer; until then only tests drive it. See decision
+`fan-out-dispatch` job on the barrier queue creates one child run per signal. Its caller, `PROCESS_IN_BATCHES`,
+runs end to end on the server; the builder does not offer the step until its settings UI lands. See decision
 [000051](../decisions/000051-batch-children-are-dispatched-by-an-app-queue-job-not-the-engine.md) for why, and
 [000015](../decisions/000015-fan-in-is-an-event-driven-waitpoint-barrier.md) for the barrier.
 

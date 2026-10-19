@@ -201,12 +201,13 @@ async function failDispatch({ barrierId, attemptsMade }: { barrierId: string, at
     })
 }
 
-async function createFanOutBarrier({ flowRunId, items, batchSize, stepName, batchStepName }: {
+async function createFanOutBarrier({ flowRunId, items, batchSize, stepName, batchStepName, timeoutSeconds }: {
     flowRunId: string
     items: unknown[]
     batchSize: number
     stepName?: string
     batchStepName?: string
+    timeoutSeconds?: number
 }) {
     return barrierService(app.log).create({
         flowRunId,
@@ -214,6 +215,7 @@ async function createFanOutBarrier({ flowRunId, items, batchSize, stepName, batc
         platformId: ctx.platform.id,
         stepName: stepName ?? FAN_OUT_BATCH_STEP,
         version: 'V1',
+        timeoutSeconds,
         fanOut: {
             entryStepName: FAN_OUT_ENTRY_STEP,
             batchStepName: batchStepName ?? FAN_OUT_BATCH_STEP,
@@ -1093,6 +1095,26 @@ describe('barrier deadline', () => {
         const armed = await sweepOverdueDeadlines({ log: app.log })
 
         expect(armed).toContain(barrier.id)
+    })
+
+    it('brings the deadline forward when the step asks for a shorter timeout', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1, timeoutSeconds: 3600 })
+
+        const deadline = dayjs(barrier.resumeDateTime)
+        expect(deadline.isAfter(dayjs().add(50, 'minute'))).toBe(true)
+        expect(deadline.isBefore(dayjs().add(70, 'minute'))).toBe(true)
+    })
+
+    it('clamps a timeout longer than the paused-flow limit down to the run-age limit', async () => {
+        const { flowRun } = await createParentRun()
+        const runCreated = dayjs().subtract(10, 'day').toISOString()
+        await db.update('flow_run', flowRun.id, { created: runCreated })
+        const beyondCap = (PAUSE_TIMEOUT_DAYS + 10) * 24 * 60 * 60
+
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1, timeoutSeconds: beyondCap })
+
+        expect(dayjs(barrier.resumeDateTime).toISOString()).toBe(dayjs(runCreated).add(PAUSE_TIMEOUT_DAYS, 'day').toISOString())
     })
 
     it('counts the signals nobody answered as still running and marks the release as timed out', async () => {
