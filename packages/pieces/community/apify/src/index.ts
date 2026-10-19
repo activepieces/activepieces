@@ -79,7 +79,7 @@ export const apify = createPiece({
   displayName: 'Apify',
   description: 'Access Apify tools for web scraping, data extraction, and automation.',
   auth: apifyAuth,
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/apify.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['buttonsbond'],
@@ -123,6 +123,12 @@ export const apify = createPiece({
       authMapping: async (auth) => {
         return {
           'Authorization': `Bearer ${auth.props.apikey}`
+        }
+      },
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://api.apify.com/v2',
+          placeholder: '/acts'
         }
       }
     })

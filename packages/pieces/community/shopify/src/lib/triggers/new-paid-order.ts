@@ -2,7 +2,7 @@ import { createShopifyWebhookTrigger } from '../common/register-webhook';
 
 export const newPaidOrder = createShopifyWebhookTrigger({
   name: 'new_paid_order',
-  description: 'Triggered when a paid order is created',
+  description: 'Triggers when an order is paid.',
   topic: 'orders/paid',
   displayName: 'New Paid Order',
   sampleData: {
