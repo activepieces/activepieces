@@ -102,7 +102,7 @@ export const resend = createPiece({
   displayName: 'Resend',
   description: 'The email API for developers',
   auth: resendAuth,
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/resend.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ['Tosh94'],
@@ -168,8 +168,14 @@ export const resend = createPiece({
       baseUrl: () => RESEND_BASE_URL,
       auth: resendAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { secret_text: string }).secret_text}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${RESEND_BASE_URL}`,
+          placeholder: '/emails',
+        },
+      },
     }),
   ],
   triggers: [emailBounced],
