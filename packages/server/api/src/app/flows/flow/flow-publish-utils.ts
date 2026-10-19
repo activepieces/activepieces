@@ -16,7 +16,14 @@ function isRepublish({ previouslyPublished, toPublish, requestedStatus }: IsRepu
         && isSameTrigger({ published: previouslyPublished.trigger, toPublish: toPublish.trigger })
 }
 
-export const flowPublishUtils = { isSameTrigger, isRepublish }
+function isTriggerUnchanged({ previouslyPublished, toPublish, requestedStatus }: IsRepublishParams): boolean {
+    return isRepublish({ previouslyPublished, toPublish, requestedStatus })
+        && previouslyPublished?.trigger.type === FlowTriggerType.PIECE
+        && toPublish.trigger.type === FlowTriggerType.PIECE
+        && previouslyPublished.trigger.settings.pieceVersion === toPublish.trigger.settings.pieceVersion
+}
+
+export const flowPublishUtils = { isSameTrigger, isRepublish, isTriggerUnchanged }
 
 type IsSameTriggerParams = {
     published: FlowVersion['trigger']

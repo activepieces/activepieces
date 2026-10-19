@@ -90,11 +90,15 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             versionId: approval.flowVersionId,
         })
 
-        const isRepublish = flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId) && flowPublishUtils.isRepublish({
-            previouslyPublished: await flowVersionService(log).getFlowVersionOrThrow({ flowId: flow.id, versionId: flow.publishedVersionId }),
+        const republishParams = {
+            previouslyPublished: flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)
+                ? await flowVersionService(log).getFlowVersionOrThrow({ flowId: flow.id, versionId: flow.publishedVersionId })
+                : undefined,
             toPublish: lockedVersion,
             requestedStatus: approval.requestedStatus,
-        })
+        }
+        const isRepublish = flowPublishUtils.isRepublish(republishParams)
+        const isTriggerUnchanged = flowPublishUtils.isTriggerUnchanged(republishParams)
 
         const decidedAt = new Date().toISOString()
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
@@ -122,6 +126,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                 simulate: false,
                 ignoreError: true,
                 isRepublish,
+                isTriggerUnchanged,
             })
         }
         await flowExecutionCache(log).invalidate(flow.id)
@@ -130,6 +135,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             projectId: approval.projectId,
             newStatus: approval.requestedStatus,
             isRepublish,
+            isTriggerUnchanged,
         })
         rejectedPromiseHandler(telemetry(log).trackProject({
             projectId: approval.projectId,

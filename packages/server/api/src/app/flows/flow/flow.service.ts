@@ -371,7 +371,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     })
                     break
                 }
-                const { isRepublish } = await this.updatedPublishedVersionId({
+                const { isRepublish, isTriggerUnchanged } = await this.updatedPublishedVersionId({
                     id,
                     userId,
                     projectId,
@@ -380,7 +380,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     previouslyPublishedVersion,
                     requestedStatus,
                 })
-                await applyStatusChange({ id, projectId, newStatus: requestedStatus, isRepublish }, log)
+                await applyStatusChange({ id, projectId, newStatus: requestedStatus, isRepublish, isTriggerUnchanged }, log)
                 break
             }
 
@@ -493,11 +493,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
         requestedStatus,
     }: UpdatePublishedVersionIdParams): Promise<UpdatePublishedVersionIdResult> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
-        const isRepublish = flowPublishUtils.isRepublish({
-            previouslyPublished: previouslyPublishedVersion,
-            toPublish: flowVersionToPublish,
-            requestedStatus,
-        })
+        const republishParams = { previouslyPublished: previouslyPublishedVersion, toPublish: flowVersionToPublish, requestedStatus }
+        const isRepublish = flowPublishUtils.isRepublish(republishParams)
+        const isTriggerUnchanged = flowPublishUtils.isTriggerUnchanged(republishParams)
 
         if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
             await triggerSourceService(log).disable({
@@ -506,6 +504,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 simulate: false,
                 ignoreError: true,
                 isRepublish,
+                isTriggerUnchanged,
             })
         }
 
@@ -545,7 +544,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 payload: { flowId: id },
             },
         }), log)
-        return { publishedFlow, isRepublish }
+        return { publishedFlow, isRepublish, isTriggerUnchanged }
     },
 
     async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<void> {
@@ -560,8 +559,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus, isRepublish }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus, isRepublish?: boolean }): Promise<void> {
-        await applyStatusChange({ id, projectId, newStatus, isRepublish }, log)
+    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus, isRepublish, isTriggerUnchanged }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus, isRepublish?: boolean, isTriggerUnchanged?: boolean }): Promise<void> {
+        await applyStatusChange({ id, projectId, newStatus, isRepublish, isTriggerUnchanged }, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
@@ -800,6 +799,7 @@ async function applyStatusChange(params: {
     projectId: ProjectId
     newStatus: FlowStatus
     isRepublish?: boolean
+    isTriggerUnchanged?: boolean
 }, log: FastifyBaseLogger): Promise<void> {
     const triggerTimeout = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
     await distributedLock(log).runExclusive({
@@ -827,6 +827,7 @@ async function applyStatusChange(params: {
                 newStatus: params.newStatus,
                 templateId: flowToUpdate.templateId ?? undefined,
                 isRepublish: params.isRepublish,
+                isTriggerUnchanged: params.isTriggerUnchanged,
             })
 
             await flowRepo().save({
@@ -969,6 +970,7 @@ type UpdatePublishedVersionIdParams = {
 type UpdatePublishedVersionIdResult = {
     publishedFlow: PopulatedFlow
     isRepublish: boolean
+    isTriggerUnchanged: boolean
 }
 
 type SetPublishedVersionParams = {

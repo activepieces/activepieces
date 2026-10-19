@@ -2,12 +2,12 @@ import { FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PropertyExe
 import { describe, expect, it } from 'vitest'
 import { flowPublishUtils } from '../../../../../src/app/flows/flow/flow-publish-utils'
 
-function pieceTrigger(overrides: { pieceName?: string, triggerName?: string, input?: Record<string, unknown> } = {}): FlowVersion['trigger'] {
+function pieceTrigger(overrides: { pieceName?: string, pieceVersion?: string, triggerName?: string, input?: Record<string, unknown> } = {}): FlowVersion['trigger'] {
     return {
         type: FlowTriggerType.PIECE,
         settings: {
             pieceName: overrides.pieceName ?? '@activepieces/piece-jira-cloud',
-            pieceVersion: '0.4.1',
+            pieceVersion: overrides.pieceVersion ?? '0.4.1',
             triggerName: overrides.triggerName ?? 'new_issue',
             input: overrides.input ?? { projectId: 'AP', maxResults: 50 },
             propertySettings: {
@@ -110,6 +110,32 @@ describe('flowPublishUtils.isRepublish', () => {
         expect(flowPublishUtils.isRepublish({
             previouslyPublished: versionWith(pieceTrigger()),
             toPublish: versionWith(pieceTrigger({ input: { projectId: 'OPS', maxResults: 50 } })),
+            requestedStatus: FlowStatus.ENABLED,
+        })).toBe(false)
+    })
+})
+
+describe('flowPublishUtils.isTriggerUnchanged', () => {
+    it('is true for a republish that keeps the piece version', () => {
+        expect(flowPublishUtils.isTriggerUnchanged({
+            previouslyPublished: versionWith(pieceTrigger()),
+            toPublish: versionWith(pieceTrigger()),
+            requestedStatus: FlowStatus.ENABLED,
+        })).toBe(true)
+    })
+
+    it('is false when the piece was upgraded, even with the same inputs', () => {
+        expect(flowPublishUtils.isTriggerUnchanged({
+            previouslyPublished: versionWith(pieceTrigger()),
+            toPublish: versionWith(pieceTrigger({ pieceVersion: '0.5.0' })),
+            requestedStatus: FlowStatus.ENABLED,
+        })).toBe(false)
+    })
+
+    it('is false when it is not a republish', () => {
+        expect(flowPublishUtils.isTriggerUnchanged({
+            previouslyPublished: undefined,
+            toPublish: versionWith(pieceTrigger()),
             requestedStatus: FlowStatus.ENABLED,
         })).toBe(false)
     })
