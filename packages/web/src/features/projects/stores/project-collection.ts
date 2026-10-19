@@ -1,4 +1,4 @@
-import { isNil, SeekPage } from '@activepieces/core-utils';
+import { isNil, omit, SeekPage } from '@activepieces/core-utils';
 import {
   CreatePlatformProjectRequest,
   ListProjectRequestForPlatformQueryParams,
@@ -16,7 +16,12 @@ import {
   or,
   useLiveSuspenseQuery,
 } from '@tanstack/react-db';
-import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -45,7 +50,7 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     onUpdate: async ({ transaction }) => {
       for (const { original, modified } of transaction.mutations) {
         const request: UpdateProjectPlatformRequest = {
-          ...modified,
+          ...omit(modified, ['isDefault']),
           metadata: modified.metadata ?? undefined,
           externalId: modified.externalId?.trim() || undefined,
         };
@@ -124,6 +129,27 @@ export const projectCollectionUtils = {
         onSuccess();
       },
       onError,
+    });
+  },
+  useSetDefaultProjects: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: async ({ add, remove }: SetDefaultProjectsRequest) => {
+        const results = await Promise.allSettled([
+          ...add.map((projectId) =>
+            api.post(`/v1/projects/${projectId}`, { isDefault: true }),
+          ),
+          ...remove.map((projectId) =>
+            api.post(`/v1/projects/${projectId}`, { isDefault: false }),
+          ),
+        ]);
+        await queryClient.invalidateQueries({ queryKey: ['platform'] });
+        const failure = results.find((result) => result.status === 'rejected');
+        if (failure?.status === 'rejected') {
+          throw failure.reason;
+        }
+      },
+      onError: () => undefined,
     });
   },
   update: (projectId: string, request: UpdateProjectPlatformRequest) => {
@@ -312,4 +338,9 @@ export const projectHooks = {
       };
     }, [projectId, embedState.isEmbedded, location.pathname]);
   },
+};
+
+type SetDefaultProjectsRequest = {
+  add: string[];
+  remove: string[];
 };

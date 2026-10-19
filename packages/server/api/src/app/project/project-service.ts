@@ -85,6 +85,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
         const teamUpdate = request.type === ProjectType.TEAM ? {
             ...spreadIfDefined('displayName', request.displayName),
             ...spreadIfDefined('icon', request.icon),
+            ...spreadIfDefined('isDefault', request.isDefault),
         } : {}
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
@@ -292,6 +293,7 @@ type UpdateTeamProjectParams = {
     executionDataRetentionDays?: number | null
     icon?: ProjectIcon
     sensitive?: boolean
+    isDefault?: boolean
 }
 
 type UpdatePersonalProjectParams = {

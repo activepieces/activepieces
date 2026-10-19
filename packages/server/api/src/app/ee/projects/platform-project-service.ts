@@ -128,6 +128,14 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     }: UpdateParams): Promise<ProjectWithLimits> {
         const project = await projectService(log).getOneOrThrow(projectId)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
+        if (request.isDefault === true && !platformPlan.projectRolesEnabled) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: {
+                    message: 'Default projects are not enabled for this platform',
+                },
+            })
+        }
         const { globalConnectionExternalIds, maxConcurrentJobs, ...rest } = request
         let resolvedPoolId: string | null | undefined
         await transaction(async (entityManager) => {
@@ -221,41 +229,41 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         await scheduleHardDeleteProjectJob({ id: personalProject.id, platformId, log })
     },
 
-    async markForDeletion({ id, platformId, refuseIfDefault = false, assertCanDelete }: MarkForDeletionParams): Promise<void> {
-        await assertCanDelete?.()
-        await softDeleteAndClearDefault({ id, platformId, refuseIfDefault })
+    async markForDeletion({ id, platformId, enforceDefaultGuard = false }: DeleteProjectParams): Promise<void> {
+        const refuseIfDefault = enforceDefaultGuard && await projectRolesEnabled({ platformId, log })
+        const query = projectRepo()
+            .createQueryBuilder()
+            .softDelete()
+            .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
+        if (refuseIfDefault) {
+            query.andWhere('"isDefault" = false')
+        }
+        const result = await query.returning('id').execute()
+        const deletedRows: unknown[] = result.raw ?? []
+        if (deletedRows.length === 0) {
+            if (refuseIfDefault && await projectRepo().existsBy({ id, platformId, isDefault: true })) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Remove this project from default projects before deleting it',
+                    },
+                })
+            }
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'project',
+                    entityId: id,
+                },
+            })
+        }
         await scheduleHardDeleteProjectJob({ id, platformId, log })
     },
 })
 
-async function softDeleteAndClearDefault({ id, platformId, refuseIfDefault }: SoftDeleteAndClearDefaultParams): Promise<void> {
-    const query = projectRepo()
-        .createQueryBuilder()
-        .update()
-        .set({ deleted: () => 'NOW()', isDefault: false })
-        .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
-    if (refuseIfDefault) {
-        query.andWhere('"isDefault" = false')
-    }
-    const result = await query.returning('id').execute()
-    const deletedRows: unknown[] = result.raw ?? []
-    if (deletedRows.length === 0) {
-        if (refuseIfDefault && await projectRepo().existsBy({ id, platformId, isDefault: true })) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Remove this project from default projects before deleting it',
-                },
-            })
-        }
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                entityType: 'project',
-                entityId: id,
-            },
-        })
-    }
+async function projectRolesEnabled({ platformId, log }: ProjectRolesEnabledParams): Promise<boolean> {
+    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    return plan.projectRolesEnabled
 }
 
 async function scheduleHardDeleteProjectJob({ id, platformId, log }: ScheduleHardDeleteProjectJobParams): Promise<void> {
@@ -406,15 +414,12 @@ type CreateProjectParams = {
 type DeleteProjectParams = {
     id: ProjectId
     platformId: PlatformId
+    enforceDefaultGuard?: boolean
 }
 
-type MarkForDeletionParams = DeleteProjectParams & {
-    refuseIfDefault?: boolean
-    assertCanDelete?: () => Promise<void>
-}
-
-type SoftDeleteAndClearDefaultParams = DeleteProjectParams & {
-    refuseIfDefault: boolean
+type ProjectRolesEnabledParams = {
+    platformId: PlatformId
+    log: FastifyBaseLogger
 }
 
 type ScheduleHardDeleteProjectJobParams = {

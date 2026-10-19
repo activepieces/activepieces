@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/item';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { PLATFORM_FEATURES, useFeatureGate } from '@/features/billing';
-import { newMemberSettingsMutations } from '@/features/platform-admin';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -36,11 +35,16 @@ export function DefaultProjectsSection() {
     feature: PLATFORM_FEATURES.projectRoles,
   });
 
-  const { mutateAsync: updateSettingsAsync, isPending } =
-    newMemberSettingsMutations.useUpdateNewMemberSettings();
+  const { mutateAsync: setDefaultProjects, isPending } =
+    projectCollectionUtils.useSetDefaultProjects();
 
-  const saveDefaultProjects = async (defaultProjectIds: string[]) => {
-    await updateSettingsAsync({ defaultProjectIds });
+  const saveDefaultProjects = async (selectedIds: string[]) => {
+    await setDefaultProjects({
+      add: selectedIds.filter((id) => !platform.defaultProjectIds.includes(id)),
+      remove: platform.defaultProjectIds.filter(
+        (id) => !selectedIds.includes(id),
+      ),
+    });
     setIsDialogOpen(false);
   };
 
@@ -67,11 +71,7 @@ export function DefaultProjectsSection() {
   };
 
   const removeDefaultProject = async (projectId: string) => {
-    await updateSettingsAsync({
-      defaultProjectIds: platform.defaultProjectIds.filter(
-        (id) => id !== projectId,
-      ),
-    });
+    await setDefaultProjects({ add: [], remove: [projectId] });
   };
 
   return (
