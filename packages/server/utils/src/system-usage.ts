@@ -224,7 +224,12 @@ export type CpuPressure = { cpuStealPercentage?: number, cpuThrottledPercentage?
 
 async function readProcessTreeMemoryBytes(rootPids: number[]): Promise<Map<number, number>> {
     const processTable = await pidtree(-1, { advanced: true })
-    const childrenByParent = processTable.reduce((acc, { ppid, pid }) => acc.set(ppid, [...(acc.get(ppid) ?? []), pid]), new Map<number, number[]>())
+    const childrenByParent = new Map<number, number[]>()
+    for (const { ppid, pid } of processTable) {
+        const children = childrenByParent.get(ppid) ?? []
+        children.push(pid)
+        childrenByParent.set(ppid, children)
+    }
     const processTrees = rootPids.map((rootPid) => ({ rootPid, selfAndDescendantPids: collectSelfAndDescendants({ rootPid, childrenByParent }) }))
     const statsByPid = await pidusage([...new Set(processTrees.flatMap(({ selfAndDescendantPids }) => selfAndDescendantPids))])
     return new Map(processTrees.map(({ rootPid, selfAndDescendantPids }) => [
