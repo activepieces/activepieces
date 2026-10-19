@@ -198,8 +198,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
-            ...spreadIfDefined('ssoDomain', params.ssoDomain),
-            ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
+            ...spreadIfNotUndefined('ssoDomain', params.ssoDomain),
+            ...spreadIfNotUndefined('ssoDomainVerification', params.ssoDomainVerification),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             ...spreadIfNotUndefined('pieceSelectorConfig', params.pieceSelectorConfig),
         }
