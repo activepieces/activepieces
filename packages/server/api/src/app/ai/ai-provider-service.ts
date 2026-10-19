@@ -244,6 +244,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return { ...aiProviderCredentials({ provider: chatProvider.provider, auth, config: chatProvider.config }), configId: chatProvider.id, platformId, modelScope: chatProvider.modelScope, modelIds: chatProvider.modelIds }
     },
 
+    async findCreditsConfig({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<GetProviderConfigResponse | null> {
+        const row = (await listVisibleRows({ platformId, log })).find((candidate) => candidate.provider === AIProviderName.ACTIVEPIECES)
+        return isNil(row) ? null : this.findKeyConfig({ platformId, configId: row.id, scope })
+    },
+
     async findKeyConfig({ platformId, configId, scope }: { platformId: PlatformId, configId: string, scope: ProviderScope }): Promise<GetProviderConfigResponse | null> {
         const row = await aiProviderRepo().findOneBy({ platformId, id: configId })
         if (isNil(row) || !aiKeyScope.rowAllowsScope({ row, scope })) {
@@ -275,6 +280,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
         const deleted = await transaction(async (manager) => {
             await platformModelTierService.removeKeyFromTiers({ manager, platformId, configId: providerId })
+            await manager.query(
+                'UPDATE "platform_configuration" SET "defaultChatModel" = NULL WHERE "platformId" = $1 AND "defaultChatModel"->>\'providerConfigId\' = $2',
+                [platformId, providerId],
+            )
             const row = await deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
             await aiUsageHooks.get(log).unpinConversationsFromKey({ manager, platformId, configId: providerId, key: null })
             return row

@@ -236,6 +236,16 @@ describe('platform configuration', () => {
         expect((await ctx.get('/v1/platform-configurations'))!.json().defaultChatModel ?? null).toBeNull()
     })
 
+    it('clears the default chat model when its key is deleted', async () => {
+        const ctx = await createTestContext(app!)
+        const key = await customKey({ platformId: ctx.platform.id, name: 'Team' })
+        await ctx.post('/v1/platform-configurations', { defaultChatModel: { type: 'model', provider: AIProviderName.CUSTOM, providerConfigId: key.id, modelId: 'team-model' } })
+
+        await ctx.delete(`/v1/ai-providers/${key.id}`)
+
+        expect((await ctx.get('/v1/platform-configurations'))!.json().defaultChatModel ?? null).toBeNull()
+    })
+
     it('lets any platform member read the configuration, but only an admin write it', async () => {
         const ctx = await createTestContext(app!)
         const memberCtx = await createMemberContext(app!, ctx, {

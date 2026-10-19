@@ -152,6 +152,7 @@ export const platformModelTierService = {
                 await tierRepo(manager).update({ platformId, id }, { isDefault: false, isFast: false })
                 await tierRepo(manager).softDelete({ platformId, id })
                 await platformConfigurationRepo(manager).update({ platformId }, { aiSpecificModelsVisible: true })
+                await clearDefaultChatTier({ manager, platformId, tierIds: [id] })
                 return
             }
             await getLiveOrThrow({ manager, platformId, id: replacedBy })
@@ -207,6 +208,7 @@ export const platformModelTierService = {
         const replacement = (await listLive({ platformId, manager }))[0]
         if (isNil(replacement)) {
             await platformConfigurationRepo(manager).update({ platformId }, { aiSpecificModelsVisible: true })
+            await clearDefaultChatTier({ manager, platformId, tierIds: emptiedIds })
             return
         }
         await manager.query(
@@ -298,6 +300,13 @@ async function lockPlatform({ manager, platformId }: { manager: EntityManager, p
     if (rows.length === 0) {
         throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: platformId, entityType: 'platform' } })
     }
+}
+
+async function clearDefaultChatTier({ manager, platformId, tierIds }: { manager: EntityManager, platformId: PlatformId, tierIds: string[] }): Promise<void> {
+    await manager.query(
+        'UPDATE "platform_configuration" SET "defaultChatModel" = NULL WHERE "platformId" = $1 AND "defaultChatModel"->>\'tierId\' = ANY($2)',
+        [platformId, tierIds],
+    )
 }
 
 async function syncDefaultChatKey({ manager, platformId, replaced }: { manager: EntityManager, platformId: PlatformId, replaced?: { from: string[], to: string } }): Promise<void> {

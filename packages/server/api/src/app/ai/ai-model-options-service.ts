@@ -36,7 +36,8 @@ export const aiModelOptionsService = (log: FastifyBaseLogger) => ({
 export const aiModelOptionsUtils = {
     usableChoice,
     defaultChoice({ surface, tiers, credits, keys, chatKeyId, platformDefault, movedTiers }: DefaultChoiceParams): ModelChoice | null {
-        const usableDefault = surface === 'chat' && !isNil(platformDefault)
+        const chatLike = surface !== 'flow'
+        const usableDefault = chatLike && !isNil(platformDefault)
             ? usableChoice({ choice: platformDefault, tiers, credits, keys, movedTiers: movedTiers ?? {} })
             : null
         if (!isNil(usableDefault)) {
@@ -46,7 +47,7 @@ export const aiModelOptionsUtils = {
         if (!isNil(defaultTier)) {
             return { type: 'tier', tierId: defaultTier.id }
         }
-        const chatKey = surface === 'chat' ? keys.find((key) => key.providerConfigId === chatKeyId) : undefined
+        const chatKey = chatLike ? keys.find((key) => key.providerConfigId === chatKeyId) : undefined
         const chatKeyModelId = isNil(chatKey) ? undefined : firstRunnableModelId({ key: chatKey })
         if (!isNil(chatKey) && !isNil(chatKeyModelId)) {
             return modelChoiceOf({ key: chatKey, modelId: chatKeyModelId })
@@ -71,7 +72,7 @@ function buildOptions({ keys, tiersForRun, movedTiers, configuration, catalog, s
     const specificModelsHidden = !configuration.aiSpecificModelsVisible
     const allKeyOptions = keys.flatMap((key) => toKeyOption({ key, surface, lookup, callsTools }))
     const keyOptions = specificModelsHidden
-        ? onlyPlatformDefault({ keys: allKeyOptions, platformDefault: surface === 'chat' ? configuration.defaultChatModel ?? null : null })
+        ? onlyPlatformDefault({ keys: allKeyOptions, platformDefault: surface === 'flow' ? null : configuration.defaultChatModel ?? null })
         : allKeyOptions
     const chatKeyId = keys.find((key) => key.isChatKey)?.row.id
     return {

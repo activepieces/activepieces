@@ -393,6 +393,22 @@ describe('knowledge base embeddings', () => {
         expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
     })
 
+    it('indexes with Credits when the Default AI key cannot embed', async () => {
+        process.env.AP_OPENROUTER_PROVISION_KEY = 'test-provision-key'
+        try {
+            const ctx = await context()
+            await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.ANTHROPIC, enabledForChat: true })
+            await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.ACTIVEPIECES })
+
+            const response = await ctx.get(EMBEDDING_SOURCE_URL, { projectId: ctx.project.id })
+
+            expect(response.json()).toMatchObject({ provider: AIProviderName.ACTIVEPIECES })
+        }
+        finally {
+            delete process.env.AP_OPENROUTER_PROVISION_KEY
+        }
+    })
+
     it('refuses an Embeddings choice that is not one of the platform\'s AI keys', async () => {
         const ctx = await context()
 
