@@ -3295,7 +3295,7 @@
   "This model is not available for chat on this platform": "This model is not available for chat on this platform",
   "New chats start on this model.": "New chats start on this model.",
   "Not set": "Not set",
-  "Not set · using {model}": "Not set · using {model}",
-  "Unavailable · using a fallback.": "Unavailable · using a fallback.",
-  "Not available in {count, plural, =1 {1 project} other {# projects}}": "Not available in {count, plural, =1 {1 project} other {# projects}}"
+  "Not available in {count, plural, =1 {1 project} other {# projects}}": "Not available in {count, plural, =1 {1 project} other {# projects}}",
+  "Not set · uses {model}": "Not set · uses {model}",
+  "Unavailable. New chats use a fallback. Click to clear.": "Unavailable. New chats use a fallback. Click to clear."
 }

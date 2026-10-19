@@ -6,17 +6,23 @@ import {
   PlatformModelTier,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, TriangleAlert, X } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { SettingsPanel, SettingsRow } from '@/app/components/admin';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { modelMeta } from '@/features/agents/ai-model/model-meta';
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { cn } from '@/lib/utils';
 
 export function DefaultChatModelCard({
   configs,
@@ -46,43 +52,48 @@ export function DefaultChatModelCard({
       <SettingsRow
         icon={<MessageSquare />}
         title={t('Default chat model')}
-        description={
-          <>
-            {t('New chats start on this model.')}
-            {!isNil(note) && (
-              <span
-                className={cn(
-                  'mt-1 block text-xs',
-                  note.warn ? 'text-warning-11' : 'text-gray-10',
-                )}
-              >
-                {note.text}
-                {note.unavailable && (
-                  <button
-                    type="button"
-                    className="ml-1 underline underline-offset-2"
-                    onClick={() => save(null)}
-                  >
-                    {t('Clear')}
-                  </button>
-                )}
-              </span>
-            )}
-          </>
-        }
+        description={t('New chats start on this model.')}
       >
-        <div
-          className="w-64"
-          {...adminControl(AdminControl.AI_DEFAULT_CHAT_MODEL_SELECT)}
-        >
-          <ModelPicker
-            surface="chat"
-            value={value}
-            disabled={isPending}
-            onChange={(choice) =>
-              save(sameChoice({ a: choice, b: value }) ? null : choice)
-            }
-          />
+        <div className="flex items-center gap-2">
+          <div className="flex size-7 shrink-0 items-center justify-center">
+            {!isNil(note) && note.warn && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {note.unavailable ? (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={t('Clear')}
+                      onClick={() => save(null)}
+                    >
+                      <X className="size-4 text-warning-11" />
+                    </Button>
+                  ) : (
+                    <TriangleAlert className="size-4 text-warning-11" />
+                  )}
+                </TooltipTrigger>
+                <TooltipContent>{note.text}</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          <div
+            className="w-64"
+            {...adminControl(AdminControl.AI_DEFAULT_CHAT_MODEL_SELECT)}
+          >
+            {isNil(configuration) ? (
+              <Skeleton className="h-9 w-full" />
+            ) : (
+              <ModelPicker
+                surface="chat"
+                value={value}
+                disabled={isPending}
+                placeholder={!isNil(note) && !note.warn ? note.text : undefined}
+                onChange={(choice) =>
+                  save(sameChoice({ a: choice, b: value }) ? null : choice)
+                }
+              />
+            )}
+          </div>
         </div>
       </SettingsRow>
     </SettingsPanel>
@@ -109,14 +120,14 @@ function noteOf({
     return {
       text: isNil(fallback)
         ? t('Not set')
-        : t('Not set · using {model}', { model: fallback }),
+        : t('Not set · uses {model}', { model: fallback }),
       warn: false,
       unavailable: false,
     };
   }
   if (modelPickerUtils.isUnavailable({ options, value })) {
     return {
-      text: t('Unavailable · using a fallback.'),
+      text: t('Unavailable. New chats use a fallback. Click to clear.'),
       warn: true,
       unavailable: true,
     };

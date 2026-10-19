@@ -38,6 +38,7 @@ export function ModelPicker({
   disabled = false,
   withTiers = true,
   variant = 'field',
+  placeholder,
   className,
 }: ModelPickerProps) {
   const [open, setOpen] = useState(false);
@@ -112,7 +113,11 @@ export function ModelPicker({
         )}
       >
         <TriggerContent
-          current={view?.current ?? emptyPick()}
+          current={
+            (view?.current.kind ?? 'empty') === 'empty' && !isNil(placeholder)
+              ? { ...emptyPick(), label: placeholder }
+              : view?.current ?? emptyPick()
+          }
           compact={variant === 'pill'}
         />
         <ChevronDown
@@ -568,6 +573,7 @@ type ModelPickerProps = {
   disabled?: boolean;
   withTiers?: boolean;
   variant?: 'field' | 'pill';
+  placeholder?: string;
   className?: string;
 };
 
