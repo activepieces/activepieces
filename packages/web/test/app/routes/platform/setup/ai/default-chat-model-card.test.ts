@@ -5,6 +5,7 @@ import { AIProviderName } from '@activepieces/core-utils';
 import {
   AIProviderModelType,
   AIProviderWithoutSensitiveData,
+  ModelChoice,
   ModelOptions,
 } from '@activepieces/shared';
 import { describe, expect, it, vi } from 'vitest';
@@ -54,15 +55,15 @@ const options: ModelOptions = {
   specificModelsHidden: false,
 };
 
-const pick = {
+const pick: ModelChoice = {
   type: 'model',
   provider: AIProviderName.OPENAI,
   providerConfigId: 'key-a',
   modelId: 'gpt-6',
-} as const;
+};
 
 const noteFor = (
-  value: typeof pick | null,
+  value: ModelChoice | null,
   projectScope: 'all' | 'selected' = 'all',
 ) =>
   defaultChatModelCardUtils.noteOf({
@@ -88,7 +89,12 @@ describe('the default chat model card note', () => {
 
   it('flags a pick that is gone', () => {
     expect(
-      noteFor({ ...pick, providerConfigId: 'deleted', modelId: 'old' }),
+      noteFor({
+        type: 'model',
+        provider: AIProviderName.OPENAI,
+        providerConfigId: 'deleted',
+        modelId: 'old',
+      }),
     ).toContain('Unavailable');
   });
 });
