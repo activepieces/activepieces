@@ -84,71 +84,75 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         }
         assertStateIsPending(approval.state)
 
-        const flow = await flowService(log).getOneOrThrow({ id: approval.flowId, projectId: approval.projectId })
         const lockedVersion = await flowVersionService(log).getFlowVersionOrThrow({
-            flowId: flow.id,
+            flowId: approval.flowId,
             versionId: approval.flowVersionId,
         })
-
-        const republishParams = {
-            previouslyPublished: flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)
-                ? await flowVersionService(log).getFlowVersionOrThrow({ flowId: flow.id, versionId: flow.publishedVersionId })
-                : undefined,
-            toPublish: lockedVersion,
-            requestedStatus: approval.requestedStatus,
-        }
-        const isRepublish = flowPublishUtils.isRepublish(republishParams)
-        const isTriggerUnchanged = flowPublishUtils.isTriggerUnchanged(republishParams)
-
         const decidedAt = new Date().toISOString()
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
 
-        await transaction(async (entityManager) => {
-            const updateResult = await flowApprovalRequestRepo(entityManager)
-                .createQueryBuilder()
-                .update()
-                .set({
-                    state: FlowApprovalRequestState.APPROVED,
-                    approverId,
-                    decidedAt,
-                })
-                .where({ id: approval.id, state: FlowApprovalRequestState.PENDING })
-                .returning(['id'])
-                .execute()
-            assertRowsAffected(updateResult.raw?.length)
-            await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
-        })
+        await flowService(log).withStatusLock({
+            id: approval.flowId,
+            fn: async () => {
+                const flow = await flowService(log).getOneOrThrow({ id: approval.flowId, projectId: approval.projectId })
+                const republishParams = {
+                    previouslyPublished: flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)
+                        ? await flowVersionService(log).getFlowVersionOrThrow({ flowId: flow.id, versionId: flow.publishedVersionId })
+                        : undefined,
+                    toPublish: lockedVersion,
+                    requestedStatus: approval.requestedStatus,
+                }
+                const isRepublish = flowPublishUtils.isRepublish(republishParams)
+                const isTriggerUnchanged = flowPublishUtils.isTriggerUnchanged(republishParams)
 
-        if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
-            await triggerSourceService(log).disable({
-                flowId: flow.id,
-                projectId: flow.projectId,
-                simulate: false,
-                ignoreError: true,
-                isRepublish,
-                isTriggerUnchanged,
-            })
-        }
-        await flowExecutionCache(log).invalidate(flow.id)
-        await flowService(log).applyStatusChangeForPublishedFlow({
-            id: flow.id,
-            projectId: approval.projectId,
-            newStatus: approval.requestedStatus,
-            isRepublish,
-            isTriggerUnchanged,
+                await transaction(async (entityManager) => {
+                    const updateResult = await flowApprovalRequestRepo(entityManager)
+                        .createQueryBuilder()
+                        .update()
+                        .set({
+                            state: FlowApprovalRequestState.APPROVED,
+                            approverId,
+                            decidedAt,
+                        })
+                        .where({ id: approval.id, state: FlowApprovalRequestState.PENDING })
+                        .returning(['id'])
+                        .execute()
+                    assertRowsAffected(updateResult.raw?.length)
+                    await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
+                })
+
+                if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
+                    await triggerSourceService(log).disable({
+                        flowId: flow.id,
+                        projectId: flow.projectId,
+                        simulate: false,
+                        ignoreError: true,
+                        isRepublish,
+                        isTriggerUnchanged,
+                    })
+                }
+                await flowExecutionCache(log).invalidate(flow.id)
+                await flowService(log).changeStatusHoldingLock({
+                    id: flow.id,
+                    projectId: approval.projectId,
+                    newStatus: approval.requestedStatus,
+                    isRepublish,
+                    isTriggerUnchanged,
+                })
+            },
         })
         rejectedPromiseHandler(telemetry(log).trackProject({
             projectId: approval.projectId,
             event: {
                 name: TelemetryEventName.FLOW_PUBLISHED,
-                payload: { flowId: flow.id },
+                payload: { flowId: approval.flowId },
             },
         }), log)
         applicationEvents(log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_APPROVAL_GRANTED,
             data: {
                 approvalRequestId: approval.id,
-                flowId: flow.id,
+                flowId: approval.flowId,
                 flowVersionId: approval.flowVersionId,
                 flowDisplayName: lockedVersion.displayName,
             },
