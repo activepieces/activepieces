@@ -2501,7 +2501,7 @@ export const searchPagesOutputSchema: OutputSchema = {
 				{ key: 'id', label: 'ID' },
 				{ key: 'type', label: 'Type' },
 				{ key: 'ari', label: 'ARI' },
-				{ key: 'base64EncodedAri', label: 'Base64 Encoded ARI' },
+				{ key: 'base64EncodedAri', label: 'Base64 Encoded Ari' },
 				{ key: 'status', label: 'Status' },
 				{ key: 'title', label: 'Title' },
 				{
@@ -2514,13 +2514,13 @@ export const searchPagesOutputSchema: OutputSchema = {
 						{ key: 'message', label: 'Message' },
 						{ key: 'number', label: 'Number', format: 'number' },
 						{ key: 'minorEdit', label: 'Minor Edit', format: 'boolean' },
+						{ key: 'confRev', label: 'Conf Rev' },
 						{ key: 'contentTypeModified', label: 'Content Type Modified', format: 'boolean' },
 						{
 							key: '_links',
 							label: 'Links',
 							children: [{ key: 'self', label: 'API URL' }],
 						},
-						{ key: 'confRev', label: 'Confluence Revision' },
 					],
 				},
 				{ key: 'macroRenderedOutput', label: 'Macro Rendered Output' },
@@ -2530,7 +2530,7 @@ export const searchPagesOutputSchema: OutputSchema = {
 					children: [
 						{ key: 'position', label: 'Position', format: 'number' },
 						{ key: 'mediaType', label: 'Media Type' },
-						{ key: 'fileSize', label: 'File Size', format: 'filesize' },
+						{ key: 'fileSize', label: 'File Size', format: 'number' },
 						{ key: 'comment', label: 'Comment' },
 						{ key: 'mediaTypeDescription', label: 'Media Type Description' },
 						{ key: 'fileId', label: 'File ID' },
@@ -2542,11 +2542,61 @@ export const searchPagesOutputSchema: OutputSchema = {
 					label: 'Links',
 					children: [
 						{ key: 'self', label: 'API URL' },
+						{ key: 'tinyui', label: 'Short Link Path' },
 						{ key: 'editui', label: 'Edit UI Path' },
 						{ key: 'webui', label: 'Web UI Path' },
 						{ key: 'edituiv2', label: 'Edit UI Path (v2)' },
-						{ key: 'tinyui', label: 'Short Link Path' },
 						{ key: 'download', label: 'Download Path' },
+					],
+				},
+				{
+					key: 'space',
+					label: 'Space',
+					children: [
+						{ key: 'id', label: 'ID', format: 'number' },
+						{ key: 'ari', label: 'ARI' },
+						{ key: 'key', label: 'Key' },
+						{ key: 'alias', label: 'Alias' },
+						{ key: 'name', label: 'Name' },
+						{ key: 'type', label: 'Type' },
+						{ key: 'status', label: 'Status' },
+						{
+							key: '_links',
+							label: 'Links',
+							children: [
+								{ key: 'webui', label: 'Web UI Path' },
+								{ key: 'self', label: 'API URL' },
+							],
+						},
+					],
+				},
+				{
+					key: 'history',
+					label: 'History',
+					children: [
+						{ key: 'latest', label: 'Latest', format: 'boolean' },
+						{ key: 'createdBy', label: 'Created By', children: userFields },
+						{ key: 'createdDate', label: 'Created Date', format: 'datetime' },
+						{
+							key: '_links',
+							label: 'Links',
+							children: [{ key: 'self', label: 'API URL' }],
+						},
+					],
+				},
+				{
+					key: 'body',
+					label: 'Body',
+					children: [
+						{
+							key: 'storage',
+							label: 'Storage',
+							children: [
+								{ key: 'value', label: 'Value' },
+								{ key: 'representation', label: 'Representation' },
+								{ key: 'embeddedContent', label: 'Embedded Content' },
+							],
+						},
 					],
 				},
 				{
