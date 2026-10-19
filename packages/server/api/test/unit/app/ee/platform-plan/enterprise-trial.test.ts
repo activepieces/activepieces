@@ -1,7 +1,7 @@
 import { ApEdition, EnterpriseTrialStatus, PlanName } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetEdition, mockOnTrialStarted, mockOnTrialEnded, mockStoreDelete, mockPlanUpdate, mockFindPlan, mockGetPlan } = vi.hoisted(() => ({
+const { mockGetEdition, mockOnTrialStarted, mockOnTrialEnded, mockStoreDelete, mockPlanUpdate, mockFindPlan, mockGetPlan, mockLogError } = vi.hoisted(() => ({
     mockGetEdition: vi.fn().mockReturnValue('cloud'),
     mockOnTrialStarted: vi.fn().mockResolvedValue(undefined),
     mockOnTrialEnded: vi.fn().mockResolvedValue(undefined),
@@ -9,6 +9,7 @@ const { mockGetEdition, mockOnTrialStarted, mockOnTrialEnded, mockStoreDelete, m
     mockPlanUpdate: vi.fn().mockResolvedValue(undefined),
     mockFindPlan: vi.fn(),
     mockGetPlan: vi.fn(),
+    mockLogError: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/helper/system/system', () => ({
@@ -16,7 +17,7 @@ vi.mock('../../../../../src/app/helper/system/system', () => ({
         getEdition: mockGetEdition,
         get: vi.fn().mockReturnValue('console-secret'),
         getOrThrow: vi.fn().mockReturnValue('https://console.activepieces.com'),
-        globalLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() }),
+        globalLogger: () => ({ error: mockLogError, warn: vi.fn(), info: vi.fn() }),
     },
 }))
 
@@ -182,6 +183,7 @@ describe('enterprise trial', () => {
             vi.spyOn(safeHttp.axios, 'post').mockRejectedValue(Object.assign(new Error('Request failed with status code 409'), { isAxiosError: true, response: { status: 409 } }))
 
             await expect(autumnConsole.startEnterpriseTrial(CREDS)).resolves.toBeNull()
+            expect(mockLogError).not.toHaveBeenCalled()
         })
 
         it('still fails on any other console error', async () => {
@@ -189,6 +191,7 @@ describe('enterprise trial', () => {
             vi.spyOn(safeHttp.axios, 'post').mockRejectedValue(Object.assign(new Error('Request failed with status code 500'), { isAxiosError: true, response: { status: 500 } }))
 
             await expect(autumnConsole.startEnterpriseTrial(CREDS)).rejects.toThrow('500')
+            expect(mockLogError).toHaveBeenCalledOnce()
         })
     })
 
