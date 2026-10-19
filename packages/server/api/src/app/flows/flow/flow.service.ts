@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
 import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -428,42 +428,46 @@ export const flowService = (log: FastifyBaseLogger) => ({
             case FlowOperationType.ADD_NOTE:
             case FlowOperationType.UPDATE_NOTE:
             case FlowOperationType.DELETE_NOTE: {
-                const lastVersion = await flowVersionService(
-                    log,
-                ).getFlowVersionOrThrow({
-                    flowId: id,
-                    versionId: undefined,
-                })
-                await flowVersionService(log).applyOperation({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersion: lastVersion,
-                    userOperation: operation,
-                })
+                await withDraftLock({ flowId: id, log, fn: async () => {
+                    const lastVersion = await flowVersionService(
+                        log,
+                    ).getFlowVersionOrThrow({
+                        flowId: id,
+                        versionId: undefined,
+                    })
+                    await flowVersionService(log).applyOperation({
+                        userId,
+                        projectId,
+                        platformId,
+                        flowVersion: lastVersion,
+                        userOperation: operation,
+                    })
+                } })
                 break
             }
             default: {
-                const { version: lastVersion, createdNewDraft } = await createNewDraftIfVersionIsPublished({
-                    flowId: id,
-                    projectId,
-                    platformId,
-                    userId,
-                    log,
-                })
-                const { error } = await tryCatch(() => flowVersionService(log).applyOperation({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersion: lastVersion,
-                    userOperation: operation,
-                }))
-                if (!isNil(error)) {
-                    if (createdNewDraft) {
-                        await tryCatch(() => flowVersionRepo().delete({ id: lastVersion.id, flowId: id }))
+                await withDraftLock({ flowId: id, log, fn: async () => {
+                    const { version: lastVersion, createdNewDraft } = await createNewDraftIfVersionIsPublished({
+                        flowId: id,
+                        projectId,
+                        platformId,
+                        userId,
+                        log,
+                    })
+                    const { error } = await tryCatch(() => flowVersionService(log).applyOperation({
+                        userId,
+                        projectId,
+                        platformId,
+                        flowVersion: lastVersion,
+                        userOperation: operation,
+                    }))
+                    if (!isNil(error)) {
+                        if (createdNewDraft) {
+                            await tryCatch(() => flowVersionRepo().delete({ id: lastVersion.id, flowId: id }))
+                        }
+                        throw error
                     }
-                    throw error
-                }
+                } })
             }
         }
 
@@ -789,6 +793,18 @@ const lockFlowVersionIfNotLocked = async ({
 }
 
 
+async function withDraftLock({ flowId, log, fn }: {
+    flowId: FlowId
+    log: FastifyBaseLogger
+    fn: () => Promise<void>
+}): Promise<void> {
+    await distributedLock(log).runExclusive({
+        key: `flow-draft-update-${flowId}`,
+        timeoutInSeconds: DRAFT_UPDATE_LOCK_TIMEOUT_SECONDS,
+        fn,
+    })
+}
+
 async function applyStatusChange(params: {
     id: FlowId
     projectId: ProjectId
@@ -809,7 +825,12 @@ async function applyStatusChange(params: {
             }
 
             const publishedFlowVersionId = flowToUpdate.publishedVersionId
-            assertNotNullOrUndefined(publishedFlowVersionId, 'publishedFlowVersionId is required')
+            if (isNil(publishedFlowVersionId)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.FLOW_OPERATION_INVALID,
+                    params: { message: 'Publish the flow before turning it on' },
+                })
+            }
             const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flowToUpdate.id,
                 versionId: publishedFlowVersionId,
@@ -1078,3 +1099,5 @@ async function createNewDraftIfVersionIsPublished({
     }
     return { version: lastVersion, createdNewDraft }
 }
+
+const DRAFT_UPDATE_LOCK_TIMEOUT_SECONDS = 60

@@ -35,6 +35,17 @@ describe('a platform tier chat turn', () => {
         expect(JSON.stringify(backup.doStreamCalls[0].prompt)).toContain('found')
     })
 
+    it('counts the tokens of a step that finished before a later step failed', async () => {
+        const turn = await runTurn({
+            models: [tierModel({ modelId: 'main', model: failingModel({ statusCode: 503 }) }), tierModel({ modelId: 'backup', model: answeringModel('done') })],
+            fastModel: tierModel({ modelId: 'fast', model: searchingModel() }),
+            search: vi.fn(async () => ({ content: [{ type: 'text', text: 'found' }] })),
+        })
+
+        expect(turn.totalInputTokens).toBe(2)
+        expect(turn.totalOutputTokens).toBe(2)
+    })
+
     it('does not fall back once the failing step already sent text to the user', async () => {
         const backup = answeringModel('from backup')
 
@@ -261,5 +272,5 @@ function textOf(turn: Awaited<ReturnType<typeof runAgentTurn>>): string {
 }
 
 const TIER = { id: 'fast', thinkingBudget: 0, modelId: 'main' }
-const USAGE = { inputTokens: 1, outputTokens: 1, totalTokens: 2 }
+const USAGE = { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } }
 const SILENT_LOG = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined }
