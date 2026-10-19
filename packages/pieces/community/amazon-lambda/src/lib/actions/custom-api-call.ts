@@ -10,6 +10,13 @@ export const customApiCall = createAction({
   description: 'Send a SigV4-signed request to the Lambda API in the connection\'s region. Method, path, query, headers, and JSON body are yours.',
   auth: awsLambdaCombinedAuth,
   requireAuth: true,
+  audience: 'human',
+  classification: 'WRITE',
+  aiMetadata: {
+    description:
+      'Send a signed request to any AWS Lambda API path in the connection\'s region. Use only when no dedicated action covers the call; the effect and retry safety depend on the method and path.',
+    idempotent: false,
+  },
   props: {
     method: Property.StaticDropdown({
       displayName: 'Method',
@@ -21,7 +28,7 @@ export const customApiCall = createAction({
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'Lambda API path, for example /2015-03-31/functions. The host is lambda.<region>.amazonaws.com.',
+      description: 'Lambda API path, such as /2015-03-31/functions.',
       required: true,
     }),
     queryParams: Property.Object({
@@ -31,7 +38,7 @@ export const customApiCall = createAction({
     }),
     headers: Property.Object({
       displayName: 'Headers',
-      description: 'Optional extra headers. Host and Authorization are set by the signature.',
+      description: 'Optional headers. Host and Authorization are set for you.',
       required: false,
     }),
     body: Property.Json({
@@ -48,13 +55,18 @@ export const customApiCall = createAction({
   },
   async run(context) {
     const { method, path, queryParams, headers, body, timeout } = context.propsValue;
-    return customLambdaCall(context.auth.props as LambdaAuthProps, context.server, {
-      method,
-      path,
-      queryParams,
-      headers,
-      body,
-      timeoutSeconds: timeout,
+    const auth: LambdaAuthProps = context.auth.props;
+    return customLambdaCall({
+      auth,
+      server: context.server,
+      input: {
+        method,
+        path,
+        queryParams,
+        headers,
+        body,
+        timeoutSeconds: timeout,
+      },
     });
   },
 });

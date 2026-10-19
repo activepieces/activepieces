@@ -71,7 +71,7 @@ describe('invokeLambda', () => {
   });
 
   describe('when the function is invoked', () => {
-    it('given a JSON payload, should return the status code, function error, and decoded payload', async () => {
+    it('given fail-on-error is off, should return the status code, function error, and decoded payload', async () => {
       send.mockResolvedValue({
         StatusCode: 200,
         FunctionError: 'Unhandled',
@@ -79,11 +79,12 @@ describe('invokeLambda', () => {
         Payload: new TextEncoder().encode(JSON.stringify({ ok: false })),
       });
 
-      const result = await invokeLambda(accessKey, server, {
+      const result = await invokeLambda({ auth: accessKey, server, input: {
         functionName: ' billing ',
         invocationType: 'RequestResponse',
         payload: { id: 1 },
-      });
+        failOnFunctionError: false,
+      } });
 
       expect(result).toEqual({
         statusCode: 200,
@@ -99,10 +100,11 @@ describe('invokeLambda', () => {
     it('given an empty body, should return a null payload', async () => {
       send.mockResolvedValue({ StatusCode: 202, Payload: new Uint8Array() });
 
-      const result = await invokeLambda(accessKey, server, {
+      const result = await invokeLambda({ auth: accessKey, server, input: {
         functionName: 'billing',
         invocationType: 'Event',
-      });
+        failOnFunctionError: true,
+      } });
 
       expect(result).toEqual({
         statusCode: 202,
@@ -115,10 +117,62 @@ describe('invokeLambda', () => {
     it('given Lambda denies the call, should put the AWS error name and message on the thrown error', async () => {
       send.mockRejectedValue(Object.assign(new Error('User is not authorized'), { name: 'AccessDeniedException' }));
 
-      await expect(invokeLambda(accessKey, server, {
+      await expect(invokeLambda({ auth: accessKey, server, input: {
         functionName: 'billing',
         invocationType: 'RequestResponse',
-      })).rejects.toThrow('AccessDeniedException: User is not authorized');
+        failOnFunctionError: true,
+      } })).rejects.toThrow('AccessDeniedException: User is not authorized');
+    });
+
+    it('given the function throws and fail-on-error is on, should fail with the function error message', async () => {
+      send.mockResolvedValue({
+        StatusCode: 200,
+        FunctionError: 'Unhandled',
+        Payload: new TextEncoder().encode(JSON.stringify({ errorType: 'Error', errorMessage: 'boom' })),
+      });
+
+      await expect(invokeLambda({ auth: accessKey, server, input: {
+        functionName: 'billing',
+        invocationType: 'RequestResponse',
+        failOnFunctionError: true,
+      } })).rejects.toThrow('The function failed: Error: boom');
+    });
+
+    it('given the payload arrives as a JSON string, should send the parsed object', async () => {
+      send.mockResolvedValue({ StatusCode: 200, Payload: new Uint8Array() });
+
+      await invokeLambda({ auth: accessKey, server, input: {
+        functionName: 'billing',
+        invocationType: 'RequestResponse',
+        payload: '{"id":1}',
+        failOnFunctionError: true,
+      } });
+
+      const command = send.mock.calls[0][0] as { input: { Payload: Uint8Array } };
+      expect(new TextDecoder().decode(command.input.Payload)).toBe('{"id":1}');
+    });
+
+    it('given the payload string is not JSON, should fail before calling Lambda', async () => {
+      await expect(invokeLambda({ auth: accessKey, server, input: {
+        functionName: 'billing',
+        invocationType: 'RequestResponse',
+        payload: '{not json',
+        failOnFunctionError: true,
+      } })).rejects.toThrow('Payload must be valid JSON.');
+      expect(send).not.toHaveBeenCalled();
+    });
+
+    it('given the SDK error carries an HTTP status, should keep it on the thrown error', async () => {
+      send.mockRejectedValue(Object.assign(new Error('Function not found'), {
+        name: 'ResourceNotFoundException',
+        $metadata: { httpStatusCode: 404 },
+      }));
+
+      await expect(invokeLambda({ auth: accessKey, server, input: {
+        functionName: 'missing',
+        invocationType: 'RequestResponse',
+        failOnFunctionError: true,
+      } })).rejects.toMatchObject({ status: 404 });
     });
   });
 });
@@ -129,7 +183,7 @@ describe('getFunctionDetails', () => {
   });
 
   describe('when the configuration is read', () => {
-    it('given environment variables, should return their names and values', async () => {
+    it('given include environment is on, should return the variable names and values', async () => {
       send.mockResolvedValue({
         FunctionArn: 'arn:aws:lambda:us-east-1:123456789012:function:billing',
         FunctionName: 'billing',
@@ -145,7 +199,11 @@ describe('getFunctionDetails', () => {
         Description: 'Bills customers',
       });
 
-      const details = await getFunctionDetails(accessKey, server, 'billing', 'live');
+      const details = await getFunctionDetails({ auth: accessKey, server, input: {
+        functionName: 'billing',
+        qualifier: 'live',
+        includeEnvironment: true,
+      } });
 
       expect(details).toEqual({
         functionArn: 'arn:aws:lambda:us-east-1:123456789012:function:billing',
@@ -162,6 +220,20 @@ describe('getFunctionDetails', () => {
         description: 'Bills customers',
       });
     });
+
+    it('given include environment is off, should not return the variables', async () => {
+      send.mockResolvedValue({
+        FunctionName: 'billing',
+        Environment: { Variables: { API_KEY: 'secret-value' } },
+      });
+
+      const details = await getFunctionDetails({ auth: accessKey, server, input: {
+        functionName: 'billing',
+        includeEnvironment: false,
+      } });
+
+      expect(details.environment).toBeNull();
+    });
   });
 });
 
@@ -176,7 +248,7 @@ describe('listFunctions', () => {
         .mockResolvedValueOnce({ Functions: [{ FunctionArn: 'arn:one' }], NextMarker: 'page-2' })
         .mockResolvedValueOnce({ Functions: [{ FunctionArn: 'arn:two' }] });
 
-      const functions = await listFunctions(accessKey, server);
+      const functions = await listFunctions({ auth: accessKey, server });
 
       expect(functions.map((fn) => fn.FunctionArn)).toEqual(['arn:one', 'arn:two']);
       expect(send).toHaveBeenCalledTimes(2);
@@ -198,11 +270,11 @@ describe('customLambdaCall', () => {
     it('given a path in the connection region, should sign the request and return the response', async () => {
       vi.mocked(fetch).mockResolvedValue(jsonResponse({ Functions: [] }));
 
-      const result = await customLambdaCall(accessKey, server, {
+      const result = await customLambdaCall({ auth: accessKey, server, input: {
         method: HttpMethod.GET,
         path: '2015-03-31/functions',
         queryParams: { MaxItems: '1' },
-      });
+      } });
 
       expect(result.status).toBe(200);
       expect(result.body).toEqual({ Functions: [] });
@@ -221,11 +293,7 @@ describe('customLambdaCall', () => {
     it('given a China region, should target the China partition host', async () => {
       vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
 
-      await customLambdaCall(
-        { ...accessKey, region: 'cn-north-1' },
-        server,
-        { method: HttpMethod.GET, path: '/2015-03-31/functions' },
-      );
+      await customLambdaCall({ auth: { ...accessKey, region: 'cn-north-1' }, server, input: { method: HttpMethod.GET, path: '/2015-03-31/functions' } });
 
       expect(fetch).toHaveBeenCalledWith(
         'https://lambda.cn-north-1.amazonaws.com.cn/2015-03-31/functions',
@@ -233,30 +301,59 @@ describe('customLambdaCall', () => {
       );
     });
 
+    it('given body, query, and headers as JSON strings, should send them parsed', async () => {
+      vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
+
+      await customLambdaCall({ auth: accessKey, server, input: {
+        method: HttpMethod.POST,
+        path: '/2015-03-31/functions/billing/invocations',
+        queryParams: '{"Qualifier":"live"}',
+        headers: '{"X-Amz-Invocation-Type":"Event"}',
+        body: '{"id":1}',
+      } });
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://lambda.us-east-1.amazonaws.com/2015-03-31/functions/billing/invocations?Qualifier=live',
+        expect.objectContaining({
+          body: '{"id":1}',
+          headers: expect.objectContaining({ 'x-amz-invocation-type': 'Event' }),
+        }),
+      );
+    });
+
+    it('given headers that are a JSON array, should reject them before sending', async () => {
+      await expect(customLambdaCall({ auth: accessKey, server, input: {
+        method: HttpMethod.GET,
+        path: '/2015-03-31/functions',
+        headers: '["a"]',
+      } })).rejects.toThrow('Headers must be a JSON object.');
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
     it('given a path that leaves the Lambda host, should reject it before sending', async () => {
-      await expect(customLambdaCall(accessKey, server, {
+      await expect(customLambdaCall({ auth: accessKey, server, input: {
         method: HttpMethod.GET,
         path: 'https://example.com/functions',
-      })).rejects.toThrow('InvalidPath');
+      } })).rejects.toThrow('InvalidPath');
       expect(fetch).not.toHaveBeenCalled();
     });
 
     it('given a backslash path, should reject it before sending', async () => {
-      await expect(customLambdaCall(accessKey, server, {
+      await expect(customLambdaCall({ auth: accessKey, server, input: {
         method: HttpMethod.POST,
         path: '/\\attacker.example/functions',
         body: { name: 'billing' },
-      })).rejects.toThrow('InvalidPath');
+      } })).rejects.toThrow('InvalidPath');
       expect(fetch).not.toHaveBeenCalled();
     });
 
     it('given a repeated query key, should sign every value', async () => {
       vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
 
-      await customLambdaCall(accessKey, server, {
+      await customLambdaCall({ auth: accessKey, server, input: {
         method: HttpMethod.GET,
         path: '/2015-03-31/functions?Marker=a&Marker=b',
-      });
+      } });
 
       expect(fetch).toHaveBeenCalledWith(
         'https://lambda.us-east-1.amazonaws.com/2015-03-31/functions?Marker=a&Marker=b',
@@ -268,12 +365,12 @@ describe('customLambdaCall', () => {
     it('given a mixed-case Content-Type with a body, should send a single lowercase content-type', async () => {
       vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
 
-      await customLambdaCall(accessKey, server, {
+      await customLambdaCall({ auth: accessKey, server, input: {
         method: HttpMethod.POST,
         path: '/2015-03-31/functions',
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: { FunctionName: 'billing' },
-      });
+      } });
 
       const sent = vi.mocked(fetch).mock.calls[0][1]?.headers as Record<string, string>;
       expect(Object.keys(sent).filter((key) => key.toLowerCase() === 'content-type')).toEqual(['content-type']);
@@ -283,11 +380,11 @@ describe('customLambdaCall', () => {
     it('given a GET with the default empty body, should send no body and no content-type', async () => {
       vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
 
-      await customLambdaCall(accessKey, server, {
+      await customLambdaCall({ auth: accessKey, server, input: {
         method: HttpMethod.GET,
         path: '/2015-03-31/functions',
         body: {},
-      });
+      } });
 
       const init = vi.mocked(fetch).mock.calls[0][1];
       expect(init?.body).toBeUndefined();
@@ -297,11 +394,11 @@ describe('customLambdaCall', () => {
     it('given a blank query value, should leave the key out', async () => {
       vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
 
-      await customLambdaCall(accessKey, server, {
+      await customLambdaCall({ auth: accessKey, server, input: {
         method: HttpMethod.GET,
         path: '/2015-03-31/functions',
         queryParams: { Marker: '', MaxItems: '5' },
-      });
+      } });
 
       expect(fetch).toHaveBeenCalledWith(
         'https://lambda.us-east-1.amazonaws.com/2015-03-31/functions?MaxItems=5',
@@ -312,11 +409,11 @@ describe('customLambdaCall', () => {
     it('given a space in the query, should send the same encoding that was signed', async () => {
       vi.mocked(fetch).mockResolvedValue(jsonResponse({}));
 
-      await customLambdaCall(accessKey, server, {
+      await customLambdaCall({ auth: accessKey, server, input: {
         method: HttpMethod.GET,
         path: '/2015-03-31/functions',
         queryParams: { Marker: 'a b' },
-      });
+      } });
 
       expect(fetch).toHaveBeenCalledWith(
         'https://lambda.us-east-1.amazonaws.com/2015-03-31/functions?Marker=a%20b',
@@ -357,7 +454,7 @@ describe('IAM role credentials', () => {
       });
       send.mockResolvedValue({ Functions: [] });
 
-      await listFunctions(role, server);
+      await listFunctions({ auth: role, server });
 
       expect(fetch).toHaveBeenCalledWith('http://localhost/api/v1/worker/oidc-token', {
         method: 'POST',
@@ -394,7 +491,7 @@ describe('IAM role credentials', () => {
       });
       send.mockResolvedValue({ Functions: [] });
 
-      await listFunctions(role, server);
+      await listFunctions({ auth: role, server });
       expect(cachedCredentialCount()).toBe(1);
 
       vi.setSystemTime(new Date('2026-01-01T00:56:00Z'));
@@ -406,7 +503,7 @@ describe('IAM role credentials', () => {
           Expiration: new Date('2026-01-01T02:00:00Z'),
         },
       });
-      await listFunctions(role, { ...server, token: 'next-worker-token' });
+      await listFunctions({ auth: role, server: { ...server, token: 'next-worker-token' } });
 
       expect(cachedCredentialCount()).toBe(1);
       expect(fetch).toHaveBeenCalledTimes(2);

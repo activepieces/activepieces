@@ -20,17 +20,23 @@ import { lambdaEndpoint } from './regions';
 const AWS_STS_AUDIENCE = 'sts.amazonaws.com';
 const DEFAULT_STS_DURATION_SECONDS = 3600;
 const CREDENTIALS_EXPIRY_MARGIN_MS = 5 * 60 * 1000;
+const STS_MAX_ATTEMPTS = 2;
+const STS_REQUEST_TIMEOUT_MS = 10_000;
+const STS_CONNECT_TIMEOUT_MS = 5_000;
 const LIST_PAGE_SIZE = 50;
 const MAX_FUNCTIONS = 10_000;
 const BODY_METHODS = new Set<HttpMethod>([HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH]);
 
 const credentialsCache = new Map<string, { credentials: AwsCredentials; expiresAtMS: number }>();
 
-export async function listFunctions(
-  auth: LambdaAuthProps,
-  server: ServerContext,
-): Promise<FunctionConfiguration[]> {
-  const client = await createLambdaClient(auth, server);
+export async function listFunctions({
+  auth,
+  server,
+}: {
+  auth: LambdaAuthProps;
+  server: ServerContext;
+}): Promise<FunctionConfiguration[]> {
+  const client = await createLambdaClient({ auth, server });
   const functions: FunctionConfiguration[] = [];
   let marker: string | undefined;
   try {
@@ -53,41 +59,56 @@ export async function listFunctions(
   }
 }
 
-export async function invokeLambda(
-  auth: LambdaAuthProps,
-  server: ServerContext,
-  input: InvokeFunctionInput,
-): Promise<InvokeFunctionResult> {
-  const client = await createLambdaClient(auth, server);
+export async function invokeLambda({
+  auth,
+  server,
+  input,
+}: {
+  auth: LambdaAuthProps;
+  server: ServerContext;
+  input: InvokeFunctionInput;
+}): Promise<InvokeFunctionResult> {
+  const client = await createLambdaClient({ auth, server });
   try {
     const response = await client.send(new InvokeCommand({
       FunctionName: requireFunctionName(input.functionName),
-      InvocationType: input.invocationType as InvocationType,
+      InvocationType: input.invocationType,
       Qualifier: blankToUndefined(input.qualifier),
       Payload: encodePayload(input.payload),
     }));
+    const payload = decodePayload(response.Payload);
+    if (response.FunctionError && input.failOnFunctionError) {
+      throw new LambdaApiError(
+        response.StatusCode,
+        response.FunctionError,
+        `The function failed: ${functionErrorMessage(payload)}`,
+      );
+    }
     return {
       statusCode: response.StatusCode ?? null,
       functionError: response.FunctionError ?? null,
       executedVersion: response.ExecutedVersion ?? null,
-      payload: decodePayload(response.Payload),
+      payload,
     };
   } catch (error) {
     throw LambdaApiError.from(error);
   }
 }
 
-export async function getFunctionDetails(
-  auth: LambdaAuthProps,
-  server: ServerContext,
-  functionName: string,
-  qualifier?: string,
-): Promise<FunctionDetails> {
-  const client = await createLambdaClient(auth, server);
+export async function getFunctionDetails({
+  auth,
+  server,
+  input,
+}: {
+  auth: LambdaAuthProps;
+  server: ServerContext;
+  input: GetFunctionDetailsInput;
+}): Promise<FunctionDetails> {
+  const client = await createLambdaClient({ auth, server });
   try {
     const config = await client.send(new GetFunctionConfigurationCommand({
-      FunctionName: requireFunctionName(functionName),
-      Qualifier: blankToUndefined(qualifier),
+      FunctionName: requireFunctionName(input.functionName),
+      Qualifier: blankToUndefined(input.qualifier),
     }));
     return {
       functionArn: config.FunctionArn ?? null,
@@ -96,7 +117,7 @@ export async function getFunctionDetails(
       handler: config.Handler ?? null,
       memorySize: config.MemorySize ?? null,
       timeout: config.Timeout ?? null,
-      environment: config.Environment?.Variables ?? {},
+      environment: input.includeEnvironment ? config.Environment?.Variables ?? {} : null,
       role: config.Role ?? null,
       lastModified: config.LastModified ?? null,
       state: config.State ?? null,
@@ -108,17 +129,22 @@ export async function getFunctionDetails(
   }
 }
 
-export async function customLambdaCall(
-  auth: LambdaAuthProps,
-  server: ServerContext,
-  input: CustomLambdaCallInput,
-): Promise<{ status: number; headers: Record<string, string>; body: unknown }> {
-  const credentials = await resolveCredentials(auth, server);
+export async function customLambdaCall({
+  auth,
+  server,
+  input,
+}: {
+  auth: LambdaAuthProps;
+  server: ServerContext;
+  input: CustomLambdaCallInput;
+}): Promise<{ status: number; headers: Record<string, string>; body: unknown }> {
+  const credentials = await resolveCredentials({ auth, server });
   const url = lambdaRequestUrl({ region: auth.region, path: input.path });
-  appendQuery(url, input.queryParams);
+  appendQuery({ url, queryParams: parseJsonObject({ value: input.queryParams, field: 'Query parameters' }) });
 
-  const bodyString = input.body === undefined || !BODY_METHODS.has(input.method) ? undefined : JSON.stringify(input.body);
-  const headers = userHeaders(input.headers);
+  const body = parseJsonInput({ value: input.body, field: 'Body' });
+  const bodyString = body === undefined || !BODY_METHODS.has(input.method) ? undefined : JSON.stringify(body);
+  const headers = userHeaders(parseJsonObject({ value: input.headers, field: 'Headers' }));
   if (bodyString && !headers['content-type']) headers['content-type'] = 'application/json';
 
   const signed = await signRequest({
@@ -157,19 +183,20 @@ export function decodePayload(payload: Uint8Array | undefined): unknown {
   if (!payload || payload.byteLength === 0) return null;
   const text = new TextDecoder().decode(payload);
   try {
-    return JSON.parse(text) as unknown;
+    const parsed: unknown = JSON.parse(text);
+    return parsed;
   } catch {
     return text;
   }
 }
 
-async function createLambdaClient(auth: LambdaAuthProps, server: ServerContext): Promise<LambdaClient> {
-  const credentials = await resolveCredentials(auth, server);
+async function createLambdaClient({ auth, server }: { auth: LambdaAuthProps; server: ServerContext }): Promise<LambdaClient> {
+  const credentials = await resolveCredentials({ auth, server });
   return new LambdaClient({ region: auth.region, credentials });
 }
 
-async function resolveCredentials(auth: LambdaAuthProps, server: ServerContext): Promise<AwsCredentials> {
-  if (isOidcAuth(auth)) return getTemporaryCredentials(auth, server);
+async function resolveCredentials({ auth, server }: { auth: LambdaAuthProps; server: ServerContext }): Promise<AwsCredentials> {
+  if (isOidcAuth(auth)) return getTemporaryCredentials({ auth, server });
   const accessKeyId = auth.accessKeyId?.trim();
   const secretAccessKey = auth.secretAccessKey?.trim();
   if (!accessKeyId || !secretAccessKey) {
@@ -178,7 +205,7 @@ async function resolveCredentials(auth: LambdaAuthProps, server: ServerContext):
   return { accessKeyId, secretAccessKey };
 }
 
-async function getTemporaryCredentials(auth: OidcAuthProps, server: ServerContext): Promise<AwsCredentials> {
+async function getTemporaryCredentials({ auth, server }: { auth: OidcAuthProps; server: ServerContext }): Promise<AwsCredentials> {
   const roleArn = auth.roleArn?.trim();
   if (!roleArn) {
     throw new LambdaApiError(undefined, 'MissingRoleArn', 'Role ARN is required for IAM role authentication.');
@@ -200,9 +227,13 @@ async function getTemporaryCredentials(auth: OidcAuthProps, server: ServerContex
   if (!response.ok) {
     throw new LambdaApiError(response.status, 'OidcTokenError', `Failed to get an OIDC token: ${response.statusText}`);
   }
-  const { token } = await response.json() as { token: string };
+  const token = readOidcToken(await response.json());
 
-  const sts = new STSClient({ region: auth.region });
+  const sts = new STSClient({
+    region: auth.region,
+    maxAttempts: STS_MAX_ATTEMPTS,
+    requestHandler: { requestTimeout: STS_REQUEST_TIMEOUT_MS, connectionTimeout: STS_CONNECT_TIMEOUT_MS },
+  });
   try {
     const assumed = await sts.send(new AssumeRoleWithWebIdentityCommand({
       RoleArn: roleArn,
@@ -277,9 +308,53 @@ function requireFunctionName(functionName: string): string {
   return trimmed;
 }
 
-function encodePayload(payload: Record<string, unknown> | undefined): Uint8Array | undefined {
-  if (payload === undefined) return undefined;
-  return new TextEncoder().encode(JSON.stringify(payload));
+function encodePayload(payload: unknown): Uint8Array | undefined {
+  const parsed = parseJsonInput({ value: payload, field: 'Payload' });
+  if (parsed === undefined) return undefined;
+  return new TextEncoder().encode(JSON.stringify(parsed));
+}
+
+function parseJsonInput({ value, field }: { value: unknown; field: string }): unknown {
+  if (typeof value !== 'string') return value ?? undefined;
+  if (!value.trim()) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return parsed;
+  } catch {
+    throw new LambdaApiError(undefined, 'InvalidJson', `${field} must be valid JSON.`);
+  }
+}
+
+function parseJsonObject({ value, field }: { value: unknown; field: string }): Record<string, unknown> | undefined {
+  const parsed = parseJsonInput({ value, field });
+  if (parsed === undefined) return undefined;
+  if (!isRecord(parsed)) {
+    throw new LambdaApiError(undefined, 'InvalidJson', `${field} must be a JSON object.`);
+  }
+  return parsed;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readOidcToken(body: unknown): string {
+  const token = isRecord(body) ? body['token'] : undefined;
+  if (typeof token !== 'string' || !token) {
+    throw new LambdaApiError(undefined, 'OidcTokenError', 'Failed to get an OIDC token: the response had no token.');
+  }
+  return token;
+}
+
+function functionErrorMessage(payload: unknown): string {
+  if (isRecord(payload)) {
+    const message = payload['errorMessage'];
+    const type = payload['errorType'];
+    if (typeof message === 'string' && message) {
+      return typeof type === 'string' && type ? `${type}: ${message}` : message;
+    }
+  }
+  return typeof payload === 'string' && payload ? payload : JSON.stringify(payload);
 }
 
 export function cachedCredentialCount(): number {
@@ -344,7 +419,7 @@ function normalizePath(path: string): string {
   return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
 }
 
-function appendQuery(url: URL, queryParams: Record<string, unknown> | undefined): void {
+function appendQuery({ url, queryParams }: { url: URL; queryParams: Record<string, unknown> | undefined }): void {
   if (!queryParams) return;
   for (const [key, value] of Object.entries(queryParams)) {
     if (value === undefined || value === null || value === '') continue;
@@ -375,7 +450,8 @@ async function readFetchBody(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) return {};
   try {
-    return JSON.parse(text) as unknown;
+    const parsed: unknown = JSON.parse(text);
+    return parsed;
   } catch {
     return text;
   }
@@ -399,9 +475,16 @@ type AwsCredentials = {
 
 export type InvokeFunctionInput = {
   functionName: string;
-  invocationType: 'RequestResponse' | 'Event';
+  invocationType: InvocationType;
   qualifier?: string;
-  payload?: Record<string, unknown>;
+  payload?: unknown;
+  failOnFunctionError: boolean;
+};
+
+export type GetFunctionDetailsInput = {
+  functionName: string;
+  qualifier?: string;
+  includeEnvironment: boolean;
 };
 
 export type InvokeFunctionResult = {
@@ -418,7 +501,7 @@ export type FunctionDetails = {
   handler: string | null;
   memorySize: number | null;
   timeout: number | null;
-  environment: Record<string, string>;
+  environment: Record<string, string> | null;
   role: string | null;
   lastModified: string | null;
   state: string | null;
@@ -429,8 +512,8 @@ export type FunctionDetails = {
 export type CustomLambdaCallInput = {
   method: HttpMethod;
   path: string;
-  queryParams?: Record<string, unknown>;
-  headers?: Record<string, unknown>;
-  body?: Record<string, unknown>;
+  queryParams?: unknown;
+  headers?: unknown;
+  body?: unknown;
   timeoutSeconds?: number;
 };

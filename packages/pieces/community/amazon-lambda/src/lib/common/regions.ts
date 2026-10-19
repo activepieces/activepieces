@@ -5,7 +5,6 @@ export function lambdaEndpoint(region: string): { host: string; url: string } {
   return { host, url: `https://${host}` };
 }
 
-// Same region list as the SES and SQS pieces, without their duplicate "Default" entry.
 export const AWS_REGIONS: { label: string; value: string }[] = [
   { label: 'US East (N. Virginia) [us-east-1]', value: 'us-east-1' },
   { label: 'US East (Ohio) [us-east-2]', value: 'us-east-2' },

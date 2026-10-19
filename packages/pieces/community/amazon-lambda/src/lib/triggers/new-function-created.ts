@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { createTrigger, TriggerStrategy, type Store } from '@activepieces/pieces-framework';
 import type { FunctionConfiguration } from '@aws-sdk/client-lambda';
 
-import { awsLambdaCombinedAuth, type LambdaAuthProps } from '../auth';
+import { awsLambdaCombinedAuth } from '../auth';
 import { listFunctions } from '../common/client';
 
 export async function remember({
@@ -110,6 +110,11 @@ export const newFunctionCreated = createTrigger({
   auth: awsLambdaCombinedAuth,
   requireAuth: true,
   type: TriggerStrategy.POLLING,
+  classification: 'READ',
+  aiMetadata: {
+    description:
+      'Starts a flow once for each AWS Lambda function that appears in the connection\'s region since the last check. Functions that already existed when the trigger was turned on are ignored.',
+  },
   props: {},
   sampleData: {
     FunctionName: 'billing-webhook',
@@ -122,18 +127,18 @@ export const newFunctionCreated = createTrigger({
     if (context.isRepublish === true && (await readPointer(context.store)) !== null) {
       return;
     }
-    const functions = await listFunctions(context.auth.props as LambdaAuthProps, context.server);
+    const functions = await listFunctions({ auth: context.auth.props, server: context.server });
     await remember({ store: context.store, functions, initializeOnly: true });
   },
   async onDisable() {
     return;
   },
   async run(context) {
-    const functions = await listFunctions(context.auth.props as LambdaAuthProps, context.server);
+    const functions = await listFunctions({ auth: context.auth.props, server: context.server });
     return remember({ store: context.store, functions, initializeOnly: false });
   },
   async test(context) {
-    const functions = await listFunctions(context.auth.props as LambdaAuthProps, context.server);
+    const functions = await listFunctions({ auth: context.auth.props, server: context.server });
     return functions.slice(0, 10);
   },
 });
