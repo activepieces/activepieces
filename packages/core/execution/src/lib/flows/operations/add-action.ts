@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { isNil } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { BranchedAction, FlowAction, FlowActionType, LoopOnItemsAction, SingleActionSchema } from '../actions/action'
+import { BranchedAction, FlowAction, FlowActionType, LoopOnItemsAction, ProcessInBatchesAction, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil, Step } from '../util/flow-structure-util'
 import { AddActionRequest, StepLocationRelativeToParent, UpdateActionRequest } from './index'
@@ -52,6 +52,13 @@ function createAction(request: UpdateActionRequest, {
                 settings: request.settings,
             }
             break
+        case FlowActionType.PROCESS_IN_BATCHES:
+            action = {
+                ...baseProperties,
+                type: FlowActionType.PROCESS_IN_BATCHES,
+                settings: request.settings,
+            }
+            break
         case FlowActionType.PIECE:
             action = {
                 ...baseProperties,
@@ -92,6 +99,29 @@ function handleLoopOnItems(parentStep: LoopOnItemsAction, request: AddActionRequ
                 code: ErrorCode.FLOW_OPERATION_INVALID,
                 params: {
                     message: `Loop step parent ${request.stepLocationRelativeToParent} not found`,
+                },
+            })
+    }
+    return parentStep
+}
+
+function handleProcessInBatches(parentStep: ProcessInBatchesAction, request: AddActionRequest): Step {
+    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BATCH) {
+        parentStep.firstLoopAction = createAction(request.action, {
+            nextAction: parentStep.firstLoopAction,
+        })
+    }
+    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
+        parentStep.nextAction = createAction(request.action, {
+            nextAction: parentStep.nextAction,
+        })
+    }
+    else {
+        throw new ActivepiecesError(
+            {
+                code: ErrorCode.FLOW_OPERATION_INVALID,
+                params: {
+                    message: `Process in batches step parent ${request.stepLocationRelativeToParent} not found`,
                 },
             })
     }
@@ -158,6 +188,8 @@ function _addAction(flowVersion: FlowVersion, request: AddActionRequest): FlowVe
         switch (parentStep.type) {
             case FlowActionType.LOOP_ON_ITEMS:
                 return handleLoopOnItems(parentStep, request)
+            case FlowActionType.PROCESS_IN_BATCHES:
+                return handleProcessInBatches(parentStep, request)
             case FlowActionType.ROUTER:
             case FlowActionType.AI_ROUTER:
                 return handleRouter(parentStep, request)

@@ -65,6 +65,17 @@ and it retries like any barrier job.
 - **`barrier-queue-factory.ts` is the module graph's acyclic leaf.** `barrierSourceKey` and the job types live
   there so `waitpoint-service.ts` imports the key without the queue. Folding it into `barrier-queue.ts` adds an
   import cycle.
+- **A batch step cannot sit inside another batch step, and the guard is post-hoc.** `flowOperations.apply` runs
+  the operation, then rejects it (`FLOW_OPERATION_INVALID`) when the result nests a batch and the input did not.
+  It needs no reasoning about `stepLocationRelativeToParent`, it catches nesting through a loop or router, and it
+  never invalidates an existing flow that already holds one.
+- **The nesting guard belongs in `apply`, not in one operation.** Inside `_addAction` it caught move, paste,
+  duplicate and import, which all decompose into `ADD_ACTION`, but not `UPDATE_ACTION`: retyping a body step to
+  `PROCESS_IN_BATCHES` saved a nested batch as `valid: true`. `flow-version-validator-util.ts` checks settings,
+  never structure.
+- **`UPDATE_ACTION` carries `firstLoopAction` across a loop/batch conversion.** Both container types keep their
+  body there, so a check on the requested type alone drops the whole body when a loop is retyped into a batch, or
+  back. `sampleData` is not carried, because the two settings shapes differ.
 
 ## Key files
 - `packages/server/api/src/app/waitpoints/` — `handleFanOutDispatch`, `barrierService.claimNextSignals`
