@@ -26,7 +26,8 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
                 const cachedAt = dayjs().toISOString()
                 const users = await listUsers(platformId)
                 const flows = await listFlows(platformId, log)
-                const runs = await listRuns(flows.map((flow) => flow.projectId), currentReport?.cachedAt ?? null, cachedAt)
+                const projects = await listProjects(platformId)
+                const runs = await listRuns({ projectIds: projects.map((project) => project.id), afterDate: currentReport?.cachedAt ?? null })
 
                 return platformAnalyticsReportRepo().save({
                     id: currentReport?.id ?? apId(),
@@ -122,7 +123,7 @@ function scopeReportToProjects({ report, projectIds, visibleUserIds, visibleFlow
 
 
 
-async function listRuns(projectIds: string[], afterDate: string | null, currentDate: string): Promise<AnalyticsRunsUsageItem[]> {
+async function listRuns({ projectIds, afterDate }: ListRunsParams): Promise<AnalyticsRunsUsageItem[]> {
     if (projectIds.length === 0) {
         return []
     }
@@ -132,42 +133,39 @@ async function listRuns(projectIds: string[], afterDate: string | null, currentD
         .addSelect('COUNT(*)', 'runs')
         .where('flow_run.projectId IN (:...projectIds)', { projectIds })
         .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+        .andWhere('flow_run.parentWaitpointId IS NULL')
         .groupBy('flow_run.flowId')
         .addGroupBy('DATE_TRUNC(\'day\', flow_run.created)')
 
     if (!isNil(afterDate)) {
-        query = query.andWhere('flow_run.created > :afterDate', {
+        query = query.andWhere('flow_run.created >= DATE_TRUNC(\'day\', CAST(:afterDate AS timestamptz) - INTERVAL \'1 day\')', {
             afterDate,
         })
     }
-    if (!isNil(currentDate)) {
-        query = query.andWhere('flow_run.created <= :currentDate', {
-            currentDate,
-        })
-    }
-    const runs = await query.getRawMany()
+    const runs = await query.getRawMany<{ flowId: string, day: Date, runs: string }>()
     return runs.map((run) => {
         return {
             flowId: run.flowId,
-            day: run.day,
+            day: dayjs(run.day).toISOString(),
             runs: Number(run.runs),
         }
     })
 }
 
-function mergeRuns(existing: AnalyticsRunsUsageItem[], incoming: AnalyticsRunsUsageItem[]): AnalyticsRunsUsageItem[] {
-    const map = new Map(existing.map(run => [`${run.flowId}-${run.day}`, { ...run }]))
-    for (const run of incoming) {
-        const key = `${run.flowId}-${run.day}`
-        if (map.has(key)) {
-            map.get(key)!.runs += run.runs
-        }
-        else {
-            map.set(key, { ...run })
-        }
+function mergeRuns(existing: AnalyticsRunsUsageItem[], recounted: AnalyticsRunsUsageItem[]): AnalyticsRunsUsageItem[] {
+    const recountedKeys = new Set(recounted.map(runKey))
+    const map = new Map<string, AnalyticsRunsUsageItem>()
+    for (const run of [...existing.filter((run) => !recountedKeys.has(runKey(run))), ...recounted]) {
+        const key = runKey(run)
+        map.set(key, { ...run, runs: (map.get(key)?.runs ?? 0) + run.runs })
     }
     return Array.from(map.values())
 }
+
+function runKey(run: AnalyticsRunsUsageItem): string {
+    return `${run.flowId}-${run.day}`
+}
+
 async function listFlows(platformId: PlatformId, log: FastifyBaseLogger): Promise<AnalyticsFlowReportItem[]> {
     const { data } = await flowService(log).list({
         platformId,
@@ -262,6 +260,11 @@ function getDateRange(timePeriod: AnalyticsTimePeriod): string {
         default:
             throw new Error(`Invalid time period: ${timePeriod}`)
     }
+}
+
+type ListRunsParams = {
+    projectIds: string[]
+    afterDate: string | null
 }
 
 type GetReportForUserParams = {

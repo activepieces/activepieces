@@ -1,6 +1,6 @@
 {
   "Streamline your scheduling": "Streamline your scheduling",
-  "\n# Personal Access Token\n1- Visit https://tidycal.com/integrations/oauth and click on \"Create a new token\"\n2- Enter a name for your token and click on \"Create\"\n": "\n# Personal Access Token\n1- Visit https://tidycal.com/integrations/oauth and click on \"Create a new token\"\n2- Enter a name for your token and click on \"Create\"\n",
+  "To create a personal access token:\n1. In TidyCal, open [Manage API keys](https://tidycal.com/integrations/advanced) under Integrations.\n2. On the **Personal tokens** tab, click **Create token**, enter a name and click **Create**.\n3. Copy the token now: TidyCal shows it only once.\n\nAPI access needs a paid TidyCal plan.": "To create a personal access token:\n1. In TidyCal, open [Manage API keys](https://tidycal.com/integrations/advanced) under Integrations.\n2. On the **Personal tokens** tab, click **Create token**, enter a name and click **Create**.\n3. Copy the token now: TidyCal shows it only once.\n\nAPI access needs a paid TidyCal plan.",
   "Custom API Call": "Custom API Call",
   "Make a custom API call to a specific endpoint": "Make a custom API call to a specific endpoint",
   "Method": "Method",
@@ -27,7 +27,11 @@
   "Booking Canceled": "Booking Canceled",
   "New Booking": "New Booking",
   "New Contact": "New Contact",
-  "Triggers when a new booking is canceled": "Triggers when a new booking is canceled",
+  "Triggers when a booking is canceled": "Triggers when a booking is canceled",
   "Triggers when a new booking is created": "Triggers when a new booking is created",
-  "Triggers when a new contact is created": "Triggers when a new contact is created"
+  "Triggers when a new contact is created": "Triggers when a new contact is created",
+  "Markdown": "Markdown",
+  "Checks TidyCal periodically and runs once for each canceled booking.": "Checks TidyCal periodically and runs once for each canceled booking.",
+  "Checks TidyCal periodically and runs once for each new booking.": "Checks TidyCal periodically and runs once for each new booking.",
+  "Checks TidyCal periodically and runs once for each new contact.": "Checks TidyCal periodically and runs once for each new contact."
 }

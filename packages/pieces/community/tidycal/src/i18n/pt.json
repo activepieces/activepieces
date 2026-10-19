@@ -29,5 +29,10 @@
   "New Contact": "Novo Contato",
   "Triggers when a new booking is canceled": "Aciona quando uma nova reserva é anulada",
   "Triggers when a new booking is created": "Dispara quando uma nova reserva é criada",
-  "Triggers when a new contact is created": "Dispara quando um novo contato é criado"
+  "Triggers when a new contact is created": "Dispara quando um novo contato é criado",
+  "Triggers when a booking is canceled": "Aciona quando uma reserva é cancelada",
+  "Checks TidyCal periodically and runs once for each new booking.": "Verifica o TidyCal periodicamente e é executado uma vez para cada nova reserva.",
+  "Checks TidyCal periodically and runs once for each canceled booking.": "Verifica o TidyCal periodicamente e é executado uma vez para cada reserva cancelada.",
+  "Checks TidyCal periodically and runs once for each new contact.": "Verifica o TidyCal periodicamente e é executado uma vez para cada novo contato.",
+  "To create a personal access token:\n1. In TidyCal, open [Manage API keys](https://tidycal.com/integrations/advanced) under Integrations.\n2. On the **Personal tokens** tab, click **Create token**, enter a name and click **Create**.\n3. Copy the token now: TidyCal shows it only once.\n\nAPI access needs a paid TidyCal plan.": "Para criar um token de acesso pessoal:\n1. No TidyCal, abra [Manage API keys](https://tidycal.com/integrations/advanced) em Integrations.\n2. Na aba **Personal tokens**, clique em **Create token**, insira um nome e clique em **Create**.\n3. Copie o token agora: o TidyCal o mostra apenas uma vez.\n\nO acesso à API exige um plano pago do TidyCal."
 }

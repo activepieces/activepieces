@@ -4,13 +4,13 @@ import {
   createApifyClient,
   generateIdempotencyKey,
   createStatusesProperty,
+  createWebhookInfoProperty,
   createTaskIdProperty,
   createWebhook,
   deleteWebhook,
   RunType,
   createWebhookSampleData,
 } from '../common';
-import { WebhookEventType } from 'apify-client';
 import { watchRunsTriggerOutputSchema } from '../output-schemas';
 
 export const watchTaskRunsTrigger = createTrigger({
@@ -18,20 +18,25 @@ export const watchTaskRunsTrigger = createTrigger({
   name: 'watchTaskRunsTrigger',
   classification: 'READ',
   displayName: 'Watch Task Runs',
-  description: 'Triggers a Flow on Apify Actor task run events',
+  description: 'Fires when a run of the task ends with a chosen status.',
   outputSchema: watchRunsTriggerOutputSchema,
   aiMetadata: {
     description: 'Fires when a run of the selected Apify Actor task reaches one of the chosen statuses (e.g. succeeded, failed, aborted). Use to react to a configured task finishing, delivering the run event payload via webhook.',
   },
   type: TriggerStrategy.WEBHOOK,
   props: {
+    webhookInfo: createWebhookInfoProperty(),
     taskid: createTaskIdProperty(),
     statuses: createStatusesProperty(),
   },
+  propertyGroups: [
+    { key: 'target', display: 'section', label: 'What to Watch', icon: 'send', props: ['webhookInfo', 'taskid'] },
+    { key: 'outcomes', display: 'section', label: 'When to Fire', icon: 'filter', props: ['statuses'] },
+  ],
   async onEnable(context) {
     const client = createApifyClient(context.auth.props.apikey);
     const taskId = context.propsValue.taskid;
-    const statuses = context.propsValue.statuses as WebhookEventType[];
+    const statuses = context.propsValue.statuses;
     const idempotencyKey = generateIdempotencyKey(taskId, statuses, context.webhookUrl);
 
     const webhookId = await createWebhook(
@@ -45,7 +50,7 @@ export const watchTaskRunsTrigger = createTrigger({
     await context.store.put('_task_webhook_id', webhookId);
   },
   async onDisable(context) {
-    const webhookId: string = (await context.store.get('_task_webhook_id')) as string;
+    const webhookId = await context.store.get<string>('_task_webhook_id');
     if (webhookId) {
       const client = createApifyClient(context.auth.props.apikey);
       await deleteWebhook(client, webhookId);
