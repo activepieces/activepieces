@@ -25,7 +25,7 @@ const MINIMUM_FUZZY_QUERY_LENGTH = 6
 const FUZZY_THRESHOLD = 0.2
 const EXACT_THRESHOLD = 0
 
-const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType, untranslatedNames = new Map() }: SearchParams): PieceMetadataSchema[] => {
+const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType, untranslatedNames }: SearchParams): PieceMetadataSchema[] => {
     if (!searchQuery) {
         return pieces
     }
@@ -177,7 +177,7 @@ type SearchParams = {
     categories: PieceCategory[] | undefined
     searchQuery: string | undefined
     pieces: PieceMetadataSchema[]
-    untranslatedNames?: Map<string, string>
+    untranslatedNames: Map<string, string>
     suggestionType?: SuggestionType
 }
 

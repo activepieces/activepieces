@@ -15,6 +15,7 @@ describe('pieceSearching.search — robustness to extra query words', () => {
             categories: undefined,
             searchQuery: 'Discord webhook',
             pieces,
+            untranslatedNames: new Map(),
             suggestionType: SuggestionType.ACTION,
         })
         expect(results.map((p) => p.displayName)).toContain('Discord')
@@ -25,6 +26,7 @@ describe('pieceSearching.search — robustness to extra query words', () => {
             categories: undefined,
             searchQuery: 'Discord',
             pieces,
+            untranslatedNames: new Map(),
             suggestionType: SuggestionType.ACTION,
         })
         expect(results.map((p) => p.displayName)).toContain('Discord')
@@ -35,6 +37,7 @@ describe('pieceSearching.search — robustness to extra query words', () => {
             categories: undefined,
             searchQuery: undefined,
             pieces,
+            untranslatedNames: new Map(),
             suggestionType: SuggestionType.ACTION,
         })
         expect(results).toHaveLength(pieces.length)
