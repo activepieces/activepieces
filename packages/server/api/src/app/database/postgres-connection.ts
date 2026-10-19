@@ -468,6 +468,7 @@ import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migr
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
 import { AddEnterpriseTrialToPlatformPlan1871000000000 } from './migration/postgres/1871000000000-AddEnterpriseTrialToPlatformPlan'
 import { AddActivepiecesAiProviderHiddenToPlatformPlan1872000000000 } from './migration/postgres/1872000000000-AddActivepiecesAiProviderHiddenToPlatformPlan'
+import { AddEnterpriseTrialOutcomeToPlatformPlan1875000000000 } from './migration/postgres/1875000000000-AddEnterpriseTrialOutcomeToPlatformPlan'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -956,6 +957,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentConversationWaitpointId1876000000000,
         AddEnterpriseTrialToPlatformPlan1871000000000,
         AddActivepiecesAiProviderHiddenToPlatformPlan1872000000000,
+        AddEnterpriseTrialOutcomeToPlatformPlan1875000000000,
     ]
     return migrations
 }
