@@ -138,6 +138,8 @@ export const PlatformPlan = z.object({
     licenseExpiresAt: Nullable(DateOrString),
     enterpriseTrialStartedAt: Nullable(DateOrString),
     enterpriseTrialEndsAt: Nullable(DateOrString),
+    enterpriseTrialEndedAt: Nullable(DateOrString),
+    enterpriseTrialUsedElsewhereAt: Nullable(DateOrString),
 
     projectsLimit: Nullable(z.number()),
     activeFlowsLimit: Nullable(z.number()),
