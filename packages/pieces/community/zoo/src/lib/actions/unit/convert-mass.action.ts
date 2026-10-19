@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertMassAction = createAction({
   name: 'convert_mass',
+  classification: 'READ',
   displayName: 'Convert Mass',
   description: 'Convert mass measurements between different units',
   audience: 'both',

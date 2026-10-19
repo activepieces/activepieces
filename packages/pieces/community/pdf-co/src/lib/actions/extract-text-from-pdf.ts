@@ -1,135 +1,80 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, HttpError } from "@activepieces/pieces-common";
+import { HttpMethod } from '@activepieces/pieces-common';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { pdfCoAuth } from '../auth';
-import { BASE_URL, commonProps } from "../common/props";
-
-interface PdfCoExtractTextSuccessResponse {
-    body: string; // The extracted text content
-    pageCount: number;
-    error: false;
-    status: number;
-    name: string; // Output file name (e.g., sample.txt)
-    remainingCredits: number;
-    credits: number;
-    url?: string; // URL to output file if inline=false
-}
-
-// Define a type for the expected error response body (can use common one if it matches)
-interface PdfCoErrorResponse {
-    error: true;
-    status: number;
-    message?: string;
-    [key: string]: unknown;
-}
-
-// Interface for the request body
-interface PdfConvertToTextSimpleRequestBody {
-    url: string;
-    async: boolean;
-    inline: boolean; // Keep true to get text directly in response body
-    name?: string;
-    pages?: string;
-    password?: string;
-    httpusername?: string;
-	httppassword?: string;
-}
+import { pdfCoClient } from '../common/client';
+import { commonProps } from '../common/props';
+import { pdfCoOutputSchemas } from '../output-schemas';
 
 export const extractTextFromPdf = createAction({
-    name: 'extract_text_from_pdf',
-    classification: 'READ',
-    displayName: 'Extract Plain Text from PDF',
-    description: 'Extracts plain text content from a PDF document.',
-    audience: 'both',
-    aiMetadata: {
-        description:
-            'Extracts plain text content from a source PDF (referenced by URL), optionally limited to specific pages. Use when an agent needs the raw text of a document for reading or downstream processing. The call only reads the input and returns the text directly, so it is idempotent.',
-        idempotent: true,
-    },
-    auth: pdfCoAuth,
-    props: {
-        url: Property.ShortText({
-            displayName: 'Source PDF URL',
-            description: 'URL of the PDF file to extract text from.',
-            required: true,
-        }),
-        pages: Property.ShortText({
-            displayName: 'Pages',
-            description: 'Comma-separated page numbers or ranges (e.g., "0,2,5-10"). Leave empty for all pages.',
-            required: false,
-        }),
-        password: commonProps.pdfPassword,
-        outputName: commonProps.fileName,
-        httpUsername:commonProps.httpUsername,
-        httpPassword:commonProps.httpPassword
-    },
-    async run(context) {
-        const { auth, propsValue } = context;
-        const {
-            url,
-            pages,
-            password,
-            outputName,
-            httpPassword,
-            httpUsername
-        } = propsValue;
-
-        const requestBody: PdfConvertToTextSimpleRequestBody = {
-            url: url,
-            async: false,
-            httpusername:httpUsername,
-            httppassword:httpPassword,
-            inline: true, // Get text directly in response.body.body
-        };
-
-        if (pages !== undefined && pages !== '') requestBody.pages = pages;
-        if (password !== undefined && password !== '') requestBody.password = password;
-        if (outputName !== undefined && outputName !== '') requestBody.name = outputName;
-
-        try {
-            const response = await httpClient.sendRequest<PdfCoExtractTextSuccessResponse | PdfCoErrorResponse>({
-                method: HttpMethod.POST,
-                url: `${BASE_URL}/pdf/convert/to/text-simple`,
-                headers: {
-                    'x-api-key': auth.secret_text,
-                    'Content-Type': 'application/json',
-                },
-                body: requestBody,
-            });
-
-            if (response.body.error) {
-                const errorBody = response.body as PdfCoErrorResponse;
-                let errorMessage = `PDF.co API Error (Extract Text): Status ${errorBody.status}.`;
-                if (errorBody.message) {
-                    errorMessage += ` Message: ${errorBody.message}.`;
-                } else {
-                    errorMessage += ` An unspecified error occurred.`;
-                }
-                errorMessage += ` Raw response: ${JSON.stringify(errorBody)}`;
-                throw new Error(errorMessage);
-            }
-
-            const successBody = response.body as PdfCoExtractTextSuccessResponse;
-
-            return {
-                extractedText: successBody.body,
-                pageCount: successBody.pageCount,
-                outputName: successBody.name,
-                creditsUsed: successBody.credits,
-                remainingCredits: successBody.remainingCredits,
-            };
-
-        } catch (error) {
-            if (error instanceof HttpError) {
-                const responseBody = error.response?.body as (PdfCoErrorResponse | undefined);
-                let detailedMessage = `HTTP Error calling PDF.co API (Extract Text): ${error.message}.`;
-                if (responseBody && responseBody.message) {
-                    detailedMessage += ` Server message: ${responseBody.message}.`;
-                } else if (responseBody) {
-                    detailedMessage += ` Server response: ${JSON.stringify(responseBody)}.`;
-                }
-                throw new Error(detailedMessage);
-            }
-            throw error;
-        }
-    },
+	name: 'extract_text_from_pdf',
+	classification: 'READ',
+	displayName: 'Extract Plain Text from PDF',
+	description: 'Extracts plain text content from a PDF document.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Extracts the text of a source PDF (referenced by URL), optionally limited to specific pages (first page is 0). By default it reads the embedded text (4 credits per page); turn on OCR for scanned documents or layout-preserving text (21 credits per page). Use when an agent needs the raw text of a document. Read-only and idempotent.',
+		idempotent: true,
+	},
+	auth: pdfCoAuth,
+	outputSchema: pdfCoOutputSchemas.extractText,
+	props: {
+		url: Property.ShortText({
+			displayName: 'Source PDF URL',
+			description: 'URL of the PDF file to extract text from.',
+			required: true,
+		}),
+		pages: Property.ShortText({
+			displayName: 'Pages',
+			description: 'Comma-separated page indexes or ranges (first page is 0), e.g. "0,2,5-10". Leave empty for all pages.',
+			required: false,
+		}),
+		password: commonProps.pdfPassword,
+		outputName: commonProps.fileName,
+		httpUsername: commonProps.httpUsername,
+		httpPassword: commonProps.httpPassword,
+		useOcr: Property.Checkbox({
+			displayName: 'Use OCR (Scanned PDFs)',
+			description: 'Read scanned pages and keep the layout. Costs 21 credits per page instead of 4.',
+			required: false,
+			defaultValue: false,
+		}),
+		lang: Property.ShortText({
+			displayName: 'OCR Language',
+			description: 'Only with OCR: language of the text, e.g. "eng", "deu", or "eng+deu". Default "eng".',
+			required: false,
+		}),
+	},
+	async run({ auth, propsValue }) {
+		const { url, pages, password, outputName, httpPassword, httpUsername, useOcr, lang } = propsValue;
+		const text = (value: unknown): value is string => typeof value === 'string' && value !== '';
+		if (text(lang) && useOcr !== true) {
+			throw new Error('OCR Language only applies when "Use OCR" is on.');
+		}
+		const body = pdfCoClient.readRecord(
+			await pdfCoClient.request<unknown>({
+				apiKey: pdfCoClient.apiKeyOf(auth),
+				method: HttpMethod.POST,
+				path: useOcr === true ? '/v1/pdf/convert/to/text' : '/v1/pdf/convert/to/text-simple',
+				body: {
+					url,
+					async: false,
+					httpusername: httpUsername,
+					httppassword: httpPassword,
+					inline: true,
+					...(text(pages) ? { pages } : {}),
+					...(text(password) ? { password } : {}),
+					...(text(outputName) ? { name: outputName } : {}),
+					...(useOcr === true && text(lang) ? { lang } : {}),
+				},
+			}),
+		);
+		return {
+			extractedText: body['body'],
+			pageCount: body['pageCount'],
+			outputName: body['name'],
+			creditsUsed: body['credits'],
+			remainingCredits: body['remainingCredits'],
+		};
+	},
 });

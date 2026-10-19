@@ -69,6 +69,10 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        deadLetteredAt: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -81,9 +85,18 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             columns: ['projectId'],
         },
         {
-            name: 'idx_waitpoint_pending_resume_date_time',
-            columns: ['resumeDateTime'],
-            where: '"status" = \'PENDING\' AND "resumeDateTime" IS NOT NULL',
+            name: 'idx_waitpoint_flow_run_id_status_created',
+            columns: ['flowRunId', 'status', 'created'],
+        },
+        {
+            name: 'idx_waitpoint_live_deadline',
+            columns: ['resumeDateTime', 'id'],
+            where: '"status" = \'PENDING\' AND "resumeDateTime" IS NOT NULL AND "deadLetteredAt" IS NULL',
+        },
+        {
+            name: 'idx_waitpoint_undelivered_barrier',
+            columns: ['updated', 'id'],
+            where: '"type" = \'BARRIER\' AND "status" = \'COMPLETED\'',
         },
     ],
     relations: {

@@ -37,6 +37,7 @@ export type PrimitiveStepMetadata = BaseStepMetadata & {
     | FlowActionType.LOOP_ON_ITEMS
     | FlowActionType.PROCESS_IN_BATCHES
     | FlowActionType.ROUTER
+    | FlowActionType.AI_ROUTER
     | FlowTriggerType.EMPTY;
 };
 

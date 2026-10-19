@@ -6,6 +6,7 @@ import { ShopifyTransactionKinds } from '../common/types';
 export const createTransactionAction = createAction({
   auth: shopifyAuth,
   name: 'create_transaction',
+  classification: 'DESTRUCTIVE',
   displayName: 'Create Transaction',
   description: 'Create a new transaction.',
   audience: 'both',

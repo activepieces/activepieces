@@ -1,4 +1,5 @@
-import { isNil } from '@activepieces/core-utils';
+import { AIProviderName, isNil } from '@activepieces/core-utils';
+import { ModelChoice } from '@activepieces/shared';
 
 function sameConfig({
   left,
@@ -10,39 +11,74 @@ function sameConfig({
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function headerStatus({
-  needsModel,
-  justLaunched,
-  live,
-  hasChanges,
+function modelPickChanged({
+  picked,
+  current,
 }: {
-  needsModel: boolean;
-  justLaunched: boolean;
-  live: unknown;
-  hasChanges: boolean;
-}): HeaderStatus {
-  if (justLaunched) {
-    return 'live';
-  }
-  if (needsModel) {
-    return 'needs-model';
-  }
-  return !isNil(live) && !hasChanges ? 'live' : 'pending';
+  picked: ModelPick;
+  current: ModelPick;
+}): boolean {
+  const same = (left?: string | null, right?: string | null) =>
+    (left ?? null) === (right ?? null);
+  return !(
+    same(picked.provider, current.provider) &&
+    same(picked.modelName, current.modelName) &&
+    same(picked.providerConfigId, current.providerConfigId) &&
+    same(picked.modelTierId, current.modelTierId)
+  );
 }
 
-function modeIntent({
-  next,
-  unsavedTyping,
-  blockedReason,
-}: {
-  next: string;
-  unsavedTyping: boolean;
-  blockedReason: string | null;
-}): ModeIntent {
-  if (next !== 'test' || !unsavedTyping || !isNil(blockedReason)) {
-    return 'switch';
+function hasModel({ config }: { config: ModelPick }): boolean {
+  return (
+    !isNil(config.modelTierId) ||
+    (!isNil(config.provider) && !isNil(config.modelName))
+  );
+}
+
+function modelChoiceOf({ config }: { config: ModelPick }): ModelChoice | null {
+  if (!isNil(config.modelTierId)) {
+    return { type: 'tier', tierId: config.modelTierId };
   }
-  return 'stage';
+  const provider = Object.values(AIProviderName).find(
+    (name) => name === config.provider,
+  );
+  if (isNil(provider) || isNil(config.modelName)) {
+    return null;
+  }
+  return {
+    type: 'model',
+    provider,
+    providerConfigId: config.providerConfigId ?? '',
+    modelId: config.modelName,
+  };
+}
+
+function modelPickOf({ choice }: { choice: ModelChoice }): ModelPick {
+  return choice.type === 'tier'
+    ? {
+        provider: null,
+        modelName: null,
+        providerConfigId: null,
+        modelTierId: choice.tierId,
+      }
+    : {
+        provider: choice.provider,
+        modelName: choice.modelId,
+        providerConfigId: choice.providerConfigId,
+        modelTierId: null,
+      };
+}
+
+function serverMovedWhileTyping({
+  fromServer,
+  lastSeen,
+  unsavedTyping,
+}: {
+  fromServer: unknown;
+  lastSeen: unknown;
+  unsavedTyping: boolean;
+}): boolean {
+  return unsavedTyping && !sameConfig({ left: fromServer, right: lastSeen });
 }
 
 function leaveGuard({
@@ -78,14 +114,21 @@ function createWriteLock(): WriteLock {
 
 export const agentEditState = {
   sameConfig,
-  headerStatus,
-  modeIntent,
+  serverMovedWhileTyping,
+  modelPickChanged,
+  hasModel,
+  modelChoiceOf,
+  modelPickOf,
   leaveGuard,
   createWriteLock,
 };
 
-export type HeaderStatus = 'needs-model' | 'live' | 'pending';
-export type ModeIntent = 'switch' | 'stage';
+export type ModelPick = {
+  provider?: string | null;
+  modelName?: string | null;
+  providerConfigId?: string | null;
+  modelTierId?: string | null;
+};
 export type LeaveGuard = {
   open: boolean;
   discardAction: 'proceed' | 'exit' | 'none';

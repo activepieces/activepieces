@@ -2,12 +2,12 @@ import { isNil, tryCatch } from '@activepieces/core-utils'
 import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
-import { triggerRunner } from '../core/piece/trigger-runner'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
+import { triggerHelper } from '../helper/trigger-helper'
 import { utils } from '../utils'
 import { resolveJobPayload } from './utils/resolve-job-payload'
 
@@ -165,7 +165,7 @@ async function buildFailedTriggerContext({ input, baseContext, error }: BuildFai
         status: FlowRunStatus.FAILED,
         failedStep: {
             name: trigger.name,
-            displayName: trigger.displayName,
+            displayName: trigger.displayName ?? trigger.name,
             message,
         },
     })
@@ -174,7 +174,10 @@ async function buildFailedTriggerContext({ input, baseContext, error }: BuildFai
 async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, constants: EngineConstants, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     if (input.executionType === ExecutionType.BEGIN) {
         if (!isNil(input.entryStepName)) {
-            return restoreSteps({ steps: input.triggerPayload as Record<string, StepOutput>, flowContext, keepFailedSteps: true })
+            if (!isSeededSteps(input.triggerPayload)) {
+                throw new EngineGenericError('InvalidSeededStepsError', `A run entered at step ${input.entryStepName} needs the steps it starts after as its payload`)
+            }
+            return restoreSteps({ steps: input.triggerPayload, flowContext, keepFailedSteps: true })
         }
         const newPayload = await runOrReturnPayload(input, constants)
         return flowContext.upsertStep(input.flowVersion.trigger.name,
@@ -193,7 +196,7 @@ async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, consta
 
 async function restoreSteps({ steps, flowContext, keepFailedSteps }: RestoreStepsParams): Promise<FlowExecutorContext> {
     let restored = flowContext
-    for (const [step, output] of Object.entries(steps ?? {})) {
+    for (const [step, output] of Object.entries(steps)) {
         if (isStepRestorable({ status: output.status, isWaitpointResume: keepFailedSteps })) {
             const newOutput = await insertSuccessStepsOrPausedRecursively({ stepOutput: output, isWaitpointResume: keepFailedSteps })
             if (!isNil(newOutput)) {
@@ -204,11 +207,18 @@ async function restoreSteps({ steps, flowContext, keepFailedSteps }: RestoreStep
     return restored
 }
 
+function isSeededSteps(payload: unknown): payload is Record<string, StepOutput> {
+    if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+        return false
+    }
+    return Object.values(payload).every((step: unknown) => step !== null && typeof step === 'object' && 'type' in step && 'status' in step)
+}
+
 async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, constants: EngineConstants): Promise<TriggerPayload> {
     if (!input.executeTrigger) {
         return input.triggerPayload as TriggerPayload
     }
-    const newPayload = await triggerRunner.executeTrigger({
+    const newPayload = await triggerHelper.executeTrigger({
         params: {
             ...input,
             hookType: TriggerHookType.RUN,
@@ -218,6 +228,9 @@ async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, cons
         },
         constants,
     }) as ExecuteTriggerResponse<TriggerHookType.RUN>
+    if (newPayload.output.length === 0) {
+        throw new ExecutionError('EmptyTriggerPayload', 'The trigger returned no payload, so the flow did not run', ExecutionErrorType.USER)
+    }
     return newPayload.output[0] as TriggerPayload
 }
 

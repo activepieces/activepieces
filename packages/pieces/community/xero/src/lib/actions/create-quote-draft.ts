@@ -7,18 +7,21 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroCreateQuoteDraft = createAction({
   auth: xeroAuth,
   name: 'xero_create_quote_draft',
+  classification: 'WRITE',
   displayName: 'Create New Quote Draft',
   description: 'Creates a new draft quote.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Create a new draft sales quote in Xero for a contact, with at least one line item (Description required) plus optional title, summary, terms, and expiry. Pick this to draft a customer-facing quote before it becomes an invoice. Not idempotent: each call creates another quote.',
     idempotent: false,
   },
+  outputSchema: xeroOutputSchemas.quoteEnvelope,
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_dropdown(true),

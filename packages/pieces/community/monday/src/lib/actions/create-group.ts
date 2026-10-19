@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
+import { createGroupActionOutputSchema } from '../output-schemas';
 
 export const createGroupAction = createAction({
   auth: mondayAuth,
@@ -8,8 +9,9 @@ export const createGroupAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Group',
   description: 'Creates a new group in board.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new group (section that holds items) on a monday.com board. Use to organize items under a named section before adding them. Not idempotent: each call creates a separate group even with the same name.', idempotent: false },
+  outputSchema: createGroupActionOutputSchema,
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const newDealEventTrigger = createTrigger({
   name: 'new_deal_event',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'New Deal Event',
   description: 'Triggers on deal-scoped events (lifecycle, contact/account association).',

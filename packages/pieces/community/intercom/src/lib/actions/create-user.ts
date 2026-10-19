@@ -2,10 +2,12 @@ import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient } from '../common';
 import dayjs from 'dayjs';
+import { contactOutputSchema } from '../output-schemas';
 
 export const createUserAction = createAction({
 	auth: intercomAuth,
 	name: 'create-user',
+	classification: 'WRITE',
 	displayName: 'Create User',
 	description: 'Creates a new user.',
 	audience: 'both',
@@ -32,8 +34,9 @@ export const createUserAction = createAction({
 			required: false,
 		}),
 	},
+	outputSchema: contactOutputSchema,
 	async run(context) {
-		const client = intercomClient(context.auth);
+		const client = await intercomClient(context.auth);
 
 		const response = await client.contacts.create({
 			role: 'user',

@@ -32,14 +32,31 @@ export const insertRowAction = createAction({
 		idempotent: false,
 	},
 	displayName: 'Add Row',
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'new_row',
+			display: 'section',
+			label: 'New Row',
+			icon: 'text',
+			props: ['first_row_headers', 'values'],
+		},
+	],
 	props: {
 		...commonProps,
 		first_row_headers: isFirstRowHeaderProp(),
 		as_string: Property.Checkbox({
 			displayName: 'As String',
 			description:
-				'Inserted values that are dates and formulas will be entered strings and have no effect',
+				'Store dates and formulas as plain text instead of evaluating them.',
 			required: false,
+			advanced: true,
 		}),
 		values: rowValuesProp(),
 	},

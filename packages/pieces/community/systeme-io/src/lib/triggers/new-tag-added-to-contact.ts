@@ -1,97 +1,48 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { systemeIoAuth } from '../common/auth';
-import { systemeIoCommon } from '../common/client';
-import { randomBytes } from 'crypto';
+import { systemeWebhook } from '../common/webhook';
+import { contactSample } from '../common/samples';
+import { newTagAddedToContactTriggerOutputSchema } from '../output-schemas';
+import { tagPicker } from '../common/dropdowns';
 
 export const newTagAddedToContact = createTrigger({
     auth: systemeIoAuth,
     name: 'newTagAddedToContact',
     classification: 'READ',
     displayName: 'New Tag Added to Contact',
-    description: 'Fires when a specific tag is assigned to a contact',
+    description: 'Fires when a tag is assigned to a contact (optionally only a chosen tag)',
     aiMetadata: {
-      description: 'Fires when a tag is added to a contact in Systeme.io, delivering the affected contact, the tag that was added, and when it was added. Use to react to a contact being labeled or entering a tag-based segment.',
+      description: 'Fires when a tag is added to a contact in Systeme.io, delivering the affected contact and the tag that was added. Fires for every tag unless the optional tag filter is set. Use to react to a contact being labeled or entering a tag-based segment.',
     },
-    props: {},
+    props: {
+        tag: tagPicker({
+            required: false,
+            displayName: 'Only for Tag',
+            description: 'Optional. Pick a tag to run the flow only when that tag is added. Leave empty to run for every tag.',
+        }),
+    },
     sampleData: {
-        contact: {
-            id: 12345,
-            email: "customer@example.com",
-            registeredAt: "2024-01-01T00:00:00+00:00",
-            locale: "en",
-            sourceURL: null,
-            unsubscribed: false,
-            bounced: false,
-            needsConfirmation: false,
-            fields: [
-                {
-                    fieldName: "first_name",
-                    slug: "first_name",
-                    value: "John"
-                },
-                {
-                    fieldName: "last_name",
-                    slug: "last_name",
-                    value: "Doe"
-                },
-                {
-                    fieldName: "phone_number",
-                    slug: "phone_number",
-                    value: "+1234567890"
-                }
-            ],
-            tags: [
-                {
-                    id: 1,
-                    name: "existing_customer"
-                },
-                {
-                    id: 2,
-                    name: "VIP Customer"
-                }
-            ]
-        },
-        tag: {
-            id: 2,
-            name: "VIP Customer"
-        },
-        addedAt: "2024-01-01T10:30:00+00:00"
+        contact: contactSample,
+        tag: { id: 2, name: 'another_tag' },
     },
+    outputSchema: newTagAddedToContactTriggerOutputSchema,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-        const secret = randomBytes(32).toString('hex');
-        const response = await systemeIoCommon.createWebhook({
-            eventType: 'CONTACT_TAG_ADDED',
+        await systemeWebhook.enable({
+            auth: context.auth,
             webhookUrl: context.webhookUrl,
-            auth: context.auth.secret_text  ,
-            secret: secret,
+            store: context.store,
+            event: 'CONTACT_TAG_ADDED',
+            prefix: 'new_tag_added',
         });
-        
-        await context.store.put('new_tag_added_webhook_id', response.id);
-        await context.store.put('new_tag_added_webhook_secret', secret);
     },
     async onDisable(context) {
-        const webhookId = await context.store.get<string>('new_tag_added_webhook_id');
-        if (webhookId) {
-            await systemeIoCommon.deleteWebhook({
-                webhookId,
-                auth: context.auth.secret_text,
-            });
-            await context.store.put('new_tag_added_webhook_id', null);
-            await context.store.put('new_tag_added_webhook_secret', null);
-        }
+        await systemeWebhook.disable({ auth: context.auth, store: context.store, prefix: 'new_tag_added' });
     },
     async run(context) {
-        const webhookSecret = await context.store.get<string>('new_tag_added_webhook_secret');
-        const webhookSignatureHeader = context.payload.headers['x-webhook-signature'];
-        const rawBody = context.payload.rawBody;
-
-        if (!systemeIoCommon.verifyWebhookSignature(webhookSecret || undefined, webhookSignatureHeader, rawBody)) {
-            console.warn('Systeme.io webhook signature verification failed');
+        if (!(await systemeWebhook.accept({ store: context.store, payload: context.payload, prefix: 'new_tag_added' }))) {
             return [];
         }
-
-        const payload = context.payload.body as any;
-        return [payload];
+        return systemeWebhook.tagEvent({ body: context.payload.body, tagFilter: context.propsValue.tag });
     }
 });

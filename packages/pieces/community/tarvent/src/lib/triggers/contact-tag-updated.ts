@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const contactTagUpdatedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_contact_tag_updated',
+  classification: 'READ',
   displayName: 'Contact Tag Added Or Removed',
   description: 'Triggers when a tag is added or removed from a contact.',
   aiMetadata: {

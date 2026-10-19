@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { resendProps } from '../common/props';
 import { deleteContactOutputSchema } from '../output-schemas';
 
@@ -18,15 +19,11 @@ export const deleteContact = createAction({
     contact_id: resendProps.contactId,
   },
   async run({ auth, propsValue }) {
-    const response = await httpClient.sendRequest<{
+    const response = await resendClient.sendRequest<{
       object: string;
       contact: string;
       deleted: boolean;
-    }>({
-      method: HttpMethod.DELETE,
-      url: `https://api.resend.com/audiences/${propsValue.audience_id}/contacts/${propsValue.contact_id}`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-    });
-    return response.body;
+    }>({ auth: auth.secret_text, method: HttpMethod.DELETE, path: `/audiences/${propsValue.audience_id}/contacts/${propsValue.contact_id}` });
+    return response;
   },
 });

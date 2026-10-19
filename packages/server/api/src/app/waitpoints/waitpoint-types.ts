@@ -35,6 +35,7 @@ type Waitpoint = {
     resumePayload: WaitpointResumePayload | null
     sealed: boolean
     policy: BarrierPolicy | null
+    deadLetteredAt: string | null
 }
 
 type WaitpointSignal = {
@@ -92,6 +93,7 @@ type HandleResumeSignalParams = {
 
 type FindPendingByVersionParams = {
     flowRunId: ApId
+    projectId: ApId
     version: WaitpointVersion
 }
 

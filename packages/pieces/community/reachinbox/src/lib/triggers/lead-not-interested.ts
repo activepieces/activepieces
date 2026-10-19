@@ -23,6 +23,7 @@ const leadNotInterestedMessage = `
 
 export const leadNotInterested = createTrigger({
   name: 'leadNotInterested',
+  classification: 'READ',
   displayName: 'Lead Not Interested',
   description: 'Triggers when a lead is set to not interested.',
   aiMetadata: {

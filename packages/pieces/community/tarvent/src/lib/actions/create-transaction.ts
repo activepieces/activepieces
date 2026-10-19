@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 export const createTransaction = createAction({
   auth: tarventAuth,
   name: 'tarvent_create_transaction',
+  classification: 'WRITE',
   displayName: 'Send A Transactional Email',
   description: 'Sends a transactional email. NOTE: This will use your email API credits.',
   audience: 'both',

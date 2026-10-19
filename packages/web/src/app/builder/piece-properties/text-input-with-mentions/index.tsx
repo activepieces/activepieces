@@ -1,19 +1,12 @@
-import { TiptapEditor } from './tiptap-editor';
+import { useFormField } from '@/components/ui/form';
 
-type TextInputWithMentionsProps = {
-  className?: string;
-  wrapperClassName?: string;
-  initialValue?: unknown;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  enableMarkdown?: boolean;
-  autoFocus?: boolean;
-  outputFormat?: 'text' | 'html';
+import { TiptapEditor, type TiptapEditorProps } from './tiptap-editor';
+
+export const FormFieldMentionInput = (props: TextInputWithMentionsProps) => {
+  const { formItemId } = useFormField();
+  return <TiptapEditor {...props} id={formItemId} />;
 };
 
-export const TextInputWithMentions = (props: TextInputWithMentionsProps) => {
-  return <TiptapEditor {...props} />;
-};
+export { TiptapEditor as TextInputWithMentions };
 
-export type { TextInputWithMentionsProps };
+export type TextInputWithMentionsProps = TiptapEditorProps;

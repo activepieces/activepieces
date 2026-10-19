@@ -8,6 +8,8 @@ const httpMethodDropdownOptions = Object.values(HttpMethod).map((m) => ({
 
 export const httpMethodDropdown = Property.StaticDropdown<HttpMethod>({
   displayName: 'Method',
+  description: 'GET reads data, POST creates it.',
   required: true,
+  defaultValue: HttpMethod.GET,
   options: { options: httpMethodDropdownOptions },
 });

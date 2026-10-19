@@ -9,6 +9,7 @@ import { pandadocAuth, pandadocClient } from '../common';
 
 export const documentCompleted = createTrigger({
   name: 'documentCompleted',
+  classification: 'READ',
   displayName: 'Document Completed',
   description:
     'Triggers when a document is completed.',

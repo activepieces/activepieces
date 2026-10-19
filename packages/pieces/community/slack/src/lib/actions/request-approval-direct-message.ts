@@ -14,7 +14,7 @@ export const requestApprovalDirectMessageAction = createAction({
   classification: 'WRITE',
   displayName: 'Request Approval from A User',
   description:
-    'Send approval message to a user and then wait until the message is approved or disapproved',
+    'Sends approve/reject buttons to a user and waits for the answer.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -22,6 +22,22 @@ export const requestApprovalDirectMessageAction = createAction({
     idempotent: false,
   },
   outputSchema: approvalActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['userId'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['text'],
+    },
+  ],
   props: {
     userId: userId(true),
     text,

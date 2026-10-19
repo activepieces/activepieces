@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils'
 import {
     ConnectionNotFoundError,
     EngineFileNotFoundError,
@@ -14,7 +15,6 @@ import {
     StreamStepProgress,
 } from '@activepieces/shared'
 import type { BeginExecuteFlowOperation, FlowAction, FlowVersion, ResumeExecuteFlowOperation } from '@activepieces/shared'
-import { isNil } from '@activepieces/core-utils'
 import dayjs from 'dayjs'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -33,8 +33,8 @@ vi.mock('../../src/lib/helper/flow-run-progress-reporter', () => ({
 const { mockExecuteTrigger } = vi.hoisted(() => ({
     mockExecuteTrigger: vi.fn(),
 }))
-vi.mock('../../src/lib/core/piece/trigger-runner', () => ({
-    triggerRunner: {
+vi.mock('../../src/lib/helper/trigger-helper', () => ({
+    triggerHelper: {
         executeTrigger: mockExecuteTrigger,
         executeOnStart: vi.fn().mockResolvedValue(undefined),
     },
@@ -51,9 +51,16 @@ vi.mock('../../src/lib/api/engine-file-api', () => ({
     },
 }))
 
+const { mockCreateWaitpoint } = vi.hoisted(() => ({
+    mockCreateWaitpoint: vi.fn(),
+}))
+vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
+    waitpointClient: {
+        create: mockCreateWaitpoint,
+    },
+}))
 
 import { flowOperation } from '../../src/lib/operations/flow.operation'
-import { EngineApiStub, startEngineApiStub } from '../helpers/engine-api-stub'
 
 function makeFlowVersion(): FlowVersion {
     return {
@@ -84,7 +91,7 @@ function makeBeginOperation(overrides?: Partial<BeginExecuteFlowOperation>): Beg
     return {
         projectId: 'proj-1',
         engineToken: 'test-token',
-        internalApiUrl: engineApi.url,
+        internalApiUrl: 'http://localhost:3000/',
         publicApiUrl: 'http://localhost:4200/api/',
         timeoutInSeconds: 600,
         platformId: 'plat-1',
@@ -180,7 +187,7 @@ function makeResumeOperation(overrides?: Partial<ResumeExecuteFlowOperation>): R
     return {
         projectId: 'proj-1',
         engineToken: 'test-token',
-        internalApiUrl: engineApi.url,
+        internalApiUrl: 'http://localhost:3000/',
         publicApiUrl: 'http://localhost:4200/api/',
         timeoutInSeconds: 600,
         platformId: 'plat-1',
@@ -199,18 +206,7 @@ function makeResumeOperation(overrides?: Partial<ResumeExecuteFlowOperation>): R
     }
 }
 
-let engineApi: EngineApiStub
-
 describe('flow operation invariants', () => {
-    beforeEach(async () => {
-        engineApi = await startEngineApiStub({
-            'POST /v1/waitpoints': { id: 'wp-new', resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-new' },
-        })
-    })
-
-    afterEach(async () => {
-        await engineApi.close()
-    })
     describe('RESUME execution state hydration', () => {
         it('throws EngineGenericError when RESUME has empty execution state in logs file', async () => {
             mockDownload.mockReset()
@@ -301,6 +297,11 @@ describe('flow operation invariants', () => {
             // (waitpoint path). With the fix, step_1 stays FAILED in the restored state,
             // `isCompleted` short-circuits piece-executor, and no new waitpoint is created.
             mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-new',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-new',
+            })
 
             mockDownload.mockResolvedValue(
                 new TextEncoder().encode(JSON.stringify({
@@ -341,7 +342,7 @@ describe('flow operation invariants', () => {
 
             await flowOperation.execute(operation)
 
-            expect(engineApi.requestsFor('/v1/waitpoints')).toHaveLength(0)
+            expect(mockCreateWaitpoint).not.toHaveBeenCalled()
         })
 
         it('drops FAILED steps on a retry resume (resumeReason=RETRY — FlowRetryStrategy.FROM_FAILED_STEP)', async () => {
@@ -350,6 +351,11 @@ describe('flow operation invariants', () => {
             // engine to replay the failed step. Preserving FAILED on this path would silently turn
             // retry into a no-op. The discriminator is the explicit `resumeReason` field.
             mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-retry',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-retry',
+            })
 
             mockDownload.mockResolvedValue(
                 new TextEncoder().encode(JSON.stringify({
@@ -384,7 +390,7 @@ describe('flow operation invariants', () => {
 
             // step_1 (FAILED) was dropped because resumeReason=RETRY → engine replayed it from
             // BEGIN, which creates a waitpoint via the approval piece.
-            expect(engineApi.requestsFor('/v1/waitpoints').length).toBeGreaterThan(0)
+            expect(mockCreateWaitpoint).toHaveBeenCalled()
         })
 
         it('drops non-terminal statuses (e.g. RUNNING from a mid-step crash) on any resume', async () => {
@@ -393,6 +399,11 @@ describe('flow operation invariants', () => {
             // whether resumePayload is present. Only SUCCEEDED, PAUSED, and FAILED (the last
             // conditionally) survive restoration.
             mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-replay',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-replay',
+            })
 
             mockDownload.mockResolvedValue(
                 new TextEncoder().encode(JSON.stringify({
@@ -432,7 +443,7 @@ describe('flow operation invariants', () => {
 
             await flowOperation.execute(operation)
 
-            expect(engineApi.requestsFor('/v1/waitpoints')).toHaveLength(1)
+            expect(mockCreateWaitpoint).toHaveBeenCalledTimes(1)
         })
 
         it('preserves FAILED steps on a delay-piece waitpoint resume even though resumePayload is null', async () => {
@@ -442,6 +453,11 @@ describe('flow operation invariants', () => {
             // engine would drop FAILED — replaying any `continueOnFailure` step that preceded
             // the delay. With `resumeReason: WAITPOINT`, FAILED is preserved correctly.
             mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-delay',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-delay',
+            })
 
             mockDownload.mockResolvedValue(
                 new TextEncoder().encode(JSON.stringify({
@@ -480,14 +496,10 @@ describe('flow operation invariants', () => {
 
             await flowOperation.execute(operation)
 
-            expect(engineApi.requestsFor('/v1/waitpoints')).toHaveLength(0)
+            expect(mockCreateWaitpoint).not.toHaveBeenCalled()
         })
 
         it('reports a start time for a run entered at a step, so a batch child is not left without one', async () => {
-            // Only executeFromTrigger ever passes a startTime to the progress reporter, and a run carrying an
-            // entryStepName skips it entirely — which left every barrier child with flow_run.startTime NULL
-            // and no derivable duration. BEGIN reports it; RESUME must not, or a child that pauses and
-            // resumes would overwrite its own start with the resume time.
             mockSendUpdate.mockClear()
 
             await flowOperation.execute(makeBeginOperation({
@@ -503,6 +515,11 @@ describe('flow operation invariants', () => {
         it('does not re-report a start time when a run entered at a step resumes', async () => {
             mockSendUpdate.mockClear()
             mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-after-batch',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-after-batch',
+            })
             mockDownload.mockResolvedValue(
                 new TextEncoder().encode(JSON.stringify({
                     executionState: {
@@ -538,13 +555,13 @@ describe('flow operation invariants', () => {
         })
 
         it('resumes a run entered mid-graph from its entry step instead of walking the flow from the trigger', async () => {
-            // A child run dispatched into a container's body starts at that body's entry step, with the
-            // parent's steps seeded as SUCCEEDED. entryStepName rides in the run's own execution-state
-            // log, so a resume re-enters the body. Without it the engine walks from the trigger: the
-            // paused body step is never re-entered (its BEGIN placeholder output sticks), and the step
-            // *after* the container runs inside the child.
             mockDownload.mockReset()
             mockSendUpdate.mockClear()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-after-batch',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-after-batch',
+            })
 
             mockDownload.mockResolvedValue(
                 new TextEncoder().encode(JSON.stringify({
@@ -618,7 +635,7 @@ describe('flow operation invariants', () => {
             }
 
             expect(mockDownload).toHaveBeenCalledWith({
-                apiUrl: engineApi.url,
+                apiUrl: 'http://localhost:3000/',
                 engineToken: 'test-token',
                 fileId: 'payload-file-1',
             })
@@ -701,6 +718,25 @@ describe('flow operation invariants', () => {
             expect(finalCtx.verdict.failedStep.name).toBe('trigger_1')
             expect(finalCtx.steps.trigger_1.errorMessage).toEqual(expect.stringContaining('toLowerCase'))
         })
+
+        it('fails the run without executing any step when the trigger run() returns no payload', async () => {
+            mockSendUpdate.mockClear()
+            mockExecuteTrigger.mockResolvedValue({ output: [] })
+            const operation = makeBeginOperation({
+                flowVersion: makeFlowVersionWithTwoApprovals(),
+                triggerPayload: { type: 'inline', value: {} },
+                executeTrigger: true,
+            })
+
+            const response = await flowOperation.execute(operation)
+
+            expect(response.status).toBe(EngineResponseStatus.OK)
+            const finalCtx = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0].flowExecutorContext
+            expect(finalCtx.verdict.status).toBe(FlowRunStatus.FAILED)
+            expect(finalCtx.verdict.failedStep.name).toBe('trigger_1')
+            expect(finalCtx.steps.trigger_1.errorMessage).toEqual(expect.stringContaining('no payload'))
+            expect(finalCtx.steps.step_1).toBeUndefined()
+        })
     })
 
     describe('trigger success output shape', () => {
@@ -748,6 +784,7 @@ describe('flow operation invariants', () => {
     describe('RESUME payload hydration', () => {
         it('resolves a ref resumePayload via the engine file client', async () => {
             mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
             mockDownload.mockImplementation(({ fileId }: { fileId: string }) => {
                 if (fileId === 'logs-file-1') {
                     return Promise.resolve(new TextEncoder().encode(JSON.stringify({
@@ -779,7 +816,7 @@ describe('flow operation invariants', () => {
             }
 
             expect(mockDownload).toHaveBeenCalledWith({
-                apiUrl: engineApi.url,
+                apiUrl: 'http://localhost:3000/',
                 engineToken: 'test-token',
                 fileId: 'resume-file-1',
             })

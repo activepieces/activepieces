@@ -6,6 +6,7 @@ import { kizeoFormsAuth } from '../..';
 export const downloadStandardPDF = createAction({
   auth: kizeoFormsAuth,
   name: 'download_standard_pdf', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'READ',
   displayName: 'Download Standard PDF',
   description: 'Get PDF data of a form',
   audience: 'both',

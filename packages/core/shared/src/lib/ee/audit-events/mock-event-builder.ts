@@ -1,12 +1,17 @@
-import { FlowOperationType, FlowStatus } from '@activepieces/core-execution'
+import { AgentRunSource, FlowOperationType, FlowStatus } from '@activepieces/core-execution'
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import {
+    AgentActionExecutedEvent,
+    AgentActionKind,
+    AgentActionOutcome,
     AgentAuditEvent,
     ApplicationEvent,
     ApplicationEventName,
+    AuditLogRetentionUpdatedEvent,
     AuthenticationEvent,
     ConnectionEvent,
     FlowActivatedEvent,
+    FlowApprovalEvent,
     FlowCreatedEvent,
     FlowDeactivatedEvent,
     FlowDeletedEvent,
@@ -26,16 +31,27 @@ import {
 
 export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventParams): ApplicationEvent => {
     const isoNow = new Date().toISOString()
-    const baseEnvelope = {
+    const project = { displayName: 'Dream Department' }
+    const user = {
+        id: apId(),
+        email: 'sample@example.com',
+        firstName: 'Sample',
+        lastName: 'User',
+    }
+    const workerEnvelope = {
         id: apId(),
         created: isoNow,
         updated: isoNow,
-        ip: '127.0.0.1',
         platformId,
         projectId,
-        userId: apId(),
     }
-    const project = { displayName: 'Dream Department' }
+    const baseEnvelope = {
+        ...workerEnvelope,
+        ip: '127.0.0.1',
+        userId: user.id,
+        userEmail: user.email,
+        projectDisplayName: project.displayName,
+    }
     const flow = { id: apId(), externalId: apId(), created: isoNow, updated: isoNow }
     const flowVersion = {
         id: apId(),
@@ -44,12 +60,6 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         created: isoNow,
         updated: isoNow,
     }
-    const user = {
-        id: apId(),
-        email: 'sample@example.com',
-        firstName: 'Sample',
-        lastName: 'User',
-    }
 
     switch (event) {
         case ApplicationEventName.FLOW_RUN_STARTED:
@@ -57,7 +67,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         case ApplicationEventName.FLOW_RUN_RESUMED:
         case ApplicationEventName.FLOW_RUN_RETRIED: {
             const mock: FlowRunEvent = {
-                ...baseEnvelope,
+                ...workerEnvelope,
                 action: event,
                 data: {
                     flowRun: {
@@ -217,6 +227,22 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             }
             return mock
         }
+        case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+            const mock: AgentActionExecutedEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    source: AgentRunSource.FLOW_STEP,
+                    flow: { id: apId(), runId: apId() },
+                    conversation: { id: apId(), source: AgentRunSource.FLOW_STEP },
+                    agent: { id: apId(), displayName: 'Marketing agent' },
+                    action: { kind: AgentActionKind.PIECE, pieceName: '@activepieces/piece-gmail', pieceDisplayName: 'Gmail', actionName: 'send_email', displayName: 'Send Email' },
+                    outcome: AgentActionOutcome.SUCCEEDED,
+                    connection: { externalId: apId(), label: 'marketing@acme.com' },
+                },
+            }
+            return mock
+        }
         case ApplicationEventName.VARIABLE_UPSERTED:
         case ApplicationEventName.VARIABLE_DELETED:
         case ApplicationEventName.VARIABLE_VALUE_REVEALED: {
@@ -264,6 +290,18 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                         created: isoNow,
                         updated: isoNow,
                     },
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED: {
+            const mock: AuditLogRetentionUpdatedEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED,
+                data: {
+                    previousRetentionDays: 365,
+                    retentionDays: 90,
+                    instanceLimitDays: null,
                 },
             }
             return mock
@@ -328,6 +366,23 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     failedCount: 0,
                     outcome: 'SUCCESS',
                     durationMs: 1234,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.FLOW_APPROVAL_REQUESTED:
+        case ApplicationEventName.FLOW_APPROVAL_GRANTED:
+        case ApplicationEventName.FLOW_APPROVAL_REJECTED:
+        case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN: {
+            const mock: FlowApprovalEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    approvalRequestId: apId(),
+                    flowId: flow.id,
+                    flowVersionId: flowVersion.id,
+                    flowDisplayName: flowVersion.displayName,
+                    rejectionReason: event === ApplicationEventName.FLOW_APPROVAL_REJECTED ? 'Needs stricter validation' : null,
                 },
             }
             return mock

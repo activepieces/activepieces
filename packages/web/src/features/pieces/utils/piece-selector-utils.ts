@@ -21,6 +21,8 @@ import {
   flowStructureUtil,
   StepSettings,
   RouterActionSettingsWithValidation,
+  AiRouterActionSettingsWithValidation,
+  AiRouterMatchMode,
   FlowTriggerType,
   PropertyExecutionType,
   DEFAULT_SAMPLE_DATA_SETTINGS,
@@ -77,6 +79,12 @@ const isPieceStepInputValid = ({
   return schema.safeParse(input).success && authValid;
 };
 
+const routerSettingsOverride = (settings: StepSettings | undefined) =>
+  !isNil(settings) && 'executionType' in settings ? settings : undefined;
+
+const aiRouterSettingsOverride = (settings: StepSettings | undefined) =>
+  !isNil(settings) && 'question' in settings ? settings : undefined;
+
 const isStepInitiallyValid = (
   pieceSelectorItem: PieceSelectorItem,
   overrideDefaultSettings?: StepSettings,
@@ -114,6 +122,14 @@ const isStepInitiallyValid = (
     case FlowActionType.ROUTER: {
       if (overrideDefaultSettings) {
         return RouterActionSettingsWithValidation.safeParse(
+          overrideDefaultSettings,
+        ).success;
+      }
+      return false;
+    }
+    case FlowActionType.AI_ROUTER: {
+      if (overrideDefaultSettings) {
+        return AiRouterActionSettingsWithValidation.safeParse(
           overrideDefaultSettings,
         ).success;
       }
@@ -184,6 +200,7 @@ const getDefaultStepValues = ({
             },
             input,
             errorHandlingOptions,
+            useDeno: true,
           },
         },
         common,
@@ -202,7 +219,7 @@ const getDefaultStepValues = ({
       return deepMergeAndCast<FlowAction>(
         {
           type: FlowActionType.ROUTER,
-          settings: overrideDefaultSettings ?? {
+          settings: routerSettingsOverride(overrideDefaultSettings) ?? {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
             branches: [
               {
@@ -222,6 +239,31 @@ const getDefaultStepValues = ({
               {
                 branchType: BranchExecutionType.FALLBACK,
                 branchName: 'Otherwise',
+              },
+            ],
+          },
+          children: [null, null],
+        },
+        common,
+      );
+    case FlowActionType.AI_ROUTER:
+      return deepMergeAndCast<FlowAction>(
+        {
+          type: FlowActionType.AI_ROUTER,
+          settings: aiRouterSettingsOverride(overrideDefaultSettings) ?? {
+            text: '',
+            question: '',
+            matchMode: AiRouterMatchMode.BEST_MATCH,
+            branches: [
+              {
+                branchType: BranchExecutionType.CONDITION,
+                branchName: 'Route 1',
+                description: '',
+              },
+              {
+                branchType: BranchExecutionType.FALLBACK,
+                branchName: 'Otherwise',
+                description: 'Anything that fits none of the routes above',
               },
             ],
           },

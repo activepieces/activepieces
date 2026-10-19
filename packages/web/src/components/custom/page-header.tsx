@@ -19,7 +19,7 @@ export const PageHeader = ({
   return (
     <div
       className={cn(
-        'sticky top-0 z-30 flex items-center justify-between py-3 px-4 w-full bg-background',
+        'sticky top-0 z-30 flex items-center justify-between py-3 px-4 w-full bg-gray-1',
         className,
       )}
     >
@@ -31,7 +31,7 @@ export const PageHeader = ({
             title
           )}
           {description && (
-            <span className="text-sm text-muted-foreground">{description}</span>
+            <span className="text-sm text-gray-11">{description}</span>
           )}
         </div>
         {leftContent}

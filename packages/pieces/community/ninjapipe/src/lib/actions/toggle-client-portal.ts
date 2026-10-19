@@ -6,6 +6,7 @@ import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from 
 export const toggleClientPortal = createAction({
   auth: ninjapipeAuth,
   name: 'toggle_client_portal',
+  classification: 'DESTRUCTIVE',
   displayName: 'Toggle Client Portal',
   description: 'Enable or disable client portal access for a contact. When enabling, NinjaPipe auto-generates a secure password and returns it in the response.',
   audience: 'both',

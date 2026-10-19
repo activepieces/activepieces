@@ -5,6 +5,7 @@ import { posthogAuth } from '../..';
 export const posthogCreateEvent = createAction({
   auth: posthogAuth,
   name: 'create_event',
+  classification: 'WRITE',
   displayName: 'Capture Event',
   description: 'Capture a custom event in PostHog',
   audience: 'both',

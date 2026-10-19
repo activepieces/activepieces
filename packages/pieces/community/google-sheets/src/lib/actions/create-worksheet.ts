@@ -19,7 +19,7 @@ export const createWorksheetAction = createAction({
   },
   props: {
     includeTeamDrives: includeTeamDrivesProp(),
-    spreadsheetId: spreadsheetIdProp('Spreadsheet',''),
+    spreadsheetId: spreadsheetIdProp('Spreadsheet','The spreadsheet to add the worksheet to.'),
     title:Property.ShortText({
         displayName:'Title',
         description:'The title of the new worksheet.',
@@ -27,6 +27,7 @@ export const createWorksheetAction = createAction({
     }),
     headers:Property.Array({
         displayName:'Headers',
+        description:'Column names to write into the first row.',
         required:false
     })
    

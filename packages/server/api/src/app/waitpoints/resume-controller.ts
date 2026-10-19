@@ -50,7 +50,7 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
 
     app.all('/:id/signals/:signalId/confirm', ConfirmSignalRequest, async (req, reply) => {
         const queryParams = req.query as Record<string, string>
-        if (req.method === 'GET' || req.method === 'HEAD') {
+        if (req.method !== 'POST') {
             await serveSignalConfirmationPage({ flowRunId: req.params.id, signalId: req.params.signalId, url: req.url, queryParams, log: req.log, reply })
             return
         }
@@ -65,7 +65,8 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId', V0ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: req.params.id, version: 'V0' })
+        const flowRun = await findFlowRunOrThrow(req.params.id)
+        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: flowRun.projectId, version: 'V0' })
         if (waitpoint) {
             await handleAsyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply })
         }
@@ -80,7 +81,8 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId/sync', V0ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: req.params.id, version: 'V0' })
+        const flowRun = await findFlowRunOrThrow(req.params.id)
+        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: flowRun.projectId, version: 'V0' })
         if (waitpoint) {
             await handleSyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: waitpoint.workerHandlerId ?? waitpoint.id })
         }
@@ -92,8 +94,8 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
 
 async function serveConfirmationPage({ flowRunId, waitpointId, url, queryParams, log, reply }: ConfirmationPageParams): Promise<void> {
     const flowRun = await findFlowRunOrThrow(flowRunId)
-    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
-    const isOpen = !isNil(waitpoint) && waitpoint.type !== PauseType.BARRIER && waitpoint.status === WaitpointStatus.PENDING && flowRun.status === FlowRunStatus.PAUSED
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId: flowRun.projectId })
+    const isOpen = !isNil(waitpoint) && waitpoint.type !== PauseType.BARRIER && waitpoint.status === WaitpointStatus.PENDING && isResumableRunStatus(flowRun.status)
     if (!isOpen) {
         await replyWithAlreadyResponded({ projectId: flowRun.projectId, log, reply })
         return
@@ -136,7 +138,7 @@ async function handleConfirmResume({ flowRunId, waitpointId, action, body, heade
         resumePayload: { body, headers, queryParams },
     })
     if (!acceptsHtml(headers)) {
-        await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
+        await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, discarded: await responseWasDiscarded({ flowRunId, waitpointId, stale, log }) })
         return
     }
     const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
@@ -158,53 +160,62 @@ async function serveSignalConfirmationPage({ flowRunId, signalId, url, queryPara
 
 async function handleSignalDecision({ flowRunId, signalId, action, body, headers, log, reply }: SignalDecisionParams): Promise<void> {
     const flowRun = await findFlowRunOrThrow(flowRunId)
-    const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
+    const projectId = flowRun.projectId
     if (action !== 'approve' && action !== 'disapprove') {
-        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.BAD_REQUEST, extra: { title: UNKNOWN_ACTION_TITLE, message: UNKNOWN_ACTION_MESSAGE, success: false } })
+        await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.BAD_REQUEST, extra: { title: UNKNOWN_ACTION_TITLE, message: UNKNOWN_ACTION_MESSAGE, success: false } })
         return
     }
-    const open = await resolveOpenSignal({ flowRunId, signalId, projectId: flowRun.projectId, flowRunStatus: flowRun.status, log })
+    const open = await resolveOpenSignal({ flowRunId, signalId, projectId, flowRunStatus: flowRun.status, log })
     if (isNil(open)) {
-        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.OK, extra: ALREADY_RESPONDED })
+        await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.OK, extra: ALREADY_RESPONDED })
         return
     }
     const approved = action === 'approve'
     const reason = readReason(body)
     if (!isNil(reason) && reason.length > MAX_SIGNAL_REASON_LENGTH) {
-        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_TOO_LONG_TITLE, message: reasonTooLongMessage(), success: false } })
+        await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_TOO_LONG_TITLE, message: reasonTooLongMessage(), success: false } })
         return
     }
     if (isReasonMissing({ reasonRequiredOn: open.barrier.policy?.reasonRequiredOn, approved, reason })) {
-        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_REQUIRED_TITLE, message: REASON_REQUIRED_MESSAGE, success: false } })
+        await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_REQUIRED_TITLE, message: REASON_REQUIRED_MESSAGE, success: false } })
         return
     }
 
-    await barrierService(log).receiveSignal({
+    const recorded = await barrierService(log).recordDecision({
+        barrierId: open.barrier.id,
         signalId,
-        projectId: flowRun.projectId,
+        projectId,
         status: approved ? BarrierSignalStatus.SUCCEEDED : BarrierSignalStatus.REJECTED,
         result: { outcome: approved ? 'approved' : 'rejected', reason: reason ?? null, decidedBy: open.signal.label },
     })
-    await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.OK, extra: { title: RECORDED_TITLE, message: recordedMessageForAction(approved ? 'approve' : 'disapprove'), success: true } })
+    if (!recorded) {
+        await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.OK, extra: ALREADY_RESPONDED })
+        return
+    }
+    await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.OK, extra: { title: RECORDED_TITLE, message: recordedMessageForAction(approved ? 'approve' : 'disapprove'), success: true } })
 }
 
 async function resolveOpenSignal({ flowRunId, signalId, projectId, flowRunStatus, log }: ResolveOpenSignalParams): Promise<OpenSignal | null> {
-    if (flowRunStatus !== FlowRunStatus.PAUSED) {
+    if (!isResumableRunStatus(flowRunStatus)) {
         return null
     }
     const signal = await barrierService(log).findSignalById({ signalId, projectId })
     if (isNil(signal) || signal.status !== BarrierSignalStatus.PENDING) {
         return null
     }
-    const barrier = await waitpointService(log).findByIdAndFlowRunId({ waitpointId: signal.waitpointId, flowRunId })
+    const barrier = await waitpointService(log).findByIdAndFlowRunId({ waitpointId: signal.waitpointId, flowRunId, projectId })
     if (isNil(barrier) || barrier.type !== PauseType.BARRIER || barrier.status !== WaitpointStatus.PENDING) {
         return null
     }
     return { signal, barrier }
 }
 
+function isResumableRunStatus(status: FlowRunStatus): boolean {
+    return RESUMABLE_RUN_STATUSES.includes(status)
+}
+
 function isReasonMissing({ reasonRequiredOn, approved, reason }: IsReasonMissingParams): boolean {
-    const required = reasonRequiredOn ?? 'reject'
+    const required = reasonRequiredOn ?? 'none'
     if (required === 'none') {
         return false
     }
@@ -215,22 +226,23 @@ function isReasonMissing({ reasonRequiredOn, approved, reason }: IsReasonMissing
 }
 
 function readReason(body: unknown): string | undefined {
-    if (isNil(body) || typeof body !== 'object') {
+    const parsed = SignalDecisionBody.safeParse(body)
+    if (!parsed.success || isNil(parsed.data.reason)) {
         return undefined
     }
-    const reason = (body as Record<string, unknown>).reason
-    return typeof reason === 'string' ? reason : undefined
+    return parsed.data.reason.replace(/\r\n/g, '\n')
 }
 
 function reasonTooLongMessage(): string {
     return `Your reason is longer than the ${MAX_SIGNAL_REASON_LENGTH} characters this form accepts. Shorten it and submit again — nothing was recorded.`
 }
 
-async function respondToSignalDecision({ reply, headers, theme, status, extra }: RespondToSignalDecisionParams): Promise<void> {
+async function respondToSignalDecision({ reply, headers, projectId, log, status, extra }: RespondToSignalDecisionParams): Promise<void> {
     if (!acceptsHtml(headers)) {
         await reply.status(status).send({ message: extra.message })
         return
     }
+    const theme = await resolveResumePageTheme({ projectId, log })
     await replyWithHtml({ reply, status, html: renderPage({ theme, extra }) })
 }
 
@@ -240,7 +252,7 @@ async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryP
         waitpointId,
         resumePayload: { body, headers, queryParams },
     })
-    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
+    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, discarded: await responseWasDiscarded({ flowRunId, waitpointId, stale, log }) })
 }
 
 async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply, correlationId }: AsyncResumeHandlerParams & { correlationId: string }): Promise<void> {
@@ -268,6 +280,18 @@ async function handleLegacySyncResume({ flowRunId, body, headers, queryParams, l
         correlationId,
     })
     await reply.status(response.status).headers(response.headers).send(response.body)
+}
+
+/**
+ * A stale resume means the waitpoint is gone — which is equally what a SUCCEEDED delivery
+ * looks like once its HTTP response is lost and the caller retries. Only the absence of a
+ * consumption marker proves nobody ever accepted this response.
+ */
+async function responseWasDiscarded({ flowRunId, waitpointId, stale, log }: ResponseWasDiscardedParams): Promise<boolean> {
+    if (!stale) {
+        return false
+    }
+    return !(await resumeService(log).waitpointWasConsumed({ waitpointId, flowRunId }))
 }
 
 async function resolveResumePageTheme({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<ResumePageTheme> {
@@ -337,6 +361,10 @@ const ConfirmSignalRequest = {
     },
 }
 
+const SignalDecisionBody = z.object({
+    reason: z.string().optional(),
+})
+
 const V0ResumeFlowRunRequest = {
     config: {
         security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
@@ -348,6 +376,8 @@ const V0ResumeFlowRunRequest = {
         }),
     },
 }
+
+const RESUMABLE_RUN_STATUSES = [FlowRunStatus.PAUSED, FlowRunStatus.RUNNING, FlowRunStatus.QUEUED]
 
 const CONFIRM_TITLE = 'Confirm your response'
 const CONFIRM_MESSAGE = 'A flow is paused and waiting for your response. Please confirm to continue.'
@@ -447,6 +477,13 @@ type OpenSignal = {
     barrier: Waitpoint
 }
 
+type ResponseWasDiscardedParams = {
+    flowRunId: string
+    waitpointId: string
+    stale: boolean
+    log: FastifyBaseLogger
+}
+
 type ConfirmationPageParams = {
     flowRunId: string
     waitpointId: string
@@ -508,7 +545,8 @@ type IsReasonMissingParams = {
 type RespondToSignalDecisionParams = {
     reply: FastifyReply
     headers: Record<string, string>
-    theme: ResumePageTheme
+    projectId: string
+    log: FastifyBaseLogger
     status: number
     extra: { title: string, message: string, success: boolean }
 }

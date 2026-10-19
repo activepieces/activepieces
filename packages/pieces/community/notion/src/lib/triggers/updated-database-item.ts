@@ -14,6 +14,7 @@ import { Client } from '@notionhq/client';
 import { notionAuth } from '../auth';
 import { isNil } from '@activepieces/pieces-framework';
 import { updatedDatabaseItemTriggerOutputSchema } from '../output-schemas';
+import { enrichPage } from '../common/enrich-page';
 
 export const updatedDatabaseItem = createTrigger({
   auth: notionAuth,
@@ -30,69 +31,91 @@ export const updatedDatabaseItem = createTrigger({
   },
   outputSchema: updatedDatabaseItemTriggerOutputSchema,
   sampleData: {
-    id: 'd23872cd-c106-4afa-b33d-d3fd66064ccb',
-    url: 'https://www.notion.so/Take-Fig-on-a-walk-d23872cdc1064afab33dd3fd66064ccb',
-    icon: {
-      type: 'emoji',
-      emoji: '🐶',
+    object: 'page',
+    id: '1a9fa248-94e2-80a7-aba9-d7200621a1ef',
+    title: 'fIX ERROR',
+    property_values: {
+      Status: 'To Do',
+      Priority: 'Medium',
+      DueDate: '2025-02-28',
+      Name: 'fIX ERROR',
+    },
+    url: 'https://app.notion.com/p/fIX-ERROR-1a9fa24894e280a7aba9d7200621a1ef',
+    public_url: null,
+    created_time: '2025-03-01T13:33:00.000Z',
+    last_edited_time: '2025-03-01T13:33:00.000Z',
+    created_by: {
+      object: 'user',
+      id: 'eb85488e-97f8-46d2-85fa-49b87bc1037d',
+    },
+    last_edited_by: {
+      object: 'user',
+      id: 'eb85488e-97f8-46d2-85fa-49b87bc1037d',
     },
     cover: null,
-    object: 'page',
+    icon: null,
     parent: {
       type: 'database_id',
-      database_id: 'fe1eb968-50b6-4d96-83ca-4d19b96f488e',
+      database_id: '1a9fa248-94e2-81bc-837e-d26e876ba6c0',
     },
+    in_trash: false,
+    is_archived: false,
+    is_locked: false,
     archived: false,
-    created_by: {
-      id: 'f3806fae-a281-4f4e-8563-c816c3e8bd40',
-      object: 'user',
-    },
     properties: {
+      Status: {
+        id: 'H%40%5Bv',
+        type: 'select',
+        select: {
+          id: 'ff441c13-5498-4922-b7b1-0530e7381857',
+          name: 'To Do',
+          color: 'red',
+        },
+      },
+      Priority: {
+        id: 'H%7C%7D%3F',
+        type: 'select',
+        select: {
+          id: 'fd99439b-915e-4cf4-9e1d-39108768e3da',
+          name: 'Medium',
+          color: 'yellow',
+        },
+      },
+      DueDate: {
+        id: 'XsW%7C',
+        type: 'date',
+        date: {
+          start: '2025-02-28',
+          end: null,
+          time_zone: null,
+        },
+      },
       Name: {
         id: 'title',
         type: 'title',
         title: [
           {
-            href: null,
-            text: {
-              link: null,
-              content: 'Take Fig on a walk',
-            },
             type: 'text',
-            plain_text: 'Take Fig on a walk',
+            text: {
+              content: 'fIX ERROR ',
+              link: null,
+            },
             annotations: {
               bold: false,
+              italic: false,
+              strikethrough: false,
+              underline: false,
               code: false,
               color: 'default',
-              italic: false,
-              underline: false,
-              strikethrough: false,
             },
+            plain_text: 'fIX ERROR ',
+            href: null,
           },
         ],
       },
-      Status: {
-        id: '%5EOE%40',
-        type: 'select',
-        select: {
-          id: '2',
-          name: 'Doing',
-          color: 'yellow',
-        },
-      },
-      'Date Created': {
-        id: "'Y6%3C",
-        type: 'created_time',
-        created_time: '2023-03-02T01:43:00.000Z',
-      },
     },
-    created_time: '2023-03-02T01:43:00.000Z',
-    last_edited_by: {
-      id: 'f3806fae-a281-4f4e-8563-c816c3e8bd40',
-      object: 'user',
-    },
-    last_edited_time: '2023-03-02T01:43:00.000Z',
   },
+
   type: TriggerStrategy.POLLING,
   async test(ctx) {
     return await pollingHelper.test(polling, {
@@ -152,7 +175,7 @@ const polling: Polling<
       const object = item as { last_edited_time: string; id: string };
       return {
         id: object.id + '|' + dayjs(object.last_edited_time).valueOf(),
-        data: item,
+        data: enrichPage(item),
       };
     });
   },

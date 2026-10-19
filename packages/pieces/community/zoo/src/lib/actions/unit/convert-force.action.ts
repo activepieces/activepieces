@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertForceAction = createAction({
   name: 'convert_force',
+  classification: 'READ',
   displayName: 'Convert Force',
   description: 'Convert force measurements between different units',
   audience: 'both',

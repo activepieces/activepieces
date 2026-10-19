@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getOAuth2ProvidersAction = createAction({
   name: 'get_oauth2_providers',
+  classification: 'SEARCH',
   displayName: 'Get OAuth2 Providers',
   description: 'Get the OAuth2 providers available for your user account',
   audience: 'both',

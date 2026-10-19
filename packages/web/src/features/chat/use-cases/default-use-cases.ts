@@ -52,25 +52,3 @@ export type ExampleCardData = {
   title: string;
   prompt: string;
 };
-
-export const GREETING_HEADLINES: GreetingHeadline[] = [
-  { withName: 'Put me to work, {name}.', plain: 'Put me to work.' },
-  { withName: "I'll handle it, {name}.", plain: "I'll handle it." },
-  { withName: 'Consider it done, {name}.', plain: 'Consider it done.' },
-  {
-    withName: "Let's get things done, {name}.",
-    plain: "Let's get things done.",
-  },
-  {
-    withName: "Let's clear your plate, {name}.",
-    plain: "Let's clear your plate.",
-  },
-];
-
-export const CHAT_INTRO_LINE =
-  "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.";
-
-export type GreetingHeadline = {
-  withName: string;
-  plain: string;
-};

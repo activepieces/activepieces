@@ -1,6 +1,5 @@
 import { DynamicPropsValue, PieceAuth, Property, StoreScope, createAction } from '@activepieces/pieces-framework';
-import { callableFlowKey, CallableFlowResponse, MOCK_CALLBACK_IN_TEST_FLOW_URL } from '../common';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { callableFlowKey, deliverSubflowResponse, MOCK_CALLBACK_IN_TEST_FLOW_URL } from '../common';
 import { isNil } from '@activepieces/pieces-framework';
 
 export const response = createAction({
@@ -62,15 +61,7 @@ export const response = createAction({
     const callbackUrl = await context.store.get<string>(callableFlowKey(context.run.id), StoreScope.FLOW);
     const isNotTestFlow = callbackUrl !== MOCK_CALLBACK_IN_TEST_FLOW_URL;
     if (isNotTestFlow && !isNil(callbackUrl)) {
-      await httpClient.sendRequest<CallableFlowResponse>({
-        method: HttpMethod.POST,
-        url: callbackUrl,
-        body: {
-          status: 'success',
-          data: response
-        },
-        retries: 10,
-      });
+      await deliverSubflowResponse({ callbackUrl, response });
     }
     return response;
   },

@@ -9,6 +9,7 @@ import { BucketDropdown, PlanDropdown } from '../common/properties';
 export const createTask = createAction({
   auth: microsoft365PlannerAuth,
   name: 'createTask',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description:
     'Create a new planner task with title, assignments, due date, etc.',

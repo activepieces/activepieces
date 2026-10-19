@@ -5,6 +5,7 @@ import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { getSftpError } from './common';
 import { unknown } from 'zod';
+import { listFolderContentsActionOutputSchema } from '../output-schemas';
 
 async function listSFTP(client: Client, directoryPath: string) {
   const contents = await client.list(directoryPath);
@@ -45,6 +46,7 @@ export const listFolderContentsAction = createAction({
       description: 'The path of the folder to list e.g. `./myfolder`',
     }),
   },
+  outputSchema: listFolderContentsActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const directoryPath = context.propsValue.directoryPath;

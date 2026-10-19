@@ -44,6 +44,7 @@ export type BarrierPolicy = z.infer<typeof BarrierPolicy>
 
 export const BarrierFanOutSource = z.object({
     entryStepName: z.string(),
+    batchStepName: z.string(),
     batchSize: z.number().int().positive(),
     items: z.array(z.unknown()),
     seedSteps: z.record(z.string(), z.unknown()),
@@ -78,6 +79,7 @@ export const BarrierCreatedState = z.object({
         label: z.string().nullable(),
         confirmUrl: z.string(),
     })).optional(),
+    signalsTruncated: z.boolean().optional(),
 })
 export type BarrierCreatedState = z.infer<typeof BarrierCreatedState>
 

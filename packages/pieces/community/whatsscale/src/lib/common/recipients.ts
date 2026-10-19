@@ -25,7 +25,7 @@ export enum RecipientType {
  * @param type - The recipient type
  * @param session - WhatsApp session ID
  * @param recipientValue - The dropdown value or manual entry
- * @param chatType - Only used for MANUAL type (ChatType.CONTACT or ChatType.GROUP)
+ * @param chatType - Only used for MANUAL type, selects how recipientValue is interpreted
  * @returns Object to spread into the API request body
  */
 export function buildRecipientBody(
@@ -44,7 +44,10 @@ export function buildRecipientBody(
       return { ...base, chatId: recipientValue };
 
     case RecipientType.MANUAL: {
-      const suffix = chatType === ChatType.CONTACT ? '@c.us' : '@g.us';
+      if (chatType === ChatType.CRM_CONTACT) {
+        return { ...base, contact_type: 'crm_contact', crm_contact_id: recipientValue };
+      }
+      const suffix = MANUAL_CHAT_SUFFIXES[chatType ?? ChatType.CONTACT];
       return { ...base, chatId: recipientValue.includes('@') ? recipientValue : recipientValue + suffix };
     }
 
@@ -59,3 +62,10 @@ export function buildRecipientBody(
       throw new Error(`Unknown recipient type: ${type}`);
   }
 }
+
+const MANUAL_CHAT_SUFFIXES: Record<ChatType, string> = {
+  [ChatType.CONTACT]: '@c.us',
+  [ChatType.GROUP]: '@g.us',
+  [ChatType.CHANNEL]: '@newsletter',
+  [ChatType.CRM_CONTACT]: '',
+};

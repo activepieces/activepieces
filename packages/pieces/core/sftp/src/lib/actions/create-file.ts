@@ -5,6 +5,7 @@ import { endClient, getClient, getProtocolBackwardCompatibility } from '../commo
 import { sftpAuth } from '../auth';
 import { Readable } from 'stream';
 import { getSftpError } from './common';
+import { createFileActionOutputSchema } from '../output-schemas';
 
 async function createFileWithSFTP(client: Client, fileName: string, fileContent: string) {
     const remotePathExists = await client.exists(fileName);
@@ -45,6 +46,7 @@ export const createFile = createAction({
             required: true,
         }),
     },
+    outputSchema: createFileActionOutputSchema,
     async run(context) {
         const fileName = context.propsValue['fileName'];
         const fileContent = context.propsValue['fileContent'];

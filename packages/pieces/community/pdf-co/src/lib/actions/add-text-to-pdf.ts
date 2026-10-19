@@ -1,57 +1,24 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, HttpError } from '@activepieces/pieces-common';
-import { PdfCoSuccessResponse, PdfCoErrorResponse } from '../common/types';
 import { pdfCoAuth } from '../auth';
-import { BASE_URL, commonProps } from '../common/props';
-
-// Interface for a single text annotation object based on PDF.co docs
-interface PdfCoTextAnnotation {
-	text: string;
-	x: number;
-	y: number;
-	pages?: string;
-	size?: number;
-	fontName?: string;
-	color?: string;
-	link?: string;
-	width?: number;
-	height?: number;
-	fontBold?: boolean;
-	fontUnderline?: boolean;
-	fontStrikeout?: boolean;
-	alignment?: string;
-	type?: 'text' | 'textField' | 'TextFieldMultiline' | 'checkbox';
-	id?: string;
-	transparent?: boolean;
-	RotationAngle?: number;
-}
-
-// Interface for the main request body for /pdf/edit/add
-interface PdfCoAddAnnotationsRequestBody {
-	url: string;
-	annotations: PdfCoTextAnnotation[];
-	async: boolean;
-	name?: string;
-	password?: string;
-	expiration?: number;
-	inline?: boolean;
-	profiles?: Record<string, unknown>; // JSON object for profiles
-	httpusername?: string;
-	httppassword?: string;
-}
+import { pdfCoClient } from '../common/client';
+import { pdfCoJobs } from '../common/jobs';
+import { commonProps, PDF_CO_DEFAULTS, pdfCoProps } from '../common/props';
+import { pdfCoOutputSchemas } from '../output-schemas';
 
 export const addTextToPdf = createAction({
 	name: 'add_text_to_pdf',
 	classification: 'WRITE',
 	displayName: 'Add Text to PDF',
 	description: 'Adds text to PDF.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
-			'Stamps a text annotation onto a source PDF (referenced by URL) at the given x/y coordinates, with optional font, size, color, and styling. Use when an agent needs to write text onto an existing document. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
+			'Stamps a text annotation onto a source PDF (referenced by URL) at the given x/y coordinates, with optional font, size, color, and styling. Page indexes start at 0. Agents should use Edit PDF (AI), which adds several texts, images and form values in one call. Each call produces a new output PDF file and consumes credits, so it is not idempotent.',
 		idempotent: false,
 	},
 	auth: pdfCoAuth,
+	outputSchema: pdfCoOutputSchemas.legacyEdit,
 	props: {
 		url: Property.ShortText({
 			displayName: 'Source PDF URL',
@@ -99,7 +66,7 @@ export const addTextToPdf = createAction({
 		pages: Property.ShortText({
 			displayName: 'Target Pages',
 			description:
-				'Specify page indices as comma-separated values or ranges to process (e.g. "0, 1, 2-" or "1, 2, 3-7").',
+				'Page indexes as comma-separated values or ranges (first page is 0), e.g. "0, 1, 2-" or "1, 2, 3-7".',
 			required: false,
 		}),
 		textBoxHeight: Property.Number({
@@ -124,102 +91,43 @@ export const addTextToPdf = createAction({
 			},
 		}),
 		...commonProps,
+		saveOutputFile: pdfCoProps.saveOutputFile({ defaultValue: PDF_CO_DEFAULTS.saveOutputFileOnExistingActions }),
 	},
-	async run(context) {
-		const { auth, propsValue } = context;
-		const {
-			url,
-			xCoordinate,
-			yCoordinate,
-			fontSize,
-			fontName,
-			fontBold,
-			fontStrikeout,
-			fontUnderline,
-			color,
-			pages,
-			textBoxAlignment,
-			textBoxHeight,
-			textBoxWidth,
-			text,
-			fileName,
-			pdfPassword,
-			httpPassword,
-			httpUsername,
-			expiration,
-		} = propsValue;
-
-		const textAnnotationPayload: PdfCoTextAnnotation = {
-			x: xCoordinate,
-			y: yCoordinate,
-			text,
-			type: 'text',
-			color,
-			pages,
-			width: textBoxWidth,
-			height: textBoxHeight,
-			alignment: textBoxAlignment,
-			size: fontSize,
-			fontName,
-			fontBold,
-			fontStrikeout,
-			fontUnderline,
-		};
-
-		const requestBody: PdfCoAddAnnotationsRequestBody = {
-			url: url,
-			annotations: [textAnnotationPayload],
-			async: false,
-			name: fileName,
-			expiration,
-			httppassword: httpPassword,
-			httpusername: httpUsername,
-			password: pdfPassword,
-		};
-
-		try {
-			const response = await httpClient.sendRequest<PdfCoSuccessResponse | PdfCoErrorResponse>({
+	async run({ auth, propsValue, files }) {
+		const body = pdfCoClient.readRecord(
+			await pdfCoClient.request<unknown>({
+				apiKey: pdfCoClient.apiKeyOf(auth),
 				method: HttpMethod.POST,
-				url: `${BASE_URL}/pdf/edit/add`,
-				headers: {
-					'x-api-key': auth.secret_text,
-					'Content-Type': 'application/json',
+				path: '/v1/pdf/edit/add',
+				body: {
+					url: propsValue.url,
+					annotations: [
+						{
+							x: propsValue.xCoordinate,
+							y: propsValue.yCoordinate,
+							text: propsValue.text,
+							type: 'text',
+							color: propsValue.color,
+							pages: propsValue.pages,
+							width: propsValue.textBoxWidth,
+							height: propsValue.textBoxHeight,
+							alignment: propsValue.textBoxAlignment,
+							size: propsValue.fontSize,
+							fontName: propsValue.fontName,
+							fontBold: propsValue.fontBold,
+							fontStrikeout: propsValue.fontStrikeout,
+							fontUnderline: propsValue.fontUnderline,
+						},
+					],
+					async: false,
+					name: propsValue.fileName,
+					expiration: propsValue.expiration,
+					httppassword: propsValue.httpPassword,
+					httpusername: propsValue.httpUsername,
+					password: propsValue.pdfPassword,
 				},
-				body: requestBody,
-			});
-
-			if (response.body.error) {
-				const errorBody = response.body as PdfCoErrorResponse;
-				let errorMessage = `PDF.co API Error (Add Text): Status ${errorBody.status}.`;
-				if (errorBody.message) {
-					errorMessage += ` Message: ${errorBody.message}.`;
-				} else {
-					errorMessage += ` An unspecified error occurred.`;
-				}
-				errorMessage += ` Raw response: ${JSON.stringify(errorBody)}`;
-				throw new Error(errorMessage);
-			}
-
-			const successBody = response.body as PdfCoSuccessResponse;
-			return {
-				outputUrl: successBody.url,
-				pageCount: successBody.pageCount,
-				outputName: successBody.name,
-				creditsUsed: successBody.credits,
-				remainingCredits: successBody.remainingCredits,
-			};
-		} catch (error) {
-			if (error instanceof HttpError) {
-				const responseBody = error.response?.body as PdfCoErrorResponse | undefined;
-				let detailedMessage = `HTTP Error calling PDF.co API (Add Text): ${error.message}.`;
-				if (responseBody && responseBody.message) {
-					detailedMessage += ` Server message: ${responseBody.message}.`;
-				} else if (responseBody) {
-					detailedMessage += ` Server response: ${JSON.stringify(responseBody)}.`;
-				}
-				throw new Error(detailedMessage);
-			}
-			throw error;
-		}
+			}),
+		);
+		return pdfCoJobs.legacyEditOutput({ body, files, saveOutputFile: propsValue.saveOutputFile, fileName: propsValue.fileName });
 	},
 });

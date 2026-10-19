@@ -6,6 +6,7 @@ import { ShopifyFulfillmentEventStatuses } from '../common/types';
 export const createFulfillmentEventAction = createAction({
   auth: shopifyAuth,
   name: 'create_fulfillment_event',
+  classification: 'WRITE',
   displayName: 'Create Fulfillment Event',
   description: 'Create a new fulfillment event.',
   audience: 'both',

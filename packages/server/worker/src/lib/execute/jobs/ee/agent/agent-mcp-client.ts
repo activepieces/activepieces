@@ -2,18 +2,33 @@ import { isNil, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, mcpTransport } from '@activepieces/server-utils'
 import { AgentMcpTool, agentToolPhases, McpAuthConfig, McpAuthType, mcpToolNameUtils } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
-import { ToolExecutionOptions, ToolSet } from 'ai'
+import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
 import { agentWorkerTools } from './agent-worker-tools'
+import { cardTitleFields, plainJsonSchema, TaintState } from './tools/tool-primitives'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 const MCP_OFFLOAD_BYTES = 64 * 1024
+const CARD_TITLE_SCHEMA = asSchema(z.object(cardTitleFields))
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
 // High-precision: matched against tool RESULT text (which can contain user/CRM data), so it
 // only fires on explicit auth signals. Low-precision alternations that match ordinary prose —
 // bare "reconnect", generic "invalid token", bare "oauth" — are deliberately excluded.
 const MCP_AUTH_ERROR_PATTERN = /\b(401|403)\b|unauthorized|forbidden|token (has )?(expired|revoked)|re-?authenticat|authentication (failed|error|required)|not (authenticated|authorized)|oauth\s*error/i
+
+function withCardTitleFields(tool: Tool): Tool {
+    const original = asSchema(tool.inputSchema)
+    return {
+        ...tool,
+        inputSchema: jsonSchema(async () => {
+            const base = plainJsonSchema(await original.jsonSchema)
+            const titles = plainJsonSchema(await CARD_TITLE_SCHEMA.jsonSchema)
+            return { ...base, properties: { ...titles.properties, ...base.properties } }
+        }),
+    }
+}
 
 async function connectMcpClient({ mcpCredentials, conversationId, log }: {
     mcpCredentials: { mcpServerUrl: string, mcpToken: string } | null
@@ -46,7 +61,7 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
     const mcpToolSet: Record<string, unknown> = {}
     for (const [name, tool] of Object.entries(allMcpTools)) {
         if (!agentToolPhases.isAgentHiddenTool(name)) {
-            mcpToolSet[name] = tool
+            mcpToolSet[name] = withCardTitleFields(tool)
         }
     }
     return { mcpClient: client, mcpToolSet }
@@ -279,9 +294,10 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     return { content: [{ type: 'text', text: agentAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
 }
 
-function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult }: {
+function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelectedAuth, saveLargeResult }: {
     mcpToolSet: Record<string, unknown>
     brokenConnectors: Set<string>
+    taintState: TaintState
     getSelectedAuth?: (params: { pieceName: string }) => string | undefined
     saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
 }): Record<string, unknown> {
@@ -301,6 +317,9 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
                 const args = injectSelectedAuth({ name, args: rawArgs, getSelectedAuth })
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
+                }
+                if (agentToolPhases.taintsTurn(name)) {
+                    taintState.tainted = true
                 }
                 const { data: toolResult, error } = await tryCatch(() => agentWorkerTools.withToolTimeout({
                     fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),

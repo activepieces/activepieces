@@ -10,13 +10,10 @@ export { ConnectionDropdown } from './agent-tools/piece-tool-dialog/connection-s
 export { PieceActionsList } from './agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';
 export { PiecesList } from './agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
 export { usePieceToolsDialogStore } from './agent-tools/stores/pieces-tools';
-export { AIModelSelector, PROVIDER_EMBEDDING_MODELS } from './ai-model';
+export { PROVIDER_EMBEDDING_MODELS } from './ai-model';
+export { ModelPicker } from './ai-model/model-picker';
 export { SUPPORTED_AI_PROVIDERS } from './ai-providers';
 export type { AiProviderInfo } from './ai-providers';
 export { AgentStructuredOutput } from './structured-output';
 export { agentQueries, agentMutations } from './hooks/agent-hooks';
-export {
-  useAgentsAvailable,
-  useAgentsEnabled,
-  useAgentsNavVisible,
-} from './hooks/agents-hooks';
+export { useAgentsAvailable, useAgentsNavVisible } from './hooks/agents-hooks';

@@ -9,7 +9,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { QueueName } from '../workers/job'
 import { BarrierJobData, BarrierJobName, BarrierQueueConfig, barrierQueueFactory } from './barrier-queue-factory'
 import { barrierService } from './barrier-service'
-import { fanOutDispatchGaveUp, handleFanOutDispatch, handleFanOutDispatchGaveUp } from './fan-out-dispatcher-job'
+import { handleFanOutDispatch, handleFanOutDispatchFailed, handleFanOutDispatchGaveUp } from './fan-out-dispatcher-job'
 
 let barrierWorker: Worker<BarrierJobData> | undefined = undefined
 
@@ -28,7 +28,7 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
                 const jobLogger = createLogger({
                     event: 'barrier.job',
                     job: { id: job.id, type: job.name },
-                    fanIn: { barrierId: job.data.barrierId },
+                    waitpoint: { id: job.data.barrierId },
                 })
                 return wideEvent.run({
                     logger: jobLogger,
@@ -50,11 +50,7 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
             if (isNil(job) || job.name !== BarrierJobName.FAN_OUT_DISPATCH) {
                 return
             }
-            const reason = fanOutDispatchGaveUp({ attemptsMade: job.attemptsMade, attempts: job.opts.attempts, error })
-            if (isNil(reason)) {
-                return
-            }
-            handleFanOutDispatchGaveUp({ data: job.data, error, reason, log }).catch((handlerError: unknown) => {
+            handleFanOutDispatchFailed({ data: job.data, attemptsMade: job.attemptsMade, attempts: job.opts.attempts, error, log }).catch((handlerError: unknown) => {
                 exceptionHandler.handle(handlerError, log)
             })
         })
@@ -68,6 +64,10 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
 
     async addFanOutDispatch(params: BarrierJobData): Promise<void> {
         await barrierQueueInstance.addFanOutDispatch(params)
+    },
+
+    async addFanOutGiveUp(params: BarrierJobData): Promise<void> {
+        await barrierQueueInstance.addFanOutGiveUp(params)
     },
 
     async clearEvaluationDedupKey(barrierId: string): Promise<void> {
@@ -96,6 +96,9 @@ async function processBarrierJob({ job, log }: ProcessBarrierJobParams): Promise
             return
         case BarrierJobName.FAN_OUT_DISPATCH:
             await handleFanOutDispatch({ data: job.data, log })
+            return
+        case BarrierJobName.FAN_OUT_GIVE_UP:
+            await handleFanOutDispatchGaveUp({ data: job.data, log })
             return
         default:
             log.warn({ job: { id: job.id, type: job.name } }, '[barrierQueue#worker] Unknown barrier job name, dropping it')

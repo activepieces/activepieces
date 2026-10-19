@@ -6,6 +6,7 @@ import { pinchPaymentsClient } from '../common/client';
 export const findEventAction = createAction({
   auth: pinchPaymentsAuth,
   name: 'find_event',
+  classification: 'READ',
   displayName: 'Find Event',
   description: 'Find an event using the Event ID',
   audience: 'both',

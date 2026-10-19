@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { Resolver, useForm } from 'react-hook-form';
 
 import { platformUserApi } from '@/api/platform-user-api';
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,6 +24,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RoleSelector } from '@/features/members';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 export const UpdateUserDialog = ({
   children,
@@ -68,7 +70,7 @@ export const UpdateUserDialog = ({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.sm}>
         <DialogHeader>
           <DialogTitle>{t('Update User Role')}</DialogTitle>
         </DialogHeader>
@@ -123,6 +125,7 @@ export const UpdateUserDialog = ({
           <Button
             disabled={isPending}
             loading={isPending}
+            {...adminControl(AdminControl.USERS_EDIT_SUBMIT)}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();

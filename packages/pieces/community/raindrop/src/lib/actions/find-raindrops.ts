@@ -6,6 +6,7 @@ import { raindropCommons } from '../common';
 export const findRaindropsAction = createAction({
   auth: raindropAuth,
   name: 'find_raindrops',
+  classification: 'SEARCH',
   displayName: 'Find Bookmarks',
   description: 'Lists bookmarks from a collection, with optional keyword search',
   audience: 'both',

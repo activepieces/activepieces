@@ -4,6 +4,7 @@ import { netlifyAuth } from "../common/auth";
 
 export const newDeploySucceeded = createTrigger({
   name: "new_deploy_succeeded",
+  classification: 'READ',
   displayName: "New Deploy Succeeded",
   description: "Fires when a new site version has successfully deployed.",
   aiMetadata: {

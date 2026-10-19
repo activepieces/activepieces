@@ -33,7 +33,7 @@ You can also copy a variable's reference from the Variables page: open the row's
 
 A variable's value is encrypted at rest and never displayed in the variables list or the edit dialog. To change it, open the variable and click **Rotate value**, then enter the new value.
 
-Members with write access (Editor or Admin) can retrieve the plaintext through the API's reveal endpoint (`POST /v1/variables/:id/reveal`). On platforms with audit logs enabled, each reveal is recorded as a `VARIABLE_VALUE_REVEALED` event.
+Members with write access (Editor or Admin) can retrieve the plaintext through the reveal endpoint (`POST /v1/variables/:id/reveal`) with their signed-in session. API keys cannot reveal a value. On platforms with audit logs enabled, each reveal is recorded as a `VARIABLE_VALUE_REVEALED` event.
 
 ## Deleting a variable
 
@@ -42,6 +42,10 @@ Deleting a variable doesn't touch the flows that reference it. Any step still re
 </Warning>
 
 Before deleting a variable, search your flows for its reference and remove or replace those steps first.
+
+## Managing variables from your backend
+
+Use the [Variables API](/endpoints/variables/schema) with a platform API key to create, list, update, and delete variables in any project of your platform. This is how you store per-tenant secrets when you embed Activepieces.
 
 ## Permissions
 

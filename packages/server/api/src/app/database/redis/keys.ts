@@ -1,6 +1,7 @@
 import { PlatformId, ProjectId } from '@activepieces/core-utils'
 
 export const getAiProviderConfirmKey = (providerId: string): string => `ai_provider:confirm-downgrade:${providerId}`
+export const getManagedAiProviderKeyLockKey = (platformId: PlatformId): string => `ai_provider_managed_key_${platformId}`
 export const getPlatformPlanNameKey = (platformId: PlatformId): string => `platform_plan:plan:${platformId}`
 export const getCreditsBalanceKey = (platformId: PlatformId): string => `platform_plan:credits:${platformId}`
 export const getAppSumoAiCreditsBalanceKey = (platformId: PlatformId): string => `platform_plan:appsumo-ai-credits:${platformId}`
@@ -19,6 +20,7 @@ export const getProjectConcurrencyPoolKey = (projectId: ProjectId): string => `p
 export const getConcurrencyPoolLimitKey = (poolId: string): string => `concurrency-pool:limit:${poolId}` // gets limit value for the pool
 export const getConcurrencyPoolSetKey = (poolId: string): string => `active_jobs_set:pool:${poolId}`
 export const getConcurrencyPoolParkedKey = (poolId: string): string => `parked_jobs_set:pool:${poolId}`
+export const getMcpOAuthRevokedGrantKey = (grantId: string): string => `mcp_oauth:revoked_grant:${grantId}`
 
 export const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 export const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60

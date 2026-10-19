@@ -39,7 +39,19 @@ function buildCreateRequest({
         auth: {
           accessKeyId: value('accessKeyId'),
           secretAccessKey: value('secretAccessKey'),
+          sessionToken: optional('sessionToken'),
         },
+      };
+    case AIProviderName.VERTEX:
+      return {
+        provider,
+        displayName,
+        config: {
+          project: value('project'),
+          region: value('region'),
+          models,
+        },
+        auth: { serviceAccountJson: value('serviceAccountJson') },
       };
     case AIProviderName.CLOUDFLARE_GATEWAY:
       return {

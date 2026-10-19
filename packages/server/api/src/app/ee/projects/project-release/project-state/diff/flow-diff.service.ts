@@ -1,6 +1,7 @@
 import { assertNotNullOrUndefined, isNil, mapsAreSame } from '@activepieces/core-utils'
 import { DEFAULT_SAMPLE_DATA_SETTINGS, FlowActionType, flowPieceUtil, FlowProjectOperationType, FlowState, flowStructureUtil, FlowTriggerType, FlowVersion, ProjectOperation, ProjectState, Step } from '@activepieces/shared'
 import deepEqual from 'deep-equal'
+import { mergeDestinationAuth } from '../project-state-helper'
 
 export const flowDiffService = {
     async diff({ newState, currentState }: DiffParams): Promise<ProjectOperation[]> {
@@ -99,7 +100,7 @@ async function isFlowChanged(fromFlow: FlowState, targetFlow: FlowState): Promis
     })
 
     const normalizedFromFlow = await normalize(fromFlow.version)
-    const normalizedTargetFlow = await normalize(targetFlow.version)
+    const normalizedTargetFlow = await normalize(mergeDestinationAuth({ destinationVersion: fromFlow.version, incomingVersion: targetFlow.version }))
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
         || !deepEqual(normalizedFromFlow.trigger, normalizedTargetFlow.trigger) || !isMatched || !notesMatched
 }
@@ -109,13 +110,9 @@ async function normalize(flowVersion: FlowVersion): Promise<FlowVersion> {
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
         clonedStep.settings.sampleData = DEFAULT_SAMPLE_DATA_SETTINGS
         clonedStep.lastUpdatedDate = ''
-        const authExists = clonedStep?.settings?.input?.auth
 
         if ([FlowActionType.PIECE, FlowTriggerType.PIECE].includes(step.type)) {
             clonedStep.settings.pieceVersion = ''
-            if (authExists) {
-                clonedStep.settings.input.auth = ''
-            }
         }
         return clonedStep
     })

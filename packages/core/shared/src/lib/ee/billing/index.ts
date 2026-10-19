@@ -1,17 +1,6 @@
 import { isNil, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { AiCreditsAutoTopUpState, ConsumableFeatureId, PlanName, PlatformPlanWithOnlyLimits, UnconsumableFeatureId } from '../../management/platform'
-import { PiecesFilterType } from '../../management/project'
-
-export type ProjectPlanLimits = {
-    nickname?: string
-    locked?: boolean
-    pieces?: string[]
-    aiCredits?: number | null
-    piecesFilterType?: PiecesFilterType
-    activeFlowsLimit?: number | null
-}
-
 
 export const AdjustUnconsumableFeatureQuantityParams = z.object({
     featureId: z.enum(UnconsumableFeatureId),
@@ -41,6 +30,10 @@ export const PurchasablePlan = z.object({
     includedSeats: Nullable(z.number()),
     includedCredits: Nullable(z.number()),
     creditsResetInterval: Nullable(z.string()),
+    creditTopUp: Nullable(z.object({
+        price: z.number(),
+        credits: z.number(),
+    })),
 })
 export type PurchasablePlan = z.infer<typeof PurchasablePlan>
 
@@ -85,7 +78,7 @@ export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'free',
     tablesEnabled: true,
     eventStreamingEnabled: false,
-    includedCredits: 100,
+    includedCredits: 1000,
     activeFlowsLimit: undefined,
     projectsLimit: 1,
     embeddingEnabled: false,

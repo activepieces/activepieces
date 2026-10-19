@@ -6,6 +6,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 export const createTopic = createAction({
   auth: discourseAuth,
   name: 'create_topic',
+  classification: 'WRITE',
   description: 'Create a new topic in Discourse',
   audience: 'both',
   aiMetadata: { description: 'Start a new Discourse topic (thread) with a title and body, optionally filed under a category ID. Use when an agent needs to open a new discussion rather than reply to an existing thread (use Create Post for replies). Each call creates a new topic, so it is not idempotent.', idempotent: false },

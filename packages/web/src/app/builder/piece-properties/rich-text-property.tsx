@@ -9,7 +9,7 @@ import { inputClass } from '@/components/ui/input';
 import { RequiredFieldAsterisk } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
-import { TextInputWithMentions } from './text-input-with-mentions';
+import { FormFieldMentionInput } from './text-input-with-mentions';
 
 function resolveMode(value: unknown): RichTextMode {
   if (typeof value !== 'string') {
@@ -77,14 +77,15 @@ function RichTextProperty({
           {property.required && <RequiredFieldAsterisk />}
         </div>
         <span className="grow" />
-        <span className="text-xs text-muted-foreground tabular-nums">
+        <span className="text-xs text-gray-11 tabular-nums">
           {t('{count, plural, other {# chars}}', { count: charCount })}
         </span>
       </FormLabel>
 
-      <TextInputWithMentions
+      <FormFieldMentionInput
         key={mode}
         disabled={disabled}
+        ariaLabel={property.displayName}
         initialValue={value ?? ''}
         onChange={onChange}
         outputFormat={mode === 'html' ? 'html' : 'text'}

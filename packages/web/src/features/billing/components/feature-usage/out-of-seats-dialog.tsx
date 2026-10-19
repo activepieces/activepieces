@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { billingMutations } from '../../hooks/billing-hooks';
 import { billingUtils } from '../../utils/billing-utils';
@@ -40,8 +41,8 @@ export const OutOfSeatsDialog = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-[420px]">
           <DialogHeader>
-            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
-              <Users className="size-5 text-primary" />
+            <div className="flex size-10 items-center justify-center rounded-full bg-accent-3">
+              <Users className="size-5 text-accent-11" />
             </div>
             <DialogTitle>{t("You're out of seats")}</DialogTitle>
             <DialogDescription>
@@ -82,6 +83,7 @@ export const OutOfSeatsDialog = ({
             )}
             {capBinds ? (
               <Button
+                {...adminControl(AdminControl.BILLING_SEATS_KEEP_PLAN_RUN)}
                 type="button"
                 loading={isReactivating}
                 onClick={() => reactivate()}
@@ -90,6 +92,7 @@ export const OutOfSeatsDialog = ({
               </Button>
             ) : (
               <Button
+                {...adminControl(AdminControl.BILLING_SEATS_ADD_OPEN)}
                 type="button"
                 onClick={() => {
                   onOpenChange(false);

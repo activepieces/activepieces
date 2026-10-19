@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { whatsscaleAuth } from '../auth';
 import { whatsscaleClient } from '../common/client';
 import { whatsscaleProps } from '../common/props';
+import { incomingMessageOutputSchema } from '../output-schemas';
 
 export const watchIncomingMessagesTrigger = createTrigger({
   auth: whatsscaleAuth,
@@ -14,6 +15,7 @@ export const watchIncomingMessagesTrigger = createTrigger({
     description:
       'Fires when a new direct (one-on-one) WhatsApp message is received on the connected session, excluding group and channel messages. Each event represents a single inbound private message and includes the sender phone number and name, message body, media details, and reply/forward metadata. Use to react to incoming customer or contact messages in private chats.',
   },
+  outputSchema: incomingMessageOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   props: {
     session: whatsscaleProps.session,
@@ -22,6 +24,7 @@ export const watchIncomingMessagesTrigger = createTrigger({
     message_id: '3EB0A1B2C3D4E5F6G7H8I9',
     chat_id: '31612345678',
     from_number: '31612345678',
+    from_id: '43001330020491@lid',
     from_name: 'John Doe',
     body: 'Hello, I have a question about your product',
     has_media: false,

@@ -6,6 +6,7 @@ import { makeRequest } from '../common';
 export const createNoteAction = createAction({
   auth: memAuth,
   name: 'create_note',
+  classification: 'WRITE',
   displayName: 'Create Note',
   description: 'Log a plain-text Markdown note into Mem, optionally with formatting, templates, collections, and timestamps.',
   audience: 'both',

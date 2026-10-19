@@ -1,6 +1,6 @@
 import { FlowId, FlowRunId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { Flow } from '@activepieces/shared'
-import { Job, JobsOptions } from 'bullmq'
+import { Job, JobsOptions, JobState } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
@@ -16,6 +16,8 @@ export enum SystemJobName {
     TOOL_SEARCH_REINDEX = 'tool-search-reindex',
     CHAT_STALE_SWEEP = 'chat-stale-sweep',
     WAITPOINT_DEADLINE_SWEEP = 'waitpoint-deadline-sweep',
+    RUN_BACKGROUND_MIGRATIONS = 'run-background-migrations',
+    AUDIT_LOG_RETENTION = 'audit-log-retention',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -58,6 +60,8 @@ type SystemJobDataMap = {
     [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
     [SystemJobName.CHAT_STALE_SWEEP]: Record<string, never>
     [SystemJobName.WAITPOINT_DEADLINE_SWEEP]: Record<string, never>
+    [SystemJobName.RUN_BACKGROUND_MIGRATIONS]: Record<string, never>
+    [SystemJobName.AUDIT_LOG_RETENTION]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
@@ -91,8 +95,9 @@ type UpsertJobParams<T extends SystemJobName> = {
 export type SystemJobSchedule = {
     init(): Promise<void>
     startWorker(): Promise<void>
-    upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
+    upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<UpsertJobResult>
     getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
+    getJobState(jobId: string): Promise<JobState | 'unknown'>
     removeJob(params: { jobId: string }): Promise<void>
     close(): Promise<void>
 }
@@ -100,4 +105,8 @@ export type SystemJobSchedule = {
 export const systemJobIds = {
     resumeDelay: ({ waitpointId }: { waitpointId: string }): string => `resume-delay-${waitpointId}`,
     legacyResumeDelay: ({ flowRunId }: { flowRunId: FlowRunId }): string => `resume-delay-${flowRunId}`,
+}
+
+export type UpsertJobResult = {
+    status: 'added' | 'kept' | 'retried' | 'scheduler-upserted'
 }

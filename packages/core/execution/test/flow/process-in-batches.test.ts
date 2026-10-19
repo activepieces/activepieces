@@ -388,6 +388,6 @@ describe('Process in Batches step', () => {
     })
 
     it('keeps the flow schema version unchanged', () => {
-        expect(LATEST_FLOW_SCHEMA_VERSION).toBe('24')
+        expect(LATEST_FLOW_SCHEMA_VERSION).toBe('28')
     })
 })

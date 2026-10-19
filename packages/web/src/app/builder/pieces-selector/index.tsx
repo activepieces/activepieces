@@ -159,11 +159,10 @@ const PieceSelectorContent = ({
   };
 
   const { platform } = platformHooks.useCurrentPlatform();
+  const hasAiPieceActions =
+    !isNil(aiProviders) && aiProviders.length > 0 && !isAiPieceUnavailable;
   const tabsList = pieceSelectorCustomization.buildResolvedTabs({
-    availableBuiltinTabs: getTabsList(
-      operation.type,
-      !isNil(aiProviders) && aiProviders.length > 0 && !isAiPieceUnavailable,
-    ),
+    availableBuiltinTabs: getTabsList(operation.type, hasAiPieceActions),
     config: platform.pieceSelectorConfig,
   });
   const firstTab = tabsList[0];

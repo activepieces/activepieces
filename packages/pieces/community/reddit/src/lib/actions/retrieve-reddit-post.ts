@@ -1,18 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { redditAuth } from '../auth';
+import { redditApi } from '../common/client';
+import { retrieveRedditPostOutputSchema } from '../output-schemas';
 
 export const retrieveRedditPost = createAction({
   auth: redditAuth,
   name: 'retrieveRedditPost',
+  outputSchema: retrieveRedditPostOutputSchema,
   classification: 'SEARCH',
   displayName: 'Retrieve Post',
   description: 'Fetch top posts in a subreddit with optional size limit.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Lists posts from a given subreddit, choosing the listing via a category (hot, new, top, rising, or controversial). Use it to read or monitor a subreddit\'s feed rather than to look up one known post. Requires the subreddit name; an optional size caps how many posts are returned (max 100). Read-only and idempotent.', idempotent: true },
   props: {
     post_category: Property.StaticDropdown({
@@ -43,27 +42,11 @@ export const retrieveRedditPost = createAction({
     }),
   },
   async run(context) {
-    const baseUrl = `https://oauth.reddit.com/r/${context.propsValue.subreddit}/${context.propsValue.post_category}`;
-    const limit = context.propsValue.size || 10;
-
-    const response = await httpClient.sendRequest({
+    return redditApi.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.GET,
-      url: baseUrl,
-      queryParams: {
-        limit: limit.toString(),
-      },
-      headers: {
-        'Authorization': `Bearer ${context.auth.access_token}`,
-        'User-Agent': 'ActivePieces Reddit Client',
-        'Content-Type': 'application/json',
-      },
-      timeout: 5000,
+      path: `/r/${context.propsValue.subreddit}/${context.propsValue.post_category}`,
+      query: { limit: context.propsValue.size || 10 },
     });
-
-    if (response.status !== 200) {
-      throw new Error(`Reddit API error: ${response.status} ${JSON.stringify(response.body)}`);
-    }
-
-    return response.body;
   },
 });

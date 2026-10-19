@@ -84,16 +84,6 @@ export class PausedFlowTimeoutError extends ExecutionError {
     }
 }
 
-export class PieceMemoryLimitError extends ExecutionError {
-    constructor(heapLimitMb: string | undefined, standardError?: string, cause?: unknown) {
-        super('PieceMemoryLimitError', JSON.stringify({
-            message: 'The piece ran out of memory',
-            heapLimitMb,
-            standardError,
-        }), ExecutionErrorType.USER, cause)
-    }
-}
-
 export class FileSizeError extends ExecutionError {
     constructor(currentFileSize: number, maximumSupportSize: number, cause?: unknown) {
         super('FileSizeError', JSON.stringify({
@@ -152,6 +142,13 @@ export class EngineGenericError extends ExecutionError {
     }
 }
 
+export class RequireError extends ExecutionError {
+    constructor(piecePath: string, cause?: unknown) {
+        const causeMessage = cause instanceof Error ? cause.message : String(cause)
+        super('RequireError', formatMessage(`Failed to require piece module at ${piecePath}: ${causeMessage}`), ExecutionErrorType.ENGINE, cause)
+    }
+}
+
 export class SSRFBlockedError extends ExecutionError {
     constructor({ host, ip, cause }: { host: string, ip: string, cause?: unknown }) {
         super(
@@ -160,5 +157,10 @@ export class SSRFBlockedError extends ExecutionError {
             ExecutionErrorType.USER,
             cause,
         )
+    }
+}
+export class AiRouterEvaluationError extends ExecutionError {
+    constructor({ message, cause }: { message: string, cause?: unknown }) {
+        super('AiRouterEvaluationError', formatMessage(message), ExecutionErrorType.USER, cause)
     }
 }

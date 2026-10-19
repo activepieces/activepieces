@@ -39,6 +39,7 @@ export type ApErrorParams =
     | JobRemovalFailureErrorParams
     | OpenAiFailedErrorParams
     | PauseMetadataMissingErrorParams
+    | PausedFlowTimeoutExceededParams
     | PermissionDeniedErrorParams
     | QuotaExceededParams
     | FeatureDisabledErrorParams
@@ -49,8 +50,13 @@ export type ApErrorParams =
     | TriggerUpdateStatusErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
+    | AgentRunSupersededErrorParams
+    | AgentRunBusyErrorParams
+    | RequiredActionsMissingErrorParams
+    | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
+    | UserNotFoundOnPlatformErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
     | ExistingAlertChannelErrorParams
@@ -73,6 +79,7 @@ export type ApErrorParams =
     | SandboxExecutionTimeoutParams
     | SandboxInternalErrorParams
     | InvalidCustomDomainErrorParams
+    | EventDestinationUrlChangeRequiresHeadersParams
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
     | ErrorUpdatingSubscriptionParams
@@ -83,6 +90,7 @@ export type ApErrorParams =
     | DoesNotMeetBusinessRequirementsParams
     | PieceSyncNotSupportedErrorParams
     | SandboxLogSizeExceededParams
+    | PieceBundleNotAvailableParams
     | SecretManagerConnectionFailedParams
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
@@ -92,6 +100,7 @@ export type ApErrorParams =
     | ExecutionStateMissingParams
     | GenericErrorParams
     | SandboxCapacityExceededParams
+    | EventDestinationFormatNotSupportedByWebhookParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -114,6 +123,12 @@ export type SandboxExecutionTimeoutParams = BaseErrorParams<ErrorCode.SANDBOX_EX
     standardOutput: string
     standardError: string
     neverStarted?: boolean
+}>
+
+export type PieceBundleNotAvailableParams = BaseErrorParams<ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE, {
+    pieceName: string
+    pieceVersion: string
+    status: number
 }>
 
 export type SandboxInternalErrorParams = BaseErrorParams<ErrorCode.SANDBOX_INTERNAL_ERROR, {
@@ -215,6 +230,13 @@ ErrorCode.USER_IS_INACTIVE,
 }
 >
 
+export type UserNotFoundOnPlatformErrorParams = BaseErrorParams<
+ErrorCode.USER_NOT_FOUND_ON_PLATFORM,
+{
+    email: string
+}
+>
+
 export type ExistingUserErrorParams = BaseErrorParams<
 ErrorCode.EXISTING_USER,
 {
@@ -308,6 +330,39 @@ ErrorCode.VALIDATION,
 }
 >
 
+export type AgentRunSupersededErrorParams = BaseErrorParams<
+ErrorCode.AGENT_RUN_SUPERSEDED,
+{
+    message: string
+}
+>
+
+export type AgentRunBusyErrorParams = BaseErrorParams<
+ErrorCode.AGENT_RUN_BUSY,
+{
+    message: string
+}
+>
+
+export type RequiredActionsMissingErrorParams = BaseErrorParams<
+ErrorCode.REQUIRED_ACTIONS_MISSING,
+{
+    message: string
+    mode: 'any' | 'all'
+    requiredActions: Record<string, string[]>
+    missingActions: Record<string, string[]>
+    skippedActions: Record<string, string[]>
+}
+>
+
+export type FileTooLargeErrorParams = BaseErrorParams<
+ErrorCode.FILE_TOO_LARGE,
+{
+    message: string
+    maxBytes: number
+}
+>
+
 export type TriggerUpdateStatusErrorParams = BaseErrorParams<
 ErrorCode.TRIGGER_UPDATE_STATUS,
 {
@@ -323,6 +378,11 @@ export type PauseMetadataMissingErrorParams = BaseErrorParams<
 ErrorCode.PAUSE_METADATA_MISSING,
 Record<string, never>
 >
+
+export type PausedFlowTimeoutExceededParams = BaseErrorParams<ErrorCode.PAUSED_FLOW_TIMEOUT_EXCEEDED, {
+    pauseTimeoutDays: number
+    flowRunId: string
+}>
 
 export type InvalidApiKeyParams = BaseErrorParams<
 ErrorCode.INVALID_API_KEY,
@@ -350,6 +410,7 @@ ErrorCode.QUOTA_EXCEEDED,
     metric: PlatformUsageMetric
     usage?: number
     limit?: number
+    message?: string
 }
 >
 
@@ -431,6 +492,10 @@ export type FlowExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.FLOW_E
     externalId: string
 }>
 
+export type EventDestinationUrlChangeRequiresHeadersParams = BaseErrorParams<ErrorCode.EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS, {
+    headerNames: string[]
+}>
+
 export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
     pieceName: string
 }>
@@ -501,6 +566,10 @@ export type GenericErrorParams = BaseErrorParams<ErrorCode.GENERIC_ERROR, {
 
 export type SandboxCapacityExceededParams = BaseErrorParams<ErrorCode.SANDBOX_CAPACITY_EXCEEDED, Record<string, never>>
 
+export type EventDestinationFormatNotSupportedByWebhookParams = BaseErrorParams<ErrorCode.EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK, {
+    format: string
+}>
+
 export enum ErrorCode {
     INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
     MACHINE_NOT_CONNECTED = 'MACHINE_NOT_CONNECTED',
@@ -522,6 +591,7 @@ export enum ErrorCode {
     SANDBOX_EXECUTION_TIMEOUT = 'SANDBOX_EXECUTION_TIMEOUT',
     SANDBOX_MEMORY_ISSUE = 'SANDBOX_MEMORY_ISSUE',
     SANDBOX_INTERNAL_ERROR = 'SANDBOX_INTERNAL_ERROR',
+    PIECE_BUNDLE_NOT_AVAILABLE = 'PIECE_BUNDLE_NOT_AVAILABLE',
     SANDBOX_CAPACITY_EXCEEDED = 'SANDBOX_CAPACITY_EXCEEDED',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
@@ -546,6 +616,7 @@ export enum ErrorCode {
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',
+    PAUSED_FLOW_TIMEOUT_EXCEEDED = 'PAUSED_FLOW_TIMEOUT_EXCEEDED',
     PERMISSION_DENIED = 'PERMISSION_DENIED',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
@@ -557,12 +628,18 @@ export enum ErrorCode {
     TRIGGER_UPDATE_STATUS = 'TRIGGER_UPDATE_STATUS',
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
+    USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
+    AGENT_RUN_SUPERSEDED = 'AGENT_RUN_SUPERSEDED',
+    AGENT_RUN_BUSY = 'AGENT_RUN_BUSY',
+    REQUIRED_ACTIONS_MISSING = 'REQUIRED_ACTIONS_MISSING',
+    FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
     INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
+    EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS = 'EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS',
     MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
@@ -577,4 +654,5 @@ export enum ErrorCode {
     RESUME_LOGS_FILE_MISSING = 'RESUME_LOGS_FILE_MISSING',
     EXECUTION_STATE_MISSING = 'EXECUTION_STATE_MISSING',
     GENERIC_ERROR = 'GENERIC_ERROR',
+    EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK = 'EVENT_DESTINATION_FORMAT_NOT_SUPPORTED_BY_WEBHOOK',
 }

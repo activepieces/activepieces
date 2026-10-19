@@ -23,7 +23,7 @@ export const findSpreadsheets = createAction({
 	},
 	auth: googleSheetsAuth,
 	props: {
-		includeTeamDrives: includeTeamDrivesProp(),
+		includeTeamDrives: includeTeamDrivesProp({ advanced: false }),
 		spreadsheet_name: Property.ShortText({
 			displayName: 'Spreadsheet Name',
 			description: 'Enter the name of the spreadsheet to search for',
@@ -32,7 +32,7 @@ export const findSpreadsheets = createAction({
 		exact_match: Property.Checkbox({
 			displayName: 'Exact Match',
 			description:
-				'If true, only return spreadsheets that exactly match the name. If false, return spreadsheets that contain the name.',
+				'Only return spreadsheets whose name matches exactly.',
 			required: false,
 			defaultValue: false,
 		}),

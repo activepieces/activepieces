@@ -4,6 +4,7 @@ import { pubrioAuth } from '../../index';
 export const pubrioWebhookTrigger = createTrigger({
 	auth: pubrioAuth,
 	name: 'pubrio_monitor_event',
+	classification: 'READ',
 	displayName: 'Monitor Event (Webhook)',
 	description:
 		'Triggers once per signal (signal_first mode) or once per company (company_first mode) when a Pubrio monitor fires. Copy the webhook URL into your Pubrio monitor destination configuration.',

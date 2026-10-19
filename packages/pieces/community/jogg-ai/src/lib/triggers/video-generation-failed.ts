@@ -8,6 +8,7 @@ interface WebhookInfo {
 
 export const videoGenerationFailed = createTrigger({
   name: 'videoGenerationFailed',
+  classification: 'READ',
   displayName: 'Video Generation Failed',
   description: 'Fires when video generation fails',
   aiMetadata: {

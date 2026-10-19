@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
+import { updateItemNameActionOutputSchema } from '../output-schemas';
 
 export const updateItemNameAction = createAction({
   auth: mondayAuth,
@@ -8,8 +9,9 @@ export const updateItemNameAction = createAction({
   classification: 'WRITE',
   displayName: 'Update Item Name',
   description: 'Updates an item name.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Renames an existing monday.com item identified by board and item id. Use to change an item\'s title. Idempotent: re-applying the same name leaves the item unchanged.', idempotent: true },
+  outputSchema: updateItemNameActionOutputSchema,
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

@@ -40,7 +40,7 @@ function listIsComplete({
   return count < pageSize;
 }
 
-function label({
+function resolve({
   tools,
   connections,
   connectionsComplete,
@@ -48,26 +48,46 @@ function label({
   tools: AgentPieceTool[];
   connections: { externalId: string; displayName: string }[];
   connectionsComplete: boolean;
-}): string | null {
+}): AccountStatus | null {
   if (tools.length === 0) {
     return null;
   }
   const externalIds = [...new Set(tools.map(pinnedExternalId))];
   if (externalIds.some(isNil)) {
-    return t('Connect an account');
+    return { state: 'missing', text: t('Connect an account') };
   }
   if (externalIds.length > 1) {
-    return t('Different account per action');
+    return { state: 'mixed', text: t('Different account per action') };
   }
   const pinned = connections.find(
     (connection) => connection.externalId === externalIds[0],
   );
   if (!isNil(pinned)) {
-    return pinned.displayName;
+    return { state: 'connected', text: pinned.displayName };
   }
   // Absent from a list we know is partial proves nothing, and a wrong "deleted" is worse than
   // saying nothing at all.
-  return connectionsComplete ? t('Account was deleted') : null;
+  return connectionsComplete
+    ? { state: 'deleted', text: t('Account was deleted') }
+    : null;
 }
 
-export const agentToolAccount = { label, listIsComplete, requiresAccount };
+function label(params: {
+  tools: AgentPieceTool[];
+  connections: { externalId: string; displayName: string }[];
+  connectionsComplete: boolean;
+}): string | null {
+  return resolve(params)?.text ?? null;
+}
+
+export const agentToolAccount = {
+  label,
+  listIsComplete,
+  requiresAccount,
+  resolve,
+};
+
+export type AccountStatus = {
+  state: 'connected' | 'missing' | 'mixed' | 'deleted';
+  text: string;
+};

@@ -114,3 +114,59 @@ describe('the status the page reads as listLoaded', () => {
     ).toBe(false);
   });
 });
+
+describe('showsNoMatchNotice with a project filter', () => {
+  it('explains an empty grid when a project hides everything and there is no search', () => {
+    expect(
+      showsNoMatchNotice({
+        matchCount: 0,
+        search: '',
+        projectFiltered: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('stays quiet when the project filter is off and nothing was searched', () => {
+    expect(
+      showsNoMatchNotice({
+        matchCount: 0,
+        search: '',
+        projectFiltered: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('still speaks for a search that matches nothing inside a project', () => {
+    expect(
+      showsNoMatchNotice({
+        matchCount: 0,
+        search: 'nothing',
+        projectFiltered: true,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('showsFirstRun with a project filter', () => {
+  it('does not offer the first-run hero when a project simply has no agents', () => {
+    expect(
+      showsFirstRun({
+        listLoaded: true,
+        hasAnyAgents: false,
+        search: '',
+        projectFiltered: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('still offers it when nothing is filtered and the platform has none', () => {
+    expect(
+      showsFirstRun({
+        listLoaded: true,
+        hasAnyAgents: false,
+        search: '',
+        projectFiltered: false,
+      }),
+    ).toBe(true);
+  });
+});

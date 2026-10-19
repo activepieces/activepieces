@@ -17,7 +17,6 @@ const OPEN_PIECE = '@activepieces/piece-test-clock'
 const action = (name: string) => ({ name, displayName: name, description: name, requireAuth: true, props: {} })
 
 beforeAll(async () => {
-    process.env.AP_AGENTS_ENABLED = 'true'
     app = await setupTestEnvironment()
     await db.save('piece_metadata', createMockPieceMetadata({
         name: AUTH_PIECE,

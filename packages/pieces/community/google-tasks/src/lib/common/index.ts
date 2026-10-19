@@ -78,7 +78,7 @@ export const googleTasksCommon = {
    * @property Target task list ID where the new task will be created
    */
   tasksList: Property.Dropdown<string,true,typeof googleTasksAuth>({
-    displayName: 'Tasks List',
+    displayName: 'Task List',
     auth: googleTasksAuth,
     refreshers: [],
     required: true,
@@ -92,21 +92,38 @@ export const googleTasksCommon = {
       }
 
       const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-      const tasksLists = await getLists(authProp);
+      try {
+        const tasksLists = await getLists(authProp);
 
-      return {
-        disabled: false,
-        options: tasksLists.map((list) => {
+        if (tasksLists.length === 0) {
           return {
-            label: list.title,
-            value: list.id,
+            disabled: false,
+            options: [],
+            placeholder: 'No task lists found. Create one in Google Tasks first.',
           };
-        }),
-      };
+        }
+
+        return {
+          disabled: false,
+          options: tasksLists.map((list) => {
+            return {
+              label: list.title,
+              value: list.id,
+            };
+          }),
+        };
+      } catch {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load task lists. Check your connection.',
+        };
+      }
     },
   }),
   title: Property.ShortText({
     displayName: 'Title',
+    placeholder: 'Call the dentist',
     required: true,
   }),
   notes: Property.LongText({
@@ -115,13 +132,15 @@ export const googleTasksCommon = {
   }),
   due: Property.DateTime({
     displayName: 'Due Date',
-    description: 'Due date of the task (YYYY-MM-DD)',
+    description: 'Google Tasks keeps the date only; the time is ignored.',
+    placeholder: '2026-10-15',
     required: false,
   }),
   completed: Property.Checkbox({
     displayName: 'Completed',
-    description: 'Mark task as completed',
+    description: 'Add the task already checked off.',
     required: false,
+    defaultValue: false,
   }),
 };
 
@@ -129,16 +148,26 @@ export async function getLists(
   authProp: OAuth2PropertyValue
 ): Promise<TasksList[]> {
   // docs: https://developers.google.com/tasks/reference/rest/v1/tasklists/list
-  const request: HttpRequest = {
-    method: HttpMethod.GET,
-    url: `${googleTasksCommon.baseUrl}/tasks/v1/users/@me/lists`,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: authProp.access_token,
-    },
-  };
-  const response = await httpClient.sendRequest<TasksListResponse>(request);
-  return response.body.items;
+  const lists: TasksList[] = [];
+  let pageToken: string | undefined = undefined;
+  do {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `${googleTasksCommon.baseUrl}/tasks/v1/users/@me/lists`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: authProp.access_token,
+      },
+      queryParams: {
+        maxResults: '100',
+        ...(pageToken ? { pageToken } : {}),
+      },
+    };
+    const response = await httpClient.sendRequest<TasksListResponse>(request);
+    lists.push(...(response.body.items ?? []));
+    pageToken = response.body.nextPageToken;
+  } while (pageToken);
+  return lists;
 }
 
 export async function getTasks(
@@ -158,6 +187,38 @@ export async function getTasks(
   };
   const response = await httpClient.sendRequest<TasksResponse>(request);
   return response.body.items ?? [];
+}
+
+export async function getAllTasks({
+  auth,
+  taskListId,
+  params,
+}: {
+  auth: OAuth2PropertyValue;
+  taskListId: string;
+  params?: Record<string, string>;
+}): Promise<Task[]> {
+  const tasks: Task[] = [];
+  let pageToken: string | undefined = undefined;
+  do {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `${googleTasksCommon.baseUrl}/tasks/v1/lists/${taskListId}/tasks`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: auth.access_token,
+      },
+      queryParams: {
+        ...params,
+        maxResults: '100',
+        ...(pageToken ? { pageToken } : {}),
+      },
+    };
+    const response = await httpClient.sendRequest<TasksResponse>(request);
+    tasks.push(...(response.body.items ?? []));
+    pageToken = response.body.nextPageToken;
+  } while (pageToken);
+  return tasks;
 }
 
 export async function createTask(

@@ -5,6 +5,7 @@ import { addOnUidDropdown } from '../common/dropdowns';
 
 export const addAddonToSubscriptionAction = createAction({
   name: 'add_addon_to_subscription',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Add Add-on to Subscription',
   description:

@@ -17,7 +17,7 @@ export const newSubmissionTrigger = createTrigger({
 	classification: 'READ',
 	displayName: 'New Submission',
 	auth: tallyAuth,
-	description: 'Triggers when a form receives a new submission',
+	description: 'Triggers when someone submits the selected form',
 	aiMetadata: {
 		description:
 			'Fires when a respondent submits a Tally form, delivering the completed submission. The payload includes the response, submission, and respondent IDs, the form ID and name, the submission timestamp, and a fields map keyed by question label with each answer (choice/checkbox/dropdown/ranking options resolved to their text and matrix answers mapped to row/column labels). Use to react to new form entries such as contact requests, signups, or survey responses.',
@@ -57,10 +57,16 @@ export const newSubmissionTrigger = createTrigger({
 		}
 	},
 	async test(context) {
-		const { questions, submissions } = await tallyApiClient.fetchRecentSubmissions({
-			apiKey: context.auth.secret_text,
-			formId: context.propsValue.form_id,
-		});
+		const [{ questions, submissions }, form] = await Promise.all([
+			tallyApiClient.fetchRecentSubmissions({
+				apiKey: context.auth.secret_text,
+				formId: context.propsValue.form_id,
+			}),
+			tallyApiClient.getForm({
+				apiKey: context.auth.secret_text,
+				formId: context.propsValue.form_id,
+			}),
+		]);
 
 		const questionById = Object.fromEntries(questions.map((q) => [q.id, q]));
 
@@ -69,7 +75,7 @@ export const newSubmissionTrigger = createTrigger({
 			submissionId: submission.id,
 			respondentId: submission.respondentId,
 			formId: submission.formId,
-			formName: '',
+			formName: form.name,
 			createdAt: submission.submittedAt,
 			fields: buildSubmissionFields({ submission, questionById }),
 		}));

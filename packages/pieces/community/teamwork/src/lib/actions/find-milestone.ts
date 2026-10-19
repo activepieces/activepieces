@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const findMilestone = createAction({
 	name: 'find_milestone',
+	classification: 'SEARCH',
 	displayName: 'Find Milestone',
 	description: 'Find a milestone by name or due date in a project.',
 	audience: 'both',

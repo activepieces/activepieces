@@ -66,6 +66,7 @@ const polling: Polling<
 export const newPost = createTrigger({
   auth: postizAuth,
   name: 'new_post',
+  classification: 'READ',
   displayName: 'New Published Post',
   description: 'Triggers when a post is published in Postiz',
   aiMetadata: {

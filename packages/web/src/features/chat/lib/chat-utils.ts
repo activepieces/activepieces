@@ -1,5 +1,6 @@
-import { isObject } from '@activepieces/core-utils';
+import { AIProviderName, isObject } from '@activepieces/core-utils';
 import {
+  aiProviderUtils,
   ActionReceiptEvent,
   BuildPlanEvent,
   BuildPlanStep,
@@ -51,6 +52,8 @@ const TOOL_LABELS: Record<string, { active: string; done: string }> = {
     done: 'Searched integrations',
   },
   ap_build_flow: { active: 'Building automation', done: 'Built automation' },
+  ap_run_task: { active: 'Working on a task', done: 'Finished a task' },
+  ap_deep_research: { active: 'Researching', done: 'Researched' },
   ap_create_flow: { active: 'Creating automation', done: 'Created automation' },
   ap_validate_step_config: {
     active: 'Validating setup',
@@ -577,8 +580,20 @@ function reopensSameConversation({
   return current === next;
 }
 
+function newChatModelName({
+  provider,
+}: {
+  provider: AIProviderName | undefined;
+}): string | null {
+  if (provider === undefined) {
+    return null;
+  }
+  return aiProviderUtils.getCuratedChatModels({ provider })?.[0]?.id ?? null;
+}
+
 export const chatUtils = {
   newChatEvent: 'ap:new-chat',
+  newChatModelName,
   reopensSameConversation,
   sanitizeTitle,
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>

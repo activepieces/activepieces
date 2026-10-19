@@ -37,7 +37,7 @@ function getFlowBoundingBox(step: Step | FlowAction | null | undefined, forBranc
         withChildMaxX = Math.max(FLOW_CANVAS_STEP_WIDTH, deltaLeftX + FLOW_CANVAS_STEP_WIDTH, childOffsetX + childBoundingBox.maxX)
         withChildHeight = Math.max(FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE, subgraphEndY)
     }
-    else if (step.type === FlowActionType.ROUTER) {
+    else if (flowStructureUtil.isBranchedAction(step)) {
         const children = step.children
         if (children.length > 0) {
             const childBoundingBoxes = children.map(c => getFlowBoundingBox(c, true))
@@ -47,7 +47,7 @@ function getFlowBoundingBox(step: Step | FlowAction | null | undefined, forBranc
             withChildHeight = merged.height
         }
     }
-    else if (hasContinueOnFailureBranches(step)) {
+    else if (flowStructureUtil.hasContinueOnFailureBranches(step)) {
         const branches = getContinueOnFailureBranchPair(step)
         const childBoundingBoxes = branches.map(b => getFlowBoundingBox(b, true))
         const merged = mergeBranchedChildBoundingBoxes(childBoundingBoxes)
@@ -88,11 +88,11 @@ function buildPositions({ step, offsetX, offsetY, positions }: {
         const subgraphEndY = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_LOOP_VOFFSET + childBoundingBox.height + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
         buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
-    else if (step.type === FlowActionType.ROUTER) {
+    else if (flowStructureUtil.isBranchedAction(step)) {
         const subgraphEndY = positionBranchedChildren({ children: step.children, offsetX, offsetY, positions })
         buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
-    else if (hasContinueOnFailureBranches(step)) {
+    else if (flowStructureUtil.hasContinueOnFailureBranches(step)) {
         const subgraphEndY = positionBranchedChildren({ children: getContinueOnFailureBranchPair(step), offsetX, offsetY, positions })
         buildPositions({ step: step.nextAction, offsetX, offsetY: offsetY + subgraphEndY, positions })
     }
@@ -173,20 +173,13 @@ function isContainerStep(step: Step | FlowAction): step is LoopOnItemsAction | P
     return step.type === FlowActionType.LOOP_ON_ITEMS || step.type === FlowActionType.PROCESS_IN_BATCHES
 }
 
-function hasContinueOnFailureBranches(step: Step | FlowAction): step is CodeAction | PieceAction {
-    if (step.type !== FlowActionType.CODE && step.type !== FlowActionType.PIECE) {
-        return false
-    }
-    return step.settings.errorHandlingOptions?.continueOnFailure?.value ?? false
-}
-
 function getContinueOnFailureBranchPair(step: CodeAction | PieceAction): (FlowAction | undefined)[] {
     const branches = step.continueOnFailureBranches
     return [branches?.onSuccess, branches?.onFailure]
 }
 
 function getStepBranchRelativeTo(ancestor: Step | FlowAction, targetStepName: string): 'on-success' | 'on-failure' | null {
-    if (!hasContinueOnFailureBranches(ancestor)) {
+    if (!flowStructureUtil.hasContinueOnFailureBranches(ancestor)) {
         return null
     }
     const [onSuccess, onFailure] = getContinueOnFailureBranchPair(ancestor)
@@ -210,7 +203,6 @@ export const flowCanvasUtils = {
         return positions
     },
     isContainerStep,
-    hasContinueOnFailureBranches,
     getContinueOnFailureBranchPair,
     getStepBranchRelativeTo,
     computeRouterChildOffsets,

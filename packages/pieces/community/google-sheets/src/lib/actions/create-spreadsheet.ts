@@ -39,7 +39,7 @@ export const createSpreadsheetAction = createAction({
 			auth: googleSheetsAuth,
 			displayName: 'Parent Folder',
 			description:
-				'The folder to create the worksheet in.By default, the new worksheet is created in the root folder of drive.',
+				'Where to create the spreadsheet. Defaults to My Drive.',
 			required: false,
 			refreshers: ['auth', 'includeTeamDrives'],
 			options: async ({ auth, includeTeamDrives }) => {
@@ -47,7 +47,7 @@ export const createSpreadsheetAction = createAction({
 					return {
 						disabled: true,
 						options: [],
-						placeholder: 'Please authenticate first',
+						placeholder: 'Connect your account first',
 					};
 				}
 				const authProp = auth;
@@ -96,6 +96,7 @@ export const createSpreadsheetAction = createAction({
 					}),
 				};
 			},
+			advanced: true,
 		}),
 	},
 	outputSchema: createSpreadsheetActionOutputSchema,

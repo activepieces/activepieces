@@ -12,7 +12,7 @@ export const listSubscribersAction = createAction({
 	audience: 'both',
 	aiMetadata: {
 		description:
-			'List MailerLite subscribers, optionally filtered by status (active, unsubscribed, unconfirmed, bounced, junk). Use this to enumerate contacts for reporting or bulk processing. Returns a page of subscriber records with cursor pagination. Read-only and idempotent.',
+			'List MailerLite subscribers, optionally filtered by status (active, unsubscribed, unconfirmed, bounced, junk). Use this to enumerate contacts for reporting or bulk processing. Returns a page of subscriber records with cursor pagination: pass meta.next_cursor back as cursor to get the next page. Read-only and idempotent.',
 		idempotent: true,
 	},
 	outputSchema: listSubscribersOutputSchema,
@@ -37,10 +37,15 @@ export const listSubscribersAction = createAction({
 			required: false,
 			defaultValue: 25,
 		}),
+		cursor: Property.ShortText({
+			displayName: 'Cursor',
+			description: 'The meta.next_cursor value from the previous page. Leave empty for the first page.',
+			required: false,
+		}),
 	},
 	async run(context) {
 		const client = new MailerLite({ api_key: context.auth.secret_text });
-		const { status, limit } = context.propsValue;
+		const { status, limit, cursor } = context.propsValue;
 		const resolvedLimit = Math.trunc(Number(limit ?? 25));
 		if (!Number.isFinite(resolvedLimit) || resolvedLimit < 1 || resolvedLimit > 1000) {
 			throw new Error('Limit must be between 1 and 1000.');
@@ -53,8 +58,8 @@ export const listSubscribersAction = createAction({
 			status === 'junk';
 		const response = await client.subscribers.get(
 			isKnownStatus
-				? { limit: resolvedLimit, filter: { status } }
-				: { limit: resolvedLimit },
+				? { limit: resolvedLimit, cursor: cursor || undefined, filter: { status } }
+				: { limit: resolvedLimit, cursor: cursor || undefined },
 		);
 		return response.data;
 	},

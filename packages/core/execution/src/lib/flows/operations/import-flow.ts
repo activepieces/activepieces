@@ -57,7 +57,8 @@ function _getImportOperationsForSteps(step: FlowAction | FlowTrigger | undefined
                 }
                 break
             }
-            case FlowActionType.ROUTER: {
+            case FlowActionType.ROUTER:
+            case FlowActionType.AI_ROUTER: {
                 if (step.children) {
                     for (const [index, child] of step.children.entries()) {
                         if (!isNil(child)) {
@@ -136,7 +137,8 @@ function _getImportOperationsForNotes(flowVersion: FlowVersion, request: ImportF
 function removeAnySubsequentAction(action: FlowAction): FlowAction {
     const clonedAction: FlowAction = JSON.parse(JSON.stringify(action))
     switch (clonedAction.type) {
-        case FlowActionType.ROUTER: {
+        case FlowActionType.ROUTER:
+        case FlowActionType.AI_ROUTER: {
             clonedAction.children = clonedAction.children.map((child: FlowAction | null) => {
                 if (isNil(child)) {
                     return null

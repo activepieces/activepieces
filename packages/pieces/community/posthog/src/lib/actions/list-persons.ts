@@ -5,6 +5,7 @@ import { posthogAuth } from '../..';
 export const posthogListPersons = createAction({
   auth: posthogAuth,
   name: 'list_persons',
+  classification: 'SEARCH',
   displayName: 'List Persons',
   description: 'Get a list of identified users in your PostHog project',
   audience: 'both',

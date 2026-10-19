@@ -7,6 +7,7 @@ import { projectId, workspaceId } from '../common/props';
 export const findTaskAction = createAction({
 	auth: clockifyAuth,
 	name: 'find-task',
+	classification: 'SEARCH',
 	displayName: 'Find Task',
 	description: 'Finds an existing task in a specific project.',
 	audience: 'both',

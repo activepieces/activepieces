@@ -141,7 +141,11 @@ export const newCustomObjectPropertyChangeTrigger = createTrigger({
 	},
 	props: {
 		customObjectType: customObjectDropdown,
-		propertyName: customObjectPropertiesDropdown('Property Name', true, true),
+		propertyName: customObjectPropertiesDropdown({
+			displayName: 'Property',
+			required: true,
+			isSingleSelect: true,
+		}),
 	},
 	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,

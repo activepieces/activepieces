@@ -5,6 +5,7 @@ import { trueLayerCommon } from '../../common';
 export const createPaymentRefund = createAction({
   auth: trueLayerCommon.auth,
   name: 'create-payment-refund',
+  classification: 'DESTRUCTIVE',
   displayName: 'Create Payment Refund',
   description: 'Refund a merchant account payment, either fully or partially.',
   audience: 'both',
