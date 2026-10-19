@@ -6,7 +6,7 @@ import { makeFolderRecursive, readPackageJson } from '../utils/files';
 import { basename, join } from 'node:path';
 import { exec } from '../utils/exec';
 import { pieceTranslation } from '@activepieces/pieces-framework';
-import { MAX_KEY_LENGTH_FOR_CORWDIN } from '@activepieces/shared';
+import { MAX_KEY_LENGTH_FOR_CORWDIN, PieceCategory } from '@activepieces/shared';
 
 const findPieceInModule= async (pieceOutputFile: string) => {
     const module = await import(pieceOutputFile);
@@ -39,9 +39,9 @@ function getPropertyValue(object: Record<string, unknown>, path: string): unknow
   return nextObject;
 }
 
-const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { const translation: Record<string, string> = {}
+const generateTranslationFileFromPiece = (piece: Record<string, unknown> & { categories?: PieceCategory[] }) => { const translation: Record<string, string> = {}
   try {
-    pieceTranslation.pathsToValuesToTranslate.forEach(path => {
+    pieceTranslation.pathsToTranslate(piece.categories).forEach(path => {
       const value = getPropertyValue(piece, path)
       if (value) {
         if (typeof value === 'string') {
@@ -72,7 +72,7 @@ const generateTranslationFile = async (pieceName: string) => {
   try{
     await installDependencies(pieceRoot)
     const pieceFromModule = await findPieceInModule(pieceRoot);
-    const i18n = generateTranslationFileFromPiece({actions: (pieceFromModule as any)._actions, triggers: (pieceFromModule as any)._triggers, description: (pieceFromModule as any).description, displayName: (pieceFromModule as any).displayName, auth: (pieceFromModule as any).auth});
+    const i18n = generateTranslationFileFromPiece({actions: (pieceFromModule as any)._actions, triggers: (pieceFromModule as any)._triggers, description: (pieceFromModule as any).description, displayName: (pieceFromModule as any).displayName, auth: (pieceFromModule as any).auth, categories: (pieceFromModule as any).categories});
     const i18nFolder = join(pieceRoot, 'src', 'i18n')
     await makeFolderRecursive(i18nFolder);
     await writeFile(join(i18nFolder, 'translation.json'), JSON.stringify(i18n, null, 2));
@@ -94,8 +94,8 @@ export const generateTranslationFileForPieceCommand = new Command('generate-tran
   .requiredOption('--shard-index <shardIndex>', 'Zero-based shard index to process', (value) => parseInt(value, 10))
   .requiredOption('--shard-total <shardTotal>', 'Total number of shards', (value) => parseInt(value, 10))
   .action(async ({shardIndex, shardTotal}: { shardIndex: number; shardTotal: number }) => {
-    const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'community')
-    const pieces = (await findPieces(piecesDirectory)).map(piece => basename(piece));
+    const piecesDirectories = ['community', 'core'].map(folder => join(process.cwd(), 'packages', 'pieces', folder))
+    const pieces = (await Promise.all(piecesDirectories.map(directory => findPieces(directory)))).flat().map(piece => basename(piece));
     let totalTime = 0
     let indexAcrossAllPieces = 0
     for (const piece of pieces) {
