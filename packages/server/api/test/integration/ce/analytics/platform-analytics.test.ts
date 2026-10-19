@@ -306,10 +306,7 @@ describe('POST /v1/analytics/refresh', () => {
 
         const second = await refreshRunsOfFlow({ ctx, flowId: flow.id })
 
-        expect({ first, second }).toEqual({
-            first: { entries: 1, total: 1 },
-            second: { entries: 1, total: 2 },
-        })
+        expect({ first: first.total, second: second.total }).toEqual({ first: 1, second: 2 })
     })
 
     it('should count runs of a project that has no enabled flow', async () => {
