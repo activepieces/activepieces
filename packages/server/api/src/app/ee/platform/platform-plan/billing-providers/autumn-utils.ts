@@ -379,14 +379,14 @@ export const autumnConsole = {
         return consoleRequest<EnterpriseTrialStatus>({
             path: '/api/v1/billing/enterprise-trial',
             method: 'get',
-            token: autumnApiKey,
+            token: edition === 'cloud' ? consoleSecretOrThrow() : autumnApiKey,
             query: { autumnCustomerId, edition },
         })
     },
     async startEnterpriseTrial({ autumnApiKey, ...body }: ConsoleCustomerCall & EnterpriseTrialEditionParam & { platformId: string, appUrl: string }): Promise<EnterpriseTrialStatus> {
         return consoleRequest<EnterpriseTrialStatus>({
             path: '/api/v1/billing/enterprise-trial/start',
-            token: autumnApiKey,
+            token: body.edition === 'cloud' ? consoleSecretOrThrow() : autumnApiKey,
             body,
         })
     },
