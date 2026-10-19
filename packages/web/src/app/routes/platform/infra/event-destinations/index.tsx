@@ -9,9 +9,8 @@ import { useQueries } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Globe, ListChecks, Radio } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import {
   AdminDataTable,
@@ -29,6 +28,7 @@ import { flowHooks, flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { useNewWindow } from '@/lib/navigation-utils';
 
 import { sampleData } from '../../sample-data';
@@ -59,6 +59,28 @@ const EventDestinationsPage = () => {
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
   const totalEventCount = eventGroupUtils.countEvents();
+  const [savingIds, setSavingIds] = useState<ReadonlySet<string>>(new Set());
+  const toggle = useCallback(
+    ({
+      destinationId,
+      enabled,
+    }: {
+      destinationId: string;
+      enabled: boolean;
+    }) => {
+      setSavingIds((current) => new Set(current).add(destinationId));
+      toggleDestination({ destinationId, enabled })
+        .finally(() =>
+          setSavingIds((current) => {
+            const next = new Set(current);
+            next.delete(destinationId);
+            return next;
+          }),
+        )
+        .catch(() => undefined);
+    },
+    [],
+  );
 
   const flowIds = useMemo(
     () =>
@@ -165,11 +187,12 @@ const EventDestinationsPage = () => {
         cell: ({ row }) => (
           <Switch
             checked={row.original.enabled}
+            disabled={savingIds.has(row.original.id)}
             aria-label={t('Enable {destination}', {
               destination: destinationTitle(row.original),
             })}
             onCheckedChange={(enabled) =>
-              toggleDestination({ destinationId: row.original.id, enabled })
+              toggle({ destinationId: row.original.id, enabled })
             }
           />
         ),
@@ -180,11 +203,14 @@ const EventDestinationsPage = () => {
         notClickable: true,
         header: () => null,
         cell: ({ row }) => (
-          <EventDestinationActions destination={row.original} />
+          <EventDestinationActions
+            destination={row.original}
+            name={destinationTitle(row.original)}
+          />
         ),
       },
     ],
-    [destinationTitle, totalEventCount],
+    [destinationTitle, totalEventCount, savingIds, toggle],
   );
 
   return (
@@ -192,9 +218,11 @@ const EventDestinationsPage = () => {
       <AdminPageHeader
         title={t('Event Streaming')}
         badge={
-          <span className="text-sm tabular-nums text-gray-11">
-            {t('destinationsCount', { count: destinations.length })}
-          </span>
+          isSample ? undefined : (
+            <span className="text-sm tabular-nums text-gray-11">
+              {t('destinationsCount', { count: destinations.length })}
+            </span>
+          )
         }
         description={t(
           'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
@@ -252,7 +280,11 @@ async function toggleDestination({
       }).isPersisted.promise,
   );
   if (!isNil(error)) {
-    toast.error(destinationErrors.describe(error));
+    mutationFeedback.error({
+      error,
+      title: t("Couldn't save changes"),
+      description: destinationErrors.describe(error),
+    });
   }
 }
 

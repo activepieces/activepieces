@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -17,25 +17,6 @@ export const apiKeyQueries = {
       staleTime: 0,
       queryFn: () => apiKeyApi.list(),
       enabled: platform.plan.apiKeysEnabled,
-    });
-  },
-};
-
-export const apiKeyMutations = {
-  useCreateApiKey: ({ onSuccess }: { onSuccess: () => void }) => {
-    return useMutation({
-      mutationFn: (request: { displayName: string }) =>
-        apiKeyApi.create(request),
-      onSuccess,
-    });
-  },
-  useDeleteApiKey: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: (keyId: string) => apiKeyApi.delete(keyId),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: apiKeyKeys.all });
-      },
     });
   },
 };

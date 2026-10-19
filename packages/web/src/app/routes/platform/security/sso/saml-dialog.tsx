@@ -7,19 +7,22 @@ import {
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useIsMutating, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CheckCircle, Loader2, TriangleAlert } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
-import { adminLayout } from '@/app/components/admin';
+import {
+  ConfirmDialog,
+  StatusDot,
+  adminLayout,
+  useAdminAction,
+} from '@/app/components/admin';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ApMarkdown } from '@/components/custom/markdown';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -42,8 +45,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { samlSsoApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
+
+import { ssoRules } from './sso-rules';
 
 export const ConfigureSamlDialog = ({
   platform,
@@ -51,9 +56,18 @@ export const ConfigureSamlDialog = ({
   refetch,
 }: ConfigureSamlDialogProps) => {
   const [open, setOpen] = useState(false);
+  const saving = useIsMutating({ mutationKey: SAML_SAVES }) > 0;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && saving) {
+          return;
+        }
+        setOpen(next);
+      }}
+    >
       <DialogTrigger asChild>
         <Button
           {...adminControl(AdminControl.SSO_SAML_OPEN)}
@@ -64,7 +78,11 @@ export const ConfigureSamlDialog = ({
           {connected ? t('Edit') : t('Enable')}
         </Button>
       </DialogTrigger>
-      <DialogContent className={adminLayout.dialog.md}>
+      <DialogContent
+        className={adminLayout.dialog.md}
+        showCloseButton={!saving}
+        aria-describedby={undefined}
+      >
         {open && (
           <SamlWizard
             key={open ? 'open' : 'closed'}
@@ -97,22 +115,33 @@ const SamlWizard = ({
     connected || !domainVerified ? 'domain' : 'saml',
   );
 
-  const { mutate: disableSaml, isPending: isDisabling } = useMutation({
-    mutationFn: async () => {
-      await platformApi.update(
-        { federatedAuthProviders: { saml: null } },
-        platform.id,
-      );
+  const disableSaml = useAdminAction({
+    verb: 'turnOff',
+    name: t('SAML sign-in'),
+    run: async () => {
+      await ssoRules.change({
+        check: { samlConnected: false },
+        write: () =>
+          platformApi.update(
+            { federatedAuthProviders: { saml: null } },
+            platform.id,
+          ),
+      });
       await refetch();
     },
-    onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
-      onClose();
-    },
+    onSuccess: onClose,
   });
 
+  const { data: flags } = flagsHooks.useFlags();
+  const methods = ssoRules.signInMethods({ platform, flags });
+  const samlIsLastMethod = connected && !methods.email && !methods.google;
   const disableAction = connected
-    ? { onDisable: () => disableSaml(), isDisabling }
+    ? {
+        onDisable: () => disableSaml.mutateAsync(),
+        blockedReason: samlIsLastMethod
+          ? t('SAML is the only way to sign in. Turn on email or Google first.')
+          : undefined,
+      }
     : null;
 
   return (
@@ -201,6 +230,14 @@ const DomainStep = ({
   canProceed: boolean;
   disableAction: DisableAction;
 }) => {
+  const { data: flags } = flagsHooks.useFlags();
+  const methods = ssoRules.signInMethods({ platform, flags });
+  const domainChangeBlocked =
+    Boolean(platform.ssoDomain) &&
+    ssoRules.samlNeedsVerifiedDomain(flags) &&
+    methods.saml &&
+    !methods.email &&
+    !methods.google;
   const form = useForm<SsoDomainFormValues>({
     resolver: zodResolver(SsoDomainFormValues),
     defaultValues: { ssoDomain: platform.ssoDomain ?? '' },
@@ -212,26 +249,30 @@ const DomainStep = ({
     ssoDomainValue.trim().toLowerCase() !== (platform.ssoDomain ?? '');
   const [showUpdateWarning, setShowUpdateWarning] = useState(false);
 
-  const { mutate: saveDomain, isPending: isSaving } = useMutation({
-    mutationFn: async (values: SsoDomainFormValues) => {
-      await samlSsoApi.updateSsoDomain(values.ssoDomain.trim().toLowerCase());
+  const saveDomain = useAdminAction<SsoDomainFormValues>({
+    verb: 'save',
+    run: async (values) => {
+      await ssoRules.change({
+        check: { domainChanges: Boolean(platform.ssoDomain) },
+        write: () =>
+          samlSsoApi.updateSsoDomain(values.ssoDomain.trim().toLowerCase()),
+      });
       await refetch();
     },
-    onSuccess: () => {
-      toast.success(t('SSO domain saved'));
-      setShowUpdateWarning(false);
+    feedback: 'inline',
+    mutationKey: SAML_SAVES,
+    handleError: (error) => {
+      if (!showUpdateWarning) {
+        form.setError('root.serverError', {
+          type: 'manual',
+          message: mutationFeedback.message(error),
+        });
+      }
+      return true;
     },
-    onError: (error) => {
-      form.setError('root.serverError', {
-        type: 'manual',
-        message: api.extractServerErrorMessage(
-          error,
-          t("Couldn't save domain"),
-        ),
-      });
-      setShowUpdateWarning(false);
-    },
+    onSuccess: () => setShowUpdateWarning(false),
   });
+  const [notFoundYet, setNotFoundYet] = useState(false);
 
   const { mutate: verifyDomain, isPending: isVerifying } = useMutation({
     mutationFn: async () => {
@@ -240,31 +281,27 @@ const DomainStep = ({
       return result;
     },
     onSuccess: (result) => {
-      if (
+      const verified =
         result.ssoDomainVerification?.status ===
-        SsoDomainVerificationStatus.VERIFIED
-      ) {
-        toast.success(t('Domain verified'));
+        SsoDomainVerificationStatus.VERIFIED;
+      setNotFoundYet(!verified);
+      if (verified) {
+        mutationFeedback.success(t('Domain verified'));
         onVerified();
-      } else {
-        toast.message(
-          t('TXT record not found yet — DNS can take a few minutes.'),
-        );
       }
     },
     onError: (error) => {
-      toast.error(
-        api.extractServerErrorMessage(error, t("Couldn't verify domain")),
-      );
+      mutationFeedback.error({ error, title: t("Couldn't verify domain") });
     },
   });
 
   const handleSubmit = (values: SsoDomainFormValues) => {
+    form.clearErrors('root.serverError');
     if (platform.ssoDomain) {
       setShowUpdateWarning(true);
       return;
     }
-    saveDomain(values);
+    saveDomain.mutate(values);
   };
 
   return (
@@ -289,33 +326,31 @@ const DomainStep = ({
           )}
         />
 
-        {verification && !isDirty && (
-          <DomainVerificationPanel
-            verification={verification}
-            isVerifying={isVerifying}
-            onVerify={() => verifyDomain()}
-          />
-        )}
-
         {form.formState.errors.root?.serverError && (
           <FormMessage>
             {form.formState.errors.root.serverError.message}
           </FormMessage>
         )}
 
+        {verification && !isDirty && (
+          <DomainVerificationPanel
+            verification={verification}
+            isVerifying={isVerifying}
+            notFoundYet={notFoundYet}
+            onVerify={() => verifyDomain()}
+          />
+        )}
+
+        {isDirty && domainChangeBlocked && (
+          <p className="text-sm text-gray-11">
+            {t(
+              'SAML is the only way to sign in, and a new domain must be verified again. Turn on email or Google before changing it.',
+            )}
+          </p>
+        )}
+
         <DialogFooter>
-          {disableAction && (
-            <Button
-              {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
-              type="button"
-              variant="basic"
-              className="text-danger-11"
-              loading={disableAction.isDisabling}
-              onClick={disableAction.onDisable}
-            >
-              {t('Disable')}
-            </Button>
-          )}
+          {disableAction && <DisableSamlButton disableAction={disableAction} />}
           {isDirty ? (
             <Button
               {...adminControl(
@@ -324,8 +359,8 @@ const DomainStep = ({
                   : AdminControl.SSO_SAML_DOMAIN_SUBMIT,
               )}
               type="submit"
-              loading={isSaving}
-              disabled={!form.formState.isValid}
+              loading={saveDomain.isPending}
+              disabled={!form.formState.isValid || domainChangeBlocked}
             >
               {platform.ssoDomain ? t('Update domain') : t('Save domain')}
             </Button>
@@ -336,39 +371,18 @@ const DomainStep = ({
           )}
         </DialogFooter>
       </form>
-      <Dialog open={showUpdateWarning} onOpenChange={setShowUpdateWarning}>
-        <DialogContent className={adminLayout.dialog.md}>
-          <DialogHeader>
-            <DialogTitle>{t('Update SSO domain?')}</DialogTitle>
-          </DialogHeader>
-          <Alert variant="warning">
-            <TriangleAlert className="size-4" />
-            <AlertDescription>
-              {t(
-                "Users won't be able to sign in via SSO until you verify the new domain.",
-              )}
-            </AlertDescription>
-          </Alert>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              disabled={isSaving}
-              onClick={() => setShowUpdateWarning(false)}
-            >
-              {t('Cancel')}
-            </Button>
-            <Button
-              {...adminControl(AdminControl.SSO_SAML_DOMAIN_UPDATE_CONFIRM)}
-              type="button"
-              loading={isSaving}
-              onClick={() => saveDomain(form.getValues())}
-            >
-              {t('Update domain')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={showUpdateWarning}
+        onOpenChange={setShowUpdateWarning}
+        title={t('Update SSO domain?')}
+        consequence={t(
+          "Users won't be able to sign in via SSO until you verify the new domain.",
+        )}
+        confirmLabel={t('Update domain')}
+        destructive={false}
+        controlId={AdminControl.SSO_SAML_DOMAIN_UPDATE_CONFIRM}
+        onConfirm={() => saveDomain.mutateAsync(form.getValues())}
+      />
     </Form>
   );
 };
@@ -396,16 +410,34 @@ const SamlStep = ({
     ApFlagId.SAML_AUTH_ACS_URL,
   );
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (request: UpdatePlatformRequestBody) => {
+  const { data: flags } = flagsHooks.useFlags();
+  const methods = ssoRules.signInMethods({ platform, flags });
+  const samlIsOnlyMethod =
+    !!platform.federatedAuthProviders?.saml &&
+    !methods.email &&
+    !methods.google;
+  const [settingsToConfirm, setSettingsToConfirm] =
+    useState<Saml2FormValues | null>(null);
+  const { mutateAsync, isPending } = useAdminAction<UpdatePlatformRequestBody>({
+    verb: 'save',
+    run: async (request) => {
       await platformApi.update(request, platform.id);
       await refetch();
     },
-    onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
-      onClose();
-    },
+    feedback: 'inline',
+    mutationKey: SAML_SAVES,
+    onSuccess: onClose,
   });
+  const saveSettings = (data: Saml2FormValues) =>
+    mutateAsync({ federatedAuthProviders: { saml: data } }).catch(
+      (error: unknown) => {
+        form.setError('root.serverError', {
+          type: 'manual',
+          message: mutationFeedback.message(error),
+        });
+        throw error;
+      },
+    );
 
   return (
     <>
@@ -436,7 +468,12 @@ Activepieces
         <form
           className="grid space-y-4"
           onSubmit={form.handleSubmit((data) => {
-            mutate({ federatedAuthProviders: { saml: data } });
+            form.clearErrors('root.serverError');
+            if (samlIsOnlyMethod) {
+              setSettingsToConfirm(data);
+              return;
+            }
+            saveSettings(data).catch(() => undefined);
           })}
         >
           <FormField
@@ -478,16 +515,10 @@ Activepieces
 
           <DialogFooter>
             {disableAction && (
-              <Button
-                {...adminControl(AdminControl.SSO_SAML_DISABLE_RUN)}
-                type="button"
-                variant="basic"
-                className="text-danger-11 mr-auto"
-                loading={disableAction.isDisabling}
-                onClick={disableAction.onDisable}
-              >
-                {t('Disable')}
-              </Button>
+              <DisableSamlButton
+                disableAction={disableAction}
+                className="mr-auto"
+              />
             )}
             <Button variant="outline" type="button" onClick={onBack}>
               {t('Back')}
@@ -503,17 +534,71 @@ Activepieces
           </DialogFooter>
         </form>
       </Form>
+      <ConfirmDialog
+        open={settingsToConfirm !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSettingsToConfirm(null);
+          }
+        }}
+        title={t('Save new SAML settings?')}
+        consequence={t(
+          'SAML is the only way to sign in. If these settings are wrong, nobody can sign in until they are fixed.',
+        )}
+        confirmLabel={t('Save settings')}
+        destructive={false}
+        onConfirm={async () => {
+          if (settingsToConfirm) {
+            await mutateAsync({
+              federatedAuthProviders: { saml: settingsToConfirm },
+            });
+          }
+        }}
+      />
     </>
   );
 };
 
+const DisableSamlButton = ({
+  disableAction,
+  className,
+}: {
+  disableAction: NonNullable<DisableAction>;
+  className?: string;
+}) =>
+  disableAction.blockedReason ? (
+    <p className={cn('text-xs text-gray-11', className)}>
+      {disableAction.blockedReason}
+    </p>
+  ) : (
+    <ConfirmDialog
+      title={t('Turn off SAML sign-in?')}
+      consequence={t(
+        "People who sign in through your identity provider can't sign in until SAML is set up again. Make sure you can still sign in another way.",
+      )}
+      confirmLabel={t('Turn off SAML')}
+      controlId={AdminControl.SSO_SAML_DISABLE_RUN}
+      onConfirm={disableAction.onDisable}
+    >
+      <Button
+        type="button"
+        variant="basic"
+        className={cn('text-danger-11', className)}
+      >
+        {t('Disable')}
+      </Button>
+    </ConfirmDialog>
+  );
+
 const DomainVerificationPanel = ({
   verification,
   isVerifying,
+  notFoundYet,
   onVerify,
 }: {
   verification: SsoDomainVerification;
   isVerifying: boolean;
+  notFoundYet: boolean;
   onVerify: () => void;
 }) => {
   const verified = verification.status === SsoDomainVerificationStatus.VERIFIED;
@@ -528,7 +613,7 @@ const DomainVerificationPanel = ({
             )}
           </p>
           <VerificationRecordRow record={verification.record} />
-          <div>
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               {...adminControl(AdminControl.SSO_SAML_DNS_RUN)}
               type="button"
@@ -539,6 +624,11 @@ const DomainVerificationPanel = ({
             >
               {t('Verify DNS')}
             </Button>
+            {notFoundYet && !isVerifying && (
+              <span role="status" className="text-xs text-gray-11">
+                {t('TXT record not found yet — DNS can take a few minutes.')}
+              </span>
+            )}
           </div>
         </>
       )}
@@ -560,10 +650,9 @@ const VerificationStatusBadge = ({
     );
   }
   return (
-    <div className="flex items-center gap-2 text-sm text-warning-11">
-      <Loader2 className="size-4 animate-spin" />
+    <StatusDot tone="warning" pulse className="text-warning-11">
       {t('Waiting for DNS')}
-    </div>
+    </StatusDot>
   );
 };
 
@@ -613,11 +702,13 @@ const Saml2FormValues = z.object({
 });
 type Saml2FormValues = z.infer<typeof Saml2FormValues>;
 
+const SAML_SAVES = ['sso', 'saml-dialog', 'save'];
+
 type WizardStep = 'domain' | 'saml';
 
 type DisableAction = {
-  onDisable: () => void;
-  isDisabling: boolean;
+  onDisable: () => Promise<unknown>;
+  blockedReason: string | undefined;
 } | null;
 
 type ConfigureSamlDialogProps = {

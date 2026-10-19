@@ -15,6 +15,7 @@ import React from 'react';
 import semver from 'semver';
 
 import {
+  AdminFetchErrorState,
   SettingsPanel,
   SettingsRow,
   StatusDot,
@@ -46,7 +47,12 @@ type SystemHealthTabProps = {
 export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCloud = edition === ApEdition.CLOUD;
-  const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
+  const {
+    data: systemHealth,
+    isPending,
+    isError,
+    refetch,
+  } = healthQueries.useSystemHealth();
   const latestVersion = systemHealth?.latestVersion;
   const release = systemHealth?.release;
   const currentVersion = release?.current;
@@ -165,6 +171,12 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
         : t('No workers are connected.'),
     },
   ];
+
+  if (isError && systemHealth === undefined) {
+    return (
+      <AdminFetchErrorState entity={t('system health')} onRetry={refetch} />
+    );
+  }
 
   return (
     <>

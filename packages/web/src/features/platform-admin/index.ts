@@ -11,25 +11,15 @@ export { signingKeyApi } from './api/signing-key-api';
 export { workersApi } from './api/workers-api';
 export {
   embedSubdomainQueries,
-  embedSubdomainMutations,
   embedSubdomainKeys,
 } from './hooks/embed-subdomain-hooks';
 export { AuditLogRetentionButton } from './components/audit-log-retention-dialog';
 export { auditLogRetentionUtils } from './lib/audit-log-retention-utils';
 export { NewSigningKeyDialog } from './components/new-signing-key-dialog';
 export { platformAnalyticsHooks } from './hooks/analytics-hooks';
-export {
-  apiKeyQueries,
-  apiKeyMutations,
-  apiKeyKeys,
-} from './hooks/api-key-hooks';
-export {
-  signingKeyQueries,
-  signingKeyMutations,
-  signingKeyKeys,
-} from './hooks/signing-key-hooks';
+export { apiKeyQueries, apiKeyKeys } from './hooks/api-key-hooks';
+export { signingKeyQueries, signingKeyKeys } from './hooks/signing-key-hooks';
 export { auditLogQueries, auditLogKeys } from './hooks/audit-log-hooks';
-export { ssoMutations } from './hooks/sso-hooks';
 export {
   projectRoleQueries,
   projectRoleMutations,
@@ -56,7 +46,6 @@ export { workersQueries, workersKeys } from './hooks/workers-hooks';
 export { healthQueries, healthKeys } from './hooks/health-hooks';
 export {
   platformUserHooks,
-  platformUserMutations,
   platformUserKeys,
 } from './hooks/platform-user-hooks';
 export {

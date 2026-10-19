@@ -1,10 +1,19 @@
-import { ErrorCode, ProjectRole, RoleType } from '@activepieces/core-utils';
+import {
+  ErrorCode,
+  ProjectRole,
+  RoleType,
+  SAFE_STRING_PATTERN,
+} from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { MoreHorizontal, Pencil, Trash, X } from 'lucide-react';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 
-import { adminLayout } from '@/app/components/admin';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import {
+  ConfirmDialog,
+  adminFeedback,
+  adminLayout,
+  useAdminAction,
+} from '@/app/components/admin';
 import EditableText from '@/components/custom/editable-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,9 +40,13 @@ import {
   RoleBase,
   rolePermissionModel,
 } from '@/features/members/lib/role-permissions';
-import { projectRoleMutations } from '@/features/platform-admin';
+import {
+  projectRoleApi,
+  projectRoleMutations,
+} from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { PermissionGrid } from './permission-grid';
@@ -57,9 +70,23 @@ export const ProjectRoleDialog = ({
     }
     onOpenChange?.(nextOpen);
   };
+  const closeAfterSave = () => {
+    setIsOpen(false);
+    onSave();
+  };
+  const save = projectRoleMutations.useUpsertProjectRole({
+    onSave: closeAfterSave,
+    onError: () => undefined,
+  });
+  const requestOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && save.isPending) {
+      return;
+    }
+    setIsOpen(nextOpen);
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={requestOpenChange}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent
         showCloseButton={false}
@@ -73,11 +100,9 @@ export const ProjectRoleDialog = ({
           mode={mode}
           projectRole={projectRole}
           initialTab={initialTab}
-          onClose={() => setIsOpen(false)}
-          onSaved={() => {
-            setIsOpen(false);
-            onSave();
-          }}
+          save={save}
+          onClose={() => requestOpenChange(false)}
+          onSaved={closeAfterSave}
         />
       </DialogContent>
     </Dialog>
@@ -88,6 +113,7 @@ function RoleDialogBody({
   mode,
   projectRole,
   initialTab,
+  save,
   onClose,
   onSaved,
 }: RoleDialogBodyProps) {
@@ -105,21 +131,13 @@ function RoleDialogBody({
   const [tab, setTab] = useState<RoleDialogTab>(initialTab);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const { mutate: upsertRole, isPending: isSaving } =
-    projectRoleMutations.useUpsertProjectRole({
-      onSave: onSaved,
-      onError: (error) =>
-        setSaveError(
-          isDuplicateNameError(error)
-            ? t('nameAlreadyTaken', { name: name.trim() })
-            : t('Could not save the role. Try again.'),
-        ),
-    });
-  const { mutateAsync: deleteRole } = projectRoleMutations.useDeleteProjectRole(
-    {
-      onSuccess: onSaved,
-    },
-  );
+  const { mutate: upsertRole, isPending: isSaving } = save;
+  const { mutateAsync: deleteRole } = useAdminAction<string>({
+    verb: 'delete',
+    name: (roleName) => roleName,
+    run: (roleName) => projectRoleApi.delete(roleName),
+    onSuccess: onSaved,
+  });
 
   const granted = rolePermissionModel.grantedBoxes({ permissions });
   const total = rolePermissionModel.totalBoxes();
@@ -128,10 +146,18 @@ function RoleDialogBody({
     !samePermissions(permissions, projectRole?.permissions ?? []);
   const showsActions =
     isCreate || isDirty || (isEditingPermissions && tab === 'permissions');
+  const hasInvalidName = name.trim().length > 0 && !SAFE_NAME.test(name.trim());
   const canSubmit =
-    name.trim().length > 0 && !isSaving && (isCreate || isDirty);
+    name.trim().length > 0 &&
+    !hasInvalidName &&
+    !isSaving &&
+    (isCreate || isDirty);
+  const nameError = hasInvalidName
+    ? t("Role names can't contain a dot (.) or a slash (/).")
+    : null;
+  const footerError = saveError ?? nameError;
   const footerNote =
-    saveError ??
+    footerError ??
     footerNoteFor({
       isCreate,
       isRenaming,
@@ -153,15 +179,43 @@ function RoleDialogBody({
     setPermissions(rolePermissionModel.basePermissions({ base: nextBase }));
   };
 
+  const submitting = useRef(false);
   const submit = () => {
+    if (!canSubmit || submitting.current) {
+      return;
+    }
+    submitting.current = true;
     setSaveError(null);
-    upsertRole({
-      mode,
-      roleId: projectRole?.id,
-      name: name.trim(),
-      permissions,
-      type: RoleType.CUSTOM,
-    });
+    const roleName = name.trim();
+    upsertRole(
+      {
+        mode,
+        roleId: projectRole?.id,
+        name: roleName,
+        permissions,
+        type: RoleType.CUSTOM,
+      },
+      {
+        onSettled: () => {
+          submitting.current = false;
+        },
+        onSuccess: () => {
+          if (isCreate) {
+            adminFeedback.done({ verb: 'create', name: roleName });
+          }
+        },
+        onError: (error) => {
+          if (mutationFeedback.isQuotaExceeded(error)) {
+            mutationFeedback.error({ error });
+          }
+          setSaveError(
+            isDuplicateNameError(error)
+              ? t('nameAlreadyTaken', { name: roleName })
+              : mutationFeedback.message(error),
+          );
+        },
+      },
+    );
   };
 
   const counter = (
@@ -258,18 +312,14 @@ function RoleDialogBody({
                   <Pencil className="size-4" />
                   {t('Edit permissions')}
                 </DropdownMenuItem>
-                <ConfirmationDeleteDialog
-                  isDanger={true}
-                  title={t('Delete role')}
-                  message={t(
+                <ConfirmDialog
+                  title={t('Delete {name}?', { name: projectRole.name })}
+                  consequence={t(
                     'Deleting this role will remove {count} project member(s) and all associated invitations.',
                     { count: projectRole.userCount },
                   )}
-                  entityName={`${t('Project Role')} ${projectRole.name}`}
-                  buttonText={t('Delete role')}
-                  mutationFn={async () => {
-                    await deleteRole(projectRole.name);
-                  }}
+                  confirmLabel={t('Delete role')}
+                  onConfirm={() => deleteRole(projectRole.name)}
                   controlId={AdminControl.ROLES_DELETE_CONFIRM}
                 >
                   <DropdownMenuItem
@@ -280,12 +330,12 @@ function RoleDialogBody({
                     <Trash className="size-4" />
                     {t('Delete role')}
                   </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
+                </ConfirmDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
           <DialogClose asChild>
-            <Button variant="ghost" size="icon-sm">
+            <Button variant="ghost" size="icon-sm" disabled={isSaving}>
               <X className="size-4" />
               <span className="sr-only">{t('Close')}</span>
             </Button>
@@ -387,10 +437,10 @@ function RoleDialogBody({
       <footer className="flex min-h-15 shrink-0 flex-wrap items-center justify-end gap-x-6 gap-y-2 border-t px-6 py-3">
         {footerNote ? (
           <p
-            role={saveError ? 'alert' : undefined}
+            role={footerError ? 'alert' : undefined}
             className={cn(
               'min-w-0 basis-full text-xs sm:flex-1 sm:basis-auto',
-              saveError ? 'font-medium text-danger-11' : 'text-gray-11',
+              footerError ? 'font-medium text-danger-11' : 'text-gray-11',
             )}
           >
             {footerNote}
@@ -403,6 +453,7 @@ function RoleDialogBody({
             <Button
               type="button"
               variant="outline"
+              disabled={isSaving}
               onClick={isCreate ? onClose : cancelEdit}
             >
               {t('Cancel')}
@@ -465,6 +516,8 @@ function samePermissions(left: string[], right: string[]): boolean {
   return left.every((permission) => rightSet.has(permission));
 }
 
+const SAFE_NAME = new RegExp(SAFE_STRING_PATTERN);
+
 type FooterNoteParams = {
   isCreate: boolean;
   isRenaming: boolean;
@@ -479,6 +532,7 @@ type RoleDialogBodyProps = {
   mode: 'create' | 'edit';
   projectRole?: ProjectRole;
   initialTab: RoleDialogTab;
+  save: ReturnType<typeof projectRoleMutations.useUpsertProjectRole>;
   onClose: () => void;
   onSaved: () => void;
 };

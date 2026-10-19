@@ -217,13 +217,21 @@ function signingKeys(): SigningKey[] {
   }));
 }
 
+function once<T>(build: () => T): () => T {
+  let built: { value: T } | null = null;
+  return () => {
+    built ??= { value: build() };
+    return built.value;
+  };
+}
+
 export const sampleData = {
-  signingKeys,
-  templatesPage: () => toPage(templates()),
-  apiKeysPage: () => toPage(apiKeys()),
-  auditEventsPage: () => toPage(auditEvents()),
-  globalConnectionsPage: () => toPage(globalConnections()),
-  projectRolesPage: () => toPage(projectRoles()),
-  eventDestinations,
-  secretManagers,
+  signingKeys: once(signingKeys),
+  templatesPage: once(() => toPage(templates())),
+  apiKeysPage: once(() => toPage(apiKeys())),
+  auditEventsPage: once(() => toPage(auditEvents())),
+  globalConnectionsPage: once(() => toPage(globalConnections())),
+  projectRolesPage: once(() => toPage(projectRoles())),
+  eventDestinations: once(eventDestinations),
+  secretManagers: once(secretManagers),
 };

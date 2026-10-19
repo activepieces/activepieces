@@ -5,8 +5,9 @@ import {
   EmbedVerificationRecordPurpose,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { CheckCircle, Loader2, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 
+import { StatusDot } from '@/app/components/admin';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Label } from '@/components/ui/label';
 import { AdminControl } from '@/lib/admin-control';
@@ -48,10 +49,9 @@ const EmbedStatusBadge = ({ status }: { status: EmbedSubdomainStatus }) => {
       );
     case EmbedSubdomainStatus.PENDING_VERIFICATION:
       return (
-        <div className="flex items-center gap-2 text-sm text-warning-11">
-          <Loader2 className="size-4 animate-spin" />
+        <StatusDot tone="warning" pulse className="text-warning-11">
           {t('Waiting for DNS')}
-        </div>
+        </StatusDot>
       );
     case EmbedSubdomainStatus.FAILED:
       return (

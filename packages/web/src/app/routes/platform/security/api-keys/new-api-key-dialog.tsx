@@ -1,12 +1,12 @@
+import { formErrors } from '@activepieces/core-utils';
 import { ApiKeyResponseWithValue } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { adminLayout } from '@/app/components/admin';
+import { adminLayout, useAdminAction } from '@/app/components/admin';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +34,7 @@ type NewApiKeyDialogProps = {
   onCreate: () => void;
 };
 const FormSchema = z.object({
-  displayName: z.string().min(1, t('Name is required')),
+  displayName: z.string().trim().min(1, formErrors.required),
 });
 
 type FormSchema = z.infer<typeof FormSchema>;
@@ -47,28 +47,58 @@ export const NewApiKeyDialog = ({
   const [apiKey, setApiKey] = useState<ApiKeyResponseWithValue | undefined>(
     undefined,
   );
+  const submitting = useRef(false);
   const form = useForm<FormSchema>({
     resolver: zodResolver(FormSchema),
+    mode: 'onChange',
+    defaultValues: { displayName: '' },
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: () => apiKeyApi.create(form.getValues()),
-    onSuccess: (apiKey) => {
-      setApiKey(apiKey);
+  const { mutate, isPending } = useAdminAction<
+    FormSchema,
+    ApiKeyResponseWithValue
+  >({
+    verb: 'create',
+    name: t('API key'),
+    run: ({ displayName }) =>
+      apiKeyApi.create({ displayName: displayName.trim() }),
+    onSuccess: ({ data }) => {
+      setApiKey(data);
       onCreate();
     },
   });
 
+  const submit = (values: FormSchema) => {
+    if (submitting.current) {
+      return;
+    }
+    submitting.current = true;
+    mutate(values, {
+      onSettled: () => {
+        submitting.current = false;
+      },
+    });
+  };
+
   return (
     <Dialog
       open={open}
-      onOpenChange={(open) => {
-        setOpen(open);
+      onOpenChange={(next) => {
+        if (!next && isPending) {
+          return;
+        }
+        setOpen(next);
+        if (!next) {
+          setApiKey(undefined);
+        }
         form.reset();
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className={adminLayout.dialog.md}>
+      <DialogContent
+        className={adminLayout.dialog.md}
+        showCloseButton={!isPending}
+      >
         <DialogHeader>
           <DialogTitle>
             {apiKey ? t('API Key Created') : t('Create API Key')}
@@ -121,7 +151,7 @@ export const NewApiKeyDialog = ({
           <Form {...form}>
             <form
               className="grid space-y-4"
-              onSubmit={form.handleSubmit(() => mutate())}
+              onSubmit={form.handleSubmit(submit)}
             >
               <FormField
                 control={form.control}
@@ -129,11 +159,7 @@ export const NewApiKeyDialog = ({
                 render={({ field }) => (
                   <FormItem className="grid space-y-4">
                     <FormLabel>{t('Name')}</FormLabel>
-                    <Input
-                      {...field}
-                      required
-                      placeholder={t('API Key Name')}
-                    />
+                    <Input {...field} placeholder={t('API Key Name')} />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -142,6 +168,7 @@ export const NewApiKeyDialog = ({
                 <Button
                   variant="outline"
                   type="button"
+                  disabled={isPending}
                   onClick={() => setOpen(false)}
                 >
                   {t('Cancel')}

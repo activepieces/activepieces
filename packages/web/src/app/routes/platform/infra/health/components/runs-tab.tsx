@@ -4,8 +4,11 @@ import { t } from 'i18next';
 import { CheckCircle2, ListChecks } from 'lucide-react';
 import { ReactNode } from 'react';
 
-import { StatCard, StatGrid } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import {
+  AdminFetchErrorState,
+  StatCard,
+  StatGrid,
+} from '@/app/components/admin';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +31,15 @@ function renderDelta(current: number, previous: number): ReactNode {
   );
 }
 
+export function formatSuccessRate(
+  summary: PlatformMetricsReport['summary'] | undefined,
+): string {
+  if (!summary || summary.completed === 0) {
+    return '—';
+  }
+  return `${summary.successRate.toFixed(1)}%`;
+}
+
 type RunsTabProps = {
   report: PlatformMetricsReport | undefined;
   isLoading: boolean;
@@ -40,51 +52,45 @@ export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
 
   if (isError) {
     return (
-      <DataFetchErrorState entity={t('health metrics')} onRetry={onRetry} />
+      <AdminFetchErrorState entity={t('health metrics')} onRetry={onRetry} />
     );
   }
 
   return (
     <>
-      <div className="flex flex-col gap-2">
-        {report && (
-          <p className="text-xs text-gray-11">
-            {t('Showing cached data · next refresh after {time}', {
-              time: dayjs(report.nextRefreshAt).format('MMM D, h:mm A'),
-            })}
-          </p>
-        )}
-        <StatGrid columns={2}>
-          <StatCard
-            icon={<ListChecks />}
-            label={t('Jobs done')}
-            info={t('Completed jobs (success + failure) in the period')}
-            value={
-              isLoading
-                ? '—'
-                : formatUtils.formatNumber(summary?.completed ?? 0)
-            }
-            hint={
-              summary
-                ? renderDelta(summary.completed, summary.previousCompleted)
-                : undefined
-            }
-          />
-          <StatCard
-            icon={<CheckCircle2 />}
-            label={t('Success rate')}
-            info={t('Share of completed jobs that succeeded')}
-            value={
-              isLoading ? '—' : `${(summary?.successRate ?? 0).toFixed(1)}%`
-            }
-            hint={
-              summary
-                ? renderDelta(summary.successRate, summary.previousSuccessRate)
-                : undefined
-            }
-          />
-        </StatGrid>
-      </div>
+      {report && (
+        <p className="text-xs text-gray-11">
+          {t('Showing cached data · next refresh after {time}', {
+            time: dayjs(report.nextRefreshAt).format('MMM D, h:mm A'),
+          })}
+        </p>
+      )}
+      <StatGrid columns={2}>
+        <StatCard
+          icon={<ListChecks />}
+          label={t('Jobs done')}
+          info={t('Completed jobs (success + failure) in the period')}
+          value={
+            isLoading ? '—' : formatUtils.formatNumber(summary?.completed ?? 0)
+          }
+          hint={
+            summary
+              ? renderDelta(summary.completed, summary.previousCompleted)
+              : undefined
+          }
+        />
+        <StatCard
+          icon={<CheckCircle2 />}
+          label={t('Success rate')}
+          info={t('Share of completed jobs that succeeded')}
+          value={isLoading ? '—' : formatSuccessRate(summary)}
+          hint={
+            summary
+              ? renderDelta(summary.successRate, summary.previousSuccessRate)
+              : undefined
+          }
+        />
+      </StatGrid>
 
       <StatusLineChart data={report?.statusTimeseries} isLoading={isLoading} />
 

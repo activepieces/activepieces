@@ -3369,6 +3369,7 @@
   "Available to the assistant": "Available to the assistant",
   "The assistant can't do this yet": "The assistant can't do this yet",
   "Role names can't contain a dot (.) or a slash (/).": "Role names can't contain a dot (.) or a slash (/).",
+  "Project names can't contain a dot (.) or a slash (/).": "Project names can't contain a dot (.) or a slash (/).",
   "invitationsSentOfTotal": "{sent} of {total, plural, =1 {1 invitation sent} other {# invitations sent}}",
   "invitationsFailedCheck": "{count, plural, =1 {The email that failed is listed in the dialog. Check it and try again.} other {The # emails that failed are listed in the dialog. Check them and try again.}}",
   "{email}: {reason}": "{email}: {reason}",
