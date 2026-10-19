@@ -276,5 +276,8 @@
   "List Playlist Videos": "List Playlist Videos",
   "List Comment Threads": "List Comment Threads",
   "List Caption Tracks": "List Caption Tracks",
-  "Download Caption Track": "Download Caption Track"
+  "Download Caption Track": "Download Caption Track",
+  "Fill in Playlist ID or Item IDs, not both.": "填写“Playlist ID”或“Item IDs”，不要同时填写。",
+  "Fill in Channel ID or Handle.": "填写“Channel ID”或“Handle”。",
+  "Sent as ?key=value. Most YouTube calls need part, like part=snippet.": "以 ?key=value 的形式发送。大多数 YouTube 调用都需要 part，例如 part=snippet。"
 }
