@@ -150,6 +150,10 @@ export const worker = {
         stopHealthServer()
         logger.info('Worker stopped')
     },
+
+    stopPolling(): void {
+        polling = false
+    },
 }
 
 async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void> {
