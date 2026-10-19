@@ -80,7 +80,19 @@ test.describe('Tables', () => {
       const editor = page.getByRole('textbox');
       await expect(editor).toBeVisible();
       const editorBox = await editor.boundingBox();
-      expect(editorBox?.height ?? 0).toBeGreaterThan(cellBox.height);
+      if (!editorBox) {
+        throw new Error('the cell editor is not rendered');
+      }
+      const belowTheRow = {
+        x: editorBox.x + editorBox.width / 2,
+        y: cellBox.y + cellBox.height + 20,
+      };
+      expect(editorBox.y + editorBox.height).toBeGreaterThan(belowTheRow.y);
+      const tagUnderPointer = await page.evaluate(
+        ({ x, y }) => document.elementFromPoint(x, y)?.tagName ?? null,
+        belowTheRow,
+      );
+      expect(tagUnderPointer).toBe('TEXTAREA');
     } finally {
       await request.delete(`/api/v1/tables/${table.id}`, { headers });
     }
