@@ -9,19 +9,15 @@ import {
   DedupeStrategy,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { googleContactsAuth } from '../auth';
+import { createGoogleClient, googleContactsAuth } from '../auth';
 import { newOrUpdatedContactOutputSchema } from '../output-schemas';
 import { people as googlePeople } from '@googleapis/people';
-import { OAuth2Client } from 'google-auth-library';
 import dayjs from 'dayjs';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof googleContactsAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ store, auth }) => {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(auth);
-
-    const contactsClient = googlePeople({ version: 'v1', auth: authClient });
+    const contactsClient = googlePeople({ version: 'v1', auth: createGoogleClient(auth) });
 
     let nextPageToken;
     const contactItems: Array<{ data: any; epochMilliSeconds: number }> = [];

@@ -22,10 +22,11 @@ export const twilioDownloadRecordingMedia = createAction({
       description: 'MP3 files are smaller. WAV keeps full quality.',
       required: false,
       defaultValue: 'mp3',
+      display: 'cards',
       options: {
         options: [
-          { label: 'MP3', value: 'mp3' },
-          { label: 'WAV', value: 'wav' },
+          { label: 'MP3', value: 'mp3', description: 'Smaller file', icon: 'file' },
+          { label: 'WAV', value: 'wav', description: 'Full quality', icon: 'file' },
         ],
       },
     }),

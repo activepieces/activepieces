@@ -1,113 +1,108 @@
-import {
-	OAuth2PropertyValue,
-	createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 
+import { approveTaskAction } from './lib/actions/approve-task';
+import { callOperationAction } from './lib/actions/call-operation';
+import { changeJobAction } from './lib/actions/change-job';
+import { createJobRequisitionAction } from './lib/actions/create-job-requisition';
+import { createPreHireAction } from './lib/actions/create-pre-hire';
+import { createSupplierCreditMemoAction } from './lib/actions/create-supplier-credit-memo';
+import { createTimeOffRequestAction } from './lib/actions/create-time-off-request';
+import { createUpdateCustomObjectAction } from './lib/actions/create-update-custom-object';
+import { createWorkerTimeBlockAction } from './lib/actions/create-worker-time-block';
+import { findPurchaseOrderAction } from './lib/actions/find-purchase-order';
+import { findRecordsWqlAction } from './lib/actions/find-records-wql';
+import { findSupplierAction } from './lib/actions/find-supplier';
+import { findSupplierInvoiceAction } from './lib/actions/find-supplier-invoice';
+import { findSupplierPaymentAction } from './lib/actions/find-supplier-payment';
+import { getBusinessObjectDetailsBatchAction } from './lib/actions/get-business-object-details-batch';
+import { getCustomObjectsAction } from './lib/actions/get-custom-objects';
+import { getReportAction } from './lib/actions/get-report';
+import { getReportWqlBatchAction } from './lib/actions/get-report-wql-batch';
+import { hireEmployeeAction } from './lib/actions/hire-employee';
+import { listCustomObjectDefinitionsBatchAction } from './lib/actions/list-custom-object-definitions-batch';
+import { searchBusinessObjectBatchAction } from './lib/actions/search-business-object-batch';
+import { updateBusinessObjectAction } from './lib/actions/update-business-object';
+import { updateSupplierAction } from './lib/actions/update-supplier';
+import { updateSupplierInvoiceAction } from './lib/actions/update-supplier-invoice';
 import { workdayAuth } from './lib/auth';
-
-import { approveTask } from './lib/action/approve-task';
-import { changeJob } from './lib/action/change-job';
-import { createJobRequisition } from './lib/action/create-job-requisition';
-import { createPreHire } from './lib/action/create-pre-hire';
-import { createSupplierCreditMemo } from './lib/action/create-supplier-credit-memo';
-import { createTimeOffRequest } from './lib/action/create-time-off-request';
-import { createWorkerTimeBlock } from './lib/action/create-worker-time-block';
-import { findPurchaseOrder } from './lib/action/find-purchase-order';
-import { findRecordsWql } from './lib/action/find-records-wql';
-import { findSupplier } from './lib/action/find-supplier';
-import { findSupplierInvoice } from './lib/action/find-supplier-invoice';
-import { findSupplierPayment } from './lib/action/find-supplier-payment';
-import { hireEmployee } from './lib/action/hire-employee';
-import { updateSupplier } from './lib/action/update-supplier';
-import { updateSupplierInvoice } from './lib/action/update-supplier-invoice';
-
-import { callOperation } from './lib/action/call-operation';
-import { createUpdateCustomObject } from './lib/action/create-update-custom-object';
-import { getBusinessObjectDetailsBatch } from './lib/action/get-business-object-details-batch';
-import { getCustomObjects } from './lib/action/get-custom-objects';
-import { getReport } from './lib/action/get-report';
-import { getReportWqlBatch } from './lib/action/get-report-wql-batch';
-import { listCustomObjectDefinitionsBatch } from './lib/action/list-custom-object-definitions-batch';
-import { searchBusinessObjectBatch } from './lib/action/search-business-object-batch';
-import { updateBusinessObject } from './lib/action/update-business-object';
-
-import { businessProcessCompleted } from './lib/trigger/business-process-completed';
-import { employeeTerminated } from './lib/trigger/employee-terminated';
-import { expenseReportSubmitted } from './lib/trigger/expense-report-submitted';
-import { leaveRequestSubmitted } from './lib/trigger/leave-request-submitted';
-import { newHireCreated } from './lib/trigger/new-hire-created';
-import { newInboxTask } from './lib/trigger/new-inbox-task';
-import { newSupplier } from './lib/trigger/new-supplier';
-import { newSupplierInvoice } from './lib/trigger/new-supplier-invoice';
-import { runWqlQuery } from './lib/trigger/run-wql-query';
-import { updatedSupplier } from './lib/trigger/updated-supplier';
-
-import { newOrUpdatedBusinessObject } from './lib/trigger/new-or-updated-business-object';
-import { newOrUpdatedBusinessObjectBatch } from './lib/trigger/new-or-updated-business-object-batch';
-import { scheduledReportFetchBatch } from './lib/trigger/scheduled-report-fetch-batch';
-import { scheduledReportFetchWqlBatch } from './lib/trigger/scheduled-report-fetch-wql-batch';
+import { workdayClient } from './lib/common/client';
+import { businessProcessCompletedTrigger } from './lib/triggers/business-process-completed';
+import { employeeTerminatedTrigger } from './lib/triggers/employee-terminated';
+import { expenseReportSubmittedTrigger } from './lib/triggers/expense-report-submitted';
+import { leaveRequestSubmittedTrigger } from './lib/triggers/leave-request-submitted';
+import { newHireCreatedTrigger } from './lib/triggers/new-hire-created';
+import { newInboxTaskTrigger } from './lib/triggers/new-inbox-task';
+import { newOrUpdatedBusinessObjectTrigger } from './lib/triggers/new-or-updated-business-object';
+import { newOrUpdatedBusinessObjectBatchTrigger } from './lib/triggers/new-or-updated-business-object-batch';
+import { newSupplierTrigger } from './lib/triggers/new-supplier';
+import { newSupplierInvoiceTrigger } from './lib/triggers/new-supplier-invoice';
+import { runWqlQueryTrigger } from './lib/triggers/run-wql-query';
+import { scheduledReportFetchBatchTrigger } from './lib/triggers/scheduled-report-fetch-batch';
+import { scheduledReportFetchWqlBatchTrigger } from './lib/triggers/scheduled-report-fetch-wql-batch';
+import { updatedSupplierTrigger } from './lib/triggers/updated-supplier';
 
 export const workday = createPiece({
 	displayName: 'Workday',
-	description:
-		'Cloud-based enterprise platform for human resources, finance, and planning.',
+	description: 'Cloud-based enterprise platform for human resources, finance, and planning.',
 	minimumSupportedRelease: '0.36.1',
 	logoUrl: 'https://cdn.activepieces.com/pieces/workday.jpg',
 	authors: [],
 	categories: [PieceCategory.HUMAN_RESOURCES],
 	auth: workdayAuth,
 	actions: [
-		approveTask,
-		changeJob,
-		createJobRequisition,
-		createPreHire,
-		createSupplierCreditMemo,
-		createTimeOffRequest,
-		createWorkerTimeBlock,
-		findPurchaseOrder,
-		findRecordsWql,
-		findSupplier,
-		findSupplierInvoice,
-		findSupplierPayment,
-		hireEmployee,
-		updateSupplier,
-		updateSupplierInvoice,
-		getBusinessObjectDetailsBatch,
-		searchBusinessObjectBatch,
-		updateBusinessObject,
-		callOperation,
-		getCustomObjects,
-		getReport,
-		getReportWqlBatch,
-		listCustomObjectDefinitionsBatch,
-		createUpdateCustomObject,
+		approveTaskAction,
+		changeJobAction,
+		createJobRequisitionAction,
+		createPreHireAction,
+		createSupplierCreditMemoAction,
+		createTimeOffRequestAction,
+		createWorkerTimeBlockAction,
+		findPurchaseOrderAction,
+		findRecordsWqlAction,
+		findSupplierAction,
+		findSupplierInvoiceAction,
+		findSupplierPaymentAction,
+		hireEmployeeAction,
+		updateSupplierAction,
+		updateSupplierInvoiceAction,
+		getBusinessObjectDetailsBatchAction,
+		searchBusinessObjectBatchAction,
+		updateBusinessObjectAction,
+		callOperationAction,
+		getCustomObjectsAction,
+		getReportAction,
+		getReportWqlBatchAction,
+		listCustomObjectDefinitionsBatchAction,
+		createUpdateCustomObjectAction,
 		createCustomApiCallAction({
 			baseUrl: (auth) => {
-				const value = auth as OAuth2PropertyValue;
-				return `https://${value.props?.['apiHost']}/ccx/api/v1/${value.props?.['tenant']}`;
+				if (!auth) {
+					throw new Error('Connect Workday first.');
+				}
+				return workdayClient.baseUrl({ auth });
 			},
 			auth: workdayAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+				Authorization: `Bearer ${workdayClient.bearerToken({ auth })}`,
 			}),
 		}),
 	],
 	triggers: [
-		businessProcessCompleted,
-		employeeTerminated,
-		expenseReportSubmitted,
-		leaveRequestSubmitted,
-		newHireCreated,
-		newInboxTask,
-		newSupplier,
-		newSupplierInvoice,
-		runWqlQuery,
-		updatedSupplier,
-		newOrUpdatedBusinessObject,
-		newOrUpdatedBusinessObjectBatch,
-		scheduledReportFetchBatch,
-		scheduledReportFetchWqlBatch,
+		businessProcessCompletedTrigger,
+		employeeTerminatedTrigger,
+		expenseReportSubmittedTrigger,
+		leaveRequestSubmittedTrigger,
+		newHireCreatedTrigger,
+		newInboxTaskTrigger,
+		newSupplierTrigger,
+		newSupplierInvoiceTrigger,
+		runWqlQueryTrigger,
+		updatedSupplierTrigger,
+		newOrUpdatedBusinessObjectTrigger,
+		newOrUpdatedBusinessObjectBatchTrigger,
+		scheduledReportFetchBatchTrigger,
+		scheduledReportFetchWqlBatchTrigger,
 	],
 });

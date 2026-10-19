@@ -21,7 +21,10 @@ export const registered = [
   {
     name: GithubEventType.PULL_REQUEST,
     displayName: 'New Pull Request',
-    description: 'Triggers when there is activity on a pull request.',
+    description:
+      'Triggers on any pull request activity: opened, edited, closed and more.',
+    activityNote:
+      'Runs for every pull request event: opened, edited, closed, labeled, review requested and more.',
     sampleData: {
       action: 'opened',
       number: 2,
@@ -284,7 +287,9 @@ export const registered = [
   {
     name: GithubEventType.STAR,
     displayName: 'New Star',
-    description: 'Trigger when there is activity relating to repository stars.',
+    description: 'Triggers when someone stars or unstars the repository.',
+    activityNote:
+      'Runs when someone stars the repository and when someone removes a star.',
     sampleData: {
       action: 'created',
       starred_at: '2023-02-18T11:18:55Z',
@@ -459,7 +464,10 @@ export const registered = [
   {
     name: GithubEventType.ISSUES,
     displayName: 'New Issue',
-    description: 'Triggers when there is activity relating to an issue.',
+    description:
+      'Triggers on any issue activity: opened, edited, closed and more.',
+    activityNote:
+      'Runs for every issue event: opened, edited, closed, labeled, assigned and more.',
     sampleData: {
       action: 'opened',
       issue: {
@@ -699,9 +707,10 @@ export const registered = [
   },
   {
     name: GithubEventType.PUSH,
-    displayName: 'Push',
-    description:
-      'Triggers when there is a push to a repository branch. This includes when a commit is pushed, when a commit tag is pushed, when a branch is deleted, when a tag is deleted, or when a repository is created from a template.',
+    displayName: 'New Push',
+    description: 'Triggers on every push, including tags and branch deletions.',
+    activityNote:
+      'Runs once per push, including tag pushes and branch deletions. New Commit runs once per commit instead.',
     sampleData: {
       after: 'sha1',
       base_ref: 'main',
@@ -912,7 +921,10 @@ export const registered = [
   {
     name: GithubEventType.DISCUSSION,
     displayName: 'New Discussion',
-    description: 'Triggers when there is activity relating to a discussion.',
+    description:
+      'Triggers on any discussion activity: created, edited, answered and more.',
+    activityNote:
+      'Runs for every discussion event: created, edited, answered, closed and more.',
     sampleData: {
       action: 'created',
       discussion: {
@@ -1159,8 +1171,11 @@ export const registered = [
 
   {
     name: GithubEventType.DISCUSSION_COMMENT,
-    displayName: 'New Comment Posted',
-    description: 'Triggers when there is a new comment posted on a discussion.',
+    displayName: 'New Discussion Comment',
+    description:
+      'Triggers when a discussion comment is created, edited or deleted.',
+    activityNote:
+      'Runs when a discussion comment is created, edited or deleted.',
     sampleData: {
       action: 'created',
       comment: {

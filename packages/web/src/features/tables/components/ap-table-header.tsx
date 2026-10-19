@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -134,10 +135,7 @@ export function ApTableHeader({
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="size-6 flex items-center justify-center"
-                  >
+                  <Button variant="ghost" size="icon-xs">
                     <ChevronDown className="h-4 w-4 text-gray-11" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -294,8 +292,14 @@ export function ApTableHeader({
           open={isImportTableDialogOpen}
           setIsOpen={setIsImportTableDialogOpen}
           tableId={table.id}
-          allowedFileTypes={['json', 'csv']}
-          onImportSuccess={refreshTableState}
+          onImportSuccess={({ importedRecordsCount }) => {
+            refreshTableState();
+            if (importedRecordsCount > 0) {
+              toast.success(
+                t('recordsImported', { count: importedRecordsCount }),
+              );
+            }
+          }}
         />
       </div>
     </>

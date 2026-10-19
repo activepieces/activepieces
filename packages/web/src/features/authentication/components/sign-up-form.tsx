@@ -246,7 +246,6 @@ const SignUpForm = ({
                     id="firstName"
                     type="text"
                     placeholder={'John'}
-                    className="rounded-sm"
                     data-testid="sign-up-first-name"
                   />
                   <FormMessage />
@@ -268,7 +267,6 @@ const SignUpForm = ({
                     id="lastName"
                     type="text"
                     placeholder={'Doe'}
-                    className="rounded-sm"
                     data-testid="sign-up-last-name"
                   />
                   <FormMessage />
@@ -293,7 +291,6 @@ const SignUpForm = ({
                   id="email"
                   type="email"
                   placeholder={'email@example.com'}
-                  className="rounded-sm"
                   data-testid="sign-up-email"
                 />
                 <FormMessage />
@@ -319,7 +316,7 @@ const SignUpForm = ({
                         id="password"
                         type={showPassword ? 'text' : 'password'}
                         placeholder={'********'}
-                        className="rounded-sm pr-16"
+                        className="pr-16"
                         data-testid="sign-up-password"
                         onFocus={() => setIsPasswordFocused(true)}
                         onBlur={() => setIsPasswordFocused(false)}
@@ -329,10 +326,10 @@ const SignUpForm = ({
                         <Button
                           type="button"
                           variant="ghost"
-                          size="icon"
+                          size="icon-xs"
                           tabIndex={-1}
                           onClick={() => setShowPassword((v) => !v)}
-                          className="h-7 w-7 p-0 text-gray-11 hover:text-gray-12"
+                          className="text-gray-11 hover:text-gray-12"
                         >
                           {showPassword ? (
                             <EyeOff className="w-4 h-4" />

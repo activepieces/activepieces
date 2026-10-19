@@ -1,16 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { mauticCommon } from '../common';
 import { mauticAuth } from '../auth';
+import { mauticApi } from '../common/api';
+import { mauticProps } from '../common/props';
+import { createMauticCompanyOutputSchema } from '../output-schemas';
 
-export const createCompany = createAction({
+export const createCompanyAction = createAction({
   auth: mauticAuth,
-  description: 'Creates a new company in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
-  audience: 'both',
+  description: 'Creates a new company in Mautic CRM',
+  audience: 'human',
   aiMetadata: {
     description:
       'Create a new company in Mautic from the provided field values (company name, address, custom fields, etc.). Use when adding an organization to Mautic; to modify an existing company use Update Company, and check Search Company first to avoid duplicates. Not idempotent: each call inserts a new company record.',
@@ -18,24 +15,12 @@ export const createCompany = createAction({
   },
   displayName: 'Create Company',
   name: 'create_mautic_company',
+  outputSchema: createMauticCompanyOutputSchema,
   classification: 'WRITE',
   props: {
-    fields: mauticCommon.companyFields,
+    fields: mauticProps.companyFields({ required: true }),
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth.props;
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url:
-        (base_url.endsWith('/') ? base_url : base_url + '/') +
-        'api/companies/new',
-      body: JSON.stringify(context.propsValue.fields),
-      headers: {
-        Authorization:
-          'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
-        'Content-Type': 'application/json',
-      },
-    };
-    return await httpClient.sendRequest(request);
+    return await mauticApi.createCompany({ auth: context.auth, fields: context.propsValue.fields });
   },
 });
