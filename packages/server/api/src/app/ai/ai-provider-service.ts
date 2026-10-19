@@ -16,6 +16,7 @@ import { aiKeyScope, ProviderScope } from './ai-key-scope'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviderHealth } from './ai-provider-health'
 import { AiToolConfigEntity } from './ai-tool-config-entity'
+import { aiUsageHooks } from './ai-usage-hooks'
 import { platformModelTierService } from './platform-model-tier-service'
 import { aiProviders } from './providers'
 
@@ -91,6 +92,21 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async listModelsForConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderModel[]> {
         const aiProvider = await getRowByIdOrThrow({ platformId, configId })
         return fetchModels({ aiProvider, platformId, log })
+    },
+
+    async suggestModelsForConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<string[]> {
+        const aiProvider = await getRowByIdOrThrow({ platformId, configId })
+        const strategy = aiProviders[aiProvider.provider]
+        if (isNil(strategy.suggestModels)) {
+            return []
+        }
+        const auth = await decryptRowAuth({ aiProvider, platformId, log })
+        const { data, error } = await tryCatch(async () => strategy.suggestModels?.(auth, aiProvider.config))
+        if (!isNil(error)) {
+            log.warn({ error, providerId: aiProvider.id }, '[aiProviderService#suggestModelsForConfig] could not fetch model suggestions')
+            return []
+        }
+        return data ?? []
     },
 
     async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<AIProviderWithoutSensitiveData> {
@@ -185,6 +201,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
             }
             await manager.update(AIProviderEntity, providerId, updates)
+            if (changesModelScope || !isNil(request.projectScope) || !isNil(request.projectIds)) {
+                const key = await manager.findOneByOrFail(AIProviderEntity, { platformId, id: providerId })
+                await aiUsageHooks.get(log).unpinConversationsFromKey({ manager, platformId, configId: providerId, key })
+            }
         })
     },
 
@@ -213,6 +233,22 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return { ...aiProviderCredentials({ provider: chatProvider.provider, auth, config: chatProvider.config }), configId: chatProvider.id, platformId, modelScope: chatProvider.modelScope, modelIds: chatProvider.modelIds }
     },
 
+    async findKeyConfig({ platformId, configId, scope }: { platformId: PlatformId, configId: string, scope: ProviderScope }): Promise<GetProviderConfigResponse | null> {
+        const row = await aiProviderRepo().findOneBy({ platformId, id: configId })
+        if (isNil(row) || !aiKeyScope.rowAllowsScope({ row, scope })) {
+            return null
+        }
+        if (row.provider === AIProviderName.ACTIVEPIECES && await isActivepiecesAiProviderHidden({ platformId, log })) {
+            return null
+        }
+        return this.configForTierKey({ platformId, key: row })
+    },
+
+    async findProviderName({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderName | null> {
+        const row = await aiProviderRepo().findOne({ where: { platformId, id: configId }, select: { provider: true } })
+        return row?.provider ?? null
+    },
+
     async keyServesScope({ platformId, provider, configId, resolvedFor, target }: { platformId: PlatformId, provider?: AIProviderName, configId?: string, resolvedFor: ProviderScope, target: ProviderScope }): Promise<boolean> {
         const candidates = await findRunKeyCandidates({ platformId, provider, configId, scope: resolvedFor, log })
         return candidates.every((row) => target.type === 'platform'
@@ -228,7 +264,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
         const deleted = await transaction(async (manager) => {
             await platformModelTierService.removeKeyFromTiers({ manager, platformId, configId: providerId })
-            return deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
+            const row = await deleteRowForUpdate({ manager, where: { platformId, id: providerId } })
+            await aiUsageHooks.get(log).unpinConversationsFromKey({ manager, platformId, configId: providerId, key: null })
+            return row
         })
         await revokeKeyIfManaged({ row: deleted, log })
     },
@@ -236,6 +274,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const deleted = await transaction(async (manager) => {
             await lockPlatformForUpdate({ manager, platformId })
             const row = await deleteRowForUpdate({ manager, where: { platformId, provider: AIProviderName.ACTIVEPIECES } })
+            if (!isNil(row)) {
+                await aiUsageHooks.get(log).unpinConversationsFromKey({ manager, platformId, configId: row.id, key: null })
+            }
             await inSameTransaction?.(manager)
             return row
         })
@@ -365,6 +406,7 @@ const CAPABILITY_LABELS: Record<AiToolCapability, string> = {
     [AiToolCapability.WEB_SEARCH]: 'web search',
     [AiToolCapability.WEB_SCRAPING]: 'web scraping',
     [AiToolCapability.IMAGE_GENERATION]: 'image generation',
+    [AiToolCapability.EMBEDDINGS]: 'embeddings',
 }
 
 const PLATFORM_SCOPE_PREFERENCE: Record<AiProviderProjectScope, number> = {

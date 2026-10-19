@@ -22,11 +22,27 @@ export const findRowAction = createAction({
     idempotent: true,
   },
   auth: baserowAuth,
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['table_id'],
+    },
+    {
+      key: 'match',
+      display: 'section',
+      label: 'Match',
+      icon: 'filter',
+      props: ['field_name', 'field_value'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
     field_name: Property.Dropdown({
       displayName: 'Field',
-      description: 'Select the field to search by.',
+      description: 'The column to look in.',
       required: true,
       auth: baserowAuth,
       refreshers: ['auth', 'table_id'],
@@ -69,7 +85,8 @@ export const findRowAction = createAction({
     }),
     field_value: Property.ShortText({
       displayName: 'Field Value',
-      description: 'The value to search for (exact match).',
+      description: 'Returns the first row whose value equals this exactly.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },

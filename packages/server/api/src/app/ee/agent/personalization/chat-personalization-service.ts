@@ -244,19 +244,19 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         }
         const userRow = await findRow({ platformId, userId })
         const [provider, user, platform, companyRow, enabledTools] = await Promise.all([
-            agentHelpers.resolveChatProvider({ platformId, scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
+            agentHelpers.resolvePlatformWorkModelOrThrow({ platformId, log }),
             userService(log).getMetaInformation({ id: userId }),
             platformService(log).getOneOrThrow(platformId),
             findRow({ platformId, userId: null }),
             tryCatch(() => aiToolConfigService(log).getEnabledTools({ platformId })),
         ])
         const webSearch = enabledTools.data?.webSearch ?? null
-        const modelId = await agentHelpers.resolveModelId({ platformId, providerConfig: provider, selectedModel: null, surface: 'chat', scope: PERSONALIZATION_PROVIDER_SCOPE, log })
+        const modelId = provider.modelId ?? await agentHelpers.resolveModelId({ platformId, providerConfig: provider.config, selectedModel: null, surface: 'chat', scope: PERSONALIZATION_PROVIDER_SCOPE, log })
         return {
             claimed: true,
-            credentials: provider,
+            credentials: provider.config,
             modelId,
-            fastModelId: await agentHelpers.resolveFastModelId({ platformId, providerConfig: provider, surface: 'chat', scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
+            fastModelId: provider.modelId ?? await agentHelpers.resolveFastModelId({ platformId, providerConfig: provider.config, surface: 'chat', scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
             user: { firstName: user.firstName, lastName: user.lastName, email: user.email },
             platformName: platform.name,
             website: companyRow?.domain ?? null,

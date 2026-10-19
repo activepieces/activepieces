@@ -56,7 +56,7 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
   return (
     <ScrollArea className="overflow-y-auto">
       <div className="px-4 py-3 border-b">
-        <div className="relative border rounded-sm">
+        <div className="relative border rounded-md">
           <Search className="absolute left-2 top-2.5 size-4 text-gray-11" />
           <Input
             placeholder={t('Search')}
@@ -80,7 +80,7 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
             <div
               key={action.name}
               className={`
-                p-2 flex items-center gap-x-2 rounded-lg transition
+                p-2 flex items-center gap-x-2 rounded-xl transition
                 ${
                   isDisabled
                     ? 'opacity-50 cursor-not-allowed'
@@ -95,7 +95,7 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
             >
               <div className="flex gap-2">
                 <LogoPlate
-                  className="size-9 rounded-sm p-1.5"
+                  className="size-9 rounded-md p-1.5"
                   border
                   src={selectedPiece.logoUrl}
                   alt={selectedPiece.displayName}

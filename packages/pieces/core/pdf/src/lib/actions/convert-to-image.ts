@@ -94,6 +94,10 @@ export const convertToImage = createAction({
             defaultValue: 'multiple',
         }),
     },
+    propertyGroups: [
+        { key: 'source', display: 'section', label: 'Source', icon: 'file', props: ['file'] },
+        { key: 'output', display: 'section', label: 'Output', icon: 'sliders', props: ['imageOutputType'] },
+    ],
     async run(context) {
         const file = context.propsValue.file;
         const returnConcatenatedImage = context.propsValue.imageOutputType === 'single';

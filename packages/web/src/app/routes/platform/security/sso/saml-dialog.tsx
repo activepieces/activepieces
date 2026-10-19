@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
+import { adminLayout } from '@/app/components/admin';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -63,7 +64,7 @@ export const ConfigureSamlDialog = ({
           {connected ? t('Edit') : t('Enable')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className={adminLayout.dialog.md}>
         {open && (
           <SamlWizard
             key={open ? 'open' : 'closed'}
@@ -277,12 +278,7 @@ const DomainStep = ({
           render={({ field }) => (
             <FormItem className="grid space-y-2">
               <Label htmlFor="ssoDomain">{t('Domain')}</Label>
-              <Input
-                {...field}
-                id="ssoDomain"
-                placeholder="acme.com"
-                className="rounded-sm"
-              />
+              <Input {...field} id="ssoDomain" placeholder="acme.com" />
               <FormDescription>
                 {t(
                   'When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.',
@@ -341,7 +337,7 @@ const DomainStep = ({
         </DialogFooter>
       </form>
       <Dialog open={showUpdateWarning} onOpenChange={setShowUpdateWarning}>
-        <DialogContent>
+        <DialogContent className={adminLayout.dialog.md}>
           <DialogHeader>
             <DialogTitle>{t('Update SSO domain?')}</DialogTitle>
           </DialogHeader>
@@ -453,7 +449,7 @@ Activepieces
                   required
                   id="idpMetadata"
                   rows={6}
-                  className="rounded-sm font-mono text-xs"
+                  className="font-mono text-xs"
                 />
                 <FormDescription>
                   {t(
@@ -469,12 +465,7 @@ Activepieces
             render={({ field }) => (
               <FormItem className="grid space-y-4">
                 <Label htmlFor="idpCertificate">{t('IDP Certificate')}</Label>
-                <Textarea
-                  {...field}
-                  required
-                  id="idpCertificate"
-                  className="rounded-sm"
-                />
+                <Textarea {...field} required id="idpCertificate" />
                 <FormMessage />
               </FormItem>
             )}
@@ -583,7 +574,7 @@ const VerificationRecordRow = ({
 }) => (
   <div className="flex flex-col gap-2 rounded-md border p-4">
     <div className="flex items-center gap-2">
-      <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-gray-3">
+      <span className="text-xs font-mono px-1.5 py-0.5 rounded-md bg-gray-3">
         {record.type}
       </span>
     </div>

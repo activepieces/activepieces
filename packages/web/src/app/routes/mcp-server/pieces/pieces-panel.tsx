@@ -84,13 +84,13 @@ export function PiecesPanel({
       ) : isError ? (
         <PiecesUnavailableAlert error={error} onRetry={refetch} />
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border px-4 py-10 text-sm text-gray-11">
+        <div className="rounded-xl border px-4 py-10 text-sm text-gray-11">
           {isSearching
             ? t('No piece or action matches your search.')
             : t('No pieces are reachable in this project.')}
         </div>
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl border">
           <VirtualizedList
             items={visibleRows}
             estimateSize={COLLAPSED_ROW_HEIGHT}

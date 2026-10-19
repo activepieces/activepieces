@@ -19,6 +19,10 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 
+vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
+  platformModelTierQueries: { useAdminList: () => ({ data: [] }) },
+}));
+
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
     useCurrentPlatform: () => ({
@@ -140,9 +144,9 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
     expect(screen.queryAllByRole('combobox')).toEqual([]);
     expect(screen.getByRole('button', { name: 'Delete' })).toBeDefined();
     expect(screen.queryAllByRole('button', { name: /Add key/ })).toEqual([]);
-    expect(screen.queryAllByRole('button', { name: /Trial Anthropic/ })).toEqual(
-      [],
-    );
+    expect(
+      screen.queryAllByRole('button', { name: /Trial Anthropic/ }),
+    ).toEqual([]);
     expect(screen.queryAllByText('Also available')).toEqual([]);
   });
 
@@ -163,7 +167,9 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
       screen.getByRole('heading', { name: 'Unlock AI Center' }),
     ).toBeDefined();
     expect(
-      screen.queryAllByText('Your plan does not include Bring your own AI keys'),
+      screen.queryAllByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toEqual([]);
   });
 });
@@ -179,7 +185,9 @@ describe('providers tab on a plan with aiProvidersEnabled', () => {
       screen.getAllByRole('button', { name: /Add key/ }).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.queryAllByText('Your plan does not include Bring your own AI keys'),
+      screen.queryAllByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toEqual([]);
     expect(
       screen.queryAllByRole('heading', { name: 'Unlock AI Center' }),

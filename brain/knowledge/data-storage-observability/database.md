@@ -238,6 +238,38 @@ public async up(q: QueryRunner): Promise<void> {
 - Blocking migrations: `down()` required unless `breaking = true`. `check-migration-rollback.ts` enforces the `breaking` flag on destructive DDL.
 - Background migrations: forward-only. `down()` is a no-op body; the rollback tooling skips the `background/` folder entirely. To undo a bad backfill, ship a forward-fix migration.
 
+### Rollback choreography when a blocking migration pairs with a background one
+
+`withBackgroundMigrationLock` acquires the per-migration lock without checking the completion row. `down()` uses this instead of `assertBackgroundMigrationComplete` because rollback must proceed even when the backfill never ran, failed, or was quiesced mid-run — otherwise a release with an incomplete background migration becomes un-rollbackable.
+
+**When `down()` needs the lock — only if its DDL touches objects a background migration also touches:**
+- Same-release reshape pair (blocking adds columns, background CIC on same table): **lock**.
+- `DROP COLUMN foo` while a background `BackfillFoo` could be in-flight: **lock**.
+- Dependency-style pair (M1's up calls `assertBackgroundMigrationComplete(B)` + does `SET NOT NULL`; down drops NOT NULL): **no lock** — B is already complete and won't re-run.
+- Any blocking migration whose paired background touches disjoint objects: **no lock**.
+
+```ts
+public async down(q: QueryRunner): Promise<void> {
+    await migrationHelpers.withBackgroundMigrationLock({
+        log: system.globalLogger(),
+        migration: ReshapeFooIndexes,
+        fn: async () => {
+            await q.query(`...restore old indexes, drop new ones...`)
+            await q.query(`DELETE FROM background_migrations WHERE name = $1`, [new ReshapeFooIndexes().name])
+            await q.query(`ALTER TABLE foo DROP COLUMN bar`)
+        },
+    })
+}
+```
+
+Deleting the `background_migrations` row is a per-migration choice — tells re-upgrade to re-run the reshape. Omit if `down()` leaves the background work's effects intact. Either way, assume the background migration can run again after `down()`: it must never drop an object the previous release needs (see Gotchas).
+
+**Caveats:**
+- Lock wait is bounded at ~4 min (`distributedLockFactory` passes `retryCount * retryDelay = (timeout / 200) * 200ms` into RedLock). If `down()` races a long in-flight backfill, the helper throws rather than waits for the full duration. Fix: scale API pods to 0 (quiesces the runner), re-run `rollback-migrations.ts`, redeploy.
+- The helper opens a Redis connection inside the rollback CLI, which keeps the event loop alive after the last `down()`. `src/rollback.ts` therefore ends with `process.exit(0)`; without it the CLI prints "Rollback complete" and never exits.
+- Destructive data changes a background migration already made (uuid migration, type change) cannot be rolled back by the framework. Ship a reverse-fix background migration or accept the residue.
+- Rolling back release N with its background migration B already completed: B's data and row persist; re-deploy of N skips B. If wrong for your case, delete B's row in `down()`.
+
 ### Recovery — permanently failing background migrations
 
 A background migration that fails every retry stops the app from booting. The guard refuses the dependent blocking DDL; boot catchup exhausts its 10 attempts and throws with the migration name. Operator options, in order of preference:
@@ -259,16 +291,23 @@ A background migration that fails every retry stops the app from booting. The gu
 - **Contract DDL in the same release as its backfill, skip-release upgrades, and fresh installs are all handled by boot catchup.** `runMigrationsWithCatchup` wraps TypeORM's `runMigrations`: when a blocking migration's guard throws `BackgroundMigrationNotCompleteError`, the catchup catches it, runs that one backfill synchronously, and retries. Max 10 catchup attempts (one per distinct dependency), then boot fails with the failing migration name. Normal upgrade pays nothing; skip-release pays a one-time slow boot while prior backfills catch up.
 - **A brand-new hot-path index in the same release as the code that needs it can leave the app on seq scans while background CIC builds.** Only applies when there's *no* prior covering index for the query. Fixes: (a) ship the CIC in a prior release so it's built by the time the code lands (verify via `pendingCount` on `/v1/health/system`), or (b) put the CIC in the blocking track so the index is present when the app starts serving. Reshapes (replacing existing indexes) don't hit this — the old index keeps queries fast while new one builds.
 - **Same-name migration in both folders would run twice.** The two history tables are independent — a rename or folder move without a seed-row migration double-executes on customers that already ran it in the old track.
+- **A rollback does not stop the paired background migration from running again.** On Cloud, `rollback.js` runs inside a live new-image container (`continuous-delivery-rollback.yml`) and the image switch comes after it. A new-image pod that boots in between re-applies every rolled-back blocking `up()`, then runs any background migration without a completed row, whether `down()` deleted that row or the migration never finished. Whatever it drops is gone under the old image. So a same-release reshape drops only an index whose queries a kept index still serves, and leaves the rest to a later release. `ReshapeFlowRunListIndexesForBarrierChildren` keeps four of the five old `flow_run` list indexes for this reason. Self-hosted rollback stops the app first.
 - **Background migrations run on API pods only.** Workers don't register system-job handlers. Deployments with zero API pods will never finish backfills; not a supported topology, worth flagging if it comes up.
+- **`check-migrations` and `db-migration` build their database with `src/migrate.ts`, not `typeorm migration:run`.** The CLI runs only the blocking track, so it reports every entity index that a background migration builds as drift. `migrate.ts` runs `runMigrationsWithCatchup` and then the background track, the boot order, through the same `distributedLock` as boot. It ends with `process.exit`: on memory Redis the lock starts redis-memory-server, whose open connection would keep the step from exiting, and the library's killer process stops `redis-server` once the parent is gone.
+- **A role-level `statement_timeout` on the main app role kills background migrations, and runtime `SET` can't substitute through a pooler.** Managed Postgres (DO, Supabase) caps the app role, which cancels every long `CREATE/DROP/REINDEX CONCURRENTLY` and chunked backfill. The retry loop leaves 0-byte INVALID index artifacts behind that `IF NOT EXISTS` on the next deploy silently skips (that's how `idx_run_project_id_environment_created_status_archived_at` and `idx_todo_run_id` sat on Cloud `flow_run`/`todo` as orphans). Runtime `SET statement_timeout = 0` is unsound on a transaction-mode pooler: the `SET` lands on one backend, the DDL on another that still has the cap, and the `SET` leaks to normal app traffic on the first backend (empirically verified against DO's pool). Fix: dedicated role (`ALTER ROLE ap_migrator SET statement_timeout = 0`) + `AP_POSTGRES_MIGRATION_URL` pointing the runner at a pool for that role. `migrationDatabaseConnection()` resolves this; unset or non-Postgres falls back to the main DS. Full SQL in `docs/install/reference/breaking-changes-unreleased.mdx`.
+- **The dedicated migration pool uses SESSION pooling, not transaction.** Transaction mode releases the backend between statements and silently breaks `pg_advisory_lock` (session-scoped) and leaves temp tables stranded on a backend serving other clients. Session mode's cost is negligible at pool size 3; apply it to the migration pool only, the main app pool stays transaction.
+- **Every new `AppSystemProp` needs an entry in `systemPropValidators`.** The mapped type is exhaustive — a missing entry fails the api build with TS2741 at `system-validator.ts:95`. Mirror the sibling (`stringValidator` for URL/host, `numberValidator` for counts/ms, `booleanValidator` for flags).
 
 ## Key files
 
 - `packages/server/api/src/app/database/` — connection, migrations, helpers.
-- `packages/server/api/src/app/database/postgres-connection.ts` — `getMigrations()`, `getBackgroundMigrations()`.
+- `packages/server/api/src/app/database/postgres-connection.ts` — `getMigrations()`, `getBackgroundMigrations()`, `createPostgresMigrationDataSource()`.
+- `packages/server/api/src/app/database/database-connection.ts` — `databaseConnection()`, `migrationDatabaseConnection()`.
 - `packages/server/api/src/app/database/migration.ts` — the `Migration` interface.
 - `packages/server/api/src/app/database/background-migration.ts` — the `BackgroundMigration` interface.
-- `packages/server/api/src/app/database/migration-helpers.ts` — `assertBackgroundMigrationComplete`, `createIndexConcurrently`.
+- `packages/server/api/src/app/database/migration-helpers.ts` — `assertBackgroundMigrationComplete`, `withBackgroundMigrationLock`, `createIndexConcurrently`, `dropIndexConcurrently`.
 - `packages/server/api/src/app/database/background-migration-runner.ts` — the BullMQ handler.
+- `packages/server/api/src/migrate.ts` — both tracks in one process, for `check-migrations` and `db-migration`.
 - `tools/scripts/check-migration-rollback.ts` — the CI check.
 
 ## Related pages
