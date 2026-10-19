@@ -123,7 +123,10 @@ describe('enterprise trial', () => {
     })
 
     describe('console credentials', () => {
-        it.each(['cloud', 'ee'] as const)('reads the %s trial with the customer key and sends no email', async (edition) => {
+        it.each([
+            { edition: 'cloud' as const, token: 'console-secret' },
+            { edition: 'ee' as const, token: CREDS.autumnApiKey },
+        ])('reads the $edition trial with the $edition credential and sends no email', async ({ edition, token }) => {
             const { autumnConsole, safeHttp } = await loadModules()
             const get = vi.spyOn(safeHttp.axios, 'get').mockResolvedValue({ data: { data: ELIGIBLE } })
 
@@ -132,13 +135,16 @@ describe('enterprise trial', () => {
             expect(get).toHaveBeenCalledWith(
                 'https://console.activepieces.com/api/v1/billing/enterprise-trial',
                 expect.objectContaining({
-                    headers: { Authorization: `Bearer ${CREDS.autumnApiKey}` },
+                    headers: { Authorization: `Bearer ${token}` },
                     params: { autumnCustomerId: CREDS.autumnCustomerId, edition },
                 }),
             )
         })
 
-        it.each(['cloud', 'ee'] as const)('starts the %s trial with the customer key and sends neither the key nor an email in the body', async (edition) => {
+        it.each([
+            { edition: 'cloud' as const, token: 'console-secret' },
+            { edition: 'ee' as const, token: CREDS.autumnApiKey },
+        ])('starts the $edition trial with the $edition credential and sends neither the Autumn key nor an email in the body', async ({ edition, token }) => {
             const { autumnConsole, safeHttp } = await loadModules()
             const post = vi.spyOn(safeHttp.axios, 'post').mockResolvedValue({ data: { data: ACTIVE } })
 
@@ -147,7 +153,7 @@ describe('enterprise trial', () => {
             expect(post).toHaveBeenCalledWith(
                 'https://console.activepieces.com/api/v1/billing/enterprise-trial/start',
                 { autumnCustomerId: CREDS.autumnCustomerId, edition, platformId: PLATFORM_ID, appUrl: 'https://cloud.example.com/' },
-                expect.objectContaining({ headers: { Authorization: `Bearer ${CREDS.autumnApiKey}` } }),
+                expect.objectContaining({ headers: { Authorization: `Bearer ${token}` } }),
             )
         })
     })
