@@ -2,12 +2,19 @@ export function showsFirstRun({
   listLoaded,
   hasAnyAgents,
   search,
+  projectFiltered = false,
 }: {
   listLoaded: boolean;
   hasAnyAgents: boolean;
   search: string;
+  projectFiltered?: boolean;
 }): boolean {
-  return listLoaded && !hasAnyAgents && search.trim().length === 0;
+  return (
+    listLoaded &&
+    !hasAnyAgents &&
+    search.trim().length === 0 &&
+    !projectFiltered
+  );
 }
 
 export function showsAgentList({
@@ -25,9 +32,11 @@ export function showsAgentList({
 export function showsNoMatchNotice({
   matchCount,
   search,
+  projectFiltered = false,
 }: {
   matchCount: number;
   search: string;
+  projectFiltered?: boolean;
 }): boolean {
-  return matchCount === 0 && search.trim().length > 0;
+  return matchCount === 0 && (search.trim().length > 0 || projectFiltered);
 }

@@ -60,6 +60,7 @@ const polling: Polling<
 export const posthogNewEvent = createTrigger({
   auth: posthogAuth,
   name: 'new_event',
+  classification: 'READ',
   displayName: 'New Event',
   description: 'Triggers when a new event is captured in PostHog',
   aiMetadata: {

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { isNil } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { FlowAction, FlowActionType, LoopOnItemsAction, ProcessInBatchesAction, RouterAction, SingleActionSchema } from '../actions/action'
+import { BranchedAction, FlowAction, FlowActionType, LoopOnItemsAction, ProcessInBatchesAction, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil, Step } from '../util/flow-structure-util'
 import { AddActionRequest, StepLocationRelativeToParent, UpdateActionRequest } from './index'
@@ -31,6 +31,15 @@ function createAction(request: UpdateActionRequest, {
             action = {
                 ...baseProperties,
                 type: FlowActionType.ROUTER,
+                settings: request.settings,
+                children: request.settings.branches.map(() => null),
+            }
+
+            break
+        case FlowActionType.AI_ROUTER:
+            action = {
+                ...baseProperties,
+                type: FlowActionType.AI_ROUTER,
                 settings: request.settings,
                 children: request.settings.branches.map(() => null),
             }
@@ -119,7 +128,7 @@ function handleProcessInBatches(parentStep: ProcessInBatchesAction, request: Add
     return parentStep
 }
 
-function handleRouter(parentStep: RouterAction, request: AddActionRequest): Step {
+function handleRouter(parentStep: BranchedAction, request: AddActionRequest): Step {
     if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH && !isNil(request.branchIndex)) {
         parentStep.children[request.branchIndex] = createAction(request.action, {
             nextAction: parentStep.children[request.branchIndex] ?? undefined,
@@ -182,6 +191,7 @@ function _addAction(flowVersion: FlowVersion, request: AddActionRequest): FlowVe
             case FlowActionType.PROCESS_IN_BATCHES:
                 return handleProcessInBatches(parentStep, request)
             case FlowActionType.ROUTER:
+            case FlowActionType.AI_ROUTER:
                 return handleRouter(parentStep, request)
             default: {
                 parentStep.nextAction = createAction(request.action, {

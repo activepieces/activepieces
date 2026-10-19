@@ -8,6 +8,7 @@ import { pageIdProp, spaceIdProp } from '../common/props';
 export const uploadAttachmentAction = createAction({
 	auth: confluenceAuth,
 	name: 'upload-attachment',
+	classification: 'WRITE',
 	displayName: 'Upload Attachment',
 	description: 'Uploads a file as an attachment to a page.',
 	audience: 'both',

@@ -6,8 +6,9 @@ import {
 import { mssqlCommon } from './common';
 
 export const mssqlAuth = PieceAuth.CustomAuth({
-  description:
-    'For Azure SQL, use the Connection String field: in the portal open your database, choose Connection strings, and copy the ADO.NET (SQL authentication) one — not an Active Directory variant. Replace the {your_password} placeholder, and quote a password containing a semicolon: Password="my;pass";.',
+  description: `**Connection String (Azure SQL, SQL authentication):** in the portal open your database, choose Connection strings, and copy the ADO.NET (SQL authentication) one, not an Active Directory variant. Replace the {your_password} placeholder, and quote a password containing a semicolon: Password="my;pass";.
+
+**Microsoft Entra ID (service principal):** leave Username and Password empty, and fill in Tenant ID, Client ID and Client Secret from an app registration instead. See [Create Microsoft Entra Users Using Service Principals](https://learn.microsoft.com/en-us/azure/azure-sql/database/authentication-aad-service-principal?view=azuresql) for how to register the app and grant it a database user.`,
   props: {
     connection_string: Property.LongText({
       displayName: 'Connection String',
@@ -35,12 +36,28 @@ export const mssqlAuth = PieceAuth.CustomAuth({
     user: Property.ShortText({
       displayName: 'Username',
       description:
-        'The SQL Server login to authenticate as. On Azure SQL this is usually user@servername.',
+        'The SQL Server login to authenticate as. On Azure SQL this is usually user@servername. Leave empty when authenticating with Tenant ID, Client ID and Client Secret below.',
       required: false,
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
       description: 'The password for the login above.',
+      required: false,
+    }),
+    tenant_id: Property.ShortText({
+      displayName: 'Tenant ID',
+      description:
+        'Microsoft Entra ID tenant ID, for authenticating as a service principal instead of a SQL login. Requires Client ID and Client Secret below, and leaves Username and Password empty.',
+      required: false,
+    }),
+    client_id: Property.ShortText({
+      displayName: 'Client ID',
+      description: 'Application (client) ID of the Entra ID app registration.',
+      required: false,
+    }),
+    client_secret: PieceAuth.SecretText({
+      displayName: 'Client Secret',
+      description: 'Client secret value of the Entra ID app registration.',
       required: false,
     }),
     encrypt: Property.Checkbox({

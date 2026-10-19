@@ -5,6 +5,7 @@ import { wedofCommon } from '../../common/wedof';
 export const certificationPartnerActive = createTrigger({
   auth: wedofAuth,
   name: 'certificationPartnerActive',
+  classification: 'READ',
   displayName: 'Partenariat actif',
   description: "Se déclenche Lorsqu'une demande de partenariat est actif",
   aiMetadata: {

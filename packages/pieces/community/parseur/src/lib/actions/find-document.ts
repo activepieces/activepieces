@@ -5,6 +5,7 @@ import { parserDropdown } from '../common/properties';
 export const findDocument = createAction({
   auth: parseurAuth,
   name: 'findDocument',
+  classification: 'SEARCH',
   displayName: 'Find Document',
   description: 'Finds a document based on search param.',
   audience: 'both',

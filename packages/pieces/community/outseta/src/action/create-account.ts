@@ -6,6 +6,7 @@ import { planUidDropdown } from '../common/dropdowns';
 
 export const createAccountAction = createAction({
   name: 'create_account',
+  classification: 'WRITE',
   auth: outsetaAuth,
   displayName: 'Create Account',
   description:

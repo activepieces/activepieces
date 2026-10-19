@@ -9,13 +9,15 @@ export const findUserByIdAction = createAction({
 	name: 'find-user-by-id',
 	classification: 'READ',
 	displayName: 'Find User by ID',
-	description: 'Finds a user by their ID.',
+	description: 'Returns the profile of a user by ID.',
 	audience: 'human',
 	aiMetadata: { description: 'Fetch a user profile directly by their Slack user ID; read-only and repeatable. Pick this when you already have the user ID (the fastest, exact lookup); use Find User by Handle when you only know the display-name handle.', idempotent: true },
 	outputSchema: getUserByIdActionOutputSchema,
 	props: {
 		id: Property.ShortText({
-			displayName: 'ID',
+			displayName: 'User ID',
+			description: 'Starts with U or W.',
+			placeholder: 'U012AB3CD',
 			required: true,
 		}),
 	},

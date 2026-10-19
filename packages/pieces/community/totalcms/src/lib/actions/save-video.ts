@@ -1,42 +1,47 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { saveContent } from '../api';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { cmsAuth } from '../auth';
-import * as z from 'zod/mini'
-import { propsValidation } from '@activepieces/pieces-common';
+import { totalcmsApi } from '../common/client';
+import { totalcmsProps } from '../common/props';
+import { totalcmsShape } from '../common/shape';
+import { totalcmsOutputSchemas } from '../output-schemas';
 
 export const saveVideoAction = createAction({
   name: 'save_video',
   classification: 'WRITE',
   auth: cmsAuth,
-  displayName: 'Save Video Content',
-  description: 'Save video content to Total CMS',
+  displayName: 'Save Video',
+  description: 'Creates or replaces a video object from a video link.',
   audience: 'both',
-  aiMetadata: { description: 'Sets a video-type CMS field in Total CMS, identified by its CMS ID (slug), to a given video URL (must be a valid URL). Use to write or update the stored video reference. Idempotent: the value is keyed on the slug, so repeating with the same URL leaves the same result.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Sets the video link (YouTube, Vimeo, Loom, Wistia, a direct MP4 and others) of a Total CMS video object, creating the object if the ID is new. Total CMS detects the provider and thumbnail. Repeating the call with the same link is safe.',
+    idempotent: true,
+  },
   props: {
-    slug: Property.ShortText({
-      displayName: 'CMS ID',
-      description: 'The CMS ID of the content to save',
-      required: true,
+    collection: totalcmsProps.collectionForSchema({ schema: 'video', label: 'Video' }),
+    object_id: totalcmsProps.objectIdText({
+      description: 'The ID of the video object. A new ID creates the object.',
     }),
     video: Property.ShortText({
       displayName: 'Video URL',
-      description: 'The URL of the video to save',
+      description: 'The video page link from YouTube, Vimeo, Loom or similar.',
       required: true,
     }),
   },
+  outputSchema: totalcmsOutputSchemas.video,
   async run(context) {
-    await propsValidation.validateZod(context.propsValue, {
-      video: z.string().check(z.url()),
+    const collection = totalcmsShape.requireId({ value: context.propsValue.collection, label: 'Collection ID' });
+    const id = totalcmsShape.requireId({ value: context.propsValue.object_id, label: 'Object ID' });
+    const url = totalcmsShape.requireId({ value: context.propsValue.video, label: 'Video URL' });
+    if (!/^https?:\/\//i.test(url)) {
+      throw new Error('Video URL must start with http:// or https://.');
+    }
+    const object = await totalcmsApi.replaceObject({
+      auth: context.auth,
+      collection,
+      id,
+      fields: { video: url },
     });
-
-    const slug = context.propsValue.slug;
-    const video = context.propsValue.video;
-    return await saveContent(context.auth, 'video', slug, {
-      nodecode: true,
-      video: video,
-    });
+    return totalcmsShape.typed({ collection, object });
   },
 });

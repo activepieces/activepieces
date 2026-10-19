@@ -1,4 +1,4 @@
-import { apId, FlowRunId, isNil } from '@activepieces/core-utils'
+import { apId, FlowRunId, isNil, tryCatch } from '@activepieces/core-utils'
 import { EngineHttpResponse, ExecutionType, FlowRun, FlowRunStatus, isFlowRunStateTerminal, PauseType, ResumeReason, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -14,7 +14,11 @@ import { Waitpoint, WaitpointResumePayload, WaitpointStatus } from './waitpoint-
 export const resumeService = (log: FastifyBaseLogger) => ({
     async resumeFromWaitpoint({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
-        if (await wouldResumeABarrier({ flowRunId, waitpointId, projectId: flowRun.projectId, log })) {
+        const addressed = await addressedWaitpointIsBarrier({ flowRunId, waitpointId, projectId: flowRun.projectId, log })
+        const refuse = addressed === 'no-such-waitpoint'
+            ? await waitpointService(log).hasBarrier({ flowRunId, projectId: flowRun.projectId })
+            : addressed
+        if (refuse) {
             log.warn({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[resumeService#resumeFromWaitpoint] Refused an external resume of a barrier; only the barrier predicate and its deadline may release it')
             return { flowRun, stale: true }
         }
@@ -31,7 +35,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
 
     async resumeTrustedWithoutLock({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
-        if (await hasPendingTerminalStatus({ flowRunId })) {
+        if (await hasPendingTerminalStatus({ flowRunId, projectId: flowRun.projectId })) {
             log.warn({ flowRun: { id: flowRunId } }, '[resumeService#resumeTrustedWithoutLock] Refused a resume of a run whose terminal status is already queued')
             return { flowRun, stale: true }
         }
@@ -43,6 +47,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             resumePayload: resumePayload ?? null,
             workerHandlerId,
             onReady: async (waitpoint) => {
+                await recordWaitpointConsumed({ waitpointId, log })
                 await enqueueResume({
                     flowRun,
                     waitpoint,
@@ -56,7 +61,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
         if (processed) {
             const currentFlowRun = await findFlowRunOrThrow(flowRunId)
             if (currentFlowRun.status === FlowRunStatus.PAUSED) {
-                const addressedWaitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+                const addressedWaitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId: currentFlowRun.projectId })
                 if (!isNil(addressedWaitpoint) && addressedWaitpoint.status === WaitpointStatus.COMPLETED) {
                     log.info({ flowRun: { id: flowRunId } }, '[resumeService#resumeTrustedWithoutLock] Race detected: metadata worker wrote PAUSED after callback completed waitpoint; consuming waitpoint and enqueuing resume')
                     await waitpointService(log).consume({ waitpoint: addressedWaitpoint })
@@ -67,11 +72,28 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                         workerHandlerId,
                         httpRequestId,
                     }, log)
+                    await recordWaitpointConsumed({ waitpointId: addressedWaitpoint.id, log })
                 }
             }
         }
 
         return { flowRun, stale: !processed }
+    },
+
+    async waitpointWasConsumed({ waitpointId, flowRunId }: WaitpointWasConsumedParams): Promise<boolean> {
+        const { data: flowRun } = await tryCatch(() => findFlowRunOrThrow(flowRunId))
+        if (!isNil(flowRun)) {
+            const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId: flowRun.projectId })
+            if (!isNil(waitpoint)) {
+                return waitpoint.status === WaitpointStatus.COMPLETED
+            }
+        }
+        const { data, error } = await tryCatch(() => distributedStore.get<boolean>(waitpointConsumedKey(waitpointId)))
+        if (error) {
+            log.error({ waitpoint: { id: waitpointId }, error: String(error) }, '[resumeService#waitpointWasConsumed] Could not read the consumption marker, assuming the response was delivered')
+            return true
+        }
+        return data === true
     },
 
     async legacyResume({ flowRunId, resumePayload, workerHandlerId }: LegacyResumeParams): Promise<ResumeFromWaitpointResult> {
@@ -83,7 +105,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                 if (flowRun.status !== FlowRunStatus.PAUSED) {
                     return { flowRun, stale: true }
                 }
-                if (await hasPendingTerminalStatus({ flowRunId })) {
+                if (await hasPendingTerminalStatus({ flowRunId, projectId: flowRun.projectId })) {
                     log.warn({ flowRun: { id: flowRunId } }, '[resumeService#legacyResume] Refused a resume of a run whose terminal status is already queued')
                     return { flowRun, stale: true }
                 }
@@ -148,7 +170,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                         headers: {},
                     }
                 }
-                if (await hasPendingTerminalStatus({ flowRunId: runId })) {
+                if (await hasPendingTerminalStatus({ flowRunId: runId, projectId: flowRun.projectId })) {
                     log.warn({ flowRun: { id: runId } }, '[resumeService#legacySyncResume] Refused a resume of a run whose terminal status is already queued')
                     return {
                         status: StatusCodes.GONE,
@@ -180,20 +202,29 @@ export const resumeService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function hasPendingTerminalStatus({ flowRunId }: HasPendingTerminalStatusParams): Promise<boolean> {
-    const pending = await distributedStore.hgetJson<RunsMetadataUpsertData>(redisMetadataKey(flowRunId))
+async function hasPendingTerminalStatus({ flowRunId, projectId }: HasPendingTerminalStatusParams): Promise<boolean> {
+    const pending = await distributedStore.hgetJson<RunsMetadataUpsertData>(redisMetadataKey({ projectId, runId: flowRunId }))
     if (isNil(pending) || isNil(pending.status)) {
         return false
     }
     return isFlowRunStateTerminal({ status: pending.status, ignoreInternalError: false })
 }
 
-async function wouldResumeABarrier({ flowRunId, waitpointId, projectId, log }: WouldResumeABarrierParams): Promise<boolean> {
-    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+async function addressedWaitpointIsBarrier({ flowRunId, waitpointId, projectId, log }: AddressedWaitpointIsBarrierParams): Promise<AddressedWaitpointVerdict> {
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId })
     if (isNil(waitpoint)) {
-        return waitpointService(log).hasBarrier({ flowRunId, projectId })
+        return 'no-such-waitpoint'
     }
     return waitpoint.type === PauseType.BARRIER
+}
+
+async function recordWaitpointConsumed({ waitpointId, log }: RecordWaitpointConsumedParams): Promise<void> {
+    const { error } = await tryCatch(() => distributedStore.put(waitpointConsumedKey(waitpointId), true, WAITPOINT_CONSUMED_TTL_SECONDS))
+    if (isNil(error)) {
+        return
+    }
+    log.error({ waitpoint: { id: waitpointId }, error: String(error) }, '[resumeService#recordWaitpointConsumed] Could not record the consumption marker, rolling the resume back so the caller can retry')
+    throw error
 }
 
 async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger): Promise<void> {
@@ -216,6 +247,19 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
         jobId: `${flowRun.id}-resume-${waitpointId}`,
     }, log)
     await flowRunSideEffects(log).onResume({ flowRun, platformId })
+}
+
+const WAITPOINT_CONSUMED_TTL_SECONDS = 3600
+const waitpointConsumedKey = (waitpointId: string): string => `waitpoint_consumed:${waitpointId}`
+
+type WaitpointWasConsumedParams = {
+    waitpointId: string
+    flowRunId: string
+}
+
+type RecordWaitpointConsumedParams = {
+    waitpointId: string
+    log: FastifyBaseLogger
 }
 
 type SyncResumePayload = {
@@ -247,9 +291,12 @@ type ResumeFromWaitpointParams = {
 
 type HasPendingTerminalStatusParams = {
     flowRunId: FlowRunId
+    projectId: string
 }
 
-type WouldResumeABarrierParams = {
+type AddressedWaitpointVerdict = boolean | 'no-such-waitpoint'
+
+type AddressedWaitpointIsBarrierParams = {
     flowRunId: FlowRunId
     waitpointId: string
     projectId: string

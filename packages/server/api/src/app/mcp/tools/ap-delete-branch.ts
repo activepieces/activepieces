@@ -41,7 +41,7 @@ export const apDeleteBranchTool = ({ mcp, userId }: McpToolContext, log: Fastify
             }
             const routerStep = resolved.routerStep
 
-            const branches = (routerStep as { settings: { branches: unknown[] } }).settings.branches
+            const branches = routerStep.settings.branches
             if (branchIndex < 0 || branchIndex >= branches.length) {
                 return {
                     content: [{

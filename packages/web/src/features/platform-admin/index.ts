@@ -1,4 +1,5 @@
 export { aiProviderApi } from './api/ai-provider-api';
+export { platformModelTierApi } from './api/platform-model-tier-api';
 export { aiToolConfigApi } from './api/ai-tool-config-api';
 export { analyticsApi } from './api/analytics-api';
 export { apiKeyApi } from './api/api-key-api';
@@ -13,6 +14,8 @@ export {
   embedSubdomainMutations,
   embedSubdomainKeys,
 } from './hooks/embed-subdomain-hooks';
+export { AuditLogRetentionButton } from './components/audit-log-retention-dialog';
+export { auditLogRetentionUtils } from './lib/audit-log-retention-utils';
 export { NewSigningKeyDialog } from './components/new-signing-key-dialog';
 export { platformAnalyticsHooks } from './hooks/analytics-hooks';
 export {
@@ -38,6 +41,11 @@ export {
   aiProviderKeys,
   hasAnyAuthFieldFilled,
 } from './hooks/ai-provider-hooks';
+export {
+  platformModelTierQueries,
+  platformModelTierMutations,
+  platformModelTierKeys,
+} from './hooks/platform-model-tier-hooks';
 export {
   aiToolConfigQueries,
   aiToolConfigMutations,

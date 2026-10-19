@@ -11,7 +11,6 @@ import {
   Package,
   Hash,
   GitBranch,
-  Layers,
   Puzzle,
   Trash,
 } from 'lucide-react';
@@ -19,18 +18,22 @@ import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { RequestTrial } from '@/app/components/request-trial';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+} from '@/app/components/admin';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
+import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
+import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { LockedAlert } from '@/components/custom/locked-alert';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { oauthAppsQueries } from '@/features/connections';
 import {
   InstallPieceDialog,
@@ -39,13 +42,10 @@ import {
   piecesHooks,
 } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 import { api } from '@/lib/api';
 
-import { PieceSetsTab } from './piece-sets/piece-sets-tab';
-
-type TabValue = 'pieces' | 'piece-sets';
-
-const PiecesListTab = () => {
+export const PiecesListTab = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
@@ -54,6 +54,7 @@ const PiecesListTab = () => {
     pieces,
     refetch: refetchPieces,
     isLoading,
+    isError,
   } = piecesHooks.usePieces({
     searchQuery,
     includeHidden: true,
@@ -145,6 +146,7 @@ const PiecesListTab = () => {
                   <ConfirmationDeleteDialog
                     title={t('Delete {name}', { name: row.original.name })}
                     entityName={t('Piece')}
+                    controlId={AdminControl.PIECES_DELETE_CONFIRM}
                     message={t(
                       'This will permanently delete this piece, all steps using it will fail.',
                     )}
@@ -163,8 +165,13 @@ const PiecesListTab = () => {
                       toast.error(t('Failed to delete piece'));
                     }}
                   >
-                    <Button variant="ghost" size={'sm'} disabled={!isEnabled}>
-                      <Trash className="size-4 text-destructive" />
+                    <Button
+                      {...adminControl(AdminControl.PIECES_DELETE_OPEN)}
+                      variant="ghost"
+                      size={'sm'}
+                      disabled={!isEnabled}
+                    >
+                      <Trash className="size-4 text-danger-11" />
                     </Button>
                   </ConfirmationDeleteDialog>
                 )}
@@ -177,118 +184,57 @@ const PiecesListTab = () => {
     );
 
   return (
-    <DataTable
-      emptyStateTextTitle={t('No pieces found')}
-      emptyStateTextDescription={t(
-        'Start by installing pieces that you want to use in your automations',
-      )}
-      emptyStateIcon={<Package className="size-14" />}
-      columns={columns}
-      filters={[
-        {
-          type: 'input',
-          title: t('Piece Name'),
-          accessorKey: 'name',
-          icon: CheckIcon,
-        },
-      ]}
-      page={{
-        data: pieces ?? [],
-        next: null,
-        previous: null,
-      }}
-      isLoading={isLoading}
-      toolbarButtons={[
-        <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
-        <SyncPiecesButton key="sync" />,
+    <AdminPage fill>
+      <AdminPageHeader
+        title={t('Pieces')}
+        description={t('Manage the pieces that are available to your users')}
+        resources={adminPageResources.pieces}
+      >
         <InstallPieceDialog
-          key="install"
           onInstallPiece={() => refetchPieces()}
           scope={PieceScope.PLATFORM}
-        />,
-      ]}
-      virtualizeRows={true}
-      hidePagination={true}
-    />
-  );
-};
-
-const PlatformPiecesPage = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as TabValue) || 'pieces';
-
-  const setTab = (tab: TabValue) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (tab === 'pieces') {
-      newParams.delete('tab');
-    } else {
-      newParams.set('tab', tab);
-    }
-    setSearchParams(newParams, { replace: true });
-  };
-
-  return (
-    <>
-      <DashboardPageHeader
-        description={t('Manage the pieces that are available to your users')}
-        title={t('Pieces')}
-      />
-      <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
-        {!platform.plan.managePiecesEnabled && (
-          <div className="px-4 shrink-0">
-            <LockedAlert
-              title={t('Control Pieces')}
-              description={t(
-                "Show the pieces that matter most to your users and hide the ones you don't like.",
-              )}
-              button={
-                <RequestTrial
-                  featureKey="ENTERPRISE_PIECES"
-                  buttonVariant="basic"
-                />
-              }
-            />
-          </div>
+        />
+      </AdminPageHeader>
+      <PiecesLockedBanner
+        message={t(
+          "Showing and hiding pieces needs a higher plan. You can browse the catalog, but changes won't stick.",
         )}
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => setTab(v as TabValue)}
-          className="flex flex-col flex-1 min-h-0 min-w-0"
-        >
-          <TabsList
-            variant="outline"
-            className="border-b w-full rounded-none justify-start shrink-0"
-          >
-            <TabsTrigger variant="outline" value="pieces">
-              <Puzzle className="size-4 mr-2" />
-              {t('Pieces')}
-            </TabsTrigger>
-            <TabsTrigger variant="outline" value="piece-sets">
-              <Layers className="size-4 mr-2" />
-              {t('Piece Sets')}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent
-            value="pieces"
-            className="flex-1 min-h-0 flex flex-col mt-0 min-w-0"
-          >
-            <PiecesListTab />
-          </TabsContent>
-          <TabsContent
-            value="piece-sets"
-            className="flex-1 min-h-0 flex flex-col mt-0 min-w-0"
-          >
-            <PieceSetsTab />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </>
+      />
+      <AdminDataTable
+        emptyStateTextTitle={t('No pieces found')}
+        emptyStateTextDescription={t(
+          'Start by installing pieces that you want to use in your automations',
+        )}
+        emptyStateIcon={<Package />}
+        columns={columns}
+        filters={[
+          {
+            type: 'input',
+            title: t('Piece Name'),
+            accessorKey: 'name',
+            icon: CheckIcon,
+          },
+        ]}
+        page={{
+          data: pieces ?? [],
+          next: null,
+          previous: null,
+        }}
+        isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('pieces')}
+        onRetry={refetchPieces}
+        toolbarButtons={[
+          <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
+          <DownloadPiecesReportButton key="download-report" />,
+          <SyncPiecesButton key="sync" />,
+        ]}
+        virtualizeRows={true}
+        hidePagination={true}
+      />
+    </AdminPage>
   );
 };
-
-PlatformPiecesPage.displayName = 'PlatformPiecesPage';
-export { PlatformPiecesPage };
 
 function shouldShowOauth2SettingForPiece(piece: PieceMetadataModelSummary) {
   const pieceAuth = Array.isArray(piece.auth)

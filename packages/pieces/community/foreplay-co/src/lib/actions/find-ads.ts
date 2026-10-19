@@ -8,6 +8,7 @@ import { foreplayCoAuth } from '../..';
 export const findAds = createAction({
   auth: foreplayCoAuth,
   name: 'findAds',
+  classification: 'SEARCH',
   displayName: 'Find Ads',
   description:
     'Search and filter ads by text, dates, platforms, and categories.',

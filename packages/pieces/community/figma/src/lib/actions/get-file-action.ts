@@ -7,6 +7,7 @@ import { figmaAuth } from '../auth';
 export const getFileAction = createAction({
   auth: figmaAuth,
   name: 'get_file',
+  classification: 'READ',
   displayName: 'Get File',
   description: 'Get file',
   audience: 'both',

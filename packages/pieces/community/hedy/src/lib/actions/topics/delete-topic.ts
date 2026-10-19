@@ -8,6 +8,7 @@ import { assertIdPrefix } from '../../common/validation';
 export const deleteTopic = createAction({
   auth: hedyAuth,
   name: 'delete-topic',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Topic',
   description: 'Delete a topic.',
   audience: 'both',

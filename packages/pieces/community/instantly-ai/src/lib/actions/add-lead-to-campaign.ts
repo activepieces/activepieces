@@ -7,6 +7,7 @@ import { campaignId, leadId } from '../common/props';
 export const addLeadToCampaignAction = createAction({
   auth: instantlyAiAuth,
   name: 'add_lead_to_campaign',
+  classification: 'WRITE',
   displayName: 'Add Lead to Campaign',
   description: 'Adds a lead to a campaign.',
   audience: 'both',

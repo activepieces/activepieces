@@ -25,6 +25,14 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             ...ApIdSchema,
             nullable: false,
         },
+        flowRunId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        aiCredits: {
+            type: Number,
+            nullable: true,
+        },
         agentId: {
             ...ApIdSchema,
             nullable: true,
@@ -40,6 +48,14 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
         },
         modelName: {
             type: String,
+            nullable: true,
+        },
+        modelTierId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        providerConfigId: {
+            ...ApIdSchema,
             nullable: true,
         },
         status: {
@@ -80,6 +96,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             where: `source = '${AgentRunSource.FLOW_STEP}'`,
         },
         {
+            name: 'idx_agent_conversation_agent_runs_created_id',
+            columns: ['projectId', 'agentId', 'created', 'id'],
+            where: `source = '${AgentRunSource.FLOW_STEP}' AND "agentId" IS NOT NULL`,
+        },
+        {
             name: 'idx_agent_conversation_agent_user_created_id',
             columns: ['agentId', 'userId', 'created', 'id'],
             where: '"agentId" IS NOT NULL',
@@ -88,6 +109,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             name: 'idx_agent_conversation_streaming_updated',
             columns: ['updated'],
             where: `status = '${AgentConversationStatus.STREAMING}'`,
+        },
+        {
+            name: 'idx_agent_conversation_platform_provider_config',
+            columns: ['platformId', 'providerConfigId'],
+            where: '"providerConfigId" IS NOT NULL',
         },
     ],
     relations: {

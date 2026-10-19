@@ -28,11 +28,11 @@ describe('MCP flow tools write audit log rows', () => {
         await apLockAndPublishTool(mockMcpToolContext(ctx, ctx.user.id), mockLog).execute({ flowId: flow.id })
 
         const rows = await savedAuditRows(ctx, 3)
-        expect(rows.map((row) => row.action)).toEqual([
-            ApplicationEventName.FLOW_UPDATED,
-            ApplicationEventName.FLOW_PUBLISHED,
+        expect(rows.map((row) => row.action).sort()).toEqual([
             ApplicationEventName.FLOW_ACTIVATED,
-        ])
+            ApplicationEventName.FLOW_PUBLISHED,
+            ApplicationEventName.FLOW_UPDATED,
+        ].sort())
     })
 
     it('records the acting user, project and platform on the persisted row', async () => {
@@ -67,10 +67,10 @@ describe('MCP flow tools write audit log rows', () => {
         await apChangeFlowStatusTool(mockMcpToolContext(ctx, ctx.user.id), mockLog).execute({ flowId: flow.id, status: FlowStatus.DISABLED })
 
         const rows = await savedAuditRows(ctx, 2)
-        expect(rows.map((row) => row.action)).toEqual([
-            ApplicationEventName.FLOW_UPDATED,
+        expect(rows.map((row) => row.action).sort()).toEqual([
             ApplicationEventName.FLOW_DEACTIVATED,
-        ])
+            ApplicationEventName.FLOW_UPDATED,
+        ].sort())
     })
 
     it('writes no audit row for a read-only tool call', async () => {

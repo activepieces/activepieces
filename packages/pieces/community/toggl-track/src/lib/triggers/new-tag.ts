@@ -4,7 +4,8 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+import { togglTrackAuth } from '../auth';
+import { togglApi } from '../common/client';
 import { togglCommon } from '../common';
 import {
   generateTogglWebhookInstructions,
@@ -18,7 +19,7 @@ export const newTag = createTrigger({
   displayName: 'New Tag',
   description: 'Triggers when a new tag is created',
   aiMetadata: {
-    description: 'Fires when a new tag is created in the configured Toggl Track workspace, delivering the created tag (id, name, workspace). Delivered via a Toggl webhook the user must set up manually.',
+    description: 'Fires when a tag is created in the workspace, delivering the tag. Needs a webhook created manually in Toggl. Classic only.',
   },
   props: {
     workspace_id: togglCommon.workspace_id,
@@ -46,11 +47,13 @@ export const newTag = createTrigger({
   type: TriggerStrategy.WEBHOOK,
 
   async onEnable(context) {
-    // Manual setup - no programmatic registration needed
+    if (togglApi.isTwo(context.auth)) {
+      throw togglApi.classicOnlyError(WEBHOOK_TRIGGER_NAME);
+    }
   },
 
-  async onDisable(context) {
-    // Manual setup - users manage webhooks in Toggl Track UI
+  async onDisable() {
+    return;
   },
 
   async run(context) {
@@ -82,3 +85,5 @@ export const newTag = createTrigger({
     return [payload];
   },
 });
+
+const WEBHOOK_TRIGGER_NAME = 'The New Tag trigger';

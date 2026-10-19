@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const giveModelFeedbackAction = createAction({
   name: 'give_model_feedback',
+  classification: 'WRITE',
   displayName: 'Give Model Feedback',
   description: 'Provide feedback on a generated 3D model',
   audience: 'both',

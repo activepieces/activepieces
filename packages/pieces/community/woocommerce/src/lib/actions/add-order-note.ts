@@ -14,7 +14,7 @@ export const wooAddOrderNote = createAction({
   classification: 'WRITE',
   displayName: 'Add Order Note',
   description: 'Add a note to an order, optionally visible to the customer',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Adds a note to an existing WooCommerce order. A private note is visible only to store staff; a customer note is emailed to the customer and shown on the order page. Use when an agent needs to record why something happened on an order or communicate an update. Not idempotent: each call appends another note.',

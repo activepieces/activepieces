@@ -52,6 +52,7 @@ export type BaseOAuth2ConnectionValue = {
     data: Record<string, any>
     props?: Record<string, unknown>
     grant_type?: OAuth2GrantType
+    resource?: string
 }
 
 export type CustomAuthConnectionValue<T extends Record<string, unknown> = Record<string, unknown>> = {
@@ -112,15 +113,6 @@ export type AppConnection<Type extends AppConnectionType = AppConnectionType> = 
     pieceVersion: string
     preSelectForNewProjects: boolean
 }
-
-export type OAuth2AppConnection = AppConnection<AppConnectionType.OAUTH2>
-export type SecretKeyAppConnection = AppConnection<AppConnectionType.SECRET_TEXT>
-export type CloudAuth2Connection = AppConnection<AppConnectionType.CLOUD_OAUTH2>
-export type PlatformOAuth2Connection = AppConnection<AppConnectionType.PLATFORM_OAUTH2>
-export type BasicAuthConnection = AppConnection<AppConnectionType.BASIC_AUTH>
-export type CustomAuthConnection = AppConnection<AppConnectionType.CUSTOM_AUTH>
-export type OIDCAppConnection = AppConnection<AppConnectionType.OIDC>
-export type NoAuthConnection = AppConnection<AppConnectionType.NO_AUTH>
 
 export const AppConnectionWithoutSensitiveData = z.object({
     ...BaseModelSchema,

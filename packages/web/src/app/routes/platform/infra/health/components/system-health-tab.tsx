@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Boxes,
@@ -14,11 +14,16 @@ import {
 import React from 'react';
 import semver from 'semver';
 
-import { LoadingSpinner } from '@/components/custom/spinner';
+import {
+  SettingsPanel,
+  SettingsRow,
+  StatusDot,
+  StatusTone,
+} from '@/app/components/admin';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent } from '@/components/ui/card';
 import { healthQueries } from '@/features/platform-admin';
-import { cn } from '@/lib/utils';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { DailyHealthStrip } from './daily-health-strip';
 
@@ -32,11 +37,15 @@ const PRODUCTION_SETUP_LINK =
 // it could not read its release from package.json. Not importable here (server-only package).
 const UNREADABLE_RELEASE_VERSION = '0.0.0';
 
+const CLOUD_HIDDEN_ROW_IDS = ['version', 'release-integrity'];
+
 type SystemHealthTabProps = {
   onSeeRuns: () => void;
 };
 
 export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
   const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
   const latestVersion = systemHealth?.latestVersion;
   const release = systemHealth?.release;
@@ -76,7 +85,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     );
   })();
 
-  const appRows: HealthRow[] = [
+  const allAppRows: HealthRow[] = [
     {
       id: 'version',
       title: t('Version'),
@@ -88,7 +97,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
           <span>
             {t('Current')} {currentVersion || t('Unknown')}
           </span>
-          <span className="size-1 rounded-full bg-border" />
+          <span className="size-1 rounded-full bg-gray-6" />
           <span>
             {t('Latest')} {latestVersion || t('Unknown')}
           </span>
@@ -128,6 +137,9 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
       message: t('At least 1 CPU core is required.'),
     },
   ];
+  const appRows = isCloud
+    ? allAppRows.filter((row) => !CLOUD_HIDDEN_ROW_IDS.includes(row.id))
+    : allAppRows;
 
   const workersConnected = !isNil(systemHealth?.workerRam);
 
@@ -155,36 +167,39 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
   ];
 
   return (
-    <div className="flex flex-col gap-4">
+    <>
       <Alert variant="primary">
         <Info />
         <AlertDescription className="text-pretty">
           {t(
             'In production setups, we recommend a ratio of about 1 app instance to 10 workers.',
           )}{' '}
-          <a href={PRODUCTION_SETUP_LINK} target="_blank" rel="noreferrer">
+          <a
+            {...adminControl(AdminControl.HEALTH_PRODUCTION_SETUP_LINK)}
+            href={PRODUCTION_SETUP_LINK}
+            target="_blank"
+            rel="noreferrer"
+          >
             {t('Learn more')}
           </a>
         </AlertDescription>
       </Alert>
-      <div className="flex flex-col gap-4">
-        <HealthCard
-          title={t('App')}
-          description={t('API server, UI and webhook routing')}
-          icon={<Server className="size-4" />}
-          rows={appRows}
-          loading={isPending}
-        />
-        <HealthCard
-          title={t('Workers')}
-          description={t('Machines that execute your flows')}
-          icon={<Boxes className="size-4" />}
-          rows={workerRows}
-          loading={isPending}
-        />
-      </div>
+      <HealthCard
+        title={t('App')}
+        description={t('API server, UI and webhook routing')}
+        icon={<Server className="size-4" />}
+        rows={appRows}
+        loading={isPending}
+      />
+      <HealthCard
+        title={t('Workers')}
+        description={t('Machines that execute your flows')}
+        icon={<Boxes className="size-4" />}
+        rows={workerRows}
+        loading={isPending}
+      />
       <DailyHealthStrip onSeeRuns={onSeeRuns} />
-    </div>
+    </>
   );
 }
 
@@ -208,102 +223,62 @@ function HealthCard({
   loading: boolean;
 }) {
   return (
-    <Card className="overflow-hidden">
-      <div className="flex items-center gap-3 border-b px-4 py-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+    <SettingsPanel
+      title={
+        <span className="flex items-center gap-2">
           {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold leading-tight">{title}</p>
-          <p className="text-xs text-muted-foreground">{description}</p>
-        </div>
-      </div>
-      <CardContent className="divide-y p-0">
-        {rows.map((row) => (
-          <HealthRowItem key={row.id} row={row} loading={loading} />
-        ))}
-      </CardContent>
-    </Card>
+          {title}
+        </span>
+      }
+      description={description}
+      flush
+    >
+      {rows.map((row) => (
+        <HealthRowItem key={row.id} row={row} loading={loading} />
+      ))}
+    </SettingsPanel>
   );
 }
 
 function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
   const status = loading ? 'loading' : row.status;
+  const config = STATUS_CONFIG[status];
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div
-        className={cn(
-          'flex size-8 shrink-0 items-center justify-center rounded-md',
-          status === 'failed'
-            ? 'bg-destructive-50 text-destructive-700'
-            : status === 'passed'
-            ? 'bg-success-50 text-success-700'
-            : 'bg-muted text-muted-foreground',
-        )}
-      >
-        {row.icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium">{row.title}</span>
+    <SettingsRow
+      icon={row.icon}
+      title={
+        <>
+          {row.title}
           {row.link && (
             <a
+              {...adminControl(AdminControl.HEALTH_CHECK_DOCS_LINK)}
               href={row.link}
               target="_blank"
               rel="noreferrer"
-              className="text-muted-foreground hover:text-foreground"
+              aria-label={t('Open docs')}
+              className="text-gray-11 hover:text-gray-12"
             >
-              <ExternalLink className="size-3.5" />
+              <ExternalLink aria-hidden className="size-3.5" />
             </a>
           )}
-        </div>
-        <div className="text-xs text-muted-foreground">{row.message}</div>
-      </div>
-      <StatusPill status={status} />
-    </div>
-  );
-}
-
-function StatusPill({ status }: { status: Status }) {
-  if (status === 'loading') {
-    return (
-      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <LoadingSpinner className="size-3.5" />
-        {t('Checking')}
-      </span>
-    );
-  }
-  const config = STATUS_CONFIG[status];
-  return (
-    <span
-      className={cn(
-        'flex items-center gap-1.5 text-xs font-medium',
-        config.text,
-      )}
+        </>
+      }
+      description={row.message}
     >
-      <span className={cn('size-1.5 rounded-full', config.dot)} />
-      {t(config.label)}
-    </span>
+      <StatusDot tone={config.tone} pulse={status === 'loading'}>
+        {config.label()}
+      </StatusDot>
+    </SettingsRow>
   );
 }
 
-const STATUS_CONFIG = {
-  passed: {
-    label: 'Passed',
-    text: 'text-success-700',
-    dot: 'bg-success-600',
-  },
-  failed: {
-    label: 'Needs attention',
-    text: 'text-destructive-700',
-    dot: 'bg-destructive-600',
-  },
-  na: {
-    label: 'Not applicable',
-    text: 'text-muted-foreground',
-    dot: 'bg-muted-foreground',
-  },
-} as const;
+const STATUS_CONFIG: Record<Status, { label: () => string; tone: StatusTone }> =
+  {
+    loading: { label: () => t('Checking'), tone: 'neutral' },
+    passed: { label: () => t('Passed'), tone: 'success' },
+    failed: { label: () => t('Needs attention'), tone: 'danger' },
+    na: { label: () => t('Not applicable'), tone: 'neutral' },
+  };
 
 type Status = 'passed' | 'failed' | 'na' | 'loading';
 

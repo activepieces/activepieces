@@ -1,19 +1,140 @@
-import { PieceSelection, PieceSelectionMode } from '@activepieces/shared';
+import {
+  PieceSelection,
+  PieceSelectionMode,
+  PieceSet,
+} from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowLeft, Layers, Loader2 } from 'lucide-react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+import { Navigate, useParams } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import {
+  AdminPage,
+  AdminPageHeader,
+  SettingsPanel,
+  SettingsRow,
+  adminPageResources,
+} from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { cn } from '@/lib/utils';
+import { AdminControl, adminControl } from '@/lib/admin-control';
 
-import { PieceSetPiecesTab } from './piece-set-pieces-tab';
+import { PieceSetPiecesTable } from './piece-set-pieces-table';
 import { PieceSetProjectsDialog } from './piece-set-projects-dialog';
+import { RequiredActionsTab } from './required-actions-tab';
+import { useRequiredActionsGroupedByPiece } from './use-required-actions-grouped-by-piece';
+
+const PieceSetDetailsPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: pieceSet, isLoading } = pieceSetQueries.usePieceSet(id ?? '');
+  const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({
+    includeHidden: true,
+    isTableQuery: true,
+    skipProjectFilter: true,
+  });
+  const { mutate: updateSet } = pieceSetMutations.useUpdatePieceSet();
+
+  const handleToggle = (value: boolean) => {
+    if (!pieceSet || !pieces) return;
+    updateSet({
+      id: pieceSet.id,
+      request: {
+        pieces: flipSelectionMode({
+          current: pieceSet.config.pieces,
+          include: value,
+          knownPieceNames: pieces.map((p) => p.name),
+        }),
+      },
+    });
+  };
+
+  if (!platform.plan.managePiecesEnabled) {
+    return <Navigate to="/platform/pieces/piece-sets" replace />;
+  }
+
+  if (isLoading || !pieceSet) {
+    return (
+      <div className="flex items-center justify-center flex-1">
+        <Loader2 className="size-6 animate-spin text-gray-11" />
+      </div>
+    );
+  }
+
+  return (
+    <AdminPage fill>
+      <AdminPageHeader
+        back={{ label: t('Piece Sets'), to: '/platform/pieces/piece-sets' }}
+        title={pieceSet.name}
+        badge={
+          pieceSet.isDefault && (
+            <Badge variant="secondary">{t('Default')}</Badge>
+          )
+        }
+        description={t(
+          'Determine which actions and triggers assigned projects can add to their flows.',
+        )}
+        resources={adminPageResources.pieces}
+      />
+
+      <Tabs
+        defaultValue="pieces"
+        className="flex min-h-0 w-full flex-1 flex-col gap-6"
+      >
+        <TabsList
+          variant="outline"
+          className="w-full shrink-0 justify-start border-b border-gray-6"
+        >
+          <TabsTrigger variant="outline" value="pieces">
+            {t('Pieces')}
+          </TabsTrigger>
+          <TabsTrigger variant="outline" value="requiredActions">
+            {t('Required actions')}
+            <RequiredActionsCountBadge pieceSet={pieceSet} />
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent
+          value="pieces"
+          className="mt-0 flex min-h-0 flex-1 flex-col gap-6 data-[state=inactive]:hidden"
+        >
+          <SettingsPanel flush className="shrink-0">
+            <SettingsRow title={t('Assigned projects')}>
+              <PieceSetProjectsDialog pieceSet={pieceSet} />
+            </SettingsRow>
+            <SettingsRow
+              title={t('Include new pieces')}
+              description={t(
+                'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
+              )}
+            >
+              <Switch
+                {...adminControl(AdminControl.PIECE_SETS_NEW_PIECES_TOGGLE)}
+                aria-label={t('Include new pieces')}
+                checked={
+                  pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
+                }
+                disabled={piecesLoading}
+                onCheckedChange={handleToggle}
+              />
+            </SettingsRow>
+          </SettingsPanel>
+          <PieceSetPiecesTable pieceSet={pieceSet} />
+        </TabsContent>
+
+        <TabsContent
+          value="requiredActions"
+          className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
+        >
+          <RequiredActionsTab pieceSet={pieceSet} />
+        </TabsContent>
+      </Tabs>
+    </AdminPage>
+  );
+};
 
 function flipSelectionMode({
   current,
@@ -33,139 +154,18 @@ function flipSelectionMode({
   };
 }
 
-const PieceSetDetailsPage = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: pieceSet, isLoading } = pieceSetQueries.usePieceSet(id ?? '');
-  const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({
-    includeHidden: true,
-    isTableQuery: true,
-    skipProjectFilter: true,
-  });
-  const { mutate: updateSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
-
-  const handleToggle = (value: boolean) => {
-    if (!pieceSet || !pieces) return;
-    updateSet({
-      id: pieceSet.id,
-      request: {
-        pieces: flipSelectionMode({
-          current: pieceSet.config.pieces,
-          include: value,
-          knownPieceNames: pieces.map((p) => p.name),
-        }),
-      },
+function RequiredActionsCountBadge({ pieceSet }: { pieceSet: PieceSet }) {
+  const { actionsInLatestPieceVersionCount: count } =
+    useRequiredActionsGroupedByPiece({
+      actions: pieceSet.config.requiredActions.actions,
     });
-  };
-
-  if (!platform.plan.managePiecesEnabled) {
-    return <Navigate to="/platform/setup/pieces?tab=piece-sets" replace />;
+  if (count === 0) {
+    return null;
   }
-
-  if (isLoading || !pieceSet) {
-    return (
-      <div className="flex items-center justify-center flex-1">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <>
-      <DashboardPageHeader
-        title={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/platform/setup/pieces?tab=piece-sets')}
-              className="p-1 h-auto"
-            >
-              <ArrowLeft className="size-4" />
-            </Button>
-            <Layers className="size-5" />
-            <span>{pieceSet.name}</span>
-            {pieceSet.isDefault && (
-              <Badge variant="secondary">{t('Default')}</Badge>
-            )}
-          </div>
-        }
-        description={t(
-          'Configure which pieces and actions are available in this set',
-        )}
-      />
-
-      <div className="mx-auto w-full flex flex-col flex-1 min-h-0 gap-0">
-        <div className="px-4 pt-3 pb-6 shrink-0 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-muted/40 px-3.5 py-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('Assigned')}
-              </span>
-              <PieceSetProjectsDialog pieceSet={pieceSet} />
-            </div>
-
-            <div className="self-stretch w-px bg-border" />
-
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('Auto-include')}
-              </span>
-              <AutoIncludePill
-                label={t('New pieces')}
-                checked={
-                  pieceSet.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL
-                }
-                disabled={isPending || piecesLoading}
-                onCheckedChange={handleToggle}
-              />
-            </div>
-
-            <span className="text-xs text-muted-foreground">
-              {t(
-                'Applies only to pieces that don’t exist yet — actions are governed per piece below.',
-              )}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex-1 min-h-0 flex flex-col">
-          <PieceSetPiecesTab pieceSet={pieceSet} />
-        </div>
-      </div>
-    </>
-  );
-};
-
-function AutoIncludePill({
-  label,
-  checked,
-  disabled,
-  onCheckedChange,
-}: {
-  label: string;
-  checked: boolean;
-  disabled: boolean;
-  onCheckedChange: (value: boolean) => void;
-}) {
-  return (
-    <label
-      className={cn(
-        'inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-lg border bg-background px-3 text-sm font-medium transition-colors',
-        checked && 'border-primary/50 bg-primary/[0.07] text-primary',
-        disabled && 'cursor-not-allowed opacity-60',
-      )}
-    >
-      <Switch
-        size="sm"
-        checked={checked}
-        disabled={disabled}
-        onCheckedChange={onCheckedChange}
-      />
-      {label}
-    </label>
+    <Badge variant="secondary" className="ml-2">
+      {count}
+    </Badge>
   );
 }
 

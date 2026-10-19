@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createMilestone = createAction({
 	name: 'create_milestone',
+	classification: 'WRITE',
 	displayName: 'Create Milestone',
 	description: 'Add a milestone with due date, description, responsible user, etc.',
 	audience: 'both',

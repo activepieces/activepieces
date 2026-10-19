@@ -21,16 +21,6 @@ interface VirtualizedScrollAreaProps<T> {
   };
 }
 
-export interface VirtualizedScrollAreaRef {
-  scrollToIndex: (
-    index: number,
-    options?: {
-      align?: 'start' | 'center' | 'end';
-      behavior?: 'auto' | 'smooth';
-    },
-  ) => void;
-}
-
 const VirtualizedScrollArea = <T,>({
   items,
   renderItem,

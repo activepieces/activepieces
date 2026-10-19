@@ -52,6 +52,37 @@ describe('bucketFor', () => {
         expect(prSizeCheck.bucketFor({ path: 'packages/core/shared/src/index.ts' }).name).toBe('core/shared')
     })
 
+    it('charges test code to the tests bucket, not the area it covers', () => {
+        const areas = [
+            'packages/server/api/test/integration/ce/flows/flow.test.ts',
+            'packages/server/engine/test/handler/loop-executor.test.ts',
+            'packages/core/shared/test/ee/index.test.ts',
+            'packages/web/test/features/chat/lib/messages.test.ts',
+            'packages/web/src/app/builder/data-selector/path-helpers.test.ts',
+            'packages/core/execution/src/lib/step.spec.ts',
+            'packages/pieces/community/simplyprint/src/lib/common/__tests__/client.ts',
+            'packages/server/api/vitest.config.ts',
+            'packages/tests-e2e/scenarios/sign-up.spec.ts',
+            'smoke-test/verify-delay.sh',
+        ].map((path) => prSizeCheck.bucketFor({ path }).name)
+        expect(new Set(areas)).toEqual(new Set(['tests']))
+    })
+
+    it('exempts the tests bucket so adding tests never blocks a PR', () => {
+        expect(prSizeCheck.bucketFor({ path: 'packages/server/api/test/integration/ce/flows/flow.test.ts' }).budget).toBeNull()
+    })
+
+    it('keeps product code whose path merely contains "test" in its own area', () => {
+        const paths = {
+            'packages/web/src/app/builder/test-step/test-trigger-section.tsx': 'packages/web',
+            'packages/server/api/src/app/flow/step-run/step-run.service.ts': 'server/api',
+            'packages/web/src/features/flows/lib/latest-test.ts': 'packages/web',
+        }
+        for (const [path, area] of Object.entries(paths)) {
+            expect(prSizeCheck.bucketFor({ path }).name).toBe(area)
+        }
+    })
+
     it('exempts pieces and anything unmatched', () => {
         expect(prSizeCheck.bucketFor({ path: 'packages/pieces/community/slack/src/index.ts' }).budget).toBeNull()
         expect(prSizeCheck.bucketFor({ path: 'docs/install/overview.mdx' }).name).toBe('other (default)')
@@ -90,6 +121,18 @@ describe('collectSizes', () => {
     it('skips binary files, which numstat reports as "-"', () => {
         const report = prSizeCheck.collectSizes({ numstat: '-\t-\tpackages/web/src/assets/logo.png\n5\t5\tpackages/web/src/app.tsx' })
         expect(report.meaningfulTotal).toBe(10)
+    })
+
+    it('keeps test lines out of the budgeted area totals', () => {
+        const numstat = numstatOf([
+            [2_000, 0, 'packages/server/api/test/integration/ce/flows/flow.test.ts'],
+            [10, 5, 'packages/server/api/src/app/flow/flow.service.ts'],
+        ])
+        const report = prSizeCheck.collectSizes({ numstat })
+        expect(linesOf({ numstat, area: 'server/api' })).toBe(15)
+        expect(linesOf({ numstat, area: 'tests' })).toBe(2_000)
+        expect(report.rows.some((row) => row.over)).toBe(false)
+        expect(report.meaningfulTotal).toBe(2_015)
     })
 
     it('counts renamed files under their destination area', () => {

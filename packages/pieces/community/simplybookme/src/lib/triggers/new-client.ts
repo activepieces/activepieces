@@ -44,6 +44,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof simplybookAuth>,
 export const newClient = createTrigger({
   auth: simplybookAuth,
   name: 'new_client',
+  classification: 'READ',
   displayName: 'New Client',
   description: 'Triggers when a new client is added (via booking or manually) in SimplyBook.me',
   aiMetadata: {

@@ -8,19 +8,20 @@ import { ApEnvironment } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { SandboxSettings } from '../../types'
 
-const engineDistPath = 'dist/packages/engine'
-const engineBundles = ['main.js', 'piece-child.js']
+const engineExecutablePath = 'dist/packages/engine/main.js'
 const installedPaths = new Map<string, Promise<void>>()
 
 export const engineInstaller = (_log: ApLogger, getSettings: () => SandboxSettings) => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
+        // The egress proxy was removed, so there is a single engine bundle (main.js).
+        const source = engineExecutablePath
         const inFlight = installedPaths.get(path)
         if (!isNil(inFlight) && !isDev) {
             await inFlight
             return { cacheHit: true }
         }
-        const install = copyEngine({ path })
+        const install = copyEngine({ source, path })
         installedPaths.set(path, install)
         const { error } = await tryCatch(() => install)
         if (error) {
@@ -31,11 +32,9 @@ export const engineInstaller = (_log: ApLogger, getSettings: () => SandboxSettin
     },
 })
 
-async function copyEngine({ path }: CopyEngineParams): Promise<void> {
-    for (const bundle of engineBundles) {
-        await atomicCopy(`${engineDistPath}/${bundle}`, `${path}/${bundle}`)
-        await atomicCopy(`${engineDistPath}/${bundle}.map`, `${path}/${bundle}.map`)
-    }
+async function copyEngine({ source, path }: CopyEngineParams): Promise<void> {
+    await atomicCopy(source, `${path}/main.js`)
+    await atomicCopy(`${source}.map`, `${path}/main.js.map`)
 }
 
 async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
@@ -47,6 +46,7 @@ async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
 }
 
 type CopyEngineParams = {
+    source: string
     path: string
 }
 

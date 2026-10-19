@@ -1,6 +1,6 @@
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
-import { EngineFileNotFoundError, EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
+import { EngineFileNotFoundError, EngineGenericError, ExecutionError, ExecutionErrorType, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
 import { retryFetch } from './retry-fetch'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
@@ -8,6 +8,7 @@ const zstdDecompress = promisify(zstdDecompressCallback)
 const READ_URL_HEADER = 'x-ap-file-read-url'
 const FILE_TYPE_HEADER = 'x-ap-file-type'
 const FILE_NAME_HEADER = 'x-ap-file-name'
+const FILE_NAME_ENCODED_HEADER = 'x-ap-file-name-encoded'
 
 export const engineFileApi = {
     async upload({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
@@ -83,6 +84,14 @@ export const engineFileApi = {
 
 async function resolveUploadReadUrl(fileId: string, response: Response): Promise<UploadResult> {
     if (!response.ok) {
+        if (response.status === 413) {
+            const serverMessage = await readErrorMessage(response)
+            throw new ExecutionError(
+                'EngineFileTooLarge',
+                JSON.stringify({ message: serverMessage ?? `File ${fileId} exceeds the server's size limit` }),
+                ExecutionErrorType.USER,
+            )
+        }
         throw new EngineGenericError(
             'EngineFileUploadError',
             `Failed to upload engine file ${fileId}: ${response.status} ${response.statusText}`,
@@ -103,6 +112,16 @@ function toRequestBody(data: Uint8Array): BodyInit {
     return data.buffer instanceof ArrayBuffer ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength) : new Uint8Array(data)
 }
 
+async function readErrorMessage(response: Response): Promise<string | undefined> {
+    try {
+        const body = await response.json() as { params?: { message?: unknown } }
+        return typeof body?.params?.message === 'string' ? body.params.message : undefined
+    }
+    catch {
+        return undefined
+    }
+}
+
 function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHeadersParams): Record<string, string> {
     const headers: Record<string, string> = {
         'Content-Type': 'application/octet-stream',
@@ -112,12 +131,22 @@ function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHe
         headers['Content-Length'] = String(contentLength)
     }
     if (fileName) {
-        headers[FILE_NAME_HEADER] = fileName
+        const wellFormedName = toWellFormed(fileName)
+        headers[FILE_NAME_HEADER] = toAsciiHeaderValue(wellFormedName)
+        headers[FILE_NAME_ENCODED_HEADER] = encodeURIComponent(wellFormedName)
     }
     if (compression === FileCompression.ZSTD) {
         headers['Content-Encoding'] = 'zstd'
     }
     return headers
+}
+
+function toWellFormed(value: string): string {
+    return value.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD')
+}
+
+function toAsciiHeaderValue(value: string): string {
+    return value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x20-\x7e]/g, '_')
 }
 
 function stripApHeaders(headers: Record<string, string>): Record<string, string> {

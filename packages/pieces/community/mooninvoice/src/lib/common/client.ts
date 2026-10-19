@@ -1,4 +1,4 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient, QueryParams } from '@activepieces/pieces-common';
 
 export const BASE_URL = `https://www.mooninvoice.com/api_mi/public`;
 
@@ -29,12 +29,19 @@ export async function getAccessToken(
   }
 }
 
-export async function makeRequest(
-  accessToken: string,
-  method: HttpMethod,
-  path: string,
-  body?: unknown
-) {
+export async function makeRequest({
+  accessToken,
+  method,
+  path,
+  body,
+  queryParams,
+}: {
+  accessToken: string;
+  method: HttpMethod;
+  path: string;
+  body?: unknown;
+  queryParams?: QueryParams;
+}) {
   try {
     const response = await httpClient.sendRequest({
       method,
@@ -44,6 +51,7 @@ export async function makeRequest(
         'Content-Type': 'application/json',
       },
       body,
+      queryParams,
     });
     return response.body;
   } catch (error: any) {

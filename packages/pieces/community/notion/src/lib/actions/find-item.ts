@@ -1,5 +1,9 @@
 import { notionAuth } from '../auth';
-import { createAction } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { getNotionToken, notionCommon } from '../common';
 import { Client } from '@notionhq/client';
 import { notionFindDatabaseItemActionOutputSchema } from '../output-schemas';
@@ -9,7 +13,7 @@ export const findDatabaseItem = createAction({
   name: 'notion-find-database-item',
   classification: 'SEARCH',
   displayName: 'Find Database Item',
-  description: 'Searches for an item in database by field.',
+  description: 'Find items in a database whose fields match exact values.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -18,6 +22,11 @@ export const findDatabaseItem = createAction({
   },
   props: {
     database_id: notionCommon.database_id,
+    filter_hint: Property.MarkDown({
+      value:
+        'Pick a database, then fill one or more of its fields. Items must match every value exactly.',
+      variant: MarkdownVariant.INFO,
+    }),
     filterDatabaseFields: notionCommon.filterDatabaseFields,
   },
   outputSchema: notionFindDatabaseItemActionOutputSchema,

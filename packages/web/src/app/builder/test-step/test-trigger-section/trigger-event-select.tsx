@@ -67,7 +67,7 @@ export const TriggerEventSelect = React.memo(
               ))}
           </SelectContent>
         </Select>
-        <span className="text-sm mt-2 text-muted-foreground">
+        <span className="text-sm mt-2 text-gray-11">
           {t('The sample data can be used in the next steps.')}
         </span>
       </div>

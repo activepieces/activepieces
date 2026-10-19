@@ -1,6 +1,7 @@
 import { apVersionUtil, systemUsage, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ActivepiecesError, ApEdition, apId, ErrorCode, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, tryCatch, unique } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, apId, AppInstance, DeploymentConfig, ErrorCode, FileLocation, GetDiagnosticsResponse, GetSystemHealthChecksResponse, InfraCheck, ReleaseHealth, tryCatch, unique } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { backgroundMigrationRunner } from '../database/background-migration-runner'
 import { databaseConnection } from '../database/database-connection'
 import { redisConnections } from '../database/redis-connections'
 import { s3Helper } from '../file/s3-helper'
@@ -41,11 +42,15 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
         }
         return  workerHealthy && databaseHealthy
     },
+    getReleaseHealth: (workerVersions: Array<string | undefined>): ReleaseHealth => {
+        return buildReleaseHealth(log, workerVersions)
+    },
     getSystemHealthChecks: async (platformId: string): Promise<GetSystemHealthChecksResponse> => {
-        const [workers, databaseHealthy, latestVersion] = await Promise.all([
+        const [workers, databaseHealthy, latestVersion, backgroundMigrations] = await Promise.all([
             machineService(log).list(platformId),
             healthStatusService(log).checkDatabaseHealth(),
             apVersionUtil.getLatestRelease(),
+            backgroundMigrationRunner.getStatus(),
         ])
         const hasWorkers = workers.length > 0
         const release = buildReleaseHealth(log, workers.map(worker => worker.information.workerProps.version))
@@ -59,7 +64,17 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
             workerRam: hasWorkers ? workers.every(worker => worker.information.totalAvailableRamInBytes >= gigaBytes(WORKER_MIN_RAM_GB)) : null,
             database: databaseHealthy,
             release,
+            backgroundMigrations,
         }
+    },
+    collectDeploymentDiagnostics: async (): Promise<DeploymentDiagnostics> => {
+        const [database, redis, storage, apps] = await Promise.all([
+            measureDatabase(log),
+            measureRedis(log),
+            measureStorage(log),
+            appMachineCache.list(),
+        ])
+        return { database, redis, storage, apps, config: readDeploymentConfig() }
     },
     getDiagnostics: async (platformId: string): Promise<GetDiagnosticsResponse> => {
         // Self-hosted only: a platform admin here is the infra operator. On Cloud a platform admin is a
@@ -71,17 +86,16 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
                 params: { message: 'Infra diagnostics are not available on the cloud edition' },
             })
         }
-        const [database, redis, storage, machines, apps] = await Promise.all([
-            measureDatabase(log),
-            measureRedis(log),
-            measureStorage(log),
+        const [deployment, machines] = await Promise.all([
+            healthStatusService(log).collectDeploymentDiagnostics(),
             machineService(log).list(platformId),
-            appMachineCache.list(),
         ])
+        const { database, redis, storage, apps, config } = deployment
         return {
             database,
             redis,
             storage,
+            config,
             apps: {
                 count: apps.length,
                 instances: apps,
@@ -97,19 +111,22 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
                     status: worker.status,
                 })),
             },
-            config: {
-                executionMode: system.get(AppSystemProp.EXECUTION_MODE) ?? null,
-                fileStorageLocation: system.get(AppSystemProp.FILE_STORAGE_LOCATION) ?? null,
-                sandboxMemoryLimitKb: system.getNumber(AppSystemProp.SANDBOX_MEMORY_LIMIT) ?? null,
-                s3SignedUrls: system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? null,
-                s3Endpoint: system.get(AppSystemProp.S3_ENDPOINT) ?? null,
-                s3Region: system.get(AppSystemProp.S3_REGION) ?? null,
-                projectRateLimiterEnabled: system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED) ?? null,
-                defaultConcurrentJobsLimit: system.getNumber(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) ?? null,
-            },
         }
     },
 })
+
+function readDeploymentConfig(): DeploymentConfig {
+    return {
+        executionMode: system.get(AppSystemProp.EXECUTION_MODE) ?? null,
+        fileStorageLocation: system.get(AppSystemProp.FILE_STORAGE_LOCATION) ?? null,
+        sandboxMemoryLimitKb: system.getNumber(AppSystemProp.SANDBOX_MEMORY_LIMIT) ?? null,
+        s3SignedUrls: system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? null,
+        s3Endpoint: system.get(AppSystemProp.S3_ENDPOINT) ?? null,
+        s3Region: system.get(AppSystemProp.S3_REGION) ?? null,
+        projectRateLimiterEnabled: system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED) ?? null,
+        defaultConcurrentJobsLimit: system.getNumber(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) ?? null,
+    }
+}
 
 async function measureDatabase(log: FastifyBaseLogger): Promise<InfraCheck> {
     const startedAt = Date.now()
@@ -188,3 +205,11 @@ const WORKER_MIN_CPU_CORES = 0.5
 const WORKER_MIN_RAM_GB = 1
 
 const UNKNOWN_WORKER_VERSION = 'unknown'
+
+export type DeploymentDiagnostics = {
+    database: InfraCheck
+    redis: InfraCheck
+    storage: InfraCheck
+    config: DeploymentConfig
+    apps: AppInstance[]
+}

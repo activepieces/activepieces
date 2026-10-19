@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { Plus, Puzzle, X } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import {
   AccordionContent,
   AccordionItem,
@@ -20,6 +21,7 @@ import { appConnectionsQueries } from '@/features/connections/hooks/app-connecti
 import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/types';
 import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 
 import { agentToolAccount } from '../lib/agent-tool-account';
 import { usePieceToolsDialogStore } from '../stores/pieces-tools';
@@ -82,7 +84,7 @@ export const AgentPieceToolComponent = ({
           <Skeleton className="h-4 w-32" />
         </div>
 
-        <Skeleton className="h-4 w-4 rounded-sm" />
+        <Skeleton className="h-4 w-4 rounded-md" />
       </div>
     );
   }
@@ -95,11 +97,15 @@ export const AgentPieceToolComponent = ({
       )?.requireAuth,
     }),
   );
-  const accountLabel = agentToolAccount.label({
+  const account = agentToolAccount.resolve({
     tools: toolsNeedingAccount,
     connections: connections?.data ?? [],
     connectionsComplete,
   });
+  const accountText =
+    account?.state === 'connected' && account.text === pieceMetadata.displayName
+      ? t('Connected')
+      : account?.text;
 
   const handleEditTool = (tool: AgentPieceTool) => {
     openAddPieceToolDialog({ page: 'action-inputs', tool });
@@ -110,28 +116,32 @@ export const AgentPieceToolComponent = ({
       value={pieceMetadata.pieceName}
       className="border-b last:border-0"
     >
-      <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-accent transition-all">
+      <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-4 transition-all">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
-              {pieceMetadata.logoUrl ? (
-                <img
-                  src={pieceMetadata.logoUrl}
-                  alt={pieceMetadata.displayName}
-                  className="h-5 w-5 object-contain"
-                />
-              ) : (
-                <Puzzle className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
+            <LogoPlate
+              src={pieceMetadata.logoUrl}
+              alt={pieceMetadata.displayName}
+              className="size-8 p-1.5"
+              fallback={<Puzzle className="h-5 w-5" />}
+            />
 
             <span className="text-sm font-medium">
               {pieceMetadata.displayName}
             </span>
           </div>
-          {!isNil(accountLabel) && (
-            <span className="ml-3 min-w-0 shrink truncate text-xs text-muted-foreground">
-              {accountLabel}
+          {!isNil(account) && (
+            <span className="ms-3 flex min-w-0 shrink items-center gap-1.5 text-xs text-gray-11">
+              <span
+                className={cn(
+                  'size-[6px] shrink-0 rounded-full',
+                  account.state === 'connected' && 'bg-success-10',
+                  account.state === 'deleted' && 'bg-danger-10',
+                  account.state === 'missing' && 'bg-warning-10',
+                  account.state === 'mixed' && 'bg-gray-9',
+                )}
+              />
+              <span className="truncate">{accountText}</span>
             </span>
           )}
         </div>
@@ -152,7 +162,7 @@ export const AgentPieceToolComponent = ({
                 onClick={() => handleEditTool(tool)}
                 className={`
                   group flex items-center gap-2 px-3 py-1 cursor-pointer
-                  rounded-full border bg-muted/50
+                  rounded-full border bg-gray-3/50
                   ${disabled ? 'opacity-50 pointer-events-none' : ''}
                 `}
               >
@@ -173,9 +183,9 @@ export const AgentPieceToolComponent = ({
                         size="icon"
                         className="
                           size-5 p-0.5
-                          text-muted-foreground
-                          hover:text-destructive
-                          hover:bg-destructive/10
+                          text-gray-11
+                          hover:text-danger-11
+                          hover:bg-danger-3
                           transition
                         "
                       >

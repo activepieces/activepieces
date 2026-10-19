@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { whatsscaleAuth } from '../auth';
 import { whatsscaleClient } from '../common/client';
 import { whatsscaleProps } from '../common/props';
+import { groupMessageOutputSchema } from '../output-schemas';
 
 export const watchGroupMessagesTrigger = createTrigger({
   auth: whatsscaleAuth,
@@ -14,6 +15,7 @@ export const watchGroupMessagesTrigger = createTrigger({
     description:
       'Fires when a new message is received in any WhatsApp group the connected session belongs to. Each event represents a single inbound group message and includes the originating group ID, the sender (participant) ID and name, message body, media details, and reply/forward metadata. Use to react to group activity across all groups rather than a single chosen one.',
   },
+  outputSchema: groupMessageOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   props: {
     session: whatsscaleProps.session,
@@ -23,6 +25,7 @@ export const watchGroupMessagesTrigger = createTrigger({
     group_id: '120363423663126276@g.us',
     participant_id: '43001330020491@lid',
     participant_name: 'Jane Smith',
+    participant_phone: '962781397972',
     body: 'Hey everyone, meeting at 3pm today!',
     has_media: false,
     media_type: 'text',

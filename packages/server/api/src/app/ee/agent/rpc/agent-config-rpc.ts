@@ -1,0 +1,388 @@
+import { ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { agentAiUtils, aiProviderSignal, aiUtils } from '@activepieces/server-utils'
+import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { LanguageModel, ModelMessage, UserContent } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
+import { agentApprovalGate } from '.././agent-approval-gate'
+import { agentChatModel } from '.././agent-chat-model'
+import { agentCompaction } from '.././agent-compaction'
+import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from '.././agent-file-utils'
+import { agentHelpers } from '.././agent-helpers'
+import { agentModelTier, agentTierCandidates, AgentTierRun } from '.././agent-model-tier'
+import { agentMcp } from '.././mcp/agent-mcp'
+import { chatPersonalizationService } from '.././personalization/chat-personalization-service'
+import { agentPrompt } from '.././prompt/agent-prompt'
+import { agentSurfaceNotes } from '.././prompt/agent-surface-notes'
+import { UserIdentity } from '.././prompt/agent-user-identity'
+import { aiToolConfigService } from '../../../ai/ai-tool-config-service'
+import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
+import { platformService } from '../../../platform/platform.service'
+import { userService } from '../../../user/user-service'
+import { smtpEmailSender } from '../../helper/email/email-sender/smtp-email-sender'
+import { agentTaskService } from '../agent-task-service'
+
+import { chosenProviders } from './chosen-providers'
+import { CONNECTION_INVENTORY_LIMIT, loadOrStartConversation } from './rpc-shared'
+
+
+export const agentConfigRpc = (log: FastifyBaseLogger) => ({
+    async getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse> {
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: requestedSource, projectId: requestedProjectId, agentId: linkedAgentId, flowRunId } = input
+
+        // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
+        // anyway meant an owner without an MCP token or a user record failed the run outright.
+        const isFlowStep = requestedSource === AgentRunSource.FLOW_STEP
+        // A saved agent answers from its own instructions, so one person's remembered preferences
+        // must not change how it behaves for everyone else who talks to it.
+        const isBuilder = requestedSource === AgentRunSource.AGENT_BUILDER
+        const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT && !isBuilder
+
+        const [conversation, userProjects, enabledAiTools, providerChoices] = await Promise.all([
+            loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName, agentId: linkedAgentId, flowRunId }),
+            agentHelpers.getUserProjects({ platformId, userId, log }),
+            aiToolConfigService(log).getEnabledTools({ platformId }),
+            aiToolConfigService(log).getProviderChoices({ platformId }),
+        ])
+
+        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult, agentsSurfaceOn] = await Promise.all([
+            carriesChatContext || isBuilder ? agentMcp.getCredentials({ platformId, userId, log }) : { mcpServerUrl: null, mcpToken: null },
+            carriesChatContext ? agentHelpers.getUserMemory({ platformId, userId }) : { instructions: null, memories: [] as string[] },
+            carriesChatContext ? userService(log).getMetaInformation({ id: userId }) : null,
+            carriesChatContext ? tryCatch(() => platformService(log).getOneOrThrow(platformId)) : null,
+            carriesChatContext ? tryCatch(() => chatPersonalizationService(log).getIdentityEnrichment({ platformId, userId })) : null,
+            requestedSource === AgentRunSource.FLOW_STEP ? false : agentHelpers.agentsSurfaceAvailable({ platformId, log }),
+        ])
+        const runUserEmail = runUser?.email ?? ''
+        const userIdentity: UserIdentity | null = isNil(runUser)
+            ? null
+            : {
+                firstName: runUser.firstName,
+                lastName: runUser.lastName,
+                email: runUser.email,
+                platformName: platformResult && !platformResult.error ? platformResult.data.name : null,
+                identity: identityResult && !identityResult.error ? identityResult.data : null,
+            }
+
+        if (isFlowStep !== (conversation.source === AgentRunSource.FLOW_STEP)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'The run asked for a different surface than the conversation it belongs to' } })
+        }
+
+        const scopedProjects = conversation.source === AgentRunSource.FLOW_STEP
+            ? userProjects.filter((p) => p.id === conversation.projectId)
+            : userProjects
+
+        const validCandidateProjectId = conversation.projectId && scopedProjects.some((p) => p.id === conversation.projectId)
+            ? conversation.projectId
+            : null
+        // Default to the user's first project when none is chosen so the agent never hits a cold
+        // "No project selected" on the first data tool. The chat MCP server resolves its project
+        // from conversation.projectId per request, so persist it below (the user can switch via the
+        // dropdown / ap_select_project, which overwrites this).
+        const selectedProjectId = agentHelpers.selectRunProject({ conversationProjectId: conversation.projectId ?? null, projects: scopedProjects })
+
+        // Settled before the provider is resolved: the turn runs inside this project, so the
+        // credential has to be chosen for it. Resolving earlier, while the project was still
+        // unknown, is what let a projectless conversation pick a key scoped away from the project
+        // it then adopted. A flow step reads its own conversation's project rather than the
+        // selection above, which narrows to what the owner can still see in chat.
+        const runProjectId = isFlowStep ? conversation.projectId ?? null : selectedProjectId
+        const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
+        const surface = agentHelpers.surfaceOf({ source: requestedSource })
+        const choiceLivesOnConversation = pickLivesOnConversation({ conversation })
+        const needsDefaultPick = choiceLivesOnConversation && await agentChatModel(log).needsDefaultPick({ platformId, conversation, scope: runScope })
+        const defaultPick = needsDefaultPick ? await agentChatModel(log).defaultPick({ platformId, projectId: runScope.projectId }) : null
+        const picked = isNil(defaultPick) ? conversation : { ...conversation, ...defaultPick }
+        const selectedModel = choiceLivesOnConversation ? picked.modelName ?? null : modelName ?? picked.modelName ?? null
+        const modelTierId = tierIdForRun({ conversation: picked, requestedTierId: input.modelTierId ?? null })
+        const tierRun = isNil(modelTierId) ? null : await agentModelTier(log).resolveRun({ platformId, tierId: modelTierId, surface, scope: runScope })
+        const pinnedConfigId = choiceLivesOnConversation && isNil(tierRun) ? picked.providerConfigId ?? null : null
+        const pinned = isNil(pinnedConfigId) ? null : await agentChatModel(log).pinnedConfig({ platformId, configId: pinnedConfigId, modelName: selectedModel, scope: runScope })
+        const providerConfig = !isNil(tierRun)
+            ? tierRun.candidates[0].config
+            : !isNil(pinned)
+                ? pinned.config
+                : await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
+
+        const attachmentRefs = files && files.length > 0 && !isNil(selectedProjectId)
+            ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, conversationId, log })
+            : []
+        const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
+
+        const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
+        const chosen = dryRun
+            ? { search: null, image: null }
+            : await chosenProviders.resolveForRun({ platformId, choices: providerChoices, surface, scope: runScope, log })
+        const actingRun = !dryRun && !discoveryOnly
+        const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
+        const agentsAvailable = actingRun && agentsSurfaceOn
+        const fetchAvailable = !dryRun
+        // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
+        const tavilySearchAvailable = !isNil(aiTools.webSearch)
+        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch((chosen.search?.credentials ?? providerConfig).provider))
+        const generatesImagesOnProvider = actingRun && isNil(aiTools.imageGeneration)
+        const imageModelId = !generatesImagesOnProvider
+            ? undefined
+            : chosen.image?.modelId ?? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log })
+
+        const lock = await agentHelpers.acquireStreamingLock({ conversationId, ...spreadIfDefined('runId', input.runId) })
+        if (lock === 'superseded') {
+            log.info({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Run superseded by a newer message before it started')
+            throw new ActivepiecesError({
+                code: ErrorCode.AGENT_RUN_SUPERSEDED,
+                params: { message: 'This message was replaced by a newer one' },
+            })
+        }
+        if (lock === 'duplicate') {
+            log.warn({ conversation: { id: conversationId }, run: { id: input.runId } }, '[agentRpc#getAgentConfig] Run redelivered while its first delivery is still streaming, dropping the duplicate')
+            throw new ActivepiecesError({
+                code: ErrorCode.AGENT_RUN_SUPERSEDED,
+                params: { message: 'This run is already in progress' },
+            })
+        }
+        if (lock === 'busy') {
+            log.warn({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Concurrent run rejected (conversation already STREAMING)')
+            throw new ActivepiecesError({
+                code: ErrorCode.AGENT_RUN_BUSY,
+                params: { message: 'An agent is already running for this conversation' },
+            })
+        }
+
+        if (!dryRun && isNil(validCandidateProjectId) && !isNil(selectedProjectId)) {
+            await agentHelpers.conversationRepo().update(conversationId, { projectId: selectedProjectId })
+        }
+        if (!dryRun && (picked.modelTierId ?? null) !== modelTierId) {
+            await agentHelpers.conversationRepo().update(conversationId, { modelTierId })
+        }
+
+        const namesItsOwnModel = surface === 'flow'
+        const tier = isNil(tierRun)
+            ? agentHelpers.resolveRunTier({ provider: providerConfig.provider, modelName: modelName ?? null, selectedModel, surface })
+            : { ...agentHelpers.resolveRunTier({ provider: providerConfig.provider, modelName: null, selectedModel: null, surface }), thinkingBudget: tierRun.candidates[0].thinkingBudget, modelId: tierRun.candidates[0].modelId }
+        const resolvedModelId = !isNil(tierRun)
+            ? tierRun.candidates[0].modelId
+            : !isNil(pinned)
+                ? pinned.modelId
+                : namesItsOwnModel && !isNil(modelName)
+                    ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, surface, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, log })
+                    : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, surface, scope: runScope, log })
+        const fastModelId = isNil(tierRun)
+            ? await agentHelpers.resolveFastModelId({ platformId, providerConfig, surface, scope: runScope, fallbackModelId: resolvedModelId, log })
+            : resolvedModelId
+        const pickToPersist = !isNil(defaultPick)
+            ? defaultPick
+            : choiceLivesOnConversation && isNil(tierRun) && isNil(pinned)
+                ? agentChatModel(log).legacyPin({ config: providerConfig, selectedModel, runTierId: tier.id, resolvedModelId })
+                : null
+        if (!dryRun && !isNil(pickToPersist)) {
+            await agentChatModel(log).persistPick({ platformId, projectId: runScope.projectId, conversationId, loadedModelName: conversation.modelName ?? null, pick: pickToPersist })
+        }
+
+        // Inject an inventory of the project's existing connections into context so the agent
+        // never has to *guess* an app name to find out what's connected. Without this, discovery
+        // is reactive and name-keyed (ap_discover_action_auth filters by an exact pieceName the
+        // model inferred from the message), so a vague request ("my CRM") could miss a connection
+        // that is right there. Best-effort: a lookup failure must not block the turn.
+        // Chat picks a connection mid-run; a configured surface had one pinned when it was set up,
+        // so handing it the inventory only teaches it to renegotiate what it cannot change.
+        const tasksAvailable = !dryRun && carriesChatContext
+        const [inventoryResult, conversationTasks] = await Promise.all([
+            (!dryRun && carriesChatContext && !isNil(selectedProjectId))
+                ? tryCatch(() => appConnectionService(log).list({
+                    projectId: selectedProjectId,
+                    platformId,
+                    pieceName: undefined,
+                    displayName: undefined,
+                    status: undefined,
+                    cursorRequest: null,
+                    scope: undefined,
+                    externalIds: undefined,
+                    limit: CONNECTION_INVENTORY_LIMIT,
+                }))
+                : null,
+            tasksAvailable ? agentTaskService.list({ platformId, conversationId }) : [],
+        ])
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        const runNotesFor = ({ forTask }: { forTask: boolean }): string => agentSurfaceNotes.buildRunNotes({
+            source: conversation.source,
+            currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
+            searchAvailable: webSearchAvailable,
+            fetchAvailable,
+            scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
+            imageAvailable: !forTask && actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
+            imageEditAvailable: !forTask && !isNil(imageModelId),
+            emailAvailable: !forTask && emailEnabled,
+            agentsAvailable: !forTask && agentsAvailable,
+            tasksAvailable: !forTask && tasksAvailable,
+            tasks: conversationTasks,
+            userEmail: runUserEmail,
+            userIdentity,
+            connections: inventoryResult && !inventoryResult.error
+                ? { connections: inventoryResult.data.data, truncated: inventoryResult.data.data.length >= CONNECTION_INVENTORY_LIMIT }
+                : null,
+            memory: runMemory,
+        })
+        const systemPromptText = agentPrompt.buildSystemPrompt({
+            projects: scopedProjects,
+            currentProjectId: selectedProjectId,
+            frontendUrl,
+            templates: promptOverride,
+        }) + runNotesFor({ forTask: false })
+        const taskSystemPrompt = tasksAvailable
+            ? agentPrompt.buildTaskSystemPrompt({ projects: scopedProjects, currentProjectId: selectedProjectId, frontendUrl }) + runNotesFor({ forTask: true })
+            : undefined
+        // Merge over defaults, not replace: an override carries only the changed guide topics
+        // (the eval fix-flow sends a partial), so a bare assignment would drop every other guide.
+        const guides = promptOverride?.guides
+            ? { ...agentPrompt.guides, ...promptOverride.guides }
+            : agentPrompt.guides
+
+        const previousMessages = conversation.messages as ModelMessage[]
+        const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
+        const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
+        const allMessages = [...previousMessages, newUserMessage]
+        const llmHistory = agentAiUtils.collapseStaleToolOutputs({ messages: allMessages })
+
+        const previousUiMessages = (conversation.uiMessages ?? []) as PersistedAgentMessage[]
+        const uiMessagesWithUser: PersistedAgentMessage[] = [
+            ...previousUiMessages,
+            { role: PersistedAgentRole.USER, parts: [{ type: PersistedAgentPartType.TEXT, text: userMessage }] },
+        ]
+        await agentHelpers.conversationRepo().update(conversationId, {
+            messages: allMessages,
+            uiMessages: JSON.parse(JSON.stringify(uiMessagesWithUser)),
+        })
+        await agentApprovalGate.clearCancel({ conversationId })
+
+        const compactionModels = isNil(tierRun)
+            ? [{ config: providerConfig, modelId: resolvedModelId, thinkingBudget: tier.thinkingBudget }]
+            : tierRun.candidates
+        const everyModelOfTheTurn = isNil(tierRun) ? compactionModels : [...tierRun.candidates, ...(isNil(tierRun.fast) ? [] : [tierRun.fast])]
+        const contextProvider = smallestContextProvider({ configs: everyModelOfTheTurn.map((candidate) => candidate.config) })
+        const reservedOutputTokens = isNil(tierRun)
+            ? await agentAiUtils.affordableOutputTokens({ provider: providerConfig.provider, modelIds: [resolvedModelId, fastModelId], thinkingBudget: tier.thinkingBudget })
+            : Math.max(...await Promise.all(everyModelOfTheTurn.map((candidate) => agentAiUtils.affordableOutputTokens({ provider: candidate.config.provider, modelIds: [candidate.modelId], thinkingBudget: candidate.thinkingBudget }))))
+        const reservedTokens = reservedOutputTokens + TOOL_SCHEMA_TOKEN_ESTIMATE
+        const payloadReservedTokens = reservedTokens + agentAiUtils.estimateTokenCount({ messages: [], systemPromptLength: systemPromptText.length })
+        const estimatedTokens = agentCompaction.estimateTokenCount({ messages: llmHistory, systemPromptLength: systemPromptText.length })
+        let compactionState = { summary: conversation.summary ?? null, summarizedUpToIndex: conversation.summarizedUpToIndex ?? null }
+
+        const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: contextProvider, messageCount: llmHistory.length, reservedTokens })
+        log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
+        if (willCompact) {
+            const previous = compactionState
+            compactionState = await onFirstModelThatAnswers({
+                models: compactionModels,
+                log,
+                run: (model) => agentCompaction.compactMessages({
+                    messages: llmHistory,
+                    existingSummary: previous.summary,
+                    summarizedUpToIndex: previous.summarizedUpToIndex,
+                    provider: contextProvider,
+                    reservedTokens: payloadReservedTokens,
+                    model,
+                    log,
+                }),
+            })
+            await agentHelpers.conversationRepo().update(conversationId, {
+                summary: compactionState.summary,
+                summarizedUpToIndex: compactionState.summarizedUpToIndex,
+            })
+            log.info({ summarizedUpToIndex: compactionState.summarizedUpToIndex, summaryLength: compactionState.summary?.length ?? 0 }, '[agentRpc#getAgentConfig] Compaction ran')
+        }
+
+        const messagesForLlm = agentCompaction.buildCompactedPayload({
+            messages: llmHistory,
+            summary: compactionState.summary,
+            summarizedUpToIndex: compactionState.summarizedUpToIndex,
+            provider: contextProvider,
+            reservedTokens: payloadReservedTokens,
+        })
+
+        log.info({
+            historyMessageCount: messagesForLlm.length,
+            estimatedTokens,
+            model: { id: resolvedModelId },
+            provider: providerConfig.provider,
+            tier: { id: tier.id, surface },
+            ...spreadIfDefined('platformTier', tierRun?.tier),
+            project: selectedProjectId ? { id: selectedProjectId } : undefined,
+            webSearchAvailable,
+        }, '[agentRpc#getAgentConfig] Chat config resolved')
+        log.debug({ systemPrompt: systemPromptText, guideNames: Object.keys(guides) }, '[agentRpc#getAgentConfig] System prompt assembled')
+
+        return {
+            credentials: providerConfig,
+            providerConfigId: providerConfig.configId,
+            modelId: resolvedModelId,
+            fastModelId,
+            ...spreadIfDefined('imageModelId', imageModelId),
+            ...spreadIfDefined('searchCredentials', chosen.search?.credentials),
+            ...spreadIfDefined('searchModelId', chosen.search?.modelId),
+            ...spreadIfDefined('imageCredentials', chosen.image?.credentials),
+            systemPrompt: systemPromptText,
+            messages: messagesForLlm,
+            allMessages,
+            previousUiMessages: uiMessagesWithUser,
+            tier: { id: tier.id, thinkingBudget: tier.thinkingBudget, modelId: tier.modelId },
+            mcpCredentials: scopedMcpCredentials.mcpServerUrl && scopedMcpCredentials.mcpToken
+                ? { mcpServerUrl: scopedMcpCredentials.mcpServerUrl, mcpToken: scopedMcpCredentials.mcpToken }
+                : null,
+            projects: scopedProjects.map((p) => ({ id: p.id, displayName: p.displayName, type: p.type })),
+            guides,
+            ...spreadIfDefined('taskSystemPrompt', taskSystemPrompt),
+            aiTools,
+            emailEnabled,
+            agentsAvailable,
+            userEmail: runUserEmail,
+            source: conversation.source,
+            ...tierFieldsOf({ tierRun }),
+        }
+    },
+
+})
+
+function withLeadingNote({ content, note }: { content: UserContent, note: string }): UserContent {
+    return [{ type: 'text', text: note }, ...(typeof content === 'string' ? [{ type: 'text' as const, text: content }] : content)]
+}
+
+function tierIdForRun({ conversation, requestedTierId }: { conversation: AgentConversation, requestedTierId: string | null }): string | null {
+    return pickLivesOnConversation({ conversation }) ? conversation.modelTierId ?? null : requestedTierId
+}
+
+function pickLivesOnConversation({ conversation }: { conversation: AgentConversation }): boolean {
+    return conversation.source === AgentRunSource.CHAT || conversation.source === AgentRunSource.AGENT_BUILDER
+}
+
+function smallestContextProvider({ configs }: { configs: GetProviderConfigResponse[] }): AIProviderName {
+    return configs.reduce((smallest, config) => aiProviderUtils.getMaxContextTokens({ provider: config.provider }) < aiProviderUtils.getMaxContextTokens({ provider: smallest.provider }) ? config : smallest).provider
+}
+
+async function onFirstModelThatAnswers<T>({ models, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
+    for (const [index, candidate] of models.entries()) {
+        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId })))
+        if (attempt.error === null) {
+            return attempt.data
+        }
+        const isLast = index === models.length - 1
+        if (isLast || !isFallbackWorthy(aiProviderSignal.fromError(attempt.error))) {
+            throw attempt.error
+        }
+        log.warn({ error: attempt.error, candidateIndex: index, model: { id: candidate.modelId } }, '[agentRpc#getAgentConfig] Compaction model failed, trying the next one in the tier')
+    }
+    throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'No model is left to compact this conversation' } })
+}
+
+function tierFieldsOf({ tierRun }: { tierRun: AgentTierRun | null }): Pick<AgentConfigResponse, 'platformTier' | 'candidates' | 'fastCandidate'> {
+    if (isNil(tierRun)) {
+        return {}
+    }
+    return {
+        platformTier: tierRun.tier,
+        candidates: tierRun.candidates.map(agentTierCandidates.toWorkerCandidate),
+        ...spreadIfDefined('fastCandidate', isNil(tierRun.fast) ? undefined : agentTierCandidates.toWorkerCandidate(tierRun.fast)),
+    }
+}
+
+const TOOL_SCHEMA_TOKEN_ESTIMATE = 12_000

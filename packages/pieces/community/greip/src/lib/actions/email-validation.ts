@@ -6,6 +6,7 @@ import { greipApiCall } from '../common/client';
 export const emailValidation = createAction({
   auth: greipAuth,
   name: 'email_validation',
+  classification: 'READ',
   displayName: 'Email Validation',
   description: 'Validate email addresses by checking domain validity, detecting disposable emails, and assessing risk factors',
   audience: 'both',

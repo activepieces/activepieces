@@ -47,6 +47,3 @@ export function toError(value: unknown): Error {
     return new Error(serialized ?? String(value))
 }
 
-export type TypedResult<T> =
-    | { success: true, data: T }
-    | { success: false, message: string }

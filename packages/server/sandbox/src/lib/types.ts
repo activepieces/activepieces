@@ -3,7 +3,7 @@ import { EngineOperation, EngineOperationType, EngineResponse, FailedStep, FlowV
 
 // Two roles:
 //   - Resolver (worker-side, owns the only apiClient): turns a job into a fully-materialized
-//     `ProvisionInput` — resolve the flowVersion, piece metadata, and a ready (compiled) flow bundle,
+//     `ProvisionInput` — resolve the flowVersion, piece metadata, and the flow bundle,
 //     disabling the flow on a missing piece. Always runs before `execute`.
 //   - Runtime: the in-process single sandbox box. It never reaches the app; it materializes the passed
 //     ProvisionInput, runs one engine operation, and releases (or invalidates on throw).
@@ -14,7 +14,7 @@ export type Resolver = {
 
 export type ResolveInput = {
     platformId: string
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
     flow?: { id: string, versionId: string, projectId: string }
     pieces?: PiecePackage[]
@@ -49,22 +49,22 @@ export type ExecuteParams = {
 export type PreWarmSandboxParams = {
     log: ApLogger
     apiClient?: WorkerToApiContract
-    publicApiUrl?: string
+    internalApiUrl?: string
     // Warm just this flow (e.g. on publish) instead of the platform's whole active set.
     flow?: { id: string, versionId: string, projectId: string }
 }
 
-// The Resolver's output and the pool's input. The pool installs each piece straight from a link: it
-// builds `${publicApiUrl}v1/engine/pieces/bundle?name=&version=&token=` per piece and hands that URL
-// to `bun install`, which follows the endpoint's redirect to npm / signed-S3 (or streams the custom
-// archive). No bytes cross the worker socket and the pool never imports WorkerToApiContract; the link
-// is publicApiUrl-based so it is reachable from a remote pool (Cloud Run). See ADR 0002.
+// The Resolver's output and the pool's input. The pool fetches each piece from
+// `${internalApiUrl}v1/engine/pieces/bundle` (engine token as a Bearer header), following the redirect
+// to npm / signed-S3 (or the streamed custom archive), saves it as a local .tgz, and `bun install`s
+// that file. No bytes cross the worker socket and the pool never imports WorkerToApiContract; the URL
+// is the worker's own app URL (ends in `/api/`), the one it already reaches the app on. See ADR 0002.
 export type ProvisionInput = {
     platformId: string
     flowVersionId?: string
     pieces: PiecePackage[]
     codes: CodeArtifact[]
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
 }
 
@@ -93,6 +93,7 @@ export type CodeArtifact = {
     sourceCode: SourceCode
     flowVersionId: string
     flowVersionState: FlowVersionState
+    useDeno: boolean
 }
 
 // Structural subset of WorkerSettingsResponse used by the local-pool runtime tree.
@@ -108,6 +109,8 @@ export type SandboxSettings = {
     FLOW_TIMEOUT_SECONDS: number
     MAX_FILE_SIZE_MB: number
     MAX_FLOW_RUN_LOG_SIZE_MB: number
+    FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB?: number | undefined
+    FLOW_RUN_LOG_SLICE_THRESHOLD_KB?: number | undefined
     NETWORK_MODE: NetworkMode
     SANDBOX_MEMORY_LIMIT: string
     SANDBOX_PROPAGATED_ENV_VARS: string[]

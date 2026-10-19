@@ -47,7 +47,7 @@ const ProjectReleasesPage = () => {
   const doesUserHavePermissionToWriteRelease = checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
-  const { data, isLoading, refetch } =
+  const { data, isLoading, isError, refetch } =
     projectReleaseQueries.useProjectReleases();
   const { data: projects } = projectCollectionUtils.useAll();
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
@@ -142,7 +142,7 @@ const ProjectReleasesPage = () => {
                 <ApplyButton
                   onSuccess={refetch}
                   variant="ghost"
-                  className="size-8 p-0"
+                  size="icon-sm"
                   request={{
                     projectId: authenticationSession.getProjectId()!,
                     type: ProjectReleaseType.ROLLBACK,
@@ -227,6 +227,9 @@ const ProjectReleasesPage = () => {
         ]}
         page={data}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('releases')}
+        onRetry={refetch}
         onRowClick={(row) => {
           navigate(`/releases/${row.id}`);
         }}

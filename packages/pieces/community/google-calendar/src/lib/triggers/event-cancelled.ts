@@ -137,16 +137,16 @@ export const eventCancelled = createTrigger({
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({
       displayName: 'Target Specific Event',
-      description:
-        'Enable to monitor a specific event instead of all events in the calendar.',
+      description: 'Watch one event instead of the whole calendar.',
       required: false,
       defaultValue: false,
     }),
     event_id: googleCalendarCommon.eventDropdown(false),
     cancellation_reason: Property.StaticMultiSelectDropdown({
       displayName: 'Cancellation Reasons',
-      description: 'Filter by specific types of cancellations (optional)',
+      description: 'Leave empty to fire on every cancellation.',
       required: false,
+      advanced: true,
       options: {
         options: [
           { label: 'Event Deleted', value: 'deleted' },

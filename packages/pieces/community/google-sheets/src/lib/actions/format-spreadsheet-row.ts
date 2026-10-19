@@ -10,7 +10,7 @@ export const formatRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'format-row',
 	classification: 'WRITE',
-	description: 'Format one or multiple rows in specific spreadsheet.',
+	description: 'Apply colour and text styling to one or more rows.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -18,39 +18,64 @@ export const formatRowAction = createAction({
 		idempotent: true,
 	},
 	displayName: 'Format Row(s)',
+	propertyGroups: [
+		{
+			key: 'spreadsheet',
+			display: 'section',
+			label: 'Spreadsheet',
+			icon: 'file',
+			props: ['spreadsheetId', 'sheetId'],
+		},
+		{
+			key: 'target_rows',
+			display: 'section',
+			label: 'Rows',
+			icon: 'markdown',
+			props: ['startingRow', 'endingRow'],
+		},
+		{
+			key: 'style',
+			display: 'section',
+			label: 'Style',
+			icon: 'type',
+			props: ['bgColor', 'textColor', 'bold', 'italic', 'strikethrough'],
+		},
+	],
 	props: {
 		...commonProps,
 		startingRow: Property.Number({
-			displayName: 'Starting row',
+			displayName: 'Starting Row',
 			description: 'The first row number where formatting should begin.',
 			required: true,
 		}),
 		endingRow: Property.Number({
-			displayName: 'Ending row',
+			displayName: 'Ending Row',
 			description:
-				'The last row number where formatting should stop (leave empty to format only the starting row).',
+				'Last row to format. Leave empty to format only the starting row.',
 			required: false,
 		}),
 		bgColor: Property.ShortText({
 			displayName: 'Background Color',
 			description: 'Provide a HEX color code (example: #FFD966)',
 			required: false,
+			width: 'half',
 		}),
 		textColor: Property.ShortText({
 			displayName: 'Text Color',
 			description: 'Provide a HEX color code (example: #FFD966)',
 			required: false,
+			width: 'half',
 		}),
 		bold: Property.Checkbox({
-			displayName: 'Make text bold',
+			displayName: 'Bold',
 			required: false,
 		}),
 		italic: Property.Checkbox({
-			displayName: 'Make text Italic',
+			displayName: 'Italic',
 			required: false,
 		}),
 		strikethrough: Property.Checkbox({
-			displayName: 'Make text Strikethrough',
+			displayName: 'Strikethrough',
 			required: false,
 		}),
 	},

@@ -90,6 +90,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof foreplayCoAuth>,
 
 export const newAdInBoard = createTrigger({
   name: 'newAdInBoard',
+  classification: 'READ',
   displayName: 'New Ad in Board',
   auth: foreplayCoAuth,
   description: 'Triggers when a new ad is added to the selected board.',

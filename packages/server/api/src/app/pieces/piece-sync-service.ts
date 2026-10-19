@@ -17,6 +17,7 @@ import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-serv
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
+const CACHE_INVALIDATION_INTERVAL_MS = 15_000
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
@@ -90,6 +91,8 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
     const batchSize = 5
     let added = 0
     let fetchFailed = 0
+    let addedAtLastInvalidation = 0
+    let lastInvalidationTime = performance.now()
     for (let done = 0; done < newPiecesToFetch.length; done += batchSize) {
         const currentBatch = newPiecesToFetch.slice(done, done + batchSize)
         await Promise.all(currentBatch.map(async (piece) => {
@@ -118,8 +121,13 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 added++
             }
         }))
+        if (added > addedAtLastInvalidation && performance.now() - lastInvalidationTime > CACHE_INVALIDATION_INTERVAL_MS) {
+            await pieceCache(log).invalidate()
+            addedAtLastInvalidation = added
+            lastInvalidationTime = performance.now()
+        }
     }
-    if (added > 0) {
+    if (added > addedAtLastInvalidation) {
         await pieceCache(log).invalidate()
     }
     return { added, fetchFailed }

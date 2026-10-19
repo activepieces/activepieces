@@ -6,6 +6,7 @@ import { pubrioRequest } from '../common';
 export const enrichCompany = createAction({
   auth: pubrioAuth,
   name: 'enrich_company',
+  classification: 'READ',
   displayName: 'Enrich Company',
   description:
     'Get enriched company data with full firmographic details (uses credits)',

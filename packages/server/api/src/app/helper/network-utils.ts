@@ -111,6 +111,8 @@ export const networkUtils = {
     getPublicIp,
     getRequestHost,
     getRequestBaseUrl,
+    cleanLeadingSlash,
+    cleanTrailingSlash,
     combineUrl(url: string, path: string) {
         const cleanedUrl = cleanTrailingSlash(url)
         const cleanedPath = cleanLeadingSlash(path)

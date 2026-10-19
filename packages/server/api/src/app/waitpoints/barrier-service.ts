@@ -1,14 +1,17 @@
-import { apId, chunk, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
+import { apId, chunk, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { apDayjsDuration, wideEvent } from '@activepieces/server-utils'
 import { ActivepiecesError, BarrierPolicy, barrierReleasesOnLastPendingSignal, BarrierSignalCounts, BarrierSignalStatus, BarrierSummary, ErrorCode, MAX_INLINE_BARRIER_SIGNALS, PauseType, RespondResponse, shouldReleaseBarrier, WaitpointVersion } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, FindOptionsWhere, IsNull, Not } from 'typeorm'
+import { EntityManager, FindOptionsWhere, In, IsNull } from 'typeorm'
+import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { distributedStore } from '../database/redis-connections'
+import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { barrierQueue } from './barrier-queue'
 import { BarrierFanOutPayload, barrierSourceKey } from './barrier-queue-factory'
 import { resumeService } from './resume-service'
@@ -22,60 +25,61 @@ const signalRepo = repoFactory(WaitpointSignalEntity)
 
 export const barrierService = (log: FastifyBaseLogger) => ({
     async create(params: CreateBarrierParams): Promise<CreateBarrierResult> {
-        const maxSignals = system.getNumberOrThrow(AppSystemProp.MAX_BARRIER_SIGNALS)
+        const maxSignals = await platformConfigurationService(log).maxBarrierSignals({ platformId: params.platformId })
         const batchSize = clampBatchSize({ itemCount: params.fanOut?.items.length ?? 0, requested: params.fanOut?.batchSize ?? 1, maxSignals })
         const batches = isNil(params.fanOut) ? [] : chunk(params.fanOut.items, batchSize)
         const labels = params.signalLabels ?? []
         const signalCount = isNil(params.fanOut) ? labels.length : batches.length
         assertSignalCountWithinLimit({ signalCount, maxSignals })
+        const flowRun = await flowRunRepo().findOneByOrFail({ id: params.flowRunId, projectId: params.projectId })
 
         const creation = await transaction(async (entityManager) => {
             const repo = waitpointRepo(entityManager)
-            const existing = await repo.findOneBy({ flowRunId: params.flowRunId, stepName: params.stepName })
+            const existing = await repo.findOneBy({ flowRunId: params.flowRunId, projectId: params.projectId, stepName: params.stepName })
             if (!isNil(existing) && existing.status === WaitpointStatus.PENDING) {
                 log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id } }, '[barrierService#create] Barrier already open for this step, reusing it')
-                return { inserted: false, barrier: existing, signals: await signalRepo(entityManager).findBy({ waitpointId: existing.id }) }
+                return { inserted: false, barrier: existing, signals: await signalRepo(entityManager).findBy({ waitpointId: existing.id, projectId: params.projectId }) }
             }
             if (!isNil(existing)) {
-                await repo.delete({ id: existing.id })
+                await repo.delete({ id: existing.id, projectId: params.projectId })
             }
-            const id = apId()
-            const deadline = resolveDeadline({ timeoutSeconds: params.timeoutSeconds })
-            await repo
-                .createQueryBuilder()
-                .insert()
-                .into('waitpoint')
-                .values({
-                    id,
-                    flowRunId: params.flowRunId,
-                    projectId: params.projectId,
-                    stepName: params.stepName,
-                    type: PauseType.BARRIER,
-                    version: params.version,
-                    status: WaitpointStatus.PENDING,
-                    resumeDateTime: deadline,
-                    responseToSend: params.responseToSend ?? null,
-                    workerHandlerId: params.workerHandlerId ?? null,
-                    httpRequestId: params.httpRequestId ?? null,
-                    resumePayload: null,
-                    sealed: true,
-                    policy: params.policy ?? null,
-                })
-                .execute()
-            const signals = buildPendingSignals({ barrierId: id, projectId: params.projectId, signalCount, labels, fanOut: !isNil(params.fanOut) })
+            const now = dayjs().toISOString()
+            const barrier: Waitpoint = {
+                id: apId(),
+                created: now,
+                updated: now,
+                flowRunId: params.flowRunId,
+                projectId: params.projectId,
+                stepName: params.stepName,
+                type: PauseType.BARRIER,
+                version: params.version,
+                status: WaitpointStatus.PENDING,
+                resumeDateTime: resolveDeadline({ flowRunCreated: flowRun.created, timeoutSeconds: params.timeoutSeconds }),
+                responseToSend: params.responseToSend ?? null,
+                workerHandlerId: params.workerHandlerId ?? null,
+                httpRequestId: params.httpRequestId ?? null,
+                resumePayload: null,
+                sealed: true,
+                policy: params.policy ?? null,
+                deadLetteredAt: null,
+            }
+            await repo.createQueryBuilder().insert().into('waitpoint').values(barrier).execute()
+            const signals = buildPendingSignals({ barrierId: barrier.id, projectId: params.projectId, signalCount, labels, fanOut: !isNil(params.fanOut) })
             for (const rows of chunk(signals, SIGNAL_INSERT_BATCH_SIZE)) {
                 await signalRepo(entityManager).createQueryBuilder().insert().into('waitpoint_signal').values(rows).execute()
             }
-            const barrier = await repo.findOneByOrFail({ id })
             return { inserted: true, barrier, signals }
         })
 
+        if (!isNil(params.fanOut)) {
+            await startFanOut({
+                barrierId: creation.barrier.id,
+                projectId: params.projectId,
+                source: { entryStepName: params.fanOut.entryStepName, batchStepName: params.fanOut.batchStepName, seedSteps: params.fanOut.seedSteps, batches },
+                log,
+            })
+        }
         if (creation.inserted) {
-            if (!isNil(params.fanOut)) {
-                const payload: BarrierFanOutPayload = { entryStepName: params.fanOut.entryStepName, seedSteps: params.fanOut.seedSteps, batches }
-                await distributedStore.put(barrierSourceKey(creation.barrier.id), payload, SOURCE_TTL_SECONDS)
-                await barrierQueue(log).addFanOutDispatch({ barrierId: creation.barrier.id, projectId: params.projectId })
-            }
             if (!isNil(creation.barrier.resumeDateTime)) {
                 await waitpointTimeoutJob.schedule({
                     flowRunId: params.flowRunId,
@@ -99,27 +103,41 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         return signalRepo().findOneBy({ id: signalId, projectId })
     },
 
-    async listUnclaimedSignals({ barrierId, projectId }: BarrierScopeParams): Promise<WaitpointSignal[]> {
-        return signalRepo().find({
-            where: unclaimedSignalWhere({ barrierId, projectId }),
-            order: { sequence: 'ASC' },
-        })
+    async hasUnclaimedSignals({ barrierId, projectId }: BarrierScopeParams): Promise<boolean> {
+        return signalRepo().existsBy(unclaimedSignalWhere({ barrierId, projectId }))
     },
 
-    async claimSignal({ signalId, refId, projectId }: ClaimSignalParams): Promise<boolean> {
-        const claimed = await signalRepo().query(
-            'UPDATE waitpoint_signal SET "refId" = $1, "updated" = now() WHERE "id" = $2 AND "projectId" = $3 AND "refId" IS NULL AND "status" = $4 RETURNING "id"',
-            [refId, signalId, projectId, BarrierSignalStatus.PENDING],
-        )
-        return Array.isArray(claimed) && claimed.length > 0
+    async claimNextSignals({ barrierId, projectId, afterSequence, limit, entityManager }: ClaimNextSignalsParams): Promise<SignalClaimResult> {
+        const openBarrier = await lockOpenBarrier({ barrierId, projectId, entityManager })
+        if (isNil(openBarrier)) {
+            return { barrierOpen: false }
+        }
+        const candidates = ClaimCandidateRows.parse(await signalRepo(entityManager).query(
+            'SELECT "id", "sequence" FROM waitpoint_signal WHERE "waitpointId" = $1 AND "projectId" = $2 AND "status" = $3 AND "refId" IS NULL AND "sequence" > $4 ORDER BY "sequence" LIMIT $5 FOR UPDATE SKIP LOCKED',
+            [barrierId, projectId, BarrierSignalStatus.PENDING, afterSequence, limit],
+        ))
+        if (candidates.length === 0) {
+            return { barrierOpen: true, claims: [], lastSequence: null }
+        }
+        const childRunIds = candidates.map(() => apId())
+        const claimed = await signalRepo(entityManager)
+            .createQueryBuilder()
+            .update()
+            .set({ refId: () => `CASE "id" ${candidates.map((_, index) => `WHEN :signalId${index} THEN :childRunId${index}`).join(' ')} END` })
+            .setParameters(Object.fromEntries(candidates.flatMap((candidate, index) => [[`signalId${index}`, candidate.id], [`childRunId${index}`, childRunIds[index]]])))
+            .where({ id: In(candidates.map((candidate) => candidate.id)), projectId, status: BarrierSignalStatus.PENDING, refId: IsNull() })
+            .returning(['id', 'sequence', 'refId'])
+            .execute()
+        const claims = ClaimedSignalRows.parse(claimed.raw ?? []).map((row) => ({ signalId: row.id, sequence: row.sequence, childRunId: row.refId }))
+        return { barrierOpen: true, claims, lastSequence: candidates[candidates.length - 1].sequence }
     },
 
-    async releaseClaim({ signalId, refId, projectId }: ClaimSignalParams): Promise<void> {
-        await signalRepo().update({ id: signalId, refId, projectId }, { refId: null })
+    async lockForDispatch({ barrierId, projectId, entityManager }: LockForDispatchParams): Promise<boolean> {
+        return !isNil(await lockOpenBarrier({ barrierId, projectId, entityManager }))
     },
 
-    async countClaimedSignals({ barrierId, projectId }: BarrierScopeParams): Promise<number> {
-        return signalRepo().countBy({ waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING, refId: Not(IsNull()) })
+    async releaseClaim({ signalId, refId, projectId, entityManager }: ReleaseClaimParams): Promise<void> {
+        await signalRepo(entityManager).update({ id: signalId, refId, projectId }, { refId: null })
     },
 
     async markUnclaimedNotDispatched({ barrierId, projectId }: BarrierScopeParams): Promise<number> {
@@ -127,34 +145,56 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         return result.affected ?? 0
     },
 
-    async receiveSignal(params: ReceiveSignalParams): Promise<WaitpointSignal | null> {
-        if (isNil(params.signalId) && isNil(params.refId)) {
-            return null
+    async receiveSignal({ signalId, refId, projectId, status, result }: ReceiveSignalParams): Promise<boolean> {
+        if (isNil(signalId) && isNil(refId)) {
+            return false
         }
-        const signal = isNil(params.signalId)
-            ? await signalRepo().findOneBy({ refId: params.refId, projectId: params.projectId })
-            : await signalRepo().findOneBy({ id: params.signalId, projectId: params.projectId })
-        if (isNil(signal)) {
+        const identity: SignalIdentity = isNil(signalId) ? { refId } : { id: signalId }
+        const barrierIds = await updateSignalOutcome({ where: { ...identity, projectId }, status, result })
+        if (barrierIds.length === 0) {
             log.warn({
-                ...spreadIfDefined('flowRun', isNil(params.refId) ? undefined : { id: params.refId }),
-                ...spreadIfDefined('signal', isNil(params.signalId) ? undefined : { id: params.signalId }),
-                project: { id: params.projectId },
-                outcome: params.status,
-            }, '[barrierService#receive] No signal row matched this outcome, so it is being dropped; the barrier was released or the row was never claimed by this ref')
-            return null
+                ...spreadIfDefined('flowRun', isNil(refId) ? undefined : { id: refId }),
+                ...spreadIfDefined('signal', isNil(signalId) ? undefined : { id: signalId }),
+                project: { id: projectId },
+                outcome: status,
+            }, '[barrierService#receiveSignal] No signal row matched this outcome, so it is being dropped; the barrier was released or the row was never claimed by this ref')
+            return false
         }
-        await signalRepo().save({
-            ...signal,
-            status: params.status,
-            result: isNil(params.result) ? null : sanitizeObjectForPostgresql(params.result),
+        await Promise.all(barrierIds.map((barrierId) => barrierQueue(log).enqueueEvaluation({ barrierId, projectId })))
+        return true
+    },
+
+    async recordDecision({ barrierId, signalId, projectId, status, result }: RecordDecisionParams): Promise<boolean> {
+        const recorded = await transaction(async (entityManager) => {
+            const openBarrier = await lockOpenBarrier({ barrierId, projectId, entityManager })
+            if (isNil(openBarrier)) {
+                return false
+            }
+            const decidedBarrierIds = await updateSignalOutcome({
+                where: { id: signalId, waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING },
+                status,
+                result,
+                entityManager,
+            })
+            return decidedBarrierIds.length > 0
         })
-        await barrierQueue(log).enqueueEvaluation({ barrierId: signal.waitpointId, projectId: signal.projectId })
-        return signal
+        if (!recorded) {
+            return false
+        }
+        await barrierQueue(log).enqueueEvaluation({ barrierId, projectId })
+        return true
     },
 
     async releaseIfReady({ barrierId, projectId }: ReleaseIfReadyParams): Promise<void> {
-        const barrier = await waitpointRepo().findOneBy({ id: barrierId, projectId, type: PauseType.BARRIER, status: WaitpointStatus.PENDING })
+        const barrier = await waitpointRepo().findOneBy({ id: barrierId, projectId, type: PauseType.BARRIER })
         if (isNil(barrier)) {
+            return
+        }
+        if (barrier.status === WaitpointStatus.COMPLETED) {
+            await redeliverClosedBarrier({ barrier, log })
+            return
+        }
+        if (barrier.status !== WaitpointStatus.PENDING) {
             return
         }
         if (!await isReadyToRelease({ barrier, projectId })) {
@@ -166,28 +206,41 @@ export const barrierService = (log: FastifyBaseLogger) => ({
     async release({ barrier, timedOut, releaseReason }: ReleaseParams): Promise<BarrierSummary | null> {
         const summary = await closeBarrier({ barrier, timedOut })
         await distributedStore.delete(barrierSourceKey(barrier.id))
-        const finalSummary = summary ?? readStoredSummary(await waitpointRepo().findOneBy({ id: barrier.id }))
-        if (isNil(finalSummary)) {
+        if (isNil(summary)) {
+            log.info({ waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[barrierService#release] Barrier was already closed by another release; leaving the resume to the release that closed it')
             return null
         }
-        if (!isNil(summary)) {
-            wideEvent.set({
-                fanIn: {
-                    barrierId: barrier.id,
-                    signalCount: summary.total,
-                    releaseReason,
-                    stillRunning: summary.stillRunning,
-                },
-            })
-        }
+        wideEvent.set({
+            waitpoint: {
+                id: barrier.id,
+                signalCount: summary.total,
+                releaseReason,
+                stillRunning: summary.stillRunning,
+            },
+        })
         await resumeService(log).resumeTrusted({
             flowRunId: barrier.flowRunId,
             waitpointId: barrier.id,
-            resumePayload: { body: finalSummary, headers: {}, queryParams: {} },
+            resumePayload: { body: summary, headers: {}, queryParams: {} },
         })
-        return finalSummary
+        return summary
     },
 })
+
+async function updateSignalOutcome({ where, status, result, entityManager }: UpdateSignalOutcomeParams): Promise<string[]> {
+    const updateResult = await signalRepo(entityManager)
+        .createQueryBuilder()
+        .update()
+        .set({
+            status,
+            result: () => 'CAST(:signalResult AS jsonb)',
+        })
+        .setParameter('signalResult', isNil(result) ? null : JSON.stringify(sanitizeObjectForPostgresql(result)))
+        .where(where)
+        .returning(['waitpointId'])
+        .execute()
+    return unique(UpdatedSignalRows.parse(updateResult.raw ?? []).map((row) => row.waitpointId))
+}
 
 function buildPendingSignals({ barrierId, projectId, signalCount, labels, fanOut }: BuildPendingSignalsParams): WaitpointSignal[] {
     const now = new Date().toISOString()
@@ -209,13 +262,26 @@ function unclaimedSignalWhere({ barrierId, projectId }: BarrierScopeParams): Fin
     return { waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING, refId: IsNull() }
 }
 
+async function lockOpenBarrier({ barrierId, projectId, entityManager }: LockForDispatchParams): Promise<Waitpoint | null> {
+    return waitpointRepo(entityManager)
+        .createQueryBuilder('waitpoint')
+        .setLock('pessimistic_read')
+        .where({ id: barrierId, projectId, type: PauseType.BARRIER, status: WaitpointStatus.PENDING })
+        .getOne()
+}
+
+async function startFanOut({ barrierId, projectId, source, log }: StartFanOutParams): Promise<void> {
+    await distributedStore.put(barrierSourceKey(barrierId), source, SOURCE_TTL_SECONDS)
+    await barrierQueue(log).addFanOutDispatch({ barrierId, projectId })
+}
+
 async function closeBarrier({ barrier, timedOut }: CloseBarrierParams): Promise<BarrierSummary | null> {
     return transaction(async (entityManager) => {
         const repo = waitpointRepo(entityManager)
         const lockedBarrier = await repo
             .createQueryBuilder('waitpoint')
             .setLock('pessimistic_write')
-            .where({ id: barrier.id, status: WaitpointStatus.PENDING })
+            .where({ id: barrier.id, projectId: barrier.projectId, status: WaitpointStatus.PENDING })
             .getOne()
         if (isNil(lockedBarrier)) {
             return null
@@ -229,6 +295,19 @@ async function closeBarrier({ barrier, timedOut }: CloseBarrierParams): Promise<
         await signalRepo(entityManager).delete({ waitpointId: lockedBarrier.id, projectId: lockedBarrier.projectId })
         return summary
     })
+}
+
+async function redeliverClosedBarrier({ barrier, log }: RedeliverClosedBarrierParams): Promise<void> {
+    log.warn({ waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[barrierService#redeliverClosedBarrier] Barrier was closed but never delivered; re-dispatching the persisted summary')
+    const { error } = await tryCatch(() => resumeService(log).resumeTrusted({
+        flowRunId: barrier.flowRunId,
+        waitpointId: barrier.id,
+        resumePayload: barrier.resumePayload,
+    }))
+    if (!isNil(error)) {
+        log.error({ error, waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[barrierService#redeliverClosedBarrier] Re-dispatching a closed barrier failed')
+        throw error
+    }
 }
 
 async function isReadyToRelease({ barrier, projectId }: IsReadyToReleaseParams): Promise<boolean> {
@@ -287,18 +366,18 @@ function clampBatchSize({ itemCount, requested, maxSignals }: ClampBatchSizePara
     return Math.max(requested, minimumBatchSize, 1)
 }
 
-function assertSignalCountWithinLimit({ signalCount, maxSignals }: { signalCount: number, maxSignals: number }): void {
+function assertSignalCountWithinLimit({ signalCount, maxSignals }: AssertSignalCountWithinLimitParams): void {
     if (signalCount > maxSignals) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
-            params: { message: `This step waits on ${signalCount} things, which exceeds the maximum of ${maxSignals}. Wait on fewer, or raise AP_MAX_BARRIER_SIGNALS.` },
+            params: { message: `This step waits on ${signalCount} things, which exceeds the maximum of ${maxSignals}. Wait on fewer things.` },
         })
     }
 }
 
-function resolveDeadline({ timeoutSeconds }: ResolveDeadlineParams): string {
+function resolveDeadline({ flowRunCreated, timeoutSeconds }: ResolveDeadlineParams): string {
     const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-    const cap = dayjs().add(maxDurationInDays, 'day')
+    const cap = dayjs(flowRunCreated).add(maxDurationInDays, 'day')
     if (isNil(timeoutSeconds)) {
         return cap.toISOString()
     }
@@ -306,15 +385,13 @@ function resolveDeadline({ timeoutSeconds }: ResolveDeadlineParams): string {
     return (requested.isBefore(cap) ? requested : cap).toISOString()
 }
 
-function readStoredSummary(waitpoint: Waitpoint | null): BarrierSummary | null {
-    if (isNil(waitpoint) || waitpoint.status !== WaitpointStatus.COMPLETED) {
-        return null
-    }
-    const parsed = BarrierSummary.safeParse(waitpoint.resumePayload?.body)
-    return parsed.success ? parsed.data : null
-}
-
 const SIGNAL_INSERT_BATCH_SIZE = 500
+
+const UpdatedSignalRows = z.array(z.object({ waitpointId: z.string() }))
+
+const ClaimCandidateRows = z.array(z.object({ id: z.string(), sequence: z.number().int() }))
+
+const ClaimedSignalRows = z.array(z.object({ id: z.string(), sequence: z.number().int(), refId: z.string() }))
 
 const SOURCE_TTL_SECONDS = apDayjsDuration(1, 'day').asSeconds()
 
@@ -323,6 +400,7 @@ export type BarrierReleaseReason = 'predicate' | 'timeout'
 export type CreateBarrierParams = {
     flowRunId: string
     projectId: string
+    platformId: string
     stepName: string
     version: WaitpointVersion
     responseToSend?: RespondResponse
@@ -332,6 +410,7 @@ export type CreateBarrierParams = {
     signalLabels?: (string | null)[]
     fanOut?: {
         entryStepName: string
+        batchStepName: string
         batchSize: number
         items: unknown[]
         seedSteps: Record<string, unknown>
@@ -354,6 +433,40 @@ export type ReceiveSignalParams = {
     result?: Record<string, unknown>
 }
 
+export type RecordDecisionParams = {
+    barrierId: string
+    signalId: string
+    projectId: string
+    status: BarrierSignalStatus
+    result?: Record<string, unknown>
+}
+
+export type SignalClaim = {
+    signalId: string
+    sequence: number
+    childRunId: string
+}
+
+export type SignalClaimResult =
+    | { barrierOpen: false }
+    | { barrierOpen: true, claims: SignalClaim[], lastSequence: number | null }
+
+type SignalIdentity = {
+    id?: string
+    refId?: string
+}
+
+type UpdateSignalOutcomeParams = {
+    where: SignalIdentity & {
+        projectId: string
+        waitpointId?: string
+        status?: BarrierSignalStatus
+    }
+    status: BarrierSignalStatus
+    result?: Record<string, unknown>
+    entityManager?: EntityManager
+}
+
 type FindSignalByIdParams = {
     signalId: string
     projectId: string
@@ -364,10 +477,28 @@ type BarrierScopeParams = {
     projectId: string
 }
 
-type ClaimSignalParams = {
+type ClaimNextSignalsParams = BarrierScopeParams & {
+    afterSequence: number
+    limit: number
+    entityManager: EntityManager
+}
+
+type LockForDispatchParams = BarrierScopeParams & {
+    entityManager: EntityManager
+}
+
+type ReleaseClaimParams = {
     signalId: string
     refId: string
     projectId: string
+    entityManager?: EntityManager
+}
+
+type StartFanOutParams = {
+    barrierId: string
+    projectId: string
+    source: BarrierFanOutPayload
+    log: FastifyBaseLogger
 }
 
 type ReleaseIfReadyParams = {
@@ -389,6 +520,11 @@ type ReleaseParams = {
 type CloseBarrierParams = {
     barrier: Waitpoint
     timedOut: boolean
+}
+
+type RedeliverClosedBarrierParams = {
+    barrier: Waitpoint
+    log: FastifyBaseLogger
 }
 
 type IsReadyToReleaseParams = {
@@ -420,6 +556,12 @@ type ClampBatchSizeParams = {
     maxSignals: number
 }
 
+type AssertSignalCountWithinLimitParams = {
+    signalCount: number
+    maxSignals: number
+}
+
 type ResolveDeadlineParams = {
+    flowRunCreated: string
     timeoutSeconds?: number
 }

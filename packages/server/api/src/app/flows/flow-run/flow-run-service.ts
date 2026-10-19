@@ -1,9 +1,9 @@
 import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, omit, PlatformId, ProjectId, SeekPage, tryCatch } from '@activepieces/core-utils'
-import { apDayjs, wideEvent } from '@activepieces/server-utils'
+import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
 import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
-import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
+import { ArrayContains, EntityManager, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock } from '../../database/redis-connections'
 import { fileCompressor } from '../../file/file-compressor'
@@ -15,9 +15,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { assertRunCreditsNotExceeded, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
-import { barrierService } from '../../waitpoints/barrier-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
-import { WaitpointStatus } from '../../waitpoints/waitpoint-types'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { flowService } from '../flow/flow.service'
@@ -28,6 +26,7 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
+const PARENT_BOUND_RETRY_BACKOFF_MS = apDayjsDuration(30, 'second').asMilliseconds()
 
 
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
@@ -133,7 +132,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
-        if (!isNil(oldFlowRun.dispatchIndex)) {
+        if (!isNil(oldFlowRun.dispatchIndex) || !isNil(oldFlowRun.parentWaitpointId)) {
             const message = `The run ${flowRunId} started from a step inside its flow rather than from the trigger, so it cannot be retried. Retry the run that dispatched it instead.`
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -171,7 +170,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                     : undefined
 
-                await waitpointService(log).deleteByFlowRunId(oldFlowRun.id)
+                await waitpointService(log).deleteByFlowRunId({ flowRunId: oldFlowRun.id, projectId: oldFlowRun.projectId })
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
                     projectId: oldFlowRun.projectId,
@@ -350,10 +349,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
         const flowVersion = await flowVersionService(log).getOneOrThrow(parentRun.flowVersionId)
-        if (isNil(flowStructureUtil.getStep(entryStepName, flowVersion.trigger))) {
+        const entryStep = flowStructureUtil.getStep(entryStepName, flowVersion.trigger)
+        if (isNil(entryStep) || !flowStructureUtil.isAction(entryStep.type)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: `The step ${entryStepName} does not exist in this flow version, so a child run cannot start from it.` },
+                params: { message: `The step ${entryStepName} is not an action in this flow version, so a child run cannot start from it.` },
             })
         }
         return {
@@ -367,25 +367,16 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async dispatchChild({ target, childRunId, seedSteps, parentWaitpointId, dispatchIndex, dispatchKey }: DispatchChildParams): Promise<void> {
-        const { projectId, parentRunId, entryStepName, flowId, flowVersionId, environment, platformId } = target
-        const barrier = await barrierService(log).findById({ barrierId: parentWaitpointId, projectId })
-        if (isNil(barrier) || barrier.status !== WaitpointStatus.PENDING) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'waitpoint', entityId: parentWaitpointId, message: 'The barrier this child would be attributed to is no longer waiting, so the child must not be created.' },
-            })
-        }
-
+    async createChildRuns({ target, parentWaitpointId, children, entityManager }: CreateChildRunsParams): Promise<FlowRunWithDispatchIndex[]> {
         const now = new Date().toISOString()
-        const childRun: FlowRunWithDispatchIndex = {
-            id: childRunId,
-            projectId,
-            flowId,
-            flowVersionId,
-            environment,
-            parentRunId,
-            parentWaitpointId: barrier.id,
+        const childRuns: FlowRunWithDispatchIndex[] = children.map(({ id, dispatchIndex }) => ({
+            id,
+            projectId: target.projectId,
+            flowId: target.flowId,
+            flowVersionId: target.flowVersionId,
+            environment: target.environment,
+            parentRunId: target.parentRunId,
+            parentWaitpointId,
             dispatchIndex,
             failParentOnFailure: false,
             status: FlowRunStatus.QUEUED,
@@ -393,32 +384,43 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             updated: now,
             tags: [],
             steps: {},
+        }))
+        if (childRuns.length > 0) {
+            await flowRunDispatchRepo(entityManager).insert(childRuns.map((childRun) => omit(childRun, ['steps'])))
         }
-        await flowRunDispatchRepo().insert(omit(childRun, ['steps']))
+        return childRuns
+    },
 
-        const { error } = await tryCatch(() => addToQueue({
+    async enqueueChildRun({ target, childRun, seedSteps }: EnqueueChildRunParams): Promise<void> {
+        await addToQueue({
             flowRun: childRun,
-            platformId,
+            platformId: target.platformId,
             payload: seedSteps,
-            entryStepName,
+            entryStepName: target.entryStepName,
             preferInlinePayload: true,
             executionType: ExecutionType.BEGIN,
             executeTrigger: false,
             workerHandlerId: undefined,
             httpRequestId: undefined,
             streamStepProgress: StreamStepProgress.NONE,
-            jobId: `${projectId}-${dispatchKey}`,
-        }, log))
-        if (error) {
-            await flowRunDispatchRepo().delete({ id: childRun.id, projectId })
-            throw error
-        }
+        }, log)
+    },
 
-        const { error: sideEffectError } = await tryCatch(() => flowRunSideEffects(log).onStart({ flowRun: childRun, platformId }))
-        if (sideEffectError) {
-            log.error({ error: sideEffectError, flowRun: { id: childRun.id }, project: { id: projectId }, fanIn: { barrierId: barrier.id }, dispatchIndex }, '[flowRunService#dispatchChild] Child run was enqueued but its start side effects failed')
+    async reportChildRunStarted({ target, childRun }: ChildRunParams): Promise<void> {
+        const logFields = { flowRun: { id: childRun.id, dispatchIndex: childRun.dispatchIndex }, project: { id: target.projectId }, waitpoint: { id: childRun.parentWaitpointId } }
+        const { error } = await tryCatch(() => flowRunSideEffects(log).onStart({ flowRun: childRun, platformId: target.platformId }))
+        if (error) {
+            log.error({ ...logFields, error }, '[flowRunService#reportChildRunStarted] Child run was enqueued but its start side effects failed')
         }
-        log.info({ flowRun: { id: childRun.id }, project: { id: projectId }, fanIn: { barrierId: barrier.id }, dispatchIndex }, '[flowRunService#dispatchChild] Child run dispatched')
+        log.info(logFields, '[flowRunService#reportChildRunStarted] Child run dispatched')
+    },
+
+    async cancelUnstartedChildRun({ target, childRun }: ChildRunParams): Promise<void> {
+        await cancelSingleRun(log, childRun, target.platformId)
+    },
+
+    async deleteChildRun({ id, projectId, entityManager }: DeleteChildRunParams): Promise<void> {
+        await flowRunDispatchRepo(entityManager).delete({ id, projectId })
     },
 
     async createQuotaExceededRun({ flowVersion, payload, projectId, environment, parentRunId, failParentOnFailure, triggeredBy, shouldExecuteTriggerOnRetry }: CreateQuotaExceededRunParams): Promise<FlowRun> {
@@ -477,7 +479,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
             streamStepProgress: StreamStepProgress.WEBSOCKET,
-            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
+            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow({
+                projectId,
+                flowVersion,
+                type: SampleDataFileType.OUTPUT,
+                referencedBy: settingsOfStepUnderTest({ flowVersion, stepNameToTest }),
+            }) : undefined,
         }, log)
     },
     async startManualTrigger({ projectId, flowVersionId, triggeredBy }: StartManualTriggerParams): Promise<FlowRun> {
@@ -605,7 +612,7 @@ async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platfor
         timeoutInSeconds: 30,
         fn: async () => {
             await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId })
-            await waitpointService(log).deleteByFlowRunId(flowRun.id)
+            await waitpointService(log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: flowRun.projectId })
             await runsMetadataQueue(log).add({
                 id: flowRun.id,
                 projectId: flowRun.projectId,
@@ -654,15 +661,20 @@ async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
 async function filterFlowRunsAndApplyFilters(
     params: FilterFlowRunsAndApplyFiltersParams,
 ): Promise<FlowRun[]> {
+    const explicitFlowRunIds = params.flowRunIds ?? []
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId: params.projectId,
         environment: RunEnvironment.PRODUCTION,
-        parentWaitpointId: IsNull(),
     })
 
-    if (!isNil(params.flowRunIds) && params.flowRunIds.length > 0) {
+    if (explicitFlowRunIds.length > 0) {
         query = query.andWhere({
-            id: In(params.flowRunIds),
+            id: In(explicitFlowRunIds),
+        })
+    }
+    else {
+        query = query.andWhere({
+            parentWaitpointId: IsNull(),
         })
     }
 
@@ -755,10 +767,12 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             executeTrigger: params.executeTrigger,
             entryStepName: params.entryStepName,
         }
+    const aParentIsBlockedOnThisRun = params.flowRun.failParentOnFailure && !isNil(params.flowRun.parentRunId)
     await jobQueue(log).add({
         id: params.jobId ?? params.flowRun.id,
         type: JobType.ONE_TIME,
         data,
+        retryBackoffMs: aParentIsBlockedOnThisRun ? PARENT_BOUND_RETRY_BACKOFF_MS : undefined,
     })
     return params.flowRun
 }
@@ -883,6 +897,19 @@ export function isOutsideRetentionWindow(createdTime: string, retentionDays: num
     return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
 }
 
+function settingsOfStepUnderTest({ flowVersion, stepNameToTest }: SettingsOfStepUnderTestParams): unknown {
+    const stepUnderTest = flowStructureUtil.getStep(stepNameToTest, flowVersion.trigger)
+    if (isNil(stepUnderTest)) {
+        return undefined
+    }
+    return flowStructureUtil.getAllChildSteps(stepUnderTest).map((step) => step.settings)
+}
+
+type SettingsOfStepUnderTestParams = {
+    flowVersion: FlowVersion
+    stepNameToTest: string
+}
+
 type CreateParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
@@ -947,13 +974,28 @@ type PrepareChildDispatchParams = {
     entryStepName: string
 }
 
-type DispatchChildParams = {
+type CreateChildRunsParams = {
     target: ChildDispatchTarget
-    childRunId: FlowRunId
-    seedSteps: Record<string, unknown>
     parentWaitpointId: string
-    dispatchIndex: number
-    dispatchKey: string
+    children: { id: FlowRunId, dispatchIndex: number }[]
+    entityManager: EntityManager
+}
+
+type EnqueueChildRunParams = {
+    target: ChildDispatchTarget
+    childRun: FlowRunWithDispatchIndex
+    seedSteps: Record<string, unknown>
+}
+
+type ChildRunParams = {
+    target: ChildDispatchTarget
+    childRun: FlowRunWithDispatchIndex
+}
+
+type DeleteChildRunParams = {
+    id: FlowRunId
+    projectId: ProjectId
+    entityManager: EntityManager
 }
 
 export type ChildDispatchTarget = {

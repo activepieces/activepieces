@@ -83,6 +83,7 @@ async function getChildPages(
 
 export const getPageContent = createAction({
 	name: 'getPageContent',
+	classification: 'READ',
 	displayName: 'Get Page Content',
 	description: 'Get page content and optionally all its descendants',
 	audience: 'both',

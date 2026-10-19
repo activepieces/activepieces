@@ -6,6 +6,7 @@ export const certificationFolderSurveyInitialExperienceAnswered = createTrigger(
   {
     auth: wedofAuth,
     name: 'certificationFolderSurveyInitialExperienceAnswered',
+    classification: 'READ',
     displayName:
       'Enquête "Situation professionnelle en début de cursus" répondue',
     description:

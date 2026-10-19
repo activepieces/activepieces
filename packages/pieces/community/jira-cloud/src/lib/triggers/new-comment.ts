@@ -6,6 +6,7 @@ import {
 import { jiraCloudAuth } from '../../auth';
 import { JiraPollingItem, createJiraPolling } from '../common/polling';
 
+import { newCommentTriggerOutputSchema } from '../output-schemas';
 type JiraComment = {
 	id: string;
 	self: string;
@@ -49,6 +50,7 @@ const polling = createJiraPolling({
 
 export const newComment = createTrigger({
 	name: 'new_comment',
+	classification: 'READ',
 	displayName: 'New Comment',
 	description:
 		'Fires whenever someone adds a new comment to a Jira issue. Great for getting notified in Slack or Teams, syncing customer replies, or reacting to feedback automatically.',
@@ -58,6 +60,7 @@ export const newComment = createTrigger({
 	},
 	auth: jiraCloudAuth,
 	type: TriggerStrategy.POLLING,
+	outputSchema: newCommentTriggerOutputSchema,
 	props: {
 		jql: Property.LongText({
 			displayName: 'Only watch these issues (optional)',

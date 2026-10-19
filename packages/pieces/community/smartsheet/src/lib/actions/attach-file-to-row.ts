@@ -6,6 +6,7 @@ import { smartsheetCommon } from '../common';
 export const attachFileToRow = createAction({
   auth: smartsheetAuth,
   name: 'attach_file_to_row',
+  classification: 'WRITE',
   displayName: 'Attach File to Row',
   description: 'Adds a file attachment to a row.',
   audience: 'both',

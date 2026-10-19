@@ -1,4 +1,4 @@
-import { SeekPage } from '@activepieces/core-utils';
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
   AgentConversation,
   AgentMessageSource,
@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -25,6 +25,7 @@ import {
   useChatStoreContext,
 } from '@/features/chat/lib/chat-store-context';
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
@@ -32,6 +33,7 @@ import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
@@ -47,11 +49,13 @@ import {
   PersonalizationChipState,
 } from './components/personalization-chip';
 import { QuickReplies } from './components/quick-replies';
+import { TaskPanelLayout } from './components/task-panel';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
+  initialPrompt,
   agentId,
   builder,
   onTurnEnd,
@@ -65,30 +69,38 @@ export function AIChatBox({
   const { data: chatProvider, isLoading: isLoadingProviders } =
     aiProviderQueries.useChatProvider();
 
-  if (!isLoadingProviders && !chatProvider) {
+  if (isLoadingProviders) {
+    return <MessageSkeletons />;
+  }
+
+  if (!chatProvider) {
     return <SetupRequiredState />;
   }
 
   return (
     <ChatStoreProvider>
-      <ChatBoxContent
-        incognito={incognito}
-        agentId={agentId}
-        builder={builder}
-        onTurnEnd={onTurnEnd}
-        emptyState={emptyState}
-        footerNote={footerNote}
-        placeholder={placeholder}
-        conversationId={conversationId}
-        onTitleUpdate={onTitleUpdate}
-        onConversationCreated={onConversationCreated}
-      />
+      <TaskPanelLayout>
+        <ChatBoxContent
+          incognito={incognito}
+          initialPrompt={initialPrompt}
+          agentId={agentId}
+          builder={builder}
+          onTurnEnd={onTurnEnd}
+          emptyState={emptyState}
+          footerNote={footerNote}
+          placeholder={placeholder}
+          conversationId={conversationId}
+          onTitleUpdate={onTitleUpdate}
+          onConversationCreated={onConversationCreated}
+        />
+      </TaskPanelLayout>
     </ChatStoreProvider>
   );
 }
 
 function ChatBoxContent({
   incognito,
+  initialPrompt,
   agentId,
   builder,
   onTurnEnd,
@@ -101,6 +113,7 @@ function ChatBoxContent({
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
+  const { data: chatProvider } = aiProviderQueries.useChatProvider();
 
   const {
     conversationId,
@@ -119,6 +132,10 @@ function ChatBoxContent({
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
     ...(builder === undefined ? {} : { builder }),
+    defaultModelName:
+      agentId === undefined
+        ? chatUtils.newChatModelName({ provider: chatProvider?.provider })
+        : null,
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,
@@ -180,6 +197,19 @@ function ChatBoxContent({
     [sendMessage],
   );
 
+  const sentInitialPrompt = useRef(false);
+
+  useEffect(() => {
+    const shouldSendInitialPrompt =
+      initialPrompt !== undefined &&
+      initialPrompt.trim().length > 0 &&
+      !initialConversationId &&
+      !sentInitialPrompt.current;
+    if (!shouldSendInitialPrompt) return;
+    sentInitialPrompt.current = true;
+    handleSend(initialPrompt).catch(() => undefined);
+  }, [initialPrompt, initialConversationId, handleSend]);
+
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
     if (lastUser) void sendMessage(getTextFromParts(lastUser.parts));
@@ -227,6 +257,7 @@ function ChatBoxContent({
   const showPersonalizationDonut =
     isEmpty &&
     !incognito &&
+    isNil(agentId) &&
     !showOnboardingCard &&
     !personalization.isResolving &&
     personalization.status !== null &&
@@ -288,7 +319,13 @@ function ChatBoxContent({
     <div className="flex flex-col h-full flex-1 min-w-0">
       <AnimatePresence mode="wait">
         {isEmpty ? (
-          <div key="empty-state" className="flex-1 overflow-y-auto min-h-0">
+          <div
+            key="empty-state"
+            className={cn(
+              'flex-1 overflow-y-auto min-h-0',
+              showPersonalizationDonut && 'pb-14',
+            )}
+          >
             {emptyState ??
               (showOnboardingCard ? (
                 <OnboardingWelcome />
@@ -310,7 +347,7 @@ function ChatBoxContent({
             transition={{ duration: 0.25 }}
           >
             <ChatContainerRoot
-              className="flex-1 relative h-full"
+              className="flex-1 relative h-full px-3 sm:px-6"
               style={{
                 maskImage:
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
@@ -318,7 +355,7 @@ function ChatBoxContent({
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-4 gap-0 min-h-full">
+              <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
                 {isLoadingHistory && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
@@ -366,7 +403,7 @@ function ChatBoxContent({
                   )}
 
                 {wasCancelled && (
-                  <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 py-2 text-xs text-gray-11 animate-in fade-in duration-200">
                     <Square className="h-3 w-3 fill-current" />
                     <span>{t('Response stopped')}</span>
                   </div>
@@ -374,7 +411,7 @@ function ChatBoxContent({
 
                 {error && (
                   <motion.div
-                    className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-destructive text-sm"
+                    className="flex items-center gap-2 rounded-xl border border-danger-6 bg-danger-3 px-3 py-2 text-danger-11 text-sm"
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
@@ -383,8 +420,8 @@ function ChatBoxContent({
                     <span className="flex-1">{error}</span>
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive gap-1.5 shrink-0 h-7 px-2"
+                      size="xs"
+                      className="text-danger-11 hover:text-danger-11 gap-1.5"
                       onClick={handleRetry}
                     >
                       <RefreshCw className="h-3 w-3" />
@@ -461,7 +498,7 @@ function ChatBoxContent({
             }
           />
           {footerNote !== undefined && (
-            <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-muted-foreground">
+            <p className="pt-[9px] text-center text-xs leading-3.5 text-gray-11">
               {footerNote}
             </p>
           )}
@@ -501,6 +538,7 @@ function computeClaimedBuildIds(
 
 type AIChatBoxProps = {
   incognito: boolean;
+  initialPrompt?: string;
   agentId?: string;
   builder?: boolean;
   onTurnEnd?: () => void;

@@ -15,7 +15,6 @@ let app: FastifyInstance
 const CONVERSATIONS_URL = '/v1/agents/conversations'
 
 beforeAll(async () => {
-    process.env.AP_AGENTS_ENABLED = 'true'
     app = await setupTestEnvironment()
 })
 

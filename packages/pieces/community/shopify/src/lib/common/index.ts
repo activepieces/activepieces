@@ -1,12 +1,13 @@
 import {
+  HttpError,
   HttpMessageBody,
   HttpMethod,
   HttpResponse,
   QueryParams,
   httpClient,
 } from '@activepieces/pieces-common';
+import { ShopifyAuth, getBaseUrl, shopifyAuthHelpers } from './auth';
 import {
-  ShopifyAuth,
   ShopifyCheckout,
   ShopifyCollect,
   ShopifyCustomer,
@@ -20,9 +21,7 @@ import {
   ShopifyTransaction,
 } from './types';
 
-export function getBaseUrl(shopName: string) {
-  return `https://${shopName}.myshopify.com/admin/api/2023-10`;
-}
+export { getBaseUrl, shopifyAuthHelpers };
 
 export function sendShopifyRequest(data: {
   url: string;
@@ -31,15 +30,17 @@ export function sendShopifyRequest(data: {
   queryParams?: QueryParams;
   auth: ShopifyAuth;
 }): Promise<HttpResponse<HttpMessageBody>> {
-  return httpClient.sendRequest({
-    url: `${getBaseUrl(data.auth.props.shopName)}${data.url}`,
-    method: data.method,
-    body: data.body,
-    queryParams: data.queryParams,
-    headers: {
-      'X-Shopify-Access-Token': data.auth.props.adminToken,
-    },
-  });
+  return httpClient
+    .sendRequest({
+      url: `${shopifyAuthHelpers.getBaseUrl(data.auth)}${data.url}`,
+      method: data.method,
+      body: data.body,
+      queryParams: data.queryParams,
+      headers: shopifyAuthHelpers.getAuthHeaders(data.auth),
+    })
+    .catch((error: unknown) => {
+      throw withMerchantApprovalHint(error);
+    });
 }
 
 export async function createCustomer(
@@ -523,4 +524,29 @@ export async function getAbandonedCheckouts(
   });
 
   return (response.body as { checkouts: ShopifyCheckout[] }).checkouts;
+}
+
+function withMerchantApprovalHint(error: unknown): unknown {
+  if (!(error instanceof HttpError) || error.response.status !== 403) {
+    return error;
+  }
+  const body = error.response.body;
+  if (typeof body !== 'object' || body === null || !('errors' in body)) {
+    return error;
+  }
+  const errors = body.errors;
+  if (typeof errors !== 'string') {
+    return error;
+  }
+  const scope = errors.match(/requires merchant approval for (\S+) scope/)?.[1];
+  if (!scope) {
+    return error;
+  }
+  return new HttpError(error.request.body, {
+    status: 403,
+    responseBody: {
+      ...body,
+      errors: `${errors} — approve the ${scope} scope for your app on the store, then reconnect.`,
+    },
+  });
 }

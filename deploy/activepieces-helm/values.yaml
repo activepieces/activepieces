@@ -98,7 +98,7 @@ livenessProbe:
   periodSeconds: 10
 readinessProbe:
   httpGet:
-    path: /v1/health
+    path: /api/v1/health
     port: http
   initialDelaySeconds: 5
   periodSeconds: 5
@@ -111,10 +111,17 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
+rollout:
+  blueGreen:
+    autoPromotionEnabled: true
+    scaleDownDelaySeconds: 30
+
 persistence:
   enabled: true
   size: 2Gi
   mountPath: "/usr/src/app/cache"
+  # Leave empty to use the cluster's default StorageClass.
+  storageClassName: ""
 
 volumes: []
 volumeMounts: []
@@ -138,6 +145,8 @@ affinity: {}
 # ============================================================================
 postgresql:
   enabled: false
+  image:
+    repository: bitnamilegacy/postgresql
   # auth:
   #   database: activepieces
   #   username: postgres
@@ -160,6 +169,8 @@ postgresql:
 # ============================================================================
 redis:
   enabled: false
+  image:
+    repository: bitnamilegacy/redis
   # auth:
   #   enabled: true
   #   password: ""        # leave empty to auto-generate
@@ -170,12 +181,10 @@ redis:
 
 # Deployment-specific, non-sensitive env vars set as plain values.
 # Use this for vars that differ per release (e.g. APP vs WORKER) and don't belong in the shared secret.
-activepiecesConfig:
-  AP_CONTAINER_TYPE: ""
+activepiecesConfig: {}
 
 # Map of Kubernetes secret name → list of AP_* (and OTEL_*) env var names to inject.
 # Each var name must exist as a key in the corresponding secret.
-# Populate secrets with deploy/scripts/apply-secrets.sh --secret-name <name> before deploying.
 activepiecesEnvVariables:
   activepieces-config-secrets:
     - AP_EDITION

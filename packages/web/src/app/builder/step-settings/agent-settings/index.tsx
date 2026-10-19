@@ -1,16 +1,19 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils';
+import { isNil, omit } from '@activepieces/core-utils';
 import {
   AgentPieceProps,
-  AgentProviderModel,
   PieceAction,
   PieceActionSettings,
 } from '@activepieces/shared';
 import { useFormContext } from 'react-hook-form';
 
+import { AgentLink } from '@/app/builder/step-settings/agent-settings/agent-link';
+import { agentLinkUtils } from '@/app/builder/step-settings/agent-settings/agent-link-utils';
+import { AgentModelField } from '@/app/builder/step-settings/agent-settings/agent-model-field';
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
+import { AgentStructuredOutput } from '@/features/agents';
+import { useAgentsAvailable } from '@/features/agents/hooks/agents-hooks';
 
 import {
   selectGenericFormComponentForProperty,
@@ -33,6 +36,7 @@ export const AgentSettings = (props: AgentSettingsProps) => {
     updatePropertySettingsSchema,
   } = useStepSettingsContext();
   const form = useFormContext();
+  const agentsAvailable = useAgentsAvailable();
 
   if (isNil(pieceModel) && pieceModelNotFound) {
     return (
@@ -62,11 +66,34 @@ export const AgentSettings = (props: AgentSettingsProps) => {
   const actionName = (props.step.settings as PieceActionSettings)
     .actionName as string;
   const selectedAction = pieceModel.actions[actionName];
-  const properties = (({ auth: _auth, ...rest }) => rest)(selectedAction.props);
+  const linkedAgentId = agentLinkUtils.externalIdOf(
+    form.watch(`settings.input.${AgentPieceProps.AGENT_ID}`),
+  );
+  const comesFromTheAgent = [
+    AgentPieceProps.AGENT_TOOLS,
+    AgentPieceProps.STRUCTURED_OUTPUT,
+    AgentPieceProps.AI_PROVIDER_MODEL,
+    AgentPieceProps.MAX_STEPS,
+  ];
+  const linkIsInEffect = !isNil(linkedAgentId) && agentsAvailable;
+  const properties = omit(selectedAction.props, [
+    'auth',
+    AgentPieceProps.AGENT_ID,
+    ...(linkIsInEffect ? comesFromTheAgent : []),
+  ]);
+  const showAgentPicker =
+    agentsAvailable &&
+    (AgentPieceProps.AGENT_ID in selectedAction.props || !isNil(linkedAgentId));
 
   return (
     <div className="w-full">
       <div className="flex flex-col gap-4 w-full">
+        {showAgentPicker && (
+          <AgentLink
+            disabled={props.readonly}
+            pieceVersion={props.step.settings.pieceVersion}
+          />
+        )}
         {Object.keys(properties).map((propertyName) => {
           return (
             <FormField
@@ -113,18 +140,7 @@ const selectAgentFormComponentForProperty = (
 
   switch (propertyName) {
     case AgentPieceProps.AGENT_TOOLS: {
-      const providerModel = params.form?.watch?.(
-        'settings.input.aiProviderModel',
-      ) as AgentProviderModel | undefined;
-      return (
-        <AgentTools
-          disabled={disabled}
-          toolsField={field}
-          selectedProvider={
-            providerModel?.provider as AIProviderName | undefined
-          }
-        />
-      );
+      return <AgentTools disabled={disabled} toolsField={field} />;
     }
     case AgentPieceProps.STRUCTURED_OUTPUT: {
       return (
@@ -135,15 +151,11 @@ const selectAgentFormComponentForProperty = (
       );
     }
     case AgentPieceProps.AI_PROVIDER_MODEL: {
-      const provider = (field.value as AgentProviderModel).provider;
-      const model = (field.value as AgentProviderModel).model;
-      const configId = (field.value as AgentProviderModel).configId;
       return (
-        <AIModelSelector
-          defaultModel={model}
-          defaultProvider={provider}
-          defaultConfigId={configId}
+        <AgentModelField
+          value={field.value}
           onChange={field.onChange}
+          pieceVersion={params.dynamicPropsInfo?.pieceVersion ?? ''}
           disabled={disabled}
         />
       );

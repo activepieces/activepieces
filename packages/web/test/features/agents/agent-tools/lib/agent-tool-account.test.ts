@@ -14,7 +14,7 @@ const tool = (auth?: string, actionName = 'send') =>
       actionName,
       ...(auth === undefined ? {} : { predefinedInput: { auth, fields: {} } }),
     },
-  }) as never;
+  } as never);
 
 const connections = [{ externalId: 'conn_1', displayName: 'Work mail' }];
 const loaded = { connections, connectionsComplete: true };
@@ -172,24 +172,50 @@ describe('agentToolAccount.listIsComplete', () => {
   });
 
   it('is not complete while a refetch is in flight, even though cached data already succeeded', () => {
-    expect(
-      agentToolAccount.listIsComplete({ ...full, isFetching: true }),
-    ).toBe(false);
+    expect(agentToolAccount.listIsComplete({ ...full, isFetching: true })).toBe(
+      false,
+    );
   });
 
   it('is not complete before the first success', () => {
-    expect(
-      agentToolAccount.listIsComplete({ ...full, isSuccess: false }),
-    ).toBe(false);
+    expect(agentToolAccount.listIsComplete({ ...full, isSuccess: false })).toBe(
+      false,
+    );
   });
 
   it('is not complete when the page came back full, since more may exist unseen', () => {
-    expect(
-      agentToolAccount.listIsComplete({ ...full, count: 1000 }),
-    ).toBe(false);
+    expect(agentToolAccount.listIsComplete({ ...full, count: 1000 })).toBe(
+      false,
+    );
   });
 
   it('is complete for an empty settled list, so a project with no connections is knowable', () => {
     expect(agentToolAccount.listIsComplete({ ...full, count: 0 })).toBe(true);
+  });
+});
+
+describe('agentToolAccount.resolve', () => {
+  it('carries the state beside the text, so a row can colour its dot', () => {
+    expect(agentToolAccount.resolve({ tools: [], ...loaded })).toBeNull();
+    expect(
+      agentToolAccount.resolve({ tools: [tool()], ...loaded })?.state,
+    ).toBe('missing');
+    expect(
+      agentToolAccount.resolve({ tools: [tool('conn_1')], ...loaded }),
+    ).toStrictEqual({ state: 'connected', text: 'Work mail' });
+    expect(
+      agentToolAccount.resolve({
+        tools: [tool('conn_deleted')],
+        ...loaded,
+      })?.state,
+    ).toBe('deleted');
+  });
+
+  it('says the same thing as label, so the two cannot drift', () => {
+    const params = { tools: [tool('conn_1')], ...loaded };
+
+    expect(agentToolAccount.resolve(params)?.text).toBe(
+      agentToolAccount.label(params),
+    );
   });
 });

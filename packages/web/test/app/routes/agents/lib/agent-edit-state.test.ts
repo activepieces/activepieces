@@ -1,3 +1,4 @@
+import { AIProviderName } from '@activepieces/core-utils';
 import { describe, expect, it } from 'vitest';
 
 import { agentEditState } from '@/app/routes/agents/lib/agent-edit-state';
@@ -13,15 +14,18 @@ const config = (over: Record<string, unknown> = {}) => ({
 
 describe('sameConfig', () => {
   it('treats an identical shape as unchanged', () => {
-    expect(
-      agentEditState.sameConfig({ left: config(), right: config() }),
-    ).toBe(true);
+    expect(agentEditState.sameConfig({ left: config(), right: config() })).toBe(
+      true,
+    );
   });
 
   it.each([
     ['a changed instruction', { draft: { instructions: 'Other.' } }],
     ['a changed name', { displayName: 'Renamed' }],
-    ['a changed model', { draft: { instructions: 'Sort it.', modelName: 'x' } }],
+    [
+      'a changed model',
+      { draft: { instructions: 'Sort it.', modelName: 'x' } },
+    ],
   ])('sees %s as changed', (_label, over) => {
     expect(
       agentEditState.sameConfig({ left: config(), right: config(over) }),
@@ -45,121 +49,12 @@ describe('sameConfig', () => {
 
   it('is order-sensitive on arrays, because tool order is meaningful', () => {
     expect(
-      agentEditState.sameConfig({ left: { tools: ['a', 'b'] }, right: { tools: ['b', 'a'] } }),
+      agentEditState.sameConfig({
+        left: { tools: ['a', 'b'] },
+        right: { tools: ['b', 'a'] },
+      }),
     ).toBe(false);
   });
-});
-
-describe('headerStatus', () => {
-  it('says live right after a launch, even while the refetch is in flight', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: true,
-        justLaunched: true,
-        live: null,
-        hasChanges: true,
-      }),
-    ).toBe('live');
-  });
-
-  it('asks for a model before anything else, since nothing can run without one', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: true,
-        justLaunched: false,
-        live: config(),
-        hasChanges: false,
-      }),
-    ).toBe('needs-model');
-  });
-
-  it('says pending for an agent that was never published', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: false,
-        justLaunched: false,
-        live: null,
-        hasChanges: true,
-      }),
-    ).toBe('pending');
-  });
-
-  it('says pending while a staged draft differs from the live copy', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: false,
-        justLaunched: false,
-        live: config(),
-        hasChanges: true,
-      }),
-    ).toBe('pending');
-  });
-
-  it('says live only when a published copy exists and nothing differs', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: false,
-        justLaunched: false,
-        live: config(),
-        hasChanges: false,
-      }),
-    ).toBe('live');
-  });
-
-  it('never claims live for an unpublished agent with no changes, which cannot happen but must not lie', () => {
-    expect(
-      agentEditState.headerStatus({
-        needsModel: false,
-        justLaunched: false,
-        live: null,
-        hasChanges: false,
-      }),
-    ).toBe('pending');
-  });
-});
-
-describe('modeIntent', () => {
-  it('stages only when switching to test with unsaved typing and nothing blocking', () => {
-    expect(
-      agentEditState.modeIntent({
-        next: 'test',
-        unsavedTyping: true,
-        blockedReason: null,
-      }),
-    ).toBe('stage');
-  });
-
-  it('switches without writing when there is nothing unsaved to stage', () => {
-    expect(
-      agentEditState.modeIntent({
-        next: 'test',
-        unsavedTyping: false,
-        blockedReason: null,
-      }),
-    ).toBe('switch');
-  });
-
-  it.each(['model', 'instructions'])(
-    'never stages an unrunnable config (%s missing), so the draft is not overwritten',
-    (reason) => {
-      expect(
-        agentEditState.modeIntent({
-          next: 'test',
-          unsavedTyping: true,
-          blockedReason: reason,
-        }),
-      ).toBe('switch');
-    },
-  );
-
-  it.each(['edit', 'configure', 'settings', ''])(
-    'never stages when moving to %s, because only test needs the draft persisted',
-    (next) => {
-      expect(
-        agentEditState.modeIntent({ next, unsavedTyping: true, blockedReason: null }),
-      ).toBe('switch');
-    },
-  );
 });
 
 describe('createWriteLock', () => {
@@ -206,7 +101,9 @@ describe('createWriteLock', () => {
 
   it('admits exactly one of many simultaneous writers', () => {
     const lock = agentEditState.createWriteLock();
-    const admitted = Array.from({ length: 25 }, () => lock.claim()).filter(Boolean);
+    const admitted = Array.from({ length: 25 }, () => lock.claim()).filter(
+      Boolean,
+    );
     expect(admitted).toHaveLength(1);
   });
 });
@@ -214,25 +111,37 @@ describe('createWriteLock', () => {
 describe('leaveGuard', () => {
   it('stays closed when nothing is trying to leave', () => {
     expect(
-      agentEditState.leaveGuard({ blockerState: 'unblocked', exitRequested: false }),
+      agentEditState.leaveGuard({
+        blockerState: 'unblocked',
+        exitRequested: false,
+      }),
     ).toStrictEqual({ open: false, discardAction: 'none' });
   });
 
   it('opens for a blocked router navigation and lets the router proceed', () => {
     expect(
-      agentEditState.leaveGuard({ blockerState: 'blocked', exitRequested: false }),
+      agentEditState.leaveGuard({
+        blockerState: 'blocked',
+        exitRequested: false,
+      }),
     ).toStrictEqual({ open: true, discardAction: 'proceed' });
   });
 
   it('opens for the back arrow and exits in-app, since no navigation is pending', () => {
     expect(
-      agentEditState.leaveGuard({ blockerState: 'unblocked', exitRequested: true }),
+      agentEditState.leaveGuard({
+        blockerState: 'unblocked',
+        exitRequested: true,
+      }),
     ).toStrictEqual({ open: true, discardAction: 'exit' });
   });
 
   it('prefers the router when both are pending, so the queued navigation is not dropped', () => {
     expect(
-      agentEditState.leaveGuard({ blockerState: 'blocked', exitRequested: true }),
+      agentEditState.leaveGuard({
+        blockerState: 'blocked',
+        exitRequested: true,
+      }),
     ).toStrictEqual({ open: true, discardAction: 'proceed' });
   });
 
@@ -244,4 +153,142 @@ describe('leaveGuard', () => {
       ).toBe(false);
     },
   );
+});
+
+describe('agentEditState.modelPickChanged', () => {
+  const pick = {
+    provider: 'openrouter',
+    modelName: 'anthropic/claude-sonnet-4.6',
+    providerConfigId: null,
+  };
+
+  it('is false when the selector reports the model the form already holds', () => {
+    expect(
+      agentEditState.modelPickChanged({ picked: pick, current: pick }),
+    ).toBe(false);
+  });
+
+  it('is true when the model differs', () => {
+    expect(
+      agentEditState.modelPickChanged({
+        picked: { ...pick, modelName: 'openai/gpt-5' },
+        current: pick,
+      }),
+    ).toBe(true);
+  });
+
+  it('treats a missing field and an explicit null as the same pick', () => {
+    expect(
+      agentEditState.modelPickChanged({
+        picked: { provider: 'openrouter', modelName: 'x' },
+        current: {
+          provider: 'openrouter',
+          modelName: 'x',
+          providerConfigId: null,
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('is true when only the provider config differs', () => {
+    expect(
+      agentEditState.modelPickChanged({
+        picked: { ...pick, providerConfigId: 'cfg_1' },
+        current: pick,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('serverMovedWhileTyping', () => {
+  const config = (instructions: string) => ({ draft: { instructions } });
+
+  it('is true when the agent changed under a form someone is typing in', () => {
+    expect(
+      agentEditState.serverMovedWhileTyping({
+        fromServer: config('chat changed this'),
+        lastSeen: config('what was there'),
+        unsavedTyping: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('is false when nothing moved, so a refetch of the same values is not a conflict', () => {
+    expect(
+      agentEditState.serverMovedWhileTyping({
+        fromServer: config('same'),
+        lastSeen: config('same'),
+        unsavedTyping: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('is false when nobody is typing, because the form can simply take the new values', () => {
+    expect(
+      agentEditState.serverMovedWhileTyping({
+        fromServer: config('chat changed this'),
+        lastSeen: config('what was there'),
+        unsavedTyping: false,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('agentEditState model choice', () => {
+  it('maps a tier pick to only the tier id and back', () => {
+    const pick = agentEditState.modelPickOf({
+      choice: { type: 'tier', tierId: 'tier-1' },
+    });
+    expect(pick).toEqual({
+      provider: null,
+      modelName: null,
+      providerConfigId: null,
+      modelTierId: 'tier-1',
+    });
+    expect(agentEditState.modelChoiceOf({ config: pick })).toEqual({
+      type: 'tier',
+      tierId: 'tier-1',
+    });
+    expect(agentEditState.hasModel({ config: pick })).toBe(true);
+  });
+
+  it('maps a model pick to provider, key and model, and clears the tier', () => {
+    const pick = agentEditState.modelPickOf({
+      choice: {
+        type: 'model',
+        provider: AIProviderName.OPENAI,
+        providerConfigId: 'key-1',
+        modelId: 'gpt-5',
+      },
+    });
+    expect(pick).toEqual({
+      provider: AIProviderName.OPENAI,
+      modelName: 'gpt-5',
+      providerConfigId: 'key-1',
+      modelTierId: null,
+    });
+    expect(
+      agentEditState.modelPickChanged({
+        picked: pick,
+        current: { ...pick, modelTierId: 'tier-1' },
+      }),
+    ).toBe(true);
+  });
+
+  it('reads a legacy row without a key id and treats no model as missing', () => {
+    expect(
+      agentEditState.modelChoiceOf({
+        config: { provider: AIProviderName.OPENAI, modelName: 'gpt-5' },
+      }),
+    ).toEqual({
+      type: 'model',
+      provider: AIProviderName.OPENAI,
+      providerConfigId: '',
+      modelId: 'gpt-5',
+    });
+    expect(agentEditState.modelChoiceOf({ config: {} })).toBeNull();
+    expect(
+      agentEditState.hasModel({ config: { provider: AIProviderName.OPENAI } }),
+    ).toBe(false);
+  });
 });

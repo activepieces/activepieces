@@ -61,6 +61,26 @@ import { getMyMember } from './lib/actions/ai/get-my-member';
 import { getMember } from './lib/actions/ai/get-member';
 import { listOrganizationBoards } from './lib/actions/ai/list-organization-boards';
 import { addReactionToComment } from './lib/actions/ai/add-reaction-to-comment';
+import { listBoardCustomFields } from './lib/actions/ai/list-board-custom-fields';
+import { getCustomField } from './lib/actions/ai/get-custom-field';
+import { listCustomFieldOptions } from './lib/actions/ai/list-custom-field-options';
+import { listCardCustomFieldValues } from './lib/actions/ai/list-card-custom-field-values';
+import { setCardCustomFieldValue } from './lib/actions/ai/set-card-custom-field-value';
+import { createBoardCustomField } from './lib/actions/ai/create-board-custom-field';
+import { createCustomFieldOption } from './lib/actions/ai/create-custom-field-option';
+import { deleteCustomField } from './lib/actions/ai/delete-custom-field';
+import { copyCard } from './lib/actions/ai/copy-card';
+import { listCardActivity } from './lib/actions/ai/list-card-activity';
+import { voteOnCard } from './lib/actions/ai/vote-on-card';
+import { removeCardVote } from './lib/actions/ai/remove-card-vote';
+import { listCardVotes } from './lib/actions/ai/list-card-votes';
+import { deleteBoard } from './lib/actions/ai/delete-board';
+import { deleteLabel } from './lib/actions/ai/delete-label';
+import { moveListToBoard } from './lib/actions/ai/move-list-to-board';
+import { updateChecklist } from './lib/actions/ai/update-checklist';
+import { updateChecklistItem } from './lib/actions/ai/update-checklist-item';
+import { listBoardMemberships } from './lib/actions/ai/list-board-memberships';
+import { addCardAttachmentFromUrl } from './lib/actions/ai/add-card-attachment-from-url';
 import { cardMovedTrigger } from './lib/triggers/cardMoved';
 import { newCardTrigger } from './lib/triggers/newCard';
 import { deadlineTrigger } from './lib/triggers/deadline';
@@ -122,9 +142,9 @@ export const trelloAuth = PieceAuth.BasicAuth({
 export const trello = createPiece({
   displayName: 'Trello',
   description: 'Project management tool for teams',
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
-  authors: ["Salem-Alaa", "kishanprmr", "MoShizzle", "khaledmashaly", "abuaboud", "AshotZaqoyan"],
+  authors: ["Salem-Alaa", "kishanprmr", "MoShizzle", "khaledmashaly", "abuaboud", "AshotZaqoyan", "OdaiAhmed99"],
   categories: [PieceCategory.PRODUCTIVITY],
   auth: trelloAuth,
   actions: [createCard, getCard, updateCard, deleteCard, getCardAttachments, addCardAttachment, getCardAttachment, deleteCardAttachment,
@@ -137,7 +157,13 @@ export const trello = createPiece({
     createList, listLists, getList, renameList, archiveList, moveAllCardsInList, archiveAllCardsInList,
     createBoard, getBoard, listBoards, updateBoard, archiveBoard, listBoardMembers,
     addChecklistToCard, listCardChecklists, deleteChecklist, setChecklistItemState, deleteChecklistItem, addChecklistItem,
-    getMyMember, getMember, listOrganizationBoards, addReactionToComment, createCustomApiCallAction({
+    getMyMember, getMember, listOrganizationBoards, addReactionToComment,
+    listBoardCustomFields, getCustomField, listCustomFieldOptions, listCardCustomFieldValues,
+    setCardCustomFieldValue, createBoardCustomField, createCustomFieldOption, deleteCustomField,
+    copyCard, listCardActivity, voteOnCard, removeCardVote, listCardVotes,
+    deleteBoard, deleteLabel, moveListToBoard, updateChecklist, updateChecklistItem,
+    listBoardMemberships, addCardAttachmentFromUrl,
+    createCustomApiCallAction({
       auth: trelloAuth,
       baseUrl: () => 'https://api.trello.com/1',
       authLocation: 'queryParams',

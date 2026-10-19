@@ -3,6 +3,7 @@ import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 
+import { useTheme } from '@/components/providers/theme-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
@@ -49,6 +50,7 @@ export function TurnstileWidget({
   resetSignal,
 }: TurnstileWidgetProps) {
   const siteKey = useTurnstileSiteKey();
+  const { resolvedTheme } = useTheme();
   const container = useRef<HTMLDivElement>(null);
   const widget = useRef<string | undefined>(undefined);
   const [failed, setFailed] = useState(false);
@@ -86,7 +88,7 @@ export function TurnstileWidget({
         widgetId = window.turnstile.render(container.current, {
           sitekey: siteKey,
           appearance: 'interaction-only',
-          theme: 'light',
+          theme: resolvedTheme,
           callback: (token: string) => {
             setFailed(false);
             onToken(token);
@@ -113,7 +115,7 @@ export function TurnstileWidget({
         window.turnstile.remove(widgetId);
       }
     };
-  }, [siteKey, onToken, onUnavailable]);
+  }, [siteKey, onToken, onUnavailable, resolvedTheme]);
 
   // A Turnstile token is single-use: once the server has rejected the request
   // the widget has to issue a fresh one or every retry replays a spent token.
@@ -137,7 +139,7 @@ export function TurnstileWidget({
         <div ref={container} className="flex justify-center" />
       </div>
       {failed && (
-        <p className="mt-3 text-center text-xs text-destructive">
+        <p className="mt-3 text-center text-xs text-danger-11">
           {t(
             'The verification step could not load. Disable your ad blocker for this page, then reload.',
           )}

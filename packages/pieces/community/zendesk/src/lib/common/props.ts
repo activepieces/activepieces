@@ -1,10 +1,7 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from './client';
 
 interface ZendeskTicket {
   id: number;
@@ -103,15 +100,10 @@ export const ticketIdDropdown =  Property.Dropdown({
     }
 
     try {
-      const authentication = auth;
       const response = await httpClient.sendRequest<ZendeskTicketsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets.json?per_page=100`,
+        url: `${getZendeskBaseUrl(auth)}/tickets.json?per_page=100`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(auth),
       });
 
       const tickets = response.body.tickets;
@@ -155,16 +147,11 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
       const response =
         await httpClient.sendRequest<ZendeskOrganizationsResponse>({
-          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organizations.json?per_page=100`,
+          url: `${getZendeskBaseUrl(auth)}/organizations.json?per_page=100`,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(auth),
         });
 
       const organizations = response.body.organizations;
@@ -210,15 +197,10 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
       const response = await httpClient.sendRequest<ZendeskUsersResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users.json?per_page=100`,
+        url: `${getZendeskBaseUrl(auth)}/users.json?per_page=100`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(auth),
       });
 
       const users = response.body.users;
@@ -264,15 +246,10 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
       const response = await httpClient.sendRequest<ZendeskBrandsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/brands.json`,
+        url: `${getZendeskBaseUrl(auth)}/brands.json`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(auth),
       });
 
       const brands = response.body.brands;
@@ -320,15 +297,10 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
       const response = await httpClient.sendRequest<ZendeskTicketsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets.json?per_page=100`,
+        url: `${getZendeskBaseUrl(auth)}/tickets.json?per_page=100`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(auth),
       });
 
       const tickets = response.body.tickets;
@@ -378,15 +350,10 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
       const response = await httpClient.sendRequest<ZendeskCustomRolesResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/custom_roles.json`,
+        url: `${getZendeskBaseUrl(auth)}/custom_roles.json`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(auth),
       });
 
       const customRoles = response.body.custom_roles;
@@ -429,15 +396,10 @@ export const agentBrandIdDropdown = Property.MultiSelectDropdown({
     }
 
     try {
-      const authentication = auth;
       const response = await httpClient.sendRequest<ZendeskBrandsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/brands.json`,
+        url: `${getZendeskBaseUrl(auth)}/brands.json`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(auth),
       });
 
       const brands = response.body.brands;
@@ -475,15 +437,10 @@ export const userFieldsDynamicProp = Property.DynamicProperties({
     if (!auth) return {};
 
     try {
-      const authentication = auth;
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/user_fields.json`,
+        url: `${getZendeskBaseUrl(auth)}/user_fields.json`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(auth),
       });
 
       const fields = (response.body as {
@@ -611,15 +568,10 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
       const response = await httpClient.sendRequest<ZendeskGroupsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/groups.json?per_page=100`,
+        url: `${getZendeskBaseUrl(auth)}/groups.json?per_page=100`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(auth),
       });
 
       const groups = response.body.groups;
@@ -644,4 +596,3 @@ auth: zendeskAuth,
     }
   },
 });
-

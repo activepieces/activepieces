@@ -20,25 +20,49 @@ export const newCommandInDirectMessageTrigger = createTrigger({
     description:
       'Fires when a direct message (im channel) addressed to the bot contains one of the configured commands (e.g., "@bot help" or "@bot remind"). Only messages in DM channels matching the listed commands fire; bot messages and the user\'s own messages can be optionally ignored. The event payload includes the original message plus a parsed_command object with the recognized command and its arguments.',
   },
+  propertyGroups: [
+    {
+      key: 'user_picker',
+      display: 'section',
+      label: 'User',
+      icon: 'user',
+      props: ['info', 'user'],
+    },
+    {
+      key: 'command',
+      display: 'section',
+      label: 'Command',
+      icon: 'code',
+      props: ['commands'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['ignoreBots', 'ignoreSelfMessages'],
+    },
+  ],
   props: {
     info: appWebhookSetupInfo,
     user: userId(true),
     commands: Property.Array({
       displayName: 'Commands',
-      description:
-        'List of valid commands that the bot should respond to (e.g., help, ocr, remind)',
+      description: 'Words the bot responds to, such as help or remind.',
       required: true,
       defaultValue: ['help'],
     }),
     ignoreBots: Property.Checkbox({
-      displayName: 'Ignore Bot Messages ?',
-      required: true,
+      displayName: 'Ignore Bot Messages',
+      description: 'Skip messages posted by bots and apps.',
+      required: false,
       defaultValue: true,
     }),
     ignoreSelfMessages: Property.Checkbox({
-        displayName: 'Ignore Message from Yourself ?',
-        required: true,
-        defaultValue: false,
+      displayName: 'Ignore My Own Messages',
+      description: 'Skip messages sent by the connected user. Needs a user token.',
+      required: false,
+      defaultValue: false,
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
@@ -76,7 +100,6 @@ export const newCommandInDirectMessageTrigger = createTrigger({
 			return [];
 		}
 
-    // Check for mention and parse command
     if (user && payloadBody.event.text) {
       const parsedCommand = parseCommand(
         payloadBody.event.text,
@@ -84,8 +107,7 @@ export const newCommandInDirectMessageTrigger = createTrigger({
         commands
       );
 
-      if (parsedCommand && commands.includes(parsedCommand.command)) {
-        // Return event with parsed command
+      if (parsedCommand) {
         return [
           {
             ...payloadBody.event,

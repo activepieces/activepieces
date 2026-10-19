@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
-import { systemeIoCommon } from '../common/client';
+import { systemeIoCommon, systemeIoInput } from '../common/client';
 import { systemeIoProps } from '../common/props';
+import { systemeIoAuthTagOptions } from '../common/dropdowns';
+import { addTagToContactActionOutputSchema } from '../output-schemas';
 
 export const addTagToContact = createAction({
   auth: systemeIoAuth,
@@ -10,7 +12,7 @@ export const addTagToContact = createAction({
   classification: 'WRITE',
   displayName: 'Add Tag to Contact',
   description: 'Assign a tag to an existing contact - select an existing tag or create a new one',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Assigns a tag to an existing Systeme.io contact, identified by contact id. Operates in two modes: reference an existing tag by id, or create a brand-new tag by name and then assign it. Use to label or segment a known contact; assigning an existing tag is effectively idempotent, but the create-new-tag mode creates a fresh tag on each call, so this is not idempotent overall.', idempotent: false },
   props: {
     contactId: systemeIoProps.contactIdDropdown,
@@ -33,7 +35,8 @@ export const addTagToContact = createAction({
       description: 'Select an existing tag',
       required: false,
       refreshers: ['tagSource'],
-      options: async ({ auth, tagSource }) => {
+      refreshOnSearch: true,
+      options: async ({ auth, tagSource }, ctx) => {
         if (!auth || tagSource !== 'existing') {
           return {
             disabled: true,
@@ -42,44 +45,7 @@ export const addTagToContact = createAction({
           };
         }
 
-        try {
-          const response = await systemeIoCommon.getTags({
-            auth: auth.secret_text,
-          });
-
-          let tags: any[] = [];
-          if (Array.isArray(response)) {
-            tags = response;
-          } else if (response && typeof response === 'object' && response !== null) {
-            const responseAny = response as any;
-            if (responseAny.items && Array.isArray(responseAny.items)) {
-              tags = responseAny.items;
-            }
-          }
-
-          if (tags.length > 0) {
-            return {
-              disabled: false,
-              options: tags.map((tag: any) => ({
-                label: tag.name,
-                value: tag.id,
-              })),
-            };
-          }
-
-          return {
-            disabled: true,
-            placeholder: 'No tags found',
-            options: [],
-          };
-        } catch (error) {
-          console.error('Error fetching tags:', error);
-          return {
-            disabled: true,
-            placeholder: 'Error loading tags',
-            options: [],
-          };
-        }
+        return systemeIoAuthTagOptions({ apiKey: auth.secret_text, searchValue: ctx?.searchValue });
       },
     }),
     newTagName: Property.ShortText({
@@ -88,8 +54,10 @@ export const addTagToContact = createAction({
       required: false,
     }),
   },
+  outputSchema: addTagToContactActionOutputSchema,
   async run(context) {
     const { contactId, tagSource, existingTagId, newTagName } = context.propsValue;
+    const contact = systemeIoInput.requireId({ value: contactId, name: 'Contact ID' });
     
     let tagId: string | number;
     let tagCreated = false;
@@ -123,7 +91,7 @@ export const addTagToContact = createAction({
 
     const response = await systemeIoCommon.apiCall({
       method: HttpMethod.POST,
-      url: `/contacts/${contactId}/tags`,
+      url: `/contacts/${contact}/tags`,
       body: {
         tagId: tagId,
       },

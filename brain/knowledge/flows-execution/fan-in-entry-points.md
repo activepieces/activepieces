@@ -8,7 +8,7 @@ The [barrier](./flow-runs.md) has **one shipped caller**: the `PROCESS_IN_BATCHE
 is still fire-and-forget and still has to be converted. This page is what a caller has to deal with — what
 the shipped one dealt with, and what the next one inherits. Read decision
 [000015](../decisions/000015-fan-in-is-an-event-driven-waitpoint-barrier.md) first for the barrier's shape,
-and [000029](../decisions/000029-batch-children-dispatch-from-a-server-side-worker-job.md) plus
+and [000051](../decisions/000051-batch-children-are-dispatched-by-an-app-queue-job-not-the-engine.md) plus
 [Server-side fan-out](./server-side-fan-out.md) for the dispatcher underneath the shipped one.
 
 **Binding constraint, settled: if it fans out, it must fan in.** No fire-and-forget fan-out action, ever.

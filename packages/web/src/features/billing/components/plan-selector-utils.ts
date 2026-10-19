@@ -2,9 +2,11 @@ import { isNil } from '@activepieces/core-utils';
 import { PurchasablePlan } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { formatUtils } from '@/lib/format-utils';
+
 const FREE_PLAN_ID = 'free';
 const ANNUAL_INTERVAL = 'year';
-const SALES_URL = 'https://activepieces.com/sales';
+const SALES_URL = 'https://www.activepieces.com/sales?ap_cta=app_plan_selector';
 
 function stripPlanInterval(name: string): string {
   return name.replace(/\s*\((annual|monthly|yearly)\)\s*/i, '').trim();
@@ -31,11 +33,9 @@ function findPurchasablePlan({
 function computePricing({
   entry,
   apiPlan,
-  monthlySibling,
 }: {
   entry: PlanCatalogEntry;
   apiPlan?: PurchasablePlan;
-  monthlySibling?: PurchasablePlan;
 }): PlanPricing | null {
   if (entry.key === 'enterprise') {
     return null;
@@ -50,64 +50,54 @@ function computePricing({
     const amount = isNil(apiPlan.price)
       ? apiPlan.priceDisplay ?? ''
       : `$${apiPlan.price}`;
-    return { amount, suffix: t('/mo') };
+    return { amount, note: t('flat per month, billed monthly') };
   }
   if (isNil(apiPlan.price)) {
     return { amount: apiPlan.priceDisplay ?? '', suffix: t('/year') };
   }
   const perMonth = Math.floor(apiPlan.price / 12);
-  const monthlyPrice = monthlySibling?.price;
-  const freeMonths =
-    !isNil(monthlyPrice) && monthlyPrice > 0
-      ? Math.round(12 - apiPlan.price / monthlyPrice)
-      : null;
   return {
     amount: `$${perMonth.toLocaleString()}`,
-    suffix: t('/mo'),
-    freeMonths: !isNil(freeMonths) && freeMonths >= 1 ? freeMonths : null,
-    annualNote: t('billed annually ({total}/year)', {
-      total: `$${apiPlan.price.toLocaleString()}`,
-    }),
+    note: t('flat per month, billed yearly'),
   };
 }
 
-function resolveFeatures({
-  entry,
-  apiPlan,
-}: {
-  entry: PlanCatalogEntry;
-  apiPlan?: PurchasablePlan;
-}): ResolvedPlanFeature[] {
-  return entry.features.flatMap((feature): ResolvedPlanFeature[] => {
-    if (isNil(feature.metric)) {
-      return isNil(feature.label)
-        ? []
-        : [{ label: feature.label, tooltip: feature.tooltip }];
+function creditTopUpFeature(apiPlan?: PurchasablePlan): PlanFeature[] {
+  if (isNil(apiPlan?.creditTopUp)) {
+    return [];
+  }
+  return [
+    {
+      label: t('Auto recharge: {price} per {credits} credits', {
+        price: `$${apiPlan.creditTopUp.price.toLocaleString()}`,
+        credits: formatUtils.formatNumberCompact(apiPlan.creditTopUp.credits),
+      }),
+      tooltip: t(
+        'When your credits run out, auto recharge buys more at this price. It stays off until you turn it on.',
+      ),
+    },
+  ];
+}
+
+function annualSavedMonths(plans: PurchasablePlan[]): number | null {
+  const savedMonths = planCatalog().flatMap((entry) => {
+    const annualPrice = findPurchasablePlan({
+      plans,
+      key: entry.key,
+      cycle: 'year',
+    })?.price;
+    const monthlyPrice = findPurchasablePlan({
+      plans,
+      key: entry.key,
+      cycle: 'month',
+    })?.price;
+    if (isNil(annualPrice) || isNil(monthlyPrice) || monthlyPrice <= 0) {
+      return [];
     }
-    if (feature.metric === 'seats') {
-      return isNil(apiPlan?.includedSeats)
-        ? []
-        : [
-            {
-              label: t('{count, plural, =1 {1 seat} other {# seats}}', {
-                count: apiPlan.includedSeats,
-              }),
-              tooltip: feature.tooltip,
-            },
-          ];
-    }
-    return isNil(apiPlan?.includedCredits)
-      ? []
-      : [
-          {
-            label: creditsLabel({
-              credits: apiPlan.includedCredits,
-              interval: apiPlan.creditsResetInterval,
-            }),
-            tooltip: feature.tooltip,
-          },
-        ];
+    return [Math.round(12 - annualPrice / monthlyPrice)];
   });
+  const mostSaved = Math.max(0, ...savedMonths);
+  return mostSaved >= 1 ? mostSaved : null;
 }
 
 function creditsLabel({
@@ -142,7 +132,7 @@ function actionFor({
 }
 
 function buildSuccessUrl(action: CheckoutAction): string {
-  return `${window.location.origin}/platform/setup/billing/success?action=${action}`;
+  return `${window.location.origin}/platform/billing/success?action=${action}`;
 }
 
 function dropToFreeWarning(additionalSeats: number | null | undefined): string {
@@ -156,119 +146,191 @@ function dropToFreeWarning(additionalSeats: number | null | undefined): string {
   )}`;
 }
 
-const PLAN_CATALOG: PlanCatalogEntry[] = [
-  {
-    key: 'free',
-    name: 'Free',
-    blurb:
-      'Perfect for individuals who want to explore automation without any commitment.',
-    featuresHeader: "What's included:",
-    features: [
-      { metric: 'credits' },
-      { metric: 'seats' },
-      { label: 'Automation flows' },
-      { label: 'Personal project only' },
-      { label: 'Tables' },
-      { label: 'API Keys' },
-    ],
-  },
-  {
-    key: 'plus',
-    name: 'Plus',
-    blurb:
-      'Built for solo builders who automate regularly and need more credits and advanced tools.',
-    featuresHeader: 'Everything in Free, +',
-    features: [
-      { metric: 'credits' },
-      { metric: 'seats' },
-      { label: 'Agents' },
-      { label: '1 team project, MCPs' },
-      { label: 'BYOK' },
-      { label: 'Team analytics' },
-    ],
-  },
-  {
-    key: 'team',
-    name: 'Team',
-    highlighted: true,
-    blurb:
-      'Designed for teams that collaborate on automations and need user management and integrations.',
-    featuresHeader: 'Everything in Plus, +',
-    features: [
-      { metric: 'credits' },
-      { metric: 'seats' },
-      { label: 'Unlimited team projects' },
-      { label: 'SSO' },
-      { label: 'Standard roles' },
-      { label: 'Global connections' },
-      { label: 'Email support' },
-    ],
-  },
-  {
-    key: 'enterprise',
-    name: 'Enterprise',
-    blurb:
-      'For organizations that require enterprise-grade security, compliance, and dedicated support.',
-    featuresHeader: 'Everything in Team, +',
-    features: [
-      {
-        label: 'From 1M credits',
-        tooltip:
-          'Custom monthly AI credit allotment negotiated for your organization.',
-      },
-      {
-        label: 'SSO + SCIM',
-        tooltip:
-          'Single sign-on with automated user provisioning and deprovisioning.',
-      },
-      {
-        label: 'Custom RBAC',
-        tooltip: 'Define custom roles and granular permissions for your team.',
-      },
-      {
-        label: 'Audit logs',
-        tooltip: 'Full activity history across your platform for compliance.',
-      },
-      {
-        label: 'Priority execution',
-        tooltip: 'Higher execution priority and dedicated capacity.',
-      },
-      {
-        label: 'White-label',
-        tooltip:
-          'Fully brand the platform with your own logo, colors, and domain.',
-      },
-      {
-        label: 'Embedding',
-        tooltip:
-          'Embed Activepieces (flows/chat/connections/tables..etc) directly inside your own product.',
-      },
-      {
-        label: 'Piece management',
-        tooltip: 'Control which pieces are available across your platform.',
-      },
-      {
-        label: 'Template management',
-        tooltip: 'Curate and manage flow templates for your team.',
-      },
-      {
-        label: 'Dedicated support',
-        tooltip: 'A dedicated support contact and onboarding assistance.',
-      },
-    ],
-  },
-];
+function planCatalog(): PlanCatalogEntry[] {
+  return [
+    {
+      key: 'free',
+      name: t('Free'),
+      blurb: t(
+        'Perfect for individuals who want to explore automation without any commitment.',
+      ),
+      featuresHeader: t('What you get'),
+      features: [
+        {
+          label: t('1,000 credits a month'),
+          tooltip: t(
+            'A fresh 1,000 credits every month, so there is always room to build and test. One credit runs a whole flow.',
+          ),
+        },
+        {
+          label: t('Unlimited flows'),
+          tooltip: t(
+            'Build as many automations as you want. We never cap the number of flows.',
+          ),
+        },
+        {
+          label: t('Up to 5 users'),
+          tooltip: t(
+            'Invite up to five teammates to build and run automations together.',
+          ),
+        },
+        {
+          label: t('Chat to automation'),
+          tooltip: t(
+            'Chat with your tools and turn the boring work into automations. Still rolling out, so chat may not be on your account yet.',
+          ),
+        },
+        {
+          label: t('Flows, Agents, Tables'),
+          tooltip: t(
+            'Build visual Flows, add Agents and Chat, and keep your data in Tables.',
+          ),
+        },
+        {
+          label: t('MCPs and API access'),
+          tooltip: t(
+            'Serve your tools to any AI assistant over MCP, and manage Activepieces from your own code over the API.',
+          ),
+        },
+      ],
+    },
+    {
+      key: 'plus',
+      name: t('Plus'),
+      blurb: t(
+        'Built for solo builders who automate regularly and need more credits and advanced tools.',
+      ),
+      featuresHeader: t('Everything in Free, plus'),
+      features: [
+        {
+          label: t('10× the Free plan'),
+          tooltip: t(
+            '10,000 credits a month, ten times what the Free plan gets.',
+          ),
+        },
+        {
+          label: t('Up to 5 users'),
+          tooltip: t(
+            'Invite up to five teammates to build and run automations together.',
+          ),
+        },
+        {
+          label: t('Bring your own AI keys'),
+          tooltip: t(
+            'Connect your own AI provider keys and every AI step costs 1 credit. The model cost goes to your AI provider, not to your credits.',
+          ),
+        },
+      ],
+    },
+    {
+      key: 'team',
+      name: t('Team'),
+      highlighted: true,
+      blurb: t(
+        'Designed for teams that collaborate on automations and need user management and integrations.',
+      ),
+      featuresHeader: t('Everything in Plus, plus'),
+      features: [
+        {
+          label: t('5× the Plus plan'),
+          tooltip: t(
+            '50,000 credits a month, five times what the Plus plan gets.',
+          ),
+        },
+        {
+          label: t('Unlimited projects'),
+          tooltip: t(
+            'Projects start on Team: separate workspaces for teams, clients, or environments, and you can create as many as you need.',
+          ),
+        },
+        {
+          label: t('25 users included'),
+          tooltip: t(
+            'The price is flat, not per seat: twenty-five people for one price.',
+          ),
+        },
+        {
+          label: t('SSO and standard roles'),
+          tooltip: t(
+            'Single sign-on plus built-in roles to control who can do what.',
+          ),
+        },
+        {
+          label: t('Global connections'),
+          tooltip: t(
+            'Shared service-account connections available to every project.',
+          ),
+        },
+        {
+          label: t('Email support'),
+          tooltip: t('Reach our team by email whenever you need a hand.'),
+        },
+      ],
+    },
+    {
+      key: 'enterprise',
+      name: t('Enterprise'),
+      blurb: t(
+        'For organizations that require enterprise-grade security, compliance, and dedicated support.',
+      ),
+      featuresHeader: t('Everything in Team, plus'),
+      features: [
+        {
+          label: t('Credits sized to you, yearly'),
+          tooltip: t(
+            'Your allowance runs across the whole year, so a heavy month is covered by a quiet month, and we size the volume to how you run.',
+          ),
+        },
+        {
+          label: t('Dedicated workers'),
+          tooltip: t(
+            'Your own isolated workers on cloud, not shared with anyone else.',
+          ),
+        },
+        {
+          label: t('Execution priority'),
+          tooltip: t(
+            'Set execution priority per project, so the flows that matter run first.',
+          ),
+        },
+        {
+          label: t('SCIM and custom roles'),
+          tooltip: t(
+            'Provision users automatically and define exactly what each role is allowed to do.',
+          ),
+        },
+        {
+          label: t('Releases and Git Sync'),
+          tooltip: t(
+            'Promote changes across environments and keep every flow versioned in your own Git repo.',
+          ),
+        },
+        {
+          label: t('Audit logs and secrets'),
+          tooltip: t(
+            'Track every action, connect your own secret manager, and govern the whole platform centrally.',
+          ),
+        },
+        {
+          label: t('Dedicated support'),
+          tooltip: t('A dedicated contact and priority help from our team.'),
+        },
+      ],
+    },
+  ];
+}
 
 export const planSelectorUtils = {
   stripPlanInterval,
   findPurchasablePlan,
   computePricing,
-  resolveFeatures,
+  annualSavedMonths,
   creditsLabel,
   dropToFreeWarning,
   actionFor,
   buildSuccessUrl,
-  PLAN_CATALOG,
+  planCatalog,
+  creditTopUpFeature,
   FREE_PLAN_ID,
   ANNUAL_INTERVAL,
   SALES_URL,
@@ -283,21 +345,14 @@ export type CheckoutAction = 'create' | 'upgrade' | 'downgrade';
 export type PlanPricing = {
   amount: string;
   suffix?: string;
-  freeMonths?: number | null;
-  annualNote?: string;
+  note?: string;
 };
 
 export type PlanKey = 'free' | 'plus' | 'team' | 'enterprise';
 
 export type PlanFeature = {
-  label?: string;
-  tooltip?: string;
-  metric?: 'seats' | 'credits';
-};
-
-export type ResolvedPlanFeature = {
   label: string;
-  tooltip?: string;
+  tooltip: string;
 };
 
 export type PlanCatalogEntry = {

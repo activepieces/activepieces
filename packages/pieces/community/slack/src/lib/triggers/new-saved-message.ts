@@ -9,7 +9,7 @@ export const newSavedMessageTrigger = createTrigger({
 	name: 'new-saved-message',
 	classification: 'READ',
 	displayName: 'New Saved Message',
-	description: 'Triggers when you save a message.',
+	description: 'Triggers when a message is saved.',
 	aiMetadata: {
 		description:
 			'Fires when the connected Slack user saves (stars) a message. Only star_added events whose saved item is a message fire; saving other item types does not trigger. The event payload is the saved item, including its channel and message reference.',
@@ -34,7 +34,6 @@ export const newSavedMessageTrigger = createTrigger({
 	run: async (context) => {
 		const payloadBody = context.payload.body as PayloadBody;
 
-		// check if it's saved message
 		if (payloadBody.event.type === 'star_added' && payloadBody.event.item.type ==='message') {
 			return [payloadBody.event.item];
 		}

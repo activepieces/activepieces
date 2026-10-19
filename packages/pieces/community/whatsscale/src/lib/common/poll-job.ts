@@ -16,5 +16,5 @@ export async function pollJob(apiKey: string, jobId: string): Promise<Record<str
     await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
   }
 
-  throw new Error('Job timed out after 20 attempts');
+  throw new Error(`Job ${jobId} timed out after ${MAX_ATTEMPTS} attempts`);
 }

@@ -169,7 +169,8 @@ export const zohoBookingsCommon = {
     });
     console.log(JSON.stringify(response.body.response));
 
-    return response.body?.response?.returnvalue?.response || [];
+    const appointments = response.body?.response?.returnvalue?.response;
+    return Array.isArray(appointments) ? appointments : [];
   },
 
   // Schemas

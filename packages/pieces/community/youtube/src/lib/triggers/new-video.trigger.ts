@@ -15,7 +15,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { channelIdentifier } from '../common/props';
 import { newVideoTriggerOutputSchema } from '../output-schemas';
-import { isNil } from '@activepieces/pieces-framework';
+import { isNil, tryCatch } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { load as cheerioLoad } from 'cheerio';
 import FeedParser from 'feedparser';
@@ -24,7 +24,7 @@ export const youtubeNewVideoTrigger = createTrigger({
   name: 'new-video',
   classification: 'READ',
   displayName: 'New Video In Channel',
-  description: 'Runs when a new video is added to a YouTube channel',
+  description: 'Runs when a new video is added to a YouTube channel.',
   aiMetadata: {
     description:
       'Fires when a new video is published on the specified YouTube channel. The event represents a single newly detected video from the channel RSS feed, including its title, link, video ID, publish date, author, and thumbnail.',
@@ -343,15 +343,14 @@ function getId(item: { id?: string; guid?: string }) {
 }
 
 async function getChannelId(urlOrId: string) {
-  if (urlOrId.trim().startsWith('@')) {
-    urlOrId = 'https://www.youtube.com/' + urlOrId;
+  const trimmed = urlOrId.trim();
+  const pageUrl = await toChannelPageUrl(trimmed);
+  if (isNil(pageUrl)) {
+    return trimmed;
   }
-  if (!urlOrId.includes('https')) {
-    return urlOrId;
-  }
-  const response = await httpClient.sendRequest<any>({
+  const response = await httpClient.sendRequest<string>({
     method: HttpMethod.GET,
-    url: urlOrId,
+    url: pageUrl,
   });
   const $ = cheerioLoad(response.body);
 
@@ -362,6 +361,27 @@ async function getChannelId(urlOrId: string) {
   }
 
   throw new Error('Invalid YouTube channel URL');
+}
+
+async function toChannelPageUrl(value: string): Promise<string | null> {
+  if (value.startsWith('@')) {
+    return `https://www.youtube.com/${value}`;
+  }
+  if (!value.includes('://') && !value.includes('youtube.com/')) {
+    return null;
+  }
+  const withScheme = value.includes('://') ? value : `https://${value}`;
+  const { data: parsed } = await tryCatch(async () => new URL(withScheme));
+  if (isNil(parsed) || !isYoutubeUrl(parsed)) {
+    throw new Error('Invalid YouTube channel URL');
+  }
+  return `https://www.youtube.com${parsed.pathname}`;
+}
+
+function isYoutubeUrl(url: URL): boolean {
+  const host = url.hostname.toLowerCase();
+  const isWeb = url.protocol === 'https:' || url.protocol === 'http:';
+  return isWeb && (host === 'youtube.com' || host.endsWith('.youtube.com'));
 }
 
 async function getRssItems(channelId: string): Promise<any[]> {

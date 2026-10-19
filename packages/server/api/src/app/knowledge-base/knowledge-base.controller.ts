@@ -1,12 +1,11 @@
-import { ActivepiecesError, ApMultipartFile, ErrorCode, isMultipartFile, Permission, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ApMultipartFile, ErrorCode, isMultipartFile, Permission } from '@activepieces/core-utils'
 import { EMBEDDING_DIMENSIONS } from '@activepieces/server-utils'
-import { FileCompression, FileType, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { fileService } from '../file/file.service'
 import { attachMultipartFieldsToBody } from '../helper/multipart-body'
 import { knowledgeBaseService } from './knowledge-base.service'
 
@@ -43,38 +42,9 @@ export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) =>
             })
         }
 
-        const savedFile = await fileService(request.log).save({
-            projectId: request.projectId,
-            data: file.data,
-            size: file.data.length,
-            type: FileType.KNOWLEDGE_BASE,
-            compression: FileCompression.NONE,
-            fileName: file.filename,
-        })
-
-        const kbFile = await knowledgeBaseService(request.log).createFile({
-            projectId: request.projectId,
-            fileId: savedFile.id,
-            displayName,
-        })
-
-        const { data: chunks, error } = await tryCatch(
-            () => knowledgeBaseService(request.log).extractChunks({
-                projectId: request.projectId,
-                knowledgeBaseFileId: kbFile.id,
-            }),
-        )
-        if (!error && chunks.length > 0) {
-            await knowledgeBaseService(request.log).storeChunks({
-                projectId: request.projectId,
-                knowledgeBaseFileId: kbFile.id,
-                chunks: chunks.map((content, i) => ({
-                    content,
-                    chunkIndex: i,
-                    metadata: { chunkIndex: i, totalChunks: chunks.length },
-                })),
-            })
-        }
+        const service = knowledgeBaseService(request.log)
+        const embedFn = await service.embedderFor({ projectId: request.projectId, platformId: request.principal.platform.id })
+        const kbFile = await service.uploadFile({ projectId: request.projectId, data: file.data, fileName: file.filename, displayName, embedFn })
 
         return reply.status(StatusCodes.CREATED).send(kbFile)
     })

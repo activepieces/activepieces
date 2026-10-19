@@ -1,4 +1,3 @@
-import { AIProviderName } from '@activepieces/core-utils';
 import { AgentToolType } from '@activepieces/shared';
 import type {
   AgentKnowledgeBaseTool,
@@ -8,6 +7,7 @@ import type {
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +19,8 @@ import {
   AgentMcpDialog,
   KnowledgeBaseSection,
 } from '@/features/agents';
+import { AddRow } from '@/features/agents/agent-tools/components/add-row';
+import { cn } from '@/lib/utils';
 
 import { AgentPieceDialog } from './piece-tool-dialog';
 
@@ -32,7 +34,7 @@ const icons = [
 interface AgentToolsProps {
   toolsField: AgentFormField;
   disabled?: boolean;
-  selectedProvider?: AIProviderName;
+  layout?: 'card' | 'rows';
 }
 
 type AgentFormField = {
@@ -43,7 +45,7 @@ type AgentFormField = {
 export const AgentTools = ({
   disabled,
   toolsField: agentToolsField,
-  selectedProvider,
+  layout = 'card',
 }: AgentToolsProps) => {
   const tools = Array.isArray(agentToolsField.value)
     ? (agentToolsField.value as AgentTool[])
@@ -72,11 +74,13 @@ export const AgentTools = ({
       return acc;
     }, {});
 
+  const asRows = layout === 'rows';
+
   return (
     <div>
-      <h2 className="text-sm font-medium">{t('Agent Tools')}</h2>
+      {!asRows && <h2 className="text-sm font-medium">{t('Agent Tools')}</h2>}
 
-      <div className="mt-2">
+      <div className={cn(!asRows && 'mt-2')}>
         {flowTools.length +
           mcpTools.length +
           Object.keys(pieceToToolMap).length >
@@ -111,37 +115,48 @@ export const AgentTools = ({
               )}
             </Accordion>
             <AddToolDropdown disabled={disabled} align="start">
-              <Button variant="outline" className="mt-2">
-                <Plus className="size-4 mr-2" />
-                {t('Add')}
-              </Button>
+              {asRows ? (
+                <div className="mt-[7px]">
+                  <AddRow label={t('Add tool')} disabled={disabled} />
+                </div>
+              ) : (
+                <Button variant="outline" className="mt-2">
+                  <Plus className="size-4 mr-2" />
+                  {t('Add')}
+                </Button>
+              )}
             </AddToolDropdown>
           </>
+        ) : asRows ? (
+          <AddToolDropdown disabled={disabled} align="start">
+            <AddRow label={t('Add tool')} disabled={disabled} />
+          </AddToolDropdown>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-4 py-8 text-center">
+          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-panel px-4 py-8 text-center">
             <div className="flex items-center">
               {icons.slice(0, 4).map((icon, index) => (
-                <div
+                <span
                   key={icon}
-                  className="relative flex size-9 items-center justify-center rounded-full border bg-background"
+                  className="relative"
                   style={{ marginLeft: index === 0 ? 0 : -10 }}
                 >
-                  <img
+                  <LogoPlate
                     src={icon}
-                    alt={icon}
-                    className="size-4 object-contain"
+                    alt=""
+                    border
+                    className="size-9 rounded-full p-2.5"
                   />
-                </div>
+                </span>
               ))}
               <div
-                className="relative flex size-9 items-center justify-center rounded-full border text-[10px] bg-background text-foreground font-medium"
+                className="relative flex size-9 items-center justify-center rounded-full border text-xs bg-gray-1 text-gray-12 font-medium"
                 style={{ marginLeft: -10 }}
               >
                 <span>+500</span>
               </div>
             </div>
 
-            <p className="text-sm font-medium text-muted-foreground">
+            <p className="text-sm font-medium text-gray-11">
               {t('Connect apps, flows, MCPs and more.')}
             </p>
 
@@ -155,14 +170,15 @@ export const AgentTools = ({
         )}
       </div>
 
-      <KnowledgeBaseSection
-        disabled={disabled}
-        tools={kbTools}
-        allTools={tools}
-        removeTool={removeTool}
-        onToolsUpdate={onToolsUpdate}
-        selectedProvider={selectedProvider}
-      />
+      {!asRows && (
+        <KnowledgeBaseSection
+          disabled={disabled}
+          tools={kbTools}
+          allTools={tools}
+          removeTool={removeTool}
+          onToolsUpdate={onToolsUpdate}
+        />
+      )}
 
       <AgentFlowToolDialog onToolsUpdate={onToolsUpdate} tools={tools} />
       <AgentPieceDialog tools={tools} onToolsUpdate={onToolsUpdate} />

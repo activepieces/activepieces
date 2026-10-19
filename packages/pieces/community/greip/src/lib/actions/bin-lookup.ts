@@ -6,6 +6,7 @@ import { greipApiCall } from '../common/client';
 export const binLookup = createAction({
   auth: greipAuth,
   name: 'bin_lookup',
+  classification: 'READ',
   displayName: 'BIN Lookup',
   description: 'Look up details of a Bank Identification Number (BIN) or Issuer Identification Number (IIN)',
   audience: 'both',

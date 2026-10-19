@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { PersonalizationIdentity } from '../personalization/chat-personalization-service'
+import { PersonalizationIdentity } from '../personalization/personalization-view'
 
 function fullName({ firstName, lastName }: { firstName: string, lastName: string }): string {
     return [firstName, lastName].map((part) => part.trim()).filter((part) => part.length > 0).join(' ')
@@ -32,7 +32,7 @@ function buildUserIdentityNote({ firstName, lastName, email, platformName, ident
     const lines = [
         '',
         '',
-        '## Who you\'re talking to',
+        IDENTITY_HEADING,
         name.length > 0
             ? `You're helping **${name}** (${email}). Use their first name when it feels natural.`
             : `You're helping the person at **${email}**.`,
@@ -70,9 +70,12 @@ const GENERIC_EMAIL_DOMAINS = new Set([
     'fastmail.com', 'hey.com', 'tutanota.com', 'qq.com', '163.com', '126.com',
 ])
 
+const IDENTITY_HEADING = '## Who you\'re talking to'
+
 export const agentUserIdentity = {
     buildNote: buildUserIdentityNote,
     companyHintFromEmail,
+    heading: IDENTITY_HEADING,
 }
 
 export type UserIdentity = {
