@@ -11,6 +11,7 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { workerCapacity } from '../../machine/worker-capacity'
+import { flowWorkerGroupService } from '../../worker-groups/flow-worker-group.service'
 import { platformWorkerGroupService } from '../../worker-groups/platform-worker-group.service'
 import { projectWorkerGroupService } from '../../worker-groups/project-worker-group.service'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
@@ -22,6 +23,11 @@ const ParkedMember = z.tuple([z.string(), z.string(), z.number()])
 const FREE_CONCURRENT_JOBS_LIMIT = 5
 const SELF_SERVE_CONCURRENT_JOBS_LIMIT = 15
 const ENTERPRISE_CONCURRENT_JOBS_LIMIT = 30
+
+async function isPinnedToFlowGroup(jobData: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<boolean> {
+    const { data: flowGroupId } = await tryCatch(() => flowWorkerGroupService(log).getFlowWorkerGroup({ flowId: jobData.flowId }))
+    return !isNil(flowGroupId)
+}
 
 function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
     if (!system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)) {
@@ -235,6 +241,11 @@ export const rateLimiterInterceptor: JobInterceptor = {
             return { verdict: InterceptorVerdict.ALLOW }
         }
 
+        if (await isPinnedToFlowGroup(jobData, log)) {
+            log.debug({ job: { id: jobId }, flow: { id: jobData.flowId } }, '[rateLimiterInterceptor] Flow is pinned to a worker group, skipping rate limit')
+            return { verdict: InterceptorVerdict.ALLOW }
+        }
+
         const allowed = await tryAcquireSlot({ jobId, jobData, job, log })
         if (allowed) {
             log.debug({ job: { id: jobId }, project: { id: jobData.projectId } }, '[rateLimiterInterceptor] Job allowed')
@@ -252,6 +263,9 @@ export const rateLimiterInterceptor: JobInterceptor = {
 
     async onJobFinished({ jobId, jobData, log }): Promise<void> {
         if (!shouldContinue(jobData)) {
+            return
+        }
+        if (await isPinnedToFlowGroup(jobData, log)) {
             return
         }
         const effectivePoolId = await releaseSlot({ jobId, jobData, log })
