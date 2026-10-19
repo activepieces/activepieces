@@ -56,6 +56,19 @@ async function backfillMarkedComplete(): Promise<boolean> {
     return rows.length > 0
 }
 
+async function resetBackfill(): Promise<void> {
+    await ds.query('DELETE FROM "background_migrations" WHERE "name" = $1', [new BackfillPieceTranslation1872000000000().name])
+    await ds.query('DELETE FROM "piece_translation" WHERE "pieceMetadataId" = ANY($1)', [seededIds])
+}
+
+async function completionRecords(): Promise<number> {
+    const [{ count }] = await ds.query(
+        'SELECT count(*)::int AS "count" FROM "background_migrations" WHERE "name" = $1 AND "executed_at" IS NOT NULL',
+        [new BackfillPieceTranslation1872000000000().name],
+    )
+    return count
+}
+
 async function tableExists(): Promise<boolean> {
     const [{ exists }] = await ds.query('SELECT to_regclass($1) IS NOT NULL AS "exists"', ['piece_translation'])
     return exists
@@ -94,6 +107,26 @@ describe('piece translation migrations', () => {
             { pieceMetadataId: translated.id, locale: LocalesEnum.FRENCH, translations: { 'Send a message': 'Envoyer un message' } },
             { pieceMetadataId: dirtyTranslations.id, locale: LocalesEnum.JAPANESE, translations: { 'Send': '送信  😀', 'Literal': 'a \\u0000 b' } },
         ])
+    })
+
+    it('runs the backfill once when several servers start the runner at the same time', async () => {
+        await resetBackfill()
+        const backfillBody = vi.spyOn(BackfillPieceTranslation1872000000000.prototype, 'up')
+
+        await Promise.all(Array.from({ length: 4 }, () => runBackfillThroughRunner()))
+
+        expect(backfillBody).toHaveBeenCalledTimes(1)
+        expect(await translationRows()).toHaveLength(4)
+        expect(await completionRecords()).toBe(1)
+        backfillBody.mockRestore()
+    })
+
+    it('stays correct when backfills overlap without the lock', async () => {
+        await resetBackfill()
+
+        await Promise.all(Array.from({ length: 3 }, () => runBackfillDirectly()))
+
+        expect(await translationRows()).toHaveLength(4)
     })
 
     it('rolling the table back clears the backfill mark, so re-upgrading copies the rows again', async () => {
