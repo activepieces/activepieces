@@ -10,7 +10,7 @@ import { shouldBlockRunOnCredits } from '../platform/billing-provider'
 import { barrierQueue } from './barrier-queue'
 import { BarrierFanOutPayload, BarrierJobData, barrierSourceKey } from './barrier-queue-factory'
 import { barrierService, SignalClaim } from './barrier-service'
-import { Waitpoint, WaitpointStatus } from './waitpoint-types'
+import { WaitpointStatus } from './waitpoint-types'
 
 export async function handleFanOutDispatch({ data, log }: JobParams): Promise<void> {
     const barrier = await barrierService(log).findById({ barrierId: data.barrierId, projectId: data.projectId })
@@ -36,7 +36,7 @@ export async function handleFanOutDispatch({ data, log }: JobParams): Promise<vo
         parentRunId: barrier.flowRunId,
         entryStepName: source.entryStepName,
     })
-    const outcome = await dispatchChunks({ data, barrier, source, target, log })
+    const outcome = await dispatchChunks({ data, source, target, log })
     switch (outcome) {
         case 'barrier-closed':
             log.info({ waitpoint: { id: data.barrierId } }, '[fanOutDispatcher] The barrier was released or cancelled mid-fan-out, stopping without retrying')
@@ -67,7 +67,7 @@ export async function handleFanOutDispatchGaveUp({ data, error, reason, log }: H
     log.error({ error, waitpoint: { id: data.barrierId }, giveUpReason: reason, notDispatchedCount }, '[fanOutDispatcher] Dispatch gave up, marking the unclaimed signals undispatched; signals already claimed keep their live children and release the barrier once those report')
 }
 
-async function dispatchChunks({ data, barrier, source, target, log }: DispatchChunksParams): Promise<DispatchOutcome> {
+async function dispatchChunks({ data, source, target, log }: DispatchChunksParams): Promise<DispatchOutcome> {
     let afterSequence: number | null = START_OF_BARRIER
     while (!isNil(afterSequence)) {
         if (await shouldBlockRunOnCredits({ platformId: target.platformId, environment: target.environment, log })) {
@@ -90,7 +90,7 @@ async function dispatchChunks({ data, barrier, source, target, log }: DispatchCh
         if (isNil(chunk)) {
             return 'barrier-closed'
         }
-        const outcomes = await enqueueChunk({ data, barrier, source, target, claims: chunk.claims, childRuns: chunk.childRuns, log })
+        const outcomes = await enqueueChunk({ data, source, target, claims: chunk.claims, childRuns: chunk.childRuns, log })
         if (outcomes.includes('barrier-closed')) {
             return 'barrier-closed'
         }
@@ -99,13 +99,13 @@ async function dispatchChunks({ data, barrier, source, target, log }: DispatchCh
     return 'dispatched'
 }
 
-async function enqueueChunk({ data, barrier, source, target, claims, childRuns, log }: EnqueueChunkParams): Promise<EnqueueOutcome[]> {
+async function enqueueChunk({ data, source, target, claims, childRuns, log }: EnqueueChunkParams): Promise<EnqueueOutcome[]> {
     const limit = pLimit(MAX_ENQUEUES_IN_FLIGHT)
     const results = await Promise.allSettled(claims.map((claim, index) => limit(() => enqueueChild({
         data,
         claim,
         childRun: childRuns[index],
-        seedSteps: { ...source.seedSteps, [barrier.stepName]: { type: BATCH_STEP_TYPE, status: 'SUCCEEDED', input: {}, output: { items: source.batches[claim.sequence] ?? [] } } },
+        seedSteps: { ...source.seedSteps, [source.batchStepName]: { type: BATCH_STEP_TYPE, status: 'SUCCEEDED', input: {}, output: { items: source.batches[claim.sequence] ?? [] } } },
         target,
         log,
     }))))
@@ -193,7 +193,6 @@ type FanOutDispatchGaveUpParams = {
 
 type DispatchChunksParams = {
     data: BarrierJobData
-    barrier: Waitpoint
     source: BarrierFanOutPayload
     target: ChildDispatchTarget
     log: FastifyBaseLogger

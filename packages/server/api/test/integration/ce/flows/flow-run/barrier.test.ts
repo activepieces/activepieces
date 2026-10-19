@@ -37,6 +37,8 @@ let ctx: TestContext
 
 const FAN_OUT_ENTRY_STEP = 'step_1'
 
+const FAN_OUT_BATCH_STEP = 'fan_out'
+
 beforeAll(async () => {
     app = await setupTestEnvironment()
 })
@@ -194,20 +196,22 @@ async function giveUp(barrierId: string) {
     })
 }
 
-async function createFanOutBarrier({ flowRunId, items, batchSize, stepName }: {
+async function createFanOutBarrier({ flowRunId, items, batchSize, stepName, batchStepName }: {
     flowRunId: string
     items: unknown[]
     batchSize: number
     stepName?: string
+    batchStepName?: string
 }) {
     return barrierService(app.log).create({
         flowRunId,
         projectId: ctx.project.id,
         platformId: ctx.platform.id,
-        stepName: stepName ?? 'fan_out',
+        stepName: stepName ?? FAN_OUT_BATCH_STEP,
         version: 'V1',
         fanOut: {
             entryStepName: FAN_OUT_ENTRY_STEP,
+            batchStepName: batchStepName ?? FAN_OUT_BATCH_STEP,
             batchSize,
             items,
             seedSteps: {},
@@ -262,6 +266,19 @@ function failNextChildEnqueue({ beforeFailure }: { beforeFailure?: () => Promise
         return realJobQueue(app.log).add(...args)
     })
     vi.spyOn(jobQueueModule, 'jobQueue').mockImplementation((log) => ({ ...realJobQueue(log), add }))
+}
+
+async function dispatchReadingChildPayloads(barrierId: string) {
+    const realJobQueue = jobQueueModule.jobQueue
+    const add = vi.fn(async (...args: Parameters<ReturnType<typeof realJobQueue>['add']>) => realJobQueue(app.log).add(...args))
+    vi.spyOn(jobQueueModule, 'jobQueue').mockImplementation((log) => ({ ...realJobQueue(log), add }))
+    try {
+        await dispatch(barrierId)
+        return add.mock.calls.map(([job]) => 'payload' in job.data ? job.data.payload : null)
+    }
+    finally {
+        vi.restoreAllMocks()
+    }
 }
 
 async function waitFor(condition: () => Promise<boolean>): Promise<void> {
@@ -1358,6 +1375,21 @@ describe('fan-out dispatch', () => {
         const children = await listChildren(barrier.id)
         expect(children).toHaveLength(3)
         expect(children.map((child) => child.dispatchIndex).sort()).toEqual([0, 1, 2])
+    })
+
+    it('seeds each child under the batch step name, so a batch inside a loop still reads its items', async () => {
+        const { flowRun } = await createFanOutParentRun(FlowRunStatus.RUNNING)
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3], batchSize: 2, stepName: 'loop_1:3/batch_1', batchStepName: 'batch_1' })
+
+            const payloads = await dispatchReadingChildPayloads(barrier.id)
+
+            expect(payloads).toHaveLength(2)
+            expect(payloads).toEqual(expect.arrayContaining([
+                { type: 'inline', value: { batch_1: expect.objectContaining({ status: 'SUCCEEDED', output: { items: [1, 2] } }) } },
+                { type: 'inline', value: { batch_1: expect.objectContaining({ status: 'SUCCEEDED', output: { items: [3] } }) } },
+            ]))
+        })
     })
 
     it('stops without dispatching when the barrier was cancelled, and its signals are gone by cascade', async () => {
