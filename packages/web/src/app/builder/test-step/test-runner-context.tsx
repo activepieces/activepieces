@@ -3,6 +3,7 @@ import {
   FlowActionType,
   FlowTrigger,
   FlowTriggerType,
+  PieceAudienceFilter,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import React, {
@@ -111,6 +112,7 @@ const TriggerTestRunnerProvider = ({
     name: pieceName,
     version: pieceVersion,
     enabled: isPieceTrigger && !!pieceName,
+    audience: PieceAudienceFilter.ALL,
   });
 
   const trigger = triggerName ? pieceModel?.triggers?.[triggerName] : undefined;

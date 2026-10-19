@@ -10,6 +10,7 @@ export {
   piecesHooks,
   piecesMutations,
   pieceCacheUtils,
+  pieceQueryKey,
   pieceQueryOptions,
 } from './hooks/pieces-hooks';
 export { stepsHooks } from './hooks/steps-hooks';
