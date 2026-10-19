@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import { argv } from 'node:process'
 import { execSync } from 'node:child_process'
+import { tryCatchSync } from '@activepieces/core-utils'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
@@ -92,9 +93,8 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   assertNoUnpublishableDeps(`${outputPath}/package.json`)
   assertNoSemverRanges(`${outputPath}/package.json`)
 
-  try {
-    execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })
-  } catch (error) {
+  const { error } = tryCatchSync(() => execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' }))
+  if (error) {
     if (!isVersionOnRegistry({ name: json.name, version })) {
       throw error
     }
@@ -106,11 +106,8 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
 }
 
 function isVersionOnRegistry({ name, version }: { name: string, version: string }): boolean {
-  try {
-    return execSync(`npm view ${name}@${version} version`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() === version
-  } catch {
-    return false
-  }
+  const { data } = tryCatchSync(() => execSync(`npm view ${name}@${version} version`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }))
+  return data?.trim() === version
 }
 
 const main = async (): Promise<void> => {
