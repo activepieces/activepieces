@@ -81,6 +81,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Plan Created": "New Plan Created",
   "New Task Created": "New Task Created",
   "New Task Assigned to User": "New Task Assigned to User",

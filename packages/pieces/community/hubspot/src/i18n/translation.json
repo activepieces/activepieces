@@ -301,6 +301,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New or Updated Company": "New or Updated Company",
   "New or Updated Contact": "New or Updated Contact",
   "New Deal Property Change": "New Deal Property Change",

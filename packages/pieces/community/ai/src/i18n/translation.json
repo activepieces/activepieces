@@ -47,5 +47,9 @@
   "Leave empty when the step runs a saved agent: the model comes from the agent.": "Leave empty when the step runs a saved agent: the model comes from the agent.",
   "Maximum number of steps before the agent stops.": "Maximum number of steps before the agent stops.",
   "Simple": "Simple",
-  "Advanced": "Advanced"
+  "Advanced": "Advanced",
+  "Request": "Request",
+  "Image": "Image",
+  "Extract from": "Extract from",
+  "Data to extract": "Data to extract"
 }
