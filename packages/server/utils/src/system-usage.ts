@@ -223,14 +223,20 @@ type CfsCounters = { throttled: number, periods: number }
 export type CpuPressure = { cpuStealPercentage?: number, cpuThrottledPercentage?: number }
 
 async function readProcessTreeMemoryBytes(rootPids: number[]): Promise<Map<number, number>> {
-    const processTrees: { rootPid: number, selfAndDescendantPids: number[] }[] = []
-    for (const rootPid of rootPids) {
-        const { data: selfAndDescendantPids } = await tryCatch(() => pidtree(rootPid, { root: true }))
-        processTrees.push({ rootPid, selfAndDescendantPids: selfAndDescendantPids ?? [] })
-    }
+    const processTable = await pidtree(-1, { advanced: true })
+    const childrenByParent = processTable.reduce((acc, { ppid, pid }) => acc.set(ppid, [...(acc.get(ppid) ?? []), pid]), new Map<number, number[]>())
+    const processTrees = rootPids.map((rootPid) => ({ rootPid, selfAndDescendantPids: collectSelfAndDescendants({ rootPid, childrenByParent }) }))
     const statsByPid = await pidusage([...new Set(processTrees.flatMap(({ selfAndDescendantPids }) => selfAndDescendantPids))])
     return new Map(processTrees.map(({ rootPid, selfAndDescendantPids }) => [
         rootPid,
         selfAndDescendantPids.reduce((total, pid) => total + (statsByPid[pid]?.memory ?? 0), 0),
     ]))
+}
+
+function collectSelfAndDescendants({ rootPid, childrenByParent }: { rootPid: number, childrenByParent: Map<number, number[]> }): number[] {
+    const pids = [rootPid]
+    for (let i = 0; i < pids.length; i++) {
+        pids.push(...(childrenByParent.get(pids[i]) ?? []).filter((child) => !pids.includes(child)))
+    }
+    return pids
 }

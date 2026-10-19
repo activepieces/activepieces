@@ -286,14 +286,7 @@ describe('getCpuUsage', () => {
 
 describe('getProcessTreeMemoryBytesByPids', () => {
     function mockProcessTable(list: { pid: number, ppid: number, memory: number }[]) {
-        mockPidtree.mockImplementation((async (rootPid: number) => {
-            if (!list.some(({ pid }) => pid === rootPid)) throw new Error('No matching pid found')
-            const selfAndDescendantPids = [rootPid]
-            for (const pid of selfAndDescendantPids) {
-                selfAndDescendantPids.push(...list.filter(({ ppid }) => ppid === pid).map(({ pid: childPid }) => childPid))
-            }
-            return selfAndDescendantPids
-        }) as never)
+        mockPidtree.mockResolvedValue(list.map(({ pid, ppid }) => ({ pid, ppid })) as never)
         mockPidusage.mockImplementation((async (pids: number[]) => Object.fromEntries(
             list.filter(({ pid }) => pids.includes(pid)).map(({ pid, memory }) => [pid, { memory }]),
         )) as never)
@@ -317,17 +310,18 @@ describe('getProcessTreeMemoryBytesByPids', () => {
         expect(result.get(999)).toBe(50)
     })
 
-    it('reads usage only once for many pids', async () => {
+    it('scans the process table and reads usage only once for many pids', async () => {
         mockProcessTable([
             { pid: 100, ppid: 1, memory: 10 },
             { pid: 200, ppid: 1, memory: 20 },
         ])
         await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
+        expect(mockPidtree).toHaveBeenCalledTimes(1)
         expect(mockPidusage).toHaveBeenCalledTimes(1)
     })
 
     it('counts a pid that exited between the scan and the read as 0', async () => {
-        mockPidtree.mockResolvedValue([100, 200] as never)
+        mockPidtree.mockResolvedValue([{ pid: 100, ppid: 1 }, { pid: 200, ppid: 100 }] as never)
         mockPidusage.mockResolvedValue({ 100: { memory: 10 } } as never)
         const result = await systemUsage.getProcessTreeMemoryBytesByPids([100])
         expect(result.get(100)).toBe(10)
@@ -342,8 +336,16 @@ describe('getProcessTreeMemoryBytesByPids', () => {
         expect(result.get(200)).toBe(20)
     })
 
+    it('maps every pid to 0 when scanning the process table fails', async () => {
+        mockPidtree.mockRejectedValue(new Error('ps failed'))
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
+        expect(result.get(100)).toBe(0)
+        expect(result.get(200)).toBe(0)
+        expect(mockPidusage).not.toHaveBeenCalled()
+    })
+
     it('maps every pid to 0 when reading usage fails', async () => {
-        mockPidtree.mockResolvedValue([100] as never)
+        mockPidtree.mockResolvedValue([{ pid: 100, ppid: 1 }] as never)
         mockPidusage.mockRejectedValue(new Error('read failed'))
         const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
         expect(result.get(100)).toBe(0)
