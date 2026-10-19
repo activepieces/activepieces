@@ -15,11 +15,24 @@ import { workdayProps } from '../common/props';
 import { workdayUtils } from '../common/utils';
 
 const props = {
-	module: workdayProps.module({ required: true }),
-	businessObject: workdayProps.businessObject({ required: true }),
-	dateField: workdayProps.dateField({ required: false }),
+	source: workdayProps.source({ required: false }),
+	module: workdayProps.module({
+		required: false,
+		description:
+			'Workday functional area: Recruiting, Onboarding, or HR Services & Time Tracking. Only used with the REST source.',
+	}),
+	businessObject: workdayProps.businessObject({
+		required: true,
+		changeTrackingOnly: true,
+	}),
+	dateField: workdayProps.dateField({
+		required: false,
+		description:
+			'Field used to detect new/updated records (e.g. `lastFunctionallyUpdated`). Only used with the REST source.',
+	}),
 	additionalFilters: Property.Json({
 		displayName: 'Additional Filters (JSON)',
+		description: 'Optional REST query parameters. Only used with the REST source.',
 		required: false,
 	}),
 };
@@ -30,11 +43,26 @@ const polling: Polling<
 > = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+		if (propsValue.source === 'wws') {
+			const { records, updatedThroughEpochMS } = await workdayApi.listChangedSoapObjects({
+				auth,
+				object: workdayUtils.resolveSoapObject({
+					value: propsValue.businessObject['objectType'],
+				}),
+				sinceEpochMS: lastFetchEpochMS,
+			});
+			return records.map((record) => ({
+				epochMilliSeconds: updatedThroughEpochMS,
+				data: record,
+			}));
+		}
 		const businessObject = workdayUtils.resolveBusinessObject({
 			module: propsValue.module,
 			selection: propsValue.businessObject,
 		});
-		const module = workdayUtils.toWorkdayModule({ module: propsValue.module });
+		const module = workdayUtils.toWorkdayModule({
+			module: propsValue.module ?? '',
+		});
 		const isTest = lastFetchEpochMS === 0;
 		const updatedAfter = isTest
 			? dayjs().subtract(7, 'day').toISOString()
@@ -69,11 +97,10 @@ export const newOrUpdatedBusinessObjectTrigger = createTrigger({
 	name: 'new_or_updated_business_object',
 	classification: 'READ',
 	displayName: 'New/Updated Business Object',
-	description:
-		'Triggers when a business object is created or updated in Recruiting, Onboarding, or HR Services & Time Tracking.',
+	description: 'Triggers when a Workday business object is created or updated.',
 	aiMetadata: {
 		description:
-			'Fires once per Workday business object created or changed since the last poll, for the module (Recruiting, Onboarding, or HR Services & Time Tracking) and object type selected, or for a custom REST path. Recency is judged by a configurable date field, defaulting to lastFunctionallyUpdated, and optional JSON filters narrow the polled set. Use when downstream work should run per record; use the batch variant to handle all changed records in one run.',
+			"Fires once per Workday business object created or changed since the last poll. With the SOAP source (the default, needs ISU credentials) it uses Workday's transaction log for Worker, Job Profile, Position, Job Requisition, or Evergreen Requisition. With the REST source it polls a module's Worker, Case, or Time Entry collection or a custom REST path, judging recency by a configurable date field (default lastFunctionallyUpdated) with optional JSON filters. Use when downstream work should run per record; use the batch variant to handle all changed records in one run.",
 	},
 	props,
 	sampleData: {

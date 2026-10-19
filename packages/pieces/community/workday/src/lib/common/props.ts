@@ -25,18 +25,44 @@ function module<R extends boolean>({
 	});
 }
 
+function source<R extends boolean>({
+	required,
+	displayName = 'Source',
+	description = 'Workday Web Services (SOAP) reaches every object in the list and needs ISU credentials on the connection. REST covers fewer objects.',
+}: PropParams<R>) {
+	return Property.StaticDropdown({
+		displayName,
+		description,
+		required,
+		defaultValue: 'wws',
+		options: {
+			disabled: false,
+			options: [
+				{ label: 'Workday Web Services (SOAP)', value: 'wws' },
+				{ label: 'REST', value: 'rest' },
+			],
+		},
+	});
+}
+
 function businessObject<R extends boolean>({
 	required,
 	displayName = 'Business Object',
 	description,
-}: PropParams<R>) {
+	changeTrackingOnly = false,
+}: PropParams<R> & { changeTrackingOnly?: boolean }) {
 	return Property.DynamicProperties({
 		displayName,
 		description,
 		required,
-		refreshers: ['module'],
+		refreshers: ['source', 'module'],
 		auth: workdayAuth,
-		props: async ({ module }): Promise<DynamicPropsValue> => {
+		props: async ({ source, module }): Promise<DynamicPropsValue> => {
+			if (source === 'wws') {
+				return {
+					objectType: soapBusinessObjectType({ changeTrackingOnly }),
+				};
+			}
 			if (typeof module !== 'string' || !module) {
 				return {
 					objectType: Property.ShortText({
@@ -151,6 +177,22 @@ function businessObjectType({ module }: { module: string }) {
 	});
 }
 
+function soapBusinessObjectType({ changeTrackingOnly }: { changeTrackingOnly: boolean }) {
+	return Property.StaticDropdown({
+		displayName: 'Business Object',
+		description: changeTrackingOnly
+			? 'Workday business object to watch. Only objects whose changes Workday tracks are listed.'
+			: 'Workday business object to work with.',
+		required: true,
+		options: {
+			disabled: false,
+			options: workdayUtils
+				.soapObjects({ transactionLogOnly: changeTrackingOnly })
+				.map((item) => ({ label: item.label, value: item.value })),
+		},
+	});
+}
+
 function customBusinessObjectPath() {
 	return Property.ShortText({
 		displayName: 'Custom Business Object Path',
@@ -185,6 +227,7 @@ function disabledOptions({ placeholder }: { placeholder: string }): DropdownStat
 }
 
 export const workdayProps = {
+	source,
 	module,
 	businessObject,
 	customObjectDefinition,

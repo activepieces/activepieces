@@ -90,6 +90,8 @@ function providerCovers({
       return !isNil(providerCapabilities.webSearch);
     case AiToolCapability.IMAGE_GENERATION:
       return !isNil(providerCapabilities.defaultImageModel);
+    case AiToolCapability.EMBEDDINGS:
+      return providerCapabilities.supportsEmbedding;
     case AiToolCapability.WEB_SCRAPING:
       return false;
   }
