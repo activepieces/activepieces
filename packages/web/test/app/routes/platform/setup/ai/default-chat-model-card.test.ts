@@ -66,13 +66,23 @@ const noteFor = (
   value: ModelChoice | null,
   projectScope: 'all' | 'selected' = 'all',
 ) =>
-  defaultChatModelCardUtils.noteOf({
-    value,
-    options,
-    tiers: [],
-    configsById: new Map([['key-a', key(projectScope)]]),
-    projectIds: ['p1', 'p2', 'p3'],
-  })?.text ?? null;
+  statusText(
+    defaultChatModelCardUtils.statusOf({
+      value,
+      options,
+      tiers: [],
+      configsById: new Map([['key-a', key(projectScope)]]),
+      projectIds: ['p1', 'p2', 'p3'],
+      hasEmbeddingsKey: true,
+    }),
+  );
+
+const statusText = (status: {
+  placeholder: string | undefined;
+  warnings: string[];
+}): string | null =>
+  status.placeholder ??
+  (status.warnings.length === 0 ? null : status.warnings.join(' '));
 
 describe('the default chat model card note', () => {
   it('names what new chats use when nothing is set', () => {
@@ -95,7 +105,7 @@ describe('the default chat model card note', () => {
         providerConfigId: 'deleted',
         modelId: 'old',
       }),
-    ).toContain('Unavailable');
+    ).toContain('no longer available');
   });
 });
 
@@ -113,5 +123,22 @@ describe('picking the default chat model again', () => {
     expect(defaultChatModelCardUtils.sameChoice({ a: pick, b: null })).toBe(
       false,
     );
+  });
+});
+
+describe('the embeddings warning', () => {
+  it('appears when the default key cannot embed and no Embeddings key is set', () => {
+    const status = defaultChatModelCardUtils.statusOf({
+      value: { ...pick, provider: AIProviderName.ANTHROPIC },
+      options: {
+        ...options,
+        keys: [{ ...options.keys[0], provider: AIProviderName.ANTHROPIC }],
+      },
+      tiers: [],
+      configsById: new Map([['key-a', key('all')]]),
+      projectIds: [],
+      hasEmbeddingsKey: false,
+    });
+    expect(status.warnings.join(' ')).toContain('Embeddings key');
   });
 });

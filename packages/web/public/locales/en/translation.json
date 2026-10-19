@@ -3297,5 +3297,10 @@
   "Not set": "Not set",
   "Not available in {count, plural, =1 {1 project} other {# projects}}": "Not available in {count, plural, =1 {1 project} other {# projects}}",
   "Not set · uses {model}": "Not set · uses {model}",
-  "Unavailable. New chats use a fallback. Click to clear.": "Unavailable. New chats use a fallback. Click to clear."
+  "Use default": "Use default",
+  "This model is no longer available.": "This model is no longer available.",
+  "This model is no longer available. New chats use {model}.": "This model is no longer available. New chats use {model}.",
+  "Not available in {count, plural, =1 {1 project} other {# projects}}.": "Not available in {count, plural, =1 {1 project} other {# projects}}.",
+  "This key can't index knowledge-base files. Set an Embeddings key in Capabilities.": "This key can't index knowledge-base files. Set an Embeddings key in Capabilities.",
+  "Couldn't check whether files can be indexed.": "Couldn't check whether files can be indexed."
 }

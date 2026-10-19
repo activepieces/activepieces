@@ -1,12 +1,14 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
+  AI_PROVIDER_CAPABILITIES,
   AIProviderWithoutSensitiveData,
+  AiToolCapability,
   ModelChoice,
   ModelOptions,
   PlatformModelTier,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { MessageSquare, TriangleAlert, X } from 'lucide-react';
+import { MessageSquare, TriangleAlert } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { SettingsPanel, SettingsRow } from '@/app/components/admin';
@@ -20,6 +22,7 @@ import {
 import { ModelPicker, modelPickerUtils } from '@/features/agents';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { modelMeta } from '@/features/agents/ai-model/model-meta';
+import { aiToolConfigQueries } from '@/features/platform-admin';
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -36,6 +39,7 @@ export function DefaultChatModelCard({
   const { data: configuration } =
     platformConfigurationHooks.useCurrentPlatformConfiguration();
   const { data: options } = aiModelHooks.useModelOptions({ surface: 'chat' });
+  const { data: toolConfigs } = aiToolConfigQueries.useAiToolConfigs();
   const { mutate: save, isPending } =
     platformModelTierMutations.useSetDefaultChatModel();
   const value = configuration?.defaultChatModel ?? null;
@@ -43,9 +47,21 @@ export function DefaultChatModelCard({
     () => new Map(configs.map((config) => [config.id, config])),
     [configs],
   );
-  const note = isNil(options)
+  const hasEmbeddingsKey = (toolConfigs ?? []).some(
+    (toolConfig) =>
+      toolConfig.capability === AiToolCapability.EMBEDDINGS &&
+      toolConfig.enabled,
+  );
+  const status = isNil(options)
     ? null
-    : noteOf({ value, options, tiers, configsById, projectIds });
+    : statusOf({
+        value,
+        options,
+        tiers,
+        configsById,
+        projectIds,
+        hasEmbeddingsKey,
+      });
 
   return (
     <SettingsPanel flush>
@@ -55,26 +71,35 @@ export function DefaultChatModelCard({
         description={t('New chats start on this model.')}
       >
         <div className="flex items-center gap-2">
-          <div className="flex size-7 shrink-0 items-center justify-center">
-            {!isNil(note) && note.warn && (
+          <div className="flex min-w-7 shrink-0 items-center justify-end">
+            {!isNil(status) && status.unavailable && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  {note.unavailable ? (
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={t('Clear')}
-                      onClick={() => save(null)}
-                    >
-                      <X className="size-4 text-warning-11" />
-                    </Button>
-                  ) : (
-                    <TriangleAlert className="size-4 text-warning-11" />
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="text-warning-11"
+                    onClick={() => save(null)}
+                  >
+                    {t('Use default')}
+                  </Button>
                 </TooltipTrigger>
-                <TooltipContent>{note.text}</TooltipContent>
+                <TooltipContent>{status.warnings.join(' ')}</TooltipContent>
               </Tooltip>
             )}
+            {!isNil(status) &&
+              !status.unavailable &&
+              status.warnings.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <TriangleAlert
+                      className="size-4 text-warning-11"
+                      aria-label={status.warnings.join(' ')}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>{status.warnings.join(' ')}</TooltipContent>
+                </Tooltip>
+              )}
           </div>
           <div
             className="w-64"
@@ -87,7 +112,7 @@ export function DefaultChatModelCard({
                 surface="chat"
                 value={value}
                 disabled={isPending}
-                placeholder={!isNil(note) && !note.warn ? note.text : undefined}
+                placeholder={status?.placeholder}
                 onChange={(choice) =>
                   save(sameChoice({ a: choice, b: value }) ? null : choice)
                 }
@@ -100,49 +125,95 @@ export function DefaultChatModelCard({
   );
 }
 
-function noteOf({
+function statusOf({
   value,
   options,
   tiers,
   configsById,
   projectIds,
+  hasEmbeddingsKey,
 }: {
   value: ModelChoice | null;
   options: ModelOptions;
   tiers: PlatformModelTier[];
   configsById: Map<string, AIProviderWithoutSensitiveData>;
   projectIds: string[];
-}): CardNote | null {
+  hasEmbeddingsKey: boolean;
+}): CardStatus {
+  const fallback = isNil(options.defaultChoice)
+    ? null
+    : labelOf({ choice: options.defaultChoice, options });
   if (isNil(value)) {
-    const fallback = isNil(options.defaultChoice)
-      ? null
-      : labelOf({ choice: options.defaultChoice, options });
     return {
-      text: isNil(fallback)
+      placeholder: isNil(fallback)
         ? t('Not set')
         : t('Not set · uses {model}', { model: fallback }),
-      warn: false,
+      warnings: [],
       unavailable: false,
     };
   }
   if (modelPickerUtils.isUnavailable({ options, value })) {
     return {
-      text: t('Unavailable. New chats use a fallback. Click to clear.'),
-      warn: true,
+      placeholder: undefined,
+      warnings: [
+        isNil(fallback)
+          ? t('This model is no longer available.')
+          : t('This model is no longer available. New chats use {model}.', {
+              model: fallback,
+            }),
+      ],
       unavailable: true,
     };
   }
   const missing = projectsWithout({ value, tiers, configsById, projectIds });
-  return missing > 0
-    ? {
-        text: t(
-          'Not available in {count, plural, =1 {1 project} other {# projects}}',
-          { count: missing },
-        ),
-        warn: true,
-        unavailable: false,
-      }
-    : null;
+  const warnings = [
+    ...(missing > 0
+      ? [
+          t(
+            'Not available in {count, plural, =1 {1 project} other {# projects}}.',
+            { count: missing },
+          ),
+        ]
+      : []),
+    ...(!hasEmbeddingsKey &&
+    !canEmbed({ provider: keyProviderOf({ value, tiers, configsById }) })
+      ? [
+          t(
+            "This key can't index knowledge-base files. Set an Embeddings key in Capabilities.",
+          ),
+        ]
+      : []),
+  ];
+  return { placeholder: undefined, warnings, unavailable: false };
+}
+
+function keyProviderOf({
+  value,
+  tiers,
+  configsById,
+}: {
+  value: ModelChoice;
+  tiers: PlatformModelTier[];
+  configsById: Map<string, AIProviderWithoutSensitiveData>;
+}): AIProviderName | undefined {
+  if (value.type === 'model') {
+    return value.provider;
+  }
+  const mainConfigId = tiers.find((tier) => tier.id === value.tierId)
+    ?.entries[0]?.configId;
+  return isNil(mainConfigId)
+    ? undefined
+    : configsById.get(mainConfigId)?.provider;
+}
+
+function canEmbed({
+  provider,
+}: {
+  provider: AIProviderName | undefined;
+}): boolean {
+  return (
+    isNil(provider) || AI_PROVIDER_CAPABILITIES[provider].supportsEmbedding
+  );
 }
 
 function sameChoice({
@@ -207,11 +278,11 @@ function labelOf({
       options.tiers.find((tier) => tier.id === choice.tierId)?.name ?? null
     );
   }
-  const creditTier = options.credits?.tiers.find(
-    (tier) => tier.id === choice.modelId,
-  );
-  if (choice.providerConfigId === options.credits?.providerConfigId) {
-    return creditTier?.label ?? null;
+  if (choice.provider === AIProviderName.ACTIVEPIECES) {
+    return (
+      options.credits?.tiers.find((tier) => tier.id === choice.modelId)
+        ?.label ?? null
+    );
   }
   return (
     options.keys
@@ -220,6 +291,10 @@ function labelOf({
   );
 }
 
-type CardNote = { text: string; warn: boolean; unavailable: boolean };
+type CardStatus = {
+  placeholder: string | undefined;
+  warnings: string[];
+  unavailable: boolean;
+};
 
-export const defaultChatModelCardUtils = { noteOf, sameChoice };
+export const defaultChatModelCardUtils = { statusOf, sameChoice };

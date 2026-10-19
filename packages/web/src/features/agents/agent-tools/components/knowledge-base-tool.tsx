@@ -86,8 +86,30 @@ function KnowledgeBaseToolPills({
   );
 }
 
-export function NoEmbeddingSourceNote({ className }: { className?: string }) {
+export function NoEmbeddingSourceNote({
+  className,
+  isError = false,
+  onRetry,
+}: {
+  className?: string;
+  isError?: boolean;
+  onRetry?: () => void;
+}) {
   const isAdmin = useIsPlatformAdmin();
+  if (isError) {
+    return (
+      <p className={className}>
+        {t("Couldn't check whether files can be indexed.")}{' '}
+        <button
+          type="button"
+          className="font-medium text-gray-12 underline underline-offset-2"
+          onClick={onRetry}
+        >
+          {t('Retry')}
+        </button>
+      </p>
+    );
+  }
   return (
     <p className={className}>
       {t('No AI key can index files for this project yet.')}{' '}
@@ -113,7 +135,11 @@ export const KnowledgeBaseSection = ({
   onToolsUpdate,
   layout = 'card',
 }: KnowledgeBaseSectionProps) => {
-  const { data: embeddingSource } = useKnowledgeBaseEmbeddingSource();
+  const {
+    data: embeddingSource,
+    isError: embeddingSourceFailed,
+    refetch: retryEmbeddingSource,
+  } = useKnowledgeBaseEmbeddingSource();
   const supportsEmbeddings = !isNil(embeddingSource?.provider);
   const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
     ApFlagId.PGVECTOR_AVAILABLE,
@@ -150,7 +176,11 @@ export const KnowledgeBaseSection = ({
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </div>
             ) : (
-              <NoEmbeddingSourceNote className="text-xs text-gray-11 mt-3" />
+              <NoEmbeddingSourceNote
+                className="text-xs text-gray-11 mt-3"
+                isError={embeddingSourceFailed}
+                onRetry={() => retryEmbeddingSource().catch(() => undefined)}
+              />
             )}
           </div>
         ) : asRows ? (
@@ -159,7 +189,11 @@ export const KnowledgeBaseSection = ({
               <AddRow label={t('Add knowledge')} disabled={disabled} />
             </AddKnowledgeBaseDropdown>
           ) : (
-            <NoEmbeddingSourceNote className="text-xs leading-4 text-gray-11" />
+            <NoEmbeddingSourceNote
+              className="text-xs leading-4 text-gray-11"
+              isError={embeddingSourceFailed}
+              onRetry={() => retryEmbeddingSource().catch(() => undefined)}
+            />
           )
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-panel px-4 py-8 text-center">
@@ -176,7 +210,11 @@ export const KnowledgeBaseSection = ({
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </>
             ) : (
-              <NoEmbeddingSourceNote className="text-sm text-gray-11" />
+              <NoEmbeddingSourceNote
+                className="text-sm text-gray-11"
+                isError={embeddingSourceFailed}
+                onRetry={() => retryEmbeddingSource().catch(() => undefined)}
+              />
             )}
           </div>
         )}

@@ -80,6 +80,9 @@ export function ProvidersTab() {
   const configs = (providers ?? []).filter(
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
   );
+  const hasCredits = (providers ?? []).some(
+    (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
+  );
 
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
@@ -233,6 +236,13 @@ export function ProvidersTab() {
         )}
       </AdminPageHeader>
 
+      {!locked && !isProvidersError && (configs.length > 0 || hasCredits) && (
+        <DefaultChatModelCard
+          configs={configs}
+          tiers={tiers ?? []}
+          projectIds={(projects ?? []).map((project) => project.id)}
+        />
+      )}
       {isProvidersError ? (
         <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
       ) : configs.length === 0 ? (
@@ -240,13 +250,6 @@ export function ProvidersTab() {
       ) : (
         <>
           {locked && <LockedProvidersAlert />}
-          {!locked && (
-            <DefaultChatModelCard
-              configs={configs}
-              tiers={tiers ?? []}
-              projectIds={(projects ?? []).map((project) => project.id)}
-            />
-          )}
           {connectedProviders.map((provider) => (
             <ProviderGroup
               key={provider}
