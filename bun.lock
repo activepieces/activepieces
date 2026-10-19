@@ -10473,7 +10473,7 @@
     },
     "packages/pieces/core/connections": {
       "name": "@activepieces/piece-connections",
-      "version": "0.5.10",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
