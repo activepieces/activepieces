@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceAuth } from '../auth';
-import { confluencePaginatedApiCall } from '../common';
+import { confluenceApi } from '../common/api';
 
 export const listSpacesAction = createAction({
 	auth: confluenceAuth,
@@ -45,15 +44,7 @@ export const listSpacesAction = createAction({
 		if (type) query['type'] = type;
 		if (status) query['status'] = status;
 
-		const spaces = await confluencePaginatedApiCall<Record<string, unknown>>({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.GET,
-			version: 'v2',
-			resourceUri: '/spaces',
-			query,
-		});
+		const spaces = await confluenceApi.listSpaces({ auth: context.auth, query });
 
 		return { count: spaces.length, results: spaces };
 	},

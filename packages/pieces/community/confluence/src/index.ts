@@ -3,6 +3,7 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 import { confluenceAuth } from './lib/auth';
+import { confluenceClient } from './lib/common/client';
 
 import { getPageContent } from './lib/actions/get-page-content';
 import { createPageFromTemplateAction } from './lib/actions/create-page-from-template';
@@ -60,10 +61,7 @@ export const confluence = createPiece({
     findUserAction,
     listSpacesAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => {
-        const domain = auth?.props?.confluenceDomain ?? '';
-        return `${domain.replace(/\/+$/, '')}/wiki`;
-      },
+      baseUrl: (auth) => (auth ? confluenceClient.baseUrl({ auth }) : ''),
       auth: confluenceAuth,
       authMapping: async (auth) => {
         const authValue = auth.props;

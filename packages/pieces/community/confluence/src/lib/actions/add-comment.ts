@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceAuth } from '../auth';
-import { confluenceApiCall } from '../common';
-import { pageIdProp, spaceIdProp } from '../common/props';
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
 
 export const addCommentAction = createAction({
 	auth: confluenceAuth,
@@ -13,8 +12,8 @@ export const addCommentAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Posts a new footer comment on a Confluence page, with the comment body given in storage (XHTML) format (plain text is accepted). Use to leave a top-level comment on a page; to respond to an existing comment use Reply to Comment instead. Not idempotent: each call adds another comment.', idempotent: false },
 	props: {
-		spaceId: spaceIdProp,
-		pageId: pageIdProp,
+		spaceId: confluenceProps.spaceId({ required: true }),
+		pageId: confluenceProps.pageId({ required: true }),
 		body: Property.LongText({
 			displayName: 'Comment',
 			description: 'Comment body in storage (XHTML) format. Plain text works too.',
@@ -24,20 +23,10 @@ export const addCommentAction = createAction({
 	async run(context) {
 		const { pageId, body } = context.propsValue;
 
-		return await confluenceApiCall({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.POST,
-			version: 'v2',
-			resourceUri: '/footer-comments',
-			body: {
-				pageId,
-				body: {
-					representation: 'storage',
-					value: body,
-				},
-			},
+		return await confluenceApi.createFooterComment({
+			auth: context.auth,
+			pageId,
+			value: body,
 		});
 	},
 });

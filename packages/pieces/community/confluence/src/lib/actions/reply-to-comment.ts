@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceAuth } from '../auth';
-import { confluenceApiCall } from '../common';
+import { confluenceApi } from '../common/api';
 
 export const replyToCommentAction = createAction({
 	auth: confluenceAuth,
@@ -26,20 +25,10 @@ export const replyToCommentAction = createAction({
 	async run(context) {
 		const { parentCommentId, body } = context.propsValue;
 
-		return await confluenceApiCall({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.POST,
-			version: 'v2',
-			resourceUri: '/footer-comments',
-			body: {
-				parentCommentId,
-				body: {
-					representation: 'storage',
-					value: body,
-				},
-			},
+		return await confluenceApi.createFooterComment({
+			auth: context.auth,
+			parentCommentId,
+			value: body,
 		});
 	},
 });
