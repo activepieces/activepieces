@@ -49,7 +49,7 @@ describe('Enterprise trial API', () => {
         expect(startTrial).not.toHaveBeenCalled()
     })
 
-    it('reads the trial from the console as Cloud, for the platform owner', async () => {
+    it('reads the trial from the console as Cloud', async () => {
         const ctx = await createTestContext(app!)
         const { getTrial } = stubConsole({ statuses: [ELIGIBLE] })
 
@@ -59,7 +59,6 @@ describe('Enterprise trial API', () => {
         expect(response.json()).toEqual(ELIGIBLE)
         expect(getTrial).toHaveBeenCalledWith(expect.objectContaining({
             autumnCustomerId: 'cus_trial',
-            ownerEmail: ctx.userIdentity.email,
             edition: 'cloud',
         }))
     })
