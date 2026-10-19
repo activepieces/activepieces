@@ -180,7 +180,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 'ff.triggerSource',
                 'trigger_source',
                 'ts',
-                'ts."flowId" = ff.id AND ts.deleted IS NULL',
+                'ts."flowId" = ff.id AND ts.deleted IS NULL AND ts.simulate = false',
             )
         }
 
@@ -226,6 +226,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 triggerSource: includeTriggerSource && flow.triggerSource
                     ? {
                         schedule: flow.triggerSource.schedule,
+                        pieceName: flow.triggerSource.pieceName,
                     }
                     : undefined,
             }
@@ -301,7 +302,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const triggerSource = await triggerSourceService(log).getByFlowId({
             flowId: id,
             projectId,
-            simulate: undefined,
+            simulate: false,
         })
 
         return {
@@ -309,6 +310,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             version: flowVersion,
             triggerSource: triggerSource ? {
                 schedule: triggerSource.schedule,
+                pieceName: triggerSource.pieceName,
             } : undefined,
         }
     },
