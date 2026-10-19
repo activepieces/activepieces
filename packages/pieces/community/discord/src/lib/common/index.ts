@@ -4,6 +4,7 @@ import { Property } from '@activepieces/pieces-framework';
 import { discordAuth } from '../auth';
 
 export const discordCommon = {
+  baseUrl: 'https://discord.com/api/v9',
   channel: Property.Dropdown({
     auth: discordAuth,
     displayName: 'Channel',

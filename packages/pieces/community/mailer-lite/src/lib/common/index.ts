@@ -5,7 +5,7 @@ import { mailerLiteAuth } from '../auth';
 export const mailerLiteCommon = {
 	subscriberFields: Property.DynamicProperties({
 		auth: mailerLiteAuth,
-		displayName: 'Fields',
+		displayName: 'Custom Fields',
 		refreshers: [],
 		required: true,
 		props: async ({ auth }) => {
@@ -13,10 +13,9 @@ export const mailerLiteCommon = {
 
 			const props: DynamicPropsValue = {};
 
-			const client = new MailerLite({ api_key: auth.secret_text });
-			const response = await client.fields.get({ page: 1, limit: 100 });
+			const fields = await listAllFields({ apiKey: auth.secret_text });
 
-			for (const field of response.data.data) {
+			for (const field of fields) {
 				switch (field.type) {
 					case 'number':
 						props[field.key] = Property.Number({
@@ -45,7 +44,8 @@ export const mailerLiteCommon = {
 	subscriberGroupIds: (required = false) =>
 		Property.MultiSelectDropdown({
 			auth: mailerLiteAuth,
-			displayName: 'Group IDs',
+			displayName: 'Groups',
+			description: 'Adds the subscriber to these groups.',
 			required,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -57,16 +57,11 @@ export const mailerLiteCommon = {
 					};
 				}
 
-				const client = new MailerLite({ api_key: auth.secret_text });
-				const response = await client.groups.get({
-					page: 1,
-					limit: 100,
-					sort: '-created_at',
-				});
+				const groups = await listAllGroups({ apiKey: auth.secret_text });
 
 				return {
 					disabled: false,
-					options: response.data.data.map((group) => {
+					options: groups.map((group) => {
 						return {
 							label: group.name,
 							value: group.id,
@@ -78,7 +73,7 @@ export const mailerLiteCommon = {
 	subscriberGroupId: (required = false) =>
 		Property.Dropdown({
 			auth: mailerLiteAuth,
-			displayName: 'Group ID',
+			displayName: 'Group',
 			required,
 			refreshers: [],
 			options: async ({ auth }) => {
@@ -90,16 +85,11 @@ export const mailerLiteCommon = {
 					};
 				}
 
-				const client = new MailerLite({ api_key: auth.secret_text });
-				const response = await client.groups.get({
-					page: 1,
-					limit: 100,
-					sort: '-created_at',
-				});
+				const groups = await listAllGroups({ apiKey: auth.secret_text });
 
 				return {
 					disabled: false,
-					options: response.data.data.map((group) => {
+					options: groups.map((group) => {
 						return {
 							label: group.name,
 							value: group.id,
@@ -111,7 +101,7 @@ export const mailerLiteCommon = {
 	subscriberId: (required = false) =>
 		Property.Dropdown({
 			auth: mailerLiteAuth,
-			displayName: 'Subscriber ID',
+			displayName: 'Subscriber',
 			refreshers: [],
 			required,
 			options: async ({ auth }) => {
@@ -124,7 +114,7 @@ export const mailerLiteCommon = {
 				}
 				const client = new MailerLite({ api_key: auth.secret_text });
 				const subscribers: { label: string; value: string }[] = [];
-				let cursor;
+				let cursor: string | undefined = undefined;
 				do {
 					const response = await client.subscribers.get({
 						limit: 25,
@@ -136,12 +126,66 @@ export const mailerLiteCommon = {
 							value: subscriber.id,
 						})),
 					);
-					cursor = response.data.meta.next_cursor;
-				} while (cursor !== null);
+					cursor = response.data.meta.next_cursor || undefined;
+				} while (cursor);
 				return {
 					disabled: false,
 					options: subscribers,
 				};
 			},
 		}),
+};
+
+async function listAllGroups({ apiKey }: { apiKey: string }): Promise<MailerLiteGroup[]> {
+	const client = new MailerLite({ api_key: apiKey });
+	const groups: MailerLiteGroup[] = [];
+	let page = 1;
+	let lastPage = 1;
+	do {
+		const response = await client.groups.get({
+			page,
+			limit: 100,
+			sort: '-created_at',
+		});
+		groups.push(
+			...response.data.data.map((group) => ({
+				id: group.id,
+				name: group.name,
+			})),
+		);
+		lastPage = response.data.meta.last_page;
+		page++;
+	} while (page <= lastPage);
+	return groups;
+}
+
+async function listAllFields({ apiKey }: { apiKey: string }): Promise<MailerLiteField[]> {
+	const client = new MailerLite({ api_key: apiKey });
+	const fields: MailerLiteField[] = [];
+	let page = 1;
+	let lastPage = 1;
+	do {
+		const response = await client.fields.get({ page, limit: 100 });
+		fields.push(
+			...response.data.data.map((field) => ({
+				key: field.key,
+				name: field.name,
+				type: field.type,
+			})),
+		);
+		lastPage = response.data.meta.last_page;
+		page++;
+	} while (page <= lastPage);
+	return fields;
+}
+
+type MailerLiteGroup = {
+	id: string;
+	name: string;
+};
+
+type MailerLiteField = {
+	key: string;
+	name: string;
+	type: string;
 };
