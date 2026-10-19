@@ -1,6 +1,9 @@
-export { AdminPage, AdminPageHeader, AdminSection } from './admin-page';
-export { AdminResources, AdminVideoDialog } from './admin-resources';
-export type { AdminResource } from './admin-resources';
+export {
+  AdminPage,
+  AdminPageFooter,
+  AdminPageHeader,
+  AdminSection,
+} from './admin-page';
 export { adminPageResources } from './admin-page-resources';
 export { adminSurface } from './admin-surface';
 export { adminLayout } from './admin-layout';
@@ -13,3 +16,13 @@ export { StatusDot } from './status-dot';
 export type { StatusTone } from './status-dot';
 export { StatCard, StatGrid } from './stat-card';
 export { LockedCallout } from './locked-callout';
+export { ConfirmDialog } from './confirm-dialog';
+export { InstantSwitch } from './instant-switch';
+export { RowActionTooltip } from './row-action-tooltip';
+export { AdminFetchErrorState, AdminQueryState } from './admin-query-state';
+export {
+  useAdminAction,
+  adminActionCopy,
+  adminFeedback,
+  adminBulk,
+} from './use-admin-action';

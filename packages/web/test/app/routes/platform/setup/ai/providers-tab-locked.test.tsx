@@ -15,7 +15,8 @@ const state = vi.hoisted(() => ({
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-vi.mock('@tanstack/react-query', () => ({
+vi.mock('@tanstack/react-query', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 
