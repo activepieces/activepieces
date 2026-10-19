@@ -1,11 +1,10 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, PlanName, SeatsBillableFeature, UNAVAILABLE_ENTERPRISE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, EnterpriseTrialStatus, FeatureId, isConsumableFeatureId, PlanName, PlatformPlan, SeatsBillableFeature, UNAVAILABLE_ENTERPRISE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEnterpriseTrialStartLockKey, getEntitlementsRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
-import { domainHelper } from '../../../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, TrackFeatureParams } from '../../../../platform/billing-provider'
 import { platformPlanTelemetry } from '../platform-plan-telemetry'
@@ -19,6 +18,8 @@ const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
 const CREDITS_CACHE_READ_TIMEOUT_MS = 25
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
+const ELIGIBLE_ENTERPRISE_TRIAL: EnterpriseTrialStatus = { state: 'eligible', startedAt: null, endsAt: null, extended: false }
+const USED_ENTERPRISE_TRIAL: EnterpriseTrialStatus = { state: 'used', startedAt: null, endsAt: null, extended: false }
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
@@ -177,7 +178,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             log,
             platformId,
             fallback: UNAVAILABLE_ENTERPRISE_TRIAL,
-            fn: async (creds) => autumnConsole.getEnterpriseTrial(creds),
+            fn: async () => toEnterpriseTrialStatus(await platformPlanService(log).getOrCreateForPlatform(platformId)),
         }))
         if (!isNil(error) || isNil(data)) {
             log.warn({ error, platform: { id: platformId } }, 'Failed to read the enterprise trial status; treating the trial as unavailable')
@@ -193,20 +194,18 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                 log,
                 platformId,
                 fallback: UNAVAILABLE_ENTERPRISE_TRIAL,
-                fn: async (creds) => {
-                    const current = await autumnConsole.getEnterpriseTrial(creds)
+                fn: async (creds): Promise<EnterpriseTrialStatus> => {
+                    const current = toEnterpriseTrialStatus(await platformPlanService(log).getOrCreateForPlatform(platformId))
                     if (current.state !== 'eligible') {
                         return current
                     }
-                    const started = await autumnConsole.startEnterpriseTrial({
-                        ...creds,
-                        platformId,
-                        appUrl: await domainHelper.getPublicUrl({ path: '' }),
-                    })
-                    if (started.state === 'active') {
-                        rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialStarted({ platformId, endsAt: started.endsAt }), log)
+                    const started = await autumnConsole.startEnterpriseTrial(creds)
+                    if (isNil(started)) {
+                        await platformPlanService(log).update({ platformId, enterpriseTrialUsedElsewhereAt: new Date().toISOString() })
+                        return USED_ENTERPRISE_TRIAL
                     }
-                    return started
+                    rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialStarted({ platformId, endsAt: started.endsAt }), log)
+                    return { state: 'active', startedAt: started.startedAt, endsAt: started.endsAt, extended: false }
                 },
             }),
         })
@@ -218,6 +217,22 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return status
     },
 })
+
+function toEnterpriseTrialStatus(plan: PlatformPlan): EnterpriseTrialStatus {
+    if (!isNil(plan.enterpriseTrialEndsAt)) {
+        const endsAt = new Date(plan.enterpriseTrialEndsAt)
+        return {
+            state: endsAt.getTime() > Date.now() ? 'active' : 'ended',
+            startedAt: isNil(plan.enterpriseTrialStartedAt) ? null : new Date(plan.enterpriseTrialStartedAt).toISOString(),
+            endsAt: endsAt.toISOString(),
+            extended: false,
+        }
+    }
+    if (!isNil(plan.enterpriseTrialEndedAt)) {
+        return { state: 'ended', startedAt: null, endsAt: new Date(plan.enterpriseTrialEndedAt).toISOString(), extended: false }
+    }
+    return isNil(plan.enterpriseTrialUsedElsewhereAt) ? ELIGIBLE_ENTERPRISE_TRIAL : USED_ENTERPRISE_TRIAL
+}
 
 async function withEnrolledCreds<T>({ log, platformId, fallback, fn }: WithEnrolledCredsParams<T>): Promise<T> {
     await autumnUtils.ensureEnrolled(log, platformId)

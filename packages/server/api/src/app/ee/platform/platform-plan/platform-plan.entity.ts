@@ -175,6 +175,14 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: 'timestamp with time zone',
             nullable: true,
         },
+        enterpriseTrialEndedAt: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
+        enterpriseTrialUsedElsewhereAt: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
         /** @deprecated see RetiredPlatformPlanColumns */
         stripeCustomerId: {
             type: String,
