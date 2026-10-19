@@ -7,11 +7,12 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { ChevronDown, Plus } from 'lucide-react';
+import { ChevronsUpDown, Plus } from 'lucide-react';
 import { KeyboardEvent, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { adminLayout } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -46,6 +47,7 @@ import {
 import { ModelRow } from '@/features/agents/ai-model/model-row';
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { AdminModelPicker } from './admin-model-picker';
@@ -105,9 +107,9 @@ function TierForm({
     defaultValues: defaultValuesOf({ state }),
   });
   const { mutate: create, isPending: creating } =
-    platformModelTierMutations.useCreate();
+    platformModelTierMutations.useCreate({ feedback: 'inline' });
   const { mutate: update, isPending: updating } =
-    platformModelTierMutations.useUpdate();
+    platformModelTierMutations.useUpdate({ feedback: 'inline' });
   const saving = creating || updating;
   const keepOpen = (event: Event) => {
     if (saving) {
@@ -115,7 +117,14 @@ function TierForm({
     }
   };
 
+  const showServerError = (error: unknown) =>
+    form.setError('root.serverError', {
+      type: 'manual',
+      message: mutationFeedback.message(error),
+    });
+
   const submit = (values: TierFormValues) => {
+    form.clearErrors('root.serverError');
     const shared = {
       name: values.name.trim(),
       emoji: values.emoji,
@@ -127,7 +136,10 @@ function TierForm({
       }),
     };
     if (editing !== undefined) {
-      update({ id: editing.id, request: shared }, { onSuccess: onSaved });
+      update(
+        { id: editing.id, request: shared },
+        { onSuccess: onSaved, onError: showServerError },
+      );
       return;
     }
     if (values.main === undefined) {
@@ -137,7 +149,7 @@ function TierForm({
       ...shared,
       entries: [values.main],
     };
-    create(request, { onSuccess: onSaved });
+    create(request, { onSuccess: onSaved, onError: showServerError });
   };
 
   const currentThinking = editing?.thinkingBudget ?? null;
@@ -148,7 +160,7 @@ function TierForm({
 
   return (
     <DialogContent
-      className="sm:max-w-md"
+      className={adminLayout.dialog.sm}
       showCloseButton={!saving}
       onEscapeKeyDown={keepOpen}
       onPointerDownOutside={keepOpen}
@@ -300,6 +312,7 @@ function TierForm({
                       exclude={[]}
                       mode="main"
                       align="start"
+                      matchTriggerWidth
                       open={pickerOpen}
                       onOpenChange={setPickerOpen}
                       onPick={(entry) => field.onChange(entry)}
@@ -307,7 +320,7 @@ function TierForm({
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-auto min-h-9 justify-between px-3 py-1.5"
+                        className="h-auto min-h-9 w-full justify-between border-gray-8 bg-transparent px-3 py-1.5 shadow-xs enabled:hover:bg-transparent dark:bg-gray-6/30 dark:enabled:hover:bg-gray-6/50"
                         aria-label={t('Main model')}
                       >
                         {field.value !== undefined &&
@@ -332,7 +345,7 @@ function TierForm({
                             {t('Pick a model')}
                           </span>
                         )}
-                        <ChevronDown className="size-4 shrink-0 opacity-60" />
+                        <ChevronsUpDown className="size-4 shrink-0 text-gray-11" />
                       </Button>
                     </AdminModelPicker>
                     <FormMessage />
@@ -375,6 +388,12 @@ function TierForm({
               </FormItem>
             )}
           />
+
+          {form.formState.errors.root?.serverError && (
+            <FormMessage>
+              {form.formState.errors.root.serverError.message}
+            </FormMessage>
+          )}
 
           <DialogFooter>
             <Button

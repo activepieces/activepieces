@@ -6,12 +6,14 @@ import {
 import { PieceSet } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { adminLayout } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import {
+  adminFeedback,
+  AdminFetchErrorState,
+  adminLayout,
+} from '@/app/components/admin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,6 +25,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { SkeletonList } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -100,11 +103,11 @@ function PieceActionsAndTriggersSheetBody({
         </div>
       </SheetHeader>
       {isLoading ? (
-        <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="size-8 animate-spin text-gray-11" />
+        <div className="flex flex-col gap-3 px-4">
+          <SkeletonList numberOfItems={6} className="h-10" />
         </div>
       ) : !pieceModel ? (
-        <DataFetchErrorState
+        <AdminFetchErrorState
           entity={t('actions and triggers')}
           onRetry={refetch}
         />
@@ -149,8 +152,8 @@ function PieceActionsAndTriggersEditor({
     showRequiredActionWillBeExcludedConfirmationDialog,
     setShowRequiredActionWillBeExcludedConfirmationDialog,
   ] = useState(false);
-  const { mutate: updatePieceSet, isPending } =
-    pieceSetMutations.useUpdatePieceSet();
+  const { mutateAsync: updatePieceSet, isPending } =
+    pieceSetMutations.useUpdatePieceSet({ announce: false });
   const values = form.watch();
   const request = pieceActionsAndTriggersForm.toUpdateRequest({
     values,
@@ -161,7 +164,12 @@ function PieceActionsAndTriggersEditor({
   const isDirty = form.formState.isDirty;
 
   const updateAndClose = () =>
-    updatePieceSet({ id: pieceSet.id, request }, { onSuccess: onClose });
+    updatePieceSet({ id: pieceSet.id, request })
+      .then(() => {
+        adminFeedback.done({ verb: 'save' });
+        onClose();
+      })
+      .catch(() => undefined);
 
   const save = () => {
     if (

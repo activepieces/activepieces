@@ -4,13 +4,18 @@ import {
   PlatformModelTierEntry,
   UpdatePlatformModelTierRequest,
 } from '@activepieces/shared';
+import {
+  Mutation,
+  useIsMutating,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ArrowDown,
   ArrowUp,
   Brain,
   Info,
-  Loader2,
   MessageSquare,
   MoreHorizontal,
   Pencil,
@@ -23,8 +28,9 @@ import {
   LucideIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 
+import { adminFeedback, SettingsPanel } from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,8 +50,13 @@ import {
   modelMeta,
   ToolsVerdict,
 } from '@/features/agents/ai-model/model-meta';
-import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
+import { platformModelTierApi } from '@/features/platform-admin/api/platform-model-tier-api';
+import {
+  platformModelTierKeys,
+  platformModelTierMutations,
+} from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { cn } from '@/lib/utils';
 
 import { AdminModelPicker } from './admin-model-picker';
@@ -65,14 +76,104 @@ export function TierCard({
   onMoveUp,
   onMoveDown,
 }: TierCardProps) {
-  const { mutate: update, isPending } = platformModelTierMutations.useUpdate();
+  const queryClient = useQueryClient();
+  const { mutateAsync: updateAsync } = platformModelTierMutations.useUpdate({
+    feedback: 'errorsOnly',
+  });
+  const { mutateAsync: undoAsync } = platformModelTierMutations.useUpdate({
+    feedback: 'silent',
+  });
+  const { mutateAsync: restoreRemoved } = useMutation({
+    mutationKey: platformModelTierKeys.admin,
+    mutationFn: async ({
+      removed,
+      position,
+    }: {
+      id: string;
+      removed: PlatformModelTierEntry;
+      position: number;
+    }) => {
+      const fresh = (await platformModelTierApi.listAdmin()).find(
+        (candidate) => candidate.id === tier.id,
+      );
+      if (fresh === undefined) {
+        throw mutationFeedback.userError(
+          t('It no longer exists. Refresh the page and try again.'),
+        );
+      }
+      const current = fresh.entries;
+      if (current.some((entry) => modelMeta.sameEntry(entry, removed))) {
+        return;
+      }
+      const at = Math.min(position, current.length);
+      await undoAsync({
+        id: tier.id,
+        request: {
+          entries: [...current.slice(0, at), removed, ...current.slice(at)],
+        },
+      });
+    },
+    onError: (error) =>
+      mutationFeedback.error({ error, title: t("Couldn't undo") }),
+  });
+  const tierWrites = {
+    mutationKey: platformModelTierKeys.admin,
+    predicate: (mutation: Mutation<unknown, Error, unknown, unknown>) =>
+      writesTier({ variables: mutation.state.variables, tierId: tier.id }),
+  };
+  const writing = useIsMutating(tierWrites) > 0;
   const [mainPickerOpen, setMainPickerOpen] = useState(false);
   const [fallbackPickerOpen, setFallbackPickerOpen] = useState(false);
+  const [wasWriting, setWasWriting] = useState(writing);
+  if (writing !== wasWriting) {
+    setWasWriting(writing);
+    if (writing) {
+      setMainPickerOpen(false);
+      setFallbackPickerOpen(false);
+    }
+  }
+  const undoing = useRef(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
-  const showSpinner = useDelayedFlag({ active: isPending, delayMs: 300 });
 
   const save = (request: UpdatePlatformModelTierRequest) =>
-    update({ id: tier.id, request });
+    updateAsync({ id: tier.id, request })
+      .then((updated) =>
+        adminFeedback.done({ verb: 'update', name: updated.name }),
+      )
+      .catch(() => undefined);
+  const removeEntry = (position: number) => {
+    const removed = tier.entries[position];
+    updateAsync({
+      id: tier.id,
+      request: {
+        entries: modelMeta.removeAt({ entries: tier.entries, index: position }),
+      },
+    })
+      .then(() =>
+        mutationFeedback.undo({
+          message: t('{model} removed from {tier}', {
+            model:
+              modelMeta.catalogModel({ keyModels, entry: removed })?.name ??
+              removed.modelId,
+            tier: tier.name,
+          }),
+          onUndo: async () => {
+            if (undoing.current || queryClient.isMutating(tierWrites) > 0) {
+              throw mutationFeedback.userError(
+                t('Wait for the current change to finish, then undo.'),
+              );
+            }
+            undoing.current = true;
+            try {
+              await restoreRemoved({ id: tier.id, removed, position });
+            } finally {
+              undoing.current = false;
+            }
+          },
+        }),
+      )
+      .catch(() => undefined);
+  };
   const move = ({ from, to }: { from: number; to: number }) =>
     save({ entries: modelMeta.moveEntry({ entries: tier.entries, from, to }) });
 
@@ -115,90 +216,71 @@ export function TierCard({
       exclude={tier.entries}
       main={mainModel}
       mode="fallback"
-      align="end"
-      open={fallbackPickerOpen}
+      align="start"
+      open={fallbackPickerOpen && !writing}
       onOpenChange={setFallbackPickerOpen}
-      onPick={(picked) =>
+      onPick={(picked) => {
+        if (writing) {
+          return;
+        }
         save({
           entries: modelMeta.addFallback({
             entries: tier.entries,
             entry: picked,
           }),
-        })
-      }
+        });
+      }}
     >
       {trigger}
     </AdminModelPicker>
   );
 
   return (
-    <section
-      className={cn(
-        'flex flex-col rounded-xl border border-gray-6/60 bg-panel shadow-panel transition-opacity',
-        unavailableHere && 'opacity-60',
-      )}
+    <SettingsPanel
+      flush
       aria-label={tier.name}
-    >
-      <header className="flex items-center gap-3 px-5 py-4">
+      className={cn('transition-opacity', unavailableHere && 'opacity-60')}
+      media={
         <span
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-3 text-xl"
+          className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gray-3 text-base"
           aria-hidden="true"
         >
           {tier.emoji}
         </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <TextWithTooltip tooltipMessage={tier.name}>
-              <h3 className="truncate text-sm font-semibold">{tier.name}</h3>
-            </TextWithTooltip>
-            {tier.isDefault && (
-              <TierTag
-                icon={Star}
-                className="border-accent-6 bg-accent-3 text-accent-11"
-              >
-                {t('Default')}
-              </TierTag>
-            )}
-            {tier.isFast && (
-              <TierTag
-                icon={Zap}
-                className="border-warning-7 bg-warning-3 text-warning-11"
-              >
-                {t('Fast')}
-              </TierTag>
-            )}
-            {thinkingChip !== undefined && (
-              <TierTag icon={Brain}>{thinkingChip}</TierTag>
-            )}
-            {tools === 'recommended' && (
-              <TierTag icon={MessageSquare}>
-                {t('Recommended for chat')}
-              </TierTag>
-            )}
-            {showSpinner && (
-              <Loader2
-                className="size-3.5 animate-spin text-gray-10"
-                aria-label={t('Saving')}
-              />
-            )}
-          </div>
-          {tier.description && (
-            <p className="truncate text-xs text-gray-11">{tier.description}</p>
+      }
+      title={
+        <TextWithTooltip tooltipMessage={tier.name}>
+          <span className="block truncate">{tier.name}</span>
+        </TextWithTooltip>
+      }
+      meta={
+        <>
+          {tier.isDefault && (
+            <TierTag
+              icon={Star}
+              className="border-accent-6 bg-accent-3 text-accent-11"
+            >
+              {t('Default')}
+            </TierTag>
           )}
-          {notices.length > 0 && (
-            <ul className="flex flex-col gap-0.5 pt-1">
-              {notices.map((notice) => (
-                <li
-                  key={notice}
-                  className="flex items-start gap-1.5 text-xs text-warning-11"
-                >
-                  <TriangleAlert className="mt-0.5 size-3 shrink-0" />
-                  <span>{notice}</span>
-                </li>
-              ))}
-            </ul>
+          {tier.isFast && (
+            <TierTag
+              icon={Zap}
+              className="border-warning-7 bg-warning-3 text-warning-11"
+            >
+              {t('Fast')}
+            </TierTag>
           )}
-        </div>
+          {thinkingChip !== undefined && (
+            <TierTag icon={Brain}>{thinkingChip}</TierTag>
+          )}
+          {tools === 'recommended' && (
+            <TierTag icon={MessageSquare}>{t('Recommended for chat')}</TierTag>
+          )}
+        </>
+      }
+      description={tier.description || undefined}
+      action={
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -206,16 +288,13 @@ export function TierCard({
               variant="ghost"
               size="icon-sm"
               aria-label={t('Tier actions')}
-              disabled={isPending}
             >
               <MoreHorizontal className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            onCloseAutoFocus={(event) => event.preventDefault()}
-          >
+          <DropdownMenuContent align="end">
             <DropdownMenuItem
+              disabled={writing}
               onSelect={() => onEdit(menuTriggerRef.current)}
               {...adminControl(AdminControl.AI_TIER_OPEN)}
             >
@@ -224,6 +303,7 @@ export function TierCard({
             </DropdownMenuItem>
             {!tier.isDefault && (
               <DropdownMenuItem
+                disabled={writing}
                 onSelect={() => save({ isDefault: true })}
                 {...adminControl(AdminControl.AI_TIER_DEFAULT_SELECT)}
               >
@@ -233,6 +313,7 @@ export function TierCard({
             )}
             {!tier.isFast && (
               <DropdownMenuItem
+                disabled={writing}
                 onSelect={() => save({ isFast: true })}
                 {...adminControl(AdminControl.AI_TIER_FAST_SELECT)}
               >
@@ -241,13 +322,13 @@ export function TierCard({
               </DropdownMenuItem>
             )}
             {onMoveUp !== undefined && (
-              <DropdownMenuItem onSelect={onMoveUp}>
+              <DropdownMenuItem disabled={writing} onSelect={onMoveUp}>
                 <ArrowUp className="size-4" />
                 {t('Move up')}
               </DropdownMenuItem>
             )}
             {onMoveDown !== undefined && (
-              <DropdownMenuItem onSelect={onMoveDown}>
+              <DropdownMenuItem disabled={writing} onSelect={onMoveDown}>
                 <ArrowDown className="size-4" />
                 {t('Move down')}
               </DropdownMenuItem>
@@ -255,6 +336,7 @@ export function TierCard({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-danger-11"
+              disabled={writing}
               onSelect={() => onDelete(menuTriggerRef.current)}
               {...adminControl(AdminControl.AI_TIER_DELETE_OPEN)}
             >
@@ -263,9 +345,22 @@ export function TierCard({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </header>
-
-      <div className="flex flex-col gap-1 border-t border-gray-6/60 px-3 pb-3 pt-3">
+      }
+    >
+      <div className="@container flex flex-col gap-1 px-3 pb-3 pt-3">
+        {notices.length > 0 && (
+          <ul className="flex flex-col gap-0.5 px-2 pb-2">
+            {notices.map((notice) => (
+              <li
+                key={notice}
+                className="flex items-start gap-1.5 text-xs text-warning-11"
+              >
+                <TriangleAlert className="mt-0.5 size-3 shrink-0" />
+                <span>{notice}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         <div className="flex items-center gap-1.5 px-2 pb-1">
           <span className="text-xs font-medium text-gray-11">
             {t('Model & fallbacks')}
@@ -317,8 +412,8 @@ export function TierCard({
                   })}
                   menu={
                     <RowMenu
+                      disabled={writing}
                       isMain={isMain}
-                      disabled={isPending}
                       canMoveUp={position > 0}
                       canMoveDown={position < tier.entries.length - 1}
                       onChangeMain={() => setMainPickerOpen(true)}
@@ -328,14 +423,7 @@ export function TierCard({
                       onMoveDown={() =>
                         move({ from: position, to: position + 1 })
                       }
-                      onRemove={() =>
-                        save({
-                          entries: modelMeta.removeAt({
-                            entries: tier.entries,
-                            index: position,
-                          }),
-                        })
-                      }
+                      onRemove={() => removeEntry(position)}
                     />
                   }
                 />
@@ -356,16 +444,19 @@ export function TierCard({
                       exclude={tier.entries}
                       mode="main"
                       anchorOnly
-                      open={mainPickerOpen}
+                      open={mainPickerOpen && !writing}
                       onOpenChange={setMainPickerOpen}
-                      onPick={(picked: PlatformModelTierEntry) =>
+                      onPick={(picked: PlatformModelTierEntry) => {
+                        if (writing) {
+                          return;
+                        }
                         save({
                           entries: modelMeta.replaceMain({
                             entries: tier.entries,
                             entry: picked,
                           }),
-                        })
-                      }
+                        });
+                      }}
                     >
                       <div>{row}</div>
                     </AdminModelPicker>
@@ -381,7 +472,7 @@ export function TierCard({
           <div className="flex items-stretch gap-3 px-2">
             <div className="flex w-4 shrink-0 flex-col items-center">
               <span className="w-px flex-1 bg-gray-6" />
-              <span className="my-1 size-2 shrink-0 rounded-full border-2 border-gray-7 bg-panel" />
+              <span className="my-1 size-2 shrink-0 rounded-full border-2 border-gray-7 bg-(--admin-surface)" />
               <span className="w-px flex-1" />
             </div>
             <div className="my-1 flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border border-dashed border-gray-7 px-3 py-2.5">
@@ -408,7 +499,7 @@ export function TierCard({
                   variant="outline"
                   size="sm"
                   className="shrink-0"
-                  disabled={isPending}
+                  disabled={writing}
                   {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
                 >
                   <Plus className="size-4" />
@@ -425,7 +516,7 @@ export function TierCard({
                   variant="ghost"
                   size="sm"
                   className="text-gray-11"
-                  disabled={isPending}
+                  disabled={writing}
                   {...adminControl(AdminControl.AI_TIER_FALLBACK_OPEN)}
                 >
                   <Plus className="size-4" />
@@ -440,7 +531,7 @@ export function TierCard({
           </div>
         )}
       </div>
-    </section>
+    </SettingsPanel>
   );
 }
 
@@ -521,8 +612,8 @@ function TierTag({
 }
 
 function RowMenu({
-  isMain,
   disabled,
+  isMain,
   canMoveUp,
   canMoveDown,
   onChangeMain,
@@ -530,8 +621,8 @@ function RowMenu({
   onMoveDown,
   onRemove,
 }: {
-  isMain: boolean;
   disabled: boolean;
+  isMain: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
   onChangeMain: () => void;
@@ -546,16 +637,13 @@ function RowMenu({
           variant="ghost"
           size="icon-xs"
           className="shrink-0 text-gray-10"
-          aria-label={t('Model actions')}
           disabled={disabled}
+          aria-label={t('Model actions')}
         >
           <MoreHorizontal className="size-3.5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        onCloseAutoFocus={(event) => event.preventDefault()}
-      >
+      <DropdownMenuContent align="end">
         {isMain && (
           <DropdownMenuItem
             onSelect={onChangeMain}
@@ -591,23 +679,19 @@ function RowMenu({
   );
 }
 
-function useDelayedFlag({
-  active,
-  delayMs,
+function writesTier({
+  variables,
+  tierId,
 }: {
-  active: boolean;
-  delayMs: number;
+  variables: unknown;
+  tierId: string;
 }): boolean {
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    if (!active) {
-      setShown(false);
-      return;
-    }
-    const timer = window.setTimeout(() => setShown(true), delayMs);
-    return () => window.clearTimeout(timer);
-  }, [active, delayMs]);
-  return shown;
+  return (
+    typeof variables === 'object' &&
+    variables !== null &&
+    'id' in variables &&
+    variables.id === tierId
+  );
 }
 
 const MAX_ENTRIES = 5;

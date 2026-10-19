@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-enabled-disabled */
+/* eslint-disable jest-dom/prefer-in-document, jest-dom/prefer-enabled-disabled, jest-dom/prefer-to-have-attribute */
 import { AIProviderName } from '@activepieces/core-utils';
 import {
   AIProviderModel,
@@ -9,6 +9,7 @@ import {
   AIProviderWithoutSensitiveData,
   PlatformModelTier,
 } from '@activepieces/shared';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -38,6 +39,10 @@ const state = vi.hoisted(() => ({
       | { aiSpecificModelsVisible: boolean }
       | undefined,
   },
+}));
+
+vi.mock('@/hooks/flags-hooks', () => ({
+  flagsHooks: { useFlag: () => ({ data: undefined }) },
 }));
 
 vi.mock('sonner', () => ({
@@ -94,13 +99,15 @@ function mutation() {
   return { mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false };
 }
 
-function renderTab() {
+function renderTab(queryClient = new QueryClient()) {
   return render(
-    <MemoryRouter>
-      <TooltipProvider>
-        <TiersTab />
-      </TooltipProvider>
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <TooltipProvider>
+          <TiersTab />
+        </TooltipProvider>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -189,8 +196,8 @@ describe('TiersTab states', () => {
   it('offers the first tier and keeps specific models visible while there are none', () => {
     renderTab();
     expect(screen.getByText('Create your first tier')).toBeDefined();
-    const hide = screen.getByRole('tab', { name: 'Hidden' });
-    expect(hide.getAttribute('data-disabled')).not.toBeNull();
+    const visible = screen.getByRole('switch', { name: 'Visible to builders' });
+    expect(visible.hasAttribute('disabled')).toBe(true);
     expect(screen.getByText('Add a tier before hiding these.')).toBeDefined();
   });
 

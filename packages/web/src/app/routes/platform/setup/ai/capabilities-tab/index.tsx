@@ -16,22 +16,25 @@ import {
 } from 'lucide-react';
 
 import {
+  AdminPage,
   AdminPageHeader,
+  AdminQueryState,
+  ConfirmDialog,
+  SettingsPanel,
+  SettingsRow,
   StatusDot,
   adminPageResources,
-  adminSurface,
+  useAdminAction,
 } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   aiProviderQueries,
-  aiToolConfigMutations,
+  aiToolConfigApi,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
 import { AdminControl, adminControl } from '@/lib/admin-control';
-import { cn } from '@/lib/utils';
 
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
 import {
@@ -43,11 +46,13 @@ import {
 export function CapabilitiesTab() {
   const {
     data: configs,
+    isLoading: configsLoading,
     isError: configsFailed,
     refetch: refetchConfigs,
   } = aiToolConfigQueries.useAiToolConfigs();
   const {
     data: providers,
+    isLoading: providersLoading,
     isError: providersFailed,
     refetch: refetchProviders,
   } = aiProviderQueries.useAiProviderConfigs();
@@ -59,12 +64,15 @@ export function CapabilitiesTab() {
       (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
     );
 
-  const { mutate: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
+  const { mutateAsync: reset } = useAdminAction<{ id: string; name: string }>({
+    verb: 'reset',
+    name: ({ name }) => name,
+    run: ({ id }) => aiToolConfigApi.delete(id),
     onSuccess: () => refetchConfigs(),
   });
 
   return (
-    <>
+    <AdminPage width="content">
       <AdminPageHeader
         title={t('Assistant capabilities')}
         badge={
@@ -77,16 +85,37 @@ export function CapabilitiesTab() {
         )}
         resources={adminPageResources.aiCapabilities}
       />
-      {isError ? (
-        <DataFetchErrorState entity={t('AI tools')} onRetry={refetch} />
-      ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <AdminQueryState
+        isLoading={configsLoading || providersLoading}
+        isError={isError}
+        hasData={configs !== undefined && providers !== undefined}
+        onRetry={refetch}
+        entity={t('AI tools')}
+        skeleton={
+          <SettingsPanel flush>
+            {AI_TOOL_CATALOG.map((capabilityInfo) => (
+              <div
+                key={capabilityInfo.capability}
+                className="flex items-center gap-4 px-5 py-4"
+              >
+                <Skeleton className="size-9 shrink-0 rounded-lg" />
+                <div className="flex flex-1 flex-col gap-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3.5 w-72" />
+                </div>
+                <Skeleton className="h-8 w-20 rounded-md" />
+              </div>
+            ))}
+          </SettingsPanel>
+        }
+      >
+        <SettingsPanel flush>
           {AI_TOOL_CATALOG.map((capabilityInfo) => {
             const config = configs?.find(
               (c) => c.capability === capabilityInfo.capability,
             );
             return (
-              <CapabilityCard
+              <CapabilityRow
                 key={capabilityInfo.capability}
                 capabilityInfo={capabilityInfo}
                 config={config}
@@ -100,18 +129,22 @@ export function CapabilitiesTab() {
                     ? chatProvider
                     : undefined
                 }
-                onDelete={() => config && remove(config.id)}
+                onDelete={async () => {
+                  if (config) {
+                    await reset({ id: config.id, name: capabilityInfo.name });
+                  }
+                }}
                 onSaved={() => refetchConfigs()}
               />
             );
           })}
-        </div>
-      )}
-    </>
+        </SettingsPanel>
+      </AdminQueryState>
+    </AdminPage>
   );
 }
 
-function CapabilityCard({
+function CapabilityRow({
   capabilityInfo,
   config,
   providers,
@@ -123,7 +156,7 @@ function CapabilityCard({
   config?: AiToolConfigWithoutSensitiveData;
   providers: AIProviderWithoutSensitiveData[];
   chatProviderFallback?: AIProviderWithoutSensitiveData;
-  onDelete: () => void;
+  onDelete: () => Promise<void>;
   onSaved: () => void;
 }) {
   const Icon = CAPABILITY_ICON[capabilityInfo.capability];
@@ -148,78 +181,73 @@ function CapabilityCard({
   const statusText = isNil(chosenModelId)
     ? status
     : `${status} · ${chosenModelId}`;
+  const statusLine = `${statusText} · ${
+    inUse
+      ? t('Available to the assistant')
+      : t("The assistant can't do this yet")
+  }`;
 
   return (
-    <div className={cn(adminSurface.card, 'group flex flex-col')}>
-      <div className="flex items-start gap-4 px-5 pt-5 pb-2">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-gray-1">
-          <Icon className="size-4 text-gray-11" />
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="truncate text-sm font-semibold text-gray-12">
-            {capabilityInfo.name}
-          </p>
+    <SettingsRow
+      className="group"
+      icon={<Icon />}
+      title={capabilityInfo.name}
+      description={
+        <span className="flex flex-col gap-1">
           <StatusDot
             tone={inUse ? 'success' : 'neutral'}
             className="text-xs text-gray-11"
           >
-            <TextWithTooltip tooltipMessage={statusText}>
-              <span className="truncate">{statusText}</span>
+            <TextWithTooltip tooltipMessage={statusLine}>
+              <span className="truncate">{statusLine}</span>
             </TextWithTooltip>
           </StatusDot>
-        </div>
-        {config && (
-          <ConfirmationDeleteDialog
-            title={t('Reset {name}', { name: capabilityInfo.name })}
-            message={
-              chatProviderFallback
-                ? t('Chat goes back to using {provider}.', {
-                    provider: chatProviderFallback.name,
-                  })
-                : t(
-                    'This removes the saved API key and disables this capability.',
-                  )
-            }
-            entityName={capabilityInfo.name}
-            controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
-            mutationFn={async () => onDelete()}
-          >
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-gray-11 opacity-0 transition-opacity hover:text-danger-11 group-focus-within:opacity-100 group-hover:opacity-100"
-              {...adminControl(AdminControl.AI_CAPABILITY_RESET_OPEN)}
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          </ConfirmationDeleteDialog>
-        )}
-      </div>
-      <p className="px-5 pb-5 text-sm text-gray-11">
-        {capabilityInfo.description}
-      </p>
-      <div className="mt-auto flex items-center justify-between gap-4 border-t px-5 py-3">
-        <span className="text-xs text-gray-11">
-          {inUse
-            ? t('Available to the assistant')
-            : t("The assistant can't do this yet")}
+          <span>{capabilityInfo.description}</span>
         </span>
-        <AiCapabilityDialog
-          capabilityInfo={capabilityInfo}
-          existingConfig={config}
-          defaultProviderId={chatProviderFallback?.id}
-          onSaved={onSaved}
+      }
+    >
+      {config && (
+        <ConfirmDialog
+          title={t('Reset {name}?', { name: capabilityInfo.name })}
+          description={
+            chatProviderFallback
+              ? t('Chat goes back to using {provider}.', {
+                  provider: chatProviderFallback.name,
+                })
+              : t(
+                  'This removes the saved API key and disables this capability.',
+                )
+          }
+          confirmLabel={t('Reset')}
+          controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
+          onConfirm={onDelete}
         >
           <Button
-            variant="outline"
-            size="sm"
-            {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t('Reset {name}', { name: capabilityInfo.name })}
+            className="text-gray-11 opacity-0 transition-opacity hover:text-danger-11 focus-visible:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100"
+            {...adminControl(AdminControl.AI_CAPABILITY_RESET_OPEN)}
           >
-            {inUse ? t('Change') : t('Connect')}
+            <Trash2 className="size-4" />
           </Button>
-        </AiCapabilityDialog>
-      </div>
-    </div>
+        </ConfirmDialog>
+      )}
+      <AiCapabilityDialog
+        capabilityInfo={capabilityInfo}
+        existingConfig={config}
+        defaultProviderId={chatProviderFallback?.id}
+        onSaved={onSaved}
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
+        >
+          {inUse ? t('Change') : t('Connect')}
+        </Button>
+      </AiCapabilityDialog>
+    </SettingsRow>
   );
 }
 

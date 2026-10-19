@@ -447,7 +447,7 @@ describe('AppearanceSection', () => {
     expect(state.toastSuccess).not.toHaveBeenCalled();
     expect(
       container.textContent?.includes(
-        'Failed to save changes. Please try again.',
+        'An unexpected error occurred. Please try again in a moment.',
       ),
     ).toBe(true);
   });

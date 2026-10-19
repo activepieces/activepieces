@@ -1,5 +1,6 @@
 export { pieceSetsApi } from './api/piece-sets-api';
 export {
+  pieceSetCacheUtils,
   pieceSetKeys,
   pieceSetMutations,
   pieceSetQueries,

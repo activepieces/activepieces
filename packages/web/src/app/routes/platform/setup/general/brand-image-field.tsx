@@ -75,7 +75,7 @@ export const BrandImageField = ({
           data-theme="light"
           className={cn(
             'flex h-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-6 bg-gray-1 p-2',
-            wide ? 'w-40' : 'w-14',
+            wide ? 'w-24 sm:w-40' : 'w-14',
           )}
         >
           {shownUrl ? (

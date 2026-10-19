@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -14,11 +15,6 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
-
-vi.mock('@tanstack/react-query', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
-}));
 
 vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
   platformModelTierQueries: { useAdminList: () => ({ data: [] }) },
@@ -106,9 +102,11 @@ vi.mock('@/app/routes/platform/setup/ai/providers-tab/config-detail', () => ({
 
 function renderTab(path = '/platform/ai') {
   render(
-    <MemoryRouter initialEntries={[path]}>
-      <ProvidersTab />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter initialEntries={[path]}>
+        <ProvidersTab />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -148,7 +146,7 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
     expect(
       screen.queryAllByRole('button', { name: /Trial Anthropic/ }),
     ).toEqual([]);
-    expect(screen.queryAllByText('Also available')).toEqual([]);
+    expect(screen.queryAllByText('Add a provider')).toEqual([]);
   });
 
   it('does not open the key detail from a deep link', () => {

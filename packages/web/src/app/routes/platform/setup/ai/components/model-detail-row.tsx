@@ -42,13 +42,13 @@ export function ModelDetailRow({
         )}
       </div>
       {loading && model === undefined && (
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-4 @lg:flex">
           <Skeleton className="h-8 w-16" />
           <Skeleton className="h-8 w-28" />
         </div>
       )}
       {model !== undefined && (
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-4 @lg:flex">
           <Stat label={t('Context')} className="w-16">
             {metadata?.contextTokens === undefined
               ? EMPTY
@@ -94,7 +94,7 @@ function Stat({
 }) {
   return (
     <span className={cn('flex flex-col', className)}>
-      <span className="text-xs text-gray-10">{label}</span>
+      <span className="text-xs text-gray-11">{label}</span>
       <span className="text-sm tabular-nums text-gray-12">{children}</span>
     </span>
   );
