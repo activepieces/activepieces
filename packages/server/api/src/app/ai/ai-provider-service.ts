@@ -11,6 +11,7 @@ import { distributedLock, distributedStore } from '../database/redis-connections
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
+import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
 import { aiKeyScope, ProviderScope } from './ai-key-scope'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
@@ -75,18 +76,17 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async listKeysForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectKeyModels[]> {
         const rows = await listVisibleRows({ platformId, log })
         const scope: ProviderScope = { type: 'project', projectId }
-        const ranked = rankRows({ rows: rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope })), scope })
-        const chatRowId = pickChatRow(ranked)?.id
-        return Promise.all(ranked.map(async (row) => {
-            const { data } = row.provider === AIProviderName.ACTIVEPIECES
-                ? { data: null }
-                : await tryCatch(() => fetchModels({ aiProvider: row, platformId, log }))
-            return {
-                row,
-                isChatKey: row.id === chatRowId,
-                models: isNil(data) ? null : data.filter((model) => aiKeyScope.scopeAllows({ modelScope: row.modelScope, modelIds: row.modelIds, modelId: model.id })),
-            }
-        }))
+        return withModels({ ranked: rankRows({ rows: rows.filter((row) => aiKeyScope.rowAllowsScope({ row, scope })), scope }), platformId, log })
+    },
+
+    async listKeysForPlatform({ platformId }: { platformId: PlatformId }): Promise<ProjectKeyModels[]> {
+        const rows = await listVisibleRows({ platformId, log })
+        return withModels({ ranked: rankRows({ rows, scope: { type: 'platform' } }), platformId, log })
+    },
+
+    async markDefaultKey({ manager, platformId, configId }: { manager: EntityManager, platformId: PlatformId, configId: string }): Promise<void> {
+        await manager.update(AIProviderEntity, { platformId }, { enabledForChat: false })
+        await manager.update(AIProviderEntity, { platformId, id: configId }, { enabledForChat: true })
     },
 
     async listModelsForConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderModel[]> {
@@ -121,7 +121,8 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const auth = await encryptUtils.encryptObject(request.auth)
         const { saved, isFirstKey } = await transaction(async (manager) => {
             await platformModelTierService.lockPlatform({ manager, platformId })
-            const firstKey = !await aiProviderRepo(manager).existsBy({ platformId, provider: Not(AIProviderName.ACTIVEPIECES) })
+            const hasDefaultChatModel = !isNil((await platformConfigurationService(log).getOrCreateForPlatform({ platformId })).defaultChatModel)
+            const firstKey = !hasDefaultChatModel && !await aiProviderRepo(manager).existsBy({ platformId, provider: Not(AIProviderName.ACTIVEPIECES) })
             if (firstKey) {
                 await aiProviderRepo(manager).update({ platformId }, { enabledForChat: false })
             }
@@ -429,6 +430,20 @@ const PROJECT_SCOPE_SPECIFICITY: Record<AiProviderProjectScope, number> = {
     selected: 0,
     except: 1,
     all: 2,
+}
+
+async function withModels({ ranked, platformId, log }: { ranked: AIProviderSchema[], platformId: PlatformId, log: FastifyBaseLogger }): Promise<ProjectKeyModels[]> {
+    const chatRowId = pickChatRow(ranked)?.id
+    return Promise.all(ranked.map(async (row) => {
+        const { data } = row.provider === AIProviderName.ACTIVEPIECES
+            ? { data: null }
+            : await tryCatch(() => fetchModels({ aiProvider: row, platformId, log }))
+        return {
+            row,
+            isChatKey: row.id === chatRowId,
+            models: isNil(data) ? null : data.filter((model) => aiKeyScope.scopeAllows({ modelScope: row.modelScope, modelIds: row.modelIds, modelId: model.id })),
+        }
+    }))
 }
 
 function rankRows({ rows, scope }: { rows: AIProviderSchema[], scope: ProviderScope }): AIProviderSchema[] {

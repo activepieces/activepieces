@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, PlatformId, spreadIfDefined } from '@activepieces/core-utils'
 import { modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
-import { AIProviderModel, AIProviderModelType, aiProviderUtils, ModelChoice, ModelOptions, ModelOptionsCredits, ModelOptionsKey, ModelOptionsSurface, ModelOptionsTier, OptionModel } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, aiProviderUtils, ModelChoice, ModelOptions, ModelOptionsCredits, ModelOptionsKey, ModelOptionsSurface, ModelOptionsTier, OptionModel, PlatformConfiguration } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { aiKeyScope } from './ai-key-scope'
@@ -10,42 +10,46 @@ import { platformModelTierService, TierForRun } from './platform-model-tier-serv
 
 export const aiModelOptionsService = (log: FastifyBaseLogger) => ({
     async list({ platformId, projectId, surface, tierId }: { platformId: PlatformId, projectId: string, surface: ModelOptionsSurface, tierId?: string }): Promise<ModelOptions> {
-        const [keys, tiersForRun, movedTiers, configuration, catalog] = await Promise.all([
+        const configuration = await platformConfigurationService(log).getOrCreateForPlatform({ platformId })
+        const [keys, tiersForRun, movedTiers, catalog] = await Promise.all([
             aiProviderService(log).listKeysForProject({ platformId, projectId }),
             platformModelTierService.listForPicker({ platformId, scope: { type: 'project', projectId } }),
-            platformModelTierService.movedTiers({ platformId, tierId }),
-            platformConfigurationService(log).getOrCreateForPlatform({ platformId }),
+            platformModelTierService.movedTiers({ platformId, tierIds: [tierId, tierIdOf(configuration.defaultChatModel)] }),
             modelCatalog.load(),
         ])
-        const lookup: Lookup = ({ provider, modelId }) => catalog.lookup({ provider, modelId })
-        const callsTools: CallsTools = ({ provider, modelId }) => surface === 'flow' || lookup({ provider, modelId })?.supportsToolCalling !== false
-        const tiers = tiersForRun.flatMap((forRun) => toTierOption({ forRun, keys, lookup, callsTools }))
-        const creditsKey = keys.find((key) => key.row.provider === AIProviderName.ACTIVEPIECES)
-        const credits = isNil(creditsKey) ? null : toCredits({ row: creditsKey.row, surface, lookup })
-        const specificModelsHidden = !configuration.aiSpecificModelsVisible
-        const keyOptions = specificModelsHidden ? [] : keys.flatMap((key) => toKeyOption({ key, surface, lookup, callsTools }))
-        const chatKeyId = keys.find((key) => key.isChatKey)?.row.id
-        return {
-            tiers,
-            credits,
-            keys: keyOptions,
-            defaultChoice: aiModelOptionsUtils.defaultChoice({ surface, tiers, credits, keys: keyOptions, chatKeyId }),
-            movedTiers,
-            specificModelsHidden,
-        }
+        return buildOptions({ keys, tiersForRun, movedTiers, configuration, catalog, surface })
+    },
+
+    async listForPlatform({ platformId, surface, platformDefault }: { platformId: PlatformId, surface: ModelOptionsSurface, platformDefault?: ModelChoice | null }): Promise<ModelOptions> {
+        const configuration = await platformConfigurationService(log).getOrCreateForPlatform({ platformId })
+        const chatDefault = platformDefault === undefined ? configuration.defaultChatModel ?? null : platformDefault
+        const [keys, tiersForRun, movedTiers, catalog] = await Promise.all([
+            aiProviderService(log).listKeysForPlatform({ platformId }),
+            platformModelTierService.listForPicker({ platformId, scope: { type: 'platform' }, anyProject: true }),
+            platformModelTierService.movedTiers({ platformId, tierIds: [tierIdOf(chatDefault)] }),
+            modelCatalog.load(),
+        ])
+        return buildOptions({ keys, tiersForRun, movedTiers, configuration: { ...configuration, defaultChatModel: chatDefault }, catalog, surface })
     },
 })
 
 export const aiModelOptionsUtils = {
-    defaultChoice({ surface, tiers, credits, keys, chatKeyId }: DefaultChoiceParams): ModelChoice | null {
+    usableChoice,
+    defaultChoice({ surface, tiers, credits, keys, chatKeyId, platformDefault, movedTiers }: DefaultChoiceParams): ModelChoice | null {
+        const usableDefault = surface === 'chat' && !isNil(platformDefault)
+            ? usableChoice({ choice: platformDefault, tiers, credits, keys, movedTiers: movedTiers ?? {} })
+            : null
+        if (!isNil(usableDefault)) {
+            return usableDefault
+        }
         const defaultTier = tiers.find((tier) => tier.isDefault)
         if (!isNil(defaultTier)) {
             return { type: 'tier', tierId: defaultTier.id }
         }
         const chatKey = surface === 'chat' ? keys.find((key) => key.providerConfigId === chatKeyId) : undefined
-        const chatKeyModel = chatKey?.models[0]
-        if (!isNil(chatKey) && !isNil(chatKeyModel)) {
-            return modelChoiceOf({ key: chatKey, modelId: chatKeyModel.id })
+        const chatKeyModelId = isNil(chatKey) ? undefined : firstRunnableModelId({ key: chatKey })
+        if (!isNil(chatKey) && !isNil(chatKeyModelId)) {
+            return modelChoiceOf({ key: chatKey, modelId: chatKeyModelId })
         }
         if (!isNil(credits)) {
             return { type: 'model', provider: AIProviderName.ACTIVEPIECES, providerConfigId: credits.providerConfigId, modelId: credits.defaultTierId }
@@ -56,6 +60,48 @@ export const aiModelOptionsUtils = {
         const firstKey = keys.find((key) => key.models.length > 0)
         return isNil(firstKey) ? null : modelChoiceOf({ key: firstKey, modelId: firstKey.models[0].id })
     },
+}
+
+function buildOptions({ keys, tiersForRun, movedTiers, configuration, catalog, surface }: BuildOptionsParams): ModelOptions {
+    const lookup: Lookup = ({ provider, modelId }) => catalog.lookup({ provider, modelId })
+    const callsTools: CallsTools = ({ provider, modelId }) => surface === 'flow' || lookup({ provider, modelId })?.supportsToolCalling !== false
+    const tiers = tiersForRun.flatMap((forRun) => toTierOption({ forRun, keys, lookup, callsTools }))
+    const creditsKey = keys.find((key) => key.row.provider === AIProviderName.ACTIVEPIECES)
+    const credits = isNil(creditsKey) ? null : toCredits({ row: creditsKey.row, surface, lookup })
+    const specificModelsHidden = !configuration.aiSpecificModelsVisible
+    const keyOptions = specificModelsHidden ? [] : keys.flatMap((key) => toKeyOption({ key, surface, lookup, callsTools }))
+    const chatKeyId = keys.find((key) => key.isChatKey)?.row.id
+    return {
+        tiers,
+        credits,
+        keys: keyOptions,
+        defaultChoice: aiModelOptionsUtils.defaultChoice({ surface, tiers, credits, keys: keyOptions, chatKeyId, platformDefault: configuration.defaultChatModel ?? null, movedTiers }),
+        movedTiers,
+        specificModelsHidden,
+    }
+}
+
+function usableChoice({ choice, tiers, credits, keys, movedTiers }: { choice: ModelChoice, tiers: ModelOptionsTier[], credits: ModelOptionsCredits | null, keys: ModelOptionsKey[], movedTiers: Record<string, string> }): ModelChoice | null {
+    if (choice.type === 'tier') {
+        const tierId = movedTiers[choice.tierId] ?? choice.tierId
+        return tiers.some((tier) => tier.id === tierId) ? { type: 'tier', tierId } : null
+    }
+    if (choice.provider === AIProviderName.ACTIVEPIECES) {
+        return !isNil(credits) && credits.tiers.some((tier) => tier.id === choice.modelId)
+            ? { ...choice, providerConfigId: credits.providerConfigId }
+            : null
+    }
+    const offered = keys.some((key) => key.providerConfigId === choice.providerConfigId && key.models.some((model) => model.id === choice.modelId))
+    return offered ? choice : null
+}
+
+function firstRunnableModelId({ key }: { key: ModelOptionsKey }): string | undefined {
+    const runnable = aiProviderUtils.runnableChatModelIds({ provider: key.provider })
+    return runnable.find((modelId) => key.models.some((model) => model.id === modelId)) ?? key.models[0]?.id
+}
+
+function tierIdOf(choice: ModelChoice | null | undefined): string | undefined {
+    return choice?.type === 'tier' ? choice.tierId : undefined
 }
 
 function toTierOption({ forRun, keys, lookup, callsTools }: { forRun: TierForRun, keys: ProjectKeyModels[], lookup: Lookup, callsTools: CallsTools }): ModelOptionsTier[] {
@@ -108,41 +154,20 @@ function toKeyOption({ key, surface, lookup, callsTools }: { key: ProjectKeyMode
     if (row.provider === AIProviderName.ACTIVEPIECES || isNil(models)) {
         return []
     }
-    const textModels = models.filter((model) => model.type === AIProviderModelType.TEXT)
-    const toolModels = textModels.filter((model) => callsTools({ provider: row.provider, modelId: model.id }))
-    const offered = surface === 'flow'
-        ? toolModels
-        : surface === 'chat'
-            ? chatModels({ row, textModels, toolModels, lookup })
-            : curatedFirst({ provider: row.provider, models: toolModels })
+    const toolModels = models
+        .filter((model) => model.type === AIProviderModelType.TEXT)
+        .filter((model) => callsTools({ provider: row.provider, modelId: model.id }))
+    const offered = surface === 'chat' ? chatModels({ row, toolModels, lookup }) : toolModels
     return offered.length === 0 ? [] : [{ providerConfigId: row.id, provider: row.provider, name: row.displayName, models: offered }]
 }
 
-function chatModels({ row, textModels, toolModels, lookup }: { row: AIProviderSchema, textModels: AIProviderModel[], toolModels: AIProviderModel[], lookup: Lookup }): AIProviderModel[] {
+function chatModels({ row, toolModels, lookup }: { row: AIProviderSchema, toolModels: AIProviderModel[], lookup: Lookup }): AIProviderModel[] {
     const curated = aiProviderUtils.getCuratedChatModels({ provider: row.provider })
     if (isNil(curated) || !isNil(aiKeyScope.manualModelIdsOf({ config: row.config }))) {
         return toolModels
     }
-    const recommended = curated
-        .filter((model) => aiKeyScope.scopeAllows({ modelScope: row.modelScope, modelIds: row.modelIds, modelId: model.id }))
-        .map((model) => textModels.find((listed) => listed.id === model.id) ?? {
-            id: model.id,
-            name: model.label,
-            type: AIProviderModelType.TEXT,
-            ...spreadIfDefined('metadata', lookup({ provider: row.provider, modelId: model.id })),
-        })
-    const recommendedIds = new Set(recommended.map((model) => model.id))
-    const knownToCallTools = toolModels.filter((model) => !recommendedIds.has(model.id) && lookup({ provider: row.provider, modelId: model.id })?.supportsToolCalling === true)
-    return [...recommended, ...knownToCallTools]
-}
-
-function curatedFirst({ provider, models }: { provider: AIProviderName, models: AIProviderModel[] }): AIProviderModel[] {
-    const curatedIds = (aiProviderUtils.getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
-    const rank = (modelId: string): number => {
-        const index = curatedIds.indexOf(modelId)
-        return index === -1 ? curatedIds.length : index
-    }
-    return [...models].sort((a, b) => rank(a.id) - rank(b.id))
+    const runnable = aiProviderUtils.runnableChatModelIds({ provider: row.provider })
+    return toolModels.filter((model) => runnable.includes(model.id) || lookup({ provider: row.provider, modelId: model.id })?.supportsToolCalling === true)
 }
 
 function modelChoiceOf({ key, modelId }: { key: ModelOptionsKey, modelId: string }): ModelChoice {
@@ -158,4 +183,15 @@ type DefaultChoiceParams = {
     credits: ModelOptionsCredits | null
     keys: ModelOptionsKey[]
     chatKeyId: string | undefined
+    platformDefault?: ModelChoice | null
+    movedTiers?: Record<string, string>
+}
+
+type BuildOptionsParams = {
+    keys: ProjectKeyModels[]
+    tiersForRun: TierForRun[]
+    movedTiers: Record<string, string>
+    configuration: PlatformConfiguration
+    catalog: Awaited<ReturnType<typeof modelCatalog.load>>
+    surface: ModelOptionsSurface
 }

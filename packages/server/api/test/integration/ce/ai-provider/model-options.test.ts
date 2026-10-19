@@ -1,6 +1,6 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { modelCatalog } from '@activepieces/server-utils'
-import { AIProviderModelType, aiProviderUtils, ModelOptions, PlatformModelTier } from '@activepieces/shared'
+import { AIProviderModelType, ModelOptions, PlatformModelTier } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { vi } from 'vitest'
@@ -104,7 +104,7 @@ describe('GET /v1/ai-providers/model-options', () => {
         expect(options.keys.flatMap((key) => key.models.map((model) => model.id))).toEqual(['gemini-2.5-flash'])
     })
 
-    it('offers chat the recommended models first, then only models the catalog says call tools', async () => {
+    it('offers chat known chat models and catalog-confirmed tool models in the key\'s own order', async () => {
         vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockResolvedValue([
             { id: 'gpt-4o', name: 'GPT-4o', type: AIProviderModelType.TEXT },
             { id: 'no-tools', name: 'No tools', type: AIProviderModelType.TEXT },
@@ -115,13 +115,31 @@ describe('GET /v1/ai-providers/model-options', () => {
             lookup: (model) => model.modelId === 'no-tools' ? { supportsToolCalling: false } : model.modelId === 'gpt-4o' ? { supportsToolCalling: true } : undefined,
         })
         await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, displayName: 'OpenAI' })
-        const recommended = (aiProviderUtils.getCuratedChatModels({ provider: AIProviderName.OPENAI }) ?? []).map((model) => model.id)
 
         const chat = (await listOptions({ surface: 'chat' })).keys[0].models.map((model) => model.id)
         const agent = (await listOptions({ surface: 'agent' })).keys[0].models.map((model) => model.id)
 
-        expect(chat).toEqual([...recommended, 'gpt-4o'])
-        expect(agent).toEqual(['gpt-5.5', 'gpt-4o', 'gpt-4o-2024-05-13'])
+        expect(chat).toEqual(['gpt-4o', 'gpt-5.5'])
+        expect(agent).toEqual(['gpt-4o', 'gpt-5.5', 'gpt-4o-2024-05-13'])
+    })
+
+    it('starts new chats on the platform default chat model, and falls back where its key does not serve the project', async () => {
+        const key = await seedKey({ name: 'Key', models: ['first', 'second'] })
+        const away = await seedKey({ name: 'Away', models: ['elsewhere'], projectScope: 'except', projectIds: [ctx.project.id] })
+        await setDefaultChatModel({ provider: AIProviderName.CUSTOM, providerConfigId: key.id, modelId: 'second' })
+        expect((await listOptions({ surface: 'chat' })).defaultChoice).toEqual({ type: 'model', provider: AIProviderName.CUSTOM, providerConfigId: key.id, modelId: 'second' })
+
+        await setDefaultChatModel({ provider: AIProviderName.CUSTOM, providerConfigId: away.id, modelId: 'elsewhere' })
+        expect((await listOptions({ surface: 'chat' })).defaultChoice).not.toMatchObject({ providerConfigId: away.id })
+    })
+
+    it('lists every key for the admin picker, including ones limited to other projects, and only for admins', async () => {
+        const away = await seedKey({ name: 'Away', models: ['elsewhere'], projectScope: 'except', projectIds: [ctx.project.id] })
+
+        const response = await ctx.get('/v1/ai-providers/model-options/platform', { surface: 'chat' })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect((response.json() as ModelOptions).keys.map((key) => key.providerConfigId)).toContain(away.id)
     })
 
     it('defaults to the Default tier, else credits, else the first option', async () => {
@@ -185,6 +203,11 @@ function mockCatalogWithoutToolsFor({ modelId }: { modelId: string }): void {
     vi.spyOn(modelCatalog, 'load').mockResolvedValue({
         lookup: (model) => model.modelId === modelId ? { supportsToolCalling: false } : undefined,
     })
+}
+
+async function setDefaultChatModel({ provider, providerConfigId, modelId }: { provider: AIProviderName, providerConfigId: string, modelId: string }): Promise<void> {
+    await ctx.get('/v1/platform-configurations')
+    await databaseConnection().getRepository('platform_configuration').update({ platformId: ctx.platform.id }, { defaultChatModel: { type: 'model', provider, providerConfigId, modelId } })
 }
 
 const TIERS = '/v1/platform-model-tiers'

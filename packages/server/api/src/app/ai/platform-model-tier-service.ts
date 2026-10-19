@@ -35,22 +35,26 @@ export const platformModelTierService = {
         return listLive({ platformId })
     },
 
-    async listForPicker({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun[]> {
+    async listForPicker({ platformId, scope, anyProject = false }: { platformId: PlatformId, scope: ProviderScope, anyProject?: boolean }): Promise<TierForRun[]> {
         const tiers = await listLive({ platformId })
         const configIds = unique(tiers.flatMap((tier) => tier.entries.map((entry) => entry.configId)))
         const keys = configIds.length === 0 ? [] : await aiProviderRepo().findBy({ platformId, id: In(configIds) })
         const keyById = new Map(keys.map((key) => [key.id, key]))
         return tiers
-            .filter((tier) => mainRunsIn({ tier, keyById, scope }))
-            .map((tier) => ({ tier, entries: entriesThatRun({ tier, keyById, scope }) }))
+            .filter((tier) => mainRunsIn({ tier, keyById, scope, anyProject }))
+            .map((tier) => ({ tier, entries: entriesThatRun({ tier, keyById, scope, anyProject }) }))
     },
 
-    async movedTiers({ platformId, tierId }: { platformId: PlatformId, tierId: string | undefined }): Promise<Record<string, string>> {
-        if (isNil(tierId)) {
+    async movedTiers({ platformId, tierIds }: { platformId: PlatformId, tierIds: (string | undefined)[] }): Promise<Record<string, string>> {
+        const ids = tierIds.filter((id): id is string => !isNil(id))
+        if (ids.length === 0) {
             return {}
         }
-        const live = (await followReplacementsInBulk({ platformId, ids: [tierId] })).get(tierId)
-        return isNil(live) || live.id === tierId ? {} : { [tierId]: live.id }
+        const live = await followReplacementsInBulk({ platformId, ids })
+        return Object.fromEntries(ids.flatMap((id) => {
+            const replacement = live.get(id)
+            return isNil(replacement) || replacement.id === id ? [] : [[id, replacement.id]]
+        }))
     },
 
     async create({ platformId, request }: { platformId: PlatformId, request: CreatePlatformModelTierRequest }): Promise<PlatformModelTier> {
@@ -257,6 +261,11 @@ export const platformModelTierService = {
         }))
     },
 
+    async mainKeyIdOf({ manager, platformId, tierId }: { manager: EntityManager, platformId: PlatformId, tierId: string }): Promise<string | null> {
+        const tier = await tierRepo(manager).findOneBy({ platformId, id: tierId })
+        return tier?.entries[0]?.configId ?? null
+    },
+
     async lockPlatform({ manager, platformId }: { manager: EntityManager, platformId: PlatformId }): Promise<void> {
         await lockPlatform({ manager, platformId })
     },
@@ -287,22 +296,22 @@ async function lockPlatform({ manager, platformId }: { manager: EntityManager, p
     }
 }
 
-function mainRunsIn({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): boolean {
+function mainRunsIn({ tier, keyById, scope, anyProject = false }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope, anyProject?: boolean }): boolean {
     const main = tier.entries[0]
-    return !isNil(main) && entryRunsIn({ entry: main, key: keyById.get(main.configId), scope })
+    return !isNil(main) && entryRunsIn({ entry: main, key: keyById.get(main.configId), scope, anyProject })
 }
 
-function entryRunsIn({ entry, key, scope }: { entry: PlatformModelTierEntry, key: AIProviderSchema | undefined, scope: ProviderScope }): boolean {
+function entryRunsIn({ entry, key, scope, anyProject = false }: { entry: PlatformModelTierEntry, key: AIProviderSchema | undefined, scope: ProviderScope, anyProject?: boolean }): boolean {
     return !isNil(key)
         && key.provider !== AIProviderName.ACTIVEPIECES
         && aiKeyScope.scopeAllows({ modelScope: key.modelScope, modelIds: key.modelIds, modelId: entry.modelId })
-        && aiKeyScope.rowAllowsScope({ row: key, scope })
+        && (anyProject || aiKeyScope.rowAllowsScope({ row: key, scope }))
 }
 
-function entriesThatRun({ tier, keyById, scope }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope }): TierForRun['entries'] {
+function entriesThatRun({ tier, keyById, scope, anyProject = false }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope, anyProject?: boolean }): TierForRun['entries'] {
     return tier.entries.flatMap((entry) => {
         const key = keyById.get(entry.configId)
-        return isNil(key) || !entryRunsIn({ entry, key, scope }) ? [] : [{ modelId: entry.modelId, key }]
+        return isNil(key) || !entryRunsIn({ entry, key, scope, anyProject }) ? [] : [{ modelId: entry.modelId, key }]
     })
 }
 

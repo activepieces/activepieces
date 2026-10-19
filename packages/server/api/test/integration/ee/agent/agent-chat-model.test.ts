@@ -245,9 +245,9 @@ describe('a chat with no model picked', () => {
         expect(stored).toMatchObject({ modelTierId: tier.id, providerConfigId: null, modelName: null })
     })
 
-    it('stores the Default AI key and its first recommended model when there is no tier', async () => {
+    it('stores the Default AI key and its first known chat model when no default chat model is set', async () => {
         const ctx = await context()
-        vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockResolvedValue([{ id: 'gpt-4o', name: 'GPT-4o', type: AIProviderModelType.TEXT }])
+        vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockResolvedValue([{ id: 'gpt-4o', name: 'GPT-4o', type: AIProviderModelType.TEXT }, { id: curatedOpenAiModel(), name: 'Curated', type: AIProviderModelType.TEXT }])
         const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
         const conversation = await createConversation({ ctx, body: { projectId: ctx.project.id } })
 
@@ -255,6 +255,20 @@ describe('a chat with no model picked', () => {
 
         const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
         expect(stored).toMatchObject({ modelTierId: null, providerConfigId: key.id, modelName: curatedOpenAiModel() })
+    })
+
+    it('stores the platform default chat model, even when a Default tier exists', async () => {
+        const ctx = await context()
+        const key = await customKey({ ctx, name: 'Team', models: ['team-model', 'other-model'] })
+        await createTier({ ctx, entries: [{ configId: key.id, modelId: 'team-model' }] })
+        const saved = await ctx.post('/v1/platform-configurations', { defaultChatModel: { type: 'model', provider: AIProviderName.CUSTOM, providerConfigId: key.id, modelId: 'other-model' } })
+        expect(saved.statusCode).toBe(StatusCodes.OK)
+        const conversation = await createConversation({ ctx, body: { projectId: ctx.project.id } })
+
+        await getConfig({ ctx, conversationId: conversation.id, dryRun: false })
+
+        const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
+        expect(stored).toMatchObject({ modelTierId: null, providerConfigId: key.id, modelName: 'other-model' })
     })
 
     it('keeps the legacy path when the Default AI key\'s models cannot be listed', async () => {
