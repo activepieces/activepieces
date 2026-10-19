@@ -1,6 +1,6 @@
 import { I18nForPiece, PieceMetadataModel, PieceMetadataModelSummary } from "./piece-metadata"
 import { LocalesEnum } from "@activepieces/core-utils"
-import { MAX_KEY_LENGTH_FOR_CORWDIN } from "@activepieces/core-piece-types"
+import { MAX_KEY_LENGTH_FOR_CORWDIN, PieceCategory } from "@activepieces/core-piece-types"
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -10,7 +10,12 @@ export const pieceTranslation = {
     if (!translations) {
       return piece
     }
-    return translateNode({ node: piece, tree: translationTree, translations })
+    const tree = isCorePiece(piece.categories) ? coreTranslationTree : translationTree
+    return translateNode({ node: piece, tree, translations })
+  },
+
+  pathsToTranslate: (categories?: PieceCategory[]): string[] => {
+    return isCorePiece(categories) ? [...pieceTranslation.pathsToValuesToTranslate, 'displayName'] : pieceTranslation.pathsToValuesToTranslate
   },
 
   /**Gets the piece metadata regardles of piece location (node_modules or dist), wasn't included inside piece.metadata() for backwards compatibility issues (if an old ap version installs a new piece it would fail)*/
@@ -57,7 +62,16 @@ export const pieceTranslation = {
   ]
 }
 
-const translationTree = pieceTranslation.pathsToValuesToTranslate.reduce<TranslationTree>((tree, path) => addPath({ tree, keys: path.split('.') }), {})
+const translationTree = buildTree(pieceTranslation.pathsToTranslate())
+const coreTranslationTree = buildTree(pieceTranslation.pathsToTranslate([PieceCategory.CORE]))
+
+function buildTree(paths: string[]): TranslationTree {
+  return paths.reduce<TranslationTree>((tree, path) => addPath({ tree, keys: path.split('.') }), {})
+}
+
+function isCorePiece(categories: PieceCategory[] | undefined): boolean {
+  return categories?.includes(PieceCategory.CORE) ?? false
+}
 
 function addPath({ tree, keys: [key, ...rest] }: AddPathParams): TranslationTree {
   return { ...tree, [key]: rest.length === 0 ? null : addPath({ tree: tree[key] ?? {}, keys: rest }) }
