@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
   AIProviderWithoutSensitiveData,
   ModelChoice,
@@ -16,6 +16,7 @@ import { modelMeta } from '@/features/agents/ai-model/model-meta';
 import { platformModelTierMutations } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { cn } from '@/lib/utils';
 
 export function DefaultChatModelCard({
   configs,
@@ -47,11 +48,25 @@ export function DefaultChatModelCard({
         title={t('Default chat model')}
         description={
           <>
-            {t(
-              'New chats start on this model. People can switch in each chat. Memory and knowledge-base embeddings use its key.',
-            )}
+            {t('New chats start on this model.')}
             {!isNil(note) && (
-              <span className="mt-1 block text-xs text-warning-11">{note}</span>
+              <span
+                className={cn(
+                  'mt-1 block text-xs',
+                  note.warn ? 'text-warning-11' : 'text-gray-10',
+                )}
+              >
+                {note.text}
+                {note.unavailable && (
+                  <button
+                    type="button"
+                    className="ml-1 underline underline-offset-2"
+                    onClick={() => save(null)}
+                  >
+                    {t('Clear')}
+                  </button>
+                )}
+              </span>
             )}
           </>
         }
@@ -64,7 +79,9 @@ export function DefaultChatModelCard({
             surface="chat"
             value={value}
             disabled={isPending}
-            onChange={(choice) => save(choice)}
+            onChange={(choice) =>
+              save(sameChoice({ a: choice, b: value }) ? null : choice)
+            }
           />
         </div>
       </SettingsRow>
@@ -84,25 +101,60 @@ function noteOf({
   tiers: PlatformModelTier[];
   configsById: Map<string, AIProviderWithoutSensitiveData>;
   projectIds: string[];
-}): string | null {
+}): CardNote | null {
   if (isNil(value)) {
     const fallback = isNil(options.defaultChoice)
       ? null
       : labelOf({ choice: options.defaultChoice, options });
-    return isNil(fallback)
-      ? t('Not set.')
-      : t('Not set. New chats use {model}.', { model: fallback });
+    return {
+      text: isNil(fallback)
+        ? t('Not set')
+        : t('Not set · using {model}', { model: fallback }),
+      warn: false,
+      unavailable: false,
+    };
   }
   if (modelPickerUtils.isUnavailable({ options, value })) {
-    return t('Unavailable. New chats fall back to the next available model.');
+    return {
+      text: t('Unavailable · using a fallback.'),
+      warn: true,
+      unavailable: true,
+    };
   }
   const missing = projectsWithout({ value, tiers, configsById, projectIds });
   return missing > 0
-    ? t(
-        'Not available in {count, plural, =1 {1 project} other {# projects}}. New chats there use the next available model.',
-        { count: missing },
-      )
+    ? {
+        text: t(
+          'Not available in {count, plural, =1 {1 project} other {# projects}}',
+          { count: missing },
+        ),
+        warn: true,
+        unavailable: false,
+      }
     : null;
+}
+
+function sameChoice({
+  a,
+  b,
+}: {
+  a: ModelChoice;
+  b: ModelChoice | null;
+}): boolean {
+  if (isNil(b) || a.type !== b.type) {
+    return false;
+  }
+  if (a.type === 'tier' && b.type === 'tier') {
+    return a.tierId === b.tierId;
+  }
+  return (
+    a.type === 'model' &&
+    b.type === 'model' &&
+    a.modelId === b.modelId &&
+    (a.providerConfigId === b.providerConfigId ||
+      (a.provider === AIProviderName.ACTIVEPIECES &&
+        b.provider === AIProviderName.ACTIVEPIECES))
+  );
 }
 
 function projectsWithout({
@@ -157,4 +209,6 @@ function labelOf({
   );
 }
 
-export const defaultChatModelCardUtils = { noteOf };
+type CardNote = { text: string; warn: boolean; unavailable: boolean };
+
+export const defaultChatModelCardUtils = { noteOf, sameChoice };

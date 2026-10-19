@@ -3292,10 +3292,10 @@
   "Couldn't switch the model. Try again.": "Couldn't switch the model. Try again.",
   "Default chat model updated": "Default chat model updated",
   "Default chat model": "Default chat model",
-  "New chats start on this model. People can switch in each chat. Memory and knowledge-base embeddings use its key.": "New chats start on this model. People can switch in each chat. Memory and knowledge-base embeddings use its key.",
-  "Not set.": "Not set.",
-  "Not set. New chats use {model}.": "Not set. New chats use {model}.",
-  "Unavailable. New chats fall back to the next available model.": "Unavailable. New chats fall back to the next available model.",
-  "Not available in {count, plural, =1 {1 project} other {# projects}}. New chats there use the next available model.": "Not available in {count, plural, =1 {1 project} other {# projects}}. New chats there use the next available model.",
-  "This model is not available for chat on this platform": "This model is not available for chat on this platform"
+  "This model is not available for chat on this platform": "This model is not available for chat on this platform",
+  "New chats start on this model.": "New chats start on this model.",
+  "Not set": "Not set",
+  "Not set · using {model}": "Not set · using {model}",
+  "Unavailable · using a fallback.": "Unavailable · using a fallback.",
+  "Not available in {count, plural, =1 {1 project} other {# projects}}": "Not available in {count, plural, =1 {1 project} other {# projects}}"
 }

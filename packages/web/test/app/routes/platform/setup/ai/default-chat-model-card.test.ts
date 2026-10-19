@@ -72,7 +72,7 @@ const noteFor = (
     tiers: [],
     configsById: new Map([['key-a', key(projectScope)]]),
     projectIds: ['p1', 'p2', 'p3'],
-  });
+  })?.text ?? null;
 
 describe('the default chat model card note', () => {
   it('names what new chats use when nothing is set', () => {
@@ -96,5 +96,22 @@ describe('the default chat model card note', () => {
         modelId: 'old',
       }),
     ).toContain('Unavailable');
+  });
+});
+
+describe('picking the default chat model again', () => {
+  it('clears it, and a different pick does not', () => {
+    expect(defaultChatModelCardUtils.sameChoice({ a: pick, b: pick })).toBe(
+      true,
+    );
+    expect(
+      defaultChatModelCardUtils.sameChoice({
+        a: { type: 'tier', tierId: 't1' },
+        b: pick,
+      }),
+    ).toBe(false);
+    expect(defaultChatModelCardUtils.sameChoice({ a: pick, b: null })).toBe(
+      false,
+    );
   });
 });
