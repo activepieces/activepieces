@@ -17,7 +17,7 @@ export enum AdminControl {
   AI_PROVIDER_KEY_DELETE_CONFIRM = 'ai.provider-key-delete.confirm',
   AI_PROVIDER_KEY_DELETE_OPEN = 'ai.provider-key-delete.open',
   AI_PROVIDER_KEY_RECHECK_RUN = 'ai.provider-key-recheck.run',
-  AI_PROVIDER_KEY_SET_DEFAULT_RUN = 'ai.provider-key-set-default.run',
+  AI_DEFAULT_CHAT_MODEL_SELECT = 'ai.default-chat-model.select',
   AI_PROVIDER_KEY_SETTINGS_SUBMIT = 'ai.provider-key-settings.submit',
   AI_PROVIDER_KEY_OPEN = 'ai.provider-key.open',
   AI_PROVIDER_KEY_SUBMIT = 'ai.provider-key.submit',

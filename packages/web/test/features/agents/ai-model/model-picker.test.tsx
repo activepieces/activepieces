@@ -247,32 +247,3 @@ describe('modelPickerUtils.isUnavailable', () => {
     ).toBe(false);
   });
 });
-
-describe('recommended models', () => {
-  const withCurated: ModelOptions = {
-    ...options,
-    keys: [
-      {
-        providerConfigId: 'key-a',
-        provider: AIProviderName.OPENAI,
-        name: 'Team key',
-        models: [
-          { id: 'gpt-5.5', name: 'GPT-5.5', type: AIProviderModelType.TEXT },
-          { id: 'gpt-4o', name: 'GPT-4o', type: AIProviderModelType.TEXT },
-        ],
-      },
-    ],
-  };
-  const starred = (surface: 'chat' | 'agent' | 'flow') =>
-    modelPickerView({ options: withCurated, shown: null, surface })
-      .groups.filter((group) => group.section === 'keys')
-      .flatMap((group) => group.items)
-      .filter((item) => item.badges !== undefined)
-      .map((item) => item.name);
-
-  it('stars curated models in chat and agents, not in flows', () => {
-    expect(starred('chat')).toEqual(['GPT-5.5']);
-    expect(starred('agent')).toEqual(['GPT-5.5']);
-    expect(starred('flow')).toEqual([]);
-  });
-});

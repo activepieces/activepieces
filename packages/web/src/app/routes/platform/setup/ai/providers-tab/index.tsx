@@ -50,6 +50,7 @@ import { cn } from '@/lib/utils';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
+import { DefaultChatModelCard } from './default-chat-model-card';
 import { KeyStatusBadge, keyStatusText } from './key-status';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
@@ -80,13 +81,6 @@ export function ProvidersTab() {
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
   );
 
-  const { mutate: toggleChatProvider, isPending: isSwitchingChatProvider } =
-    aiProviderMutations.useToggleChatProvider({
-      onSuccess: () => {
-        refetch();
-        toast.success(t('Default AI key updated'));
-      },
-    });
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
       onSuccess: () => refetch(),
@@ -197,13 +191,6 @@ export function ProvidersTab() {
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
           isRechecking={isRechecking}
           onRecheck={() => recheckProvider(activeConfig.id)}
-          isSettingDefault={isSwitchingChatProvider}
-          onSetDefault={() =>
-            toggleChatProvider({
-              providerId: activeConfig.id,
-              displayName: activeConfig.name,
-            })
-          }
           onBack={closeConfig}
         />
         <ConnectProviderDialog
@@ -253,6 +240,13 @@ export function ProvidersTab() {
       ) : (
         <>
           {locked && <LockedProvidersAlert />}
+          {!locked && (
+            <DefaultChatModelCard
+              configs={configs}
+              tiers={tiers ?? []}
+              projectIds={(projects ?? []).map((project) => project.id)}
+            />
+          )}
           {connectedProviders.map((provider) => (
             <ProviderGroup
               key={provider}
@@ -469,20 +463,6 @@ function ConfigRow({
           <p className="truncate text-sm font-medium text-gray-12">
             {config.name}
           </p>
-          {config.enabledForChat && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="shrink-0 rounded-md bg-accent-3 px-2 py-px text-xs font-medium text-accent-11">
-                  {t('Default')}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                {t(
-                  'New chats start here when no Default tier fits. Memory and knowledge-base embeddings also use it.',
-                )}
-              </TooltipContent>
-            </Tooltip>
-          )}
           <KeyStatusBadge status={config.status} />
         </div>
         <Tooltip>
