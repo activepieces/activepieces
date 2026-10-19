@@ -81,6 +81,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Call": "New Call",
   "Triggers when a new outgoing or incoming call is created.": "Triggers when a new outgoing or incoming call is created.",
   "Markdown": "Markdown",

@@ -39,6 +39,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Document Generated": "Document Generated",
   "Triggers when a document generation completes successfully.": "Triggers when a document generation completes successfully."
 }
