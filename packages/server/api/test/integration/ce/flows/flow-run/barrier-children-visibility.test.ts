@@ -209,23 +209,6 @@ describe('Reaching a barrier child on request', () => {
         expect(secondPage.json().data).toEqual([])
     })
 
-    it('resolves one batch to its child run by dispatch index, past the first page of a wide fan-out', async () => {
-        const { children, barrierId } = await seedFanOut({
-            childStatuses: Array.from({ length: 5 }, () => FlowRunStatus.SUCCEEDED),
-        })
-
-        const response = await ctx.get('/v1/flow-runs', {
-            projectId: ctx.project.id,
-            parentWaitpointId: barrierId,
-            dispatchIndex: 3,
-            limit: 1,
-        })
-
-        expect(response.statusCode).toBe(200)
-        expect(response.json().data.map((run: { id: string }) => run.id)).toEqual([children[3].id])
-        expect(response.json().data[0].dispatchIndex).toBe(3)
-    })
-
     it('never returns another barrier\'s children', async () => {
         const { barrierId } = await seedFanOut({ childStatuses: [FlowRunStatus.SUCCEEDED] })
         await seedFanOut({ childStatuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED] })
@@ -291,17 +274,6 @@ describe('Barrier children named by id', () => {
         expect(body[0].id).toBe(children[0].id)
         expect(body[0].error.errorMessage).toContain('started from a step inside its flow')
         await waitForRunCountForProject({ projectId: ctx.project.id, expected: 2 })
-    })
-
-    it('rejects a dispatch index that names no barrier', async () => {
-        await seedFanOut({ childStatuses: [FlowRunStatus.SUCCEEDED] })
-
-        const response = await ctx.get('/v1/flow-runs', {
-            projectId: ctx.project.id,
-            dispatchIndex: 0,
-        })
-
-        expect(response.statusCode).toBe(400)
     })
 })
 

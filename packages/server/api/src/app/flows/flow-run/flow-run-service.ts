@@ -72,7 +72,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             .andWhere({ parentWaitpointId: params.parentWaitpointId ?? IsNull() })
 
         if (!isNil(params.parentWaitpointId)) {
-            query = query.andWhere({ dispatchIndex: params.dispatchIndex ?? Not(IsNull()) })
+            query = query.andWhere({ dispatchIndex: Not(IsNull()) })
         }
 
         if (!params.includeArchived) {
@@ -169,7 +169,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                     : undefined
 
-                await waitpointService(log).deleteByFlowRunId({ flowRunId: oldFlowRun.id, projectId: oldFlowRun.projectId })
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
                     projectId: oldFlowRun.projectId,
@@ -851,7 +850,6 @@ type ListParams = {
     includeArchived?: boolean
     environment?: RunEnvironment
     parentWaitpointId?: ApId
-    dispatchIndex?: number
 }
 
 type GetOneParams = {
