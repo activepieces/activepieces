@@ -92,9 +92,25 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   assertNoUnpublishableDeps(`${outputPath}/package.json`)
   assertNoSemverRanges(`${outputPath}/package.json`)
 
-  execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })
+  try {
+    execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })
+  } catch (error) {
+    if (!isVersionOnRegistry({ name: json.name, version })) {
+      throw error
+    }
+    console.info(`[publishProject] already on registry (published by a concurrent run), path=${path}, version=${version}`)
+    return
+  }
 
   console.info(`[publishProject] success, path=${path}, version=${version}`)
+}
+
+function isVersionOnRegistry({ name, version }: { name: string, version: string }): boolean {
+  try {
+    return execSync(`npm view ${name}@${version} version`, { encoding: 'utf8' }).trim() === version
+  } catch {
+    return false
+  }
 }
 
 const main = async (): Promise<void> => {
