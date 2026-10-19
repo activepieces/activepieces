@@ -75,7 +75,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
             await startFanOut({
                 barrierId: creation.barrier.id,
                 projectId: params.projectId,
-                source: { entryStepName: params.fanOut.entryStepName, seedSteps: params.fanOut.seedSteps, batches },
+                source: { entryStepName: params.fanOut.entryStepName, batchStepName: params.fanOut.batchStepName, seedSteps: params.fanOut.seedSteps, batches },
                 log,
             })
         }
@@ -405,6 +405,7 @@ export type CreateBarrierParams = {
     signalLabels?: (string | null)[]
     fanOut?: {
         entryStepName: string
+        batchStepName: string
         batchSize: number
         items: unknown[]
         seedSteps: Record<string, unknown>

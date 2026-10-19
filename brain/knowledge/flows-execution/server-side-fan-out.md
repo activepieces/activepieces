@@ -13,7 +13,7 @@ The barrier's own child dispatcher. A batch step hands the server its items in o
 
 **Server-side fan-out** — one parent pause, N child runs created by the app. _Avoid_: "subflow fan-out", which is
 fire-and-forget webhook calls with no barrier.
-**Source** — `{ entryStepName, seedSteps, batches }` stored under `barrier_source:<barrierId>` with a 1-day TTL.
+**Source** — `{ entryStepName, batchStepName, seedSteps, batches }` stored under `barrier_source:<barrierId>` with a 1-day TTL.
 Deleted on release, on cancel and when dispatch gives up.
 **Claim** — a signal is claimed when its `refId` holds its child run id. _Unclaimed_ means `PENDING` with no
 `refId` (`unclaimedSignalWhere`).
@@ -25,6 +25,9 @@ It is written into the child's execution-state log, so a resume re-enters it. It
 the source, then marks the unclaimed signals `NOT_DISPATCHED`.
 
 ## Gotchas
+- **The waitpoint key is not the batch step's name.** Inside a loop the barrier's `stepName` is the path key
+  `loop_1:3/batch_1`, which keeps one barrier per iteration. The body reads its batch under the bare name, so the
+  engine sends that name as `batchStepName` and the dispatcher seeds the batch under it.
 - **Raw `UPDATE … RETURNING` through `repo.query()` returns `[rows, rowCount]` on node-postgres but a plain rows
   array on PGlite.** A `.length > 0` check on it is always true in production and only correct in tests. Read
   `RETURNING` rows through the query builder (`.returning().execute()`, then `raw`), as `claimNextSignals` does.
