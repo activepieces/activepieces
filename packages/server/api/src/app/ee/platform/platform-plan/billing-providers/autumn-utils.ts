@@ -1,6 +1,6 @@
-import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isEmpty, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
-import { ApEdition, ConsumableFeatureId, EnterpriseTrialStatus, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, UnconsumableFeatureId } from '@activepieces/shared'
+import { ApEdition, ConsumableFeatureId, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, UnconsumableFeatureId } from '@activepieces/shared'
 import {
     type AggregateEventsResponse,
     Autumn,
@@ -13,8 +13,9 @@ import {
     Range,
     type TrackParams,
 } from 'autumn-js'
-import { type AxiosRequestConfig } from 'axios'
+import { type AxiosRequestConfig, isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey, getFreeLegacyCompAttemptKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
@@ -165,15 +166,20 @@ export const autumnUtils = {
         const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan'] })
         const entitlements = toAutumnEntitlements(customer)
         const previousPlan = await platformPlanRepo().findOneBy({ platformId })
-        await platformPlanService(log).update({ platformId, ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements) })
         const previousTrialEndsAt = previousPlan?.enterpriseTrialEndsAt ?? null
-        if (!isNil(previousTrialEndsAt) && isNil(entitlements.enterpriseTrial)) {
-            const trialEndsAt = new Date(previousTrialEndsAt)
-            const endedAt = new Date(Math.min(Date.now(), trialEndsAt.getTime()))
+        const trialEndedAt = !isNil(previousTrialEndsAt) && isNil(entitlements.enterpriseTrial)
+            ? new Date(Math.min(Date.now(), new Date(previousTrialEndsAt).getTime()))
+            : null
+        await platformPlanService(log).update({
+            platformId,
+            ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements),
+            ...spreadIfDefined('enterpriseTrialEndedAt', trialEndedAt?.toISOString()),
+        })
+        if (!isNil(previousTrialEndsAt) && !isNil(trialEndedAt)) {
             rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialEnded({
                 platformId,
-                trialEndsAt: trialEndsAt.toISOString(),
-                endedAt: endedAt.toISOString(),
+                trialEndsAt: new Date(previousTrialEndsAt).toISOString(),
+                endedAt: trialEndedAt.toISOString(),
             }), log)
         }
         await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
@@ -375,20 +381,19 @@ export const autumnConsole = {
             body: { autumnCustomerId: creds.autumnCustomerId, action },
         })
     },
-    async getEnterpriseTrial({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<EnterpriseTrialStatus> {
-        return consoleRequest<EnterpriseTrialStatus>({
+    async startEnterpriseTrial({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<StartedEnterpriseTrial | null> {
+        const { data, error } = await tryCatch(() => consoleRequest<StartedEnterpriseTrial>({
             path: '/api/v1/billing/enterprise-trial',
-            method: 'get',
             token: edition === ApEdition.CLOUD ? consoleSecretOrThrow() : autumnApiKey,
-            query: { autumnCustomerId },
-        })
-    },
-    async startEnterpriseTrial({ autumnApiKey, ...body }: ConsoleCustomerCall & { platformId: string, appUrl: string }): Promise<EnterpriseTrialStatus> {
-        return consoleRequest<EnterpriseTrialStatus>({
-            path: '/api/v1/billing/enterprise-trial/start',
-            token: edition === ApEdition.CLOUD ? consoleSecretOrThrow() : autumnApiKey,
-            body,
-        })
+            body: { autumnCustomerId },
+        }))
+        if (isAxiosError(error) && error.response?.status === StatusCodes.CONFLICT) {
+            return null
+        }
+        if (!isNil(error)) {
+            throw error
+        }
+        return data
     },
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
@@ -709,12 +714,19 @@ type NotProjectedFromAutumn =
     | 'canary'
     | 'customDomainsEnabled'
     | 'workerGroupId'
+    | 'enterpriseTrialEndedAt'
+    | 'enterpriseTrialUsedElsewhereAt'
 
 type PlatformPlanProjection = Required<Pick<PlatformPlanLimits, Exclude<keyof PlatformPlanLimits, NotProjectedFromAutumn>>>
 
 type AutumnEnrollmentCredentials = {
     autumnCustomerId: string
     autumnApiKey: string
+}
+
+type StartedEnterpriseTrial = {
+    startedAt: string
+    endsAt: string
 }
 
 export type ConsoleCustomerCall = {
