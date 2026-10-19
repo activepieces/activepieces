@@ -133,6 +133,32 @@ describe('GET /v1/ai-providers/model-options', () => {
         expect((await listOptions({ surface: 'chat' })).defaultChoice).not.toMatchObject({ providerConfigId: away.id })
     })
 
+    it('moves the Default AI key when the default tier\'s main key changes', async () => {
+        const first = await seedKey({ name: 'First', models: ['m'] })
+        const second = await seedKey({ name: 'Second', models: ['m'] })
+        const tier = await createTier({ name: 'Chat', entries: [{ configId: first.id, modelId: 'm' }] })
+        expect((await ctx.post('/v1/platform-configurations', { defaultChatModel: { type: 'tier', tierId: tier.id } })).statusCode).toBe(StatusCodes.OK)
+
+        await ctx.post(`${TIERS}/${tier.id}`, { entries: [{ configId: second.id, modelId: 'm' }] })
+
+        const keys = await databaseConnection().getRepository('ai_provider').findBy({ platformId: ctx.platform.id })
+        expect(keys.filter((key) => key.enabledForChat).map((key) => key.id)).toEqual([second.id])
+    })
+
+    it('keeps an own-key default chat model when specific models are hidden from builders', async () => {
+        const key = await seedKey({ name: 'Key', models: ['first', 'second'] })
+        await createTier({ name: 'Tier', entries: [{ configId: key.id, modelId: 'first' }] })
+        expect((await ctx.post('/v1/platform-configurations', { defaultChatModel: { type: 'model', provider: AIProviderName.CUSTOM, providerConfigId: key.id, modelId: 'second' } })).statusCode).toBe(StatusCodes.OK)
+        expect((await ctx.post('/v1/platform-configurations', { aiSpecificModelsVisible: false })).statusCode).toBe(StatusCodes.OK)
+
+        const chat = await listOptions({ surface: 'chat' })
+        const admin = (await ctx.get('/v1/ai-providers/model-options/platform', { surface: 'chat' })).json() as ModelOptions
+
+        expect(chat.keys.flatMap((option) => option.models.map((model) => model.id))).toEqual(['second'])
+        expect(chat.defaultChoice).toMatchObject({ providerConfigId: key.id, modelId: 'second' })
+        expect(admin.keys.flatMap((option) => option.models.map((model) => model.id))).toEqual(['first', 'second'])
+    })
+
     it('lists every key for the admin picker, including ones limited to other projects, and only for admins', async () => {
         const away = await seedKey({ name: 'Away', models: ['elsewhere'], projectScope: 'except', projectIds: [ctx.project.id] })
 

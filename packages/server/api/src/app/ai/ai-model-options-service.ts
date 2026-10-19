@@ -29,7 +29,7 @@ export const aiModelOptionsService = (log: FastifyBaseLogger) => ({
             platformModelTierService.movedTiers({ platformId, tierIds: [tierIdOf(chatDefault)] }),
             modelCatalog.load(),
         ])
-        return buildOptions({ keys, tiersForRun, movedTiers, configuration: { ...configuration, defaultChatModel: chatDefault }, catalog, surface })
+        return buildOptions({ keys, tiersForRun, movedTiers, configuration: { ...configuration, defaultChatModel: chatDefault, aiSpecificModelsVisible: true }, catalog, surface })
     },
 })
 
@@ -69,7 +69,10 @@ function buildOptions({ keys, tiersForRun, movedTiers, configuration, catalog, s
     const creditsKey = keys.find((key) => key.row.provider === AIProviderName.ACTIVEPIECES)
     const credits = isNil(creditsKey) ? null : toCredits({ row: creditsKey.row, surface, lookup })
     const specificModelsHidden = !configuration.aiSpecificModelsVisible
-    const keyOptions = specificModelsHidden ? [] : keys.flatMap((key) => toKeyOption({ key, surface, lookup, callsTools }))
+    const allKeyOptions = keys.flatMap((key) => toKeyOption({ key, surface, lookup, callsTools }))
+    const keyOptions = specificModelsHidden
+        ? onlyPlatformDefault({ keys: allKeyOptions, platformDefault: surface === 'chat' ? configuration.defaultChatModel ?? null : null })
+        : allKeyOptions
     const chatKeyId = keys.find((key) => key.isChatKey)?.row.id
     return {
         tiers,
@@ -93,6 +96,16 @@ function usableChoice({ choice, tiers, credits, keys, movedTiers }: { choice: Mo
     }
     const offered = keys.some((key) => key.providerConfigId === choice.providerConfigId && key.models.some((model) => model.id === choice.modelId))
     return offered ? choice : null
+}
+
+function onlyPlatformDefault({ keys, platformDefault }: { keys: ModelOptionsKey[], platformDefault: ModelChoice | null }): ModelOptionsKey[] {
+    if (isNil(platformDefault) || platformDefault.type !== 'model' || platformDefault.provider === AIProviderName.ACTIVEPIECES) {
+        return []
+    }
+    return keys.flatMap((key) => {
+        const models = key.providerConfigId === platformDefault.providerConfigId ? key.models.filter((model) => model.id === platformDefault.modelId) : []
+        return models.length === 0 ? [] : [{ ...key, models }]
+    })
 }
 
 function firstRunnableModelId({ key }: { key: ModelOptionsKey }): string | undefined {

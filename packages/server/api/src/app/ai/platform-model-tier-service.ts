@@ -110,6 +110,7 @@ export const platformModelTierService = {
                 ...spreadIfDefined('isDefault', request.isDefault),
                 ...spreadIfDefined('isFast', request.isFast),
             })
+            await syncDefaultChatKey({ manager, platformId })
             return getLiveOrThrow({ manager, platformId, id })
         }))
     },
@@ -166,6 +167,7 @@ export const platformModelTierService = {
                     ...(tier.isFast ? { isFast: true } : {}),
                 })
             }
+            await syncDefaultChatKey({ manager, platformId, replaced: { from: [id], to: replacedBy } })
         })
     },
 
@@ -196,6 +198,7 @@ export const platformModelTierService = {
             )
         }
         if (emptied.length === 0) {
+            await syncDefaultChatKey({ manager, platformId })
             return
         }
         const emptiedIds = emptied.map((tier) => tier.id)
@@ -214,6 +217,7 @@ export const platformModelTierService = {
             ...(emptied.some((tier) => tier.isDefault) ? { isDefault: true } : {}),
             ...(emptied.some((tier) => tier.isFast) ? { isFast: true } : {}),
         })
+        await syncDefaultChatKey({ manager, platformId, replaced: { from: emptiedIds, to: replacement.id } })
     },
 
     async getDefaultForRun({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun | null> {
@@ -294,6 +298,24 @@ async function lockPlatform({ manager, platformId }: { manager: EntityManager, p
     if (rows.length === 0) {
         throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: platformId, entityType: 'platform' } })
     }
+}
+
+async function syncDefaultChatKey({ manager, platformId, replaced }: { manager: EntityManager, platformId: PlatformId, replaced?: { from: string[], to: string } }): Promise<void> {
+    const configuration = await platformConfigurationRepo(manager).findOneBy({ platformId })
+    const choice = configuration?.defaultChatModel
+    if (isNil(choice) || choice.type !== 'tier') {
+        return
+    }
+    const tierId = !isNil(replaced) && replaced.from.includes(choice.tierId) ? replaced.to : choice.tierId
+    if (tierId !== choice.tierId) {
+        await platformConfigurationRepo(manager).update({ platformId }, { defaultChatModel: { type: 'tier', tierId } })
+    }
+    const mainKeyId = (await tierRepo(manager).findOneBy({ platformId, id: tierId }))?.entries[0]?.configId
+    if (isNil(mainKeyId)) {
+        return
+    }
+    await aiProviderRepo(manager).update({ platformId }, { enabledForChat: false })
+    await aiProviderRepo(manager).update({ platformId, id: mainKeyId }, { enabledForChat: true })
 }
 
 function mainRunsIn({ tier, keyById, scope, anyProject = false }: { tier: PlatformModelTier, keyById: Map<string, AIProviderSchema>, scope: ProviderScope, anyProject?: boolean }): boolean {
