@@ -1,4 +1,4 @@
-import { ProjectWithLimits } from '@activepieces/shared';
+import { MAX_DEFAULT_PROJECTS, ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
@@ -77,6 +77,7 @@ function AddDefaultProjectsContent({
   const selectedIds = teamProjects
     .map((project) => project.id)
     .filter((id) => checkedIds.has(id));
+  const isAtCap = selectedIds.length >= MAX_DEFAULT_PROJECTS;
   const removedProjects = teamProjects.filter(
     (project) =>
       defaultProjectIds.includes(project.id) && !checkedIds.has(project.id),
@@ -120,32 +121,45 @@ function AddDefaultProjectsContent({
                   : t('No team projects yet. Create one on the Projects page.')}
               </p>
             )}
-            {filteredProjects.map((project) => (
-              <button
-                key={project.id}
-                type="button"
-                className="flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-3"
-                onClick={() => toggleProject(project.id)}
-              >
-                <Checkbox
-                  checked={checkedIds.has(project.id)}
-                  onCheckedChange={() => toggleProject(project.id)}
-                  onClick={(event) => event.stopPropagation()}
-                />
-                <TextWithTooltip tooltipMessage={project.displayName}>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                    {project.displayName}
+            {filteredProjects.map((project) => {
+              const isChecked = checkedIds.has(project.id);
+              const isLockedByCap = isAtCap && !isChecked;
+              return (
+                <button
+                  key={project.id}
+                  type="button"
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-gray-3 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                  disabled={isLockedByCap}
+                  onClick={() => toggleProject(project.id)}
+                >
+                  <Checkbox
+                    checked={isChecked}
+                    disabled={isLockedByCap}
+                    onCheckedChange={() => toggleProject(project.id)}
+                    onClick={(event) => event.stopPropagation()}
+                  />
+                  <TextWithTooltip tooltipMessage={project.displayName}>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {project.displayName}
+                    </span>
+                  </TextWithTooltip>
+                  <span className="ml-auto shrink-0 text-xs text-gray-11">
+                    {t('projectMemberCount', {
+                      count: project.analytics.totalUsers,
+                    })}
                   </span>
-                </TextWithTooltip>
-                <span className="ml-auto shrink-0 text-xs text-gray-11">
-                  {t('projectMemberCount', {
-                    count: project.analytics.totalUsers,
-                  })}
-                </span>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </ScrollArea>
+        {isAtCap && (
+          <p className="text-xs text-gray-11">
+            {t('You can pick up to {count} default projects.', {
+              count: MAX_DEFAULT_PROJECTS,
+            })}
+          </p>
+        )}
       </div>
 
       <DialogFooter className="sm:justify-between">
