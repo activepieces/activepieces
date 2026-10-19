@@ -1,13 +1,12 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { AiCreditsAutoTopUpState, ApEdition, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, PlanName, SeatsBillableFeature, UNAVAILABLE_ENTERPRISE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, PlanName, SeatsBillableFeature, UNAVAILABLE_ENTERPRISE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
 import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEnterpriseTrialStartLockKey, getEntitlementsRefreshKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { domainHelper } from '../../../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
-import { system } from '../../../../helper/system/system'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, TrackFeatureParams } from '../../../../platform/billing-provider'
 import { platformPlanTelemetry } from '../platform-plan-telemetry'
 import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
@@ -178,7 +177,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             log,
             platformId,
             fallback: UNAVAILABLE_ENTERPRISE_TRIAL,
-            fn: async (creds) => autumnConsole.getEnterpriseTrial({ ...creds, edition: enterpriseTrialEdition() }),
+            fn: async (creds) => autumnConsole.getEnterpriseTrial(creds),
         }))
         if (!isNil(error) || isNil(data)) {
             log.warn({ error, platform: { id: platformId } }, 'Failed to read the enterprise trial status; treating the trial as unavailable')
@@ -195,14 +194,12 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                 platformId,
                 fallback: UNAVAILABLE_ENTERPRISE_TRIAL,
                 fn: async (creds) => {
-                    const edition = enterpriseTrialEdition()
-                    const current = await autumnConsole.getEnterpriseTrial({ ...creds, edition })
+                    const current = await autumnConsole.getEnterpriseTrial(creds)
                     if (current.state !== 'eligible') {
                         return current
                     }
                     const started = await autumnConsole.startEnterpriseTrial({
                         ...creds,
-                        edition,
                         platformId,
                         appUrl: await domainHelper.getPublicUrl({ path: '' }),
                     })
@@ -221,10 +218,6 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return status
     },
 })
-
-function enterpriseTrialEdition(): 'cloud' | 'ee' {
-    return system.getEdition() === ApEdition.CLOUD ? 'cloud' : 'ee'
-}
 
 async function withEnrolledCreds<T>({ log, platformId, fallback, fn }: WithEnrolledCredsParams<T>): Promise<T> {
     await autumnUtils.ensureEnrolled(log, platformId)

@@ -375,18 +375,18 @@ export const autumnConsole = {
             body: { autumnCustomerId: creds.autumnCustomerId, action },
         })
     },
-    async getEnterpriseTrial({ autumnCustomerId, autumnApiKey, edition }: ConsoleCustomerCall & EnterpriseTrialEditionParam): Promise<EnterpriseTrialStatus> {
+    async getEnterpriseTrial({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<EnterpriseTrialStatus> {
         return consoleRequest<EnterpriseTrialStatus>({
             path: '/api/v1/billing/enterprise-trial',
             method: 'get',
-            token: edition === 'cloud' ? consoleSecretOrThrow() : autumnApiKey,
-            query: { autumnCustomerId, edition },
+            token: edition === ApEdition.CLOUD ? consoleSecretOrThrow() : autumnApiKey,
+            query: { autumnCustomerId },
         })
     },
-    async startEnterpriseTrial({ autumnApiKey, ...body }: ConsoleCustomerCall & EnterpriseTrialEditionParam & { platformId: string, appUrl: string }): Promise<EnterpriseTrialStatus> {
+    async startEnterpriseTrial({ autumnApiKey, ...body }: ConsoleCustomerCall & { platformId: string, appUrl: string }): Promise<EnterpriseTrialStatus> {
         return consoleRequest<EnterpriseTrialStatus>({
             path: '/api/v1/billing/enterprise-trial/start',
-            token: body.edition === 'cloud' ? consoleSecretOrThrow() : autumnApiKey,
+            token: edition === ApEdition.CLOUD ? consoleSecretOrThrow() : autumnApiKey,
             body,
         })
     },
@@ -711,10 +711,6 @@ type NotProjectedFromAutumn =
     | 'workerGroupId'
 
 type PlatformPlanProjection = Required<Pick<PlatformPlanLimits, Exclude<keyof PlatformPlanLimits, NotProjectedFromAutumn>>>
-
-type EnterpriseTrialEditionParam = {
-    edition: 'cloud' | 'ee'
-}
 
 type AutumnEnrollmentCredentials = {
     autumnCustomerId: string
