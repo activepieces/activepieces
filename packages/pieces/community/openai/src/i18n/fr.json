@@ -43,12 +43,12 @@
   "Question": "Question",
   "Maximum Tokens": "Maximum de jetons",
   "Conversation Memory ID": "ID de mémoire de conversation",
+  "Markdown": "Markdown",
   "Temperature": "Température",
   "Top P": "Top P",
   "Frequency Penalty": "Pénalité de fréquence",
   "Presence Penalty": "Pénalité de présence",
   "Roles": "Rôles",
-  "Markdown": "Markdown",
   "Assistant": "Assistant",
   "Image": "Image",
   "Detail": "Détail",
@@ -86,6 +86,7 @@
   "What you want the model to answer or do.": "Ce que le modèle doit répondre ou faire.",
   "Longest reply in tokens, about 4 characters each.": "Réponse la plus longue en jetons, environ 4 caractères chacun.",
   "Runs that share this ID continue one conversation. Empty: no memory.": "Les exécutions qui partagent cet ID poursuivent une même conversation. Vide : aucune mémoire.",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Saved for the whole project, so other flows that use this ID join the same conversation.",
   "From 0 to 2. Lower is more focused, higher is more varied.": "De 0 à 2. Plus bas est plus ciblé, plus haut est plus varié.",
   "From 0 to 1. Adjust this or Temperature, not both.": "De 0 à 1. Ajustez ceci ou la température, pas les deux.",
   "From -2 to 2. Higher values make the model repeat itself less.": "De -2 à 2. Des valeurs plus élevées réduisent les répétitions du modèle.",
@@ -236,6 +237,5 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE",
-  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Saved for the whole project, so other flows that use this ID join the same conversation."
+  "HEAD": "TÊTE"
 }
