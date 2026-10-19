@@ -49,6 +49,7 @@ import { McpOAuthClientEntity } from '../mcp/oauth/client/mcp-oauth-client.entit
 import { McpOAuthAuthorizationCodeEntity } from '../mcp/oauth/code/mcp-oauth-code.entity'
 import { McpOAuthTokenEntity } from '../mcp/oauth/token/mcp-oauth-token.entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
+import { PieceTranslationEntity } from '../pieces/metadata/piece-translation-entity'
 import { PlatformConfigurationEntity } from '../platform/platform-configuration.entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -70,7 +71,7 @@ import { WaitpointEntity } from '../waitpoints/waitpoint-entity'
 import { WaitpointSignalEntity } from '../waitpoints/waitpoint-signal-entity'
 import { DatabaseType } from './database-type'
 import { createPGliteDataSource } from './pglite-connection'
-import { createPostgresDataSource } from './postgres-connection'
+import { createPostgresDataSource, createPostgresMigrationDataSource } from './postgres-connection'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -90,6 +91,7 @@ function getEntities(): EntitySchema<unknown>[] {
         VariableEntity,
         FolderEntity,
         PieceMetadataEntity,
+        PieceTranslationEntity,
         PlatformEntity,
         PlatformConfigurationEntity,
         SecretManagerEntity,
@@ -180,6 +182,32 @@ export const databaseConnection = (): DataSource => {
     return ds
 }
 
+export const migrationDatabaseConnection = async (): Promise<DataSource> => {
+    const persisted = getPersistedMigrationConnection()
+    if (!isNil(persisted)) {
+        return persisted
+    }
+    if (databaseType !== DatabaseType.POSTGRES) {
+        return databaseConnection()
+    }
+    const dedicated = createPostgresMigrationDataSource()
+    if (isNil(dedicated)) {
+        return databaseConnection()
+    }
+    await dedicated.initialize()
+    setPersistedMigrationConnection(dedicated)
+    return dedicated
+}
+
 export function resetDatabaseConnection(): void {
     setPersistedConnection(null)
+    setPersistedMigrationConnection(null)
+}
+
+const MIGRATION_DB_GLOBAL_KEY = '__AP_DB_MIGRATION_CONNECTION__'
+function getPersistedMigrationConnection(): DataSource | null {
+    return ((globalThis as Record<string, unknown>)[MIGRATION_DB_GLOBAL_KEY] as DataSource) ?? null
+}
+function setPersistedMigrationConnection(ds: DataSource | null): void {
+    (globalThis as Record<string, unknown>)[MIGRATION_DB_GLOBAL_KEY] = ds
 }

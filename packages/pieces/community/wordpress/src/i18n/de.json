@@ -329,5 +329,6 @@
   "Get Site Settings": "Get Site Settings",
   "Gets the site title, tagline, URL, timezone, date format and reading settings.": "Gets the site title, tagline, URL, timezone, date format and reading settings.",
   "Short summary of the page. Takes effect only when the theme or site supports page excerpts; WordPress silently ignores it otherwise.": "Short summary of the page. Takes effect only when the theme or site supports page excerpts; WordPress silently ignores it otherwise.",
-  "Short summary of the page. Takes effect only when the theme or site supports page excerpts; WordPress silently ignores it otherwise. Leave empty to keep the current value.": "Short summary of the page. Takes effect only when the theme or site supports page excerpts; WordPress silently ignores it otherwise. Leave empty to keep the current value."
+  "Short summary of the page. Takes effect only when the theme or site supports page excerpts; WordPress silently ignores it otherwise. Leave empty to keep the current value.": "Short summary of the page. Takes effect only when the theme or site supports page excerpts; WordPress silently ignores it otherwise. Leave empty to keep the current value.",
+  "Empty fields keep their current value.": "Leere Felder behalten ihren aktuellen Wert."
 }

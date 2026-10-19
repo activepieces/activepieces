@@ -1,5 +1,5 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { mailerLiteAuth } from '../auth';
 import { addOrUpdateSubscriberOutputSchema } from '../output-schemas';
 import { mailerLiteCommon } from '../common';
@@ -9,8 +9,8 @@ export const createOrUpdateSubscriber = createAction({
 	auth: mailerLiteAuth,
 	name: 'add_or_update_subscriber',
 	classification: 'WRITE',
-	displayName: 'Add or Update subscriber',
-	description: 'Create a new subscriber or updates an existing one if the email already exists.',
+	displayName: 'Add or Update Subscriber',
+	description: 'Add a subscriber, or update the one with this email.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -18,17 +18,43 @@ export const createOrUpdateSubscriber = createAction({
 		idempotent: true,
 	},
 	outputSchema: addOrUpdateSubscriberOutputSchema,
+	propertyGroups: [
+		{
+			key: 'subscriber',
+			display: 'section',
+			label: 'Subscriber',
+			icon: 'user',
+			props: ['update_info', 'email', 'status'],
+		},
+		{
+			key: 'profile',
+			display: 'section',
+			label: 'Fields and Groups',
+			icon: 'tag',
+			props: ['subscriberFields', 'subscriberGroupId'],
+		},
+		{
+			key: 'consent',
+			display: 'section',
+			label: 'Consent',
+			icon: 'calendar',
+			props: ['subscribed_at', 'opted_in_at', 'ip_address', 'optin_ip'],
+		},
+	],
 	props: {
+		update_info: Property.MarkDown({
+			value: 'If this email is already on your list, that subscriber is updated.',
+			variant: MarkdownVariant.INFO,
+		}),
 		email: Property.ShortText({
 			displayName: 'Email',
-			description: 'Email of the new contact',
+			placeholder: 'jane@example.com',
 			required: true,
 		}),
-		subscriberFields: mailerLiteCommon.subscriberFields,
 		status: Property.StaticDropdown({
 			displayName: 'Status',
 			required: false,
-			description: 'If empty, status Active is used by default.',
+			description: 'Applied to new and existing subscribers.',
 			defaultValue: 'active',
 			options: {
 				disabled: false,
@@ -56,22 +82,29 @@ export const createOrUpdateSubscriber = createAction({
 				],
 			},
 		}),
+		subscriberFields: mailerLiteCommon.subscriberFields,
 		subscriberGroupId: mailerLiteCommon.subscriberGroupIds(false),
 		subscribed_at: Property.DateTime({
 			displayName: 'Subscribed On',
 			required: false,
+			width: 'half',
 		}),
 		opted_in_at: Property.DateTime({
-			displayName: 'Opt-in Date',
+			displayName: 'Opted In On',
 			required: false,
+			width: 'half',
 		}),
 		ip_address: Property.ShortText({
-			displayName: 'Signup IP address',
+			displayName: 'Signup IP Address',
+			placeholder: '203.0.113.7',
 			required: false,
+			width: 'half',
 		}),
 		optin_ip: Property.ShortText({
-			displayName: 'Opt-in IP address',
+			displayName: 'Opt-in IP Address',
+			placeholder: '203.0.113.7',
 			required: false,
+			width: 'half',
 		}),
 	},
 	async run(context) {
