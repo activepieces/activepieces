@@ -49,6 +49,12 @@ export const barrierQueueFactory = ({ createRedisConnection }: BarrierQueueFacto
             })
         },
 
+        async addFanOutGiveUp(params: BarrierJobData): Promise<void> {
+            await requireQueue().add(BarrierJobName.FAN_OUT_GIVE_UP, params, {
+                jobId: `give-up-${params.barrierId}`,
+            })
+        },
+
         async clearEvaluationDedupKey(barrierId: string): Promise<void> {
             await requireQueue().removeDeduplicationKey(evaluationDedupKey(barrierId))
         },
@@ -66,6 +72,7 @@ export const barrierQueueFactory = ({ createRedisConnection }: BarrierQueueFacto
 export enum BarrierJobName {
     EVALUATE = 'evaluate-barrier',
     FAN_OUT_DISPATCH = 'fan-out-dispatch',
+    FAN_OUT_GIVE_UP = 'fan-out-give-up',
 }
 
 export type BarrierJobData = {

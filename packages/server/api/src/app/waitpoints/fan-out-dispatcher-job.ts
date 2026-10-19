@@ -61,10 +61,19 @@ export function fanOutDispatchGaveUp({ attemptsMade, attempts, error }: FanOutDi
     return null
 }
 
-export async function handleFanOutDispatchGaveUp({ data, error, reason, log }: HandleFanOutDispatchGaveUpParams): Promise<void> {
+export async function handleFanOutDispatchFailed({ data, attemptsMade, attempts, error, log }: HandleFanOutDispatchFailedParams): Promise<void> {
+    const reason = fanOutDispatchGaveUp({ attemptsMade, attempts, error })
+    if (isNil(reason)) {
+        return
+    }
+    log.error({ error, waitpoint: { id: data.barrierId }, giveUpReason: reason }, '[fanOutDispatcher] Dispatch gave up, queueing the settlement of its unclaimed signals')
+    await barrierQueue(log).addFanOutGiveUp(data)
+}
+
+export async function handleFanOutDispatchGaveUp({ data, log }: JobParams): Promise<void> {
     await distributedStore.delete(barrierSourceKey(data.barrierId))
     const notDispatchedCount = await settleUnclaimedSignals({ data, log })
-    log.error({ error, waitpoint: { id: data.barrierId }, giveUpReason: reason, notDispatchedCount }, '[fanOutDispatcher] Dispatch gave up, marking the unclaimed signals undispatched; signals already claimed keep their live children and release the barrier once those report')
+    log.warn({ waitpoint: { id: data.barrierId }, notDispatchedCount }, '[fanOutDispatcher] Marked the unclaimed signals undispatched after dispatch gave up; signals already claimed keep their live children and release the barrier once those report')
 }
 
 async function dispatchChunks({ data, source, target, log }: DispatchChunksParams): Promise<DispatchOutcome> {
@@ -178,10 +187,11 @@ type JobParams = {
     log: FastifyBaseLogger
 }
 
-type HandleFanOutDispatchGaveUpParams = {
+type HandleFanOutDispatchFailedParams = {
     data: BarrierJobData
+    attemptsMade: number
+    attempts?: number
     error: Error
-    reason: GiveUpReason
     log: FastifyBaseLogger
 }
 

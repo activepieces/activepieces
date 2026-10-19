@@ -15,10 +15,10 @@ import * as billingProviderModule from '../../../../../src/app/platform/billing-
 import { platformConfigurationService } from '../../../../../src/app/platform/platform-configuration.service'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import * as barrierQueueModule from '../../../../../src/app/waitpoints/barrier-queue'
-import { BarrierJobData, barrierSourceKey } from '../../../../../src/app/waitpoints/barrier-queue-factory'
+import { BarrierJobData, BarrierJobName, barrierSourceKey } from '../../../../../src/app/waitpoints/barrier-queue-factory'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
 import * as barrierServiceModule from '../../../../../src/app/waitpoints/barrier-service'
-import { fanOutDispatchGaveUp, handleFanOutDispatch, handleFanOutDispatchGaveUp } from '../../../../../src/app/waitpoints/fan-out-dispatcher-job'
+import { fanOutDispatchGaveUp, handleFanOutDispatch, handleFanOutDispatchFailed, handleFanOutDispatchGaveUp } from '../../../../../src/app/waitpoints/fan-out-dispatcher-job'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
 import { BARRIER_RECOVERY_CURSOR_KEY, DEADLINE_SWEEP_CURSOR_KEY, sweepOverdueDeadlines } from '../../../../../src/app/waitpoints/waitpoint-deadline-sweep'
@@ -188,10 +188,15 @@ async function dropResumeJobs(flowRunId: string) {
 }
 
 async function giveUp(barrierId: string) {
-    return handleFanOutDispatchGaveUp({
+    return handleFanOutDispatchGaveUp({ data: { barrierId, projectId: ctx.project.id }, log: app.log })
+}
+
+async function failDispatch({ barrierId, attemptsMade }: { barrierId: string, attemptsMade: number }) {
+    return handleFanOutDispatchFailed({
         data: { barrierId, projectId: ctx.project.id },
+        attemptsMade,
+        attempts: 5,
         error: new Error('worker died'),
-        reason: 'exhausted',
         log: app.log,
     })
 }
@@ -1507,6 +1512,63 @@ describe('fan-out dispatch', () => {
             expect(summary.notDispatched).toBe(4)
             expect(summary.total).toBe(4)
         })
+    })
+
+    it('queues the give-up as its own retried job once dispatch fails for good, and not mid-ladder', async () => {
+        const { flowRun } = await createFanOutParentRun(FlowRunStatus.RUNNING)
+        await withBarrierQueuePaused(async () => {
+            const queue = barrierQueue(app.log).get()
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1 })
+
+            await failDispatch({ barrierId: barrier.id, attemptsMade: 4 })
+            expect(await queue.getJob(`give-up-${barrier.id}`)).toBeUndefined()
+
+            await failDispatch({ barrierId: barrier.id, attemptsMade: 5 })
+            const giveUpJob = await queue.getJob(`give-up-${barrier.id}`)
+            expect(giveUpJob?.name).toBe(BarrierJobName.FAN_OUT_GIVE_UP)
+            expect(giveUpJob?.opts.attempts).toBe(5)
+            expect((await listSignals(barrier.id)).map((signal) => signal.status)).toEqual([BarrierSignalStatus.PENDING, BarrierSignalStatus.PENDING])
+        })
+    })
+
+    it('fails the give-up when settling the signals fails, so the queue retries it instead of leaving the parent waiting', async () => {
+        const { flowRun } = await createFanOutParentRun(FlowRunStatus.RUNNING)
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1 })
+            const realBarrierService = barrierServiceModule.barrierService
+            vi.spyOn(barrierServiceModule, 'barrierService').mockImplementation((log) => ({
+                ...realBarrierService(log),
+                markUnclaimedNotDispatched: async () => {
+                    throw new Error('postgres is down')
+                },
+            }))
+            try {
+                await expect(giveUp(barrier.id)).rejects.toThrow('postgres is down')
+            }
+            finally {
+                vi.restoreAllMocks()
+            }
+
+            await giveUp(barrier.id)
+            await releaseIfReady(barrier.id)
+
+            expect(await readSummary(barrier.id)).toMatchObject({ total: 2, notDispatched: 2, stillRunning: 0 })
+        })
+    })
+
+    it('settles the unclaimed signals when the barrier worker runs a queued give-up', async () => {
+        const { flowRun } = await createFanOutParentRun(FlowRunStatus.RUNNING)
+        const barrier = await withBarrierQueuePaused(async () => {
+            const created = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1 })
+            await barrierQueue(app.log).get().remove(`dispatch-${created.barrier.id}`)
+            return created.barrier
+        })
+
+        await barrierQueue(app.log).addFanOutGiveUp({ barrierId: barrier.id, projectId: ctx.project.id })
+        await waitFor(async () => (await readStatus(barrier.id)) !== WaitpointStatus.PENDING)
+
+        expect(await readSummary(barrier.id)).toMatchObject({ total: 2, notDispatched: 2, stillRunning: 0 })
+        expect(await distributedStore.exists(barrierSourceKey(barrier.id))).toBe(false)
     })
 
     it('spares the signals whose children are already live when dispatch gives up', async () => {

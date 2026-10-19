@@ -21,13 +21,17 @@ Deleted on release, on cancel and when dispatch gives up.
 claim, and the child rows.
 **Entry step** — `entryStepName`, the action a child run starts at, with the parent's steps seeded as SUCCEEDED.
 It is written into the child's execution-state log, so a resume re-enters it. It must be an action.
-**Give-up** — the barrier worker's `failed` handler, on exhausted attempts or an `UnrecoverableError`. It deletes
-the source, then marks the unclaimed signals `NOT_DISPATCHED`.
+**Give-up** — the `fan-out-give-up` job (`give-up-<barrierId>`). The barrier worker's `failed` handler queues it on
+exhausted attempts or an `UnrecoverableError`. It deletes the source, then marks the unclaimed signals `NOT_DISPATCHED`,
+and it retries like any barrier job.
 
 ## Gotchas
 - **The waitpoint key is not the batch step's name.** Inside a loop the barrier's `stepName` is the path key
   `loop_1:3/batch_1`, which keeps one barrier per iteration. The body reads its batch under the bare name, so the
   engine sends that name as `batchStepName` and the dispatcher seeds the batch under it.
+- **The give-up cleanup runs as its own queue job, never inline in the `failed` handler.** Inline, a Postgres or
+  Redis error there was logged and lost, and the parent stayed paused until its deadline. One gap is left: a process
+  that dies between BullMQ's `moveToFailed` and that enqueue never queues the give-up.
 - **Raw `UPDATE … RETURNING` through `repo.query()` returns `[rows, rowCount]` on node-postgres but a plain rows
   array on PGlite.** A `.length > 0` check on it is always true in production and only correct in tests. Read
   `RETURNING` rows through the query builder (`.returning().execute()`, then `raw`), as `claimNextSignals` does.
