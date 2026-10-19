@@ -49,7 +49,7 @@ Public read-only endpoints returning UI metadata for flows whose trigger is `@ac
 A **Subflow** is a flow invoked by another flow rather than by its own external trigger — reached by a webhook POST to `/v1/webhooks/:flowId`, never a dedicated transport. Vocabulary from `@activepieces/piece-subflows`:
 - **Callable Flow** — the trigger that makes a flow callable; carries the parent's `data` payload and an optional `callbackUrl`. *Avoid:* child flow, nested flow, sub-workflow.
 - **Call Flow** — the action that invokes one subflow once, optionally waiting on a waitpoint for its `Respond` callback.
-- **Subflow fan-out** — many calls dispatched from one parent step (e.g. one per CSV batch), fire-and-forget, no waiting per call. *Avoid:* scatter, broadcast.
+- **Subflow fan-out** — many calls dispatched from one parent step (e.g. one per CSV batch), fire-and-forget, no waiting per call. Not the barrier's server-side fan-out, whose parent waits for every child. *Avoid:* scatter, broadcast.
 - **Batch** — the rows carried by one fan-out call: `{ batchIndex, headers, rows, extraData }`. *Avoid:* chunk, csv table, sub-table, shard.
 - Parent linkage is two headers (`x-parent-run-id`, `x-fail-parent-on-failure`); fan-out sets the latter false. Streaming bounds memory, not time — the step is still capped by `FLOW_TIMEOUT_SECONDS`.
 
@@ -61,6 +61,7 @@ A **waitpoint** is a row recording something a run waits on — `DELAY` / `WEBHO
 - **Waitpoint key** — the path-qualified step identity the engine sends in `stepName`, e.g. `loop_1:3/approval`. It is only ever an identity key inside `waitpoint-service`. Gives each loop iteration its own row; without it a pause inside a loop fired on iteration 1 only.
 - **Consume** — what happens to a **waitpoint** once its resume has been enqueued: a barrier is tombstoned `CONSUMED` so the run stays provably barrier-owned until it ends, any other type is deleted. `waitpointService.consume`, the single owner of the rule. *Avoid:* "close the waitpoint".
 - **Signal** — one `waitpoint_signal` row per awaited thing on a barrier, created up front. Deleted on release, so a returning approver sees only "already responded".
+- **Server-side fan-out** — one `POST /v1/waitpoints` hands a barrier its items, and a `fan-out-dispatch` job on the barrier queue creates one child run per signal. See [Server-side fan-out](server-side-fan-out.md).
 - Gotcha: a run can hold a COMPLETED leftover *and* an open PENDING pause at once, so any per-run waitpoint lookup must say which it wants — `findUndeliveredCompletedWaitpoint` declines only while a PENDING **barrier** is held, since delivering a resume never leaves a row at COMPLETED. An earlier form declined while *anything* was pending and hung every run holding a second waitpoint.
 - See [decision 000015](../decisions/000015-fan-in-is-an-event-driven-waitpoint-barrier.md), [decision 000033](../decisions/000033-a-released-barrier-leaves-a-tombstone-until-the-run-ends.md) and the public [Waitpoints](https://www.activepieces.com/docs/install/architecture/waitpoints) page.
 
@@ -83,6 +84,7 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 - **Human Input** — forms, approvals, the resume confirmation page
 - **Subflows** — flow-calls-flow: Callable Flow, Call Flow, streaming fan-out
 - **Waitpoints** — how a paused run is parked; release vs resume, barriers, signals
+- **Server-side fan-out** — the barrier's child dispatcher: chunks, claims, give-up, entry step
 - **Folders** — flow organization; the uncategorized sentinel
 - **Templates** — OFFICIAL / CUSTOM / SHARED blueprints
 - **Variables** — project-scoped values referenced from steps
