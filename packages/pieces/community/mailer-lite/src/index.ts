@@ -116,6 +116,12 @@ export const mailerLite = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://connect.mailerlite.com',
+          placeholder: '/api/subscribers',
+        },
+      },
     }),
   ],
   triggers,
