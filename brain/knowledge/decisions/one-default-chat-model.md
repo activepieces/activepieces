@@ -14,6 +14,6 @@ Before, a new chat's model came from a hidden chain: Default tier → the Defaul
 One explicit setting answers "what does a new chat use?" in one place, and folding the Default AI key into it leaves one concept to explain. Rejected: keep the rule chain and just explain it on screen. With recommendations gone, a key's "first model" is an arbitrary list order, so explaining the chain would describe a guess.
 
 ## Consequences
-- One nullable jsonb column (migration 1872), no backfill. Existing platforms keep the old chain until an admin picks, and the chain keeps a Default AI key step so BYOK platforms aren't moved to Credits.
+- One nullable jsonb column (migration 1875), no backfill. Existing platforms keep the old chain until an admin picks, and the chain keeps a Default AI key step so BYOK platforms aren't moved to Credits.
 - Deleting the picked tier or key doesn't clean the setting: it falls back at read time and the card shows Unavailable.
 - Bringing back recommendations needs a real recommendation system first.

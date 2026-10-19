@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddDefaultChatModelToPlatformConfiguration1872000000000 implements Migration {
-    name = 'AddDefaultChatModelToPlatformConfiguration1872000000000'
+export class AddDefaultChatModelToPlatformConfiguration1875000000000 implements Migration {
+    name = 'AddDefaultChatModelToPlatformConfiguration1875000000000'
     breaking = false
     release = '0.93.0'
     transaction = true
