@@ -5,8 +5,8 @@ import { DataSource, QueryRunner } from 'typeorm'
 import { initializeDatabase } from '../../../../src/app/database'
 import { backgroundMigrationRunner } from '../../../../src/app/database/background-migration-runner'
 import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
-import { AddPieceTranslationTable1871000000000 } from '../../../../src/app/database/migration/postgres/1871000000000-AddPieceTranslationTable'
-import { BackfillPieceTranslation1872000000000 } from '../../../../src/app/database/migration/postgres/background/1872000000000-BackfillPieceTranslation'
+import { AddPieceTranslationTable1873000000000 } from '../../../../src/app/database/migration/postgres/1873000000000-AddPieceTranslationTable'
+import { BackfillPieceTranslation1874000000000 } from '../../../../src/app/database/migration/postgres/background/1874000000000-BackfillPieceTranslation'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -41,30 +41,30 @@ async function withQueryRunner(fn: (queryRunner: QueryRunner) => Promise<void>):
 }
 
 async function runBackfillDirectly(): Promise<void> {
-    await withQueryRunner((queryRunner) => new BackfillPieceTranslation1872000000000().up(queryRunner))
+    await withQueryRunner((queryRunner) => new BackfillPieceTranslation1874000000000().up(queryRunner))
 }
 
 async function runBackfillThroughRunner(): Promise<void> {
-    await backgroundMigrationRunner.run({ log: app!.log, migrations: [BackfillPieceTranslation1872000000000] })
+    await backgroundMigrationRunner.run({ log: app!.log, migrations: [BackfillPieceTranslation1874000000000] })
 }
 
 async function backfillMarkedComplete(): Promise<boolean> {
     const rows = await ds.query(
         'SELECT 1 FROM "background_migrations" WHERE "name" = $1 AND "executed_at" IS NOT NULL',
-        [new BackfillPieceTranslation1872000000000().name],
+        [new BackfillPieceTranslation1874000000000().name],
     )
     return rows.length > 0
 }
 
 async function resetBackfill(): Promise<void> {
-    await ds.query('DELETE FROM "background_migrations" WHERE "name" = $1', [new BackfillPieceTranslation1872000000000().name])
+    await ds.query('DELETE FROM "background_migrations" WHERE "name" = $1', [new BackfillPieceTranslation1874000000000().name])
     await ds.query('DELETE FROM "piece_translation" WHERE "pieceMetadataId" = ANY($1)', [seededIds])
 }
 
 async function completionRecords(): Promise<number> {
     const [{ count }] = await ds.query(
         'SELECT count(*)::int AS "count" FROM "background_migrations" WHERE "name" = $1 AND "executed_at" IS NOT NULL',
-        [new BackfillPieceTranslation1872000000000().name],
+        [new BackfillPieceTranslation1874000000000().name],
     )
     return count
 }
@@ -111,7 +111,7 @@ describe('piece translation migrations', () => {
 
     it('runs the backfill once when several servers start the runner at the same time', async () => {
         await resetBackfill()
-        const backfillBody = vi.spyOn(BackfillPieceTranslation1872000000000.prototype, 'up')
+        const backfillBody = vi.spyOn(BackfillPieceTranslation1874000000000.prototype, 'up')
 
         await Promise.all(Array.from({ length: 4 }, () => runBackfillThroughRunner()))
 
@@ -130,7 +130,7 @@ describe('piece translation migrations', () => {
     })
 
     it('rolling the table back clears the backfill mark, so re-upgrading copies the rows again', async () => {
-        const migration = new AddPieceTranslationTable1871000000000()
+        const migration = new AddPieceTranslationTable1873000000000()
         await runBackfillThroughRunner()
         expect(await backfillMarkedComplete()).toBe(true)
 
