@@ -29,5 +29,10 @@
   "New Contact": "新しい連絡先",
   "Triggers when a new booking is canceled": "新しい予約がキャンセルされたときにトリガーします",
   "Triggers when a new booking is created": "新しい予約が作成されたときに発生する",
-  "Triggers when a new contact is created": "新しい連絡先が作成されたときにトリガーします"
+  "Triggers when a new contact is created": "新しい連絡先が作成されたときにトリガーします",
+  "Triggers when a booking is canceled": "予約がキャンセルされたときにトリガーします",
+  "Checks TidyCal periodically and runs once for each new booking.": "TidyCal を定期的に確認し、新しい予約ごとに 1 回実行します。",
+  "Checks TidyCal periodically and runs once for each canceled booking.": "TidyCal を定期的に確認し、キャンセルされた予約ごとに 1 回実行します。",
+  "Checks TidyCal periodically and runs once for each new contact.": "TidyCal を定期的に確認し、新しい連絡先ごとに 1 回実行します。",
+  "To create a personal access token:\n1. In TidyCal, open [Manage API keys](https://tidycal.com/integrations/advanced) under Integrations.\n2. On the **Personal tokens** tab, click **Create token**, enter a name and click **Create**.\n3. Copy the token now: TidyCal shows it only once.\n\nAPI access needs a paid TidyCal plan.": "個人アクセストークンを作成するには:\n1. TidyCal で、Integrations の [Manage API keys](https://tidycal.com/integrations/advanced) を開きます。\n2. **Personal tokens** タブで **Create token** をクリックし、名前を入力して **Create** をクリックします。\n3. トークンをすぐにコピーしてください。TidyCal では一度しか表示されません。\n\nAPI アクセスには TidyCal の有料プランが必要です。"
 }
