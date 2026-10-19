@@ -1,5 +1,8 @@
 import { QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { Migration } from '../../migration'
+import { migrationHelpers } from '../../migration-helpers'
+import { BackfillPieceTranslation1872000000000 } from './background/1872000000000-BackfillPieceTranslation'
 
 export class AddPieceTranslationTable1871000000000 implements Migration {
     name = 'AddPieceTranslationTable1871000000000'
@@ -20,8 +23,13 @@ export class AddPieceTranslationTable1871000000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            DROP TABLE IF EXISTS "piece_translation"
-        `)
+        await migrationHelpers.withBackgroundMigrationLock({
+            log: system.globalLogger(),
+            migration: BackfillPieceTranslation1872000000000,
+            fn: async () => {
+                await queryRunner.query('DELETE FROM "background_migrations" WHERE "name" = $1', [new BackfillPieceTranslation1872000000000().name])
+                await queryRunner.query('DROP TABLE IF EXISTS "piece_translation"')
+            },
+        })
     }
 }

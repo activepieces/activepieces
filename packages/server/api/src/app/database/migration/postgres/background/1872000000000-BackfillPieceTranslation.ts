@@ -15,7 +15,7 @@ export class BackfillPieceTranslation1872000000000 implements BackgroundMigratio
                     SELECT "id", "i18n", "i18n"::text ~* $2 AS "hasUnicodeEscapes" FROM "piece_metadata"
                      WHERE "id" > $1
                      ORDER BY "id"
-                     LIMIT ${BATCH_SIZE}
+                     LIMIT $3
                 ),
                 inserted AS (
                     INSERT INTO "piece_translation" ("pieceMetadataId", "locale", "translations")
@@ -27,7 +27,7 @@ export class BackfillPieceTranslation1872000000000 implements BackgroundMigratio
                 SELECT max("id") AS "lastId",
                        array_remove(array_agg(CASE WHEN "hasUnicodeEscapes" THEN "id" END), NULL) AS "escapedIds"
                   FROM batch
-            `, [lastId, UNICODE_ESCAPE_POSTGRES_CANNOT_DECODE]) as [{ lastId: string | null, escapedIds: string[] }]
+            `, [lastId, UNICODE_ESCAPE_POSTGRES_CANNOT_DECODE, BATCH_SIZE]) as [{ lastId: string | null, escapedIds: string[] }]
             if (isNil(progress.lastId)) {
                 return
             }
