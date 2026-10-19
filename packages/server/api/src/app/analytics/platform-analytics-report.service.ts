@@ -26,7 +26,8 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
                 const cachedAt = dayjs().toISOString()
                 const users = await listUsers(platformId)
                 const flows = await listFlows(platformId, log)
-                const runs = await listRuns(flows.map((flow) => flow.projectId), currentReport?.cachedAt ?? null, cachedAt)
+                const projects = await listProjects(platformId)
+                const runs = await listRuns(projects.map((project) => project.id), currentReport?.cachedAt ?? null, cachedAt)
 
                 return platformAnalyticsReportRepo().save({
                     id: currentReport?.id ?? apId(),

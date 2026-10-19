@@ -287,4 +287,25 @@ describe('POST /v1/analytics/refresh', () => {
             { flowId: otherFlowId, day, runs: 5 },
         ]))
     })
+
+    it('should count runs of a project that has no enabled flow', async () => {
+        const ctx = await createTestContext(app!, {
+            plan: { analyticsEnabled: true },
+        })
+        const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+        await db.save('flow', flow)
+        const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.DRAFT })
+        await db.save('flow_version', flowVersion)
+        await db.save('flow_run', createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            created: dayjs().subtract(1, 'hour').toISOString(),
+        }))
+
+        const runs = await refreshRunsOfFlow({ ctx, flowId: flow.id })
+
+        expect(runs).toEqual({ entries: 1, total: 1 })
+    })
 })
