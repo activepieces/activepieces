@@ -8,13 +8,14 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  Row,
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -79,6 +80,7 @@ interface DataTableProps<
   isLoading: boolean;
   isError: boolean;
   errorStateEntity: string;
+  errorStateDescription?: string;
   onRetry?: () => void;
   filters?: DataTableFilters<Keys>[];
   customFilters?: React.ReactNode[];
@@ -102,6 +104,8 @@ interface DataTableProps<
   bordered?: boolean;
   frameClassName?: string;
   toolbarClassName?: string;
+  stableRowActions?: boolean;
+  syncSelectionWithData?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -129,6 +133,7 @@ export function DataTable<
   isLoading,
   isError,
   errorStateEntity,
+  errorStateDescription,
   onRetry,
   onSelectedRowsChange,
   hidePagination,
@@ -149,6 +154,8 @@ export function DataTable<
   getRowClassName,
   isRowSelectionDisabled,
   virtualizeRows = false,
+  stableRowActions = false,
+  syncSelectionWithData = false,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
     id: 'select',
@@ -161,6 +168,7 @@ export function DataTable<
       <div className="flex items-center h-full">
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
+          aria-label={t('Select all')}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         />
       </div>
@@ -170,6 +178,7 @@ export function DataTable<
         <Checkbox
           checked={row.getIsSelected()}
           disabled={!row.getCanSelect()}
+          aria-label={t('Select row')}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
         />
       </div>
@@ -179,6 +188,19 @@ export function DataTable<
   const columnsWithSelect = selectColumn
     ? [selectColumnDef, ...columnsInitial]
     : columnsInitial;
+
+  const actionsRef = useRef(actions);
+  actionsRef.current = actions;
+  const renderActionsCell = useCallback(
+    ({ row }: { row: Row<RowDataWithActions<TData>> }) => (
+      <div className="flex justify-end gap-4">
+        {actionsRef.current.map((action, index) => (
+          <React.Fragment key={index}>{action(row.original)}</React.Fragment>
+        ))}
+      </div>
+    ),
+    [],
+  );
 
   const columns =
     actions.length > 0
@@ -191,19 +213,21 @@ export function DataTable<
             header: ({ column }) => (
               <DataTableColumnHeader column={column} title="" />
             ),
-            cell: ({ row }) => {
-              return (
-                <div className="flex justify-end gap-4">
-                  {actions.map((action, index) => {
-                    return (
-                      <React.Fragment key={index}>
-                        {action(row.original)}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              );
-            },
+            cell: stableRowActions
+              ? renderActionsCell
+              : ({ row }) => {
+                  return (
+                    <div className="flex justify-end gap-4">
+                      {actions.map((action, index) => {
+                        return (
+                          <React.Fragment key={index}>
+                            {action(row.original)}
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  );
+                },
           },
         ])
       : columnsWithSelect;
@@ -218,6 +242,8 @@ export function DataTable<
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
   const startingLimit = searchParams.get('limit') || '10';
+  const rowsPerPageLabelId = React.useId();
+  const rowsPerPageTriggerId = React.useId();
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
     startingCursor,
   );
@@ -303,9 +329,20 @@ export function DataTable<
   const rowSelection = table.getState().rowSelection;
   const selectedRowOriginals = React.useMemo(
     () => table.getSelectedRowModel().rows.map((row) => row.original),
-    [rowSelection],
+    [rowSelection, syncSelectionWithData ? tableData : undefined],
   );
+  const emittedSelection = useRef<RowDataWithActions<TData>[] | null>(null);
   useEffect(() => {
+    const previous = emittedSelection.current;
+    if (
+      syncSelectionWithData &&
+      previous !== null &&
+      previous.length === selectedRowOriginals.length &&
+      previous.every((row, index) => row === selectedRowOriginals[index])
+    ) {
+      return;
+    }
+    emittedSelection.current = selectedRowOriginals;
     onSelectedRowsChange?.(selectedRowOriginals);
   }, [selectedRowOriginals]);
 
@@ -648,6 +685,7 @@ export function DataTable<
                   <DataFetchErrorState
                     entity={errorStateEntity}
                     onRetry={onRetry}
+                    description={errorStateDescription}
                   />
                 </TableCell>
               </TableRow>
@@ -678,7 +716,9 @@ export function DataTable<
       {!hidePagination && !virtualizeRows && (
         <div className="flex items-center justify-end gap-4 px-2 py-4 text-sm">
           <div className="flex items-center gap-2">
-            <span className="text-gray-11">{t('Rows per page')}</span>
+            <span id={rowsPerPageLabelId} className="text-gray-11">
+              {t('Rows per page')}
+            </span>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
@@ -688,7 +728,12 @@ export function DataTable<
                 }
               }}
             >
-              <SelectTrigger size="sm" className="w-[70px]">
+              <SelectTrigger
+                id={rowsPerPageTriggerId}
+                size="sm"
+                className="w-[70px]"
+                aria-labelledby={`${rowsPerPageLabelId} ${rowsPerPageTriggerId}`}
+              >
                 <SelectValue
                   placeholder={table.getState().pagination.pageSize}
                 />
