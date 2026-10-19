@@ -8,7 +8,7 @@ status: accepted
 
 ## Decision
 
-Whether a team project is a default project is stored as `project.isDefault`, with a database check that only team projects can have it. The platform API keeps its shape: it takes `defaultProjectIds` and returns it, built from the flagged projects.
+Whether a team project is a default project is stored as `project.isDefault`, with a database check that only team projects can have it. It is set one project at a time through the project update endpoint (`POST /v1/projects/:id` with `isDefault`). The platform response still lists `defaultProjectIds`, built from the flagged projects.
 
 ## Context
 
@@ -20,4 +20,4 @@ A flag lives on the row it describes: deleting the project takes the flag with i
 
 ## Consequences
 
-Reads are a query (`platformId`, `type = TEAM`, `isDefault`, not deleted), ordered by `created`, because an array's order is gone. Saving sets exactly the given set in one `UPDATE`. Only the platform endpoints return `defaultProjectIds` (`PlatformResponse`), so other platform reads don't pay for the query.
+Reads are a query (`platformId`, `type = TEAM`, `isDefault`, not deleted), ordered by `created`, because an array's order is gone. Adding or removing several defaults is one request per project; there is no bulk save. Only the platform GET and update endpoints return `defaultProjectIds` (`PlatformResponse`), so other platform reads don't pay for the query. A soft-deleted project keeps its flag until the hard delete removes the row; every read skips deleted rows.

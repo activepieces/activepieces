@@ -19,6 +19,7 @@ export const UpdateProjectPlatformRequest = z.object({
     workerGroupId: z.optional(Nullable(z.string())),
     executionDataRetentionDays: z.optional(Nullable(z.number().int().positive())),
     sensitive: z.boolean().optional(),
+    isDefault: z.boolean().optional(),
 })
 
 export type UpdateProjectPlatformRequest = z.infer<typeof UpdateProjectPlatformRequest>
