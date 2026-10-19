@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Plus, X } from 'lucide-react';
 import { useId, useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -16,10 +17,12 @@ import {
 export function ManualModelList({
   models,
   suggestedModelIds = [],
+  tiersByModel = new Map(),
   onChange,
 }: {
   models: ProviderModelConfig[];
   suggestedModelIds?: string[];
+  tiersByModel?: Map<string, string[]>;
   onChange: (models: ProviderModelConfig[]) => void;
 }) {
   const suggestionListId = useId();
@@ -93,13 +96,22 @@ export function ManualModelList({
           )}
         </p>
       ) : (
-        <div className="flex flex-wrap gap-1.5 border-t border-gray-6/60 p-3">
+        <div className="flex flex-col border-t border-gray-6/60">
           {models.map((model) => (
-            <span
+            <div
               key={model.modelId}
-              className="flex items-center gap-1.5 rounded-md bg-gray-3 px-2 py-1 font-mono text-xs"
+              className="flex items-center gap-3 border-b border-gray-6/60 px-4 py-2.5 last:border-b-0"
             >
-              {model.modelId}
+              <span className="min-w-0 flex-1 truncate font-mono text-sm">
+                {model.modelId}
+              </span>
+              {tiersByModel.has(model.modelId) && (
+                <Badge variant="info" className="shrink-0">
+                  {t('Used by {tiers}', {
+                    tiers: tiersByModel.get(model.modelId)?.join(', '),
+                  })}
+                </Badge>
+              )}
               <button
                 type="button"
                 title={t('Model Type')}
@@ -112,12 +124,16 @@ export function ManualModelList({
                     ),
                   )
                 }
-                className="rounded-md bg-gray-1 px-1 py-px font-sans text-xs text-gray-11 transition-colors hover:text-gray-12"
+                className="rounded-md border border-gray-6 px-2 py-0.5 text-xs text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12"
               >
                 {modelTypeLabel(model.modelType)}
               </button>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label={t('Remove')}
+                disabled={tiersByModel.has(model.modelId)}
                 onClick={() =>
                   onChange(
                     models.filter(
@@ -125,11 +141,10 @@ export function ManualModelList({
                     ),
                   )
                 }
-                className="text-gray-11 transition-colors hover:text-gray-12"
               >
-                <X className="size-3" />
-              </button>
-            </span>
+                <X className="size-3.5" />
+              </Button>
+            </div>
           ))}
         </div>
       )}
