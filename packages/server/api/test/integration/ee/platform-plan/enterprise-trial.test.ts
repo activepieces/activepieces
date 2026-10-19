@@ -6,6 +6,7 @@ import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const ELIGIBLE: EnterpriseTrialStatus = { state: 'eligible', startedAt: null, endsAt: null, extended: false }
+const STARTED = { startedAt: '2026-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
 
 let app: FastifyInstance | null = null
 
@@ -22,18 +23,19 @@ afterEach(() => {
 })
 
 describe('Enterprise trial API', () => {
-    it('reads the trial from the console as a self-hosted Enterprise instance', async () => {
+    it('reads the trial as a self-hosted Enterprise instance and starts it with the instance billing key', async () => {
         const ctx = await createTestContext(app!)
         vi.spyOn(autumnUtils, 'ensureEnrolled').mockResolvedValue(undefined)
+        vi.spyOn(autumnUtils, 'refreshEntitlements').mockResolvedValue(undefined)
         vi.spyOn(autumnConsole, 'getCreds').mockResolvedValue({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
-        const getTrial = vi.spyOn(autumnConsole, 'getEnterpriseTrial').mockResolvedValue(ELIGIBLE)
+        const startTrial = vi.spyOn(autumnConsole, 'startEnterpriseTrial').mockResolvedValue(STARTED)
 
-        const response = await ctx.get('/v1/platform-billing/enterprise-trial')
+        const status = await ctx.get('/v1/platform-billing/enterprise-trial')
+        const start = await ctx.post('/v1/platform-billing/enterprise-trial/start')
 
-        expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(response.json()).toEqual(ELIGIBLE)
-        expect(getTrial).toHaveBeenCalledWith(expect.objectContaining({
-            autumnApiKey: 'am_sk_trial',
-        }))
+        expect(status.statusCode).toBe(StatusCodes.OK)
+        expect(status.json()).toEqual(ELIGIBLE)
+        expect(start.json()).toEqual({ state: 'active', ...STARTED, extended: false })
+        expect(startTrial).toHaveBeenCalledWith({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
     })
 })
