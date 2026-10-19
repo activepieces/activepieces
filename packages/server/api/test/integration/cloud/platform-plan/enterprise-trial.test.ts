@@ -59,7 +59,6 @@ describe('Enterprise trial API', () => {
         expect(response.json()).toEqual(ELIGIBLE)
         expect(getTrial).toHaveBeenCalledWith(expect.objectContaining({
             autumnCustomerId: 'cus_trial',
-            edition: 'cloud',
         }))
     })
 
@@ -75,6 +74,6 @@ describe('Enterprise trial API', () => {
         expect(second.statusCode).toBe(StatusCodes.OK)
         expect(second.json()).toEqual(ACTIVE)
         expect(startTrial).toHaveBeenCalledTimes(1)
-        expect(startTrial).toHaveBeenCalledWith(expect.objectContaining({ edition: 'cloud', platformId: ctx.platform.id }))
+        expect(startTrial).toHaveBeenCalledWith(expect.objectContaining({ platformId: ctx.platform.id }))
     })
 })
