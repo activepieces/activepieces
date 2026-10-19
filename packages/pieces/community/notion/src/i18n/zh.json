@@ -218,5 +218,7 @@
   "Triggers when an item is added to a database.": "Triggers when an item is added to a database.",
   "Triggers when an item is updated in a database.": "Triggers when an item is updated in a database.",
   "Triggers when a comment is added to a page.": "Triggers when a comment is added to a page.",
-  "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited."
+  "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited.",
+  "Empty fields keep their current value. Checkboxes are always saved as shown.": "空字段保留其当前值。复选框始终按显示的状态保存。",
+  "Add Notion-Version, e.g. 2022-02-22. Authorization is added for you.": "添加 Notion-Version，例如 2022-02-22。授权会自动添加。"
 }
