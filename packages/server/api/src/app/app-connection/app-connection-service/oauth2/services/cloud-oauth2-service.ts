@@ -6,6 +6,7 @@ import { AppConnectionType, CloudOAuth2ConnectionValue } from '@activepieces/sha
 import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
+import { sleep } from '../../../../helper/sleep'
 import { system } from '../../../../helper/system/system'
 import {
     ClaimOAuth2Request,
@@ -52,15 +53,7 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
                 pieceName,
                 edition: system.getEdition(),
             }
-            const value = (
-                await safeHttp.axios.post<CloudOAuth2ConnectionValue>(
-                    'https://secrets.activepieces.com/claim',
-                    cloudRequest,
-                    {
-                        timeout: 10000,
-                    },
-                )
-            ).data
+            const value = await postClaim(cloudRequest)
             return {
                 ...value,
                 token_url: request.tokenUrl,
@@ -83,6 +76,32 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
     },
 })
 
+async function postClaim(cloudRequest: ClaimWithCloudRequest, attempt = 1): Promise<CloudOAuth2ConnectionValue> {
+    try {
+        const response = await safeHttp.axios.post<CloudOAuth2ConnectionValue>(
+            'https://secrets.activepieces.com/claim',
+            cloudRequest,
+            {
+                timeout: 10000,
+            },
+        )
+        return response.data
+    }
+    catch (e: unknown) {
+        if (attempt < MAX_CLAIM_ATTEMPTS && cloudflareNeverReachedSecretsService(e)) {
+            await sleep(CLAIM_RETRY_DELAY_MS)
+            return postClaim(cloudRequest, attempt + 1)
+        }
+        throw e
+    }
+}
+
+function cloudflareNeverReachedSecretsService(e: unknown): boolean {
+    return e instanceof AxiosError
+        && !isNil(e.response)
+        && CLOUDFLARE_ORIGIN_NOT_REACHED_STATUSES.includes(e.response.status)
+}
+
 function describeSecretsServiceReply(e: unknown): SecretsServiceReply {
     if (!(e instanceof AxiosError) || isNil(e.response)) {
         return {}
@@ -96,6 +115,12 @@ function describeSecretsServiceReply(e: unknown): SecretsServiceReply {
 }
 
 const MAX_OAUTH2_ERROR_LENGTH = 300
+
+const MAX_CLAIM_ATTEMPTS = 3
+
+const CLAIM_RETRY_DELAY_MS = 2000
+
+const CLOUDFLARE_ORIGIN_NOT_REACHED_STATUSES = [521, 523, 525, 526]
 
 const OAuth2ErrorReply = z.object({
     error: z.string().optional(),

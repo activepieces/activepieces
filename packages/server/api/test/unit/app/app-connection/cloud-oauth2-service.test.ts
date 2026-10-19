@@ -1,7 +1,7 @@
 import { ErrorCode } from '@activepieces/core-utils'
 import axios, { AxiosError, AxiosHeaders, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cloudOAuth2Service } from '../../../../src/app/app-connection/app-connection-service/oauth2/services/cloud-oauth2-service'
 
 const PIECE_NAME = '@activepieces/piece-gitlab'
@@ -39,15 +39,74 @@ describe('cloudOAuth2Service.claim', () => {
     beforeEach(() => {
         secretsService.mockReset()
         vi.mocked(log.error).mockReset()
+        vi.useFakeTimers()
     })
 
-    it('sends the single-use code to the secrets service once when it answers 500', async () => {
-        secretsService.mockImplementation(secretsServiceReplies(500, ''))
+    afterEach(() => {
+        vi.useRealTimers()
+    })
 
-        await expect(claimGitlabCode()).rejects.toMatchObject({
+    it.each([500, 502, 503, 504, 520, 522, 524])('sends the single-use code once when the answer is %i, which can come after the code was used', async (status) => {
+        secretsService.mockImplementation(secretsServiceReplies(status, ''))
+
+        const claimFails = expect(claimGitlabCode()).rejects.toMatchObject({
             error: { code: ErrorCode.INVALID_CLOUD_CLAIM, params: { pieceName: PIECE_NAME } },
         })
+        await vi.runAllTimersAsync()
+        await claimFails
         expect(secretsService).toHaveBeenCalledTimes(1)
+    })
+
+    it('sends the single-use code once when the secrets service does not answer in time', async () => {
+        secretsService.mockRejectedValue(new AxiosError('timeout of 10000ms exceeded', AxiosError.ECONNABORTED))
+
+        const claimFails = expect(claimGitlabCode()).rejects.toMatchObject({
+            error: { code: ErrorCode.INVALID_CLOUD_CLAIM },
+        })
+        await vi.runAllTimersAsync()
+        await claimFails
+        expect(secretsService).toHaveBeenCalledTimes(1)
+    })
+
+    it.each([521, 523, 525, 526])('retries when Cloudflare answers %i, which means the secrets service never got the code', async (status) => {
+        secretsService
+            .mockImplementationOnce(secretsServiceReplies(status, ''))
+            .mockImplementationOnce(secretsServiceReplies(201, { access_token: 'access', refresh_token: 'refresh' }))
+
+        const claim = claimGitlabCode()
+        await vi.runAllTimersAsync()
+
+        await expect(claim).resolves.toMatchObject({ access_token: 'access', refresh_token: 'refresh' })
+        expect(secretsService).toHaveBeenCalledTimes(2)
+        expect(secretsService.mock.calls[1][0].data).toBe(secretsService.mock.calls[0][0].data)
+    })
+
+    it('gives up after 3 attempts when Cloudflare keeps failing to reach the secrets service', async () => {
+        secretsService.mockImplementation(secretsServiceReplies(521, ''))
+
+        const claimFails = expect(claimGitlabCode()).rejects.toMatchObject({
+            error: { code: ErrorCode.INVALID_CLOUD_CLAIM },
+        })
+        await vi.runAllTimersAsync()
+        await claimFails
+        expect(secretsService).toHaveBeenCalledTimes(3)
+        expect(log.error).toHaveBeenCalledWith(
+            expect.objectContaining({ secretsService: { responseStatus: 521 } }),
+            expect.any(String),
+        )
+    })
+
+    it('stops retrying once the answer could come from the secrets service itself', async () => {
+        secretsService
+            .mockImplementationOnce(secretsServiceReplies(523, ''))
+            .mockImplementationOnce(secretsServiceReplies(500, ''))
+
+        const claimFails = expect(claimGitlabCode()).rejects.toMatchObject({
+            error: { code: ErrorCode.INVALID_CLOUD_CLAIM },
+        })
+        await vi.runAllTimersAsync()
+        await claimFails
+        expect(secretsService).toHaveBeenCalledTimes(2)
     })
 
     it('logs the status and the OAuth2 error the secrets service answered with', async () => {
