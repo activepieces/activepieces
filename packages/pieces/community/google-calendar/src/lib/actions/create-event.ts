@@ -14,11 +14,13 @@ export const createEventProps = {
   start_date_time: Property.DateTime({
     displayName: 'Start Time',
     required: true,
+    width: 'half',
   }),
   end_date_time: Property.DateTime({
     displayName: 'End Time',
     description: 'Defaults to 30 minutes after the start.',
     required: false,
+    width: 'half',
   }),
   location: Property.ShortText({
     displayName: 'Location',
@@ -172,6 +174,29 @@ export const createEvent = createAction({
   audience: 'human',
   aiMetadata: { description: 'Creates a Google Calendar event with structured fields (title, start/end times, location, description, attendees, color, guest permissions) and can optionally attach a Google Meet link. Use this when you have explicit event details; choose Create Quick Event instead when working from a single natural-language phrase. Requires a title and start time (end defaults to 30 minutes after start). Not idempotent: each call creates a new event.', idempotent: false },
   displayName: 'Create Event',
+  propertyGroups: [
+    {
+      key: 'calendar',
+      display: 'section',
+      label: 'Calendar',
+      icon: 'calendar',
+      props: ['calendar_id'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Details',
+      icon: 'text',
+      props: ['title', 'start_date_time', 'end_date_time', 'location', 'description', 'colorId'],
+    },
+    {
+      key: 'guests',
+      display: 'section',
+      label: 'Guests',
+      icon: 'users',
+      props: ['attendees', 'send_notifications', 'create_meet_link'],
+    },
+  ],
   props: createEventProps,
   outputSchema: eventOutputSchema,
   run: runCreateEvent,

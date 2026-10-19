@@ -136,6 +136,12 @@ export const baserow = createPiece({
       },
       auth: baserowAuth,
       authMapping: buildCustomApiAuthHeader,
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to your Baserow address.',
+          placeholder: '/api/database/rows/table/123/',
+        },
+      },
     }),
   ],
   triggers: [

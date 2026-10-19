@@ -3,7 +3,7 @@ import { wideEvent } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { DataSource } from 'typeorm'
 import { BackgroundMigration } from './background-migration'
-import { databaseConnection } from './database-connection'
+import { databaseConnection, migrationDatabaseConnection } from './database-connection'
 import { BackgroundMigrationNotCompleteError } from './migration-helpers'
 import { getBackgroundMigrations } from './postgres-connection'
 import { distributedLock } from './redis-connections'
@@ -132,8 +132,9 @@ async function executeMigrationBody({
     log: FastifyBaseLogger
     dataSource: DataSource
 }): Promise<void> {
-    const queryRunner = dataSource.createQueryRunner()
     try {
+        const executionDs = await migrationDatabaseConnection()
+        const queryRunner = executionDs.createQueryRunner()
         try {
             await migration.up(queryRunner)
         }
