@@ -41,5 +41,6 @@
   "Record Deleted": "Record verwijderd",
   "Triggers when a new record is added to the selected table.": "Activeert wanneer een nieuwe record wordt toegevoegd aan de geselecteerde tabel.",
   "Triggers when a record is updated in the selected table.": "Activeert wanneer een record wordt bijgewerkt in de geselecteerde tabel.",
-  "Triggers when a record is deleted from the selected table.": "Activeert wanneer een record wordt verwijderd uit de geselecteerde tabel."
+  "Triggers when a record is deleted from the selected table.": "Activeert wanneer een record wordt verwijderd uit de geselecteerde tabel.",
+  "Empty fields keep their current value.": "Lege velden behouden hun huidige waarde."
 }
