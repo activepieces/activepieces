@@ -10,6 +10,7 @@ import type {
 	ConfluenceBlogPost,
 	ConfluenceComment,
 	ConfluenceCqlSearchResponse,
+	ConfluenceCurrentUser,
 	ConfluenceFolderSummary,
 	ConfluencePage,
 	ConfluencePageSummary,
@@ -19,6 +20,18 @@ import type {
 	ConfluenceTemplateSummary,
 	ConfluenceUserSearchResult,
 } from './types';
+
+async function getCurrentUser({
+	auth,
+}: {
+	auth: ConfluenceAuthValue;
+}): Promise<ConfluenceCurrentUser> {
+	return await confluenceClient.request<ConfluenceCurrentUser>({
+		auth,
+		method: HttpMethod.GET,
+		path: `${V1}/user/current`,
+	});
+}
 
 async function listSpaces({
 	auth,
@@ -523,6 +536,7 @@ async function searchUsers({
 }
 
 export const confluenceApi = {
+	getCurrentUser,
 	listSpaces,
 	getSpace,
 	listPages,

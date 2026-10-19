@@ -12,6 +12,13 @@ export type ConfluencePaginatedResponse<T> = {
 	};
 };
 
+export type ConfluenceCurrentUser = {
+	type?: string;
+	accountId?: string;
+	email?: string;
+	displayName?: string;
+};
+
 export type ConfluenceSpace = { id: string; name: string; key: string; homepageId: string };
 
 export type ConfluencePageSummary = { id: string; title: string };
