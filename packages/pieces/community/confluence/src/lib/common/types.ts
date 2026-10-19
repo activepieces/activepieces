@@ -81,6 +81,63 @@ export type ConfluenceUserSearchResult = {
 	totalSize?: number;
 };
 
+export type ConfluenceRecord = Record<string, unknown>;
+
+export type ConfluenceQuery = Record<string, string | number | boolean | undefined>;
+
+export type ConfluenceCursorPage = {
+	results: ConfluenceRecord[];
+	count: number;
+	nextCursor: string | null;
+};
+
+export type ConfluenceContentType =
+	| 'pages'
+	| 'blogposts'
+	| 'attachments'
+	| 'whiteboards'
+	| 'folders'
+	| 'spaces'
+	| 'labels'
+	| 'footer-comments'
+	| 'inline-comments';
+
+export type ConfluenceVersionedContent = {
+	id: string;
+	title: string;
+	status: string;
+	version: { number: number };
+	body?: { storage?: { value: string } };
+};
+
+export type ConfluenceContentProperty = {
+	id: string;
+	key: string;
+	value: unknown;
+	version: { number: number };
+};
+
+export type ConfluenceTask = {
+	id: string;
+	localId?: string;
+	spaceId?: string;
+	pageId?: string;
+	blogPostId?: string;
+	status: string;
+	createdBy?: string;
+	assignedTo?: string;
+	completedBy?: string;
+	createdAt?: string;
+	updatedAt?: string;
+	dueAt?: string;
+	completedAt?: string;
+};
+
+export type ConfluenceCopyDestination = {
+	type: string;
+	value: string;
+};
+
 export type ConfluenceCqlSearchResponse = {
 	results: unknown[];
 	size: number;

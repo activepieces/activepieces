@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
+import { downloadAttachmentOutputSchema } from '../output-schemas';
 
 export const downloadAttachmentAction = createAction({
 	auth: confluenceAuth,
 	name: 'download-attachment',
+	outputSchema: downloadAttachmentOutputSchema,
 	classification: 'READ',
 	displayName: 'Download Attachment',
 	description: 'Downloads an attachment file by its ID and returns it as a file.',

@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
+import { replyToCommentOutputSchema } from '../output-schemas';
 
 export const replyToCommentAction = createAction({
 	auth: confluenceAuth,
 	name: 'reply-to-comment',
+	outputSchema: replyToCommentOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Reply to Comment',
 	description: 'Replies to an existing footer comment on a page.',

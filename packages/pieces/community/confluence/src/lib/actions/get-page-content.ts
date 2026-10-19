@@ -3,13 +3,15 @@ import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
 
 import type { ConfluenceAuthValue, ConfluencePage } from '../common/types';
+import { getpagecontentOutputSchema } from '../output-schemas';
 
 export const getPageContent = createAction({
 	name: 'getPageContent',
+	outputSchema: getpagecontentOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Page Content',
 	description: 'Get page content and optionally all its descendants',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Fetches a single Confluence page (title and storage-format body) by its page ID; when "include descendants" is enabled it additionally walks the page tree and returns child pages recursively up to a configurable max depth. Use to read the full content of a known page, optionally including its sub-pages. Requires the numeric page ID (from the page URL); read-only and idempotent.', idempotent: true },
 	auth: confluenceAuth,
 	props: {

@@ -7,6 +7,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
 import { confluenceProps } from '../common/props';
+import { newAttachmentOutputSchema } from '../output-schemas';
 
 const props = {
   spaceId: confluenceProps.spaceId({ required: true }),
@@ -34,6 +35,7 @@ const polling: Polling<
 
 export const newAttachmentTrigger = createTrigger({
   name: 'new-attachment',
+  outputSchema: newAttachmentOutputSchema,
   classification: 'READ',
   displayName: 'New Attachment',
   description:

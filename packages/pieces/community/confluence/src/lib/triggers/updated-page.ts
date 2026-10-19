@@ -7,6 +7,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
 import { confluenceProps } from '../common/props';
+import { updatedPageOutputSchema } from '../output-schemas';
 
 const props = {
 	spaceId: confluenceProps.spaceId({ required: true }),
@@ -35,6 +36,7 @@ const polling: Polling<
 
 export const updatedPageTrigger = createTrigger({
 	name: 'updated-page',
+	outputSchema: updatedPageOutputSchema,
 	classification: 'READ',
 	displayName: 'Updated Page',
 	description: 'Triggers when an existing page is updated (version > 1).',

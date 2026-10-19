@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
+import { listSpacesOutputSchema } from '../output-schemas';
 
 export const listSpacesAction = createAction({
 	auth: confluenceAuth,
 	name: 'list-spaces',
+	outputSchema: listSpacesOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'List Spaces',
 	description: 'Lists all spaces the authenticated user can access.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Lists the Confluence spaces the authenticated user can access (paginated through all results), optionally filtered by space type (global, personal, collaboration, knowledge base) and status (current or archived). Use to discover available spaces or resolve a space to its ID. Read-only and idempotent.', idempotent: true },
 	props: {
 		type: Property.StaticDropdown({

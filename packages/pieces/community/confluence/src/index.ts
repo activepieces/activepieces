@@ -26,6 +26,8 @@ import { removeLabelAction } from './lib/actions/remove-label';
 import { findUserAction } from './lib/actions/find-user';
 import { listSpacesAction } from './lib/actions/list-spaces';
 
+import { confluenceAiActions } from './lib/actions/ai';
+
 import { newPageTrigger } from './lib/triggers/new-page';
 import { updatedPageTrigger } from './lib/triggers/updated-page';
 import { newCommentTrigger } from './lib/triggers/new-comment';
@@ -35,7 +37,7 @@ import { newBlogPostTrigger } from './lib/triggers/new-blog-post';
 export const confluence = createPiece({
   displayName: 'Confluence',
   auth: confluenceAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/confluence.png',
   authors: ['geekyme', 'sanket-a11y'],
   categories: [PieceCategory.CONTENT_AND_FILES],
@@ -60,6 +62,7 @@ export const confluence = createPiece({
     removeLabelAction,
     findUserAction,
     listSpacesAction,
+    ...confluenceAiActions,
     createCustomApiCallAction({
       baseUrl: (auth) => (auth ? confluenceClient.baseUrl({ auth }) : ''),
       auth: confluenceAuth,

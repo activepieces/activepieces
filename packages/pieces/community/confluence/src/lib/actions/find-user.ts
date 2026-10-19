@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
+import { findUserOutputSchema } from '../output-schemas';
 
 export const findUserAction = createAction({
 	auth: confluenceAuth,
 	name: 'find-user',
+	outputSchema: findUserOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find User',
 	description: 'Looks up Confluence users by name, email, or keyword.',

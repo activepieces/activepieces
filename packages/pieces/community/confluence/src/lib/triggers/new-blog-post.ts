@@ -7,6 +7,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
 import { confluenceProps } from '../common/props';
+import { newBlogPostOutputSchema } from '../output-schemas';
 
 const props = {
 	spaceId: confluenceProps.spaceId({ required: true }),
@@ -26,6 +27,7 @@ const polling: Polling<
 
 export const newBlogPostTrigger = createTrigger({
 	name: 'new-blog-post',
+	outputSchema: newBlogPostOutputSchema,
 	classification: 'READ',
 	displayName: 'New Blog Post',
 	description: 'Triggers when a new blog post is published in the selected space.',

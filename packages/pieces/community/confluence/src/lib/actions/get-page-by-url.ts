@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
+import { getPageByUrlOutputSchema } from '../output-schemas';
 
 export const getPageByUrlAction = createAction({
 	auth: confluenceAuth,
 	name: 'get-page-by-url',
+	outputSchema: getPageByUrlOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Page by URL',
 	description:

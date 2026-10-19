@@ -7,6 +7,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
 import { confluenceProps } from '../common/props';
+import { newPageOutputSchema } from '../output-schemas';
 
 const props = {
 	spaceId: confluenceProps.spaceId({ required: true }),
@@ -31,6 +32,7 @@ const polling: Polling<
 
 export const newPageTrigger = createTrigger({
 	name: 'new-page',
+	outputSchema: newPageOutputSchema,
 	classification: 'READ',
 	displayName: 'New Page',
 	description: 'Triggers when a new page is created.',

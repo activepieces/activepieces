@@ -7,6 +7,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
 import { confluenceProps } from '../common/props';
+import { newCommentOutputSchema } from '../output-schemas';
 
 const props = {
   spaceId: confluenceProps.spaceId({ required: true }),
@@ -38,6 +39,7 @@ const polling: Polling<
 
 export const newCommentTrigger = createTrigger({
   name: 'new-comment',
+  outputSchema: newCommentOutputSchema,
   classification: 'READ',
   displayName: 'New Comment on Page',
   description:

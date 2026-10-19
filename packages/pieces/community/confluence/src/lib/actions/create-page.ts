@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
 import { confluenceProps } from '../common/props';
+import { createPageOutputSchema } from '../output-schemas';
 
 export const createPageAction = createAction({
 	auth: confluenceAuth,
 	name: 'create-page',
+	outputSchema: createPageOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Page',
 	description: 'Creates a new page in a space with the given title and body.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new Confluence page in the given space with a title and body, optionally nested under a parent page, and either published (current) or saved as a draft. The body is interpreted in the chosen format (storage XHTML, wiki markup, or atlas doc format). Use to author a brand-new page. Not idempotent: each call creates another page even with identical input.', idempotent: false },
 	props: {
 		spaceId: confluenceProps.spaceId({ required: true }),

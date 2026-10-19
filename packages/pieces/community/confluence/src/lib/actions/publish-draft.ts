@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { confluenceAuth } from '../auth';
 import { confluenceApi } from '../common/api';
+import { getPageByUrlOutputSchema } from '../output-schemas';
 
 export const publishDraftAction = createAction({
 	auth: confluenceAuth,
 	name: 'publish-draft',
+	outputSchema: getPageByUrlOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Publish Draft',
 	description: 'Publishes a draft page (changes status from draft to current).',

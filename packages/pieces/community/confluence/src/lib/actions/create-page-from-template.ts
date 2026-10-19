@@ -2,10 +2,12 @@ import { confluenceAuth } from '../auth';
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { confluenceApi } from '../common/api';
 import { confluenceProps } from '../common/props';
+import { createPageOutputSchema } from '../output-schemas';
 
 export const createPageFromTemplateAction = createAction({
     auth:confluenceAuth,
     name:'create-page-from-template',
+    outputSchema: createPageOutputSchema,
     classification: 'WRITE',
     displayName:'Create Page from Template',
     description:'Creates a new page from a template with the given title and variables.',
