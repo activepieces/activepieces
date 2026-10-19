@@ -3084,7 +3084,7 @@
     },
     "packages/pieces/community/facebook-leads": {
       "name": "@activepieces/piece-facebook-leads",
-      "version": "0.4.1",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
