@@ -172,7 +172,7 @@ export const confluenceListAttachmentCommentsOutputSchema: OutputSchema = {
 						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
 						{
 							key: 'atlas_doc_format',
-							label: 'Atlas Doc Format',
+							label: 'Atlas Document Format',
 							children: bodyRepresentationFields,
 						},
 					],
@@ -369,7 +369,7 @@ export const confluenceListBlogPostFooterCommentsOutputSchema: OutputSchema = {
 						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
 						{
 							key: 'atlas_doc_format',
-							label: 'Atlas Doc Format',
+							label: 'Atlas Document Format',
 							children: bodyRepresentationFields,
 						},
 					],
@@ -446,7 +446,14 @@ export const confluenceListBlogPostInlineCommentsOutputSchema: OutputSchema = {
 				{
 					key: 'body',
 					label: 'Body',
-					children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+					children: [
+						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+						{
+							key: 'atlas_doc_format',
+							label: 'Atlas Document Format',
+							children: bodyRepresentationFields,
+						},
+					],
 				},
 				{
 					key: 'properties',
@@ -493,7 +500,6 @@ export const confluenceCreateBlogPostPropertyOutputSchema: OutputSchema = {
 		{
 			key: 'value',
 			label: 'Value',
-			children: [{ key: 'b', label: 'B', format: 'number' }],
 		},
 		{ key: 'key', label: 'Key' },
 		{ key: 'id', label: 'ID' },
@@ -655,7 +661,14 @@ export const confluenceListBlogPostVersionsOutputSchema: OutputSchema = {
 						{
 							key: 'body',
 							label: 'Body',
-							children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+							children: [
+								{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+								{
+									key: 'atlas_doc_format',
+									label: 'Atlas Document Format',
+									children: bodyRepresentationFields,
+								},
+							],
 						},
 						{ key: 'title', label: 'Title' },
 					],
@@ -682,7 +695,14 @@ export const confluenceListBlogPostsForLabelOutputSchema: OutputSchema = {
 				{
 					key: 'body',
 					label: 'Body',
-					children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+					children: [
+						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+						{
+							key: 'atlas_doc_format',
+							label: 'Atlas Document Format',
+							children: bodyRepresentationFields,
+						},
+					],
 				},
 				{ key: 'status', label: 'Status' },
 				{ key: 'title', label: 'Title' },
@@ -1004,7 +1024,7 @@ export const confluenceListFooterCommentRepliesOutputSchema: OutputSchema = {
 						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
 						{
 							key: 'atlas_doc_format',
-							label: 'Atlas Doc Format',
+							label: 'Atlas Document Format',
 							children: bodyRepresentationFields,
 						},
 					],
@@ -1114,7 +1134,14 @@ export const confluenceGetBlogPostOutputSchema: OutputSchema = {
 			label: 'Body',
 			children: [
 				{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+				{
+					key: 'atlas_doc_format',
+					label: 'Atlas Document Format',
+					children: bodyRepresentationFields,
+				},
 				{ key: 'view', label: 'View', children: bodyRepresentationFields },
+				{ key: 'export_view', label: 'Export View', children: bodyRepresentationFields },
+				{ key: 'styled_view', label: 'Styled View', children: bodyRepresentationFields },
 			],
 		},
 		{ key: 'title', label: 'Title' },
@@ -1219,6 +1246,11 @@ export const confluenceGetFooterCommentOutputSchema: OutputSchema = {
 			label: 'Body',
 			children: [
 				{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+				{
+					key: 'atlas_doc_format',
+					label: 'Atlas Document Format',
+					children: bodyRepresentationFields,
+				},
 				{ key: 'view', label: 'View', children: bodyRepresentationFields },
 			],
 		},
@@ -1250,7 +1282,12 @@ export const confluenceGetInlineCommentOutputSchema: OutputSchema = {
 			label: 'Body',
 			children: [
 				{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
-				{ key: 'atlas_doc_format', label: 'Atlas Doc Format', children: bodyRepresentationFields },
+				{
+					key: 'atlas_doc_format',
+					label: 'Atlas Document Format',
+					children: bodyRepresentationFields,
+				},
+				{ key: 'view', label: 'View', children: bodyRepresentationFields },
 			],
 		},
 		{
@@ -1324,8 +1361,14 @@ export const confluenceGetPageOutputSchema: OutputSchema = {
 			label: 'Body',
 			children: [
 				{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
-				{ key: 'atlas_doc_format', label: 'Atlas Doc Format', children: bodyRepresentationFields },
+				{
+					key: 'atlas_doc_format',
+					label: 'Atlas Document Format',
+					children: bodyRepresentationFields,
+				},
 				{ key: 'view', label: 'View', children: bodyRepresentationFields },
+				{ key: 'export_view', label: 'Export View', children: bodyRepresentationFields },
+				{ key: 'styled_view', label: 'Styled View', children: bodyRepresentationFields },
 			],
 		},
 		{ key: 'status', label: 'Status' },
@@ -1620,7 +1663,14 @@ export const confluenceListInlineCommentRepliesOutputSchema: OutputSchema = {
 				{
 					key: 'body',
 					label: 'Body',
-					children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+					children: [
+						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+						{
+							key: 'atlas_doc_format',
+							label: 'Atlas Document Format',
+							children: bodyRepresentationFields,
+						},
+					],
 				},
 				{
 					key: '_links',
@@ -1645,7 +1695,6 @@ export const confluenceListBlogPostPropertiesOutputSchema: OutputSchema = {
 				{
 					key: 'value',
 					label: 'Value',
-					children: [{ key: 'b', label: 'B', format: 'number' }],
 				},
 				{ key: 'key', label: 'Key' },
 				{ key: 'id', label: 'ID' },
@@ -1671,7 +1720,14 @@ export const confluenceListBlogPostsOutputSchema: OutputSchema = {
 				{
 					key: 'body',
 					label: 'Body',
-					children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+					children: [
+						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+						{
+							key: 'atlas_doc_format',
+							label: 'Atlas Document Format',
+							children: bodyRepresentationFields,
+						},
+					],
 				},
 				{ key: 'status', label: 'Status' },
 				{ key: 'title', label: 'Title' },
@@ -1702,7 +1758,6 @@ export const confluenceListPagePropertiesOutputSchema: OutputSchema = {
 				{
 					key: 'value',
 					label: 'Value',
-					children: [{ key: 'a', label: 'A', format: 'number' }],
 				},
 				{ key: 'key', label: 'Key' },
 				{ key: 'id', label: 'ID' },
@@ -1734,7 +1789,14 @@ export const confluenceListPagesOutputSchema: OutputSchema = {
 				{
 					key: 'body',
 					label: 'Body',
-					children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+					children: [
+						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+						{
+							key: 'atlas_doc_format',
+							label: 'Atlas Document Format',
+							children: bodyRepresentationFields,
+						},
+					],
 				},
 				{ key: 'status', label: 'Status' },
 				{ key: 'title', label: 'Title' },
@@ -1767,10 +1829,6 @@ export const confluenceListSpacePropertiesOutputSchema: OutputSchema = {
 				{
 					key: 'value',
 					label: 'Value',
-					children: [
-						{ key: 'count', label: 'Count', format: 'number' },
-						{ key: 'stage', label: 'Stage' },
-					],
 				},
 				{ key: 'createdAt', label: 'Created At', format: 'datetime' },
 				{ key: 'authorId', label: 'Author ID' },
@@ -1898,7 +1956,6 @@ export const confluenceListWhiteboardPropertiesOutputSchema: OutputSchema = {
 				{
 					key: 'value',
 					label: 'Value',
-					children: [{ key: 'w', label: 'W', format: 'number' }],
 				},
 				{ key: 'key', label: 'Key' },
 				{ key: 'id', label: 'ID' },
@@ -2018,6 +2075,47 @@ export const findPageByTitleOutputSchema: OutputSchema = {
 };
 
 export const getPageByUrlOutputSchema: OutputSchema = {
+	fields: [
+		{ key: 'authorId', label: 'Author ID' },
+		{ key: 'parentType', label: 'Parent Type' },
+		{ key: 'parentId', label: 'Parent ID' },
+		{ key: 'ownerId', label: 'Owner ID' },
+		{ key: 'createdAt', label: 'Created At', format: 'datetime' },
+		{ key: 'lastOwnerId', label: 'Last Owner ID' },
+		{ key: 'version', label: 'Version', children: versionFields },
+		{ key: 'position', label: 'Position', format: 'number' },
+		{ key: 'id', label: 'ID' },
+		{ key: 'spaceId', label: 'Space ID' },
+		{
+			key: 'body',
+			label: 'Body',
+			children: [
+				{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+				{
+					key: 'atlas_doc_format',
+					label: 'Atlas Document Format',
+					children: bodyRepresentationFields,
+				},
+				{ key: 'view', label: 'View', children: bodyRepresentationFields },
+			],
+		},
+		{ key: 'status', label: 'Status' },
+		{ key: 'title', label: 'Title' },
+		{
+			key: '_links',
+			label: 'Links',
+			children: [
+				{ key: 'editui', label: 'Edit UI Path' },
+				{ key: 'webui', label: 'Web UI Path' },
+				{ key: 'edituiv2', label: 'Edit UI Path (v2)' },
+				{ key: 'tinyui', label: 'Short Link Path' },
+				{ key: 'base', label: 'Site Base URL', format: 'url' },
+			],
+		},
+	],
+};
+
+export const publishDraftOutputSchema: OutputSchema = {
 	fields: [
 		{ key: 'authorId', label: 'Author ID' },
 		{ key: 'parentType', label: 'Parent Type' },
@@ -2273,7 +2371,14 @@ export const listCommentsOutputSchema: OutputSchema = {
 				{
 					key: 'body',
 					label: 'Body',
-					children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+					children: [
+						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+						{
+							key: 'atlas_doc_format',
+							label: 'Atlas Document Format',
+							children: bodyRepresentationFields,
+						},
+					],
 				},
 				{
 					key: '_links',
@@ -2300,7 +2405,14 @@ export const listCommentsOutputSchema: OutputSchema = {
 				{
 					key: 'body',
 					label: 'Body',
-					children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+					children: [
+						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+						{
+							key: 'atlas_doc_format',
+							label: 'Atlas Document Format',
+							children: bodyRepresentationFields,
+						},
+					],
 				},
 				{
 					key: '_links',
@@ -2327,7 +2439,14 @@ export const listCommentsOutputSchema: OutputSchema = {
 				{
 					key: 'body',
 					label: 'Body',
-					children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+					children: [
+						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+						{
+							key: 'atlas_doc_format',
+							label: 'Atlas Document Format',
+							children: bodyRepresentationFields,
+						},
+					],
 				},
 				{
 					key: 'properties',
@@ -2657,7 +2776,7 @@ export const confluenceListPageFooterCommentsOutputSchema: OutputSchema = {
 						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
 						{
 							key: 'atlas_doc_format',
-							label: 'Atlas Doc Format',
+							label: 'Atlas Document Format',
 							children: bodyRepresentationFields,
 						},
 					],
@@ -2694,7 +2813,14 @@ export const confluenceListPageInlineCommentsOutputSchema: OutputSchema = {
 				{
 					key: 'body',
 					label: 'Body',
-					children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+					children: [
+						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+						{
+							key: 'atlas_doc_format',
+							label: 'Atlas Document Format',
+							children: bodyRepresentationFields,
+						},
+					],
 				},
 				{
 					key: 'properties',
@@ -2730,7 +2856,6 @@ export const confluenceCreatePagePropertyOutputSchema: OutputSchema = {
 		{
 			key: 'value',
 			label: 'Value',
-			children: [{ key: 'a', label: 'A', format: 'number' }],
 		},
 		{ key: 'key', label: 'Key' },
 		{ key: 'id', label: 'ID' },
@@ -2757,7 +2882,14 @@ export const confluenceListPagesForLabelOutputSchema: OutputSchema = {
 				{
 					key: 'body',
 					label: 'Body',
-					children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+					children: [
+						{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+						{
+							key: 'atlas_doc_format',
+							label: 'Atlas Document Format',
+							children: bodyRepresentationFields,
+						},
+					],
 				},
 				{ key: 'title', label: 'Title' },
 				{ key: 'id', label: 'ID' },
@@ -3080,10 +3212,6 @@ export const confluenceCreateSpacePropertyOutputSchema: OutputSchema = {
 		{
 			key: 'value',
 			label: 'Value',
-			children: [
-				{ key: 'count', label: 'Count', format: 'number' },
-				{ key: 'stage', label: 'Stage' },
-			],
 		},
 		{ key: 'createdAt', label: 'Created At', format: 'datetime' },
 		{ key: 'authorId', label: 'Author ID' },
@@ -3360,7 +3488,6 @@ export const confluenceUpdatePagePropertyOutputSchema: OutputSchema = {
 		{
 			key: 'value',
 			label: 'Value',
-			children: [{ key: 'a', label: 'A', format: 'number' }],
 		},
 		{ key: 'key', label: 'Key' },
 		{ key: 'id', label: 'ID' },
@@ -3515,7 +3642,6 @@ export const confluenceUpdateSpacePropertyOutputSchema: OutputSchema = {
 		{
 			key: 'value',
 			label: 'Value',
-			children: [{ key: 'stage', label: 'Stage' }],
 		},
 		{ key: 'createdAt', label: 'Created At', format: 'datetime' },
 		{ key: 'authorId', label: 'Author ID' },
@@ -3567,10 +3693,6 @@ export const confluenceUpdateWhiteboardPropertyOutputSchema: OutputSchema = {
 		{
 			key: 'value',
 			label: 'Value',
-			children: [
-				{ key: 'w', label: 'W', format: 'number' },
-				{ key: 'stage', label: 'Stage' },
-			],
 		},
 		{ key: 'key', label: 'Key' },
 		{ key: 'id', label: 'ID' },
@@ -3596,7 +3718,14 @@ export const confluenceListPageVersionsOutputSchema: OutputSchema = {
 						{
 							key: 'body',
 							label: 'Body',
-							children: [{ key: 'storage', label: 'Storage', children: bodyRepresentationFields }],
+							children: [
+								{ key: 'storage', label: 'Storage', children: bodyRepresentationFields },
+								{
+									key: 'atlas_doc_format',
+									label: 'Atlas Document Format',
+									children: bodyRepresentationFields,
+								},
+							],
 						},
 						{ key: 'title', label: 'Title' },
 					],
@@ -3621,7 +3750,6 @@ export const confluenceCreateWhiteboardPropertyOutputSchema: OutputSchema = {
 		{
 			key: 'value',
 			label: 'Value',
-			children: [{ key: 'w', label: 'W', format: 'number' }],
 		},
 		{ key: 'key', label: 'Key' },
 		{ key: 'id', label: 'ID' },
