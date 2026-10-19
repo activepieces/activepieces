@@ -459,9 +459,9 @@ import { AddAgentTask1867000000000 } from './migration/postgres/1867000000000-Ad
 import { AddProviderConfigIdToAgentConversation1868000000000 } from './migration/postgres/1868000000000-AddProviderConfigIdToAgentConversation'
 import { DropChatRolloutUserTable1870000000000 } from './migration/postgres/1870000000000-DropChatRolloutUserTable'
 import { AddBarrierChildAttribution1871000000000 } from './migration/postgres/1871000000000-AddBarrierChildAttribution'
-import { DropFlowRunLegacyListIndexes1868000000000 } from './migration/postgres/background/1868000000000-DropFlowRunLegacyListIndexes'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
+import { DropFlowRunLegacyListIndexes1872000000000 } from './migration/postgres/background/1872000000000-DropFlowRunLegacyListIndexes'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -477,7 +477,7 @@ export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => 
     return [
         AddAgentConversationProviderConfigIdIndex1869000000000,
         ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
-        DropFlowRunLegacyListIndexes1868000000000,
+        DropFlowRunLegacyListIndexes1872000000000,
     ]
 }
 

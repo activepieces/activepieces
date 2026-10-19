@@ -6,8 +6,8 @@ import {
     ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
 } from './1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 
-export class DropFlowRunLegacyListIndexes1868000000000 implements BackgroundMigration {
-    name = 'DropFlowRunLegacyListIndexes1868000000000'
+export class DropFlowRunLegacyListIndexes1872000000000 implements BackgroundMigration {
+    name = 'DropFlowRunLegacyListIndexes1872000000000'
     release = '0.93.0'
     transaction = false as const
 
