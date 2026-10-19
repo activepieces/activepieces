@@ -288,6 +288,30 @@ describe('POST /v1/analytics/refresh', () => {
         ]))
     })
 
+    it('should count a run whose row is written after the refresh that covered its time', async () => {
+        const ctx = await createTestContext(app!, {
+            plan: { analyticsEnabled: true },
+        })
+        const flow = await createEnabledFlowWithRun(ctx.project.id, 'late-run-flow')
+        const first = await refreshRunsOfFlow({ ctx, flowId: flow.id })
+        const report = await db.findOneByOrFail<{ cachedAt: string }>('platform_analytics_report', { platformId: ctx.platform.id })
+        const flowVersion = await db.findOneByOrFail<{ id: string }>('flow_version', { flowId: flow.id })
+        await db.save('flow_run', createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            created: dayjs(report.cachedAt).subtract(1, 'second').toISOString(),
+        }))
+
+        const second = await refreshRunsOfFlow({ ctx, flowId: flow.id })
+
+        expect({ first, second }).toEqual({
+            first: { entries: 1, total: 1 },
+            second: { entries: 1, total: 2 },
+        })
+    })
+
     it('should count runs of a project that has no enabled flow', async () => {
         const ctx = await createTestContext(app!, {
             plan: { analyticsEnabled: true },
