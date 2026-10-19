@@ -34,7 +34,6 @@ describe('Enterprise trial API', () => {
         expect(response.json()).toEqual(ELIGIBLE)
         expect(getTrial).toHaveBeenCalledWith(expect.objectContaining({
             autumnApiKey: 'am_sk_trial',
-            edition: 'ee',
         }))
     })
 })
