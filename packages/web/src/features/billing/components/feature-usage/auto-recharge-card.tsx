@@ -23,12 +23,13 @@ export const AutoRechargeCard = ({
   hasCard,
   note,
   className,
+  adminFeedback = false,
 }: AutoRechargeCardProps) => {
   const autoTopUp = feature.autoTopUp;
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { mutate: updateAutoTopUp, isPending } =
-    billingMutations.useUpdateAutoTopUp(queryClient);
+    billingMutations.useUpdateAutoTopUp({ queryClient, adminFeedback });
   const { mutate: setupPayment, isPending: isSettingUpPayment } =
     billingMutations.useSetupPayment();
 
@@ -137,6 +138,7 @@ export const AutoRechargeCard = ({
         isOpen={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         feature={feature}
+        adminFeedback={adminFeedback}
       />
     </div>
   );
@@ -147,4 +149,5 @@ type AutoRechargeCardProps = {
   hasCard: boolean;
   note?: ReactNode;
   className?: string;
+  adminFeedback?: boolean;
 };

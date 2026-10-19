@@ -3,16 +3,14 @@ import {
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
-import { adminLayout } from '@/app/components/admin';
+import { adminLayout, useAdminAction } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,7 +22,9 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 type AllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;
@@ -45,56 +45,51 @@ export const AllowedDomainDialog = ({
   refetch,
 }: AllowedDomainDialogProps) => {
   const [open, setOpen] = useState(false);
+  const { data: currentUser } = userHooks.useCurrentUser();
   const form = useForm<AllowedDomainsFormValues>({
-    defaultValues: {
-      allowedAuthDomains: (platform?.allowedAuthDomains ?? []).map(
-        (domain) => ({
-          domain,
-        }),
-      ),
-    },
+    defaultValues: formValuesOf(platform),
     resolver: zodResolver(AllowedDomainsFormValues),
   });
-
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'allowedAuthDomains',
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (request: UpdatePlatformRequestBody) => {
+  const { mutate, isPending } = useAdminAction<UpdatePlatformRequestBody>({
+    verb: 'save',
+    run: async (request) => {
       await platformApi.update(request, platform.id);
       await refetch();
     },
-    onSuccess: () => {
-      toast.success(t('Allowed domains updated'), {
-        duration: 3000,
-      });
-      setOpen(false);
-    },
+    feedback: 'inline',
+    onSuccess: () => setOpen(false),
   });
+  const openDialog = (next: boolean) => {
+    if (!next && isPending) {
+      return;
+    }
+    if (next) {
+      form.reset(formValuesOf(platform));
+    }
+    setOpen(next);
+  };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          form.reset();
-        }
-        setOpen(open);
-      }}
-    >
+    <Dialog open={open} onOpenChange={openDialog}>
       <DialogTrigger asChild>
         <Button
           {...adminControl(AdminControl.SSO_ALLOWED_DOMAINS_OPEN)}
           size={'sm'}
           variant={'basic'}
-          onClick={() => setOpen(true)}
+          onClick={() => openDialog(true)}
         >
           {platform.allowedAuthDomains.length > 0 ? t('Update') : t('Enable')}
         </Button>
       </DialogTrigger>
-      <DialogContent className={adminLayout.dialog.md}>
+      <DialogContent
+        className={adminLayout.dialog.md}
+        aria-describedby={undefined}
+      >
         <DialogHeader>
           <DialogTitle>{t('Configure Allowed Domains')}</DialogTitle>
         </DialogHeader>
@@ -102,13 +97,42 @@ export const AllowedDomainDialog = ({
           <form
             className="flex flex-col gap-4"
             onSubmit={form.handleSubmit((data) => {
-              mutate({
-                allowedAuthDomains: data.allowedAuthDomains.map(
-                  (d) => d.domain,
+              const domains = [
+                ...new Set(
+                  data.allowedAuthDomains.map((d) =>
+                    d.domain.trim().toLowerCase(),
+                  ),
                 ),
-                enforceAllowedAuthDomains:
-                  data.allowedAuthDomains.length === 0 ? false : true,
-              });
+              ];
+              form.clearErrors('root.serverError');
+              const ownDomain = currentUser?.email.split('@')[1]?.toLowerCase();
+              if (
+                domains.length > 0 &&
+                ownDomain !== undefined &&
+                !domains.includes(ownDomain)
+              ) {
+                form.setError('root.serverError', {
+                  type: 'manual',
+                  message: t(
+                    'Add your own domain ({domain}) to the list, or you will not be able to sign in.',
+                    { domain: ownDomain },
+                  ),
+                });
+                return;
+              }
+              mutate(
+                {
+                  allowedAuthDomains: domains,
+                  enforceAllowedAuthDomains: domains.length > 0,
+                },
+                {
+                  onError: (error) =>
+                    form.setError('root.serverError', {
+                      type: 'manual',
+                      message: mutationFeedback.message(error),
+                    }),
+                },
+              );
             })}
           >
             <p className="text-sm text-gray-11">
@@ -160,7 +184,8 @@ export const AllowedDomainDialog = ({
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => openDialog(false)}
+                disabled={isPending}
                 type="button"
               >
                 {t('Cancel')}
@@ -180,3 +205,13 @@ export const AllowedDomainDialog = ({
     </Dialog>
   );
 };
+
+function formValuesOf(
+  platform: AllowedDomainDialogProps['platform'],
+): AllowedDomainsFormValues {
+  return {
+    allowedAuthDomains: (platform?.allowedAuthDomains ?? []).map((domain) => ({
+      domain,
+    })),
+  };
+}

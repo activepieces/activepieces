@@ -13,6 +13,10 @@ vi.mock('i18next', () => ({ t: (key: string) => key }));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
+vi.mock('@/hooks/flags-hooks', () => ({
+  flagsHooks: { useFlag: () => ({ data: undefined }) },
+}));
+
 vi.mock('@/lib/api', () => ({
   API_BASE_URL: 'http://localhost',
   api: { isApError: () => false, serverErrorMessage: () => undefined },

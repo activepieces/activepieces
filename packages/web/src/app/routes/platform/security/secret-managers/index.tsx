@@ -13,18 +13,20 @@ import {
   Globe,
   Activity,
 } from 'lucide-react';
+import { useMemo } from 'react';
 
 import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
+  ConfirmDialog,
   StatusDot,
   adminPageResources,
+  useAdminAction,
 } from '@/app/components/admin';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { PlusIcon } from '@/components/icons/plus';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,6 +37,7 @@ import {
 } from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces';
 import { secretManagersHooks } from '@/features/secret-managers';
+import { secretManagersApi } from '@/features/secret-managers/api/secret-managers-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -52,8 +55,15 @@ const SecretManagersPage = () => {
   } = secretManagersHooks.useListSecretManagerConnections({
     listForPlatform: true,
   });
-  const { mutate: deleteConnection } =
-    secretManagersHooks.useDeleteSecretManagerConnection();
+  const { mutateAsync: deleteConnection } = useAdminAction<{
+    id: string;
+    name: string;
+  }>({
+    verb: 'delete',
+    name: ({ name }) => name,
+    run: ({ id }) => secretManagersApi.delete(id),
+    invalidate: [['secret-managers']],
+  });
 
   const isLoading = isLoadingConnections;
 
@@ -64,128 +74,132 @@ const SecretManagersPage = () => {
   const columns: ColumnDef<
     RowDataWithActions<SecretManagerConnectionWithStatus>,
     unknown
-  >[] = [
-    {
-      accessorKey: 'name',
-      size: 240,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Name')}
-          icon={KeyRound}
-        />
-      ),
-      cell: ({ row }) => {
-        const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
-          (p) => p.id === row.original.providerId,
-        );
-        return (
-          <div className="flex items-center gap-2 w-fit">
-            <PieceIcon
-              size="md"
-              border={true}
-              displayName={provider?.name}
-              logoUrl={provider?.logo}
-              showTooltip={true}
-            />
-            <span>{row.original.name}</span>
-          </div>
-        );
+  >[] = useMemo(
+    () => [
+      {
+        accessorKey: 'name',
+        size: 240,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Name')}
+            icon={KeyRound}
+          />
+        ),
+        cell: ({ row }) => {
+          const provider = SECRET_MANAGER_PROVIDERS_METADATA.find(
+            (p) => p.id === row.original.providerId,
+          );
+          return (
+            <div className="flex items-center gap-2 w-fit">
+              <PieceIcon
+                size="md"
+                border={true}
+                displayName={provider?.name}
+                logoUrl={provider?.logo}
+                showTooltip={true}
+              />
+              <span>{row.original.name}</span>
+            </div>
+          );
+        },
       },
-    },
-    {
-      accessorKey: 'scope',
-      size: 100,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Scope')}
-          icon={Globe}
-        />
-      ),
-      cell: ({ row }) => {
-        const connection = row.original;
-        if (connection.scope === SecretManagerConnectionScope.PLATFORM) {
-          return <Badge variant="outline">{t('Platform')}</Badge>;
-        }
-        return <Badge variant="outline">{t('Project')}</Badge>;
+      {
+        accessorKey: 'scope',
+        size: 100,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Scope')}
+            icon={Globe}
+          />
+        ),
+        cell: ({ row }) => {
+          const connection = row.original;
+          if (connection.scope === SecretManagerConnectionScope.PLATFORM) {
+            return <Badge variant="outline">{t('Platform')}</Badge>;
+          }
+          return <Badge variant="outline">{t('Project')}</Badge>;
+        },
       },
-    },
-    {
-      accessorKey: 'connection',
-      size: 100,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Status')}
-          icon={Activity}
-        />
-      ),
-      cell: ({ row }) => {
-        const { configured, connected } = row.original.connection;
-        if (!configured) {
-          return <StatusDot tone="neutral">{t('Not configured')}</StatusDot>;
-        }
-        if (connected) {
-          return <StatusDot tone="success">{t('Connected')}</StatusDot>;
-        }
-        return <StatusDot tone="danger">{t('Disconnected')}</StatusDot>;
+      {
+        accessorKey: 'connection',
+        size: 100,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Status')}
+            icon={Activity}
+          />
+        ),
+        cell: ({ row }) => {
+          const { configured, connected } = row.original.connection;
+          if (!configured) {
+            return <StatusDot tone="neutral">{t('Not configured')}</StatusDot>;
+          }
+          if (connected) {
+            return <StatusDot tone="success">{t('Connected')}</StatusDot>;
+          }
+          return <StatusDot tone="danger">{t('Disconnected')}</StatusDot>;
+        },
       },
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const connection = row.original;
-        return (
-          <div className="flex items-center gap-1 justify-end">
-            <AddEditSecretManagerConnectionDialog connection={connection}>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={t('Edit')}
-                {...adminControl(
-                  AdminControl.SECRET_MANAGERS_CONNECTION_EDIT_OPEN,
+      {
+        id: 'actions',
+        cell: ({ row }) => {
+          const connection = row.original;
+          return (
+            <div className="flex items-center gap-1 justify-end">
+              <AddEditSecretManagerConnectionDialog connection={connection}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t('Edit')}
+                  {...adminControl(
+                    AdminControl.SECRET_MANAGERS_CONNECTION_EDIT_OPEN,
+                  )}
+                >
+                  <Pencil className="size-4" />
+                </Button>
+              </AddEditSecretManagerConnectionDialog>
+              <SecretManagerClearCacheButton connection={connection} />
+              <ConfirmDialog
+                title={t('Delete {name}?', { name: connection.name })}
+                consequence={t(
+                  'Deleting this secret manager connection will break all flows/app connections using it.',
                 )}
+                confirmLabel={t('Delete Connection')}
+                controlId={
+                  AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_CONFIRM
+                }
+                onConfirm={() =>
+                  deleteConnection({ id: connection.id, name: connection.name })
+                }
               >
-                <Pencil className="size-4" />
-              </Button>
-            </AddEditSecretManagerConnectionDialog>
-            <SecretManagerClearCacheButton connection={connection} />
-            <ConfirmationDeleteDialog
-              title={t('Delete Connection')}
-              message={t(
-                'Are you sure you want to delete this secret manager connection?',
-              )}
-              warning={t(
-                'Deleting this secret manager connection will break all flows/app connections using it.',
-              )}
-              entityName={connection.name}
-              controlId={AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_CONFIRM}
-              mutationFn={async () => deleteConnection(connection.id)}
-            >
-              <div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={t('Delete')}
-                      {...adminControl(
-                        AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_OPEN,
-                      )}
-                    >
-                      <Trash className="size-4 text-danger-11" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('Delete')}</TooltipContent>
-                </Tooltip>
-              </div>
-            </ConfirmationDeleteDialog>
-          </div>
-        );
+                <div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={t('Delete')}
+                        {...adminControl(
+                          AdminControl.SECRET_MANAGERS_CONNECTION_DELETE_OPEN,
+                        )}
+                      >
+                        <Trash className="size-4 text-danger-11" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('Delete')}</TooltipContent>
+                  </Tooltip>
+                </div>
+              </ConfirmDialog>
+            </div>
+          );
+        },
       },
-    },
-  ];
+    ],
+    [deleteConnection],
+  );
 
   return (
     <AdminPage>

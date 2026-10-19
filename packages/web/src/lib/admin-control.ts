@@ -199,6 +199,7 @@ export enum AdminControl {
   USERS_INVITE_CSV_RUN = 'users.invite-csv.run',
   USERS_INVITE_LINK_COPY = 'users.invite-link.copy',
   USERS_INVITE_OPEN = 'users.invite.open',
+  USERS_INVITE_RETRY_RUN = 'users.invite-retry.run',
   USERS_INVITE_SUBMIT = 'users.invite.submit',
   WORKERS_ASSIGN_OPEN = 'workers.assign.open',
   WORKERS_ASSIGN_SUBMIT = 'workers.assign.submit',

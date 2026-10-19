@@ -47,9 +47,15 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { HttpError } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 import { formatUtils } from '@/lib/format-utils';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 import { userInvitationsHooks } from '../../hooks/user-invitations-hooks';
 
+import {
+  FailedInvitation,
+  InvitationOutcome,
+  sendInvitations,
+} from './send-invitations';
 import { UserSuggestionsPopover } from './user-suggestions-popover';
 
 const buildInvalidEmailsMessage = (emails: string[]): string => {
@@ -116,12 +122,16 @@ const InviteUserDialogInternal = ({
   open,
   setOpen,
   onInviteSuccess,
+  adminFeedback = false,
 }: InviteUserDialogProps) => {
   const { embedState } = useEmbedding();
   const [invitationResults, setInvitationResults] = useState<
     UserInvitationWithLink[]
   >([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [failedInvitations, setFailedInvitations] = useState<
+    FailedInvitation[]
+  >([]);
   const { platform } = platformHooks.useCurrentPlatform();
   const { handleSeatLimitError, ensureSeatsAvailable, seatLimitDialog } =
     useSeatLimitGuard();
@@ -152,12 +162,12 @@ const InviteUserDialogInternal = ({
   ).length;
 
   const { mutate, isPending } = useMutation<
-    UserInvitationWithLink[],
+    InvitationOutcome<UserInvitationWithLink>,
     HttpError,
     FormSchema
   >({
     mutationFn: async (data) => {
-      const promises = data.emails.map((email) =>
+      const invite = (email: string) =>
         data.type === InvitationType.PLATFORM
           ? userInvitationApi.invite({
               email: email.trim().toLowerCase(),
@@ -169,19 +179,29 @@ const InviteUserDialogInternal = ({
               type: data.type,
               projectRole: data.projectRole!,
               projectId: project.id,
-            }),
-      );
-
-      return Promise.all(promises);
+            });
+      if (adminFeedback) {
+        return sendInvitations.sendAll({ emails: data.emails, invite });
+      }
+      const sent = await Promise.all(data.emails.map(invite));
+      return { sent, failed: [] };
     },
-    onSuccess: (results) => {
+    onSuccess: ({ sent: results, failed }) => {
+      if (failed.length > 0) {
+        if (results.length > 0) {
+          refetch();
+          onInviteSuccess?.();
+        }
+        reportPartialFailure({ results, failed });
+        return;
+      }
       const addedCount = results.filter(
         (r) => r.status === InvitationStatus.ACCEPTED,
       ).length;
       const invitedCount = results.filter((r) => r.link).length;
 
-      if (invitedCount > 0) {
-        setInvitationResults(results);
+      if (invitedCount > 0 || hasLinks) {
+        setInvitationResults((previous) => withRetried({ previous, results }));
       } else {
         setOpen(false);
         form.reset();
@@ -193,7 +213,9 @@ const InviteUserDialogInternal = ({
         sentCount: results.length - addedCount - invitedCount,
         projectName: project.displayName,
       });
-      if (toastMessage) {
+      if (toastMessage && adminFeedback) {
+        mutationFeedback.success(toastMessage);
+      } else if (toastMessage) {
         toast.success(toastMessage, { duration: 3000 });
       }
       refetch();
@@ -201,6 +223,13 @@ const InviteUserDialogInternal = ({
     },
     onError: (error) => {
       if (handleSeatLimitError(error)) {
+        return;
+      }
+      if (adminFeedback) {
+        mutationFeedback.error({
+          error,
+          title: t("Couldn't send the invitations"),
+        });
         return;
       }
       toast.error(error.message || t('Failed to send invitations'), {
@@ -223,7 +252,41 @@ const InviteUserDialogInternal = ({
     },
   });
 
+  const reportPartialFailure = ({
+    results,
+    failed,
+  }: {
+    results: UserInvitationWithLink[];
+    failed: FailedInvitation[];
+  }) => {
+    setFailedInvitations(failed);
+    if (results.length > 0) {
+      setInvitationResults((previous) => withRetried({ previous, results }));
+    }
+    form.setValue(
+      'emails',
+      failed.map((invitation) => invitation.email),
+    );
+    form.clearErrors('emails');
+    const copy = sendInvitations.partialFailureCopy({
+      sentCount: results.length,
+      failedCount: failed.length,
+    });
+    const title =
+      results.length === 0 ? t("Couldn't send the invitations") : copy.title;
+    if (adminFeedback) {
+      mutationFeedback.error({
+        error: failed[0].error,
+        title,
+        description: copy.description,
+      });
+      return;
+    }
+    toast.error(title, { description: copy.description, duration: 4000 });
+  };
+
   const invitationType = form.getValues().type;
+  const currentEmails = form.watch('emails');
   const isPlatformInvite = invitationType === InvitationType.PLATFORM;
 
   const handleEmailsChange = useCallback(
@@ -260,6 +323,7 @@ const InviteUserDialogInternal = ({
       return;
     }
 
+    setFailedInvitations([]);
     mutate(data);
   };
 
@@ -315,9 +379,13 @@ const InviteUserDialogInternal = ({
           open={open}
           modal
           onOpenChange={(open) => {
+            if (!open && isPending && adminFeedback) {
+              return;
+            }
             setOpen(open);
             form.reset();
             setInvitationResults([]);
+            setFailedInvitations([]);
             setSuggestionsOpen(false);
           }}
         >
@@ -356,6 +424,12 @@ const InviteUserDialogInternal = ({
                     )}
                   />
 
+                  <FailedInvitationsList
+                    failed={failedInvitations.filter((invitation) =>
+                      currentEmails.includes(invitation.email),
+                    )}
+                  />
+
                   {form.getValues().type === InvitationType.PLATFORM && (
                     <PlatformRoleSelect form={form} />
                   )}
@@ -370,7 +444,11 @@ const InviteUserDialogInternal = ({
                   )}
                   <DialogFooter>
                     <DialogClose asChild>
-                      <Button type="button" variant={'outline'}>
+                      <Button
+                        type="button"
+                        variant={'outline'}
+                        disabled={adminFeedback && isPending}
+                      >
                         {t('Cancel')}
                       </Button>
                     </DialogClose>
@@ -386,6 +464,18 @@ const InviteUserDialogInternal = ({
               </Form>
             ) : (
               <div className="flex flex-col gap-3">
+                <FailedInvitationsList failed={failedInvitations} />
+                {failedInvitations.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    loading={isPending}
+                    onClick={form.handleSubmit(onSubmit)}
+                    {...adminControl(AdminControl.USERS_INVITE_RETRY_RUN)}
+                  >
+                    {t('Retry failed')}
+                  </Button>
+                )}
                 <ScrollArea className="max-h-[300px]">
                   <div className="flex flex-col gap-3">
                     {resultsWithLinks.map((result) => (
@@ -433,6 +523,41 @@ const InviteUserDialogInternal = ({
     </>
   );
 };
+
+function withRetried({
+  previous,
+  results,
+}: {
+  previous: UserInvitationWithLink[];
+  results: UserInvitationWithLink[];
+}): UserInvitationWithLink[] {
+  const retried = new Set(results.map((result) => result.email));
+  return [
+    ...previous.filter((result) => !retried.has(result.email)),
+    ...results,
+  ];
+}
+
+function FailedInvitationsList({ failed }: { failed: FailedInvitation[] }) {
+  if (failed.length === 0) {
+    return null;
+  }
+  return (
+    <ul
+      className="flex flex-col gap-1 text-sm font-medium text-danger-11"
+      aria-live="polite"
+    >
+      {failed.map((invitation) => (
+        <li key={invitation.email} className="wrap-break-word">
+          {t('{email}: {reason}', {
+            email: invitation.email,
+            reason: invitation.reason,
+          })}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 function getDialogDescription({
   hasLinks,
@@ -559,4 +684,5 @@ type InviteUserDialogProps = {
   open: boolean;
   setOpen: (_open: boolean) => void;
   onInviteSuccess?: () => void;
+  adminFeedback?: boolean;
 };

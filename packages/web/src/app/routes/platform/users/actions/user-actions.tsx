@@ -1,4 +1,8 @@
-import { PlatformRole, UserStatus } from '@activepieces/shared';
+import {
+  PlatformRole,
+  UserStatus,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CircleMinus,
@@ -9,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { userHooks } from '@/hooks/user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { UserRowData } from '../index';
@@ -26,8 +30,8 @@ import { UpdateUserDialog } from './update-user-dialog';
 type UserActionsProps = {
   row: UserRowData;
   isUpdatingStatus: boolean;
-  onDelete: (id: string, isInvitation: boolean) => void;
-  onToggleStatus: (userId: string, currentStatus: UserStatus) => void;
+  onDelete: (row: UserRowData) => void;
+  onToggleStatus: (user: UserWithMetaInformation) => void;
   onUpdate: () => void;
 };
 
@@ -39,40 +43,44 @@ export const UserActions = ({
   onUpdate,
 }: UserActionsProps) => {
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const { data: currentUser } = userHooks.useCurrentUser();
   const isInvitation = row.type === 'invitation';
+  const isSelf = !isInvitation && row.data.id === currentUser?.id;
   const isAdmin = !isInvitation && row.data.platformRole === PlatformRole.ADMIN;
   const isActive = !isInvitation && row.data.status === UserStatus.ACTIVE;
+  const disabledReason = isSelf
+    ? t("You can't deactivate or delete your own account.")
+    : isAdmin
+    ? t("Admins can't be deactivated. Change their role first.")
+    : undefined;
 
   return (
     <div className="flex justify-end">
       <DropdownMenu modal={true} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm">
+          <Button variant="ghost" size="icon-sm" aria-label={t('Open menu')}>
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
+        <DropdownMenuContent collisionPadding={8}>
           {!isInvitation && (
-            <UpdateUserDialog
-              userId={row.data.id}
-              role={row.data.platformRole}
-              externalId={row.data.externalId ?? undefined}
-              onUpdate={onUpdate}
+            <DropdownMenuItem
+              onSelect={() => {
+                setOpen(false);
+                setEditOpen(true);
+              }}
+              {...adminControl(AdminControl.USERS_EDIT_OPEN)}
             >
-              <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
-                {...adminControl(AdminControl.USERS_EDIT_OPEN)}
-              >
-                <Pencil className="h-4 w-4" />
-                {t('Edit')}
-              </DropdownMenuItem>
-            </UpdateUserDialog>
+              <Pencil className="h-4 w-4" />
+              {t('Edit')}
+            </DropdownMenuItem>
           )}
           {!isInvitation && (
             <DropdownMenuItem
               disabled={isAdmin || isUpdatingStatus}
               onSelect={() => {
-                onToggleStatus(row.data.id, row.data.status);
+                onToggleStatus(row.data);
                 setOpen(false);
               }}
               {...adminControl(
@@ -89,32 +97,36 @@ export const UserActions = ({
               {isActive ? t('Deactivate') : t('Activate')}
             </DropdownMenuItem>
           )}
-          <ConfirmationDeleteDialog
-            title={isInvitation ? t('Delete Invitation') : t('Delete User')}
-            message={
-              isInvitation
-                ? t('This invitation will be permanently deleted.')
-                : t('This user and all their data will be permanently deleted.')
-            }
-            entityName={`${isInvitation ? t('Invitation') : t('User')} ${
-              row.data.email
-            }`}
-            mutationFn={async () => {
-              onDelete(isInvitation ? row.id : row.data.id, isInvitation);
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={isSelf}
+            onSelect={() => {
+              onDelete(row);
+              setOpen(false);
             }}
-            controlId={AdminControl.USERS_DELETE_CONFIRM}
+            {...adminControl(AdminControl.USERS_DELETE_OPEN)}
           >
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={(e) => e.preventDefault()}
-              {...adminControl(AdminControl.USERS_DELETE_OPEN)}
-            >
-              <Trash className="h-4 w-4" />
-              {t('Delete')}
-            </DropdownMenuItem>
-          </ConfirmationDeleteDialog>
+            <Trash className="h-4 w-4" />
+            {t('Delete')}
+          </DropdownMenuItem>
+          {disabledReason && (
+            <p className="max-w-56 px-2 py-1.5 text-xs text-gray-11">
+              {disabledReason}
+            </p>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
+      {!isInvitation && (
+        <UpdateUserDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          userId={row.data.id}
+          email={row.data.email}
+          role={row.data.platformRole}
+          externalId={row.data.externalId ?? undefined}
+          onUpdate={onUpdate}
+        />
+      )}
     </div>
   );
 };

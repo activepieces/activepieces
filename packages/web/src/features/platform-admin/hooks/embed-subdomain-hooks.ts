@@ -3,9 +3,8 @@ import {
   ApFlagId,
   EmbedSubdomain,
   EmbedSubdomainStatus,
-  GenerateEmbedSubdomainRequest,
 } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -37,20 +36,5 @@ export const embedSubdomainQueries = {
     const { data, isLoading, isError, refetch } =
       embedSubdomainQueries.useEmbedSubdomain();
     return { subdomain: data ?? undefined, isLoading, isError, refetch };
-  },
-};
-
-export const embedSubdomainMutations = {
-  useUpsert: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: (request: GenerateEmbedSubdomainRequest) =>
-        embedSubdomainApi.upsert(request),
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: embedSubdomainKeys.current,
-        });
-      },
-    });
   },
 };

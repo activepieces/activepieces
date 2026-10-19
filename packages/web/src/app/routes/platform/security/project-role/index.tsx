@@ -16,7 +16,10 @@ const ProjectRolePage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { data, isLoading, isError, refetch } =
-    projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
+    projectRoleQueries.useProjectRoles({
+      enabled: platform.plan.projectRolesEnabled,
+      failFast: true,
+    });
   const isSample = !platform.plan.projectRolesEnabled;
   const roles = isSample ? sampleData.projectRolesPage() : data;
 

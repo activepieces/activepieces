@@ -1,8 +1,4 @@
-import {
-  AddSigningKeyRequestBody,
-  AddSigningKeyResponse,
-} from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -21,20 +17,6 @@ export const signingKeyQueries = {
       staleTime: 0,
       queryFn: () => signingKeyApi.list(),
       enabled: platform.plan.embeddingEnabled,
-    });
-  },
-};
-
-export const signingKeyMutations = {
-  useCreateSigningKey: ({
-    onSuccess,
-  }: {
-    onSuccess: (key: AddSigningKeyResponse) => void;
-  }) => {
-    return useMutation({
-      mutationFn: (request: AddSigningKeyRequestBody) =>
-        signingKeyApi.create(request),
-      onSuccess,
     });
   },
 };

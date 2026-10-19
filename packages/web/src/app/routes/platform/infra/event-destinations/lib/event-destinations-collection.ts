@@ -25,6 +25,7 @@ import { flowHooks, flowsApi, triggerEventsApi } from '@/features/flows';
 import { projectCollectionUtils } from '@/features/projects';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 
 const collectionQueryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
@@ -134,7 +135,7 @@ export const eventDestinationsCollectionUtils = {
           `/v1/event-destinations/test`,
           request,
         ),
-      onError: () => undefined,
+      onError: (error) => mutationFeedback.markShown(error),
     });
   },
 
@@ -153,7 +154,7 @@ export const eventDestinationsCollectionUtils = {
             project.ownerId === currentUser?.id,
         );
         if (!personalProject) {
-          throw new Error(
+          throw mutationFeedback.userError(
             t('You need a personal project to generate the handler flow.'),
           );
         }
@@ -165,7 +166,7 @@ export const eventDestinationsCollectionUtils = {
         });
         const createdFlow = flows[0];
         if (!createdFlow) {
-          throw new Error(t('Flow import returned no flow.'));
+          throw mutationFeedback.userError(t('Flow import returned no flow.'));
         }
 
         const triggerStepName = createdFlow.version.trigger.name;

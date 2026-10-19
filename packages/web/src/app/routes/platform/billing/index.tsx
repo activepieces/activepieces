@@ -9,11 +9,11 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowUpRight, ExternalLink, RefreshCw } from 'lucide-react';
 import React, { useState } from 'react';
-import { toast } from 'sonner';
 
 import {
   AdminPage,
   AdminPageHeader,
+  adminFeedback,
   adminSurface,
 } from '@/app/components/admin';
 import { BillingPageShell } from '@/app/components/billing-page-shell';
@@ -42,11 +42,16 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { UsageTab } from './usage-tab';
 
 export function BillingPlanTab() {
+  const header = (
+    <AdminPageHeader
+      title={t('Billing & subscription')}
+      description={t(
+        'For questions about billing contact us at support@activepieces.com',
+      )}
+    />
+  );
   return (
-    <BillingPageShell
-      lockTitle={t('Unlock Billing & Usage')}
-      errorMessage={t('Failed to load billing information')}
-    >
+    <BillingPageShell lockTitle={t('Unlock Billing & Usage')} header={header}>
       {({ platform, info }) => (
         <AdminPage>
           <AdminPageHeader
@@ -68,7 +73,12 @@ export function BillingUsageTab() {
   return (
     <BillingPageShell
       lockTitle={t('Unlock Billing & Usage')}
-      errorMessage={t('Failed to load billing information')}
+      header={
+        <AdminPageHeader
+          title={t('Usage')}
+          description={t('Track your workspace usage across your plan limits.')}
+        />
+      }
     >
       {({ platform, info }) => <UsageTab platform={platform} info={info} />}
     </BillingPageShell>
@@ -86,7 +96,11 @@ function BillingRefreshButton() {
       loading={isRefreshing}
       onClick={() =>
         refreshBilling(undefined, {
-          onSuccess: () => toast.success(t('Billing information refreshed')),
+          onSuccess: () =>
+            adminFeedback.done({
+              verb: 'update',
+              name: t('Billing information'),
+            }),
         })
       }
     >
@@ -196,6 +210,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
                   hasCard={hasBillingPortal}
                   note={autoRechargeNote}
                   className={adminSurface.card}
+                  adminFeedback
                 />
               )}
           </BillingSection>

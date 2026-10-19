@@ -4,8 +4,12 @@ import { t } from 'i18next';
 import { ChevronRight, Shield } from 'lucide-react';
 import { useState } from 'react';
 
-import { AdminEmpty, SettingsPanel, SettingsRow } from '@/app/components/admin';
-import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import {
+  AdminEmpty,
+  AdminFetchErrorState,
+  SettingsPanel,
+  SettingsRow,
+} from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { SkeletonList } from '@/components/ui/skeleton';
@@ -28,7 +32,7 @@ export function ProjectRolesList({
   }
 
   if (isError) {
-    return <DataFetchErrorState entity={t('roles')} onRetry={refetch} />;
+    return <AdminFetchErrorState entity={t('roles')} onRetry={refetch} />;
   }
 
   const roles = roleCopy.sortProjectRoles({
@@ -39,7 +43,8 @@ export function ProjectRolesList({
     return (
       <AdminEmpty
         icon={<Shield />}
-        title={t('No project roles yet. Create one to get started.')}
+        title={t('No project roles yet')}
+        description={t('Create one to get started.')}
       />
     );
   }
@@ -55,7 +60,7 @@ export function ProjectRolesList({
           return (
             <SettingsRow
               key={role.id}
-              className="relative cursor-pointer first:rounded-t-xl last:rounded-b-xl hover:bg-gray-3 has-focus-visible:bg-gray-3"
+              className="relative cursor-pointer first:rounded-t-xl last:rounded-b-xl hover:bg-gray-3 has-focus-visible:bg-gray-3 has-[[data-role-open]:focus-visible]:ring-[3px] has-[[data-role-open]:focus-visible]:ring-inset has-[[data-role-open]:focus-visible]:ring-gray-8/50"
               media={
                 <RoleAvatar
                   name={role.name}
@@ -67,6 +72,7 @@ export function ProjectRolesList({
                 <>
                   <button
                     type="button"
+                    data-role-open
                     className="min-w-0 text-left focus-visible:outline-none after:absolute after:inset-0 after:content-['']"
                     onClick={() => setOpened({ role, tab: 'permissions' })}
                     {...adminControl(AdminControl.ROLES_ROLE_OPEN)}

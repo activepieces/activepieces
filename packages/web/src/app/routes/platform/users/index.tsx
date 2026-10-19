@@ -7,20 +7,23 @@ import { t } from 'i18next';
 import { Gem, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { platformUserApi } from '@/api/platform-user-api';
 import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
   adminPageResources,
+  ConfirmDialog,
+  useAdminAction,
 } from '@/app/components/admin';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { useSeatLimitGuard } from '@/features/billing';
 import { InviteUserDialog } from '@/features/members';
+import { userInvitationApi } from '@/features/members/api/user-invitation';
 import {
   platformUserHooks,
-  platformUserMutations,
+  platformUserKeys,
 } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
@@ -41,6 +44,8 @@ export type UserRowData =
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<UserRowData | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const {
     isOutOfSeats,
     ensureSeatsAvailable,
@@ -86,38 +91,47 @@ export default function UsersPage() {
   }, [usersData, invitationsData]);
 
   const isLoading = usersLoading || invitationsLoading;
-  const isError = usersError || invitationsError;
+  const isError =
+    (usersError && usersData === undefined) ||
+    (invitationsError && invitationsData === undefined);
 
-  const { mutate: deleteUser } = platformUserMutations.useDeleteUser({
-    onSuccess: refetch,
+  const invalidate = [platformUserKeys.users, platformUserKeys.invitations];
+
+  const deleteRow = useAdminAction<UserRowData>({
+    verb: 'delete',
+    name: (row) => row.data.email,
+    run: async (row) => {
+      if (row.type === 'invitation') {
+        await userInvitationApi.delete(row.id);
+      } else {
+        await platformUserApi.delete(row.data.id);
+      }
+    },
+    invalidate,
   });
 
-  const { mutate: deleteInvitation } =
-    platformUserMutations.useDeleteInvitation({ onSuccess: refetch });
+  const setStatus = useAdminAction<StatusChange>({
+    verb: ({ status }) =>
+      status === UserStatus.ACTIVE ? 'activate' : 'deactivate',
+    name: ({ email }) => email,
+    run: ({ userId, status }) => platformUserApi.update(userId, { status }),
+    undo: ({ vars }) =>
+      platformUserApi.update(vars.userId, {
+        status:
+          vars.status === UserStatus.ACTIVE
+            ? UserStatus.INACTIVE
+            : UserStatus.ACTIVE,
+      }),
+    handleError: handleSeatLimitError,
+    invalidate,
+  });
 
-  const { mutate: updateUserStatus, isPending: isUpdatingStatus } =
-    platformUserMutations.useUpdateUserStatus({
-      onSuccess: refetch,
-      onError: (error) => {
-        if (!handleSeatLimitError(error)) {
-          internalErrorToast();
-        }
-      },
-    });
-
-  const handleDelete = (id: string, isInvitation: boolean) => {
-    if (isInvitation) {
-      deleteInvitation(id);
-    } else {
-      deleteUser(id);
-    }
-  };
-
-  const handleToggleStatus = (userId: string, currentStatus: UserStatus) => {
-    updateUserStatus({
-      userId,
+  const handleToggleStatus = (user: UserWithMetaInformation) => {
+    setStatus.mutate({
+      userId: user.id,
+      email: user.email,
       status:
-        currentStatus === UserStatus.ACTIVE
+        user.status === UserStatus.ACTIVE
           ? UserStatus.INACTIVE
           : UserStatus.ACTIVE,
     });
@@ -156,7 +170,7 @@ export default function UsersPage() {
         emptyStateIcon={<User />}
         columns={columns}
         page={{
-          data: combinedData,
+          data: isError ? [] : combinedData,
           next: usersData?.next || null,
           previous: usersData?.previous || null,
         }}
@@ -169,20 +183,57 @@ export default function UsersPage() {
           (row) => (
             <UserActions
               row={row}
-              isUpdatingStatus={isUpdatingStatus}
-              onDelete={handleDelete}
+              isUpdatingStatus={
+                setStatus.isPending && setStatus.variables?.userId === row.id
+              }
+              onDelete={(row) => {
+                setDeleteTarget(row);
+                setDeleteOpen(true);
+              }}
               onToggleStatus={handleToggleStatus}
               onUpdate={refetch}
             />
           ),
         ]}
       />
+      {deleteTarget && (
+        <ConfirmDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title={
+            deleteTarget.type === 'invitation'
+              ? t('Delete the invitation for {email}?', {
+                  email: deleteTarget.data.email,
+                })
+              : t('Delete {email}?', { email: deleteTarget.data.email })
+          }
+          description={
+            deleteTarget.type === 'invitation'
+              ? t('This invitation will be permanently deleted.')
+              : t('This user and all their data will be permanently deleted.')
+          }
+          confirmLabel={
+            deleteTarget.type === 'invitation'
+              ? t('Delete Invitation')
+              : t('Delete User')
+          }
+          onConfirm={() => deleteRow.mutateAsync(deleteTarget)}
+          controlId={AdminControl.USERS_DELETE_CONFIRM}
+        />
+      )}
       <InviteUserDialog
         open={inviteOpen}
         setOpen={setInviteOpen}
         onInviteSuccess={refetch}
+        adminFeedback
       />
       {seatLimitDialog}
     </AdminPage>
   );
 }
+
+type StatusChange = {
+  userId: string;
+  email: string;
+  status: UserStatus;
+};

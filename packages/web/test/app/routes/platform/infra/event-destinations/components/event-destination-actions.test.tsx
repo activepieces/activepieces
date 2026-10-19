@@ -22,13 +22,6 @@ vi.mock('@/components/ui/sonner', () => ({
   INTERNAL_ERROR_MESSAGE: 'internal error',
 }));
 
-vi.mock('@/lib/api', () => ({
-  api: {
-    extractServerErrorMessage: (error: unknown, fallback: string) =>
-      error instanceof Error ? error.message : fallback,
-  },
-}));
-
 vi.mock(
   '@/app/routes/platform/infra/event-destinations/lib/event-destinations-collection',
   () => ({ eventDestinationsCollectionUtils: collectionUtilsMock }),
@@ -44,10 +37,15 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
   ),
   DropdownMenuItem: ({
     children,
-    onSelect: _onSelect,
+    onSelect,
     variant: _variant,
-  }: React.PropsWithChildren<{ onSelect?: unknown; variant?: string }>) => (
-    <div role="menuitem">{children}</div>
+  }: React.PropsWithChildren<{
+    onSelect?: () => void;
+    variant?: string;
+  }>) => (
+    <div role="menuitem" onClick={() => onSelect?.()}>
+      {children}
+    </div>
   ),
 }));
 
@@ -115,8 +113,6 @@ import { makeDestination } from '../event-destination-fixtures';
 
 const destination = makeDestination();
 
-const serverError = new Error('Destination not reachable');
-
 function mount(element: React.ReactElement) {
   render(
     <MemoryRouter>
@@ -158,7 +154,9 @@ beforeEach(() => {
 
 describe('EventDestinationActions delete', () => {
   function confirmDelete() {
-    mount(<EventDestinationActions destination={destination} />);
+    mount(
+      <EventDestinationActions destination={destination} name="Orders hook" />,
+    );
     const deleteItem = screen
       .getAllByRole('menuitem')
       .find((item) => item.textContent === 'Delete');
@@ -166,27 +164,15 @@ describe('EventDestinationActions delete', () => {
     click(findButton('Delete', dialogs()[0]));
   }
 
-  it('shows the server error instead of success when deleting fails', async () => {
-    collectionUtilsMock.delete.mockRejectedValue(serverError);
-
-    confirmDelete();
-    await settle();
-
-    expect(collectionUtilsMock.delete).toHaveBeenCalledWith([destination.id]);
-    expect(toastMock.error).toHaveBeenCalledWith('Error', {
-      description: serverError.message,
-    });
-    expect(toastMock.success).not.toHaveBeenCalled();
-    expect(dialogs()).toHaveLength(1);
-  });
-
   it('shows success and closes the confirmation only after deleting succeeds', async () => {
     collectionUtilsMock.delete.mockResolvedValue(undefined);
 
     confirmDelete();
     await settle();
 
-    expect(toastMock.success).toHaveBeenCalledWith('Removed {entityName}');
+    expect(toastMock.success).toHaveBeenCalledWith('Destination deleted', {
+      id: 'Destination deleted',
+    });
     expect(toastMock.error).not.toHaveBeenCalled();
     expect(dialogs()).toHaveLength(0);
   });

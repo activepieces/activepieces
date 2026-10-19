@@ -1,26 +1,28 @@
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Trash, UserCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
+  ConfirmDialog,
+  adminBulk,
+  InstantSwitch,
   SettingsPanel,
   SettingsRow,
+  adminActionCopy,
   adminPageResources,
+  useAdminAction,
 } from '@/app/components/admin';
 import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
-import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +38,7 @@ import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/pro
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
+import { mutationFeedback } from '@/lib/mutation-feedback';
 import { validationUtils } from '@/lib/validation-utils';
 
 import { projectsTableColumns } from './columns';
@@ -75,27 +78,62 @@ export default function ProjectsPage() {
     [displayNameFilter, typeFilter.join(',')],
   );
 
+  const hasActiveFilters =
+    displayNameFilter !== undefined ||
+    typeFilter.some((type) => type !== ProjectType.TEAM);
   const { data: allProjects } =
     projectCollectionUtils.useAllPlatformProjects(filters);
+  const projectsLoad = projectCollectionUtils.useLoadState();
 
-  const {
-    mutate: toggleAutoCreatePersonalProjects,
-    isPending: isAutoCreatePersonalProjectsPending,
-  } = useMutation({
-    mutationFn: (autoCreatePersonalProjects: boolean) =>
-      platformApi.update({ autoCreatePersonalProjects }, platform.id),
-    onSuccess: (updatedPlatform) => {
-      setCurrentPlatform(queryClient, updatedPlatform);
-      toast.success(t('Automatic personal project creation updated'), {
-        duration: 3000,
-      });
+  const setAutoCreatePersonalProjects = async (
+    autoCreatePersonalProjects: boolean,
+  ) => {
+    const updatedPlatform = await platformApi.update(
+      { autoCreatePersonalProjects },
+      platform.id,
+    );
+    setCurrentPlatform(queryClient, updatedPlatform);
+  };
+
+  const deleteProjects = useAdminAction<ProjectWithLimits[]>({
+    verb: 'delete',
+    name: (projects) => projectsLabel(projects),
+    run: async (projects) => {
+      try {
+        await adminBulk.runEach({
+          items: projects,
+          run: (project) => projectCollectionUtils.delete([project.id]),
+          verb: 'delete',
+          label: (count) =>
+            t('{count, plural, =1 {# project} other {# projects}}', { count }),
+          nameOf: (project) => project.displayName,
+          describe: deleteErrorMessage,
+        });
+      } finally {
+        await projectCollectionUtils.refetchProjects().catch(() => undefined);
+      }
     },
-    onError: () => {
-      toast.error(t('Failed to save changes. Please try again.'));
+    handleError: (error, projects) => {
+      const description = deleteErrorMessage(error);
+      if (description === undefined) {
+        return false;
+      }
+      mutationFeedback.error({
+        error,
+        title: adminActionCopy.failed({
+          verb: 'delete',
+          name: projectsLabel(projects),
+        }),
+        description,
+      });
+      return true;
     },
   });
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(
+    null,
+  );
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
   const editDialogProject = allProjects.find(
@@ -145,7 +183,14 @@ export default function ProjectsPage() {
 
         return (
           <Checkbox
-            checked={allSelectableSelected || someSelectableSelected}
+            aria-label={t('Select all')}
+            checked={
+              allSelectableSelected
+                ? true
+                : someSelectableSelected
+                ? 'indeterminate'
+                : false
+            }
             onCheckedChange={(value) => {
               const isChecked = !!value;
               selectableRows.forEach((row) => row.toggleSelected(isChecked));
@@ -184,9 +229,12 @@ export default function ProjectsPage() {
 
         return (
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <div className={isDisabled ? 'cursor-not-allowed' : ''}>
                 <Checkbox
+                  aria-label={t('Select {name}', {
+                    name: row.original.displayName,
+                  })}
                   checked={isChecked}
                   disabled={isDisabled}
                   onCheckedChange={(value) => {
@@ -251,71 +299,37 @@ export default function ProjectsPage() {
           _: RowDataWithActions<ProjectWithLimits>[],
           resetSelection: () => void,
         ) => {
-          const canDeleteAny = selectedRows.some(
+          const deletableProjects = selectedRows.filter(
             (row) => row.id !== currentProject?.id,
           );
+          if (selectedRows.length === 0) {
+            return null;
+          }
           return (
-            <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
-                title={t('Delete Projects')}
-                message={t(
-                  'The selected projects and all their data will be permanently deleted.',
-                )}
-                entityName={t('Projects')}
-                buttonText={t('Delete')}
-                controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
-                mutationFn={async () => {
-                  const deletableProjects = selectedRows.filter(
-                    (row) => row.id !== currentProject?.id,
-                  );
-                  projectCollectionUtils.delete(
-                    deletableProjects.map((row) => row.id),
-                  );
-                  resetSelection();
-                  setSelectedRows([]);
-                }}
-                onError={(error) => {
-                  toast.error(t('Error'), {
-                    description: errorToastMessage(error),
-                    duration: 3000,
-                  });
-                }}
-              >
-                {selectedRows.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-danger-11 hover:text-danger-11"
-                    disabled={!canDeleteAny}
-                    {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
-                  >
-                    <Trash className="mr-1 w-4" />
-                    {`${t('Delete')} (${selectedRows.length})`}
-                  </Button>
-                )}
-              </ConfirmationDeleteDialog>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-danger-11 hover:text-danger-11"
+              disabled={deletableProjects.length === 0}
+              onClick={(event) => {
+                event.stopPropagation();
+                setPendingDelete({
+                  projects: deletableProjects,
+                  keepsCurrent: deletableProjects.length < selectedRows.length,
+                  resetSelection,
+                });
+              }}
+              {...adminControl(AdminControl.PROJECTS_DELETE_OPEN)}
+            >
+              <Trash className="mr-1 w-4" />
+              {`${t('Delete')} (${deletableProjects.length})`}
+            </Button>
           );
         },
       },
     ],
     [selectedRows, currentProject],
   );
-
-  const errorToastMessage = (error: unknown): string | undefined => {
-    if (validationUtils.isValidationError(error)) {
-      console.error(t('Validation error'), error);
-      switch (error.response?.data?.params?.message) {
-        case 'PROJECT_HAS_ENABLED_FLOWS':
-          return t('Project has enabled flows. Please disable them first.');
-        case 'ACTIVE_PROJECT':
-          return t(
-            'This project is active. Please switch to another project first.',
-          );
-      }
-      return undefined;
-    }
-  };
 
   const actions = [
     (row: ProjectWithLimits) => {
@@ -326,6 +340,7 @@ export default function ProjectsPage() {
               <Button
                 variant="ghost"
                 size="icon-sm"
+                aria-label={t('Edit project')}
                 {...adminControl(AdminControl.PROJECTS_EDIT_OPEN)}
                 onClick={async (e) => {
                   e.stopPropagation();
@@ -361,22 +376,31 @@ export default function ProjectsPage() {
             'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
           )}
         >
-          <Switch
+          <InstantSwitch
             aria-label={t('Automatic personal project creation')}
             checked={platform.autoCreatePersonalProjects}
-            onCheckedChange={(checked) =>
-              toggleAutoCreatePersonalProjects(checked)
+            onCheckedChange={setAutoCreatePersonalProjects}
+            undo
+            successMessage={(on) =>
+              on
+                ? t('Automatic personal projects turned on')
+                : t('Automatic personal projects turned off')
             }
-            disabled={isAutoCreatePersonalProjectsPending}
-            {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
+            controlId={AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE}
           />
         </SettingsRow>
       </SettingsPanel>
       <AdminDataTable
-        emptyStateTextTitle={t('No projects found')}
-        emptyStateTextDescription={t(
-          'Start by creating projects to manage your automation teams',
-        )}
+        emptyStateTextTitle={
+          hasActiveFilters
+            ? t('No projects match these filters')
+            : t('No projects found')
+        }
+        emptyStateTextDescription={
+          hasActiveFilters
+            ? t('Clear a filter to see more.')
+            : t('Start by creating projects to manage your automation teams')
+        }
         emptyStateIcon={<Package />}
         onRowClick={async (project) => {
           await projectCollectionUtils.setCurrentProject(project.id);
@@ -409,13 +433,68 @@ export default function ProjectsPage() {
           next: null,
           previous: null,
         }}
-        isLoading={false}
-        isError={false}
+        isLoading={projectsLoad.isFetching && allProjects.length === 0}
+        isError={projectsLoad.isError && allProjects.length === 0}
         errorStateEntity={t('projects')}
+        onRetry={() =>
+          projectCollectionUtils.refetchProjects().catch(() => undefined)
+        }
         clientPagination={true}
+        hidePagination={projectsLoad.isError && allProjects.length === 0}
         bulkActions={bulkActions}
         actions={actions}
       />
+      {pendingDelete !== null && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingDelete(null);
+            }
+          }}
+          title={t('Delete {name}?', {
+            name: projectsLabel(pendingDelete.projects),
+          })}
+          description={
+            pendingDelete.projects.length === 1
+              ? t('This project and all its data will be permanently deleted.')
+              : t(
+                  'The selected projects and all their data will be permanently deleted.',
+                )
+          }
+          consequence={
+            pendingDelete.keepsCurrent
+              ? t(
+                  "The project you're in stays. Switch to another project to delete it.",
+                )
+              : undefined
+          }
+          confirmLabel={t('Delete')}
+          typeToConfirm={projectsLabel(pendingDelete.projects)}
+          controlId={AdminControl.PROJECTS_DELETE_CONFIRM}
+          onConfirm={async () => {
+            const targets = pendingDelete.projects;
+            await deleteProjects
+              .mutateAsync(targets)
+              .catch((error: unknown) => {
+                if (adminBulk.isPartialFailure(error)) {
+                  const failed = adminBulk.failedItems({
+                    error,
+                    items: targets,
+                  });
+                  setSelectedRows((current) => [
+                    ...current.filter((row) => !targets.includes(row)),
+                    ...failed,
+                  ]);
+                  setPendingDelete({ ...pendingDelete, projects: failed });
+                }
+                throw error;
+              });
+            pendingDelete.resetSelection();
+            setSelectedRows([]);
+          }}
+        />
+      )}
       <EditProjectDialog
         open={editDialogOpen}
         onClose={() => {
@@ -433,3 +512,33 @@ export default function ProjectsPage() {
     </AdminPage>
   );
 }
+
+function projectsLabel(projects: ProjectWithLimits[]): string {
+  return projects.length === 1
+    ? projects[0].displayName
+    : t('{count, plural, =1 {# project} other {# projects}}', {
+        count: projects.length,
+      });
+}
+
+function deleteErrorMessage(error: unknown): string | undefined {
+  if (!validationUtils.isValidationError(error)) {
+    return undefined;
+  }
+  switch (error.response?.data?.params?.message) {
+    case 'PROJECT_HAS_ENABLED_FLOWS':
+      return t('Project has enabled flows. Please disable them first.');
+    case 'ACTIVE_PROJECT':
+      return t(
+        'This project is active. Please switch to another project first.',
+      );
+    default:
+      return undefined;
+  }
+}
+
+type PendingDelete = {
+  projects: ProjectWithLimits[];
+  keepsCurrent: boolean;
+  resetSelection: () => void;
+};
