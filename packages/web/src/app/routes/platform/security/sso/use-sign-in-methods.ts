@@ -30,12 +30,9 @@ export function useSignInMethods(
     selfHosted,
     working,
     isOnlyWorkingMethod: (method) =>
-      working[method] &&
-      SIGN_IN_METHODS.every((other) => other === method || !working[other]),
+      working[method] && Object.values(working).filter(Boolean).length === 1,
   };
 }
-
-const SIGN_IN_METHODS: SignInMethod[] = ['email', 'google', 'saml'];
 
 export type SignInMethod = 'email' | 'google' | 'saml';
 
