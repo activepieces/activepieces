@@ -98,7 +98,7 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
     if (!isVersionOnRegistry({ name: json.name, version })) {
       throw error
     }
-    console.info(`[publishProject] already on registry (published by a concurrent run), path=${path}, version=${version}`)
+    console.info(`[publishProject] publish failed but version is already on registry, path=${path}, version=${version}`)
     return
   }
 
@@ -107,7 +107,7 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
 
 function isVersionOnRegistry({ name, version }: { name: string, version: string }): boolean {
   try {
-    return execSync(`npm view ${name}@${version} version`, { encoding: 'utf8' }).trim() === version
+    return execSync(`npm view ${name}@${version} version`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() === version
   } catch {
     return false
   }
