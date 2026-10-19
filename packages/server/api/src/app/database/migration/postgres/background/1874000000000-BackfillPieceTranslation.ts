@@ -2,8 +2,8 @@ import { isNil, isObject, sanitizeObjectForPostgresql } from '@activepieces/core
 import { QueryRunner } from 'typeorm'
 import { BackgroundMigration } from '../../../background-migration'
 
-export class BackfillPieceTranslation1872000000000 implements BackgroundMigration {
-    name = 'BackfillPieceTranslation1872000000000'
+export class BackfillPieceTranslation1874000000000 implements BackgroundMigration {
+    name = 'BackfillPieceTranslation1874000000000'
     release = '0.93.0'
     transaction = false as const
 
