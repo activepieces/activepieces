@@ -176,6 +176,7 @@ function statusOf({
         ]
       : []),
     ...(!hasEmbeddingsKey &&
+    isNil(options.credits) &&
     !canEmbed({ provider: keyProviderOf({ value, tiers, configsById }) })
       ? [
           t(

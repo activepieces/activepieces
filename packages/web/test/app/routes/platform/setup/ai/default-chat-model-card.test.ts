@@ -142,3 +142,25 @@ describe('the embeddings warning', () => {
     expect(status.warnings.join(' ')).toContain('Embeddings key');
   });
 });
+
+describe('the embeddings warning with Credits', () => {
+  it('stays quiet when Credits can index the files', () => {
+    const status = defaultChatModelCardUtils.statusOf({
+      value: { ...pick, provider: AIProviderName.ANTHROPIC },
+      options: {
+        ...options,
+        keys: [{ ...options.keys[0], provider: AIProviderName.ANTHROPIC }],
+        credits: {
+          providerConfigId: 'managed',
+          defaultTierId: 'smart',
+          tiers: [],
+        },
+      },
+      tiers: [],
+      configsById: new Map([['key-a', key('all')]]),
+      projectIds: [],
+      hasEmbeddingsKey: false,
+    });
+    expect(status.warnings).toEqual([]);
+  });
+});
