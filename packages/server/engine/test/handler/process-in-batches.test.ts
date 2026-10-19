@@ -88,6 +88,7 @@ describe('process in batches executor', () => {
         expect(call.stepName).toBe('batches')
         expect(call.barrier.fanOut).toMatchObject({
             entryStepName: 'echo_step',
+            batchStepName: 'batches',
             batchSize: 2,
             items: [1, 2, 3, 4, 5],
         })
@@ -137,7 +138,7 @@ describe('process in batches executor', () => {
         expect(result.steps['batches'].output).toMatchObject({ batchSize: 3, total: 2 })
     })
 
-    it('path-keys the barrier when the step runs inside a loop iteration', async () => {
+    it('path-keys the barrier inside a loop iteration but hands over the bare batch step name', async () => {
         const action = buildProcessInBatchesAction({
             name: 'batches',
             items: '{{ [1] }}',
@@ -152,6 +153,7 @@ describe('process in batches executor', () => {
         })
 
         expect(mockCreateWaitpoint.mock.calls[0][0].stepName).toBe('loop:0/batches')
+        expect(mockCreateWaitpoint.mock.calls[0][0].barrier.fanOut.batchStepName).toBe('batches')
     })
 
     it('seeds only the steps the body references, with slice refs left intact', async () => {

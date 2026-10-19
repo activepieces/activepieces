@@ -1640,4 +1640,102 @@ describe('Execute Flow E2E', () => {
         expect(children.every((child) => child.status === FlowRunStatus.SUCCEEDED)).toBe(true)
         expect(children.map((child) => child.dispatchIndex).sort()).toEqual([0, 1, 2])
     }, 180_000)
+
+    it('hands every child of a batch inside a loop the items of its own batch', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+        const webhookPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-webhook',
+            version: '0.1.29',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        await databaseConnection().getRepository('piece_metadata').save([webhookPiece])
+
+        const batchBody = {
+            type: FlowActionType.CODE as const,
+            name: 'step_3',
+            displayName: 'Handle one batch',
+            valid: true,
+            settings: {
+                sourceCode: {
+                    code: 'export const code = async (inputs) => ({ received: inputs.items })',
+                    packageJson: '{}',
+                },
+                input: { items: '{{step_2[\'output\'].items}}' },
+                errorHandlingOptions: {},
+            },
+        }
+
+        const batchesAction = {
+            type: FlowActionType.PROCESS_IN_BATCHES as const,
+            name: 'step_2',
+            displayName: 'Process in Batches',
+            valid: true,
+            skip: false,
+            settings: {
+                items: '{{step_1[\'output\'].item}}',
+                batchSize: 2,
+                errorHandlingOptions: {},
+            },
+            firstLoopAction: batchBody,
+        }
+
+        const loopAction = {
+            type: FlowActionType.LOOP_ON_ITEMS as const,
+            name: 'step_1',
+            displayName: 'Loop',
+            valid: true,
+            skip: false,
+            settings: { items: '{{trigger[\'output\'].body.groups}}' },
+            firstLoopAction: batchesAction,
+        }
+
+        const mockFlow = createMockFlow({ projectId: mockProject.id })
+        await db.save('flow', mockFlow)
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+            state: FlowVersionState.LOCKED,
+            trigger: {
+                type: FlowTriggerType.PIECE,
+                name: 'trigger',
+                displayName: 'Catch Webhook',
+                valid: true,
+                lastUpdatedDate: new Date().toISOString(),
+                settings: {
+                    pieceName: '@activepieces/piece-webhook',
+                    pieceVersion: '0.1.29',
+                    triggerName: 'catch_webhook',
+                    input: { authType: 'none' },
+                    propertySettings: {},
+                },
+                nextAction: loopAction,
+            },
+        })
+        await db.save('flow_version', mockFlowVersion)
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: mockFlow.id,
+            payload: { body: { groups: [[1, 2, 3], [4, 5]] } },
+            platformId: mockPlatform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            streamStepProgress: StreamStepProgress.NONE,
+            executeTrigger: false,
+            flowVersionId: mockFlowVersion.id,
+            projectId: mockProject.id,
+            workerHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+        })
+
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+
+        const children = await databaseConnection().getRepository('flow_run').findBy({ parentRunId: flowRun.id })
+        const received = await Promise.all(children.map(async (child) => (await pollFlowRunToCompletion(child.id, mockProject.id)).steps.step_3?.output))
+        expect(received).toHaveLength(3)
+        expect(received).toEqual(expect.arrayContaining([{ received: [1, 2] }, { received: [3] }, { received: [4, 5] }]))
+    }, 180_000)
 })

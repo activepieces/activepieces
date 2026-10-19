@@ -60,6 +60,7 @@ async function handOverToDispatcher({ action, executionState, constants }: Execu
             barrier: {
                 fanOut: {
                     entryStepName: bodyEntryStep.name,
+                    batchStepName: action.name,
                     batchSize: requestedBatchSize,
                     items: [...items],
                     seedSteps: buildSeed({ action, executionState, constants }),
