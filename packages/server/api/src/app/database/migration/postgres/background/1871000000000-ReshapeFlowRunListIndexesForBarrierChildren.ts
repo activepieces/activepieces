@@ -2,8 +2,8 @@ import { QueryRunner } from 'typeorm'
 import { BackgroundMigration } from '../../../background-migration'
 import { migrationHelpers } from '../../../migration-helpers'
 
-export class ReshapeFlowRunListIndexesForBarrierChildren1867000000000 implements BackgroundMigration {
-    name = 'ReshapeFlowRunListIndexesForBarrierChildren1867000000000'
+export class ReshapeFlowRunListIndexesForBarrierChildren1871000000000 implements BackgroundMigration {
+    name = 'ReshapeFlowRunListIndexesForBarrierChildren1871000000000'
     release = '0.93.0'
     transaction = false as const
 

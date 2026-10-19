@@ -6,11 +6,11 @@ import { migrationHelpers } from '../../migration-helpers'
 import {
     FLOW_RUN_BARRIER_INDEXES,
     FLOW_RUN_LEGACY_LIST_INDEXES,
-    ReshapeFlowRunListIndexesForBarrierChildren1867000000000,
-} from './background/1867000000000-ReshapeFlowRunListIndexesForBarrierChildren'
+    ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
+} from './background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 
-export class AddBarrierChildAttribution1867000000000 implements Migration {
-    name = 'AddBarrierChildAttribution1867000000000'
+export class AddBarrierChildAttribution1871000000000 implements Migration {
+    name = 'AddBarrierChildAttribution1871000000000'
     breaking = false
     release = '0.93.0'
     transaction = false
@@ -29,7 +29,7 @@ export class AddBarrierChildAttribution1867000000000 implements Migration {
     public async down(queryRunner: QueryRunner): Promise<void> {
         await migrationHelpers.withBackgroundMigrationLock({
             log: system.globalLogger(),
-            migration: ReshapeFlowRunListIndexesForBarrierChildren1867000000000,
+            migration: ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
             fn: async () => {
                 for (const index of FLOW_RUN_LEGACY_LIST_INDEXES) {
                     await migrationHelpers.createIndexConcurrently({ queryRunner, table: 'flow_run', ...index })
@@ -39,7 +39,7 @@ export class AddBarrierChildAttribution1867000000000 implements Migration {
                 }
                 await queryRunner.query(
                     `DELETE FROM "${BACKGROUND_MIGRATIONS_TABLE}" WHERE "name" = $1`,
-                    [new ReshapeFlowRunListIndexesForBarrierChildren1867000000000().name],
+                    [new ReshapeFlowRunListIndexesForBarrierChildren1871000000000().name],
                 )
                 await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "dispatchIndex"')
                 await queryRunner.query('ALTER TABLE "flow_run" DROP COLUMN IF EXISTS "parentWaitpointId"')

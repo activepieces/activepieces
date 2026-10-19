@@ -456,11 +456,11 @@ import { AddPlatformTierFastAndConversationTier1864000000000 } from './migration
 import { AddAuditLogRetentionDaysToPlatform1865000000000 } from './migration/postgres/1865000000000-AddAuditLogRetentionDaysToPlatform'
 import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from './migration/postgres/1866000000000-AddAiSpecificModelsVisibleToPlatformConfiguration'
 import { AddAgentTask1867000000000 } from './migration/postgres/1867000000000-AddAgentTask'
-import { AddBarrierChildAttribution1867000000000 } from './migration/postgres/1867000000000-AddBarrierChildAttribution'
 import { AddProviderConfigIdToAgentConversation1868000000000 } from './migration/postgres/1868000000000-AddProviderConfigIdToAgentConversation'
 import { DropChatRolloutUserTable1870000000000 } from './migration/postgres/1870000000000-DropChatRolloutUserTable'
-import { ReshapeFlowRunListIndexesForBarrierChildren1867000000000 } from './migration/postgres/background/1867000000000-ReshapeFlowRunListIndexesForBarrierChildren'
+import { AddBarrierChildAttribution1871000000000 } from './migration/postgres/1871000000000-AddBarrierChildAttribution'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
+import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -475,7 +475,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => {
     return [
         AddAgentConversationProviderConfigIdIndex1869000000000,
-        ReshapeFlowRunListIndexesForBarrierChildren1867000000000,
+        ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
     ]
 }
 
@@ -940,7 +940,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentTask1867000000000,
         AddProviderConfigIdToAgentConversation1868000000000,
         DropChatRolloutUserTable1870000000000,
-        AddBarrierChildAttribution1867000000000,
+        AddBarrierChildAttribution1871000000000,
     ]
     return migrations
 }
