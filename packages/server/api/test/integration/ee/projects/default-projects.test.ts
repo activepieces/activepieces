@@ -1,5 +1,5 @@
 import { apId, ErrorCode, Permission, RoleType } from '@activepieces/core-utils'
-import { PlatformRole, PrincipalType, ProjectType } from '@activepieces/shared'
+import { MAX_DEFAULT_PROJECTS, PlatformRole, PrincipalType, ProjectType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { In, ObjectLiteral } from 'typeorm'
@@ -118,6 +118,45 @@ describe('Default projects', () => {
 
         expect(response?.statusCode).toBe(StatusCodes.OK)
         expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toStrictEqual([mockProject.id])
+    })
+
+    it('refuses a default project past the cap', async () => {
+        const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
+        const defaults = await saveTeamProjects({ platformId: mockPlatform.id, ownerId: mockOwner.id, count: MAX_DEFAULT_PROJECTS })
+        await markDefault({ projectIds: defaults.map((project) => project.id) })
+        const [extraProject] = await saveTeamProjects({ platformId: mockPlatform.id, ownerId: mockOwner.id, count: 1 })
+
+        const response = await setDefault({ platformId: mockPlatform.id, userId: mockOwner.id, projectId: extraProject.id, isDefault: true })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response?.json().code).toBe(ErrorCode.VALIDATION)
+        expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toHaveLength(MAX_DEFAULT_PROJECTS)
+    })
+
+    it('stops at the cap when several defaults are added at once', async () => {
+        const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
+        const defaults = await saveTeamProjects({ platformId: mockPlatform.id, ownerId: mockOwner.id, count: MAX_DEFAULT_PROJECTS - 2 })
+        await markDefault({ projectIds: defaults.map((project) => project.id) })
+        const candidates = await saveTeamProjects({ platformId: mockPlatform.id, ownerId: mockOwner.id, count: 5 })
+
+        const responses = await Promise.all(candidates.map((project) => setDefault({ platformId: mockPlatform.id, userId: mockOwner.id, projectId: project.id, isDefault: true })))
+
+        expect(responses.filter((response) => response?.statusCode === StatusCodes.OK)).toHaveLength(2)
+        expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toHaveLength(MAX_DEFAULT_PROJECTS)
+    })
+
+    it('still saves and removes defaults at the cap', async () => {
+        const { mockPlatform, mockOwner } = await setupPlatform({ projectRolesEnabled: true })
+        const defaults = await saveTeamProjects({ platformId: mockPlatform.id, ownerId: mockOwner.id, count: MAX_DEFAULT_PROJECTS })
+        await markDefault({ projectIds: defaults.map((project) => project.id) })
+
+        const resave = await setDefault({ platformId: mockPlatform.id, userId: mockOwner.id, projectId: defaults[0].id, isDefault: true })
+        const removal = await setDefault({ platformId: mockPlatform.id, userId: mockOwner.id, projectId: defaults[1].id, isDefault: false })
+
+        expect(resave?.statusCode).toBe(StatusCodes.OK)
+        expect(removal?.statusCode).toBe(StatusCodes.OK)
+        expect(await defaultProjectIdsOf({ platformId: mockPlatform.id })).toHaveLength(MAX_DEFAULT_PROJECTS - 1)
+        expect((await getPlatform({ platformId: mockPlatform.id, userId: mockOwner.id }))?.json().defaultProjectIds).toHaveLength(MAX_DEFAULT_PROJECTS - 1)
     })
 
     it('refuses to delete a default project from the app', async () => {
@@ -242,6 +281,10 @@ async function saveProject({ platformId, ownerId, type }: { platformId: string, 
     const project = createMockProject({ platformId, ownerId, type })
     await databaseConnection().getRepository('project').save(project)
     return project
+}
+
+async function saveTeamProjects({ platformId, ownerId, count }: { platformId: string, ownerId: string, count: number }) {
+    return Promise.all(Array.from({ length: count }, () => saveProject({ platformId, ownerId, type: ProjectType.TEAM })))
 }
 
 async function setDefault({ platformId, userId, projectId, isDefault }: { platformId: string, userId: string, projectId: string, isDefault: boolean }) {

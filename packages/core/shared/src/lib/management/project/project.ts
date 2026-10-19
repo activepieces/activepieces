@@ -144,3 +144,5 @@ export const PROJECT_COLOR_PALETTE: Record<ColorName, ProjectColor> = {
     [ColorName.LAVENDER]: projectColorFor(ColorName.LAVENDER),
 }
 
+
+export const MAX_DEFAULT_PROJECTS = 10
