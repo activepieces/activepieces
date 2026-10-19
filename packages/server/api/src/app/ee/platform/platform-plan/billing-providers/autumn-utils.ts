@@ -386,6 +386,7 @@ export const autumnConsole = {
             path: '/api/v1/billing/enterprise-trial',
             token: edition === ApEdition.CLOUD ? consoleSecretOrThrow() : autumnApiKey,
             body: { autumnCustomerId },
+            expectedErrorStatus: StatusCodes.CONFLICT,
         }))
         if (isAxiosError(error) && error.response?.status === StatusCodes.CONFLICT) {
             return null
@@ -403,7 +404,7 @@ export const autumnConsole = {
     },
 }
 
-async function consoleRequest<T>({ path, method = 'post', token, body, query }: ConsoleRequestParams): Promise<T> {
+async function consoleRequest<T>({ path, method = 'post', token, body, query, expectedErrorStatus }: ConsoleRequestParams): Promise<T> {
     const url = `${AUTUMN_CONSOLE_URL}${path}`
     const config: AxiosRequestConfig = {
         timeout: CONSOLE_REQUEST_TIMEOUT_MS,
@@ -414,7 +415,9 @@ async function consoleRequest<T>({ path, method = 'post', token, body, query }: 
         ? safeHttp.axios.get<ConsoleEnvelope<T>>(url, config)
         : safeHttp.axios.post<ConsoleEnvelope<T>>(url, body ?? {}, config))
     if (!isNil(error)) {
-        system.globalLogger().error({ error, url }, 'Autumn console request failed')
+        if (!isAxiosError(error) || error.response?.status !== expectedErrorStatus) {
+            system.globalLogger().error({ error, url }, 'Autumn console request failed')
+        }
         throw error
     }
     assertNotNullOrUndefined(response, 'response')
@@ -760,6 +763,7 @@ type ConsoleRequestParams = {
     token?: string
     body?: unknown
     query?: Record<string, string>
+    expectedErrorStatus?: number
 }
 
 export type BalanceCacheRef = {
