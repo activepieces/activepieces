@@ -178,7 +178,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
             log,
             platformId,
             fallback: UNAVAILABLE_ENTERPRISE_TRIAL,
-            fn: async (creds) => autumnConsole.getEnterpriseTrial({ ...creds, ...await resolveEnterpriseTrialOwner({ log, platformId }) }),
+            fn: async (creds) => autumnConsole.getEnterpriseTrial({ ...creds, edition: enterpriseTrialEdition() }),
         }))
         if (!isNil(error) || isNil(data)) {
             log.warn({ error, platform: { id: platformId } }, 'Failed to read the enterprise trial status; treating the trial as unavailable')
@@ -195,14 +195,14 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                 platformId,
                 fallback: UNAVAILABLE_ENTERPRISE_TRIAL,
                 fn: async (creds) => {
-                    const owner = await resolveEnterpriseTrialOwner({ log, platformId })
-                    const current = await autumnConsole.getEnterpriseTrial({ ...creds, ...owner })
+                    const edition = enterpriseTrialEdition()
+                    const current = await autumnConsole.getEnterpriseTrial({ ...creds, edition })
                     if (current.state !== 'eligible') {
                         return current
                     }
                     const started = await autumnConsole.startEnterpriseTrial({
                         ...creds,
-                        ...owner,
+                        edition,
                         platformId,
                         appUrl: await domainHelper.getPublicUrl({ path: '' }),
                     })
@@ -222,11 +222,8 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     },
 })
 
-async function resolveEnterpriseTrialOwner({ log, platformId }: { log: FastifyBaseLogger, platformId: string }): Promise<{ ownerEmail: string, edition: 'cloud' | 'ee' }> {
-    return {
-        ownerEmail: await autumnUtils.getPlatformOwnerEmail(log, platformId),
-        edition: system.getEdition() === ApEdition.CLOUD ? 'cloud' : 'ee',
-    }
+function enterpriseTrialEdition(): 'cloud' | 'ee' {
+    return system.getEdition() === ApEdition.CLOUD ? 'cloud' : 'ee'
 }
 
 async function withEnrolledCreds<T>({ log, platformId, fallback, fn }: WithEnrolledCredsParams<T>): Promise<T> {
