@@ -8,6 +8,8 @@ import { CapabilitiesTab } from './capabilities-tab';
 import { ProvidersTab } from './providers-tab';
 import { TiersTab } from './tiers-tab';
 import { UsageTab } from './usage-tab';
+import { UsageDetailPage } from './usage-tab/usage-detail-page';
+import { UsageListPage } from './usage-tab/usage-list-page';
 
 export default function AIProvidersPage({ section }: AIProvidersPageProps) {
   return <AICenter section={section} />;
@@ -30,6 +32,10 @@ function AICenter({ section }: { section: AISection }) {
         <UsageTab />
       ) : section === 'usage-v2' ? (
         <UsageTab layout="trees" />
+      ) : section === 'usage-list' ? (
+        <UsageListPage />
+      ) : section === 'usage-detail' ? (
+        <UsageDetailPage />
       ) : (
         <CapabilitiesTab />
       )}
@@ -37,7 +43,14 @@ function AICenter({ section }: { section: AISection }) {
   );
 }
 
-type AISection = 'providers' | 'capabilities' | 'tiers' | 'usage' | 'usage-v2';
+type AISection =
+  | 'providers'
+  | 'capabilities'
+  | 'tiers'
+  | 'usage'
+  | 'usage-v2'
+  | 'usage-list'
+  | 'usage-detail';
 
 type AIProvidersPageProps = {
   section: AISection;

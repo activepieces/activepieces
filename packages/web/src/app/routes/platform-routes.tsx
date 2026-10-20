@@ -226,6 +226,38 @@ export const platformRoutes = [
     ),
   },
   {
+    path: '/platform/ai/usage/:dimension',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Usage">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="usage-list" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/ai/usage/:dimension/:id',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Usage">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="usage-detail" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
     path: '/platform/ai/usage-v2',
     element: (
       <PlatformLayout>
