@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { DeltaChip, dimensionIcon, ItemIcon } from './usage-bits';
+import { dimensionIcon, ItemIcon } from './usage-bits';
 import { UsageDimension, UsageItem } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 
@@ -128,30 +128,19 @@ export function UsageTopRow({
             <span className="text-sm font-medium tabular-nums text-gray-12">
               {usageFormat.usd(item.spendUsd)}
             </span>
-            {item.comparable && (
-              <DeltaChip
-                size="xs"
-                value={usageFormat.change({
-                  current: item.spendUsd,
-                  previous: item.previousSpendUsd,
-                })}
-              />
-            )}
+            <span className="text-xs tabular-nums text-gray-11">
+              {usageFormat.percent(share)}
+            </span>
           </div>
           <ChevronRight className="size-4 shrink-0 text-gray-9" />
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-2">
-              <div className="h-1 flex-1 overflow-hidden rounded-full bg-gray-3">
-                <div
-                  className="h-full rounded-full bg-accent-9"
-                  style={{ width: `${Math.max(share * 100, 1)}%` }}
-                />
-              </div>
-              <span className="w-8 text-right text-xs tabular-nums text-gray-11">
-                {usageFormat.percent(share)}
-              </span>
+            <div className="h-1 overflow-hidden rounded-full bg-gray-3">
+              <div
+                className="h-full rounded-full bg-accent-9"
+                style={{ width: `${Math.max(share * 100, 1)}%` }}
+              />
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={6}>
