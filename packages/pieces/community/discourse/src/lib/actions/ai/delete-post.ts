@@ -15,7 +15,7 @@ export const deletePostAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Delete one Discourse post by numeric post ID. Deleting the first post of a topic deletes the topic. Only call when the user clearly asked to delete. A post that is already gone is reported with already_deleted true, so retries are safe.',
+      'Delete one Discourse post by numeric post ID. Deleting the first post of a topic deletes the topic. Only call when the user clearly asked to delete. A post that was already soft-deleted is reported with already_deleted true, so retries are safe; an unknown ID fails with a not found error.',
     idempotent: true,
   },
   props: {
@@ -35,7 +35,11 @@ export const deletePostAction = createAction({
       return { id: Number(id), deleted: true, already_deleted: false };
     } catch (error) {
       if (error instanceof DiscourseApiError && error.status === 404) {
-        return { id: Number(id), deleted: true, already_deleted: true };
+        throw new DiscourseApiError({
+          message: `Discourse post ${id} was not found. Check the Post ID; nothing was deleted.`,
+          status: 404,
+          responseBody: error.responseBody,
+        });
       }
       throw error;
     }

@@ -15,7 +15,7 @@ export const deleteTopicAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Delete a Discourse topic and all its posts by numeric topic ID. Staff can still recover it from the forum UI, but it disappears for members immediately. Only call when the user clearly asked to delete. A topic that is already gone is reported with already_deleted true, so retries are safe.',
+      'Delete a Discourse topic and all its posts by numeric topic ID. Staff can still recover it from the forum UI, but it disappears for members immediately. Only call when the user clearly asked to delete. A topic that was already soft-deleted is reported with already_deleted true, so retries are safe; an unknown ID fails with a not found error.',
     idempotent: true,
   },
   props: {
@@ -35,7 +35,11 @@ export const deleteTopicAction = createAction({
       return { id: Number(id), deleted: true, already_deleted: false };
     } catch (error) {
       if (error instanceof DiscourseApiError && error.status === 404) {
-        return { id: Number(id), deleted: true, already_deleted: true };
+        throw new DiscourseApiError({
+          message: `Discourse topic ${id} was not found. Check the Topic ID; nothing was deleted.`,
+          status: 404,
+          responseBody: error.responseBody,
+        });
       }
       throw error;
     }

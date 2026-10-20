@@ -108,6 +108,29 @@ describe('custom API call', () => {
     expect(getGlobalDispatcher()).toBe(before);
     expect(globalThis.fetch).toBe(fetchSpy);
   });
+  it('saves a binary response through files.write without the forum dispatcher', async () => {
+    const guarded = await discourseNetwork.getGuardedDispatcher();
+    const seen: Array<{ url: string; dispatcher: unknown }> = [];
+    const fetchSpy = vi.fn(async (input: string | URL, init?: RequestInit) => {
+      seen.push({ url: String(input), dispatcher: Reflect.get(Object(init), 'dispatcher') });
+      if (String(input).startsWith(BASE)) {
+        return new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { 'content-type': 'application/pdf' } });
+      }
+      return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+    const write = vi.fn(async ({ fileName, data }: { fileName: string; data: Buffer }) => {
+      await fetch('https://engine.local/v1/step-files', { method: 'POST' });
+      return `file://${fileName}:${data.length}`;
+    });
+    const base = makeContext({ props: { url: { url: '/file.pdf' }, method: 'GET', followRedirects: true, response_is_binary: true } });
+    const output = await call({ fn: customCall.run, ctx: { ...base, files: { write } } });
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(output).toMatchObject({ status: 200, body: 'file://output.pdf:3' });
+    expect(seen.map((entry) => entry.url)).toEqual([`${BASE}/file.pdf`, 'https://engine.local/v1/step-files']);
+    expect(seen[0].dispatcher).toBe(guarded);
+    expect(seen[1].dispatcher).toBeUndefined();
+  });
   it('accepts a full URL on the same forum', async () => {
     const calls = stubFetch([{ body: { ok: true } }]);
     await call({ fn: customCall.run, ctx: ctx({ url: `${BASE}/site.json` }) });

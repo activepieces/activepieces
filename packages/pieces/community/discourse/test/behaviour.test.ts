@@ -8,6 +8,7 @@ import { createUserAction } from '../src/lib/actions/ai/create-user';
 import { getTopicAction } from '../src/lib/actions/ai/get-topic';
 import { getTopicByExternalIdAction } from '../src/lib/actions/ai/get-topic-by-external-id';
 import { getUserAction } from '../src/lib/actions/ai/get-user';
+import { deletePostAction } from '../src/lib/actions/ai/delete-post';
 import { deleteTopicAction } from '../src/lib/actions/ai/delete-topic';
 import { likePostAction } from '../src/lib/actions/ai/like-post';
 import { setUserTrustLevelAction } from '../src/lib/actions/ai/set-user-trust-level';
@@ -177,6 +178,14 @@ describe('errors', () => {
     const calls = stubFetch([{ body: { id: 42, deleted_at: '2026-10-13T10:00:00.000Z' } }]);
     await expect(call({ fn: deleteTopicAction.run, ctx: makeContext({ props: { topic_id: '42' } }) })).resolves.toMatchObject({ already_deleted: true });
     expect(calls.map((c) => c.method)).toEqual(['GET']);
+  });
+  it('fails with a not found error when the post or topic ID does not exist, without a DELETE', async () => {
+    const postCalls = stubFetch([{ status: 404, body: { errors: ['not found'] } }]);
+    await expect(call({ fn: deletePostAction.run, ctx: makeContext({ props: { post_id: '501' } }) })).rejects.toThrow('Discourse post 501 was not found');
+    expect(postCalls.map((c) => c.method)).toEqual(['GET']);
+    const topicCalls = stubFetch([{ status: 404, body: { errors: ['not found'] } }]);
+    await expect(call({ fn: deleteTopicAction.run, ctx: makeContext({ props: { topic_id: '42' } }) })).rejects.toThrow('Discourse topic 42 was not found');
+    expect(topicCalls.map((c) => c.method)).toEqual(['GET']);
   });
   it('explains that a user cannot like their own post', async () => {
     stubFetch([{ status: 403, body: { errors: ['You are not permitted to view the requested resource.'] } }, { body: { ...{ id: 5, topic_id: 1, post_number: 1 }, yours: true } }]);
