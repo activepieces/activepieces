@@ -14,7 +14,9 @@ function buildOverview({ period, scope, preset }: ViewParams): UsageOverview {
   });
   const calls = sumOf({ items: projects, pick: (item) => item.calls });
   const tokens = sumOf({ items: projects, pick: (item) => item.tokens });
+  const history = historyFor({ period, preset });
   return {
+    history,
     totals: {
       spendUsd,
       previousSpendUsd,
@@ -25,6 +27,7 @@ function buildOverview({ period, scope, preset }: ViewParams): UsageOverview {
     },
     series: seriesFor({
       period,
+      preset,
       spendUsd,
       previousSpendUsd,
       calls,
@@ -33,9 +36,15 @@ function buildOverview({ period, scope, preset }: ViewParams): UsageOverview {
     }),
     forecastUsd:
       period === 'this-month'
-        ? (spendUsd / MONTH_DAYS_SO_FAR) * MONTH_DAYS
+        ? (spendUsd / Math.min(MONTH_DAYS_SO_FAR, history.coveredDays)) *
+          MONTH_DAYS
         : undefined,
-    avgPerDayUsd: spendUsd / PERIOD_DAYS[period],
+    avgPerDayUsd:
+      spendUsd /
+      Math.max(
+        Math.min(PERIOD_DAYS[period], history.coveredDays),
+        PERIOD_DAYS['1h'],
+      ),
     bySource: sourcesFor({ preset, spendUsd }),
     top: topByDimension({ items }),
     limits: projects
@@ -93,8 +102,10 @@ function buildDetail({
   );
   return {
     item,
+    history: historyFor({ period, preset }),
     series: seriesFor({
       period,
+      preset,
       spendUsd: item.spendUsd,
       previousSpendUsd: item.previousSpendUsd,
       calls: item.calls,
@@ -140,8 +151,10 @@ function allItems({
   random,
 }: ViewParams & { random: () => number }): UsageItem[] {
   const profile = PRESET_PROFILES[preset];
+  const history = historyFor({ period, preset });
   const scale =
     PERIOD_SCALE[period] *
+    history.currentCoverage *
     profile.scale *
     SCOPE_FACTOR[scope]({ testingShare: profile.testingShare });
   return CATALOG.filter(
@@ -160,6 +173,7 @@ function allItems({
         ...entry,
         spendUsd,
         previousSpendUsd: spendUsd / (1 + change),
+        comparable: history.comparable,
         calls,
         tokens: Math.round(calls * (2100 + random() * 1800)),
         credits:
@@ -227,8 +241,76 @@ function sumOf({
   return items.reduce((total, item) => total + pick(item), 0);
 }
 
+function historyFor({
+  period,
+  preset,
+}: {
+  period: UsagePeriod;
+  preset: UsageDataPreset;
+}): UsageHistory {
+  const { trackedDays } = PRESET_PROFILES[preset];
+  const labels = pointLabels({ period });
+  const now = NOW.getTime();
+  const periodDays = PERIOD_DAYS[period];
+  if (trackedDays === undefined) {
+    return {
+      trackingSince: TRACKING_SINCE,
+      coveredDays: periodDays,
+      periodDays,
+      currentCoverage: 1,
+      comparable: true,
+    };
+  }
+  const cutoff = now - trackedDays * DAY_MS;
+  const start = timeOf({ label: labels[0] });
+  const previousStart = previousTimeOf({
+    period,
+    time: start,
+    count: labels.length,
+    labels,
+  });
+  const coveredDays = Math.min(periodDays, trackedDays);
+  return {
+    trackingSince: new Date(cutoff).toISOString().slice(0, 10),
+    coveredDays,
+    periodDays,
+    currentCoverage: start >= cutoff ? 1 : coveredDays / periodDays,
+    comparable: previousStart >= cutoff,
+  };
+}
+
+function previousTimeOf({
+  period,
+  time,
+  count,
+  labels,
+}: {
+  period: UsagePeriod;
+  time: number;
+  count: number;
+  labels: string[];
+}): number {
+  if (period === 'this-month' || period === 'last-month') {
+    const date = new Date(time);
+    date.setUTCMonth(date.getUTCMonth() - 1);
+    return date.getTime();
+  }
+  const step =
+    labels.length > 1
+      ? timeOf({ label: labels[1] }) - timeOf({ label: labels[0] })
+      : DAY_MS;
+  return time - step * count;
+}
+
+function timeOf({ label }: { label: string }): number {
+  return label.includes('T')
+    ? new Date(label).getTime()
+    : new Date(`${label}T00:00:00Z`).getTime();
+}
+
 function seriesFor({
   period,
+  preset,
   spendUsd,
   previousSpendUsd,
   calls,
@@ -244,12 +326,30 @@ function seriesFor({
   );
   const total = shape.reduce((sum, value) => sum + value, 0);
   const previousTotal = previousShape.reduce((sum, value) => sum + value, 0);
+  const { trackedDays } = PRESET_PROFILES[preset];
+  const cutoff =
+    trackedDays === undefined
+      ? undefined
+      : NOW.getTime() - trackedDays * DAY_MS;
+  const tracked = (time: number): boolean =>
+    cutoff === undefined || time >= cutoff;
   const pointsFor = (current: number, previous: number): UsagePoint[] =>
-    labels.map((label, index) => ({
-      label,
-      current: (current * shape[index]) / total,
-      previous: (previous * previousShape[index]) / previousTotal,
-    }));
+    labels.map((label, index) => {
+      const time = timeOf({ label });
+      const previousTime = previousTimeOf({
+        period,
+        time,
+        count: labels.length,
+        labels,
+      });
+      return {
+        label,
+        current: tracked(time) ? (current * shape[index]) / total : null,
+        previous: tracked(previousTime)
+          ? (previous * previousShape[index]) / previousTotal
+          : null,
+      };
+    });
   const ratio = previousSpendUsd / Math.max(spendUsd, 0.0001);
   return {
     spend: pointsFor(spendUsd, previousSpendUsd),
@@ -259,7 +359,7 @@ function seriesFor({
 }
 
 function pointLabels({ period }: { period: UsagePeriod }): string[] {
-  const now = new Date('2026-10-20T10:20:00Z');
+  const now = NOW;
   const { count, stepMinutes } = PERIOD_STEPS[period];
   return Array.from({ length: count }, (_, index) => {
     const at = new Date(
@@ -283,6 +383,9 @@ function seededRandom({ seed }: { seed: string }): () => number {
 }
 
 const CREDIT_USD_VALUE = 0.0005;
+const NOW = new Date('2026-10-20T10:20:00Z');
+const DAY_MS = 24 * 60 * 60 * 1000;
+const TRACKING_SINCE = '2025-09-01';
 const LIMIT_WARN_SHARE = 0.8;
 const TOP_COUNT = 5;
 const DAY_MINUTES = 24 * 60;
@@ -401,6 +504,14 @@ const PRESET_PROFILES: Record<UsageDataPreset, PresetProfile> = {
     testingShare: 0.06,
     creditShare: 0.08,
     sources: ['flow-steps', 'chat', 'agent-steps', 'agents'],
+  },
+  'short-history': {
+    members: 'all',
+    scale: 1,
+    testingShare: 0.09,
+    creditShare: 0.12,
+    sources: ALL_SOURCES,
+    trackedDays: 25,
   },
   rich: {
     members: 'all',
@@ -747,6 +858,7 @@ export const USAGE_PRESETS: UsagePreset[] = [
   'empty',
   'minimal',
   'half',
+  'short-history',
   'rich',
 ];
 export const USAGE_PERIODS: UsagePeriod[] = [
@@ -772,7 +884,12 @@ export const USAGE_SCOPES: UsageScope[] = ['all', 'production', 'testing'];
 export const USAGE_METRICS: UsageMetric[] = ['spend', 'calls', 'tokens'];
 
 export type UsagePreset = 'loading' | 'error' | UsageDataPreset;
-export type UsageDataPreset = 'empty' | 'minimal' | 'half' | 'rich';
+export type UsageDataPreset =
+  | 'empty'
+  | 'minimal'
+  | 'half'
+  | 'short-history'
+  | 'rich';
 
 export type UsagePeriod =
   | '1h'
@@ -803,6 +920,7 @@ export type UsageSource =
 export type UsageItem = CatalogEntry & {
   spendUsd: number;
   previousSpendUsd: number;
+  comparable: boolean;
   calls: number;
   tokens: number;
   credits: number;
@@ -811,8 +929,16 @@ export type UsageItem = CatalogEntry & {
 
 export type UsagePoint = {
   label: string;
-  current: number;
-  previous: number;
+  current: number | null;
+  previous: number | null;
+};
+
+export type UsageHistory = {
+  trackingSince: string;
+  coveredDays: number;
+  periodDays: number;
+  currentCoverage: number;
+  comparable: boolean;
 };
 
 export type UsageSourceSpend = {
@@ -821,6 +947,7 @@ export type UsageSourceSpend = {
 };
 
 export type UsageOverview = {
+  history: UsageHistory;
   totals: {
     spendUsd: number;
     previousSpendUsd: number;
@@ -839,6 +966,7 @@ export type UsageOverview = {
 
 export type UsageDetail = {
   item: UsageItem;
+  history: UsageHistory;
   series: Record<UsageMetric, UsagePoint[]>;
   related: Partial<Record<UsageDimension, UsageItem[]>>;
   bySource?: UsageSourceSpend[];
@@ -878,10 +1006,12 @@ type PresetProfile = {
   testingShare: number;
   creditShare: number;
   sources: UsageSource[];
+  trackedDays?: number;
 };
 
 type SeriesParams = {
   period: UsagePeriod;
+  preset: UsageDataPreset;
   spendUsd: number;
   previousSpendUsd: number;
   calls: number;

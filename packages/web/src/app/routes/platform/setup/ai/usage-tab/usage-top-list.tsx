@@ -108,13 +108,15 @@ export function UsageTopRow({
             <span className="text-sm font-medium tabular-nums text-gray-12">
               {usageFormat.usd(item.spendUsd)}
             </span>
-            <DeltaChip
-              size="xs"
-              value={usageFormat.change({
-                current: item.spendUsd,
-                previous: item.previousSpendUsd,
-              })}
-            />
+            {item.comparable && (
+              <DeltaChip
+                size="xs"
+                value={usageFormat.change({
+                  current: item.spendUsd,
+                  previous: item.previousSpendUsd,
+                })}
+              />
+            )}
           </div>
           <ChevronRight className="size-4 shrink-0 text-gray-9" />
         </div>

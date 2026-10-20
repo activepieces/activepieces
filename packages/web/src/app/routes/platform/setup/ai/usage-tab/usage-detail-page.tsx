@@ -166,7 +166,11 @@ function DetailBody({
   return (
     <>
       <DetailTiles dimension={dimension} detail={detail} />
-      <UsageHero series={detail.series} period={view.period} />
+      <UsageHero
+        series={detail.series}
+        period={view.period}
+        history={detail.history}
+      />
       {detail.bySource && <UsageSourceDonut sources={detail.bySource} />}
       {related.length > 0 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">

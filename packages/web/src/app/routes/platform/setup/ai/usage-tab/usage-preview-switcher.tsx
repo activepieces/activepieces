@@ -81,6 +81,8 @@ function presetLabel({ preset }: { preset: UsagePreset }): string {
       return t('Minimal setup');
     case 'half':
       return t('Half rich');
+    case 'short-history':
+      return t('Short history');
     case 'rich':
       return t('Rich');
   }
@@ -98,6 +100,10 @@ function presetHint({ preset }: { preset: UsagePreset }): string {
       return t('One project, two flows, one OpenAI key');
     case 'half':
       return t('Three projects, two agents, credits and limits');
+    case 'short-history':
+      return t(
+        'Tracking started 25 days ago, so longer periods have no full comparison',
+      );
     case 'rich':
       return t('A busy platform with every card filled');
   }

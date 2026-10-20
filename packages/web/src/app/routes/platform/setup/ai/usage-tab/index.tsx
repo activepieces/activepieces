@@ -135,6 +135,7 @@ function UsageBody({
       <UsageHero
         series={overview.series}
         period={view.period}
+        history={overview.history}
         note={
           totals.credits > 0
             ? t('Includes {credits} credits', {

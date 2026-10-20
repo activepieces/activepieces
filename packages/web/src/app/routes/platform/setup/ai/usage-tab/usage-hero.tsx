@@ -1,5 +1,6 @@
+import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { ChartColumn, ChartLine } from 'lucide-react';
+import { ChartColumn, ChartLine, Info } from 'lucide-react';
 import { ReactNode, useId, useState } from 'react';
 import {
   Area,
@@ -19,11 +20,17 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 import { DeltaChip } from './usage-bits';
 import {
   USAGE_METRICS,
+  UsageHistory,
   UsageMetric,
   UsagePeriod,
   UsagePoint,
@@ -34,13 +41,19 @@ export function UsageHero({
   series,
   period,
   note,
+  history,
   height = 280,
 }: UsageHeroProps) {
   const [metric, setMetric] = useState<UsageMetric>('spend');
   const [chartType, setChartType] = useState<UsageChartType>('line');
   const points = series[metric];
-  const current = points.reduce((sum, point) => sum + point.current, 0);
-  const previous = points.reduce((sum, point) => sum + point.previous, 0);
+  const current = points.reduce((sum, point) => sum + (point.current ?? 0), 0);
+  const previous = points.reduce(
+    (sum, point) => sum + (point.previous ?? 0),
+    0,
+  );
+  const comparable = history?.comparable ?? true;
+  const partial = !isNil(history) && history.currentCoverage < 1;
 
   return (
     <section className={cn(adminSurface.card, 'flex flex-col gap-5 p-5')}>
@@ -53,13 +66,33 @@ export function UsageHero({
             <span className="text-4xl font-semibold tracking-tight tabular-nums text-gray-12">
               {usageFormat.metricValue({ metric, value: current })}
             </span>
-            <DeltaChip value={usageFormat.change({ current, previous })} />
-            <span className="text-sm text-gray-11">
-              {usageFormat.previousLabel({ period })}
-            </span>
+            {comparable ? (
+              <>
+                <DeltaChip value={usageFormat.change({ current, previous })} />
+                <span className="text-sm text-gray-11">
+                  {usageFormat.previousLabel({ period })}
+                </span>
+              </>
+            ) : (
+              <NoComparison />
+            )}
           </div>
           {metric === 'spend' && note && (
             <span className="text-xs text-gray-11">{note}</span>
+          )}
+          {partial && history && (
+            <span className="text-xs text-warning-11">
+              {t(
+                'Tracking started {date}, so this covers {covered} of {total} days',
+                {
+                  date: usageFormat.pointLabel({
+                    label: history.trackingSince,
+                  }),
+                  covered: Math.round(history.coveredDays),
+                  total: Math.round(history.periodDays),
+                },
+              )}
+            </span>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -95,7 +128,12 @@ export function UsageHero({
         </div>
       </div>
       <div className="flex flex-col gap-3">
-        <ChartLegend points={points} period={period} chartType={chartType} />
+        <ChartLegend
+          points={points}
+          period={period}
+          chartType={chartType}
+          comparable={comparable}
+        />
         <UsageLineChart
           points={points}
           metric={metric}
@@ -183,19 +221,21 @@ export function UsageLineChart({
               labelFormatter={(label) =>
                 usageFormat.pointLabel({ label: String(label) })
               }
-              formatter={(value, name) => (
-                <TooltipRow
-                  label={
-                    String(name) === 'previous'
-                      ? config.previous.label
-                      : config.current.label
-                  }
-                  value={usageFormat.metricValue({
-                    metric,
-                    value: Number(value),
-                  })}
-                />
-              )}
+              formatter={(value, name) =>
+                value === null || value === undefined ? null : (
+                  <TooltipRow
+                    label={
+                      String(name) === 'previous'
+                        ? config.previous.label
+                        : config.current.label
+                    }
+                    value={usageFormat.metricValue({
+                      metric,
+                      value: Number(value),
+                    })}
+                  />
+                )
+              }
             />
           }
         />
@@ -242,15 +282,36 @@ export function UsageLineChart({
   );
 }
 
+function NoComparison() {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="flex cursor-default items-center gap-1.5 text-sm text-gray-11">
+          {t('No full previous period to compare yet')}
+          <Info className="size-3.5" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={6} className="max-w-xs">
+        {t(
+          'Usage tracking started after the previous period began, so a change % would be wrong. It shows up once a full previous period is tracked.',
+        )}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function ChartLegend({
   points,
   period,
   chartType,
+  comparable,
 }: {
   points: UsagePoint[];
   period: UsagePeriod;
   chartType: UsageChartType;
+  comparable: boolean;
 }) {
+  const hasPrevious = points.some((point) => point.previous !== null);
   const ranges = usageFormat.rangeLabel({
     labels: points.map((point) => point.label),
     period,
@@ -267,7 +328,13 @@ function ChartLegend({
         previous
         chartType={chartType}
         label={t('Previous period')}
-        range={ranges?.previous}
+        range={
+          hasPrevious
+            ? comparable
+              ? ranges?.previous
+              : t('{range}, partly tracked', { range: ranges?.previous ?? '' })
+            : t('not tracked yet')
+        }
       />
     </div>
   );
@@ -336,6 +403,7 @@ type UsageChartType = 'line' | 'bar';
 
 type UsageHeroProps = {
   series: Record<UsageMetric, UsagePoint[]>;
+  history?: UsageHistory;
   period: UsagePeriod;
   note?: ReactNode;
   height?: number;

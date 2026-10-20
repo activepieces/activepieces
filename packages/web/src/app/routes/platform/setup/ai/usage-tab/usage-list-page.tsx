@@ -170,7 +170,12 @@ function columnsFor({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Change')} sortable />
       ),
-      cell: ({ row }) => <DeltaChip value={row.original.change} />,
+      cell: ({ row }) =>
+        row.original.comparable ? (
+          <DeltaChip value={row.original.change} />
+        ) : (
+          <span className="text-xs text-gray-11">—</span>
+        ),
     },
     {
       id: 'share',

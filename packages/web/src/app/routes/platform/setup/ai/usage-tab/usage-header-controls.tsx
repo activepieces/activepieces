@@ -239,8 +239,8 @@ function downloadSeriesCsv({
   const header = ['bucket', 'spend_usd', 'previous_period_spend_usd'];
   const rows = points.map((point) => [
     point.label,
-    point.current.toFixed(4),
-    point.previous.toFixed(4),
+    point.current === null ? '' : point.current.toFixed(4),
+    point.previous === null ? '' : point.previous.toFixed(4),
   ]);
   downloadCsv({ fileName, rows: [header, ...rows] });
 }
