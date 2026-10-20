@@ -146,7 +146,6 @@ export function ConfigDetail({
   const metaLine = [
     info.name,
     usedByTierCount > 0 && t('usedByTiersCount', { count: usedByTierCount }),
-    config.enabledForChat && t('Chat provider'),
     statusDetail,
   ]
     .filter(Boolean)
