@@ -233,7 +233,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 
     async markForDeletion({ id, platformId, enforceDefaultGuard = false }: DeleteProjectParams): Promise<void> {
-        const refuseIfDefault = enforceDefaultGuard && await projectRolesEnabled({ platformId, log })
+        const refuseIfDefault = enforceDefaultGuard && (await platformPlanService(log).getOrCreateForPlatform(platformId)).projectRolesEnabled
         const query = projectRepo()
             .createQueryBuilder()
             .softDelete()
@@ -279,11 +279,6 @@ async function assertDefaultProjectsBelowCap({ platformId, entityManager }: Asse
             },
         })
     }
-}
-
-async function projectRolesEnabled({ platformId, log }: ProjectRolesEnabledParams): Promise<boolean> {
-    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-    return plan.projectRolesEnabled
 }
 
 async function scheduleHardDeleteProjectJob({ id, platformId, log }: ScheduleHardDeleteProjectJobParams): Promise<void> {
@@ -440,11 +435,6 @@ type DeleteProjectParams = {
 type AssertDefaultProjectsBelowCapParams = {
     platformId: PlatformId
     entityManager: EntityManager
-}
-
-type ProjectRolesEnabledParams = {
-    platformId: PlatformId
-    log: FastifyBaseLogger
 }
 
 type ScheduleHardDeleteProjectJobParams = {
