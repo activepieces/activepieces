@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createDiscussion } from '../api';
-import { buildMemberSpacesDropdown } from '../props';
+import { bindTokenStore } from '../common/client';
 import { bettermodeAuth } from '../auth';
+import { bettermodeSchemas } from '../common/schemas';
+import { memberSpacesDropdown } from '../common/props';
+import { createLegacyPost } from './create-post-of-type';
 
 export const createDiscussionAction = createAction({
   name: 'create_discussion',
@@ -9,18 +11,14 @@ export const createDiscussionAction = createAction({
   auth: bettermodeAuth,
   displayName: 'Create Discussion Post',
   description: 'Create a new discussion post in a space',
-  audience: 'both',
-  aiMetadata: { description: 'Publishes a new discussion post (title, HTML content, optional comma-separated tags, optional locked flag) into a Bettermode community space identified by its space ID. Use to start a conversation thread programmatically. Not idempotent: each call publishes a separate post.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Publishes a new post of the community post type named exactly "Discussion" into a space the connected member has joined. Agents should use List Post Types and Create Post instead. Each call creates a separate post, so retries duplicate.',
+    idempotent: false,
+  },
   props: {
-    spaceId: Property.Dropdown({
-      auth: bettermodeAuth,
-      displayName: 'Space',
-      description: 'The space to create the discussion in',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) =>
-        await buildMemberSpacesDropdown(auth?.props),
-    }),
+    spaceId: memberSpacesDropdown,
     title: Property.ShortText({
       displayName: 'Title',
       description: 'The title of the discussion',
@@ -28,12 +26,12 @@ export const createDiscussionAction = createAction({
     }),
     content: Property.LongText({
       displayName: 'Content',
-      description: 'The content of the discussion',
+      description: 'The content of the discussion. HTML is supported.',
       required: true,
     }),
     tagNames: Property.ShortText({
       displayName: 'Tags',
-      description: 'The tags to add to the discussion',
+      description: 'Comma-separated tag names to add, for example onboarding, feedback. Leave empty for no tags.',
       required: false,
     }),
     locked: Property.Checkbox({
@@ -43,14 +41,13 @@ export const createDiscussionAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: bettermodeSchemas.legacyPost,
   async run(context) {
-    return await createDiscussion(
-      context.auth.props,
-      context.propsValue.spaceId,
-      context.propsValue.tagNames ?? '',
-      context.propsValue.title,
-      context.propsValue.content,
-      context.propsValue.locked
-    );
+    bindTokenStore({ credentials: context.auth.props, store: context.store });
+    return createLegacyPost({
+      auth: context.auth.props,
+      postTypeName: 'Discussion',
+      propsValue: context.propsValue,
+    });
   },
 });
