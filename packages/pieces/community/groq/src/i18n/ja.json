@@ -61,5 +61,7 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "Markdown": "Markdown",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "プロジェクト全体で保存されるため、このIDを使うほかのフローも同じ会話に加わります。"
 }

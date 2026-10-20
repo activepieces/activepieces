@@ -13,7 +13,7 @@ import { creditLedger } from './credit-ledger'
 import { declinedActions } from './declined-actions'
 import { classifyAgentRunError, delayWithJitter, drainOf, firstStepUsesFastModel, isTransientFailureText, NO_STEP_CONTENT, runAgentTurn, StreamDrain, trackStepContent, TurnModel } from './run-agent-turn'
 import { taskContext } from './tools/task-context'
-import { createTaskSubagentTools } from './tools/task-subagent-tools'
+import { createTaskSubagentTools, taskTokensOf } from './tools/task-subagent-tools'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -264,7 +264,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 skip: (dryRun ?? false) || (discoveryOnly ?? false),
                 log,
                 run: (stepMcpToolSet) => {
-                    const baseTools = { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) }
+                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) } })
                     const taskTools = createTaskSubagentTools({
                         tools: baseTools, guides: config.guides, models: turnModels, researchModels: isNil(fastTurnModel) ? turnModels : [fastTurnModel], tier: config.tier,
                         taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
@@ -356,7 +356,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         ...(config.previousUiMessages as PersistedAgentMessage[]),
                         ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
                     ],
-                    ...answeredByOf({ config, answeredBy: turn.answeredBy }),
+                    ...answeredByOf({ answeredBy: turn.answeredBy }),
                 }
                 const { error: cancelSaveError } = await tryCatch(() => ctx.apiClient.saveAgentMessages(cancelSavePayload))
                 if (cancelSaveError) {
@@ -384,6 +384,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
 
             const autoTitle = await autoTitlePromise
+            const taskTokens = taskTokensOf({ parts: uiParts })
 
             log.info({
                 conversation: { id: conversationId },
@@ -396,6 +397,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 model: { id: turn.answeredBy.modelId },
                 finishReason: turn.finishReason,
                 truncatedAfterRetries,
+                taskInputTokens: taskTokens.input,
+                taskOutputTokens: taskTokens.output,
             }, 'Chat message completed')
 
             const thinkingDurationMs = Date.now() - thinkingStartTime
@@ -409,7 +412,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ],
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) && isNil(config.platformTier) ? config.tier.id : undefined),
-                ...answeredByOf({ config, answeredBy: turn.answeredBy }),
+                ...answeredByOf({ answeredBy: turn.answeredBy }),
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
@@ -504,8 +507,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
     },
 }
 
-function answeredByOf({ config, answeredBy }: { config: AgentConfigResponse, answeredBy: TurnModel }): Pick<SaveAgentMessagesRequest, 'answeredBy'> {
-    return isNil(config.platformTier) ? {} : { answeredBy: { provider: answeredBy.provider, modelId: answeredBy.modelId } }
+function answeredByOf({ answeredBy }: { answeredBy: TurnModel }): Pick<SaveAgentMessagesRequest, 'answeredBy'> {
+    return { answeredBy: { provider: answeredBy.provider, modelId: answeredBy.modelId } }
 }
 
 function turnModelsFor({ config, model, billing, metadata }: { config: AgentConfigResponse, model: LanguageModel, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): [TurnModel, ...TurnModel[]] {

@@ -212,6 +212,15 @@ export const platformModelTierService = {
         })
     },
 
+    async getDefaultForRun({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun | null> {
+        const defaultTier = await tierRepo().findOneBy({ platformId, isDefault: true })
+        if (isNil(defaultTier)) {
+            return null
+        }
+        const { data } = await tryCatch(() => platformModelTierService.getForRun({ platformId, id: defaultTier.id, scope }))
+        return data ?? null
+    },
+
     async getFastForRun({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<TierForRun | null> {
         const fastTier = await tierRepo().findOneBy({ platformId, isFast: true })
         if (isNil(fastTier)) {

@@ -218,6 +218,7 @@
   "Map it from an earlier step like Find Ticket.": "Map it from an earlier step like Find Ticket.",
   "The object type of the linked records.": "The object type of the linked records.",
   "The linked records to unlink.": "The linked records to unlink.",
+  "Fields left empty keep their current value.": "Fields left empty keep their current value.",
   "Leave empty to keep the current name.": "Leave empty to keep the current name.",
   "Leave empty to keep the current pipeline.": "Leave empty to keep the current pipeline.",
   "Leave empty to keep the current stage.": "Leave empty to keep the current stage.",

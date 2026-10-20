@@ -25,19 +25,23 @@ const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous st
 
 const FINAL_STEP_MESSAGE: ModelMessage = { role: 'user', content: FINAL_STEP_NOTE }
 
-export function decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations }: {
+export function decideLoopAction({ finishReason, endedWithReply, continuations, emptyContinuations }: {
     finishReason: string
-    producedVisibleOutput: boolean
+    endedWithReply: boolean
     continuations: number
     emptyContinuations: number
 }): LoopDecision {
     if (finishReason === 'length') {
         return continuations >= MAX_AUTO_CONTINUATIONS ? 'finish' : 'continue_truncation'
     }
-    if (!producedVisibleOutput && emptyContinuations < MAX_EMPTY_CONTINUATIONS) {
+    if (!endedWithReply && emptyContinuations < MAX_EMPTY_CONTINUATIONS) {
         return 'continue_empty'
     }
     return 'finish'
+}
+
+export function stepEndsWithReply({ text, toolCallCount }: { text: string, toolCallCount: number }): boolean {
+    return text.trim().length > 0 || toolCallCount > 0
 }
 
 export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
@@ -242,7 +246,9 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 log.warn({ tool: { name: toolCall.toolName, durationMs: toolExecutionMs }, error: toolOutput.error }, 'Tool call failed')
             }
         },
-        onStepEnd: ({ content, response }) => {
+        onStepEnd: ({ content, response, usage: stepUsage }) => {
+            totalInputTokens += stepUsage.inputTokens ?? 0
+            totalOutputTokens += stepUsage.outputTokens ?? 0
             uiParts.push(...agentAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
             currentAttemptMessages = [...currentAttemptMessages, ...agentAiUtils.collectStepMessages([{ response }])]
             const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
@@ -315,8 +321,6 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         const stepMessages = agentAiUtils.collectStepMessages(steps)
         earlierAttemptToolCalls = [...earlierAttemptToolCalls, ...completedToolCalls(steps)]
         usage = attemptUsage
-        totalInputTokens += attemptUsage.inputTokens ?? 0
-        totalOutputTokens += attemptUsage.outputTokens ?? 0
         lastFinishReason = finishReason
         logTurnPerformance({ performance: finalStep.performance, modelId: current().modelId, stepCount: steps.length, log })
 
@@ -333,7 +337,8 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             break
         }
 
-        const decision = decideLoopAction({ finishReason, producedVisibleOutput, continuations, emptyContinuations })
+        const endedWithReply = stepEndsWithReply({ text: finalStep.text, toolCallCount: finalStep.toolCalls.length })
+        const decision = decideLoopAction({ finishReason, endedWithReply, continuations, emptyContinuations })
 
         if (decision === 'finish') {
             accumulatedResponseMessages.push(...stepMessages)

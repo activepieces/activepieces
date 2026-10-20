@@ -136,6 +136,7 @@ async function soap<T extends WorkdayRecord = WorkdayRecord>({
 	auth,
 	service,
 	operationXml,
+	version,
 }: SoapParams & { auth: WorkdayAuthValue }): Promise<T> {
 	const { username, password } = isuCredentials({ auth });
 	const envelope = buildSoapEnvelope({
@@ -146,8 +147,11 @@ async function soap<T extends WorkdayRecord = WorkdayRecord>({
 
 	const response = await httpClient.sendRequest({
 		method: HttpMethod.POST,
-		url: `https://${apiHost({ auth })}/ccx/service/${tenant({ auth })}/${service}/${wwsVersion({
+		url: `https://${apiHost({ auth })}/ccx/service/${tenant({
 			auth,
+		})}/${service}/${wwsVersion({
+			auth,
+			version,
 		})}`,
 		headers: {
 			'Content-Type': 'text/xml;charset=UTF-8',
@@ -159,6 +163,7 @@ async function soap<T extends WorkdayRecord = WorkdayRecord>({
 		ignoreAttributes: false,
 		removeNSPrefix: true,
 		parseAttributeValue: true,
+		numberParseOptions: { leadingZeros: false, hex: false },
 	});
 
 	const parsed: WorkdaySoapEnvelope<T> = parser.parse(
@@ -206,8 +211,17 @@ function readConnectionProp({
 	return typeof value === 'string' ? value : undefined;
 }
 
-function wwsVersion({ auth }: { auth: WorkdayAuthValue }): string {
-	const version = readConnectionProp({ auth, key: 'wwsVersion' })?.trim() || DEFAULT_WWS_VERSION;
+function wwsVersion({
+	auth,
+	version: override,
+}: {
+	auth: WorkdayAuthValue;
+	version?: string;
+}): string {
+	const version =
+		override?.trim() ||
+		readConnectionProp({ auth, key: 'wwsVersion' })?.trim() ||
+		DEFAULT_WWS_VERSION;
 	if (!/^v\d+(\.\d+)?$/.test(version)) {
 		throw new Error(`WWS Version "${version}" is not valid. Use a version like v47.0.`);
 	}
@@ -309,6 +323,7 @@ type WqlParams = {
 type SoapParams = {
 	service: string;
 	operationXml: string;
+	version?: string;
 };
 
 type ReportParams = {

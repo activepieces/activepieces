@@ -17,11 +17,28 @@ export const getMedia = createAction({
       'Reads one Instagram post, reel or album by its media id, returning caption, permalink, media type, media URL, timestamp and engagement counts. Use it after List Media, or when a trigger or earlier step supplied a media id. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'account',
+      display: 'section',
+      label: 'Account',
+      icon: 'user',
+      props: ['page'],
+    },
+    {
+      key: 'media',
+      display: 'section',
+      label: 'Post to read',
+      icon: 'file',
+      props: ['media_id'],
+    },
+  ],
   props: {
     page: instagramCommon.page,
     media_id: Property.ShortText({
       displayName: 'Media ID',
-      description: 'The id of the post, as returned by List Media or a publish action.',
+      description: 'The id from List Media or a publish step.',
+      placeholder: '17895695668004550',
       required: true,
     }),
   },

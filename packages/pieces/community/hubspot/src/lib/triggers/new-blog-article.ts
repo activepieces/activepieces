@@ -98,20 +98,27 @@ export const newBlogArticleTrigger = createTrigger({
 		articleState: Property.StaticDropdown({
 			displayName: 'Post Status',
 			required: true,
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
 					{
 						label: 'Published Only',
 						value: 'PUBLISHED',
+						description: 'Live posts only',
+						icon: 'send',
 					},
 					{
 						label: 'Draft Only',
 						value: 'DRAFT',
+						description: 'Unpublished only',
+						icon: 'file',
 					},
 					{
 						label: 'Both',
 						value: 'BOTH',
+						description: 'Drafts and live',
+						icon: 'inbox',
 					},
 				],
 			},
