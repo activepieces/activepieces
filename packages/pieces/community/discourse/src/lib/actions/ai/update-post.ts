@@ -27,7 +27,7 @@ export const updatePostAction = createAction({
   outputSchema: discourseSchemas.post,
   async run({ auth, propsValue }) {
     const id = discourseInput.id({ value: propsValue.post_id, label: 'Post ID' });
-    const raw = discourseInput.text({ value: propsValue.raw, label: 'New Content' });
+    const raw = discourseInput.markdown({ value: propsValue.raw, label: 'New Content' });
     const editReason = discourseInput.optionalText(propsValue.edit_reason);
     const body = discourseMap.rec(
       await discourseRequest({

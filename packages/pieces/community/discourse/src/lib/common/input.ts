@@ -32,6 +32,13 @@ function text({ value, label }: { value: unknown; label: string }): string {
   return result;
 }
 
+function markdown({ value, label }: { value: unknown; label: string }): string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new Error(`${label} is required.`);
+  }
+  return value;
+}
+
 function secret({ value, label }: { value: unknown; label: string }): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new Error(`${label} is required.`);
@@ -113,6 +120,7 @@ export const discourseInput = {
   optionalId,
   name,
   text,
+  markdown,
   optionalText,
   stringList,
   boundedNumber,

@@ -14,9 +14,11 @@ The Discourse connection used to send your API key to whatever URL was entered, 
 
 Create Post, Create Topic, Change User Trust Level and Send Private Message used to return the raw HTTP response (`{status, headers, body}`). From 0.3.0 they return the result fields directly (for example `id`, `topic_id`, `url`), so a reference such as `{{step.body.id}}` no longer resolves after the upgrade.
 
+Add Users to Group used to return Discourse's response as is (`success: "OK"` and `usernames` and `emails` as lists). From 0.3.0 it returns `{ group_id, success, usernames, skipped_usernames, emails }`, where `success` is `true` and the names and emails are comma-separated text.
+
 #### What you need to do
 
-If your Discourse forum is reached over `http://` or on a private network, serve it over https at a public address and update the connection's Website URL. After upgrading a step that uses Create Post, Create Topic, Change User Trust Level or Send Private Message, change later references from `{{step.body.<field>}}` to `{{step.<field>}}` (for example `{{step.body.id}}` becomes `{{step.id}}`). Change User Trust Level nested its fields under `user`, so `{{step.body.user.trust_level}}` becomes `{{step.trust_level}}`, `{{step.body.user.username}}` becomes `{{step.username}}`, and the user's ID is `{{step.user_id}}`. Steps keep running on the version they were built with until you upgrade them.
+If your Discourse forum is reached over `http://` or on a private network, serve it over https at a public address and update the connection's Website URL. After upgrading a step that uses Create Post, Create Topic, Change User Trust Level or Send Private Message, change later references from `{{step.body.<field>}}` to `{{step.<field>}}` (for example `{{step.body.id}}` becomes `{{step.id}}`). Change User Trust Level nested its fields under `user`, so `{{step.body.user.trust_level}}` becomes `{{step.trust_level}}`, `{{step.body.user.username}}` becomes `{{step.username}}`, and the user's ID is `{{step.user_id}}`. Steps keep running on the version they were built with until you upgrade them. If a later step reads Add Users to Group's output, use `{{step.usernames}}` (now comma-separated text) instead of the `usernames` list, and check `{{step.skipped_usernames}}` for users that were not added.
 
 #### Snowflake 0.4.0: Update Row needs a WHERE condition, stricter limits, query timeout and stage paths
 

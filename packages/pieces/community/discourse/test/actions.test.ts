@@ -180,3 +180,19 @@ describe('every action sends the documented request', () => {
     });
   }
 });
+
+describe('markdown bodies keep their whitespace', () => {
+  it.each([
+    { action: createPost, props: { raw: '    const answer = 42;\n', topic_id: 42 }, raw: '    const answer = 42;\n' },
+    { action: sendPrivateMessage, props: { title: 'T', raw: '  - indented item', target_recipients: ['alice'] }, raw: '  - indented item' },
+  ])('$action.name sends the body untrimmed', async ({ action, props, raw }) => {
+    const calls = stubFetch([{ body: POST }]);
+    await call({ fn: action.run, ctx: makeContext({ props }) });
+    expect(calls[0].body).toMatchObject({ raw });
+  });
+
+  it('still rejects a blank body', async () => {
+    stubFetch([{ body: POST }]);
+    await expect(call({ fn: createPost.run, ctx: makeContext({ props: { raw: '   ', topic_id: 42 } }) })).rejects.toThrow('Post Content is required');
+  });
+});

@@ -43,7 +43,7 @@ async function createPost({
     path: '/posts.json',
     body: {
       topic_id: Number(discourseInput.id({ value: topicId, label: 'Topic ID' })),
-      raw: discourseInput.text({ value: raw, label: 'Post Content' }),
+      raw: discourseInput.markdown({ value: raw, label: 'Post Content' }),
       ...optionalNumberField({
         key: 'reply_to_post_number',
         value: discourseInput.optionalId({ value: replyToPostNumber, label: 'Reply To Post Number' }),
@@ -138,7 +138,7 @@ async function createTopic({
     path: '/posts.json',
     body: {
       title: discourseInput.text({ value: title, label: 'Title' }),
-      raw: discourseInput.text({ value: raw, label: 'Content' }),
+      raw: discourseInput.markdown({ value: raw, label: 'Content' }),
       ...optionalNumberField({ key: 'category', value: category }),
       ...(tagList.length > 0 ? { tags: tagList } : {}),
       ...(external !== undefined ? { external_id: external } : {}),
@@ -241,7 +241,7 @@ async function sendPrivateMessage({
     path: '/posts.json',
     body: {
       title: discourseInput.text({ value: title, label: 'Title' }),
-      raw: discourseInput.text({ value: raw, label: 'Content' }),
+      raw: discourseInput.markdown({ value: raw, label: 'Content' }),
       archetype: 'private_message',
       ...(users.length > 0 ? { target_recipients: users.join(',') } : {}),
       ...(groupNames.length > 0 ? { target_group_names: groupNames.join(',') } : {}),
