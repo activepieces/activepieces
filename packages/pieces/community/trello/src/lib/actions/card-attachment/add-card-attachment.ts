@@ -18,26 +18,38 @@ export const addCardAttachment = createAction({
   description: 'Adds an attachment to a card.',
   audience: 'human',
   outputSchema: addCardAttachmentActionOutputSchema,
+  propertyGroups: [
+    { key: 'card', display: 'section', label: 'Card', icon: 'tag', props: ['card_id'] },
+    { key: 'attachment', display: 'section', label: 'Attachment', icon: 'paperclip', props: ['attachment', 'name', 'mime_type', 'set_cover'] },
+  ],
   props: {
     card_id: Property.ShortText({
-      description: 'The ID of the card to add attachment to',
+      description: "From an earlier step, or the code after /c/ in the card's URL.",
       displayName: 'Card ID',
+      placeholder: 'aBcD1234',
       required: true,
     }),
     attachment: Property.File({
-      displayName: 'Attachment File',
+      description: 'A file from an earlier step, or a public URL.',
+      displayName: 'File',
       required: true,
     }),
     name: Property.ShortText({
-      displayName: 'Attachment Name',
+      description: "Shown on the card. Empty uses the file's own name.",
+      displayName: 'File Name',
+      placeholder: 'report.pdf',
       required: false,
+      width: 'half',
     }),
     mime_type: Property.ShortText({
-      displayName: 'MIME Type',
+      description: 'The MIME type. Empty lets Trello detect it.',
+      displayName: 'File Type',
+      placeholder: 'application/pdf',
       required: false,
+      width: 'half',
     }),
     set_cover: Property.Checkbox({
-      description: 'Set this attachment as the card cover',
+      description: 'Only images can be card covers.',
       displayName: 'Set as Cover',
       required: false,
     }),

@@ -84,7 +84,7 @@
   "Replace the entire body of a Google Docs document with Markdown content": "Replace the entire body of a Google Docs document with Markdown content",
   "Replace a character range of a Google Docs document with Markdown content": "Replace a character range of a Google Docs document with Markdown content",
   "Send a raw Google Docs batchUpdate requests array to a document": "Send a raw Google Docs batchUpdate requests array to a document",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Add text to the end of a document.": "Add text to the end of a document.",
   "Document Title": "ドキュメントタイトル",
   "Document Content": "新規作成時の本文",

@@ -16,6 +16,15 @@ export const getDealAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single deal by its HubSpot deal ID, returning default and any requested additional properties such as amount, stage, and close date. Use when you already have the deal ID. Read-only and idempotent.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Deal',
+			icon: 'tag',
+			props: ['dealId'],
+		},
+	],
 	props: {
 		dealId: Property.ShortText({
 			displayName: 'Deal ID',

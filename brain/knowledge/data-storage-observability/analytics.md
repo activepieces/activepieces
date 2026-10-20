@@ -23,6 +23,8 @@ Platform-level reporting on automation usage — daily run counts, active flows/
 
 - All frontend queries include `enabled: platform.plan.analyticsEnabled` so they never fire when off.
 - The "Refresh" button invalidates all analytics query keys after calling the backend refresh.
+- `flow_run.created` is when a run was admitted, not when its row was written: the runs metadata queue writes the row later, hours later on retry. So a `created > lastRefresh` cursor misses runs; each refresh recounts yesterday and today and replaces those day buckets (ENG-1004).
+- Raw `DATE_TRUNC` rows come back from `pg` as a `Date`; convert with `dayjs(day).toISOString()` before using them as keys next to saved JSON strings (ENG-924).
 
 ### Key files
 

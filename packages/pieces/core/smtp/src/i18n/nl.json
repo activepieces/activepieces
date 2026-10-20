@@ -24,18 +24,5 @@
   "Custom Headers": "Aangepaste headers",
   "Attachments": "Bijlagen",
   "plain text": "onopgemaakte tekst",
-  "html": "html",
-  "Require TLS": "TLS vereisen",
-  "465 encrypts from the start; other ports upgrade to STARTTLS if the server offers it.": "465 versleutelt vanaf het begin; andere poorten schakelen over op STARTTLS als de server dat aanbiedt.",
-  "Fail instead of sending unencrypted if STARTTLS is unavailable.": "Mislukt in plaats van onversleuteld te verzenden als STARTTLS niet beschikbaar is.",
-  "Login name, usually your email address. Blank if no login is needed.": "Inlognaam, meestal je e-mailadres. Leeg als er geen login nodig is.",
-  "Cc": "Cc",
-  "Bcc": "Bcc",
-  "Must be an address your server lets you send from.": "Moet een adres zijn waarvan je server verzenden toestaat.",
-  "Replies go to this address instead of the sender.": "Antwoorden gaan naar dit adres in plaats van naar de afzender.",
-  "How the text in Body is interpreted.": "Hoe de tekst in Lichaam wordt geïnterpreteerd.",
-  "Name shown in the inbox instead of your address.": "Naam die in de inbox wordt getoond in plaats van je adres.",
-  "Extra headers added to the email, as name and value pairs.": "Extra headers voor de e-mail, als naam-waardeparen.",
-  "Plain Text": "Platte tekst",
-  "HTML": "HTML"
+  "html": "html"
 }

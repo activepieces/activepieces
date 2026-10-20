@@ -4,7 +4,8 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { togglTrackAuth } from '../..';
+import { togglTrackAuth } from '../auth';
+import { togglApi } from '../common/client';
 import { togglCommon } from '../common';
 import {
   generateTogglWebhookInstructions,
@@ -18,7 +19,7 @@ export const newClient = createTrigger({
   displayName: 'New Client',
   description: 'Fires when a new client is created in a workspace.',
   aiMetadata: {
-    description: 'Fires when a new client is created in the configured Toggl Track workspace, delivering the created client (id, name, notes, workspace). Delivered via a Toggl webhook the user must set up manually.',
+    description: 'Fires when a client is created in the workspace, delivering the client. Needs a webhook created manually in Toggl. Classic only.',
   },
   props: {
     workspace_id: togglCommon.workspace_id,
@@ -49,11 +50,13 @@ export const newClient = createTrigger({
 
 
   async onEnable(context) {
-    // Manual setup - no programmatic registration needed
+    if (togglApi.isTwo(context.auth)) {
+      throw togglApi.classicOnlyError(WEBHOOK_TRIGGER_NAME);
+    }
   },
 
-  async onDisable(context) {
-    // Manual setup - users manage webhooks in Toggl Track UI
+  async onDisable() {
+    return;
   },
 
   async run(context) {
@@ -91,3 +94,5 @@ export const newClient = createTrigger({
     return [payload];
   },
 });
+
+const WEBHOOK_TRIGGER_NAME = 'The New Client trigger';

@@ -49,7 +49,10 @@ import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 import { flowsApi } from '../api/flows-api';
 import { flowsUtils } from '../utils/flows-utils';
 
+import { sampleDataHooks } from './sample-data-hooks';
+
 const createFlowsQueryKey = (projectId: string) => ['flows', projectId];
+const createFlowQueryKeyPrefix = (flowId: string) => ['flow', flowId];
 export const flowHooks = {
   invalidateFlowsQuery: (queryClient: QueryClient) => {
     queryClient.invalidateQueries({
@@ -598,7 +601,27 @@ export const flowHooks = {
   }: {
     flowId: string;
     versionId: string | undefined;
-  }) => ['flow', flowId, versionId],
+  }) => [...createFlowQueryKeyPrefix(flowId), versionId],
+  removeFlowFromCache: ({
+    flowId,
+    queryClient,
+  }: {
+    flowId: string;
+    queryClient: QueryClient;
+  }) => {
+    const flowQueryKeyPrefix = createFlowQueryKeyPrefix(flowId);
+    queryClient
+      .getQueriesData<PopulatedFlow | null>({ queryKey: flowQueryKeyPrefix })
+      .forEach(([, flow]) => {
+        if (!isNil(flow)) {
+          sampleDataHooks.removeSampleData({
+            flowVersionId: flow.version.id,
+            queryClient,
+          });
+        }
+      });
+    queryClient.removeQueries({ queryKey: flowQueryKeyPrefix });
+  },
 };
 
 type UseChangeFlowStatusParams = {
