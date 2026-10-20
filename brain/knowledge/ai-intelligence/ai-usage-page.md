@@ -13,6 +13,14 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 - **Overview, then drill down.** Every item opens its own detail page (`/platform/ai/usage/:dimension/:id`), and every card has See all (`/platform/ai/usage/:dimension`). Period and scope ride in the URL.
 - **One detail template.** Header + the same chart + top 5 of the *other* dimensions + one extra card per type: project → monthly limit, flow → runs and cost per run, key → reported vs estimated, model → list price. A flow detail stops at flow level; there is no per-step split.
 
+## Data hierarchy
+- **Root: the platform**, which is the bill. Scope (Production / Testing / All) and period filter the whole page; they are not levels.
+- **Tree 1, where the money is spent:** platform → project → flows · agents · chat by user. Project is the parent because limits, project admins and ownership live there.
+- **Tree 2, what it is spent on:** platform → provider → key → model. Keys are platform-owned and shared across projects, so they never sit under a project.
+- **Side views, not levels:** user (who; only chat and agent runs have one) and source (what kind of work, an overlay on tree 1).
+- **Detail pages pivot to the other tree:** a flow shows its models and keys, and a key shows its projects and flows.
+- **A Run Agent step counts under both its flow and its agent**, marked Shared, so flows + agents can add up to more than the project total. Decided 2026-10-20; the two-tree layout is being tried as "Usage v2" next to the flat page.
+
 ## Page anatomy
 1. Tiles: month-end forecast (this month) or average per day, AI calls, tokens.
 2. Hero: total for the period, change vs the previous period, line chart (this period solid, previous dashed), metric switch Spend · Calls · Tokens.
