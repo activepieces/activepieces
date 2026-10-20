@@ -780,6 +780,17 @@ export function useAgentChat({
       savedPickRef.current = pick ?? null;
       conversationIdRef.current = conv.id;
       setConversationIdState(conv.id);
+      const latestPick = modelPickRef.current;
+      if (!isNil(latestPick) && latestPick !== (pick ?? null)) {
+        pickSaveQueueRef.current = pickSaveQueueRef.current.then(async () => {
+          const { error } = await tryCatch(() =>
+            chatApi.updateConversation(conv.id, latestPick),
+          );
+          if (isNil(error)) {
+            savedPickRef.current = latestPick;
+          }
+        });
+      }
       return conv;
     },
     [agentId, builder],

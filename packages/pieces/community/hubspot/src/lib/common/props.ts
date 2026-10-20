@@ -999,16 +999,21 @@ export const 	pageType=Property.StaticDropdown({
 	displayName:'Page Type',
 	required:true,
 	defaultValue:'landing_page',
+	display:'cards',
 	options:{
 		disabled:false,
 		options:[
 			{
 				label:'Landing Page',
-				value:'landing_page'
+				value:'landing_page',
+				description:'For a campaign',
+				icon:'tag'
 			},
 			{
 				label:'Site Page',
-				value:'site_page'
+				value:'site_page',
+				description:'Part of your site',
+				icon:'file'
 			}
 		]
 	}

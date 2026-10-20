@@ -20,6 +20,22 @@ export const removeAssociationsAction = createAction({
     audience: 'both',
     aiMetadata: { description: 'Remove the labeled association of a specific type between one source HubSpot object and one or more target objects, batching the targets. Removing an already-absent association is harmless, so it is idempotent on the end state. Use Create Associations to add links.', idempotent: true },
     outputSchema: removeAssociationsOutputSchema,
+    propertyGroups: [
+        {
+            key: 'source',
+            display: 'section',
+            label: 'From Record',
+            icon: 'file',
+            props: ['fromObjectId', 'fromObjectType'],
+        },
+        {
+            key: 'target',
+            display: 'section',
+            label: 'Records to Unlink',
+            icon: 'trash',
+            props: ['toObjectType', 'associationType', 'toObjectIds'],
+        },
+    ],
     props: {
         fromObjectId: Property.ShortText({
             displayName: 'From Object ID',

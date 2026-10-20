@@ -30,6 +30,11 @@ export const aiProviderApi = {
       `/v1/ai-providers/configs/${configId}/suggested-models`,
     );
   },
+  listPlatformModelOptions({ surface }: { surface: ModelOptionsSurface }) {
+    return api.get<ModelOptions>('/v1/ai-providers/model-options/platform', {
+      surface,
+    });
+  },
   listModelOptions({
     projectId,
     surface,

@@ -54,11 +54,11 @@ export function CapabilitiesTab() {
   } = aiProviderQueries.useAiProviderConfigs();
   const isError = configsFailed || providersFailed;
   const refetch = () => Promise.all([refetchConfigs(), refetchProviders()]);
+  const creditsProvider = providers?.find(
+    (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
+  );
   const chatProvider =
-    providers?.find((provider) => provider.enabledForChat) ??
-    providers?.find(
-      (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
-    );
+    providers?.find((provider) => provider.enabledForChat) ?? creditsProvider;
 
   const { mutate: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
     onSuccess: () => refetchConfigs(),
@@ -92,15 +92,13 @@ export function CapabilitiesTab() {
                 capabilityInfo={capabilityInfo}
                 config={config}
                 providers={providers ?? []}
-                chatProviderFallback={
-                  chatProvider &&
-                  aiCapabilitySources.servesByDefault({
-                    capability: capabilityInfo.capability,
-                    provider: chatProvider,
-                  })
-                    ? chatProvider
-                    : undefined
-                }
+                chatProviderFallback={fallbackFor({
+                  capability: capabilityInfo.capability,
+                  candidates:
+                    capabilityInfo.capability === AiToolCapability.EMBEDDINGS
+                      ? [chatProvider, creditsProvider]
+                      : [chatProvider],
+                })}
                 onDelete={() => config && remove(config.id)}
                 onSaved={() => refetchConfigs()}
               />
@@ -109,6 +107,20 @@ export function CapabilitiesTab() {
         </div>
       )}
     </>
+  );
+}
+
+function fallbackFor({
+  capability,
+  candidates,
+}: {
+  capability: AiToolCapability;
+  candidates: (AIProviderWithoutSensitiveData | undefined)[];
+}): AIProviderWithoutSensitiveData | undefined {
+  return candidates.find(
+    (candidate): candidate is AIProviderWithoutSensitiveData =>
+      candidate !== undefined &&
+      aiCapabilitySources.servesByDefault({ capability, provider: candidate }),
   );
 }
 

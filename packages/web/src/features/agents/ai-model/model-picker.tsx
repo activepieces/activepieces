@@ -38,6 +38,7 @@ export function ModelPicker({
   disabled = false,
   withTiers = true,
   variant = 'field',
+  placeholder,
   className,
 }: ModelPickerProps) {
   const [open, setOpen] = useState(false);
@@ -53,9 +54,8 @@ export function ModelPicker({
         : modelPickerView({
             options: withTiers ? data : { ...data, tiers: [] },
             shown: value,
-            surface,
           }),
-    [data, value, withTiers, surface],
+    [data, value, withTiers],
   );
 
   if (isLoading) {
@@ -113,7 +113,11 @@ export function ModelPicker({
         )}
       >
         <TriggerContent
-          current={view?.current ?? emptyPick()}
+          current={
+            (view?.current.kind ?? 'empty') === 'empty' && !isNil(placeholder)
+              ? { ...emptyPick(), label: placeholder }
+              : view?.current ?? emptyPick()
+          }
           compact={variant === 'pill'}
         />
         <ChevronDown
@@ -130,11 +134,9 @@ export function ModelPicker({
 export function modelPickerView({
   options,
   shown,
-  surface,
 }: {
   options: ModelOptions;
   shown: ModelChoice | null;
-  surface?: ModelOptionsSurface;
 }): PickerView {
   const current = resolveCurrent({ options, shown });
   const tierItems = options.tiers.map((tier) => {
@@ -221,14 +223,6 @@ export function modelPickerView({
             modelId: model.id,
           } satisfies ModelChoice,
           name: model.name,
-          badges:
-            surface !== 'flow' &&
-            modelMeta.isRecommended({
-              provider: key.provider,
-              modelId: model.id,
-            }) ? (
-              <RecommendedMark />
-            ) : undefined,
           trailing: contextOf({ model: optionModel }),
           searchText: `${model.name} ${model.id} ${key.name} ${info.name}`,
           selected:
@@ -527,18 +521,6 @@ function TierBadges({
   );
 }
 
-function RecommendedMark() {
-  return (
-    <span title={t('Recommended')} className="flex shrink-0 items-center">
-      <Star
-        className="size-3 fill-warning-9 text-warning-9 opacity-70"
-        aria-hidden
-      />
-      <span className="sr-only">{t('Recommended')}</span>
-    </span>
-  );
-}
-
 function contextOf({ model }: { model: OptionModel }): string | undefined {
   const tokens = model.metadata?.contextTokens;
   return isNil(tokens) ? undefined : modelMeta.formatContext({ tokens });
@@ -584,13 +566,14 @@ type PickerView = {
 };
 
 type ModelPickerProps = {
-  projectId: string;
+  projectId?: string;
   surface: ModelOptionsSurface;
   value: ModelChoice | null;
   onChange: (choice: ModelChoice) => void;
   disabled?: boolean;
   withTiers?: boolean;
   variant?: 'field' | 'pill';
+  placeholder?: string;
   className?: string;
 };
 

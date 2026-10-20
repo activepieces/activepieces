@@ -17,8 +17,9 @@ export const deleteCard = createAction({
   aiMetadata: { description: 'Permanently deletes a Trello card by its card_id. Use to remove a card entirely (this is irreversible, unlike archiving via Update Card with closed=true). Requires card_id; deleting the same id again returns an error once it no longer exists.', idempotent: false },
   props: {
     card_id: Property.ShortText({
-      description: 'The ID of the card to delete.',
+      description: "From an earlier step, or the code after /c/ in the card's URL.",
       displayName: 'Card ID',
+      placeholder: 'aBcD1234',
       required: true,
     }),
   },

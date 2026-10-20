@@ -172,9 +172,18 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         const scope = { type: 'project' as const, projectId }
         const choice = (await aiToolConfigService(log).getProviderChoices({ platformId })).embeddings
         const chosen = isNil(choice) ? null : await aiProviderService(log).findKeyConfig({ platformId, configId: choice.aiProviderId, scope })
-        const credentials = chosen ?? await aiProviderService(log).getChatProvider({ platformId, scope })
-        const modelId = (isNil(chosen) ? undefined : choice?.modelId) ?? (isNil(credentials) ? undefined : AI_PROVIDER_CAPABILITIES[credentials.provider].defaultEmbeddingModel)
-        return isNil(credentials) || isNil(modelId) ? null : { credentials, modelId }
+        if (!isNil(chosen)) {
+            const pickedModel = choice?.modelId ?? AI_PROVIDER_CAPABILITIES[chosen.provider].defaultEmbeddingModel
+            return isNil(pickedModel) ? null : { credentials: chosen, modelId: pickedModel }
+        }
+        const defaultKey = await aiProviderService(log).getChatProvider({ platformId, scope })
+        const defaultKeyModel = isNil(defaultKey) ? undefined : AI_PROVIDER_CAPABILITIES[defaultKey.provider].defaultEmbeddingModel
+        if (!isNil(defaultKey) && !isNil(defaultKeyModel)) {
+            return { credentials: defaultKey, modelId: defaultKeyModel }
+        }
+        const credits = await aiProviderService(log).findCreditsConfig({ platformId, scope })
+        const creditsModel = isNil(credits) ? undefined : AI_PROVIDER_CAPABILITIES[credits.provider].defaultEmbeddingModel
+        return isNil(credits) || isNil(creditsModel) ? null : { credentials: credits, modelId: creditsModel }
     },
 
     async getEmbeddingSource({ platformId, projectId }: { platformId: string, projectId: string }): Promise<KnowledgeBaseEmbeddingSource> {

@@ -6,7 +6,6 @@ import { aiKeyScope, ProviderScope } from '../../ai/ai-key-scope'
 import { aiModelOptionsService } from '../../ai/ai-model-options-service'
 import { AIProviderEntity, AIProviderSchema } from '../../ai/ai-provider-entity'
 import { aiProviderService } from '../../ai/ai-provider-service'
-import { platformModelTierService } from '../../ai/platform-model-tier-service'
 import { transaction } from '../../core/db/transaction'
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { agentHelpers } from './agent-helpers'
@@ -15,21 +14,11 @@ import { agentModelTier } from './agent-model-tier'
 
 export const agentChatModel = (log: FastifyBaseLogger) => ({
     async defaultPick({ platformId, projectId }: { platformId: string, projectId: string }): Promise<ChatPick | null> {
-        const scope: ProviderScope = { type: 'project', projectId }
-        const defaultTier = await platformModelTierService.getDefaultForRun({ platformId, scope })
-        if (!isNil(defaultTier)) {
-            const { error } = await tryCatch(() => agentModelTier(log).assertUsable({ platformId, tierId: defaultTier.tier.id, scope }))
-            if (isNil(error)) {
-                return { modelTierId: defaultTier.tier.id, providerConfigId: null, modelName: null }
-            }
-        }
-        const chatKey = await aiProviderService(log).getChatKey({ platformId, scope })
         const { defaultChoice } = await aiModelOptionsService(log).list({ platformId, projectId, surface: 'chat' })
-        const onChatKey = defaultChoice?.type === 'model' && defaultChoice.providerConfigId === chatKey?.id
-        if (!isNil(chatKey) && !onChatKey) {
-            return null
-        }
         if (isNil(defaultChoice)) {
+            if (!isNil(await aiProviderService(log).getChatKey({ platformId, scope: { type: 'project', projectId } }))) {
+                return null
+            }
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityId: platformId, entityType: AI_PROVIDER_ENTITY_TYPES.chatProvider },

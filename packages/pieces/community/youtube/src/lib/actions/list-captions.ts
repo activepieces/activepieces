@@ -39,6 +39,15 @@ export const youtubeListCaptionsAction = createAction({
       advanced: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'video',
+      display: 'section',
+      label: 'Video',
+      icon: 'file',
+      props: ['videoId'],
+    },
+  ],
   async run(context) {
     const { captionIds, onBehalfOfContentOwner, videoId } = context.propsValue;
 

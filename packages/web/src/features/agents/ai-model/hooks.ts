@@ -10,16 +10,18 @@ export const aiModelHooks = {
     tierId,
     enabled = true,
   }: {
-    projectId: string;
+    projectId?: string;
     surface: ModelOptionsSurface;
     tierId?: string;
     enabled?: boolean;
   }) =>
     useQuery({
       enabled,
-      queryKey: ['ai-model-options', projectId, surface, tierId],
+      queryKey: ['ai-model-options', projectId ?? 'platform', surface, tierId],
       queryFn: () =>
-        aiProviderApi.listModelOptions({ projectId, surface, tierId }),
+        projectId === undefined
+          ? aiProviderApi.listPlatformModelOptions({ surface })
+          : aiProviderApi.listModelOptions({ projectId, surface, tierId }),
       placeholderData: keepPreviousData,
     }),
 };

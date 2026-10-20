@@ -20,7 +20,7 @@ function AICenter({ section }: { section: AISection }) {
   }
 
   return (
-    <AdminPage width={PAGE_WIDTH[section]}>
+    <AdminPage width="wide">
       {section === 'providers' ? (
         <ProvidersTab />
       ) : section === 'tiers' ? (
@@ -33,12 +33,6 @@ function AICenter({ section }: { section: AISection }) {
 }
 
 type AISection = 'providers' | 'capabilities' | 'tiers';
-
-const PAGE_WIDTH: Record<AISection, 'full' | 'content' | 'wide'> = {
-  providers: 'wide',
-  capabilities: 'content',
-  tiers: 'full',
-};
 
 type AIProvidersPageProps = {
   section: AISection;
