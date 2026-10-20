@@ -136,7 +136,7 @@ function buildQuery(query?: QueryInput): QueryParams {
   );
 }
 
-async function request({ auth, method, path, query, body }: InvoiceNinjaRequest): Promise<unknown> {
+async function request({ auth, method, path, query, body, timeoutMs }: InvoiceNinjaRequest): Promise<unknown> {
   const baseUrl = apiBaseUrl(auth.base_url);
   const headers = authHeaders(auth);
   const hasBody = body !== undefined;
@@ -152,7 +152,7 @@ async function request({ auth, method, path, query, body }: InvoiceNinjaRequest)
         headers,
         queryParams: buildQuery(query),
         body: hasBody ? body : undefined,
-        timeout: REQUEST_TIMEOUT_MS,
+        timeout: Math.min(REQUEST_TIMEOUT_MS, Math.max(1, Math.floor(timeoutMs ?? REQUEST_TIMEOUT_MS))),
         followRedirects: false,
       },
       { dispatcher },
@@ -300,7 +300,17 @@ function compact(record: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
 }
 
-function lineItemsOf({ value, label, required }: { value: unknown; label: string; required: boolean }): Record<string, unknown>[] | undefined {
+function lineItemsOf({
+  value,
+  label,
+  required,
+  isAmountDiscount,
+}: {
+  value: unknown;
+  label: string;
+  required: boolean;
+  isAmountDiscount?: boolean;
+}): Record<string, unknown>[] | undefined {
   if (value === undefined || value === null || value === '') {
     if (required) throw new Error(`${label} needs at least one line item.`);
     return undefined;
@@ -319,6 +329,7 @@ function lineItemsOf({ value, label, required }: { value: unknown; label: string
       cost: optionalNumber({ value: item['cost'], label: `${row} cost` }),
       quantity: optionalNumber({ value: item['quantity'], label: `${row} quantity` }) ?? 1,
       discount: optionalNumber({ value: item['discount'], label: `${row} discount`, min: 0 }),
+      is_amount_discount: isAmountDiscount,
       tax_name1: optionalText(item['tax_name1']),
       tax_rate1: optionalNumber({ value: item['tax_rate1'], label: `${row} tax rate`, min: 0, max: 100 }),
     });
@@ -370,6 +381,7 @@ export type InvoiceNinjaRequest = {
   path: string;
   query?: QueryInput;
   body?: unknown;
+  timeoutMs?: number;
 };
 
 type ListPageInput = {

@@ -96,7 +96,7 @@ export const createRecurringInvoiceAi = createAction({
     const body = invoiceNinjaClient.compact({
       ...invoiceNinjaProps.documentBody(propsValue),
       client_id: invoiceNinjaClient.parseId({ value: propsValue.client_id, label: 'Client ID' }),
-      line_items: invoiceNinjaClient.lineItemsOf({ value: propsValue.line_items, label: 'Line Items', required: true }),
+      line_items: invoiceNinjaClient.lineItemsOf({ value: propsValue.line_items, label: 'Line Items', required: true, isAmountDiscount: invoiceNinjaClient.parseBoolean(propsValue.is_amount_discount) }),
       frequency_id: frequency === undefined ? undefined : String(frequency),
       next_send_date: invoiceNinjaClient.toDateOnly({ value: propsValue.next_send_date, label: 'Next Send Date' }),
       remaining_cycles: cycles ?? -1,

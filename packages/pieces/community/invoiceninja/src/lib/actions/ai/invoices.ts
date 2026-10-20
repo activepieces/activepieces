@@ -96,7 +96,7 @@ export const createInvoiceAi = createAction({
     const body = {
       ...invoiceNinjaProps.documentBody(propsValue),
       client_id: invoiceNinjaClient.parseId({ value: propsValue.client_id, label: 'Client ID' }),
-      line_items: invoiceNinjaClient.lineItemsOf({ value: propsValue.line_items, label: 'Line Items', required: true }),
+      line_items: invoiceNinjaClient.lineItemsOf({ value: propsValue.line_items, label: 'Line Items', required: true, isAmountDiscount: invoiceNinjaClient.parseBoolean(propsValue.is_amount_discount) }),
     };
     return invoiceNinjaClient.recordOf(
       await invoiceNinjaClient.request({ auth: auth.props, method: HttpMethod.POST, path: '/invoices', body }),
@@ -127,7 +127,7 @@ export const updateInvoice = createAction({
     const body = invoiceNinjaClient.compact({
       ...invoiceNinjaClient.clearedFields({ value: propsValue.clear_fields, allowed: CLEARABLE }),
       ...invoiceNinjaProps.documentBody(propsValue),
-      line_items: invoiceNinjaClient.lineItemsOf({ value: propsValue.line_items, label: 'Line Items', required: false }),
+      line_items: invoiceNinjaClient.lineItemsOf({ value: propsValue.line_items, label: 'Line Items', required: false, isAmountDiscount: invoiceNinjaClient.parseBoolean(propsValue.is_amount_discount) }),
     });
     if (Object.keys(body).length === 0) {
       throw new Error('Nothing to update: give at least one field or clear_fields.');

@@ -74,6 +74,11 @@ describe('ids, dates and line items', () => {
     expect(() => invoiceNinjaClient.lineItemsOf({ value: [{ cost: 1 }], label: 'L', required: true })).toThrow();
     expect(() => invoiceNinjaClient.lineItemsOf({ value: [], label: 'L', required: true })).toThrow();
   });
+  it('gives each line the document discount type', () => {
+    expect(invoiceNinjaClient.lineItemsOf({ value: [{ notes: 'x', discount: 5 }], label: 'L', required: true, isAmountDiscount: true })).toEqual([
+      { notes: 'x', quantity: 1, discount: 5, is_amount_discount: true },
+    ]);
+  });
 });
 
 describe('requests', () => {
@@ -247,6 +252,21 @@ describe('getreport_task', () => {
     const assertion = expect(promise).rejects.toThrow('was not ready after 60 seconds');
     await vi.advanceTimersByTimeAsync(62_000);
     await assertion;
+  });
+
+  it('bounds every poll timeout by the time left before the deadline', async () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(httpClient, 'sendRequest');
+    spy.mockResolvedValueOnce({ status: 200, headers: {}, body: { message: jobId } });
+    spy.mockRejectedValue(stillWorking);
+    const promise = runAction({ name: 'getreport_task', propsValue: { reportType: 'clients' } });
+    const assertion = expect(promise).rejects.toThrow('was not ready after 60 seconds');
+    await vi.advanceTimersByTimeAsync(62_000);
+    await assertion;
+    const timeouts = spy.mock.calls.slice(1).map((call) => call[0].timeout ?? 0);
+    expect(timeouts.length).toBeGreaterThan(1);
+    expect(timeouts[timeouts.length - 1]).toBeLessThanOrEqual(2_000);
+    expect(timeouts.every((timeout) => timeout <= 58_000)).toBe(true);
   });
 
   it('does not retry other errors', async () => {

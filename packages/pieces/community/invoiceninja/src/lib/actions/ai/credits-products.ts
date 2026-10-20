@@ -80,7 +80,7 @@ export const createCredit = createAction({
     const body = {
       ...invoiceNinjaProps.documentBody(propsValue),
       client_id: invoiceNinjaClient.parseId({ value: propsValue.client_id, label: 'Client ID' }),
-      line_items: invoiceNinjaClient.lineItemsOf({ value: propsValue.line_items, label: 'Line Items', required: true }),
+      line_items: invoiceNinjaClient.lineItemsOf({ value: propsValue.line_items, label: 'Line Items', required: true, isAmountDiscount: invoiceNinjaClient.parseBoolean(propsValue.is_amount_discount) }),
     };
     return invoiceNinjaClient.recordOf(
       await invoiceNinjaClient.request({ auth: auth.props, method: HttpMethod.POST, path: '/credits', body }),

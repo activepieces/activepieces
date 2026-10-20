@@ -37,10 +37,17 @@ async function runReport({ auth, reportType, dateRange, startDate, endDate, clie
     throw new Error('Invoice Ninja did not return a report job ID.');
   }
   const deadline = Date.now() + POLL_DEADLINE_MS;
-  while (Date.now() < deadline) {
+  while (deadline - Date.now() > POLL_INTERVAL_MS) {
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) break;
     try {
-      const preview = await invoiceNinjaClient.request({ auth, method: HttpMethod.POST, path: `/reports/preview/${reportId}` });
+      const preview = await invoiceNinjaClient.request({
+        auth,
+        method: HttpMethod.POST,
+        path: `/reports/preview/${reportId}`,
+        timeoutMs: remainingMs,
+      });
       return shape({ reportType, preview });
     } catch (error) {
       if (!(error instanceof InvoiceNinjaApiError) || error.status !== 409) throw error;
