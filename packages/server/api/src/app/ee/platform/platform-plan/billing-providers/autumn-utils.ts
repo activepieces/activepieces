@@ -227,7 +227,7 @@ export const autumnUtils = {
             plan: entitlements.planId,
             billedTeamProjectsLimit: toPlatformPlanLimit(teamProjects, 1),
             usersLimit: toPlatformPlanLimit(users, null),
-            scheduledUsersLimit: entitlements.scheduledUsersLimit,
+            scheduledUsersLimit: isNil(entitlements.enterpriseTrial) ? entitlements.scheduledUsersLimit : null,
             activeFlowsLimit: toPlatformPlanLimit(activeFlows, null),
             includedCredits: credits?.granted ?? 0,
             enterpriseTrialStartedAt: msToIsoOrNull(entitlements.enterpriseTrial?.startedAt),
