@@ -136,12 +136,26 @@ export function UsageTopRow({
           </div>
           <ChevronRight className="size-4 shrink-0 text-gray-9" />
         </div>
-        <div className="h-1 overflow-hidden rounded-full bg-gray-3">
-          <div
-            className="h-full rounded-full bg-accent-9"
-            style={{ width: `${Math.max(share * 100, 1)}%` }}
-          />
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-2">
+              <div className="h-1 flex-1 overflow-hidden rounded-full bg-gray-3">
+                <div
+                  className="h-full rounded-full bg-accent-9"
+                  style={{ width: `${Math.max(share * 100, 1)}%` }}
+                />
+              </div>
+              <span className="w-8 text-right text-xs tabular-nums text-gray-11">
+                {usageFormat.percent(share)}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" sideOffset={6}>
+            {t('{share} of all AI spend in this period', {
+              share: usageFormat.percent(share),
+            })}
+          </TooltipContent>
+        </Tooltip>
       </Link>
       {item.dimension === 'key' &&
         !isNil(item.dashboardUrl) &&
