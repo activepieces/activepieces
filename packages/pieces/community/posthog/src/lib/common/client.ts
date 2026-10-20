@@ -2,8 +2,6 @@ import { httpClient, HttpMethod, HttpResponse, QueryParams } from '@activepieces
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const LOCAL_HOSTS = ['localhost', '127.0.0.1', '[::1]'];
-export const DEFAULT_API_HOST = 'https://us.posthog.com';
-export const DEFAULT_INGESTION_HOST = 'https://us.i.posthog.com';
 let verifiedTlsAgent: Promise<unknown> | undefined;
 
 export class PostHogApiError extends Error {
@@ -260,6 +258,9 @@ function userName(value: unknown): string | null {
   const name = [str(value['first_name']), str(value['last_name'])].filter((p): p is string => !!p && p.trim() !== '').join(' ').trim();
   return name === '' ? null : name;
 }
+
+export const DEFAULT_API_HOST = 'https://us.posthog.com';
+export const DEFAULT_INGESTION_HOST = 'https://us.i.posthog.com';
 
 export const posthogClient = {
   request,
