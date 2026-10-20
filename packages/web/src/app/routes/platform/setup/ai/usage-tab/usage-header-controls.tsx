@@ -154,7 +154,7 @@ export function UsageScopeTabs({ view }: { view: UsageView }) {
     >
       <TabsList
         variant="outline"
-        className="flex w-full gap-6 border-b border-gray-6"
+        className="flex w-full gap-1 border-b border-gray-6"
       >
         {USAGE_SCOPES.map((scope) => (
           <Tooltip key={scope}>
@@ -162,12 +162,14 @@ export function UsageScopeTabs({ view }: { view: UsageView }) {
               <TabsTrigger
                 value={scope}
                 variant="outline"
-                className="cursor-pointer px-0 pb-2 text-gray-11 transition-colors hover:border-gray-7 hover:text-gray-12 data-[state=active]:text-gray-12 data-[state=active]:hover:border-gray-12"
+                className="cursor-pointer rounded-t-md px-2.5 pt-1.5 pb-2 text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 data-[state=active]:text-gray-12"
               >
                 {usageFormat.scopeLabel({ scope })}
               </TabsTrigger>
             </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={6}>{scopeHint({ scope })}</TooltipContent>
+            <TooltipContent side="top" sideOffset={6}>
+              {scopeHint({ scope })}
+            </TooltipContent>
           </Tooltip>
         ))}
       </TabsList>
