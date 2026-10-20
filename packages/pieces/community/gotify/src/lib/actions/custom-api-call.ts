@@ -6,6 +6,7 @@ import { gotifyClient } from '../common/client';
 export const customApiCall = createAction({
   auth: gotifyAuth,
   name: 'custom_api_call',
+  classification: 'WRITE',
   displayName: 'Custom API Call',
   description: 'Make a request to any Gotify API endpoint with the Client Token.',
   audience: 'human',

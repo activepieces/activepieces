@@ -163,6 +163,21 @@ describe('update_application', () => {
   });
 });
 
+describe('get_server_health', () => {
+  it('returns the unhealthy status when /health answers 500', async () => {
+    vi.spyOn(httpClient, 'sendRequest')
+      .mockRejectedValueOnce({ response: { status: 500, body: { health: 'orange', database: 'red' } } })
+      .mockResolvedValueOnce({ status: 200, headers: {}, body: { version: '2.6.1', commit: 'abc', buildDate: '2024' } });
+    const result = await runAction({ name: 'get_server_health' });
+    expect(result).toEqual({ health: 'orange', database: 'red', version: '2.6.1', commit: 'abc', buildDate: '2024' });
+  });
+
+  it('still throws on other errors', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockRejectedValue({ response: { status: 502, body: 'bad gateway' } });
+    await expect(runAction({ name: 'get_server_health' })).rejects.toBeInstanceOf(GotifyApiError);
+  });
+});
+
 describe('auth validate', () => {
   it('rejects an app token not owned by the client user', async () => {
     vi.spyOn(httpClient, 'sendRequest')
