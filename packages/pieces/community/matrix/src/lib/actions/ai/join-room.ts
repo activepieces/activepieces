@@ -24,7 +24,7 @@ export const joinRoom = createAction({
   async run({ auth, propsValue }) {
     const room = matrixIds.roomIdOrAlias(propsValue.room);
     const via = matrixClient.stringList(propsValue.via);
-    if (via.some((server) => !/^[A-Za-z0-9.-]+(:\d{1,5})?$/.test(server))) {
+    if (via.some((server) => !matrixClient.isServerName(server))) {
       throw new Error('Via servers must be server names like matrix.org.');
     }
     const query = via.length > 0 ? `?${via.map((server) => `via=${encodeURIComponent(server)}`).join('&')}` : '';

@@ -41,7 +41,7 @@ export const sendTextMessage = createAction({
     }),
   },
   async run({ auth, propsValue, run, step }) {
-    const text = matrixClient.requiredText({ value: propsValue.text, label: 'Text' });
+    const text = matrixClient.messageText({ value: propsValue.text, label: 'Text' });
     const replyText = matrixClient.optionalText(propsValue.replyToEventId);
     const replyTo = replyText === undefined ? undefined : matrixIds.eventId(replyText);
     const content = await matrixCommon.buildTextContent({

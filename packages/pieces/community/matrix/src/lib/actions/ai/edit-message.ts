@@ -1,6 +1,7 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { matrixAuth } from '../../auth';
-import { matrixClient } from '../../common/client';
+import { matrixClient, MatrixAuthValue } from '../../common/client';
 import { matrixCommon } from '../../common/common';
 import { matrixIds } from '../../common/ids';
 import { matrixOutputSchemas } from '../../common/output-schemas';
@@ -33,7 +34,8 @@ export const editMessage = createAction({
   async run({ auth, propsValue, run, step }) {
     const roomId = matrixIds.roomId(propsValue.roomId);
     const eventId = matrixIds.eventId(propsValue.eventId);
-    const text = matrixClient.requiredText({ value: propsValue.text, label: 'New Text' });
+    const text = matrixClient.messageText({ value: propsValue.text, label: 'New Text' });
+    await assertEditable({ auth: auth.props, roomId, eventId });
     const newContent = await matrixCommon.buildTextContent({ text, msgtype: 'm.text', format: propsValue.format ?? 'markdown' });
     const content: Record<string, unknown> = {
       ...newContent,
@@ -52,3 +54,21 @@ export const editMessage = createAction({
     return { ...sent, editedEventId: eventId };
   },
 });
+
+async function assertEditable({ auth, roomId, eventId }: { auth: MatrixAuthValue; roomId: string; eventId: string }): Promise<void> {
+  const [original, me] = await Promise.all([
+    matrixClient.request({ auth, method: HttpMethod.GET, path: matrixIds.clientPath('rooms', roomId, 'event', eventId) }),
+    matrixClient.request({ auth, method: HttpMethod.GET, path: matrixIds.clientPath('account', 'whoami') }),
+  ]);
+  const event = matrixCommon.mapEvent({ raw: original, roomId });
+  const userId = matrixClient.isRecord(me) ? matrixClient.stringOr(me['user_id']) : null;
+  if (userId === null) throw new Error('The homeserver did not return the connected user ID.');
+  if (event.sender !== userId) {
+    throw new Error(`Only the original sender can edit a message. ${eventId} was sent by ${event.sender ?? 'an unknown user'}, not ${userId}.`);
+  }
+  if (event.redacted) throw new Error(`Message ${eventId} was deleted and cannot be edited.`);
+  if (event.type !== 'm.room.message') throw new Error(`Event ${eventId} is not a message (type ${event.type ?? 'unknown'}).`);
+  if (event.relType === 'm.replace') {
+    throw new Error(`Event ${eventId} is itself an edit. Edit the original message ${event.relatesToEventId ?? ''} instead.`.trim());
+  }
+}

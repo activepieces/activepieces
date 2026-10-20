@@ -65,7 +65,7 @@ export const sendMessage = createAction({
     }),
   },
   async run({ auth, propsValue, run, step }) {
-    const message = matrixClient.requiredText({ value: propsValue.message, label: 'Message' });
+    const message = matrixClient.messageText({ value: propsValue.message, label: 'Message' });
     const picked = matrixClient.optionalText(propsValue.room);
     const alias = matrixClient.optionalText(propsValue.room_alias);
     if (picked === undefined && alias === undefined) {

@@ -42,7 +42,7 @@ export const listMessages = createAction({
       },
     });
     const record = matrixClient.isRecord(body) ? body : {};
-    const items = matrixClient.arrayOf(record['chunk']).map((event) => matrixCommon.mapEvent(event));
+    const items = matrixClient.arrayOf(record['chunk']).map((event) => matrixCommon.mapEvent({ raw: event, roomId }));
     const end = matrixClient.stringOr(record['end']);
     return { items, count: items.length, hasMore: end !== null, nextToken: end };
   },

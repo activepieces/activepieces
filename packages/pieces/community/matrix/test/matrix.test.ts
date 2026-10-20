@@ -207,6 +207,55 @@ describe('list_messages', () => {
   });
 });
 
+describe('greptile fixes', () => {
+  function routed(original: unknown) {
+    return vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.url.endsWith('/account/whoami')) return { status: 200, headers: {}, body: { user_id: '@me:x.org' } };
+      if (request.method === HttpMethod.GET) return { status: 200, headers: {}, body: original };
+      return { status: 200, headers: {}, body: { event_id: '$edit' } };
+    });
+  }
+  const mine = { event_id: '$e', type: 'm.room.message', sender: '@me:x.org', content: { msgtype: 'm.text', body: 'old' } };
+  it('edit_message sends an m.replace for own messages', async () => {
+    const spy = routed(mine);
+    const out = await runAction({ name: 'edit_message', propsValue: { roomId: '!r:x.org', eventId: '$e', text: 'new', format: 'plain' } });
+    expect(out).toMatchObject({ eventId: '$edit', editedEventId: '$e' });
+    expect(spy.mock.calls.at(-1)?.[0].body).toMatchObject({ 'm.relates_to': { rel_type: 'm.replace', event_id: '$e' } });
+  });
+  it('edit_message refuses another sender, redacted or edit events', async () => {
+    for (const { original, msg } of [
+      { original: { ...mine, sender: '@other:x.org' }, msg: 'Only the original sender' },
+      { original: { ...mine, unsigned: { redacted_because: {} } }, msg: 'was deleted' },
+      { original: { ...mine, content: { body: '* x', 'm.relates_to': { rel_type: 'm.replace', event_id: '$o' } } }, msg: 'itself an edit' },
+    ]) {
+      vi.restoreAllMocks();
+      const spy = routed(original);
+      await expect(runAction({ name: 'edit_message', propsValue: { roomId: '!r:x.org', eventId: '$e', text: 'new' } })).rejects.toThrow(msg);
+      expect(spy.mock.calls.every((call) => call[0].method === HttpMethod.GET)).toBe(true);
+    }
+  });
+  it('keeps leading whitespace in message bodies but rejects blank text', async () => {
+    const spy = mockOk({ event_id: '$ev' });
+    await runAction({ name: 'send_text_message', propsValue: { room: '!r:x.org', text: '    code()', format: 'plain' } });
+    expect(spy.mock.calls[0][0].body).toEqual({ msgtype: 'm.text', body: '    code()' });
+    await expect(runAction({ name: 'send_text_message', propsValue: { room: '!r:x.org', text: '   ' } })).rejects.toThrow('Text is required');
+  });
+  it('fills roomId from the request when events omit it', async () => {
+    mockOk({ event_id: '$e', type: 'm.room.message', sender: '@a:x.org', content: { body: 'b' } });
+    await expect(runAction({ name: 'get_message', propsValue: { roomId: '!r:x.org', eventId: '$e' } })).resolves.toMatchObject({ roomId: '!r:x.org' });
+    vi.restoreAllMocks();
+    mockOk({ chunk: [{ event_id: '$1', type: 'm.room.message', content: { body: 'b' } }] });
+    const out = await runAction({ name: 'list_messages', propsValue: { room: '!r:x.org' } });
+    expect(out.items[0].roomId).toBe('!r:x.org');
+  });
+  it('join_room accepts bracketed IPv6 via servers', async () => {
+    const spy = mockOk({ room_id: '!r:x.org' });
+    await runAction({ name: 'join_room', propsValue: { room: '!r:x.org', via: ['[2001:db8::1]:8448', 'matrix.org'] } });
+    expect(spy.mock.calls[0][0].url).toContain('via=%5B2001%3Adb8%3A%3A1%5D%3A8448&via=matrix.org');
+    await expect(runAction({ name: 'join_room', propsValue: { room: '!r:x.org', via: ['bad/server'] } })).rejects.toThrow('Via servers');
+  });
+});
+
 describe('create_room', () => {
   it('still returns roomId when the alias lookup fails', async () => {
     vi.spyOn(httpClient, 'sendRequest')

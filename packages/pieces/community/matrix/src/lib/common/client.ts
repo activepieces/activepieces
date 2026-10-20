@@ -194,6 +194,15 @@ function requiredText({ value, label }: { value: unknown; label: string }): stri
   return text;
 }
 
+function messageText({ value, label }: { value: unknown; label: string }): string {
+  if (typeof value !== 'string' || value.trim() === '') throw new Error(`${label} is required.`);
+  return value;
+}
+
+function isServerName(value: string): boolean {
+  return /^(?:[A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])(:\d{1,5})?$/.test(value);
+}
+
 function parseLimit({ value, label, min, max, fallback }: { value: unknown; label: string; min: number; max: number; fallback: number }): number {
   if (value === undefined || value === null || value === '') return fallback;
   const parsed = typeof value === 'string' ? Number(value.trim()) : value;
@@ -223,6 +232,8 @@ export const matrixClient = {
   stringOr,
   optionalText,
   requiredText,
+  messageText,
+  isServerName,
   parseLimit,
   stringList,
   retryWaitMs,

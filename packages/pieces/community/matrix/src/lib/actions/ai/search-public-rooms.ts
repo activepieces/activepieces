@@ -27,7 +27,7 @@ export const searchPublicRooms = createAction({
     const limit = matrixClient.parseLimit({ value: propsValue.limit, label: 'Limit', min: 1, max: 100, fallback: 20 });
     const term = matrixClient.optionalText(propsValue.query);
     const server = matrixClient.optionalText(propsValue.server);
-    if (server !== undefined && !/^[A-Za-z0-9.-]+(:\d{1,5})?$|^\[[0-9A-Fa-f:.]+\](:\d{1,5})?$/.test(server)) {
+    if (server !== undefined && !matrixClient.isServerName(server)) {
       throw new Error('Server must be a server name like matrix.org.');
     }
     const requestBody: Record<string, unknown> = { limit };

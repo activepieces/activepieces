@@ -86,7 +86,7 @@ async function mapLimited<T, R>({ items, limit, fn }: { items: T[]; limit: numbe
   return results;
 }
 
-function mapEvent(raw: unknown): MatrixEventSummary {
+function mapEvent({ raw, roomId }: { raw: unknown; roomId: string | null }): MatrixEventSummary {
   const event = matrixClient.isRecord(raw) ? raw : {};
   const content = matrixClient.isRecord(event['content']) ? event['content'] : {};
   const relates = matrixClient.isRecord(content['m.relates_to']) ? content['m.relates_to'] : {};
@@ -95,7 +95,7 @@ function mapEvent(raw: unknown): MatrixEventSummary {
   const ts = event['origin_server_ts'];
   return {
     eventId: matrixClient.stringOr(event['event_id']),
-    roomId: matrixClient.stringOr(event['room_id']),
+    roomId: matrixClient.stringOr(event['room_id']) ?? roomId,
     sender: matrixClient.stringOr(event['sender']),
     type: matrixClient.stringOr(event['type']),
     msgtype: matrixClient.stringOr(content['msgtype']),

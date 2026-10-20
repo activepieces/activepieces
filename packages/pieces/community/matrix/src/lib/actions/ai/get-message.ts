@@ -31,6 +31,6 @@ export const getMessage = createAction({
       method: HttpMethod.GET,
       path: matrixIds.clientPath('rooms', roomId, 'event', eventId),
     });
-    return matrixCommon.mapEvent(body);
+    return matrixCommon.mapEvent({ raw: body, roomId });
   },
 });
