@@ -1,5 +1,12 @@
 import { t } from 'i18next';
-import { CalendarRange, ChartLine, Hash, TrendingUp, Type } from 'lucide-react';
+import {
+  CalendarRange,
+  ChartLine,
+  Gauge,
+  Hash,
+  TrendingUp,
+  Type,
+} from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -15,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-import { UsageOverview, usageDummyData } from './usage-dummy-data';
+import { UsageOverview, UsagePeriod, usageDummyData } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 import {
   UsageHeaderControls,
@@ -104,21 +111,7 @@ function UsageBody({
   return (
     <>
       <StatGrid columns={3}>
-        {overview.forecastUsd === undefined ? (
-          <StatCard
-            label={t('Average per day')}
-            icon={<CalendarRange />}
-            value={usageFormat.usd(overview.avgPerDayUsd)}
-            hint={usageFormat.periodLabel({ period: view.period })}
-          />
-        ) : (
-          <StatCard
-            label={t('Month-end forecast')}
-            icon={<TrendingUp />}
-            value={usageFormat.usd(overview.forecastUsd)}
-            hint={t('At this month’s daily pace')}
-          />
-        )}
+        <PaceTile view={view} overview={overview} />
         <StatCard
           label={t('AI calls')}
           icon={<Hash />}
@@ -170,6 +163,52 @@ function UsageBody({
         </p>
       )}
     </>
+  );
+}
+
+function PaceTile({
+  view,
+  overview,
+}: {
+  view: UsageView;
+  overview: UsageOverview;
+}) {
+  if (view.period === 'this-month' && overview.forecastUsd !== undefined) {
+    return (
+      <StatCard
+        label={t('Month-end forecast')}
+        icon={<TrendingUp />}
+        value={usageFormat.usd(overview.forecastUsd)}
+        hint={t('Projected by {date} · {amount} a day so far', {
+          date: MONTH_END_LABEL,
+          amount: usageFormat.usd(overview.avgPerDayUsd),
+        })}
+      />
+    );
+  }
+  if (SHORT_PERIODS.includes(view.period)) {
+    return (
+      <StatCard
+        label={t('Daily run rate')}
+        icon={<Gauge />}
+        value={usageFormat.usd(overview.avgPerDayUsd)}
+        hint={t('At the pace of the {period}, for a full day', {
+          period: usageFormat
+            .periodLabel({ period: view.period })
+            .toLowerCase(),
+        })}
+      />
+    );
+  }
+  return (
+    <StatCard
+      label={t('Average per day')}
+      icon={<CalendarRange />}
+      value={usageFormat.usd(overview.avgPerDayUsd)}
+      hint={t('Across {period}', {
+        period: usageFormat.periodLabel({ period: view.period }).toLowerCase(),
+      })}
+    />
   );
 }
 
@@ -337,6 +376,9 @@ function UsageSkeleton() {
     </>
   );
 }
+
+const SHORT_PERIODS: UsagePeriod[] = ['1h', '6h', '12h', '24h'];
+const MONTH_END_LABEL = 'Oct 31';
 
 const SKELETON_TILES = ['forecast', 'calls', 'tokens'];
 
