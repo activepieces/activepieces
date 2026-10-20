@@ -178,6 +178,14 @@ function PaceTile({
       <StatCard
         label={t('Month-end forecast')}
         icon={<TrendingUp />}
+        info={
+          <PaceInfo
+            title={t('A projection, not money spent')}
+            body={t(
+              'Spend so far this month, divided by the days so far, times the days in the month. It moves as the month goes on.',
+            )}
+          />
+        }
         value={usageFormat.usd(overview.forecastUsd)}
         hint={t('Projected by {date} · {amount} a day so far', {
           date: MONTH_END_LABEL,
@@ -191,6 +199,14 @@ function PaceTile({
       <StatCard
         label={t('Daily run rate')}
         icon={<Gauge />}
+        info={
+          <PaceInfo
+            title={t('A projection, not money spent')}
+            body={t(
+              'What a full day would cost if spend kept the pace of this period. Short periods swing a lot, so read it as a rough rate.',
+            )}
+          />
+        }
         value={usageFormat.usd(overview.avgPerDayUsd)}
         hint={t('At the pace of the {period}, for a full day', {
           period: usageFormat
@@ -204,11 +220,26 @@ function PaceTile({
     <StatCard
       label={t('Average per day')}
       icon={<CalendarRange />}
+      info={
+        <PaceInfo
+          title={t('Real spend, spread evenly')}
+          body={t('Total spend in this period divided by its number of days.')}
+        />
+      }
       value={usageFormat.usd(overview.avgPerDayUsd)}
       hint={t('Across {period}', {
         period: usageFormat.periodLabel({ period: view.period }).toLowerCase(),
       })}
     />
+  );
+}
+
+function PaceInfo({ title, body }: { title: string; body: string }) {
+  return (
+    <span className="flex flex-col gap-1">
+      <span className="font-medium">{title}</span>
+      <span className="opacity-80">{body}</span>
+    </span>
   );
 }
 
