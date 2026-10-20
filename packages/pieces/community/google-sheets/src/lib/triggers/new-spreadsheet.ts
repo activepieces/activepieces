@@ -67,10 +67,18 @@ export const newSpreadsheetTrigger = createTrigger({
 	},
 	outputSchema: newSpreadsheetTriggerOutputSchema,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, context);
+		await pollingHelper.onEnable(polling, {
+			auth: context.auth,
+			store: context.store,
+			propsValue: context.propsValue,
+		});
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, context);
+		await pollingHelper.onDisable(polling, {
+			auth: context.auth,
+			store: context.store,
+			propsValue: context.propsValue,
+		});
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);
