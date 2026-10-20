@@ -77,6 +77,23 @@ describe('Enterprise trial API', () => {
         expect(startTrial).toHaveBeenCalledWith({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
     })
 
+    it('keeps a started trial when the refresh after it fails', async () => {
+        const ctx = await createTestContext(app!)
+        vi.spyOn(autumnUtils, 'ensureEnrolled').mockResolvedValue(undefined)
+        vi.spyOn(autumnConsole, 'getCreds').mockResolvedValue({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
+        const startTrial = vi.spyOn(autumnConsole, 'startEnterpriseTrial').mockResolvedValue(STARTED)
+        vi.spyOn(autumnUtils, 'refreshEntitlements').mockRejectedValue(new Error('autumn timeout'))
+
+        const start = await ctx.post('/v1/platform-billing/enterprise-trial/start')
+        const status = await ctx.get('/v1/platform-billing/enterprise-trial')
+        const again = await ctx.post('/v1/platform-billing/enterprise-trial/start')
+
+        expect(start.json()).toEqual(ACTIVE)
+        expect(status.json()).toEqual(ACTIVE)
+        expect(again.json()).toEqual(ACTIVE)
+        expect(startTrial).toHaveBeenCalledTimes(1)
+    })
+
     it('remembers a start the console refuses and stops offering the trial', async () => {
         const ctx = await createTestContext(app!)
         const { startTrial } = stubBilling({ started: null })
