@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { pineconeClient } from '../common/client';
 import type { PineconeRecord, RecordMetadata } from '../common/types';
 import { pineconeAuth } from '../auth';
+import { upsertVectorOutputSchema } from '../output-schemas';
 
 export const upsertVectorAction = createAction({
   auth: pineconeAuth,
   name: 'upsert_vector',
+  outputSchema: upsertVectorOutputSchema,
   classification: 'WRITE',
   displayName: 'Upsert Vector',
   description: 'Upsert vectors into a namespace. Overwrites existing vectors with the same ID.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Writes (inserts or overwrites) vectors into a namespace of a Pinecone index, accepting either a single vector or a batch of vectors supplied as structured rows, chosen via the input method. Use to store or refresh embeddings keyed by ID; each vector requires an ID and numeric values. Idempotent: because writes are keyed on the vector ID, repeating the same call overwrites the same records to the same state without creating duplicates.', idempotent: true },
   props: {
     indexName: Property.ShortText({
@@ -114,8 +116,8 @@ export const upsertVectorAction = createAction({
     try {
 
       const index = indexHost
-        ? pc.index(indexName, indexHost)
-        : pc.index(indexName);
+        ? pc.index({ name: indexName, host: indexHost })
+        : pc.index({ name: indexName });
 
       if (vectorsInput === 'single') {
         if (!id) {
@@ -229,8 +231,8 @@ export const upsertVectorAction = createAction({
 
 
       namespace
-        ? await index.namespace(namespace).upsert(vectorsToUpsert)
-        : await index.upsert(vectorsToUpsert);
+        ? await index.namespace(namespace).upsert({ records: vectorsToUpsert })
+        : await index.upsert({ records: vectorsToUpsert });
 
       const upsertedCount = vectorsToUpsert.length;
 

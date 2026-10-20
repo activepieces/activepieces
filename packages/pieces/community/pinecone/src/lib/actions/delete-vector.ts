@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pineconeClient } from '../common/client';
 import { pineconeAuth } from '../auth';
+import { deleteVectorOutputSchema } from '../output-schemas';
 
 export const deleteVectorAction = createAction({
   auth: pineconeAuth,
   name: 'delete_vector',
+  outputSchema: deleteVectorOutputSchema,
   classification: 'DESTRUCTIVE',
   displayName: 'Delete a Vector',
   description: 'Delete vectors by ID from a namespace.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Removes vectors from a namespace of a Pinecone index, with a delete mode selecting whether to delete a single ID, a list of IDs, all vectors in the namespace, or only vectors matching a metadata filter. Use to permanently remove embeddings; deleting all requires an explicit confirmation flag. Not idempotent: it mutates index contents, and filter/delete-all modes remove whatever currently matches on each call.', idempotent: false },
   props: {
     indexName: Property.ShortText({
@@ -88,8 +90,8 @@ export const deleteVectorAction = createAction({
     try {
 
       const index = indexHost
-        ? pc.index(indexName, indexHost)
-        : pc.index(indexName);
+        ? pc.index({ name: indexName, host: indexHost })
+        : pc.index({ name: indexName });
 
 
       const ns = namespace ? index.namespace(namespace) : index;
@@ -105,7 +107,7 @@ export const deleteVectorAction = createAction({
           );
         }
 
-        await ns.deleteOne(id);
+        await ns.deleteOne({ id });
         deletedCount = 1;
         operation = `Deleted vector with ID: ${id}`;
       } else if (deleteMode === 'many') {
@@ -117,7 +119,7 @@ export const deleteVectorAction = createAction({
         }
 
         const recordIds = ids.map((recordId) => String(recordId));
-        await ns.deleteMany(recordIds);
+        await ns.deleteMany({ ids: recordIds });
         deletedCount = ids.length;
         operation = `Deleted ${ids.length} vectors with IDs: ${recordIds.join(', ')}`;
       } else if (deleteMode === 'all') {
@@ -139,7 +141,7 @@ export const deleteVectorAction = createAction({
           );
         }
 
-        await ns.deleteMany(filter);
+        await ns.deleteMany({ filter });
         operation = `Deleted vectors matching filter: ${JSON.stringify(filter)}`;
       }
 

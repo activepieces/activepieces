@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { pineconeClient } from '../common/client';
+import { pineconeApi } from '../common/api';
 import { pineconeAuth } from '../auth';
+import { searchIndexOutputSchema } from '../output-schemas';
 
 export const searchIndexAction = createAction({
   auth: pineconeAuth,
   name: 'search_index',
+  outputSchema: searchIndexOutputSchema,
   classification: 'SEARCH',
   displayName: 'Search Index',
   description: 'Search indexes by name or list all indexes in your project.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Discovers indexes in the connected Pinecone project, operating in one of two modes: list all indexes (optionally narrowed by a case-insensitive partial name filter) or describe one specific index by its exact name. Use to enumerate available indexes or confirm an index exists and inspect its configuration before other operations. Idempotent read-only lookup.', idempotent: true },
   props: {
     searchMode: Property.StaticDropdown({
@@ -41,11 +43,9 @@ export const searchIndexAction = createAction({
       throw new Error('You must provide an index name when using Find Specific Index mode.');
     }
 
-    const pc = pineconeClient.create({ auth: context.auth });
-
     try {
       if (searchMode === 'find' && indexName) {
-        const indexDetails = await pc.describeIndex(indexName);
+        const indexDetails = await pineconeApi.describeLegacyIndex({ auth: context.auth, indexName });
         
         return {
           success: true,
@@ -56,7 +56,7 @@ export const searchIndexAction = createAction({
           message: `Successfully found index: ${indexName}`
         };
       } else {
-        const indexList = await pc.listIndexes();
+        const indexList = await pineconeApi.listLegacyIndexes({ auth: context.auth });
         const allIndexes = indexList.indexes || [];
 
         let filteredIndexes = allIndexes;

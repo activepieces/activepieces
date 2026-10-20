@@ -13,7 +13,7 @@ export const pineconeAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     const { error } = await tryCatch(() =>
-      pineconeClient.create({ auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth } }).listIndexes(),
+      pineconeClient.create({ auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth } }).indexes.list(),
     );
     if (error) {
       return {

@@ -1,15 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { pineconeClient } from '../common/client';
-import type { CreateIndexOptions, PineconeCreateIndexSpec } from '../common/types';
+import { pineconeApi } from '../common/api';
+import type { PineconeLegacyCreateIndexRequest, PineconeLegacyIndexSpec } from '../common/types';
 import { pineconeAuth } from '../auth';
+import { createIndexOutputSchema } from '../output-schemas';
 
 export const createIndexAction = createAction({
   auth: pineconeAuth,
   name: 'create_index',
+  outputSchema: createIndexOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Index',
   description: 'Creates a new Pinecone index with custom settings.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new Pinecone vector index in the connected project, supporting both serverless (cloud + region) and pod-based (environment + pod type) deployments selected via the index type. Use to provision a fresh index before storing or querying vectors; not for adding data to an existing one. Requires a unique name and, for dense indexes, a positive dimension. Not idempotent: re-running creates or conflicts with an index, though enabling Suppress Conflicts lets a repeat call against an existing index avoid erroring.', idempotent: false },
   props: {
     name: Property.ShortText({
@@ -116,7 +118,7 @@ export const createIndexAction = createAction({
         ]
       }
     }),
-    vectorType: Property.StaticDropdown({
+    vectorType: Property.StaticDropdown<'dense' | 'sparse'>({
       displayName: 'Vector Type',
       description:
         'The type of vectors to store. Dense is default for most use cases.',
@@ -211,10 +213,8 @@ export const createIndexAction = createAction({
       }
     }
 
-    const pc = pineconeClient.create({ auth: context.auth });
-
     try {
-      let spec: PineconeCreateIndexSpec | undefined;
+      let spec: PineconeLegacyIndexSpec | undefined;
 
       if (indexType === 'serverless') {
         if (!cloud) {
@@ -267,7 +267,7 @@ export const createIndexAction = createAction({
 
       const resolvedMetric = metric || (vType === 'sparse' ? 'dotproduct' : 'cosine');
 
-      const createIndexOptions: CreateIndexOptions = {
+      const createIndexRequest: PineconeLegacyCreateIndexRequest = {
         name: name,
         dimension: dimension,
         spec: spec,
@@ -280,12 +280,15 @@ export const createIndexAction = createAction({
           tags: Object.fromEntries(
             Object.entries(tags).map(([key, value]) => [key, String(value)])
           )
-        }),
-        waitUntilReady: waitUntilReady || false,
-        suppressConflicts: suppressConflicts || false
+        })
       };
 
-      const response = await pc.createIndex(createIndexOptions);
+      const response = await pineconeApi.createLegacyIndex({
+        auth: context.auth,
+        request: createIndexRequest,
+        waitUntilReady: waitUntilReady || false,
+        suppressConflicts: suppressConflicts || false
+      });
 
       return {
         success: true,

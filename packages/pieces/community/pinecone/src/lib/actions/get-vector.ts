@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pineconeClient } from '../common/client';
 import { pineconeAuth } from '../auth';
+import { getVectorOutputSchema } from '../output-schemas';
 
 export const getVectorAction = createAction({
   auth: pineconeAuth,
   name: 'get_vector',
+  outputSchema: getVectorOutputSchema,
   classification: 'READ',
   displayName: 'Get a Vector',
   description: 'Look up and return vectors by ID from a namespace.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Fetches one or more stored vectors by their exact IDs from a namespace of a Pinecone index. Use when you already know the vector IDs and want their values and metadata; for similarity lookups use Search Vectors instead. Requires the index name and at least one ID (IDs cannot contain spaces). Idempotent read-only lookup.', idempotent: true },
   props: {
     indexName: Property.ShortText({
@@ -61,12 +63,12 @@ export const getVectorAction = createAction({
 
     try {
 
-      const index = indexHost ? pc.index(indexName, indexHost) : pc.index(indexName);
+      const index = indexHost ? pc.index({ name: indexName, host: indexHost }) : pc.index({ name: indexName });
 
 
       const fetchResult = namespace 
-        ? await index.namespace(namespace).fetch(recordIds)
-        : await index.fetch(recordIds);
+        ? await index.namespace(namespace).fetch({ ids: recordIds })
+        : await index.fetch({ ids: recordIds });
 
       const records = fetchResult.records || {};
       const vectorCount = Object.keys(records).length;
