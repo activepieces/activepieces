@@ -45,7 +45,7 @@ export const posthogCustomApiCall = createAction({
       const data: unknown = response.body;
       if (binary && (data instanceof ArrayBuffer || Buffer.isBuffer(data))) {
         const buffer = Buffer.isBuffer(data) ? data : Buffer.from(new Uint8Array(data));
-        return { status: response.status, headers: response.headers, body: await files.write({ fileName: 'output.bin', data: buffer }) };
+        return { status: response.status, headers: response.headers, body: await files.write({ fileName: `output.${extensionOf(response.headers)}`, data: buffer }) };
       }
       return { status: response.status, headers: response.headers, body: data };
     } catch (error) {
@@ -54,6 +54,13 @@ export const posthogCustomApiCall = createAction({
     }
   },
 });
+
+function extensionOf(headers: unknown): string {
+  const raw = posthogClient.isRecord(headers) ? headers['content-type'] : undefined;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const type = typeof value === 'string' ? value.split(';')[0].trim().toLowerCase() : '';
+  return CONTENT_TYPE_EXTENSIONS[type] ?? 'txt';
+}
 
 function urlOf(value: unknown): string {
   return posthogClient.isRecord(value) && typeof value['url'] === 'string' ? value['url'].trim() : '';
@@ -109,3 +116,23 @@ function bodyOf({ body, bodyType }: { body: unknown; bodyType: unknown }): HttpR
   }
   return form;
 }
+
+const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
+  'application/json': 'json',
+  'application/pdf': 'pdf',
+  'application/zip': 'zip',
+  'application/gzip': 'gz',
+  'application/octet-stream': 'bin',
+  'application/xml': 'xml',
+  'text/xml': 'xml',
+  'text/csv': 'csv',
+  'text/plain': 'txt',
+  'text/html': 'html',
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/svg+xml': 'svg',
+  'video/mp4': 'mp4',
+  'audio/mpeg': 'mp3',
+};

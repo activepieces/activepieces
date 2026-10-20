@@ -260,3 +260,19 @@ describe('new event trigger', () => {
     await expect(Reflect.apply(posthogNewEvent.run, undefined, [ctx])).rejects.toThrow(/another host/);
   });
 });
+
+describe('custom api call binary responses', () => {
+  it.each([
+    ['image/png', 'output.png'],
+    ['application/pdf; charset=binary', 'output.pdf'],
+    ['application/x-unknown', 'output.txt'],
+  ])('names a %s response %s', async (contentType, fileName) => {
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce({ status: 200, headers: { 'content-type': contentType }, body: Buffer.from('x') });
+    const write = vi.fn(async ({ fileName: name }: { fileName: string }) => `file://${name}`);
+    const result = await Reflect.apply(action('custom_api_call').run, undefined, [
+      { auth, files: { write }, propsValue: { url: { url: '/api/projects/123/exports/1/content' }, method: HttpMethod.GET, response_is_binary: true } },
+    ]);
+    expect(write).toHaveBeenCalledWith(expect.objectContaining({ fileName }));
+    expect(result.body).toBe(`file://${fileName}`);
+  });
+});
