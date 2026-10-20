@@ -2391,7 +2391,7 @@
     },
     "packages/pieces/community/cursor": {
       "name": "@activepieces/piece-cursor",
-      "version": "0.1.8",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2400,7 +2400,6 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
-        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/customer-io": {
@@ -4037,7 +4036,7 @@
     },
     "packages/pieces/community/google-sheets": {
       "name": "@activepieces/piece-google-sheets",
-      "version": "0.18.3",
+      "version": "0.18.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5931,7 +5930,7 @@
     },
     "packages/pieces/community/microsoft-excel-365": {
       "name": "@activepieces/piece-microsoft-excel-365",
-      "version": "0.8.3",
+      "version": "0.8.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5943,7 +5942,6 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
-        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/microsoft-onedrive": {
