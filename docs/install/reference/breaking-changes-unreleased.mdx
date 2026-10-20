@@ -8,6 +8,18 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### PandaDoc 0.3.0: seven actions are builder-only, and the triggers now fire
+
+Create Document from Template, Create Attachment, Create or Update Contact, Find Document(s), Get Document Attachment, Get Document and Download Document are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
+
+The PandaDoc triggers did not fire before this version; after you upgrade and re-enable a flow they start runs. **Document Completed** now starts one run per completed document instead of two. The filter on **Document Updated** is still shown but is ignored, so the trigger runs for every update. **Create Document from Template** now sends template fields by their merge-field key, so a step that used to fail with a 401 now fills the fields.
+
+#### What you need to do
+
+Agents that used these actions switch to their twins: Create Document from Template (AI), Add Document Attachment (AI), Create Contact (AI) or Update Contact (AI), Search Documents (AI), List Document Attachments (AI), Get Document (AI) and Download Document (AI). Flow steps keep running on the version they were built with until you upgrade them.
+
+After upgrading a PandaDoc trigger, turn the flow off and on again so PandaDoc signs its deliveries. If a flow used the Document Updated filter, add a Router or Branch step after the trigger to keep only the updates you need.
+
 #### PostHog requires https hosts, and agents can no longer create projects
 
 PostHog 0.7.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
