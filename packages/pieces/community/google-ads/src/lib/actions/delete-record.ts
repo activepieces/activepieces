@@ -1,16 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
 
 import { googleAdsAuth } from '../auth';
-import { normalizeCustomerId } from '../common/client';
-import { customerIdProp } from '../common/props';
-import {
-  mutateRecord,
-  recordIdentifierProp,
-  resourceDefinition,
-  resourceTypeProp,
-  validateOnlyProp,
-} from '../common/records';
-import { resourceNameFor } from '../common/resources';
+import { googleAdsApi } from '../common/api';
+import { googleAdsProps } from '../common/props';
+import { googleAdsUtils } from '../common/utils';
 import { deleteRecordOutputSchema } from '../output-schemas';
 
 export const deleteRecord = createAction({
@@ -26,18 +19,17 @@ export const deleteRecord = createAction({
   },
   auth: googleAdsAuth,
   props: {
-    customerId: customerIdProp,
-    resourceType: resourceTypeProp,
-    identifier: recordIdentifierProp,
-    validateOnly: validateOnlyProp,
+    customerId: googleAdsProps.customerId({ required: true }),
+    resourceType: googleAdsProps.resourceType({ required: true }),
+    identifier: googleAdsProps.identifier({ required: true }),
+    validateOnly: googleAdsProps.validateOnly({ required: false }),
   },
   outputSchema: deleteRecordOutputSchema,
   async run(context) {
     const { customerId, resourceType, identifier, validateOnly } = context.propsValue;
-    const def = resourceDefinition(resourceType);
-    const resourceName = resourceNameFor({ def, customerId: normalizeCustomerId(customerId), identifier });
-
-    const result = await mutateRecord({
+    const def = googleAdsUtils.resourceDefinition(resourceType);
+    const resourceName = googleAdsUtils.resourceNameFor({ def, customerId: googleAdsUtils.normalizeCustomerId(customerId), identifier });
+    const result = await googleAdsApi.mutateRecord({
       auth: context.auth,
       customerId,
       def,

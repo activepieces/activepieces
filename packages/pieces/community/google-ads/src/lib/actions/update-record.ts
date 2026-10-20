@@ -1,16 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { googleAdsAuth } from '../auth';
-import { normalizeCustomerId } from '../common/client';
-import { customerIdProp } from '../common/props';
-import {
-  mutateRecord,
-  recordIdentifierProp,
-  resourceDefinition,
-  resourceTypeProp,
-  validateOnlyProp,
-} from '../common/records';
-import { resourceNameFor, updateMaskFor } from '../common/resources';
+import { googleAdsApi } from '../common/api';
+import { googleAdsProps } from '../common/props';
+import { googleAdsUtils } from '../common/utils';
 import { recordMutationOutputSchema } from '../output-schemas';
 
 export const updateRecord = createAction({
@@ -26,26 +19,25 @@ export const updateRecord = createAction({
   },
   auth: googleAdsAuth,
   props: {
-    customerId: customerIdProp,
-    resourceType: resourceTypeProp,
-    identifier: recordIdentifierProp,
+    customerId: googleAdsProps.customerId({ required: true }),
+    resourceType: googleAdsProps.resourceType({ required: true }),
+    identifier: googleAdsProps.identifier({ required: true }),
     record: Property.Json({
       displayName: 'Fields to Update',
       description:
         'Only the fields to change, as the Google Ads REST API names them (camelCase), e.g. `{"status":"PAUSED"}` or `{"name":"New name","cpcBidMicros":"1500000"}`. The update mask is derived from these keys; fields you leave out are untouched. Ads are immutable except for `status`: to change an ad, create a new one.',
       required: true,
     }),
-    validateOnly: validateOnlyProp,
+    validateOnly: googleAdsProps.validateOnly({ required: false }),
   },
   outputSchema: recordMutationOutputSchema,
   async run(context) {
     const { customerId, resourceType, identifier, record, validateOnly } = context.propsValue;
-    const def = resourceDefinition(resourceType);
-    const resourceName = resourceNameFor({ def, customerId: normalizeCustomerId(customerId), identifier });
+    const def = googleAdsUtils.resourceDefinition(resourceType);
+    const resourceName = googleAdsUtils.resourceNameFor({ def, customerId: googleAdsUtils.normalizeCustomerId(customerId), identifier });
     const fields = Object.fromEntries(Object.entries(record).filter(([key]) => key !== 'resourceName'));
-    const updateMask = updateMaskFor(fields);
-
-    return mutateRecord({
+    const updateMask = googleAdsUtils.updateMaskFor(fields);
+    return await googleAdsApi.mutateRecord({
       auth: context.auth,
       customerId,
       def,

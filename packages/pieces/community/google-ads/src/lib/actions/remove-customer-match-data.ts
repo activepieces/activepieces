@@ -1,14 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
 
 import { googleAdsAuth } from '../auth';
-import { toMemberInput } from '../common/customer-match';
-import {
-  membersProp,
-  uploadCustomerMatch,
-  userListProp,
-  waitForCompletionProp,
-} from '../common/customer-match-action';
-import { customerIdProp } from '../common/props';
+import { googleAdsApi } from '../common/api';
+import { googleAdsProps } from '../common/props';
+import { googleAdsUtils } from '../common/utils';
 import { customerMatchOutputSchema } from '../output-schemas';
 
 export const removeCustomerMatchData = createAction({
@@ -24,19 +19,19 @@ export const removeCustomerMatchData = createAction({
   },
   auth: googleAdsAuth,
   props: {
-    customerId: customerIdProp,
-    userList: userListProp,
-    members: membersProp,
-    waitForCompletion: waitForCompletionProp,
+    customerId: googleAdsProps.customerId({ required: true }),
+    userList: googleAdsProps.userList({ required: true }),
+    members: googleAdsProps.members({ required: true }),
+    waitForCompletion: googleAdsProps.waitForCompletion({ required: false }),
   },
   outputSchema: customerMatchOutputSchema,
   async run(context) {
     const { customerId, userList, members, waitForCompletion } = context.propsValue;
-    return uploadCustomerMatch({
+    return await googleAdsApi.uploadCustomerMatch({
       auth: context.auth,
       customerId,
       userList,
-      members: (members ?? []).map(toMemberInput),
+      members: (members ?? []).map(googleAdsUtils.toMemberInput),
       mode: 'remove',
       waitForCompletion: Boolean(waitForCompletion),
     });

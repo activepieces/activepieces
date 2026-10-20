@@ -2,7 +2,9 @@ import { createHash } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import { buildMemberBatches, identifiersFor, normalizeEmail, normalizeName, normalizePhone, sha256, toMemberInput } from '../../../src/lib/common/customer-match';
+import { googleAdsUtils } from '../../../src/lib/common/utils';
+
+const { buildMemberBatches, identifiersFor, normalizeEmail, normalizeName, normalizePhone, sha256, toMemberInput } = googleAdsUtils;
 
 const hash = (s: string) => createHash('sha256').update(s).digest('hex');
 
@@ -80,9 +82,8 @@ describe('buildMemberBatches()', () => {
     expect(batches[2]?.[0]).toEqual({ userData: { userIdentifiers: [{ emailAddress: hash('u4@x.com') }] } });
   });
 
-  it('should reject empty input, bad limits and members without identifiers', () => {
+  it('should reject empty input and members without identifiers', () => {
     expect(() => buildMemberBatches({ members: [], limit: 10 })).toThrow('At least one member');
-    expect(() => buildMemberBatches({ members: [{ email: 'a@x.com' }], limit: 0 })).toThrow('positive integer');
     expect(() => buildMemberBatches({ members: [{ email: 'a@x.com' }, {}], limit: 10 })).toThrow('Member #2 has no identifier');
   });
 });

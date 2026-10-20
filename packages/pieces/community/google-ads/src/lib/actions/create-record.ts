@@ -1,14 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { googleAdsAuth } from '../auth';
-import { customerIdProp } from '../common/props';
-import { mutateRecord, resourceDefinition, resourceTypeProp, validateOnlyProp } from '../common/records';
-import { RESOURCES, RESOURCE_TYPES } from '../common/resources';
+import { googleAdsApi } from '../common/api';
+import { googleAdsProps } from '../common/props';
+import { googleAdsUtils } from '../common/utils';
 import { recordMutationOutputSchema } from '../output-schemas';
 
-function createExamples(): string {
-  return RESOURCE_TYPES.map((type) => `**${RESOURCES[type].label}**: \`${JSON.stringify(RESOURCES[type].createExample)}\``).join('\n\n');
-}
+const CREATE_EXAMPLES = googleAdsUtils.resources.map((def) => `**${def.label}**: \`${JSON.stringify(def.createExample)}\``).join('\n\n');
 
 export const createRecord = createAction({
   name: 'createRecord',
@@ -23,21 +21,20 @@ export const createRecord = createAction({
   },
   auth: googleAdsAuth,
   props: {
-    customerId: customerIdProp,
-    resourceType: resourceTypeProp,
+    customerId: googleAdsProps.customerId({ required: true }),
+    resourceType: googleAdsProps.resourceType({ required: true }),
     record: Property.Json({
       displayName: 'Record',
-      description: `Fields of the new record as the Google Ads REST API expects them (camelCase, enums as strings, money in micros as strings). Minimal examples:\n\n${createExamples()}\n\nA campaign needs an existing campaign budget (\`campaignBudgets:mutate\` via Custom API Call).`,
+      description: `Fields of the new record as the Google Ads REST API expects them (camelCase, enums as strings, money in micros as strings). Minimal examples:\n\n${CREATE_EXAMPLES}\n\nA campaign needs an existing campaign budget (\`campaignBudgets:mutate\` via Custom API Call).`,
       required: true,
     }),
-    validateOnly: validateOnlyProp,
+    validateOnly: googleAdsProps.validateOnly({ required: false }),
   },
   outputSchema: recordMutationOutputSchema,
   async run(context) {
     const { customerId, resourceType, record, validateOnly } = context.propsValue;
-    const def = resourceDefinition(resourceType);
+    const def = googleAdsUtils.resourceDefinition(resourceType);
     const body = Object.fromEntries(Object.entries(record).filter(([key]) => key !== 'resourceName'));
-
-    return mutateRecord({ auth: context.auth, customerId, def, operation: { create: body }, validateOnly: Boolean(validateOnly) });
+    return await googleAdsApi.mutateRecord({ auth: context.auth, customerId, def, operation: { create: body }, validateOnly: Boolean(validateOnly) });
   },
 });

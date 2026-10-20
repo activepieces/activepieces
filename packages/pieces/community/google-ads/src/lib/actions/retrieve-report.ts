@@ -1,29 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { googleAdsAuth } from '../auth';
-import { GoogleAdsApi } from '../common/client';
-import { customerIdProp } from '../common/props';
-import { DATE_RANGE_PRESETS, DEFAULT_METRICS, REPORT_RESOURCES, REPORT_RESOURCE_TYPES, buildReportQuery, flattenRow } from '../common/reports';
-import type { DateRangePreset, ReportResource } from '../common/reports';
+import { googleAdsApi } from '../common/api';
+import { googleAdsProps } from '../common/props';
+import type { GoogleAdsDateRangePreset, GoogleAdsReportResource } from '../common/types';
+import { googleAdsUtils } from '../common/utils';
 import { retrieveReportOutputSchema } from '../output-schemas';
-
-function resourceOptions(): { label: string; value: ReportResource }[] {
-  return REPORT_RESOURCE_TYPES.map((value) => ({
-    label: REPORT_RESOURCES[value].label,
-    value,
-  }));
-}
-
-function dateRangeOptions(): { label: string; value: DateRangePreset }[] {
-  return [
-    ...DATE_RANGE_PRESETS.map((value) => ({ label: value.replace(/_/g, ' ').toLowerCase(), value })),
-    { label: 'custom (start / end date)', value: 'CUSTOM' },
-    { label: 'all time (no date filter)', value: 'ALL_TIME' },
-  ];
-}
 
 const DEFAULT_MAX_ROWS = 1000;
 const HARD_MAX_ROWS = 100_000;
+
+const RESOURCE_OPTIONS = googleAdsUtils.reportResourceTypes.map((value) => ({ label: googleAdsUtils.reportResources[value].label, value }));
+
+const DATE_RANGE_OPTIONS: { label: string; value: GoogleAdsDateRangePreset }[] = [
+  ...googleAdsUtils.dateRangePresets.map((value) => ({ label: value.replace(/_/g, ' ').toLowerCase(), value })),
+  { label: 'custom (start / end date)', value: 'CUSTOM' },
+  { label: 'all time (no date filter)', value: 'ALL_TIME' },
+];
 
 export const retrieveReport = createAction({
   name: 'retrieveReport',
@@ -38,19 +31,19 @@ export const retrieveReport = createAction({
   },
   auth: googleAdsAuth,
   props: {
-    customerId: customerIdProp,
-    resource: Property.StaticDropdown<ReportResource, true>({
+    customerId: googleAdsProps.customerId({ required: true }),
+    resource: Property.StaticDropdown<GoogleAdsReportResource, true>({
       displayName: 'Report On',
       description: 'The level the metrics are broken down by.',
       required: true,
       defaultValue: 'campaign',
-      options: { options: resourceOptions() },
+      options: { options: RESOURCE_OPTIONS },
     }),
-    dateRange: Property.StaticDropdown<DateRangePreset, true>({
+    dateRange: Property.StaticDropdown<GoogleAdsDateRangePreset, true>({
       displayName: 'Date Range',
       required: true,
       defaultValue: 'LAST_30_DAYS',
-      options: { options: dateRangeOptions() },
+      options: { options: DATE_RANGE_OPTIONS },
     }),
     startDate: Property.ShortText({ displayName: 'Start Date', description: 'YYYY-MM-DD, with the custom date range.', required: false }),
     endDate: Property.ShortText({ displayName: 'End Date', description: 'YYYY-MM-DD, with the custom date range.', required: false }),
@@ -62,7 +55,7 @@ export const retrieveReport = createAction({
     }),
     metrics: Property.Array({
       displayName: 'Metrics',
-      description: `GAQL metric fields. Default: ${DEFAULT_METRICS.join(', ')}.`,
+      description: `GAQL metric fields. Default: ${googleAdsUtils.defaultMetrics.join(', ')}.`,
       required: false,
     }),
     fields: Property.Array({
@@ -90,12 +83,10 @@ export const retrieveReport = createAction({
   },
   outputSchema: retrieveReportOutputSchema,
   async run(context) {
-    const { customerId, resource, dateRange, startDate, endDate, segmentByDate, metrics, fields, where, orderBy, maxRows, query } =
-      context.propsValue;
-
+    const { customerId, resource, dateRange, startDate, endDate, segmentByDate, metrics, fields, where, orderBy, maxRows, query } = context.propsValue;
     const gaql =
       query?.trim() ||
-      buildReportQuery({
+      googleAdsUtils.buildReportQuery({
         resource,
         dateRange,
         startDate: startDate || undefined,
@@ -106,11 +97,9 @@ export const retrieveReport = createAction({
         where: where || undefined,
         orderBy: orderBy || undefined,
       });
-
     const cap = Math.min(Math.max(Math.floor(Number(maxRows) || DEFAULT_MAX_ROWS), 1), HARD_MAX_ROWS);
-    const { results, truncated } = await GoogleAdsApi.searchAll({ auth: context.auth, customerId, query: gaql, maxRows: cap });
-    const rows = results.map((row) => flattenRow(row));
-
+    const { results, truncated } = await googleAdsApi.searchAll({ auth: context.auth, customerId, query: gaql, maxRows: cap });
+    const rows = results.map((row) => googleAdsUtils.flattenRow(row));
     return { query: gaql, rows, count: rows.length, truncated };
   },
 });

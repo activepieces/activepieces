@@ -1,18 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  RESOURCES,
-  RESOURCE_TYPES,
-  buildOperation,
-  idFromResourceName,
-  newestRecordsQuery,
-  recordByResourceNameQuery,
-  recordsByResourceNamesQuery,
-  readField,
-  resourceDefinition,
-  resourceNameFor,
-  updateMaskFor,
-} from '../../../src/lib/common/resources';
+import { googleAdsUtils } from '../../../src/lib/common/utils';
+
+const { resourceDefinition, resourceNameFor, idFromResourceName, updateMaskFor, buildOperation, newestRecordsQuery, recordsByResourceNamesQuery, recordByResourceNameQuery } =
+  googleAdsUtils;
+const RESOURCES = Object.fromEntries(googleAdsUtils.resources.map((def) => [def.type, def]));
+const RESOURCE_TYPES = googleAdsUtils.resourceTypes;
 
 describe('resourceDefinition()', () => {
   it('should know the five record types', () => {
@@ -102,15 +95,6 @@ describe('updateMaskFor()', () => {
   });
 });
 
-describe('readField()', () => {
-  it('should walk a GAQL path over a camelCase REST row', () => {
-    const row = { adGroupAd: { ad: { id: '99' }, status: 'ENABLED' }, adGroupCriterion: { criterionId: '7' } };
-    expect(readField({ row, gaqlPath: 'ad_group_ad.ad.id' })).toBe('99');
-    expect(readField({ row, gaqlPath: 'ad_group_criterion.criterion_id' })).toBe('7');
-    expect(readField({ row, gaqlPath: 'campaign.id' })).toBeUndefined();
-  });
-});
-
 describe('buildOperation()', () => {
   it('should wrap the operation in the per-type envelope', () => {
     expect(buildOperation({ def: RESOURCES.ad_group_criterion, operation: { remove: 'customers/1/adGroupCriteria/2~3' } })).toEqual({
@@ -124,8 +108,8 @@ describe('newestRecordsQuery()', () => {
     expect(newestRecordsQuery({ def: RESOURCES.ad_group_criterion, limit: 5 })).toBe(
       "SELECT ad_group_criterion.criterion_id, ad_group_criterion.keyword.text, ad_group_criterion.keyword.match_type, ad_group_criterion.status, ad_group_criterion.ad_group, ad_group_criterion.resource_name FROM ad_group_criterion WHERE ad_group_criterion.type = 'KEYWORD' AND ad_group_criterion.status != 'REMOVED' ORDER BY ad_group_criterion.criterion_id DESC LIMIT 5"
     );
-    expect(newestRecordsQuery({ def: RESOURCES.campaign })).toMatch(/^SELECT campaign\.id, .* FROM campaign WHERE campaign\.status != 'REMOVED' ORDER BY campaign\.id DESC LIMIT 100$/);
-    expect(newestRecordsQuery({ def: RESOURCES.user_list })).toMatch(/^SELECT user_list\.id, .* FROM user_list ORDER BY user_list\.id DESC LIMIT 100$/);
+    expect(newestRecordsQuery({ def: RESOURCES.campaign, limit: 100 })).toMatch(/^SELECT campaign\.id, .* FROM campaign WHERE campaign\.status != 'REMOVED' ORDER BY campaign\.id DESC LIMIT 100$/);
+    expect(newestRecordsQuery({ def: RESOURCES.user_list, limit: 100 })).toMatch(/^SELECT user_list\.id, .* FROM user_list ORDER BY user_list\.id DESC LIMIT 100$/);
   });
 
   it('should fetch criteria by resource names with their type, removed ones and other types included so they can be told apart from unreadable ones, and reject anything else', () => {

@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { googleAdsAuth } from '../auth';
-import { GoogleAdsApi } from '../common/client';
-import { customerIdProp } from '../common/props';
+import { googleAdsApi } from '../common/api';
+import { googleAdsProps } from '../common/props';
 import { searchRecordsOutputSchema } from '../output-schemas';
 
 const DEFAULT_MAX_ROWS = 1000;
@@ -21,7 +21,7 @@ export const searchRecords = createAction({
   },
   auth: googleAdsAuth,
   props: {
-    customerId: customerIdProp,
+    customerId: googleAdsProps.customerId({ required: true }),
     query: Property.LongText({
       displayName: 'GAQL Query',
       description:
@@ -49,24 +49,13 @@ export const searchRecords = createAction({
   outputSchema: searchRecordsOutputSchema,
   async run(context) {
     const { customerId, query, fetchAllPages, maxRows, pageToken } = context.propsValue;
-
     if (fetchAllPages) {
       const cap = Math.min(Math.max(Math.floor(Number(maxRows) || DEFAULT_MAX_ROWS), 1), HARD_MAX_ROWS);
-      const { results, truncated } = await GoogleAdsApi.searchAll({ auth: context.auth, customerId, query, maxRows: cap });
+      const { results, truncated } = await googleAdsApi.searchAll({ auth: context.auth, customerId, query, maxRows: cap });
       return { results, count: results.length, truncated };
     }
-
-    const page = await GoogleAdsApi.search({
-      auth: context.auth,
-      customerId,
-      query,
-      pageToken: pageToken || undefined,
-    });
+    const page = await googleAdsApi.search({ auth: context.auth, customerId, query, pageToken: pageToken || undefined });
     const results = page.results ?? [];
-    return {
-      results,
-      count: results.length,
-      nextPageToken: page.nextPageToken ?? null,
-    };
+    return { results, count: results.length, nextPageToken: page.nextPageToken ?? null };
   },
 });

@@ -1,166 +1,17 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 
 import { googleAdsAuth } from '../auth';
-import { GoogleAdsApi, normalizeCustomerId } from '../common/client';
-import type { GoogleAdsAuthValue, GoogleAdsRow } from '../common/client';
-import { absorbEvents, accountTime, baselineState, beforeActivation, clockHorizon, createEventsQuery, EVENTS_PER_POLL, eventWindow, planEventsQuery, toCreateEvents, zoneClock } from '../common/change-events';
-import type { CreateEvent, CreateEventState, PendingRecord, ZoneClock } from '../common/change-events';
-import { customerIdProp } from '../common/props';
-import { resourceTypeProp } from '../common/records';
-import { isOfKind, newestRecordsQuery, readField, recordsAfterIdQuery, recordsByResourceNamesQuery, resourceDefinition } from '../common/resources';
-import type { ResourceDefinition } from '../common/resources';
-
-export async function recordsAfter({ auth, customerId, def, afterId }: RecordsAfterParams): Promise<GoogleAdsRow[]> {
-  const { results } = await GoogleAdsApi.searchAll({ auth, customerId, query: recordsAfterIdQuery({ def, afterId }), maxRows: MAX_ROWS_PER_POLL });
-  return results;
-}
-
-async function saveBaseline({ auth, customerId, resourceType, store }: SaveBaselineParams): Promise<void> {
-  const def = resourceDefinition(resourceType);
-  if (def.changeEventType) {
-    const now = new Date();
-    const timeZone = await accountTimeZone({ auth, customerId });
-    const enabledAt = accountTime({ now, timeZone });
-    const window = eventWindow(now);
-    const query = createEventsQuery({ changeEventType: def.changeEventType, after: window.start, until: enabledAt, order: 'DESC', limit: BASELINE_EVENTS });
-    const { results } = await GoogleAdsApi.searchAll({ auth, customerId, query, maxRows: BASELINE_EVENTS });
-    await store.put(EVENTS_KEY, baselineState({ events: toCreateEvents(results), now, limit: BASELINE_EVENTS, enabledAt, timeZone }));
-    return;
-  }
-  const newest = await newestRecords({ auth, customerId, def, limit: 1 });
-  await store.put(LAST_ID_KEY, idOf({ def, row: newest[0] }) ?? '0');
-}
-
-async function accountTimeZone({ auth, customerId }: { auth: GoogleAdsAuthValue; customerId: string }): Promise<string> {
-  const page = await GoogleAdsApi.search({ auth, customerId, query: 'SELECT customer.time_zone FROM customer LIMIT 1' });
-  const timeZone = page.results?.[0] === undefined ? undefined : readField({ row: page.results[0], gaqlPath: 'customer.time_zone' });
-  if (typeof timeZone !== 'string' || timeZone === '') {
-    throw new Error(`Google Ads did not return the time zone of account ${customerId}, which is needed to ignore creations made before the trigger was enabled.`);
-  }
-  return timeZone;
-}
-
-async function createdSince({ auth, customerId, def, changeEventType, state, store }: CreatedSinceParams): Promise<GoogleAdsRow[]> {
-  const now = new Date();
-  const timeZone = state.timeZone ?? (await accountTimeZone({ auth, customerId }));
-  const horizon = clockHorizon({ now, timeZone });
-  const clock = zoneClock({ timeZone, now });
-  const plan = planEventsQuery({ changeEventType, state, now, horizon, limit: EVENTS_PER_POLL });
-  const { results } = await GoogleAdsApi.searchAll({ auth, customerId, query: plan.query, maxRows: EVENTS_PER_POLL });
-  const events = toCreateEvents(results);
-  const fitting = absorbEvents({ state: plan.state, events, full: results.length >= EVENTS_PER_POLL, horizon, clock });
-  const fresh = fitting.fresh;
-  const prefix = `customers/${normalizeCustomerId(customerId)}/${def.collection}/`;
-  const retried = state.pending ?? [];
-  const freshNames = fresh
-    .filter((event) => !beforeActivation({ state, event, clock }))
-    .map((event) => event.resourceName)
-    .filter((name) => name.startsWith(prefix));
-  const resourceNames = [...new Set([...retried.map((record) => `${prefix}${record.id}`), ...freshNames])];
-  const byName = await recordsByResourceNames({ auth, customerId, def, resourceNames });
-  const admission = admit({ def, prefix, byName, retried, events, fresh, now: now.getTime(), state, clock });
-  const absorbed = admission.cut === undefined ? fitting : absorbAdmitted({ state: plan.state, events, fresh, cut: admission.cut, horizon, clock });
-  if (absorbed.overflow !== undefined) {
-    console.warn(
-      `Google Ads New Record: ad group ${absorbed.overflow.adGroupId} has at least ${EVENTS_PER_POLL} creations at ${absorbed.overflow.time}, the most one change history query can return. Creations beyond those rows cannot be read and do not fire.`
-    );
-  }
-  await store.put(EVENTS_KEY, withPending({ state: absorbed.state, pending: admission.pending, enabledAt: state.enabledAt, enabledAtMs: state.enabledAtMs, timeZone }));
-  return admission.rows;
-}
-
-function admit({ def, prefix, byName, retried, events, fresh, now, state, clock }: AdmitParams): Admission {
-  const rows: GoogleAdsRow[] = [];
-  const pending: PendingRecord[] = [];
-  const handled = new Set<string>();
-  for (const record of retried) {
-    handled.add(record.id);
-    const row = byName.get(`${prefix}${record.id}`);
-    if (row === undefined) {
-      if (now - record.at < RETRY_WINDOW_MS) {
-        pending.push(record);
-      }
-    } else if (fires({ def, row })) {
-      rows.push(row);
-    }
-  }
-  const isFresh = new Set(fresh);
-  for (const [index, event] of events.entries()) {
-    const id = event.resourceName.slice(prefix.length);
-    if (!isFresh.has(event) || !event.resourceName.startsWith(prefix) || handled.has(id) || beforeActivation({ state, event, clock })) {
-      continue;
-    }
-    const row = byName.get(event.resourceName);
-    if (row === undefined && pending.length >= MAX_PENDING) {
-      return { rows, pending, cut: index };
-    }
-    handled.add(id);
-    if (row === undefined) {
-      pending.push({ id, at: now });
-    } else if (fires({ def, row })) {
-      rows.push(row);
-    }
-  }
-  return { rows, pending };
-}
-
-function absorbAdmitted({ state, events, fresh, cut, horizon, clock }: AbsorbAdmittedParams): ReturnType<typeof absorbEvents> {
-  const admitted = events.slice(0, cut);
-  const isFresh = new Set(fresh);
-  if (!admitted.some((event) => isFresh.has(event))) {
-    return { state, fresh: [] };
-  }
-  return absorbEvents({ state, events: admitted, full: true, horizon, clock });
-}
-
-async function recordsByResourceNames({ auth, customerId, def, resourceNames }: RecordsByResourceNamesParams): Promise<Map<string, GoogleAdsRow>> {
-  const rows: GoogleAdsRow[] = [];
-  for (let start = 0; start < resourceNames.length; start += NAMES_PER_QUERY) {
-    const chunk = resourceNames.slice(start, start + NAMES_PER_QUERY);
-    const { results } = await GoogleAdsApi.searchAll({ auth, customerId, query: recordsByResourceNamesQuery({ def, resourceNames: chunk }), maxRows: chunk.length });
-    rows.push(...results);
-  }
-  return new Map(rows.map((row) => [String(readField({ row, gaqlPath: `${def.type}.resource_name` })), row]));
-}
-
-function fires({ def, row }: { def: ResourceDefinition; row: GoogleAdsRow }): boolean {
-  return isOfKind({ def, row }) && !(def.statusField !== undefined && readField({ row, gaqlPath: def.statusField }) === 'REMOVED');
-}
-
-function withPending({ state, pending, enabledAt, enabledAtMs, timeZone }: WithPendingParams): CreateEventState {
-  return {
-    floor: state.floor,
-    seen: state.seen,
-    ...(state.boundary === undefined ? {} : { boundary: state.boundary }),
-    ...(state.scan === undefined ? {} : { scan: state.scan }),
-    ...(state.horizon === undefined ? {} : { horizon: state.horizon }),
-    ...(state.closing === true ? { closing: true } : {}),
-    ...(pending.length === 0 ? {} : { pending }),
-    ...(enabledAt === undefined ? {} : { enabledAt }),
-    ...(enabledAtMs === undefined ? {} : { enabledAtMs }),
-    timeZone,
-  };
-}
-
-async function newestRecords({ auth, customerId, def, limit }: NewestRecordsParams): Promise<GoogleAdsRow[]> {
-  const page = await GoogleAdsApi.search({ auth, customerId, query: newestRecordsQuery({ def, limit }) });
-  return page.results ?? [];
-}
-
-function idOf({ def, row }: { def: ResourceDefinition; row: GoogleAdsRow | undefined }): string | null {
-  if (row === undefined) return null;
-  const id = readField({ row, gaqlPath: def.idField });
-  return typeof id === 'string' || typeof id === 'number' ? String(id) : null;
-}
+import { googleAdsApi } from '../common/api';
+import { googleAdsProps } from '../common/props';
+import type { GoogleAdsAuthValue, GoogleAdsResourceDefinition, GoogleAdsRow } from '../common/types';
+import { googleAdsUtils } from '../common/utils';
 
 const LAST_ID_KEY = 'google_ads_new_record_last_id';
 const EVENTS_KEY = 'google_ads_new_record_create_events';
-const MAX_ROWS_PER_POLL = 1_000;
-const NAMES_PER_QUERY = 500;
 const TEST_LIMIT = 5;
-const BASELINE_EVENTS = 5_000;
-const RETRY_WINDOW_MS = 30 * 60_000;
-const MAX_PENDING = 1_000;
+const EVENTS_PER_POLL = 10_000;
+const OVERLAP_MS = 10 * 60_000;
+const DAY_MS = 86_400_000;
 
 export const newRecord = createTrigger({
   name: 'newRecord',
@@ -173,8 +24,8 @@ export const newRecord = createTrigger({
   },
   auth: googleAdsAuth,
   props: {
-    customerId: customerIdProp,
-    resourceType: resourceTypeProp,
+    customerId: googleAdsProps.customerId({ required: true }),
+    resourceType: googleAdsProps.resourceType({ required: true }),
   },
   type: TriggerStrategy.POLLING,
   sampleData: {
@@ -191,7 +42,8 @@ export const newRecord = createTrigger({
     },
   },
   async onEnable(context) {
-    await saveBaseline({ auth: context.auth, customerId: context.propsValue.customerId, resourceType: context.propsValue.resourceType, store: context.store });
+    const { customerId, resourceType } = context.propsValue;
+    await saveBaseline({ auth: context.auth, customerId, def: googleAdsUtils.resourceDefinition(resourceType), store: context.store });
   },
   async onDisable(context) {
     await context.store.delete(LAST_ID_KEY);
@@ -199,72 +51,138 @@ export const newRecord = createTrigger({
   },
   async run(context) {
     const { auth, store } = context;
-    const { customerId, resourceType } = context.propsValue;
-    const def = resourceDefinition(resourceType);
+    const { customerId } = context.propsValue;
+    const def = googleAdsUtils.resourceDefinition(context.propsValue.resourceType);
     if (def.changeEventType) {
-      const state = await store.get<CreateEventState>(EVENTS_KEY);
-      if (state === null || state === undefined) {
-        await saveBaseline({ auth, customerId, resourceType, store });
+      const state = await store.get<EventState>(EVENTS_KEY);
+      if (!state) {
+        await saveBaseline({ auth, customerId, def, store });
         return [];
       }
-      return createdSince({ auth, customerId, def, changeEventType: def.changeEventType, state, store });
+      const now = new Date();
+      const events = await googleAdsApi.listCreateEvents({
+        auth,
+        customerId,
+        changeEventType: def.changeEventType,
+        after: latest([windowStart(now), state.full ? state.cursor : shift({ time: state.cursor, ms: -OVERLAP_MS })]),
+        until: windowEnd(now),
+        order: 'ASC',
+        limit: EVENTS_PER_POLL,
+      });
+      const fresh = events.filter((row) => !isSeen({ state, row }));
+      await store.put<EventState>(EVENTS_KEY, absorb({ state, events, full: events.length >= EVENTS_PER_POLL }));
+      return await createdRecords({ auth, customerId, def, events: fresh });
     }
     const lastId = await store.get<string>(LAST_ID_KEY);
     if (lastId === null || lastId === undefined) {
-      await saveBaseline({ auth, customerId, resourceType, store });
+      await saveBaseline({ auth, customerId, def, store });
       return [];
     }
-    const rows = await recordsAfter({ auth, customerId, def, afterId: lastId });
-    const newestId = idOf({ def, row: rows[rows.length - 1] });
-    if (newestId !== null) {
-      await store.put(LAST_ID_KEY, newestId);
+    const rows = await googleAdsApi.listRecordsAfterId({ auth, customerId, def, afterId: lastId });
+    const newestId = def.read(rows[rows.length - 1] ?? {})?.id;
+    if (newestId) {
+      await store.put(LAST_ID_KEY, String(newestId));
     }
     return rows;
   },
   async test(context) {
-    const def = resourceDefinition(context.propsValue.resourceType);
-    return newestRecords({ auth: context.auth, customerId: context.propsValue.customerId, def, limit: TEST_LIMIT });
+    const def = googleAdsUtils.resourceDefinition(context.propsValue.resourceType);
+    return await googleAdsApi.listNewestRecords({ auth: context.auth, customerId: context.propsValue.customerId, def, limit: TEST_LIMIT });
   },
 });
 
-type TriggerStore = { put: <T>(key: string, value: T) => Promise<T> };
+async function saveBaseline({ auth, customerId, def, store }: SaveBaselineParams): Promise<void> {
+  if (def.changeEventType) {
+    const now = new Date();
+    const events = await googleAdsApi.listCreateEvents({
+      auth,
+      customerId,
+      changeEventType: def.changeEventType,
+      after: windowStart(now),
+      until: windowEnd(now),
+      order: 'DESC',
+      limit: EVENTS_PER_POLL,
+    });
+    await store.put<EventState>(EVENTS_KEY, absorb({ state: { cursor: windowStart(now), seen: {} }, events, full: false }));
+    return;
+  }
+  const newest = await googleAdsApi.listNewestRecords({ auth, customerId, def, limit: 1 });
+  await store.put(LAST_ID_KEY, String(def.read(newest[0] ?? {})?.id ?? '0'));
+}
 
-type RecordsAfterParams = { auth: GoogleAdsAuthValue; customerId: string; def: ResourceDefinition; afterId: string };
+async function createdRecords({ auth, customerId, def, events }: CreatedRecordsParams): Promise<GoogleAdsRow[]> {
+  const prefix = `customers/${googleAdsUtils.normalizeCustomerId(customerId)}/${def.collection}/`;
+  const names = [...new Set(events.map((row) => row.changeEvent?.changeResourceName ?? '').filter((name) => name.startsWith(prefix)))];
+  const rows = await googleAdsApi.listRecordsByResourceNames({ auth, customerId, def, resourceNames: names });
+  const byName = new Map(rows.map((row) => [def.read(row)?.resourceName, row]));
+  return names.flatMap((name) => {
+    const row = byName.get(name);
+    const entity = row === undefined ? undefined : def.read(row);
+    if (row === undefined || entity?.status === 'REMOVED' || (def.kind !== undefined && entity?.type !== def.kind.value)) {
+      return [];
+    }
+    return [row];
+  });
+}
 
-type NewestRecordsParams = { auth: GoogleAdsAuthValue; customerId: string; def: ResourceDefinition; limit: number };
+function absorb({ state, events, full }: { state: EventState; events: GoogleAdsRow[]; full: boolean }): EventState {
+  const cursor = latest([state.cursor, ...events.map((row) => secondOf(row.changeEvent?.changeDateTime ?? state.cursor))]);
+  const keep = shift({ time: cursor, ms: -OVERLAP_MS });
+  const seen = events.reduce<Record<string, string>>(
+    (groups, row) => {
+      const second = secondOf(row.changeEvent?.changeDateTime ?? '');
+      return second < keep || isSeen({ state: { cursor, seen: groups }, row }) ? groups : { ...groups, [second]: `${groups[second] ?? ''}${seenKey(row)}` };
+    },
+    Object.fromEntries(Object.entries(state.seen).filter(([second]) => second >= keep))
+  );
+  return { cursor, seen, ...(full ? { full } : {}) };
+}
 
-type RecordsByResourceNamesParams = { auth: GoogleAdsAuthValue; customerId: string; def: ResourceDefinition; resourceNames: string[] };
+function isSeen({ state, row }: { state: EventState; row: GoogleAdsRow }): boolean {
+  const keys = state.seen[secondOf(row.changeEvent?.changeDateTime ?? '')] ?? '';
+  const key = seenKey(row);
+  return Array.from({ length: keys.length / SEEN_KEY_LENGTH }, (_, i) => keys.slice(i * SEEN_KEY_LENGTH, (i + 1) * SEEN_KEY_LENGTH)).includes(key);
+}
 
-type CreatedSinceParams = {
-  auth: GoogleAdsAuthValue;
-  customerId: string;
-  def: ResourceDefinition;
-  changeEventType: string;
-  state: CreateEventState;
-  store: TriggerStore;
-};
+function seenKey(row: GoogleAdsRow): string {
+  return googleAdsUtils.sha256(row.changeEvent?.resourceName ?? '').slice(0, SEEN_KEY_LENGTH);
+}
+
+function secondOf(time: string): string {
+  return time.slice(0, 19);
+}
+
+function shift({ time, ms }: { time: string; ms: number }): string {
+  const [date, clock = '00:00:00'] = time.split(' ');
+  return formatTime(new Date(Date.parse(`${date}T${clock.slice(0, 8)}Z`) + ms));
+}
+
+function windowStart(now: Date): string {
+  return formatTime(new Date(now.getTime() - 29 * DAY_MS)).slice(0, 10);
+}
+
+function windowEnd(now: Date): string {
+  return formatTime(new Date(now.getTime() + 2 * DAY_MS)).slice(0, 10);
+}
+
+function formatTime(date: Date): string {
+  const iso = date.toISOString();
+  return `${iso.slice(0, 10)} ${iso.slice(11, 19)}`;
+}
+
+function latest(times: string[]): string {
+  return times.reduce((max, time) => (time > max ? time : max));
+}
+
+const SEEN_KEY_LENGTH = 8;
+
+type EventState = { cursor: string; seen: Record<string, string>; full?: boolean };
 
 type SaveBaselineParams = {
   auth: GoogleAdsAuthValue;
   customerId: string;
-  resourceType: string;
-  store: TriggerStore;
+  def: GoogleAdsResourceDefinition;
+  store: { put: <T>(key: string, value: T) => Promise<T> };
 };
 
-type AdmitParams = {
-  def: ResourceDefinition;
-  prefix: string;
-  byName: Map<string, GoogleAdsRow>;
-  retried: PendingRecord[];
-  events: CreateEvent[];
-  fresh: CreateEvent[];
-  now: number;
-  state: CreateEventState;
-  clock: ZoneClock;
-};
-
-type Admission = { rows: GoogleAdsRow[]; pending: PendingRecord[]; cut?: number };
-
-type WithPendingParams = { state: CreateEventState; pending: PendingRecord[]; enabledAt: string | undefined; enabledAtMs: number | undefined; timeZone: string };
-
-type AbsorbAdmittedParams = { state: CreateEventState; events: CreateEvent[]; fresh: CreateEvent[]; cut: number; horizon: string; clock: ZoneClock };
+type CreatedRecordsParams = { auth: GoogleAdsAuthValue; customerId: string; def: GoogleAdsResourceDefinition; events: GoogleAdsRow[] };

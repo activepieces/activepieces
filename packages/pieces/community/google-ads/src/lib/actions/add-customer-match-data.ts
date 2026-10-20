@@ -1,18 +1,17 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { googleAdsAuth } from '../auth';
-import { toMemberInput } from '../common/customer-match';
-import {
-  acceptTermsProp,
-  consentAdPersonalizationProp,
-  consentAdUserDataProp,
-  membersProp,
-  uploadCustomerMatch,
-  userListProp,
-  waitForCompletionProp,
-} from '../common/customer-match-action';
-import { customerIdProp } from '../common/props';
+import { googleAdsApi } from '../common/api';
+import { googleAdsProps } from '../common/props';
+import type { GoogleAdsConsentStatus } from '../common/types';
+import { googleAdsUtils } from '../common/utils';
 import { customerMatchOutputSchema } from '../output-schemas';
+
+const CONSENT_OPTIONS: { label: string; value: GoogleAdsConsentStatus }[] = [
+  { label: 'Granted', value: 'GRANTED' },
+  { label: 'Denied', value: 'DENIED' },
+  { label: 'Unspecified', value: 'UNSPECIFIED' },
+];
 
 export const addCustomerMatchData = createAction({
   name: 'addCustomerMatchData',
@@ -27,27 +26,42 @@ export const addCustomerMatchData = createAction({
   },
   auth: googleAdsAuth,
   props: {
-    customerId: customerIdProp,
-    userList: userListProp,
-    members: membersProp,
-    adUserData: consentAdUserDataProp,
-    adPersonalization: consentAdPersonalizationProp,
-    acceptTerms: acceptTermsProp,
-    waitForCompletion: waitForCompletionProp,
+    customerId: googleAdsProps.customerId({ required: true }),
+    userList: googleAdsProps.userList({ required: true }),
+    members: googleAdsProps.members({ required: true }),
+    adUserData: Property.StaticDropdown<GoogleAdsConsentStatus, true>({
+      displayName: 'Consent: Ad User Data',
+      description:
+        'Consent the members gave for their data to be used for advertising (required by Google for uploads, enforced in the EEA). Pick the value that matches what the members actually agreed to.',
+      required: true,
+      options: { options: CONSENT_OPTIONS },
+    }),
+    adPersonalization: Property.StaticDropdown<GoogleAdsConsentStatus, true>({
+      displayName: 'Consent: Ad Personalization',
+      description: 'Consent the members gave for personalized advertising. Pick the value that matches what the members actually agreed to.',
+      required: true,
+      options: { options: CONSENT_OPTIONS },
+    }),
+    acceptTerms: Property.Checkbox({
+      displayName: 'Customer Match Terms Accepted',
+      description:
+        'Google requires every upload to confirm that the advertiser accepted the Customer Match terms of service (https://support.google.com/adspolicy/answer/6299717). Tick to confirm.',
+      required: true,
+      defaultValue: false,
+    }),
+    waitForCompletion: googleAdsProps.waitForCompletion({ required: false }),
   },
   outputSchema: customerMatchOutputSchema,
   async run(context) {
     const { customerId, userList, members, adUserData, adPersonalization, acceptTerms, waitForCompletion } = context.propsValue;
     if (!acceptTerms) {
-      throw new Error(
-        'Customer Match uploads require the advertiser to accept Google\'s Customer Match terms of service. Tick "Customer Match Terms Accepted".'
-      );
+      throw new Error('Customer Match uploads require the advertiser to accept Google\'s Customer Match terms of service. Tick "Customer Match Terms Accepted".');
     }
-    return uploadCustomerMatch({
+    return await googleAdsApi.uploadCustomerMatch({
       auth: context.auth,
       customerId,
       userList,
-      members: (members ?? []).map(toMemberInput),
+      members: (members ?? []).map(googleAdsUtils.toMemberInput),
       mode: 'add',
       consent: { adUserData, adPersonalization },
       waitForCompletion: Boolean(waitForCompletion),
