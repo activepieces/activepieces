@@ -3,7 +3,7 @@ import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, EnterpriseTrialStatus, FeatureId, isConsumableFeatureId, PlanName, PlatformPlan, SeatsBillableFeature, UNAVAILABLE_ENTERPRISE_TRIAL, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
 import { FastifyBaseLogger } from 'fastify'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEnterpriseTrialStartLockKey, getEntitlementsRefreshKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, ENTITLEMENTS_WRITE_LOCK_TIMEOUT_SECONDS, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewFetchLockKey, getBillingOverviewKey, getCustomerStateFetchLockKey, getCustomerStateMissKey, getCustomerStateRefreshKey, getEnterpriseTrialStartLockKey, getEntitlementsRefreshKey, getEntitlementsWriteLockKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, TrackFeatureParams } from '../../../../platform/billing-provider'
@@ -204,7 +204,11 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                         await platformPlanService(log).update({ platformId, enterpriseTrialUsedElsewhereAt: new Date().toISOString() })
                         return USED_ENTERPRISE_TRIAL
                     }
-                    await platformPlanService(log).update({ platformId, enterpriseTrialStartedAt: started.startedAt, enterpriseTrialEndsAt: started.endsAt })
+                    await distributedLock(log).runExclusive({
+                        key: getEntitlementsWriteLockKey(platformId),
+                        timeoutInSeconds: ENTITLEMENTS_WRITE_LOCK_TIMEOUT_SECONDS,
+                        fn: () => platformPlanService(log).update({ platformId, enterpriseTrialStartedAt: started.startedAt, enterpriseTrialEndsAt: started.endsAt }),
+                    })
                     rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialStarted({ platformId, endsAt: started.endsAt }), log)
                     return { state: 'active', startedAt: started.startedAt, endsAt: started.endsAt, extended: false }
                 },
