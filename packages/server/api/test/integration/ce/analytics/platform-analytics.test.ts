@@ -1,4 +1,5 @@
-import { DefaultProjectRole, FlowStatus, FlowVersionState, PlatformRole, ProjectType, RunEnvironment } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { AnalyticsRunsUsageItem, DefaultProjectRole, FlowStatus, FlowVersionState, PlatformRole, ProjectType, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -55,6 +56,13 @@ async function seedTwoProjects(ctx: TestContext) {
     const foreignFlow = await createEnabledFlowWithRun(foreignProject.id, 'foreign-project-flow')
 
     return { foreignUser, foreignProject, ownFlow, foreignFlow }
+}
+
+async function refreshRunsOfFlow({ ctx, flowId }: { ctx: TestContext, flowId: string }) {
+    const response = await ctx.post('/v1/analytics/refresh')
+    expect(response?.statusCode).toBe(StatusCodes.OK)
+    const runs: AnalyticsRunsUsageItem[] = response!.json().runs.filter((run: AnalyticsRunsUsageItem) => run.flowId === flowId)
+    return { entries: runs.length, total: runs.reduce((sum, run) => sum + run.runs, 0) }
 }
 
 describe('Platform Analytics API', () => {
@@ -211,5 +219,114 @@ describe('POST /v1/analytics/refresh', () => {
         expect(response?.statusCode).toBe(StatusCodes.OK)
         const flowIds = response!.json().flows.map((flow: { flowId: string }) => flow.flowId)
         expect(flowIds).toContain(foreignFlow.id)
+    })
+
+    it('should keep one entry per flow and day with the right total across repeated refreshes', async () => {
+        const ctx = await createTestContext(app!, {
+            plan: { analyticsEnabled: true },
+        })
+        const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.ENABLED })
+        await db.save('flow', flow)
+        const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.DRAFT })
+        await db.save('flow_version', flowVersion)
+        const start = dayjs().subtract(1, 'day').startOf('hour')
+        const addRuns = ({ count, created }: { count: number, created: dayjs.Dayjs }) => db.save('flow_run', Array.from({ length: count }, () => createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            created: created.toISOString(),
+        })))
+        await addRuns({ count: 3, created: start })
+
+        const first = await refreshRunsOfFlow({ ctx, flowId: flow.id })
+        const report = await db.findOneByOrFail<{ id: string }>('platform_analytics_report', { platformId: ctx.platform.id })
+        await db.update('platform_analytics_report', report.id, { cachedAt: start.add(1, 'minute').toISOString() })
+        await addRuns({ count: 1, created: start.add(2, 'minute') })
+        const second = await refreshRunsOfFlow({ ctx, flowId: flow.id })
+        const third = await refreshRunsOfFlow({ ctx, flowId: flow.id })
+
+        expect({ first, second, third }).toEqual({
+            first: { entries: 1, total: 3 },
+            second: { entries: 1, total: 4 },
+            third: { entries: 1, total: 4 },
+        })
+    })
+
+    it('should merge same-day entries already split in a saved report', async () => {
+        const ctx = await createTestContext(app!, {
+            plan: { analyticsEnabled: true },
+        })
+        const flowId = apId()
+        const otherFlowId = apId()
+        const day = dayjs().startOf('day').toISOString()
+        const previousDay = dayjs().startOf('day').subtract(1, 'day').toISOString()
+        await db.save('platform_analytics_report', {
+            id: apId(),
+            platformId: ctx.platform.id,
+            cachedAt: dayjs().toISOString(),
+            outdated: false,
+            runs: [
+                { flowId, day, runs: 3 },
+                { flowId, day, runs: 1 },
+                { flowId, day: previousDay, runs: 2 },
+                { flowId: otherFlowId, day, runs: 5 },
+            ],
+            flows: [],
+            users: [],
+        })
+
+        const response = await ctx.post('/v1/analytics/refresh')
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        const runs = response!.json().runs
+        expect(runs).toHaveLength(3)
+        expect(runs).toEqual(expect.arrayContaining([
+            { flowId, day, runs: 4 },
+            { flowId, day: previousDay, runs: 2 },
+            { flowId: otherFlowId, day, runs: 5 },
+        ]))
+    })
+
+    it('should count a run whose row is written after the refresh that covered its time', async () => {
+        const ctx = await createTestContext(app!, {
+            plan: { analyticsEnabled: true },
+        })
+        const flow = await createEnabledFlowWithRun(ctx.project.id, 'late-run-flow')
+        const first = await refreshRunsOfFlow({ ctx, flowId: flow.id })
+        const report = await db.findOneByOrFail<{ cachedAt: string }>('platform_analytics_report', { platformId: ctx.platform.id })
+        const flowVersion = await db.findOneByOrFail<{ id: string }>('flow_version', { flowId: flow.id })
+        await db.save('flow_run', createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            created: dayjs(report.cachedAt).subtract(1, 'second').toISOString(),
+        }))
+
+        const second = await refreshRunsOfFlow({ ctx, flowId: flow.id })
+
+        expect({ first: first.total, second: second.total }).toEqual({ first: 1, second: 2 })
+    })
+
+    it('should count runs of a project that has no enabled flow', async () => {
+        const ctx = await createTestContext(app!, {
+            plan: { analyticsEnabled: true },
+        })
+        const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+        await db.save('flow', flow)
+        const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.DRAFT })
+        await db.save('flow_version', flowVersion)
+        await db.save('flow_run', createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            environment: RunEnvironment.PRODUCTION,
+            created: dayjs().subtract(1, 'hour').toISOString(),
+        }))
+
+        const runs = await refreshRunsOfFlow({ ctx, flowId: flow.id })
+
+        expect(runs).toEqual({ entries: 1, total: 1 })
     })
 })

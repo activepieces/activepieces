@@ -218,5 +218,7 @@
   "Triggers when an item is added to a database.": "データベースに項目が追加されたときに、フローを開始します。",
   "Triggers when an item is updated in a database.": "データベースの項目が更新されたときに、フローを開始します。",
   "Triggers when a comment is added to a page.": "Triggers when a comment is added to a page.",
-  "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited."
+  "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited.",
+  "Empty fields keep their current value. Checkboxes are always saved as shown.": "空のフィールドは現在の値を保持します。チェックボックスは常に表示どおりに保存されます。",
+  "Add Notion-Version, e.g. 2022-02-22. Authorization is added for you.": "Notion-Version を追加してください（例: 2022-02-22）。認証は自動で追加されます。"
 }

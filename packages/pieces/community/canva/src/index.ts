@@ -21,7 +21,7 @@ To connect Canva, follow these steps:
 1. Go to https://www.canva.com/developers/integrations and sign in.
 2. Click **Create an integration** and fill in the app name and description.
 3. Under **Configure** → **Authentication**, set the redirect URL to the one shown above.
-4. Under **Configure** → **Scopes**, enable: \`design:content:read\`, \`design:content:write\`, \`design:meta:read\`, \`asset:read\`, \`asset:write\`, \`folder:read\`, \`folder:write\`.
+4. Under **Configure** → **Scopes**, enable: \`design:content:read\`, \`design:content:write\`, \`design:meta:read\`, \`asset:read\`, \`asset:write\`, \`folder:read\`, \`folder:write\`, \`profile:read\`.
 5. Copy the **Client ID** and **Client secret** and paste them above.
 `;
 
@@ -40,7 +40,21 @@ export const canvaAuth = PieceAuth.OAuth2({
     'asset:write',
     'folder:read',
     'folder:write',
+    'profile:read',
   ],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<{ profile?: { display_name?: string } }>({
+        method: HttpMethod.GET,
+        url: `${canvaCommon.baseUrl}/users/me/profile`,
+        headers: { Authorization: `Bearer ${auth.access_token}` },
+        timeout: 5000,
+      });
+      return response.body.profile?.display_name || undefined;
+    } catch {
+      return undefined;
+    }
+  },
   validate: async ({ auth }) => {
     try {
       const authValue = auth as OAuth2PropertyValue;

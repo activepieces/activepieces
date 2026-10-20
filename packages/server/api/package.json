@@ -112,6 +112,7 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
+    "deno": "2.9.3",
     "@activepieces/piece-facebook-leads": "workspace:*",
     "@activepieces/piece-intercom": "workspace:*",
     "@activepieces/piece-microsoft-teams-bot": "workspace:*",

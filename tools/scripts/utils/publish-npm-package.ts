@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import { argv } from 'node:process'
 import { execSync } from 'node:child_process'
+import { tryCatchSync } from '@activepieces/core-utils'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readPackageJson } from './files'
 import { packagePrePublishChecks } from './package-pre-publish-checks'
@@ -92,9 +93,21 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   assertNoUnpublishableDeps(`${outputPath}/package.json`)
   assertNoSemverRanges(`${outputPath}/package.json`)
 
-  execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })
+  const { error } = tryCatchSync(() => execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' }))
+  if (error) {
+    if (!isVersionOnRegistry({ name: json.name, version })) {
+      throw error
+    }
+    console.info(`[publishProject] publish failed but version is already on registry, path=${path}, version=${version}`)
+    return
+  }
 
   console.info(`[publishProject] success, path=${path}, version=${version}`)
+}
+
+function isVersionOnRegistry({ name, version }: { name: string, version: string }): boolean {
+  const { data } = tryCatchSync(() => execSync(`npm view ${name}@${version} version`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }))
+  return data?.trim() === version
 }
 
 const main = async (): Promise<void> => {

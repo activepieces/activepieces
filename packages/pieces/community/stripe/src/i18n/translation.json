@@ -632,5 +632,7 @@
   "Only disputes for this charge. Empty: all.": "Only disputes for this charge. Empty: all.",
   "Only disputes for this payment. Empty: all.": "Only disputes for this payment. Empty: all.",
   "Only updates where the subscription's status is this.": "Only updates where the subscription's status is this.",
-  "Only sessions for this customer. Empty: all.": "Only sessions for this customer. Empty: all."
+  "Only sessions for this customer. Empty: all.": "Only sessions for this customer. Empty: all.",
+  "Markdown": "Markdown",
+  "Empty fields keep their current value.": "Empty fields keep their current value."
 }

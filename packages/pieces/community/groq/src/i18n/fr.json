@@ -61,5 +61,7 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "HEAD": "TÊTE",
+  "Markdown": "Markdown",
+  "Saved for the whole project, so other flows that use this ID join the same conversation.": "Enregistré pour tout le projet : les autres flux qui utilisent cet ID rejoignent la même conversation."
 }

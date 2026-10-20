@@ -41,5 +41,6 @@
   "Record Deleted": "Registro Excluído",
   "Triggers when a new record is added to the selected table.": "Dispara quando um novo registro é adicionado à tabela selecionada.",
   "Triggers when a record is updated in the selected table.": "Dispara quando um registro é atualizado na tabela selecionada.",
-  "Triggers when a record is deleted from the selected table.": "Dispara quando um registro é excluído da tabela selecionada."
+  "Triggers when a record is deleted from the selected table.": "Dispara quando um registro é excluído da tabela selecionada.",
+  "Empty fields keep their current value.": "Campos vazios mantêm o valor atual."
 }

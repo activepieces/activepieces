@@ -41,5 +41,6 @@
   "Record Deleted": "レコードの削除",
   "Triggers when a new record is added to the selected table.": "選択したテーブルに新しいレコードが追加されたときに、フローを開始します。",
   "Triggers when a record is updated in the selected table.": "選択したテーブルでレコードが更新されたときに、フローを開始します。",
-  "Triggers when a record is deleted from the selected table.": "選択したテーブルからレコードが削除されたときに、フローを開始します。"
+  "Triggers when a record is deleted from the selected table.": "選択したテーブルからレコードが削除されたときに、フローを開始します。",
+  "Empty fields keep their current value.": "空欄のフィールドは現在の値のままです。"
 }

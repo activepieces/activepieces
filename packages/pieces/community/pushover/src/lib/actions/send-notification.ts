@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pushoverAuth } from '../..';
 import { buildMessageBody } from '../common';
@@ -9,68 +13,108 @@ export const sendNotification = createAction({
   name: 'send_notification',
   classification: 'WRITE',
   displayName: 'Send Notification',
-  description: 'Send a notification to Pushover',
+  description: 'Send a push notification to a Pushover user or group.',
   audience: 'human',
   aiMetadata: {
     description: 'Sends a push notification through Pushover to the device(s) tied to the configured user/group key. Use to alert a person or group on their phone/desktop. The message body is required; optional priority (-2 to 2) controls urgency, and emergency priority (2) additionally requires retry and expire values. Not idempotent: each call delivers a new notification.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['recipient_info', 'title', 'message', 'html'],
+    },
+    {
+      key: 'urgency',
+      display: 'section',
+      label: 'Urgency',
+      icon: 'sliders',
+      props: ['priority', 'emergency_info', 'retry', 'expire'],
+    },
+    {
+      key: 'link',
+      display: 'section',
+      label: 'Link',
+      icon: 'paperclip',
+      props: ['url', 'url_title'],
+    },
+  ],
   props: {
+    recipient_info: Property.MarkDown({
+      value: 'Sent to the user or group key on your Pushover connection.',
+      variant: MarkdownVariant.INFO,
+    }),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of the notification',
+      description: 'Shown above the message. Empty uses your app name.',
+      placeholder: 'Backup finished',
       required: false,
     }),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'The message to send',
+      description: 'The notification text, up to 1024 characters.',
+      placeholder: 'The nightly backup completed in 4 minutes.',
       required: true,
     }),
     html: Property.Checkbox({
       displayName: 'Enable HTML',
-      description: 'To enable HTML parsing',
+      description: 'Render <b>, <i>, <u> and <a href> tags in the message.',
       required: false,
     }),
     priority: Property.Number({
       displayName: 'Priority',
-      description:
-        'The priority of the notification (-2 to 2). -2 is lowest priority. If set to 2, you should also specify Retry and Expire.',
+      description: '-2 no alert, -1 quiet, 0 normal, 1 high, 2 emergency.',
       required: false,
+    }),
+    emergency_info: Property.MarkDown({
+      value:
+        'The two fields below apply only at priority 2, which repeats the alert until it is acknowledged. Both are then required.',
+      variant: MarkdownVariant.INFO,
     }),
     retry: Property.Number({
-      displayName: 'Retry',
-      description:
-        'Works only if priority is set to 2. Specifies how often (in seconds) the Pushover servers will send the same notification to the user.',
+      displayName: 'Repeat Every',
+      description: 'Seconds between repeats, at least 30.',
       required: false,
+      width: 'half',
     }),
     expire: Property.Number({
-      displayName: 'Expire',
-      description:
-        'Works only if priority is set to 2. Specifies how many seconds your notification will continue to be retried for (every retry seconds).',
+      displayName: 'Keep Repeating For',
+      description: 'Seconds, up to 10800 (3 hours).',
       required: false,
+      width: 'half',
     }),
     url: Property.ShortText({
       displayName: 'URL',
-      description: 'A supplementary URL to show with your message.',
+      description: 'A link shown under the message.',
+      placeholder: 'https://example.com',
       required: false,
+      width: 'half',
     }),
     url_title: Property.ShortText({
       displayName: 'URL Title',
-      description:
-        'A title for the URL specified as the url input parameter, otherwise just the URL is shown.',
+      description: 'Text shown instead of the URL.',
+      placeholder: 'Open dashboard',
       required: false,
-    }),
-    timestamp: Property.ShortText({
-      displayName: 'Timestamp',
-      description:
-        'a Unix timestamp of a time to display instead of when our API received it.',
-      required: false,
+      width: 'half',
     }),
     device: Property.ShortText({
       displayName: 'Device',
       description:
-        'The name of one of your devices to send just to that device instead of all devices.',
+        'Send only to this device instead of all. Separate several with commas.',
+      placeholder: 'iphone',
       required: false,
+      advanced: true,
+    }),
+    timestamp: Property.ShortText({
+      displayName: 'Timestamp',
+      description:
+        'Unix time in seconds to show instead of the time it was sent.',
+      placeholder: '1767225600',
+      required: false,
+      advanced: true,
     }),
   },
   outputSchema: sendNotificationActionOutputSchema,
