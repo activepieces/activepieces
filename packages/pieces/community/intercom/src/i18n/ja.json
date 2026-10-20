@@ -274,7 +274,7 @@
   "The sending admin. Leave empty to send as the admin who owns this connection.": "The sending admin. Leave empty to send as the admin who owns this connection.",
   "Open a conversation in the inbox without waiting for the contact to reply.": "Open a conversation in the inbox without waiting for the contact to reply.",
   "From List Ticket Types.": "From List Ticket Types.",
-  "The contact ID, email or external ID, matching Identify Contact By.": "The contact ID, email or external ID, matching Identify Contact By.",
+  "The contact ID, email or external ID, matching Identify Contact By. An unknown email creates a new contact.": "The contact ID, email or external ID, matching Identify Contact By. An unknown email creates a new contact.",
   "Ticket type attributes by name, for example {\"Priority\": \"<list option ID>\", \"Due\": \"2026-10-20T12:00:00Z\"}.": "Ticket type attributes by name, for example {\"Priority\": \"<list option ID>\", \"Due\": \"2026-10-20T12:00:00Z\"}.",
   "Optional Intercom company ID to link.": "Optional Intercom company ID to link.",
   "The ticket \"id\" from Intercom, not the inbox ticket number.": "The ticket \"id\" from Intercom, not the inbox ticket number.",

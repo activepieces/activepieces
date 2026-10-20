@@ -14,11 +14,16 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  StatusDot,
+  adminPageResources,
+} from '@/app/components/admin';
 import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import {
   CURSOR_QUERY_PARAM,
-  DataTable,
   RowDataWithActions,
 } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -46,13 +51,14 @@ export const PieceSetsTab = () => {
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
   const limitParam = searchParams.get('limit');
   const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+  const name = searchParams.get('name') ?? undefined;
 
   const {
     data: pieceSetsPage,
     isLoading,
     isError,
     refetch,
-  } = pieceSetQueries.usePieceSets({ cursor, limit });
+  } = pieceSetQueries.usePieceSets({ cursor, limit, name });
   const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();
 
   const pieceSets = useMemo(() => pieceSetsPage?.data ?? [], [pieceSetsPage]);
@@ -103,9 +109,9 @@ export const PieceSetsTab = () => {
           const includesNewPieces =
             row.original.config.pieces.mode === PieceSelectionMode.INCLUDE_ALL;
           return (
-            <Badge variant={includesNewPieces ? 'success' : 'outline'}>
+            <StatusDot tone={includesNewPieces ? 'success' : 'neutral'}>
               {includesNewPieces ? t('Yes') : t('No')}
-            </Badge>
+            </StatusDot>
           );
         },
       },
@@ -169,20 +175,23 @@ export const PieceSetsTab = () => {
   );
 
   return (
-    <>
-      <DashboardPageHeader
+    <AdminPage>
+      <AdminPageHeader
         title={t('Piece Sets')}
         description={t(
           'A piece set decides which pieces (actions/triggers) a project can see. It can also set required actions that a flow must include before it can be published.',
         )}
-      />
+        resources={adminPageResources.pieces}
+      >
+        <CreatePieceSetDialog onCreated={() => refetch()} />
+      </AdminPageHeader>
       <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
-      <DataTable
+      <AdminDataTable
         emptyStateTextTitle={t('No piece sets found')}
         emptyStateTextDescription={t(
           'Create a piece set to control which pieces are available to specific projects',
         )}
-        emptyStateIcon={<Layers className="size-14" />}
+        emptyStateIcon={<Layers />}
         columns={columns}
         filters={[
           {
@@ -201,13 +210,9 @@ export const PieceSetsTab = () => {
         isError={isError}
         errorStateEntity={t('piece sets')}
         onRetry={refetch}
-        clientFiltering={true}
         onRowClick={(pieceSet) =>
           navigate(`/platform/pieces/piece-sets/${pieceSet.id}`)
         }
-        toolbarButtons={[
-          <CreatePieceSetDialog key="create" onCreated={() => refetch()} />,
-        ]}
       />
       {duplicatingSet && (
         <DuplicatePieceSetDialog
@@ -230,6 +235,6 @@ export const PieceSetsTab = () => {
           currentKey={editingSet.key ?? null}
         />
       )}
-    </>
+    </AdminPage>
   );
 };

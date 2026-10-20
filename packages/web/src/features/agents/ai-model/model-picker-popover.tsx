@@ -320,7 +320,7 @@ export function ModelPickerPopover<T>({
             >
               <div
                 data-testid="model-picker-detail"
-                className="w-[300px] rounded-lg border bg-panel px-2 py-5 text-gray-12 shadow-lg"
+                className="w-[300px] rounded-xl border bg-panel px-2 py-5 text-gray-12 shadow-lg"
               >
                 {detail(activeItem)}
               </div>

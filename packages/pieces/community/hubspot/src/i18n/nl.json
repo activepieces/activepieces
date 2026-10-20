@@ -320,5 +320,6 @@
   "Note": "Notitie",
   "Task": "Opdracht",
   "Meeting": "Afspraak",
-  "Call": "Oproepen"
+  "Call": "Oproepen",
+  "Fields left empty keep their current value.": "Velden die je leeg laat, behouden hun huidige waarde."
 }

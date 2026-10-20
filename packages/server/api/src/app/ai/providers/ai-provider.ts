@@ -8,5 +8,6 @@ export type AIProviderStrategy<T extends AIProviderAuthConfig, C extends AIProvi
     modelIdsAreCustomerNamed?: boolean
     validationSkipsModelEndpoint?: boolean
     listModels(authConfig: T, config: C): Promise<AIProviderModel[]>
+    suggestModels?(authConfig: T, config: C): Promise<string[]>
     validateConnection(authConfig: T, config: C, log: FastifyBaseLogger): Promise<void>
 }

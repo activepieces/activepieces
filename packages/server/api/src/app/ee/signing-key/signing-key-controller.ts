@@ -18,7 +18,12 @@ export const signingKeyController: FastifyPluginAsyncZod = async (app) => {
         applicationEvents(req.log).sendUserEvent(req, {
             action: ApplicationEventName.SIGNING_KEY_CREATED,
             data: {
-                signingKey: newSigningKey,
+                signingKey: {
+                    id: newSigningKey.id,
+                    displayName: newSigningKey.displayName,
+                    created: newSigningKey.created,
+                    updated: newSigningKey.updated,
+                },
             },
         })
 

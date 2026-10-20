@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
-import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions, webhookUrlInfo } from '../common/webhook-trigger';
 import { rowEventTriggerOutputSchema } from '../output-schemas';
 
 const triggerHooks = createWebhookTriggerHooks({
@@ -15,15 +15,31 @@ export const rowEventTrigger = createTrigger({
   outputSchema: rowEventTriggerOutputSchema,
   auth: baserowAuth,
   displayName: 'Any Row Change',
-  description:
-    'Triggers when a row is created, updated, or deleted in a Baserow table. To react to only one event type, use the dedicated New Row, Updated Row, or Deleted Row triggers.',
+  description: 'Triggers when a row is created, updated or deleted in a table.',
   aiMetadata: {
     description:
       'Fires on any row change — create, update, or delete — in the selected Baserow table, tagging each event with its event_type. Use when one flow should handle all row lifecycle events; for a single event type use the dedicated New Row, Updated Row, or Deleted Row triggers.',
   },
   type: TriggerStrategy.WEBHOOK,
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table to Watch',
+      icon: 'file',
+      props: ['table_id'],
+    },
+    {
+      key: 'setup',
+      display: 'section',
+      label: 'Webhook',
+      icon: 'send',
+      props: ['webhook_url', 'instructions'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
+    webhook_url: webhookUrlInfo(),
     instructions: dynamicWebhookInstructions('Rows created, Rows updated, and Rows deleted'),
   },
   sampleData: {

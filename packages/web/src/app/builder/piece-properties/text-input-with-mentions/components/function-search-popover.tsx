@@ -121,7 +121,7 @@ export function FunctionSearchPopover({
     <div className="border-t border-gray-6 px-3 py-2 text-xs text-gray-11 flex items-center justify-between">
       <div className="flex items-center gap-1">
         {t('Press')}
-        <kbd className="bg-gray-3 border border-gray-6 rounded px-1 flex justify-center text-[10px]">
+        <kbd className="bg-gray-3 border border-gray-6 rounded-md px-1 flex justify-center text-xs">
           ↵
         </kbd>
         {t('to apply')}
@@ -145,7 +145,7 @@ export function FunctionSearchPopover({
     return createPortal(
       <div
         ref={popoverRef}
-        className="fixed z-9998 bg-panel border border-gray-6 rounded-lg shadow-lg overflow-hidden"
+        className="fixed z-9998 bg-panel border border-gray-6 rounded-xl shadow-lg overflow-hidden"
         style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
         <div className="px-3 py-8 text-sm text-gray-11 text-center">
@@ -161,7 +161,7 @@ export function FunctionSearchPopover({
     return createPortal(
       <div
         ref={popoverRef}
-        className="fixed z-9998 bg-panel border border-gray-6 rounded-lg shadow-lg overflow-hidden"
+        className="fixed z-9998 bg-panel border border-gray-6 rounded-xl shadow-lg overflow-hidden"
         style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
         <div className="px-3 py-8 text-sm text-gray-11 text-center">
@@ -177,7 +177,7 @@ export function FunctionSearchPopover({
     <>
       <div
         ref={popoverRef}
-        className="fixed z-999 bg-panel border border-gray-6 rounded-lg shadow-lg overflow-hidden"
+        className="fixed z-999 bg-panel border border-gray-6 rounded-xl shadow-lg overflow-hidden"
         style={{ top: popoverTop, left: popoverLeft, width: popoverWidth }}
       >
         <div
@@ -187,7 +187,7 @@ export function FunctionSearchPopover({
         >
           {Object.entries(grouped).map(([category, fns]) => (
             <div key={category}>
-              <div className="px-3 py-1 text-[10px] font-semibold text-gray-11 uppercase tracking-wide sticky top-0 bg-panel">
+              <div className="px-3 py-1 text-xs font-semibold text-gray-11 sticky top-0 bg-panel">
                 {category}
               </div>
               {fns.map((fn) => {
@@ -223,14 +223,14 @@ export function FunctionSearchPopover({
                   >
                     <span
                       className={cn(
-                        'text-[11px] font-mono font-medium px-1.5 py-0.5 rounded border shrink-0',
+                        'text-xs font-mono font-medium px-1.5 py-0.5 rounded-md border shrink-0',
                         CATEGORY_COLORS[fn.category] ??
                           'bg-gray-3 text-gray-11',
                       )}
                     >
                       {fn.name}
                     </span>
-                    <span className="text-gray-11 text-[11px] truncate">
+                    <span className="text-gray-11 text-xs truncate">
                       {t(fn.description)}
                     </span>
                   </div>

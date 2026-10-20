@@ -48,20 +48,20 @@ export function FlowBuildCard({
 
   return (
     <motion.div
-      className={cn('relative my-2 rounded-2xl', CARD_BASE)}
+      className={cn('relative my-2 rounded-xl', CARD_BASE)}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
       <div
         className={cn(
-          'relative z-10 rounded-t-2xl px-4 pb-3 pt-4 sm:px-5',
+          'relative z-10 rounded-t-xl px-4 pb-3 pt-4 sm:px-5',
           !isDone && !isFailed && 'sticky top-0',
           CARD_BASE,
         )}
       >
         <BuildDoodle iconName={iconName} />
-        <h2 className="pr-28 text-2xl font-extrabold leading-[1.1] tracking-tight text-gray-12 sm:pr-40 sm:text-[28px]">
+        <h2 className="pr-28 text-2xl font-semibold leading-tight tracking-tight text-gray-12 sm:pr-40 sm:text-3xl">
           {tagline}
         </h2>
         <Progress
@@ -92,7 +92,7 @@ export function FlowBuildCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 gap-1.5 rounded-lg border border-gray-6 bg-gray-2 px-3 text-xs font-medium text-gray-12 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
+                className="gap-1.5 border border-gray-6 bg-gray-2 text-xs font-medium text-gray-12 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
                 onClick={() =>
                   onSendPrompt?.(
                     t('Publish and enable the automation so it runs live'),
@@ -127,7 +127,7 @@ function OpenInBuilderButton({
     <Button
       size="sm"
       variant="ghost"
-      className="h-8 gap-1.5 rounded-lg px-3 text-xs font-medium text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
+      className="gap-1.5 text-xs font-medium text-gray-11 shadow-none transition-colors hover:bg-gray-4 hover:text-gray-12"
       onClick={() => openNewWindow(`/projects/${projectId}/flows/${flowId}`)}
     >
       <ExternalLink className="h-3.5 w-3.5" />

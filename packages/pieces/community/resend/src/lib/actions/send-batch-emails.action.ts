@@ -16,57 +16,66 @@ export const sendBatchEmails = createAction({
   props: {
     emails: Property.Array({
       displayName: 'Emails',
-      description: 'List of emails to send (max 100). Each email is sent independently with its own recipient, subject, and body.',
+      description: 'Up to 100 emails, each with its own sender, recipient and body.',
       required: true,
       properties: {
         from: Property.ShortText({
           displayName: 'From',
-          description: 'Sender address. Use "Name <email@domain.com>" for a friendly name.',
+          description: 'Must be on a verified domain. Use Name <email> to show a name.',
+          placeholder: 'Acme <hello@acme.com>',
           required: true,
         }),
         to: Property.ShortText({
           displayName: 'To',
-          description: 'Recipient email address.',
+          placeholder: 'jane@example.com',
           required: true,
         }),
         subject: Property.ShortText({
           displayName: 'Subject',
+          placeholder: 'Your March invoice',
           required: true,
         }),
         content_type: Property.StaticDropdown({
-          displayName: 'Content Type',
+          displayName: 'Body Type',
           required: true,
+          display: 'cards',
           options: {
             options: [
-              { label: 'HTML', value: 'html' },
-              { label: 'Plain Text', value: 'text' },
+              { label: 'Plain Text', value: 'text', icon: 'text' },
+              { label: 'HTML', value: 'html', icon: 'code' },
             ],
           },
         }),
         content: Property.LongText({
-          displayName: 'Content',
-          description: 'Email body. Use HTML markup if Content Type is HTML.',
+          displayName: 'Body',
+          description: 'Write HTML markup when Body Type is HTML.',
+          placeholder: 'Hi Jane, thanks for signing up.',
           required: true,
         }),
         reply_to: Property.ShortText({
           displayName: 'Reply To',
+          placeholder: 'support@acme.com',
           required: false,
         }),
         cc: Property.ShortText({
-          displayName: 'CC',
+          displayName: 'Cc',
+          placeholder: 'jane@example.com',
           required: false,
         }),
         bcc: Property.ShortText({
-          displayName: 'BCC',
+          displayName: 'Bcc',
+          placeholder: 'jane@example.com',
           required: false,
         }),
       },
     }),
     idempotency_key: Property.ShortText({
-      displayName: 'Idempotency Key',
+      displayName: 'Deduplication Key',
       description:
-        'Optional unique key to prevent duplicate sends. Must be unique per request, expires after 24 hours, max 256 characters.',
+        'A repeat batch with the same key within 24 hours is not sent again.',
+      placeholder: 'order-1042-receipts',
       required: false,
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {

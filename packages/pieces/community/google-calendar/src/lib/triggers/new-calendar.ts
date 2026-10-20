@@ -88,6 +88,15 @@ export const newCalendar = createTrigger({
   aiMetadata: {
     description: 'Fires when a calendar newly appears in the connected account\'s calendar list, whether created or shared in, detected by polling. Each fired item is the new calendar. Can be filtered by access role, a name/description text match, and an option to exclude shared calendars.',
   },
+  propertyGroups: [
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['access_role_filter', 'calendar_name_filter', 'exclude_shared'],
+    },
+  ],
   props: {
     access_role_filter: Property.StaticMultiSelectDropdown({
       displayName: 'Access Role Filter',
