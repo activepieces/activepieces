@@ -8,7 +8,7 @@ import { matrixOutputSchemas } from '../../common/output-schemas';
 export const banUser = createAction({
   auth: matrixAuth,
   name: 'ban_user',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Ban User',
   description: 'Ban a user from a room.',
   audience: 'ai',

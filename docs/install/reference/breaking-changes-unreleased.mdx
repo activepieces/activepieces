@@ -14,9 +14,11 @@ Send Message used to return the raw HTTP response of the send call (`status`, `h
 
 The connection's **Home Server** is now checked when it is saved and on every run. It must be an `https` URL of the homeserver itself, such as `https://matrix-client.matrix.org` (plain `http` is accepted only for `localhost`). An Element web link such as `https://app.element.io/#/home` is rejected with a message that says which URL to use instead.
 
+Custom API Call now only accepts URLs on the connection's homeserver. A step that pointed it at another host fails after the upgrade.
+
 #### What you need to do
 
-If a later step reads `body.event_id` from Send Message, read `eventId` instead. Agents that used Send Message as a tool switch to Send Text Message. If a Matrix connection fails with the Home Server message, reconnect it with your homeserver's URL (shown in Element under Settings, Help & About). Steps keep running on the version they were built with until you upgrade them.
+If a later step reads `body.event_id` from Send Message, read `eventId` instead. If a Custom API Call step calls another host, point it at your homeserver or use the HTTP piece. Agents that used Send Message as a tool switch to Send Text Message. If a Matrix connection fails with the Home Server message, reconnect it with your homeserver's URL (shown in Element under Settings, Help & About). Steps keep running on the version they were built with until you upgrade them.
 
 #### Retell AI 0.3.0: New Call fires only when a call starts, and webhooks must be signed
 
