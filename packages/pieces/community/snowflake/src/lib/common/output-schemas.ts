@@ -83,7 +83,9 @@ function listSchema({
 }
 
 export const rawRowsOutputSchema: OutputSchema = {
-  fields: [{ key: 'rows', label: 'Rows', value: '', listItems: [rowColumnsField] }],
+  fields: [
+    { key: 'rows', label: 'Rows', value: '', listItems: [rowColumnsField] },
+  ],
   itemLabel: 'Row',
 };
 
@@ -127,7 +129,10 @@ export const getRowOutputSchema: OutputSchema = {
 };
 
 export const getRowByIdOutputSchema: OutputSchema = {
-  fields: [{ key: 'found', label: 'Found', format: 'boolean' }, rowColumnsField],
+  fields: [
+    { key: 'found', label: 'Found', format: 'boolean' },
+    rowColumnsField,
+  ],
 };
 
 export const insertResultOutputSchema: OutputSchema = {
