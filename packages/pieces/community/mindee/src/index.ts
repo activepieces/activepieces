@@ -1,7 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { mindeeAuth } from './lib/auth';
-import { MINDEE_V1_BASE_URL, MINDEE_V2_BASE_URL, isRecord, normalizeApiKey } from './lib/common/client';
+import { mindeeCustomApiCall } from './lib/actions/custom-api-call';
 import { getJobStatusAction, getResultAction } from './lib/actions/jobs';
 import { listModelsAction } from './lib/actions/list-models';
 import { mindeePredictDocumentAction } from './lib/actions/predict-document';
@@ -48,22 +47,9 @@ export const mindee = createPiece({
     ocrDocumentAiAction,
     splitDocumentAiAction,
     uploadRagDocumentAiAction,
-    createCustomApiCallAction({
-      baseUrl: () => `${MINDEE_V2_BASE_URL}/v2`,
-      auth: mindeeAuth,
-      authMapping: async (auth, propsValue) => {
-        const key = normalizeApiKey(auth.secret_text);
-        return { Authorization: isLegacyUrl(propsValue) ? `Token ${key}` : key };
-      },
-    }),
+    mindeeCustomApiCall,
   ],
   triggers: [],
 });
-
-function isLegacyUrl(propsValue: unknown): boolean {
-  const urlProp = isRecord(propsValue) ? propsValue['url'] : undefined;
-  const raw = isRecord(urlProp) ? urlProp['url'] : urlProp;
-  return typeof raw === 'string' && raw.trim().startsWith(MINDEE_V1_BASE_URL.replace('/v1', ''));
-}
 
 export { mindeeAuth };

@@ -40,7 +40,7 @@ export const uploadRagDocumentAiAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Upload a reference document (downloaded from a public https:// URL, max 50 MB) to a Mindee extraction model so runs with rag=true can match it. Needs the extraction model_id from List Models. Not idempotent: each call creates another RAG document; delete extras with Delete RAG Document.',
+      'Upload a reference document (downloaded from a public https:// URL, max 50 MB; private or local addresses are refused) to a Mindee extraction model so runs with rag=true can match it. Needs the extraction model_id from List Models. Not idempotent: each call creates another RAG document; delete extras with Delete RAG Document.',
     idempotent: false,
   },
   props: {

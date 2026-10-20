@@ -312,3 +312,92 @@ describe('rag documents', () => {
     expect(init?.body).toBe(JSON.stringify({ status: 'Active' }));
   });
 });
+
+describe('download SSRF guard', () => {
+  it('blocks private, loopback, link-local and metadata addresses and local names', async () => {
+    const { mindeeNetwork } = await import('../src/lib/common/network-guard');
+    for (const host of ['127.0.0.1', '10.1.2.3', '192.168.0.1', '172.16.0.5', '169.254.169.254', '[::1]', '[fe80::1]', '[::ffff:127.0.0.1]', 'localhost', 'metadata.google.internal', 'db']) {
+      expect(mindeeNetwork.isBlockedHostname(host)).toBe(true);
+    }
+    expect(mindeeNetwork.isBlockedHostname('93.184.215.14')).toBe(false);
+    expect(mindeeNetwork.isBlockedHostname('example.com')).toBe(false);
+  });
+
+  it('refuses a blocked host before any request', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(mindeeFiles.downloadFile({ url: new URL('https://169.254.169.254/latest'), label: 'File URL' })).rejects.toThrow(/private network/);
+    await expect(mindeeFiles.downloadFile({ url: new URL('https://localhost/x.pdf'), label: 'File URL' })).rejects.toThrow(/private network/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('does not auto-follow redirects and re-validates every hop', async () => {
+    const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
+      expect(init.redirect).toBe('manual');
+      return new Response(null, { status: 302, headers: { location: 'https://10.0.0.5/secret' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(mindeeFiles.downloadFile({ url: new URL('https://93.184.215.14/a.pdf'), label: 'File URL' })).rejects.toThrow(/private network/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses a redirect to http', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 301, headers: { location: 'http://93.184.215.14/a.pdf' } })));
+    await expect(mindeeFiles.downloadFile({ url: new URL('https://93.184.215.14/a.pdf'), label: 'File URL' })).rejects.toThrow(/https/);
+  });
+
+  it('follows a safe redirect and stops after 3 hops', async () => {
+    let calls = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        calls++;
+        return calls === 2 ? new Response('PDFDATA', { status: 200 }) : new Response(null, { status: 302, headers: { location: '/doc.pdf' } });
+      }),
+    );
+    const upload = await mindeeFiles.downloadFile({ url: new URL('https://93.184.215.14/a.pdf'), label: 'File URL' });
+    expect(upload.data.toString()).toBe('PDFDATA');
+    expect(upload.filename).toBe('doc.pdf');
+    calls = -10;
+    await expect(mindeeFiles.downloadFile({ url: new URL('https://93.184.215.14/a.pdf'), label: 'File URL' })).rejects.toThrow(/more than 3 redirects/);
+  });
+});
+
+describe('custom API call', () => {
+  async function runCustom(props: Record<string, unknown>) {
+    const { mindeeCustomApiCall } = await import('../src/lib/actions/custom-api-call');
+    return mindeeCustomApiCall.run({ auth: { secret_text: 'md_key' }, propsValue: props, files: { write: vi.fn() } } as never);
+  }
+
+  it('sends the bare key to v2 and Token to v1, with redirects off', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => json({ status: 200, body: { ok: true } }));
+    vi.stubGlobal('fetch', fetchMock);
+    await runCustom({ method: 'GET', url: { url: '/search/models' } });
+    await runCustom({ method: 'GET', url: { url: 'https://api.mindee.net/v1/products' } });
+    const first = fetchMock.mock.calls[0];
+    const second = fetchMock.mock.calls[1];
+    expect(String(first[0])).toBe('https://api-v2.mindee.net/v2/search/models');
+    expect(new Headers(first[1].headers).get('authorization')).toBe('md_key');
+    expect(new Headers(second[1].headers).get('authorization')).toBe('Token md_key');
+    expect(first[1].redirect).toBe('manual');
+  });
+
+  it('refuses non-Mindee hosts and http', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(runCustom({ method: 'GET', url: { url: 'https://evil.example.com/v2/x' } })).rejects.toThrow(/api-v2.mindee.net/);
+    await expect(runCustom({ method: 'GET', url: { url: 'http://api-v2.mindee.net/v2/x' } })).rejects.toThrow(/api-v2.mindee.net/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('does not follow a redirect off Mindee hosts', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 302, headers: { location: 'https://evil.example.com/' } })));
+    await expect(runCustom({ method: 'GET', url: { url: '/jobs/1' }, followRedirects: true })).rejects.toThrow(/api-v2.mindee.net/);
+  });
+
+  it('redacts the request body in errors', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json({ status: 400, body: { detail: 'bad' } })));
+    const error = await runCustom({ method: 'POST', url: { url: '/x' }, body: { secret: 'doc-bytes' } }).catch((e: unknown) => e);
+    expect(JSON.stringify(error instanceof Error ? error.message : error)).not.toContain('doc-bytes');
+  });
+});

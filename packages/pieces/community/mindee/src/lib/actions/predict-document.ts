@@ -99,8 +99,7 @@ async function requestBody({ upload, file }: { upload: unknown; file: string | u
     throw new Error('Provide a File, or a File URL or Base64 string.');
   }
   if (/^https?:\/\//i.test(value)) {
-    const url = mindeeFiles.parseHttpsUrl({ value, label: 'File URL', allowHttp: true });
-    return multipart(await mindeeFiles.downloadFile({ url, label: 'File URL' }));
+    return { document: mindeeFiles.parseHttpsUrl({ value, label: 'File URL', allowHttp: true }).toString() };
   }
   const base64 = value.replace(/^data:[^;,]*;base64,/i, '').replace(/\s+/g, '');
   if (base64.length < 16 || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) {

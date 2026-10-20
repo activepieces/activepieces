@@ -1,6 +1,7 @@
 import { Readable } from 'node:stream';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isRecord, verifiedTls } from './client';
+import { isRecord } from './client';
+import { mindeeNetwork } from './network-guard';
 
 function readFileProp({ value, label }: { value: unknown; label: string }): MindeeUpload {
   if (!isRecord(value)) {
@@ -39,7 +40,7 @@ function parseHttpsUrl({ value, label, allowHttp = false }: { value: string | un
 }
 
 async function downloadFile({ url, label, timeoutMs = DOWNLOAD_TIMEOUT_MS }: { url: URL; label: string; timeoutMs?: number }): Promise<MindeeUpload> {
-  const response = await requestDownload({ url, label, timeoutMs });
+  const { response, finalUrl } = await followSafely({ url, label, timeoutMs });
   const declared = Number(response.headers?.['content-length'] ?? '');
   if (Number.isFinite(declared) && declared > MAX_FILE_BYTES) {
     response.body.destroy();
@@ -49,7 +50,48 @@ async function downloadFile({ url, label, timeoutMs = DOWNLOAD_TIMEOUT_MS }: { u
   if (data.length === 0) {
     throw new Error(`${label} returned an empty file.`);
   }
-  return { data, filename: filenameFromUrl(url) };
+  return { data, filename: filenameFromUrl(finalUrl) };
+}
+
+async function followSafely({ url, label, timeoutMs }: { url: URL; label: string; timeoutMs: number }) {
+  let current = url;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    await assertSafeTarget({ url: current, label });
+    const response = await requestDownload({ url: current, label, timeoutMs });
+    if (response.status < 300 || response.status >= 400) {
+      return { response, finalUrl: current };
+    }
+    response.body?.destroy();
+    const location = headerValue(response.headers?.['location']);
+    if (location === undefined) {
+      throw new Error(`Could not download ${label}: the server answered HTTP ${response.status} without a redirect location.`);
+    }
+    try {
+      current = new URL(location, current);
+    } catch {
+      throw new Error(`Could not download ${label}: the server redirected to an invalid URL.`);
+    }
+  }
+  throw new Error(`Could not download ${label}: more than ${MAX_REDIRECTS} redirects.`);
+}
+
+async function assertSafeTarget({ url, label }: { url: URL; label: string }): Promise<void> {
+  if (url.protocol !== 'https:') {
+    throw new Error(`${label} must use https:// (redirects to other schemes are not followed).`);
+  }
+  if (url.username !== '' || url.password !== '') {
+    throw new Error(`${label} must not contain a user name or password.`);
+  }
+  try {
+    await mindeeNetwork.assertPublicHost(url.hostname);
+  } catch (error) {
+    throw new Error(`Could not download ${label}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function headerValue(raw: unknown): string | undefined {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
 }
 
 function toBlob(upload: MindeeUpload): Blob {
@@ -65,9 +107,10 @@ async function requestDownload({ url, label, timeoutMs }: { url: URL; label: str
         headers: { Accept: '*/*' },
         responseType: 'stream',
         redactBodyInErrors: true,
+        followRedirects: false,
         timeout: timeoutMs,
       },
-      { dispatcher: await verifiedTls() },
+      { dispatcher: await mindeeNetwork.getGuardedDispatcher() },
     );
   } catch (error) {
     const response: unknown = isRecord(error) || error instanceof Error ? Reflect.get(error, 'response') : undefined;
@@ -130,6 +173,7 @@ function filenameFromUrl(url: URL): string {
 const MAX_FILE_MB = 50;
 const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
 const DOWNLOAD_TIMEOUT_MS = 60_000;
+const MAX_REDIRECTS = 3;
 
 export const mindeeFiles = { readFileProp, parseHttpsUrl, downloadFile, toBlob, MAX_FILE_MB };
 
