@@ -1,7 +1,9 @@
 import { t } from 'i18next';
+import { ChartColumn, ChartLine } from 'lucide-react';
 import { ReactNode, useId, useState } from 'react';
 import {
   Area,
+  Bar,
   CartesianGrid,
   ComposedChart,
   Line,
@@ -35,6 +37,7 @@ export function UsageHero({
   height = 280,
 }: UsageHeroProps) {
   const [metric, setMetric] = useState<UsageMetric>('spend');
+  const [chartType, setChartType] = useState<UsageChartType>('line');
   const points = series[metric];
   const current = points.reduce((sum, point) => sum + point.current, 0);
   const previous = points.reduce((sum, point) => sum + point.previous, 0);
@@ -59,24 +62,46 @@ export function UsageHero({
             <span className="text-xs text-gray-11">{note}</span>
           )}
         </div>
-        <Tabs
-          value={metric}
-          onValueChange={(value) =>
-            setMetric(USAGE_METRICS.find((item) => item === value) ?? 'spend')
-          }
-        >
-          <TabsList size="sm">
-            {USAGE_METRICS.map((item) => (
-              <TabsTrigger key={item} value={item} size="sm">
-                {usageFormat.metricLabel({ metric: item })}
+        <div className="flex flex-wrap items-center gap-2">
+          <Tabs
+            value={metric}
+            onValueChange={(value) =>
+              setMetric(USAGE_METRICS.find((item) => item === value) ?? 'spend')
+            }
+          >
+            <TabsList size="sm">
+              {USAGE_METRICS.map((item) => (
+                <TabsTrigger key={item} value={item} size="sm">
+                  {usageFormat.metricLabel({ metric: item })}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <Tabs
+            value={chartType}
+            onValueChange={(value) =>
+              setChartType(CHART_TYPES.find((item) => item === value) ?? 'line')
+            }
+          >
+            <TabsList size="sm">
+              <TabsTrigger value="line" size="sm" aria-label={t('Line chart')}>
+                <ChartLine className="size-4" />
               </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+              <TabsTrigger value="bar" size="sm" aria-label={t('Bar chart')}>
+                <ChartColumn className="size-4" />
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
       <div className="flex flex-col gap-3">
-        <ChartLegend points={points} period={period} />
-        <UsageLineChart points={points} metric={metric} height={height} />
+        <ChartLegend points={points} period={period} chartType={chartType} />
+        <UsageLineChart
+          points={points}
+          metric={metric}
+          height={height}
+          chartType={chartType}
+        />
       </div>
     </section>
   );
@@ -87,6 +112,7 @@ export function UsageLineChart({
   metric,
   height,
   compact = false,
+  chartType = 'line',
 }: UsageLineChartProps) {
   const gradientId = useId().replaceAll(':', '');
   const config = {
@@ -146,7 +172,11 @@ export function UsageLineChart({
           }
         />
         <ChartTooltip
-          cursor={{ stroke: 'var(--gray-8)', strokeWidth: 1 }}
+          cursor={
+            chartType === 'bar'
+              ? { fill: 'var(--gray-3)' }
+              : { stroke: 'var(--gray-8)', strokeWidth: 1 }
+          }
           content={
             <ChartTooltipContent
               indicator="line"
@@ -169,24 +199,43 @@ export function UsageLineChart({
             />
           }
         />
-        <Line
-          dataKey="previous"
-          type="monotone"
-          stroke={config.previous.color}
-          strokeWidth={1.5}
-          strokeDasharray="4 4"
-          dot={false}
-          activeDot={false}
-        />
-        <Area
-          dataKey="current"
-          type="monotone"
-          stroke={config.current.color}
-          strokeWidth={2}
-          fill={`url(#${gradientId})`}
-          dot={false}
-          activeDot={{ r: 4, strokeWidth: 0, fill: config.current.color }}
-        />
+        {chartType === 'bar' ? (
+          <>
+            <Bar
+              dataKey="current"
+              fill={config.current.color}
+              radius={[3, 3, 0, 0]}
+              maxBarSize={28}
+            />
+            <Bar
+              dataKey="previous"
+              fill={PREVIOUS_BAR_COLOR}
+              radius={[3, 3, 0, 0]}
+              maxBarSize={28}
+            />
+          </>
+        ) : (
+          <>
+            <Line
+              dataKey="previous"
+              type="monotone"
+              stroke={config.previous.color}
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+              dot={false}
+              activeDot={false}
+            />
+            <Area
+              dataKey="current"
+              type="monotone"
+              stroke={config.current.color}
+              strokeWidth={2}
+              fill={`url(#${gradientId})`}
+              dot={false}
+              activeDot={{ r: 4, strokeWidth: 0, fill: config.current.color }}
+            />
+          </>
+        )}
       </ComposedChart>
     </ChartContainer>
   );
@@ -195,9 +244,11 @@ export function UsageLineChart({
 function ChartLegend({
   points,
   period,
+  chartType,
 }: {
   points: UsagePoint[];
   period: UsagePeriod;
+  chartType: UsageChartType;
 }) {
   const ranges = usageFormat.rangeLabel({
     labels: points.map((point) => point.label),
@@ -206,12 +257,14 @@ function ChartLegend({
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-gray-11">
       <LegendItem
-        dashed={false}
+        previous={false}
+        chartType={chartType}
         label={t('This period')}
         range={ranges?.current}
       />
       <LegendItem
-        dashed
+        previous
+        chartType={chartType}
         label={t('Previous period')}
         range={ranges?.previous}
       />
@@ -220,34 +273,46 @@ function ChartLegend({
 }
 
 function LegendItem({
-  dashed,
+  previous,
+  chartType,
   label,
   range,
 }: {
-  dashed: boolean;
+  previous: boolean;
+  chartType: UsageChartType;
   label: string;
   range?: string;
 }) {
+  const dashed = previous;
   return (
     <span className="flex items-center gap-2">
-      <svg
-        width="20"
-        height="8"
-        viewBox="0 0 20 8"
-        aria-hidden="true"
-        className="shrink-0"
-      >
-        <line
-          x1="1"
-          y1="4"
-          x2="19"
-          y2="4"
-          stroke={dashed ? 'var(--gray-8)' : 'var(--accent-9)'}
-          strokeWidth={dashed ? 1.5 : 2}
-          strokeDasharray={dashed ? '3 3' : undefined}
-          strokeLinecap="round"
+      {chartType === 'bar' ? (
+        <span
+          className="size-2.5 shrink-0 rounded-xs"
+          style={{
+            backgroundColor: previous ? PREVIOUS_BAR_COLOR : 'var(--accent-9)',
+          }}
         />
-      </svg>
+      ) : (
+        <svg
+          width="20"
+          height="8"
+          viewBox="0 0 20 8"
+          aria-hidden="true"
+          className="shrink-0"
+        >
+          <line
+            x1="1"
+            y1="4"
+            x2="19"
+            y2="4"
+            stroke={dashed ? 'var(--gray-8)' : 'var(--accent-9)'}
+            strokeWidth={dashed ? 1.5 : 2}
+            strokeDasharray={dashed ? '3 3' : undefined}
+            strokeLinecap="round"
+          />
+        </svg>
+      )}
       <span className="text-gray-12">{label}</span>
       {range && <span className="tabular-nums">{range}</span>}
     </span>
@@ -263,6 +328,11 @@ function TooltipRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+const PREVIOUS_BAR_COLOR = 'var(--gray-6)';
+const CHART_TYPES: UsageChartType[] = ['line', 'bar'];
+
+type UsageChartType = 'line' | 'bar';
+
 type UsageHeroProps = {
   series: Record<UsageMetric, UsagePoint[]>;
   period: UsagePeriod;
@@ -275,4 +345,5 @@ type UsageLineChartProps = {
   metric: UsageMetric;
   height: number;
   compact?: boolean;
+  chartType?: UsageChartType;
 };
