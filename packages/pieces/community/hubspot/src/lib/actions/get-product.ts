@@ -16,6 +16,15 @@ export const getProductAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Fetch a single HubSpot product by its product ID, returning its default and any requested additional properties. Read-only and repeatable. Use Find Product when you only know property values rather than the ID.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Product',
+			icon: 'tag',
+			props: ['productId'],
+		},
+	],
 	props: {
 		productId: Property.ShortText({
 			displayName: 'Product ID',

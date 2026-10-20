@@ -29,5 +29,10 @@
   "New Contact": "New Contact",
   "Triggers when a new booking is canceled": "Triggers when a new booking is canceled",
   "Triggers when a new booking is created": "Triggers when a new booking is created",
-  "Triggers when a new contact is created": "Triggers when a new contact is created"
+  "Triggers when a new contact is created": "Triggers when a new contact is created",
+  "Triggers when a booking is canceled": "预约被取消时触发",
+  "Checks TidyCal periodically and runs once for each new booking.": "定期检查 TidyCal，每个新预约运行一次。",
+  "Checks TidyCal periodically and runs once for each canceled booking.": "定期检查 TidyCal，每个被取消的预约运行一次。",
+  "Checks TidyCal periodically and runs once for each new contact.": "定期检查 TidyCal，每个新联系人运行一次。",
+  "To create a personal access token:\n1. In TidyCal, open [Manage API keys](https://tidycal.com/integrations/advanced) under Integrations.\n2. On the **Personal tokens** tab, click **Create token**, enter a name and click **Create**.\n3. Copy the token now: TidyCal shows it only once.\n\nAPI access needs a paid TidyCal plan.": "创建个人访问令牌：\n1. 在 TidyCal 中，打开 Integrations 下的 [Manage API keys](https://tidycal.com/integrations/advanced)。\n2. 在 **Personal tokens** 标签页中点击 **Create token**，输入名称并点击 **Create**。\n3. 立即复制令牌：TidyCal 只显示一次。\n\n使用 API 需要 TidyCal 付费套餐。"
 }

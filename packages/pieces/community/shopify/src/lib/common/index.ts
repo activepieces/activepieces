@@ -151,7 +151,7 @@ export async function getProducts(
     updatedAtMin?: string;
   }
 ): Promise<ShopifyProduct[]> {
-  const queryParams: QueryParams = {};
+  let queryParams: QueryParams = {};
   const { title, createdAtMin, updatedAtMin } = search;
   if (title) {
     queryParams.title = title;
@@ -186,7 +186,9 @@ export async function getProducts(
         ?.match(/<(.*?)>/)?.[1];
       
       if (nextLink) {
-        queryParams.page_info = new URL(nextLink).searchParams.get('page_info') || '';
+        queryParams = {
+          page_info: new URL(nextLink).searchParams.get('page_info') || '',
+        };
       } else {
         hasNextPage = false;
       }
@@ -425,7 +427,7 @@ export async function adjustInventoryLevel(
     },
   });
 
-  return (response.body as { order: unknown }).order;
+  return (response.body as { inventory_level: unknown }).inventory_level;
 }
 
 export async function createCollect(
