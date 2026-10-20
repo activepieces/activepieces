@@ -390,6 +390,7 @@ export const pineconeListNamespaceAliasesOutputSchema: OutputSchema = {
 			listItems: namespaceAliasFields,
 		},
 		{ key: 'total_count', label: 'Total Count', format: 'number' },
+		paginationField,
 	],
 };
 
@@ -446,6 +447,7 @@ export const pineconeSearchDocumentsOutputSchema: OutputSchema = {
 			listItems: [
 				{ key: '_id', label: 'Document ID' },
 				{ key: '_score', label: 'Score', format: 'number' },
+				{ key: 'fields', label: 'Document Fields', value: '', dynamicKey: true },
 			],
 		},
 		{ key: 'namespace', label: 'Namespace' },
