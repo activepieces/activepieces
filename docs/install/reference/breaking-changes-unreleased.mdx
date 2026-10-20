@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### PDFMonkey 0.3.0: Generate Document, Find Document and Delete Document are builder-only
+
+Generate Document, Find Document and Delete Document are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
+
+#### What you need to do
+
+Agents that used these actions switch to their twins: Generate Document (AI), Get Document (AI) and Delete Document (AI). Flow steps keep running on the version they were built with until you upgrade them.
+
 #### WordPress Update Post keeps a post's categories and tags when those fields are empty
 
 Update Post used to send an empty list when **Categories** or **Tags** was cleared or mapped to an empty list. WordPress then reset the post to the default category and removed all of its tags. From WordPress 0.9.0, an empty Categories or Tags field leaves the post's current categories and tags as they are, like every other empty field on the form. Steps keep running on the version they were built with until you upgrade them.
