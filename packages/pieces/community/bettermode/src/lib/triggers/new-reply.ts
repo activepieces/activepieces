@@ -27,6 +27,12 @@ export const newReplyTrigger = createTrigger({
   sampleData: SAMPLE_REPLY,
   outputSchema: bettermodeSchemas.post,
   async onEnable(context) {
+    if (context.isRepublish) {
+      const existing = await context.store.get<Checkpoint>(bettermodePolling.CHECKPOINT_KEY);
+      if (existing !== null && existing !== undefined) {
+        return;
+      }
+    }
     bindTokenStore({ credentials: context.auth.props, store: context.store });
     const page = await bettermodeFetchers.fetchRecentReplies({
       auth: context.auth.props,
@@ -37,8 +43,8 @@ export const newReplyTrigger = createTrigger({
       bettermodePolling.newestCheckpoint({ items: page.items, fallback: new Date().toISOString() })
     );
   },
-  async onDisable(context) {
-    await context.store.delete(bettermodePolling.CHECKPOINT_KEY);
+  async onDisable() {
+    return;
   },
   async test(context) {
     bindTokenStore({ credentials: context.auth.props, store: context.store });
@@ -59,7 +65,7 @@ export const newReplyTrigger = createTrigger({
       checkpoint,
       fetchPage: () => bettermodeFetchers.fetchRecentReplies({ auth: context.auth.props, spaceIds }),
     });
-    if (result.items.length > 0 || (result.checkpoint.resumeCursor ?? null) !== (checkpoint.resumeCursor ?? null)) {
+    if (bettermodePolling.checkpointChanged({ before: checkpoint, after: result.checkpoint })) {
       await context.store.put<Checkpoint>(bettermodePolling.CHECKPOINT_KEY, result.checkpoint);
     }
     return result.items;

@@ -20,6 +20,12 @@ export const newMemberTrigger = createTrigger({
   sampleData: SAMPLE_MEMBER,
   outputSchema: bettermodeSchemas.member,
   async onEnable(context) {
+    if (context.isRepublish) {
+      const existing = await context.store.get<Checkpoint>(bettermodePolling.CHECKPOINT_KEY);
+      if (existing !== null && existing !== undefined) {
+        return;
+      }
+    }
     bindTokenStore({ credentials: context.auth.props, store: context.store });
     const page = await bettermodeFetchers.fetchMembersPage({
       auth: context.auth.props,
@@ -31,8 +37,8 @@ export const newMemberTrigger = createTrigger({
       bettermodePolling.newestCheckpoint({ items: page.items, fallback: new Date().toISOString() })
     );
   },
-  async onDisable(context) {
-    await context.store.delete(bettermodePolling.CHECKPOINT_KEY);
+  async onDisable() {
+    return;
   },
   async test(context) {
     bindTokenStore({ credentials: context.auth.props, store: context.store });
@@ -54,7 +60,7 @@ export const newMemberTrigger = createTrigger({
           limit: bettermodeFetchers.pageSize,
         }),
     });
-    if (result.items.length > 0 || (result.checkpoint.resumeCursor ?? null) !== (checkpoint.resumeCursor ?? null)) {
+    if (bettermodePolling.checkpointChanged({ before: checkpoint, after: result.checkpoint })) {
       await context.store.put<Checkpoint>(bettermodePolling.CHECKPOINT_KEY, result.checkpoint);
     }
     return result.items;

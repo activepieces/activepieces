@@ -589,66 +589,24 @@ describe('polling triggers', () => {
     expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: '2026-10-13T11:00:00.000Z', idsAtLast: ['old-draft'] });
   });
 
-  it('does not skip records when the page budget runs out before the checkpoint', async () => {
-    const base = Date.UTC(2026, 9, 13, 12, 0, 0);
-    const at = (index: number) => new Date(base - index * 1000).toISOString();
-    const pages = Array.from({ length: 12 }, (_, pageIndex) => ({
-      body: {
-        data: {
-          posts: pageOf({
-            nodes: Array.from({ length: 50 }, (_, offset) => postNode({ id: `p${pageIndex * 50 + offset}`, createdAt: at(pageIndex * 50 + offset) })),
-            hasNextPage: true,
-            endCursor: `c${pageIndex + 1}`,
-          }),
-        },
-      },
-    }));
-    const checkpointTime = at(560);
-    const calls = stubGraphql({ PollPosts: pages });
+  it('drains a 650-post backlog oldest first across polls and never loops', async () => {
+    const feed = fakePostFeed({ count: 0 });
     const store = makeStore();
-    store.data.set(bettermodePolling.CHECKPOINT_KEY, { lastCreatedAt: checkpointTime, idsAtLast: ['p560'] });
+    const calls = stubGraphql({ PollPosts: feed.handler });
+    feed.add(1);
+    await call({ fn: newPostTrigger.onEnable, ctx: triggerContext({ store }) });
+    feed.add(650);
+    const id = (index: number) => `n${String(index).padStart(5, '0')}`;
     const first = await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
     expect(first).toEqual([]);
-    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: checkpointTime, idsAtLast: ['p560'], resumeCursor: 'c10' });
+    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toMatchObject({ resumeCursors: [id(152)] });
     const second = await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
-    expect(businessCalls(calls).at(-1)?.variables).toMatchObject({ after: 'c11' });
-    expect(Array.isArray(second) ? second.map((item) => item.id) : second).toEqual(
-      Array.from({ length: 60 }, (_, index) => `p${559 - index}`)
-    );
-    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: at(500), idsAtLast: ['p500'] });
-  });
-
-  it('keeps reading the resumed window until it is drained before going back to the newest page', async () => {
-    const base = Date.UTC(2026, 9, 13, 12, 0, 0);
-    const at = (index: number) => new Date(base - index * 1000).toISOString();
-    const pageAt = (pageIndex: number) => ({
-      body: {
-        data: {
-          posts: pageOf({
-            nodes: Array.from({ length: 50 }, (_, offset) => postNode({ id: `p${pageIndex * 50 + offset}`, createdAt: at(pageIndex * 50 + offset) })),
-            hasNextPage: true,
-            endCursor: `c${pageIndex + 1}`,
-          }),
-        },
-      },
-    });
-    const calls = stubGraphql({
-      PollPosts: [
-        ...Array.from({ length: 10 }, (_, index) => pageAt(index)),
-        ...[10, 11, 12, 13].map(pageAt),
-        ...[10, 11, 12, 13].map(pageAt),
-      ],
-    });
-    const store = makeStore();
-    store.data.set(bettermodePolling.CHECKPOINT_KEY, { lastCreatedAt: at(650), idsAtLast: ['p650'] });
-    await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
-    const second = await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
-    expect(Array.isArray(second) ? [second.length, second[0].id, second[99].id] : second).toEqual([100, 'p649', 'p550']);
-    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: at(550), idsAtLast: ['p550'], resumeCursor: 'c10' });
-    const third = await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
-    expect(Array.isArray(third) ? [third.length, third[0].id, third[49].id] : third).toEqual([50, 'p549', 'p500']);
-    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: at(500), idsAtLast: ['p500'] });
-    expect(businessCalls(calls)[14].variables).toMatchObject({ after: 'c10' });
+    expect(businessCalls(calls)[12].variables).toMatchObject({ after: id(152) });
+    expect(Array.isArray(second) ? [second.length, second[0].id, second[99].id] : second).toEqual([100, id(2), id(101)]);
+    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: '2026-10-13T12:01:41.000Z', idsAtLast: [id(101)], resumeCursors: [id(152)] });
+    const rest = await pollUntilQuiet({ store, polls: 12 });
+    expect(rest).toEqual(Array.from({ length: 550 }, (_, index) => id(102 + index)));
+    expect(await pollUntilQuiet({ store, polls: 4 })).toEqual([]);
   });
 
   it('new_post on an empty community starts from now', async () => {
@@ -660,11 +618,26 @@ describe('polling triggers', () => {
     expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: '2026-10-13T00:00:00.000Z', idsAtLast: [] });
   });
 
-  it('onDisable clears the checkpoint', async () => {
+  it.each([
+    ['new_post', newPostTrigger],
+    ['new_member', newMemberTrigger],
+    ['new_reply', newReplyTrigger],
+  ])('%s keeps its checkpoint across a republish', async (_name, trigger) => {
+    const calls = stubGraphql({});
     const store = makeStore();
-    store.data.set(bettermodePolling.CHECKPOINT_KEY, { lastCreatedAt: 'x', idsAtLast: [] });
-    await call({ fn: newMemberTrigger.onDisable, ctx: triggerContext({ store }) });
-    expect(store.data.has(bettermodePolling.CHECKPOINT_KEY)).toBe(false);
+    const saved = { lastCreatedAt: '2026-10-13T09:00:00.000Z', idsAtLast: ['x1'] };
+    store.data.set(bettermodePolling.CHECKPOINT_KEY, saved);
+    await call({ fn: trigger.onDisable, ctx: { ...triggerContext({ store }), isRepublish: true } });
+    await call({ fn: trigger.onEnable, ctx: { ...triggerContext({ store }), isRepublish: true } });
+    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual(saved);
+    expect(businessCalls(calls)).toEqual([]);
+  });
+
+  it('re-baselines on enable when a republish finds no checkpoint', async () => {
+    stubGraphql({ PollMembers: { members: pageOf([{ id: 'm1', createdAt: '2026-10-13T09:00:00.000Z' }]) } });
+    const store = makeStore();
+    await call({ fn: newMemberTrigger.onEnable, ctx: { ...triggerContext({ store }), isRepublish: true } });
+    expect(store.data.get(bettermodePolling.CHECKPOINT_KEY)).toEqual({ lastCreatedAt: '2026-10-13T09:00:00.000Z', idsAtLast: ['m1'] });
   });
 
   it('new_member polls members by createdAt and emits new ones', async () => {
@@ -712,5 +685,77 @@ describe('polling triggers', () => {
   it('run without a checkpoint asks to re-enable', async () => {
     stubGraphql({});
     await expect(call({ fn: newPostTrigger.run, ctx: triggerContext({}) })).rejects.toThrow('re-enable');
+  });
+});
+
+function fakePostFeed({ count, startIndex = 0 }: { count: number; startIndex?: number }) {
+  const base = Date.UTC(2026, 9, 13, 12, 0, 0);
+  const feed: ReturnType<typeof postNode>[] = [];
+  let next = startIndex;
+  const add = (amount: number) => {
+    const added = Array.from({ length: amount }, () => {
+      next += 1;
+      return postNode({ id: `n${String(next).padStart(5, '0')}`, createdAt: new Date(base + next * 1000).toISOString() });
+    });
+    feed.unshift(...added.reverse());
+  };
+  add(count);
+  const handler = (sent: { variables: Record<string, unknown> }) => {
+    const after = sent.variables['after'];
+    const limit = Number(sent.variables['limit']);
+    const start = typeof after === 'string' ? feed.findIndex((item) => item.id === after) + 1 : 0;
+    const nodes = feed.slice(start, start + limit);
+    return {
+      body: {
+        data: { posts: pageOf({ nodes, hasNextPage: start + limit < feed.length, endCursor: nodes.length > 0 ? nodes[nodes.length - 1].id : null }) },
+      },
+    };
+  };
+  return { feed, add, handler };
+}
+
+async function pollUntilQuiet({ store, polls }: { store: ReturnType<typeof makeStore>; polls: number }) {
+  const emitted: string[] = [];
+  for (let index = 0; index < polls; index++) {
+    const items = await call({ fn: newPostTrigger.run, ctx: triggerContext({ store }) });
+    if (Array.isArray(items)) {
+      emitted.push(...items.map((item) => String(item.id)));
+    }
+  }
+  return emitted;
+}
+
+describe('polling bursts larger than the page budget', () => {
+  it.each([650, 1000, 1234, 2600])('fires each of %i new posts exactly once and then stays quiet', async (burst) => {
+    const feed = fakePostFeed({ count: 0 });
+    const store = makeStore();
+    stubGraphql({ PollPosts: feed.handler });
+    feed.add(1);
+    await call({ fn: newPostTrigger.onEnable, ctx: triggerContext({ store }) });
+    feed.add(burst);
+    const emitted = await pollUntilQuiet({ store, polls: Math.ceil(burst / 100) * 3 + 10 });
+    const expected = feed.feed.slice(0, burst).map((item) => item.id).reverse();
+    expect(new Set(emitted).size).toBe(emitted.length);
+    expect([...emitted].sort()).toEqual([...expected].sort());
+    expect(await pollUntilQuiet({ store, polls: 3 })).toEqual([]);
+  });
+
+  it('keeps up when new posts arrive while a large backlog drains', async () => {
+    const feed = fakePostFeed({ count: 0 });
+    const store = makeStore();
+    stubGraphql({ PollPosts: feed.handler });
+    feed.add(1);
+    await call({ fn: newPostTrigger.onEnable, ctx: triggerContext({ store }) });
+    feed.add(1200);
+    const emitted: string[] = [];
+    for (let round = 0; round < 40; round++) {
+      emitted.push(...(await pollUntilQuiet({ store, polls: 1 })));
+      if (round < 20) {
+        feed.add(30);
+      }
+    }
+    const expected = feed.feed.slice(0, feed.feed.length - 1).map((item) => item.id);
+    expect(new Set(emitted).size).toBe(emitted.length);
+    expect([...emitted].sort()).toEqual([...expected].sort());
   });
 });

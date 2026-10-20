@@ -27,6 +27,12 @@ export const newPostTrigger = createTrigger({
   sampleData: SAMPLE_POST,
   outputSchema: bettermodeSchemas.post,
   async onEnable(context) {
+    if (context.isRepublish) {
+      const existing = await context.store.get<Checkpoint>(bettermodePolling.CHECKPOINT_KEY);
+      if (existing !== null && existing !== undefined) {
+        return;
+      }
+    }
     bindTokenStore({ credentials: context.auth.props, store: context.store });
     const page = await bettermodeFetchers.fetchPostsPage({
       auth: context.auth.props,
@@ -40,8 +46,8 @@ export const newPostTrigger = createTrigger({
       bettermodePolling.newestCheckpoint({ items: page.items, fallback: new Date().toISOString(), timeField: 'published_at' })
     );
   },
-  async onDisable(context) {
-    await context.store.delete(bettermodePolling.CHECKPOINT_KEY);
+  async onDisable() {
+    return;
   },
   async test(context) {
     bindTokenStore({ credentials: context.auth.props, store: context.store });
@@ -73,7 +79,7 @@ export const newPostTrigger = createTrigger({
         }),
       timeField: 'published_at',
     });
-    if (result.items.length > 0 || (result.checkpoint.resumeCursor ?? null) !== (checkpoint.resumeCursor ?? null)) {
+    if (bettermodePolling.checkpointChanged({ before: checkpoint, after: result.checkpoint })) {
       await context.store.put<Checkpoint>(bettermodePolling.CHECKPOINT_KEY, result.checkpoint);
     }
     return result.items;

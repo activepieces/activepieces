@@ -39,26 +39,38 @@ async function collectNewItems<T extends PolledItem>({
     throw new Error('The trigger checkpoint is invalid. Disable and re-enable the trigger.');
   }
   const seenAtLast = new Set(checkpoint.idsAtLast);
-  const base: Checkpoint = { lastCreatedAt: checkpoint.lastCreatedAt, idsAtLast: checkpoint.idsAtLast };
+  const isFresh = (item: PolledItem) => {
+    const time = parseTime(timeOf(item));
+    if (time === null || item.id === null) {
+      return false;
+    }
+    return time > checkpointTime || (time === checkpointTime && !seenAtLast.has(item.id));
+  };
+  const isAtOrBelowCheckpoint = (item: PolledItem) => {
+    const time = parseTime(timeOf(item));
+    return time !== null && (time < checkpointTime || (time === checkpointTime && item.id !== null && seenAtLast.has(item.id)));
+  };
+  const stack = checkpoint.resumeCursors ?? [];
+  const windowStart = stack.length > 0 ? stack[stack.length - 1] : null;
+  const parents = stack.slice(0, -1);
   const pages: T[][] = [];
-  let cursor: string | null = checkpoint.resumeCursor ?? null;
+  let cursor: string | null = windowStart;
   let complete = false;
-  for (let pageIndex = 0; pageIndex < MAX_POLL_PAGES; pageIndex++) {
+  for (let pageIndex = 0; pageIndex <= MAX_POLL_PAGES; pageIndex++) {
     const page = await fetchPage(cursor);
     assertNewestFirst({ items: page.items, timeField });
     pages.push(page.items);
-    const reachedCheckpoint = page.items.some((item) => {
-      const time = parseTime(timeOf(item));
-      return time !== null && time < checkpointTime;
-    });
-    if (reachedCheckpoint || !page.has_more || page.next_cursor === null) {
+    if (page.items.some(isAtOrBelowCheckpoint) || !page.has_more || page.next_cursor === null) {
       complete = true;
       break;
     }
-    cursor = page.next_cursor;
+    if (pageIndex < MAX_POLL_PAGES) {
+      cursor = page.next_cursor;
+    }
   }
+  const base: Checkpoint = { lastCreatedAt: checkpoint.lastCreatedAt, idsAtLast: checkpoint.idsAtLast };
   if (!complete && cursor !== null) {
-    return { items: [], checkpoint: { ...base, resumeCursor: cursor } };
+    return { items: [], checkpoint: withCursors({ checkpoint: base, cursors: [...stack, cursor] }) };
   }
   const unique = new Map<string, T>();
   for (const item of pages.flat()) {
@@ -66,29 +78,26 @@ async function collectNewItems<T extends PolledItem>({
       unique.set(item.id, item);
     }
   }
-  const sorted = [...unique.values()]
-    .filter((item) => {
-      const time = parseTime(timeOf(item));
-      if (time === null || item.id === null) {
-        return false;
-      }
-      return time > checkpointTime || (time === checkpointTime && !seenAtLast.has(item.id));
-    })
-    .sort((left, right) => compareItems({ left, right, timeField }));
-  const truncated = sorted.length > MAX_EMIT_PER_POLL;
+  const sorted = [...unique.values()].filter(isFresh).sort((left, right) => compareItems({ left, right, timeField }));
   const fresh = sorted.slice(0, MAX_EMIT_PER_POLL);
+  const remaining = sorted.length > MAX_EMIT_PER_POLL ? stack : parents;
   if (fresh.length === 0) {
-    return { items: [], checkpoint: base };
+    return { items: [], checkpoint: withCursors({ checkpoint: base, cursors: parents }) };
   }
-  const resumeCursor = truncated && checkpoint.resumeCursor ? { resumeCursor: checkpoint.resumeCursor } : {};
   const next = newestCheckpoint({ items: fresh, fallback: checkpoint.lastCreatedAt, timeField });
   const sameTime = parseTime(next.lastCreatedAt) === checkpointTime;
-  return {
-    items: fresh,
-    checkpoint: sameTime
-      ? { lastCreatedAt: next.lastCreatedAt, idsAtLast: [...checkpoint.idsAtLast, ...next.idsAtLast].slice(-MAX_IDS_AT_LAST), ...resumeCursor }
-      : { ...next, ...resumeCursor },
-  };
+  const advanced: Checkpoint = sameTime
+    ? { lastCreatedAt: next.lastCreatedAt, idsAtLast: [...checkpoint.idsAtLast, ...next.idsAtLast].slice(-MAX_IDS_AT_LAST) }
+    : next;
+  return { items: fresh, checkpoint: withCursors({ checkpoint: advanced, cursors: remaining }) };
+}
+
+function withCursors({ checkpoint, cursors }: { checkpoint: Checkpoint; cursors: string[] }): Checkpoint {
+  return cursors.length > 0 ? { ...checkpoint, resumeCursors: cursors } : checkpoint;
+}
+
+function checkpointChanged({ before, after }: { before: Checkpoint; after: Checkpoint }): boolean {
+  return JSON.stringify(before) !== JSON.stringify(after);
 }
 
 function assertNewestFirst<T extends PolledItem>({ items, timeField }: { items: T[]; timeField: TimeField }): void {
@@ -123,6 +132,7 @@ const MAX_IDS_AT_LAST = 200;
 export const bettermodePolling = {
   newestCheckpoint,
   collectNewItems,
+  checkpointChanged,
   CHECKPOINT_KEY: 'bettermode_checkpoint',
   POLL_PAGE_SIZE: 50,
 };
@@ -130,7 +140,7 @@ export const bettermodePolling = {
 export type Checkpoint = {
   lastCreatedAt: string;
   idsAtLast: string[];
-  resumeCursor?: string | null;
+  resumeCursors?: string[];
 };
 
 type TimeField = 'created_at' | 'published_at';
