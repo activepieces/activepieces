@@ -1,5 +1,5 @@
 import { Store } from '@activepieces/pieces-framework';
-import { FileType } from 'basic-ftp';
+import { FTPError, FileType } from 'basic-ftp';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { newOrModifiedFile } from '../src/lib/triggers/new-modified-file';
 
@@ -60,11 +60,37 @@ describe('New File trigger over FTP', () => {
     expect(ftpClient.lastMod).not.toHaveBeenCalled();
   });
 
-  test('skips a file the server refuses to timestamp rather than treating it as new', async () => {
+  test('skips an entry the server permanently refuses to timestamp', async () => {
     ftpClient.list.mockResolvedValue([listEntry({ name: 'report.csv' })]);
-    ftpClient.lastMod.mockRejectedValue(new Error('550 Could not get file modification time.'));
+    ftpClient.lastMod.mockRejectedValue(new FTPError({ code: 550, message: '550 Could not get file modification time.' }));
 
     await expect(newOrModifiedFile.run(pollContext(memoryStore({ lastPoll: 0 })))).resolves.toEqual([]);
+  });
+
+  test('fails the poll on a temporary timestamp error instead of losing the file behind a newer one', async () => {
+    const store = memoryStore({ lastPoll: 0 });
+    ftpClient.list.mockResolvedValue([listEntry({ name: 'blips.csv' }), listEntry({ name: 'fine.csv' })]);
+    ftpClient.lastMod
+      .mockRejectedValueOnce(new FTPError({ code: 421, message: '421 Service not available.' }))
+      .mockResolvedValue(MODIFIED_AT);
+
+    await expect(newOrModifiedFile.run(pollContext(store))).rejects.toThrow('421 Service not available.');
+    expect(await store.get('lastPoll')).toBe(0);
+
+    ftpClient.lastMod.mockReset();
+    ftpClient.lastMod.mockResolvedValue(MODIFIED_AT);
+
+    await expect(newOrModifiedFile.run(pollContext(store))).resolves.toEqual([
+      expect.objectContaining({ name: 'blips.csv' }),
+      expect.objectContaining({ name: 'fine.csv' }),
+    ]);
+  });
+
+  test('fails the poll when the server does not implement MDTM, rather than going quiet', async () => {
+    ftpClient.list.mockResolvedValue([listEntry({ name: 'report.csv' })]);
+    ftpClient.lastMod.mockRejectedValue(new FTPError({ code: 502, message: '502 Command not implemented.' }));
+
+    await expect(newOrModifiedFile.run(pollContext(memoryStore({ lastPoll: 0 })))).rejects.toThrow('502 Command not implemented.');
   });
 
   test('uses the listing timestamp and skips MDTM when the server supports MLSD', async () => {

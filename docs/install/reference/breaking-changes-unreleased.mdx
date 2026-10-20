@@ -14,7 +14,8 @@ On an FTP or FTPS server that does not support the `MLSD` command, **New File** 
 
 #### What you need to do
 
-Nothing for most flows: they simply stop running on files they had already handled. If a downstream step was written to tolerate the repeats, for example by checking whether the work had already been done, that guard is now redundant but harmless. On the rare server that supports neither `MLSD` nor `MDTM` the trigger cannot establish when a file changed and will not emit it; if a folder goes quiet after upgrading, check whether your server offers either command with `FEAT`. Steps keep running on the version they were built with until you upgrade them.
+Nothing for most flows: they simply stop running on files they had already handled. If a downstream step was written to tolerate the repeats, for example by checking whether the work had already been done, that guard is now redundant but harmless. On the rare server that supports neither `MLSD` nor `MDTM` the trigger cannot establish when a file changed, so each poll now fails and is counted on the Triggers page instead of the flow going quiet; check whether your server offers either command with `FEAT`. Steps keep running on the version they were built with until you upgrade them.
+
 #### Invoice Ninja 0.5.0: Get Report returns columns and rows, the existing actions are builder-only, and some text inputs changed type
 
 Get Report used to send a GET to `/api/v1/reports/<type>`, which does not return report data, and returned whatever came back (or an error message as a successful step). From Invoice Ninja 0.5.0 it runs the report and returns `{ reportType, columns, rows, rowCount }`, where each row is keyed by column key (for example `client.name`). It also gains a date range and fails the step on API errors.

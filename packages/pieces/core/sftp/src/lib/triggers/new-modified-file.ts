@@ -4,8 +4,10 @@ import { getClient, getProtocolBackwardCompatibility, endClient } from '../commo
 import { sftpAuth } from '../auth';
 import dayjs from 'dayjs';
 import Client from 'ssh2-sftp-client';
-import { Client as FTPClient, FileInfo as FTPFileInfo, FileType as FTPFileType } from 'basic-ftp';
+import { Client as FTPClient, FTPError, FileInfo as FTPFileInfo, FileType as FTPFileType } from 'basic-ftp';
 import { newOrModifiedFileTriggerOutputSchema } from '../output-schemas';
+
+const FTP_FILE_UNAVAILABLE = 550;
 
 async function getModifyTime({ client, file, protocol, directory }: { client: Client | FTPClient; file: Client.FileInfo | FTPFileInfo; protocol: string; directory: string }): Promise<number | null> {
   if (protocol === 'sftp') {
@@ -21,10 +23,15 @@ async function getModifyTime({ client, file, protocol, directory }: { client: Cl
   }
 
   const { data, error } = await tryCatch(() => (client as FTPClient).lastMod(`${directory.replace(/\/+$/, '')}/${ftpFile.name}`));
-  if (error) {
+  if (isNil(error)) {
+    return dayjs(data).valueOf();
+  }
+
+  const serverRefusedThisEntry = error instanceof FTPError && error.code === FTP_FILE_UNAVAILABLE;
+  if (serverRefusedThisEntry) {
     return null;
   }
-  return dayjs(data).valueOf();
+  throw error;
 }
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof sftpAuth>, { path: string; ignoreHiddenFiles?: boolean }> = {
