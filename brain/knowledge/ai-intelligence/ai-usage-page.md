@@ -30,7 +30,7 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 ## Page anatomy
 1. Tiles: a pace tile that follows the period (1h–24h → daily run rate; 7–90 days and last month → average per day; this month → month-end forecast with the date and daily pace it is based on), AI calls, tokens. Never label a projection as an average.
 2. Hero: total for the period, change vs the previous period, line chart (this period solid, previous dashed), metric switch Spend · Calls · Tokens.
-3. Bento of top-5 cards in three full rows: projects · flows · agents / spend by source (donut, two columns) · users / providers & keys · models · limits at risk. Without limits, models takes two columns. There is no "biggest changes" card; a row's change % covers it.
+3. Bento of top-5 cards in three full rows: projects · flows · agents / spend by source (donut, two columns) · users / providers & keys · models · limits at risk. Without limits, models takes two columns. Card rows stay quiet: name, parent, amount, and share % under the amount, over a thin share bar. Change % lives on the hero, the see-all list and the detail page, not on card rows. There is no "biggest changes" card.
 4. The cost footnote.
 
 ## Key files
