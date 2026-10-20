@@ -41,33 +41,13 @@ export function UsageTab({ layout = 'flat' }: { layout?: UsageLayout }) {
       }),
     [view.period, view.scope, view.dataPreset],
   );
-  const hasData = view.preset !== 'loading' && view.preset !== 'error';
-
   return (
     <>
       <AdminPageHeader
         title={t('AI usage')}
-        description={
-          <div className="flex flex-col gap-1">
-            <span>
-              {t('Where your AI spend goes across flows, agents and chat.')}
-            </span>
-            {hasData && overview.totals.calls > 0 && (
-              <span className="text-xs">
-                {t('Updated {minutes} min ago · Tracking since {date}', {
-                  minutes: overview.updatedMinutesAgo,
-                  date: new Date(
-                    `${overview.trackingSince}T00:00:00Z`,
-                  ).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    timeZone: 'UTC',
-                  }),
-                })}
-              </span>
-            )}
-          </div>
-        }
+        description={t(
+          'Where your AI spend goes across flows, agents and chat.',
+        )}
       >
         <UsageHeaderControls
           view={view}
@@ -77,12 +57,7 @@ export function UsageTab({ layout = 'flat' }: { layout?: UsageLayout }) {
         />
       </AdminPageHeader>
 
-      {view.preset !== 'error' && (
-        <UsageScopeTabs
-          view={view}
-          totals={hasData ? overview.scopeTotals : undefined}
-        />
-      )}
+      {view.preset !== 'error' && <UsageScopeTabs view={view} />}
       <UsageBody view={view} overview={overview} layout={layout} />
       <UsagePreviewSwitcher view={view} />
     </>

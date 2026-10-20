@@ -14,8 +14,6 @@ function buildOverview({ period, scope, preset }: ViewParams): UsageOverview {
   });
   const calls = sumOf({ items: projects, pick: (item) => item.calls });
   const tokens = sumOf({ items: projects, pick: (item) => item.tokens });
-  const productionUsd =
-    spendUsd / SCOPE_FACTOR[scope]({ testingShare: profile.testingShare });
   return {
     totals: {
       spendUsd,
@@ -51,13 +49,6 @@ function buildOverview({ period, scope, preset }: ViewParams): UsageOverview {
           (b.monthToDateUsd ?? 0) / (b.monthlyLimitUsd ?? 1) -
           (a.monthToDateUsd ?? 0) / (a.monthlyLimitUsd ?? 1),
       ),
-    scopeTotals: {
-      production: productionUsd,
-      testing: productionUsd * profile.testingShare,
-      all: productionUsd * (1 + profile.testingShare),
-    },
-    updatedMinutesAgo: 2,
-    trackingSince: '2026-10-18',
   };
 }
 
@@ -777,7 +768,7 @@ export const USAGE_DIMENSIONS: UsageDimension[] = [
   'key',
   'model',
 ];
-export const USAGE_SCOPES: UsageScope[] = ['production', 'testing', 'all'];
+export const USAGE_SCOPES: UsageScope[] = ['all', 'production', 'testing'];
 export const USAGE_METRICS: UsageMetric[] = ['spend', 'calls', 'tokens'];
 
 export type UsagePreset = 'loading' | 'error' | UsageDataPreset;
@@ -844,10 +835,6 @@ export type UsageOverview = {
   bySource: UsageSourceSpend[];
   top: Record<UsageDimension, UsageItem[]>;
   limits: UsageItem[];
-  scopeTotals: Record<UsageScope, number>;
-
-  updatedMinutesAgo: number;
-  trackingSince: string;
 };
 
 export type UsageDetail = {

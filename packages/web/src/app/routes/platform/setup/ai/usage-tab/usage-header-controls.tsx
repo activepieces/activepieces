@@ -18,6 +18,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 import {
   USAGE_PERIODS,
@@ -137,46 +142,38 @@ export function UsageHeaderControls({
   );
 }
 
-export function UsageScopeTabs({
-  view,
-  totals,
-}: {
-  view: UsageView;
-  totals?: Record<UsageScope, number>;
-}) {
+export function UsageScopeTabs({ view }: { view: UsageView }) {
   return (
-    <div className="flex flex-col gap-2">
-      <Tabs
-        value={view.scope}
-        onValueChange={(value) =>
-          view.setScope(
-            USAGE_SCOPES.find((item) => item === value) ?? DEFAULT_SCOPE,
-          )
-        }
+    <Tabs
+      value={view.scope}
+      onValueChange={(value) =>
+        view.setScope(
+          USAGE_SCOPES.find((item) => item === value) ?? DEFAULT_SCOPE,
+        )
+      }
+    >
+      <TabsList
+        variant="outline"
+        className="flex w-full gap-6 border-b border-gray-6"
       >
-        <TabsList
-          variant="outline"
-          className="flex w-full gap-6 border-b border-gray-6"
-        >
-          {USAGE_SCOPES.map((scope) => (
-            <TabsTrigger
-              key={scope}
-              value={scope}
-              variant="outline"
-              className="flex items-baseline gap-2 px-0 pb-2"
-            >
-              {usageFormat.scopeLabel({ scope })}
-              {totals && (
-                <span className="text-xs font-normal tabular-nums text-gray-11">
-                  {usageFormat.usd(totals[scope])}
-                </span>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-      <p className="text-xs text-gray-11">{scopeHint({ scope: view.scope })}</p>
-    </div>
+        {USAGE_SCOPES.map((scope) => (
+          <Tooltip key={scope}>
+            <TooltipTrigger asChild>
+              <TabsTrigger
+                value={scope}
+                variant="outline"
+                className="px-0 pb-2"
+              >
+                {usageFormat.scopeLabel({ scope })}
+              </TabsTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs">
+              {scopeHint({ scope })}
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }
 
