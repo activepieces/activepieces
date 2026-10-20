@@ -12,6 +12,7 @@ import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.
 import { beginPlatformTeardown } from '../ee/platform/platform-teardown-jobs'
 import { fileService } from '../file/file.service'
 import { attachMultipartFieldsToBody } from '../helper/multipart-body'
+import { networkUtils } from '../helper/network-utils'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
@@ -83,6 +84,8 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             logoIconUrl,
             fullLogoUrl,
             favIconUrl,
+            userId: req.principal.id,
+            ip: networkUtils.clientIp(req),
         })
         return platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
     })

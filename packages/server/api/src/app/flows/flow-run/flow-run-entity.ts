@@ -12,7 +12,7 @@ import {
     BaseColumnSchemaPart,
 } from '../../database/database-common'
 
-type FlowRunSchema = FlowRun & {
+type FlowRunSchema = FlowRunWithDispatchIndex & {
     project: Project
     flow: Flow
     flowVersion: FlowVersion
@@ -39,6 +39,14 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
         parentRunId: {
             ...ApIdSchema,
+            nullable: true,
+        },
+        parentWaitpointId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
+        dispatchIndex: {
+            type: Number,
             nullable: true,
         },
         failParentOnFailure: {
@@ -104,16 +112,31 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             columns: ['projectId', 'environment', 'status', 'created', 'archivedAt'],
         },
         {
-            name: 'idx_run_project_id_environment_created_archived_at',
-            columns: ['projectId', 'environment', 'created', 'archivedAt'],
-        },
-        {
             name: 'idx_run_project_id_environment_created_status_archived_at',
             columns: ['projectId', 'environment', 'created', 'archivedAt', 'status'],
         },
         {
             name: 'idx_run_project_id_environment_flow_id_created_archived_at',
             columns: ['projectId', 'environment', 'flowId', 'created', 'archivedAt'],
+        },
+        {
+            name: 'idx_run_project_env_status_created_archived_parent_waitpoint',
+            columns: ['projectId', 'environment', 'status', 'created', 'archivedAt', 'parentWaitpointId'],
+        },
+        {
+            name: 'idx_run_project_env_created_archived_status_parent_waitpoint',
+            columns: ['projectId', 'environment', 'created', 'archivedAt', 'status'],
+            where: '"parentWaitpointId" IS NULL',
+        },
+        {
+            name: 'idx_run_project_env_flow_created_archived_parent_waitpoint',
+            columns: ['projectId', 'environment', 'flowId', 'created', 'archivedAt'],
+            where: '"parentWaitpointId" IS NULL',
+        },
+        {
+            name: 'idx_run_project_env_flow_status_created_parent_waitpoint',
+            columns: ['projectId', 'environment', 'flowId', 'status', 'created', 'archivedAt'],
+            where: '"parentWaitpointId" IS NULL',
         },
         {
             name: 'idx_run_flow_id',
@@ -126,6 +149,11 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         {
             name: 'idx_run_parent_run_id',
             columns: ['parentRunId'],
+        },
+        {
+            name: 'idx_run_parent_waitpoint_id',
+            columns: ['parentWaitpointId', 'projectId', 'dispatchIndex', 'status'],
+            where: '"parentWaitpointId" IS NOT NULL',
         },
         {
             name: 'idx_run_flow_version_id',
@@ -189,3 +217,7 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
     },
 })
+
+export type FlowRunWithDispatchIndex = FlowRun & {
+    dispatchIndex?: number | null
+}

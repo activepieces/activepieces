@@ -87,14 +87,34 @@ async function graphRequest<T>({
 }
 
 async function getPages(accessToken: string): Promise<FacebookPage[]> {
-  const response = await graphRequest<{ data?: FacebookPage[] }>({
+  return getPagesFrom({ accessToken, after: undefined });
+}
+
+async function getPagesFrom({
+  accessToken,
+  after,
+}: GetPagesFromParams): Promise<FacebookPage[]> {
+  const response = await graphRequest<{
+    data?: FacebookPage[];
+    paging?: GraphPaging;
+  }>({
     method: HttpMethod.GET,
     resourceUri: '/me/accounts',
     accessToken,
-    query: { fields: 'id,name,access_token,instagram_business_account' },
+    query: {
+      fields: 'id,name,access_token,instagram_business_account{id,username}',
+      limit: 100,
+      after,
+    },
   });
 
-  return response.data ?? [];
+  const pages = response.data ?? [];
+  const nextAfter = nextCursor(response.paging);
+  if (!nextAfter || nextAfter === after) {
+    return pages;
+  }
+
+  return [...pages, ...(await getPagesFrom({ accessToken, after: nextAfter }))];
 }
 
 async function createContainer({
@@ -234,7 +254,8 @@ export const instagramCommon = {
 
   page: Property.Dropdown<FacebookPageDropdown, true, typeof instagramBusinessAuth>({
     auth: instagramBusinessAuth,
-    displayName: 'Page',
+    displayName: 'Facebook Page',
+    description: 'Uses the Instagram account linked to this Page.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -242,7 +263,7 @@ export const instagramCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Connect your account',
+          placeholder: 'Connect your account first',
         };
       }
 
@@ -251,7 +272,9 @@ export const instagramCommon = {
       const options = pages
         .filter((page) => page.instagram_business_account !== undefined)
         .map((page) => ({
-          label: page.name,
+          label: page.instagram_business_account.username
+            ? `${page.name} (@${page.instagram_business_account.username})`
+            : page.name,
           value: {
             id: page.instagram_business_account.id,
             pageId: page.id,
@@ -263,38 +286,42 @@ export const instagramCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder:
-            'No Facebook Page with a linked Instagram professional account was found',
+          placeholder: 'No Page with a linked Instagram account',
         };
       }
 
       return {
         options,
-        placeholder: 'Choose a page',
+        placeholder: 'Select a Facebook Page',
       };
     },
   }),
 
   caption: Property.LongText({
     displayName: 'Caption',
+    description: 'Up to 2,200 characters, including hashtags and mentions.',
+    placeholder: 'Summer collection is live! #newarrivals',
     required: false,
   }),
 
   cursor: Property.ShortText({
     displayName: 'Cursor',
-    description: 'Next Cursor from a previous run, to fetch the following page.',
+    description: 'The Next Cursor from an earlier run, to get the next results.',
     required: false,
+    advanced: true,
   }),
 
   photo: Property.ShortText({
-    displayName: 'Photo',
-    description: 'A URL we can access for the photo (JPG only)',
+    displayName: 'Photo URL',
+    description: 'Public link to a JPG image.',
+    placeholder: 'https://example.com/photo.jpg',
     required: true,
   }),
 
   video: Property.ShortText({
-    displayName: 'Video',
-    description: 'A URL we can access for the video (Limit: 1GB or 15 minutes)',
+    displayName: 'Video URL',
+    description: 'Public link to the video, up to 1 GB and 15 minutes long.',
+    placeholder: 'https://example.com/reel.mp4',
     required: true,
   }),
 };
@@ -338,6 +365,7 @@ export type FacebookPage = {
   access_token: string;
   instagram_business_account: {
     id: string;
+    username?: string;
   };
 };
 
@@ -357,6 +385,11 @@ type GraphRequestParams = {
   accessToken: string;
   query?: Record<string, string | number | boolean | undefined>;
   body?: unknown;
+};
+
+type GetPagesFromParams = {
+  accessToken: string;
+  after: string | undefined;
 };
 
 type PublishMediaParams = {

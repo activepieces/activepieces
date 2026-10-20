@@ -2,6 +2,7 @@ import { intercomAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { intercomClient, Operator } from '../common';
 import dayjs from 'dayjs';
+import { findConversationOutputSchema } from '../output-schemas';
 
 export const findConversationAction = createAction({
     auth: intercomAuth,
@@ -9,8 +10,8 @@ export const findConversationAction = createAction({
     classification: 'SEARCH',
     displayName: 'Find Conversation',
     description: 'Searches for conversations using various criteria',
-    audience: 'both',
-    aiMetadata: { description: 'Search conversations by a chosen field (ID, subject, message body, author email, assigned admin, team, or tag IDs) with a contains/equals/starts-with match, optionally filtered by open/closed status and an update-time window. Read-only and repeatable; returns the first match plus a found flag. Use when you do not already have the conversation ID — otherwise use Retrieve a Conversation.', idempotent: true },
+    audience: 'human',
+    aiMetadata: { description: 'Search conversations by a chosen field (ID, subject, message body, author email, assigned admin, team, or tag IDs) with a contains/equals/starts-with match (IDs: equals only), optionally filtered by open/closed/snoozed status and an update-time window. Read-only and repeatable; returns the first match plus a found flag. Use when you do not already have the conversation ID — otherwise use Retrieve a Conversation.', idempotent: true },
     props: {
         searchField: Property.StaticDropdown({
             displayName: 'Search Field',
@@ -42,6 +43,7 @@ export const findConversationAction = createAction({
         }),
         searchTerm: Property.ShortText({
             displayName: 'Search Term',
+            description: 'Conversation ID, Assigned Admin, Team and Tag IDs only support Equals.',
             required: true,
         }),
         status: Property.StaticDropdown({
@@ -52,11 +54,13 @@ export const findConversationAction = createAction({
                 options: [
                     { label: 'Open', value: 'open' },
                     { label: 'Closed', value: 'closed' },
+                    { label: 'Snoozed', value: 'snoozed' },
                 ],
             },
         }),
         updateAfter: Property.DateTime({
             displayName: 'Update After',
+            description: 'Intercom compares dates by calendar day in your workspace time zone.',
             required: false,
         }),
         updateBefore: Property.DateTime({
@@ -64,14 +68,19 @@ export const findConversationAction = createAction({
             required: false,
         }),
     },
+    outputSchema: findConversationOutputSchema,
     async run(context) {
         const { searchField, matchType, searchTerm, status, updateAfter, updateBefore } =
             context.propsValue;
 
+        if (matchType !== 'equals' && EQUALS_ONLY_FIELDS.includes(searchField)) {
+            throw new Error('Conversation ID, Assigned Admin, Team and Tag IDs can only be matched with Equals.');
+        }
+
         const operator = matchType === 'contains' ? '~' : matchType === 'starts_with' ? '^' : '=';
 
 
-        const client = intercomClient(context.auth);
+        const client = await intercomClient(context.auth);
 
         const filter = [
             {
@@ -115,3 +124,5 @@ export const findConversationAction = createAction({
         };
     },
 });
+
+const EQUALS_ONLY_FIELDS = ['id', 'admin_assignee_id', 'team_assignee_id', 'tag_ids'];

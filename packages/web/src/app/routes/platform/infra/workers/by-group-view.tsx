@@ -8,6 +8,7 @@ import { t } from 'i18next';
 import { Layers, Plus, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
+import { AdminEmpty, adminSurface } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import {
   workersApi,
 } from '@/features/platform-admin/api/workers-api';
 import { AdminControl, adminControl } from '@/lib/admin-control';
+import { cn } from '@/lib/utils';
 
 import { AssignFlowsDialog } from './assign-flows-dialog';
 import { AssignProjectsDialog } from './assign-projects-dialog';
@@ -47,12 +49,7 @@ export function ByGroupView({
   ).sort();
 
   if (projectGroupLabels.length === 0 && flowGroupLabels.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-11">
-        <Layers className="size-10" strokeWidth={1.5} />
-        <p className="text-sm">{t('No worker groups')}</p>
-      </div>
-    );
+    return <AdminEmpty icon={<Layers />} title={t('No worker groups')} />;
   }
 
   return (
@@ -122,9 +119,14 @@ function GroupCard({
 
   return (
     <>
-      <div className="flex w-full flex-col rounded-lg border bg-gray-1 p-5 gap-4 sm:w-[475px]">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
+      <div
+        className={cn(
+          adminSurface.card,
+          'flex w-full flex-col gap-4 p-5 sm:w-[475px]',
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-accent-3 text-accent-11">
             {isFlowGroup ? (
               <Workflow className="size-4" />
             ) : (
@@ -138,8 +140,8 @@ function GroupCard({
           </TextWithTooltip>
         </div>
 
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-bold leading-tight">
+        <div className="flex items-baseline gap-2">
+          <span className="text-2xl font-semibold text-gray-12">
             {onlineWorkerCount}
           </span>
           <span className="text-sm text-gray-11">
@@ -151,16 +153,15 @@ function GroupCard({
         </div>
 
         {isFlowGroup ? (
-          <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
-                {t('FLOWS')}
+          <div className="flex flex-col gap-2 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-11">
+                {t('Flows')}
               </span>
               <Button
                 {...adminControl(AdminControl.WORKERS_ASSIGN_OPEN)}
                 variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
+                size="xs"
                 onClick={() => setDialogOpen(true)}
               >
                 <Plus className="size-3.5" />
@@ -170,16 +171,15 @@ function GroupCard({
             <AssignedFlowChips groupLabel={groupLabel} />
           </div>
         ) : (
-          <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
-                {t('PROJECTS')}
+          <div className="flex flex-col gap-2 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-11">
+                {t('Projects')}
               </span>
               <Button
                 {...adminControl(AdminControl.WORKERS_ASSIGN_OPEN)}
                 variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
+                size="xs"
                 onClick={() => setDialogOpen(true)}
               >
                 <Plus className="size-3.5" />
@@ -190,7 +190,7 @@ function GroupCard({
             {assignedProjects.length === 0 ? (
               <p className="text-xs text-gray-11">{t('No projects')}</p>
             ) : (
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-2">
                 {assignedProjects.slice(0, 3).map((project) => (
                   <ProjectChip key={project.id} project={project} />
                 ))}
@@ -241,7 +241,7 @@ function AssignedFlowChips({ groupLabel }: { groupLabel: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-2">
       {flows.slice(0, 3).map((flow) => (
         <FlowChip key={flow.id} flow={flow} />
       ))}
@@ -256,7 +256,7 @@ function AssignedFlowChips({ groupLabel }: { groupLabel: string }) {
 
 function FlowChip({ flow }: { flow: WorkerGroupFlow }) {
   return (
-    <div className="inline-flex items-center gap-1 rounded-full border bg-gray-3/40 px-2 py-0.5 text-xs">
+    <div className="inline-flex items-center gap-1 rounded-md border bg-gray-3/40 px-2 py-0.5 text-xs">
       <Workflow className="size-3 shrink-0 text-gray-11" />
       <TextWithTooltip tooltipMessage={flow.displayName}>
         <span className="max-w-[100px] truncate">{flow.displayName}</span>
@@ -267,7 +267,7 @@ function FlowChip({ flow }: { flow: WorkerGroupFlow }) {
 
 function ProjectChip({ project }: { project: ProjectWithLimits }) {
   return (
-    <div className="inline-flex items-center gap-1 rounded-full border bg-gray-3/40 px-2 py-0.5 text-xs">
+    <div className="inline-flex items-center gap-1 rounded-md border bg-gray-3/40 px-2 py-0.5 text-xs">
       <ProjectAvatar project={project} size="sm" />
       <TextWithTooltip tooltipMessage={project.displayName}>
         <span className="max-w-[100px] truncate">{project.displayName}</span>

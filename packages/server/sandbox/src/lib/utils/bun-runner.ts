@@ -7,13 +7,14 @@ import { stepFolderResolvePlugin } from './esbuild-build-options'
 import { CommandOutput, spawnWithKill } from './exec'
 
 export const bunRunner = (log: ApLogger) => ({
-    async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
+    async install({ path, filtersPath, force }: InstallParams): Promise<CommandOutput> {
         const filterArgs: string[] = filtersPath
             .map(sanitizeFilterPath)
             .flatMap((p) => ['--filter', `./${p}`])
         const args = [
             'install',
             '--ignore-scripts',
+            ...(force ? ['--force'] : []),
             ...filterArgs,
         ]
         await fileSystemUtils.threadSafeMkdir(path)
@@ -84,6 +85,7 @@ function formatBuildError({ error, entryFile }: FormatBuildErrorParams): string 
 type InstallParams = {
     path: string
     filtersPath: string[]
+    force?: boolean
 }
 
 type BuildParams = {

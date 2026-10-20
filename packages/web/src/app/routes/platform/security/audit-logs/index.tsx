@@ -29,8 +29,14 @@ import {
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { DataTable, DataTableFilters } from '@/components/custom/data-table';
+import {
+  AdminDataTable,
+  AdminPage,
+  AdminPageHeader,
+  adminPageResources,
+  adminLayout,
+} from '@/app/components/admin';
+import { DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
@@ -42,12 +48,17 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { auditLogQueries } from '@/features/platform-admin';
+import {
+  AuditLogRetentionButton,
+  auditLogQueries,
+  auditLogRetentionUtils,
+} from '@/features/platform-admin';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { formatUtils } from '@/lib/format-utils';
+import { cn } from '@/lib/utils';
 
 import { sampleData } from '../../sample-data';
 
@@ -117,17 +128,20 @@ export default function AuditLogsPage() {
   const rows = isSample ? sampleData.auditEventsPage() : auditLogsData;
 
   return (
-    <div className="flex flex-col w-full">
-      <DashboardPageHeader
-        description={t('Track activities done within your platform')}
+    <AdminPage>
+      <AdminPageHeader
         title={t('Audit Logs')}
-      />
-      <DataTable
+        description={t('Track activities done within your platform')}
+        resources={adminPageResources.auditLogs}
+      >
+        {!isSample && <AuditLogRetentionButton />}
+      </AdminPageHeader>
+      <AdminDataTable
         emptyStateTextTitle={t('No audit logs found')}
         emptyStateTextDescription={t(
           'Come back later when you have some activity to audit',
         )}
-        emptyStateIcon={<History className="size-14" />}
+        emptyStateIcon={<History />}
         filters={filters}
         columns={[
           {
@@ -232,8 +246,7 @@ export default function AuditLogsPage() {
               <Button
                 {...adminControl(AdminControl.AUDIT_LOG_EVENT_OPEN)}
                 variant="ghost"
-                size="icon"
-                className="size-8"
+                size="icon-sm"
                 onClick={() => {
                   setSelectedEvent(row.original);
                   setIsSheetOpen(true);
@@ -251,7 +264,7 @@ export default function AuditLogsPage() {
         onRetry={refetch}
       />
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col p-0">
+        <SheetContent className={cn(adminLayout.sheet.md, 'flex flex-col p-0')}>
           <SheetHeader className="px-6 py-4 border-b shrink-0">
             <SheetTitle className="text-base">
               {formatUtils.convertEnumToHumanReadable(
@@ -264,7 +277,7 @@ export default function AuditLogsPage() {
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
+              <p className="text-xs font-semibold text-gray-11">
                 {t('Who & When')}
               </p>
               <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
@@ -302,7 +315,7 @@ export default function AuditLogsPage() {
               <>
                 <Separator />
                 <div className="px-6 py-5 flex flex-col gap-4">
-                  <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-gray-11">
                     {t('Event Details')}
                   </p>
                   <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
@@ -320,7 +333,7 @@ export default function AuditLogsPage() {
             )}
             <Separator />
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
+              <p className="text-xs font-semibold text-gray-11">
                 {t('Full Payload')}
               </p>
               <SimpleJsonViewer data={selectedEvent?.data ?? {}} />
@@ -328,7 +341,7 @@ export default function AuditLogsPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </AdminPage>
   );
 }
 
@@ -399,6 +412,11 @@ function convertToIcon(event: ApplicationEvent) {
       return {
         icon: <Key className="size-4" />,
         tooltip: t('Signing Key'),
+      };
+    case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED:
+      return {
+        icon: <Clock className="size-4" />,
+        tooltip: t('Audit log retention'),
       };
     default:
       return undefined;
@@ -585,6 +603,26 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       return [
         { label: t('Key Name'), value: event.data.signingKey.displayName },
       ];
+    case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED: {
+      const { previousRetentionDays, retentionDays, instanceLimitDays } =
+        event.data;
+      return [
+        {
+          label: t('Before'),
+          value: auditLogRetentionUtils.formatChoice({
+            days: previousRetentionDays,
+            ceiling: instanceLimitDays,
+          }),
+        },
+        {
+          label: t('After'),
+          value: auditLogRetentionUtils.formatChoice({
+            days: retentionDays,
+            ceiling: instanceLimitDays,
+          }),
+        },
+      ];
+    }
     case ApplicationEventName.PROJECT_ROLE_CREATED:
     case ApplicationEventName.PROJECT_ROLE_UPDATED:
     case ApplicationEventName.PROJECT_ROLE_DELETED: {

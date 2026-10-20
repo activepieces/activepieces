@@ -39,7 +39,7 @@ export const CreditsInfoDialog = () => {
         className="max-w-[625px] gap-0 overflow-hidden p-0"
       >
         <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-accent-3 px-6 py-12">
-          <DialogTitle className="relative flex items-center gap-2 text-2xl font-bold text-accent-11">
+          <DialogTitle className="relative flex items-center gap-2 text-2xl font-semibold text-accent-11">
             <Coins className="size-6" />
             {t('Credits FAQ')}
           </DialogTitle>
@@ -81,7 +81,7 @@ function CreditsCostTable({
 }) {
   const items = buildCostItems({ includeActivepiecesModels, chatEnabled });
   return (
-    <div className="flex w-full flex-col overflow-hidden rounded-[10px] border">
+    <div className="flex w-full flex-col overflow-hidden rounded-lg border">
       <div className="flex items-center gap-2 border-b px-3 py-2.5 text-sm font-medium text-gray-11">
         <span className="flex-1">{t('Action')}</span>
         <span className="w-40 text-right">{t('Credits')}</span>
@@ -93,7 +93,7 @@ function CreditsCostTable({
             <div
               key={item.label}
               className={cn(
-                'bg-gray-3 px-2 py-1.5 text-center text-xs font-semibold uppercase text-gray-11',
+                'bg-gray-3 px-2 py-1.5 text-center text-xs font-semibold text-gray-11',
                 border,
               )}
             >

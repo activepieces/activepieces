@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ExecutionMode, FlowVersionState, NetworkMode } from '@activepieces/shared'
@@ -373,5 +373,63 @@ describe('codeBuilder.processCodeStep', () => {
         expect(statuses).toEqual(Array.from({ length: concurrentCount }, () => 'success'))
         expect(installMock).toHaveBeenCalledTimes(1)
         await expect(readFile(entryPath, 'utf8')).resolves.toBe(TRANSPILED_SOURCE)
+    })
+})
+
+describe('codeBuilder in-place rebuilds', () => {
+    it('keeps node_modules across a rebuild and only replaces the build outputs', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        const ref = { flowVersionId: artifact.flowVersionId, stepName: artifact.name }
+        const stepDir = codeCache(codesFolderPath).stepDir(ref)
+        mockInstallSuccess()
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        const markerPath = join(stepDir, 'node_modules', 'marker.txt')
+        await writeFile(markerPath, 'installed-earlier', 'utf8')
+
+        const changedSource = 'export const code = async () => 43'
+        const changedArtifact = { ...artifact, sourceCode: { ...artifact.sourceCode, code: changedSource } }
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact: changedArtifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        await expect(readFile(markerPath, 'utf8')).resolves.toBe('installed-earlier')
+        await expect(readFile(codeCache(codesFolderPath).stepEntryPath(ref), 'utf8')).resolves.toBe(changedSource)
+    })
+
+    it('installs dependencies with force so an interrupted earlier install is fully re-linked', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        mockInstallSuccess()
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        expect(installMock).toHaveBeenCalledWith(expect.objectContaining({ force: true }))
+    })
+
+    it('runs the dependency install while holding the shared disk lock', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        let lockFilesDuringInstall: string[] | null = null
+        installMock.mockImplementation(async ({ path }: { path: string }) => {
+            lockFilesDuringInstall = await readdir(join(codesFolderPath, '.install-locks'))
+            await mkdir(join(path, 'node_modules'), { recursive: true })
+            return { stdout: '', stderr: '' }
+        })
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        expect(lockFilesDuringInstall).not.toBeNull()
+        expect(lockFilesDuringInstall!.filter((name) => name.endsWith('.lock'))).toHaveLength(1)
+        const lockFilesAfter = await readdir(join(codesFolderPath, '.install-locks'))
+        expect(lockFilesAfter.filter((name) => name.endsWith('.lock'))).toHaveLength(0)
     })
 })

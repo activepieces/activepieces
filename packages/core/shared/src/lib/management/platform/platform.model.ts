@@ -212,6 +212,7 @@ export const Platform = z.object({
     autoCreatePersonalProjects: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
+    auditLogRetentionDays: Nullable(z.number().int()),
 })
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
@@ -242,6 +243,7 @@ export const PlatformWithoutSensitiveData = z.object({
     autoCreatePersonalProjects: z.boolean(),
     pinnedPieces: z.array(z.string()),
     pieceSelectorConfig: Nullable(PieceSelectorConfig),
+    auditLogRetentionDays: Nullable(z.number().int()),
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 

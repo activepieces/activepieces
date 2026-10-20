@@ -191,23 +191,9 @@
   --ease-*: initial;
   --ease-expand-out: cubic-bezier(0.35, 0, 0.25, 1);
 
-  --width-4_5: 1.125rem;
-
-  --height-4_5: 1.125rem;
-
   --transition-duration-1500: 1500ms;
 
-  --radius-lg: 0.75rem;
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-xs: calc(var(--radius) - 8px);
-  --radius-xss: calc(var(--radius) - 10px);
-
   --container-page-band: 1198px;
-
-  --text-xss: 0.65rem;
-  --text-3xl: 1.75rem;
-  --text-4xl: 2rem;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -924,6 +910,20 @@
     cursor: default !important;
   }
 
+  /* React Flow sets position: absolute on every svg in the edges layer, including
+     icons inside edge labels (foreignObject). Safari then draws those icons outside
+     their box, e.g. the menu dots on router branch labels disappear. */
+  .react-flow__edges foreignObject svg {
+    position: static !important;
+  }
+
+  /* Safari starts a native text selection while drag-selecting on the canvas and
+     paints large blue boxes over steps and edges. Chrome does not. */
+  .react-flow__pane {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
   .react-flow__edge.selectable > path {
     /* If necessary, add !important to the rule */
     pointer-events: none !important;
@@ -1254,4 +1254,19 @@
 
 @media (prefers-reduced-motion: reduce) {
   .recurring-chip-gradient { animation: none; }
+}
+
+@layer base {
+  :root,
+  [data-theme='light'] {
+    --admin-page: oklch(97.9% 0 0);
+    --admin-surface: var(--panel);
+    --admin-card-border: var(--gray-6);
+  }
+
+  [data-theme='dark'] {
+    --admin-page: var(--gray-1);
+    --admin-surface: var(--panel);
+    --admin-card-border: var(--gray-6);
+  }
 }

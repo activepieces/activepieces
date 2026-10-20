@@ -59,10 +59,19 @@ export const projectWorkerGroupService = (log: FastifyBaseLogger) => ({
                 })
             }
         }
-        const project = await projectRepo().findOneOrFail({
+        const project = await projectRepo().findOne({
             select: ['id', 'workerGroupId'],
             where: { id: projectId, platformId },
         })
+        if (isNil(project)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: projectId,
+                    entityType: 'project',
+                },
+            })
+        }
         const previousGroupId = project.workerGroupId ?? null
         await projectRepo().update({ id: projectId, platformId }, { workerGroupId })
         await this.invalidate({ projectId })

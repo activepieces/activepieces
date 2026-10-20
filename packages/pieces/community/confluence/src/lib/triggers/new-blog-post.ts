@@ -1,45 +1,24 @@
 import {
+	AppConnectionValueForAuthProperty,
 	createTrigger,
 	TriggerStrategy,
-	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
-import { confluenceAuth, confluenceAuthValue } from '../auth';
-import { confluenceApiCall, PaginatedResponse } from '../common';
-import { spaceIdProp } from '../common/props';
-
-interface ConfluenceBlogPost {
-	id: string;
-	status: string;
-	title: string;
-	spaceId: string;
-	createdAt: string;
-	version: { number: number; createdAt: string };
-}
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { confluenceAuth } from '../auth';
+import { confluenceApi } from '../common/api';
+import { confluenceProps } from '../common/props';
+import { newBlogPostOutputSchema } from '../output-schemas';
 
 const props = {
-	spaceId: spaceIdProp,
+	spaceId: confluenceProps.spaceId({ required: true }),
 };
-const polling: Polling<confluenceAuthValue, { spaceId?: string }>  = {
+const polling: Polling<
+	AppConnectionValueForAuthProperty<typeof confluenceAuth>, { spaceId?: string }>  = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue }) {
-		const response = await confluenceApiCall<PaginatedResponse<ConfluenceBlogPost>>({
-			domain: auth.props.confluenceDomain,
-			username: auth.props.username,
-			password: auth.props.password,
-			version: 'v2',
-			method: HttpMethod.GET,
-			resourceUri: `/spaces/${propsValue.spaceId}/blogposts`,
-			query: {
-				limit: '100',
-				sort: '-created-date',
-			},
-		});
+		const results = await confluenceApi.listSpaceBlogPosts({ auth, spaceId: propsValue.spaceId });
 
-		if (isNil(response.results)) return [];
-
-		return response.results.map((post) => ({
+		return results.map((post) => ({
 			epochMilliSeconds: new Date(post.createdAt).getTime(),
 			data: post,
 		}));
@@ -48,6 +27,7 @@ const polling: Polling<confluenceAuthValue, { spaceId?: string }>  = {
 
 export const newBlogPostTrigger = createTrigger({
 	name: 'new-blog-post',
+	outputSchema: newBlogPostOutputSchema,
 	classification: 'READ',
 	displayName: 'New Blog Post',
 	description: 'Triggers when a new blog post is published in the selected space.',

@@ -1,6 +1,8 @@
-import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { TeableAuth, TeableAuthValue } from '../auth';
-import { makeClient, TeableCommon } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { TeableAuth } from '../auth';
+import { TeableCommon } from '../common';
+import { teableClient } from '../common/client';
+import { teableOutputSchemas } from '../output-schemas';
 
 export const uploadAttachmentAction = createAction({
   auth: TeableAuth,
@@ -10,58 +12,32 @@ export const uploadAttachmentAction = createAction({
   description: 'Uploads a file as an attachment to a field in a Teable record.',
   audience: 'both',
   aiMetadata: {
-    description: 'Attaches a file to an attachment-type field of an existing Teable record, accepting either a public URL or binary file data. Use to add a document or image to a known record; requires the table ID, record ID, and the attachment field. Not idempotent — each call adds another attachment to the field.',
+    description:
+      'Attaches a file to an attachment field of an existing record. The File input accepts a URL or binary data. Each call adds another attachment, so a retry duplicates the file.',
     idempotent: false,
   },
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,
     record_id: TeableCommon.record_id,
-    field_id: Property.Dropdown({
-      auth: TeableAuth,
-      displayName: 'Attachment Field',
-      description: 'The attachment field to upload the file to.',
-      required: true,
-      refreshers: ['table_id'],
-      options: async ({ auth, table_id }) => {
-        if (!auth || !table_id) {
-          return { disabled: true, options: [], placeholder: 'Select a table first.' };
-        }
-        const client = makeClient(auth as TeableAuthValue);
-        const fields = await client.listFields(table_id as string);
-        const attachmentFields = fields.filter((f) => f.type === 'attachment');
-        return {
-          disabled: false,
-          options: attachmentFields.map((f) => ({ label: f.name, value: f.id })),
-        };
-      },
-    }),
+    field_id: TeableCommon.attachment_field_id,
     file: Property.File({
       displayName: 'File',
       description: 'The file to upload. Accepts a URL or a binary file.',
       required: true,
     }),
   },
+  outputSchema: teableOutputSchemas.recordCore,
   async run(context) {
-    const { table_id, record_id, field_id } = context.propsValue;
-    const client = makeClient(context.auth as TeableAuthValue);
-    const file = context.propsValue.file as ApFile | string;
-
-    const form = new FormData();
-    if (typeof file === 'string' && /^https?:\/\//i.test(file)) {
-      form.append('fileUrl', file);
-    } else {
-      const apFile = file as ApFile;
-      const mimeType = apFile.extension
-        ? `application/${apFile.extension.replace(/^\./, '')}`
-        : 'application/octet-stream';
-      form.append(
-        'file',
-        new Blob([new Uint8Array(apFile.data)], { type: mimeType }),
-        apFile.filename
-      );
-    }
-
-    return await client.uploadAttachment(table_id, record_id, field_id, form);
+    const { table_id, record_id, field_id, file } = context.propsValue;
+    return teableClient.uploadAttachment({
+      auth: context.auth,
+      tableId: table_id,
+      recordId: record_id,
+      fieldId: field_id,
+      filename: file.filename,
+      extension: file.extension,
+      data: file.data,
+    });
   },
 });

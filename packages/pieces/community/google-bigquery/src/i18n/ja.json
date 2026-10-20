@@ -19,7 +19,7 @@
   "Searches for a row matching a WHERE clause. If found, returns it. If not found, inserts the provided row data and returns that.": "WHERE句に一致する行を検索します。見つからない場合は、指定した行データを挿入し、それを返します。",
   "Retrieves the result rows from a completed BigQuery query job by Job ID. Use this after a \"Query Job Completed\" trigger to fetch the full result set.": "ジョブ ID により完了した BigQuery クエリージョブから結果行を取得します。 「クエリジョブが完了した」トリガーの後にこれを使用して、完全な結果セットを取得します。",
   "Imports a batch of rows into a BigQuery table. Accepts a JSON array or newline-delimited JSON (NDJSON). Large datasets are automatically split into chunks.": "行のバッチを BigQuery テーブルにインポートします。JSON 配列または改行区切りの JSON (NDJSON) を受け付けます。大きなデータセットは自動的にチャンクに分割されます。",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Project": "プロジェクト",
   "SQL Query": "SQL クエリ",
   "Max Rows": "最大行",

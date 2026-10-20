@@ -1,10 +1,9 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { opnformCommon } from './common';
-import { AppConnectionType } from '@activepieces/pieces-framework';
+import { AppConnectionType, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
+import { opnformApi } from './common/api';
 
 export const opnformAuth = PieceAuth.CustomAuth({
     description:
-        'Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)',
+        'Please use your Opnform API Key. [Click here for create API Key](https://opnform.com/home?user-settings=access-tokens)\n\nGrant the abilities the steps you use need: workspaces-read/write, workspace-users-read/write, forms-read/write and manage-integrations.',
     required: true,
     props: {
         baseApiUrl: Property.ShortText({
@@ -17,18 +16,10 @@ export const opnformAuth = PieceAuth.CustomAuth({
             required: true,
         }),
     },
-    validate: async ({ auth }): Promise<{ valid: true } | { valid: false; error: string }> => {
-        try {
-            const isValid = await opnformCommon.validateAuth({
-                props: auth,
-                type: AppConnectionType.CUSTOM_AUTH,
-            });
-            if (isValid) {
-                return { valid: true };
-            }
-            return { valid: false, error: 'Invalid API Key' };
-        } catch (e) {
-            return { valid: false, error: 'Invalid API Key' };
-        }
+    validate: async ({ auth }) => {
+        const { error } = await tryCatch(() =>
+            opnformApi.listWorkspaces({ auth: { type: AppConnectionType.CUSTOM_AUTH, props: auth } }),
+        );
+        return error ? { valid: false, error: 'Invalid API Key' } : { valid: true };
     },
 });

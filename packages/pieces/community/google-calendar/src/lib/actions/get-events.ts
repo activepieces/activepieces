@@ -46,11 +46,13 @@ export const getEventsProps = {
     displayName: 'Start Time',
     description: 'Only events that end after this time.',
     required: false,
+    width: 'half',
   }),
   end_date: Property.DateTime({
     displayName: 'End Time',
     description: 'Only events starting before this. Requires Start Time.',
     required: false,
+    width: 'half',
   }),
   singleEvents: Property.Checkbox({
     displayName: 'Expand Recurring Events',
@@ -119,6 +121,22 @@ export const getEvents = createAction({
   audience: 'human',
   aiMetadata: { description: 'Lists events from a Google Calendar, optionally filtered by a date range, search term, and event types, and can expand recurring events into individual instances. Use to look up or browse multiple events when you do not already have a specific event ID; use Get Event by ID for a single known event. Read-only and idempotent.', idempotent: true },
   displayName: 'Get Events',
+  propertyGroups: [
+    {
+      key: 'calendar',
+      display: 'section',
+      label: 'Calendar',
+      icon: 'calendar',
+      props: ['calendar_id'],
+    },
+    {
+      key: 'filters',
+      display: 'section',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['event_types', 'search', 'start_date', 'end_date', 'singleEvents'],
+    },
+  ],
   props: getEventsProps,
   outputSchema: getEventsActionOutputSchema,
   run: runGetEvents,

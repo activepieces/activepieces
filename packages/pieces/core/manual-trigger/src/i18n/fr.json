@@ -1,6 +1,7 @@
 {
+  "Start a flow on demand with a button click.": "Start a flow on demand with a button click.",
   "Manual Trigger": "Déclencheur manuel",
-  "Manually start your own flow without any extra configurations": "Démarrez manuellement votre propre flux sans configuration supplémentaire",
+  "Start the flow on demand with the Run Flow button": "Start the flow on demand with the Run Flow button",
   "Markdown": "Markdown",
-  "Manual triggers are used to start a flow on demand, publish your flow and click (Run Flow) at the start of the flow.": "Les déclencheurs manuels sont utilisés pour démarrer un flux à la demande, publier votre flux et cliquer sur (Run Flow) au début du flux."
+  "Publish the flow, then click **Run Flow** on the canvas to start it.\n\nThis trigger passes no data, so later steps have nothing to map from it.": "Publish the flow, then click **Run Flow** on the canvas to start it.\n\nThis trigger passes no data, so later steps have nothing to map from it."
 }

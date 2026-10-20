@@ -156,14 +156,13 @@ function assertManagedModelAllowed({ provider, modelId, image, adminChosenModelI
     }, message)
 }
 
-function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false, adminChosenImageModelId }: {
+function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false, adminChosenImageModelId }: {
     credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
     flowStep?: FlowStepMetadata
     billing?: ActivepiecesAiBilling
     turnAlreadyCharged?: boolean
-    openaiResponsesModel?: boolean
     webSearchEnabled?: boolean
     webSearchOptions?: WebSearchOptions
     platformId?: string
@@ -172,7 +171,7 @@ function createModel({ credentials, modelId, metadata, flowStep, billing, turnAl
     adminChosenImageModelId?: string
 }): LanguageModel {
     assertManagedModelAllowed({ provider: credentials.provider, modelId, image: imageGeneration, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
-    const model = buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
+    const model = buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
     return billedLanguageModel({
         model,
         provider: credentials.provider,
@@ -182,12 +181,11 @@ function createModel({ credentials, modelId, metadata, flowStep, billing, turnAl
     })
 }
 
-function buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome }: {
+function buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome }: {
     credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
     flowStep?: FlowStepMetadata
-    openaiResponsesModel: boolean
     webSearchEnabled: boolean
     webSearchOptions?: WebSearchOptions
     onOutcome?: ProviderOutcomeReporter
@@ -197,7 +195,6 @@ function buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesM
         return createCloudflareGatewayModel({
             credentials,
             modelId,
-            openaiResponsesModel,
             routing: isNil(flowStep) ? 'compat' : 'submodel',
             ...spreadIfDefined('metadata', cloudflareGatewayMetadata(flowStep)),
             ...spreadIfDefined('onOutcome', onOutcome),
@@ -209,7 +206,6 @@ function buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesM
         options: {
             openRouterSettings: openRouterModelSettings({ provider, webSearchEnabled, options: webSearchOptions }),
             mistralViaOpenRouter: isNil(flowStep),
-            openaiResponsesModel,
             ...spreadIfDefined('extraHeaders', flowStepMetadataHeaders(flowStep) ?? managedProviderMetadataHeaders({ provider, metadata })),
             ...spreadIfDefined('onOutcome', onOutcome),
         },
@@ -263,13 +259,14 @@ function toStorageEmbedding(embedding: number[]): number[] {
     return magnitude === 0 ? truncated : truncated.map((value) => value / magnitude)
 }
 
-function createEmbeddingModel({ credentials, billing, platformId, providerConfigId }: {
+function createEmbeddingModel({ credentials, modelId, billing, platformId, providerConfigId }: {
     credentials: AiProviderCredentials
+    modelId?: string
     billing?: ActivepiecesAiBilling
     platformId?: string
     providerConfigId?: string
 }): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
-    const embeddingModelId = AI_PROVIDER_CAPABILITIES[credentials.provider].defaultEmbeddingModel
+    const embeddingModelId = modelId ?? AI_PROVIDER_CAPABILITIES[credentials.provider].defaultEmbeddingModel
     if (isNil(embeddingModelId)) {
         throw new Error(`Provider ${credentials.provider} does not support knowledge base search`)
     }

@@ -107,7 +107,7 @@ describe('which version a conversation runs', () => {
         await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
         const agent = await createAgent(ctx, { modelName: CONFIGURED_MODEL, provider: AIProviderName.OPENROUTER })
         const cleared = await ctx.post(`/v1/agents/${agent.id}`, {
-            draft: { ...agent.draft, provider: null, modelName: null },
+            draft: { ...agent.draft, provider: null, providerConfigId: null, modelName: null },
         })
         expect(cleared.statusCode).toBe(StatusCodes.OK)
         expect(cleared.json().published.modelName).toBeNull()

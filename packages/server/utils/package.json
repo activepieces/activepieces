@@ -29,6 +29,8 @@
     "check-disk-space": "3.4.0",
     "dayjs": "1.11.9",
     "fastify": "5.12.5",
+    "pidtree": "0.6.0",
+    "pidusage": "4.0.1",
     "request-filtering-agent": "3.2.1",
     "systeminformation": "5.31.7",
     "tslib": "2.6.2",
@@ -37,7 +39,9 @@
     "@activepieces/core-formula": "workspace:*"
   },
   "devDependencies": {
+    "@ai-sdk/devtools": "1.0.9",
     "@types/node": "24.11.0",
+    "@types/pidusage": "2.0.5",
     "vitest": "3.2.6"
   }
 }
