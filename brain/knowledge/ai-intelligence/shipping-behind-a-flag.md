@@ -18,7 +18,9 @@ Two shapes, and they answer different questions. Pick by asking **who decides** 
 
 ## A test group, while we are still learning
 
-Task agents shipped this way on 15 Oct 2026 and the gate came out on 18 Oct. Copy that shape.
+Task agents shipped this way on 15 Oct 2026 and the gate came out on 18 Oct.
+
+**None of this is on `main` any more**, which is the point: a rollout flag is meant to be deleted. Read it in `3e51229` (added, with its four tests) and #16574 (removed). Do not go looking for `task-agents-rollout.ts` in the tree.
 
 One small module, named after the feature, owning the whole decision:
 
@@ -39,15 +41,15 @@ Four properties make it work, and each one is a test:
 - **Deterministic.** Hash a stable id, so a conversation gets the same answer on every turn. A user must never see the feature appear and vanish mid-chat.
 - **Cloud only.** Self-hosters never get a half-finished feature, and it needs no setup from them.
 - **Always on in local dev**, so nobody has to opt in to test their own work.
-- **One decision point.** Decide it once, server side, and let the result flow down. Task agents gate `tasksAvailable` in `agent-config-rpc.ts`; when it is false the server sends no `taskSystemPrompt`, so the worker builds no task tools. Do not re-check the flag in three places.
+- **One decision point.** Decide it once, server side, and let the result flow down. Task agents gated `tasksAvailable` in `agent-config-rpc.ts`; when it was false the server sent no `taskSystemPrompt`, so the worker built no task tools. Both of those still exist on `main`, ungated. Do not re-check a flag in three places.
 
-Then **tag the turn log with the group** (task agents used `tasksEnabled`). Without it you cannot split cost or quality by group, which is the only reason to run a test group at all.
+Then **tag the turn log with the group**, as task agents did with a `tasksEnabled` field. Without it you cannot split cost or quality by group, which is the only reason to run a test group at all. That field went out with the gate, so add your own; there is no shared one to reuse.
 
 Turning it off is setting `ROLLOUT_PERCENT` to 0 and deploying. There is no runtime switch, by design.
 
 ## A feature the plan decides
 
-Add a boolean to `PlatformPlan` and an id to `PlatformPlanFeatureId`, both in `platform.model.ts`, then set its default per plan in the billing defaults.
+Add a boolean to `PlatformPlan` and an id to `FeatureFlagId`, both in `platform.model.ts`, then set its default per plan in the billing defaults. `chatEnabled` and `agentsEnabled` are the ones to copy.
 
 - **Backend:** `platformMustHaveFeatureEnabled((p) => p.plan.myFlag)` on the EE module. Returns 402.
 - **Frontend:** `LockedFeatureGuard`, and `enabled: platform.plan.myFlag` on queries.
@@ -74,7 +76,8 @@ The cohort-table approach (a `chat_rollout_user` row per user) was tried for the
 
 ## Key files
 
-- `packages/server/api/src/app/ee/agent` — where the task-agents rollout module lived, beside `agent-config-rpc.ts`, which is the single decision point
-- `packages/core/shared/src/lib/management/platform` — `PlatformPlan` and `PlatformPlanFeatureId` in `platform.model.ts`
+- `3e51229` and #16574 — the worked example, added then removed. There is no rollout module in the tree to read, by design
+- `packages/server/api/src/app/ee/agent/rpc` — `agent-config-rpc.ts`, the server-side decision point a chat flag hangs off
+- `packages/core/shared/src/lib/management/platform` — `PlatformPlan` and `FeatureFlagId` in `platform.model.ts`
 - `packages/core/shared/src/lib/ee/billing` — per-plan defaults for each flag
 - `packages/server/api/src/app/ee/authentication` — `platformMustHaveFeatureEnabled` in `ee-authorization.ts`
