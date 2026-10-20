@@ -33,30 +33,34 @@ export function UsageTopList({
     <section
       className={cn(adminSurface.card, 'flex flex-col gap-3 p-5', className)}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-gray-12">
-            <TitleIcon className="size-4 shrink-0 text-gray-11" />
-            {title ?? usageFormat.dimensionLabel({ dimension })}
-          </h2>
-          {subtitle && <p className="text-xs text-gray-11">{subtitle}</p>}
-        </div>
-        {items.length > 0 && (
+      {items.length > 0 && (
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-gray-12">
+              <TitleIcon className="size-4 shrink-0 text-gray-11" />
+              {title ?? usageFormat.dimensionLabel({ dimension })}
+            </h2>
+            {subtitle && <p className="text-xs text-gray-11">{subtitle}</p>}
+          </div>
           <Button variant="ghost" size="xs" asChild>
             <Link to={`/platform/ai/usage/${dimension}${search}`}>
               {t('See all')}
               <ChevronRight className="size-3.5" />
             </Link>
           </Button>
-        )}
-      </div>
+        </div>
+      )}
       {items.length === 0 ? (
         <div className="flex min-h-36 flex-1 flex-col items-center justify-center gap-2 text-center">
           <span className="flex size-9 items-center justify-center rounded-lg bg-gray-3 text-gray-11">
             <TitleIcon className="size-4" />
           </span>
           <p className="text-sm font-medium text-gray-12">
-            {t('No AI usage yet')}
+            {t('No usage from {items}', {
+              items: (
+                title ?? usageFormat.dimensionLabel({ dimension })
+              ).toLowerCase(),
+            })}
           </p>
           <p className="max-w-56 text-xs text-gray-11">
             {t('Nothing ran in this period. Try a longer period or All.')}
