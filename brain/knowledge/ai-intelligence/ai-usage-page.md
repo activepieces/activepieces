@@ -19,7 +19,7 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 - **Tree 2, what it is spent on:** platform → provider → key → model. Keys are platform-owned and shared across projects, so they never sit under a project.
 - **Side views, not levels:** user (who; only chat and agent runs have one) and source (what kind of work, an overlay on tree 1).
 - **Detail pages pivot to the other tree:** a flow shows its models and keys, and a key shows its projects and flows.
-- **A Run Agent step counts under both its flow and its agent**, marked Shared, so flows + agents can add up to more than the project total. Decided 2026-10-20; the two-tree layout is being tried as "Usage v2" next to the flat page.
+- **A Run Agent step counts under both its flow and its agent**, marked Shared, so flows + agents can add up to more than the project total. Decided 2026-10-20. A two-tree overview layout was tried as "Usage v2" and dropped the same day: the overview keeps flat top-5 cards, and the trees only shape the detail-page pivot.
 
 ## Page anatomy
 1. Tiles: month-end forecast (this month) or average per day, AI calls, tokens.
