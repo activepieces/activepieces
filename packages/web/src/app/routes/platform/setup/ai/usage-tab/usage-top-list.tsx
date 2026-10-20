@@ -1,9 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { adminSurface } from '@/app/components/admin';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,7 +68,7 @@ export function UsageTopList({
           </p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-1.5">
+        <ul className="flex flex-col gap-1">
           {items.map((item) => (
             <UsageTopRow
               key={item.id}
@@ -99,56 +100,72 @@ export function UsageTopRow({
 }) {
   const share = totalUsd === 0 ? 0 : item.spendUsd / totalUsd;
   return (
-    <li>
-      <Tooltip delayDuration={ROW_TOOLTIP_DELAY_MS}>
-        <TooltipTrigger asChild>
-          <Link
-            to={`/platform/ai/usage/${item.dimension}/${item.id}${search}`}
-            className="group relative flex min-w-0 items-center gap-2.5 overflow-hidden rounded-md px-3 py-2 transition-colors hover:bg-gray-2 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50"
-          >
-            <span
-              aria-hidden="true"
-              className="absolute inset-y-0 left-0 rounded-md bg-accent-3 transition-colors group-hover:bg-accent-4"
-              style={{ width: `${Math.max(share * 100, 1)}%` }}
-            />
-            {(item.dimension === 'key' || item.dimension === 'model') && (
-              <span className="relative">
-                <ItemIcon item={item} />
-              </span>
-            )}
-            <div className="relative flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-sm font-medium text-gray-12">
+    <li className="flex items-center gap-2">
+      <Link
+        to={`/platform/ai/usage/${item.dimension}/${item.id}${search}`}
+        className="flex min-w-0 flex-1 flex-col gap-1.5 rounded-md py-1.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50"
+      >
+        <div className="flex min-w-0 items-center gap-2.5">
+          {(item.dimension === 'key' || item.dimension === 'model') && (
+            <ItemIcon item={item} />
+          )}
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TextWithTooltip tooltipMessage={item.name}>
+              <p className="truncate text-sm font-medium text-gray-12">
                 {item.name}
-              </span>
-              {(item.parent || (showShared && !isNil(item.sharedWith))) && (
-                <span className="flex min-w-0 items-center gap-1.5">
-                  {item.parent && (
-                    <span className="truncate text-xs text-gray-11">
-                      {item.parent}
-                    </span>
-                  )}
-                  {showShared && !isNil(item.sharedWith) && (
-                    <SharedBadge item={item} />
-                  )}
-                </span>
+              </p>
+            </TextWithTooltip>
+            <div className="flex min-w-0 items-center gap-1.5">
+              {item.parent && (
+                <p className="truncate text-xs text-gray-11">{item.parent}</p>
+              )}
+              {showShared && !isNil(item.sharedWith) && (
+                <SharedBadge item={item} />
               )}
             </div>
-            <span className="relative shrink-0 text-sm font-medium tabular-nums text-gray-12">
+          </div>
+          <div className="flex shrink-0 flex-col items-end">
+            <span className="text-sm font-medium tabular-nums text-gray-12">
               {usageFormat.usd(item.spendUsd)}
             </span>
-          </Link>
-        </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={6}>
-          {shareOf
-            ? t('{share} of {whole}', {
-                share: usageFormat.percent(share),
-                whole: shareOf,
-              })
-            : t('{share} of all AI spend in this period', {
-                share: usageFormat.percent(share),
-              })}
-        </TooltipContent>
-      </Tooltip>
+          </div>
+          <ChevronRight className="size-4 shrink-0 text-gray-9" />
+        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="h-1 overflow-hidden rounded-full bg-gray-3">
+              <div
+                className="h-full rounded-full bg-accent-9"
+                style={{ width: `${Math.max(share * 100, 1)}%` }}
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" sideOffset={6}>
+            {shareOf
+              ? t('{share} of {whole}', {
+                  share: usageFormat.percent(share),
+                  whole: shareOf,
+                })
+              : t('{share} of all AI spend in this period', {
+                  share: usageFormat.percent(share),
+                })}
+          </TooltipContent>
+        </Tooltip>
+      </Link>
+      {item.dimension === 'key' &&
+        !isNil(item.dashboardUrl) &&
+        !item.dashboardUrl.startsWith('/') && (
+          <Button variant="ghost" size="icon-sm" asChild>
+            <a
+              href={item.dashboardUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={t('Open provider dashboard')}
+            >
+              <ExternalLink className="size-3.5" />
+            </a>
+          </Button>
+        )}
     </li>
   );
 }
@@ -171,8 +188,6 @@ function SharedBadge({ item }: { item: UsageItem }) {
     </Tooltip>
   );
 }
-
-const ROW_TOOLTIP_DELAY_MS = 500;
 
 type UsageTopListProps = {
   dimension: UsageDimension;
