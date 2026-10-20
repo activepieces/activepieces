@@ -467,6 +467,20 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Location": "Location",
+  "Task Details": "Task Details",
+  "Dates": "Dates",
+  "List Fields": "List Fields",
+  "Search In": "Search In",
+  "Filters": "Filters",
+  "Sort and Page": "Sort and Page",
+  "Time Window": "Time Window",
+  "People": "People",
+  "Task to Update": "Task to Update",
+  "Changes": "Changes",
+  "Field Value": "Field Value",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Task Created": "Task Created",
   "Task Updated": "Task Updated",
   "Task Deleted": "Task Deleted",
@@ -527,5 +541,6 @@
   "Triggered when a key result is updated.": "Triggered when a key result is updated.",
   "Triggered when a key result is deleted.": "Triggered when a key result is deleted.",
   "Triggered when a tag is added or removed or renamed on a task.": "Triggered when a tag is added or removed or renamed on a task.",
-  "Leave space, folder, list and task empty to listen to the whole workspace.": "Leave space, folder, list and task empty to listen to the whole workspace."
+  "Leave space, folder, list and task empty to listen to the whole workspace.": "Leave space, folder, list and task empty to listen to the whole workspace.",
+  "Listen In": "Listen In"
 }
