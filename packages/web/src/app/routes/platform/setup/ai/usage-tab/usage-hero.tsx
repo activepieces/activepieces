@@ -204,16 +204,13 @@ export function UsageLineChart({
           tickLine={false}
           axisLine={false}
           width={Y_AXIS_WIDTH}
-          tickMargin={0}
-          tick={{
-            fill: 'var(--gray-11)',
-            fontSize: 12,
-            textAnchor: 'start',
-            dx: -Y_AXIS_WIDTH,
-          }}
-          tickFormatter={(value: number) =>
-            usageFormat.metricValue({ metric, value })
-          }
+          tick={(props: AxisTickProps) => (
+            <YAxisTick
+              y={props.y}
+              value={props.payload?.value}
+              metric={metric}
+            />
+          )}
         />
         <ChartTooltip
           cursor={
@@ -285,6 +282,28 @@ export function UsageLineChart({
         )}
       </ComposedChart>
     </ChartContainer>
+  );
+}
+
+function YAxisTick({
+  y,
+  value,
+  metric,
+}: {
+  y?: number;
+  value?: number;
+  metric: UsageMetric;
+}) {
+  return (
+    <text
+      x={0}
+      y={y}
+      dominantBaseline="middle"
+      fill="var(--gray-11)"
+      fontSize={12}
+    >
+      {usageFormat.metricValue({ metric, value: value ?? 0 })}
+    </text>
   );
 }
 
@@ -403,6 +422,11 @@ function TooltipRow({ label, value }: { label: string; value: string }) {
 }
 
 const Y_AXIS_WIDTH = 56;
+
+type AxisTickProps = {
+  y?: number;
+  payload?: { value?: number };
+};
 const PREVIOUS_BAR_COLOR = 'var(--gray-6)';
 const CHART_TYPES: UsageChartType[] = ['line', 'bar'];
 
