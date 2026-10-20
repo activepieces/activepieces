@@ -82,6 +82,35 @@ describe('receive', () => {
     expect(second).toEqual([]);
   });
 
+  it('leaves no dedupe marker when filtering fails, so a PandaDoc resend is processed', async () => {
+    const store = memoryStore({ [storeKey]: { webhookId: 'w1', sharedKey: 'k1' } });
+    const body = stateChangedBody('document.completed');
+    const payload = {
+      body: JSON.parse(body),
+      rawBody: body,
+      headers: { 'X-PandaDoc-Webhook-Event-Id': 'evt-2' },
+      queryParams: { signature: sign({ body, key: 'k1' }) },
+    };
+    await expect(
+      pandadocWebhook.receive({
+        payload,
+        store,
+        storeKey,
+        events: ['document_state_changed'],
+        select: async () => {
+          throw new Error('document lookup failed');
+        },
+      }),
+    ).rejects.toThrow('document lookup failed');
+    expect(store.data[`${storeKey}_deliveries`]).toBeUndefined();
+    const resend = await pandadocWebhook.receive({ payload, store, storeKey, events: ['document_state_changed'], select: async (items) => items });
+    expect(resend).toHaveLength(1);
+    expect(Reflect.get(resend[0], '_dedupe_key')).toBe('evt-2:0');
+    expect(store.data[`${storeKey}_deliveries`]).toEqual(['evt-2']);
+    const duplicate = await pandadocWebhook.receive({ payload, store, storeKey, events: ['document_state_changed'], select: async (items) => items });
+    expect(duplicate).toEqual([]);
+  });
+
   it('keeps accepting unsigned deliveries for legacy subscriptions that only stored webhook_id', async () => {
     const store = memoryStore({ webhook_id: 'legacy-uuid' });
     const body = stateChangedBody('document.sent');

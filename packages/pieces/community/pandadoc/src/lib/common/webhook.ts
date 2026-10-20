@@ -82,11 +82,13 @@ async function receive({
   store,
   storeKey,
   events,
+  select,
 }: {
   payload: { body: unknown; rawBody?: unknown; headers: Record<string, string | undefined>; queryParams?: Record<string, string | undefined> };
   store: WebhookStore;
   storeKey: string;
   events: string[];
+  select?: (items: WebhookDocumentEvent[]) => Promise<WebhookDocumentEvent[]> | WebhookDocumentEvent[];
 }): Promise<WebhookDocumentEvent[]> {
   const stored = await readStored({ store, storeKey });
   if (stored.sharedKey !== null && !verifySignature({ sharedKey: stored.sharedKey, rawBody: payload.rawBody, signature: payload.queryParams?.['signature'] })) {
@@ -100,15 +102,17 @@ async function receive({
   }
   const deliveryId = headerValue({ headers: payload.headers, name: EVENT_ID_HEADER });
   if (deliveryId === undefined) {
-    return items;
+    return select === undefined ? items : select(items);
   }
   const dedupeKey = `${storeKey}_deliveries`;
   const seen = (await store.get<string[]>(dedupeKey)) ?? [];
   if (seen.includes(deliveryId)) {
     return [];
   }
+  const keyed = items.map((item, index) => ({ ...item, [DEDUPE_KEY_PROPERTY]: `${deliveryId}:${index}` }));
+  const selected = select === undefined ? keyed : await select(keyed);
   await store.put(dedupeKey, [...seen, deliveryId].slice(-MAX_REMEMBERED_DELIVERIES));
-  return items.map((item, index) => ({ ...item, [DEDUPE_KEY_PROPERTY]: `${deliveryId}:${index}` }));
+  return selected;
 }
 
 function parseItems(body: unknown): { event: string; data: unknown }[] {

@@ -56,9 +56,14 @@ export const documentStateChanged = createTrigger({
     await pandadocWebhook.unsubscribe({ apiKey: context.auth.secret_text, store: context.store, storeKey: STORE_KEY });
   },
   async run(context) {
-    const items = await pandadocWebhook.receive({ payload: context.payload, store: context.store, storeKey: STORE_KEY, events: EVENTS });
     const statuses = context.propsValue.filter_status ?? [];
-    return items.filter((item) => statuses.length === 0 || (item.status !== null && statuses.includes(item.status)));
+    return pandadocWebhook.receive({
+      payload: context.payload,
+      store: context.store,
+      storeKey: STORE_KEY,
+      events: EVENTS,
+      select: (items) => items.filter((item) => statuses.length === 0 || (item.status !== null && statuses.includes(item.status))),
+    });
   },
 });
 

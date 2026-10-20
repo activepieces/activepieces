@@ -36,12 +36,18 @@ export const documentCompleted = createTrigger({
     await pandadocWebhook.unsubscribe({ apiKey: context.auth.secret_text, store: context.store, storeKey: STORE_KEY });
   },
   async run(context) {
-    const items = await pandadocWebhook.receive({ payload: context.payload, store: context.store, storeKey: STORE_KEY, events: EVENTS });
-    return pandadocWebhook.filterItems({
-      apiKey: context.auth.secret_text,
-      items: items.filter((item) => item.status === 'document.completed'),
-      templateIds: context.propsValue.template_filter,
-      folderIds: context.propsValue.folder_filter,
+    return pandadocWebhook.receive({
+      payload: context.payload,
+      store: context.store,
+      storeKey: STORE_KEY,
+      events: EVENTS,
+      select: (items) =>
+        pandadocWebhook.filterItems({
+          apiKey: context.auth.secret_text,
+          items: items.filter((item) => item.status === 'document.completed'),
+          templateIds: context.propsValue.template_filter,
+          folderIds: context.propsValue.folder_filter,
+        }),
     });
   },
 });
