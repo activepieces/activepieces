@@ -1,9 +1,9 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createEntryAiAction } from './lib/actions/ai/create-entry-ai';
 import { deleteEntryAiAction } from './lib/actions/ai/delete-entry-ai';
 import { getEntryAiAction } from './lib/actions/ai/get-entry-ai';
 import { updateEntryAiAction } from './lib/actions/ai/update-entry-ai';
+import { customApiCallAction } from './lib/actions/custom-api-call';
 import { createEntryAction } from './lib/actions/create-entry';
 import { deleteEntryAction } from './lib/actions/delete-entry';
 import { downloadFileAction } from './lib/actions/download-file';
@@ -14,7 +14,6 @@ import { listFormsAction } from './lib/actions/list-forms';
 import { setFormAvailabilityAction } from './lib/actions/set-form-availability';
 import { updateEntryAction } from './lib/actions/update-entry';
 import { cognitoFormsAuth } from './lib/auth';
-import { COGNITO_API_BASE } from './lib/common/client';
 import { entryUpdatedTrigger } from './lib/triggers/entry-updated';
 import { newEntryTrigger } from './lib/triggers/new-entry-submitted';
 
@@ -40,13 +39,7 @@ export const cognitoForms = createPiece({
     setFormAvailabilityAction,
     getEntryDocumentAction,
     downloadFileAction,
-    createCustomApiCallAction({
-      auth: cognitoFormsAuth,
-      baseUrl: () => COGNITO_API_BASE,
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth.secret_text}`,
-      }),
-    }),
+    customApiCallAction,
   ],
   triggers: [newEntryTrigger, entryUpdatedTrigger],
 });

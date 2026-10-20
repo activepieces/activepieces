@@ -15,6 +15,7 @@ import { updateEntryAction } from '../src/lib/actions/update-entry';
 import { cognitoFormsAuth } from '../src/lib/auth';
 import { CognitoFormsApiError } from '../src/lib/common/client';
 import { normalizeEntry, stripEmptyValues } from '../src/lib/common/entries';
+import { decodeContent, MAX_FILE_BYTES } from '../src/lib/common/files';
 import { buildFieldProps } from '../src/lib/common/props';
 import { sampleEntry } from '../src/lib/common/trigger-helpers';
 
@@ -93,6 +94,32 @@ describe('piece wiring', () => {
     const calls = stubFetch([{ body: [] }]);
     await run({ action: custom, props: { url: { url: `${BASE}/forms` }, method: 'GET', headers: {}, queryParams: {}, failsafe: false } });
     expect(calls[0].headers['authorization']).toBe(`Bearer ${KEY}`);
+  });
+});
+
+describe('custom api call', () => {
+  const custom = () => cognitoForms.actions()['custom_api_call'];
+  const props = (url: string) => ({ url: { url }, method: 'GET', headers: {}, queryParams: {}, failsafe: false });
+
+  it('uses the TLS-verifying dispatcher and resolves relative paths', async () => {
+    const inits: RequestInit[] = [];
+    const urls: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL, init?: RequestInit) => {
+      urls.push(String(input));
+      inits.push(init ?? {});
+      return new Response('[]', { status: 200, headers: { 'content-type': 'application/json' } });
+    }));
+    await run({ action: custom(), props: props('/forms') });
+    const { Agent } = await import('undici');
+    expect(urls[0]).toBe(`${BASE}/forms`);
+    expect(Reflect.get(inits[0], 'dispatcher')).toBeInstanceOf(Agent);
+  });
+
+  it('refuses other hosts and dot segments', async () => {
+    stubFetch([]);
+    await expect(run({ action: custom(), props: props('https://evil.example/api/forms') })).rejects.toThrow('must be on');
+    await expect(run({ action: custom(), props: props('http://www.cognitoforms.com/api/forms') })).rejects.toThrow('must be on');
+    await expect(run({ action: custom(), props: props('/forms/../../x') })).rejects.toThrow('..');
   });
 });
 
@@ -234,6 +261,36 @@ describe('files', () => {
     expect(calls[0].url).toBe(`${BASE}/forms/5/entries/12/documents/2`);
     expect(calls[1].headers['authorization']).toBeUndefined();
     expect(written[0].fileName).toBe('doc.pdf');
+  });
+
+  it('rejects base64 content over the size cap before decoding', () => {
+    const spy = vi.spyOn(Buffer, 'from');
+    expect(() => decodeContent('A'.repeat(Math.ceil((MAX_FILE_BYTES * 4) / 3) + 8))).toThrow('larger than');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('rejects a download whose Content-Length is over the cap', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL) => String(input).startsWith(BASE)
+      ? new Response(JSON.stringify({ Id: 'f1', Name: 'a.bin', File: 'https://files.example/a' }), { status: 200, headers: { 'content-type': 'application/json' } })
+      : new Response('x', { status: 200, headers: { 'content-length': String(MAX_FILE_BYTES + 1) } })));
+    await expect(run({ action: downloadFileAction, props: { file_id: 'f1' } })).rejects.toThrow('larger than');
+  });
+
+  it('aborts a streamed download once it passes the cap', async () => {
+    let pulled = 0;
+    const chunk = new Uint8Array(8 * 1024 * 1024);
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        if (pulled > 40) controller.close();
+        else controller.enqueue(chunk);
+      },
+    });
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL) => String(input).startsWith(BASE)
+      ? new Response(JSON.stringify({ Id: 'f1', Name: 'a.bin', File: 'https://files.example/a' }), { status: 200, headers: { 'content-type': 'application/json' } })
+      : new Response(body, { status: 200 })));
+    await expect(run({ action: downloadFileAction, props: { file_id: 'f1' } })).rejects.toThrow('larger than');
+    expect(pulled).toBeLessThan(20);
   });
 
   it('document rejects a bad template number', async () => {
