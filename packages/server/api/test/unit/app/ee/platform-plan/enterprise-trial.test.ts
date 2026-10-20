@@ -124,6 +124,7 @@ describe('enterprise trial', () => {
 
             expect(status).toEqual(ACTIVE)
             expect(consoleStart).toHaveBeenCalledWith(CREDS)
+            expect(mockPlanUpdate).toHaveBeenCalledWith({ platformId: PLATFORM_ID, enterpriseTrialStartedAt: STARTED.startedAt, enterpriseTrialEndsAt: STARTED.endsAt })
             expect(mockOnTrialStarted).toHaveBeenCalledTimes(1)
             expect(mockOnTrialStarted).toHaveBeenCalledWith({ platformId: PLATFORM_ID, endsAt: ACTIVE.endsAt })
         })
