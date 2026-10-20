@@ -222,6 +222,21 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
         expect(projection).not.toHaveProperty('billingEnforced')
         expect(projection.showPoweredBy).toBe(true)
     })
+
+    it.each([
+        { name: 'drops', enterpriseTrial: { startedAt: 1, endsAt: 2 }, expected: null },
+        { name: 'keeps', enterpriseTrial: null, expected: 5 },
+    ])('$name a scheduled seat reduction depending on whether an Enterprise trial runs', ({ enterpriseTrial, expected }) => {
+        const projection = autumnUtils.mapAutumnFeaturesToPlatformPlan({
+            planId: 'team',
+            grantedFeatureIds: new Set(FREE_FLAGS),
+            balances: {},
+            scheduledUsersLimit: 5,
+            enterpriseTrial,
+            embeddingOutsideEnterpriseTrial: false,
+        })
+        expect(projection.scheduledUsersLimit).toBe(expected)
+    })
 })
 
 describe('grantsEmbeddingOutsideEnterpriseTrial', () => {
