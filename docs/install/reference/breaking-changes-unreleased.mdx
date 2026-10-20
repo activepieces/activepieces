@@ -18,9 +18,13 @@ The PostHog host on a connection must now start with `https://`. A plain `http:/
 
 The **New Event** trigger now follows up to 10 pages of new events per poll instead of only the first 100 events, so a busy project can start more runs per poll. **Capture Event** returns extra fields next to the unchanged `status`.
 
+**Custom API Call** now only calls the API Host set on the connection. A step that points at a full URL on another host fails after the upgrade.
+
 #### What you need to do
 
 If your PostHog host uses plain http, serve it over https and update the connection's host. Remove Create Project from any agent's tool list and use a flow step instead.
+
+If a Custom API Call step targets a host other than your PostHog API Host, change it to a path on the API Host, or use an HTTP step for the other host.
 
 #### Pdfcrowd 0.3.0: Convert URL to PDF and Convert HTML to PDF are builder-only
 

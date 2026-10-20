@@ -19,7 +19,7 @@ function uniqueNames(names: string[]): string[] {
 export const runHogqlQuery = createAction({
   auth: posthogAuth,
   name: 'run_hogql_query',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'Run HogQL Query',
   description: 'Run a read-only HogQL (SQL) query against your PostHog data.',
   audience: 'ai',
