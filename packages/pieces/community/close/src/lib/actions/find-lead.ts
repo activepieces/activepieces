@@ -176,7 +176,7 @@ function buildLeadSearchQuery(params: {
 						},
 						condition: {
 							type: 'text',
-							mode: textMode,
+							mode: 'phrase',
 							value: search_query,
 						},
 					},

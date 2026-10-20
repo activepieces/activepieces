@@ -372,6 +372,17 @@ describe('legacy actions', () => {
     await run({ name: 'find_lead', propsValue: { search_type: 'name', search_query: 'Acme Inc', match_type: 'exact' } });
     expect(spy.mock.calls[0][0].body.query.queries[1].condition.mode).toBe('phrase');
   });
+  it.each([
+    ['find_contact', 'email', 'jo@acme.com'],
+    ['find_contact', 'phone', '+15550100'],
+    ['find_lead', 'contact_email', 'jo@acme.com'],
+  ])('%s by %s keeps phrase matching on the default match type', async (name, search_type, search_query) => {
+    const spy = mockSeq({ data: [], cursor: null });
+    await run({ name, propsValue: { search_type, search_query, match_type: 'contains' } });
+    const body = JSON.stringify(spy.mock.calls[0][0].body);
+    expect(body).toContain('"mode":"phrase"');
+    expect(body).not.toContain('full_words');
+  });
   it('find_lead by status resolves an exact label to a status reference', async () => {
     const statuses = { data: [{ id: 'stat_pot', label: 'Potential' }, { id: 'stat_bad', label: 'Bad Fit' }] };
     const spy = mockSeq(statuses, { data: [{ id: 'lead_1' }], cursor: null });

@@ -30,7 +30,7 @@ describe('metadata', () => {
   });
   it('classifies by side effect', () => {
     expect(deleteActivity.classification).toBe('DESTRUCTIVE');
-    expect(listActivities.classification).toBe('READ');
+    expect(listActivities.classification).toBe('SEARCH');
     expect(sendSms.classification).toBe('WRITE');
     expect(sendSms.aiMetadata?.description).toMatch(/real SMS/);
   });

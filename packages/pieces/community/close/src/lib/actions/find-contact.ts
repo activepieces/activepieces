@@ -146,7 +146,7 @@ function buildSearchQuery(params: {
 					},
 					condition: {
 						type: 'text',
-						mode: textMode,
+						mode: 'phrase',
 						value: search_query,
 					},
 				},
@@ -167,7 +167,7 @@ function buildSearchQuery(params: {
 					},
 					condition: {
 						type: 'text',
-						mode: textMode,
+						mode: 'phrase',
 						value: search_query,
 					},
 				},

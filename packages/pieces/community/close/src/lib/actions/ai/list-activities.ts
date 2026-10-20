@@ -9,7 +9,7 @@ const TYPE_NAMES: Record<string, string> = { note: 'Note', call: 'Call', email: 
 const listActivities = createAction({
   auth: closeAuth,
   name: 'list_activities',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Activities',
   description: 'List notes, calls, emails, SMS and meetings, newest first.',
   audience: 'ai',
