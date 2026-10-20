@@ -28,6 +28,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Message": "New Message",
   "Triggers when a new message is received": "Triggers when a new message is received",
   "Markdown": "Markdown",
