@@ -3,6 +3,7 @@ import {
   AgentConversation,
   AgentMessageSource,
   ChatPersonalizationStatus,
+  ModelOptions,
   PlatformRole,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
@@ -18,6 +19,9 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ModelPicker, modelPickerUtils } from '@/features/agents';
+import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { ChatCreditsAlert } from '@/features/billing';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
@@ -30,9 +34,9 @@ import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
-import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
@@ -66,14 +70,20 @@ export function AIChatBox({
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
-  const { data: chatProvider, isLoading: isLoadingProviders } =
-    aiProviderQueries.useChatProvider();
+  const projectId = authenticationSession.getProjectId();
+  const gated =
+    agentId === undefined && isNil(conversationId) && !isNil(projectId);
+  const { data: options, isLoading } = aiModelHooks.useModelOptions({
+    projectId: projectId ?? '',
+    surface: 'chat',
+    enabled: gated,
+  });
 
-  if (isLoadingProviders) {
+  if (gated && isLoading) {
     return <MessageSkeletons />;
   }
 
-  if (!chatProvider) {
+  if (gated && !isNil(options) && !hasAnyModel({ options })) {
     return <SetupRequiredState />;
   }
 
@@ -113,11 +123,12 @@ function ChatBoxContent({
 }: AIChatBoxProps) {
   const queryClient = useQueryClient();
   const credits = useCreditsState();
-  const { data: chatProvider } = aiProviderQueries.useChatProvider();
+  const sessionProjectId = authenticationSession.getProjectId();
 
   const {
     conversationId,
-    modelName,
+    conversationProjectId,
+    modelPick,
     messages,
     isStreaming,
     isResumedStream,
@@ -128,14 +139,11 @@ function ChatBoxContent({
     sendMessage,
     cancelStream,
     setConversationId,
-    setModelName,
+    setModelPick,
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
     ...(builder === undefined ? {} : { builder }),
-    defaultModelName:
-      agentId === undefined
-        ? chatUtils.newChatModelName({ provider: chatProvider?.provider })
-        : null,
+    projectId: sessionProjectId,
     onTitleUpdate,
     onConversationCreated,
     onTurnEnd,
@@ -182,6 +190,29 @@ function ChatBoxContent({
     return () => window.removeEventListener('keydown', handler);
   }, [isStreaming, cancelStream]);
 
+  const chatProjectId = conversationProjectId ?? sessionProjectId;
+  const showsPicker = agentId === undefined && !isNil(chatProjectId);
+  const { data: modelOptions } = aiModelHooks.useModelOptions({
+    projectId: chatProjectId ?? '',
+    surface: 'chat',
+    tierId: modelPick?.modelTierId ?? undefined,
+    enabled: showsPicker,
+  });
+  const shownChoice = isNil(modelOptions)
+    ? null
+    : chatUtils.choiceOf({ pick: modelPick, options: modelOptions }) ??
+      modelOptions.defaultChoice ??
+      null;
+  const awaitingSavedPick =
+    !isNil(initialConversationId) && (isNil(modelPick) || isLoadingHistory);
+  const pickUnavailable =
+    showsPicker &&
+    !isNil(modelOptions) &&
+    modelPickerUtils.isUnavailable({
+      options: modelOptions,
+      value: shownChoice,
+    });
+
   const [hasSentMessage, setHasSentMessage] = useState(false);
 
   const handleSend = useCallback(
@@ -191,10 +222,21 @@ function ChatBoxContent({
       options?: { messageSource?: AgentMessageSource },
     ) => {
       if (!text.trim() && (!files || files.length === 0)) return;
+      if (pickUnavailable) return;
+      if (isNil(conversationId) && isNil(modelPick) && !isNil(shownChoice)) {
+        await setModelPick(chatUtils.pickOf({ choice: shownChoice }));
+      }
       setHasSentMessage(true);
       await sendMessage(text.trim(), files, options);
     },
-    [sendMessage],
+    [
+      sendMessage,
+      pickUnavailable,
+      conversationId,
+      modelPick,
+      shownChoice,
+      setModelPick,
+    ],
   );
 
   const sentInitialPrompt = useRef(false);
@@ -212,8 +254,9 @@ function ChatBoxContent({
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
-    if (lastUser) void sendMessage(getTextFromParts(lastUser.parts));
-  }, [messages, sendMessage]);
+    if (lastUser && !pickUnavailable)
+      void sendMessage(getTextFromParts(lastUser.parts));
+  }, [messages, sendMessage, pickUnavailable]);
 
   const lastMessage = messages[messages.length - 1];
   const lastAssistantMessage = useMemo(
@@ -474,11 +517,26 @@ function ChatBoxContent({
             onStop={cancelStream}
             onInputChange={setHasInput}
             recede={showOnboardingCard}
-            selectedModel={modelName}
-            onModelChange={setModelName}
+            modelPicker={
+              showsPicker && awaitingSavedPick ? (
+                <Skeleton className="h-8 w-24 rounded-full" />
+              ) : showsPicker && !isNil(chatProjectId) ? (
+                <ModelPicker
+                  variant="pill"
+                  surface="chat"
+                  projectId={chatProjectId}
+                  value={shownChoice}
+                  onChange={(choice) =>
+                    void setModelPick(chatUtils.pickOf({ choice }))
+                  }
+                />
+              ) : null
+            }
+            sendBlockedReason={
+              pickUnavailable ? t('Pick another model to continue') : undefined
+            }
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}
-            hideModelSelector={agentId !== undefined}
             placeholder={
               placeholder ??
               (showOnboardingCard
@@ -505,6 +563,14 @@ function ChatBoxContent({
         </div>
       </div>
     </div>
+  );
+}
+
+function hasAnyModel({ options }: { options: ModelOptions }): boolean {
+  return (
+    options.tiers.length > 0 ||
+    !isNil(options.credits) ||
+    options.keys.length > 0
   );
 }
 
