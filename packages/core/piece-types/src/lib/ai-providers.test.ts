@@ -25,10 +25,11 @@ describe('AI_PROVIDER_CAPABILITIES', () => {
         ].sort())
     })
 
-    it('marks embedding support iff a default embedding model exists', () => {
+    it('marks embedding support iff the provider lists embedding models, the first being the default', () => {
         for (const provider of Object.values(AIProviderName)) {
             const caps = AI_PROVIDER_CAPABILITIES[provider]
-            expect(caps.supportsEmbedding).toBe(caps.defaultEmbeddingModel !== undefined)
+            expect(caps.supportsEmbedding).toBe(caps.embeddingModels.length > 0)
+            expect(caps.defaultEmbeddingModel).toBe(caps.embeddingModels[0])
         }
     })
 })
@@ -138,7 +139,7 @@ describe('canDisableReasoning', () => {
 describe('tier native model ids', () => {
     it('names a model the native Anthropic list actually offers, so no tier resolves to an id that does not exist', () => {
         for (const tier of ACTIVEPIECES_CHAT_TIERS) {
-            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ANTHROPIC], tier.id).toContain(tier.nativeModelId)
+            expect(aiProviderUtils.runnableChatModelIds({ provider: AIProviderName.ANTHROPIC }), tier.id).toContain(tier.nativeModelId)
         }
     })
 
