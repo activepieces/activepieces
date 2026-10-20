@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  makeSenderRequest,
-  senderAuth,
-  subscriberDropdownSingle,
-} from '../common/common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { subscribe } from 'diagnostics_channel';
+import { createAction } from '@activepieces/pieces-framework';
+import { senderAuth } from '../auth';
+import { senderApi } from '../common/api';
+import { senderProps } from '../common/props';
 
 export const unsubscribeSubscriberAction = createAction({
   auth: senderAuth,
@@ -16,22 +12,12 @@ export const unsubscribeSubscriberAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Marks a subscriber as unsubscribed in a Sender account so they stop receiving campaigns. Use to honor an opt-out or suppress a contact. Identify the subscriber by their Sender subscriber ID. Idempotent: re-running on an already-unsubscribed contact leaves them unsubscribed with no further effect.', idempotent: true },
   props: {
-    subscriber: subscriberDropdownSingle,
+    subscriber: senderProps.subscriber({ required: true }),
   },
   async run(context) {
-    const subscriber = context.propsValue.subscriber;
-    const subscriberId = subscriber;
-
-    const requestBody = {
-      subscribers: [subscriberId],
-    };
-
-    const response = await makeSenderRequest(
-      context.auth.secret_text,
-      `/subscribers`,
-      HttpMethod.DELETE,
-      requestBody
-    );
-    return response.body;
+    return await senderApi.deleteSubscribers({
+      auth: context.auth,
+      subscribers: [context.propsValue.subscriber],
+    });
   },
 });

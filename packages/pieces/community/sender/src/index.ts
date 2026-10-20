@@ -1,6 +1,5 @@
-import { createPiece} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { senderAuth } from './lib/common/common';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { senderAuth } from './lib/auth';
 import { addUpdateSubscriberAction } from './lib/actions/add-subscriber';
 import { createCampaignAction } from './lib/actions/create-campaign';
 import { unsubscribeSubscriberAction } from './lib/actions/unsubscribe-subscriber';
