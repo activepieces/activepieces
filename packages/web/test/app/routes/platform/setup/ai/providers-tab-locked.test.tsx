@@ -66,7 +66,6 @@ vi.mock('@/features/platform-admin', () => {
       }),
     },
     aiProviderMutations: {
-      useToggleChatProvider: mutation,
       useDeleteAiProvider: mutation,
       useRecheckAiProvider: mutation,
       useUpdateAiProvider: mutation,
@@ -99,6 +98,10 @@ vi.mock(
   () => ({ ConnectProviderDialog: () => null }),
 );
 
+vi.mock(
+  '@/app/routes/platform/setup/ai/providers-tab/default-chat-model-card',
+  () => ({ DefaultChatModelCard: () => null }),
+);
 vi.mock('@/app/routes/platform/setup/ai/providers-tab/config-detail', () => ({
   ConfigDetail: () => <h1>Key detail</h1>,
 }));

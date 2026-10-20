@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 import { resendClient } from '../common/client';
@@ -14,11 +14,31 @@ export const updateContact = createAction({
   description: 'Update the name or subscription status of a contact in an audience',
   audience: 'both',
   aiMetadata: { description: 'Updates an existing contact\'s first name, last name, or subscribed/unsubscribed status within an audience, identified by audience ID and contact ID. Use this to change details or toggle subscription for a known contact. Idempotent — repeating with the same values leaves the contact in the same state.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'contact',
+      display: 'section',
+      label: 'Contact to Update',
+      icon: 'user',
+      props: ['audience_id', 'contact_id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: ['info', 'first_name', 'last_name', 'unsubscribed'],
+    },
+  ],
   props: {
     audience_id: resendProps.audienceId,
     contact_id: resendProps.contactId,
-    first_name: Property.ShortText({ displayName: 'First Name', required: false }),
-    last_name: Property.ShortText({ displayName: 'Last Name', required: false }),
+    info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
+    first_name: Property.ShortText({ displayName: 'First Name', placeholder: 'Jane', width: 'half', required: false }),
+    last_name: Property.ShortText({ displayName: 'Last Name', placeholder: 'Doe', width: 'half', required: false }),
     unsubscribed: Property.StaticDropdown({
       displayName: 'Subscription Status',
       required: false,

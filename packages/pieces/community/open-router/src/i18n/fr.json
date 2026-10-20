@@ -35,5 +35,6 @@
   "None": "Aucun",
   "JSON": "JSON",
   "Form Data": "Données du formulaire",
-  "Raw": "Brut"
+  "Raw": "Brut",
+  "Full URL, or a path relative to https://openrouter.ai/api/v1": "URL complète, ou chemin relatif à https://openrouter.ai/api/v1"
 }

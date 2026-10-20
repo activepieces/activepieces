@@ -24,6 +24,22 @@ export const stripeCreateSubscription = createAction({
       'Starts a recurring subscription for an existing customer against one or more price IDs, with optional collection method, trial period, and default payment method. Use to enroll a customer in recurring billing. Requires a customer ID and at least one price; not idempotent, as each call creates a separate subscription.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'subscription',
+      display: 'section',
+      label: 'Subscription',
+      icon: 'tag',
+      props: ['customer', 'items'],
+    },
+    {
+      key: 'billing',
+      display: 'section',
+      label: 'Billing',
+      icon: 'calendar',
+      props: ['collection_method', 'days_until_due', 'trial_period_days'],
+    },
+  ],
   props: {
     customer: stripeCommon.customer,
     items: Property.Array({
@@ -48,18 +64,15 @@ export const stripeCreateSubscription = createAction({
     collection_method: Property.StaticDropdown({
       displayName: 'Collection Method',
       required: false,
-      display: 'cards',
       options: {
         options: [
           {
             label: 'Auto-Charge',
             value: 'charge_automatically',
-            icon: 'tag',
           },
           {
             label: 'Send Invoice',
             value: 'send_invoice',
-            icon: 'send',
           },
         ],
       },
@@ -73,7 +86,6 @@ export const stripeCreateSubscription = createAction({
       displayName: 'Trial Days',
       description: 'Free days before the first bill.',
       required: false,
-      display: 'stepper',
       min: 1,
       max: 730,
       step: 1,

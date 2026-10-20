@@ -16,6 +16,15 @@ export const findLineItemAction = createAction({
     audience: 'both',
     aiMetadata: { description: 'Search HubSpot line items by one or two property/value pairs (matched with equality) and return the matches. Read-only and repeatable. Use this to locate an existing line item before updating it.', idempotent: true },
     outputSchema: lineItemSearchOutputSchema,
+    propertyGroups: [
+        {
+            key: 'search',
+            display: 'section',
+            label: 'Search',
+            icon: 'filter',
+            props: ['firstSearchPropertyName', 'firstSearchPropertyValue'],
+        },
+    ],
     props: {
         firstSearchPropertyName: standardObjectPropertiesDropdown(
             {

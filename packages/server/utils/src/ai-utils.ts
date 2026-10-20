@@ -259,13 +259,14 @@ function toStorageEmbedding(embedding: number[]): number[] {
     return magnitude === 0 ? truncated : truncated.map((value) => value / magnitude)
 }
 
-function createEmbeddingModel({ credentials, billing, platformId, providerConfigId }: {
+function createEmbeddingModel({ credentials, modelId, billing, platformId, providerConfigId }: {
     credentials: AiProviderCredentials
+    modelId?: string
     billing?: ActivepiecesAiBilling
     platformId?: string
     providerConfigId?: string
 }): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
-    const embeddingModelId = AI_PROVIDER_CAPABILITIES[credentials.provider].defaultEmbeddingModel
+    const embeddingModelId = modelId ?? AI_PROVIDER_CAPABILITIES[credentials.provider].defaultEmbeddingModel
     if (isNil(embeddingModelId)) {
         throw new Error(`Provider ${credentials.provider} does not support knowledge base search`)
     }
