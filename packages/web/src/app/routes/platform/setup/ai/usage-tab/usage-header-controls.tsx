@@ -85,22 +85,6 @@ export function UsageHeaderControls({
 }: UsageHeaderControlsProps) {
   return (
     <>
-      <Tabs
-        value={view.scope}
-        onValueChange={(value) =>
-          view.setScope(
-            USAGE_SCOPES.find((item) => item === value) ?? DEFAULT_SCOPE,
-          )
-        }
-      >
-        <TabsList size="sm">
-          {USAGE_SCOPES.map((scope) => (
-            <TabsTrigger key={scope} value={scope} size="sm">
-              {usageFormat.scopeLabel({ scope })}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
       <Select
         value={view.period}
         onValueChange={(value) =>
@@ -151,6 +135,60 @@ export function UsageHeaderControls({
       </DropdownMenu>
     </>
   );
+}
+
+export function UsageScopeTabs({
+  view,
+  totals,
+}: {
+  view: UsageView;
+  totals?: Record<UsageScope, number>;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Tabs
+        value={view.scope}
+        onValueChange={(value) =>
+          view.setScope(
+            USAGE_SCOPES.find((item) => item === value) ?? DEFAULT_SCOPE,
+          )
+        }
+      >
+        <TabsList
+          variant="outline"
+          className="flex w-full gap-6 border-b border-gray-6"
+        >
+          {USAGE_SCOPES.map((scope) => (
+            <TabsTrigger
+              key={scope}
+              value={scope}
+              variant="outline"
+              className="flex items-baseline gap-2 px-0 pb-2"
+            >
+              {usageFormat.scopeLabel({ scope })}
+              {totals && (
+                <span className="text-xs font-normal tabular-nums text-gray-11">
+                  {usageFormat.usd(totals[scope])}
+                </span>
+              )}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+      <p className="text-xs text-gray-11">{scopeHint({ scope: view.scope })}</p>
+    </div>
+  );
+}
+
+function scopeHint({ scope }: { scope: UsageScope }): string {
+  switch (scope) {
+    case 'production':
+      return t('Published flows, agents and chat. Test runs are not included.');
+    case 'testing':
+      return t('Test runs from the flow builder and the agent builder only.');
+    case 'all':
+      return t('Production and test runs together, as on your provider bill.');
+  }
 }
 
 function PeriodOption({ period }: { period: UsagePeriod }) {

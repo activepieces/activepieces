@@ -14,8 +14,8 @@ function buildOverview({ period, scope, preset }: ViewParams): UsageOverview {
   });
   const calls = sumOf({ items: projects, pick: (item) => item.calls });
   const tokens = sumOf({ items: projects, pick: (item) => item.tokens });
-  const testingShare = profile.testingShare;
-  const testingSpendUsd = spendUsd * testingShare;
+  const productionUsd =
+    spendUsd / SCOPE_FACTOR[scope]({ testingShare: profile.testingShare });
   return {
     totals: {
       spendUsd,
@@ -51,29 +51,10 @@ function buildOverview({ period, scope, preset }: ViewParams): UsageOverview {
           (b.monthToDateUsd ?? 0) / (b.monthlyLimitUsd ?? 1) -
           (a.monthToDateUsd ?? 0) / (a.monthlyLimitUsd ?? 1),
       ),
-    testing: {
-      spendUsd: testingSpendUsd,
-      share: scope === 'all' ? testingShare : testingShare / (1 + testingShare),
-      series: seriesFor({
-        period,
-        spendUsd: testingSpendUsd,
-        previousSpendUsd: testingSpendUsd * 0.8,
-        calls: calls * testingShare,
-        tokens: tokens * testingShare,
-        random,
-      }).spend,
-      topFlows: itemsOf({ items, dimension: 'flow' })
-        .slice(0, 3)
-        .map((item) => ({
-          ...item,
-          spendUsd: item.spendUsd * testingShare * 1.4,
-        })),
-      topAgents: itemsOf({ items, dimension: 'agent' })
-        .slice(0, 3)
-        .map((item) => ({
-          ...item,
-          spendUsd: item.spendUsd * testingShare * 1.1,
-        })),
+    scopeTotals: {
+      production: productionUsd,
+      testing: productionUsd * profile.testingShare,
+      all: productionUsd * (1 + profile.testingShare),
     },
     updatedMinutesAgo: 2,
     trackingSince: '2026-10-18',
@@ -171,7 +152,7 @@ function allItems({
   const scale =
     PERIOD_SCALE[period] *
     profile.scale *
-    (scope === 'all' ? 1 + profile.testingShare : 1);
+    SCOPE_FACTOR[scope]({ testingShare: profile.testingShare });
   return CATALOG.filter(
     (entry) => profile.members === 'all' || profile.members.includes(entry.id),
   )
@@ -363,6 +344,15 @@ const SOURCES: { source: UsageSource; share: number }[] = [
   { source: 'agents', share: 0.1 },
   { source: 'knowledge-base', share: 0.03 },
 ];
+
+const SCOPE_FACTOR: Record<
+  UsageScope,
+  (params: { testingShare: number }) => number
+> = {
+  production: () => 1,
+  testing: ({ testingShare }) => testingShare,
+  all: ({ testingShare }) => 1 + testingShare,
+};
 
 const ALL_SOURCES: UsageSource[] = [
   'flow-steps',
@@ -773,7 +763,7 @@ export const USAGE_DIMENSIONS: UsageDimension[] = [
   'key',
   'model',
 ];
-export const USAGE_SCOPES: UsageScope[] = ['production', 'all'];
+export const USAGE_SCOPES: UsageScope[] = ['production', 'testing', 'all'];
 export const USAGE_METRICS: UsageMetric[] = ['spend', 'calls', 'tokens'];
 
 export type UsagePreset = 'loading' | 'error' | UsageDataPreset;
@@ -796,7 +786,7 @@ export type UsageDimension =
   | 'user'
   | 'key'
   | 'model';
-export type UsageScope = 'production' | 'all';
+export type UsageScope = 'production' | 'testing' | 'all';
 export type UsageMetric = 'spend' | 'calls' | 'tokens';
 export type UsageSource =
   | 'flow-steps'
@@ -840,13 +830,8 @@ export type UsageOverview = {
   bySource: UsageSourceSpend[];
   top: Record<UsageDimension, UsageItem[]>;
   limits: UsageItem[];
-  testing: {
-    spendUsd: number;
-    share: number;
-    series: UsagePoint[];
-    topFlows: UsageItem[];
-    topAgents: UsageItem[];
-  };
+  scopeTotals: Record<UsageScope, number>;
+
   updatedMinutesAgo: number;
   trackingSince: string;
 };

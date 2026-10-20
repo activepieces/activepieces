@@ -19,11 +19,12 @@ import { UsageOverview, usageDummyData } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 import {
   UsageHeaderControls,
+  UsageScopeTabs,
   UsageView,
   useUsageView,
 } from './usage-header-controls';
 import { UsageHero } from './usage-hero';
-import { UsageLimitsCard, UsageTestingSection } from './usage-insight-cards';
+import { UsageLimitsCard } from './usage-insight-cards';
 import { UsagePreviewSwitcher } from './usage-preview-switcher';
 import { UsageSourceDonut } from './usage-source-donut';
 import { UsageTopList } from './usage-top-list';
@@ -75,6 +76,12 @@ export function UsageTab() {
         />
       </AdminPageHeader>
 
+      {view.preset !== 'error' && (
+        <UsageScopeTabs
+          view={view}
+          totals={hasData ? overview.scopeTotals : undefined}
+        />
+      )}
       <UsageBody view={view} overview={overview} />
       <UsagePreviewSwitcher view={view} />
     </>
@@ -222,12 +229,6 @@ function UsageBody({
           />
         )}
       </div>
-
-      <UsageTestingSection
-        testing={overview.testing}
-        scope={view.scope}
-        search={view.search}
-      />
 
       <p className="text-xs text-gray-11">
         {t(

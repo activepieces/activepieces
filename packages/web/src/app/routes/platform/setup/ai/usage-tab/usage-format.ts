@@ -178,6 +178,8 @@ function scopeLabel({ scope }: { scope: UsageScope }): string {
   switch (scope) {
     case 'production':
       return t('Production');
+    case 'testing':
+      return t('Testing');
     case 'all':
       return t('All');
   }

@@ -8,10 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 import { SetLimitDialog } from './set-limit-dialog';
-import { UsageItem, UsagePoint, UsageScope } from './usage-dummy-data';
+import { UsageItem } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
-import { UsageLineChart } from './usage-hero';
-import { UsageTopRow } from './usage-top-list';
 
 export function UsageLimitsCard({
   projects,
@@ -110,105 +108,3 @@ export function UsageLimitsCard({
     </section>
   );
 }
-
-export function UsageTestingSection({
-  testing,
-  scope,
-  search,
-}: UsageTestingSectionProps) {
-  const tested = [...testing.topFlows, ...testing.topAgents];
-  const testedTotal = tested.reduce((sum, item) => sum + item.spendUsd, 0);
-  return (
-    <section
-      className={cn(
-        adminSurface.card,
-        'grid grid-cols-1 gap-6 p-5 lg:grid-cols-12',
-      )}
-    >
-      <div className="flex flex-col gap-3 lg:col-span-4">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="text-base font-semibold text-gray-12">
-            {t('Testing')}
-          </h2>
-          <p className="text-xs text-gray-11">
-            {scope === 'all'
-              ? t(
-                  'Test runs from the flow builder and the agent builder. Included in the totals above.',
-                )
-              : t(
-                  'Test runs from the flow builder and the agent builder. Not in the totals above; pick All to add them.',
-                )}
-          </p>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-semibold tracking-tight tabular-nums text-gray-12">
-            {usageFormat.usd(testing.spendUsd)}
-          </span>
-          <span className="text-sm text-gray-11">
-            {t('{share} of all AI spend', {
-              share: usageFormat.percent(testing.share),
-            })}
-          </span>
-        </div>
-        <UsageLineChart
-          points={testing.series}
-          metric="spend"
-          height={72}
-          compact
-        />
-      </div>
-      <div className="flex flex-col gap-1 lg:col-span-4">
-        <h3 className="text-sm font-medium text-gray-11">
-          {t('Most tested flows')}
-        </h3>
-        {testing.topFlows.length === 0 && (
-          <p className="py-1.5 text-sm text-gray-11">
-            {t('No flows tested in this period.')}
-          </p>
-        )}
-        <ul className="flex flex-col gap-1">
-          {testing.topFlows.map((item) => (
-            <UsageTopRow
-              key={item.id}
-              item={item}
-              totalUsd={testedTotal}
-              search={search}
-            />
-          ))}
-        </ul>
-      </div>
-      <div className="flex flex-col gap-1 lg:col-span-4">
-        <h3 className="text-sm font-medium text-gray-11">
-          {t('Most tested agents')}
-        </h3>
-        {testing.topAgents.length === 0 && (
-          <p className="py-1.5 text-sm text-gray-11">
-            {t('No agents tested in this period.')}
-          </p>
-        )}
-        <ul className="flex flex-col gap-1">
-          {testing.topAgents.map((item) => (
-            <UsageTopRow
-              key={item.id}
-              item={item}
-              totalUsd={testedTotal}
-              search={search}
-            />
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-type UsageTestingSectionProps = {
-  testing: {
-    spendUsd: number;
-    share: number;
-    series: UsagePoint[];
-    topFlows: UsageItem[];
-    topAgents: UsageItem[];
-  };
-  scope: UsageScope;
-  search: string;
-};
