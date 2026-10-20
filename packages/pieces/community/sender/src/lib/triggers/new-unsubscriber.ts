@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { senderAuth } from '../auth';
 import { senderApi } from '../common/api';
+import { senderSubscriberTriggerOutputSchema } from '../output-schemas';
 
 const TOPIC = 'subscribers/unsubscribed';
 const STORE_KEY = 'webhookId';
@@ -8,6 +9,7 @@ const STORE_KEY = 'webhookId';
 export const newUnsubscriberTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_unsubscriber',
+  outputSchema: senderSubscriberTriggerOutputSchema,
   classification: 'READ',
   displayName: 'New Unsubscriber',
   description: 'Fires when someone unsubscribes globally',

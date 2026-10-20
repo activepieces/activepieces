@@ -35,7 +35,8 @@ export const newGroupTrigger = createTrigger({
     return [context.payload.body];
   },
   async test(context) {
-    return await senderApi.listGroups({ auth: context.auth, limit: 1 });
+    const page = await senderApi.listGroups({ auth: context.auth, limit: 1 });
+    return page.data ?? [];
   },
   sampleData: {},
 });

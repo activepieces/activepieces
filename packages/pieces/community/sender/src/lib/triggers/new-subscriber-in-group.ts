@@ -1,6 +1,7 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { senderAuth } from '../auth';
 import { senderApi } from '../common/api';
+import { senderSubscriberTriggerOutputSchema } from '../output-schemas';
 
 const TOPIC = 'groups/new-subscriber';
 const STORE_KEY = 'webhookId';
@@ -8,6 +9,7 @@ const STORE_KEY = 'webhookId';
 export const newSubscriberInGroupTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_subscriber_in_group',
+  outputSchema: senderSubscriberTriggerOutputSchema,
   classification: 'READ',
   displayName: 'New Subscriber in Group',
   description: 'Fires when a subscriber is added to a specific group/list',
@@ -42,7 +44,8 @@ export const newSubscriberInGroupTrigger = createTrigger({
     return [context.payload.body];
   },
   async test(context) {
-    return await senderApi.listGroupSubscribers({ auth: context.auth, groupId: context.propsValue.groupId, limit: 1 });
+    const page = await senderApi.listGroupSubscribers({ auth: context.auth, groupId: context.propsValue.groupId, limit: 1 });
+    return page.data ?? [];
   },
   sampleData: {},
 });

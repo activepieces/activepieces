@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { senderAuth } from '../auth';
 import { senderApi } from '../common/api';
+import { senderSubscriberTriggerOutputSchema } from '../output-schemas';
 
 const TOPIC = 'subscribers/updated';
 const STORE_KEY = 'webhookId';
@@ -8,6 +9,7 @@ const STORE_KEY = 'webhookId';
 export const updatedSubscriberTrigger = createTrigger({
   auth: senderAuth,
   name: 'updated_subscriber',
+  outputSchema: senderSubscriberTriggerOutputSchema,
   classification: 'READ',
   displayName: 'Updated Subscriber',
   description: "Fires when a subscriber's data (fields) is updated",
@@ -35,7 +37,8 @@ export const updatedSubscriberTrigger = createTrigger({
     return [context.payload.body];
   },
   async test(context) {
-    return await senderApi.listSubscribers({ auth: context.auth, limit: 1 });
+    const page = await senderApi.listSubscribers({ auth: context.auth, limit: 1 });
+    return page.data ?? [];
   },
   sampleData: {},
 });

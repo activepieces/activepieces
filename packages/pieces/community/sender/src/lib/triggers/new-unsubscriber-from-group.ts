@@ -1,6 +1,7 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { senderAuth } from '../auth';
 import { senderApi } from '../common/api';
+import { senderSubscriberTriggerOutputSchema } from '../output-schemas';
 
 const TOPIC = 'groups/unsubscribed';
 const STORE_KEY = 'webhookId';
@@ -8,6 +9,7 @@ const STORE_KEY = 'webhookId';
 export const newUnsubscriberFromGroupTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_unsubscriber_from_group',
+  outputSchema: senderSubscriberTriggerOutputSchema,
   classification: 'READ',
   displayName: 'New Unsubscriber From Group',
   description: 'Fires when a subscriber is removed/unsubscribed from a specific group',

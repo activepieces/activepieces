@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { senderAuth } from '../auth';
 import { senderApi } from '../common/api';
 import { senderProps } from '../common/props';
+import { senderSubscriberWriteOutputSchema } from '../output-schemas';
 
 export const addUpdateSubscriberAction = createAction({
   auth: senderAuth,
   name: 'add_update_subscriber',
+  outputSchema: senderSubscriberWriteOutputSchema,
   classification: 'WRITE',
   displayName: 'Add / Update Subscriber',
   description: 'Add a new subscriber or update existing subscriber\'s data',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Upserts a subscriber in a Sender account by email: creates the contact if the email is new, otherwise updates its name, phone, group membership, and custom fields. Use to ensure a contact exists with given details before campaigns or grouping. Keyed on email, so repeating the same call is idempotent (no duplicate contact); note the optional flag that triggers automation workflows on the subscriber.', idempotent: true },
   props: {
     email: Property.ShortText({
@@ -54,7 +56,7 @@ export const addUpdateSubscriberAction = createAction({
       phone: context.propsValue.phone,
       groups: context.propsValue.groups,
       customFields: context.propsValue.customFields,
-      triggerAutomation: context.propsValue.triggerAutomation,
+      triggerAutomation: context.propsValue.triggerAutomation ? true : undefined,
     });
   },
 });

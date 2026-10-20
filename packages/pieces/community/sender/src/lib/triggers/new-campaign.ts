@@ -35,7 +35,8 @@ export const newCampaignTrigger = createTrigger({
     return [context.payload.body];
   },
   async test(context) {
-    return await senderApi.listCampaigns({ auth: context.auth, limit: 1 });
+    const page = await senderApi.listCampaigns({ auth: context.auth, limit: 1 });
+    return page.data ?? [];
   },
   sampleData: {},
 });

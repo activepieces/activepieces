@@ -19,7 +19,7 @@ function groupId<R extends boolean>({
 				return disabledOptions({ placeholder: NOT_CONNECTED });
 			}
 			try {
-				const groups = await senderApi.listGroups({ auth });
+				const { data: groups = [] } = await senderApi.listGroups({ auth });
 				return {
 					disabled: false,
 					options: groups.map((group) => ({ label: group.title, value: group.id })),
@@ -47,7 +47,7 @@ function groupIds<R extends boolean>({
 				return disabledOptions({ placeholder: NOT_CONNECTED });
 			}
 			try {
-				const groups = await senderApi.listGroups({ auth });
+				const { data: groups = [] } = await senderApi.listGroups({ auth });
 				return {
 					disabled: false,
 					options: groups.map((group) => ({ label: group.title, value: group.id })),
@@ -75,7 +75,7 @@ function subscriber<R extends boolean>({
 				return disabledOptions({ placeholder: NOT_CONNECTED });
 			}
 			try {
-				const subscribers = await senderApi.listSubscribers({ auth, limit: 50 });
+				const { data: subscribers = [] } = await senderApi.listSubscribers({ auth, limit: 50 });
 				return {
 					disabled: false,
 					options: subscribers.map((sub) => ({ label: sub.email, value: sub.email })),
@@ -103,7 +103,7 @@ function subscribers<R extends boolean>({
 				return disabledOptions({ placeholder: NOT_CONNECTED });
 			}
 			try {
-				const subscribers = await senderApi.listSubscribers({ auth, limit: 50 });
+				const { data: subscribers = [] } = await senderApi.listSubscribers({ auth, limit: 50 });
 				return {
 					disabled: false,
 					options: subscribers.map((sub) => ({ label: sub.email, value: sub.email })),
@@ -131,7 +131,11 @@ function campaignId<R extends boolean>({
 				return disabledOptions({ placeholder: NOT_CONNECTED });
 			}
 			try {
-				const campaigns = await senderApi.listCampaigns({ auth, limit: 50, status: 'DRAFT' });
+				const { data: campaigns = [] } = await senderApi.listCampaigns({
+					auth,
+					limit: 50,
+					status: 'DRAFT',
+				});
 				return {
 					disabled: false,
 					options: campaigns.map((c) => ({ label: c.title || c.subject || c.id, value: c.id })),
