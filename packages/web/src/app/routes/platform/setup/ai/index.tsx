@@ -28,6 +28,8 @@ function AICenter({ section }: { section: AISection }) {
         <TiersTab />
       ) : section === 'usage' ? (
         <UsageTab />
+      ) : section === 'usage-v2' ? (
+        <UsageTab layout="trees" />
       ) : (
         <CapabilitiesTab />
       )}
@@ -35,7 +37,7 @@ function AICenter({ section }: { section: AISection }) {
   );
 }
 
-type AISection = 'providers' | 'capabilities' | 'tiers' | 'usage';
+type AISection = 'providers' | 'capabilities' | 'tiers' | 'usage' | 'usage-v2';
 
 type AIProvidersPageProps = {
   section: AISection;

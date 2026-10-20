@@ -5,7 +5,13 @@ import { Link } from 'react-router-dom';
 
 import { adminSurface } from '@/app/components/admin';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 import { DeltaChip, ItemIcon } from './usage-bits';
@@ -18,6 +24,8 @@ export function UsageTopList({
   totalUsd,
   search,
   title,
+  subtitle,
+  showShared = false,
   className,
 }: UsageTopListProps) {
   return (
@@ -25,15 +33,20 @@ export function UsageTopList({
       className={cn(adminSurface.card, 'flex flex-col gap-3 p-5', className)}
     >
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-gray-12">
-          {title ?? usageFormat.dimensionLabel({ dimension })}
-        </h2>
-        <Button variant="ghost" size="xs" asChild>
-          <Link to={`/platform/ai/usage/${dimension}${search}`}>
-            {t('See all')}
-            <ChevronRight className="size-3.5" />
-          </Link>
-        </Button>
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-base font-semibold text-gray-12">
+            {title ?? usageFormat.dimensionLabel({ dimension })}
+          </h2>
+          {subtitle && <p className="text-xs text-gray-11">{subtitle}</p>}
+        </div>
+        {items.length > 0 && (
+          <Button variant="ghost" size="xs" asChild>
+            <Link to={`/platform/ai/usage/${dimension}${search}`}>
+              {t('See all')}
+              <ChevronRight className="size-3.5" />
+            </Link>
+          </Button>
+        )}
       </div>
       {items.length === 0 ? (
         <p className="text-sm text-gray-11">
@@ -47,6 +60,7 @@ export function UsageTopList({
               item={item}
               totalUsd={totalUsd}
               search={search}
+              showShared={showShared}
             />
           ))}
         </ul>
@@ -59,10 +73,12 @@ export function UsageTopRow({
   item,
   totalUsd,
   search,
+  showShared = false,
 }: {
   item: UsageItem;
   totalUsd: number;
   search: string;
+  showShared?: boolean;
 }) {
   const share = totalUsd === 0 ? 0 : item.spendUsd / totalUsd;
   return (
@@ -79,9 +95,14 @@ export function UsageTopRow({
                 {item.name}
               </p>
             </TextWithTooltip>
-            {item.parent && (
-              <p className="truncate text-xs text-gray-11">{item.parent}</p>
-            )}
+            <div className="flex min-w-0 items-center gap-1.5">
+              {item.parent && (
+                <p className="truncate text-xs text-gray-11">{item.parent}</p>
+              )}
+              {showShared && !isNil(item.sharedWith) && (
+                <SharedBadge item={item} />
+              )}
+            </div>
           </div>
           <div className="flex shrink-0 flex-col items-end">
             <span className="text-sm font-medium tabular-nums text-gray-12">
@@ -122,11 +143,32 @@ export function UsageTopRow({
   );
 }
 
+function SharedBadge({ item }: { item: UsageItem }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge variant="info">{t('Shared')}</Badge>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        {t(
+          '{amount} of this comes from Run Agent steps, so it also counts under {other}.',
+          {
+            amount: usageFormat.usd(item.spendUsd * (item.sharedShare ?? 0)),
+            other: item.sharedWith ?? '',
+          },
+        )}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 type UsageTopListProps = {
   dimension: UsageDimension;
   items: UsageItem[];
   totalUsd: number;
   search: string;
   title?: string;
+  subtitle?: string;
+  showShared?: boolean;
   className?: string;
 };

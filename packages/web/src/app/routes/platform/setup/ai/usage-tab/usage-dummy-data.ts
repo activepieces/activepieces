@@ -481,6 +481,8 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'flow',
     id: 'lead-enrichment',
+    sharedWith: 'SDR agent',
+    sharedShare: 0.3,
     name: 'Lead enrichment',
     parent: 'Sales ops',
     weight: 6,
@@ -489,6 +491,8 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'flow',
     id: 'ticket-triage',
+    sharedWith: 'Support agent',
+    sharedShare: 0.45,
     name: 'Ticket triage',
     parent: 'Support desk',
     weight: 5,
@@ -537,6 +541,8 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'agent',
     id: 'support-agent',
+    sharedWith: 'Ticket triage',
+    sharedShare: 0.4,
     name: 'Support agent',
     parent: 'Support desk',
     weight: 5.5,
@@ -553,6 +559,8 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'agent',
     id: 'sdr-agent',
+    sharedWith: 'Lead enrichment',
+    sharedShare: 0.55,
     name: 'SDR agent',
     parent: 'Sales ops',
     weight: 2.2,
@@ -667,6 +675,7 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'model',
     id: 'claude-sonnet-5',
+    keyId: 'anthropic-main',
     name: 'Claude Sonnet 5',
     parent: 'Anthropic',
     provider: AIProviderName.ANTHROPIC,
@@ -678,6 +687,7 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'model',
     id: 'gpt-5',
+    keyId: 'openai-prod',
     name: 'GPT-5',
     parent: 'OpenAI',
     provider: AIProviderName.OPENAI,
@@ -689,6 +699,7 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'model',
     id: 'gemini-3-pro',
+    keyId: 'openrouter',
     name: 'Gemini 3 Pro',
     parent: 'Google',
     provider: AIProviderName.GOOGLE,
@@ -700,6 +711,7 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'model',
     id: 'gpt-5-mini',
+    keyId: 'openai-prod',
     name: 'GPT-5 mini',
     parent: 'OpenAI',
     provider: AIProviderName.OPENAI,
@@ -711,6 +723,7 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'model',
     id: 'claude-haiku-4-5',
+    keyId: 'anthropic-main',
     name: 'Claude Haiku 4.5',
     parent: 'Anthropic',
     provider: AIProviderName.ANTHROPIC,
@@ -722,6 +735,7 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'model',
     id: 'gpt-prod-eu',
+    keyId: 'azure-eu',
     name: 'gpt-prod-eu',
     parent: 'Azure deployment',
     provider: AIProviderName.AZURE,
@@ -860,6 +874,9 @@ type CatalogEntry = {
   limitUsed?: number;
   inputPrice?: number;
   outputPrice?: number;
+  keyId?: string;
+  sharedWith?: string;
+  sharedShare?: number;
 };
 
 type ViewParams = {
