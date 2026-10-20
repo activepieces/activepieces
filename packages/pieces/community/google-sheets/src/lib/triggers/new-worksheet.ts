@@ -32,7 +32,7 @@ export const newWorksheetTrigger = createTrigger({
 		if (response.data.sheets) {
 			for (const sheet of response.data.sheets) {
 				const sheetId = sheet.properties?.sheetId;
-				if (sheetId) {
+				if (!isNil(sheetId)) {
 					ids.push(sheetId);
 				}
 			}
