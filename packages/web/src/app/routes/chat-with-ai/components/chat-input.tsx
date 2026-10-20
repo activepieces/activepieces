@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { ArrowUp, Mic, Paperclip, Square, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -30,6 +31,7 @@ export function ChatInput({
   rightActions,
   minimalUntilFocus = false,
   onFocusChange,
+  sendBlockedReason,
 }: {
   isStreaming: boolean;
   onSend: (text: string, files?: File[]) => void;
@@ -40,6 +42,7 @@ export function ChatInput({
   rightActions?: React.ReactNode;
   minimalUntilFocus?: boolean;
   onFocusChange?: (focused: boolean) => void;
+  sendBlockedReason?: string;
 }) {
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
@@ -100,7 +103,11 @@ export function ChatInput({
   }, [isRecording, cancelRecording]);
 
   const handleSubmit = useCallback(() => {
-    if (!isStreaming && (value.trim() || attachedFiles.length > 0)) {
+    if (
+      isNil(sendBlockedReason) &&
+      !isStreaming &&
+      (value.trim() || attachedFiles.length > 0)
+    ) {
       onSend(
         value.trim(),
         attachedFiles.length > 0 ? attachedFiles : undefined,
@@ -108,7 +115,7 @@ export function ChatInput({
       setValue('');
       setAttachedFiles([]);
     }
-  }, [isStreaming, value, attachedFiles, onSend]);
+  }, [isStreaming, value, attachedFiles, onSend, sendBlockedReason]);
 
   const handleFilesAdded = useCallback((files: File[]) => {
     setAttachedFiles((prev) => [...prev, ...files]);
@@ -228,13 +235,15 @@ export function ChatInput({
                   </Button>
                 </PromptInputAction>
               ) : canSend ? (
-                <PromptInputAction tooltip={t('Send message')}>
+                <PromptInputAction
+                  tooltip={sendBlockedReason ?? t('Send message')}
+                >
                   <Button
                     variant="default"
                     size="icon"
                     className="sm:h-7 sm:w-7 rounded-full"
                     onClick={handleSubmit}
-                    disabled={isStreaming}
+                    disabled={isStreaming || !isNil(sendBlockedReason)}
                   >
                     <ArrowUp className="size-4" />
                   </Button>

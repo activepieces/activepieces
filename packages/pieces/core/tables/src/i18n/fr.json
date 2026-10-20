@@ -24,6 +24,7 @@
   "Records as JSON": "Records as JSON",
   "Record IDs": "ID des enregistrements",
   "Record ID": "ID de l'enregistrement",
+  "Markdown": "Markdown",
   "Filters": "Filtres",
   "Limit": "Limite",
   "Include Headers": "Include Headers",
@@ -32,6 +33,7 @@
   "Array of objects keyed by field name. Overrides the form above.": "Array of objects keyed by field name. Overrides the form above.",
   "Usually mapped from a Find Records step or a table trigger.": "Usually mapped from a Find Records step or a table trigger.",
   "Usually comes from a Find Records step or a table trigger.": "Usually comes from a Find Records step or a table trigger.",
+  "Empty fields keep their current value.": "Les champs vides conservent leur valeur actuelle.",
   "Leave a field empty to keep its current value.": "Leave a field empty to keep its current value.",
   "All conditions must match. Empty returns every record.": "All conditions must match. Empty returns every record.",
   "Maximum records to return. Empty returns all records.": "Maximum records to return. Empty returns all records.",
@@ -41,6 +43,5 @@
   "Record Deleted": "Enregistrement supprimé",
   "Triggers when a new record is added to the selected table.": "Déclenche lorsqu'un nouvel enregistrement est ajouté à la table sélectionnée.",
   "Triggers when a record is updated in the selected table.": "Déclenche lorsqu'un enregistrement est mis à jour dans le tableau sélectionné.",
-  "Triggers when a record is deleted from the selected table.": "Déclenche lorsqu'un enregistrement est supprimé de la table sélectionnée.",
-  "Empty fields keep their current value.": "Les champs vides conservent leur valeur actuelle."
+  "Triggers when a record is deleted from the selected table.": "Déclenche lorsqu'un enregistrement est supprimé de la table sélectionnée."
 }
