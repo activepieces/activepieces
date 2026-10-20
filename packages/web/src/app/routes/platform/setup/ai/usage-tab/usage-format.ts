@@ -68,6 +68,49 @@ function pointLabel({ label }: { label: string }): string {
   });
 }
 
+function rangeLabel({
+  labels,
+  period,
+}: {
+  labels: string[];
+  period: UsagePeriod;
+}): RangeLabels | undefined {
+  if (labels.length < 2) {
+    return undefined;
+  }
+  const times = labels.map((label) => toTime({ label }));
+  const step = times[1] - times[0];
+  const span = step * labels.length;
+  const dateOnly = !labels[0].includes('T');
+  const format = (time: number): string =>
+    pointLabel({
+      label: dateOnly
+        ? new Date(time).toISOString().slice(0, 10)
+        : new Date(time).toISOString(),
+    });
+  const first = times[0];
+  const last = times[times.length - 1];
+  const byMonth = period === 'this-month' || period === 'last-month';
+  const previousOf = (time: number): number =>
+    byMonth ? monthBefore({ time }) : time - span;
+  return {
+    current: `${format(first)} – ${format(last)}`,
+    previous: `${format(previousOf(first))} – ${format(previousOf(last))}`,
+  };
+}
+
+function monthBefore({ time }: { time: number }): number {
+  const date = new Date(time);
+  date.setUTCMonth(date.getUTCMonth() - 1);
+  return date.getTime();
+}
+
+function toTime({ label }: { label: string }): number {
+  return label.includes('T')
+    ? new Date(label).getTime()
+    : new Date(`${label}T00:00:00Z`).getTime();
+}
+
 function periodLabel({ period }: { period: UsagePeriod }): string {
   switch (period) {
     case '1h':
@@ -206,6 +249,7 @@ export const usageFormat = {
   signedPercent,
   metricValue,
   pointLabel,
+  rangeLabel,
   periodLabel,
   previousLabel,
   dimensionLabel,
@@ -213,4 +257,9 @@ export const usageFormat = {
   sourceLabel,
   metricLabel,
   scopeLabel,
+};
+
+type RangeLabels = {
+  current: string;
+  previous: string;
 };

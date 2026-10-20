@@ -74,7 +74,10 @@ export function UsageHero({
           </TabsList>
         </Tabs>
       </div>
-      <UsageLineChart points={points} metric={metric} height={height} />
+      <div className="flex flex-col gap-3">
+        <ChartLegend points={points} period={period} />
+        <UsageLineChart points={points} metric={metric} height={height} />
+      </div>
     </section>
   );
 }
@@ -186,6 +189,68 @@ export function UsageLineChart({
         />
       </ComposedChart>
     </ChartContainer>
+  );
+}
+
+function ChartLegend({
+  points,
+  period,
+}: {
+  points: UsagePoint[];
+  period: UsagePeriod;
+}) {
+  const ranges = usageFormat.rangeLabel({
+    labels: points.map((point) => point.label),
+    period,
+  });
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-gray-11">
+      <LegendItem
+        dashed={false}
+        label={t('This period')}
+        range={ranges?.current}
+      />
+      <LegendItem
+        dashed
+        label={t('Previous period')}
+        range={ranges?.previous}
+      />
+    </div>
+  );
+}
+
+function LegendItem({
+  dashed,
+  label,
+  range,
+}: {
+  dashed: boolean;
+  label: string;
+  range?: string;
+}) {
+  return (
+    <span className="flex items-center gap-2">
+      <svg
+        width="20"
+        height="8"
+        viewBox="0 0 20 8"
+        aria-hidden="true"
+        className="shrink-0"
+      >
+        <line
+          x1="1"
+          y1="4"
+          x2="19"
+          y2="4"
+          stroke={dashed ? 'var(--gray-8)' : 'var(--accent-9)'}
+          strokeWidth={dashed ? 1.5 : 2}
+          strokeDasharray={dashed ? '3 3' : undefined}
+          strokeLinecap="round"
+        />
+      </svg>
+      <span className="text-gray-12">{label}</span>
+      {range && <span className="tabular-nums">{range}</span>}
+    </span>
   );
 }
 
