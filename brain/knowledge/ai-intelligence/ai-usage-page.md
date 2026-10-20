@@ -22,7 +22,7 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 - **A Run Agent step counts under both its flow and its agent**, marked Shared, so flows + agents can add up to more than the project total. Decided 2026-10-20. A two-tree overview layout was tried as "Usage v2" and dropped the same day: the overview keeps flat top-5 cards, and the trees only shape the detail-page pivot.
 
 ## Page anatomy
-1. Tiles: month-end forecast (this month) or average per day, AI calls, tokens.
+1. Tiles: a pace tile that follows the period (1h–24h → daily run rate; 7–90 days and last month → average per day; this month → month-end forecast with the date and daily pace it is based on), AI calls, tokens. Never label a projection as an average.
 2. Hero: total for the period, change vs the previous period, line chart (this period solid, previous dashed), metric switch Spend · Calls · Tokens.
 3. Bento of top-5 cards in three full rows: projects · flows · agents / spend by source (donut, two columns) · users / providers & keys · models · limits at risk. Without limits, models takes two columns. There is no "biggest changes" card; a row's change % covers it.
 4. The cost footnote.
