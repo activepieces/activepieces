@@ -39,13 +39,6 @@ function buildOverview({ period, scope }: ViewParams): UsageOverview {
       spendUsd: spendUsd * source.share,
     })),
     top: topByDimension({ items }),
-    risers: [...items]
-      .filter((item) => item.dimension === 'flow' || item.dimension === 'agent')
-      .sort(
-        (a, b) =>
-          b.spendUsd - b.previousSpendUsd - (a.spendUsd - a.previousSpendUsd),
-      )
-      .slice(0, 3),
     limits: projects
       .filter(
         (item) =>
@@ -742,7 +735,6 @@ export type UsageOverview = {
   avgPerDayUsd: number;
   bySource: UsageSourceSpend[];
   top: Record<UsageDimension, UsageItem[]>;
-  risers: UsageItem[];
   limits: UsageItem[];
   testing: {
     spendUsd: number;

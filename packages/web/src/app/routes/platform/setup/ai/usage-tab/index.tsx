@@ -8,11 +8,7 @@ import { usageDummyData } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 import { UsageHeaderControls, useUsageView } from './usage-header-controls';
 import { UsageHero } from './usage-hero';
-import {
-  UsageChangesCard,
-  UsageLimitsCard,
-  UsageTestingSection,
-} from './usage-insight-cards';
+import { UsageLimitsCard, UsageTestingSection } from './usage-insight-cards';
 import { UsageSourceDonut } from './usage-source-donut';
 import { UsageTopList } from './usage-top-list';
 
@@ -57,18 +53,6 @@ export function UsageTab() {
         />
       </AdminPageHeader>
 
-      <UsageHero
-        series={overview.series}
-        period={view.period}
-        note={
-          totals.credits > 0
-            ? t('Includes {credits} credits', {
-                credits: usageFormat.whole(totals.credits),
-              })
-            : undefined
-        }
-      />
-
       <StatGrid columns={3}>
         {overview.forecastUsd === undefined ? (
           <StatCard
@@ -105,6 +89,18 @@ export function UsageTab() {
         />
       </StatGrid>
 
+      <UsageHero
+        series={overview.series}
+        period={view.period}
+        note={
+          totals.credits > 0
+            ? t('Includes {credits} credits', {
+                credits: usageFormat.whole(totals.credits),
+              })
+            : undefined
+        }
+      />
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <UsageTopList
           className="lg:col-span-4"
@@ -120,16 +116,16 @@ export function UsageTab() {
           totalUsd={totals.spendUsd}
           search={view.search}
         />
-        <UsageSourceDonut
-          className="lg:col-span-4"
-          sources={overview.bySource}
-        />
         <UsageTopList
           className="lg:col-span-4"
           dimension="agent"
           items={overview.top.agent}
           totalUsd={totals.spendUsd}
           search={view.search}
+        />
+        <UsageSourceDonut
+          className="lg:col-span-8"
+          sources={overview.bySource}
         />
         <UsageTopList
           className="lg:col-span-4"
@@ -146,18 +142,12 @@ export function UsageTab() {
           search={view.search}
         />
         <UsageTopList
-          className="lg:col-span-4"
-          dimension="model"
-          items={overview.top.model}
-          totalUsd={totals.spendUsd}
-          search={view.search}
-        />
-        <UsageChangesCard
           className={
             overview.limits.length === 0 ? 'lg:col-span-8' : 'lg:col-span-4'
           }
-          risers={overview.risers}
-          period={view.period}
+          dimension="model"
+          items={overview.top.model}
+          totalUsd={totals.spendUsd}
           search={view.search}
         />
         {overview.limits.length > 0 && (

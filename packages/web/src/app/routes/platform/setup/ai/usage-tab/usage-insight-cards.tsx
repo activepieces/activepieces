@@ -1,8 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 
 import { adminSurface } from '@/app/components/admin';
 import { Button } from '@/components/ui/button';
@@ -10,79 +8,10 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 import { SetLimitDialog } from './set-limit-dialog';
-import { DeltaChip, ItemIcon } from './usage-bits';
-import {
-  UsageItem,
-  UsagePeriod,
-  UsagePoint,
-  UsageScope,
-} from './usage-dummy-data';
+import { UsageItem, UsagePoint, UsageScope } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 import { UsageLineChart } from './usage-hero';
 import { UsageTopRow } from './usage-top-list';
-
-export function UsageChangesCard({
-  risers,
-  period,
-  search,
-  className,
-}: UsageChangesCardProps) {
-  return (
-    <section
-      className={cn(adminSurface.card, 'flex flex-col gap-3 p-5', className)}
-    >
-      <div className="flex flex-col gap-0.5">
-        <h2 className="text-base font-semibold text-gray-12">
-          {t('Biggest changes')}
-        </h2>
-        <p className="text-xs text-gray-11">
-          {usageFormat.previousLabel({ period })}
-        </p>
-      </div>
-      <ul className="flex flex-col gap-1">
-        {risers.map((item) => (
-          <li key={item.id}>
-            <Link
-              to={`/platform/ai/usage/${item.dimension}/${item.id}${search}`}
-              className="flex items-center gap-2.5 rounded-md py-1.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50"
-            >
-              <ItemIcon item={item} />
-              <div className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-sm font-medium text-gray-12">
-                  {item.name}
-                </span>
-                <span className="truncate text-xs text-gray-11">
-                  {t('{type} in {parent}', {
-                    type: usageFormat.dimensionBadge({
-                      dimension: item.dimension,
-                    }),
-                    parent: item.parent ?? '',
-                  })}
-                </span>
-              </div>
-              <div className="flex shrink-0 flex-col items-end">
-                <span className="text-sm font-medium tabular-nums text-gray-12">
-                  {item.spendUsd >= item.previousSpendUsd ? '+' : '−'}
-                  {usageFormat.usd(
-                    Math.abs(item.spendUsd - item.previousSpendUsd),
-                  )}
-                </span>
-                <DeltaChip
-                  size="xs"
-                  value={usageFormat.change({
-                    current: item.spendUsd,
-                    previous: item.previousSpendUsd,
-                  })}
-                />
-              </div>
-              <ChevronRight className="size-4 shrink-0 text-gray-9" />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
 
 export function UsageLimitsCard({
   projects,
@@ -261,13 +190,6 @@ export function UsageTestingSection({
     </section>
   );
 }
-
-type UsageChangesCardProps = {
-  risers: UsageItem[];
-  period: UsagePeriod;
-  search: string;
-  className?: string;
-};
 
 type UsageTestingSectionProps = {
   testing: {
