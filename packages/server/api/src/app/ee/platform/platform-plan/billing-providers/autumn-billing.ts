@@ -204,6 +204,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                         await platformPlanService(log).update({ platformId, enterpriseTrialUsedElsewhereAt: new Date().toISOString() })
                         return USED_ENTERPRISE_TRIAL
                     }
+                    await platformPlanService(log).update({ platformId, enterpriseTrialStartedAt: started.startedAt, enterpriseTrialEndsAt: started.endsAt })
                     rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialStarted({ platformId, endsAt: started.endsAt }), log)
                     return { state: 'active', startedAt: started.startedAt, endsAt: started.endsAt, extended: false }
                 },
