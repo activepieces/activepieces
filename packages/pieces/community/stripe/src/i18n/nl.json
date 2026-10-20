@@ -632,5 +632,7 @@
   "Only disputes for this charge. Empty: all.": "Alleen aanvechtingen voor deze afschrijving. Leeg: alle.",
   "Only disputes for this payment. Empty: all.": "Alleen aanvechtingen voor deze betaling. Leeg: alle.",
   "Only updates where the subscription's status is this.": "Alleen updates waarbij het abonnement deze status heeft.",
-  "Only sessions for this customer. Empty: all.": "Alleen sessies voor deze klant. Leeg: alle."
+  "Only sessions for this customer. Empty: all.": "Alleen sessies voor deze klant. Leeg: alle.",
+  "Markdown": "Markdown",
+  "Empty fields keep their current value.": "Lege velden behouden hun huidige waarde."
 }

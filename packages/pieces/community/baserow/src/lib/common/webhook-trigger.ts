@@ -1,4 +1,4 @@
-import { MarkdownVariant } from '@activepieces/pieces-framework';
+import { MarkdownVariant, tryCatch } from '@activepieces/pieces-framework';
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { BaserowAuthValue, baserowAuth, baserowAuthHelpers } from '../auth';
 import { makeClient } from './index';
@@ -13,28 +13,33 @@ export function dynamicWebhookInstructions(eventLabel: string) {
       if (auth && baserowAuthHelpers.isJwtAuth(auth as BaserowAuthValue)) {
         return {
           info: Property.MarkDown({
-            value: '✅ **Webhook auto-registered** — no manual setup needed. The webhook is created and removed automatically when you enable or disable this trigger.',
+            value: 'This webhook is added to Baserow when the flow is turned on and removed when it is turned off.',
             variant: MarkdownVariant.INFO,
           }),
         };
       }
       return {
         info: Property.MarkDown({
-          value: `**Manual webhook setup required** (Database Token auth):
+          value: `This connection uses a database token, so add the webhook in Baserow:
 
-1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
-2. Click **Create webhook +**.
-3. Set the HTTP method to **POST**.
-4. Paste this URL into the endpoint field:
-\`\`\`
-{{webhookUrl}}
-\`\`\`
-5. Under **Events**, select **${eventLabel}**.
-6. Click **Save**.`,
-          variant: MarkdownVariant.INFO,
+1. Open the **···** menu beside the table and pick **Webhooks**.
+2. Click **Create webhook +** and set the method to **POST**.
+3. Paste the webhook URL shown above.
+4. Under **Events**, select **${eventLabel}**, then click **Save**.`,
+          variant: MarkdownVariant.WARNING,
         }),
       };
     },
+  });
+}
+
+export function webhookUrlInfo() {
+  return Property.MarkDown({
+    value: `Webhook URL for this flow:
+\`\`\`text
+{{webhookUrl}}
+\`\`\``,
+    variant: MarkdownVariant.INFO,
   });
 }
 
@@ -75,12 +80,10 @@ export function createWebhookTriggerHooks({
       if (!baserowAuthHelpers.isJwtAuth(context.auth)) return;
       const data = await context.store.get<{ webhookId: number }>(storeKey);
       if (!data?.webhookId) return;
-      const client = await makeClient(context.auth);
-      try {
+      await tryCatch(async () => {
+        const client = await makeClient(context.auth);
         await client.deleteWebhook(data.webhookId);
-      } catch {
-        // Webhook may have been manually deleted in Baserow — ignore
-      }
+      });
       await context.store.delete(storeKey);
     },
   };

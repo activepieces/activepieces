@@ -41,5 +41,6 @@
   "Record Deleted": "Registro eliminado",
   "Triggers when a new record is added to the selected table.": "Se activa cuando se añade un nuevo registro a la tabla seleccionada.",
   "Triggers when a record is updated in the selected table.": "Se activa cuando un registro se actualiza en la tabla seleccionada.",
-  "Triggers when a record is deleted from the selected table.": "Se activa cuando se elimina un registro de la tabla seleccionada."
+  "Triggers when a record is deleted from the selected table.": "Se activa cuando se elimina un registro de la tabla seleccionada.",
+  "Empty fields keep their current value.": "Los campos vacíos conservan su valor actual."
 }

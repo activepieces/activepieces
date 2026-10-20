@@ -320,5 +320,6 @@
   "Note": "メモ",
   "Task": "タスク",
   "Meeting": "会議",
-  "Call": "電話"
+  "Call": "電話",
+  "Fields left empty keep their current value.": "空欄のフィールドは現在の値のまま変更されません。"
 }

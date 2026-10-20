@@ -149,8 +149,8 @@ export const barrierService = (log: FastifyBaseLogger) => ({
             return null
         }
         wideEvent.set({
-            fanIn: {
-                barrierId: barrier.id,
+            waitpoint: {
+                id: barrier.id,
                 signalCount: summary.total,
                 releaseReason,
                 stillRunning: summary.stillRunning,
