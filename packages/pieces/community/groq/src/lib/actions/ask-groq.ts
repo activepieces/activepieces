@@ -1,4 +1,4 @@
-import { createAction, Property, StoreScope } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property, StoreScope } from '@activepieces/pieces-framework';
 import { groqAuth } from '../..';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { askAiActionOutputSchema } from '../output-schemas';
@@ -11,6 +11,11 @@ export const askGroq = createAction({
 	displayName: 'Ask AI',
 	description: 'Send a question or instruction to a Groq model and get a text reply.',
 	aiMetadata: { description: 'Sends a prompt to a Groq-hosted chat model (Whisper speech models are excluded from the model list) and returns the generated text, with optional sampling controls and a roles array for system instructions. Runs stateless by default, or shares conversation history across runs and flows when a memory key is set. This is the only text-generation action in the piece - pick the sibling Transcribe Audio or Translate Audio actions when the input is a sound file rather than text. Requires a model, a question, and a maximum token count; not idempotent: each call produces a fresh completion and, when a memory key is set, appends to the stored project-scoped history.', idempotent: false },
+	propertyGroups: [
+		{ key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'maxTokens'] },
+		{ key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt'] },
+		{ key: 'history', display: 'section', label: 'History', icon: 'inbox', props: ['memoryKey', 'memoryInfo'] },
+	],
 	props: {
 		model: Property.Dropdown({
 			auth: groqAuth,
@@ -104,6 +109,7 @@ export const askGroq = createAction({
 			placeholder: 'e.g. support-chat-42',
 			required: false,
 		}),
+		memoryInfo: Property.MarkDown({ value: 'Saved for the whole project, so other flows that use this ID join the same conversation.', variant: MarkdownVariant.INFO }),
 		roles: Property.Json({
 			displayName: 'Roles',
 			required: false,

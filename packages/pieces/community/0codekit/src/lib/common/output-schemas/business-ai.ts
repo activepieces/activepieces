@@ -64,6 +64,67 @@ export const businessAiOutputSchemas = {
             },
         ],
     },
+    entityDetection: {
+        fields: [
+            { key: 'entity_count', label: 'Entity Count', format: 'number' },
+            {
+                key: 'entities',
+                label: 'Entities',
+                labelKey: 'text',
+                listItems: [
+                    { key: 'text', label: 'Text' },
+                    { key: 'category', label: 'Category', description: 'For example Person, Location, Organization or DateTime.' },
+                    { key: 'sub_category', label: 'Sub-Category' },
+                    { key: 'offset', label: 'Offset', format: 'number' },
+                    { key: 'length', label: 'Length', format: 'number' },
+                    { key: 'confidence_score', label: 'Confidence Score', format: 'number', description: 'Between 0 and 1.' },
+                ],
+            },
+        ],
+    },
+    languageDetection: {
+        fields: [
+            { key: 'language_name', label: 'Language Name' },
+            { key: 'language_code', label: 'Language Code', description: 'Two-letter ISO 639-1 code.' },
+            { key: 'confidence_score', label: 'Confidence Score', format: 'number', description: 'Between 0 and 1.' },
+        ],
+    },
+    moodDetection: {
+        fields: [
+            { key: 'mood', label: 'Overall Mood', description: 'positive, neutral, negative or mixed.' },
+            { key: 'positive_score', label: 'Positive Score', format: 'number' },
+            { key: 'neutral_score', label: 'Neutral Score', format: 'number' },
+            { key: 'negative_score', label: 'Negative Score', format: 'number' },
+            {
+                key: 'sentences',
+                label: 'Sentences',
+                labelKey: 'text',
+                listItems: [
+                    { key: 'text', label: 'Text' },
+                    { key: 'mood', label: 'Mood' },
+                ],
+            },
+        ],
+    },
+    pictureObjectRecognition: {
+        fields: [
+            { key: 'label_count', label: 'Label Count', format: 'number' },
+            { key: 'labels', label: 'Labels', description: 'Short labels for the objects and scenes found in the image.' },
+        ],
+    },
+    pictureTextRecognition: {
+        fields: [
+            { key: 'text', label: 'Text', description: 'All recognized lines joined with line breaks.' },
+            { key: 'line_count', label: 'Line Count', format: 'number' },
+            { key: 'lines', label: 'Lines' },
+        ],
+    },
+    translateText: {
+        fields: [
+            { key: 'translation', label: 'Translation' },
+            { key: 'target_language', label: 'Target Language', description: 'Two-letter ISO 639-1 code.' },
+        ],
+    },
 } satisfies Record<string, OutputSchema>;
 
 function vatValidationFields(): OutputSchema['fields'] {

@@ -5,6 +5,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
+import FormData from 'form-data';
 
 const BASE_URL = 'https://app.asana.com/api/1.0';
 const DEFAULT_LIMIT = 50;
@@ -12,6 +13,7 @@ const MAX_LIMIT = 100;
 const MAX_TAG_PAGES = 20;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-](\d{2}):(\d{2}))$/i;
+const MAX_PRECISION = 6;
 const MAX_ERROR_BODY_LENGTH = 300;
 const GID_PATTERN = /^\d+$/;
 
@@ -88,6 +90,7 @@ async function asanaApi<T>({
   path,
   query,
   data,
+  form,
   operation,
 }: AsanaRequestParams): Promise<T> {
   try {
@@ -99,7 +102,7 @@ async function asanaApi<T>({
         token: auth.access_token,
       },
       queryParams: toQueryParams(query),
-      body: data === undefined ? undefined : { data },
+      body: form ?? (data === undefined ? undefined : { data }),
     });
     return response.body;
   } catch (error) {
@@ -307,6 +310,13 @@ function isInRange({ value, max }: { value: string | undefined; max: number }): 
   return value === undefined || Number(value) <= max;
 }
 
+function assertPrecision(value: number | undefined | null): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > MAX_PRECISION) {
+    throw new Error(`Decimal Places must be a whole number from 0 to ${MAX_PRECISION}, got ${value}.`);
+  }
+  return value;
+}
+
 function assertDate({ value, field }: { value: string; field: string }): string {
   const trimmed = value.trim();
   if (!isCalendarDate(trimmed)) {
@@ -359,6 +369,59 @@ function assertNotEmpty({ patch, fields }: { patch: Record<string, unknown>; fie
 
 function pathSegment(value: string): string {
   return encodeURIComponent(value.trim());
+}
+
+function toGidValuePairs({
+  value,
+  field,
+}: {
+  value: unknown[] | undefined | null;
+  field: string;
+}): { gid: string; value: string }[] {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  return value.map((entry, index) => {
+    const gid = readStringField({ entry, key: 'gid' });
+    const pairValue = readStringField({ entry, key: 'value' });
+    if (gid === undefined || pairValue === undefined) {
+      throw new Error(`${field} row ${index + 1} needs both a GID and a value.`);
+    }
+    return { gid, value: pairValue };
+  });
+}
+
+function buildAllocationEffort({
+  type,
+  value,
+}: {
+  type: string | undefined | null;
+  value: number | undefined | null;
+}): { type: string; value: number } | undefined {
+  const hasType = typeof type === 'string' && type !== '';
+  const hasNumber = typeof value === 'number';
+  if (hasType !== hasNumber) {
+    throw new Error('Set Effort Unit and Effort Value together, or leave both empty.');
+  }
+  if (typeof type !== 'string' || typeof value !== 'number') {
+    return undefined;
+  }
+  if (value < 0) {
+    throw new Error(`Effort Value must not be negative, got ${value}.`);
+  }
+  return { type, value };
+}
+
+function readStringField({ entry, key }: { entry: unknown; key: string }): string | undefined {
+  if (typeof entry !== 'object' || entry === null || !(key in entry)) {
+    return undefined;
+  }
+  const raw: unknown = Reflect.get(entry, key);
+  if (typeof raw !== 'string' && typeof raw !== 'number') {
+    return undefined;
+  }
+  const trimmed = String(raw).trim();
+  return trimmed === '' ? undefined : trimmed;
 }
 
 function optionalBooleanProp({
@@ -430,8 +493,14 @@ export const asanaUtils = {
   assertDateTime,
   assertNotBoth,
   assertNotEmpty,
+  assertLimit,
   pathSegment,
+  toGidValuePairs,
+  buildAllocationEffort,
+  assertPrecision,
 };
+
+export const ASANA_MAX_PRECISION = MAX_PRECISION;
 
 export const ASANA_COLOR_OPTIONS = [
   'dark-pink',
@@ -454,6 +523,31 @@ export const ASANA_COLOR_OPTIONS = [
   'light-warm-gray',
 ].map((color) => ({ label: color, value: color }));
 
+export const ASANA_TEAM_VISIBILITY_OPTIONS = [
+  { label: 'Public to the organization', value: 'public' },
+  { label: 'Membership by request', value: 'request_to_join' },
+  { label: 'Private (secret)', value: 'secret' },
+];
+
+export const ASANA_CUSTOM_FIELD_FORMAT_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Currency', value: 'currency' },
+  { label: 'Percentage', value: 'percentage' },
+  { label: 'Custom label', value: 'custom' },
+  { label: 'Duration', value: 'duration' },
+  { label: 'Identifier', value: 'identifier' },
+];
+
+export const ASANA_CUSTOM_LABEL_POSITION_OPTIONS = [
+  { label: 'Before the value (prefix)', value: 'prefix' },
+  { label: 'After the value (suffix)', value: 'suffix' },
+];
+
+export const ASANA_EFFORT_TYPE_OPTIONS = [
+  { label: 'Hours', value: 'hours' },
+  { label: 'Percent of time', value: 'percent' },
+];
+
 export const ASANA_FIELDS = {
   task: 'name,resource_subtype,notes,completed,completed_at,created_at,modified_at,due_on,due_at,start_on,start_at,assignee.name,assignee.email,parent.name,projects.name,memberships.project.name,memberships.section.name,tags.name,followers.name,workspace.name,num_subtasks,permalink_url',
   taskList: 'name,resource_subtype,completed,completed_at,created_at,modified_at,due_on,due_at,start_on,assignee.name,parent.name,permalink_url',
@@ -470,7 +564,28 @@ export const ASANA_FIELDS = {
   user: 'name,email,workspaces.name',
   workspace: 'name,is_organization,email_domains',
   team: 'name,description,visibility,organization.name,permalink_url',
+  teamFull: 'name,description,html_description,visibility,endorsed,organization.name,permalink_url',
+  userList: 'name,email',
+  workspaceMembership: 'user.name,workspace.name,is_active,is_admin,is_guest,is_view_only,created_at',
+  teamMembership: 'user.name,team.name,is_admin,is_guest,is_limited_access',
+  attachment: 'name,resource_subtype,created_at,size,host,download_url,permanent_url,view_url,connected_to_app,parent.name,parent.resource_subtype',
+  accessRequest: 'approval_status,message,requester.name,target',
   taskCounts: 'num_tasks,num_completed_tasks,num_incomplete_tasks,num_milestones,num_completed_milestones,num_incomplete_milestones',
+  customField: 'name,resource_subtype,description,format,precision,currency_code,custom_label,custom_label_position,has_notifications_enabled,is_global_to_workspace,is_formula_field,is_value_read_only,input_restrictions,id_prefix,privacy_setting,default_access_level,asana_created_field,created_by.name,enum_options.name,enum_options.enabled,enum_options.color',
+  customFieldList: 'name,resource_subtype,description,format,precision,is_global_to_workspace,enum_options.name,enum_options.enabled,enum_options.color',
+  enumOption: 'name,enabled,color',
+  projectTemplate: 'name,description,color,public,owner,team.name,requested_dates.name,requested_dates.description,requested_roles.name',
+  taskTemplate: 'name,created_at,created_by,project',
+  portfolio: 'name,archived,color,created_at,created_by.name,owner.name,workspace.name,start_on,due_on,privacy_setting,default_access_level,current_status_update.title,members.name,permalink_url',
+  portfolioList: 'name,archived,color,created_at,owner.name,start_on,due_on,privacy_setting,permalink_url',
+  goal: 'name,notes,html_notes,status,start_on,due_on,is_workspace_level,privacy_setting,owner.name,team.name,workspace.name,time_period.display_name,time_period.start_on,time_period.end_on,metric.resource_subtype,metric.unit,metric.precision,metric.currency_code,metric.initial_number_value,metric.target_number_value,metric.current_number_value,metric.current_display_value,metric.progress_source,current_status_update.title,followers.name,num_likes',
+  goalList: 'name,status,start_on,due_on,is_workspace_level,owner.name,team.name,time_period.display_name',
+  goalRelationship: 'resource_subtype,contribution_weight,supported_goal.name,supporting_resource.name,supporting_resource.resource_subtype',
+  timePeriod: 'display_name,period,start_on,end_on,parent.display_name',
+  allocation: 'resource_subtype,start_date,end_date,effort.type,effort.value,assignee.name,parent.name,created_by.name',
+  timeTrackingEntry: 'duration_minutes,entered_on,created_by.name,attributable_to.name,categories.name',
+  customType: 'name,asana_created_type_identifier,status_options.name,status_options.color,status_options.enabled,status_options.completion_state',
+  userInWorkspace: 'name,email,custom_fields.name,custom_fields.display_value',
 };
 
 export type AsanaAuth = {
@@ -486,6 +601,7 @@ export type AsanaRequestParams = {
   operation: string;
   query?: AsanaQuery;
   data?: Record<string, unknown>;
+  form?: FormData;
 };
 
 export type AsanaListParams = {

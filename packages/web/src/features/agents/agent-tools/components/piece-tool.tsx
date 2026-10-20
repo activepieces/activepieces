@@ -84,7 +84,7 @@ export const AgentPieceToolComponent = ({
           <Skeleton className="h-4 w-32" />
         </div>
 
-        <Skeleton className="h-4 w-4 rounded-sm" />
+        <Skeleton className="h-4 w-4 rounded-md" />
       </div>
     );
   }

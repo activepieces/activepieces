@@ -16,7 +16,7 @@
         { "type": "neverCutOff" },
         { "type": "neverCalledTool", "toolName": "ap_run_code" },
         { "type": "neverCalledTool", "toolName": "ap_show_showcase" },
-        { "type": "reachedToolWithin", "toolName": "ap_set_phase", "n": 10 }
+        { "type": "reachedToolWithin", "toolName": "ap_set_build_plan", "n": 12 }
     ],
     "judge": [
         {

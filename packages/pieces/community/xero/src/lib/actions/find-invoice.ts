@@ -7,6 +7,8 @@ import {
 } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
 import { props } from '../common/props';
+import { xeroInput } from '../common/client';
+import { xeroOutputSchemas } from '../output-schemas';
 
 export const xeroFindInvoice = createAction({
   auth: xeroAuth,
@@ -20,6 +22,7 @@ export const xeroFindInvoice = createAction({
       'Look up Xero invoices by exact invoice number, exact reference, or a fuzzy search term, optionally filtered to sales invoices (ACCREC) or bills (ACCPAY). Read-only and idempotent; use it to resolve an invoice ID before recording a payment, sending, or allocating a credit note. The search-term mode matches invoice number or reference more loosely than the exact modes.',
     idempotent: true,
   },
+  outputSchema: xeroOutputSchemas.invoiceEnvelope,
   props: {
     tenant_id: props.tenant_id,
     search_by: Property.StaticDropdown({
@@ -73,9 +76,9 @@ export const xeroFindInvoice = createAction({
     }
 
     if (search_by === 'INVOICE_NUMBER') {
-      whereClauses.push(`InvoiceNumber="${value.replace(/"/g, '\\"')}"`);
+      whereClauses.push(`InvoiceNumber=${xeroInput.whereString({ value })}`);
     } else if (search_by === 'REFERENCE') {
-      whereClauses.push(`Reference="${value.replace(/"/g, '\\"')}"`);
+      whereClauses.push(`Reference=${xeroInput.whereString({ value })}`);
     } else if (search_by === 'SEARCH_TERM') {
       params.push(`SearchTerm=${encodeURIComponent(value)}`);
     }

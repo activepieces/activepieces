@@ -11,7 +11,7 @@ export const customOdooApiCall = createAction({
   classification: 'WRITE',
   displayName: 'Custom API Call',
   description: 'Make a custom XML-RPC API call to Odoo',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Invokes any Odoo model method over XML-RPC (e.g. search, read, search_read, create, write, unlink) with arbitrary positional and keyword arguments. Use as an escape hatch when no dedicated Odoo action covers the operation. Idempotency depends on the method called: reads and searches are safe to repeat, while create, write, and unlink are not.', idempotent: false },
   auth: odooAuth,
   props: {

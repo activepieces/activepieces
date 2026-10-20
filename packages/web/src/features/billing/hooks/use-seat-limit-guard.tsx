@@ -16,8 +16,8 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 
 import { OutOfSeatsDialog } from '../components/feature-usage/out-of-seats-dialog';
-import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 
+import { billingDialogHooks } from './billing-dialog-hooks';
 import { billingQueries } from './billing-hooks';
 
 export const useSeatLimitGuard = () => {
@@ -29,7 +29,7 @@ export const useSeatLimitGuard = () => {
     platform.id,
     isPlatformAdmin,
   );
-  const { openDialog } = useManagePlanDialogStore();
+  const { openDialog } = billingDialogHooks.useManagePlanDialogStore();
   const seatFeature = info?.seatsFeature;
 
   const openSeatLimit = () => {

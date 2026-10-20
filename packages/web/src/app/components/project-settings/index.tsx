@@ -24,6 +24,7 @@ import { ProjectAvatar } from '../project-avatar';
 
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
+import { projectSettingsFormDefaults } from './form-defaults';
 import { GeneralSettings, FormValues } from './general';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
@@ -34,17 +35,12 @@ interface ProjectSettingsDialogProps {
   open: boolean;
   onClose: () => void;
   initialTab?: TabId;
-  initialValues?: {
-    projectName?: string;
-    externalId?: string;
-  };
 }
 
 export function ProjectSettingsDialog({
   open,
   onClose,
   initialTab = 'general',
-  initialValues,
 }: ProjectSettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const { checkAccess } = useAuthorization();
@@ -59,14 +55,7 @@ export function ProjectSettingsDialog({
   const platformRole = userHooks.getCurrentUserPlatformRole();
 
   const form = useForm<FormValues>({
-    defaultValues: {
-      projectName: initialValues?.projectName,
-      icon: project.icon,
-      externalId: initialValues?.externalId,
-      maxConcurrentJobs: project.maxConcurrentJobs,
-      activeFlowsLimit: project.plan?.activeFlowsLimit ?? null,
-      sensitive: project.sensitive ?? false,
-    },
+    defaultValues: projectSettingsFormDefaults(project),
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
@@ -97,13 +86,8 @@ export function ProjectSettingsDialog({
 
   useEffect(() => {
     const dialogJustOpened = open && !previousOpenRef.current;
-    if (dialogJustOpened && !isNil(project)) {
-      form.reset({
-        ...initialValues,
-        icon: project.icon,
-        maxConcurrentJobs: project.maxConcurrentJobs,
-        activeFlowsLimit: project.plan?.activeFlowsLimit ?? null,
-      });
+    if (dialogJustOpened) {
+      form.reset(projectSettingsFormDefaults(project));
       setActiveTab(initialTab);
     }
     previousOpenRef.current = open;
@@ -170,7 +154,7 @@ export function ProjectSettingsDialog({
     const hasUnsavedChanges = activeTab === 'general' && form.formState.isDirty;
     return (
       <div className="flex items-center gap-2">
-        <span className="text-lg font-bold">
+        <span className="text-lg font-semibold">
           {tabs.find((tab) => tab.id === activeTab)?.label}
         </span>
         {hasUnsavedChanges && (
@@ -206,10 +190,10 @@ export function ProjectSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-full max-h-[95vh] rounded-sm flex flex-col p-0">
+      <DialogContent className="max-w-5xl w-full max-h-[95vh] flex flex-col p-0">
         <div className="flex h-[700px]">
           <div className="w-[238px]">
-            <nav className="space-y-1 bg-gray-3 rounded-sm rounded-r-none h-full flex flex-col rounded-l-md">
+            <nav className="space-y-1 bg-gray-3 rounded-md rounded-r-none h-full flex flex-col rounded-l-md">
               <ApProjectDisplay
                 title={form.watch('projectName') ?? project.displayName}
                 icon={form.watch('icon') ?? project.icon}
@@ -223,7 +207,7 @@ export function ProjectSettingsDialog({
                   <div
                     key={tab.id}
                     className={cn(
-                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-gray-4',
+                      'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-gray-4',
                       {
                         'bg-gray-4': activeTab === tab.id,
                       },

@@ -7,6 +7,7 @@ import {
     AgentAuditEvent,
     ApplicationEvent,
     ApplicationEventName,
+    AuditLogRetentionUpdatedEvent,
     AuthenticationEvent,
     ConnectionEvent,
     FlowActivatedEvent,
@@ -289,6 +290,18 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                         created: isoNow,
                         updated: isoNow,
                     },
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED: {
+            const mock: AuditLogRetentionUpdatedEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.AUDIT_LOG_RETENTION_UPDATED,
+                data: {
+                    previousRetentionDays: 365,
+                    retentionDays: 90,
+                    instanceLimitDays: null,
                 },
             }
             return mock

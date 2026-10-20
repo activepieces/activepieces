@@ -16,6 +16,15 @@ export const stripeCreateInvoice = createAction({
       'Creates a draft invoice in Stripe for an existing customer in the given currency. Use to bill a customer for pending invoice items. Requires a valid Stripe customer ID; not idempotent, as each call creates a separate invoice.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'invoice',
+      display: 'section',
+      label: 'Invoice',
+      icon: 'file',
+      props: ['customer_id', 'currency', 'description'],
+    },
+  ],
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

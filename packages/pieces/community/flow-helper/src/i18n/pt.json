@@ -5,5 +5,14 @@
   "Fails the flow execution with a custom message.": "Falha na execução do fluxo com uma mensagem personalizada.",
   "Stops the flow immediately this step is reached.": "Interrompe o fluxo imediatamente que esta etapa é atingida.",
   "Error Message": "Mensagem de Erro",
-  "The error message to show when the flow fails.": "Mensagem de erro a ser exibida quando o fluxo falhar."
+  "The error message to show when the flow fails.": "Mensagem de erro a ser exibida quando o fluxo falhar.",
+  "Stop or fail a running flow, or get a link to the current run.": "Pare ou faça falhar um fluxo em execução, ou obtenha um link para a execução atual.",
+  "Gets this run's ID and a link to open it.": "Obtém o ID desta execução e um link para abri-la.",
+  "Fails this step with your error message.": "Faz esta etapa falhar com a sua mensagem de erro.",
+  "Ends the run at this step and marks it as succeeded.": "Encerra a execução nesta etapa e a marca como bem-sucedida.",
+  "Markdown": "Markdown",
+  "Outputs this run's ID and a link that opens the run.": "Retorna o ID desta execução e um link que abre a execução.",
+  "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.": "A execução falha aqui e as etapas seguintes não são executadas. Se Add Error Handler estiver ativado, apenas esta etapa falha. O ramo Falha é executado e o fluxo continua.",
+  "Shown as the step's error. Can include data from earlier steps.": "Exibida como o erro da etapa. Pode incluir dados de etapas anteriores.",
+  "The run ends here and is marked as succeeded. Steps after this one do not run.": "A execução termina aqui e é marcada como bem-sucedida. As etapas seguintes não são executadas."
 }

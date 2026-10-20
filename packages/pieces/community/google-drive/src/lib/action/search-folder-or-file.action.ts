@@ -13,6 +13,22 @@ export const googleDriveSearchFolder = createAction({
   description: 'Find files or folders by name, content or type.',
   audience: 'human',
   aiMetadata: { description: 'Searches Google Drive for files or folders matching a name, full-text, or MIME-type query, optionally scoped to a parent folder and filtered to files or folders only. Use to resolve a file/folder ID from a human-readable name before acting on it. Read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search for',
+      icon: 'type',
+      props: ['queryTerm', 'operator', 'query'],
+    },
+    {
+      key: 'scope',
+      display: 'section',
+      label: 'Limit results',
+      icon: 'sliders',
+      props: ['type', 'parentFolder', 'include_team_drives'],
+    },
+  ],
   props: {
     queryTerm: Property.StaticDropdown({
       displayName: 'Search By',
@@ -31,10 +47,11 @@ export const googleDriveSearchFolder = createAction({
       displayName: 'Match',
       description: 'Contains finds partial matches; Equals needs the exact value.',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Contains', value: 'contains' },
-          { label: 'Equals', value: '=' },
+          { label: 'Contains', value: 'contains', description: 'Partial match', icon: 'filter' },
+          { label: 'Equals', value: '=', description: 'Exact match', icon: 'tag' },
         ],
       },
       defaultValue: 'contains',

@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
@@ -13,7 +17,7 @@ export const wooCreateCustomer = createAction({
   name: 'Create Customer',
   classification: 'WRITE',
   displayName: 'Create Customer',
-  description: 'Create a Customer',
+  description: 'Create a customer account in your store',
   audience: 'human',
   aiMetadata: {
     description:
@@ -22,82 +26,138 @@ export const wooCreateCustomer = createAction({
   },
   auth: wooAuth,
   outputSchema: createCustomerOutputSchema,
+  propertyGroups: [
+    {
+      key: 'customer',
+      display: 'section',
+      label: 'Customer',
+      icon: 'user',
+      props: ['email', 'first_name', 'last_name'],
+    },
+    {
+      key: 'login',
+      display: 'section',
+      label: 'Sign-in',
+      icon: 'sliders',
+      props: ['login_info', 'username', 'password'],
+    },
+    {
+      key: 'address',
+      display: 'section',
+      label: 'Address',
+      icon: 'location',
+      props: [
+        'address_info',
+        'street_address',
+        'city',
+        'state',
+        'postcode',
+        'country',
+        'phone',
+      ],
+    },
+  ],
   props: {
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Enter the email',
+      description: 'Used to sign in and for order emails.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
     first_name: Property.ShortText({
-      displayName: 'First name',
-      description: 'Enter the first name',
-      required: true,
+      displayName: 'First Name',
+      placeholder: 'Jane',
+      width: 'half',
+      required: false,
     }),
     last_name: Property.ShortText({
-      displayName: 'Last name',
-      description: 'Enter the last name',
-      required: true,
+      displayName: 'Last Name',
+      placeholder: 'Doe',
+      width: 'half',
+      required: false,
+    }),
+    login_info: Property.MarkDown({
+      value:
+        'Leave both empty to let WooCommerce create them, if your store allows it.',
+      variant: MarkdownVariant.INFO,
     }),
     username: Property.ShortText({
       displayName: 'Username',
-      description: 'Enter the username',
-      required: true,
+      width: 'half',
+      required: false,
     }),
     password: Property.ShortText({
       displayName: 'Password',
-      description: 'Enter the password',
-      required: true,
+      width: 'half',
+      required: false,
+    }),
+    address_info: Property.MarkDown({
+      value:
+        'This address and phone are saved as both billing and shipping details.',
+      variant: MarkdownVariant.INFO,
     }),
     street_address: Property.ShortText({
-      displayName: 'Address',
-      description: 'Enter the street address',
-      required: true,
+      displayName: 'Street Address',
+      placeholder: '1 Main Street',
+      required: false,
     }),
     city: Property.ShortText({
       displayName: 'City',
-      description: 'Enter the city',
-      required: true,
+      width: 'half',
+      required: false,
     }),
     state: Property.ShortText({
       displayName: 'State',
-      description: 'Enter the state',
-      required: true,
+      description: 'State or county code.',
+      placeholder: 'CA',
+      width: 'half',
+      required: false,
     }),
     postcode: Property.ShortText({
       displayName: 'Postcode',
-      description: 'Enter the postcode',
-      required: true,
+      width: 'half',
+      required: false,
     }),
     country: Property.ShortText({
       displayName: 'Country',
-      description: 'Enter the country',
-      required: true,
+      description: 'Two-letter country code, e.g. GB',
+      placeholder: 'GB',
+      width: 'half',
+      required: false,
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
-      description: 'Enter the phone',
-      required: true,
+      placeholder: '+1 555 123 4567',
+      required: false,
     }),
   },
   async run(configValue) {
     const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
 
-    const email = configValue.propsValue['email'];
-    const first_name = configValue.propsValue['first_name'];
-    const last_name = configValue.propsValue['last_name'];
-    const username = configValue.propsValue['username'];
-    const password = configValue.propsValue['password'];
-
-    const billing = {
+    const {
+      email,
       first_name,
       last_name,
-      address_1: configValue.propsValue['street_address'],
-      city: configValue.propsValue['city'],
-      state: configValue.propsValue['state'],
-      postcode: configValue.propsValue['postcode'],
-      country: configValue.propsValue['country'],
+      username,
+      password,
+      street_address,
+      city,
+      state,
+      postcode,
+      country,
+      phone,
+    } = configValue.propsValue;
+
+    const billing = {
+      ...(isFilled(first_name) ? { first_name } : {}),
+      ...(isFilled(last_name) ? { last_name } : {}),
+      ...(isFilled(street_address) ? { address_1: street_address } : {}),
+      ...(isFilled(city) ? { city } : {}),
+      ...(isFilled(state) ? { state } : {}),
+      ...(isFilled(postcode) ? { postcode } : {}),
+      ...(isFilled(country) ? { country } : {}),
       email,
-      phone: configValue.propsValue['phone'],
+      ...(isFilled(phone) ? { phone } : {}),
     };
 
     const request: HttpRequest = {
@@ -110,10 +170,10 @@ export const wooCreateCustomer = createAction({
       },
       body: {
         email,
-        first_name,
-        last_name,
-        username,
-        password,
+        ...(isFilled(first_name) ? { first_name } : {}),
+        ...(isFilled(last_name) ? { last_name } : {}),
+        ...(isFilled(username) ? { username } : {}),
+        ...(isFilled(password) ? { password } : {}),
         billing,
         shipping: billing,
       },
@@ -124,3 +184,7 @@ export const wooCreateCustomer = createAction({
     return res.body;
   },
 });
+
+function isFilled(value: string | null | undefined): value is string {
+  return value !== undefined && value !== null && value.trim() !== '';
+}

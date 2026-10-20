@@ -46,7 +46,7 @@
   "Fetch one calendar's metadata (summary, time zone, description, location) by its calendar ID.": "Fetch one calendar's metadata (summary, time zone, description, location) by its calendar ID.",
   "Fetch the Google Calendar color palette mapping colorId values to their hex background/foreground colors.": "Fetch the Google Calendar color palette mapping colorId values to their hex background/foreground colors.",
   "List the user's Google Calendar account settings (time zone, week start, date/time format, and more).": "List the user's Google Calendar account settings (time zone, week start, date/time format, and more).",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Calendar": "カレンダー",
   "Event ID": "イベントID",
   "Attendees": "参加者",

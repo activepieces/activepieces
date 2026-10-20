@@ -22,6 +22,9 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
             scope: { type: 'project', projectId: input.projectId },
             ...spreadIfDefined('configId', input.providerConfigId),
         })
+        if (!isNil(input.modelId)) {
+            aiProviderService(log).assertKeyAllowsModel({ key: config, modelId: input.modelId })
+        }
         return {
             ...config,
             providerConfigId: config.configId,
@@ -30,7 +33,7 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async resolveAiModelCandidates(input: ResolveAiModelCandidatesRequest): Promise<ResolveAiModelCandidatesResponse> {
         await assertProjectBelongsToPlatform({ ...input, log })
-        return aiModelCandidates(log).resolve({ platformId: input.platformId, tierId: input.modelTierId })
+        return aiModelCandidates(log).resolve({ platformId: input.platformId, tierId: input.modelTierId, scope: { type: 'project', projectId: input.projectId } })
     },
 
     async reportAiKeyOutcome(input: ReportAiKeyOutcomeRequest): Promise<void> {

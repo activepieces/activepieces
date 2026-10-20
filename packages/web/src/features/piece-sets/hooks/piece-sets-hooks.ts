@@ -22,8 +22,14 @@ import { pieceSetsApi } from '../api/piece-sets-api';
 
 export const pieceSetKeys = {
   all: ['piece-sets'] as const,
-  page: (cursor: string | undefined, limit: number | undefined) =>
-    ['piece-sets', 'page', cursor ?? null, limit ?? null] as const,
+  page: ({ cursor, limit, name }: PieceSetsPageParams) =>
+    [
+      'piece-sets',
+      'page',
+      cursor ?? null,
+      limit ?? null,
+      name ?? null,
+    ] as const,
   one: (id: string) => ['piece-sets', id] as const,
   project: (projectId: string) => ['piece-sets', 'project', projectId] as const,
   update: ['piece-sets', 'update'] as const,
@@ -37,14 +43,11 @@ export const pieceSetQueryOptions = {
 };
 
 export const pieceSetQueries = {
-  usePieceSets: ({
-    cursor,
-    limit,
-  }: { cursor?: string; limit?: number } = {}) => {
+  usePieceSets: ({ cursor, limit, name }: PieceSetsPageParams = {}) => {
     const { platform } = platformHooks.useCurrentPlatform();
     return useQuery({
-      queryKey: pieceSetKeys.page(cursor, limit),
-      queryFn: () => pieceSetsApi.list({ cursor, limit }),
+      queryKey: pieceSetKeys.page({ cursor, limit, name }),
+      queryFn: () => pieceSetsApi.list({ cursor, limit, name }),
       enabled: platform.plan.managePiecesEnabled,
     });
   },
@@ -218,3 +221,9 @@ const UpdatePieceSetVariables = z.object({
   id: z.string(),
   request: UpdatePieceSetRequestBody,
 });
+
+type PieceSetsPageParams = {
+  cursor?: string;
+  limit?: number;
+  name?: string;
+};

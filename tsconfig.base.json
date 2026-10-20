@@ -75,6 +75,9 @@
       "@activepieces/piece-airtop": [
         "packages/pieces/community/airtop/src/index.ts"
       ],
+      "@activepieces/piece-amazon-lambda": [
+        "packages/pieces/community/amazon-lambda/src/index.ts"
+      ],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
@@ -225,6 +228,12 @@
       ],
       "@activepieces/piece-google-ads": [
         "packages/pieces/community/google-ads/src/index.ts"
+      ],
+      "@activepieces/piece-google-translate": [
+        "packages/pieces/community/google-translate/src/index.ts"
+      ],
+      "@activepieces/piece-google-document-ai": [
+        "packages/pieces/community/google-document-ai/src/index.ts"
       ],
       "@activepieces/piece-rounded-studio": [
         "packages/pieces/community/rounded-studio/src/index.ts"
@@ -720,6 +729,9 @@
       ],
       "@activepieces/piece-json": [
         "packages/pieces/community/json/src/index.ts"
+      ],
+      "@activepieces/piece-jumpcloud": [
+        "packages/pieces/community/jumpcloud/src/index.ts"
       ],
       "@activepieces/piece-kallabot-ai": [
         "packages/pieces/community/kallabot-ai/src/index.ts"
