@@ -17,6 +17,8 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 
 - **Never compare against a period that isn't fully tracked.** If tracking started after the previous period began, every change % (hero, cards, lists) is hidden and the hero says so; a partial comparison would show fake growth like +400%. If tracking started inside the current period, the chart starts at that date and a note says "covers 25 of 90 days".
 
+- **Every bar says what it is a share of.** Overview bars are a share of all AI spend in the period; detail-page bars are a share of that item's spend. Each bar shows its % and a tooltip that names the whole.
+
 ## Data hierarchy
 - **Root: the platform**, which is the bill. Scope (Production / Testing / All) and period filter the whole page; they are not levels.
 - **Tree 1, where the money is spent:** platform → project → flows · agents · chat by user. Project is the parent because limits, project admins and ownership live there.
