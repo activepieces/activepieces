@@ -4,6 +4,20 @@ import { mindeeFiles } from '../src/lib/common/file';
 import { mindeeInference } from '../src/lib/common/inference';
 import { mindeeApi } from '../src/lib/common/api';
 
+const dnsAnswers = vi.hoisted(() => new Map<string, { address: string; family: number }[]>([['example.com', [{ address: '93.184.215.14', family: 4 }]]]));
+
+vi.mock('dns', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('dns')>();
+  const lookup = (hostname: string, _options: unknown, callback: (error: NodeJS.ErrnoException | null, addresses: { address: string; family: number }[]) => void) => {
+    const answer = dnsAnswers.get(hostname);
+    if (answer === undefined) {
+      throw new Error(`Unexpected DNS lookup in tests: ${hostname}`);
+    }
+    process.nextTick(() => callback(null, answer));
+  };
+  return { ...actual, lookup, default: { ...actual, lookup } };
+});
+
 const MODEL = '21b8675e-4c68-4d8d-abb6-ef34c453b0de';
 const JOB = '11111111-2222-4333-8444-555555555555';
 const INF = '99999999-2222-4333-8444-555555555555';
@@ -201,6 +215,20 @@ describe('runInference', () => {
       mindeeInference.runInference({ apiKey: 'k', product: 'crop', modelId: 'invoice', source: { type: 'url', url: 'https://x.com/a' }, options: {} }),
     ).rejects.toThrow('List Models');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses a public-looking name that resolves to a private address', async () => {
+    dnsAnswers.set('internal.example.org', [{ address: '10.0.0.7', family: 4 }]);
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(mindeeFiles.downloadFile({ url: new URL('https://internal.example.org/a.pdf'), label: 'File URL' })).rejects.toThrow(/private network/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('allows a name that resolves to a public address', async () => {
+    dnsAnswers.set('files.example.org', [{ address: '93.184.215.14', family: 4 }]);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('ok', { status: 200 })));
+    await expect(mindeeFiles.downloadFile({ url: new URL('https://files.example.org/a.pdf'), label: 'File URL' })).resolves.toMatchObject({ filename: 'a.pdf' });
   });
 
   it('rejects non-https file URLs', async () => {
