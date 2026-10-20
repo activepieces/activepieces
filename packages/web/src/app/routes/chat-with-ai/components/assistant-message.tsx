@@ -30,8 +30,8 @@ import {
   OutcomeCardBlock,
 } from '../lib/message-blocks';
 import {
-  ConnectionPickerData,
   getTextFromParts,
+  isConnectionPickerData,
   parseAnswerPairs,
   ProjectPickerData,
 } from '../lib/message-parsers';
@@ -53,6 +53,7 @@ import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
 import { ShowcaseCard } from './showcase-card/showcase-card';
 import { ShowcaseTileData } from './showcase-card/showcase-tile';
+import { SubagentGroup } from './subagent-card';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
 const PROSE_CLASSES = 'max-w-none break-words';
@@ -397,6 +398,15 @@ function MessageBlocks({
             }
             return null;
           }
+          case 'tasks':
+            return (
+              <SubagentGroup
+                key={`tasks-${block.tasks[0]?.toolCallId ?? i}`}
+                tasks={block.tasks}
+                toolCallMeta={toolCallMeta}
+                isStreaming={isStreaming}
+              />
+            );
           case 'batch-progress':
             return (
               <div key={`batch-${i}`} className="py-2">
@@ -572,15 +582,18 @@ function DisplayToolCard({
   const data = part.input as Record<string, unknown>;
   const toolName = chatPartUtils.getToolPartName(part);
   const parsedOutput = chatPartUtils.parseToolOutput(part);
+  if (parsedOutput.state === 'error') return null;
   const toolOutput =
     parsedOutput.state === 'success'
       ? (parsedOutput.data as Record<string, unknown>)
       : undefined;
   const toolCallId = chatPartUtils.getToolCallId(part);
+  if (toolOutput?.['notShown'] === true) return null;
 
   switch (toolName) {
     case 'ap_show_connection_required':
     case 'ap_show_connection_picker': {
+      if (!isConnectionPickerData(data)) return null;
       if (!isInteractive && toolOutput?.['dismissed'] === true) return null;
       const selectedLabel =
         typeof toolOutput?.['label'] === 'string'
@@ -588,7 +601,7 @@ function DisplayToolCard({
           : undefined;
       return (
         <ConnectionPickerCard
-          picker={data as unknown as ConnectionPickerData}
+          picker={data}
           onResolve={(payload) => onResolve(toolCallId, payload)}
           isInteractive={isInteractive}
           selectedConnectionLabel={selectedLabel}
@@ -663,7 +676,7 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="max-w-[80%] bg-gray-3 rounded-2xl rounded-br-md px-4 py-3 space-y-3">
+      <div className="max-w-[80%] bg-gray-3 rounded-xl rounded-br-md px-4 py-3 space-y-3">
         {pairs.map((pair, i) => (
           <div key={i} className="space-y-0.5">
             <p className="text-sm font-semibold">

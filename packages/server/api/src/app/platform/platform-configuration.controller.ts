@@ -17,6 +17,8 @@ export const platformConfigurationController: FastifyPluginAsyncZod = async (app
             isProductTelemetryEnabled: request.body.isProductTelemetryEnabled,
             isInfraSetupTelemetryEnabled: request.body.isInfraSetupTelemetryEnabled,
             maxBarrierSignals: request.body.maxBarrierSignals,
+            aiSpecificModelsVisible: request.body.aiSpecificModelsVisible,
+            defaultChatModel: request.body.defaultChatModel,
         })
     })
 }

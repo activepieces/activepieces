@@ -33,9 +33,9 @@ export const AgentActionsMenu = ({ agent }: AgentActionsMenuProps) => {
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-xs"
             aria-label={t('Agent actions')}
-            className="pointer-events-none size-7 rounded-full opacity-0 transition-opacity focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 data-[state=open]:pointer-events-auto data-[state=open]:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100"
+            className="pointer-events-none rounded-full opacity-0 transition-opacity focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 data-[state=open]:pointer-events-auto data-[state=open]:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100"
           >
             <MoreHorizontal size={16} />
           </Button>

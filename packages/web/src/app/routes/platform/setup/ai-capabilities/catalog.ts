@@ -75,6 +75,14 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
       },
     ],
   },
+  {
+    capability: AiToolCapability.EMBEDDINGS,
+    name: t('Embeddings'),
+    description: t(
+      'Index knowledge-base files so agents can search them. Pick one of your AI keys and its embedding model.',
+    ),
+    providers: [],
+  },
 ];
 
 function providerCovers({
@@ -90,6 +98,8 @@ function providerCovers({
       return !isNil(providerCapabilities.webSearch);
     case AiToolCapability.IMAGE_GENERATION:
       return !isNil(providerCapabilities.defaultImageModel);
+    case AiToolCapability.EMBEDDINGS:
+      return providerCapabilities.supportsEmbedding;
     case AiToolCapability.WEB_SCRAPING:
       return false;
   }
@@ -123,6 +133,9 @@ function servesByDefault({
     provider.modelScope !== 'selected' ||
     (!isNil(defaultImageModel) &&
       provider.modelIds.includes(defaultImageModel));
+  if (capability === AiToolCapability.EMBEDDINGS) {
+    return providerCovers({ capability, provider });
+  }
   return (
     eligibleProviders({ capability, providers: [provider] }).length > 0 &&
     defaultModelAllowed

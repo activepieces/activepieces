@@ -1,96 +1,55 @@
 import {
+  AppConnectionValueForAuthProperty,
+  Property,
+  StaticPropsValue,
   TriggerStrategy,
   createTrigger,
-  PiecePropValueSchema,
-  Property,
-  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { xeroAuth } from '../..';
-import {
-  DedupeStrategy,
-  httpClient,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
 import { props } from '../common/props';
+import { xeroPolling } from '../common/polling';
+import { xeroSamples } from '../common/samples';
+import { xeroTriggerState } from '../common/trigger-state';
+import { xeroOutputSchemas } from '../output-schemas';
 
-function parseXeroDateToEpoch(dateVal: unknown): number {
-  if (typeof dateVal === 'string') {
-    if (dateVal.includes('/Date(')) {
-      const match = /\/Date\((\d+)/.exec(dateVal);
-      if (match && match[1]) return Number(match[1]);
-    }
-    const t = Date.parse(dateVal);
-    if (!Number.isNaN(t)) return t;
-  }
-  if (typeof dateVal === 'number') return dateVal;
-  return Date.now();
-}
+const triggerProps = {
+  tenant_id: props.tenant_id,
+  statuses: Property.StaticMultiSelectDropdown({
+    displayName: 'Filter by Status (optional)',
+    required: false,
+    options: {
+      options: [
+        { label: 'DRAFT', value: 'DRAFT' },
+        { label: 'SENT', value: 'SENT' },
+        { label: 'ACCEPTED', value: 'ACCEPTED' },
+        { label: 'DECLINED', value: 'DECLINED' },
+        { label: 'INVOICED', value: 'INVOICED' },
+        { label: 'DELETED', value: 'DELETED' },
+      ],
+    },
+  }),
+  contact_id: props.contact_dropdown(false),
+  quote_number: Property.ShortText({ displayName: 'Quote Number (partial match)', required: false }),
+  date_from: Property.ShortText({ displayName: 'Date From (YYYY-MM-DD)', required: false }),
+  date_to: Property.ShortText({ displayName: 'Date To (YYYY-MM-DD)', required: false }),
+  expiry_date_from: Property.ShortText({ displayName: 'Expiry Date From (YYYY-MM-DD)', required: false }),
+  expiry_date_to: Property.ShortText({ displayName: 'Expiry Date To (YYYY-MM-DD)', required: false }),
+  page_size: Property.Number({ displayName: 'Page Size (1-1000)', required: false }),
+};
 
-const polling: Polling<
-AppConnectionValueForAuthProperty<typeof xeroAuth>,
-  Record<string, unknown>
-> = {
+type QuoteProps = StaticPropsValue<typeof triggerProps>;
+
+const polling: Polling<AppConnectionValueForAuthProperty<typeof xeroAuth>, QuoteProps> = {
   strategy: DedupeStrategy.TIMEBASED,
-  async items({ auth, lastFetchEpochMS, propsValue }) {
-    const { access_token } = auth;
-    const tenantId = propsValue?.['tenant_id'] as string;
-    const pageSize = (propsValue?.['page_size'] as number) || 200;
-    const statuses = (propsValue?.['statuses'] as string[]) || [];
-    const contactId = propsValue?.['contact_id'] as string | undefined;
-    const quoteNumber = propsValue?.['quote_number'] as string | undefined;
-    const dateFrom = propsValue?.['date_from'] as string | undefined;
-    const dateTo = propsValue?.['date_to'] as string | undefined;
-    const expiryFrom = propsValue?.['expiry_date_from'] as string | undefined;
-    const expiryTo = propsValue?.['expiry_date_to'] as string | undefined;
-
-    const results: any[] = [];
-    const maxPages = 5;
-    for (let page = 1; page <= maxPages; page++) {
-      const queryParams: Record<string, string> = {
-        page: String(page),
-        pageSize: String(pageSize),
-        order: 'UpdatedDateUTC ASC',
-      };
-      if (Array.isArray(statuses) && statuses.length === 1) {
-        queryParams['status'] = statuses[0];
-      }
-      if (contactId) queryParams['ContactID'] = contactId;
-      if (quoteNumber) queryParams['QuoteNumber'] = quoteNumber;
-      if (dateFrom) queryParams['DateFrom'] = dateFrom;
-      if (dateTo) queryParams['DateTo'] = dateTo;
-      if (expiryFrom) queryParams['ExpiryDateFrom'] = expiryFrom;
-      if (expiryTo) queryParams['ExpiryDateTo'] = expiryTo;
-
-      const headers: Record<string, string> = {
-        Authorization: `Bearer ${access_token}`,
-        Accept: 'application/json',
-        'Xero-Tenant-Id': tenantId,
-      };
-      if (lastFetchEpochMS > 0) {
-        const ifModified = new Date(lastFetchEpochMS).toISOString().slice(0, 19);
-        headers['If-Modified-Since'] = ifModified;
-      }
-
-      const resp = await httpClient.sendRequest<Record<string, any>>({
-        method: HttpMethod.GET,
-        url: 'https://api.xero.com/api.xro/2.0/Quotes',
-        headers,
-        queryParams,
-      });
-
-      if (resp.status !== 200) break;
-
-      const quotes: any[] = resp.body?.Quotes ?? [];
-      for (const q of quotes) {
-        const epoch = parseXeroDateToEpoch(q.UpdatedDateUTC || q.Date);
-        results.push({ epochMilliSeconds: epoch, data: q });
-      }
-
-      if (quotes.length < pageSize) break;
-    }
-    return results;
+  async items({ auth, propsValue, lastFetchEpochMS }) {
+    const { request, matches } = quoteRequest({ accessToken: auth.access_token, propsValue });
+    const records = await xeroPolling.fetchUpdated({
+      ...request,
+      lastFetchEpochMS,
+      pageSize: xeroPolling.pageSizeOf({ value: propsValue.page_size, fallback: 200, max: 1000 }),
+    });
+    return xeroPolling.toItems({ records, matches });
   },
 };
 
@@ -101,73 +60,66 @@ export const xeroUpdatedQuote = createTrigger({
   displayName: 'Updated Quote',
   description: 'Fires when a quote is created or updated.',
   aiMetadata: {
-    description: 'Fires when a quote is created or updated in the connected Xero organisation. Polls the Xero Quotes endpoint and emits a quote whenever its UpdatedDateUTC advances beyond the last seen value, so it fires on both new quotes and subsequent edits, optionally filtered by status (DRAFT, SENT, ACCEPTED, DECLINED, INVOICED, DELETED), contact, quote number, or date/expiry range. Each item is a full quote record (number, status, contact, line items, totals).',
+    description:
+      'Fires each time a quote is created or edited after the trigger is enabled (whenever its UpdatedDateUTC moves forward), optionally filtered by status, contact, quote number, or date and expiry ranges. Each item is one full quote; use New Quote to fire only once per quote.',
   },
   props: {
-    tenant_id: props.tenant_id,
-    statuses: Property.StaticMultiSelectDropdown({
-      displayName: 'Filter by Status (optional)',
-      required: false,
-      options: {
-        options: [
-          { label: 'DRAFT', value: 'DRAFT' },
-          { label: 'SENT', value: 'SENT' },
-          { label: 'ACCEPTED', value: 'ACCEPTED' },
-          { label: 'DECLINED', value: 'DECLINED' },
-          { label: 'INVOICED', value: 'INVOICED' },
-          { label: 'DELETED', value: 'DELETED' },
-        ],
-      },
-    }),
-    contact_id: props.contact_dropdown(false),
-    quote_number: Property.ShortText({ displayName: 'Quote Number (partial match)', required: false }),
-    date_from: Property.ShortText({ displayName: 'Date From (YYYY-MM-DD)', required: false }),
-    date_to: Property.ShortText({ displayName: 'Date To (YYYY-MM-DD)', required: false }),
-    expiry_date_from: Property.ShortText({ displayName: 'Expiry Date From (YYYY-MM-DD)', required: false }),
-    expiry_date_to: Property.ShortText({ displayName: 'Expiry Date To (YYYY-MM-DD)', required: false }),
-    page_size: Property.Number({ displayName: 'Page Size (1-1000)', required: false }),
+    tenant_id: triggerProps.tenant_id,
+    statuses: triggerProps.statuses,
+    contact_id: triggerProps.contact_id,
+    quote_number: triggerProps.quote_number,
+    date_from: triggerProps.date_from,
+    date_to: triggerProps.date_to,
+    expiry_date_from: triggerProps.expiry_date_from,
+    expiry_date_to: triggerProps.expiry_date_to,
+    page_size: triggerProps.page_size,
   },
   type: TriggerStrategy.POLLING,
-  async onEnable(context: any) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
+  outputSchema: xeroOutputSchemas.quote,
+  sampleData: xeroSamples.quote,
+  async onEnable(context) {
+    await xeroPolling.keepStateOnRepublish({ store: context.store, isRepublish: context.isRepublish, propsValue: context.propsValue });
+    await pollingHelper.onEnable(polling, context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, context);
+  },
+  async test(context) {
+    const { request, matches } = quoteRequest({ accessToken: context.auth.access_token, propsValue: context.propsValue });
+    return (await xeroPolling.fetchRecent(request)).filter(matches);
+  },
+  async run(context) {
+    const items = xeroPolling.records({ items: await pollingHelper.poll(polling, context) });
+    const key = `xero_quote_prev_updated_${context.propsValue.tenant_id}`;
+    const previous = xeroTriggerState.readMap({
+      value: await context.store.get<unknown>(key),
+      isValue: (entry): entry is number => typeof entry === 'number',
     });
-  },
-  async onDisable(context: any) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
+    const next = new Map(Object.entries(previous));
+    const emitted = items.filter((record) => {
+      const id = xeroPolling.idOf({ record, key: 'QuoteID' });
+      if (id === undefined) return false;
+      const updated = xeroPolling.epochOf({ record });
+      if (updated <= (next.get(id) ?? 0)) return false;
+      next.delete(id);
+      next.set(id, updated);
+      return true;
     });
+    await context.store.put(key, xeroTriggerState.boundMap({ map: Object.fromEntries(next) }));
+    return emitted;
   },
-  async test(context: any) {
-    return await pollingHelper.test(polling, context);
-  },
-  async run(context: any) {
-    const items = (await pollingHelper.poll(polling, context)) as any[];
-    const tenantId = context.propsValue['tenant_id'];
-
-    const prevMapKey = `xero_quote_prev_updated_${tenantId}`;
-    const prevMap: Record<string, number> = (await context.store.get(prevMapKey)) || {};
-
-    const results: any[] = [];
-    for (const q of items) {
-      const id = q?.QuoteID as string | undefined;
-      if (!id) continue;
-      const updatedEpoch = parseXeroDateToEpoch(q?.UpdatedDateUTC || q?.Date);
-      const prevEpoch = prevMap[id] || 0;
-      if (updatedEpoch > prevEpoch) {
-        results.push(q);
-        prevMap[id] = updatedEpoch;
-      }
-    }
-
-    await context.store.put(prevMapKey, prevMap);
-    return results;
-  },
-  sampleData: undefined,
 });
 
-
+function quoteRequest({ accessToken, propsValue }: { accessToken: string; propsValue: QuoteProps }) {
+  return xeroPolling.quoteRequest({
+    accessToken,
+    tenantId: propsValue.tenant_id,
+    statuses: propsValue.statuses,
+    contactId: propsValue.contact_id,
+    quoteNumber: propsValue.quote_number,
+    dateFrom: propsValue.date_from,
+    dateTo: propsValue.date_to,
+    expiryDateFrom: propsValue.expiry_date_from,
+    expiryDateTo: propsValue.expiry_date_to,
+  });
+}

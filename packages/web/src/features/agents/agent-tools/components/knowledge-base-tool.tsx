@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import {
   AgentKnowledgeBaseTool,
   AgentTool,
@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { BookOpen, FileText, Table2, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -14,11 +15,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PROVIDER_EMBEDDING_MODELS } from '@/features/agents';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { AgentKnowledgeBaseDialog } from '../knowledge-base-dialog';
+import { useKnowledgeBaseEmbeddingSource } from '../knowledge-base-dialog/knowledge-base-hooks';
 import { useKnowledgeBaseToolDialogStore } from '../stores/knowledge-base-tools';
 
 import { AddKnowledgeBaseDropdown } from './add-knowledge-base-dropdown';
@@ -84,19 +86,61 @@ function KnowledgeBaseToolPills({
   );
 }
 
+export function NoEmbeddingSourceNote({
+  className,
+  isError = false,
+  onRetry,
+}: {
+  className?: string;
+  isError?: boolean;
+  onRetry?: () => void;
+}) {
+  const isAdmin = useIsPlatformAdmin();
+  if (isError) {
+    return (
+      <p className={className}>
+        {t("Couldn't check whether files can be indexed.")}{' '}
+        <button
+          type="button"
+          className="font-medium text-gray-12 underline underline-offset-2"
+          onClick={onRetry}
+        >
+          {t('Retry')}
+        </button>
+      </p>
+    );
+  }
+  return (
+    <p className={className}>
+      {t('No AI key can index files for this project yet.')}{' '}
+      {isAdmin ? (
+        <Link
+          to="/platform/ai/capabilities"
+          className="font-medium text-gray-12 underline underline-offset-2"
+        >
+          {t('Pick an embedding model')}
+        </Link>
+      ) : (
+        t('Ask your admin to set an Embeddings model.')
+      )}
+    </p>
+  );
+}
+
 export const KnowledgeBaseSection = ({
   disabled,
   tools,
   allTools,
   removeTool,
   onToolsUpdate,
-  selectedProvider,
   layout = 'card',
 }: KnowledgeBaseSectionProps) => {
-  const embeddingModel = selectedProvider
-    ? PROVIDER_EMBEDDING_MODELS[selectedProvider]
-    : undefined;
-  const supportsEmbeddings = !!embeddingModel;
+  const {
+    data: embeddingSource,
+    isError: embeddingSourceFailed,
+    refetch: retryEmbeddingSource,
+  } = useKnowledgeBaseEmbeddingSource();
+  const supportsEmbeddings = !isNil(embeddingSource?.provider);
   const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
     ApFlagId.PGVECTOR_AVAILABLE,
   );
@@ -118,7 +162,7 @@ export const KnowledgeBaseSection = ({
           <div
             className={cn(
               'overflow-hidden',
-              asRows ? 'rounded-[10px] border p-3' : 'border rounded-md p-4',
+              asRows ? 'rounded-lg border p-3' : 'border rounded-md p-4',
             )}
           >
             <KnowledgeBaseToolPills
@@ -132,11 +176,11 @@ export const KnowledgeBaseSection = ({
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </div>
             ) : (
-              <p className="text-xs text-gray-11 mt-3">
-                {t(
-                  'The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.',
-                )}
-              </p>
+              <NoEmbeddingSourceNote
+                className="text-xs text-gray-11 mt-3"
+                isError={embeddingSourceFailed}
+                onRetry={() => retryEmbeddingSource().catch(() => undefined)}
+              />
             )}
           </div>
         ) : asRows ? (
@@ -145,11 +189,11 @@ export const KnowledgeBaseSection = ({
               <AddRow label={t('Add knowledge')} disabled={disabled} />
             </AddKnowledgeBaseDropdown>
           ) : (
-            <p className="text-xs leading-4 text-gray-11">
-              {t(
-                'Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.',
-              )}
-            </p>
+            <NoEmbeddingSourceNote
+              className="text-xs leading-4 text-gray-11"
+              isError={embeddingSourceFailed}
+              onRetry={() => retryEmbeddingSource().catch(() => undefined)}
+            />
           )
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-panel px-4 py-8 text-center">
@@ -166,11 +210,11 @@ export const KnowledgeBaseSection = ({
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </>
             ) : (
-              <p className="text-sm text-gray-11">
-                {t(
-                  'Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.',
-                )}
-              </p>
+              <NoEmbeddingSourceNote
+                className="text-sm text-gray-11"
+                isError={embeddingSourceFailed}
+                onRetry={() => retryEmbeddingSource().catch(() => undefined)}
+              />
             )}
           </div>
         )}
@@ -191,5 +235,4 @@ type KnowledgeBaseSectionProps = {
   allTools: AgentTool[];
   removeTool: (toolName: string) => void;
   onToolsUpdate: (tools: AgentTool[]) => void;
-  selectedProvider?: AIProviderName;
 };

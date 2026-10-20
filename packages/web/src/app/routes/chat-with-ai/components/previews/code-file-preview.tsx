@@ -26,14 +26,14 @@ export function CodeFilePreview({
             textToCopy={code}
             withoutTooltip
             variant="ghost"
-            className="h-6 w-6 p-0"
+            size="icon-xs"
           />
           <DownloadButton
             fileName="snippet"
             textToDownload={code}
             extension={previewUtils.languageToExtension(language)}
             variant="ghost"
-            className="h-6 w-6 p-0"
+            size="icon-xs"
           />
         </div>
       </CodeBlockGroup>

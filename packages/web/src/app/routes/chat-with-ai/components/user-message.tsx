@@ -49,7 +49,7 @@ export const UserMessage = memo(function UserMessage({
     >
       <div className="max-w-[80%]">
         <Message className="flex-row-reverse">
-          <div className="bg-gray-3 rounded-2xl rounded-br-md px-2.5 py-1 text-sm">
+          <div className="bg-gray-3 rounded-xl rounded-br-md px-2.5 py-1 text-sm">
             {fileNames.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-1.5">
                 {fileNames.map((name, i) => (

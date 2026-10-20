@@ -269,6 +269,20 @@ export const httpSendRequestAction = createAction({
       icon: 'send',
       props: ['method', 'url', 'headers', 'queryParams'],
     },
+    {
+      key: 'authentication',
+      display: 'section',
+      label: 'Credentials',
+      icon: 'user',
+      props: ['authType', 'authFields'],
+    },
+    {
+      key: 'payload',
+      display: 'section',
+      label: 'Data to send',
+      icon: 'code',
+      props: ['body_type', 'body'],
+    },
   ],
   errorHandlingOptions: {
     continueOnFailure: { hide: true, defaultValue: false },

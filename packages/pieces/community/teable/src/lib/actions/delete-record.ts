@@ -1,6 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { TeableCommon, makeClient } from '../common';
-import { TeableAuth, TeableAuthValue } from '../auth';
+import { TeableCommon } from '../common';
+import { teableClient } from '../common/client';
+import { TeableAuth } from '../auth';
+import { teableOutputSchemas } from '../output-schemas';
 
 export const deleteRecordAction = createAction({
   auth: TeableAuth,
@@ -10,7 +12,8 @@ export const deleteRecordAction = createAction({
   description: 'Deletes a record from a Teable table by its ID.',
   audience: 'both',
   aiMetadata: {
-    description: 'Permanently removes a single record from a Teable table by its record ID. Use when the agent must delete a known row. Effectively idempotent on the end state (the record stays gone), though a repeat call on an already-deleted ID may error.',
+    description:
+      'Permanently removes one record from a Teable table by its record ID. Deleting the same ID again still succeeds and the record stays gone, so a retry is safe.',
     idempotent: true,
   },
   props: {
@@ -18,9 +21,14 @@ export const deleteRecordAction = createAction({
     table_id: TeableCommon.table_id,
     record_id: TeableCommon.record_id,
   },
+  outputSchema: teableOutputSchemas.deleteRecord,
   async run(context) {
     const { table_id, record_id } = context.propsValue;
-    const client = makeClient(context.auth as TeableAuthValue);
-    return await client.deleteRecord(table_id, record_id);
+    await teableClient.deleteRecord({
+      auth: context.auth,
+      tableId: table_id,
+      recordId: record_id,
+    });
+    return { success: true, recordId: record_id };
   },
 });

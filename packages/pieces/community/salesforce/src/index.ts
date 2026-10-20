@@ -5,7 +5,7 @@ import {
 	OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 import { addContactToCampaign } from './lib/action/add-contact-to-campaign';
 import { addFileToRecord } from './lib/action/add-file-to-record';
@@ -138,6 +138,26 @@ export const salesforceAuth = PieceAuth.OAuth2({
 	scope: ['refresh_token', 'full', 'api'],
 	pkce: true,
 	pkceMethod: 'S256',
+	getConnectionIdentifier: async ({ auth }) => {
+		const identityUrl = auth.data['id'];
+		if (typeof identityUrl !== 'string' || !identityUrl.startsWith('https://')) {
+			return undefined;
+		}
+		try {
+			const response = await httpClient.sendRequest<{ email?: string; username?: string }>({
+				method: HttpMethod.GET,
+				url: identityUrl,
+				headers: {
+					Authorization: `Bearer ${auth.access_token}`,
+					Accept: 'application/json',
+				},
+				timeout: 5000,
+			});
+			return response.body.email || response.body.username || undefined;
+		} catch {
+			return undefined;
+		}
+	},
 });
 
 export const salesforce = createPiece({

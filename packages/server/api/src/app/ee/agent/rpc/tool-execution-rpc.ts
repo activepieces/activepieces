@@ -2,24 +2,25 @@ import { isDeepStrictEqual } from 'node:util'
 import { ActivepiecesAiConsumerSource, ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
 import { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, AgentActionOutcome, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FlowActionType, flowStructureUtil } from '@activepieces/shared'
-import { embed } from 'ai'
+import { embed, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentHelpers } from '.././agent-helpers'
 import { executeCrossProjectTool } from '.././tools/agent-tools'
 import { pieceToolRunner } from '.././tools/piece-tool-runner'
+import { aiModelCandidates } from '../../../ai/ai-model-candidates'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { knowledgeBaseService } from '../../../knowledge-base/knowledge-base.service'
 import { extractMcpTriggerInput, resolveRunnableFlow, runFlowAsTool } from '../../../mcp/mcp-server-builder'
 
-import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedRunFor, connectionForConfiguredTool, markTurnAsHavingRead, outcomeOfToolResult, pinConnectionToAgent, recordAgentAction, recordAgentFlowToolUse, turnHasRead } from './rpc-shared'
+import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, ConfiguredToolRun, confinedRunFor, connectionForConfiguredTool, markTurnAsHavingRead, outcomeOfToolResult, pinConnectionToAgent, recordAgentAction, recordAgentFlowToolUse, turnHasRead } from './rpc-shared'
 
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
         const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
         const { projectId, platformId } = configuredRun
-        const model = await agentHelpers.resolveFastModel({ platformId, surface: agentHelpers.surfaceOf({ source: configuredRun.source }), scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId), fallbackModelId: input.modelId })
+        const model = await pieceToolModel({ configuredRun, input, log })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
         const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
         const { data: resolved, error: resolveError } = await tryCatch(() => pieceToolRunner.resolveInput({
@@ -71,13 +72,10 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         await markTurnAsHavingRead({ conversationId: input.conversationId, ...spreadIfDefined('runId', input.runId) })
         const { projectId, platformId } = conversation
         const file = await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
-        const embeddingModel = () => agentHelpers.resolveEmbeddingModel({
+        const embeddingModel = () => knowledgeBaseService(log).embeddingModelFor({
             platformId,
-            scope: { type: 'project', projectId },
+            projectId,
             billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: input.conversationId },
-            log,
-            ...spreadIfDefined('provider', input.provider),
-            ...spreadIfDefined('providerConfigId', input.providerConfigId),
         })
         const { error: backfillError } = await tryCatch(() => knowledgeBaseService(log).embedMissingChunks({
             projectId,
@@ -193,7 +191,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             return { result: decision }
         }
         if (input.toolName === '__store_pending_gate') {
-            const { conversationId: convId, runId: gateRunId, gateId, toolName: gateTool, displayName, toolInput: gateInput } = input.toolInput
+            const { conversationId: convId, runId: gateRunId, gateId, toolName: gateTool, displayName, toolInput: gateInput, taskTitle } = input.toolInput
             if (typeof convId === 'string' && typeof gateId === 'string' && typeof gateTool === 'string') {
                 await agentApprovalGate.storePendingGate({
                     conversationId: convId,
@@ -203,6 +201,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
                         displayName: typeof displayName === 'string' ? displayName : gateTool,
                         toolInput: typeof gateInput === 'object' && gateInput !== null ? gateInput as Record<string, unknown> : {},
                         ...(typeof gateRunId === 'string' ? { runId: gateRunId } : {}),
+                        ...(typeof taskTitle === 'string' ? { taskTitle } : {}),
                     },
                 })
             }
@@ -320,6 +319,17 @@ const SOURCE_EXTRA_TOOLS: Partial<Record<AgentRunSource, readonly string[]>> = {
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
+
+async function pieceToolModel({ configuredRun, input, log }: { configuredRun: ConfiguredToolRun, input: ExecutePieceToolRequest, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    const { projectId, platformId, modelTierId } = configuredRun
+    const granted = isNil(modelTierId) || isNil(input.providerConfigId)
+        ? null
+        : await aiModelCandidates(log).grantedEntryConfig({ platformId, tierId: modelTierId, configId: input.providerConfigId, modelId: input.modelId, scope: { type: 'project', projectId } })
+    if (!isNil(granted)) {
+        return aiUtils.createModel({ credentials: granted, modelId: input.modelId, platformId, providerConfigId: granted.configId })
+    }
+    return agentHelpers.resolveFastModel({ platformId, surface: agentHelpers.surfaceOf({ source: configuredRun.source }), scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId), fallbackModelId: input.modelId })
+}
 
 async function flowOfRun({ flowRunId, projectId, log }: { flowRunId: string, projectId: string, log: FastifyBaseLogger }): Promise<{ id: string, runId: string } | undefined> {
     const { data: flowRun, error } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))

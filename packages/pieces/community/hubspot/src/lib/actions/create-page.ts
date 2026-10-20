@@ -13,15 +13,33 @@ export const createPageAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Create a new HubSpot CMS landing page or site page (choose via Page Type) from a template, then optionally publish it when State is set to publish rather than leaving it as a draft. Each call creates a distinct page, so it is not idempotent.', idempotent: false },
 	outputSchema: pageOutputSchema,
+	propertyGroups: [
+		{
+			key: 'page',
+			display: 'section',
+			label: 'Page',
+			icon: 'file',
+			props: ['pageType', 'pageTitle', 'internalPageName', 'templatePath', 'slug', 'language'],
+		},
+		{
+			key: 'publishing',
+			display: 'section',
+			label: 'Publishing',
+			icon: 'send',
+			props: ['state'],
+		},
+	],
 	props: {
 		pageType: pageType,
 		pageTitle: Property.ShortText({
 			displayName: 'Page Title',
 			required: true,
+			width: 'half',
 		}),
 		internalPageName: Property.ShortText({
 			displayName: 'Internal Page Name',
 			required: true,
+			width: 'half',
 		}),
 		templatePath: Property.ShortText({
 			displayName: 'Template Path',
@@ -33,12 +51,14 @@ export const createPageAction = createAction({
 			displayName: 'Slug',
 			placeholder: 'spring-sale',
 			required: true,
+			width: 'half',
 		}),
 		language: Property.ShortText({
 			displayName: 'Language',
 			description: 'A language code such as en-us or de-de.',
 			required: false,
 			defaultValue: 'en-us',
+			width: 'half',
 		}),
 		metaDescription: Property.LongText({
 			displayName: 'Meta Description',
@@ -49,7 +69,6 @@ export const createPageAction = createAction({
 			displayName: 'Status',
 			required: false,
 			defaultValue: 'DRAFT',
-			display: 'cards',
 			options: {
 				disabled: false,
 				options: [

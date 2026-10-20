@@ -44,7 +44,7 @@
   "Rename an existing user-created contact group.": "Rename an existing user-created contact group.",
   "Delete a user-created contact group.": "Delete a user-created contact group.",
   "Add contacts to a contact group or remove them from it.": "Add contacts to a contact group or remove them from it.",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "First Name": "名",
   "Middle Name": "ミドルネーム",
   "Last Name": "Last Name",

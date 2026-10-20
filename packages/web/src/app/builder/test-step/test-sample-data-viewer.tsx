@@ -235,7 +235,7 @@ const SegmentedTabs = ({
 }: SegmentedTabsProps) => (
   <div
     className={cn(
-      'inline-flex items-center rounded-md bg-gray-3 p-0.5 gap-0.5',
+      'inline-flex items-center rounded-lg bg-gray-3 p-0.5 gap-0.5',
       disabled && 'opacity-50',
     )}
   >
@@ -282,7 +282,7 @@ const SegmentedTabsButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'px-3 py-1 text-xs font-medium rounded-sm transition-colors disabled:cursor-not-allowed',
+      'px-3 py-1 text-xs font-medium rounded-md transition-colors disabled:cursor-not-allowed',
       active
         ? 'bg-gray-1 text-gray-12 shadow-sm'
         : 'text-gray-11 hover:text-gray-12',
