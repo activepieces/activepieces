@@ -20,11 +20,14 @@ Two shapes, and they answer different questions. Pick by asking **who decides** 
 
 Task agents shipped this way on 15 Oct 2026 and the gate came out on 18 Oct.
 
-**None of this is on `main` any more**, which is the point: a rollout flag is meant to be deleted. Read it in `3e51229` (added, with its four tests) and #16574 (removed). Do not go looking for `task-agents-rollout.ts` in the tree.
+**None of it is on `main` any more**, which is the point: a rollout flag is meant to be deleted. #16574 took it out, and `taskAgentsRollout`, `isOnForConversation` and the `tasksEnabled` log field are all gone. Do not go looking for `task-agents-rollout.ts` in the tree; everything you need is below.
 
-One small module, named after the feature, owning the whole decision:
+The whole module was this, named after the feature and owning the whole decision:
 
 ```ts
+import { createHash } from 'node:crypto'
+import { ApEdition, ApEnvironment } from '@activepieces/shared'
+
 function isOnForConversation({ conversationId }: { conversationId: string }): boolean {
     if (system.get(AppSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT) {
         return true
@@ -34,9 +37,20 @@ function isOnForConversation({ conversationId }: { conversationId: string }): bo
     }
     return bucketOf({ conversationId }) < ROLLOUT_PERCENT
 }
+
+function bucketOf({ conversationId }: { conversationId: string }): number {
+    return createHash('sha256').update(conversationId).digest().readUInt32BE(0) % 100
+}
+
+const ROLLOUT_PERCENT = 10
+
+export const taskAgentsRollout = {
+    isOnForConversation,
+    ROLLOUT_PERCENT,
+}
 ```
 
-Four properties make it work, and each one is a test:
+Four properties make it work, and each one was a test:
 
 - **Deterministic.** Hash a stable id, so a conversation gets the same answer on every turn. A user must never see the feature appear and vanish mid-chat.
 - **Cloud only.** Self-hosters never get a half-finished feature, and it needs no setup from them.
@@ -47,9 +61,23 @@ Then **tag the turn log with the group**, as task agents did with a `tasksEnable
 
 Turning it off is setting `ROLLOUT_PERCENT` to 0 and deploying. There is no runtime switch, by design.
 
+The four tests that pinned it, worth copying verbatim for your own flag:
+
+- turns it on for about the rollout share of cloud conversations (assert within a few points of `ROLLOUT_PERCENT`, not an exact count)
+- keeps the same answer for the same conversation on every turn
+- keeps it off on self-hosted editions
+- turns it on for every conversation in local development
+
 ## A feature the plan decides
 
-Add a boolean to `PlatformPlan` and an id to `FeatureFlagId`, both in `platform.model.ts`, then set its default per plan in the billing defaults. `chatEnabled` and `agentsEnabled` are the ones to copy.
+Four places, and missing the last one is a compile error rather than a silent bug. `chatEnabled` and `agentsEnabled` are the ones to copy.
+
+1. A boolean on `PlatformPlan`, in `platform.model.ts`.
+2. An id on `FeatureFlagId`, in the same file.
+3. Its default per plan, in the billing defaults.
+4. **A line in `toPlatformPlanFlags`**, in `autumn-utils.ts`, mapping the `FeatureFlagId` onto the boolean. It returns the whole `PlatformPlanFlags`, so a flag added to the type and not mapped here fails to typecheck. `autumn-entitlement-flags.test.ts` covers this mapping.
+
+Then gate on it:
 
 - **Backend:** `platformMustHaveFeatureEnabled((p) => p.plan.myFlag)` on the EE module. Returns 402.
 - **Frontend:** `LockedFeatureGuard`, and `enabled: platform.plan.myFlag` on queries.
@@ -76,8 +104,9 @@ The cohort-table approach (a `chat_rollout_user` row per user) was tried for the
 
 ## Key files
 
-- `3e51229` and #16574 — the worked example, added then removed. There is no rollout module in the tree to read, by design
+- #16574 — the worked example being removed. There is no rollout module in the tree to read, by design; it is inlined above
 - `packages/server/api/src/app/ee/agent/rpc` — `agent-config-rpc.ts`, the server-side decision point a chat flag hangs off
+- `packages/server/api/src/app/ee/platform/platform-plan/billing-providers` — `toPlatformPlanFlags` in `autumn-utils.ts`, the step a new plan flag is easiest to forget
 - `packages/core/shared/src/lib/management/platform` — `PlatformPlan` and `FeatureFlagId` in `platform.model.ts`
 - `packages/core/shared/src/lib/ee/billing` — per-plan defaults for each flag
 - `packages/server/api/src/app/ee/authentication` — `platformMustHaveFeatureEnabled` in `ee-authorization.ts`

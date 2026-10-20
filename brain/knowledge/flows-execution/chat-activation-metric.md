@@ -17,11 +17,19 @@ S1 first chat → S2 tried to build (`ap_set_build_plan`, `ap_build_flow` or `ap
 ## Running it
 
 1. Open a Craftboxes box (`box new -n chat-activation`). The replica is reached through the box's `craftbox` MCP server (`postgres_query`, one read-only statement, 1000 rows max), not through `psql`.
-2. The replica has a 15s statement timeout, so the single query below times out on prod. Run it in stages and join them locally:
-   1. the cohort and S2 counts;
-   2. the chat-built flow ids;
-   3. flow state and run counts, in batches of about 50 flows passed back as `VALUES`;
-   4. agents the cohort owns that were created in the window, with their published state and successful runs.
+2. The replica has a 15s statement timeout, so the single query below times out on prod. **Split the cohort by first-chat week and add the halves.** Every count is per user and a user has exactly one `t0`, so disjoint `t0` ranges never double count. The `cohort` CTE takes only a lower bound, so add an upper one; setting `since` twice would overlap, not split. What ran on 2026-10-20:
+
+   ```sql
+   -- first half
+   where t0 >= '2026-10-01'::timestamptz and t0 < '2026-10-07'::timestamptz
+   -- second half
+   where t0 >= '2026-10-07'::timestamptz and t0 < now() - interval '7 days'
+   ```
+
+   Only the **flow** half needs this. The cohort and S2 counts, and the whole agent half, still run in one pass over the full cohort. Marking `chat_parts` as `materialized` helps but is not enough on its own.
+
+   If splitting by week ever stops being enough, fall back to pulling the chat-built flow ids out and passing them back as `VALUES` in batches of about 50. That costs several round trips and hits the 1000-row cap, which is why the split is the better route.
+
    The single query is still the definition. Save the SQL block below as `chat-activation.sql` and it runs as-is on a local or dev database with `psql -v since=2026-06-01 -f chat-activation.sql`.
 3. Record the row, with the date, under Baselines.
 
@@ -142,5 +150,5 @@ Of 500 chat-built flows, 32 had been deleted since, down from 18% to 6.4%. The a
 - **The cohort anchor is the first CHAT message.**
 - **Cohorts before and after 1 Oct 2026 are different populations.** Until then Cloud chat was capped at 200 users plus platforms whose plan had `chatEnabled`; from 1 Oct it is open to every Cloud user. Compare cohorts by first-chat date, and don't read the 2.9% baseline as what an open cohort should match.
 - **Small cohorts swing.** In the capped cohorts one user moved a stage by several points, so read the counts next to the percentages.
-- **Split the cohort by first-chat week, not the query by CTE.** Since the 1 Oct opening the flow half of the query no longer fits the replica's 15s timeout, even with `chat_parts` materialized. The cheap fix is to run the whole thing twice over disjoint `t0` ranges and add the results: every count is per user, a user has exactly one `t0`, so the halves never double count. That beats pulling flow ids out and batching them back as `VALUES`, which needs several round trips and hits the replica's 1000-row cap. The cohort and S2 counts, and the whole agent half, still run in one pass.
+- **The flow half stopped fitting the 15s timeout after the 1 Oct opening**, even with `chat_parts` materialized, though the cohort, S2 and agent halves still run in one pass. See Running it for the cohort split that solves it.
 - **Agents stopped being a rounding error.** On 20 Oct the open cohort had created 390 agents, 182 published, 121 with at least one good run. The 29 Sep note that agents contribute nothing (72 agents, 3 published, 2 ever run) is about the capped cohort and no longer holds, so run the agent half rather than assuming it is zero.
