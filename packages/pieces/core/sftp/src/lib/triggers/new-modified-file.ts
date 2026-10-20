@@ -18,7 +18,7 @@ async function getModifyTime({ client, file, protocol, directory, serverCanTimes
   if (!isNil(ftpFile.modifiedAt)) {
     return dayjs(ftpFile.modifiedAt).valueOf();
   }
-  if (ftpFile.type !== FTPFileType.File) {
+  if (ftpFile.type === FTPFileType.Directory) {
     return null;
   }
   if (!serverCanTimestamp) {

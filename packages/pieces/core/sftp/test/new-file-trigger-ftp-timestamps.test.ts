@@ -61,6 +61,16 @@ describe('New File trigger over FTP', () => {
     expect(ftpClient.lastMod).not.toHaveBeenCalled();
   });
 
+  test('emits a symlinked file, whose timestamp the server can resolve', async () => {
+    ftpClient.list.mockResolvedValue([listEntry({ name: 'linked.csv', type: FileType.SymbolicLink })]);
+    ftpClient.lastMod.mockResolvedValue(MODIFIED_AT);
+
+    await expect(newOrModifiedFile.run(pollContext(memoryStore({ lastPoll: 0 })))).resolves.toEqual([
+      expect.objectContaining({ name: 'linked.csv' }),
+    ]);
+    expect(ftpClient.lastMod).toHaveBeenCalledWith('/inbox/linked.csv');
+  });
+
   test('skips an entry the server permanently refuses to timestamp', async () => {
     ftpClient.list.mockResolvedValue([listEntry({ name: 'report.csv' })]);
     ftpClient.lastMod.mockRejectedValue(new FTPError({ code: 550, message: '550 Could not get file modification time.' }));
