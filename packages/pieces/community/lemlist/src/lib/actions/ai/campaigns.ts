@@ -243,29 +243,29 @@ export const updateCampaignAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates one campaign: name, stop-on-reply / meeting-booked / link-clicked rules and open/click/reply tracking switches. Only the settings you pass are changed. Idempotent.',
+      'Updates one campaign: name, stop-on-reply / meeting-booked / link-clicked rules and open/click/reply tracking switches. Each switch takes yes, no or unchanged; only the name and switches set to yes/no are sent, everything else keeps its current value. Idempotent.',
     idempotent: true,
   },
   props: {
     campaign_id: aiProps.campaignId(),
     name: Property.ShortText({ displayName: 'Name', required: false }),
-    stopOnEmailReplied: Property.Checkbox({ displayName: 'Stop on Email Replied', required: false }),
-    stopOnMeetingBooked: Property.Checkbox({ displayName: 'Stop on Meeting Booked', required: false }),
-    stopOnLinkClicked: Property.Checkbox({ displayName: 'Stop on Link Clicked', required: false }),
-    disableTrackOpen: Property.Checkbox({ displayName: 'Disable Open Tracking', required: false }),
-    disableTrackClick: Property.Checkbox({ displayName: 'Disable Click Tracking', required: false }),
-    disableTrackReply: Property.Checkbox({ displayName: 'Disable Reply Tracking', required: false }),
+    stopOnEmailReplied: aiProps.triState({ displayName: 'Stop on Email Replied', description: 'Stop the sequence for a lead who replies.' }),
+    stopOnMeetingBooked: aiProps.triState({ displayName: 'Stop on Meeting Booked', description: 'Stop the sequence for a lead who books a meeting.' }),
+    stopOnLinkClicked: aiProps.triState({ displayName: 'Stop on Link Clicked', description: 'Stop the sequence for a lead who clicks a link.' }),
+    disableTrackOpen: aiProps.triState({ displayName: 'Disable Open Tracking', description: 'Turn off email open tracking.' }),
+    disableTrackClick: aiProps.triState({ displayName: 'Disable Click Tracking', description: 'Turn off link click tracking.' }),
+    disableTrackReply: aiProps.triState({ displayName: 'Disable Reply Tracking', description: 'Turn off reply tracking.' }),
   },
   outputSchema: lemlistSchemas.updatedCampaign,
   async run({ auth, propsValue }) {
     const body = lemlistInput.compact({
       name: propsValue.name,
-      stopOnEmailReplied: propsValue.stopOnEmailReplied,
-      stopOnMeetingBooked: propsValue.stopOnMeetingBooked,
-      stopOnLinkClicked: propsValue.stopOnLinkClicked,
-      disableTrackOpen: propsValue.disableTrackOpen,
-      disableTrackClick: propsValue.disableTrackClick,
-      disableTrackReply: propsValue.disableTrackReply,
+      stopOnEmailReplied: lemlistInput.triState(propsValue.stopOnEmailReplied),
+      stopOnMeetingBooked: lemlistInput.triState(propsValue.stopOnMeetingBooked),
+      stopOnLinkClicked: lemlistInput.triState(propsValue.stopOnLinkClicked),
+      disableTrackOpen: lemlistInput.triState(propsValue.disableTrackOpen),
+      disableTrackClick: lemlistInput.triState(propsValue.disableTrackClick),
+      disableTrackReply: lemlistInput.triState(propsValue.disableTrackReply),
     });
     if (Object.keys(body).length === 0) {
       throw new Error('Provide at least one setting to update.');

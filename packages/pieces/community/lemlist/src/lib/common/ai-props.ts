@@ -37,4 +37,18 @@ export const aiProps = {
       description: 'How many items to skip, for paging. Default 0.',
       required: false,
     }),
+  triState: ({ displayName, description }: { displayName: string; description: string }) =>
+    Property.StaticDropdown<string, false>({
+      displayName,
+      description: `${description} Leave empty to keep the current setting.`,
+      required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+          { label: 'Leave unchanged', value: 'unchanged' },
+        ],
+      },
+    }),
 };

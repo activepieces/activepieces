@@ -167,7 +167,25 @@ const EMAIL_PATTERN = /^[^\s@/\\?#]{1,200}@[^\s@/\\?#]{1,200}\.[^\s@/\\?#]{1,60}
 const DOMAIN_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,62}\.){1,10}[A-Za-z]{2,63}$/;
 const ID_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
 
+function triState(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const text = value.trim().toLowerCase();
+  if (text === 'yes' || text === 'true') {
+    return true;
+  }
+  if (text === 'no' || text === 'false') {
+    return false;
+  }
+  return undefined;
+}
+
 export const lemlistInput = {
+  triState,
   requireText,
   optionalText,
   segment,

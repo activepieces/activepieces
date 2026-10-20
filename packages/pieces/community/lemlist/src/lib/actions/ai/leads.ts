@@ -32,7 +32,7 @@ export const listCampaignLeadsAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists leads of one campaign (lead ID, contact ID, state), optionally only those in a state such as scanned, contacted, interested or notInterested. Returns at most Limit leads (1-500, default 100); has_more=true means more exist and this endpoint has no offset, so narrow with State. Read-only.',
+      'Lists leads of one campaign (lead ID, contact ID, state), optionally only those in a state such as scanned, contacted, interested or notInterested. Returns at most Limit leads (1-500, default 100); Page with Offset (default 0); has_more=true means another page may exist, so call again with offset + limit. Read-only.',
     idempotent: true,
   },
   props: {
@@ -43,17 +43,19 @@ export const listCampaignLeadsAction = createAction({
       required: false,
     }),
     limit: aiProps.limit({ max: 500, fallback: 100 }),
+    offset: aiProps.offset(),
   },
   outputSchema: lemlistSchemas.campaignLeads,
   async run({ auth, propsValue }) {
     const limit = lemlistInput.boundedInt({ value: propsValue.limit, label: 'Limit', min: 1, max: 500 }) ?? 100;
+    const offset = lemlistInput.boundedInt({ value: propsValue.offset, label: 'Offset', min: 0, max: 1_000_000 }) ?? 0;
     const body = await lemlistApiCall<unknown>({
       apiKey: auth.secret_text,
       method: HttpMethod.GET,
       resourceUri: `/campaigns/${lemlistLeads.campaignSegment(propsValue.campaign_id)}/leads/`,
-      query: { state: lemlistInput.optionalText(propsValue.state), limit },
+      query: { state: lemlistInput.optionalText(propsValue.state), limit, offset },
     });
-    return lemlistResults.page({ items: lemlistResults.listFrom({ body }), offset: 0, limit });
+    return lemlistResults.page({ items: lemlistResults.listFrom({ body }), offset, limit });
   },
 });
 

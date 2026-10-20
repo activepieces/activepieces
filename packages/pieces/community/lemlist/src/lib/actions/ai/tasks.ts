@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { isRecord, lemlistApiCall } from '../../common/client';
 import { lemlistAuth } from '../../common/constants';
+import { aiProps } from '../../common/ai-props';
 import { lemlistInput } from '../../common/input';
 import { lemlistResults } from '../../common/results';
 import { lemlistSchemas } from '../../common/schemas';
@@ -108,7 +109,7 @@ export const updateTaskAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates one lemlist task (opp_...): assignee, due date, title, instructions, priority or done status. Only fields you pass change; at least one is required. Idempotent.',
+      'Updates one lemlist task (opp_...): assignee, due date, title, instructions, priority or done status (yes/no; unchanged or empty keeps it). Only fields you pass change; at least one is required. Idempotent.',
     idempotent: true,
   },
   props: {
@@ -123,7 +124,7 @@ export const updateTaskAction = createAction({
       required: false,
       options: { disabled: false, options: PRIORITIES.filter((option) => option.value !== '') },
     }),
-    done: Property.Checkbox({ displayName: 'Done', required: false }),
+    done: aiProps.triState({ displayName: 'Done', description: 'Mark the task done (yes) or not done (no).' }),
   },
   outputSchema: lemlistSchemas.task,
   async run({ auth, propsValue }) {
@@ -134,7 +135,7 @@ export const updateTaskAction = createAction({
       title: propsValue.title,
       message: propsValue.message,
       priority: propsValue.priority,
-      done: propsValue.done,
+      done: lemlistInput.triState(propsValue.done),
     });
     if (Object.keys(changes).length === 0) {
       throw new Error('Provide at least one field to update.');
