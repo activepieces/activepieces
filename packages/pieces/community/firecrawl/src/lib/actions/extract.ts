@@ -9,51 +9,45 @@ export const extract = createAction({
   name: 'extract',
   classification: 'READ',
   displayName: 'Extract Structured Data',
-  description: 'Extract structured data from multiple URLs using AI.',
+  description: 'Pull structured data from one or more pages with AI.',
   audience: 'human',
   outputSchema: extractDataActionOutputSchema,
   aiMetadata: { description: 'Pulls structured data from one or more known URLs by running an AI extraction against a natural-language prompt and a field schema (simple field list or advanced JSON Schema). Choose this when you need specific typed values from pages you already have URLs for; use Scrape to read raw page content or Map to discover URLs first. Runs as a polled job bounded by the timeout; read-only against the sites, so repeating the same request is safe.', idempotent: true },
   props: {
     urls: Property.Array({
       displayName: 'URLs',
-      description: 'Add one or more URLs to extract data from.',
+      description: 'Pages to read. End a URL with /* to cover a whole site.',
       required: true,
       properties: {
         url: Property.ShortText({
           displayName: 'URL',
-          description: 'Website URL to extract data from',
+          placeholder: 'https://example.com/pricing',
           required: true,
         })
       }
     }),
-    prompt: Property.LongText({
-      displayName: 'Extraction Prompt',
-      description: 'Describe what information you want to extract.',
-      required: false,
-      defaultValue: 'Extract the following data from the provided content.',
-    }),
     enableWebSearch: Property.Checkbox({
       displayName: 'Enable Web Search',
-      description: 'Enable web search to find additional context.',
+      description: 'Also search the web for related pages and context.',
       required: false,
       defaultValue: false,
     }),
-    timeout: Property.Number({
-      displayName: 'Timeout (seconds)',
-      description: 'Timeout in seconds after which the task will be cancelled',
+    prompt: Property.LongText({
+      displayName: 'Extraction Prompt',
+      description: 'What to pull from the page, in plain words.',
       required: false,
-      defaultValue: 300,
+      defaultValue: 'Extract the following data from the provided content.',
     }),
     mode: Property.StaticDropdown<'simple' | 'advanced'>({
       displayName: 'Data Schema Type',
-      description: 'For complex schema, you can use advanced mode.',
       required: true,
       defaultValue: 'simple',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
-          { label: 'Simple', value: 'simple' },
-          { label: 'Advanced', value: 'advanced' },
+          { label: 'Simple', value: 'simple', description: 'A list of fields', icon: 'text' },
+          { label: 'Advanced', value: 'advanced', description: 'A JSON Schema', icon: 'code' },
         ],
       },
     }),
@@ -68,8 +62,7 @@ export const extract = createAction({
           return {
             fields: Property.Json({
               displayName: 'JSON Schema',
-              description:
-                'Learn more about JSON Schema here: https://json-schema.org/learn/getting-started-step-by-step',
+              description: 'The shape of the data to return, as a JSON Schema.',
               required: true,
               defaultValue: {
                 type: 'object',
@@ -88,24 +81,23 @@ export const extract = createAction({
         }
         return {
           fields: Property.Array({
-            displayName: 'Data Definition',
+            displayName: 'Fields to Extract',
+            description: 'One row per value to pull from the page.',
             required: true,
             properties: {
               name: Property.ShortText({
                 displayName: 'Name',
-                description:
-                  'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+                description: 'Letters, numbers, _ . or - only.',
+                placeholder: 'price',
                 required: true,
               }),
               description: Property.LongText({
                 displayName: 'Description',
-                description:
-                  'Brief description of the data, this hints for the AI on what to look for',
+                description: 'What the value is, as a hint for the AI.',
                 required: false,
               }),
               type: Property.StaticDropdown({
                 displayName: 'Data Type',
-                description: 'Type of parameter.',
                 required: true,
                 defaultValue: 'string',
                 options: {
@@ -118,7 +110,8 @@ export const extract = createAction({
                 },
               }),
               isRequired: Property.Checkbox({
-                displayName: 'Fail if Not present?',
+                displayName: 'Required Field',
+                description: 'The AI must return a value for this field.',
                 required: true,
                 defaultValue: false,
               }),
@@ -127,7 +120,18 @@ export const extract = createAction({
         };
       },
     }),
+    timeout: Property.Number({
+      displayName: 'Timeout',
+      description: 'Seconds to wait. The job keeps running after a timeout.',
+      required: false,
+      defaultValue: 300,
+      advanced: true,
+    }),
   },
+  propertyGroups: [
+    { key: 'pages', display: 'section', label: 'Pages', icon: 'file', props: ['urls', 'enableWebSearch'] },
+    { key: 'data', display: 'section', label: 'What to extract', icon: 'code', props: ['prompt', 'mode', 'schema'] },
+  ],
 
   async run( context ) {
     const { auth, propsValue } = context;

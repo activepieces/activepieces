@@ -61,6 +61,12 @@ export const groq = createPiece({
           Authorization: `Bearer ${auth.secret_text}`,
         };
       },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${baseUrl}`,
+          placeholder: '/models',
+        },
+      },
     }),
   ],
   authors: ['abuaboud'],

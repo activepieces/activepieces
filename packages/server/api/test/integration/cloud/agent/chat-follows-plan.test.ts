@@ -26,7 +26,7 @@ describe('chat on Cloud follows the plan', () => {
         expect(platform.json().plan.chatEnabled).toBe(true)
     })
 
-    it('stays closed for a user whose plan does not include chat, even with no rollout cap in the way', async () => {
+    it('stays closed for a user whose plan does not include chat', async () => {
         const ctx = await createTestContext(app, { plan: { chatEnabled: false } })
 
         const conversations = await ctx.get('/v1/agents/conversations')

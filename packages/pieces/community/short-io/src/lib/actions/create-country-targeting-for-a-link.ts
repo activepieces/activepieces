@@ -1,8 +1,9 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { shortIoLinks } from '../common/links';
+import { shortIoSchemas } from '../common/output-schemas';
 import { domainIdDropdown, linkIdDropdown } from '../common/props';
+import { shortIoTargeting } from '../common/targeting';
 
 export const createCountryTargetingRuleAction = createAction({
   auth: shortIoAuth,
@@ -10,8 +11,13 @@ export const createCountryTargetingRuleAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Country Targeting Rule',
   description: 'Set geographic targeting rules for a link with specific destination per country.',
-  audience: 'both',
-  aiMetadata: { description: 'Adds a country-targeting rule to an existing short link so visitors from a given country are redirected to a country-specific URL instead of the default destination. Use to set up geo-redirects on a link you already have the ID for. Requires the link ID, a 2-letter ISO country code, and a valid redirect URL; not idempotent — a rule for a country that already exists is rejected (409).', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Adds a country-targeting rule to an existing short link so visitors from a given country are redirected to a country-specific URL instead of the default destination. Requires the link, a 2-letter ISO country code and a valid redirect URL. Not idempotent: Short.io may reject a second rule for the same country.',
+    idempotent: false,
+  },
+  outputSchema: shortIoSchemas.legacyCountryRule,
   props: {
     domain: domainIdDropdown,
     linkId: linkIdDropdown,
@@ -27,77 +33,18 @@ export const createCountryTargetingRuleAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const { linkId, domain: domainString, country, originalURL } = propsValue;
-
-    if (!country || country.trim().length !== 2) {
-      throw new Error('Country code must be exactly 2 characters (e.g., US, GB, CA)');
-    }
-
-    const countryCode = country.trim().toUpperCase();
-
-    try {
-      new URL(originalURL);
-    } catch (error) {
-      throw new Error('Invalid URL format. Please provide a valid URL starting with http:// or https://');
-    }
-
-    const query: Record<string, string> = {};
-    if (domainString) {
-      const domainObject = JSON.parse(domainString as string);
-      query['domainId'] = String(domainObject.id);
-    }
-
-    const body = {
-      country: countryCode,
-      originalURL,
+    const domain = shortIoLinks.parseDomainProp(propsValue.domain);
+    const rule = await shortIoTargeting.addCountryRule({
+      auth,
+      linkId: propsValue.linkId,
+      domainId: domain.id,
+      country: propsValue.country,
+      originalURL: propsValue.originalURL,
+    });
+    return {
+      success: true,
+      message: `Country targeting rule for ${rule.country} created successfully`,
+      data: rule.raw ?? { country: rule.country, originalURL: rule.originalURL },
     };
-
-    try {
-      const response = await shortIoApiCall({
-        method: HttpMethod.POST,
-        auth,
-        resourceUri: `/link_country/${linkId}`,
-        query,
-        body,
-      });
-
-      return {
-        success: true,
-        message: `Country targeting rule for ${countryCode} created successfully`,
-        data: response,
-      };
-    } catch (error: any) {
-      if (error.message.includes('400')) {
-        throw new Error(
-          'Invalid request parameters. Please check the country code format and URL validity.'
-        );
-      }
-      
-      if (error.message.includes('401') || error.message.includes('403')) {
-        throw new Error(
-          'Authentication failed. Please check your API key and permissions.'
-        );
-      }
-      
-      if (error.message.includes('404')) {
-        throw new Error(
-          'Short link not found. Please check the link ID and try again.'
-        );
-      }
-      
-      if (error.message.includes('409')) {
-        throw new Error(
-          `A country targeting rule for ${countryCode} already exists for this link.`
-        );
-      }
-      
-      if (error.message.includes('429')) {
-        throw new Error(
-          'Rate limit exceeded. Please wait a moment before trying again.'
-        );
-      }
-
-      throw new Error(`Failed to create country targeting rule: ${error.message}`);
-    }
   },
 });

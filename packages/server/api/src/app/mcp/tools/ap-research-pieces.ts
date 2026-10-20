@@ -77,11 +77,8 @@ function summarizeComponent(c: { name: string, displayName: string, description:
     }
 }
 
-function detailOnlyFor({ components, recommended }: { components: ComponentSummary[], recommended: string[] | undefined }): Partial<ComponentSummary>[] {
-    if (isNil(recommended)) {
-        return components
-    }
-    return components.map((component) => recommended.includes(component.name) ? component : { name: component.name, displayName: component.displayName })
+function detailOnlyFor({ components, recommended, trim }: { components: ComponentSummary[], recommended: string[] | undefined, trim: ComponentTrim }): Partial<ComponentSummary>[] {
+    return components.map((component) => isNil(recommended) || recommended.includes(component.name) ? trim(component) : { name: component.name, displayName: component.displayName })
 }
 
 async function bulkLookup({ pieceNames, forIntent, projectId, platformId, log }: {
@@ -90,51 +87,73 @@ async function bulkLookup({ pieceNames, forIntent, projectId, platformId, log }:
     projectId: string | undefined
     platformId: string
     log: FastifyBaseLogger
-}): Promise<{ content: [{ type: 'text', text: string }], structuredContent: Record<string, unknown> }> {
+}): Promise<PieceSearchResult> {
     const capped = pieceNames.slice(0, BULK_LOOKUP_CAP)
     const svc = pieceMetadataService(log)
-    const results = await Promise.all(capped.map(async (rawName) => {
+    const results = await Promise.all(capped.map(async (rawName): Promise<BulkLookupEntry> => {
         const normalized = mcpUtils.normalizePieceName(rawName)
         if (isNil(normalized)) {
-            return { name: rawName, found: false as const }
+            return { name: rawName, found: false }
         }
         const piece = await svc.get({ name: normalized, projectId, platformId })
         if (isNil(piece)) {
-            return { name: normalized, found: false as const }
+            return { name: normalized, found: false }
         }
         const actions = Object.values(piece.actions).map(summarizeComponent)
         const triggers = Object.values(piece.triggers).map(summarizeComponent)
-        const recommendedActions = isNil(forIntent) ? undefined : mcpUtils.rankActionsByIntent({ actions, forIntent })
-        const recommendedTriggers = isNil(forIntent) ? undefined : mcpUtils.rankActionsByIntent({ actions: triggers, forIntent })
         return {
             name: piece.name,
-            found: true as const,
+            found: true,
             displayName: piece.displayName,
             description: piece.description,
-            actions: detailOnlyFor({ components: actions, recommended: recommendedActions }),
-            triggers: detailOnlyFor({ components: triggers, recommended: recommendedTriggers }),
-            ...(!isNil(recommendedActions) && recommendedActions.length > 0 && { recommendedActions }),
+            actions,
+            triggers,
+            recommendedActions: isNil(forIntent) ? undefined : mcpUtils.rankActionsByIntent({ actions, forIntent }),
+            recommendedTriggers: isNil(forIntent) ? undefined : mcpUtils.rankActionsByIntent({ actions: triggers, forIntent }),
         }
     }))
 
-    const found = results.filter((r) => r.found)
-    const missing = results.filter((r) => !r.found)
-    const hints: string[] = []
-    if (missing.length > 0) {
-        hints.push(`⚠️ Not found: ${missing.map((m) => m.name).join(', ')}`)
-    }
-    if (pieceNames.length > BULK_LOOKUP_CAP) {
-        hints.push(`⚠️ Only the first ${BULK_LOOKUP_CAP} pieces were looked up (${pieceNames.length} requested)`)
-    }
-    const hintText = hints.length > 0 ? `\n\n${hints.join('\n')}` : ''
+    const found = results.filter((r): r is FoundPiece => r.found)
+    const missing = results.filter((r) => !r.found).map((r) => r.name)
+    const hints = [
+        ...(missing.length > 0 ? [`⚠️ Not found: ${missing.join(', ')}`] : []),
+        ...(pieceNames.length > BULK_LOOKUP_CAP ? [`⚠️ Only the first ${BULK_LOOKUP_CAP} pieces were looked up (${pieceNames.length} requested)`] : []),
+    ]
+    return fitBulkLookup({ found, missing, hints, forIntent })
+}
 
+export function fitBulkLookup({ found, missing, hints, forIntent }: { found: FoundPiece[], missing: string[], hints: string[], forIntent: string | undefined }): PieceSearchResult {
+    const trimHint = isNil(forIntent)
+        ? '⚠️ Trimmed to fit: pass forIntent with what you are trying to do to get full details on the actions that match it.'
+        : '⚠️ Trimmed to fit: look up fewer pieces at once for full details.'
+    for (const [rung, trim] of DETAIL_LADDER.entries()) {
+        const result = bulkResult({ pieces: found.map((piece) => shapeFoundPiece({ piece, trim })), missing, hints: rung === 0 ? hints : [...hints, trimHint] })
+        if (fitsBudget(result)) {
+            return result
+        }
+    }
+    return bulkResult({
+        pieces: found.map(({ name, displayName, actions, triggers }) => ({ name, displayName, actionCount: actions.length, triggerCount: triggers.length })),
+        missing,
+        hints: [...hints, '⚠️ Too many actions to list for these pieces together: look up one piece at a time, with forIntent.'],
+    })
+}
+
+function shapeFoundPiece({ piece, trim }: { piece: FoundPiece, trim: ComponentTrim }): Record<string, unknown> {
+    const { actions, triggers, recommendedActions, recommendedTriggers, ...rest } = piece
     return {
-        content: [{ type: 'text', text: `✅ Researched ${found.length} piece(s)${hintText}:\n${JSON.stringify(found)}` }],
-        structuredContent: {
-            pieces: found,
-            missing: missing.map((m) => m.name),
-            count: found.length,
-        },
+        ...rest,
+        actions: detailOnlyFor({ components: actions, recommended: recommendedActions, trim }),
+        triggers: detailOnlyFor({ components: triggers, recommended: recommendedTriggers, trim }),
+        ...(!isNil(recommendedActions) && recommendedActions.length > 0 && { recommendedActions }),
+    }
+}
+
+function bulkResult({ pieces, missing, hints }: { pieces: Record<string, unknown>[], missing: string[], hints: string[] }): PieceSearchResult {
+    const hintText = hints.length > 0 ? `\n\n${hints.join('\n')}` : ''
+    return {
+        content: [{ type: 'text', text: `✅ Researched ${pieces.length} piece(s)${hintText}:\n${JSON.stringify(pieces)}` }],
+        structuredContent: { pieces, missing, count: pieces.length },
     }
 }
 
@@ -213,7 +232,7 @@ async function searchPieces({ params, projectId, platformId, log }: {
     return fitEnrichedResponse({ pieces: enrichedPieces, overflowHint, totalCount })
 }
 
-const DETAIL_LADDER: Array<(component: ComponentSummary) => Partial<ComponentSummary>> = [
+const DETAIL_LADDER: ComponentTrim[] = [
     (component) => component,
     ({ aiDescription: _aiDescription, ...rest }) => rest,
     ({ name, displayName }) => ({ name, displayName }),
@@ -281,6 +300,21 @@ type ComponentSummary = {
     cardinality: ActionCardinality
     aiDescription?: string
 }
+
+type ComponentTrim = (component: ComponentSummary) => Partial<ComponentSummary>
+
+export type FoundPiece = {
+    name: string
+    found: true
+    displayName: string
+    description: string
+    actions: ComponentSummary[]
+    triggers: ComponentSummary[]
+    recommendedActions: string[] | undefined
+    recommendedTriggers: string[] | undefined
+}
+
+type BulkLookupEntry = FoundPiece | { name: string, found: false }
 
 type PieceSearchResult = { content: [{ type: 'text', text: string }], structuredContent: Record<string, unknown> }
 

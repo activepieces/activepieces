@@ -1,4 +1,4 @@
-import { ActivepiecesAiConsumerSource, ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
 import { FileCompression, FileType, KnowledgeBaseFile } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
@@ -7,6 +7,7 @@ import { parse as parseCsv } from 'csv-parse/sync'
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull, Not } from 'typeorm'
 import { aiProviderService } from '../ai/ai-provider-service'
+import { aiToolConfigService } from '../ai/ai-tool-config-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { databaseConnection } from '../database/database-connection'
@@ -147,20 +148,26 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
 
     async embedderFor(params: { projectId: string, platformId: string }): Promise<EmbedFn> {
         const { projectId, platformId } = params
-        const provider = await aiProviderService(log).getChatProvider({ platformId, scope: { type: 'project', projectId } })
+        const { model, providerOptions } = await this.embeddingModelFor({
+            platformId,
+            projectId,
+            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: KNOWLEDGE_BASE_BILLING_CONVERSATION },
+        })
+        return this.embedFnOf({ model, providerOptions })
+    },
+
+    async embeddingModelFor({ platformId, projectId, billing }: { platformId: string, projectId: string, billing: ActivepiecesAiBilling }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
+        const scope = { type: 'project' as const, projectId }
+        const choice = (await aiToolConfigService(log).getProviderChoices({ platformId })).embeddings
+        const chosen = isNil(choice) ? null : await aiProviderService(log).findKeyConfig({ platformId, configId: choice.aiProviderId, scope })
+        const provider = chosen ?? await aiProviderService(log).getChatProvider({ platformId, scope })
         if (isNil(provider)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: KNOWLEDGE_BASE_NEEDS_AI_PROVIDER },
             })
         }
-        const { model, providerOptions } = aiUtils.createEmbeddingModel({
-            credentials: provider,
-            platformId,
-            providerConfigId: provider.configId,
-            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: KNOWLEDGE_BASE_BILLING_CONVERSATION },
-        })
-        return this.embedFnOf({ model, providerOptions })
+        return aiUtils.createEmbeddingModel({ credentials: provider, platformId, providerConfigId: provider.configId, billing })
     },
 
     embedFnOf(params: { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }): EmbedFn {

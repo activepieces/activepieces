@@ -356,6 +356,12 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async saveAgentMessages(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).saveAgentMessages(input)
         },
+        async beginAgentTask(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).beginAgentTask(input)
+        },
+        async finishAgentTask(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).finishAgentTask(input)
+        },
 
         async saveAgentFile(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).saveAgentFile(input)

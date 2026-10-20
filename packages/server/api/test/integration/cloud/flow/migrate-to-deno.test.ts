@@ -187,6 +187,19 @@ describe('POST /v1/admin/flows/migrate-to-deno', () => {
         expect(secondRevert.json()).toEqual({ flowsProcessed: 1, flowVersionsMigrated: 0, notifiedFlows: 0 })
     })
 
+    it('reverts a flow whose code steps never set useDeno, since an unset flag now runs on deno', async () => {
+        const ctx = await createTestContext(app!)
+        const { flow, publishedVersion } = await setupFlowWithPublishedLatestVersion(ctx)
+
+        const revertResponse = await postRevertFromDeno({ flowIds: [flow.id] })
+
+        expect(revertResponse.statusCode).toBe(StatusCodes.OK)
+        expect(revertResponse.json()).toEqual({ flowsProcessed: 1, flowVersionsMigrated: 1, notifiedFlows: 1 })
+
+        const revertedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: publishedVersion.id })
+        expect(getCodeStep(revertedVersion)?.settings.useDeno).toBe(false)
+    })
+
     it('is idempotent: a second run reports zero migrated versions', async () => {
         const ctx = await createTestContext(app!)
         const { flow } = await setupFlowWithDraftAndPublishedVersions(ctx)
