@@ -13,6 +13,8 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 - **Overview, then drill down.** Every item opens its own detail page (`/platform/ai/usage/:dimension/:id`), and every card has See all (`/platform/ai/usage/:dimension`). Period and scope ride in the URL.
 - **One detail template.** Header + the same chart + top 5 of the *other* dimensions + one extra card per type: project → monthly limit, flow → runs and cost per run, key → reported vs estimated, model → list price. A flow detail stops at flow level; there is no per-step split.
 
+- **"Previous period" means the same span right before**, except month views: "This month" and "Last month" compare with the same days of the month before (Oct 1–20 vs Sep 1–20). The chart legend shows both ranges, and the read API has to use the same rule.
+
 ## Data hierarchy
 - **Root: the platform**, which is the bill. Scope (Production / Testing / All) and period filter the whole page; they are not levels.
 - **Tree 1, where the money is spent:** platform → project → flows · agents · chat by user. Project is the parent because limits, project admins and ownership live there.
