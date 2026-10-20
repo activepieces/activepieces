@@ -1,14 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClientFromAuth } from '../common/pinecone-client';
+import { pineconeClient } from '../common/client';
+import type { PineconeRecord, RecordMetadata } from '../common/types';
 import { pineconeAuth } from '../auth';
+import { upsertVectorOutputSchema } from '../output-schemas';
 
-export const upsertVector = createAction({
+export const upsertVectorAction = createAction({
   auth: pineconeAuth,
   name: 'upsert_vector',
+  outputSchema: upsertVectorOutputSchema,
   classification: 'WRITE',
   displayName: 'Upsert Vector',
   description: 'Upsert vectors into a namespace. Overwrites existing vectors with the same ID.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Writes (inserts or overwrites) vectors into a namespace of a Pinecone index, accepting either a single vector or a batch of vectors supplied as structured rows, chosen via the input method. Use to store or refresh embeddings keyed by ID; each vector requires an ID and numeric values. Idempotent: because writes are keyed on the vector ID, repeating the same call overwrites the same records to the same state without creating duplicates.', idempotent: true },
   props: {
     indexName: Property.ShortText({
@@ -106,15 +109,15 @@ export const upsertVector = createAction({
       throw new Error('You must provide an index name to upsert vectors.');
     }
 
-    const pc = createPineconeClientFromAuth(context.auth);
+    const pc = pineconeClient.create({ auth: context.auth });
 
-    let vectorsToUpsert: any[] = [];
+    let vectorsToUpsert: PineconeRecord[] = [];
 
     try {
 
       const index = indexHost
-        ? pc.index(indexName, indexHost)
-        : pc.index(indexName);
+        ? pc.index({ name: indexName, host: indexHost })
+        : pc.index({ name: indexName });
 
       if (vectorsInput === 'single') {
         if (!id) {
@@ -128,7 +131,7 @@ export const upsertVector = createAction({
           );
         }
 
-        const record: any = {
+        const record: PineconeRecord = {
           id: id,
           values: values.map((v) => Number(v))
         };
@@ -147,34 +150,42 @@ export const upsertVector = createAction({
           );
         }
 
-        vectorsToUpsert = vectors.map((vector: any, index: number) => {
-          if (!vector.id) {
+        vectorsToUpsert = vectors.map((item, index) => {
+          const vector = typeof item === 'object' && item !== null ? item : {};
+          const vectorId = 'id' in vector ? vector.id : undefined;
+          const vectorValues = 'values' in vector ? vector.values : undefined;
+          const metadataKeys = 'metadataKeys' in vector ? vector.metadataKeys : undefined;
+          const metadataValues = 'metadataValues' in vector ? vector.metadataValues : undefined;
+          const sparseIndicesText = 'sparseIndices' in vector ? vector.sparseIndices : undefined;
+          const sparseValuesText = 'sparseValues' in vector ? vector.sparseValues : undefined;
+
+          if (!vectorId) {
             throw new Error(
               `Vector at index ${index} must have an ID.`
             );
           }
           
-          if (!vector.values) {
+          if (!vectorValues) {
             throw new Error(
               `Vector at index ${index} must have values.`
             );
           }
 
-          const values = vector.values.split(',').map((v: string) => Number(v.trim()));
+          const values = String(vectorValues).split(',').map((v) => Number(v.trim()));
           if (values.some(isNaN) || values.length === 0) {
             throw new Error(
               `Vector at index ${index} has invalid values. Use comma-separated numbers.`
             );
           }
 
-          const record: any = {
-            id: String(vector.id),
+          const record: PineconeRecord = {
+            id: String(vectorId),
             values: values
           };
 
-          if (vector.sparseIndices && vector.sparseValues) {
-            const sparseIndices = vector.sparseIndices.split(',').map((v: string) => Number(v.trim()));
-            const sparseValues = vector.sparseValues.split(',').map((v: string) => Number(v.trim()));
+          if (sparseIndicesText && sparseValuesText) {
+            const sparseIndices = String(sparseIndicesText).split(',').map((v) => Number(v.trim()));
+            const sparseValues = String(sparseValuesText).split(',').map((v) => Number(v.trim()));
             
             if (sparseIndices.some(isNaN) || sparseValues.some(isNaN)) {
               throw new Error(
@@ -194,9 +205,9 @@ export const upsertVector = createAction({
             };
           }
 
-          if (vector.metadataKeys && vector.metadataValues) {
-            const keys = vector.metadataKeys.split(',').map((k: string) => k.trim());
-            const vals = vector.metadataValues.split(',').map((v: string) => v.trim());
+          if (metadataKeys && metadataValues) {
+            const keys = String(metadataKeys).split(',').map((k) => k.trim());
+            const vals = String(metadataValues).split(',').map((v) => v.trim());
             
             if (keys.length !== vals.length) {
               throw new Error(
@@ -204,7 +215,7 @@ export const upsertVector = createAction({
               );
             }
             
-            const metadata: any = {};
+            const metadata: RecordMetadata = {};
             for (let i = 0; i < keys.length; i++) {
               const key = keys[i];
               const value = vals[i];
@@ -219,14 +230,11 @@ export const upsertVector = createAction({
       }
 
 
-      const response: any = namespace
-        ? await index.namespace(namespace).upsert(vectorsToUpsert)
-        : await index.upsert(vectorsToUpsert);
+      namespace
+        ? await index.namespace(namespace).upsert({ records: vectorsToUpsert })
+        : await index.upsert({ records: vectorsToUpsert });
 
-      const upsertedCount =
-        response && typeof response === 'object' && response.upsertedCount
-          ? response.upsertedCount
-          : vectorsToUpsert.length;
+      const upsertedCount = vectorsToUpsert.length;
 
       return {
         success: true,
@@ -236,58 +244,11 @@ export const upsertVector = createAction({
         vectorCount: vectorsToUpsert.length,
         vectors: vectorsToUpsert.map((v) => ({
           id: v.id,
-          dimension: v.values.length
+          dimension: v.values?.length
         })),
         message: `Successfully upserted ${upsertedCount} vector(s)`
       };
     } catch (caught) {
-      console.log('Failed to upsert vector(s).', caught);
-
-      if (caught instanceof Error) {
-        const error = caught as any;
-
-        if (error.status === 400 || error.code === 400) {
-          return {
-            success: false,
-            error: 'Bad Request',
-            code: 400,
-            message:
-              error.message ||
-              'The request body included invalid request parameters.',
-            details: error.details || [],
-            vectorCount: vectorsToUpsert?.length || 0,
-            indexName: indexName,
-            namespace: namespace || 'default'
-          };
-        }
-
-        if (error.status >= 400 && error.status < 500) {
-          return {
-            success: false,
-            error: 'Client Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected client error occurred.',
-            details: error.details || [],
-            vectorCount: vectorsToUpsert?.length || 0,
-            indexName: indexName,
-            namespace: namespace || 'default'
-          };
-        }
-
-        if (error.status >= 500 || error.code >= 500) {
-          return {
-            success: false,
-            error: 'Server Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected server error occurred.',
-            details: error.details || [],
-            vectorCount: vectorsToUpsert?.length || 0,
-            indexName: indexName,
-            namespace: namespace || 'default'
-          };
-        }
-      }
-
       return {
         success: false,
         error: 'Unknown Error',
