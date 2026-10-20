@@ -162,14 +162,12 @@ export function UsageScopeTabs({ view }: { view: UsageView }) {
               <TabsTrigger
                 value={scope}
                 variant="outline"
-                className="px-0 pb-2"
+                className="cursor-pointer px-0 pb-2 text-gray-11 transition-colors hover:border-gray-7 hover:text-gray-12 data-[state=active]:text-gray-12 data-[state=active]:hover:border-gray-12"
               >
                 {usageFormat.scopeLabel({ scope })}
               </TabsTrigger>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-xs">
-              {scopeHint({ scope })}
-            </TooltipContent>
+            <TooltipContent side="top" sideOffset={6}>{scopeHint({ scope })}</TooltipContent>
           </Tooltip>
         ))}
       </TabsList>
@@ -180,11 +178,11 @@ export function UsageScopeTabs({ view }: { view: UsageView }) {
 function scopeHint({ scope }: { scope: UsageScope }): string {
   switch (scope) {
     case 'production':
-      return t('Published flows, agents and chat. Test runs are not included.');
+      return t('Live flows, agents and chat');
     case 'testing':
-      return t('Test runs from the flow builder and the agent builder only.');
+      return t('Test runs from the builders');
     case 'all':
-      return t('Production and test runs together, as on your provider bill.');
+      return t('Production and testing together');
   }
 }
 
