@@ -212,6 +212,8 @@ export const platformModelTierMutations = {
           platformConfigurationHooks.queryKey,
           configuration,
         );
+        queryClient.invalidateQueries({ queryKey: aiProviderKeys.configs });
+        queryClient.invalidateQueries({ queryKey: ['ai-model-options'] });
         toast.success(t('Default chat model updated'), {
           duration: TOAST_SUCCESS_MS,
         });
