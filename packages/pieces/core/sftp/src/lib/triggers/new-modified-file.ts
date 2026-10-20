@@ -20,7 +20,7 @@ async function getModifyTime({ client, file, protocol, directory }: { client: Cl
     return null;
   }
 
-  const { data, error } = await tryCatch(() => (client as FTPClient).lastMod(`${directory}/${ftpFile.name}`));
+  const { data, error } = await tryCatch(() => (client as FTPClient).lastMod(`${directory.replace(/\/+$/, '')}/${ftpFile.name}`));
   if (error) {
     return null;
   }

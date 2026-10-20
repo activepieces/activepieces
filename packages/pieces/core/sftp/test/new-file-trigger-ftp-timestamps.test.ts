@@ -44,6 +44,15 @@ describe('New File trigger over FTP', () => {
     expect(ftpClient.lastMod).toHaveBeenCalledWith('/inbox/report.csv');
   });
 
+  test('does not double the separator when the watched path ends in a slash', async () => {
+    ftpClient.list.mockResolvedValue([listEntry({ name: 'report.csv' })]);
+    ftpClient.lastMod.mockResolvedValue(MODIFIED_AT);
+
+    await newOrModifiedFile.run(pollContext(memoryStore({ lastPoll: 0 }), './'));
+
+    expect(ftpClient.lastMod).toHaveBeenCalledWith('./report.csv');
+  });
+
   test('never asks the server to timestamp a directory, which answers 550', async () => {
     ftpClient.list.mockResolvedValue([listEntry({ name: 'subdir', type: FileType.Directory })]);
 
@@ -101,10 +110,10 @@ function memoryStore(initial: Record<string, unknown>): Store {
   };
 }
 
-function pollContext(store: Store) {
+function pollContext(store: Store, path = '/inbox') {
   return {
     auth: { props: { protocol: 'ftp', host: 'files.example.com', port: 21, username: 'user', password: 'secret' } },
-    propsValue: { path: '/inbox', ignoreHiddenFiles: false },
+    propsValue: { path, ignoreHiddenFiles: false },
     store,
   } as never;
 }
