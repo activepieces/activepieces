@@ -10,12 +10,7 @@ export const deleteResponseAction = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Response',
   description: 'Permanently deletes a survey response.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Permanently delete one Formbricks survey response by response ID. Cannot be undone; a retry after success fails with not found.',
-    idempotent: false,
-  },
+  audience: 'human',
   props: {
     responseId: Property.ShortText({ displayName: 'Response ID', required: true }),
   },

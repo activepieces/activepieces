@@ -85,17 +85,18 @@ export const formBricksRegisterTrigger = ({
       await context.store.delete(storeKey(name));
     },
     async test(context) {
-      const surveyIds = context.propsValue.survey_id ?? [];
-      const result = await formbricksApi.listResponses({
+      const workspaceId = (context.propsValue.workspaceId ?? '').trim();
+      if (workspaceId.length === 0) {
+        throw new Error('Select the Formbricks workspace.');
+      }
+      const responses = await formbricksApi.listWorkspaceSampleResponses({
         auth: context.auth,
-        surveyId: surveyIds.length === 1 ? surveyIds[0] : undefined,
-        limit: 10,
-        skip: 0,
+        workspaceId,
+        surveyIds: context.propsValue.survey_id ?? [],
+        finishedOnly: eventType === 'responseFinished',
+        sampleSize: 5,
       });
-      return result.responses
-        .filter((response) => surveyIds.length === 0 || (response.surveyId !== null && surveyIds.includes(response.surveyId)))
-        .filter((response) => eventType !== 'responseFinished' || response.finished)
-        .slice(0, 5)
+      return responses
         .map(({ contactId, ...response }) => ({
           webhookId: null,
           event: eventType,

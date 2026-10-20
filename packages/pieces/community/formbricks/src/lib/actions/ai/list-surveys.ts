@@ -13,7 +13,7 @@ export const listSurveysAiAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'List Formbricks surveys with their IDs, status and question count. Use it to find a survey ID before reading its questions or responses. Optional workspaceId and status (draft, scheduled, inProgress, paused, completed) filters. Read-only, safe to retry.',
+      'List Formbricks surveys with their IDs, status and question count. Use it to find a survey ID before reading its questions or responses. Optional workspaceId and status (draft, scheduled, inProgress, paused, completed) filters. Scans at most 1,000 surveys: truncated=true means more matches may exist (scan_limit_reached=true means the scan cap was hit). Read-only, safe to retry.',
     idempotent: true,
   },
   props: {

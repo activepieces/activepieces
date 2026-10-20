@@ -10,12 +10,7 @@ export const deleteContactAction = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Delete Contact',
   description: 'Permanently deletes a contact and its attributes.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Permanently delete one Formbricks contact by contact ID (use Find Contact to get it). Cannot be undone; a retry after success fails with not found.',
-    idempotent: false,
-  },
+  audience: 'human',
   props: {
     contactId: Property.ShortText({
       displayName: 'Contact ID',

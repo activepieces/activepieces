@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildFormbricksError, buildFormbricksUrl, normalizeAppUrl, toFormbricksError } from '../src/lib/common/client';
 import { handleFormbricksWebhook, readStoredWebhook, verifyStandardWebhook } from '../src/lib/common/webhook';
 import { formbricksInputs } from '../src/lib/common/inputs';
+import { collectPages, collectSampleResponses, FormbricksResponse } from '../src/lib/common/api';
 
 const SECRET_BYTES = randomBytes(32);
 const SECRET = `whsec_${SECRET_BYTES.toString('base64')}`;
@@ -159,5 +160,71 @@ describe('inputs', () => {
     expect(formbricksInputs.stringRecord({ plan: 'pro', empty: '', n: 3, missing: null })).toEqual({ plan: 'pro', n: '3' });
     expect(formbricksInputs.clampInt({ value: 900, min: 1, max: 250, fallback: 50 })).toBe(250);
     expect(() => formbricksInputs.optionalDate({ value: 'nope', label: 'From' })).toThrow(/From/);
+  });
+});
+
+describe('collectPages', () => {
+  it('reports hitCap when the scan stops with full pages left', async () => {
+    const fetchPage = vi.fn(async () => Array.from({ length: 10 }, (_, i) => i));
+    const result = await collectPages({ fetchPage, pageSize: 10, maxItems: 30 });
+    expect(result.items).toHaveLength(30);
+    expect(result.hitCap).toBe(true);
+    expect(fetchPage).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not report hitCap when the last page is short', async () => {
+    const pages = [[1, 2, 3], [4]];
+    const result = await collectPages({ fetchPage: async (offset) => pages[offset / 3] ?? [], pageSize: 3, maxItems: 30 });
+    expect(result).toEqual({ items: [1, 2, 3, 4], hitCap: false });
+  });
+});
+
+describe('collectSampleResponses', () => {
+  const response = (id: string, surveyId: string, createdAt: string, finished = true): FormbricksResponse => ({
+    id,
+    surveyId,
+    finished,
+    data: {},
+    variables: {},
+    contactId: null,
+    contactAttributes: null,
+    meta: {},
+    language: null,
+    endingId: null,
+    singleUseId: null,
+    createdAt,
+    updatedAt: createdAt,
+  });
+
+  it('queries every selected survey and merges newest first', async () => {
+    const bySurvey: Record<string, FormbricksResponse[]> = {
+      s1: [response('r1', 's1', '2026-10-01T00:00:00Z')],
+      s2: [response('r2', 's2', '2026-10-03T00:00:00Z'), response('x', 'other', '2026-10-09T00:00:00Z')],
+      s3: [response('r3', 's3', '2026-10-02T00:00:00Z', false)],
+    };
+    const fetchSurveyResponses = vi.fn(async (id: string) => bySurvey[id] ?? []);
+    const result = await collectSampleResponses({ surveyIds: ['s1', 's2', 's3'], finishedOnly: false, sampleSize: 5, fetchSurveyResponses });
+    expect(fetchSurveyResponses).toHaveBeenCalledTimes(3);
+    expect(result.map((r) => r.id)).toEqual(['r2', 'r3', 'r1']);
+  });
+
+  it('applies finishedOnly and the sample size', async () => {
+    const result = await collectSampleResponses({
+      surveyIds: ['s1'],
+      finishedOnly: true,
+      sampleSize: 1,
+      fetchSurveyResponses: async () => [
+        response('a', 's1', '2026-10-05T00:00:00Z', false),
+        response('b', 's1', '2026-10-04T00:00:00Z'),
+        response('c', 's1', '2026-10-03T00:00:00Z'),
+      ],
+    });
+    expect(result.map((r) => r.id)).toEqual(['b']);
+  });
+
+  it('returns nothing when the workspace has no surveys', async () => {
+    const fetchSurveyResponses = vi.fn();
+    expect(await collectSampleResponses({ surveyIds: [], finishedOnly: false, sampleSize: 5, fetchSurveyResponses })).toEqual([]);
+    expect(fetchSurveyResponses).not.toHaveBeenCalled();
   });
 });

@@ -83,7 +83,18 @@ const listSurveys: OutputSchema = {
   fields: [
     { key: 'surveys', label: 'Surveys', labelKey: 'name', listItems: surveySummaryFields },
     { key: 'count', label: 'Count', format: 'number' },
-    { key: 'truncated', label: 'More Available', format: 'boolean', description: 'True when more surveys matched than the limit.' },
+    {
+      key: 'truncated',
+      label: 'More Available',
+      format: 'boolean',
+      description: 'True when more surveys matched than the limit, or when the 1,000-survey scan cap was reached and the list may be incomplete.',
+    },
+    {
+      key: 'scan_limit_reached',
+      label: 'Scan Limit Reached',
+      format: 'boolean',
+      description: 'True when the piece stopped after scanning 1,000 surveys; surveys beyond that are not included.',
+    },
   ],
 };
 
