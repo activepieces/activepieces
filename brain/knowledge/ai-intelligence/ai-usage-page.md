@@ -15,6 +15,8 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 
 - **"Previous period" means the same span right before**, except month views: "This month" and "Last month" compare with the same days of the month before (Oct 1–20 vs Sep 1–20). The chart legend shows both ranges, and the read API has to use the same rule.
 
+- **Never compare against a period that isn't fully tracked.** If tracking started after the previous period began, every change % (hero, cards, lists) is hidden and the hero says so; a partial comparison would show fake growth like +400%. If tracking started inside the current period, the chart starts at that date and a note says "covers 25 of 90 days".
+
 ## Data hierarchy
 - **Root: the platform**, which is the bill. Scope (Production / Testing / All) and period filter the whole page; they are not levels.
 - **Tree 1, where the money is spent:** platform → project → flows · agents · chat by user. Project is the parent because limits, project admins and ownership live there.
