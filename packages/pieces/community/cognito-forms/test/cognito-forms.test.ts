@@ -115,6 +115,18 @@ describe('custom api call', () => {
     expect(Reflect.get(inits[0], 'dispatcher')).toBeInstanceOf(Agent);
   });
 
+  it.each([
+    ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'output.docx'],
+    ['application/msword; charset=binary', 'output.doc'],
+    ['application/vnd.ms-excel', 'output.xls'],
+    ['application/x-unknown', 'output.txt'],
+  ])('names binary %s responses %s', async (contentType, fileName) => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { 'content-type': contentType } })));
+    const { output, written } = await run({ action: custom(), props: { ...props('/forms'), response_is_binary: true } });
+    expect(written.map((w) => w.fileName)).toEqual([fileName]);
+    expect(Reflect.get(Object(output), 'body')).toBe(`file://${fileName}`);
+  });
+
   it('refuses other hosts and dot segments', async () => {
     stubFetch([]);
     await expect(run({ action: custom(), props: props('https://evil.example/api/forms') })).rejects.toThrow('must be on');
