@@ -20,4 +20,4 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 4. Testing section, then the cost footnote.
 
 ## Key files
-- `packages/web/src/app/routes/platform/setup/ai/usage-tab` — page, cards, and the dummy-data module (`usageDummyData`) until the read API lands
+- `packages/web/src/app/routes/platform/setup/ai/usage-tab` — page, cards, and the dummy-data module (`usageDummyData`) until the read API lands. While it is a prototype, `?preset=loading|error|empty|minimal|half|rich` (or the bottom-right Preview button) shows each data state
