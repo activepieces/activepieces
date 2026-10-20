@@ -16,6 +16,24 @@ Generate Document, Find Document and Delete Document are no longer offered to AI
 
 Agents that used these actions switch to their twins: Generate Document (AI), Get Document (AI) and Delete Document (AI). Flow steps keep running on the version they were built with until you upgrade them.
 
+#### Snowflake 0.4.0: Update Row needs a WHERE condition, stricter limits, query timeout and stage paths
+
+From Snowflake 0.4.0 several actions validate their inputs where they used to pass them straight to Snowflake:
+
+- **Update Row** fails when the WHERE condition is empty, instead of updating every row in the table. A new **Update All Rows** toggle allows it.
+- **Search Rows** fails when **Row Limit** is not a whole number between 1 and 10,000. Before, any value went into `LIMIT`.
+- **Run Query** and **Run Multiple Queries**: the **Query Timeout (ms)** value used to be passed to the Snowflake driver as its connection timeout, so long queries were not stopped. It now sets Snowflake's `STATEMENT_TIMEOUT_IN_SECONDS`, which cancels any query that runs longer than the value (30 seconds by default, at most 540 seconds).
+- **Load Data from Stage**: the stage path is now parsed and checked. User (`@~`) and table (`@%`) stages are rejected, the stage name must be a valid (optionally qualified) name, and the folder part may only contain letters, digits, spaces and `- _ . / = + % ~` (no `..`).
+
+#### What you need to do
+
+- Update Row: if a step is meant to change every row, turn on **Update All Rows**; otherwise add a WHERE condition.
+- Search Rows: keep **Row Limit** between 1 and 10,000. For more rows, use **Run Query** with your own `LIMIT`.
+- Run Query and Run Multiple Queries: if a query takes longer than 30 seconds, raise **Query Timeout (ms)** (up to 540 000). Queries that need more than 540 seconds should run outside the flow, for example as a Snowflake task.
+- Load Data from Stage: use a named stage (`@stage_name/folder/` or `@schema.stage_name/folder/`). For user or table stages, or paths with other characters, use **Run Query** with your own `COPY INTO`.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Pdfcrowd 0.3.0: Convert URL to PDF and Convert HTML to PDF are builder-only
 
 Convert URL to PDF and Convert HTML to PDF are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
