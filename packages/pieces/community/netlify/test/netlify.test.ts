@@ -67,6 +67,7 @@ function mockRoutes(routes: Route[]) {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('webhook signature', () => {
@@ -233,6 +234,14 @@ describe('custom api call paths', () => {
     '',
   ])('refuses %s', (url) => {
     expect(() => netlifyClient.apiPath(url)).toThrow();
+  });
+  it('keeps the request body out of logs when Netlify rejects a custom call', async () => {
+    const { customApiCall } = await import('../src/lib/actions/custom-api-call');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ message: 'Invalid' }), { status: 422, headers: { 'content-type': 'application/json' } })));
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const props = { url: '/accounts/acc-1/env', method: HttpMethod.POST, headers: {}, queryParams: {}, body: { key: 'API_KEY', value: 'super-secret-value' } };
+    await expect(Reflect.apply(customApiCall.run, undefined, [{ auth, propsValue: props }])).rejects.toThrow('Netlify API error (422): Invalid.');
+    expect(JSON.stringify(logged.mock.calls.map((call) => call.map(String)))).not.toContain('super-secret-value');
   });
   it('never lets a header replace the connection token', async () => {
     const calls: { headers: unknown }[] = [];

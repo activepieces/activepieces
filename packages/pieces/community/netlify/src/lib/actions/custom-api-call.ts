@@ -41,6 +41,7 @@ export const customApiCall = createAction({
       query: stringRecord(propsValue.queryParams),
       extraHeaders: stringRecord(propsValue.headers),
       body: jsonBody(propsValue.body),
+      redactBody: true,
     });
     return { status: response.status, body: response.body };
   },
