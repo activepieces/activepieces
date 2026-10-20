@@ -77,34 +77,16 @@ export const newRecordTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
-    });
+    await pollingHelper.onEnable(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
-    });
+    await pollingHelper.onDisable(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      store: context.store,
-      auth: context.auth,
-      propsValue: { datasheet_id: context.propsValue.datasheet_id },
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, { ...context, propsValue: { datasheet_id: context.propsValue.datasheet_id } });
   },
 });
 
