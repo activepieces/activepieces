@@ -41,5 +41,6 @@
   "Record Deleted": "Eintrag gelöscht",
   "Triggers when a new record is added to the selected table.": "Wird ausgelöst, wenn ein neuer Datensatz zur ausgewählten Tabelle hinzugefügt wird.",
   "Triggers when a record is updated in the selected table.": "Wird ausgelöst, wenn ein Datensatz in der ausgewählten Tabelle aktualisiert wird.",
-  "Triggers when a record is deleted from the selected table.": "Wird ausgelöst, wenn ein Datensatz aus der ausgewählten Tabelle gelöscht wird."
+  "Triggers when a record is deleted from the selected table.": "Wird ausgelöst, wenn ein Datensatz aus der ausgewählten Tabelle gelöscht wird.",
+  "Empty fields keep their current value.": "Leere Felder behalten ihren aktuellen Wert."
 }

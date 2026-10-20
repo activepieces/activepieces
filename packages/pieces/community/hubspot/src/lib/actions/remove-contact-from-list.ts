@@ -17,6 +17,22 @@ export const removeContactFromListAction = createAction({
 			'Remove a contact, identified by email, from a specific static HubSpot list (this only works on static lists, not active/dynamic ones). Use to revoke list membership; it first resolves the email to a contact and errors if no such contact exists or if the contact was not a member of the list.',
 		idempotent: false,
 	},
+	propertyGroups: [
+		{
+			key: 'list',
+			display: 'section',
+			label: 'List',
+			icon: 'users',
+			props: ['listId'],
+		},
+		{
+			key: 'contact',
+			display: 'section',
+			label: 'Contact',
+			icon: 'user',
+			props: ['email'],
+		},
+	],
 	props: {
 		listId: staticListsDropdown,
 		email: Property.ShortText({

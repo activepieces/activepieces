@@ -169,6 +169,7 @@ embedded PGLite database. Set the connection with discrete fields or a single
 | `AP_POSTGRES_SSL_CA` | SSL certificate (CA) used to connect to PostgreSQL. | `None` |
 | `AP_POSTGRES_POOL_SIZE` | Maximum number of clients in the connection pool. | `None` |
 | `AP_POSTGRES_IDLE_TIMEOUT_MS` | Idle timeout (ms) for pooled PostgreSQL connections. | `300000` |
+| `AP_POSTGRES_MIGRATION_URL` | Separate connection string for background migrations only (slow backfills, `CREATE INDEX CONCURRENTLY`). Set this when the app role has `statement_timeout` configured — the migration role on the other end should have `statement_timeout = 0`. If unset, background migrations use the main connection. | `None` |
 
 ---
 

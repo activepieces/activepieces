@@ -1,4 +1,5 @@
 import {
+  MarkdownVariant,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -86,8 +87,7 @@ export const issueAssigned = createTrigger({
   name: 'issue_assigned',
   classification: 'READ',
   displayName: 'Issue Assigned',
-  description:
-    'Fires when a Jira issue is assigned to someone. Use it to ping people in Slack/Teams the moment work lands on them, auto-create a to-do when tickets hit your queue, or track hand-offs between teammates.',
+  description: 'Triggers when an issue is assigned to someone.',
   aiMetadata: {
     description:
       'Fires when the assignee of a Jira issue changes, optionally filtered to a specific assignee, the connected user, or a JQL scope. Each event represents one assignment change and includes the issue plus the previous/new assignee, who made the change, and when. Polling-based; events arrive on the next poll, not instantly.',
@@ -97,40 +97,49 @@ export const issueAssigned = createTrigger({
   outputSchema: issueAssignedTriggerOutputSchema,
   props: {
     assignedToMe: Property.Checkbox({
-      displayName: 'Only when assigned to me',
-      description:
-        'Only trigger when the issue is assigned to the user who set up this connection. Overrides the Assignee field below.',
+      displayName: 'Only Assignments to Me',
+      description: 'Watches the connected account only. Overrides Assignee.',
       required: false,
       defaultValue: false,
     }),
     assignee: getUsersDropdown({
-      displayName: 'Assignee (optional)',
-      description:
-        'Pick a teammate to watch. Leave empty to trigger on assignments to anyone. Ignored if "Only when assigned to me" is checked.',
+      displayName: 'Assignee',
+      description: 'Empty: assignments to anyone.',
       required: false,
     }),
+    filterHelp: Property.MarkDown({
+      value: 'Build a filter in Jira under Filters → Advanced search, then copy its JQL here.',
+      variant: MarkdownVariant.INFO,
+    }),
     jql: Property.LongText({
-      displayName: 'Only watch these issues (optional)',
-      description: `Narrow down which issues to watch. Leave empty to watch every issue in your Jira.
-
-Ready-to-use examples:
-
-- \`project = "SUPPORT"\` — only the Support project
-- \`priority = High\` — only high-priority issues
-- \`labels = "vip"\` — only issues tagged \`vip\`
-- \`project = "SUPPORT" AND status != Done\` — combine with \`AND\`
-
-Not sure what to write? Open Jira → Filters → Advanced search, build a filter visually, then copy the query here.`,
+      displayName: 'Issue Filter',
+      description: 'JQL query. Empty: every issue is watched.',
+      placeholder: 'project = SUPPORT AND status != Done',
       required: false,
     }),
     sanitizeJql: Property.Checkbox({
-      displayName: 'Auto-fix the filter',
-      description:
-        "Keep this on. If your filter references something you can't access (a private project, a deleted field), Jira will automatically clean it up instead of erroring.",
+      displayName: 'Sanitize JQL',
+      description: "Jira swaps names you can't view for IDs before the search runs.",
       required: false,
       defaultValue: true,
     }),
   },
+  propertyGroups: [
+    {
+      key: 'who',
+      display: 'section',
+      label: 'Whose Assignments',
+      icon: 'users',
+      props: ['assignedToMe', 'assignee'],
+    },
+    {
+      key: 'filter',
+      display: 'section',
+      label: 'Filter',
+      icon: 'filter',
+      props: ['filterHelp', 'jql', 'sanitizeJql'],
+    },
+  ],
   sampleData: {
     issue: {
       id: '10001',

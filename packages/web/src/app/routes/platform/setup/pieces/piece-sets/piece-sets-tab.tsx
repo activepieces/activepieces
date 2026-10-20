@@ -51,13 +51,14 @@ export const PieceSetsTab = () => {
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
   const limitParam = searchParams.get('limit');
   const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+  const name = searchParams.get('name') ?? undefined;
 
   const {
     data: pieceSetsPage,
     isLoading,
     isError,
     refetch,
-  } = pieceSetQueries.usePieceSets({ cursor, limit });
+  } = pieceSetQueries.usePieceSets({ cursor, limit, name });
   const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();
 
   const pieceSets = useMemo(() => pieceSetsPage?.data ?? [], [pieceSetsPage]);
@@ -209,7 +210,6 @@ export const PieceSetsTab = () => {
         isError={isError}
         errorStateEntity={t('piece sets')}
         onRetry={refetch}
-        clientFiltering={true}
         onRowClick={(pieceSet) =>
           navigate(`/platform/pieces/piece-sets/${pieceSet.id}`)
         }

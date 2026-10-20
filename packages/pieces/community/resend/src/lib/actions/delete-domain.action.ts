@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 import { resendClient } from '../common/client';
@@ -15,6 +15,10 @@ export const deleteDomain = createAction({
   audience: 'both',
   aiMetadata: { description: 'Permanently removes a sending domain from the Resend account, identified by its domain ID. Use this to decommission a domain you no longer send from. Effectively idempotent — once deleted, repeating the call has no further effect.', idempotent: true },
   props: {
+    info: Property.MarkDown({
+      value: 'You can no longer send from this domain once it is deleted.',
+      variant: MarkdownVariant.INFO,
+    }),
     domain_id: resendProps.domainId,
   },
   async run({ auth, propsValue }) {

@@ -632,5 +632,7 @@
   "Only disputes for this charge. Empty: all.": "仅此扣款的争议。留空：全部。",
   "Only disputes for this payment. Empty: all.": "仅此付款的争议。留空：全部。",
   "Only updates where the subscription's status is this.": "仅限订阅状态为此值的更新。",
-  "Only sessions for this customer. Empty: all.": "仅此客户的会话。留空：全部。"
+  "Only sessions for this customer. Empty: all.": "仅此客户的会话。留空：全部。",
+  "Markdown": "Markdown",
+  "Empty fields keep their current value.": "留空的字段保留当前值。"
 }

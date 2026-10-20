@@ -4,6 +4,7 @@ import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils
 import { LanguageModel, ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
+import { agentChatModel } from '.././agent-chat-model'
 import { agentCompaction } from '.././agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
@@ -89,11 +90,20 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const runProjectId = isFlowStep ? conversation.projectId ?? null : selectedProjectId
         const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
         const surface = agentHelpers.surfaceOf({ source: requestedSource })
-        const modelTierId = tierIdForRun({ conversation, requestedTierId: input.modelTierId ?? null })
+        const choiceLivesOnConversation = pickLivesOnConversation({ conversation })
+        const needsDefaultPick = choiceLivesOnConversation && await agentChatModel(log).needsDefaultPick({ platformId, conversation, scope: runScope })
+        const defaultPick = needsDefaultPick ? await agentChatModel(log).defaultPick({ platformId, projectId: runScope.projectId }) : null
+        const picked = isNil(defaultPick) ? conversation : { ...conversation, ...defaultPick }
+        const selectedModel = choiceLivesOnConversation ? picked.modelName ?? null : modelName ?? picked.modelName ?? null
+        const modelTierId = tierIdForRun({ conversation: picked, requestedTierId: input.modelTierId ?? null })
         const tierRun = isNil(modelTierId) ? null : await agentModelTier(log).resolveRun({ platformId, tierId: modelTierId, surface, scope: runScope })
-        const providerConfig = isNil(tierRun)
-            ? await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
-            : tierRun.candidates[0].config
+        const pinnedConfigId = choiceLivesOnConversation && isNil(tierRun) ? picked.providerConfigId ?? null : null
+        const pinned = isNil(pinnedConfigId) ? null : await agentChatModel(log).pinnedConfig({ platformId, configId: pinnedConfigId, modelName: selectedModel, scope: runScope })
+        const providerConfig = !isNil(tierRun)
+            ? tierRun.candidates[0].config
+            : !isNil(pinned)
+                ? pinned.config
+                : await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
 
         const attachmentRefs = files && files.length > 0 && !isNil(selectedProjectId)
             ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, conversationId, log })
@@ -142,23 +152,32 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         if (!dryRun && isNil(validCandidateProjectId) && !isNil(selectedProjectId)) {
             await agentHelpers.conversationRepo().update(conversationId, { projectId: selectedProjectId })
         }
-        if (!dryRun && (conversation.modelTierId ?? null) !== modelTierId) {
+        if (!dryRun && (picked.modelTierId ?? null) !== modelTierId) {
             await agentHelpers.conversationRepo().update(conversationId, { modelTierId })
         }
 
-        const selectedModel = modelName ?? conversation.modelName ?? null
         const namesItsOwnModel = surface === 'flow'
         const tier = isNil(tierRun)
             ? agentHelpers.resolveRunTier({ provider: providerConfig.provider, modelName: modelName ?? null, selectedModel, surface })
             : { ...agentHelpers.resolveRunTier({ provider: providerConfig.provider, modelName: null, selectedModel: null, surface }), thinkingBudget: tierRun.candidates[0].thinkingBudget, modelId: tierRun.candidates[0].modelId }
         const resolvedModelId = !isNil(tierRun)
             ? tierRun.candidates[0].modelId
-            : namesItsOwnModel && !isNil(modelName)
-                ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, surface, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, log })
-                : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, surface, scope: runScope, log })
+            : !isNil(pinned)
+                ? pinned.modelId
+                : namesItsOwnModel && !isNil(modelName)
+                    ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, surface, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, log })
+                    : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, surface, scope: runScope, log })
         const fastModelId = isNil(tierRun)
             ? await agentHelpers.resolveFastModelId({ platformId, providerConfig, surface, scope: runScope, fallbackModelId: resolvedModelId, log })
             : resolvedModelId
+        const pickToPersist = !isNil(defaultPick)
+            ? defaultPick
+            : choiceLivesOnConversation && isNil(tierRun) && isNil(pinned)
+                ? agentChatModel(log).legacyPin({ config: providerConfig, selectedModel, runTierId: tier.id, resolvedModelId })
+                : null
+        if (!dryRun && !isNil(pickToPersist)) {
+            await agentChatModel(log).persistPick({ platformId, projectId: runScope.projectId, conversationId, loadedModelName: conversation.modelName ?? null, pick: pickToPersist })
+        }
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
@@ -329,8 +348,11 @@ function withLeadingNote({ content, note }: { content: UserContent, note: string
 }
 
 function tierIdForRun({ conversation, requestedTierId }: { conversation: AgentConversation, requestedTierId: string | null }): string | null {
-    const choiceLivesOnConversation = conversation.source === AgentRunSource.CHAT || conversation.source === AgentRunSource.AGENT_BUILDER
-    return choiceLivesOnConversation ? conversation.modelTierId ?? null : requestedTierId
+    return pickLivesOnConversation({ conversation }) ? conversation.modelTierId ?? null : requestedTierId
+}
+
+function pickLivesOnConversation({ conversation }: { conversation: AgentConversation }): boolean {
+    return conversation.source === AgentRunSource.CHAT || conversation.source === AgentRunSource.AGENT_BUILDER
 }
 
 function smallestContextProvider({ configs }: { configs: GetProviderConfigResponse[] }): AIProviderName {

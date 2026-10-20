@@ -10,20 +10,42 @@ export const getMediaInsights = createAction({
   name: 'get_media_insights',
   classification: 'READ',
   displayName: 'Get Media Insights',
-  description: 'Read reach, likes and comment metrics for one post.',
+  description: 'Read reach, likes and comments metrics for one post.',
   audience: 'both',
   aiMetadata: {
     description:
       'Reads per-post Instagram metrics such as reach, likes, comments, saves and shares for one media id. Available metrics differ by media type, since reels and stories expose different ones from feed images, and an unsupported metric returns an error naming it. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'account',
+      display: 'section',
+      label: 'Account',
+      icon: 'user',
+      props: ['page'],
+    },
+    {
+      key: 'media',
+      display: 'section',
+      label: 'Post',
+      icon: 'file',
+      props: ['media_id', 'metrics'],
+    },
+  ],
   props: {
     page: instagramCommon.page,
-    media_id: Property.ShortText({ displayName: 'Media ID', required: true }),
+    media_id: Property.ShortText({
+      displayName: 'Media ID',
+      description: 'The id from List Media or a publish step.',
+      placeholder: '17895695668004550',
+      required: true,
+    }),
     metrics: Property.Array({
       displayName: 'Metrics',
-      description: 'Metric names. Defaults to reach, likes and comments (reach, replies and shares for stories).',
+      description: 'For example reach or saved. Empty uses defaults for the post type.',
       required: false,
+      defaultValue: [],
     }),
   },
   async run({ propsValue }) {
