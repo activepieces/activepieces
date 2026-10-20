@@ -79,6 +79,7 @@ every one it touches. One such run reformatted 84 files that the change had neve
 way back was to stash the handful of intended edits, `git checkout` the package, and restore them.
 
 ## Gotchas
+- **Recharts 2 ignores series inside a React fragment.** `<ComposedChart>{cond ? <><Bar/><Bar/></> : <><Line/><Area/></>}</ComposedChart>` draws nothing and the axes lose their scale. Put each `Bar` / `Line` / `Area` directly under the chart, each behind its own `cond && …`.
 - **`Tabs variant="outline"` (underline tabs) has no inactive or hover style.** Every trigger is `text-gray-12` and only the active one gets an underline, so the tabs look dead. Add `cursor-pointer rounded-t-md px-2.5 text-gray-11 hover:bg-gray-3 hover:text-gray-12 data-[state=active]:text-gray-12` to the trigger: a background on hover, the underline only for the active tab (see the AI usage scope tabs).
 - **Recharts fills from `ChartContainer` fail `check-tailwind-classes.mjs`.** `var(--color-<key>)` is defined at runtime by the chart, so the checker reports it as an unknown variable. Put the colour token in the chart config and pass `fill={config.<key>.color}`.
 - **`t('…', { count })` needs a number.** i18next types reserve `count` for plurals, so a formatted string value fails `tsc`. Name the placeholder something else (`{calls}`) when you pass a pre-formatted number.
