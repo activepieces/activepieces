@@ -222,6 +222,20 @@ describe('greptile fixes', () => {
     expect(out).toMatchObject({ eventId: '$edit', editedEventId: '$e' });
     expect(spy.mock.calls.at(-1)?.[0].body).toMatchObject({ 'm.relates_to': { rel_type: 'm.replace', event_id: '$e' } });
   });
+  it('edit_message keeps the original notice or emote message type', async () => {
+    for (const msgtype of ['m.notice', 'm.emote']) {
+      vi.restoreAllMocks();
+      const spy = routed({ ...mine, content: { msgtype, body: 'old' } });
+      await runAction({ name: 'edit_message', propsValue: { roomId: '!r:x.org', eventId: '$e', text: 'new', format: 'plain' } });
+      const body = spy.mock.calls.at(-1)?.[0].body;
+      expect(body).toMatchObject({ msgtype, 'm.new_content': { msgtype, body: 'new' } });
+    }
+  });
+  it('edit_message refuses non-text messages such as images', async () => {
+    const spy = routed({ ...mine, content: { msgtype: 'm.image', body: 'pic.png' } });
+    await expect(runAction({ name: 'edit_message', propsValue: { roomId: '!r:x.org', eventId: '$e', text: 'new' } })).rejects.toThrow('only text, notice and emote');
+    expect(spy.mock.calls.every((call) => call[0].method === HttpMethod.GET)).toBe(true);
+  });
   it('edit_message refuses another sender, redacted or edit events', async () => {
     for (const { original, msg } of [
       { original: { ...mine, sender: '@other:x.org' }, msg: 'Only the original sender' },

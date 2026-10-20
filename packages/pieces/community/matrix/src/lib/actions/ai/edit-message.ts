@@ -15,7 +15,7 @@ export const editMessage = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Edits a message previously sent by this account by posting an m.replace edit event; clients then show the new text with an "(edited)" marker. Needs roomId (!...) and eventId ($...) of the original message. Only the original sender can edit. The original text stays in the room history. Each call adds a new edit event; a retry after a failed call, or a repeated transactionId, returns the original edit event instead of adding another.',
+      'Edits a message previously sent by this account by posting an m.replace edit event; clients then show the new text with an "(edited)" marker. Needs roomId (!...) and eventId ($...) of the original message. Only the original sender can edit, and only text, notice and emote messages; the edit keeps the original message type. The original text stays in the room history. Each call adds a new edit event; a retry after a failed call, or a repeated transactionId, returns the original edit event instead of adding another.',
     idempotent: false,
   },
   outputSchema: matrixOutputSchemas.edited,
@@ -35,8 +35,8 @@ export const editMessage = createAction({
     const roomId = matrixIds.roomId(propsValue.roomId);
     const eventId = matrixIds.eventId(propsValue.eventId);
     const text = matrixClient.messageText({ value: propsValue.text, label: 'New Text' });
-    await assertEditable({ auth: auth.props, roomId, eventId });
-    const newContent = await matrixCommon.buildTextContent({ text, msgtype: 'm.text', format: propsValue.format ?? 'markdown' });
+    const msgtype = await assertEditable({ auth: auth.props, roomId, eventId });
+    const newContent = await matrixCommon.buildTextContent({ text, msgtype, format: propsValue.format ?? 'markdown' });
     const content: Record<string, unknown> = {
       ...newContent,
       body: `* ${text}`,
@@ -55,7 +55,7 @@ export const editMessage = createAction({
   },
 });
 
-async function assertEditable({ auth, roomId, eventId }: { auth: MatrixAuthValue; roomId: string; eventId: string }): Promise<void> {
+async function assertEditable({ auth, roomId, eventId }: { auth: MatrixAuthValue; roomId: string; eventId: string }): Promise<string> {
   const [original, me] = await Promise.all([
     matrixClient.request({ auth, method: HttpMethod.GET, path: matrixIds.clientPath('rooms', roomId, 'event', eventId) }),
     matrixClient.request({ auth, method: HttpMethod.GET, path: matrixIds.clientPath('account', 'whoami') }),
@@ -71,4 +71,9 @@ async function assertEditable({ auth, roomId, eventId }: { auth: MatrixAuthValue
   if (event.relType === 'm.replace') {
     throw new Error(`Event ${eventId} is itself an edit. Edit the original message ${event.relatesToEventId ?? ''} instead.`.trim());
   }
+  const msgtype = event.msgtype ?? 'm.text';
+  if (!matrixCommon.MSG_TYPES.includes(msgtype)) {
+    throw new Error(`Message ${eventId} is a ${msgtype} message; only text, notice and emote messages can be edited.`);
+  }
+  return msgtype;
 }
