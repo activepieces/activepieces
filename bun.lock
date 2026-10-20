@@ -5675,17 +5675,17 @@
     },
     "packages/pieces/community/matrix": {
       "name": "@activepieces/piece-matrix",
-      "version": "0.5.1",
+      "version": "0.6.0",
       "dependencies": {
-        "@activepieces/core-piece-types": "workspace:*",
-        "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "marked": "4.3.0",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "@types/marked": "4.3.2",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/mattermost": {

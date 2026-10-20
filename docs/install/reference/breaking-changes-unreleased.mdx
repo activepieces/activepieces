@@ -8,6 +8,18 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Matrix 0.6.0: Send Message returns the event ID, is builder-only, and the Home Server must be the server's own URL
+
+Send Message used to return the raw HTTP response of the send call (`status`, `headers` and a `body` holding `event_id`). From Matrix 0.6.0 it returns `{ eventId, roomId, transactionId }`. The room is now picked from a dropdown of joined rooms (Room Alias stays as an optional fallback), and the action is builder-only: AI agents use the new **Send Text Message** action instead.
+
+The connection's **Home Server** is now checked when it is saved and on every run. It must be an `https` URL of the homeserver itself, such as `https://matrix-client.matrix.org` (plain `http` is accepted only for `localhost`). An Element web link such as `https://app.element.io/#/home` is rejected with a message that says which URL to use instead.
+
+Custom API Call now only accepts URLs on the connection's homeserver. A step that pointed it at another host fails after the upgrade.
+
+#### What you need to do
+
+If a later step reads `body.event_id` from Send Message, read `eventId` instead. If a Custom API Call step calls another host, point it at your homeserver or use the HTTP piece. Agents that used Send Message as a tool switch to Send Text Message. If a Matrix connection fails with the Home Server message, reconnect it with your homeserver's URL (shown in Element under Settings, Help & About). Steps keep running on the version they were built with until you upgrade them.
+
 #### Close 0.3.0: Find Lead and Find Contact drop the "Starts With" and "Ends With" match options
 
 Find Lead and Find Contact no longer offer the **Starts With** and **Ends With** match options. They never worked: Close's search ignored them, so a step using one did not filter as its label said. A step upgraded to Close 0.3.0 with one of these options saved fails validation until a supported option is picked.
