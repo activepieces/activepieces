@@ -16,7 +16,7 @@ import {
 import { type AxiosRequestConfig, isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey, getFreeLegacyCompAttemptKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, ENTITLEMENTS_WRITE_LOCK_TIMEOUT_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey, getEntitlementsWriteLockKey, getFreeLegacyCompAttemptKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { system } from '../../../../helper/system/system'
@@ -159,6 +159,13 @@ export const autumnUtils = {
         )
     },
     async refreshEntitlements(log: FastifyBaseLogger, platformId: string): Promise<void> {
+        await distributedLock(log).runExclusive({
+            key: getEntitlementsWriteLockKey(platformId),
+            timeoutInSeconds: ENTITLEMENTS_WRITE_LOCK_TIMEOUT_SECONDS,
+            fn: () => autumnUtils.writeEntitlementsFromAutumn(log, platformId),
+        })
+    },
+    async writeEntitlementsFromAutumn(log: FastifyBaseLogger, platformId: string): Promise<void> {
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
         if (isNil(client)) {
             return
