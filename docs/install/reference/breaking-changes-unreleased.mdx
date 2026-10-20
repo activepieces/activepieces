@@ -8,6 +8,13 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### FTP/SFTP 0.5.12: the FTP "New File" trigger no longer re-fires the same file on every poll
+
+On an FTP or FTPS server that does not support the `MLSD` command, **New File** had no usable modification time for the entries it listed, and treated every one of them as if it had just changed. Every poll therefore started a flow run for every file in the watched folder, and for its subfolders too, for as long as the flow was enabled. From 0.5.12 the trigger asks the server for the real timestamp with `MDTM` when the listing does not carry one, so a file starts one run when it arrives and one more each time it genuinely changes. Subfolders are no longer reported as files. SFTP is unchanged.
+
+#### What you need to do
+
+Nothing for most flows: they simply stop running on files they had already handled. If a downstream step was written to tolerate the repeats, for example by checking whether the work had already been done, that guard is now redundant but harmless. On the rare server that supports neither `MLSD` nor `MDTM` the trigger cannot establish when a file changed and will not emit it; if a folder goes quiet after upgrading, check whether your server offers either command with `FEAT`. Steps keep running on the version they were built with until you upgrade them.
 #### Invoice Ninja 0.5.0: Get Report returns columns and rows, the existing actions are builder-only, and some text inputs changed type
 
 Get Report used to send a GET to `/api/v1/reports/<type>`, which does not return report data, and returned whatever came back (or an error message as a successful step). From Invoice Ninja 0.5.0 it runs the report and returns `{ reportType, columns, rows, rowCount }`, where each row is keyed by column key (for example `client.name`). It also gains a date range and fails the step on API errors.
