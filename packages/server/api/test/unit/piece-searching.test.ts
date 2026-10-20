@@ -108,6 +108,7 @@ function search(searchQuery: string): PieceMetadataSchema[] {
         categories: undefined,
         searchQuery,
         pieces: allPieces,
+        untranslatedNames: new Map(),
         suggestionType: SuggestionType.ACTION,
     })
 }
@@ -117,6 +118,7 @@ function searchTriggers(searchQuery: string): PieceMetadataSchema[] {
         categories: undefined,
         searchQuery,
         pieces: allPieces,
+        untranslatedNames: new Map(),
         suggestionType: SuggestionType.TRIGGER,
     })
 }
@@ -226,6 +228,7 @@ describe('pieceSearching.search', () => {
             categories: undefined,
             searchQuery: undefined,
             pieces: allPieces,
+            untranslatedNames: new Map(),
             suggestionType: SuggestionType.ACTION,
         })
 
@@ -253,6 +256,7 @@ function searchWithLegacyPiece(searchQuery: string): PieceMetadataSchema[] {
         categories: undefined,
         searchQuery,
         pieces: [...allPieces, legacyPiece],
+        untranslatedNames: new Map(),
         suggestionType: SuggestionType.ACTION_AND_TRIGGER,
     })
 }
@@ -285,6 +289,7 @@ describe('pieceSearching.search with null descriptions', () => {
             categories: undefined,
             searchQuery: 'submission',
             pieces: [...allPieces, legacyPiece],
+            untranslatedNames: new Map(),
             suggestionType: SuggestionType.TRIGGER,
         })
 

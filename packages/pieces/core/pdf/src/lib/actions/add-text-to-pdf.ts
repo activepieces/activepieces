@@ -77,6 +77,10 @@ export const addTextToPdf = createAction({
       },
     }),
   },
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Source', icon: 'file', props: ['file'] },
+    { key: 'stamps', display: 'section', label: 'Text', icon: 'type', props: ['textItems'] },
+  ],
   async run(context) {
     try {
       const file = context.propsValue.file;

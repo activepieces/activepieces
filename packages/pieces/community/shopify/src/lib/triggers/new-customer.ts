@@ -2,7 +2,7 @@ import { createShopifyWebhookTrigger } from '../common/register-webhook';
 
 export const newCustomer = createShopifyWebhookTrigger({
   name: 'new_customer',
-  description: 'Triggered when a new customer is created',
+  description: 'Triggers when a customer is created.',
   topic: 'customers/create',
   displayName: 'New Customer',
   sampleData: {
