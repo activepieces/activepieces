@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 import { resendClient } from '../common/client';
@@ -10,18 +10,22 @@ export const createDomain = createAction({
   auth: resendAuth,
   displayName: 'Create Domain',
   outputSchema: createDomainOutputSchema,
-  description: 'Add a sending domain to your Resend account and get the DNS records to verify it',
+  description: 'Add a sending domain and get the DNS records to verify it.',
   audience: 'both',
   aiMetadata: { description: 'Registers a new sending domain on the Resend account and returns the DNS records that must be added to verify it. Use this as the first step in setting up a custom sending domain before triggering verification. Not idempotent — each call attempts to create a new domain entry.', idempotent: false },
+  propertyGroups: [
+    { key: 'domain', display: 'section', label: 'Domain', icon: 'inbox', props: ['name', 'region', 'info'] },
+  ],
   props: {
     name: Property.ShortText({
       displayName: 'Domain Name',
-      description: 'The domain you want to send from, e.g. mail.yourdomain.com',
+      description: 'The domain or subdomain you will send from.',
+      placeholder: 'mail.acme.com',
       required: true,
     }),
     region: Property.StaticDropdown({
       displayName: 'Region',
-      description: 'AWS region for email delivery. Defaults to US East.',
+      description: 'Where Resend sends from. Empty uses US East.',
       required: false,
       options: {
         options: [
@@ -31,6 +35,10 @@ export const createDomain = createAction({
           { label: 'South America (São Paulo)', value: 'sa-east-1' },
         ],
       },
+    }),
+    info: Property.MarkDown({
+      value: 'Add the returned DNS records at your DNS provider, then run Verify Domain.',
+      variant: MarkdownVariant.INFO,
     }),
   },
   async run({ auth, propsValue }) {

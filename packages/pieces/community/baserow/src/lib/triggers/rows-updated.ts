@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
-import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+import { createWebhookTriggerHooks, dynamicWebhookInstructions, webhookUrlInfo } from '../common/webhook-trigger';
 import { rowsUpdatedTriggerOutputSchema } from '../output-schemas';
 
 const triggerHooks = createWebhookTriggerHooks({
@@ -15,15 +15,31 @@ export const rowsUpdatedTrigger = createTrigger({
   outputSchema: rowsUpdatedTriggerOutputSchema,
   auth: baserowAuth,
   displayName: 'Updated Rows (Batch)',
-  description:
-    'Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.',
+  description: 'Triggers once with all the rows updated together, as one list.',
   aiMetadata: {
     description:
       'Fires when one or more existing rows are updated in the selected Baserow table, delivering all changed rows (each with new and previous values) from a single update event together as one batch. Use to process bulk edits at once; for one event per row use Updated Row.',
   },
   type: TriggerStrategy.WEBHOOK,
+  propertyGroups: [
+    {
+      key: 'table',
+      display: 'section',
+      label: 'Table to Watch',
+      icon: 'file',
+      props: ['table_id'],
+    },
+    {
+      key: 'setup',
+      display: 'section',
+      label: 'Webhook',
+      icon: 'send',
+      props: ['webhook_url', 'instructions'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
+    webhook_url: webhookUrlInfo(),
     instructions: dynamicWebhookInstructions('Rows updated'),
   },
   sampleData: {

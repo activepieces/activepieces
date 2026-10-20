@@ -40,5 +40,4 @@ export const getAppointmentDetails = {
 
 export const cancelAppointment = {
   booking_id: z.string().check(z.minLength(1)),
-  action: z.enum(['cancel', 'completed', 'noshow']),
 };

@@ -1,4 +1,4 @@
-import { isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { AgentConversation, AgentTurnModel, chatBilling, ChatToolCall, isAppSumoCreditedPlan, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, PersistedToolCallStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { LicenseKeyPostHogEvents } from '../../helper/telemetry.utils'
@@ -14,9 +14,16 @@ function latestTurnToolCalls({ messages }: { messages: PersistedAgentMessage[] }
     const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
     return turn.flatMap((message) => message.parts.flatMap((part) =>
         part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.COMPLETED
-            ? [{ toolName: part.toolName, output: part.output }]
+            ? [{ toolName: part.toolName, output: part.output }, ...(SUB_AGENT_TOOLS.includes(part.toolName) ? taskToolCalls(part.output) : [])]
             : [],
     ))
+}
+
+function taskToolCalls(output: unknown): ChatToolCall[] {
+    if (!isObject(output) || !Array.isArray(output['billedToolCalls'])) {
+        return []
+    }
+    return output['billedToolCalls'].flatMap((call) => isObject(call) && typeof call['toolName'] === 'string' ? [{ toolName: call['toolName'], output: call['output'] }] : [])
 }
 
 function countBillableToolCallsInLatestTurn({ messages }: { messages: PersistedAgentMessage[] }): number {
@@ -27,14 +34,15 @@ async function chargeForLatestTurn({ conversation, runId, answeredBy, log }: Cha
     const messages = agentHistory.resolveMessages({ conversation, log })
     const turnIndex = messages.filter((message) => message.role === PersistedAgentRole.USER).length
     const idempotencyScope = runId ?? turnIndex
-    const tierModel = isNil(conversation.modelTierId) ? null : answeredBy ?? await agentModelTier(log).mainModelOf({ conversation })
-    const provider = tierModel?.provider ?? await agentHelpers.resolveChatProviderName({
+    const tierModel = answeredBy ?? (isNil(conversation.modelTierId) ? null : await agentModelTier(log).mainModelOf({ conversation }))
+    const provider = tierModel?.provider ?? await agentHelpers.resolveConversationProviderName({
         platformId: conversation.platformId,
         projectId: conversation.projectId ?? null,
+        providerConfigId: conversation.providerConfigId ?? null,
         log,
     })
     const surface = agentHelpers.surfaceOf({ source: conversation.source })
-    const model = tierModel?.modelId ?? agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider, surface })
+    const model = tierModel?.modelId ?? agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider, surface, pinned: !isNil(conversation.providerConfigId) })
     const tier = agentHelpers.resolveTier({ tierId: conversation.modelName ?? null, surface })
     const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)
 
@@ -98,3 +106,5 @@ type ChargeForLatestTurnParams = {
     answeredBy?: AgentTurnModel
     log: FastifyBaseLogger
 }
+
+const SUB_AGENT_TOOLS = ['ap_run_task', 'ap_deep_research']

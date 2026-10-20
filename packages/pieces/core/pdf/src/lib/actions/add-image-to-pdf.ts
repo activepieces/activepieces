@@ -59,6 +59,10 @@ export const addImageToPdf = createAction({
       },
     }),
   },
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Source', icon: 'file', props: ['file'] },
+    { key: 'stamps', display: 'section', label: 'Images', icon: 'paperclip', props: ['imageItems'] },
+  ],
   async run(context) {
     try {
       const file = context.propsValue.file;

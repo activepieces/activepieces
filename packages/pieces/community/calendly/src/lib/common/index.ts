@@ -238,12 +238,14 @@ const LOCATION_KINDS = [
 export const calendlyCommon = {
   baseUrl: BASE_URL,
   scope: Property.StaticDropdown({
-    displayName: 'Scope',
+    displayName: 'Events to Watch',
+    description: 'Organization covers every member and needs an admin or owner token.',
     required: true,
+    display: 'cards',
     options: {
       options: [
-        { value: 'user', label: 'User' },
-        { value: 'organization', label: 'Organization' },
+        { value: 'user', label: 'My Events', icon: 'user' },
+        { value: 'organization', label: 'Organization', icon: 'users' },
       ],
       disabled: false,
     },
@@ -269,6 +271,12 @@ export const calendlyCommon = {
     displayName: 'Scheduled Event',
     description:
       'Scheduled event URI (https://api.calendly.com/scheduled_events/...) or UUID, from List Scheduled Events or a trigger.',
+    required: true,
+  }),
+  bookedEvent: Property.ShortText({
+    displayName: 'Event',
+    description: 'The event URI or ID, such as the event field from a Calendly trigger.',
+    placeholder: 'https://api.calendly.com/scheduled_events/…',
     required: true,
   }),
   invitee: Property.ShortText({

@@ -54,6 +54,10 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             ...ApIdSchema,
             nullable: true,
         },
+        providerConfigId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         status: {
             type: String,
             nullable: false,
@@ -105,6 +109,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             name: 'idx_agent_conversation_streaming_updated',
             columns: ['updated'],
             where: `status = '${AgentConversationStatus.STREAMING}'`,
+        },
+        {
+            name: 'idx_agent_conversation_platform_provider_config',
+            columns: ['platformId', 'providerConfigId'],
+            where: '"providerConfigId" IS NOT NULL',
         },
     ],
     relations: {

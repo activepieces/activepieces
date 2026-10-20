@@ -35,5 +35,6 @@
   "None": "geen",
   "JSON": "JSON",
   "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte"
+  "Raw": "Onbewerkte",
+  "Full URL, or a path relative to https://openrouter.ai/api/v1": "Volledige URL, of een pad relatief aan https://openrouter.ai/api/v1"
 }

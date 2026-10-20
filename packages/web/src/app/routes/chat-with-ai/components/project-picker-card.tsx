@@ -254,7 +254,7 @@ function ProjectGrid({ projects, search, onSelect }: ProjectGridProps) {
               titleClassName="text-sm"
               framePersonalIcon
             />
-            <span className="inline-flex h-7 min-w-12 shrink-0 items-center justify-center rounded-lg bg-gray-3 px-3 text-sm font-medium text-gray-12 transition-colors group-hover:bg-gray-4">
+            <span className="inline-flex h-7 min-w-12 shrink-0 items-center justify-center rounded-xl bg-gray-3 px-3 text-sm font-medium text-gray-12 transition-colors group-hover:bg-gray-4">
               {t('Use')}
             </span>
           </button>
