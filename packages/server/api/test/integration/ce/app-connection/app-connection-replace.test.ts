@@ -677,6 +677,74 @@ describe('POST /v1/app-connections/replace', () => {
         const newestLocked = versions.find((v) => v.state === FlowVersionState.LOCKED)
         expect(newestLocked?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'submitted' })
     })
+
+    it('repoints only the listed flows when the scope is flow, and keeps their sample data', async () => {
+        const ctx = await createTestContext(app!)
+        const { source, target } = await saveSourceAndTarget(ctx)
+
+        const listedFlow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+        const otherFlow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+        await db.save('flow', [listedFlow, otherFlow])
+        await db.save('flow_version', [
+            createMockFlowVersion({
+                flowId: listedFlow.id,
+                state: FlowVersionState.DRAFT,
+                connectionIds: [source.externalId],
+                trigger: pieceTrigger({ externalId: source.externalId, marker: 'listed', sampleDataFileId: 'listed-sample' }),
+            }),
+            createMockFlowVersion({
+                flowId: otherFlow.id,
+                state: FlowVersionState.DRAFT,
+                connectionIds: [source.externalId],
+                trigger: pieceTrigger({ externalId: source.externalId, marker: 'other' }),
+            }),
+        ])
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            scope: 'FLOW',
+            flowIds: [listedFlow.id],
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        const [listedVersion] = await versionsNewestFirst(listedFlow.id)
+        expect(listedVersion.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'listed' })
+        expect(listedVersion.trigger.settings.sampleData?.sampleDataFileId).toBe('listed-sample')
+        const [otherVersion] = await versionsNewestFirst(otherFlow.id)
+        expect(otherVersion.trigger.settings.input).toEqual({ auth: connectionRef(source.externalId), marker: 'other' })
+        const stillThere = await db.findOneBy<AppConnection>('app_connection', { id: source.id })
+        expect(stillThere?.id).toBe(source.id)
+    })
+
+    it('rejects a flow scope that lists a flow from another project', async () => {
+        const ctx = await createTestContext(app!)
+        const otherCtx = await createTestContext(app!)
+        const { source, target } = await saveSourceAndTarget(ctx)
+
+        const foreignFlow = createMockFlow({ projectId: otherCtx.project.id, status: FlowStatus.DISABLED })
+        await db.save('flow', foreignFlow)
+        await db.save('flow_version', createMockFlowVersion({
+            flowId: foreignFlow.id,
+            state: FlowVersionState.DRAFT,
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'foreign' }),
+        }))
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            scope: 'FLOW',
+            flowIds: [foreignFlow.id],
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response?.json().params.message).toContain(foreignFlow.id)
+        const [foreignVersion] = await versionsNewestFirst(foreignFlow.id)
+        expect(foreignVersion.trigger.settings.input).toEqual({ auth: connectionRef(source.externalId), marker: 'foreign' })
+    })
 })
 
 async function saveSourceAndTarget(ctx: Awaited<ReturnType<typeof createTestContext>>): Promise<{ source: AppConnection, target: AppConnection }> {

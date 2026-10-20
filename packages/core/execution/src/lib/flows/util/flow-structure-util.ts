@@ -1,5 +1,5 @@
-import { AgentPieceProps } from '@activepieces/core-piece-types'
-import { isNil, unique } from '@activepieces/core-utils'
+import { AgentPieceProps, AgentPieceTool } from '@activepieces/core-piece-types'
+import { connectionTemplate, isNil, unique } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { BranchCondition, BranchedAction, BranchExecutionType, CodeAction, emptyCondition, FlowAction, FlowActionType, PieceAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
@@ -295,6 +295,71 @@ function extractConnectionIds(flowVersion: FlowVersion): string[] {
     return Array.from(new Set([...triggerAuthIds, ...stepAuthIds]))
 }
 
+function getAgentToolConnectionId(tool: unknown): string | undefined {
+    const pieceTool = AgentPieceTool.safeParse(tool)
+    if (!pieceTool.success) {
+        return undefined
+    }
+    return connectionTemplate.unwrapExternalId(pieceTool.data.pieceMetadata.predefinedInput?.auth) ?? undefined
+}
+
+function extractAgentToolConnectionIds(flowVersion: FlowVersion): string[] {
+    const connectionIds = getAllSteps(flowVersion.trigger).flatMap((step) => getAgentTools(step).map(getAgentToolConnectionId))
+    return unique(connectionIds.filter((connectionId): connectionId is string => !isNil(connectionId) && connectionId !== ''))
+}
+
+function getAgentTools(step: Step): unknown[] {
+    if (!isAgentPiece(step)) {
+        return []
+    }
+    const agentTools = step.settings.input[AgentPieceProps.AGENT_TOOLS]
+    return Array.isArray(agentTools) ? agentTools : []
+}
+
+function replaceConnection({ flowVersion, sourceExternalId, targetExternalId }: ReplaceConnectionParams): FlowVersion {
+    return transferFlow(flowVersion, (step) => {
+        const input = step.settings?.input
+        if (!input) {
+            return step
+        }
+        const replacesAuth = input.auth === `{{connections['${sourceExternalId}']}}`
+        const agentTools = getAgentTools(step)
+        const replacesAgentTools = agentTools.some((tool) => getAgentToolConnectionId(tool) === sourceExternalId)
+        if (!replacesAuth && !replacesAgentTools) {
+            return step
+        }
+        return {
+            ...step,
+            settings: {
+                ...step.settings,
+                input: {
+                    ...input,
+                    ...(replacesAuth && { auth: `{{connections['${targetExternalId}']}}` }),
+                    ...(replacesAgentTools && { [AgentPieceProps.AGENT_TOOLS]: agentTools.map((tool) => withAgentToolConnection({ tool, sourceExternalId, targetExternalId })) }),
+                },
+            },
+        }
+    })
+}
+
+function withAgentToolConnection({ tool, sourceExternalId, targetExternalId }: { tool: unknown } & Omit<ReplaceConnectionParams, 'flowVersion'>): unknown {
+    const pieceTool = AgentPieceTool.safeParse(tool)
+    if (!pieceTool.success) {
+        return tool
+    }
+    const predefinedInput = pieceTool.data.pieceMetadata.predefinedInput
+    if (isNil(predefinedInput) || connectionTemplate.unwrapExternalId(predefinedInput.auth) !== sourceExternalId) {
+        return tool
+    }
+    return {
+        ...pieceTool.data,
+        pieceMetadata: {
+            ...pieceTool.data.pieceMetadata,
+            predefinedInput: { ...predefinedInput, auth: targetExternalId },
+        },
+    }
+}
+
 export const flowStructureUtil = {
     isTrigger,
     isAction,
@@ -320,4 +385,13 @@ export const flowStructureUtil = {
     isAgentPiece,
     isBranchedAction,
     extractAgentIds,
+    getAgentToolConnectionId,
+    extractAgentToolConnectionIds,
+    replaceConnection,
+}
+
+type ReplaceConnectionParams = {
+    flowVersion: FlowVersion
+    sourceExternalId: string
+    targetExternalId: string
 }

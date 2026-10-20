@@ -56,13 +56,16 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     // versions of the flows it can see (those whose latest version references the
     // connection), so only published versions whose flow's latest version dropped the
     // connection stay untouched and count as blocking.
-    async countPublishedFlowsReferencingConnection({ projectId, externalId, applyToPublishedVersions }: CountPublishedFlowsParams): Promise<number> {
+    async countPublishedFlowsReferencingConnection({ projectId, externalId, applyToPublishedVersions, flowIds }: CountPublishedFlowsParams): Promise<number> {
         const query = flowVersionRepo()
             .createQueryBuilder('flow_version')
             .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
             .where('flow."projectId" = :projectId', { projectId })
             .andWhere('flow_version.id = flow."publishedVersionId"')
             .andWhere('flow_version."connectionIds" && :externalIds', { externalIds: [externalId] })
+        if (!isNil(flowIds)) {
+            query.andWhere('flow.id IN (:...flowIds)', { flowIds })
+        }
         if (applyToPublishedVersions) {
             const latestVersionConnectionIds = flowVersionRepo()
                 .createQueryBuilder('fv_latest')
@@ -399,8 +402,9 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         previousFlow: flow,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,
-            request: replaceConnectionInFlowVersion(lastPublishedVersion, appConnection, newAppConnection),
+            request: replaceConnectionInFlowVersion({ flowVersion: lastPublishedVersion, appConnection, newAppConnection }),
         },
+        auditReason: replaceConnectionAuditReason({ flowVersion: lastPublishedVersion, appConnection, newAppConnection }),
     })
 
     const { status } = await flowService(log).getOneOrThrow({ id: flow.id, projectId })
@@ -418,7 +422,9 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
 }
 
 async function handleDraftVersion({ flow, latestVersion, userId, platformId, appConnection, newAppConnection, log }: HandleDraftVersionParams): Promise<void> {
-    if (!latestVersion.connectionIds.includes(appConnection.externalId)) {
+    const usesConnection = latestVersion.connectionIds.includes(appConnection.externalId)
+        || flowStructureUtil.extractAgentToolConnectionIds(latestVersion).includes(appConnection.externalId)
+    if (!usesConnection) {
         return
     }
 
@@ -429,33 +435,28 @@ async function handleDraftVersion({ flow, latestVersion, userId, platformId, app
         userId,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,
-            request: replaceConnectionInFlowVersion(latestVersion, appConnection, newAppConnection),
+            request: replaceConnectionInFlowVersion({ flowVersion: latestVersion, appConnection, newAppConnection }),
         },
-    })
-}
-function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData) {
-    return flowStructureUtil.transferFlow(flowVersion, (step) => {
-        if (step.settings?.input?.auth?.includes(appConnection.externalId)) {
-            return {
-                ...step,
-                settings: {
-                    ...step.settings,
-                    input: {
-                        ...step.settings?.input,
-                        auth: replaceConnectionIdInAuth(step.settings.input.auth, appConnection.externalId, newAppConnection.externalId),
-                    },
-                },
-            }
-        }
-        return step
+        auditReason: replaceConnectionAuditReason({ flowVersion: latestVersion, appConnection, newAppConnection }),
     })
 }
 
-function replaceConnectionIdInAuth(auth: string, oldConnectionId: string, newConnectionId: string): string {
-    return auth.replace(
-        new RegExp(`connections\\['${oldConnectionId}'\\]`, 'g'),
-        `connections['${newConnectionId}']`,
-    )
+function replaceConnectionInFlowVersion({ flowVersion, appConnection, newAppConnection }: ReplaceConnectionInFlowVersionParams): FlowVersion {
+    return flowStructureUtil.replaceConnection({
+        flowVersion,
+        sourceExternalId: appConnection.externalId,
+        targetExternalId: newAppConnection.externalId,
+    })
+}
+
+function replaceConnectionAuditReason({ flowVersion, appConnection, newAppConnection }: ReplaceConnectionInFlowVersionParams): string {
+    return `Replaced connection "${appConnection.displayName}" with "${newAppConnection.displayName}" in "${flowVersion.displayName}" Flow.`
+}
+
+type ReplaceConnectionInFlowVersionParams = {
+    flowVersion: FlowVersion
+    appConnection: AppConnectionWithoutSensitiveData
+    newAppConnection: AppConnectionWithoutSensitiveData
 }
 
 type UpdateFlowsWithAppConnectionParams = {
@@ -484,4 +485,5 @@ type CountPublishedFlowsParams = {
     projectId: ProjectId
     externalId: string
     applyToPublishedVersions: boolean
+    flowIds?: FlowId[]
 }
