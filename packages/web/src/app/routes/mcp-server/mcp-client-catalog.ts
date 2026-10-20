@@ -59,73 +59,145 @@ function mcpServersJson({
   return prettyJson({ mcpServers: { [slug]: serverConfig } });
 }
 
-const CLOUD_LISTINGS = {
-  claude: 'https://claude.ai/directory/cloud-activepieces-com',
-  cursor:
-    'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor',
-};
-
-const SELF_HOSTED_SETUP_VIDEOS = {
-  claude:
-    'https://cdn.activepieces.com/videos/mcp-tutorials/Claude%20MCP%20-%20Step%201.mp4',
-  chatgpt:
-    'https://cdn.activepieces.com/videos/mcp-tutorials/ChatGPT%20MCP%20-%20Step%201.mp4',
-};
+function configMethod({
+  path,
+  text,
+  body,
+}: {
+  path: string;
+  text: string;
+  body: string;
+}): MethodEntry {
+  return {
+    key: 'config',
+    label: t('Config file'),
+    install: {
+      title: t('Add it to {path}', { path }),
+      body,
+      snippet: text,
+      path,
+    },
+  };
+}
 
 function catalogEntries({
   url,
   brand: { name, slug },
+  isCloud,
 }: {
   url: string;
   brand: Brand;
+  isCloud: boolean;
 }): CatalogEntry[] {
+  const hasListings = isCloud && name === LISTED_BRAND_NAME;
+  const claudeConnector: MethodEntry = {
+    key: 'connector',
+    label: t('Custom connector'),
+    install: {
+      title: t('Add a custom connector'),
+      body: t(
+        'Opens Claude with the connector filled in. You can also paste the server URL yourself.',
+      ),
+      action: {
+        label: t('Add to Claude'),
+        href: claudeDeepLink({ serverUrl: url, brandName: name }),
+        requiresInternetReachableUrl: true,
+      },
+      command: url,
+    },
+  };
+  const chatgptConnector: MethodEntry = {
+    key: 'connector',
+    label: t('Custom connector'),
+    install: {
+      title: t('Add a custom connector'),
+      body: t('In ChatGPT settings, create a connector with this URL.'),
+      command: url,
+    },
+  };
+
   return [
     {
       key: 'claude-code',
       ...MCP_CLIENT_BRANDING['claude-code'],
       group: 'terminal',
       setupHint: t('One command'),
-      docsUrl: 'https://docs.claude.com/en/docs/claude-code/mcp',
-      install: {
-        body: t('From the folder you want the tools available in.'),
-        command: `claude mcp add --transport http ${slug} ${url}`,
-      },
-      auth: t('Run /mcp inside Claude Code and pick Authenticate.'),
-      config: {
-        path: '.mcp.json',
-        snippet: mcpServersJson({ slug, serverConfig: { type: 'http', url } }),
-      },
+      docsUrl: 'https://code.claude.com/docs/en/mcp',
+      auth: { body: t('Run /mcp inside Claude Code and pick Authenticate.') },
+      methods: [
+        {
+          key: 'terminal',
+          label: t('Terminal'),
+          install: {
+            title: t('Run this in your terminal'),
+            body: t('From the folder you want the tools available in.'),
+            command: `claude mcp add --transport http ${slug} ${url}`,
+          },
+        },
+        configMethod({
+          path: '.mcp.json',
+          text: mcpServersJson({ slug, serverConfig: { type: 'http', url } }),
+          body: t('At the root of the project.'),
+        }),
+      ],
     },
     {
       key: 'codex',
       ...MCP_CLIENT_BRANDING.codex,
       group: 'terminal',
       setupHint: t('One command'),
-      docsUrl: 'https://developers.openai.com/codex/mcp',
-      install: {
-        body: t('From the folder you want the tools available in.'),
-        command: `codex mcp add ${slug} --url ${url}`,
+      docsUrl: 'https://learn.chatgpt.com/docs/extend/mcp?surface=cli',
+      auth: {
+        body: t(
+          'Run this to sign in, then approve the project in your browser.',
+        ),
+        command: `codex mcp login ${slug}`,
       },
-      config: {
-        path: '~/.codex/config.toml',
-        snippet: `[mcp_servers.${slug}]\nurl = "${url}"`,
-      },
+      methods: [
+        {
+          key: 'terminal',
+          label: t('Terminal'),
+          install: {
+            title: t('Run this in your terminal'),
+            body: t('From the folder you want the tools available in.'),
+            command: `codex mcp add ${slug} --url ${url}`,
+          },
+        },
+        configMethod({
+          path: '~/.codex/config.toml',
+          text: `[mcp_servers.${slug}]\nurl = "${url}"`,
+          body: t('Create the file if it doesn’t exist.'),
+        }),
+      ],
     },
     {
       key: 'gemini-cli',
       ...MCP_CLIENT_BRANDING['gemini-cli'],
       group: 'terminal',
       setupHint: t('One command'),
-      docsUrl:
-        'https://google-gemini.github.io/gemini-cli/docs/tools/mcp-server.html',
-      install: {
-        body: t('Pass --scope project to keep it to one repository.'),
-        command: `gemini mcp add --transport http ${slug} ${url}`,
+      docsUrl: 'https://geminicli.com/docs/tools/mcp-server/',
+      auth: {
+        body: t(
+          'Run this inside Gemini CLI, then approve the project in your browser.',
+        ),
+        command: `/mcp auth ${slug}`,
       },
-      config: {
-        path: '~/.gemini/settings.json',
-        snippet: mcpServersJson({ slug, serverConfig: { httpUrl: url } }),
-      },
+      methods: [
+        {
+          key: 'terminal',
+          label: t('Terminal'),
+          install: {
+            title: t('Run this in your terminal'),
+            body: t('From the folder you want the tools available in.'),
+            command: `gemini mcp add --transport http ${slug} ${url}`,
+          },
+        },
+        configMethod({
+          path: '~/.gemini/settings.json',
+          text: mcpServersJson({ slug, serverConfig: { httpUrl: url } }),
+          body: t('Create the file if it doesn’t exist.'),
+        }),
+      ],
     },
     {
       key: 'opencode',
@@ -133,113 +205,145 @@ function catalogEntries({
       group: 'terminal',
       setupHint: t('Config file'),
       docsUrl: 'https://opencode.ai/docs/mcp-servers/',
-      config: {
-        path: '~/.config/opencode/opencode.json',
-        snippet: prettyJson({
-          mcp: { [slug]: { type: 'remote', url, enabled: true } },
-        }),
+      auth: {
+        body: t(
+          'Run this to sign in, then approve the project in your browser.',
+        ),
+        command: `opencode mcp auth ${slug}`,
       },
+      methods: [
+        configMethod({
+          path: '~/.config/opencode/opencode.json',
+          text: prettyJson({
+            mcp: { [slug]: { type: 'remote', url, oauth: {} } },
+          }),
+          body: t('Create the file if it doesn’t exist.'),
+        }),
+      ],
     },
     {
       key: 'windsurf',
       ...MCP_CLIENT_BRANDING.windsurf,
       group: 'editors',
+      agentName: 'Cascade',
       setupHint: t('Config file'),
       docsUrl: 'https://docs.windsurf.com/windsurf/cascade/mcp',
-      install: {
-        body: t(
-          'Open Cascade, click the plugins icon, then Manage plugins → View raw config.',
-        ),
-        command: url,
-      },
-      config: {
-        path: '~/.codeium/windsurf/mcp_config.json',
-        snippet: mcpServersJson({ slug, serverConfig: { serverUrl: url } }),
-      },
+      methods: [
+        configMethod({
+          path: '~/.codeium/windsurf/mcp_config.json',
+          text: mcpServersJson({ slug, serverConfig: { serverUrl: url } }),
+          body: t(
+            'Open Cascade, click the plugins icon, then Manage plugins → View raw config.',
+          ),
+        }),
+      ],
     },
     {
       key: 'cursor',
       ...MCP_CLIENT_BRANDING.cursor,
       group: 'editors',
       setupHint: t('One click install'),
-      docsUrl: 'https://docs.cursor.com/context/mcp',
-      install: {
-        body: t('Opens Cursor and writes the server into ~/.cursor/mcp.json.'),
-        action: {
-          label: t('Add to Cursor'),
-          href: cursorDeepLink({ serverUrl: url, slug }),
+      docsUrl: hasListings
+        ? CURSOR_DIRECTORY_URL
+        : 'https://cursor.com/docs/mcp',
+      methods: [
+        {
+          key: 'deeplink',
+          label: t('One click'),
+          install: {
+            title: t('Install in one click'),
+            body: t(
+              'Opens Cursor and writes the server into ~/.cursor/mcp.json.',
+            ),
+            action: {
+              label: t('Add to Cursor'),
+              href: cursorDeepLink({ serverUrl: url, slug }),
+            },
+          },
         },
-      },
-      cloud: { docsUrl: CLOUD_LISTINGS.cursor },
-      config: {
-        path: '~/.cursor/mcp.json',
-        snippet: mcpServersJson({ slug, serverConfig: { url } }),
-      },
+        configMethod({
+          path: '~/.cursor/mcp.json',
+          text: mcpServersJson({ slug, serverConfig: { url } }),
+          body: t('Save the file, then reload Cursor.'),
+        }),
+      ],
     },
     {
       key: 'vscode',
       ...MCP_CLIENT_BRANDING.vscode,
       group: 'editors',
+      agentName: 'Copilot',
       setupHint: t('One click install'),
-      docsUrl: 'https://code.visualstudio.com/docs/copilot/chat/mcp-servers',
-      install: {
-        body: t(
-          'Opens VS Code and writes the server into .vscode/mcp.json for this workspace.',
-        ),
-        action: {
-          label: t('Add to VS Code'),
-          href: vscodeDeepLink({ serverUrl: url, slug }),
+      docsUrl:
+        'https://code.visualstudio.com/docs/agent-customization/mcp-servers',
+      methods: [
+        {
+          key: 'deeplink',
+          label: t('One click'),
+          install: {
+            title: t('Install in one click'),
+            body: t(
+              'Opens VS Code and writes the server into .vscode/mcp.json for this workspace.',
+            ),
+            action: {
+              label: t('Add to VS Code'),
+              href: vscodeDeepLink({ serverUrl: url, slug }),
+            },
+          },
         },
-      },
-      config: {
-        path: '.vscode/mcp.json',
-        snippet: prettyJson({ servers: { [slug]: { type: 'http', url } } }),
-      },
+        configMethod({
+          path: '.vscode/mcp.json',
+          text: prettyJson({ servers: { [slug]: { type: 'http', url } } }),
+          body: t('Save the file, then select Start above the server entry.'),
+        }),
+      ],
     },
     {
       key: 'claude',
       ...MCP_CLIENT_BRANDING.claude,
       group: 'chat',
-      setupHint: t('Add a connector'),
-      selfHostedVideoUrl: SELF_HOSTED_SETUP_VIDEOS.claude,
-      docsUrl:
-        'https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp',
-      install: {
-        body: t(
-          'Paste the server URL as a custom connector. This client dials your server from the internet, so localhost will not reach it.',
-        ),
-        action: {
-          label: t('Add to Claude'),
-          href: claudeDeepLink({ serverUrl: url, brandName: name }),
-          requiresInternetReachableUrl: true,
-        },
-      },
-      cloud: {
-        docsUrl: CLOUD_LISTINGS.claude,
-        install: {
-          body: t(
-            'This server is already listed in Claude’s directory — add it there in one click.',
-          ),
-          action: {
-            label: t('Add from the Claude directory'),
-            href: CLOUD_LISTINGS.claude,
-          },
-        },
-      },
+      setupHint: hasListings ? t('One click install') : t('Add a connector'),
+      docsUrl: hasListings
+        ? CLAUDE_DIRECTORY_URL
+        : 'https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp',
+      methods: hasListings
+        ? [
+            {
+              key: 'directory',
+              label: t('One click'),
+              install: {
+                title: t('Add it from the Claude directory'),
+                body: t('{brand} is already listed there.', { brand: name }),
+                action: {
+                  label: t('Open the directory'),
+                  href: CLAUDE_DIRECTORY_URL,
+                },
+              },
+            },
+            claudeConnector,
+          ]
+        : [claudeConnector],
     },
     {
       key: 'chatgpt',
       ...MCP_CLIENT_BRANDING.chatgpt,
       group: 'chat',
-      setupHint: t('Add a connector'),
-      selfHostedVideoUrl: SELF_HOSTED_SETUP_VIDEOS.chatgpt,
-      docsUrl: 'https://platform.openai.com/docs/mcp',
-      install: {
-        body: t(
-          'Paste the server URL as a connector. ChatGPT dials your server from the internet, so localhost will not reach it.',
-        ),
-        command: url,
-      },
+      setupHint: hasListings ? t('One click install') : t('Add a connector'),
+      docsUrl: 'https://developers.openai.com/plugins/deploy/connect-chatgpt',
+      methods: hasListings
+        ? [
+            {
+              key: 'app',
+              label: t('One click'),
+              install: {
+                title: t('Open the app in ChatGPT'),
+                body: t('Select Connect on the {brand} app.', { brand: name }),
+                action: { label: t('Open in ChatGPT'), href: CHATGPT_APP_URL },
+              },
+            },
+            chatgptConnector,
+          ]
+        : [chatgptConnector],
     },
     {
       key: 'unknown',
@@ -249,21 +353,57 @@ function catalogEntries({
       setupHint: t(
         'Streamable HTTP or SSE. Point it at the link and it works.',
       ),
-      docsUrl: 'https://modelcontextprotocol.io/clients',
-      install: {
-        body: t('Check your client’s docs for where the server URL goes.'),
-        command: url,
-      },
-      config: { snippet: mcpServersJson({ slug, serverConfig: { url } }) },
+      docsUrl:
+        'https://modelcontextprotocol.io/docs/2026-07-28/develop/connect-remote-servers',
+      methods: [
+        {
+          key: 'url',
+          label: t('Server URL'),
+          install: {
+            title: t('Paste the server URL'),
+            body: t('Check your client’s docs for where the server URL goes.'),
+            command: url,
+          },
+        },
+        {
+          key: 'config',
+          label: t('Config file'),
+          install: {
+            title: t('Add it to the client’s MCP config'),
+            body: t('For clients configured with an mcpServers file.'),
+            snippet: mcpServersJson({ slug, serverConfig: { url } }),
+          },
+        },
+      ],
     },
   ];
 }
 
-function localAuthBody(client: string): string {
-  return t(
-    '{client} opens your browser on the first tool call. Approve the project.',
-    { client },
-  );
+function defaultAuthBody({
+  group,
+  client,
+  brand,
+}: {
+  group: ClientGroupKey;
+  client: string;
+  brand: string;
+}): string {
+  switch (group) {
+    case 'chat':
+      return t(
+        '{client} opens {brand} in your browser. Sign in and approve the project.',
+        { client, brand },
+      );
+    case 'other':
+      return t(
+        'Your client opens a sign-in page on the first tool call. Sign in and approve the project.',
+      );
+    case 'terminal':
+    case 'editors':
+      return t(
+        'Your browser opens on the first tool call. Sign in and approve the project.',
+      );
+  }
 }
 
 const GROUP_ORDER: ClientGroupKey[] = ['terminal', 'editors', 'chat', 'other'];
@@ -272,106 +412,141 @@ const GROUP_COPY: Record<ClientGroupKey, GroupCopy> = {
   terminal: {
     label: () => t('Terminal'),
     tagline: () => t('one command, nothing to edit'),
-    installTitle: () => t('Run this in your terminal'),
-    subtitle: () => t('Terminal · runs locally'),
-    authBody: ({ client }) => localAuthBody(client),
   },
   editors: {
     label: () => t('Editors'),
     tagline: () => t('we write the config for you'),
-    installTitle: () => t('Add the server'),
-    subtitle: () => t('Editor · runs locally'),
-    authBody: ({ client }) => localAuthBody(client),
   },
   chat: {
     label: () => t('Chat apps'),
     tagline: () => t('desktop and web, needs a public HTTPS URL'),
-    installTitle: () => t('Add the connector'),
-    subtitle: () => t('Desktop and web · needs a public HTTPS address'),
-    authBody: ({ client, brand }) =>
-      t(
-        '{client} opens {brand} in your browser. Approve the project it can reach.',
-        { client, brand },
-      ),
   },
   other: {
     label: () => t('Anything else'),
-    installTitle: () => t('Paste the server URL'),
-    subtitle: () => t('Streamable HTTP · OAuth'),
-    authBody: () =>
-      t(
-        'The client opens an OAuth prompt on the first tool call. Approve the project.',
-      ),
   },
 };
 
-function installBody(entry: CatalogEntry): string {
-  return (
-    entry.install?.body ??
-    t(
-      'Add a Streamable HTTP MCP server pointing at this URL — the {client} docs say where its server list lives.',
-      { client: entry.name },
-    )
-  );
+function toMethod({
+  entry,
+  method,
+  brandName,
+}: {
+  entry: CatalogEntry;
+  method: MethodEntry;
+  brandName: string;
+}): SetupMethod {
+  return {
+    key: method.key,
+    label: method.label,
+    instructions: [
+      {
+        title: method.install.title,
+        body: method.install.body,
+        command: method.install.command,
+        snippet: method.install.snippet,
+        agentPrompt: method.install.agentPrompt,
+        action: method.install.action,
+      },
+      {
+        title: t('Sign in'),
+        body:
+          entry.auth?.body ??
+          defaultAuthBody({
+            group: entry.group,
+            client: entry.name,
+            brand: brandName,
+          }),
+        command: entry.auth?.command,
+      },
+      {
+        title: t('Check it works'),
+        body: t('Ask this. If it answers with your tools, you’re set.'),
+        prompt: t('What {brand} tools do you have?', { brand: brandName }),
+      },
+    ],
+  };
 }
 
-function configLabel(config: ConfigSnippet): string {
-  return config.path
-    ? t('Or edit {path}', { path: config.path })
-    : t('MCP server JSON');
+function withAgentMethod({
+  entry,
+  brandName,
+}: {
+  entry: CatalogEntry;
+  brandName: string;
+}): MethodEntry[] {
+  if (entry.group !== 'terminal' && entry.group !== 'editors') {
+    return entry.methods;
+  }
+  const prompt = agentPrompt({ methods: entry.methods, brandName });
+  if (prompt === null) {
+    return entry.methods;
+  }
+  const agent = entry.agentName ?? entry.name;
+  const agentMethod: MethodEntry = {
+    key: 'agent',
+    label: t('Ask the agent'),
+    install: {
+      title: t('Paste this into {agent}', { agent }),
+      body: t(
+        'It adds the server for you. You may need to restart {client} after.',
+        { client: entry.name },
+      ),
+      agentPrompt: prompt,
+    },
+  };
+  const [first, ...rest] = entry.methods;
+  return [first, agentMethod, ...rest];
 }
 
-function verifyPrompts(brandName: string): string[] {
-  return [
-    `"${t('What {brand} tools do you have?', { brand: brandName })}"`,
-    `"${t('Post a note in Slack that the deploy finished.')}"`,
-  ];
+function agentPrompt({
+  methods,
+  brandName,
+}: {
+  methods: MethodEntry[];
+  brandName: string;
+}): AgentPrompt | null {
+  const command = methods.find((method) => method.install.command)?.install
+    .command;
+  if (command) {
+    return {
+      intro: t('Add the {brand} MCP server for me by running this command:', {
+        brand: brandName,
+      }),
+      code: command,
+      outro: t('Then tell me how to sign in.'),
+    };
+  }
+  const config = methods.find((method) => method.install.snippet)?.install;
+  if (config?.snippet && config.path) {
+    return {
+      intro: t(
+        'Add the {brand} MCP server for me. Put this in {path}, and create the file if it doesn’t exist:',
+        { brand: brandName, path: config.path },
+      ),
+      code: config.snippet,
+      outro: t('Then tell me if I need to reload, and how to sign in.'),
+    };
+  }
+  return null;
 }
 
 function toCatalogClient({
   entry,
-  url,
   brandName,
-  isCloud,
 }: {
   entry: CatalogEntry;
-  url: string;
   brandName: string;
-  isCloud: boolean;
 }): CatalogClient {
-  const groupCopy = GROUP_COPY[entry.group];
   return {
     key: entry.key,
     icon: entry.icon,
     name: entry.name,
     group: entry.group,
     setupHint: entry.setupHint,
-    subtitle: groupCopy.subtitle(),
     docsUrl: entry.docsUrl,
-    setupVideoUrl: isCloud ? undefined : entry.selfHostedVideoUrl,
-    config: entry.config && {
-      label: configLabel(entry.config),
-      snippet: entry.config.snippet,
-    },
-    instructions: [
-      {
-        title: groupCopy.installTitle(),
-        body: installBody(entry),
-        command: entry.install ? entry.install.command : url,
-        action: entry.install?.action,
-      },
-      {
-        title: t('Authenticate'),
-        body:
-          entry.auth ??
-          groupCopy.authBody({ client: entry.name, brand: brandName }),
-      },
-      {
-        title: t('Check it works'),
-        body: t('If it answers with your tools, you’re set.'),
-        prompts: verifyPrompts(brandName),
-      },
-    ],
+    methods: withAgentMethod({ entry, brandName }).map((method) =>
+      toMethod({ entry, method, brandName }),
+    ),
   };
 }
 
@@ -388,18 +563,8 @@ export const mcpClientCatalog = {
     catalogEntries({
       url: serverUrl,
       brand: { name: websiteName, slug: slugify(websiteName) || FALLBACK_SLUG },
-    })
-      .map((entry) =>
-        isCloud && entry.cloud ? { ...entry, ...entry.cloud } : entry,
-      )
-      .map((entry) =>
-        toCatalogClient({
-          entry,
-          url: serverUrl,
-          brandName: websiteName,
-          isCloud,
-        }),
-      ),
+      isCloud,
+    }).map((entry) => toCatalogClient({ entry, brandName: websiteName })),
 
   groups: (): ClientGroup[] =>
     GROUP_ORDER.map((key) => ({
@@ -409,8 +574,13 @@ export const mcpClientCatalog = {
     })),
 };
 
-export const POPULAR_CLIENT_KEYS = ['claude-code', 'cursor', 'claude'];
-
+const LISTED_BRAND_NAME = 'Activepieces';
+const CLAUDE_DIRECTORY_URL =
+  'https://claude.ai/directory/cloud-activepieces-com';
+const CURSOR_DIRECTORY_URL =
+  'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor';
+const CHATGPT_APP_URL =
+  'https://chatgpt.com/plugins/plugin_asdk_app_6abd993104c481919ffbfd1c90241e27';
 export type ClientGroupKey = 'terminal' | 'editors' | 'chat' | 'other';
 
 export type ClientGroup = {
@@ -423,8 +593,16 @@ export type SetupInstruction = {
   title: string;
   body: string;
   command?: string;
-  prompts?: string[];
+  snippet?: string;
+  prompt?: string;
+  agentPrompt?: AgentPrompt;
   action?: SetupLink;
+};
+
+export type SetupMethod = {
+  key: string;
+  label: string;
+  instructions: SetupInstruction[];
 };
 
 export type CatalogClient = {
@@ -433,14 +611,8 @@ export type CatalogClient = {
   name: string;
   group: ClientGroupKey;
   setupHint: string;
-  subtitle: string;
   docsUrl: string;
-  setupVideoUrl?: string;
-  config?: {
-    label: string;
-    snippet: string;
-  };
-  instructions: SetupInstruction[];
+  methods: SetupMethod[];
 };
 
 type Brand = {
@@ -457,14 +629,20 @@ type SetupLink = {
 type GroupCopy = {
   label: () => string;
   tagline?: () => string;
-  installTitle: () => string;
-  subtitle: () => string;
-  authBody: (params: { client: string; brand: string }) => string;
 };
 
-type ConfigSnippet = {
-  path?: string;
-  snippet: string;
+type MethodEntry = {
+  key: string;
+  label: string;
+  install: {
+    title: string;
+    body: string;
+    command?: string;
+    action?: SetupLink;
+    snippet?: string;
+    path?: string;
+    agentPrompt?: AgentPrompt;
+  };
 };
 
 type CatalogEntry = {
@@ -474,13 +652,13 @@ type CatalogEntry = {
   group: ClientGroupKey;
   setupHint: string;
   docsUrl: string;
-  install?: {
-    body: string;
-    command?: string;
-    action?: SetupLink;
-  };
-  auth?: string;
-  selfHostedVideoUrl?: string;
-  config?: ConfigSnippet;
-  cloud?: Pick<CatalogEntry, 'install'> & { docsUrl?: string };
+  auth?: { body: string; command?: string };
+  agentName?: string;
+  methods: MethodEntry[];
+};
+
+export type AgentPrompt = {
+  intro: string;
+  code: string;
+  outro: string;
 };
