@@ -1157,16 +1157,14 @@
     },
     "packages/pieces/community/bettermode": {
       "name": "@activepieces/piece-bettermode",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
-        "@activepieces/core-piece-types": "workspace:*",
-        "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-        "zod": "4.3.6",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/bexio": {
@@ -3829,6 +3827,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/google-ads": {
+      "name": "@activepieces/piece-google-ads",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/google-bigquery": {
       "name": "@activepieces/piece-google-bigquery",
       "version": "0.1.2",
@@ -5148,7 +5158,7 @@
     },
     "packages/pieces/community/lemlist": {
       "name": "@activepieces/piece-lemlist",
-      "version": "0.1.11",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5157,6 +5167,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/lemon-squeezy": {
@@ -7110,16 +7121,16 @@
     },
     "packages/pieces/community/pinecone": {
       "name": "@activepieces/piece-pinecone",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-        "@pinecone-database/pinecone": "^6.1.1",
+        "@pinecone-database/pinecone": "9.0.0",
       },
       "devDependencies": {
-        "tslib": "^2.3.0",
+        "tslib": "2.8.1",
       },
     },
     "packages/pieces/community/pinterest": {
@@ -8690,16 +8701,22 @@
     },
     "packages/pieces/community/snowflake": {
       "name": "@activepieces/piece-snowflake",
-      "version": "0.3.6",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "deepmerge-ts": "8.0.2",
+        "form-data": "4.0.6",
+        "ipaddr.js": "2.3.0",
+        "nanoid": "3.3.18",
         "snowflake-sdk": "2.3.4",
+        "zod": "4.3.6",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/soap": {
@@ -11915,6 +11932,7 @@
 
     "@activepieces/piece-goodmem": ["@activepieces/piece-goodmem@workspace:packages/pieces/community/goodmem"],
 
+    "@activepieces/piece-google-ads": ["@activepieces/piece-google-ads@workspace:packages/pieces/community/google-ads"],
     "@activepieces/piece-google-bigquery": ["@activepieces/piece-google-bigquery@workspace:packages/pieces/community/google-bigquery"],
 
     "@activepieces/piece-google-calendar": ["@activepieces/piece-google-calendar@workspace:packages/pieces/community/google-calendar"],
@@ -13981,7 +13999,7 @@
 
     "@pdf-lib/upng": ["@pdf-lib/upng@1.0.1", "", { "dependencies": { "pako": "^1.0.10" } }, "sha512-dQK2FUMQtowVP00mtIksrlZhdFXQZPC+taih1q4CvPZ5vqdxR/LKBaFg0oAfzd1GlHZXXSPdQfzQnt+ViGvEIQ=="],
 
-    "@pinecone-database/pinecone": ["@pinecone-database/pinecone@6.1.4", "", {}, "sha512-wkipvpkBYNGYDeYj4azVVyCzSrekJE3Pgo0HImkbw80SGnTo9gz5kSbDCXCfVvFnhqC2q4nGikdTUvFCDiuruA=="],
+    "@pinecone-database/pinecone": ["@pinecone-database/pinecone@9.0.0", "", {}, "sha512-2SEZEGbQPJTXWiRKSQJghqe7XjfmMRtLvkCdjPc5o+vxTa4ufgSid8j2wd+uQkX2B+n6h8+82SGGeTLttvGZGA=="],
 
     "@pinojs/redact": ["@pinojs/redact@0.4.0", "", {}, "sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg=="],
 

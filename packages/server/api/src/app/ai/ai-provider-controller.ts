@@ -44,6 +44,13 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             tierId: request.query.tierId,
         })
     })
+    app.get('/model-options/platform', ListPlatformModelOptions, async (request) => {
+        return aiModelOptionsService(app.log).listForPlatform({
+            platformId: request.principal.platform.id,
+            surface: request.query.surface,
+            platformDefault: null,
+        })
+    })
     app.get('/:provider/models', ListModels, async (request) => {
         return aiProviderService(app.log).listModels({
             platformId: request.principal.platform.id,
@@ -151,6 +158,20 @@ const ListModelOptions = {
             projectId: z.string().optional(),
             surface: ModelOptionsSurface,
             tierId: z.string().optional(),
+        }),
+        response: {
+            [StatusCodes.OK]: ModelOptions,
+        },
+    },
+}
+
+const ListPlatformModelOptions = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        querystring: z.object({
+            surface: ModelOptionsSurface,
         }),
         response: {
             [StatusCodes.OK]: ModelOptions,
