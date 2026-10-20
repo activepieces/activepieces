@@ -105,7 +105,9 @@ const polling: Polling<
         });
 
         // The polling helper will filter for new rows where the ID (row.index) is greater than lastItemId
-        const newItems = processedRows.filter(item => isNil(lastItemId) || item.id > (lastItemId as number));
+        const newItems = processedRows
+            .filter(item => isNil(lastItemId) || item.id > (lastItemId as number))
+            .sort((a, b) => b.id - a.id);
         return newItems;
     }
 };
@@ -148,36 +150,18 @@ export const newRowInTableTrigger = createTrigger({
         if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
             throw new Error('please select SharePoint site and document library.');
         }
-        await pollingHelper.onEnable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        await pollingHelper.onEnable(polling, context);
     },
 
     onDisable: async (context) => {
-        await pollingHelper.onDisable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        await pollingHelper.onDisable(polling, context);
     },
 
     run: async (context) => {
-        return await pollingHelper.poll(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-            files: context.files, 
-        });
+        return await pollingHelper.poll(polling, context);
     },
 
     test: async (context) => {
-        return await pollingHelper.test(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-            files: context.files, 
-        });
+        return await pollingHelper.test(polling, context);
     },
 });
