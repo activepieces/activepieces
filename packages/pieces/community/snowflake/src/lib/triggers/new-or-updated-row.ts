@@ -96,8 +96,8 @@ export const newOrUpdatedRowTrigger = createTrigger({
     });
     await context.store.put(ROW_CURSOR_STORE_KEY, { cursor });
   },
-  async onDisable(context) {
-    await context.store.delete(ROW_CURSOR_STORE_KEY);
+  async onDisable() {
+    return;
   },
   async run(context) {
     const { table, updated_at_column } = context.propsValue;

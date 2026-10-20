@@ -115,11 +115,13 @@ describe.each([
     expect(lastCall().sql).toBe('SELECT * FROM DB.PUBLIC.T WHERE TS IS NOT NULL ORDER BY TS DESC LIMIT 5');
   });
 
-  it('forgets state on disable', async () => {
+  it('keeps the cursor across disable then republish enable', async () => {
     const mem = memoryStore();
     mem.data.set('snowflake_row_cursor', { cursor: '5' });
     await hookOf({ trigger: trigger, hook: 'onDisable' })(context({ propsValue: props, store: mem.store }));
-    expect(mem.data.has('snowflake_row_cursor')).toBe(false);
+    await hookOf({ trigger: trigger, hook: 'onEnable' })({ ...context({ propsValue: props, store: mem.store }), isRepublish: true });
+    expect(userCalls()).toHaveLength(0);
+    expect(mem.data.get('snowflake_row_cursor')).toEqual({ cursor: '5' });
   });
 });
 
