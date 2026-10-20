@@ -8,7 +8,7 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 
 ## Rules
 - **One dollar unit.** Credits are converted at their dollar value; credits only appear as a note ("Includes 6,479 credits"). Never two units side by side.
-- **Three scopes, one page.** Tabs under the header: **Production** (default) · **Testing** (flow builder Test step and agent builder) · **All**, each showing its total, with one line saying what the tab covers. The whole page follows the tab. No separate testing section, never a toggle switch.
+- **Three scopes, one page.** Tabs under the header in this order: **All** · **Production** (the default) · **Testing** (flow builder Test step and agent builder). No amounts on the tabs; each explains itself in a tooltip. The whole page follows the tab. No separate testing section, never a toggle switch.
 - **Exact vs estimated stays out of the headline.** It shows only on a key's detail page (reported by provider vs estimated from list prices, plus the provider dashboard link), and as one footnote on the overview.
 - **Overview, then drill down.** Every item opens its own detail page (`/platform/ai/usage/:dimension/:id`), and every card has See all (`/platform/ai/usage/:dimension`). Period and scope ride in the URL.
 - **One detail template.** Header + the same chart + top 5 of the *other* dimensions + one extra card per type: project → monthly limit, flow → runs and cost per run, key → reported vs estimated, model → list price. A flow detail stops at flow level; there is no per-step split.
