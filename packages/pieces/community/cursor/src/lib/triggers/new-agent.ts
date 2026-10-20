@@ -95,16 +95,34 @@ export const newAgentTrigger = createTrigger({
     createdAt: '2024-01-15T10:30:00Z',
   },
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, context);
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, context);
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, context);
+    return await pollingHelper.test(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, context);
+    return await pollingHelper.poll(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files,
+    });
   },
 });
 

@@ -63,16 +63,20 @@ export const newAgentConversationMessageTrigger = createTrigger({
     text: 'Add a README.md file with installation instructions',
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    const { store, auth, propsValue } = context;
+    await pollingHelper.onEnable(polling, { store, auth, propsValue });
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+    const { store, auth, propsValue } = context;
+    await pollingHelper.onDisable(polling, { store, auth, propsValue });
   },
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    const { store, auth, propsValue, files } = context;
+    return await pollingHelper.test(polling, { store, auth, propsValue, files });
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const { store, auth, propsValue, files } = context;
+    return await pollingHelper.poll(polling, { store, auth, propsValue, files });
   },
 });
 

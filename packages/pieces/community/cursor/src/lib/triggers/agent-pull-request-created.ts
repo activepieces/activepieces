@@ -35,24 +35,32 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof cursorAuth>, Rec
     const limit = isTest ? 5 : 100;
 
     try {
-      const agents = await listAgents({ auth, limit });
-      if (agents.length === 0) {
+      const response = await makeCursorRequest<ListAgentsResponse>(
+        auth,
+        '/v0/agents',
+        HttpMethod.GET,
+        undefined,
+        { limit }
+      );
+
+      if (!response.agents || response.agents.length === 0) {
         return [];
       }
 
-      const storedAgentsWithPRs = await store.get<string>(AGENTS_WITH_PRS_KEY);
+      const storedAgentsWithPRs = await store.get<string>('agents_with_prs');
       const agentsWithPRsSet = new Set<string>(
         storedAgentsWithPRs ? JSON.parse(storedAgentsWithPRs) : []
       );
-      const detectedAt = Date.now();
+
       const newPRs: Array<{ epochMilliSeconds: number; data: Agent }> = [];
       const updatedAgentsWithPRs = new Set<string>(agentsWithPRsSet);
 
-      for (const agent of agents) {
+      for (const agent of response.agents) {
         if (agent.target?.prUrl) {
           if (!agentsWithPRsSet.has(agent.id)) {
+            const epochMilliSeconds = Date.parse(agent.createdAt);
             newPRs.push({
-              epochMilliSeconds: isTest ? Date.parse(agent.createdAt) : detectedAt,
+              epochMilliSeconds,
               data: agent,
             });
           }
@@ -62,8 +70,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof cursorAuth>, Rec
         }
       }
 
-      await store.put(AGENTS_WITH_PRS_KEY, JSON.stringify(Array.from(updatedAgentsWithPRs)));
-      return newPRs;
+      await store.put('agents_with_prs', JSON.stringify(Array.from(updatedAgentsWithPRs)));
+
+      if (isTest) {
+        return newPRs;
+      }
+
+      return newPRs.filter((item) => item.epochMilliSeconds > lastFetchEpochMS);
     } catch (error) {
       return [];
     }
@@ -100,32 +113,22 @@ export const agentPullRequestCreatedTrigger = createTrigger({
     createdAt: '2024-01-15T10:30:00Z',
   },
   async onEnable(context) {
-    const agents = await listAgents({ auth: context.auth, limit: 100 });
-    const agentsWithPRs = agents.filter((agent) => agent.target?.prUrl).map((agent) => agent.id);
-    await context.store.put(AGENTS_WITH_PRS_KEY, JSON.stringify(agentsWithPRs));
-    await pollingHelper.onEnable(polling, context);
+    const { store, auth, propsValue } = context;
+    await store.put('agents_with_prs', JSON.stringify([]));
+    await pollingHelper.onEnable(polling, { store, auth, propsValue });
   },
   async onDisable(context) {
-    await context.store.delete(AGENTS_WITH_PRS_KEY);
-    await pollingHelper.onDisable(polling, context);
+    const { store, auth, propsValue } = context;
+    await store.delete('agents_with_prs');
+    await pollingHelper.onDisable(polling, { store, auth, propsValue });
   },
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    const { store, auth, propsValue, files } = context;
+    return await pollingHelper.test(polling, { store, auth, propsValue, files });
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const { store, auth, propsValue, files } = context;
+    return await pollingHelper.poll(polling, { store, auth, propsValue, files });
   },
 });
 
-async function listAgents({ auth, limit }: { auth: AppConnectionValueForAuthProperty<typeof cursorAuth>; limit: number }): Promise<Agent[]> {
-  const response = await makeCursorRequest<ListAgentsResponse>(
-    auth,
-    '/v0/agents',
-    HttpMethod.GET,
-    undefined,
-    { limit }
-  );
-  return response.agents ?? [];
-}
-
-const AGENTS_WITH_PRS_KEY = 'agents_with_prs';
