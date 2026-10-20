@@ -121,6 +121,7 @@
   "Pick a database, then fill one or more of its fields. Items must match every value exactly.": "Pick a database, then fill one or more of its fields. Items must match every value exactly.",
   "How many pages to return, up to 100.": "How many pages to return, up to 100.",
   "Pick a database, then fill any of its fields below to filter. Empty fields are ignored.": "Pick a database, then fill any of its fields below to filter. Empty fields are ignored.",
+  "Empty fields keep their current value. Checkboxes are always saved as shown.": "Empty fields keep their current value. Checkboxes are always saved as shown.",
   "The new page is created inside this page.": "The new page is created inside this page.",
   "Plain text body. Markdown is not rendered.": "Plain text body. Markdown is not rendered.",
   "Your 100 most recently edited pages shared with the integration.": "Your 100 most recently edited pages shared with the integration.",
@@ -207,10 +208,6 @@
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
-  "None": "geen",
-  "JSON": "JSON",
-  "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte",
   "New Database Item": "Nieuw Database Item",
   "Updated Database Item": "Bijgewerkt Database Item",
   "New Comment": "Nieuwe reactie",
@@ -219,6 +216,5 @@
   "Triggers when an item is updated in a database.": "Triggert wanneer een item wordt bijgewerkt in een database.",
   "Triggers when a comment is added to a page.": "Triggers when a comment is added to a page.",
   "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited.",
-  "Empty fields keep their current value. Checkboxes are always saved as shown.": "Lege velden behouden hun huidige waarde. Selectievakjes worden altijd opgeslagen zoals ze worden weergegeven.",
-  "Add Notion-Version, e.g. 2022-02-22. Authorization is added for you.": "Voeg Notion-Version toe, bijv. 2022-02-22. Autorisatie wordt automatisch toegevoegd."
+  "Add Notion-Version, e.g. 2022-02-22. Authorization is added for you.": "Add Notion-Version, e.g. 2022-02-22. Authorization is added for you."
 }
