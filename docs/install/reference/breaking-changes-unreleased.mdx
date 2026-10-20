@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Gotify 0.5.0: Send Notification returns the message, and server URLs are checked
+
+Send Notification used to return the whole HTTP response, `{ status, headers, body }`. From Gotify 0.5.0 it returns the created message itself (`id`, `appid`, `message`, `title`, `priority`, `extras`, `date`), which was `body` before. The app token is now sent in the `X-Gotify-Key` header instead of the URL query string, and a priority of `0` is sent as `0` instead of being dropped.
+
+The connection's server URL must now be an `http` or `https` URL without a username, password, query string or fragment (a sub-path such as `https://example.com/gotify` is kept). Connections are checked against the server's `/health` endpoint when saved. TLS certificates are now checked on every request; the old Send Notification skipped this check, so a Gotify server with a self-signed certificate fails after the upgrade.
+
+#### What you need to do
+
+If a later step reads `body.id` or another field under `body` from Send Notification, read it from the top level instead (`id`). A connection whose server URL has credentials or a query string must be updated to the plain server URL. A server with a self-signed certificate needs a certificate from a trusted authority (for example Let's Encrypt), or its CA added to the trust store of the machine running Activepieces (`NODE_EXTRA_CA_CERTS`). Steps keep running on the version they were built with until you upgrade them.
+
 #### Discourse 0.3.0: the forum URL must use https and a public address, and actions return flat fields
 
 The Discourse connection used to send your API key to whatever URL was entered, including plain `http://` and local or private network addresses. From 0.3.0 the Website URL must start with `https://` and must not point to `localhost` or a private/LAN IP address; such connections now fail with a clear error, and new connections are checked when you save them.
