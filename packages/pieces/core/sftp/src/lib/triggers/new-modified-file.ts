@@ -8,7 +8,6 @@ import { Client as FTPClient, FTPError, FileInfo as FTPFileInfo, FileType as FTP
 import { newOrModifiedFileTriggerOutputSchema } from '../output-schemas';
 
 const FTP_FILE_UNAVAILABLE = 550;
-const MDTM_FEATURE = 'MDTM';
 
 async function getModifyTime({ client, file, protocol, directory, serverCanTimestamp }: { client: Client | FTPClient; file: Client.FileInfo | FTPFileInfo; protocol: string; directory: string; serverCanTimestamp: boolean }): Promise<number | null> {
   if (protocol === 'sftp') {
@@ -38,13 +37,13 @@ async function getModifyTime({ client, file, protocol, directory, serverCanTimes
   throw error;
 }
 
-async function supportsTimestampLookup({ client, protocol, files }: { client: Client | FTPClient; protocol: string; files: (Client.FileInfo | FTPFileInfo)[] }): Promise<boolean> {
+async function serverCanTimestampEntries({ client, protocol, files }: { client: Client | FTPClient; protocol: string; files: (Client.FileInfo | FTPFileInfo)[] }): Promise<boolean> {
   const listingCarriesTimes = protocol === 'sftp' || files.every(file => !isNil((file as FTPFileInfo).modifiedAt));
   if (listingCarriesTimes) {
     return true;
   }
   const features = await (client as FTPClient).features();
-  return features.has(MDTM_FEATURE);
+  return features.has('MDTM');
 }
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof sftpAuth>, { path: string; ignoreHiddenFiles?: boolean }> = {
@@ -60,7 +59,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof sftpAuth>, { pat
         files.filter(file => !file.name.startsWith('.')) :
         files;
 
-      const serverCanTimestamp = await supportsTimestampLookup({ client, protocol: protocolBackwardCompatibility, files: visibleFiles });
+      const serverCanTimestamp = await serverCanTimestampEntries({ client, protocol: protocolBackwardCompatibility, files: visibleFiles });
 
       const newFiles: { data: unknown; epochMilliSeconds: number }[] = [];
       for (const file of visibleFiles) {
