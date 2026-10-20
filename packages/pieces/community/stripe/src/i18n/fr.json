@@ -632,5 +632,7 @@
   "Only disputes for this charge. Empty: all.": "Uniquement les litiges de ce débit. Vide : tous.",
   "Only disputes for this payment. Empty: all.": "Uniquement les litiges de ce paiement. Vide : tous.",
   "Only updates where the subscription's status is this.": "Uniquement les mises à jour où l'abonnement a ce statut.",
-  "Only sessions for this customer. Empty: all.": "Uniquement les sessions de ce client. Vide : toutes."
+  "Only sessions for this customer. Empty: all.": "Uniquement les sessions de ce client. Vide : toutes.",
+  "Markdown": "Markdown",
+  "Empty fields keep their current value.": "Les champs vides conservent leur valeur actuelle."
 }

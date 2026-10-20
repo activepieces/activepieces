@@ -12,9 +12,29 @@ export const updateRecord = createAction({
   description: 'Update values in an existing record.',
   aiMetadata: { description: 'Overwrites cell values on one existing Activepieces Table record addressed by its record ID, changing only the columns supplied - blank values are skipped and keep whatever the record already holds. Pick this to modify a known row; use Create Record(s) to insert new rows, since this action only edits a record that already exists. Requires both the table ID and the record ID, and each value is validated against the type of its column; idempotent, since re-applying the same values leaves the record unchanged.', idempotent: true },
   auth: PieceAuth.None(),
+  propertyGroups: [
+    {
+      key: 'record',
+      display: 'section',
+      label: 'Record to update',
+      icon: 'tag',
+      props: ['table_id', 'record_id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['empty_fields_info', 'values'],
+    },
+  ],
   props: {
     table_id: tablesCommon.table_id,
     record_id: tablesCommon.record_id,
+    empty_fields_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
+    }),
     values: Property.DynamicProperties({
       auth: PieceAuth.None(),
       displayName: 'Values',

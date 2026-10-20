@@ -320,5 +320,6 @@
   "Note": "Observação",
   "Task": "Tarefas",
   "Meeting": "Reunião",
-  "Call": "Chamada"
+  "Call": "Chamada",
+  "Fields left empty keep their current value.": "Os campos deixados em branco mantêm o valor atual."
 }

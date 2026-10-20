@@ -206,6 +206,7 @@ export const AgentConversation = z.object({
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
     modelTierId: Nullable(ApId),
+    providerConfigId: Nullable(ApId),
     status: z.nativeEnum(AgentConversationStatus).default(AgentConversationStatus.IDLE),
     activeRunId: Nullable(z.string()),
     messages: z.array(z.record(z.string(), z.unknown())).default([]),
@@ -225,6 +226,7 @@ export const CreateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
     modelTierId: z.optional(Nullable(ApId)),
+    providerConfigId: z.optional(Nullable(ApId)),
     agentId: z.optional(z.string()),
     builder: z.optional(z.boolean()),
     projectId: z.optional(z.string()),
@@ -235,6 +237,7 @@ export const UpdateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
     modelTierId: z.optional(Nullable(ApId)),
+    providerConfigId: z.optional(Nullable(ApId)),
 })
 export type UpdateAgentConversationRequest = z.infer<typeof UpdateAgentConversationRequest>
 
@@ -246,6 +249,33 @@ export const UserMemory = z.object({
     memories: z.array(z.string()).default([]),
 })
 export type UserMemory = z.infer<typeof UserMemory>
+
+export enum SubagentTaskStatus {
+    RUNNING = 'RUNNING',
+    DONE = 'DONE',
+    BLOCKED = 'BLOCKED',
+    FAILED = 'FAILED',
+}
+
+export const SubagentTaskArtifact = z.object({
+    type: z.string(),
+    id: z.string(),
+    name: z.string(),
+})
+export type SubagentTaskArtifact = z.infer<typeof SubagentTaskArtifact>
+
+export const SubagentTask = z.object({
+    ...BaseModelSchema,
+    platformId: z.string(),
+    projectId: Nullable(z.string()),
+    conversationId: z.string(),
+    title: z.string(),
+    status: z.enum(SubagentTaskStatus),
+    messages: z.array(z.record(z.string(), z.unknown())).default([]),
+    summary: Nullable(z.string()),
+    artifacts: z.array(SubagentTaskArtifact).default([]),
+})
+export type SubagentTask = z.infer<typeof SubagentTask>
 
 export const GetAgentMemoryResponse = z.object({
     instructions: z.string().nullable(),

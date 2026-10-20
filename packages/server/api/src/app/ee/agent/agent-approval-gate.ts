@@ -208,4 +208,5 @@ type PendingGate = {
     displayName: string
     toolInput: Record<string, unknown>
     runId?: string
+    taskTitle?: string
 }

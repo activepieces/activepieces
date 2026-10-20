@@ -9,8 +9,8 @@ status: accepted
 
 Delivering a resume no longer means deleting the waitpoint row. `waitpointService.consume` owns the
 rule: a `BARRIER` is tombstoned at a third status, `CONSUMED`, and every other type is still deleted.
-The tombstone lives until the run reaches a terminal status, where the existing `deleteByFlowRunId`
-sweep clears it. The legacy by-run resume guard (`hasBarrier`) therefore asks whether the run holds a
+The tombstone lives until the run reaches a terminal status, where `onFinish`
+(`waitpointService.deleteForFinishedRun`) clears it; that call deletes a barrier whatever the run's status. The legacy by-run resume guard (`hasBarrier`) therefore asks whether the run holds a
 barrier row **at all**, in any status, instead of whether one is `PENDING`.
 
 ## Context

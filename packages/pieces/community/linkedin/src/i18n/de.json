@@ -33,5 +33,6 @@
   "None": "Keine",
   "JSON": "JSON",
   "Form Data": "Formulardaten",
-  "Raw": "Rohe"
+  "Raw": "Rohe",
+  "Calls to /rest/ need LinkedIn-Version: 202511 and X-Restli-Protocol-Version: 2.0.0. Authorization comes from your connection.": "Aufrufe an /rest/ benötigen LinkedIn-Version: 202511 und X-Restli-Protocol-Version: 2.0.0. Die Autorisierung kommt aus Ihrer Verbindung."
 }

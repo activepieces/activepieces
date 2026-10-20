@@ -65,7 +65,7 @@ List the jobs in the request first: intake, processing, storage, reporting, appr
 How to build one:
 1. **Folder:** `ap_create_folder` with a name for the whole solution; pass that `folderName` to every `ap_build_flow` and `ap_create_table` in it.
 2. **Names:** each flow named for its one job in plain words ("Save order", never "Flow 2").
-3. **Order:** tables, then subflows, then the flows that call them; each needs an id the previous one returned.
+3. **Order:** tables, then every flow that needs nothing else built first (a shared subflow, a digest that only reads a table) in one step with parallel `ap_build_flow` calls, then the flows that call them, given the ids the first ones returned. Build the flows yourself, not through tasks: a task repeats your setup for each flow and costs about twice as much.
 4. **Subflow:** trigger `@activepieces/piece-subflows` `callableFlow` with `exampleData.sampleData` listing every input, e.g. `{"orderId": "123", "email": "a@b.co"}`. Its steps read inputs as `{{trigger['output'].data.<key>}}`, never `{{trigger['output'].<key>}}` (empty at run time). Add `returnResponse` only if a caller needs data back.
 5. **Caller:** a `callFlow` step with `flowId` = the subflow's **externalId** (from `ap_build_flow`, not its flow id), `mode: "simple"`, every sample-data key in `flowProps.payload` as an object, and `waitForResponse` only when the subflow returns a response.
 6. **Tables steps:** `table_id` is the table's **externalId**; form `values` are keyed by field externalId.

@@ -18,6 +18,15 @@ export const findProductAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Search the HubSpot product library by one or two property/value pairs (matched with equality) and return the matching products. Read-only and repeatable. Use Get Product instead when you already have the product ID.', idempotent: true },
 	outputSchema: productSearchOutputSchema,
+	propertyGroups: [
+		{
+			key: 'search',
+			display: 'section',
+			label: 'Search',
+			icon: 'filter',
+			props: ['firstSearchPropertyName', 'firstSearchPropertyValue'],
+		},
+	],
 	props: {
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{
