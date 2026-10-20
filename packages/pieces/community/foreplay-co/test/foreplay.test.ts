@@ -570,7 +570,7 @@ describe('triggers', () => {
     const spy = mock(ok([rawAd('s1')]));
     const out = await call({ target: newSwipefileAd, method: 'test', args: triggerArgs({ store, propsValue: {} }) });
     expect(Object.fromEntries(urlOf(spy).searchParams)).toEqual({ order: 'saved_newest', limit: '5', offset: '0' });
-    expect(out).toEqual([rawAd('s1')]);
+    expect(out).toEqual([{ ...rawAd('s1'), metadata: { success: true, message: 'New ad detected' } }]);
   });
   it('onDisable keeps state', async () => {
     const store = memoryStore();
@@ -608,6 +608,24 @@ describe('triggers', () => {
     mock(ok([{ ...rawAd('n1'), name: 'Ad N1' }, rawAd('old')]));
     const out = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
     expect(out).toMatchObject([{ id: 'n1', title: 'Ad N1', board_id: 'bd1' }]);
+  });
+  it('board and swipefile events keep the legacy metadata fields', async () => {
+    const legacy = { success: true, message: 'New ad detected' };
+    const boardStore = memoryStore();
+    await boardStore.put('foreplay_seen_ad_ids', ['old']);
+    mock(ok([rawAd('n1'), rawAd('old')]));
+    const board = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store: boardStore, propsValue: { board_id: 'bd1' } }) });
+    expect(board).toMatchObject([{ id: 'n1', board_id: 'bd1', metadata: legacy }]);
+    const swipeStore = memoryStore();
+    await swipeStore.put('foreplay_seen_ad_ids', ['old']);
+    mock(ok([rawAd('s1'), rawAd('old')]));
+    const swipe = await call({ target: newSwipefileAd, method: 'run', args: triggerArgs({ store: swipeStore, propsValue: {} }) });
+    expect(swipe).toMatchObject([{ id: 's1', metadata: legacy }]);
+    expect(newAdInBoard.sampleData).toMatchObject({ metadata: legacy });
+    expect(newSwipefileAd.sampleData).toMatchObject({ metadata: legacy });
+    for (const t of [newAdInBoard, newSwipefileAd]) {
+      expect(t.outputSchema?.fields.map((f) => f.key)).toEqual(expect.arrayContaining(['metadata.success', 'metadata.message']));
+    }
   });
   it('rejects a page size above 50', async () => {
     const store = memoryStore();

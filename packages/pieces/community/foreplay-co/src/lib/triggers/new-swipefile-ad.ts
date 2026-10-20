@@ -1,10 +1,11 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { foreplayCoAuth } from '../auth';
 import { ForeplayAuthInput } from '../common/client';
+import { foreplayMappers } from '../common/mappers';
 import { foreplayOutputSchemas } from '../common/output-schemas';
 import { foreplayPolling } from '../common/polling';
 import { foreplayProps } from '../common/props';
-import { sampleAd } from './sample-ad';
+import { legacyEventMetadata, sampleAd } from './sample-ad';
 
 function fetcher({ auth, propsValue }: { auth: ForeplayAuthInput; propsValue: Record<string, unknown> }) {
   const filters = foreplayProps.adFilterQuery(foreplayProps.humanAdFilterInput(propsValue));
@@ -13,7 +14,7 @@ function fetcher({ auth, propsValue }: { auth: ForeplayAuthInput; propsValue: Re
     const size = limit ?? pageSize;
     const offset = cursor === undefined ? 0 : Number(cursor);
     const { ads } = await foreplayPolling.fetchAdPage({ auth, path: '/api/swipefile/ads', query: { ...filters, order: 'saved_newest', limit: size, offset }, pageSize: size });
-    return { ads, next: ads.length >= size ? String(offset + ads.length) : null };
+    return { ads: ads.map((ad) => ({ ...foreplayMappers.recordOf(ad), metadata: legacyEventMetadata })), next: ads.length >= size ? String(offset + ads.length) : null };
   };
 }
 
@@ -27,8 +28,8 @@ const newSwipefileAd = createTrigger({
   },
   classification: 'READ',
   type: TriggerStrategy.POLLING,
-  sampleData: sampleAd,
-  outputSchema: foreplayOutputSchemas.rawAd,
+  sampleData: { ...sampleAd, metadata: legacyEventMetadata },
+  outputSchema: foreplayOutputSchemas.swipefileAd,
   props: {
     page_size: foreplayPolling.pageSizeProp(),
     polling_interval: foreplayPolling.legacyPollingIntervalProp(),

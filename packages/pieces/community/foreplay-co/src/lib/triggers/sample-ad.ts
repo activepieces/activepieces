@@ -23,4 +23,6 @@ const sampleAd = {
   foreplay_url: 'https://app.foreplay.co/share/ad/Xk2mP9qLr4TzW8vN1aBc',
 };
 
-export { sampleAd };
+const legacyEventMetadata = { success: true, message: 'New ad detected' };
+
+export { sampleAd, legacyEventMetadata };

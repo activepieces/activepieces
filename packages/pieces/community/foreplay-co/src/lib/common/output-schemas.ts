@@ -163,6 +163,11 @@ const rawBoardFields: OutputSchemaField[] = [
   { key: 'created_at', label: 'Created (epoch)', format: 'number' },
 ];
 
+const legacyEventMetadataFields: OutputSchemaField[] = [
+  { key: 'metadata.success', label: 'Detected', format: 'boolean' },
+  { key: 'metadata.message', label: 'Detection Message' },
+];
+
 const foreplayOutputSchemas = {
   ad: { fields: [...adFields, ...creditFields] } satisfies OutputSchema,
   adEvent: { fields: adFields } satisfies OutputSchema,
@@ -259,7 +264,8 @@ const foreplayOutputSchemas = {
   } satisfies OutputSchema,
   rawAds: { itemLabel: '{name}', fields: rawAdFields } satisfies OutputSchema,
   rawAd: { fields: rawAdFields } satisfies OutputSchema,
-  boardAd: { fields: [...rawAdFields, { key: 'title', label: 'Title' }, { key: 'board_id', label: 'Board ID' }] } satisfies OutputSchema,
+  boardAd: { fields: [...rawAdFields, { key: 'title', label: 'Title' }, { key: 'board_id', label: 'Board ID' }, ...legacyEventMetadataFields] } satisfies OutputSchema,
+  swipefileAd: { fields: [...rawAdFields, ...legacyEventMetadataFields] } satisfies OutputSchema,
   rawBrands: { itemLabel: '{name}', fields: rawBrandFields } satisfies OutputSchema,
   rawBoards: { itemLabel: '{name}', fields: rawBoardFields } satisfies OutputSchema,
 };

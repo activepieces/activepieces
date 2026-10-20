@@ -5,7 +5,7 @@ import { foreplayMappers } from '../common/mappers';
 import { foreplayOutputSchemas } from '../common/output-schemas';
 import { foreplayPolling } from '../common/polling';
 import { foreplayProps } from '../common/props';
-import { sampleAd } from './sample-ad';
+import { legacyEventMetadata, sampleAd } from './sample-ad';
 
 function fetcher({ auth, propsValue }: { auth: ForeplayAuthInput; propsValue: Record<string, unknown> }) {
   const boardId = foreplayProps.foreplayId({ value: propsValue['board_id'], label: 'Board' });
@@ -21,7 +21,7 @@ function fetcher({ auth, propsValue }: { auth: ForeplayAuthInput; propsValue: Re
 function withBoard({ ad, boardId }: { ad: unknown; boardId: string }) {
   const record = foreplayMappers.recordOf(ad);
   const title = foreplayMappers.str(record['title']) ?? foreplayMappers.str(record['name']);
-  return { ...record, title, board_id: boardId };
+  return { ...record, title, board_id: boardId, metadata: legacyEventMetadata };
 }
 
 const newAdInBoard = createTrigger({
@@ -34,7 +34,7 @@ const newAdInBoard = createTrigger({
   },
   classification: 'READ',
   type: TriggerStrategy.POLLING,
-  sampleData: { ...sampleAd, title: sampleAd.name, board_id: 'aBcD1234EfGh5678' },
+  sampleData: { ...sampleAd, title: sampleAd.name, board_id: 'aBcD1234EfGh5678', metadata: legacyEventMetadata },
   outputSchema: foreplayOutputSchemas.boardAd,
   props: {
     board_id: Property.Dropdown({
