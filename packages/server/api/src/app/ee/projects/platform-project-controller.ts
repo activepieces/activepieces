@@ -89,6 +89,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
                 ...request.body,
                 externalId: ownThePlatform ? request.body.externalId : undefined,
                 executionDataRetentionDays: ownThePlatform ? request.body.executionDataRetentionDays : undefined,
+                isDefault: ownThePlatform ? request.body.isDefault : undefined,
             },
         })
     })
@@ -98,6 +99,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
         await platformProjectService(req.log).markForDeletion({
             id: req.params.id,
             platformId: req.principal.platform.id,
+            enforceDefaultGuard: req.principal.type === PrincipalType.USER,
         })
 
         return res.status(StatusCodes.NO_CONTENT).send()

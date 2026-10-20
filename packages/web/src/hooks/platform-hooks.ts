@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import { PlatformWithoutSensitiveData } from '@activepieces/shared';
+import { PlatformResponse } from '@activepieces/shared';
 import {
   QueryClient,
   useMutation,
@@ -44,7 +44,7 @@ export const platformHooks = {
       },
       setCurrentPlatform: (
         queryClient: QueryClient,
-        platform: PlatformWithoutSensitiveData,
+        platform: PlatformResponse,
       ) => {
         queryClient.setQueryData(['platform', currentPlatformId], platform);
       },

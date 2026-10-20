@@ -460,6 +460,7 @@ import { AddProviderConfigIdToAgentConversation1868000000000 } from './migration
 import { DropChatRolloutUserTable1870000000000 } from './migration/postgres/1870000000000-DropChatRolloutUserTable'
 import { AddBarrierChildAttribution1871000000000 } from './migration/postgres/1871000000000-AddBarrierChildAttribution'
 import { AddPieceTranslationTable1873000000000 } from './migration/postgres/1873000000000-AddPieceTranslationTable'
+import { AddIsDefaultToProject1875000000000 } from './migration/postgres/1875000000000-AddIsDefaultToProject'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
@@ -945,6 +946,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropChatRolloutUserTable1870000000000,
         AddBarrierChildAttribution1871000000000,
         AddPieceTranslationTable1873000000000,
+        AddIsDefaultToProject1875000000000,
     ]
     return migrations
 }

@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
-import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
+import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, MAX_DEFAULT_PROJECTS, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformResponse, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { EntityManager } from 'typeorm'
@@ -15,6 +15,7 @@ import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { auditLogRetentionCeiling } from '../helper/retention/audit-log-retention-ceiling'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
+import { projectRepo } from '../project/project-repo'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { billingProvider } from './billing-provider'
@@ -233,6 +234,15 @@ export const platformService = (log: FastifyBaseLogger) => ({
         }
         return stripFederatedAuth(saved)
     },
+    async listDefaultProjectIds({ platformId, entityManager }: ListDefaultProjectIdsParams): Promise<string[]> {
+        const projects = await projectRepo(entityManager).find({
+            where: { platformId, type: ProjectType.TEAM, isDefault: true },
+            select: { id: true },
+            order: { created: 'ASC' },
+            take: MAX_DEFAULT_PROJECTS,
+        })
+        return projects.map((project) => project.id)
+    },
     async getOneOrThrow(id: PlatformId): Promise<PlatformWithoutFederatedAuth> {
         return platformRepo().findOneByOrFail({ id })
     },
@@ -283,13 +293,14 @@ export const platformService = (log: FastifyBaseLogger) => ({
             plan,
         }
     },
-    async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
+    async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformResponse> {
         const platform = await this.getOneOrThrow(id)
-        const [samlConfigured, usage, plan, billingEnforced] = await Promise.all([
+        const [samlConfigured, usage, plan, billingEnforced, defaultProjectIds] = await Promise.all([
             this.hasSamlConfigured(id),
             getUsage(log, platform),
             getPlan(log, platform),
             getBillingEnforced(log, id),
+            this.listDefaultProjectIds({ platformId: id }),
         ])
         return {
             ...platform,
@@ -297,6 +308,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             usage,
             billingEnforced,
             plan,
+            defaultProjectIds,
         }
     },
 })
@@ -478,6 +490,11 @@ type AssertAuditLogRetentionDaysAllowedParams = {
     log: FastifyBaseLogger
     platform: PlatformWithoutFederatedAuth
     auditLogRetentionDays: number | null | undefined
+}
+
+type ListDefaultProjectIdsParams = {
+    platformId: PlatformId
+    entityManager?: EntityManager
 }
 
 type UpdateParams = UpdatePlatformRequestBody & {
