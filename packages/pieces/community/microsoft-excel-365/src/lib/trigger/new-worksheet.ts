@@ -93,18 +93,36 @@ export const newWorksheetTrigger = createTrigger({
     if (storageSource === 'sharepoint' && (!siteId || !documentId)) {
       throw new Error('please select SharePoint site and document library.');
     }
-    await pollingHelper.onEnable(polling, context);
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue
+    });
   },
 
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, context);
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue
+    });
   },
 
   run: async (context) => {
-    return await pollingHelper.poll(polling, context);
+    return await pollingHelper.poll(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files
+    });
   },
 
   test: async (context) => {
-    return await pollingHelper.test(polling, context);
+    return await pollingHelper.test(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+      files: context.files
+    });
   }
 });
