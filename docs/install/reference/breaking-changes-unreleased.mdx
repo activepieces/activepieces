@@ -8,13 +8,15 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
-#### Discourse 0.3.0: the forum URL must use https and a public address
+#### Discourse 0.3.0: the forum URL must use https and a public address, and actions return flat fields
 
 The Discourse connection used to send your API key to whatever URL was entered, including plain `http://` and local or private network addresses. From 0.3.0 the Website URL must start with `https://` and must not point to `localhost` or a private/LAN IP address; such connections now fail with a clear error, and new connections are checked when you save them.
 
+Create Post, Create Topic, Change User Trust Level and Send Private Message used to return the raw HTTP response (`{status, headers, body}`). From 0.3.0 they return the result fields directly (for example `id`, `topic_id`, `url`), so a reference such as `{{step.body.id}}` no longer resolves after the upgrade.
+
 #### What you need to do
 
-If your Discourse forum is reached over `http://` or on a private network, serve it over https at a public address and update the connection's Website URL. Steps keep running on the version they were built with until you upgrade them.
+If your Discourse forum is reached over `http://` or on a private network, serve it over https at a public address and update the connection's Website URL. After upgrading a step that uses Create Post, Create Topic, Change User Trust Level or Send Private Message, change later references from `{{step.body.<field>}}` to `{{step.<field>}}` (for example `{{step.body.id}}` becomes `{{step.id}}`). Steps keep running on the version they were built with until you upgrade them.
 
 #### Pdfcrowd 0.3.0: Convert URL to PDF and Convert HTML to PDF are builder-only
 
