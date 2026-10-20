@@ -7874,7 +7874,7 @@
     },
     "packages/pieces/community/retell-ai": {
       "name": "@activepieces/piece-retell-ai",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7882,7 +7882,8 @@
         "@activepieces/pieces-framework": "workspace:*",
       },
       "devDependencies": {
-        "tslib": "^2.3.0",
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/retune": {

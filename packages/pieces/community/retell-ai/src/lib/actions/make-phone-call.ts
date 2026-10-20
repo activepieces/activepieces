@@ -1,8 +1,10 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { retellAiApiCall } from '../common/client';
 import { retellAiAuth } from '../common/auth';
+import { apiKeyOf, retellApiCall } from '../common/client';
+import { retellInput } from '../common/input';
 import { agentIdDropdown } from '../common/props';
+import { retellSchemas } from '../common/schemas';
 
 export const makePhoneCall = createAction({
   auth: retellAiAuth,
@@ -10,13 +12,16 @@ export const makePhoneCall = createAction({
   classification: 'WRITE',
   displayName: 'Make Phone Call',
   description: 'Initiate a new outbound phone call using Retell AI agents.',
-  audience: 'both',
-  aiMetadata: { description: 'Place an outbound phone call from a Retell-owned/imported number to a destination number, dialed by a Retell AI voice agent. Use to start a live AI-driven call. Both numbers must be in E.164 format; the agent version, metadata, dynamic prompt variables, and custom SIP headers can optionally be overridden per call. Not idempotent: each call places a new outbound call.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Places an outbound phone call from a Retell number, handled by a Retell voice agent. Billed per minute; each run dials again.',
+    idempotent: false,
+  },
   props: {
     fromNumber: Property.ShortText({
       displayName: 'From Number',
-      description:
-        'The number you own in E.164 format. Must be a number purchased from Retell or imported to Retell.',
+      description: 'The number you own in E.164 format. Must be a number purchased from Retell or imported to Retell.',
       required: true,
     }),
     toNumber: Property.ShortText({
@@ -25,7 +30,7 @@ export const makePhoneCall = createAction({
         'The number you want to call, in E.164 format. If using a number purchased from Retell, only US numbers are supported as destination.',
       required: true,
     }),
-    overrideAgentId: agentIdDropdown('Agent'),
+    overrideAgentId: agentIdDropdown({ displayName: 'Agent' }),
     overrideAgentVersion: Property.Number({
       displayName: 'Override Agent Version',
       description:
@@ -41,7 +46,7 @@ export const makePhoneCall = createAction({
     dynamicVariables: Property.Object({
       displayName: 'Dynamic Variables',
       description:
-        'Add optional dynamic variables in key value pairs of string that injects into your Response Engine prompt and tool description. Only applicable for Response Engine.',
+        'Key-value pairs for the agent prompt. Values are sent as text.',
       required: false,
     }),
     customSipHeaders: Property.Object({
@@ -50,56 +55,40 @@ export const makePhoneCall = createAction({
       required: false,
     }),
   },
+  outputSchema: retellSchemas.rawCall,
   async run({ propsValue, auth }) {
-    const {
-      fromNumber,
-      toNumber,
-      overrideAgentId,
-      overrideAgentVersion,
-      metadata,
-      dynamicVariables,
-      customSipHeaders,
-    } = propsValue;
-
-    // Validate phone numbers
-    const e164Regex = /^\+[1-9]\d{1,14}$/;
-    if (!e164Regex.test(fromNumber)) {
-      throw new Error('From Number must be in E.164 format (e.g., +14157774444)');
-    }
-    
-    if (!e164Regex.test(toNumber)) {
-      throw new Error('To Number must be in E.164 format (e.g., +12137774445)');
-    }
-
     const body: Record<string, unknown> = {
-      from_number: fromNumber,
-      to_number: toNumber,
+      from_number: retellInput.e164({ value: propsValue.fromNumber, label: 'From Number' }),
+      to_number: retellInput.e164({ value: propsValue.toNumber, label: 'To Number' }),
     };
-
-    if (overrideAgentId) {
-      body['override_agent_id'] = overrideAgentId;
+    const agentId = retellInput.optionalText(propsValue.overrideAgentId);
+    if (agentId !== undefined) {
+      body['override_agent_id'] = agentId;
     }
-
-    if (overrideAgentVersion !== undefined) {
-      body['override_agent_version'] = overrideAgentVersion;
+    const version = retellInput.optionalInteger({
+      value: propsValue.overrideAgentVersion,
+      label: 'Override Agent Version',
+      min: 0,
+    });
+    if (version !== undefined) {
+      body['override_agent_version'] = version;
     }
-
-    if (metadata) {
+    const metadata = retellInput.objectValue({ value: propsValue.metadata, label: 'Metadata' });
+    if (metadata !== undefined) {
       body['metadata'] = metadata;
     }
-
-    if (dynamicVariables) {
-      body['retell_llm_dynamic_variables'] = dynamicVariables;
+    const variables = retellInput.stringMap({ value: propsValue.dynamicVariables, label: 'Dynamic Variables' });
+    if (variables !== undefined) {
+      body['retell_llm_dynamic_variables'] = variables;
     }
-
-    if (customSipHeaders) {
-      body['custom_sip_headers'] = customSipHeaders;
+    const sipHeaders = retellInput.stringMap({ value: propsValue.customSipHeaders, label: 'Custom SIP Headers' });
+    if (sipHeaders !== undefined) {
+      body['custom_sip_headers'] = sipHeaders;
     }
-
-    return await retellAiApiCall({
+    return retellApiCall({
+      apiKey: apiKeyOf(auth),
       method: HttpMethod.POST,
-      url: '/v2/create-phone-call',
-      auth: auth,
+      path: '/v2/create-phone-call',
       body,
     });
   },
