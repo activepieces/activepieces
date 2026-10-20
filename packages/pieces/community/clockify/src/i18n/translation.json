@@ -52,6 +52,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Task": "New Task",
   "New Time Entry": "New Time Entry",
   "New Timer Started": "New Timer Started",

@@ -185,6 +185,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New To-Do": "New To-Do",
   "New Issue": "New Issue",
   "New Rock": "New Rock",

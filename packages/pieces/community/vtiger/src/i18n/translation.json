@@ -184,6 +184,8 @@
   "Exact": "Exact",
   "Contains (text values)": "Contains (text values)",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New or Updated Record": "New or Updated Record",
   "Triggers when a new record is introduced or a record is updated. Deleted records are not emitted.": "Triggers when a new record is introduced or a record is updated. Deleted records are not emitted.",
   "Watch By": "Watch By",
