@@ -79,6 +79,8 @@ every one it touches. One such run reformatted 84 files that the change had neve
 way back was to stash the handful of intended edits, `git checkout` the package, and restore them.
 
 ## Gotchas
+- **Recharts fills from `ChartContainer` fail `check-tailwind-classes.mjs`.** `var(--color-<key>)` is defined at runtime by the chart, so the checker reports it as an unknown variable. Put the colour token in the chart config and pass `fill={config.<key>.color}`.
+- **`t('…', { count })` needs a number.** i18next types reserve `count` for plurals, so a formatted string value fails `tsc`. Name the placeholder something else (`{calls}`) when you pass a pre-formatted number.
 
 - **To style one word inside a translated sentence, translate the whole sentence and split it around a sentinel; nothing in the app uses `Trans`.** Call `t('Type {text} to confirm', { text: SLOT })`, `split(SLOT)`, and render `before`, the styled word, `after`, so translators can still move the word (see `TypeToConfirm` in `components/custom`). Concatenating two separately translated halves fixes the word order to English.
 - **Flags are cached with `staleTime: Infinity`, so a setting that feeds a flag must invalidate `flagsHooks.queryKey` after it changes.** Several flags are computed from platform settings (`THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP` from the Google switch, `EMAIL_AUTH_ENABLED`, `THEME`), and refetching only the platform leaves the flag stale until reload. `ssoMutations.useUpdatePlatformSso` and the appearance section both do `queryClient.invalidateQueries({ queryKey: flagsHooks.queryKey })`.
