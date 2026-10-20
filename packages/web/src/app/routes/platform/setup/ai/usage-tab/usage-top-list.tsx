@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { DeltaChip, ItemIcon } from './usage-bits';
+import { DeltaChip, dimensionIcon, ItemIcon } from './usage-bits';
 import { UsageDimension, UsageItem } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 
@@ -28,13 +28,15 @@ export function UsageTopList({
   showShared = false,
   className,
 }: UsageTopListProps) {
+  const TitleIcon = dimensionIcon({ dimension });
   return (
     <section
       className={cn(adminSurface.card, 'flex flex-col gap-3 p-5', className)}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
-          <h2 className="text-base font-semibold text-gray-12">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-gray-12">
+            <TitleIcon className="size-4 shrink-0 text-gray-11" />
             {title ?? usageFormat.dimensionLabel({ dimension })}
           </h2>
           {subtitle && <p className="text-xs text-gray-11">{subtitle}</p>}
@@ -49,9 +51,17 @@ export function UsageTopList({
         )}
       </div>
       {items.length === 0 ? (
-        <p className="text-sm text-gray-11">
-          {t('No AI usage in this period.')}
-        </p>
+        <div className="flex min-h-36 flex-1 flex-col items-center justify-center gap-2 text-center">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-gray-3 text-gray-11">
+            <TitleIcon className="size-4" />
+          </span>
+          <p className="text-sm font-medium text-gray-12">
+            {t('No AI usage yet')}
+          </p>
+          <p className="max-w-56 text-xs text-gray-11">
+            {t('Nothing ran in this period. Try a longer period or All.')}
+          </p>
+        </div>
       ) : (
         <ul className="flex flex-col gap-1">
           {items.map((item) => (
@@ -88,7 +98,9 @@ export function UsageTopRow({
         className="flex min-w-0 flex-1 flex-col gap-1.5 rounded-md py-1.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50"
       >
         <div className="flex min-w-0 items-center gap-2.5">
-          <ItemIcon item={item} />
+          {(item.dimension === 'key' || item.dimension === 'model') && (
+            <ItemIcon item={item} />
+          )}
           <div className="flex min-w-0 flex-1 flex-col">
             <TextWithTooltip tooltipMessage={item.name}>
               <p className="truncate text-sm font-medium text-gray-12">

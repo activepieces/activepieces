@@ -4,7 +4,10 @@ import {
   ArrowUpRight,
   Bot,
   Coins,
-  Folder,
+  Cpu,
+  KeyRound,
+  LayoutGrid,
+  LucideIcon,
   User,
   Workflow,
 } from 'lucide-react';
@@ -14,7 +17,7 @@ import { cn } from '@/lib/utils';
 
 import { ProviderLogo } from '../providers-tab/provider-logo';
 
-import { UsageItem } from './usage-dummy-data';
+import { UsageDimension, UsageItem } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 
 export function DeltaChip({
@@ -59,13 +62,7 @@ export function ItemIcon({ item }: { item: UsageItem }) {
   const Icon =
     item.provider === AIProviderName.ACTIVEPIECES
       ? Coins
-      : item.dimension === 'project'
-      ? Folder
-      : item.dimension === 'flow'
-      ? Workflow
-      : item.dimension === 'agent'
-      ? Bot
-      : User;
+      : dimensionIcon({ dimension: item.dimension });
   return (
     <span className="flex size-4 shrink-0 items-center justify-center text-gray-11">
       <Icon className="size-4" />
@@ -73,4 +70,21 @@ export function ItemIcon({ item }: { item: UsageItem }) {
   );
 }
 
+export function dimensionIcon({
+  dimension,
+}: {
+  dimension: UsageDimension;
+}): LucideIcon {
+  return DIMENSION_ICONS[dimension];
+}
+
 const FLAT_CHANGE = 0.005;
+
+const DIMENSION_ICONS: Record<UsageDimension, LucideIcon> = {
+  project: LayoutGrid,
+  flow: Workflow,
+  agent: Bot,
+  user: User,
+  key: KeyRound,
+  model: Cpu,
+};
