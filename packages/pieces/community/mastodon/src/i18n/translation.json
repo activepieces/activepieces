@@ -450,6 +450,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Mention": "New Mention",
   "New Follower": "New Follower",
   "New Status from Account": "New Status from Account",
