@@ -3,11 +3,19 @@ import {
   OutputSchemaField,
 } from '@activepieces/pieces-framework';
 
+const rowColumnsField: OutputSchemaField = {
+  key: 'columns',
+  label: 'Row Columns',
+  value: '',
+  dynamicKey: true,
+};
+
 const rowsField: OutputSchemaField = {
   key: 'rows',
   label: 'Rows',
   description:
     'Each row is an object keyed by column name (Snowflake upper-cases unquoted names).',
+  listItems: [rowColumnsField],
 };
 
 const queryIdField: OutputSchemaField = { key: 'queryId', label: 'Query ID' };
@@ -75,7 +83,7 @@ function listSchema({
 }
 
 export const rawRowsOutputSchema: OutputSchema = {
-  fields: [],
+  fields: [{ key: 'rows', label: 'Rows', value: '', listItems: [rowColumnsField] }],
   itemLabel: 'Row',
 };
 
@@ -119,7 +127,7 @@ export const getRowOutputSchema: OutputSchema = {
 };
 
 export const getRowByIdOutputSchema: OutputSchema = {
-  fields: [{ key: 'found', label: 'Found', format: 'boolean' }],
+  fields: [{ key: 'found', label: 'Found', format: 'boolean' }, rowColumnsField],
 };
 
 export const insertResultOutputSchema: OutputSchema = {
@@ -479,7 +487,7 @@ export const sessionOutputSchema: OutputSchema = {
 };
 
 export const rowTriggerOutputSchema: OutputSchema = {
-  fields: [],
+  fields: [rowColumnsField],
 };
 
 export const newColumnOutputSchema: OutputSchema = {
