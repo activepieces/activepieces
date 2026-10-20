@@ -182,6 +182,7 @@ function DetailBody({
               items={group.items}
               totalUsd={relatedTotal}
               search={view.search}
+              shareOf={t('{name} spend', { name: detail.item.name })}
             />
           ))}
         </div>

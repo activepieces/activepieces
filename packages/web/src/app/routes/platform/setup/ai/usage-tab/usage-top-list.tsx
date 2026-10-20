@@ -26,6 +26,7 @@ export function UsageTopList({
   title,
   subtitle,
   showShared = false,
+  shareOf,
   className,
 }: UsageTopListProps) {
   const TitleIcon = dimensionIcon({ dimension });
@@ -75,6 +76,7 @@ export function UsageTopList({
               totalUsd={totalUsd}
               search={search}
               showShared={showShared}
+              shareOf={shareOf}
             />
           ))}
         </ul>
@@ -88,11 +90,13 @@ export function UsageTopRow({
   totalUsd,
   search,
   showShared = false,
+  shareOf,
 }: {
   item: UsageItem;
   totalUsd: number;
   search: string;
   showShared?: boolean;
+  shareOf?: string;
 }) {
   const share = totalUsd === 0 ? 0 : item.spendUsd / totalUsd;
   return (
@@ -151,9 +155,14 @@ export function UsageTopRow({
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={6}>
-            {t('{share} of all AI spend in this period', {
-              share: usageFormat.percent(share),
-            })}
+            {shareOf
+              ? t('{share} of {whole}', {
+                  share: usageFormat.percent(share),
+                  whole: shareOf,
+                })
+              : t('{share} of all AI spend in this period', {
+                  share: usageFormat.percent(share),
+                })}
           </TooltipContent>
         </Tooltip>
       </Link>
@@ -202,5 +211,6 @@ type UsageTopListProps = {
   title?: string;
   subtitle?: string;
   showShared?: boolean;
+  shareOf?: string;
   className?: string;
 };
