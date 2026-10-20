@@ -111,6 +111,7 @@ const AI_TAB_PATHS = {
   providers: '',
   capabilities: 'capabilities',
   tiers: 'tiers',
+  usage: 'usage',
 };
 const PIECES_TAB_PATHS = { pieces: '', 'piece-sets': 'piece-sets' };
 
@@ -200,6 +201,22 @@ export const platformRoutes = [
             <PlanFeatureSample feature="aiProviders">
               <SuspenseWrapper>
                 <AIProvidersPage section="tiers" />
+              </SuspenseWrapper>
+            </PlanFeatureSample>
+          </LegacyTabRedirect>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/ai/usage',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="AI Usage">
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
+            <PlanFeatureSample feature="aiProviders">
+              <SuspenseWrapper>
+                <AIProvidersPage section="usage" />
               </SuspenseWrapper>
             </PlanFeatureSample>
           </LegacyTabRedirect>

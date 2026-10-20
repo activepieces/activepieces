@@ -104,16 +104,18 @@ export function PlatformNav() {
           icon: SparklesIcon,
           locked: !platform.plan.aiProvidersEnabled,
           tier: PLATFORM_FEATURES.aiProviders.tier,
-          subItems:
-            edition === ApEdition.COMMUNITY
-              ? undefined
+          subItems: [
+            { to: '/platform/ai', label: t('Providers'), end: true },
+            ...(edition === ApEdition.COMMUNITY
+              ? []
               : [
-                  { to: '/platform/ai', label: t('Providers'), end: true },
                   {
                     to: '/platform/ai/capabilities',
                     label: t('Capabilities'),
                   },
-                ],
+                ]),
+            { to: '/platform/ai/usage', label: t('Usage') },
+          ],
         },
       ],
     },
