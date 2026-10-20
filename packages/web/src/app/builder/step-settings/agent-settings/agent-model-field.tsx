@@ -15,6 +15,7 @@ export function AgentModelField({
   pieceVersion,
   actionName,
   disabled,
+  hideHeading = false,
 }: AgentModelFieldProps) {
   const { surface, showHeading } = agentModelUtils.fieldFor({ actionName });
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -44,7 +45,7 @@ export function AgentModelField({
 
   return (
     <div className="space-y-2">
-      {showHeading && (
+      {showHeading && !hideHeading && (
         <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
       )}
       <ModelPicker
@@ -70,4 +71,5 @@ type AgentModelFieldProps = {
   pieceVersion: string;
   actionName: string;
   disabled: boolean;
+  hideHeading?: boolean;
 };

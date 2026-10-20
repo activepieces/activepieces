@@ -57,12 +57,14 @@ function render({
   pieceVersion = '0.14.1',
   actionName = 'run_agent',
   disabled = false,
+  hideHeading,
 }: {
   value: unknown;
   onChange: (value: unknown) => void;
   pieceVersion?: string;
   actionName?: string;
   disabled?: boolean;
+  hideHeading?: boolean;
 }) {
   act(() => {
     root.render(
@@ -72,7 +74,8 @@ function render({
         pieceVersion={pieceVersion}
         actionName={actionName}
         disabled={disabled}
-      />
+        hideHeading={hideHeading}
+      />,
     );
   });
 }
@@ -145,7 +148,7 @@ describe('the model field on a Run Agent step', () => {
 
     expect(state.pickerProps?.withTiers).toBe(false);
     expect(container.textContent).toContain(
-      'Update this step to the latest version to use your tiers.'
+      'Update this step to the latest version to use your tiers.',
     );
     expect(onChange).toHaveBeenCalledWith({
       provider: AIProviderName.ACTIVEPIECES,
@@ -193,6 +196,18 @@ describe('the model field on an AI piece text step', () => {
 
     expect(onChange).toHaveBeenCalledWith({ modelTierId: 'tier-1' });
     expect(container.textContent).toContain('AI Model *');
+  });
+
+  it('drops its heading when the form label above it carries the expression switch', () => {
+    render({
+      value: undefined,
+      onChange: vi.fn(),
+      pieceVersion: '0.15.0',
+      actionName: 'summarizeText',
+      hideHeading: true,
+    });
+
+    expect(container.textContent).not.toContain('AI Model *');
   });
 
   it('never overwrites a model held in an expression', () => {

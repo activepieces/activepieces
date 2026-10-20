@@ -140,7 +140,7 @@ function resolveSelectionOrThrow(value: unknown): AIProviderSelection {
 
 function aiModelProp() {
   return Property.Object({
-    displayName: 'AI Model',
+    displayName: 'Model',
     description: 'A tier your admin set up, or a specific model.',
     required: true,
   });

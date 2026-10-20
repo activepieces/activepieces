@@ -83,14 +83,32 @@ export const selectGenericFormComponentForProperty = ({
         dynamicPropsInfo?.pieceName === AI_PIECE_NAME &&
         propertyName === AgentPieceProps.AI_PROVIDER_MODEL
       ) {
-        return (
+        const modelField = (
           <AgentModelField
             value={field.value}
             onChange={field.onChange}
             pieceVersion={dynamicPropsInfo.pieceVersion}
             actionName={dynamicPropsInfo.actionOrTriggerName}
             disabled={disabled}
+            hideHeading={allowDynamicValues}
           />
+        );
+        if (!allowDynamicValues) {
+          return modelField;
+        }
+        return (
+          <AutoFormFieldWrapper
+            property={property}
+            propertyName={propertyName}
+            field={field}
+            hideLabel={hideLabel}
+            inputName={inputName}
+            disabled={disabled}
+            allowDynamicValues={allowDynamicValues}
+            dynamicInputModeToggled={dynamicInputModeToggled}
+          >
+            {modelField}
+          </AutoFormFieldWrapper>
         );
       }
       return (
