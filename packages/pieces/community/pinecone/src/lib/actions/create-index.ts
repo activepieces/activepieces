@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClientFromAuth } from '../common/pinecone-client';
+import { pineconeClient } from '../common/client';
+import type { CreateIndexOptions, PineconeCreateIndexSpec } from '../common/types';
 import { pineconeAuth } from '../auth';
 
-export const createIndex = createAction({
+export const createIndexAction = createAction({
   auth: pineconeAuth,
   name: 'create_index',
   classification: 'WRITE',
@@ -35,7 +36,7 @@ export const createIndex = createAction({
       },
       defaultValue: 'serverless'
     }),
-    cloud: Property.StaticDropdown({
+    cloud: Property.StaticDropdown<'aws' | 'gcp' | 'azure'>({
       displayName: 'Cloud Provider',
       description:
         'The public cloud where you would like your index hosted (for serverless)',
@@ -102,7 +103,7 @@ export const createIndex = createAction({
         'The number of pods to be used in the index. This should be equal to shards x replicas.',
       required: false
     }),
-    metric: Property.StaticDropdown({
+    metric: Property.StaticDropdown<'cosine' | 'euclidean' | 'dotproduct'>({
       displayName: 'Metric',
       description:
         'The distance metric to use. Defaults to cosine for dense indexes, dotproduct for sparse indexes.',
@@ -210,10 +211,10 @@ export const createIndex = createAction({
       }
     }
 
-    const pc = createPineconeClientFromAuth(context.auth);
+    const pc = pineconeClient.create({ auth: context.auth });
 
     try {
-      let spec: any;
+      let spec: PineconeCreateIndexSpec | undefined;
 
       if (indexType === 'serverless') {
         if (!cloud) {
@@ -258,27 +259,31 @@ export const createIndex = createAction({
         };
       }
 
-      const createIndexOptions: any = {
+      if (!spec) {
+        throw new Error(
+          'You must pass a `pods` or `serverless` `spec` object in order to create an index.'
+        );
+      }
+
+      const resolvedMetric = metric || (vType === 'sparse' ? 'dotproduct' : 'cosine');
+
+      const createIndexOptions: CreateIndexOptions = {
         name: name,
         dimension: dimension,
         spec: spec,
-        ...(metric && { metric }),
-        ...(vectorType && { vector_type: vectorType }),
-        ...(deletionProtection !== undefined && { 
-          deletionProtection: deletionProtection ? 'enabled' : 'disabled' 
+        metric: resolvedMetric,
+        ...(vectorType && { vectorType }),
+        ...(deletionProtection !== undefined && {
+          deletionProtection: deletionProtection ? 'enabled' : 'disabled'
         }),
-        ...(tags && { tags }),
+        ...(tags && {
+          tags: Object.fromEntries(
+            Object.entries(tags).map(([key, value]) => [key, String(value)])
+          )
+        }),
         waitUntilReady: waitUntilReady || false,
         suppressConflicts: suppressConflicts || false
       };
-
-      if (!createIndexOptions.metric) {
-        if (vType === 'sparse') {
-          createIndexOptions.metric = 'dotproduct';
-        } else {
-          createIndexOptions.metric = 'cosine';
-        }
-      }
 
       const response = await pc.createIndex(createIndexOptions);
 
@@ -288,14 +293,13 @@ export const createIndex = createAction({
         dimension: dimension,
         indexType: indexType,
         spec: spec,
-        metric: createIndexOptions.metric,
+        metric: resolvedMetric,
         vectorType: vType,
         ...(tags && { tags }),
         message: 'Index created successfully',
         ...(response && { response })
       };
     } catch (caught) {
-      console.log('Failed to create index.', caught);
       return caught;
     }
   }

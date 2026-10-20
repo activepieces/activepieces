@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClientFromAuth } from '../common/pinecone-client';
+import { pineconeClient } from '../common/client';
+import type { QueryOptions, RecordSparseValues } from '../common/types';
 import { pineconeAuth } from '../auth';
 
-export const searchVector = createAction({
+export const searchVectorAction = createAction({
   auth: pineconeAuth,
   name: 'search_vector',
   classification: 'SEARCH',
@@ -126,9 +127,9 @@ export const searchVector = createAction({
       }
     }
 
-    const pc = createPineconeClientFromAuth(context.auth);
+    const pc = pineconeClient.create({ auth: context.auth });
 
-    let queryRequest: any = {};
+    let queryRequest: QueryOptions | undefined;
 
     try {
 
@@ -136,21 +137,7 @@ export const searchVector = createAction({
         ? pc.index(indexName, indexHost)
         : pc.index(indexName);
 
-      queryRequest = {
-        topK: topK,
-        includeValues: includeValues || false,
-        includeMetadata: includeMetadata || false
-      };
-
-      if (queryMethod === 'vector') {
-        if (vector && Array.isArray(vector)) {
-          queryRequest.vector = vector.map((v) => Number(v));
-        }
-      } else if (queryMethod === 'id') {
-        if (id) {
-          queryRequest.id = id;
-        }
-      }
+      let sparseVector: RecordSparseValues | undefined;
 
       if (sparseIndices && sparseValues) {
         if (!Array.isArray(sparseIndices) || !Array.isArray(sparseValues)) {
@@ -162,15 +149,24 @@ export const searchVector = createAction({
           );
         }
 
-        queryRequest.sparseVector = {
+        sparseVector = {
           indices: sparseIndices.map((i) => Number(i)),
           values: sparseValues.map((v) => Number(v))
         };
       }
 
-      if (filter) {
-        queryRequest.filter = filter;
-      }
+      const sharedQuery = {
+        topK: topK,
+        includeValues: includeValues || false,
+        includeMetadata: includeMetadata || false,
+        ...(sparseVector && { sparseVector }),
+        ...(filter && { filter })
+      };
+
+      queryRequest =
+        queryMethod === 'id' && id
+          ? { ...sharedQuery, id }
+          : { ...sharedQuery, vector: (vector ?? []).map((v) => Number(v)) };
 
       const queryResponse = namespace
         ? await index.namespace(namespace).query(queryRequest)
@@ -200,53 +196,6 @@ export const searchVector = createAction({
         message: `Successfully found ${matches.length} matches`
       };
     } catch (caught) {
-      console.log('Failed to search vectors.', caught);
-
-      if (caught instanceof Error) {
-        const error = caught as any;
-
-        if (error.status === 400 || error.code === 400) {
-          return {
-            success: false,
-            error: 'Bad Request',
-            code: 400,
-            message:
-              error.message ||
-              'The request body included invalid request parameters.',
-            details: error.details || [],
-            query: queryRequest,
-            indexName: indexName,
-            namespace: namespace || 'default'
-          };
-        }
-
-        if (error.status >= 400 && error.status < 500) {
-          return {
-            success: false,
-            error: 'Client Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected client error occurred.',
-            details: error.details || [],
-            query: queryRequest,
-            indexName: indexName,
-            namespace: namespace || 'default'
-          };
-        }
-
-        if (error.status >= 500 || error.code >= 500) {
-          return {
-            success: false,
-            error: 'Server Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected server error occurred.',
-            details: error.details || [],
-            query: queryRequest,
-            indexName: indexName,
-            namespace: namespace || 'default'
-          };
-        }
-      }
-
       return {
         success: false,
         error: 'Unknown Error',
@@ -254,7 +203,7 @@ export const searchVector = createAction({
           caught instanceof Error
             ? caught.message
             : 'An unexpected error occurred while searching vectors.',
-        query: queryRequest,
+        query: queryRequest ?? {},
         indexName: indexName,
         namespace: namespace || 'default'
       };

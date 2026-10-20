@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClientFromAuth } from '../common/pinecone-client';
+import { pineconeClient } from '../common/client';
+import type { RecordMetadata, UpdateOptions } from '../common/types';
 import { pineconeAuth } from '../auth';
 
-export const updateVector = createAction({
+export const updateVectorAction = createAction({
   auth: pineconeAuth,
   name: 'update_vector',
   classification: 'WRITE',
@@ -91,7 +92,7 @@ export const updateVector = createAction({
       );
     }
 
-    const pc = createPineconeClientFromAuth(context.auth);
+    const pc = pineconeClient.create({ auth: context.auth });
 
     try {
 
@@ -99,7 +100,7 @@ export const updateVector = createAction({
         ? pc.index(indexName, indexHost)
         : pc.index(indexName);
 
-      const updateRequest: any = {
+      const updateRequest: UpdateOptions = {
         id: id
       };
 
@@ -124,13 +125,13 @@ export const updateVector = createAction({
       }
 
       if (metadata && Array.isArray(metadata) && metadata.length > 0) {
-        const metadataObj: any = {};
+        const metadataObj: RecordMetadata = {};
         for (const item of metadata) {
-          const metaItem = item as any;
-          const key = String(metaItem.key);
-          const value = metaItem.value;
+          const metaItem = typeof item === 'object' && item !== null ? item : {};
+          const key = String('key' in metaItem ? metaItem.key : undefined);
+          const value = 'value' in metaItem ? metaItem.value : undefined;
           const numValue = Number(value);
-          metadataObj[key] = isNaN(numValue) ? value : numValue;
+          metadataObj[key] = isNaN(numValue) ? String(value) : numValue;
         }
         updateRequest.metadata = metadataObj;
       }
@@ -159,50 +160,6 @@ export const updateVector = createAction({
         message: `Successfully updated vector '${id}'`
       };
     } catch (caught) {
-      console.log('Failed to update vector.', caught);
-
-      if (caught instanceof Error) {
-        const error = caught as any;
-
-        if (error.status === 400 || error.code === 400) {
-          return {
-            success: false,
-            error: 'Bad Request',
-            code: 400,
-            message:
-              error.message ||
-              'The request body included invalid request parameters.',
-            details: error.details || [],
-            vectorId: id,
-            indexName: indexName
-          };
-        }
-
-        if (error.status >= 400 && error.status < 500) {
-          return {
-            success: false,
-            error: 'Client Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected client error occurred.',
-            details: error.details || [],
-            vectorId: id,
-            indexName: indexName
-          };
-        }
-
-        if (error.status >= 500 || error.code >= 500) {
-          return {
-            success: false,
-            error: 'Server Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected server error occurred.',
-            details: error.details || [],
-            vectorId: id,
-            indexName: indexName
-          };
-        }
-      }
-
       return {
         success: false,
         error: 'Unknown Error',

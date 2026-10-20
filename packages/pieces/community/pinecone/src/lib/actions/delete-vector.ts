@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClientFromAuth } from '../common/pinecone-client';
+import { pineconeClient } from '../common/client';
 import { pineconeAuth } from '../auth';
 
-export const deleteVector = createAction({
+export const deleteVectorAction = createAction({
   auth: pineconeAuth,
   name: 'delete_vector',
   classification: 'DESTRUCTIVE',
@@ -83,7 +83,7 @@ export const deleteVector = createAction({
       throw new Error('You must provide an index name to delete vectors.');
     }
 
-    const pc = createPineconeClientFromAuth(context.auth);
+    const pc = pineconeClient.create({ auth: context.auth });
 
     try {
 
@@ -94,7 +94,6 @@ export const deleteVector = createAction({
 
       const ns = namespace ? index.namespace(namespace) : index;
 
-      let deleteResult: any;
       let deletedCount = 0;
       let operation = '';
 
@@ -117,11 +116,10 @@ export const deleteVector = createAction({
           );
         }
 
-        await ns.deleteMany(ids as string[]);
+        const recordIds = ids.map((recordId) => String(recordId));
+        await ns.deleteMany(recordIds);
         deletedCount = ids.length;
-        operation = `Deleted ${ids.length} vectors with IDs: ${(
-          ids as string[]
-        ).join(', ')}`;
+        operation = `Deleted ${ids.length} vectors with IDs: ${recordIds.join(', ')}`;
       } else if (deleteMode === 'all') {
         if (!confirmDeleteAll) {
           throw new Error(
@@ -129,7 +127,7 @@ export const deleteVector = createAction({
           );
         }
 
-        deleteResult = await ns.deleteAll();
+        await ns.deleteAll();
         operation = `Deleted ALL vectors in namespace: ${
           namespace || 'default'
         }`;
@@ -152,52 +150,9 @@ export const deleteVector = createAction({
         deleteMode: deleteMode,
         operation: operation,
         ...(deletedCount > 0 && { deletedCount }),
-        ...(deleteResult && { deleteResult }),
         message: `Successfully completed delete operation: ${operation}`
       };
     } catch (caught) {
-      console.log('Failed to delete vector(s).', caught);
-      
-      if (caught instanceof Error) {
-        const error = caught as any;
-        
-        if (error.status === 400 || error.code === 400) {
-          return {
-            success: false,
-            error: 'Bad Request',
-            code: 400,
-            message: error.message || 'The request body included invalid request parameters.',
-            details: error.details || [],
-            indexName: indexName,
-            namespace: namespace || 'default',
-          };
-        }
-        
-        if (error.status >= 400 && error.status < 500) {
-          return {
-            success: false,
-            error: 'Client Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected client error occurred.',
-            details: error.details || [],
-            indexName: indexName,
-            namespace: namespace || 'default',
-          };
-        }
-        
-        if (error.status >= 500 || error.code >= 500) {
-          return {
-            success: false,
-            error: 'Server Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected server error occurred.',
-            details: error.details || [],
-            indexName: indexName,
-            namespace: namespace || 'default',
-          };
-        }
-      }
-      
       return {
         success: false,
         error: 'Unknown Error',

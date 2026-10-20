@@ -1,12 +1,12 @@
-import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
-import { createIndex } from './lib/actions/create-index';
-import { upsertVector } from './lib/actions/upsert-vector';
-import { updateVector } from './lib/actions/update-vector';
-import { getVector } from './lib/actions/get-vector';
-import { deleteVector } from './lib/actions/delete-vector';
-import { searchVector } from './lib/actions/search-vector';
-import { searchIndex } from './lib/actions/search-index';
+import { createIndexAction } from './lib/actions/create-index';
+import { upsertVectorAction } from './lib/actions/upsert-vector';
+import { updateVectorAction } from './lib/actions/update-vector';
+import { getVectorAction } from './lib/actions/get-vector';
+import { deleteVectorAction } from './lib/actions/delete-vector';
+import { searchVectorAction } from './lib/actions/search-vector';
+import { searchIndexAction } from './lib/actions/search-index';
 import { pineconeAuth } from './lib/auth';
 
 export const pinecone = createPiece({
@@ -17,6 +17,14 @@ export const pinecone = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/pinecone.png',
   authors: ['fortunamide', 'onyedikachi-david'],
-  actions: [createIndex, upsertVector, updateVector, getVector, deleteVector, searchVector, searchIndex],
+  actions: [
+    createIndexAction,
+    upsertVectorAction,
+    updateVectorAction,
+    getVectorAction,
+    deleteVectorAction,
+    searchVectorAction,
+    searchIndexAction,
+  ],
   triggers: []
 });
