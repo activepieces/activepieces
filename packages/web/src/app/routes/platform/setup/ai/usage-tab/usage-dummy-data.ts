@@ -513,6 +513,14 @@ const PRESET_PROFILES: Record<UsageDataPreset, PresetProfile> = {
     sources: ALL_SOURCES,
     trackedDays: 25,
   },
+  'partial-history': {
+    members: 'all',
+    scale: 1,
+    testingShare: 0.09,
+    creditShare: 0.12,
+    sources: ALL_SOURCES,
+    trackedDays: 45,
+  },
   rich: {
     members: 'all',
     scale: 1,
@@ -859,6 +867,7 @@ export const USAGE_PRESETS: UsagePreset[] = [
   'minimal',
   'half',
   'short-history',
+  'partial-history',
   'rich',
 ];
 export const USAGE_PERIODS: UsagePeriod[] = [
@@ -889,6 +898,7 @@ export type UsageDataPreset =
   | 'minimal'
   | 'half'
   | 'short-history'
+  | 'partial-history'
   | 'rich';
 
 export type UsagePeriod =

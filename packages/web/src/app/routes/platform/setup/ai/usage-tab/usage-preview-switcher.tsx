@@ -83,6 +83,8 @@ function presetLabel({ preset }: { preset: UsagePreset }): string {
       return t('Half rich');
     case 'short-history':
       return t('Short history');
+    case 'partial-history':
+      return t('Partial comparison');
     case 'rich':
       return t('Rich');
   }
@@ -103,6 +105,10 @@ function presetHint({ preset }: { preset: UsagePreset }): string {
     case 'short-history':
       return t(
         'Tracking started 25 days ago, so longer periods have no full comparison',
+      );
+    case 'partial-history':
+      return t(
+        'Tracking started 45 days ago, so on 30 days and this month the previous period is only partly there',
       );
     case 'rich':
       return t('A busy platform with every card filled');
