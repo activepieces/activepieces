@@ -134,11 +134,11 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         if (system.getEdition() !== ApEdition.CLOUD) {
             return null
         }
-        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
+        const memberships = await platformService(log).listPlatformMembershipsForIdentity({ identityId })
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
-        const lastUsed = !isNil(identity.lastLoggedInPlatformId) ? platforms.find((p) => p.id === identity.lastLoggedInPlatformId) : undefined
-        const licensed = platforms.find((p) => !isNil(p.plan.licenseKey))
-        return lastUsed?.id ?? licensed?.id ?? platforms[0]?.id ?? null
+        const lastUsed = memberships.find((membership) => membership.platform.id === identity.lastLoggedInPlatformId)
+        const withProjects = memberships.find((membership) => membership.hasProjects)
+        return (lastUsed ?? withProjects ?? memberships[0])?.platform.id ?? null
     },
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResult> {
         const platformId = isNil(params.predefinedPlatformId) ? await selectCloudSignInPlatformIdByEmail({ email: params.email, log }) : params.predefinedPlatformId
@@ -194,7 +194,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         return { response, signedUp: created }
     },
     async switchPlatform(params: SwitchPlatformParams): Promise<AuthenticationResponse> {
-        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
+        const platforms = await platformService(log).listPlatformsForIdentity({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
         await assertUserCanSwitchToPlatform(platform)
 
@@ -287,6 +287,7 @@ function refusedSignUpError({ email, provider }: SignUpParams): ActivepiecesErro
         params: null,
     })
 }
+
 
 type SelectCloudSignInPlatformIdParams = {
     identityId: string

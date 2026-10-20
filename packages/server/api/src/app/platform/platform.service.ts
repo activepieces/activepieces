@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, partition, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
 import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, MAX_DEFAULT_PROJECTS, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformResponse, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -25,23 +25,25 @@ import { PlatformEntity } from './platform.entity'
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
 export const platformService = (log: FastifyBaseLogger) => ({
-    async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
+    async listPlatformsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
+        const memberships = await this.listPlatformMembershipsForIdentity(params)
+        return memberships.map((membership) => membership.platform)
+    },
+    async listPlatformMembershipsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformMembershipWithPlatform[]> {
         const users = await userService(log).getByIdentityId({ identityId: params.identityId })
-
-        const platformsWithProjects = await Promise.all(users.map(async (user) => {
-            if (isNil(user.platformId) || user.status === UserStatus.INACTIVE) {
-                return null
-            }
-            const hasProjects = await projectService(log).userHasProjects({
-                platformId: user.platformId,
-                userId: user.id,
-                isPrivileged: userService(log).isUserPrivileged(user),
-            })
-            return hasProjects ? user.platformId : null
+        const activeUsers = users.flatMap((user) => isNil(user.platformId) || user.status === UserStatus.INACTIVE
+            ? []
+            : [{ userId: user.id, platformId: user.platformId, isPrivileged: userService(log).isUserPrivileged(user) }])
+        const platformIdsWithProjects = new Set(await projectService(log).listPlatformIdsWhereUsersHaveProjects({ users: activeUsers }))
+        const memberships: PlatformMembership[] = activeUsers.map((user) => ({
+            platformId: user.platformId,
+            hasProjects: platformIdsWithProjects.has(user.platformId),
         }))
-
-        const platforms = await Promise.all(platformsWithProjects.filter((platformId) => !isNil(platformId)).map((platformId) => this.getOneWithPlanOrThrow(platformId)))
-        return platforms
+        const [withProjects, withoutProjects] = partition(memberships, (membership) => membership.hasProjects)
+        return Promise.all([...withProjects, ...withoutProjects].map(async (membership) => ({
+            platform: await this.getOneWithPlanOrThrow(membership.platformId),
+            hasProjects: membership.hasProjects,
+        })))
     },
     async create(params: AddParams): Promise<PlatformWithoutFederatedAuth> {
         const {
@@ -490,6 +492,16 @@ type AssertAuditLogRetentionDaysAllowedParams = {
     log: FastifyBaseLogger
     platform: PlatformWithoutFederatedAuth
     auditLogRetentionDays: number | null | undefined
+}
+
+type PlatformMembership = {
+    platformId: PlatformId
+    hasProjects: boolean
+}
+
+type PlatformMembershipWithPlatform = {
+    platform: PlatformWithoutSensitiveData
+    hasProjects: boolean
 }
 
 type ListDefaultProjectIdsParams = {

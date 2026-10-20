@@ -1,26 +1,21 @@
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Trash, UserCircle } from 'lucide-react';
+import { CheckIcon, Package, Pencil, Trash } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { platformApi } from '@/api/platforms-api';
 import {
   AdminDataTable,
   AdminPage,
   AdminPageHeader,
-  SettingsPanel,
-  SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
 import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -41,8 +36,7 @@ import { validationUtils } from '@/lib/validation-utils';
 import { projectsTableColumns } from './columns';
 
 export default function ProjectsPage() {
-  const { platform, setCurrentPlatform } = platformHooks.useCurrentPlatform();
-  const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { project: currentProject } =
@@ -84,23 +78,6 @@ export default function ProjectsPage() {
 
   const { data: allProjects } =
     projectCollectionUtils.useAllPlatformProjects(filters);
-
-  const {
-    mutate: toggleAutoCreatePersonalProjects,
-    isPending: isAutoCreatePersonalProjectsPending,
-  } = useMutation({
-    mutationFn: (autoCreatePersonalProjects: boolean) =>
-      platformApi.update({ autoCreatePersonalProjects }, platform.id),
-    onSuccess: (updatedPlatform) => {
-      setCurrentPlatform(queryClient, updatedPlatform);
-      toast.success(t('Automatic personal project creation updated'), {
-        duration: 3000,
-      });
-    },
-    onError: () => {
-      toast.error(t('Failed to save changes. Please try again.'));
-    },
-  });
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -408,25 +385,6 @@ export default function ProjectsPage() {
       >
         <CreateProjectButton variant="full" projects={allProjects} />
       </AdminPageHeader>
-      <SettingsPanel flush>
-        <SettingsRow
-          icon={<UserCircle />}
-          title={t('Automatic personal project creation')}
-          description={t(
-            'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
-          )}
-        >
-          <Switch
-            aria-label={t('Automatic personal project creation')}
-            checked={platform.autoCreatePersonalProjects}
-            onCheckedChange={(checked) =>
-              toggleAutoCreatePersonalProjects(checked)
-            }
-            disabled={isAutoCreatePersonalProjectsPending}
-            {...adminControl(AdminControl.PROJECTS_AUTO_PERSONAL_TOGGLE)}
-          />
-        </SettingsRow>
-      </SettingsPanel>
       <AdminDataTable
         emptyStateTextTitle={t('No projects found')}
         emptyStateTextDescription={t(
