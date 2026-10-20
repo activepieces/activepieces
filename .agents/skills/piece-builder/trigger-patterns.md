@@ -16,7 +16,7 @@ Two deduplication strategies:
 
 **Always pass the whole `context`** to `pollingHelper.onEnable` / `onDisable` / `poll` / `test` -- never a subset like `{ store, auth, propsValue }`. Every field on the helper's param type is optional, so a partial object type-checks and whatever you left out is dropped in silence. The set also grows: `onEnable` now reads `context.isRepublish` to keep the existing `lastPoll`/`lastItem` when a running flow is republished, so a subset call still resets the checkpoint and drops every event since the last poll.
 
-**Editing an existing polling trigger? Fix every `pollingHelper` call in the piece while you're there.** Most pieces in the repo still pass the subset — the SKILL.md carve-out explains why fix-on-touch beats a repo-wide codemod. Mention the fix in your PR description so it doesn't read as an unrelated change.
+**Lint enforces this.** A `no-restricted-syntax` rule in the root `.eslintrc.json` rejects an object literal as the second argument to `pollingHelper.*`. To override a field, spread the context: `{ ...context, propsValue: … }`.
 
 ### TIMEBASED Polling (most common)
 
