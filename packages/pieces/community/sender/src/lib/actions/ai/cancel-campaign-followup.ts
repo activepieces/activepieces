@@ -12,7 +12,7 @@ export const senderCancelCampaignFollowupAction = createAction({
 	displayName: 'Cancel Campaign Follow-up',
 	description: 'Cancels the automatic follow-up of a campaign.',
 	audience: 'ai',
-	classification: 'WRITE',
+	classification: 'DESTRUCTIVE',
 	aiMetadata: {
 		description:
 			'Cancels the automatic follow-up email (resent to subscribers who did not open) of a sent campaign that has auto follow-up turned on.',

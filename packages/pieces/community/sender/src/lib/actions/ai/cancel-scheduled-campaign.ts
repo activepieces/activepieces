@@ -12,7 +12,7 @@ export const senderCancelScheduledCampaignAction = createAction({
 	displayName: 'Cancel Scheduled Campaign',
 	description: 'Cancels a scheduled campaign.',
 	audience: 'ai',
-	classification: 'WRITE',
+	classification: 'DESTRUCTIVE',
 	aiMetadata: {
 		description: 'Cancels the schedule of a campaign that has not sent yet, returning it to draft.',
 		idempotent: true,
