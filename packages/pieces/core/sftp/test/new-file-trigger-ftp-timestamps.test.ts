@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { newOrModifiedFile } from '../src/lib/triggers/new-modified-file';
 
 const { ftpClient } = vi.hoisted(() => ({
-  ftpClient: { access: vi.fn(), list: vi.fn(), lastMod: vi.fn(), close: vi.fn() },
+  ftpClient: { access: vi.fn(), list: vi.fn(), lastMod: vi.fn(), features: vi.fn(), close: vi.fn() },
 }));
 
 vi.mock('ssh2-sftp-client', () => ({ default: vi.fn() }));
@@ -20,6 +20,7 @@ describe('New File trigger over FTP', () => {
     vi.resetAllMocks();
     ftpClient.access.mockResolvedValue(undefined);
     ftpClient.list.mockResolvedValue([]);
+    ftpClient.features.mockResolvedValue(new Map([['MDTM', '']]));
   });
 
   test('emits a file once when the server has no MLSD, instead of re-emitting it every poll', async () => {
@@ -86,11 +87,22 @@ describe('New File trigger over FTP', () => {
     ]);
   });
 
-  test('fails the poll when the server does not implement MDTM, rather than going quiet', async () => {
+  test('keeps the previous behaviour on a server that offers neither MLSD nor MDTM', async () => {
+    ftpClient.features.mockResolvedValue(new Map([['PASV', '']]));
     ftpClient.list.mockResolvedValue([listEntry({ name: 'report.csv' })]);
-    ftpClient.lastMod.mockRejectedValue(new FTPError({ code: 502, message: '502 Command not implemented.' }));
 
-    await expect(newOrModifiedFile.run(pollContext(memoryStore({ lastPoll: 0 })))).rejects.toThrow('502 Command not implemented.');
+    await expect(newOrModifiedFile.run(pollContext(memoryStore({ lastPoll: 0 })))).resolves.toEqual([
+      expect.objectContaining({ name: 'report.csv' }),
+    ]);
+    expect(ftpClient.lastMod).not.toHaveBeenCalled();
+  });
+
+  test('does not ask the server for its features when the listing already carries times', async () => {
+    ftpClient.list.mockResolvedValue([listEntry({ name: 'report.csv', modifiedAt: MODIFIED_AT })]);
+
+    await newOrModifiedFile.run(pollContext(memoryStore({ lastPoll: 0 })));
+
+    expect(ftpClient.features).not.toHaveBeenCalled();
   });
 
   test('uses the listing timestamp and skips MDTM when the server supports MLSD', async () => {
