@@ -4,7 +4,7 @@ import {
   PlatformAdminSurface,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Check, Crown, ExternalLink } from 'lucide-react';
+import { Check, Gem, ExternalLink } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,7 @@ export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
   return {
     locked,
     crown: locked ? (
-      <Crown className="size-3.5 shrink-0 text-on-accent/90" />
+      <Gem className="size-3.5 shrink-0 text-on-accent/90" />
     ) : null,
     open: () => setOpen(true),
     dialog: (

@@ -178,8 +178,7 @@ export function MultiQuestionForm({
         <>
           <Button
             variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+            size="icon-xs"
             onClick={() => setCurrentStep((s) => s - 1)}
             disabled={currentStep === 0}
             aria-label={t('Back')}
@@ -194,8 +193,7 @@ export function MultiQuestionForm({
           </span>
           <Button
             variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+            size="icon-xs"
             onClick={() => handleNext()}
             disabled={!currentAnswer}
             aria-label={t('Next')}
@@ -509,11 +507,7 @@ function ChoiceBody({
             <Button
               type="button"
               variant={isCustomTextActive ? 'default' : 'outline'}
-              size={isCustomTextActive ? 'icon' : 'sm'}
-              className={cn(
-                'h-7 shrink-0',
-                isCustomTextActive ? 'w-7' : 'px-2.5 text-sm',
-              )}
+              size={isCustomTextActive ? 'icon-xs' : 'xs'}
               onClick={() =>
                 isCustomTextActive ? onPick((answer ?? '').trim()) : onSkip()
               }

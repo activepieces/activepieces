@@ -36,7 +36,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
           <div className="absolute right-3 top-3 flex gap-2">
             <Button
               size="icon"
-              variant="accent"
+              variant="secondary"
               title={t('Download')}
               onClick={() => imageUrl && downloadImage(imageUrl)}
             >
@@ -45,7 +45,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
             </Button>
             <Button
               size="icon"
-              variant="accent"
+              variant="secondary"
               title={t('Close')}
               onClick={() => onOpenChange(false)}
             >

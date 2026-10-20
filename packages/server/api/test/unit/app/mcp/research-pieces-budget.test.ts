@@ -1,6 +1,6 @@
 import { MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { describe, expect, it } from 'vitest'
-import { fitEnrichedResponse } from '../../../../src/app/mcp/tools/ap-research-pieces'
+import { fitBulkLookup, fitEnrichedResponse, FoundPiece } from '../../../../src/app/mcp/tools/ap-research-pieces'
 
 const SLIM_PIECE = { name: '@activepieces/piece-webhook', displayName: 'Webhook', description: 'Receive HTTP requests.' }
 
@@ -71,5 +71,27 @@ describe('what ap_research_pieces is allowed to return', () => {
 
         expect(result.content[0].text).toContain('too many to name here')
         expect(result.structuredContent).toMatchObject({ pieces: [], trimmed: true })
+    })
+})
+
+describe('what a pieceNames lookup is allowed to return', () => {
+    function foundPiece(index: number): FoundPiece {
+        const { actions, ...rest } = piece({ index, actionCount: 60, detailLength: 600, aiLength: 600 })
+        return { ...rest, found: true, actions, triggers: actions, recommendedActions: undefined, recommendedTriggers: undefined }
+    }
+
+    it('trims three big CRMs to fit and tells the model to pass forIntent', () => {
+        const result = fitBulkLookup({ found: [foundPiece(1), foundPiece(2), foundPiece(3)], missing: [], hints: [], forIntent: undefined })
+
+        expect(byteSize(result)).toBeLessThanOrEqual(MAX_TOOL_RESULT_BYTES)
+        expect(result.structuredContent['count']).toBe(3)
+        expect(result.content[0].text).toContain('forIntent')
+    })
+
+    it('leaves a small lookup untouched with no trim hint', () => {
+        const small = { ...foundPiece(1), actions: [], triggers: [] }
+        const result = fitBulkLookup({ found: [small], missing: [], hints: [], forIntent: undefined })
+
+        expect(result.content[0].text).not.toContain('Trimmed to fit')
     })
 })

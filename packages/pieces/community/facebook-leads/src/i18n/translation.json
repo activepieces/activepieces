@@ -71,7 +71,12 @@
   "DELETE": "DELETE",
   "HEAD": "HEAD",
   "New Lead": "New Lead",
-  "Triggers when a new lead is created.": "Triggers when a new lead is created.",
+  "Triggers when someone fills in one of your lead ad forms.": "Triggers when someone fills in one of your lead ad forms.",
   "Page": "Page",
-  "Form": "Form"
+  "Form": "Form",
+  "Markdown": "Markdown",
+  "The Facebook Page that runs your lead ads.": "The Facebook Page that runs your lead ads.",
+  "Pick one form, or All Forms for leads from every form on the Page.": "Pick one form, or All Forms for leads from every form on the Page.",
+  "Runs once for each new lead. Test Trigger loads recent leads from the chosen form, or from the first form on the Page that has any.": "Runs once for each new lead. Test Trigger loads recent leads from the chosen form, or from the first form on the Page that has any.",
+  "Watch": "Watch"
 }

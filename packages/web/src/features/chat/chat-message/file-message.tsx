@@ -17,7 +17,7 @@ export const FileMessage: React.FC<FileMessageProps> = ({
   const isVideo = mimeType?.startsWith('video/');
   return (
     <a
-      className="p-2 w-80 rounded-lg border px-2 max-w-full hover:bg-gray-3 transition-colors cursor-pointer"
+      className="p-2 w-80 rounded-xl border px-2 max-w-full hover:bg-gray-3 transition-colors cursor-pointer"
       href={content}
       download={fileName ?? 'file'}
     >

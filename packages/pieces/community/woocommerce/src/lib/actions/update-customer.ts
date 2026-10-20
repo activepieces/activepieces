@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import {
   AuthenticationType,
   HttpMethod,
@@ -7,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { wooPathId } from '../common/path-id';
 import { updateCustomerOutputSchema } from '../output-schemas';
 
 export const wooUpdateCustomer = createAction({
@@ -22,39 +27,81 @@ export const wooUpdateCustomer = createAction({
   },
   auth: wooAuth,
   outputSchema: updateCustomerOutputSchema,
+  propertyGroups: [
+    {
+      key: 'customer',
+      display: 'section',
+      label: 'Customer to Update',
+      icon: 'user',
+      props: ['id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: [
+        'changes_info',
+        'email',
+        'first_name',
+        'last_name',
+        'city',
+        'postcode',
+        'country',
+        'phone',
+      ],
+    },
+  ],
   props: {
     id: Property.ShortText({
       displayName: 'Customer ID',
-      description: 'Enter the customer ID',
+      description:
+        'Find it in WooCommerce under Customers, or from Find Customer.',
+      placeholder: '123',
       required: true,
+    }),
+    changes_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
+      variant: MarkdownVariant.INFO,
     }),
     email: Property.ShortText({
       displayName: 'Email',
+      description: 'Changes the email the customer signs in with.',
+      placeholder: 'jane@example.com',
       required: false,
     }),
     first_name: Property.ShortText({
       displayName: 'First Name',
+      placeholder: 'Jane',
+      width: 'half',
       required: false,
     }),
     last_name: Property.ShortText({
       displayName: 'Last Name',
-      required: false,
-    }),
-    phone: Property.ShortText({
-      displayName: 'Billing Phone',
+      placeholder: 'Doe',
+      width: 'half',
       required: false,
     }),
     city: Property.ShortText({
       displayName: 'Billing City',
+      width: 'half',
       required: false,
     }),
     postcode: Property.ShortText({
       displayName: 'Billing Postcode',
+      width: 'half',
       required: false,
     }),
     country: Property.ShortText({
       displayName: 'Billing Country',
       description: 'Two-letter country code, e.g. GB',
+      placeholder: 'GB',
+      width: 'half',
+      required: false,
+    }),
+    phone: Property.ShortText({
+      displayName: 'Billing Phone',
+      width: 'half',
       required: false,
     }),
   },
@@ -93,7 +140,7 @@ export const wooUpdateCustomer = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.PUT,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/customers/${id}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/customers/${wooPathId.encode({ id, label: 'Customer ID' })}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

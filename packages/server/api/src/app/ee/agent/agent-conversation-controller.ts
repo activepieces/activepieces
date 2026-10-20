@@ -9,6 +9,7 @@ import { mcpUtils } from '../../mcp/tools/mcp-utils'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentApprovalGate } from './agent-approval-gate'
+import { agentChatModel } from './agent-chat-model'
 import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
@@ -131,14 +132,19 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             projects: await agentHelpers.getUserProjects({ platformId, userId, log }),
         })
         const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
-        await agentHelpers.assertRunProviderConfigured({
-            platformId,
-            log,
-            scope: runScope,
-            modelTierId: runTierId,
-            ...spreadIfDefined('provider', agentConfig?.provider ?? undefined),
-            ...spreadIfDefined('providerConfigId', agentConfig?.providerConfigId ?? undefined),
-        })
+        if (runsOnAgentModel) {
+            await agentHelpers.assertRunProviderConfigured({
+                platformId,
+                log,
+                scope: runScope,
+                modelTierId: runTierId,
+                ...spreadIfDefined('provider', agentConfig.provider ?? undefined),
+                ...spreadIfDefined('providerConfigId', agentConfig.providerConfigId ?? undefined),
+            })
+        }
+        else {
+            await agentChatModel(log).assertRunnable({ platformId, conversation, scope: runScope })
+        }
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         const carriesConfiguredTools = !isNil(agentConfig) && !isBuilder
