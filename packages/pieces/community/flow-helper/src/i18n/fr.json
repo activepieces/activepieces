@@ -1,18 +1,15 @@
 {
+  "Stop or fail a running flow, or get a link to the current run.": "Stop or fail a running flow, or get a link to the current run.",
   "Get Run Info": "Obtenir les informations sur l'exécution",
   "Fail Flow": "Défaut Flow",
   "Stop Flow": "Arrêter le flux",
-  "Fails the flow execution with a custom message.": "Échoue l'exécution du flux avec un message personnalisé.",
-  "Stops the flow immediately this step is reached.": "Arrête le flux immédiatement cette étape est atteinte.",
-  "Error Message": "Message d'erreur",
-  "The error message to show when the flow fails.": "Le message d'erreur à afficher lorsque le flux échoue.",
-  "Stop or fail a running flow, or get a link to the current run.": "Arrêter ou faire échouer un flux en cours, ou obtenir un lien vers l'exécution en cours.",
-  "Gets this run's ID and a link to open it.": "Récupère l'ID de cette exécution et un lien pour l'ouvrir.",
-  "Fails this step with your error message.": "Fait échouer cette étape avec votre message d'erreur.",
-  "Ends the run at this step and marks it as succeeded.": "Termine l'exécution à cette étape et la marque comme réussie.",
+  "Gets this run's ID and a link to open it.": "Gets this run's ID and a link to open it.",
+  "Fails this step with your error message.": "Fails this step with your error message.",
+  "Ends the run at this step and marks it as succeeded.": "Ends the run at this step and marks it as succeeded.",
   "Markdown": "Markdown",
-  "Outputs this run's ID and a link that opens the run.": "Renvoie l'ID de cette exécution et un lien qui ouvre l'exécution.",
-  "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.": "L'exécution échoue ici et les étapes suivantes ne s'exécutent pas. Si Add Error Handler est activé, seule cette étape échoue. La branche Échec s'exécute et le flux continue.",
-  "Shown as the step's error. Can include data from earlier steps.": "Affiché comme erreur de l'étape. Peut inclure des données des étapes précédentes.",
-  "The run ends here and is marked as succeeded. Steps after this one do not run.": "L'exécution s'arrête ici et est marquée comme réussie. Les étapes suivantes ne s'exécutent pas."
+  "Error Message": "Message d'erreur",
+  "Outputs this run's ID and a link that opens the run.": "Outputs this run's ID and a link that opens the run.",
+  "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.": "The run fails here and later steps do not run. If Add Error Handler is on, only this step fails. The Failure branch runs and the flow continues.",
+  "Shown as the step's error. Can include data from earlier steps.": "Shown as the step's error. Can include data from earlier steps.",
+  "The run ends here and is marked as succeeded. Steps after this one do not run.": "The run ends here and is marked as succeeded. Steps after this one do not run."
 }
