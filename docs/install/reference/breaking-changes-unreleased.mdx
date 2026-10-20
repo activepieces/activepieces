@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Close 0.3.0: Find Lead and Find Contact drop the "Starts With" and "Ends With" match options
+
+Find Lead and Find Contact no longer offer the **Starts With** and **Ends With** match options. They never worked: Close's search ignored them, so a step using one did not filter as its label said. A step upgraded to Close 0.3.0 with one of these options saved fails validation until a supported option is picked.
+
+The New Lead, New Contact and other Close webhook triggers now drop duplicate deliveries of the same Close event, so a flow runs once per event. Opportunity **Value** is now labelled as cents, which is what Close always expected.
+
+#### What you need to do
+
+Steps keep running on the version they were built with until you upgrade them. When you upgrade a Find Lead or Find Contact step that used Starts With or Ends With, switch its Match Type to **All Words (any order)** or **Exact Phrase**.
+
 #### Snowflake 0.4.0: Update Row needs a WHERE condition, stricter limits, query timeout and stage paths
 
 From Snowflake 0.4.0 several actions validate their inputs where they used to pass them straight to Snowflake:
@@ -127,6 +137,7 @@ Most code steps keep working unchanged: sources are transpiled to CommonJS, so N
 - **Custom deployments** that do not use the official Docker images must provide a Deno binary and point `AP_DENO_PATH` at it; without it every code step fails at spawn.
 
 To find affected steps after upgrading, search your logs for the structured `Code step failed` warning — it carries the flow run, flow version, project, step name, the runtime that executed the step (`codeRuntime: deno|legacy`), and the error message, so you can group failures by step and error. To pin a misbehaving step to the legacy runtime while you fix it (available on every edition), set `AP_API_KEY` in your environment and call `POST /v1/admin/flows/revert-from-deno` with the `api-key` header and a body of exactly one of `flowIds`, `projectId`, or `platformId`; this sets `useDeno: false` on the affected steps, and `migrate-to-deno` moves them back.
+
 #### Each chat keeps the AI model and key it started on
 
 A chat used to run on whatever key was the **Default AI key** at the time of each message. Now a chat remembers the key and model it first ran on. Changing the Default AI key affects new chats only. An existing chat moves to the new default only when its key is deleted, or no longer covers the chat's project or model.
