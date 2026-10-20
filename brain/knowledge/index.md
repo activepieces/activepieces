@@ -17,6 +17,7 @@ ones than a sales project does. `decisions/` is the only one every repo starts w
 with your own and keep the shape: **bold name**, then the one line that says what a reader will find there.
 
 - **Example Area** — what this Area covers, and the one gotcha that bites people in it
+- **[Team](team.md)** — who works here, by function, with each person's GitHub username
 
 ## How a page is shaped
 
