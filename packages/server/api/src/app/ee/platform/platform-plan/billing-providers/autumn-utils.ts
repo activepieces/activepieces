@@ -163,9 +163,9 @@ export const autumnUtils = {
         if (isNil(client)) {
             return
         }
+        const previousPlan = await platformPlanRepo().findOneBy({ platformId })
         const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan'] })
         const entitlements = toAutumnEntitlements(customer)
-        const previousPlan = await platformPlanRepo().findOneBy({ platformId })
         const previousTrialEndsAt = previousPlan?.enterpriseTrialEndsAt ?? null
         const trialEndedAt = !isNil(previousTrialEndsAt) && isNil(entitlements.enterpriseTrial)
             ? new Date(Math.min(Date.now(), new Date(previousTrialEndsAt).getTime()))

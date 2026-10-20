@@ -242,6 +242,37 @@ describe('enterprise trial', () => {
             })
         })
 
+        it('never ends a trial that a start saved while the refresh was reading Autumn', async () => {
+            const { autumnUtils } = await loadModules()
+            const freeOnly = {
+                subscriptions: [{ planId: PlanName.FREE, status: 'active', addOn: false, trialEndsAt: null, plan: { addOn: false, items: [] } }],
+                purchases: [],
+                balances: {},
+            }
+            const reads: string[] = []
+            vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue({
+                getCustomer: async () => {
+                    reads.push('autumn')
+                    return freeOnly
+                },
+            } as never)
+            vi.spyOn(autumnUtils, 'writeCustomerStateCaches').mockResolvedValue({ credits: null, appSumo: null })
+            vi.spyOn(autumnUtils, 'invalidateBillingOverview').mockResolvedValue(undefined)
+            vi.spyOn(autumnUtils, 'provisionLicenseKeyIfPaid').mockResolvedValue(undefined)
+            mockFindPlan.mockImplementation(async () => {
+                reads.push('plan')
+                return reads.includes('autumn')
+                    ? { plan: PlanName.FREE, enterpriseTrialStartedAt: '2099-01-01T00:00:00.000Z', enterpriseTrialEndsAt: '2099-01-08T00:00:00.000Z' }
+                    : { plan: PlanName.FREE, enterpriseTrialEndsAt: null }
+            })
+
+            await autumnUtils.refreshEntitlements(log, PLATFORM_ID)
+
+            expect(reads).toEqual(['plan', 'autumn'])
+            expect(mockOnTrialEnded).not.toHaveBeenCalled()
+            expect(mockPlanUpdate).toHaveBeenCalledWith(expect.not.objectContaining({ enterpriseTrialEndedAt: expect.anything() }))
+        })
+
         it('leaves the ended mark alone while no trial has ended', async () => {
             const { autumnUtils } = await loadModules()
             const freeOnly = {
