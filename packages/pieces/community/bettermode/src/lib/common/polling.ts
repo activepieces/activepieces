@@ -46,21 +46,26 @@ async function collectNewItems<T extends PolledItem>({
     }
     return time > checkpointTime || (time === checkpointTime && !seenAtLast.has(item.id));
   };
-  const isAtOrBelowCheckpoint = (item: PolledItem) => {
+  const isOlderThanCheckpoint = (item: PolledItem) => {
     const time = parseTime(timeOf(item));
-    return time !== null && (time < checkpointTime || (time === checkpointTime && item.id !== null && seenAtLast.has(item.id)));
+    return time !== null && time < checkpointTime;
   };
   const stack = checkpoint.resumeCursors ?? [];
+  const drainedCursor = checkpoint.drainedCursor ?? null;
   const windowStart = stack.length > 0 ? stack[stack.length - 1] : null;
   const parents = stack.slice(0, -1);
   const pages: T[][] = [];
   let cursor: string | null = windowStart;
   let complete = false;
   for (let pageIndex = 0; pageIndex <= MAX_POLL_PAGES; pageIndex++) {
+    if (pageIndex > 0 && cursor !== null && cursor === drainedCursor) {
+      complete = true;
+      break;
+    }
     const page = await fetchPage(cursor);
     assertNewestFirst({ items: page.items, timeField });
     pages.push(page.items);
-    if (page.items.some(isAtOrBelowCheckpoint) || !page.has_more || page.next_cursor === null) {
+    if (page.items.some(isOlderThanCheckpoint) || !page.has_more || page.next_cursor === null) {
       complete = true;
       break;
     }
@@ -70,7 +75,7 @@ async function collectNewItems<T extends PolledItem>({
   }
   const base: Checkpoint = { lastCreatedAt: checkpoint.lastCreatedAt, idsAtLast: checkpoint.idsAtLast };
   if (!complete && cursor !== null) {
-    return { items: [], checkpoint: withCursors({ checkpoint: base, cursors: [...stack, cursor] }) };
+    return { items: [], checkpoint: withCursors({ checkpoint: base, cursors: [...stack, cursor], drainedCursor }) };
   }
   const unique = new Map<string, T>();
   for (const item of pages.flat()) {
@@ -80,20 +85,31 @@ async function collectNewItems<T extends PolledItem>({
   }
   const sorted = [...unique.values()].filter(isFresh).sort((left, right) => compareItems({ left, right, timeField }));
   const fresh = sorted.slice(0, MAX_EMIT_PER_POLL);
-  const remaining = sorted.length > MAX_EMIT_PER_POLL ? stack : parents;
+  const windowDrained = sorted.length <= MAX_EMIT_PER_POLL;
+  const remaining = windowDrained ? parents : stack;
+  const nextDrained = windowDrained ? windowStart : drainedCursor;
   if (fresh.length === 0) {
-    return { items: [], checkpoint: withCursors({ checkpoint: base, cursors: parents }) };
+    return { items: [], checkpoint: withCursors({ checkpoint: base, cursors: parents, drainedCursor: windowStart }) };
   }
   const next = newestCheckpoint({ items: fresh, fallback: checkpoint.lastCreatedAt, timeField });
   const sameTime = parseTime(next.lastCreatedAt) === checkpointTime;
   const advanced: Checkpoint = sameTime
     ? { lastCreatedAt: next.lastCreatedAt, idsAtLast: [...checkpoint.idsAtLast, ...next.idsAtLast].slice(-MAX_IDS_AT_LAST) }
     : next;
-  return { items: fresh, checkpoint: withCursors({ checkpoint: advanced, cursors: remaining }) };
+  return { items: fresh, checkpoint: withCursors({ checkpoint: advanced, cursors: remaining, drainedCursor: nextDrained }) };
 }
 
-function withCursors({ checkpoint, cursors }: { checkpoint: Checkpoint; cursors: string[] }): Checkpoint {
-  return cursors.length > 0 ? { ...checkpoint, resumeCursors: cursors } : checkpoint;
+function withCursors({
+  checkpoint,
+  cursors,
+  drainedCursor,
+}: {
+  checkpoint: Checkpoint;
+  cursors: string[];
+  drainedCursor: string | null;
+}): Checkpoint {
+  const withStack: Checkpoint = cursors.length > 0 ? { ...checkpoint, resumeCursors: cursors } : checkpoint;
+  return drainedCursor !== null ? { ...withStack, drainedCursor } : withStack;
 }
 
 function checkpointChanged({ before, after }: { before: Checkpoint; after: Checkpoint }): boolean {
@@ -127,7 +143,7 @@ function parseTime(value: string | null): number | null {
 
 const MAX_POLL_PAGES = 10;
 const MAX_EMIT_PER_POLL = 100;
-const MAX_IDS_AT_LAST = 200;
+const MAX_IDS_AT_LAST = 2000;
 
 export const bettermodePolling = {
   newestCheckpoint,
@@ -141,6 +157,7 @@ export type Checkpoint = {
   lastCreatedAt: string;
   idsAtLast: string[];
   resumeCursors?: string[];
+  drainedCursor?: string;
 };
 
 type TimeField = 'created_at' | 'published_at';

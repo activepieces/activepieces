@@ -699,6 +699,14 @@ function fakePostFeed({ count, startIndex = 0 }: { count: number; startIndex?: n
     });
     feed.unshift(...added.reverse());
   };
+  const addSameTime = (amount: number) => {
+    const createdAt = new Date(base + (next + 1) * 1000).toISOString();
+    const added = Array.from({ length: amount }, () => {
+      next += 1;
+      return postNode({ id: `n${String(next).padStart(5, '0')}`, createdAt });
+    });
+    feed.unshift(...added);
+  };
   add(count);
   const handler = (sent: { variables: Record<string, unknown> }) => {
     const after = sent.variables['after'];
@@ -711,7 +719,7 @@ function fakePostFeed({ count, startIndex = 0 }: { count: number; startIndex?: n
       },
     };
   };
-  return { feed, add, handler };
+  return { feed, add, addSameTime, handler };
 }
 
 async function pollUntilQuiet({ store, polls }: { store: ReturnType<typeof makeStore>; polls: number }) {
@@ -735,6 +743,20 @@ describe('polling bursts larger than the page budget', () => {
     feed.add(burst);
     const emitted = await pollUntilQuiet({ store, polls: Math.ceil(burst / 100) * 3 + 10 });
     const expected = feed.feed.slice(0, burst).map((item) => item.id).reverse();
+    expect(new Set(emitted).size).toBe(emitted.length);
+    expect([...emitted].sort()).toEqual([...expected].sort());
+    expect(await pollUntilQuiet({ store, polls: 3 })).toEqual([]);
+  });
+
+  it.each([120, 250, 900])('fires each of %i posts sharing one timestamp exactly once when Bettermode lists them in ID order', async (burst) => {
+    const feed = fakePostFeed({ count: 0 });
+    const store = makeStore();
+    stubGraphql({ PollPosts: feed.handler });
+    feed.add(1);
+    await call({ fn: newPostTrigger.onEnable, ctx: triggerContext({ store }) });
+    feed.addSameTime(burst);
+    const emitted = await pollUntilQuiet({ store, polls: Math.ceil(burst / 100) * 3 + 10 });
+    const expected = feed.feed.slice(0, burst).map((item) => item.id);
     expect(new Set(emitted).size).toBe(emitted.length);
     expect([...emitted].sort()).toEqual([...expected].sort());
     expect(await pollUntilQuiet({ store, polls: 3 })).toEqual([]);
