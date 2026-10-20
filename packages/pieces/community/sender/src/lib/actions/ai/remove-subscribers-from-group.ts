@@ -33,7 +33,7 @@ export const senderRemoveSubscribersFromGroupAction = createAction({
 				value: subscribers,
 				propName: 'Subscriber Emails',
 			}),
-			triggerAutomation,
+			triggerAutomation: senderUtils.yesNoToBoolean(triggerAutomation),
 		});
 	},
 });

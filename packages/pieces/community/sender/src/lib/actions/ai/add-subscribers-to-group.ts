@@ -33,7 +33,7 @@ export const senderAddSubscribersToGroupAction = createAction({
 				value: subscribers,
 				propName: 'Subscriber Emails',
 			}),
-			triggerAutomation,
+			triggerAutomation: senderUtils.yesNoToBoolean(triggerAutomation),
 		});
 	},
 });

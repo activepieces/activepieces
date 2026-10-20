@@ -28,4 +28,11 @@ function requiredStringList({
 	return list;
 }
 
-export const senderUtils = { optionalStringList, requiredStringList };
+function yesNoToBoolean(value: string | undefined): boolean | undefined {
+	if (value !== 'yes' && value !== 'no') {
+		return undefined;
+	}
+	return value === 'yes';
+}
+
+export const senderUtils = { optionalStringList, requiredStringList, yesNoToBoolean };

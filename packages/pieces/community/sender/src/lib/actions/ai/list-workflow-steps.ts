@@ -15,7 +15,7 @@ export const senderListWorkflowStepsAction = createAction({
 	classification: 'SEARCH',
 	aiMetadata: {
 		description:
-			'Lists the steps of an automation workflow (trigger, delays, conditions, emails) as a tree. Large workflows come in batches: pass the returned next_batch as Batch Number to get the next one.',
+			'Lists the steps of an automation workflow (trigger, delays, conditions, emails) as a tree. Large workflows come in batches: when the response includes next_batch, pass it as Batch Number to get the next one.',
 		idempotent: true,
 	},
 	props: {

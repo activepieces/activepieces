@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { senderAuth } from '../../auth';
 import { senderAiProps } from '../../common/ai-props';
 import { senderApi } from '../../common/api';
+import { senderUtils } from '../../common/utils';
 import { senderSuccessOutputSchema } from '../../output-schemas';
 
 export const senderUpdateFieldAction = createAction({
@@ -32,6 +33,12 @@ export const senderUpdateFieldAction = createAction({
 		}),
 	},
 	async run(context) {
-		return await senderApi.updateField({ auth: context.auth, ...context.propsValue });
+		const { fieldId, title, show } = context.propsValue;
+		return await senderApi.updateField({
+			auth: context.auth,
+			fieldId,
+			title,
+			show: senderUtils.yesNoToBoolean(show),
+		});
 	},
 });

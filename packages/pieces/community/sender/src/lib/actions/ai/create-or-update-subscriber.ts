@@ -52,7 +52,7 @@ export const senderCreateOrUpdateSubscriberAction = createAction({
 			phone,
 			groups: senderUtils.optionalStringList({ value: groups, propName: 'Group IDs' }),
 			customFields: fields,
-			triggerAutomation,
+			triggerAutomation: senderUtils.yesNoToBoolean(triggerAutomation),
 		});
 	},
 });

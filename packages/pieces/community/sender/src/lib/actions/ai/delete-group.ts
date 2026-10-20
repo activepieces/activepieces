@@ -3,6 +3,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { senderAuth } from '../../auth';
 import { senderAiProps } from '../../common/ai-props';
 import { senderApi } from '../../common/api';
+import { senderUtils } from '../../common/utils';
 import { senderSuccessOutputSchema } from '../../output-schemas';
 
 export const senderDeleteGroupAction = createAction({
@@ -27,6 +28,10 @@ export const senderDeleteGroupAction = createAction({
 		}),
 	},
 	async run(context) {
-		return await senderApi.deleteGroup({ auth: context.auth, ...context.propsValue });
+		return await senderApi.deleteGroup({
+			auth: context.auth,
+			groupId: context.propsValue.groupId,
+			deleteSubscribers: senderUtils.yesNoToBoolean(context.propsValue.deleteSubscribers),
+		});
 	},
 });

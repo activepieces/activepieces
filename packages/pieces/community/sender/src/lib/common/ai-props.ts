@@ -95,15 +95,15 @@ function yesNo<R extends boolean>({
 	displayName,
 	description,
 }: PropParams<R> & { displayName: string }) {
-	return Property.StaticDropdown<boolean, R>({
+	return Property.StaticDropdown<string, R>({
 		displayName,
 		description,
 		required,
 		options: {
 			disabled: false,
 			options: [
-				{ label: 'Yes', value: true },
-				{ label: 'No', value: false },
+				{ label: 'Yes', value: 'yes' },
+				{ label: 'No', value: 'no' },
 			],
 		},
 	});

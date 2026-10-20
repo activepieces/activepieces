@@ -96,8 +96,16 @@ export const senderCreateCampaignAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { googleAnalytics, groups, segments, contentType, content, ...props } =
-			context.propsValue;
+		const {
+			googleAnalytics,
+			autoFollowupActive,
+			groups,
+			segments,
+			contentType,
+			content,
+			...props
+		} = context.propsValue;
+		const analytics = senderUtils.yesNoToBoolean(googleAnalytics);
 		return await senderApi.createCampaign({
 			auth: context.auth,
 			...props,
@@ -105,7 +113,8 @@ export const senderCreateCampaignAction = createAction({
 			content: contentType === 'html' && content ? withUnsubscribeLink({ html: content }) : content,
 			groups: senderUtils.optionalStringList({ value: groups, propName: 'Group IDs' }),
 			segments: senderUtils.optionalStringList({ value: segments, propName: 'Segment IDs' }),
-			googleAnalytics: googleAnalytics === undefined ? undefined : Number(googleAnalytics),
+			googleAnalytics: analytics === undefined ? undefined : Number(analytics),
+			autoFollowupActive: senderUtils.yesNoToBoolean(autoFollowupActive),
 		});
 	},
 });

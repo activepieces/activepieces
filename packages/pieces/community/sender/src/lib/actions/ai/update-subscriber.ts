@@ -87,7 +87,7 @@ export const senderUpdateSubscriberAction = createAction({
 			subscriberStatus,
 			smsStatus,
 			transactionalEmailStatus,
-			triggerAutomation,
+			triggerAutomation: senderUtils.yesNoToBoolean(triggerAutomation),
 		});
 	},
 });
