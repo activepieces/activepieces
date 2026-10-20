@@ -1,7 +1,7 @@
 import { ApEdition, EnterpriseTrialStatus, PlanName } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetEdition, mockOnTrialStarted, mockOnTrialEnded, mockStoreDelete, mockPlanUpdate, mockFindPlan, mockGetPlan, mockLogError } = vi.hoisted(() => ({
+const { mockGetEdition, mockOnTrialStarted, mockOnTrialEnded, mockStoreDelete, mockPlanUpdate, mockFindPlan, mockGetPlan, mockLogError, mockRunExclusive } = vi.hoisted(() => ({
     mockGetEdition: vi.fn().mockReturnValue('cloud'),
     mockOnTrialStarted: vi.fn().mockResolvedValue(undefined),
     mockOnTrialEnded: vi.fn().mockResolvedValue(undefined),
@@ -10,6 +10,7 @@ const { mockGetEdition, mockOnTrialStarted, mockOnTrialEnded, mockStoreDelete, m
     mockFindPlan: vi.fn(),
     mockGetPlan: vi.fn(),
     mockLogError: vi.fn(),
+    mockRunExclusive: vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) => fn()),
 }))
 
 vi.mock('../../../../../src/app/helper/system/system', () => ({
@@ -37,7 +38,7 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan-telemetr
 
 vi.mock('../../../../../src/app/database/redis-connections', () => ({
     distributedLock: () => ({
-        runExclusive: async ({ fn }: { fn: () => Promise<unknown> }) => fn(),
+        runExclusive: mockRunExclusive,
     }),
     distributedStore: {
         get: vi.fn(),
@@ -127,6 +128,12 @@ describe('enterprise trial', () => {
             expect(mockPlanUpdate).toHaveBeenCalledWith({ platformId: PLATFORM_ID, enterpriseTrialStartedAt: STARTED.startedAt, enterpriseTrialEndsAt: STARTED.endsAt })
             expect(mockOnTrialStarted).toHaveBeenCalledTimes(1)
             expect(mockOnTrialStarted).toHaveBeenCalledWith({ platformId: PLATFORM_ID, endsAt: ACTIVE.endsAt })
+        })
+
+        it('saves the new trial dates under the lock every plan refresh takes', async () => {
+            await startTrial({ plan: {} })
+
+            expect(mockRunExclusive).toHaveBeenCalledWith(expect.objectContaining({ key: `platform_plan_entitlements_write_${PLATFORM_ID}` }))
         })
 
         it('returns a running trial without starting or reporting it again', async () => {
@@ -268,6 +275,7 @@ describe('enterprise trial', () => {
 
             await autumnUtils.refreshEntitlements(log, PLATFORM_ID)
 
+            expect(mockRunExclusive).toHaveBeenCalledWith(expect.objectContaining({ key: `platform_plan_entitlements_write_${PLATFORM_ID}` }))
             expect(reads).toEqual(['plan', 'autumn'])
             expect(mockOnTrialEnded).not.toHaveBeenCalled()
             expect(mockPlanUpdate).toHaveBeenCalledWith(expect.not.objectContaining({ enterpriseTrialEndedAt: expect.anything() }))
