@@ -1,14 +1,30 @@
 import { t } from 'i18next';
-import { CalendarRange, Hash, TrendingUp, Type } from 'lucide-react';
+import { CalendarRange, ChartLine, Hash, TrendingUp, Type } from 'lucide-react';
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 
-import { AdminPageHeader, StatCard, StatGrid } from '@/app/components/admin';
+import {
+  AdminEmpty,
+  AdminPageHeader,
+  StatCard,
+  StatGrid,
+  adminSurface,
+} from '@/app/components/admin';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-import { usageDummyData } from './usage-dummy-data';
+import { UsageOverview, usageDummyData } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
-import { UsageHeaderControls, useUsageView } from './usage-header-controls';
+import {
+  UsageHeaderControls,
+  UsageView,
+  useUsageView,
+} from './usage-header-controls';
 import { UsageHero } from './usage-hero';
 import { UsageLimitsCard, UsageTestingSection } from './usage-insight-cards';
+import { UsagePreviewSwitcher } from './usage-preview-switcher';
 import { UsageSourceDonut } from './usage-source-donut';
 import { UsageTopList } from './usage-top-list';
 
@@ -16,10 +32,14 @@ export function UsageTab() {
   const view = useUsageView();
   const overview = useMemo(
     () =>
-      usageDummyData.buildOverview({ period: view.period, scope: view.scope }),
-    [view.period, view.scope],
+      usageDummyData.buildOverview({
+        period: view.period,
+        scope: view.scope,
+        preset: view.dataPreset,
+      }),
+    [view.period, view.scope, view.dataPreset],
   );
-  const { totals } = overview;
+  const hasData = view.preset !== 'loading' && view.preset !== 'error';
 
   return (
     <>
@@ -30,18 +50,20 @@ export function UsageTab() {
             <span>
               {t('Where your AI spend goes across flows, agents and chat.')}
             </span>
-            <span className="text-xs">
-              {t('Updated {minutes} min ago · Tracking since {date}', {
-                minutes: overview.updatedMinutesAgo,
-                date: new Date(
-                  `${overview.trackingSince}T00:00:00Z`,
-                ).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  timeZone: 'UTC',
-                }),
-              })}
-            </span>
+            {hasData && overview.totals.calls > 0 && (
+              <span className="text-xs">
+                {t('Updated {minutes} min ago · Tracking since {date}', {
+                  minutes: overview.updatedMinutesAgo,
+                  date: new Date(
+                    `${overview.trackingSince}T00:00:00Z`,
+                  ).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    timeZone: 'UTC',
+                  }),
+                })}
+              </span>
+            )}
           </div>
         }
       >
@@ -53,6 +75,49 @@ export function UsageTab() {
         />
       </AdminPageHeader>
 
+      <UsageBody view={view} overview={overview} />
+      <UsagePreviewSwitcher view={view} />
+    </>
+  );
+}
+
+function UsageBody({
+  view,
+  overview,
+}: {
+  view: UsageView;
+  overview: UsageOverview;
+}) {
+  if (view.preset === 'loading') {
+    return <UsageSkeleton />;
+  }
+  if (view.preset === 'error') {
+    return (
+      <DataFetchErrorState
+        entity={t('AI usage')}
+        onRetry={() => view.setPreset('rich')}
+      />
+    );
+  }
+  if (overview.totals.calls === 0) {
+    return (
+      <AdminEmpty
+        icon={<ChartLine />}
+        title={t('No AI usage yet')}
+        description={t(
+          'Spend shows up here a minute after your first AI step, agent run or chat message.',
+        )}
+        action={
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/platform/ai">{t('Set up AI providers')}</Link>
+          </Button>
+        }
+      />
+    );
+  }
+  const { totals } = overview;
+  return (
+    <>
       <StatGrid columns={3}>
         {overview.forecastUsd === undefined ? (
           <StatCard
@@ -172,3 +237,40 @@ export function UsageTab() {
     </>
   );
 }
+
+function UsageSkeleton() {
+  return (
+    <>
+      <StatGrid columns={3}>
+        {SKELETON_TILES.map((key) => (
+          <Skeleton key={key} className="h-[118px] rounded-xl" />
+        ))}
+      </StatGrid>
+      <div className={cn(adminSurface.card, 'flex flex-col gap-5 p-5')}>
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-9 w-48" />
+        </div>
+        <Skeleton className="h-[280px] w-full" />
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {SKELETON_CARDS.map((card) => (
+          <Skeleton
+            key={card.key}
+            className={cn('h-72 rounded-xl', card.span)}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+const SKELETON_TILES = ['forecast', 'calls', 'tokens'];
+
+const SKELETON_CARDS = [
+  { key: 'projects', span: 'lg:col-span-4' },
+  { key: 'flows', span: 'lg:col-span-4' },
+  { key: 'agents', span: 'lg:col-span-4' },
+  { key: 'source', span: 'lg:col-span-8' },
+  { key: 'users', span: 'lg:col-span-4' },
+];

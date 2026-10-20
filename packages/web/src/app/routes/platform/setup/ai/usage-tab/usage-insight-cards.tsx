@@ -161,6 +161,11 @@ export function UsageTestingSection({
         <h3 className="text-sm font-medium text-gray-11">
           {t('Most tested flows')}
         </h3>
+        {testing.topFlows.length === 0 && (
+          <p className="py-1.5 text-sm text-gray-11">
+            {t('No flows tested in this period.')}
+          </p>
+        )}
         <ul className="flex flex-col gap-1">
           {testing.topFlows.map((item) => (
             <UsageTopRow
@@ -176,6 +181,11 @@ export function UsageTestingSection({
         <h3 className="text-sm font-medium text-gray-11">
           {t('Most tested agents')}
         </h3>
+        {testing.topAgents.length === 0 && (
+          <p className="py-1.5 text-sm text-gray-11">
+            {t('No agents tested in this period.')}
+          </p>
+        )}
         <ul className="flex flex-col gap-1">
           {testing.topAgents.map((item) => (
             <UsageTopRow

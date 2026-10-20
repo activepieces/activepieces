@@ -1,8 +1,11 @@
 import { AIProviderName } from '@activepieces/core-utils';
 
-function buildOverview({ period, scope }: ViewParams): UsageOverview {
-  const random = seededRandom({ seed: `overview:${period}:${scope}` });
-  const items = allItems({ period, scope, random });
+function buildOverview({ period, scope, preset }: ViewParams): UsageOverview {
+  const random = seededRandom({
+    seed: `overview:${period}:${scope}:${preset}`,
+  });
+  const profile = PRESET_PROFILES[preset];
+  const items = allItems({ period, scope, preset, random });
   const projects = itemsOf({ items, dimension: 'project' });
   const spendUsd = sumOf({ items: projects, pick: (item) => item.spendUsd });
   const previousSpendUsd = sumOf({
@@ -11,7 +14,8 @@ function buildOverview({ period, scope }: ViewParams): UsageOverview {
   });
   const calls = sumOf({ items: projects, pick: (item) => item.calls });
   const tokens = sumOf({ items: projects, pick: (item) => item.tokens });
-  const testingSpendUsd = spendUsd * TESTING_SHARE;
+  const testingShare = profile.testingShare;
+  const testingSpendUsd = spendUsd * testingShare;
   return {
     totals: {
       spendUsd,
@@ -19,7 +23,7 @@ function buildOverview({ period, scope }: ViewParams): UsageOverview {
       calls,
       tokens,
       cacheShare: 0.37,
-      credits: Math.round((spendUsd * CREDIT_SHARE) / CREDIT_USD_VALUE),
+      credits: Math.round((spendUsd * profile.creditShare) / CREDIT_USD_VALUE),
     },
     series: seriesFor({
       period,
@@ -34,10 +38,7 @@ function buildOverview({ period, scope }: ViewParams): UsageOverview {
         ? (spendUsd / MONTH_DAYS_SO_FAR) * MONTH_DAYS
         : undefined,
     avgPerDayUsd: spendUsd / PERIOD_DAYS[period],
-    bySource: SOURCES.map((source) => ({
-      source: source.source,
-      spendUsd: spendUsd * source.share,
-    })),
+    bySource: sourcesFor({ preset, spendUsd }),
     top: topByDimension({ items }),
     limits: projects
       .filter(
@@ -52,27 +53,26 @@ function buildOverview({ period, scope }: ViewParams): UsageOverview {
       ),
     testing: {
       spendUsd: testingSpendUsd,
-      share:
-        scope === 'all' ? TESTING_SHARE : TESTING_SHARE / (1 + TESTING_SHARE),
+      share: scope === 'all' ? testingShare : testingShare / (1 + testingShare),
       series: seriesFor({
         period,
         spendUsd: testingSpendUsd,
         previousSpendUsd: testingSpendUsd * 0.8,
-        calls: calls * TESTING_SHARE,
-        tokens: tokens * TESTING_SHARE,
+        calls: calls * testingShare,
+        tokens: tokens * testingShare,
         random,
       }).spend,
       topFlows: itemsOf({ items, dimension: 'flow' })
         .slice(0, 3)
         .map((item) => ({
           ...item,
-          spendUsd: item.spendUsd * TESTING_SHARE * 1.4,
+          spendUsd: item.spendUsd * testingShare * 1.4,
         })),
       topAgents: itemsOf({ items, dimension: 'agent' })
         .slice(0, 3)
         .map((item) => ({
           ...item,
-          spendUsd: item.spendUsd * TESTING_SHARE * 1.1,
+          spendUsd: item.spendUsd * testingShare * 1.1,
         })),
     },
     updatedMinutesAgo: 2,
@@ -83,6 +83,7 @@ function buildOverview({ period, scope }: ViewParams): UsageOverview {
 function buildDetail({
   period,
   scope,
+  preset,
   dimension,
   id,
 }: ViewParams & { dimension: UsageDimension; id: string }):
@@ -91,7 +92,7 @@ function buildDetail({
   const random = seededRandom({
     seed: `detail:${period}:${scope}:${dimension}:${id}`,
   });
-  const items = allItems({ period, scope, random });
+  const items = allItems({ period, scope, preset, random });
   const item = items.find(
     (candidate) => candidate.dimension === dimension && candidate.id === id,
   );
@@ -131,10 +132,7 @@ function buildDetail({
     related,
     bySource:
       dimension === 'project' || dimension === 'agent'
-        ? SOURCES.map((source) => ({
-            source: source.source,
-            spendUsd: item.spendUsd * source.share,
-          }))
+        ? sourcesFor({ preset, spendUsd: item.spendUsd })
         : undefined,
     runs: dimension === 'flow' ? Math.round(item.calls / 2.4) : undefined,
     reportedUsd:
@@ -151,44 +149,75 @@ function buildDetail({
 function buildList({
   period,
   scope,
+  preset,
   dimension,
 }: ViewParams & { dimension: UsageDimension }): UsageItem[] {
-  const random = seededRandom({ seed: `list:${period}:${scope}:${dimension}` });
-  return itemsOf({ items: allItems({ period, scope, random }), dimension });
+  const random = seededRandom({
+    seed: `list:${period}:${scope}:${preset}:${dimension}`,
+  });
+  return itemsOf({
+    items: allItems({ period, scope, preset, random }),
+    dimension,
+  });
 }
 
 function allItems({
   period,
   scope,
+  preset,
   random,
 }: ViewParams & { random: () => number }): UsageItem[] {
+  const profile = PRESET_PROFILES[preset];
   const scale =
-    PERIOD_SCALE[period] * (scope === 'all' ? 1 + TESTING_SHARE : 1);
-  return CATALOG.map((entry) => {
-    const spendUsd = entry.weight * scale * (0.9 + random() * 0.2);
-    const change = entry.change ?? random() * 0.6 - 0.25;
-    const calls = Math.round(
-      spendUsd *
-        (entry.dimension === 'model' && entry.name.includes('mini')
-          ? 900
-          : 140),
-    );
-    return {
-      ...entry,
-      spendUsd,
-      previousSpendUsd: spendUsd / (1 + change),
-      calls,
-      tokens: Math.round(calls * (2100 + random() * 1800)),
-      credits:
-        entry.provider === AIProviderName.ACTIVEPIECES
-          ? Math.round(spendUsd / CREDIT_USD_VALUE)
-          : 0,
-      monthToDateUsd:
-        entry.monthlyLimitUsd === undefined
-          ? undefined
-          : entry.monthlyLimitUsd * (entry.limitUsed ?? 0.4),
-    };
-  }).sort((a, b) => b.spendUsd - a.spendUsd);
+    PERIOD_SCALE[period] *
+    profile.scale *
+    (scope === 'all' ? 1 + profile.testingShare : 1);
+  return CATALOG.filter(
+    (entry) => profile.members === 'all' || profile.members.includes(entry.id),
+  )
+    .map((entry) => {
+      const spendUsd = entry.weight * scale * (0.9 + random() * 0.2);
+      const change = entry.change ?? random() * 0.6 - 0.25;
+      const calls = Math.round(
+        spendUsd *
+          (entry.dimension === 'model' && entry.name.includes('mini')
+            ? 900
+            : 140),
+      );
+      return {
+        ...entry,
+        spendUsd,
+        previousSpendUsd: spendUsd / (1 + change),
+        calls,
+        tokens: Math.round(calls * (2100 + random() * 1800)),
+        credits:
+          entry.provider === AIProviderName.ACTIVEPIECES
+            ? Math.round(spendUsd / CREDIT_USD_VALUE)
+            : 0,
+        monthToDateUsd:
+          entry.monthlyLimitUsd === undefined
+            ? undefined
+            : entry.monthlyLimitUsd * (entry.limitUsed ?? 0.4),
+      };
+    })
+    .sort((a, b) => b.spendUsd - a.spendUsd);
+}
+
+function sourcesFor({
+  preset,
+  spendUsd,
+}: {
+  preset: UsageDataPreset;
+  spendUsd: number;
+}): UsageSourceSpend[] {
+  const kept = SOURCES.filter((source) =>
+    PRESET_PROFILES[preset].sources.includes(source.source),
+  );
+  const total = kept.reduce((sum, source) => sum + source.share, 0);
+  return kept.map((source) => ({
+    source: source.source,
+    spendUsd: total === 0 ? 0 : (spendUsd * source.share) / total,
+  }));
 }
 
 function topByDimension({
@@ -282,8 +311,6 @@ function seededRandom({ seed }: { seed: string }): () => number {
 }
 
 const CREDIT_USD_VALUE = 0.0005;
-const CREDIT_SHARE = 0.12;
-const TESTING_SHARE = 0.09;
 const LIMIT_WARN_SHARE = 0.8;
 const TOP_COUNT = 5;
 const DAY_MINUTES = 24 * 60;
@@ -336,6 +363,72 @@ const SOURCES: { source: UsageSource; share: number }[] = [
   { source: 'agents', share: 0.1 },
   { source: 'knowledge-base', share: 0.03 },
 ];
+
+const ALL_SOURCES: UsageSource[] = [
+  'flow-steps',
+  'chat',
+  'agent-steps',
+  'agents',
+  'knowledge-base',
+];
+
+const PRESET_PROFILES: Record<UsageDataPreset, PresetProfile> = {
+  empty: {
+    members: [],
+    scale: 0,
+    testingShare: 0,
+    creditShare: 0,
+    sources: [],
+  },
+  minimal: {
+    members: [
+      'sales-ops',
+      'lead-enrichment',
+      'crm-sync',
+      'maya',
+      'openai-prod',
+      'gpt-5',
+      'gpt-5-mini',
+    ],
+    scale: 0.12,
+    testingShare: 0.03,
+    creditShare: 0,
+    sources: ['flow-steps', 'chat'],
+  },
+  half: {
+    members: [
+      'sales-ops',
+      'support-desk',
+      'finance',
+      'lead-enrichment',
+      'ticket-triage',
+      'invoice-extraction',
+      'crm-sync',
+      'support-agent',
+      'sdr-agent',
+      'maya',
+      'omar',
+      'lena',
+      'openai-prod',
+      'anthropic-main',
+      'credits',
+      'claude-sonnet-5',
+      'gpt-5',
+      'gpt-5-mini',
+    ],
+    scale: 0.55,
+    testingShare: 0.06,
+    creditShare: 0.08,
+    sources: ['flow-steps', 'chat', 'agent-steps', 'agents'],
+  },
+  rich: {
+    members: 'all',
+    scale: 1,
+    testingShare: 0.09,
+    creditShare: 0.12,
+    sources: ALL_SOURCES,
+  },
+};
 
 const RELATED_DIMENSIONS: Record<UsageDimension, UsageDimension[]> = {
   project: ['flow', 'agent', 'user', 'model', 'key'],
@@ -653,6 +746,14 @@ export const usageDummyData = {
   buildList,
 };
 
+export const USAGE_PRESETS: UsagePreset[] = [
+  'loading',
+  'error',
+  'empty',
+  'minimal',
+  'half',
+  'rich',
+];
 export const USAGE_PERIODS: UsagePeriod[] = [
   '1h',
   '6h',
@@ -674,6 +775,9 @@ export const USAGE_DIMENSIONS: UsageDimension[] = [
 ];
 export const USAGE_SCOPES: UsageScope[] = ['production', 'all'];
 export const USAGE_METRICS: UsageMetric[] = ['spend', 'calls', 'tokens'];
+
+export type UsagePreset = 'loading' | 'error' | UsageDataPreset;
+export type UsageDataPreset = 'empty' | 'minimal' | 'half' | 'rich';
 
 export type UsagePeriod =
   | '1h'
@@ -776,6 +880,15 @@ type CatalogEntry = {
 type ViewParams = {
   period: UsagePeriod;
   scope: UsageScope;
+  preset: UsageDataPreset;
+};
+
+type PresetProfile = {
+  members: string[] | 'all';
+  scale: number;
+  testingShare: number;
+  creditShare: number;
+  sources: UsageSource[];
 };
 
 type SeriesParams = {

@@ -21,6 +21,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import {
   USAGE_PERIODS,
+  USAGE_PRESETS,
+  UsageDataPreset,
+  UsagePreset,
   USAGE_SCOPES,
   UsageItem,
   UsagePeriod,
@@ -37,6 +40,9 @@ export function useUsageView(): UsageView {
   const scope =
     USAGE_SCOPES.find((item) => item === searchParams.get('scope')) ??
     DEFAULT_SCOPE;
+  const preset =
+    USAGE_PRESETS.find((item) => item === searchParams.get('preset')) ??
+    DEFAULT_PRESET;
   const update = ({
     key,
     value,
@@ -57,10 +63,15 @@ export function useUsageView(): UsageView {
   return {
     period,
     scope,
+    preset,
+    dataPreset:
+      preset === 'loading' || preset === 'error' ? DEFAULT_PRESET : preset,
     search:
       searchParams.toString().length === 0 ? '' : `?${searchParams.toString()}`,
     setPeriod: (value) =>
       update({ key: 'period', value, fallback: DEFAULT_PERIOD }),
+    setPreset: (value) =>
+      update({ key: 'preset', value, fallback: DEFAULT_PRESET }),
     setScope: (value) =>
       update({ key: 'scope', value, fallback: DEFAULT_SCOPE }),
   };
@@ -221,10 +232,14 @@ function downloadCsv({
 
 const DEFAULT_PERIOD: UsagePeriod = 'this-month';
 const DEFAULT_SCOPE: UsageScope = 'production';
+const DEFAULT_PRESET: UsageDataPreset = 'rich';
 
 export type UsageView = {
   period: UsagePeriod;
   scope: UsageScope;
+  preset: UsagePreset;
+  dataPreset: UsageDataPreset;
+  setPreset: (preset: UsagePreset) => void;
   search: string;
   setPeriod: (period: UsagePeriod) => void;
   setScope: (scope: UsageScope) => void;
