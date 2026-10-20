@@ -199,42 +199,43 @@ export function UsageLineChart({
             />
           }
         />
-        {chartType === 'bar' ? (
-          <>
-            <Bar
-              dataKey="current"
-              fill={config.current.color}
-              radius={[3, 3, 0, 0]}
-              maxBarSize={28}
-            />
-            <Bar
-              dataKey="previous"
-              fill={PREVIOUS_BAR_COLOR}
-              radius={[3, 3, 0, 0]}
-              maxBarSize={28}
-            />
-          </>
-        ) : (
-          <>
-            <Line
-              dataKey="previous"
-              type="monotone"
-              stroke={config.previous.color}
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              dot={false}
-              activeDot={false}
-            />
-            <Area
-              dataKey="current"
-              type="monotone"
-              stroke={config.current.color}
-              strokeWidth={2}
-              fill={`url(#${gradientId})`}
-              dot={false}
-              activeDot={{ r: 4, strokeWidth: 0, fill: config.current.color }}
-            />
-          </>
+        {chartType === 'bar' && (
+          <Bar
+            dataKey="current"
+            fill={config.current.color}
+            radius={[3, 3, 0, 0]}
+            maxBarSize={28}
+          />
+        )}
+        {chartType === 'bar' && (
+          <Bar
+            dataKey="previous"
+            fill={PREVIOUS_BAR_COLOR}
+            radius={[3, 3, 0, 0]}
+            maxBarSize={28}
+          />
+        )}
+        {chartType === 'line' && (
+          <Line
+            dataKey="previous"
+            type="monotone"
+            stroke={config.previous.color}
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            dot={false}
+            activeDot={false}
+          />
+        )}
+        {chartType === 'line' && (
+          <Area
+            dataKey="current"
+            type="monotone"
+            stroke={config.current.color}
+            strokeWidth={2}
+            fill={`url(#${gradientId})`}
+            dot={false}
+            activeDot={{ r: 4, strokeWidth: 0, fill: config.current.color }}
+          />
         )}
       </ComposedChart>
     </ChartContainer>
