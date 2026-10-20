@@ -48,5 +48,11 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Get Job Result": "Get Job Result",
+  "Check a MagicalAPI job once by its Request ID and return its result if it is ready.": "Check a MagicalAPI job once by its Request ID and return its result if it is ready.",
+  "Service": "Service",
+  "The service that created the job.": "The service that created the job.",
+  "Request ID": "Request ID",
+  "The Request ID returned when the job was started.": "The Request ID returned when the job was started."
 }

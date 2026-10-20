@@ -12,20 +12,34 @@ export const getPipelineStageDetailsAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Retrieves the configuration of a single pipeline stage (label, order, metadata) for a ticket or deal pipeline, given the object type, pipeline ID, and stage ID. Use to resolve or validate a stage ID before setting a deal or ticket stage. Read-only and idempotent.', idempotent: true },
 	outputSchema: pipelineStageDetailsOutputSchema,
+	propertyGroups: [
+		{
+			key: 'stage',
+			display: 'section',
+			label: 'Pipeline Stage',
+			icon: 'sliders',
+			props: ['objectType', 'pipelineId', 'stageId'],
+		},
+	],
 	props: {
 		objectType: Property.StaticDropdown({
 			displayName: 'Object Type',
 			required: true,
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
 					{
 						label: 'Ticket',
 						value: 'ticket',
+						description: 'Support pipeline',
+						icon: 'inbox',
 					},
 					{
 						label: 'Deal',
 						value: 'deal',
+						description: 'Sales pipeline',
+						icon: 'tag',
 					},
 				],
 			},
@@ -34,11 +48,13 @@ export const getPipelineStageDetailsAction = createAction({
 			displayName: 'Pipeline ID',
 			description: 'The pipeline\'s ID, found in a deal or ticket\'s pipeline property.',
 			required: true,
+			width: 'half',
 		}),
 		stageId: Property.ShortText({
 			displayName: 'Stage ID',
 			description: 'The stage\'s ID, found in a deal or ticket\'s stage property.',
 			required: true,
+			width: 'half',
 		}),
 	},
 	async run(context) {

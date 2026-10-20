@@ -15,16 +15,22 @@ export const deleteCardAttachment = createAction({
   description: 'Deletes an attachment from a card.',
   audience: 'both',
   aiMetadata: { description: 'Permanently removes a specific attachment from a Trello card, identified by both card_id and attachment_id. Use to delete a file or link from a card. Requires both ids; deleting the same attachment again returns an error once it no longer exists.', idempotent: false },
+  propertyGroups: [
+    { key: 'attachment', display: 'section', label: 'Attachment', icon: 'paperclip', props: ['card_id', 'attachment_id'] },
+  ],
   props: {
     card_id: Property.ShortText({
-      description: 'The ID of the card',
+      description: "From an earlier step, or the code after /c/ in the card's URL.",
       displayName: 'Card ID',
+      placeholder: 'aBcD1234',
       required: true,
+      width: 'half',
     }),
     attachment_id: Property.ShortText({
-      description: 'The ID of the attachment to delete',
+      description: 'From Get All Card Attachments or an earlier step.',
       displayName: 'Attachment ID',
       required: true,
+      width: 'half',
     }),
   },
 
