@@ -176,6 +176,9 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ? await this.getOneWithFederatedAuthOrThrow(params.id)
             : await this.getOneOrThrow(params.id)
         await assertAuditLogRetentionDaysAllowed({ log, platform, auditLogRetentionDays: params.auditLogRetentionDays })
+        if (params.autoCreatePersonalProjects === false && platform.autoCreatePersonalProjects) {
+            await assertPersonalProjectsCanBeTurnedOff({ platform, log })
+        }
         const federatedAuthProviders = hasFederatedAuth(platform)
             ? {
                 ...platform.federatedAuthProviders,
@@ -235,6 +238,13 @@ export const platformService = (log: FastifyBaseLogger) => ({
             })
         }
         return stripFederatedAuth(saved)
+    },
+    async runWithPlatformSettingsLock<T>({ platformId, fn }: RunWithPlatformSettingsLockParams<T>): Promise<T> {
+        return distributedLock(log).runExclusive({
+            key: `platform-settings-${platformId}`,
+            timeoutInSeconds: 30,
+            fn,
+        })
     },
     async listDefaultProjectIds({ platformId, entityManager }: ListDefaultProjectIdsParams): Promise<string[]> {
         const projects = await projectRepo(entityManager).find({
@@ -468,6 +478,18 @@ async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederate
     return platformPlanService(log).getOrCreateForPlatform(platform.id)
 }
 
+async function assertPersonalProjectsCanBeTurnedOff({ platform, log }: AssertPersonalProjectsCanBeTurnedOffParams): Promise<void> {
+    const plan = await getPlan(log, platform)
+    if (!plan.projectRolesEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: 'Turning personal projects off is not enabled for this platform',
+            },
+        })
+    }
+}
+
 function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
     const { federatedAuthProviders: _omitted, ...rest } = platform
     return rest
@@ -502,6 +524,16 @@ type PlatformMembership = {
 type PlatformMembershipWithPlatform = {
     platform: PlatformWithoutSensitiveData
     hasProjects: boolean
+}
+
+type AssertPersonalProjectsCanBeTurnedOffParams = {
+    platform: PlatformWithoutFederatedAuth
+    log: FastifyBaseLogger
+}
+
+type RunWithPlatformSettingsLockParams<T> = {
+    platformId: string
+    fn: () => Promise<T>
 }
 
 type ListDefaultProjectIdsParams = {
