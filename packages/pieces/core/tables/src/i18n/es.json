@@ -24,6 +24,7 @@
   "Records as JSON": "Records as JSON",
   "Record IDs": "ID de registro",
   "Record ID": "ID de registro",
+  "Markdown": "Markdown",
   "Filters": "Filtros",
   "Limit": "Límite",
   "Include Headers": "Include Headers",
@@ -32,6 +33,7 @@
   "Array of objects keyed by field name. Overrides the form above.": "Array of objects keyed by field name. Overrides the form above.",
   "Usually mapped from a Find Records step or a table trigger.": "Usually mapped from a Find Records step or a table trigger.",
   "Usually comes from a Find Records step or a table trigger.": "Usually comes from a Find Records step or a table trigger.",
+  "Empty fields keep their current value.": "Los campos vacíos conservan su valor actual.",
   "Leave a field empty to keep its current value.": "Leave a field empty to keep its current value.",
   "All conditions must match. Empty returns every record.": "All conditions must match. Empty returns every record.",
   "Maximum records to return. Empty returns all records.": "Maximum records to return. Empty returns all records.",
@@ -41,6 +43,5 @@
   "Record Deleted": "Registro eliminado",
   "Triggers when a new record is added to the selected table.": "Se activa cuando se añade un nuevo registro a la tabla seleccionada.",
   "Triggers when a record is updated in the selected table.": "Se activa cuando un registro se actualiza en la tabla seleccionada.",
-  "Triggers when a record is deleted from the selected table.": "Se activa cuando se elimina un registro de la tabla seleccionada.",
-  "Empty fields keep their current value.": "Los campos vacíos conservan su valor actual."
+  "Triggers when a record is deleted from the selected table.": "Se activa cuando se elimina un registro de la tabla seleccionada."
 }

@@ -1,5 +1,5 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 import { AdminPage } from '@/app/components/admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -14,16 +14,13 @@ export default function AIProvidersPage({ section }: AIProvidersPageProps) {
 
 function AICenter({ section }: { section: AISection }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const [searchParams] = useSearchParams();
-  const showsSettings =
-    section === 'capabilities' || searchParams.has('config');
 
   if (section === 'capabilities' && edition === ApEdition.COMMUNITY) {
     return <Navigate to="/platform/ai" replace />;
   }
 
   return (
-    <AdminPage width={showsSettings ? 'content' : 'full'}>
+    <AdminPage width="wide">
       {section === 'providers' ? (
         <ProvidersTab />
       ) : section === 'tiers' ? (
