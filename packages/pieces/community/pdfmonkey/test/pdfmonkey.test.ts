@@ -116,6 +116,44 @@ describe('createDocument with an agent deadline', () => {
     vi.useRealTimers();
   });
 
+  it('keeps polling through temporary status failures and still returns the created document', async () => {
+    vi.useFakeTimers();
+    let polls = 0;
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.method === 'POST') return { status: 200, headers: {}, body: { document: { id: 'doc-1', status: 'pending' } } };
+      polls += 1;
+      if (polls === 1) throw new HttpError({}, { status: 503, responseBody: {} });
+      if (polls === 2) throw new Error('socket hang up');
+      return { status: 200, headers: {}, body: { document_card: CARD } };
+    });
+    const pending = pdfmonkeyOperations.createDocument({ auth, templateId: 'tpl-1', payload: {}, waitForCompletion: true, maxWaitMs: pdfmonkeyOperations.AI_MAX_WAIT_MS });
+    await vi.advanceTimersByTimeAsync(20000);
+    const result = await pending;
+    expect(result).toMatchObject({ id: 'doc-1', status: 'success' });
+    vi.useRealTimers();
+  });
+
+  it('returns the created ID when every status check fails until the deadline', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.method === 'POST') return { status: 200, headers: {}, body: { document: { id: 'doc-1', status: 'pending' } } };
+      throw new HttpError({}, { status: 429, responseBody: {} });
+    });
+    const pending = pdfmonkeyOperations.createDocument({ auth, templateId: 'tpl-1', payload: {}, waitForCompletion: true, maxWaitMs: pdfmonkeyOperations.AI_MAX_WAIT_MS });
+    await vi.advanceTimersByTimeAsync(pdfmonkeyOperations.AI_MAX_WAIT_MS + 10000);
+    const result = await pending;
+    expect(result).toMatchObject({ id: 'doc-1', status: 'pending' });
+    vi.useRealTimers();
+  });
+
+  it('stops on a permanent status error such as 401', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.method === 'POST') return { status: 200, headers: {}, body: { document: { id: 'doc-1', status: 'pending' } } };
+      throw new HttpError({}, { status: 401, responseBody: {} });
+    });
+    await expect(pdfmonkeyOperations.createDocument({ auth, templateId: 'tpl-1', payload: {}, waitForCompletion: true, maxWaitMs: 1000 })).rejects.toBeInstanceOf(PdfmonkeyApiError);
+  });
+
   it('fails with the cause when generation fails while polling', async () => {
     vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
       if (request.method === 'POST') return { status: 200, headers: {}, body: { document: { id: 'doc-1', status: 'pending' } } };

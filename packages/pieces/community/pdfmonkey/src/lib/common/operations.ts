@@ -39,7 +39,7 @@ async function createDocument({
       body: { document },
     });
     const created = unwrap({ body: response.body, key: 'document' });
-    return waitForDocument({ auth, documentId: created['id'], deadline: Date.now() + maxWaitMs });
+    return waitForDocument({ auth, created, deadline: Date.now() + maxWaitMs });
   }
   if (waitForCompletion) {
     const response = await pdfmonkeyClient.request<Record<string, unknown>>({
@@ -64,17 +64,42 @@ async function createDocument({
   return unwrap({ body: response.body, key: 'document' });
 }
 
-async function waitForDocument({ auth, documentId, deadline }: { auth: unknown; documentId: unknown; deadline: number }): Promise<Record<string, unknown>> {
+async function waitForDocument({
+  auth,
+  created,
+  deadline,
+}: {
+  auth: unknown;
+  created: Record<string, unknown>;
+  deadline: number;
+}): Promise<Record<string, unknown>> {
+  let lastKnown = created;
   for (;;) {
-    const card = await getDocumentCard({ auth, documentId });
-    if (card['status'] === 'failure') {
-      throw new Error(`PDFMonkey could not generate document ${String(card['id'])}: ${failureCause(card)}.`);
+    const card = await readCardIfReachable({ auth, documentId: created['id'] });
+    if (card !== null) {
+      if (card['status'] === 'failure') {
+        throw new Error(`PDFMonkey could not generate document ${String(card['id'])}: ${failureCause(card)}.`);
+      }
+      if (card['status'] === 'success') return card;
+      lastKnown = card;
     }
-    if (card['status'] === 'success' || Date.now() + POLL_INTERVAL_MS > deadline) {
-      return card;
-    }
+    if (Date.now() + POLL_INTERVAL_MS > deadline) return lastKnown;
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
+}
+
+async function readCardIfReachable({ auth, documentId }: { auth: unknown; documentId: unknown }): Promise<Record<string, unknown> | null> {
+  try {
+    return await getDocumentCard({ auth, documentId });
+  } catch (error) {
+    if (isTransient(error)) return null;
+    throw error;
+  }
+}
+
+function isTransient(error: unknown): boolean {
+  if (!(error instanceof PdfmonkeyApiError)) return true;
+  return error.status === 408 || error.status === 429 || error.status >= 500;
 }
 
 async function updateDocument({
