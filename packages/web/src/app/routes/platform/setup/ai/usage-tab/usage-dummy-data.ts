@@ -1,118 +1,271 @@
 import { AIProviderName } from '@activepieces/core-utils';
 
-function buildSummary({
-  period,
-  groupBy,
-  includeTestRuns,
-}: BuildSummaryParams): UsageSummary {
-  const scale = PERIOD_SCALE[period] * (includeTestRuns ? 1.12 : 1);
-  const random = seededRandom({
-    seed: `${period}:${groupBy}:${includeTestRuns}`,
+function buildOverview({ period, scope }: ViewParams): UsageOverview {
+  const random = seededRandom({ seed: `overview:${period}:${scope}` });
+  const items = allItems({ period, scope, random });
+  const projects = itemsOf({ items, dimension: 'project' });
+  const spendUsd = sumOf({ items: projects, pick: (item) => item.spendUsd });
+  const previousSpendUsd = sumOf({
+    items: projects,
+    pick: (item) => item.previousSpendUsd,
   });
-  const rows = ROWS_BY_GROUP[groupBy].map((template) =>
-    rowFrom({ template, scale, random }),
-  );
-  const points = pointLabels({ period }).map((label) =>
-    pointFrom({ label, scale: scale / pointLabels({ period }).length, random }),
-  );
+  const calls = sumOf({ items: projects, pick: (item) => item.calls });
+  const tokens = sumOf({ items: projects, pick: (item) => item.tokens });
+  const testingSpendUsd = spendUsd * TESTING_SHARE;
   return {
-    totals: totalsOf({ rows }),
-    points,
-    rows: [...rows].sort(
-      (a, b) => spendUsdOf({ row: b }) - spendUsdOf({ row: a }),
-    ),
-    dataThroughMinutesAgo: 2,
+    totals: {
+      spendUsd,
+      previousSpendUsd,
+      calls,
+      tokens,
+      cacheShare: 0.37,
+      credits: Math.round((spendUsd * CREDIT_SHARE) / CREDIT_USD_VALUE),
+    },
+    series: seriesFor({
+      period,
+      spendUsd,
+      previousSpendUsd,
+      calls,
+      tokens,
+      random,
+    }),
+    forecastUsd:
+      period === 'this-month'
+        ? (spendUsd / MONTH_DAYS_SO_FAR) * MONTH_DAYS
+        : undefined,
+    avgPerDayUsd: spendUsd / PERIOD_DAYS[period],
+    bySource: SOURCES.map((source) => ({
+      source: source.source,
+      spendUsd: spendUsd * source.share,
+    })),
+    top: topByDimension({ items }),
+    risers: [...items]
+      .filter((item) => item.dimension === 'flow' || item.dimension === 'agent')
+      .sort(
+        (a, b) =>
+          b.spendUsd - b.previousSpendUsd - (a.spendUsd - a.previousSpendUsd),
+      )
+      .slice(0, 3),
+    limits: projects
+      .filter(
+        (item) =>
+          item.monthlyLimitUsd !== undefined &&
+          (item.monthToDateUsd ?? 0) / item.monthlyLimitUsd >= LIMIT_WARN_SHARE,
+      )
+      .sort(
+        (a, b) =>
+          (b.monthToDateUsd ?? 0) / (b.monthlyLimitUsd ?? 1) -
+          (a.monthToDateUsd ?? 0) / (a.monthlyLimitUsd ?? 1),
+      ),
+    testing: {
+      spendUsd: testingSpendUsd,
+      share:
+        scope === 'all' ? TESTING_SHARE : TESTING_SHARE / (1 + TESTING_SHARE),
+      series: seriesFor({
+        period,
+        spendUsd: testingSpendUsd,
+        previousSpendUsd: testingSpendUsd * 0.8,
+        calls: calls * TESTING_SHARE,
+        tokens: tokens * TESTING_SHARE,
+        random,
+      }).spend,
+      topFlows: itemsOf({ items, dimension: 'flow' })
+        .slice(0, 3)
+        .map((item) => ({
+          ...item,
+          spendUsd: item.spendUsd * TESTING_SHARE * 1.4,
+        })),
+      topAgents: itemsOf({ items, dimension: 'agent' })
+        .slice(0, 3)
+        .map((item) => ({
+          ...item,
+          spendUsd: item.spendUsd * TESTING_SHARE * 1.1,
+        })),
+    },
+    updatedMinutesAgo: 2,
     trackingSince: '2026-10-18',
-    creditUsdValue: CREDIT_USD_VALUE,
   };
 }
 
-function rowFrom({
-  template,
-  scale,
+function buildDetail({
+  period,
+  scope,
+  dimension,
+  id,
+}: ViewParams & { dimension: UsageDimension; id: string }):
+  | UsageDetail
+  | undefined {
+  const random = seededRandom({
+    seed: `detail:${period}:${scope}:${dimension}:${id}`,
+  });
+  const items = allItems({ period, scope, random });
+  const item = items.find(
+    (candidate) => candidate.dimension === dimension && candidate.id === id,
+  );
+  if (item === undefined) {
+    return undefined;
+  }
+  const share =
+    item.spendUsd /
+    sumOf({
+      items: itemsOf({ items, dimension }),
+      pick: (candidate) => candidate.spendUsd,
+    });
+  const related = Object.fromEntries(
+    RELATED_DIMENSIONS[dimension].map((other) => [
+      other,
+      itemsOf({ items, dimension: other })
+        .slice(0, TOP_COUNT)
+        .map((candidate) => ({
+          ...candidate,
+          spendUsd: candidate.spendUsd * share * (0.6 + random() * 0.8),
+          previousSpendUsd:
+            candidate.previousSpendUsd * share * (0.6 + random() * 0.8),
+        }))
+        .sort((a, b) => b.spendUsd - a.spendUsd),
+    ]),
+  );
+  return {
+    item,
+    series: seriesFor({
+      period,
+      spendUsd: item.spendUsd,
+      previousSpendUsd: item.previousSpendUsd,
+      calls: item.calls,
+      tokens: item.tokens,
+      random,
+    }),
+    related,
+    bySource:
+      dimension === 'project' || dimension === 'agent'
+        ? SOURCES.map((source) => ({
+            source: source.source,
+            spendUsd: item.spendUsd * source.share,
+          }))
+        : undefined,
+    runs: dimension === 'flow' ? Math.round(item.calls / 2.4) : undefined,
+    reportedUsd:
+      dimension === 'key'
+        ? item.spendUsd * (1 - (item.estimatedShare ?? 0))
+        : undefined,
+    estimatedUsd:
+      dimension === 'key'
+        ? item.spendUsd * (item.estimatedShare ?? 0)
+        : undefined,
+  };
+}
+
+function buildList({
+  period,
+  scope,
+  dimension,
+}: ViewParams & { dimension: UsageDimension }): UsageItem[] {
+  const random = seededRandom({ seed: `list:${period}:${scope}:${dimension}` });
+  return itemsOf({ items: allItems({ period, scope, random }), dimension });
+}
+
+function allItems({
+  period,
+  scope,
   random,
+}: ViewParams & { random: () => number }): UsageItem[] {
+  const scale =
+    PERIOD_SCALE[period] * (scope === 'all' ? 1 + TESTING_SHARE : 1);
+  return CATALOG.map((entry) => {
+    const spendUsd = entry.weight * scale * (0.9 + random() * 0.2);
+    const change = entry.change ?? random() * 0.6 - 0.25;
+    const calls = Math.round(
+      spendUsd *
+        (entry.dimension === 'model' && entry.name.includes('mini')
+          ? 900
+          : 140),
+    );
+    return {
+      ...entry,
+      spendUsd,
+      previousSpendUsd: spendUsd / (1 + change),
+      calls,
+      tokens: Math.round(calls * (2100 + random() * 1800)),
+      credits:
+        entry.provider === AIProviderName.ACTIVEPIECES
+          ? Math.round(spendUsd / CREDIT_USD_VALUE)
+          : 0,
+      monthToDateUsd:
+        entry.monthlyLimitUsd === undefined
+          ? undefined
+          : entry.monthlyLimitUsd * (entry.limitUsed ?? 0.4),
+    };
+  }).sort((a, b) => b.spendUsd - a.spendUsd);
+}
+
+function topByDimension({
+  items,
 }: {
-  template: RowTemplate;
-  scale: number;
-  random: () => number;
-}): UsageRow {
-  const weight = template.weight * scale * (0.85 + random() * 0.3);
-  const calls = Math.round(weight * 420);
-  const inputTokens = Math.round(calls * (1800 + random() * 2400));
-  const outputTokens = Math.round(calls * (240 + random() * 360));
-  const cacheReadTokens = Math.round(inputTokens * (0.2 + random() * 0.4));
-  const ownKeyUsd =
-    template.provider === AIProviderName.ACTIVEPIECES ? 0 : weight * 3.1;
-  const estimatedShare = template.estimatedShare ?? 0.08;
+  items: UsageItem[];
+}): Record<UsageDimension, UsageItem[]> {
   return {
-    id: template.id,
-    name: template.name,
-    subtitle: template.subtitle,
-    provider: template.provider,
-    calls,
-    inputTokens,
-    outputTokens,
-    cacheReadTokens,
-    exactUsd: ownKeyUsd * (1 - estimatedShare),
-    estimatedUsd: ownKeyUsd * estimatedShare,
-    credits:
-      template.provider === AIProviderName.ACTIVEPIECES ||
-      template.provider === undefined
-        ? Math.round(weight * 2100 * (template.creditShare ?? 0.35))
-        : 0,
-    unpricedCalls:
-      template.unpricedCalls === undefined
-        ? 0
-        : Math.round(template.unpricedCalls * scale),
-    monthlyLimitUsd: template.monthlyLimitUsd,
-    monthToDateUsd:
-      template.monthlyLimitUsd === undefined
-        ? undefined
-        : template.monthlyLimitUsd * (template.limitUsed ?? 0.4),
-    dashboardUrl: template.dashboardUrl,
+    project: itemsOf({ items, dimension: 'project' }).slice(0, TOP_COUNT),
+    flow: itemsOf({ items, dimension: 'flow' }).slice(0, TOP_COUNT),
+    agent: itemsOf({ items, dimension: 'agent' }).slice(0, TOP_COUNT),
+    user: itemsOf({ items, dimension: 'user' }).slice(0, TOP_COUNT),
+    key: itemsOf({ items, dimension: 'key' }).slice(0, TOP_COUNT),
+    model: itemsOf({ items, dimension: 'model' }).slice(0, TOP_COUNT),
   };
 }
 
-function pointFrom({
-  label,
-  scale,
+function itemsOf({
+  items,
+  dimension,
+}: {
+  items: UsageItem[];
+  dimension: UsageDimension;
+}): UsageItem[] {
+  return items.filter((item) => item.dimension === dimension);
+}
+
+function sumOf({
+  items,
+  pick,
+}: {
+  items: UsageItem[];
+  pick: (item: UsageItem) => number;
+}): number {
+  return items.reduce((total, item) => total + pick(item), 0);
+}
+
+function seriesFor({
+  period,
+  spendUsd,
+  previousSpendUsd,
+  calls,
+  tokens,
   random,
-}: {
-  label: string;
-  scale: number;
-  random: () => number;
-}): UsagePoint {
-  const wave = 0.6 + random() * 0.8;
-  const base = scale * 38 * wave;
+}: SeriesParams): Record<UsageMetric, UsagePoint[]> {
+  const labels = pointLabels({ period });
+  const shape = labels.map(
+    (_, index) => 0.7 + 0.3 * Math.sin(index / 2.3) + random() * 0.35,
+  );
+  const previousShape = labels.map(
+    (_, index) => 0.75 + 0.25 * Math.cos(index / 2.9) + random() * 0.3,
+  );
+  const total = shape.reduce((sum, value) => sum + value, 0);
+  const previousTotal = previousShape.reduce((sum, value) => sum + value, 0);
+  const pointsFor = (current: number, previous: number): UsagePoint[] =>
+    labels.map((label, index) => ({
+      label,
+      current: (current * shape[index]) / total,
+      previous: (previous * previousShape[index]) / previousTotal,
+    }));
+  const ratio = previousSpendUsd / Math.max(spendUsd, 0.0001);
   return {
-    label,
-    exactUsd: base * 0.78,
-    estimatedUsd: base * 0.07,
-    creditsUsd: base * 0.15,
+    spend: pointsFor(spendUsd, previousSpendUsd),
+    calls: pointsFor(calls, calls * ratio),
+    tokens: pointsFor(tokens, tokens * ratio),
   };
-}
-
-function totalsOf({ rows }: { rows: UsageRow[] }): UsageTotals {
-  const sum = (pick: (row: UsageRow) => number): number =>
-    rows.reduce((total, row) => total + pick(row), 0);
-  return {
-    calls: sum((row) => row.calls),
-    inputTokens: sum((row) => row.inputTokens),
-    outputTokens: sum((row) => row.outputTokens),
-    cacheReadTokens: sum((row) => row.cacheReadTokens),
-    exactUsd: sum((row) => row.exactUsd),
-    estimatedUsd: sum((row) => row.estimatedUsd),
-    credits: sum((row) => row.credits),
-    unpricedCalls: sum((row) => row.unpricedCalls),
-  };
-}
-
-function spendUsdOf({ row }: { row: UsageRow }): number {
-  return row.exactUsd + row.estimatedUsd + row.credits * CREDIT_USD_VALUE;
 }
 
 function pointLabels({ period }: { period: UsagePeriod }): string[] {
-  const now = new Date('2026-10-20T10:23:00Z');
+  const now = new Date('2026-10-20T10:20:00Z');
   const { count, stepMinutes } = PERIOD_STEPS[period];
   return Array.from({ length: count }, (_, index) => {
     const at = new Date(
@@ -136,7 +289,13 @@ function seededRandom({ seed }: { seed: string }): () => number {
 }
 
 const CREDIT_USD_VALUE = 0.0005;
+const CREDIT_SHARE = 0.12;
+const TESTING_SHARE = 0.09;
+const LIMIT_WARN_SHARE = 0.8;
+const TOP_COUNT = 5;
 const DAY_MINUTES = 24 * 60;
+const MONTH_DAYS = 31;
+const MONTH_DAYS_SO_FAR = 20;
 
 const PERIOD_SCALE: Record<UsagePeriod, number> = {
   '1h': 0.02,
@@ -150,6 +309,18 @@ const PERIOD_SCALE: Record<UsagePeriod, number> = {
   'last-month': 12.4,
 };
 
+const PERIOD_DAYS: Record<UsagePeriod, number> = {
+  '1h': 1 / 24,
+  '6h': 0.25,
+  '12h': 0.5,
+  '24h': 1,
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+  'this-month': MONTH_DAYS_SO_FAR,
+  'last-month': 30,
+};
+
 const PERIOD_STEPS: Record<
   UsagePeriod,
   { count: number; stepMinutes: number }
@@ -161,183 +332,332 @@ const PERIOD_STEPS: Record<
   '7d': { count: 7, stepMinutes: DAY_MINUTES },
   '30d': { count: 30, stepMinutes: DAY_MINUTES },
   '90d': { count: 90, stepMinutes: DAY_MINUTES },
-  'this-month': { count: 20, stepMinutes: DAY_MINUTES },
+  'this-month': { count: MONTH_DAYS_SO_FAR, stepMinutes: DAY_MINUTES },
   'last-month': { count: 30, stepMinutes: DAY_MINUTES },
 };
 
-const ROWS_BY_GROUP: Record<UsageGroupBy, RowTemplate[]> = {
-  project: [
-    {
-      id: 'p1',
-      name: 'Sales ops',
-      weight: 9,
-      monthlyLimitUsd: 50,
-      limitUsed: 0.86,
-    },
-    {
-      id: 'p2',
-      name: 'Support desk',
-      weight: 7,
-      monthlyLimitUsd: 200,
-      limitUsed: 0.31,
-    },
-    { id: 'p3', name: 'Marketing', weight: 4 },
-    {
-      id: 'p4',
-      name: 'Finance',
-      weight: 2.5,
-      monthlyLimitUsd: 20,
-      limitUsed: 1.04,
-    },
-    { id: 'p5', name: 'Data team', weight: 1.6 },
-    { id: 'p6', name: 'Internal tools', weight: 0.4 },
-  ],
-  flow: [
-    { id: 'f1', name: 'Lead enrichment', subtitle: 'Sales ops', weight: 6 },
-    { id: 'f2', name: 'Ticket triage', subtitle: 'Support desk', weight: 5 },
-    { id: 'f3', name: 'Invoice extraction', subtitle: 'Finance', weight: 2.4 },
-    { id: 'f4', name: 'Weekly digest', subtitle: 'Marketing', weight: 1.8 },
-    { id: 'f5', name: 'CRM sync', subtitle: 'Sales ops', weight: 1.1 },
-    { id: 'f6', name: 'Contract review', subtitle: 'Finance', weight: 0.7 },
-  ],
-  agent: [
-    { id: 'a1', name: 'Support agent', subtitle: 'Support desk', weight: 5.5 },
-    { id: 'a2', name: 'Research agent', subtitle: 'Data team', weight: 3 },
-    { id: 'a3', name: 'SDR agent', subtitle: 'Sales ops', weight: 2.2 },
-    {
-      id: 'a4',
-      name: 'Onboarding helper',
-      subtitle: 'Internal tools',
-      weight: 0.6,
-    },
-  ],
-  user: [
-    { id: 'u1', name: 'Maya Chen', subtitle: 'maya@acme.com', weight: 3.2 },
-    { id: 'u2', name: 'Omar Haddad', subtitle: 'omar@acme.com', weight: 2.6 },
-    { id: 'u3', name: 'Lena Fischer', subtitle: 'lena@acme.com', weight: 1.9 },
-    { id: 'u4', name: 'Sam Okafor', subtitle: 'sam@acme.com', weight: 1.2 },
-    { id: 'u5', name: 'Priya Nair', subtitle: 'priya@acme.com', weight: 0.5 },
-  ],
-  key: [
-    {
-      id: 'k1',
-      name: 'OpenAI · Production',
-      provider: AIProviderName.OPENAI,
-      weight: 8,
-      estimatedShare: 0.04,
-      dashboardUrl: 'https://platform.openai.com/usage',
-    },
-    {
-      id: 'k2',
-      name: 'Anthropic · Main',
-      provider: AIProviderName.ANTHROPIC,
-      weight: 6,
-      estimatedShare: 0.06,
-      dashboardUrl: 'https://console.anthropic.com/usage',
-    },
-    {
-      id: 'k3',
-      name: 'Azure · EU',
-      provider: AIProviderName.AZURE,
-      weight: 2.5,
-      estimatedShare: 0.35,
-      unpricedCalls: 1204,
-      dashboardUrl:
-        'https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/Microsoft.CognitiveServices%2Faccounts',
-    },
-    {
-      id: 'k4',
-      name: 'OpenRouter',
-      provider: AIProviderName.OPENROUTER,
-      weight: 1.8,
-      estimatedShare: 0,
-      dashboardUrl: 'https://openrouter.ai/activity',
-    },
-    {
-      id: 'k5',
-      name: 'Credits',
-      provider: AIProviderName.ACTIVEPIECES,
-      weight: 3,
-      creditShare: 1,
-      dashboardUrl: '/platform/usage',
-    },
-  ],
-  model: [
-    {
-      id: 'm1',
-      name: 'Claude Sonnet 5',
-      subtitle: 'Anthropic',
-      provider: AIProviderName.ANTHROPIC,
-      weight: 6,
-    },
-    {
-      id: 'm2',
-      name: 'GPT-5',
-      subtitle: 'OpenAI',
-      provider: AIProviderName.OPENAI,
-      weight: 5,
-    },
-    {
-      id: 'm3',
-      name: 'Gemini 3 Pro',
-      subtitle: 'Google',
-      provider: AIProviderName.GOOGLE,
-      weight: 2.4,
-    },
-    {
-      id: 'm4',
-      name: 'GPT-5 mini',
-      subtitle: 'OpenAI',
-      provider: AIProviderName.OPENAI,
-      weight: 1.6,
-    },
-    {
-      id: 'm5',
-      name: 'gpt-prod-eu',
-      subtitle: 'Azure deployment',
-      provider: AIProviderName.AZURE,
-      weight: 1.1,
-      estimatedShare: 1,
-      unpricedCalls: 1204,
-    },
-  ],
-  origin: [
-    {
-      id: 'o1',
-      name: 'Flow steps',
-      subtitle: 'Ask AI, Summarize, Classify, Extract, Router',
-      weight: 7,
-    },
-    {
-      id: 'o2',
-      name: 'Chat',
-      subtitle: 'Conversations in the chat',
-      weight: 5,
-    },
-    {
-      id: 'o3',
-      name: 'Run Agent steps',
-      subtitle: 'Agents called from flows',
-      weight: 4,
-    },
-    {
-      id: 'o4',
-      name: 'Agents',
-      subtitle: 'Agents run on their own',
-      weight: 2.2,
-    },
-    {
-      id: 'o5',
-      name: 'Knowledge base',
-      subtitle: 'Indexing and search',
-      weight: 0.5,
-    },
-  ],
+const SOURCES: { source: UsageSource; share: number }[] = [
+  { source: 'flow-steps', share: 0.41 },
+  { source: 'chat', share: 0.27 },
+  { source: 'agent-steps', share: 0.19 },
+  { source: 'agents', share: 0.1 },
+  { source: 'knowledge-base', share: 0.03 },
+];
+
+const RELATED_DIMENSIONS: Record<UsageDimension, UsageDimension[]> = {
+  project: ['flow', 'agent', 'user', 'model', 'key'],
+  flow: ['model', 'key'],
+  agent: ['user', 'model', 'key'],
+  user: ['agent', 'project', 'model'],
+  key: ['project', 'flow', 'model'],
+  model: ['project', 'flow', 'agent', 'key'],
 };
 
+const CATALOG: CatalogEntry[] = [
+  {
+    dimension: 'project',
+    id: 'sales-ops',
+    name: 'Sales ops',
+    weight: 9,
+    change: 0.22,
+    monthlyLimitUsd: 120,
+    limitUsed: 0.86,
+  },
+  {
+    dimension: 'project',
+    id: 'support-desk',
+    name: 'Support desk',
+    weight: 7,
+    change: 0.08,
+    monthlyLimitUsd: 300,
+    limitUsed: 0.31,
+  },
+  {
+    dimension: 'project',
+    id: 'marketing',
+    name: 'Marketing',
+    weight: 4,
+    change: -0.12,
+  },
+  {
+    dimension: 'project',
+    id: 'finance',
+    name: 'Finance',
+    weight: 2.5,
+    change: 0.41,
+    monthlyLimitUsd: 60,
+    limitUsed: 0.97,
+  },
+  {
+    dimension: 'project',
+    id: 'data-team',
+    name: 'Data team',
+    weight: 1.6,
+    change: -0.05,
+  },
+  {
+    dimension: 'project',
+    id: 'internal-tools',
+    name: 'Internal tools',
+    weight: 0.4,
+    change: 0.02,
+  },
+  {
+    dimension: 'flow',
+    id: 'lead-enrichment',
+    name: 'Lead enrichment',
+    parent: 'Sales ops',
+    weight: 6,
+    change: 0.35,
+  },
+  {
+    dimension: 'flow',
+    id: 'ticket-triage',
+    name: 'Ticket triage',
+    parent: 'Support desk',
+    weight: 5,
+    change: 2.4,
+  },
+  {
+    dimension: 'flow',
+    id: 'invoice-extraction',
+    name: 'Invoice extraction',
+    parent: 'Finance',
+    weight: 2.4,
+    change: 0.6,
+  },
+  {
+    dimension: 'flow',
+    id: 'weekly-digest',
+    name: 'Weekly digest',
+    parent: 'Marketing',
+    weight: 1.8,
+    change: -0.2,
+  },
+  {
+    dimension: 'flow',
+    id: 'crm-sync',
+    name: 'CRM sync',
+    parent: 'Sales ops',
+    weight: 1.1,
+    change: 0.04,
+  },
+  {
+    dimension: 'flow',
+    id: 'contract-review',
+    name: 'Contract review',
+    parent: 'Finance',
+    weight: 0.7,
+    change: -0.1,
+  },
+  {
+    dimension: 'flow',
+    id: 'social-listening',
+    name: 'Social listening',
+    parent: 'Marketing',
+    weight: 0.5,
+    change: 0.12,
+  },
+  {
+    dimension: 'agent',
+    id: 'support-agent',
+    name: 'Support agent',
+    parent: 'Support desk',
+    weight: 5.5,
+    change: 0.18,
+  },
+  {
+    dimension: 'agent',
+    id: 'research-agent',
+    name: 'Research agent',
+    parent: 'Data team',
+    weight: 3,
+    change: 0.9,
+  },
+  {
+    dimension: 'agent',
+    id: 'sdr-agent',
+    name: 'SDR agent',
+    parent: 'Sales ops',
+    weight: 2.2,
+    change: -0.15,
+  },
+  {
+    dimension: 'agent',
+    id: 'onboarding-helper',
+    name: 'Onboarding helper',
+    parent: 'Internal tools',
+    weight: 0.6,
+    change: 0.03,
+  },
+  {
+    dimension: 'user',
+    id: 'maya',
+    name: 'Maya Chen',
+    parent: 'maya@acme.com',
+    weight: 3.2,
+    change: 0.12,
+  },
+  {
+    dimension: 'user',
+    id: 'omar',
+    name: 'Omar Haddad',
+    parent: 'omar@acme.com',
+    weight: 2.6,
+    change: 0.44,
+  },
+  {
+    dimension: 'user',
+    id: 'lena',
+    name: 'Lena Fischer',
+    parent: 'lena@acme.com',
+    weight: 1.9,
+    change: -0.08,
+  },
+  {
+    dimension: 'user',
+    id: 'sam',
+    name: 'Sam Okafor',
+    parent: 'sam@acme.com',
+    weight: 1.2,
+    change: 0.05,
+  },
+  {
+    dimension: 'user',
+    id: 'priya',
+    name: 'Priya Nair',
+    parent: 'priya@acme.com',
+    weight: 0.5,
+    change: -0.3,
+  },
+  {
+    dimension: 'user',
+    id: 'jonas',
+    name: 'Jonas Berg',
+    parent: 'jonas@acme.com',
+    weight: 0.3,
+    change: 0.2,
+  },
+  {
+    dimension: 'key',
+    id: 'openai-prod',
+    name: 'OpenAI · Production',
+    provider: AIProviderName.OPENAI,
+    weight: 8,
+    change: 0.15,
+    estimatedShare: 0.04,
+    dashboardUrl: 'https://platform.openai.com/usage',
+  },
+  {
+    dimension: 'key',
+    id: 'anthropic-main',
+    name: 'Anthropic · Main',
+    provider: AIProviderName.ANTHROPIC,
+    weight: 6,
+    change: 0.28,
+    estimatedShare: 0.06,
+    dashboardUrl: 'https://console.anthropic.com/usage',
+  },
+  {
+    dimension: 'key',
+    id: 'credits',
+    name: 'Credits',
+    provider: AIProviderName.ACTIVEPIECES,
+    weight: 3,
+    change: 0.1,
+    estimatedShare: 0,
+    dashboardUrl: '/platform/usage',
+  },
+  {
+    dimension: 'key',
+    id: 'azure-eu',
+    name: 'Azure · EU',
+    provider: AIProviderName.AZURE,
+    weight: 2.5,
+    change: -0.04,
+    estimatedShare: 0.35,
+    dashboardUrl: 'https://portal.azure.com',
+  },
+  {
+    dimension: 'key',
+    id: 'openrouter',
+    name: 'OpenRouter',
+    provider: AIProviderName.OPENROUTER,
+    weight: 1.8,
+    change: 0.5,
+    estimatedShare: 0,
+    dashboardUrl: 'https://openrouter.ai/activity',
+  },
+  {
+    dimension: 'model',
+    id: 'claude-sonnet-5',
+    name: 'Claude Sonnet 5',
+    parent: 'Anthropic',
+    provider: AIProviderName.ANTHROPIC,
+    weight: 6,
+    change: 0.3,
+    inputPrice: 3,
+    outputPrice: 15,
+  },
+  {
+    dimension: 'model',
+    id: 'gpt-5',
+    name: 'GPT-5',
+    parent: 'OpenAI',
+    provider: AIProviderName.OPENAI,
+    weight: 5,
+    change: 0.1,
+    inputPrice: 1.25,
+    outputPrice: 10,
+  },
+  {
+    dimension: 'model',
+    id: 'gemini-3-pro',
+    name: 'Gemini 3 Pro',
+    parent: 'Google',
+    provider: AIProviderName.GOOGLE,
+    weight: 2.4,
+    change: 0.65,
+    inputPrice: 2,
+    outputPrice: 12,
+  },
+  {
+    dimension: 'model',
+    id: 'gpt-5-mini',
+    name: 'GPT-5 mini',
+    parent: 'OpenAI',
+    provider: AIProviderName.OPENAI,
+    weight: 1.6,
+    change: -0.1,
+    inputPrice: 0.25,
+    outputPrice: 2,
+  },
+  {
+    dimension: 'model',
+    id: 'claude-haiku-4-5',
+    name: 'Claude Haiku 4.5',
+    parent: 'Anthropic',
+    provider: AIProviderName.ANTHROPIC,
+    weight: 1.2,
+    change: 0.02,
+    inputPrice: 1,
+    outputPrice: 5,
+  },
+  {
+    dimension: 'model',
+    id: 'gpt-prod-eu',
+    name: 'gpt-prod-eu',
+    parent: 'Azure deployment',
+    provider: AIProviderName.AZURE,
+    weight: 1.1,
+    change: -0.04,
+  },
+];
+
 export const usageDummyData = {
-  buildSummary,
-  spendUsdOf,
+  buildOverview,
+  buildDetail,
+  buildList,
 };
 
 export const USAGE_PERIODS: UsagePeriod[] = [
@@ -351,15 +671,16 @@ export const USAGE_PERIODS: UsagePeriod[] = [
   'this-month',
   'last-month',
 ];
-export const USAGE_GROUPS: UsageGroupBy[] = [
+export const USAGE_DIMENSIONS: UsageDimension[] = [
   'project',
   'flow',
   'agent',
   'user',
   'key',
   'model',
-  'origin',
 ];
+export const USAGE_SCOPES: UsageScope[] = ['production', 'all'];
+export const USAGE_METRICS: UsageMetric[] = ['spend', 'calls', 'tokens'];
 
 export type UsagePeriod =
   | '1h'
@@ -371,77 +692,105 @@ export type UsagePeriod =
   | '90d'
   | 'this-month'
   | 'last-month';
-
-export type UsageGroupBy =
+export type UsageDimension =
   | 'project'
   | 'flow'
   | 'agent'
   | 'user'
   | 'key'
-  | 'model'
-  | 'origin';
+  | 'model';
+export type UsageScope = 'production' | 'all';
+export type UsageMetric = 'spend' | 'calls' | 'tokens';
+export type UsageSource =
+  | 'flow-steps'
+  | 'agent-steps'
+  | 'agents'
+  | 'chat'
+  | 'knowledge-base';
 
-export type UsageRow = {
-  id: string;
-  name: string;
-  subtitle?: string;
-  provider?: AIProviderName;
+export type UsageItem = CatalogEntry & {
+  spendUsd: number;
+  previousSpendUsd: number;
   calls: number;
-  inputTokens: number;
-  outputTokens: number;
-  cacheReadTokens: number;
-  exactUsd: number;
-  estimatedUsd: number;
+  tokens: number;
   credits: number;
-  unpricedCalls: number;
-  monthlyLimitUsd?: number;
   monthToDateUsd?: number;
-  dashboardUrl?: string;
 };
 
 export type UsagePoint = {
   label: string;
-  exactUsd: number;
-  estimatedUsd: number;
-  creditsUsd: number;
+  current: number;
+  previous: number;
 };
 
-export type UsageTotals = Omit<
-  UsageRow,
-  | 'id'
-  | 'name'
-  | 'subtitle'
-  | 'provider'
-  | 'monthlyLimitUsd'
-  | 'monthToDateUsd'
-  | 'dashboardUrl'
->;
+export type UsageSourceSpend = {
+  source: UsageSource;
+  spendUsd: number;
+};
 
-export type UsageSummary = {
-  totals: UsageTotals;
-  points: UsagePoint[];
-  rows: UsageRow[];
-  dataThroughMinutesAgo: number;
+export type UsageOverview = {
+  totals: {
+    spendUsd: number;
+    previousSpendUsd: number;
+    calls: number;
+    tokens: number;
+    cacheShare: number;
+    credits: number;
+  };
+  series: Record<UsageMetric, UsagePoint[]>;
+  forecastUsd?: number;
+  avgPerDayUsd: number;
+  bySource: UsageSourceSpend[];
+  top: Record<UsageDimension, UsageItem[]>;
+  risers: UsageItem[];
+  limits: UsageItem[];
+  testing: {
+    spendUsd: number;
+    share: number;
+    series: UsagePoint[];
+    topFlows: UsageItem[];
+    topAgents: UsageItem[];
+  };
+  updatedMinutesAgo: number;
   trackingSince: string;
-  creditUsdValue: number;
 };
 
-type RowTemplate = {
+export type UsageDetail = {
+  item: UsageItem;
+  series: Record<UsageMetric, UsagePoint[]>;
+  related: Partial<Record<UsageDimension, UsageItem[]>>;
+  bySource?: UsageSourceSpend[];
+  runs?: number;
+  reportedUsd?: number;
+  estimatedUsd?: number;
+};
+
+type CatalogEntry = {
+  dimension: UsageDimension;
   id: string;
   name: string;
-  subtitle?: string;
+  parent?: string;
   provider?: AIProviderName;
   weight: number;
+  change?: number;
   estimatedShare?: number;
-  creditShare?: number;
-  unpricedCalls?: number;
+  dashboardUrl?: string;
   monthlyLimitUsd?: number;
   limitUsed?: number;
-  dashboardUrl?: string;
+  inputPrice?: number;
+  outputPrice?: number;
 };
 
-type BuildSummaryParams = {
+type ViewParams = {
   period: UsagePeriod;
-  groupBy: UsageGroupBy;
-  includeTestRuns: boolean;
+  scope: UsageScope;
+};
+
+type SeriesParams = {
+  period: UsagePeriod;
+  spendUsd: number;
+  previousSpendUsd: number;
+  calls: number;
+  tokens: number;
+  random: () => number;
 };
