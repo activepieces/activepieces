@@ -128,7 +128,7 @@ export const startRecurringInvoice = createAction({
 export const stopRecurringInvoice = createAction({
   auth: invoiceninjaAuth,
   name: 'stop_recurring_invoice',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Pause Recurring Invoice',
   description: 'Pause the schedule of a recurring invoice.',
   audience: 'ai',

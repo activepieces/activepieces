@@ -16,9 +16,11 @@ Create Task, Check Task Existence, Get Client Details from e-mail, Get Invoices,
 
 Several single-line inputs (client name and address, task number, client email, recurring invoice ID) moved from long text to short text, Private Notes moved to long text, and Invoice Discount is now a number, and the Client ID text box on Get Invoices and Get Report is now a Client dropdown. Values saved by older steps still parse. The API token is now a secret and the connection is checked when it is saved.
 
+TLS certificates are now checked on every request. A self-hosted Invoice Ninja server with a self-signed or expired certificate fails after the upgrade.
+
 #### What you need to do
 
-If a later step reads Get Report's output, map it to `rows` and `columns`. Agents that used the builder actions as tools switch to the twins above. Steps keep running on the version they were built with until you upgrade them.
+If a later step reads Get Report's output, map it to `rows` and `columns`. If you self-host Invoice Ninja with a self-signed certificate, give the server a certificate from a trusted authority (for example Let's Encrypt). Agents that used the builder actions as tools switch to the twins above. Steps keep running on the version they were built with until you upgrade them.
 
 #### Retell AI 0.3.0: New Call fires only when a call starts, and webhooks must be signed
 

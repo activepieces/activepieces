@@ -99,12 +99,12 @@ export const createPayment = createAction({
 export const refundPayment = createAction({
   auth: invoiceninjaAuth,
   name: 'refund_payment',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Refund Payment',
   description: 'Record a refund of a payment in Invoice Ninja (no money is moved at a payment gateway).',
   audience: 'ai',
   aiMetadata: {
-    description: 'Records a refund on an Invoice Ninja payment: amount (default: everything not yet refunded) is taken back from the invoices the payment was applied to, oldest allocation first, and their balances reopen. It never refunds through a payment gateway and sends no email. Not idempotent: each call refunds again until nothing is left.',
+    description: 'Records a refund on an Invoice Ninja payment: amount (default: everything not yet refunded) is taken back from the invoices the payment was applied to, oldest allocation first, and their balances reopen. If part of the payment is unapplied credit, refund the invoice part first; the call fails with the amounts to use, and a second call refunds the credit. It never refunds through a payment gateway and sends no email. Not idempotent: each call refunds again until nothing is left.',
     idempotent: false,
   },
   outputSchema: invoiceNinjaOutputSchemas.payment,
@@ -122,7 +122,20 @@ export const refundPayment = createAction({
     if (available <= 0) throw new Error(`Payment ${id} is already fully refunded.`);
     if (amount > available) throw new Error(`Amount ${amount} is more than the refundable ${available} of payment ${id}.`);
     const invoices = allocate({ paymentables: invoiceNinjaClient.arrayOf(payment['paymentables']), amount });
-    const body = { id, amount, date: new Date().toISOString().slice(0, 10), gateway_refund: false, send_email: false, invoices };
+    const allocated = round(invoices.reduce((sum, row) => sum + row.amount, 0));
+    if (invoices.length > 0 && allocated < amount) {
+      throw new Error(
+        `Payment ${id} has only ${allocated} left on its invoices; the other ${round(available - allocated)} is unapplied credit. Refund ${allocated} first, then call again for the credit.`,
+      );
+    }
+    const body = invoiceNinjaClient.compact({
+      id,
+      amount,
+      date: new Date().toISOString().slice(0, 10),
+      gateway_refund: false,
+      send_email: false,
+      invoices: invoices.length > 0 ? invoices : undefined,
+    });
     return invoiceNinjaClient.recordOf(
       await invoiceNinjaClient.request({ auth: auth.props, method: HttpMethod.POST, path: '/payments/refund', body }),
     );

@@ -108,7 +108,7 @@ export const updateClient = createAction({
 export const archiveClient = createAction({
   auth: invoiceninjaAuth,
   name: 'archive_client',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Client',
   description: 'Archive a client (hidden from lists, can be restored).',
   audience: 'ai',

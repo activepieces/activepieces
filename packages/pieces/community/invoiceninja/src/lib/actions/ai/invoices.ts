@@ -195,7 +195,7 @@ export const markInvoicePaid = createAction({
 export const archiveInvoice = createAction({
   auth: invoiceninjaAuth,
   name: 'archive_invoice',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Invoice',
   description: 'Archive an invoice (can be restored).',
   audience: 'ai',
