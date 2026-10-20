@@ -356,10 +356,10 @@ describe('human actions keep raw output', () => {
     await run({ action: findAds, propsValue: { niches: ['technology', 'food', 'travel', 'finance', 'sports', 'automotive', 'beauty'] } });
     expect(urlOf(spy).searchParams.getAll('niches')).toEqual(['app/software', 'food/drink', 'beauty']);
   });
-  it('findAds with only retired niches sends no niche filter', async () => {
+  it('findAds with only retired niches throws naming them', async () => {
     const spy = mock(ok([]));
-    await run({ action: findAds, propsValue: { niches: ['travel', 'sports'] } });
-    expect(urlOf(spy).searchParams.has('niches')).toBe(false);
+    await expect(run({ action: findAds, propsValue: { niches: ['travel', 'sports'] } })).rejects.toThrow('"travel", "sports" are no longer supported');
+    expect(spy).not.toHaveBeenCalled();
   });
   it('every niche offered on 0.1.9 is still a dropdown option', () => {
     const offered = JSON.stringify(findAds.props['niches']);
@@ -572,11 +572,42 @@ describe('triggers', () => {
     expect(Object.fromEntries(urlOf(spy).searchParams)).toEqual({ order: 'saved_newest', limit: '5', offset: '0' });
     expect(out).toEqual([rawAd('s1')]);
   });
-  it('onDisable clears state', async () => {
+  it('onDisable keeps state', async () => {
     const store = memoryStore();
     await store.put('foreplay_seen_ad_ids', ['x']);
     await call({ target: newAdInSpyder, method: 'onDisable', args: triggerArgs({ store, propsValue: {} }) });
-    expect(store.data.size).toBe(0);
+    expect(store.data.get('foreplay_seen_ad_ids')).toEqual(['x']);
+  });
+  it('onDisable then onEnable on a republish keeps the seen list and backlog', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', ['x']);
+    await store.put('foreplay_backlog_cursor', { cursor: 'c1' });
+    const spy = mock(ok([rawAd('n1')]));
+    await call({ target: newAdInSpyder, method: 'onDisable', args: triggerArgs({ store, propsValue: { brand_id: 'br1' } }) });
+    await call({ target: newAdInSpyder, method: 'onEnable', args: { ...triggerArgs({ store, propsValue: { brand_id: 'br1' } }), isRepublish: true } });
+    expect(spy).not.toHaveBeenCalled();
+    expect(store.data.get('foreplay_seen_ad_ids')).toEqual(['x']);
+    expect(store.data.get('foreplay_backlog_cursor')).toEqual({ cursor: 'c1' });
+  });
+  it('onEnable on a republish with no seen list seeds', async () => {
+    const store = memoryStore();
+    mock(ok([rawAd('n1')]));
+    await call({ target: newAdInSpyder, method: 'onEnable', args: { ...triggerArgs({ store, propsValue: { brand_id: 'br1' } }), isRepublish: true } });
+    expect(store.data.get('foreplay_seen_ad_ids')).toEqual(['n1']);
+  });
+  it('onEnable without republish reseeds', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', ['x']);
+    mock(ok([rawAd('n1')]));
+    await call({ target: newAdInSpyder, method: 'onEnable', args: triggerArgs({ store, propsValue: { brand_id: 'br1' } }) });
+    expect(store.data.get('foreplay_seen_ad_ids')).toEqual(['n1']);
+  });
+  it('board events carry title from the ad name', async () => {
+    const store = memoryStore();
+    await store.put('foreplay_seen_ad_ids', ['old']);
+    mock(ok([{ ...rawAd('n1'), name: 'Ad N1' }, rawAd('old')]));
+    const out = await call({ target: newAdInBoard, method: 'run', args: triggerArgs({ store, propsValue: { board_id: 'bd1' } }) });
+    expect(out).toMatchObject([{ id: 'n1', title: 'Ad N1', board_id: 'bd1' }]);
   });
   it('rejects a page size above 50', async () => {
     const store = memoryStore();

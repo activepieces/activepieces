@@ -14,8 +14,14 @@ function fetcher({ auth, propsValue }: { auth: ForeplayAuthInput; propsValue: Re
   return async ({ limit, cursor }: { limit: number | undefined; cursor: string | undefined }) => {
     const size = limit ?? pageSize;
     const page = await foreplayPolling.fetchAdPage({ auth, path: '/api/board/ads', query: { board_id: boardId, ...filters, order: 'newest', limit: size, cursor }, pageSize: size });
-    return { ...page, ads: page.ads.map((ad) => ({ ...foreplayMappers.recordOf(ad), board_id: boardId })) };
+    return { ...page, ads: page.ads.map((ad) => withBoard({ ad, boardId })) };
   };
+}
+
+function withBoard({ ad, boardId }: { ad: unknown; boardId: string }) {
+  const record = foreplayMappers.recordOf(ad);
+  const title = foreplayMappers.str(record['title']) ?? foreplayMappers.str(record['name']);
+  return { ...record, title, board_id: boardId };
 }
 
 const newAdInBoard = createTrigger({
@@ -28,8 +34,8 @@ const newAdInBoard = createTrigger({
   },
   classification: 'READ',
   type: TriggerStrategy.POLLING,
-  sampleData: { ...sampleAd, board_id: 'aBcD1234EfGh5678' },
-  outputSchema: foreplayOutputSchemas.rawAd,
+  sampleData: { ...sampleAd, title: sampleAd.name, board_id: 'aBcD1234EfGh5678' },
+  outputSchema: foreplayOutputSchemas.boardAd,
   props: {
     board_id: Property.Dropdown({
       auth: foreplayCoAuth,
@@ -56,11 +62,11 @@ const newAdInBoard = createTrigger({
     polling_interval: foreplayPolling.legacyPollingIntervalProp(),
     ...foreplayProps.humanAdFilterProps({ withDates: false }),
   },
-  async onEnable({ auth, propsValue, store }) {
-    await foreplayPolling.seed({ store, fetchAds: fetcher({ auth, propsValue }) });
+  async onEnable({ auth, propsValue, store, isRepublish }) {
+    await foreplayPolling.seed({ store, fetchAds: fetcher({ auth, propsValue }), isRepublish });
   },
-  async onDisable({ store }) {
-    await foreplayPolling.clear(store);
+  async onDisable() {
+    return;
   },
   async test({ auth, propsValue }) {
     return foreplayPolling.testAds({ fetchAds: fetcher({ auth, propsValue }) });

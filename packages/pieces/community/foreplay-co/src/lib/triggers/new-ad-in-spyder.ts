@@ -58,11 +58,11 @@ const newAdInSpyder = createTrigger({
     polling_interval: foreplayPolling.legacyPollingIntervalProp(),
     ...foreplayProps.humanAdFilterProps({ withDates: false }),
   },
-  async onEnable({ auth, propsValue, store }) {
-    await foreplayPolling.seed({ store, fetchAds: fetcher({ auth, propsValue }) });
+  async onEnable({ auth, propsValue, store, isRepublish }) {
+    await foreplayPolling.seed({ store, fetchAds: fetcher({ auth, propsValue }), isRepublish });
   },
-  async onDisable({ store }) {
-    await foreplayPolling.clear(store);
+  async onDisable() {
+    return;
   },
   async test({ auth, propsValue }) {
     return foreplayPolling.testAds({ fetchAds: fetcher({ auth, propsValue }) });

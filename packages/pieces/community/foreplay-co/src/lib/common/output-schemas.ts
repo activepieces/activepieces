@@ -259,6 +259,7 @@ const foreplayOutputSchemas = {
   } satisfies OutputSchema,
   rawAds: { itemLabel: '{name}', fields: rawAdFields } satisfies OutputSchema,
   rawAd: { fields: rawAdFields } satisfies OutputSchema,
+  boardAd: { fields: [...rawAdFields, { key: 'title', label: 'Title' }, { key: 'board_id', label: 'Board ID' }] } satisfies OutputSchema,
   rawBrands: { itemLabel: '{name}', fields: rawBrandFields } satisfies OutputSchema,
   rawBoards: { itemLabel: '{name}', fields: rawBoardFields } satisfies OutputSchema,
 };

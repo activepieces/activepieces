@@ -107,14 +107,19 @@ function enumList({ value, label, allowed, aliases, dropped }: { value: unknown;
   const list = stringList({ value, label });
   if (list === undefined) return undefined;
   const out: string[] = [];
+  const droppedUsed: string[] = [];
   for (const v of list) {
     const lower = v.toLowerCase();
-    if (dropped?.includes(lower)) continue;
+    if (dropped?.includes(lower)) {
+      droppedUsed.push(v);
+      continue;
+    }
     const mapped = aliases?.[lower] ?? lower;
     if (!allowed.includes(mapped)) throw new Error(`${label}: "${v}" is not supported. Use one of: ${allowed.join(', ')}.`);
     out.push(mapped);
   }
   const unique = [...new Set(out)];
+  if (unique.length === 0 && droppedUsed.length > 0) throw new Error(`${label}: ${droppedUsed.map((v) => `"${v}"`).join(', ')} ${droppedUsed.length === 1 ? 'is' : 'are'} no longer supported by Foreplay, so this filter would match every ad. Pick one of: ${allowed.join(', ')}, or clear the filter.`);
   return unique.length === 0 ? undefined : unique;
 }
 

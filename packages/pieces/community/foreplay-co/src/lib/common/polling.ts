@@ -115,7 +115,8 @@ function idsOf(ads: unknown[]): string[] {
   return ads.map(idOf).filter((id): id is string => id !== null);
 }
 
-async function seed({ store, fetchAds }: { store: Store; fetchAds: FetchAds }): Promise<void> {
+async function seed({ store, fetchAds, isRepublish = false }: { store: Store; fetchAds: FetchAds; isRepublish?: boolean }): Promise<void> {
+  if (isRepublish && (await seenIds(store)) !== null) return;
   const { ads } = await fetchAds({ limit: undefined, cursor: undefined });
   await store.put(SEEN_KEY, idsOf(ads).slice(0, MAX_SEEN));
   await store.delete(LEGACY_LAST_POLL_KEY);
@@ -182,12 +183,6 @@ async function testAds({ fetchAds }: { fetchAds: FetchAds }): Promise<unknown[]>
   return ads;
 }
 
-async function clear(store: Store): Promise<void> {
-  await store.delete(SEEN_KEY);
-  await store.delete(LEGACY_LAST_POLL_KEY);
-  await store.delete(BACKLOG_KEY);
-}
-
 async function fetchAdPage({ auth, path, query, pageSize }: { auth: ForeplayAuthInput; path: string; query: ForeplayQuery; pageSize: number }): Promise<AdPage> {
   const response = await foreplayClient.request({ auth, path, query });
   const ads = foreplayMappers.listOf(response.body);
@@ -215,7 +210,6 @@ const foreplayPolling = {
   seed,
   pollNewAds,
   testAds,
-  clear,
   fetchAdPage,
   MAX_POLL_PAGES,
 };
