@@ -43,6 +43,15 @@ export const calendarEventChanged = createTrigger({
 	aiMetadata: {
 		description: 'Fires when any event in the selected calendar is created or modified, polling by last-updated time. Each fired item is the affected event; can optionally expand recurring events so every occurrence fires separately.',
 	},
+	propertyGroups: [
+		{
+			key: 'calendar',
+			display: 'section',
+			label: 'Calendar',
+			icon: 'calendar',
+			props: ['calendar_id', 'expandRecurringEvent'],
+		},
+	],
 	props: {
 		calendar_id: googleCalendarCommon.calendarDropdown(),
 		expandRecurringEvent: Property.Checkbox({

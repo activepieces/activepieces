@@ -39,6 +39,8 @@ import { youtubeListCommentThreadsAction } from './lib/actions/list-comment-thre
 import { youtubeListCaptionTracksAction } from './lib/actions/list-caption-tracks';
 import { youtubeDownloadCaptionTrackAction } from './lib/actions/download-caption-track';
 
+const youtubeApiBaseUrl = 'https://www.googleapis.com/youtube/v3';
+
 export const youtube = createPiece({
   displayName: 'YouTube',
   description:
@@ -89,11 +91,21 @@ export const youtube = createPiece({
     youtubeListCaptionTracksAction,
     youtubeDownloadCaptionTrackAction,
     createCustomApiCallAction({
-      baseUrl: () => 'https://www.googleapis.com/youtube/v3',
+      baseUrl: () => youtubeApiBaseUrl,
       auth: youtubeAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${youtubeApiBaseUrl}`,
+          placeholder: '/channels?part=snippet&mine=true',
+        },
+        queryParams: {
+          description:
+            'Sent as ?key=value. Most YouTube calls need part, like part=snippet.',
+        },
+      },
     }),
   ],
   triggers: [youtubeNewVideoTrigger],

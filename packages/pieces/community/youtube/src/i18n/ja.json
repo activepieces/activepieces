@@ -276,5 +276,8 @@
   "List Playlist Videos": "List Playlist Videos",
   "List Comment Threads": "List Comment Threads",
   "List Caption Tracks": "List Caption Tracks",
-  "Download Caption Track": "Download Caption Track"
+  "Download Caption Track": "Download Caption Track",
+  "Fill in Playlist ID or Item IDs, not both.": "「プレイリストID」か「アイテムID」のどちらか一方だけを入力してください。",
+  "Fill in Channel ID or Handle.": "「チャンネル ID」または「取扱先」を入力してください。",
+  "Sent as ?key=value. Most YouTube calls need part, like part=snippet.": "?key=value の形式で送信されます。YouTube の多くの呼び出しでは part（例: part=snippet）が必要です。"
 }
