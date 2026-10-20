@@ -28,6 +28,13 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
         return workerGroupId
     },
 
+    async invalidateMany({ flowIds }: { flowIds: string[] }): Promise<void> {
+        if (flowIds.length === 0) {
+            return
+        }
+        await distributedStore.delete(flowIds.map(getFlowWorkerGroupCacheKey))
+    },
+
     async invalidate({ flowId }: { flowId: string }): Promise<void> {
         await distributedStore.delete(getFlowWorkerGroupCacheKey(flowId))
     },

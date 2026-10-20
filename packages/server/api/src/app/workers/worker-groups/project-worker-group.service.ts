@@ -35,6 +35,13 @@ export const projectWorkerGroupService = (log: FastifyBaseLogger) => ({
         return projects.map((p) => p.id)
     },
 
+    async invalidateMany({ projectIds }: { projectIds: string[] }): Promise<void> {
+        if (projectIds.length === 0) {
+            return
+        }
+        await distributedStore.delete(projectIds.map(getProjectWorkerGroupCacheKey))
+    },
+
     async invalidate({ projectId }: { projectId: string }): Promise<void> {
         await distributedStore.delete(getProjectWorkerGroupCacheKey(projectId))
     },

@@ -33,9 +33,23 @@ export const platformQueueMigrationService = (log: FastifyBaseLogger) => ({
 
         await migrateRegularJobs({ sourceQueue, targetQueue, batchSize, belongsTo: job => job.data?.flowId === flowId && PROJECT_GROUP_ROUTABLE_JOB_TYPES.has(job.data?.jobType) })
     },
+    async migrateAssignmentJobs({ fromQueueName, toQueueName, projectIds, flowIds, batchSize = 200 }: MigrateAssignmentJobsParams): Promise<string[]> {
+        if (fromQueueName === toQueueName || (projectIds.size === 0 && flowIds.size === 0)) {
+            return []
+        }
+        const sourceQueue = await jobQueue(log).getOrCreateQueue({ queueName: fromQueueName })
+        const targetQueue = await jobQueue(log).getOrCreateQueue({ queueName: toQueueName })
+        return migrateRegularJobs({
+            sourceQueue,
+            targetQueue,
+            batchSize,
+            belongsTo: job => PROJECT_GROUP_ROUTABLE_JOB_TYPES.has(job.data?.jobType) && (projectIds.has(job.data?.projectId) || flowIds.has(job.data?.flowId)),
+        })
+    },
 })
 
-async function migrateRegularJobs({ sourceQueue, targetQueue, belongsTo, batchSize }: MigrateRegularJobsParams): Promise<void> {
+async function migrateRegularJobs({ sourceQueue, targetQueue, belongsTo, batchSize }: MigrateRegularJobsParams): Promise<string[]> {
+    const movedJobIds: string[] = []
     for (const state of ['waiting', 'prioritized', 'delayed', 'paused'] as const) {
         let offset = 0
         while (true) {
@@ -46,6 +60,7 @@ async function migrateRegularJobs({ sourceQueue, targetQueue, belongsTo, batchSi
 
             const matchedJobs = jobs.filter(job => belongsTo(job) && !job.repeatJobKey)
             const skipped = jobs.length - matchedJobs.length
+            movedJobIds.push(...matchedJobs.flatMap(job => isNil(job.id) ? [] : [job.id]))
 
             await Promise.all(matchedJobs.map(async (job) => {
                 if (isNil(job.id)) {
@@ -71,6 +86,7 @@ async function migrateRegularJobs({ sourceQueue, targetQueue, belongsTo, batchSi
             }
         }
     }
+    return movedJobIds
 }
 
 async function migrateSchedulers({ sourceQueue, targetQueue, platformId, batchSize, log }: MigrateQueueParams & { log: FastifyBaseLogger }): Promise<void> {
@@ -191,6 +207,14 @@ type MigrateFlowJobsParams = {
     fromQueueName: string
     toQueueName: string
     flowId: string
+    batchSize?: number
+}
+
+type MigrateAssignmentJobsParams = {
+    fromQueueName: string
+    toQueueName: string
+    projectIds: Set<string>
+    flowIds: Set<string>
     batchSize?: number
 }
 

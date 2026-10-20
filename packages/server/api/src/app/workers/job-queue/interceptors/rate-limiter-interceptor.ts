@@ -93,6 +93,10 @@ async function getMaxConcurrentJobs({ poolId, platformId, projectId, log }: { po
         return planLimit
     }
     const slots = await resolveRoutedPoolSlots({ platformId, projectId, log })
+    return limitWithinSlots({ planLimit, slots })
+}
+
+function limitWithinSlots({ planLimit, slots }: { planLimit: number, slots: number }): number {
     return slots > 0 ? Math.min(planLimit, slots) : planLimit
 }
 
@@ -269,5 +273,18 @@ export const rateLimiterInterceptor: JobInterceptor = {
         if (error) {
             log.warn({ pool: { id: effectivePoolId }, error: String(error) }, '[rateLimiterInterceptor] Failed to promote parked job')
         }
+    },
+}
+
+export const projectConcurrencyDefaults = {
+    async resolver({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<(projectWorkerGroupId: string | null) => number> {
+        const [planLimit, { projectGroups, shared }] = await Promise.all([
+            getMaxConcurrentJobsForPlatformPlan({ platformId, log }),
+            workerCapacity.get(),
+        ])
+        return (projectWorkerGroupId) => limitWithinSlots({
+            planLimit,
+            slots: isNil(projectWorkerGroupId) ? shared.slots : projectGroups.get(projectWorkerGroupId)?.slots ?? 0,
+        })
     },
 }
