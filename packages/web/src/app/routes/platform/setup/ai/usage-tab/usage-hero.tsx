@@ -203,8 +203,14 @@ export function UsageLineChart({
           hide={compact}
           tickLine={false}
           axisLine={false}
-          width={56}
-          tick={{ fill: 'var(--gray-11)', fontSize: 12 }}
+          width={Y_AXIS_WIDTH}
+          tickMargin={0}
+          tick={{
+            fill: 'var(--gray-11)',
+            fontSize: 12,
+            textAnchor: 'start',
+            dx: -Y_AXIS_WIDTH,
+          }}
           tickFormatter={(value: number) =>
             usageFormat.metricValue({ metric, value })
           }
@@ -396,6 +402,7 @@ function TooltipRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+const Y_AXIS_WIDTH = 56;
 const PREVIOUS_BAR_COLOR = 'var(--gray-6)';
 const CHART_TYPES: UsageChartType[] = ['line', 'bar'];
 
