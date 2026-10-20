@@ -2,6 +2,32 @@ import { DropdownState, Property } from '@activepieces/pieces-framework';
 import { pdfmonkeyAuth } from './auth';
 import { pdfmonkeyOperations } from './operations';
 
+async function dropdown({
+  auth,
+  load,
+}: {
+  auth: unknown;
+  load: () => Promise<{ options: { label: string; value: string }[]; truncated: boolean }>;
+}): Promise<DropdownState<string>> {
+  if (!auth) {
+    return { disabled: true, options: [], placeholder: 'Connect your PDFMonkey account first.' };
+  }
+  try {
+    const { options, truncated } = await load();
+    return {
+      disabled: false,
+      options,
+      placeholder: options.length === 0 ? 'Nothing found in this account.' : truncated ? `Showing the first ${options.length}; map an ID instead.` : 'Select one',
+    };
+  } catch (error) {
+    return { disabled: true, options: [], placeholder: `Could not load the list: ${error instanceof Error ? error.message : 'unknown error'}` };
+  }
+}
+
+function text(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
 export const templateIdDropdown = Property.Dropdown({
   displayName: 'Template ID',
   auth: pdfmonkeyAuth,
@@ -74,29 +100,3 @@ export const fileNameProp = Property.ShortText({
   description: 'Name of the generated file, e.g. "Invoice 2026-001.pdf". Stored as the _filename meta key.',
   required: false,
 });
-
-async function dropdown({
-  auth,
-  load,
-}: {
-  auth: unknown;
-  load: () => Promise<{ options: { label: string; value: string }[]; truncated: boolean }>;
-}): Promise<DropdownState<string>> {
-  if (!auth) {
-    return { disabled: true, options: [], placeholder: 'Connect your PDFMonkey account first.' };
-  }
-  try {
-    const { options, truncated } = await load();
-    return {
-      disabled: false,
-      options,
-      placeholder: options.length === 0 ? 'Nothing found in this account.' : truncated ? `Showing the first ${options.length}; map an ID instead.` : 'Select one',
-    };
-  } catch (error) {
-    return { disabled: true, options: [], placeholder: `Could not load the list: ${error instanceof Error ? error.message : 'unknown error'}` };
-  }
-}
-
-function text(value: unknown): string {
-  return typeof value === 'string' ? value : '';
-}

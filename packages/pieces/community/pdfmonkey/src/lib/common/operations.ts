@@ -2,6 +2,8 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pdfmonkeyClient, PdfmonkeyApiError } from './client';
 
 const MAX_LIST_PAGES = 20;
+const POLL_INTERVAL_MS = 3000;
+const AI_MAX_WAIT_MS = 240000;
 const DOCUMENT_STATUSES = ['draft', 'pending', 'generating', 'success', 'failure'];
 
 async function createDocument({
@@ -12,6 +14,7 @@ async function createDocument({
   filename,
   status,
   waitForCompletion,
+  maxWaitMs,
 }: {
   auth: unknown;
   templateId: unknown;
@@ -20,6 +23,7 @@ async function createDocument({
   filename?: unknown;
   status?: unknown;
   waitForCompletion?: boolean;
+  maxWaitMs?: number;
 }): Promise<Record<string, unknown>> {
   const document_template_id = requiredText({ value: templateId, label: 'Template ID' });
   const parsedPayload = jsonObject({ value: payload, label: 'Payload' }) ?? {};
@@ -27,6 +31,16 @@ async function createDocument({
   const finalStatus = waitForCompletion ? 'pending' : createStatus(status);
   const document: Record<string, unknown> = { document_template_id, status: finalStatus, payload: parsedPayload };
   if (mergedMeta !== undefined) document['meta'] = mergedMeta;
+  if (waitForCompletion && maxWaitMs !== undefined) {
+    const response = await pdfmonkeyClient.request<Record<string, unknown>>({
+      auth,
+      method: HttpMethod.POST,
+      path: '/documents',
+      body: { document },
+    });
+    const created = unwrap({ body: response.body, key: 'document' });
+    return waitForDocument({ auth, documentId: created['id'], deadline: Date.now() + maxWaitMs });
+  }
   if (waitForCompletion) {
     const response = await pdfmonkeyClient.request<Record<string, unknown>>({
       auth,
@@ -37,8 +51,7 @@ async function createDocument({
     });
     const card = unwrap({ body: response.body, key: 'document_card' });
     if (card['status'] === 'failure') {
-      const cause = typeof card['failure_cause'] === 'string' && card['failure_cause'] ? card['failure_cause'] : 'no reason given';
-      throw new Error(`PDFMonkey could not generate document ${String(card['id'])}: ${cause}.`);
+      throw new Error(`PDFMonkey could not generate document ${String(card['id'])}: ${failureCause(card)}.`);
     }
     return card;
   }
@@ -49,6 +62,19 @@ async function createDocument({
     body: { document },
   });
   return unwrap({ body: response.body, key: 'document' });
+}
+
+async function waitForDocument({ auth, documentId, deadline }: { auth: unknown; documentId: unknown; deadline: number }): Promise<Record<string, unknown>> {
+  for (;;) {
+    const card = await getDocumentCard({ auth, documentId });
+    if (card['status'] === 'failure') {
+      throw new Error(`PDFMonkey could not generate document ${String(card['id'])}: ${failureCause(card)}.`);
+    }
+    if (card['status'] === 'success' || Date.now() + POLL_INTERVAL_MS > deadline) {
+      return card;
+    }
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
 }
 
 async function updateDocument({
@@ -267,6 +293,10 @@ function unwrap({ body, key }: { body: unknown; key: string }): Record<string, u
   return value;
 }
 
+function failureCause(card: Record<string, unknown>): string {
+  return typeof card['failure_cause'] === 'string' && card['failure_cause'] ? card['failure_cause'] : 'no reason given';
+}
+
 function arrayOf(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? value.filter(pdfmonkeyClient.isRecord) : [];
 }
@@ -376,6 +406,7 @@ export const pdfmonkeyOperations = {
   getTemplate,
   getCurrentUser,
   parseMeta,
+  AI_MAX_WAIT_MS,
 };
 
 type DocumentCard = Record<string, unknown>;

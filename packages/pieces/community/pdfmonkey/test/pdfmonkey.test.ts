@@ -81,6 +81,50 @@ describe('createDocument', () => {
   });
 });
 
+describe('createDocument with an agent deadline', () => {
+  it('queues the document, polls it, and returns the finished card', async () => {
+    vi.useFakeTimers();
+    let polls = 0;
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.method === 'POST') return { status: 200, headers: {}, body: { document: { id: 'doc-1', status: 'pending' } } };
+      polls += 1;
+      return { status: 200, headers: {}, body: { document_card: polls < 2 ? { ...CARD, status: 'generating' } : CARD } };
+    });
+    const pending = pdfmonkeyOperations.createDocument({ auth, templateId: 'tpl-1', payload: {}, waitForCompletion: true, maxWaitMs: pdfmonkeyOperations.AI_MAX_WAIT_MS });
+    await vi.advanceTimersByTimeAsync(10000);
+    const result = await pending;
+    expect(result['status']).toBe('success');
+    expect(polls).toBe(2);
+    vi.useRealTimers();
+  });
+
+  it('returns the document ID and current status when the deadline passes', async () => {
+    vi.useFakeTimers();
+    const urls: string[] = [];
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      urls.push(request.url);
+      if (request.method === 'POST') return { status: 200, headers: {}, body: { document: { id: 'doc-1', status: 'pending' } } };
+      return { status: 200, headers: {}, body: { document_card: { ...CARD, status: 'generating', download_url: null } } };
+    });
+    const pending = pdfmonkeyOperations.createDocument({ auth, templateId: 'tpl-1', payload: {}, waitForCompletion: true, maxWaitMs: pdfmonkeyOperations.AI_MAX_WAIT_MS });
+    await vi.advanceTimersByTimeAsync(pdfmonkeyOperations.AI_MAX_WAIT_MS + 10000);
+    const result = await pending;
+    expect(result).toMatchObject({ id: 'doc-1', status: 'generating' });
+    expect(urls[0]).toBe('https://api.pdfmonkey.io/api/v1/documents');
+    expect(urls.some((url) => url.includes('/documents/sync'))).toBe(false);
+    expect(pdfmonkeyOperations.AI_MAX_WAIT_MS).toBeLessThan(5 * 60 * 1000);
+    vi.useRealTimers();
+  });
+
+  it('fails with the cause when generation fails while polling', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.method === 'POST') return { status: 200, headers: {}, body: { document: { id: 'doc-1', status: 'pending' } } };
+      return { status: 200, headers: {}, body: { document_card: { ...CARD, status: 'failure', failure_cause: 'Liquid error' } } };
+    });
+    await expect(pdfmonkeyOperations.createDocument({ auth, templateId: 'tpl-1', payload: {}, waitForCompletion: true, maxWaitMs: 1000 })).rejects.toThrow('Liquid error');
+  });
+});
+
 describe('updateDocument', () => {
   it('keeps the other meta keys when only the file name changes', async () => {
     const calls = mockRoutes([

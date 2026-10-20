@@ -13,7 +13,7 @@ export const generateDocumentAiAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Generates a PDF (or image) in PDFMonkey from a template ID and a JSON payload, with optional meta and file name. By default it waits (up to 7 minutes) and returns the finished document with status "success" and its download URL (valid 1 hour); set wait_for_completion=false to only queue it and poll Get Document. Get the template ID from List Templates and the expected payload fields from Get Template. Every call creates a new document.',
+      'Generates a PDF (or image) in PDFMonkey from a template ID and a JSON payload, with optional meta and file name. By default it waits up to 4 minutes and returns the finished document with status "success" and its download URL (valid 1 hour). If it is still "pending" or "generating" after 4 minutes, it returns the document ID with that status instead of failing: call Get Document (AI) with that ID later rather than generating again; set wait_for_completion=false to only queue it and poll Get Document (AI). Get the template ID from List Templates and the expected payload fields from Get Template. Every call creates a new document.',
     idempotent: false,
   },
   outputSchema: pdfmonkeySchemas.document,
@@ -24,7 +24,7 @@ export const generateDocumentAiAction = createAction({
     file_name: fileNameProp,
     wait_for_completion: Property.Checkbox({
       displayName: 'Wait for Completion',
-      description: 'Wait until the file is generated and return its download URL.',
+      description: 'Wait up to 4 minutes for the file and return its download URL; if it is not ready by then, return the document ID and current status.',
       required: false,
       defaultValue: true,
     }),
@@ -38,6 +38,7 @@ export const generateDocumentAiAction = createAction({
       filename: propsValue.file_name,
       status: 'pending',
       waitForCompletion: propsValue.wait_for_completion !== false,
+      maxWaitMs: pdfmonkeyOperations.AI_MAX_WAIT_MS,
     });
   },
 });
