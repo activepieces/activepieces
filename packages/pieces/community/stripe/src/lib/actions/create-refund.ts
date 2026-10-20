@@ -20,6 +20,15 @@ export const stripeCreateRefund = createAction({
       'Issues a refund against a payment identified by its PaymentIntent ID; refunds the full amount by default, or a partial amount if one is given, with an optional reason. Use to return funds to a customer for a captured payment. Not idempotent: each call creates a new refund and moves money again.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'refund',
+      display: 'section',
+      label: 'Refund',
+      icon: 'tag',
+      props: ['payment_intent', 'amount', 'reason'],
+    },
+  ],
   props: {
     payment_intent: stripeCommon.paymentIntent, 
     amount: Property.Number({

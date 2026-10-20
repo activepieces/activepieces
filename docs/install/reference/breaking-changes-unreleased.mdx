@@ -8,6 +8,30 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Pdfcrowd 0.3.0: Convert URL to PDF and Convert HTML to PDF are builder-only
+
+Convert URL to PDF and Convert HTML to PDF are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
+
+#### What you need to do
+
+Agents that used these actions switch to Convert to PDF, which takes a URL or HTML. Flow steps keep running on the version they were built with until you upgrade them.
+
+#### Retell AI 0.3.0: New Call fires only when a call starts, and webhooks must be signed
+
+The **New Call** trigger used to run the flow on every Retell webhook event for a call (started, ended and analyzed), so one call could start the flow three times. From Retell AI 0.3.0 it runs once per call, on the `call_started` event. Deliveries are also checked against Retell's `X-Retell-Signature` header (signed with your API key), and unsigned, forged, stale or repeated deliveries are ignored.
+
+#### What you need to do
+
+To react to a finished call or its analysis, use the new **Call Ended** or **Call Analyzed** trigger. Make sure the API key in your connection is the one with the webhook badge in Retell, or deliveries will not pass the signature check. Steps keep running on the version they were built with until you upgrade them.
+
+#### WordPress Update Post keeps a post's categories and tags when those fields are empty
+
+Update Post used to send an empty list when **Categories** or **Tags** was cleared or mapped to an empty list. WordPress then reset the post to the default category and removed all of its tags. From WordPress 0.9.0, an empty Categories or Tags field leaves the post's current categories and tags as they are, like every other empty field on the form. Steps keep running on the version they were built with until you upgrade them.
+
+#### What you need to do
+
+Nothing for most flows. If a flow cleared a post's tags or categories by sending an empty list, it no longer does: pick the categories to keep instead, or use the Custom API Call with `POST /posts/<id>` and `{"tags": []}` in the body.
+
 #### Background migrations need a dedicated Postgres role when a `statement_timeout` applies
 
 The app's background migration track (slow data backfills, `CREATE INDEX CONCURRENTLY`, `DROP INDEX CONCURRENTLY`) runs through whichever database connection the app itself uses. When a `statement_timeout` applies to that connection, every long DDL statement a background migration issues is cancelled at that cap and never completes. The retry loop leaves `INVALID` index artifacts behind that an `IF NOT EXISTS` on the next deploy silently skips.
