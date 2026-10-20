@@ -143,7 +143,7 @@ function parseTime(value: string | null): number | null {
 
 const MAX_POLL_PAGES = 10;
 const MAX_EMIT_PER_POLL = 100;
-const MAX_IDS_AT_LAST = 2000;
+const MAX_IDS_AT_LAST = 10000;
 
 export const bettermodePolling = {
   newestCheckpoint,

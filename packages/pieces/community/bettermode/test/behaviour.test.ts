@@ -748,7 +748,7 @@ describe('polling bursts larger than the page budget', () => {
     expect(await pollUntilQuiet({ store, polls: 3 })).toEqual([]);
   });
 
-  it.each([120, 250, 900])('fires each of %i posts sharing one timestamp exactly once when Bettermode lists them in ID order', async (burst) => {
+  it.each([120, 250, 900, 2500])('fires each of %i posts sharing one timestamp exactly once when Bettermode lists them in ID order', async (burst) => {
     const feed = fakePostFeed({ count: 0 });
     const store = makeStore();
     stubGraphql({ PollPosts: feed.handler });
