@@ -320,5 +320,6 @@
   "Note": "说明",
   "Task": "Task",
   "Meeting": "Meeting",
-  "Call": "Call"
+  "Call": "Call",
+  "Fields left empty keep their current value.": "留空的字段将保留其当前值。"
 }

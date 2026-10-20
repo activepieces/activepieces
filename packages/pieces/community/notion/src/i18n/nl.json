@@ -218,5 +218,7 @@
   "Triggers when an item is added to a database.": "Triggert wanneer een artikel is toegevoegd aan een database.",
   "Triggers when an item is updated in a database.": "Triggert wanneer een item wordt bijgewerkt in een database.",
   "Triggers when a comment is added to a page.": "Triggers when a comment is added to a page.",
-  "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited."
+  "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited.",
+  "Empty fields keep their current value. Checkboxes are always saved as shown.": "Lege velden behouden hun huidige waarde. Selectievakjes worden altijd opgeslagen zoals ze worden weergegeven.",
+  "Add Notion-Version, e.g. 2022-02-22. Authorization is added for you.": "Voeg Notion-Version toe, bijv. 2022-02-22. Autorisatie wordt automatisch toegevoegd."
 }

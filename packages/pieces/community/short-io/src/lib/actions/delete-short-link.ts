@@ -1,7 +1,8 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { shortIoApiCall } from '../common/client';
 import { shortIoAuth } from '../common/auth';
+import { shortIoClient } from '../common/client';
+import { shortIoSchemas } from '../common/output-schemas';
 
 export const deleteShortLinkAction = createAction({
   auth: shortIoAuth,
@@ -10,7 +11,12 @@ export const deleteShortLinkAction = createAction({
   displayName: 'Delete Short Link',
   description: 'Permanently delete a short link by its unique link ID.',
   audience: 'both',
-  aiMetadata: { description: 'Permanently deletes a short link identified by its link ID. Use to remove a link that is no longer needed. Not idempotent — repeating the call returns a not-found error once the link is already gone; this is destructive and cannot be undone.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Permanently deletes a short link identified by its link ID (lnk_…); the short URL stops working and this cannot be undone. Not idempotent: a repeat call fails with a not-found error once the link is gone (Delete Short Link (AI) reports alreadyDeleted instead).',
+    idempotent: false,
+  },
+  outputSchema: shortIoSchemas.legacyDelete,
   props: {
     linkId: Property.ShortText({
       displayName: 'Link ID',
@@ -19,50 +25,19 @@ export const deleteShortLinkAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const { linkId } = propsValue;
-
-    if (!linkId || linkId.trim() === '') {
-      throw new Error('Link ID is required and cannot be empty');
-    }
-
+    const linkId = shortIoClient.seg({ value: propsValue.linkId, label: 'Link ID' });
     try {
-      const response = await shortIoApiCall({
-        method: HttpMethod.DELETE,
-        auth,
-        resourceUri: `/links/${linkId}`,
-      });
-
+      const response = await shortIoClient.request({ method: HttpMethod.DELETE, auth, path: `/links/${linkId}` });
       return {
         success: true,
-        message: `Short link with ID ${linkId} deleted successfully`,
+        message: `Short link with ID ${propsValue.linkId.trim()} deleted successfully`,
         data: response,
       };
-    } catch (error: any) {
-      if (error.message.includes('400')) {
-        throw new Error(
-          'Invalid request. Please check the link ID format and try again.'
-        );
-      }
-      
-      if (error.message.includes('401') || error.message.includes('403')) {
-        throw new Error(
-          'Authentication failed. Please check your API key and permissions.'
-        );
-      }
-      
-      if (error.message.includes('404')) {
-        throw new Error(
-          `Short link with ID ${linkId} not found. It may have already been deleted.`
-        );
-      }
-      
-      if (error.message.includes('429')) {
-        throw new Error(
-          'Rate limit exceeded. Please wait a moment before trying again.'
-        );
-      }
-
-      throw new Error(`Failed to delete short link: ${error.message}`);
+    } catch (error) {
+      return shortIoClient.rethrowWithHint({
+        error,
+        hints: { 404: `Short link with ID ${propsValue.linkId.trim()} not found. It may have already been deleted.` },
+      });
     }
   },
 });

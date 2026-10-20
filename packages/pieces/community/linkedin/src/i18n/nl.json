@@ -33,5 +33,6 @@
   "None": "geen",
   "JSON": "JSON",
   "Form Data": "Formulieren gegevens",
-  "Raw": "Onbewerkte"
+  "Raw": "Onbewerkte",
+  "Calls to /rest/ need LinkedIn-Version: 202511 and X-Restli-Protocol-Version: 2.0.0. Authorization comes from your connection.": "Aanroepen naar /rest/ hebben LinkedIn-Version: 202511 en X-Restli-Protocol-Version: 2.0.0 nodig. Autorisatie komt uit uw verbinding."
 }

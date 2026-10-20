@@ -23,6 +23,15 @@ export const createProductAction = createAction({
         idempotent: false,
     },
     outputSchema: crmObjectOutputSchema,
+    propertyGroups: [
+        {
+            key: 'details',
+            display: 'section',
+            label: 'Details',
+            icon: 'text',
+            props: ['objectProperties'],
+        },
+    ],
     props: {
         objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.PRODUCT,[]),
         markdown: Property.MarkDown({

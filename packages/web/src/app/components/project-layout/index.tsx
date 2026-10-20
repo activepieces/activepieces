@@ -20,7 +20,7 @@ import {
   GlobalSearchProvider,
   useGlobalSearch,
 } from '../global-search/global-search-context';
-import { PrimaryRail } from '../primary-rail';
+import { AppSidebar } from '../sidebar/app-sidebar';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
 
@@ -139,18 +139,27 @@ function ProjectDashboardLayoutInner({
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
-      {!isEmbedded && <PrimaryRail />}
+    <div
+      className={cn(
+        'flex h-full w-full overflow-hidden',
+        !isEmbedded && 'max-md:h-svh max-md:flex-col',
+      )}
+    >
+      {!isEmbedded && <AppSidebar mode="app" />}
       <SidebarProvider
         defaultOpen={false}
         hoverMode={!searchOpen}
-        className="flex-1 min-w-0 w-auto will-change-transform"
+        keyboardShortcut={isEmbedded}
+        className={cn(
+          'flex-1 min-w-0 w-auto will-change-transform',
+          !isEmbedded && 'max-md:h-auto max-md:min-h-0',
+        )}
       >
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-gray-2">
           <div
             className={cn(
               'flex-1 flex flex-col overflow-hidden',
-              !isEmbedded && 'pr-2 pt-3 pb-3',
+              !isEmbedded && 'pr-2 pt-3 pb-3 max-md:pl-2 max-md:pt-2',
             )}
           >
             <div

@@ -1,8 +1,4 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/pieces-framework';
@@ -62,17 +58,6 @@ import { wooAiUpdateProductReview } from './lib/actions/ai/update-product-review
 import { wooAiUpdateProductVariation } from './lib/actions/ai/update-product-variation';
 import { triggers } from './lib/triggers';
 import { wooAuth } from './lib/auth';
-
-const authDescription = `
-To generate your API credentials, follow the steps below:
-1. Go to WooCommerce -> Settings -> Advanced tab -> REST API.
-2. Click on Add Key to create a new key.
-3. Enter the key description and change the permissions to Read/Write.
-4. Click Generate Key.
-5. Copy the Consumer Key and Consumer Secret into the fields below. You will not be able to view the Consumer Secret after exiting the page.
-
-Note that the base URL of your WooCommerce instance needs to be on a secure (HTTPS) connection, or the piece will not work even on local instances on the same device.
-`;
 
 export const woocommerce = createPiece({
   displayName: 'WooCommerce',
@@ -148,6 +133,12 @@ export const woocommerce = createPiece({
           }`
         ).toString('base64')}`,
       }),
+      props: {
+        url: {
+          description: "Full URL, or a path relative to your store's address.",
+          placeholder: '/wp-json/wc/v3/orders',
+        },
+      },
     }),
   ],
   triggers: triggers,

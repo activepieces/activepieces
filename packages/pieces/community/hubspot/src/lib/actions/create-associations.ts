@@ -20,6 +20,22 @@ export const createAssociationsAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Link one source HubSpot object (e.g. a company) to one or more target objects using a specific association type, batching the targets. Re-running with the same inputs re-applies the same association without creating duplicates. Use Remove Associations to undo a link.', idempotent: true },
 	outputSchema: createAssociationsOutputSchema,
+	propertyGroups: [
+		{
+			key: 'source',
+			display: 'section',
+			label: 'From Record',
+			icon: 'file',
+			props: ['fromObjectId', 'fromObjectType'],
+		},
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Records to Link',
+			icon: 'send',
+			props: ['toObjectType', 'associationType', 'toObjectIds'],
+		},
+	],
 	props: {
 		fromObjectId: Property.ShortText({
 			displayName: 'From Object ID',
