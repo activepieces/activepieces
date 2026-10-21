@@ -244,6 +244,7 @@ function FlatBento({
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+      <UsageSourceDonut className="lg:col-span-8" sources={overview.bySource} />
       <UsageTopList
         className="lg:col-span-4"
         dimension="project"
@@ -265,7 +266,6 @@ function FlatBento({
         totalUsd={overview.totals.spendUsd}
         search={view.search}
       />
-      <UsageSourceDonut className="lg:col-span-8" sources={overview.bySource} />
       <UsageTopList
         className="lg:col-span-4"
         dimension="user"
