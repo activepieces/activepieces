@@ -1,12 +1,13 @@
 import {
   WORKER_GROUP_BULK_ASSIGN_MAX_ITEMS,
-  chunk,
-  tryCatch,
   WorkerGroupFlowAssignmentPage,
+  WorkerGroupMoveResult,
   WorkerGroupProjectAssignmentPage,
   WorkerGroupScope,
   WorkerGroupSummary,
   WorkerGroupsOverview,
+  chunk,
+  tryCatch,
 } from '@activepieces/shared';
 import {
   keepPreviousData,
@@ -355,21 +356,34 @@ async function sendMovesInParts({
 }) {
   const done: MoveItem[] = [];
   let waiting = 0;
-  for (const part of chunk(items, WORKER_GROUP_BULK_ASSIGN_MAX_ITEMS)) {
-    const { data, error } = await tryCatch(() =>
-      workerGroupsApi.assign({
-        projects: part.filter((i) => i.kind === 'project').map((i) => i.id),
-        flows: part.filter((i) => i.kind === 'flow').map((i) => i.id),
-        workerGroupId: to,
-      }),
-    );
-    if (error) return { done, waiting, failed: true };
-    projectCollectionUtils.setWorkerGroup({
-      projectIds: part.filter((i) => i.kind === 'project').map((i) => i.id),
-      workerGroupId: to,
-    });
-    done.push(...part);
-    waiting += data.movedWaitingRuns;
+  const senders: MoveSender[] = [
+    {
+      kind: 'project',
+      send: (ids) =>
+        workerGroupsApi.assignProjects({ projects: ids, workerGroupId: to }),
+    },
+    {
+      kind: 'flow',
+      send: (ids) =>
+        workerGroupsApi.assignFlows({ flows: ids, workerGroupId: to }),
+    },
+  ];
+  for (const { kind, send } of senders) {
+    const kindItems = items.filter((item) => item.kind === kind);
+    for (const part of chunk(kindItems, WORKER_GROUP_BULK_ASSIGN_MAX_ITEMS)) {
+      const { data, error } = await tryCatch(() =>
+        send(part.map((item) => item.id)),
+      );
+      if (error) return { done, waiting, failed: true };
+      if (kind === 'project') {
+        projectCollectionUtils.setWorkerGroup({
+          projectIds: part.map((item) => item.id),
+          workerGroupId: to,
+        });
+      }
+      done.push(...part);
+      waiting += data.movedWaitingRuns;
+    }
   }
   return { done, waiting, failed: false };
 }
@@ -464,6 +478,11 @@ export type MoveItem = {
   id: string;
   from: string | null;
   flows?: number;
+};
+
+type MoveSender = {
+  kind: MoveItem['kind'];
+  send: (ids: string[]) => Promise<WorkerGroupMoveResult>;
 };
 
 type SearchPage =

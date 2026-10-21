@@ -27,11 +27,13 @@ describe('worker group assignments', () => {
 
         const flows = await mine.get('/v1/worker-groups/assignments/flows', { filter: 'all', search: 'Shared secret' })
         const list = await mine.get('/v1/worker-groups/assignments/projects', { filter: 'all' })
-        const move = await mine.post('/v1/worker-groups/assignments', { projects: [theirs.project.id], flows: [foreignFlow.id], workerGroupId: 'gpu' })
+        const moveProjects = await mine.post('/v1/worker-groups/assignments/projects', { projects: [theirs.project.id], workerGroupId: 'gpu' })
+        const moveFlows = await mine.post('/v1/worker-groups/assignments/flows', { flows: [foreignFlow.id], workerGroupId: 'gpu' })
 
         expect(flows.json().data).toEqual([])
         expect(list.json().data.map((p: { id: string }) => p.id)).not.toContain(theirs.project.id)
-        expect(move.statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect(moveProjects.statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect(moveFlows.statusCode).toBe(StatusCodes.NOT_FOUND)
         expect((await db.findOneByOrFail<{ workerGroupId: string | null }>('project', { id: theirs.project.id })).workerGroupId).toBeNull()
         expect((await db.findOneByOrFail<{ workerGroupId: string | null }>('flow', { id: foreignFlow.id })).workerGroupId).toBeNull()
     })
@@ -79,7 +81,7 @@ describe('worker group assignments', () => {
     it('rejects a group name the queues cannot use and changes nothing', async () => {
         const ctx = await createTestContext(app, { plan: { workerGroupsEnabled: true } })
 
-        const response = await ctx.post('/v1/worker-groups/assignments', { projects: [ctx.project.id], workerGroupId: 'gpu:eu' })
+        const response = await ctx.post('/v1/worker-groups/assignments/projects', { projects: [ctx.project.id], workerGroupId: 'gpu:eu' })
 
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
         expect((await db.findOneByOrFail<{ workerGroupId: string | null }>('project', { id: ctx.project.id })).workerGroupId).toBeNull()

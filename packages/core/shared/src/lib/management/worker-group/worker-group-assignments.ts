@@ -108,14 +108,17 @@ export const WorkerGroupFlowAssignmentPage = z.object({
 })
 export type WorkerGroupFlowAssignmentPage = z.infer<typeof WorkerGroupFlowAssignmentPage>
 
-export const BulkAssignWorkerGroupRequest = z.object({
-    projects: z.array(ApId).max(WORKER_GROUP_BULK_ASSIGN_MAX_ITEMS).optional(),
-    flows: z.array(ApId).max(WORKER_GROUP_BULK_ASSIGN_MAX_ITEMS).optional(),
+export const AssignWorkerGroupProjectsRequest = z.object({
+    projects: z.array(ApId).min(1).max(WORKER_GROUP_BULK_ASSIGN_MAX_ITEMS),
     workerGroupId: WorkerGroupTarget.nullable(),
-}).refine((request) => (request.projects?.length ?? 0) + (request.flows?.length ?? 0) > 0, {
-    message: 'projects or flows is required',
 })
-export type BulkAssignWorkerGroupRequest = z.infer<typeof BulkAssignWorkerGroupRequest>
+export type AssignWorkerGroupProjectsRequest = z.infer<typeof AssignWorkerGroupProjectsRequest>
+
+export const AssignWorkerGroupFlowsRequest = z.object({
+    flows: z.array(ApId).min(1).max(WORKER_GROUP_BULK_ASSIGN_MAX_ITEMS),
+    workerGroupId: WorkerGroupTarget.nullable(),
+})
+export type AssignWorkerGroupFlowsRequest = z.infer<typeof AssignWorkerGroupFlowsRequest>
 
 export const MoveAllWorkerGroupRequest = z.object({
     from: WorkerGroupLabel,

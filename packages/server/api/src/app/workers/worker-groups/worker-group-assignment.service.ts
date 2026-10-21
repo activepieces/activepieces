@@ -170,11 +170,19 @@ export const workerGroupAssignmentService = (log: FastifyBaseLogger) => ({
         return toPage({ data: rows.map(toFlowAssignment), offset, limit: request.limit, total })
     },
 
-    async assign({ platformId, projectIds, flowIds, workerGroupId }: AssignParams): Promise<WorkerGroupMoveResult> {
+    async assignProjects({ platformId, projectIds, workerGroupId }: AssignProjectsParams): Promise<WorkerGroupMoveResult> {
         return withAssignLock({
             platformId,
             log,
-            fn: () => applyAssignment({ platformId, projectIds, flowIds, workerGroupId, log }),
+            fn: () => applyProjectAssignment({ platformId, projectIds, workerGroupId, log }),
+        })
+    },
+
+    async assignFlows({ platformId, flowIds, workerGroupId }: AssignFlowsParams): Promise<WorkerGroupMoveResult> {
+        return withAssignLock({
+            platformId,
+            log,
+            fn: () => applyFlowAssignment({ platformId, flowIds, workerGroupId, log }),
         })
     },
 
@@ -186,22 +194,21 @@ export const workerGroupAssignmentService = (log: FastifyBaseLogger) => ({
             platformId,
             log,
             fn: async () => {
-                const ids = scope === WorkerGroupScope.PROJECT
-                    ? (await projectRepo().find({ select: ['id'], where: { platformId, workerGroupId: from, deleted: IsNull() } })).map((p) => p.id)
-                    : (await platformFlows({ platformId })
-                        .andWhere('flow."workerGroupId" = :from', { from })
-                        .select('flow.id', 'id')
-                        .getRawMany<{ id: string }>()).map((f) => f.id)
-                if (ids.length === 0) {
+                if (scope === WorkerGroupScope.PROJECT) {
+                    const projectIds = (await projectRepo().find({ select: ['id'], where: { platformId, workerGroupId: from, deleted: IsNull() } })).map((p) => p.id)
+                    if (projectIds.length === 0) {
+                        return { movedWaitingRuns: 0, projects: [], flows: [] }
+                    }
+                    return applyProjectAssignment({ platformId, projectIds, workerGroupId: to, log })
+                }
+                const flowIds = (await platformFlows({ platformId })
+                    .andWhere('flow."workerGroupId" = :from', { from })
+                    .select('flow.id', 'id')
+                    .getRawMany<{ id: string }>()).map((f) => f.id)
+                if (flowIds.length === 0) {
                     return { movedWaitingRuns: 0, projects: [], flows: [] }
                 }
-                return applyAssignment({
-                    platformId,
-                    projectIds: scope === WorkerGroupScope.PROJECT ? ids : [],
-                    flowIds: scope === WorkerGroupScope.FLOW ? ids : [],
-                    workerGroupId: to,
-                    log,
-                })
+                return applyFlowAssignment({ platformId, flowIds, workerGroupId: to, log })
             },
         })
     },
@@ -215,24 +222,17 @@ async function withAssignLock<T>({ platformId, log, fn }: { platformId: string, 
     })
 }
 
-async function applyAssignment({ platformId, projectIds, flowIds, workerGroupId, log }: AssignParams & { log: FastifyBaseLogger }): Promise<WorkerGroupMoveResult> {
-    await assertAssignable({ workerGroupId, hasProjects: projectIds.length > 0, hasFlows: flowIds.length > 0, log })
+async function applyProjectAssignment({ platformId, projectIds, workerGroupId, log }: AssignProjectsParams & { log: FastifyBaseLogger }): Promise<WorkerGroupMoveResult> {
+    await assertProjectsAssignable({ workerGroupId, log })
     const uniqueProjectIds = [...new Set(projectIds)]
-    const uniqueFlowIds = [...new Set(flowIds)]
     const projects = (await Promise.all(chunk(uniqueProjectIds, MAX_IDS_PER_QUERY).map((ids) => projectRepo().find({
         select: ['id', 'workerGroupId'],
         where: { id: In(ids), platformId, deleted: IsNull() },
     })))).flat()
-    const flows = (await Promise.all(chunk(uniqueFlowIds, MAX_IDS_PER_QUERY).map((ids) => platformFlows({ platformId })
-        .andWhere('flow.id IN (:...flowIds)', { flowIds: ids })
-        .select('flow.id', 'id')
-        .addSelect('flow."projectId"', 'projectId')
-        .addSelect('flow."workerGroupId"', 'workerGroupId')
-        .getRawMany<{ id: string, projectId: string, workerGroupId: string | null }>()))).flat()
-    if (projects.length !== uniqueProjectIds.length || flows.length !== uniqueFlowIds.length) {
+    if (projects.length !== uniqueProjectIds.length) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { message: 'Some projects or flows were not found on this platform' },
+            params: { message: 'Some projects were not found on this platform' },
         })
     }
 
@@ -240,28 +240,59 @@ async function applyAssignment({ platformId, projectIds, flowIds, workerGroupId,
         for (const ids of chunk(projects.map((p) => p.id), MAX_IDS_PER_QUERY)) {
             await projectRepo(manager).update({ id: In(ids), platformId }, { workerGroupId })
         }
-        for (const ids of chunk(flows.map((f) => f.id), MAX_IDS_PER_QUERY)) {
-            await flowRepo(manager).update({ id: In(ids) }, { workerGroupId })
-        }
     })
     await projectWorkerGroupService(log).invalidateMany({ projectIds: projects.map((p) => p.id) })
-    await flowWorkerGroupService(log).invalidateMany({ flowIds: flows.map((f) => f.id) })
 
-    const movedWaitingRuns = await migrateQueuedJobs({
+    const movedWaitingRuns = await migrateProjectQueuedJobs({
         platformId,
         projects: projects.map((p) => ({ id: p.id, from: p.workerGroupId ?? null })),
-        flows: flows.map((f) => ({ id: f.id, projectId: f.projectId, from: f.workerGroupId })),
         to: workerGroupId,
         log,
     })
     return {
         movedWaitingRuns,
         projects: projects.map((p) => p.id),
+        flows: [],
+    }
+}
+
+async function applyFlowAssignment({ platformId, flowIds, workerGroupId, log }: AssignFlowsParams & { log: FastifyBaseLogger }): Promise<WorkerGroupMoveResult> {
+    await assertFlowsAssignable({ workerGroupId, log })
+    const uniqueFlowIds = [...new Set(flowIds)]
+    const flows = (await Promise.all(chunk(uniqueFlowIds, MAX_IDS_PER_QUERY).map((ids) => platformFlows({ platformId })
+        .andWhere('flow.id IN (:...flowIds)', { flowIds: ids })
+        .select('flow.id', 'id')
+        .addSelect('flow."projectId"', 'projectId')
+        .addSelect('flow."workerGroupId"', 'workerGroupId')
+        .getRawMany<{ id: string, projectId: string, workerGroupId: string | null }>()))).flat()
+    if (flows.length !== uniqueFlowIds.length) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { message: 'Some flows were not found on this platform' },
+        })
+    }
+
+    await transaction(async (manager) => {
+        for (const ids of chunk(flows.map((f) => f.id), MAX_IDS_PER_QUERY)) {
+            await flowRepo(manager).update({ id: In(ids) }, { workerGroupId })
+        }
+    })
+    await flowWorkerGroupService(log).invalidateMany({ flowIds: flows.map((f) => f.id) })
+
+    const movedWaitingRuns = await migrateFlowQueuedJobs({
+        platformId,
+        flows: flows.map((f) => ({ id: f.id, projectId: f.projectId, from: f.workerGroupId })),
+        to: workerGroupId,
+        log,
+    })
+    return {
+        movedWaitingRuns,
+        projects: [],
         flows: flows.map((f) => f.id),
     }
 }
 
-async function assertAssignable({ workerGroupId, hasProjects, hasFlows, log }: AssertAssignableParams): Promise<void> {
+async function assertProjectsAssignable({ workerGroupId, log }: AssertAssignableParams): Promise<void> {
     if (isNil(workerGroupId)) {
         return
     }
@@ -272,18 +303,34 @@ async function assertAssignable({ workerGroupId, hasProjects, hasFlows, log }: A
         })
     }
     const scopes = await machineService(log).getWorkerGroupScopes({ workerGroupId })
-    if (scopes.length === 0) {
-        return
-    }
-    if ((hasProjects && !scopes.includes(WorkerGroupScope.PROJECT)) || (hasFlows && !scopes.includes(WorkerGroupScope.FLOW))) {
+    if (scopes.length > 0 && !scopes.includes(WorkerGroupScope.PROJECT)) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
-            params: { message: `"${workerGroupId}" does not accept ${hasProjects ? 'projects' : 'flows'}` },
+            params: { message: `"${workerGroupId}" does not accept projects` },
         })
     }
 }
 
-async function migrateQueuedJobs({ platformId, projects, flows, to, log }: MigrateQueuedJobsParams): Promise<number> {
+async function assertFlowsAssignable({ workerGroupId, log }: AssertAssignableParams): Promise<void> {
+    if (isNil(workerGroupId)) {
+        return
+    }
+    if (!workerGroupQueues.isRoutableWorkerGroupId(workerGroupId) || workerGroupId.includes(':')) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `"${workerGroupId}" is not a valid worker group id` },
+        })
+    }
+    const scopes = await machineService(log).getWorkerGroupScopes({ workerGroupId })
+    if (scopes.length > 0 && !scopes.includes(WorkerGroupScope.FLOW)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `"${workerGroupId}" does not accept flows` },
+        })
+    }
+}
+
+async function migrateProjectQueuedJobs({ platformId, projects, to, log }: MigrateProjectQueuedJobsParams): Promise<number> {
     const platformGroupId = await platformWorkerGroupService(log).getWorkerGroupId({ platformId })
     const ungroupedQueue = isNil(platformGroupId)
         ? QueueName.WORKER_JOBS
@@ -292,33 +339,18 @@ async function migrateQueuedJobs({ platformId, projects, flows, to, log }: Migra
         ? ungroupedQueue
         : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PROJECT, workerGroupId: label })
 
-    const flowProjectIds = [...new Set(flows.map((f) => f.projectId))]
-    const flowProjects = (await Promise.all(chunk(flowProjectIds, MAX_IDS_PER_QUERY).map((ids) => projectRepo().find({
-        select: ['id', 'workerGroupId'],
-        where: { id: In(ids), platformId },
-    })))).flat()
-    const projectGroupById = new Map(flowProjects.map((p) => [p.id, p.workerGroupId ?? null]))
-    const flowQueue = (label: string | null, projectId: string): string => isNil(label)
-        ? projectQueue(projectGroupById.get(projectId) ?? null)
-        : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.FLOW, workerGroupId: label })
-
-    const moves = new Map<string, { from: string, to: string, projectIds: Set<string>, flowIds: Set<string> }>()
-    const addMove = ({ from, target, kind, id }: { from: string, target: string, kind: 'project' | 'flow', id: string }): void => {
+    const moves = new Map<string, { from: string, to: string, projectIds: Set<string> }>()
+    for (const project of projects) {
+        const from = projectQueue(project.from)
+        const target = projectQueue(to)
         if (from === target) {
-            return
+            continue
         }
         const key = `${from}→${target}`
-        const move = moves.get(key) ?? { from, to: target, projectIds: new Set<string>(), flowIds: new Set<string>() }
-        if (kind === 'project') {
-            move.projectIds.add(id)
-        }
-        else {
-            move.flowIds.add(id)
-        }
+        const move = moves.get(key) ?? { from, to: target, projectIds: new Set<string>() }
+        move.projectIds.add(project.id)
         moves.set(key, move)
     }
-    projects.forEach((p) => addMove({ from: projectQueue(p.from), target: projectQueue(to), kind: 'project', id: p.id }))
-    flows.forEach((f) => addMove({ from: flowQueue(f.from, f.projectId), target: flowQueue(to, f.projectId), kind: 'flow', id: f.id }))
 
     const movedJobIds = new Set<string>()
     for (const move of moves.values()) {
@@ -326,10 +358,62 @@ async function migrateQueuedJobs({ platformId, projects, flows, to, log }: Migra
             fromQueueName: move.from,
             toQueueName: move.to,
             projectIds: move.projectIds,
+            flowIds: new Set<string>(),
+        }))
+        if (error) {
+            log.error({ platform: { id: platformId }, from: move.from, to: move.to, error }, '[workerGroupAssignmentService#assignProjects] Failed to move waiting jobs to the new worker group queue')
+            continue
+        }
+        data.forEach((jobId) => movedJobIds.add(jobId))
+    }
+    return movedJobIds.size
+}
+
+async function migrateFlowQueuedJobs({ platformId, flows, to, log }: MigrateFlowQueuedJobsParams): Promise<number> {
+    const platformGroupId = await platformWorkerGroupService(log).getWorkerGroupId({ platformId })
+    const ungroupedQueue = isNil(platformGroupId)
+        ? QueueName.WORKER_JOBS
+        : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PLATFORM, workerGroupId: platformGroupId })
+
+    const flowProjectIds = [...new Set(flows.map((f) => f.projectId))]
+    const flowProjects = (await Promise.all(chunk(flowProjectIds, MAX_IDS_PER_QUERY).map((ids) => projectRepo().find({
+        select: ['id', 'workerGroupId'],
+        where: { id: In(ids), platformId },
+    })))).flat()
+    const projectGroupById = new Map(flowProjects.map((p) => [p.id, p.workerGroupId ?? null]))
+    const flowQueue = (label: string | null, projectId: string): string => {
+        if (!isNil(label)) {
+            return workerGroupQueues.getQueueName({ scope: WorkerGroupScope.FLOW, workerGroupId: label })
+        }
+        const projectGroup = projectGroupById.get(projectId) ?? null
+        return isNil(projectGroup) || !workerGroupQueues.isRoutableWorkerGroupId(projectGroup)
+            ? ungroupedQueue
+            : workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PROJECT, workerGroupId: projectGroup })
+    }
+
+    const moves = new Map<string, { from: string, to: string, flowIds: Set<string> }>()
+    for (const flow of flows) {
+        const from = flowQueue(flow.from, flow.projectId)
+        const target = flowQueue(to, flow.projectId)
+        if (from === target) {
+            continue
+        }
+        const key = `${from}→${target}`
+        const move = moves.get(key) ?? { from, to: target, flowIds: new Set<string>() }
+        move.flowIds.add(flow.id)
+        moves.set(key, move)
+    }
+
+    const movedJobIds = new Set<string>()
+    for (const move of moves.values()) {
+        const { data, error } = await tryCatch(() => platformQueueMigrationService(log).migrateAssignmentJobs({
+            fromQueueName: move.from,
+            toQueueName: move.to,
+            projectIds: new Set<string>(),
             flowIds: move.flowIds,
         }))
         if (error) {
-            log.error({ platform: { id: platformId }, from: move.from, to: move.to, error }, '[workerGroupAssignmentService#assign] Failed to move waiting jobs to the new worker group queue')
+            log.error({ platform: { id: platformId }, from: move.from, to: move.to, error }, '[workerGroupAssignmentService#assignFlows] Failed to move waiting jobs to the new worker group queue')
             continue
         }
         data.forEach((jobId) => movedJobIds.add(jobId))
@@ -530,9 +614,14 @@ type FlowRow = {
     projectWorkerGroupId: string | null
 }
 
-type AssignParams = {
+type AssignProjectsParams = {
     platformId: string
     projectIds: string[]
+    workerGroupId: string | null
+}
+
+type AssignFlowsParams = {
+    platformId: string
     flowIds: string[]
     workerGroupId: string | null
 }
@@ -554,14 +643,18 @@ type ScopeSource = {
 
 type AssertAssignableParams = {
     workerGroupId: string | null
-    hasProjects: boolean
-    hasFlows: boolean
     log: FastifyBaseLogger
 }
 
-type MigrateQueuedJobsParams = {
+type MigrateProjectQueuedJobsParams = {
     platformId: string
     projects: { id: string, from: string | null }[]
+    to: string | null
+    log: FastifyBaseLogger
+}
+
+type MigrateFlowQueuedJobsParams = {
+    platformId: string
     flows: { id: string, projectId: string, from: string | null }[]
     to: string | null
     log: FastifyBaseLogger

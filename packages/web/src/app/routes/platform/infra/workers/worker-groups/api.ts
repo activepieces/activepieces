@@ -1,5 +1,6 @@
 import {
-  BulkAssignWorkerGroupRequest,
+  AssignWorkerGroupFlowsRequest,
+  AssignWorkerGroupProjectsRequest,
   ListWorkerGroupFlowsRequest,
   ListWorkerGroupProjectsRequest,
   MoveAllWorkerGroupRequest,
@@ -28,9 +29,15 @@ export const workerGroupsApi = {
       params,
     );
   },
-  assign(request: BulkAssignWorkerGroupRequest) {
+  assignProjects(request: AssignWorkerGroupProjectsRequest) {
     return api.post<WorkerGroupMoveResult>(
-      '/v1/worker-groups/assignments',
+      '/v1/worker-groups/assignments/projects',
+      request,
+    );
+  },
+  assignFlows(request: AssignWorkerGroupFlowsRequest) {
+    return api.post<WorkerGroupMoveResult>(
+      '/v1/worker-groups/assignments/flows',
       request,
     );
   },
