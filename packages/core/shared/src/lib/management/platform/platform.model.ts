@@ -113,10 +113,7 @@ export const PlatformPlan = z.object({
     scimEnabled: z.boolean(),
     licenseKey: Nullable(z.string()),
     licenseExpiresAt: Nullable(DateOrString),
-    enterpriseTrialStartedAt: Nullable(DateOrString),
-    enterpriseTrialEndsAt: Nullable(DateOrString),
-    enterpriseTrialEndedAt: Nullable(DateOrString),
-    enterpriseTrialUsedElsewhereAt: Nullable(DateOrString),
+    selfServeTrialUsedElsewhereAt: Nullable(DateOrString),
 
     projectsLimit: Nullable(z.number()),
     activeFlowsLimit: Nullable(z.number()),
@@ -223,11 +220,18 @@ export const Platform = z.object({
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
 
+export const SelfServeTrialWindow = z.object({
+    startedAt: z.string(),
+    endsAt: z.string(),
+})
+export type SelfServeTrialWindow = z.infer<typeof SelfServeTrialWindow>
+
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
     billingEnforced: z.boolean().optional(),
+    selfServeTrial: SelfServeTrialWindow.optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,

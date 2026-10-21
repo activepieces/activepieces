@@ -462,13 +462,11 @@ import { DropChatRolloutUserTable1870000000000 } from './migration/postgres/1870
 import { AddBarrierChildAttribution1871000000000 } from './migration/postgres/1871000000000-AddBarrierChildAttribution'
 import { AddPieceTranslationTable1873000000000 } from './migration/postgres/1873000000000-AddPieceTranslationTable'
 import { AddDefaultChatModelToPlatformConfiguration1875000000000 } from './migration/postgres/1875000000000-AddDefaultChatModelToPlatformConfiguration'
+import { AddActivepiecesAiProviderHiddenToPlatformPlan1876000000000 } from './migration/postgres/1876000000000-AddActivepiecesAiProviderHiddenToPlatformPlan'
+import { AddSelfServeTrialUsedElsewhereToPlatformPlan1877000000000 } from './migration/postgres/1877000000000-AddSelfServeTrialUsedElsewhereToPlatformPlan'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
-import { AddEnterpriseTrialToPlatformPlan1871000000000 } from './migration/postgres/1871000000000-AddEnterpriseTrialToPlatformPlan'
-import { AddActivepiecesAiProviderHiddenToPlatformPlan1872000000000 } from './migration/postgres/1872000000000-AddActivepiecesAiProviderHiddenToPlatformPlan'
-import { AddEnterpriseTrialOutcomeToPlatformPlan1875000000000 } from './migration/postgres/1875000000000-AddEnterpriseTrialOutcomeToPlatformPlan'
-import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -953,9 +951,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddBarrierChildAttribution1871000000000,
         AddPieceTranslationTable1873000000000,
         AddDefaultChatModelToPlatformConfiguration1875000000000,
-        AddEnterpriseTrialToPlatformPlan1871000000000,
-        AddActivepiecesAiProviderHiddenToPlatformPlan1872000000000,
-        AddEnterpriseTrialOutcomeToPlatformPlan1875000000000,
+        AddActivepiecesAiProviderHiddenToPlatformPlan1876000000000,
+        AddSelfServeTrialUsedElsewhereToPlatformPlan1877000000000,
     ]
     return migrations
 }
