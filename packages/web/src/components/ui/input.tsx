@@ -85,5 +85,8 @@ type InputProps = Omit<React.ComponentProps<'input'>, 'size'> & {
   defaultFileName?: string;
 };
 
+export const fieldSurfaceClass =
+  'border-gray-8 bg-transparent dark:bg-gray-6/30';
+
 export { Input };
 export type { InputProps };

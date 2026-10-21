@@ -28,6 +28,7 @@ import {
   FormItem,
   FormLabel,
 } from '@/components/ui/form';
+import { fieldSurfaceClass } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -273,7 +274,8 @@ function CreditsAmountSelect({
         <button
           type="button"
           className={cn(
-            'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-gray-6 bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-gray-8 focus-visible:ring-[3px] focus-visible:ring-gray-8/50',
+            'flex h-9 w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-gray-8/50',
+            fieldSurfaceClass,
           )}
         >
           <span>{value.toLocaleString()}</span>

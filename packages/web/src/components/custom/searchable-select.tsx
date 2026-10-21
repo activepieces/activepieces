@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 
 import { Button } from '../ui/button';
+import { fieldSurfaceClass } from '../ui/input';
 import { ScrollArea } from '../ui/scroll-area';
 
 type SelectOption<T> = {
@@ -161,7 +162,11 @@ export const SearchableSelect = <T,>({
             role="combobox"
             loading={loading}
             aria-expanded={open}
-            className={cn('w-full justify-between', triggerClassName)}
+            className={cn(
+              'w-full justify-between',
+              fieldSurfaceClass,
+              triggerClassName,
+            )}
             onClick={(e) => {
               handleOpenChange(!open);
               e.preventDefault();

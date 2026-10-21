@@ -313,6 +313,7 @@ const TestWebhookFunctionalityForm = (
                     <FormItem>
                       <FormLabel>{t('Type')}</FormLabel>
                       <SearchableSelect
+                        triggerClassName="border-gray-6 bg-gray-1 dark:bg-gray-1"
                         options={[
                           {
                             value: BodyType.JSON,

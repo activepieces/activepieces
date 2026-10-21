@@ -408,7 +408,7 @@ const AgentsPageContent = () => {
                     ...projectOptions,
                   ]}
                   placeholder={t('Search projects')}
-                  triggerClassName="h-8 w-[170px] rounded-md text-sm font-normal"
+                  triggerClassName="h-8 w-[170px] rounded-md text-sm font-normal border-gray-6 bg-gray-1 dark:bg-gray-1"
                 />
               )}
               <DropdownMenu>
