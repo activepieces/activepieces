@@ -374,6 +374,76 @@ describe('AppConnection CE API', () => {
             expect(body.data).toHaveLength(1)
             expect(body.data[0].pieceName).toBe(mockPieceA.name)
         })
+
+        it('should filter by multiple pieceNames', async () => {
+            const ctx = await setup()
+
+            const mockPieceA = createMockPieceMetadata({
+                name: 'piece-a-filter-multi',
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            const mockPieceB = createMockPieceMetadata({
+                name: 'piece-b-filter-multi',
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            const mockPieceC = createMockPieceMetadata({
+                name: 'piece-c-filter-multi',
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', [mockPieceA, mockPieceB, mockPieceC])
+
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceA)
+            await ctx.post('/v1/app-connections', {
+                externalId: 'filter-multi-a',
+                displayName: 'Connection A',
+                pieceName: mockPieceA.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                pieceVersion: mockPieceA.version,
+            })
+
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceB)
+            await ctx.post('/v1/app-connections', {
+                externalId: 'filter-multi-b',
+                displayName: 'Connection B',
+                pieceName: mockPieceB.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                pieceVersion: mockPieceB.version,
+            })
+
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceC)
+            await ctx.post('/v1/app-connections', {
+                externalId: 'filter-multi-c',
+                displayName: 'Connection C',
+                pieceName: mockPieceC.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                pieceVersion: mockPieceC.version,
+            })
+
+            const response = await ctx.get('/v1/app-connections', {
+                projectId: ctx.project.id,
+                pieceName: [mockPieceA.name, mockPieceB.name],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.data).toHaveLength(2)
+            const returnedPieceNames = body.data.map((conn) => conn.pieceName)
+            expect(returnedPieceNames).toContain(mockPieceA.name)
+            expect(returnedPieceNames).toContain(mockPieceB.name)
+            expect(returnedPieceNames).not.toContain(mockPieceC.name)
+        })
     })
 
     describeWithAuth('GET /v1/app-connections/:id', () => app!, (setup) => {

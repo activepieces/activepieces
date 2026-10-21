@@ -7,15 +7,13 @@ export const ListAppConnectionsRequestQuery = z.object({
     cursor: z.string().optional(),
     projectId: z.string(),
     scope: z.nativeEnum(AppConnectionScope).optional(),
-    pieceName: z.string().optional(),
+    pieceName: OptionalArrayFromQuery(z.string()),
     displayName: z.string().optional(),
     status: OptionalArrayFromQuery(z.nativeEnum(AppConnectionStatus)),
     limit: z.coerce.number().optional(),
 })
 
-export type ListAppConnectionsRequestQuery = z.infer<
-  typeof ListAppConnectionsRequestQuery
->
+export type ListAppConnectionsRequestQuery = Omit<z.infer<typeof ListAppConnectionsRequestQuery>, 'pieceName'> & { pieceName?: string | string[] }
 
 export const GetAppConnectionForWorkerRequestQuery = z.object({
     externalId: z.string(),
@@ -36,13 +34,13 @@ export const ListPlatformAppConnectionsRequestQuery = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().optional(),
     displayName: z.string().optional(),
-    pieceName: z.string().optional(),
+    pieceName: OptionalArrayFromQuery(z.string()),
     scope: z.nativeEnum(AppConnectionScope).optional(),
     status: OptionalArrayFromQuery(z.nativeEnum(AppConnectionStatus)),
     projectIds: OptionalArrayFromQuery(z.string()),
     ownerIds: OptionalArrayFromQuery(z.string()),
 })
-export type ListPlatformAppConnectionsRequestQuery = z.infer<typeof ListPlatformAppConnectionsRequestQuery>
+export type ListPlatformAppConnectionsRequestQuery = Omit<z.infer<typeof ListPlatformAppConnectionsRequestQuery>, 'pieceName'> & { pieceName?: string | string[] }
 
 export const PlatformAppConnectionProjectInfo = z.object({
     id: z.string(),

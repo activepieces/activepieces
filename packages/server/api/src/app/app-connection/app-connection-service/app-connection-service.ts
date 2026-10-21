@@ -439,7 +439,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             platformId,
         }
         if (!isNil(pieceName)) {
-            querySelector.pieceName = Equal(pieceName)
+            if (Array.isArray(pieceName)) {
+                if (pieceName.length > 0) {
+                    querySelector.pieceName = In(pieceName)
+                }
+            } else {
+                querySelector.pieceName = Equal(pieceName)
+            }
         }
         if (!isNil(displayName)) {
             querySelector.displayName = ILike(`%${displayName}%`)
@@ -1008,7 +1014,7 @@ type ListParams = {
     projectIds?: ProjectId[]
     ownerIds?: string[]
     platformId: string
-    pieceName: string | undefined
+    pieceName: string | string[] | undefined
     cursorRequest: Cursor | null
     scope: AppConnectionScope | undefined
     displayName: string | undefined
@@ -1019,7 +1025,7 @@ type ListParams = {
 
 type ListForPlatformParams = {
     platformId: string
-    pieceName: string | undefined
+    pieceName: string | string[] | undefined
     displayName: string | undefined
     status: AppConnectionStatus[] | undefined
     scope: AppConnectionScope | undefined
