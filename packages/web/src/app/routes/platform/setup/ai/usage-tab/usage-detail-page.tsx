@@ -89,14 +89,7 @@ export function UsageDetailPage() {
             : undefined
         }
       >
-        <UsageHeaderControls
-          view={view}
-          exportRows={
-            detail ? [detail.item, ...Object.values(detail.related).flat()] : []
-          }
-          exportSeries={detail?.series.spend ?? []}
-          exportName={`ai-usage-${dimension}-${id ?? ''}`}
-        />
+        <UsageHeaderControls view={view} />
       </AdminPageHeader>
       <DetailBody view={view} dimension={dimension} detail={detail} />
       <UsagePreviewSwitcher view={view} />

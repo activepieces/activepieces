@@ -69,12 +69,7 @@ export function UsageListPage() {
               )
         }
       >
-        <UsageHeaderControls
-          view={view}
-          exportRows={rows}
-          exportSeries={[]}
-          exportName={`ai-usage-${dimension}`}
-        />
+        <UsageHeaderControls view={view} />
       </AdminPageHeader>
       <AdminDataTable
         columns={columnsFor({ dimension, totalUsd })}

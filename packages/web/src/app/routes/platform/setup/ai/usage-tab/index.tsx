@@ -55,12 +55,7 @@ export function UsageTab({ layout = 'flat' }: { layout?: UsageLayout }) {
           'Where your AI spend goes across flows, agents and chat.',
         )}
       >
-        <UsageHeaderControls
-          view={view}
-          exportRows={Object.values(overview.top).flat()}
-          exportSeries={overview.series.spend}
-          exportName="ai-usage"
-        />
+        <UsageHeaderControls view={view} />
       </AdminPageHeader>
       <UsageBody view={view} overview={overview} layout={layout} />
       <UsagePreviewSwitcher view={view} />

@@ -2,24 +2,12 @@ import { t } from 'i18next';
 import {
   Activity,
   CalendarClock,
-  ChartLine,
-  ChevronDown,
-  Download,
   FlaskConical,
   Layers,
   LucideIcon,
-  Table2,
 } from 'lucide-react';
-import { ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -28,11 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 import {
   USAGE_PERIODS,
@@ -40,9 +23,7 @@ import {
   UsageDataPreset,
   UsagePreset,
   USAGE_SCOPES,
-  UsageItem,
   UsagePeriod,
-  UsagePoint,
   UsageScope,
 } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
@@ -92,22 +73,11 @@ export function useUsageView(): UsageView {
   };
 }
 
-export function UsageHeaderControls({
-  view,
-  exportRows,
-  exportSeries,
-  exportName,
-}: UsageHeaderControlsProps) {
+export function UsageHeaderControls({ view }: { view: UsageView }) {
   return (
     <>
       <ScopeSelect view={view} />
       <PeriodSelect view={view} />
-      <ExportMenu
-        view={view}
-        exportRows={exportRows}
-        exportSeries={exportSeries}
-        exportName={exportName}
-      />
     </>
   );
 }
@@ -124,7 +94,7 @@ function ScopeSelect({ view }: { view: UsageView }) {
     >
       <SelectTrigger
         size="sm"
-        className="w-auto cursor-pointer hover:bg-gray-3"
+        className={TRIGGER_CLASS}
         aria-label={t('Usage scope')}
       >
         <ScopeIcon scope={view.scope} />
@@ -174,7 +144,7 @@ function PeriodSelect({ view }: { view: UsageView }) {
     >
       <SelectTrigger
         size="sm"
-        className="w-auto cursor-pointer hover:bg-gray-3"
+        className={TRIGGER_CLASS}
         aria-label={t('Period')}
       >
         <CalendarClock className="size-4" />
@@ -200,119 +170,6 @@ function PeriodOption({ period }: { period: UsagePeriod }) {
   );
 }
 
-function ExportMenu({
-  view,
-  exportRows,
-  exportSeries,
-  exportName,
-}: UsageHeaderControlsProps) {
-  const blocked = exportBlockedReason({ view, exportRows });
-  if (blocked !== null) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span tabIndex={0} className="rounded-lg">
-            <Button variant="outline" size="sm" disabled>
-              <ExportLabel />
-            </Button>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={6}>
-          {blocked}
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="data-[state=open]:bg-gray-3"
-        >
-          <ExportLabel />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <ExportItem
-          icon={<Table2 />}
-          label={t('Breakdown')}
-          hint={t('Every item on this page, one row each')}
-          onSelect={() =>
-            downloadItemsCsv({
-              items: exportRows,
-              fileName: `${exportName}-${view.scope}-${view.period}.csv`,
-            })
-          }
-        />
-        {exportSeries.length > 0 && (
-          <ExportItem
-            icon={<ChartLine />}
-            label={t('Spend over time')}
-            hint={t('One row per point on the chart')}
-            onSelect={() =>
-              downloadSeriesCsv({
-                points: exportSeries,
-                fileName: `${exportName}-over-time-${view.scope}-${view.period}.csv`,
-              })
-            }
-          />
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function ExportLabel() {
-  return (
-    <>
-      <Download className="size-4" />
-      {t('Export')}
-      <ChevronDown className="size-3.5 text-gray-11" />
-    </>
-  );
-}
-
-function ExportItem({
-  icon,
-  label,
-  hint,
-  onSelect,
-}: {
-  icon: ReactNode;
-  label: string;
-  hint: string;
-  onSelect: () => void;
-}) {
-  return (
-    <DropdownMenuItem onSelect={onSelect} className="items-start">
-      <span className="flex pt-0.5 text-gray-11">{icon}</span>
-      <span className="flex flex-col">
-        <span className="text-gray-12">{label}</span>
-        <span className="text-xs text-gray-11">{hint}</span>
-      </span>
-      <span className="ml-auto pt-0.5 text-xs text-gray-11">CSV</span>
-    </DropdownMenuItem>
-  );
-}
-
-function exportBlockedReason({
-  view,
-  exportRows,
-}: {
-  view: UsageView;
-  exportRows: UsageItem[];
-}): string | null {
-  if (view.preset === 'loading' || view.preset === 'error') {
-    return t('Export is ready once usage loads');
-  }
-  if (exportRows.length === 0) {
-    return t('Nothing to export in this period');
-  }
-  return null;
-}
-
 function scopeHint({ scope }: { scope: UsageScope }): string {
   switch (scope) {
     case 'production':
@@ -324,72 +181,8 @@ function scopeHint({ scope }: { scope: UsageScope }): string {
   }
 }
 
-function downloadItemsCsv({
-  items,
-  fileName,
-}: {
-  items: UsageItem[];
-  fileName: string;
-}): void {
-  const header = [
-    'type',
-    'id',
-    'name',
-    'parent',
-    'spend_usd',
-    'previous_spend_usd',
-    'calls',
-    'tokens',
-  ];
-  const rows = items.map((item) => [
-    item.dimension,
-    item.id,
-    item.name,
-    item.parent ?? '',
-    item.spendUsd.toFixed(4),
-    item.previousSpendUsd.toFixed(4),
-    item.calls,
-    item.tokens,
-  ]);
-  downloadCsv({ fileName, rows: [header, ...rows] });
-}
-
-function downloadSeriesCsv({
-  points,
-  fileName,
-}: {
-  points: UsagePoint[];
-  fileName: string;
-}): void {
-  const header = ['bucket', 'spend_usd', 'previous_period_spend_usd'];
-  const rows = points.map((point) => [
-    point.label,
-    point.current === null ? '' : point.current.toFixed(4),
-    point.previous === null ? '' : point.previous.toFixed(4),
-  ]);
-  downloadCsv({ fileName, rows: [header, ...rows] });
-}
-
-function downloadCsv({
-  fileName,
-  rows,
-}: {
-  fileName: string;
-  rows: Array<Array<string | number>>;
-}): void {
-  const text = rows
-    .map((row) =>
-      row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(','),
-    )
-    .join('\n');
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
+const TRIGGER_CLASS =
+  'w-auto cursor-pointer gap-1.5 border-gray-6 bg-gray-1 px-2.5 shadow-none hover:bg-gray-4 hover:text-gray-12';
 const SCOPE_ICONS: Record<UsageScope, LucideIcon> = {
   all: Layers,
   production: Activity,
@@ -408,11 +201,4 @@ export type UsageView = {
   search: string;
   setPeriod: (period: UsagePeriod) => void;
   setScope: (scope: UsageScope) => void;
-};
-
-type UsageHeaderControlsProps = {
-  view: UsageView;
-  exportRows: UsageItem[];
-  exportSeries: UsagePoint[];
-  exportName: string;
 };
