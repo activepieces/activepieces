@@ -17,7 +17,12 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { DeltaChip, ItemIcon, UsageEmptyState } from './usage-bits';
+import {
+  DeltaChip,
+  ItemIcon,
+  itemSubtitle,
+  UsageEmptyState,
+} from './usage-bits';
 import {
   USAGE_DIMENSIONS,
   usageDummyData,
@@ -281,9 +286,9 @@ function UsageListRow({
               {!isNil(item.sharedWith) && <SharedBadge item={item} />}
             </div>
             <div className="flex min-w-0 items-center gap-2">
-              {item.parent && (
-                <p className="truncate text-xs text-gray-11">{item.parent}</p>
-              )}
+              <p className="truncate text-xs text-gray-11">
+                {itemSubtitle({ item })}
+              </p>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="h-1 w-24 shrink-0 overflow-hidden rounded-full bg-gray-3">

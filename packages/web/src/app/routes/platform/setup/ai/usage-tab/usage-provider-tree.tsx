@@ -140,7 +140,7 @@ function ProviderMark({ provider }: { provider: AIProviderName }) {
 
 function providerName({ provider }: { provider: AIProviderName }): string {
   if (provider === AIProviderName.ACTIVEPIECES) {
-    return t('Credits');
+    return t('Activepieces credits');
   }
   return (
     SUPPORTED_AI_PROVIDERS.find((candidate) => candidate.provider === provider)

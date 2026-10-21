@@ -180,6 +180,8 @@ function allItems({
           entry.provider === AIProviderName.ACTIVEPIECES
             ? Math.round(spendUsd / CREDIT_USD_VALUE)
             : 0,
+        flowCount: childCount({ entry, dimension: 'flow' }),
+        agentCount: childCount({ entry, dimension: 'agent' }),
         monthToDateUsd:
           entry.monthlyLimitUsd === undefined
             ? undefined
@@ -187,6 +189,20 @@ function allItems({
       };
     })
     .sort((a, b) => b.spendUsd - a.spendUsd);
+}
+
+function childCount({
+  entry,
+  dimension,
+}: {
+  entry: CatalogEntry;
+  dimension: UsageDimension;
+}): number | undefined {
+  return entry.dimension === 'project'
+    ? CATALOG.filter(
+        (child) => child.dimension === dimension && child.parent === entry.name,
+      ).length
+    : undefined;
 }
 
 function sourcesFor({
@@ -735,7 +751,8 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'key',
     id: 'openai-prod',
-    name: 'OpenAI · Production',
+    name: 'Production',
+    parent: 'OpenAI',
     provider: AIProviderName.OPENAI,
     weight: 8,
     change: 0.15,
@@ -745,7 +762,8 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'key',
     id: 'anthropic-main',
-    name: 'Anthropic · Main',
+    name: 'Main',
+    parent: 'Anthropic',
     provider: AIProviderName.ANTHROPIC,
     weight: 6,
     change: 0.28,
@@ -755,7 +773,7 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'key',
     id: 'credits',
-    name: 'Credits',
+    name: 'Activepieces credits',
     provider: AIProviderName.ACTIVEPIECES,
     weight: 3,
     change: 0.1,
@@ -765,7 +783,8 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'key',
     id: 'azure-eu',
-    name: 'Azure · EU',
+    name: 'EU',
+    parent: 'Azure OpenAI',
     provider: AIProviderName.AZURE,
     weight: 2.5,
     change: -0.04,
@@ -775,7 +794,8 @@ const CATALOG: CatalogEntry[] = [
   {
     dimension: 'key',
     id: 'openrouter',
-    name: 'OpenRouter',
+    name: 'Team key',
+    parent: 'OpenRouter',
     provider: AIProviderName.OPENROUTER,
     weight: 1.8,
     change: 0.5,
@@ -934,6 +954,8 @@ export type UsageItem = CatalogEntry & {
   calls: number;
   tokens: number;
   credits: number;
+  flowCount?: number;
+  agentCount?: number;
   monthToDateUsd?: number;
 };
 

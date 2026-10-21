@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { ChevronRight, ExternalLink } from 'lucide-react';
+import { ChevronRight, ExternalLink, ReceiptText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { adminSurface } from '@/app/components/admin';
@@ -14,7 +14,12 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { dimensionIcon, ItemIcon, UsageEmptyState } from './usage-bits';
+import {
+  dimensionIcon,
+  ItemIcon,
+  itemSubtitle,
+  UsageEmptyState,
+} from './usage-bits';
 import { UsageDimension, UsageItem } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 
@@ -104,10 +109,10 @@ export function UsageTopRow({
                 {item.name}
               </p>
             </TextWithTooltip>
-            <div className="flex min-w-0 items-center gap-1.5">
-              {item.parent && (
-                <p className="truncate text-xs text-gray-11">{item.parent}</p>
-              )}
+            <div className="flex min-h-4 min-w-0 items-center gap-1.5">
+              <p className="truncate text-xs text-gray-11">
+                {itemSubtitle({ item })}
+              </p>
               {showShared && !isNil(item.sharedWith) && (
                 <SharedBadge item={item} />
               )}
@@ -141,21 +146,32 @@ export function UsageTopRow({
           </TooltipContent>
         </Tooltip>
       </Link>
-      {item.dimension === 'key' &&
-        !isNil(item.dashboardUrl) &&
-        !item.dashboardUrl.startsWith('/') && (
-          <Button variant="ghost" size="icon-sm" asChild>
-            <a
-              href={item.dashboardUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={t('Open provider dashboard')}
-            >
-              <ExternalLink className="size-3.5" />
-            </a>
-          </Button>
-        )}
+      {item.dimension === 'key' && <DashboardButton url={item.dashboardUrl} />}
     </li>
+  );
+}
+
+function DashboardButton({ url }: { url: string | undefined }) {
+  if (isNil(url)) {
+    return <span className="size-8 shrink-0" />;
+  }
+  return (
+    <Button variant="ghost" size="icon-sm" asChild>
+      {url.startsWith('/') ? (
+        <Link to={url} aria-label={t('Open billing')}>
+          <ReceiptText className="size-3.5" />
+        </Link>
+      ) : (
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={t('Open provider dashboard')}
+        >
+          <ExternalLink className="size-3.5" />
+        </a>
+      )}
+    </Button>
   );
 }
 

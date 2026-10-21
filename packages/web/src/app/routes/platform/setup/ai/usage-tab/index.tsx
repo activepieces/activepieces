@@ -130,7 +130,7 @@ function UsageBody({
         history={overview.history}
         note={
           totals.credits > 0
-            ? t('Includes {credits} credits', {
+            ? t('Includes {credits} Activepieces credits', {
                 credits: usageFormat.whole(totals.credits),
               })
             : undefined

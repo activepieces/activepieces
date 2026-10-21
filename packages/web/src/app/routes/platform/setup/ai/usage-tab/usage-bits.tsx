@@ -1,10 +1,10 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
+import { DEFAULT_BRAND_LOGOS } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowDownRight,
   ArrowUpRight,
   Bot,
-  Coins,
   Cpu,
   KeyRound,
   LayoutGrid,
@@ -13,6 +13,7 @@ import {
   Workflow,
 } from 'lucide-react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { cn } from '@/lib/utils';
 
@@ -60,10 +61,16 @@ export function ItemIcon({ item }: { item: UsageItem }) {
   ) {
     return <ProviderLogo info={info} size="sm" />;
   }
-  const Icon =
-    item.provider === AIProviderName.ACTIVEPIECES
-      ? Coins
-      : dimensionIcon({ dimension: item.dimension });
+  if (item.provider === AIProviderName.ACTIVEPIECES) {
+    return (
+      <LogoPlate
+        src={DEFAULT_BRAND_LOGOS.logoIconUrl}
+        alt={t('Activepieces')}
+        className="size-4"
+      />
+    );
+  }
+  const Icon = dimensionIcon({ dimension: item.dimension });
   return (
     <span className="flex size-4 shrink-0 items-center justify-center text-gray-11">
       <Icon className="size-4" />
@@ -96,6 +103,19 @@ export function UsageEmptyState({
       </p>
     </div>
   );
+}
+
+export function itemSubtitle({ item }: { item: UsageItem }): string {
+  if (item.provider === AIProviderName.ACTIVEPIECES) {
+    return t('Billed on your plan');
+  }
+  if (item.dimension === 'project') {
+    return t(
+      '{flows, plural, =1 {1 flow} other {# flows}} · {agents, plural, =1 {1 agent} other {# agents}}',
+      { flows: item.flowCount ?? 0, agents: item.agentCount ?? 0 },
+    );
+  }
+  return item.parent ?? '';
 }
 
 export function dimensionIcon({

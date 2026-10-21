@@ -353,7 +353,7 @@ function DashboardTile({ url }: { url: string | undefined }) {
     <StatCard
       label={t('Provider dashboard')}
       icon={<ExternalLink />}
-      value={internal ? t('Credits') : t('Your bill')}
+      value={internal ? t('Activepieces credits') : t('Your bill')}
       hint={
         internal
           ? t('Credits are billed on your plan')
