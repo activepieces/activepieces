@@ -2,7 +2,7 @@ import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId
 import { apDayjs } from '@activepieces/server-utils'
 import { AppConnectionScope, MAX_DEFAULT_PROJECTS, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains, EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
+import { ArrayContains, EntityManager, Equal, ILike, In, IsNull, Not } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -142,8 +142,8 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         const { globalConnectionExternalIds, maxConcurrentJobs, workerGroupId, ...rest } = request
         let resolvedPoolId: string | null | undefined
         await transaction(async (entityManager) => {
-            if (request.isDefault === true && !project.isDefault) {
-                await assertDefaultProjectsBelowCap({ platformId: project.platformId, entityManager })
+            if (request.isDefault === true) {
+                await assertDefaultProjectsBelowCap({ platformId: project.platformId, projectId, entityManager })
             }
             resolvedPoolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
             await projectService(log).update(projectId, {
@@ -278,14 +278,14 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function assertDefaultProjectsBelowCap({ platformId, entityManager }: AssertDefaultProjectsBelowCapParams): Promise<void> {
+async function assertDefaultProjectsBelowCap({ platformId, projectId, entityManager }: AssertDefaultProjectsBelowCapParams): Promise<void> {
     await platformRepo(entityManager).findOneOrFail({
         where: { id: platformId },
         select: { id: true },
         lock: { mode: 'pessimistic_write' },
     })
-    const defaultCount = await projectRepo(entityManager).countBy({ platformId, type: ProjectType.TEAM, isDefault: true })
-    if (defaultCount >= MAX_DEFAULT_PROJECTS) {
+    const otherDefaultCount = await projectRepo(entityManager).countBy({ platformId, type: ProjectType.TEAM, isDefault: true, id: Not(projectId) })
+    if (otherDefaultCount >= MAX_DEFAULT_PROJECTS) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: {
@@ -473,6 +473,7 @@ type DeleteProjectParams = {
 
 type AssertDefaultProjectsBelowCapParams = {
     platformId: PlatformId
+    projectId: ProjectId
     entityManager: EntityManager
 }
 
