@@ -1,25 +1,12 @@
 import { t } from 'i18next';
-import {
-  CalendarRange,
-  ChartLine,
-  Gauge,
-  Hash,
-  TrendingUp,
-  Type,
-} from 'lucide-react';
+import { CalendarRange, Gauge, Hash, TrendingUp, Type } from 'lucide-react';
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
 
-import {
-  AdminEmpty,
-  AdminPageHeader,
-  StatCard,
-  StatGrid,
-} from '@/app/components/admin';
+import { AdminPageHeader, StatCard, StatGrid } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { Button } from '@/components/ui/button';
 
 import { UsageOverview, UsagePeriod, usageDummyData } from './usage-dummy-data';
+import { UsageEmpty } from './usage-empty';
 import { usageFormat } from './usage-format';
 import {
   UsageHeaderControls,
@@ -81,20 +68,7 @@ function UsageBody({
     );
   }
   if (overview.totals.calls === 0) {
-    return (
-      <AdminEmpty
-        icon={<ChartLine />}
-        title={t('No AI usage yet')}
-        description={t(
-          'Spend shows up here a minute after your first AI step, agent run or chat message.',
-        )}
-        action={
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/platform/ai">{t('Set up AI providers')}</Link>
-          </Button>
-        }
-      />
-    );
+    return <UsageEmpty view={view} ghost="chart" />;
   }
   const { totals } = overview;
   return (

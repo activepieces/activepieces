@@ -20,7 +20,6 @@ import {
   DeltaChip,
   ItemIcon,
   itemSubtitle,
-  UsageEmptyState,
   USAGE_LIST_GRID,
   UsageTrail,
 } from './usage-bits';
@@ -30,6 +29,7 @@ import {
   UsageDimension,
   UsageItem,
 } from './usage-dummy-data';
+import { UsageEmpty } from './usage-empty';
 import { usageFormat } from './usage-format';
 import {
   UsageHeaderControls,
@@ -126,9 +126,13 @@ function UsageListBody({
   }
   if (items.length === 0) {
     return (
-      <section className={cn(adminSurface.card, 'p-5')}>
-        <UsageEmptyState dimension={dimension} />
-      </section>
+      <UsageEmpty
+        view={view}
+        ghost="rows"
+        title={t('No {item} spend in this period', {
+          item: usageFormat.dimensionBadge({ dimension }).toLowerCase(),
+        })}
+      />
     );
   }
 

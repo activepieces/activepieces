@@ -2,7 +2,6 @@ import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import {
   Calculator,
-  ChartLine,
   CircleDollarSign,
   ExternalLink,
   Gauge,
@@ -14,12 +13,7 @@ import {
 import { ReactNode, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 
-import {
-  AdminEmpty,
-  AdminPageHeader,
-  StatCard,
-  StatGrid,
-} from '@/app/components/admin';
+import { AdminPageHeader, StatCard, StatGrid } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 
@@ -30,6 +24,7 @@ import {
   usageDummyData,
   UsageDimension,
 } from './usage-dummy-data';
+import { UsageEmpty } from './usage-empty';
 import { usageFormat } from './usage-format';
 import {
   UsageHeaderControls,
@@ -113,16 +108,14 @@ function DetailBody({
   }
   if (isNil(detail)) {
     return (
-      <AdminEmpty
-        icon={<ChartLine />}
-        title={t('No AI usage for this {type} in this period', {
+      <UsageEmpty
+        view={view}
+        ghost="chart"
+        title={t('No spend for this {type} in this period', {
           type: usageFormat.dimensionBadge({ dimension }).toLowerCase(),
         })}
-        description={t(
-          'Pick a longer period, or switch to All to include test runs.',
-        )}
-        action={
-          <Button variant="outline" size="sm" asChild>
+        extraAction={
+          <Button variant="ghost" size="sm" asChild>
             <Link to={`/platform/ai/usage/${dimension}${view.search}`}>
               {t('See all {items}', {
                 items: usageFormat.dimensionLabel({ dimension }).toLowerCase(),
