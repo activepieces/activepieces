@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 import { microsoft365PlannerAuth } from '../auth';
 import { microsoft365PlannerApi } from '../common/api';
 import { microsoft365PlannerProps } from '../common/props';
+import { microsoft365PlannerTaskOutputSchema } from '../output-schemas';
 
 const props = {
   planId: microsoft365PlannerProps.planId({ required: true }),
@@ -41,6 +42,7 @@ const polling: Polling<
 export const newTaskCreatedTrigger = createTrigger({
   auth: microsoft365PlannerAuth,
   name: 'newTaskCreated',
+  outputSchema: microsoft365PlannerTaskOutputSchema,
   classification: 'READ',
   displayName: 'New Task Created',
   description: 'Triggers when a new Task is created in Microsoft 365 Planner.',
@@ -87,13 +89,11 @@ export const newTaskCreatedTrigger = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

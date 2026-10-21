@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 import { microsoft365PlannerAuth } from '../auth';
 import { microsoft365PlannerApi } from '../common/api';
 import { microsoft365PlannerProps } from '../common/props';
+import { microsoft365PlannerTaskOutputSchema } from '../output-schemas';
 
 const props = {
   planId: microsoft365PlannerProps.planId({ required: true }),
@@ -50,6 +51,7 @@ const polling: Polling<
 export const newTaskAssignedToUserTrigger = createTrigger({
   auth: microsoft365PlannerAuth,
   name: 'newTaskAssignedToUser',
+  outputSchema: microsoft365PlannerTaskOutputSchema,
   classification: 'READ',
   displayName: 'New Task Assigned to User',
   description:
@@ -64,13 +66,11 @@ export const newTaskAssignedToUserTrigger = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

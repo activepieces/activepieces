@@ -3,15 +3,17 @@ import { microsoft365PlannerAuth } from '../auth';
 import { microsoft365PlannerApi } from '../common/api';
 import { microsoft365PlannerProps } from '../common/props';
 import { microsoft365PlannerUtils } from '../common/utils';
+import { microsoft365PlannerSuccessOutputSchema } from '../output-schemas';
 
 export const updateTaskAction = createAction({
   auth: microsoft365PlannerAuth,
   name: 'updateTask',
+  outputSchema: microsoft365PlannerSuccessOutputSchema,
   classification: 'WRITE',
   displayName: 'Update Task',
   description:
     'Modify existing task fields: title, due date, assignments, descriptions.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Updates fields on an existing Planner task identified by task ID, such as title, assignees, due/start dates, priority, and percent complete. Use to edit a task; only provided fields are changed. Idempotent: applying the same field values repeatedly leaves the task in the same end state.',
     idempotent: true,

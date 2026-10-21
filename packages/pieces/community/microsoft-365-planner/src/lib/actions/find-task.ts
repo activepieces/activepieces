@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoft365PlannerAuth } from '../auth';
 import { microsoft365PlannerApi } from '../common/api';
 import { microsoft365PlannerProps } from '../common/props';
+import { microsoft365PlannerFindTaskOutputSchema } from '../output-schemas';
 
 export const findTaskAction = createAction({
   auth: microsoft365PlannerAuth,
   name: 'findTask',
+  outputSchema: microsoft365PlannerFindTaskOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find Task',
   description: 'Find task by fields.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Searches the tasks of a given Planner plan and returns those whose title contains the given text (case-insensitive substring match). Use to locate a task ID within a known plan. Read-only and idempotent; both plan ID and title are required.',
     idempotent: true,

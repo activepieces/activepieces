@@ -1,5 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
+import { microsoft365PlannerAiActions } from './lib/actions/ai';
 import { createBucketAction } from './lib/actions/create-bucket';
 import { createPlanAction } from './lib/actions/create-plan';
 import { createTaskAction } from './lib/actions/create-task';
@@ -22,7 +23,7 @@ export const microsoft365Planner = createPiece({
   description:
     'Microsoft 365 Planner is part of the Microsoft 365 suite, offering lightweight task and bucket-based planning for teams. This integration supports creating plans, buckets, tasks, fetching them, deleting them, and custom API calls.',
   auth: microsoft365PlannerAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-365-planner.png',
   authors: ['LuizDMM', 'sanket-a11y'],
   actions: [
@@ -37,6 +38,7 @@ export const microsoft365Planner = createPiece({
     findAPlanAction,
     getABucketAction,
     findTaskAction,
+    ...microsoft365PlannerAiActions,
     createCustomApiCallAction({
       auth: microsoft365PlannerAuth,
       baseUrl: (auth) =>

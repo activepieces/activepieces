@@ -3,15 +3,17 @@ import { microsoft365PlannerAuth } from '../auth';
 import { microsoft365PlannerApi } from '../common/api';
 import { microsoft365PlannerProps } from '../common/props';
 import { microsoft365PlannerUtils } from '../common/utils';
+import { microsoft365PlannerCreatedTaskOutputSchema } from '../output-schemas';
 
 export const createTaskAction = createAction({
   auth: microsoft365PlannerAuth,
   name: 'createTask',
+  outputSchema: microsoft365PlannerCreatedTaskOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Task',
   description:
     'Create a new planner task with title, assignments, due date, etc.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description: 'Creates a new task in a Planner plan, optionally placing it in a bucket and setting assignees, due/start dates, priority, and percent complete. Use to add work items to a plan. Each call creates a separate task, so it is not idempotent.',
     idempotent: false,
