@@ -9,15 +9,11 @@ Automated reports and alerts that tell us something is wrong before a customer d
 
 Runs that run out of memory end with status `MEMORY_LIMIT_EXCEEDED`. They are not failed queue jobs, so queue alerts never see them. This report surfaces them so we can reach out with a fix (bigger dedicated workers, flow optimization) before the customer escalates.
 
-- **When:** daily at 12:00 Cairo time, covering the previous UTC day.
-- **Who:** enterprise Cloud platforms only, every platform with at least one OOM run that day.
+- **Runs:** as a daily cron job on the DevOps machine, reading the read-only Postgres replica and storing one row per platform per day in ClickHouse.
+- **Who:** enterprise Cloud platforms only, every platform with at least one OOM run the previous day.
 - **Where:** one message in the internal Discord channel, one line per platform with OOM runs, flows affected and OOM rate. Nothing is sent on a quiet day.
 - **History:** the **Enterprise OOM Tracker** dashboard in HyperDX shows trends and every past day's report.
 - **If it stops:** a Betterstack heartbeat alerts when the daily job has not run.
-
-<Note>
-Customer names stay in the internal channel and dashboard. Do not paste them into Linear, GitHub, or public channels.
-</Note>
 
 ## Nightly Benchmark
 
@@ -26,7 +22,3 @@ The `Benchmark` GitHub Actions workflow (`.github/workflows/benchmark.yml`) runs
 - **Results:** each scheduled run stores one row per shape in ClickHouse. The **Nightly Benchmark** dashboard in HyperDX charts throughput, latency, queue wait and worker resources over time.
 - **Regression alert:** `benchmark/detect-regression.mjs` compares the run with the median of the last 14 runs and alerts Betterstack when a metric is more than 5% worse on 2 runs in a row. It stays silent until a shape has 3 runs of history.
 - **Pipeline alert:** the job's last step opens a `bench-pipeline-<shape>` alert in Betterstack when anything in the job failed, and resolves it on the next green run.
-
-<Warning>
-The ClickHouse and alert steps run on **scheduled runs only**. A green manual run (`workflow_dispatch`) does not prove they work, so check the next nightly after changing them or their secrets. `CLICKHOUSE_CI_HOST` must be the bare hostname, with no `https://` or port.
-</Warning>
