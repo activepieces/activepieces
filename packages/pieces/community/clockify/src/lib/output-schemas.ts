@@ -362,6 +362,65 @@ const customFieldFields: OutputSchema['fields'] = [
 	{ key: 'workspaceId', label: 'Workspace ID' },
 ];
 
+const detailedTimeEntryFields: OutputSchema['fields'] = [
+	{ key: '_id', label: 'Time Entry ID' },
+	{ key: 'description', label: 'Description' },
+	{ key: 'userId', label: 'User ID' },
+	{ key: 'userName', label: 'User Name' },
+	{ key: 'userEmail', label: 'User Email', format: 'email' },
+	{ key: 'projectId', label: 'Project ID' },
+	{ key: 'projectName', label: 'Project Name' },
+	{ key: 'clientId', label: 'Client ID' },
+	{ key: 'clientName', label: 'Client Name' },
+	{ key: 'taskId', label: 'Task ID' },
+	{ key: 'taskName', label: 'Task Name' },
+	{ key: 'billable', label: 'Billable', format: 'boolean' },
+	{ key: 'isLocked', label: 'Locked', format: 'boolean' },
+	{ key: 'approvalStatus', label: 'Approval Status' },
+	{
+		key: 'timeInterval',
+		label: 'Time Interval',
+		children: [
+			{ key: 'start', label: 'Start', format: 'datetime' },
+			{ key: 'end', label: 'End', format: 'datetime' },
+			{ key: 'duration', label: 'Duration (Seconds)', format: 'number' },
+		],
+	},
+	{
+		key: 'tags',
+		label: 'Tags',
+		labelKey: 'name',
+		listItems: [
+			{ key: '_id', label: 'Tag ID' },
+			{ key: 'name', label: 'Name' },
+		],
+	},
+];
+
+const totalsByDayFields: OutputSchema['fields'] = [
+	{ key: 'date', label: 'Date', format: 'datetime' },
+	{ key: 'duration', label: 'Duration (Seconds)', format: 'number' },
+	{ key: 'amount', label: 'Amount (Cents)', format: 'number' },
+];
+
+const weeklyDayFields: OutputSchema['fields'] = [
+	{ key: 'date', label: 'Date', format: 'datetime' },
+	{ key: 'duration', label: 'Duration (Seconds)', format: 'number' },
+];
+
+const weeklyRowFields: OutputSchema['fields'] = [
+	{ key: '_id', label: 'ID' },
+	{ key: 'name', label: 'Name' },
+	{ key: 'duration', label: 'Duration (Seconds)', format: 'number' },
+	{ key: 'amount', label: 'Amount (Cents)', format: 'number' },
+	{
+		key: 'days',
+		label: 'Days',
+		labelKey: 'date',
+		listItems: weeklyDayFields,
+	},
+];
+
 export const workspaceOutputSchema: OutputSchema = { fields: workspaceFields };
 
 export const workspacesOutputSchema: OutputSchema = {
@@ -643,7 +702,24 @@ export const sharedReportsOutputSchema: OutputSchema = {
 
 export const sharedReportDataOutputSchema: OutputSchema = {
 	fields: [
-		...summaryReportFields,
+		{ key: 'totals', label: 'Totals', listItems: reportTotalFields },
+		{
+			key: 'groupOne',
+			label: 'Groups',
+			labelKey: 'name',
+			listItems: [
+				...reportGroupFields,
+				{ key: 'amount', label: 'Amount (Cents)', format: 'number' },
+				{ key: 'days', label: 'Days', labelKey: 'date', listItems: weeklyDayFields },
+			],
+		},
+		{
+			key: 'timeentries',
+			label: 'Time Entries',
+			labelKey: 'description',
+			listItems: detailedTimeEntryFields,
+		},
+		{ key: 'totalsByDay', label: 'Totals By Day', labelKey: 'date', listItems: totalsByDayFields },
 		{
 			key: 'filters',
 			label: 'Report',
@@ -663,40 +739,7 @@ export const detailedReportOutputSchema: OutputSchema = {
 			key: 'timeentries',
 			label: 'Time Entries',
 			labelKey: 'description',
-			listItems: [
-				{ key: '_id', label: 'Time Entry ID' },
-				{ key: 'description', label: 'Description' },
-				{ key: 'userId', label: 'User ID' },
-				{ key: 'userName', label: 'User Name' },
-				{ key: 'userEmail', label: 'User Email', format: 'email' },
-				{ key: 'projectId', label: 'Project ID' },
-				{ key: 'projectName', label: 'Project Name' },
-				{ key: 'clientId', label: 'Client ID' },
-				{ key: 'clientName', label: 'Client Name' },
-				{ key: 'taskId', label: 'Task ID' },
-				{ key: 'taskName', label: 'Task Name' },
-				{ key: 'billable', label: 'Billable', format: 'boolean' },
-				{ key: 'isLocked', label: 'Locked', format: 'boolean' },
-				{ key: 'approvalStatus', label: 'Approval Status' },
-				{
-					key: 'timeInterval',
-					label: 'Time Interval',
-					children: [
-						{ key: 'start', label: 'Start', format: 'datetime' },
-						{ key: 'end', label: 'End', format: 'datetime' },
-						{ key: 'duration', label: 'Duration (Seconds)', format: 'number' },
-					],
-				},
-				{
-					key: 'tags',
-					label: 'Tags',
-					labelKey: 'name',
-					listItems: [
-						{ key: '_id', label: 'Tag ID' },
-						{ key: 'name', label: 'Name' },
-					],
-				},
-			],
+			listItems: detailedTimeEntryFields,
 		},
 	],
 };
@@ -710,31 +753,13 @@ export const weeklyReportOutputSchema: OutputSchema = {
 			key: 'totalsByDay',
 			label: 'Totals By Day',
 			labelKey: 'date',
-			listItems: [
-				{ key: 'date', label: 'Date', format: 'datetime' },
-				{ key: 'duration', label: 'Duration (Seconds)', format: 'number' },
-				{ key: 'amount', label: 'Amount (Cents)', format: 'number' },
-			],
+			listItems: totalsByDayFields,
 		},
 		{
 			key: 'groupOne',
 			label: 'Rows',
 			labelKey: 'name',
-			listItems: [
-				{ key: '_id', label: 'ID' },
-				{ key: 'name', label: 'Name' },
-				{ key: 'duration', label: 'Duration (Seconds)', format: 'number' },
-				{ key: 'amount', label: 'Amount (Cents)', format: 'number' },
-				{
-					key: 'days',
-					label: 'Days',
-					labelKey: 'date',
-					listItems: [
-						{ key: 'date', label: 'Date', format: 'datetime' },
-						{ key: 'duration', label: 'Duration (Seconds)', format: 'number' },
-					],
-				},
-			],
+			listItems: weeklyRowFields,
 		},
 	],
 };

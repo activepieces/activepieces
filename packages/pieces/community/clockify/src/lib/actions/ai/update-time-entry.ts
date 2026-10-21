@@ -75,7 +75,7 @@ export const updateTimeEntryAction = createAction({
 				description: propsValue.description ?? current.description,
 				projectId: propsValue.projectId ?? current.projectId,
 				taskId: propsValue.taskId ?? current.taskId,
-				tagIds: propsValue.tagIds?.map(String) ?? current.tagIds,
+				tagIds: clockifyUtils.nonEmptyIds({ values: propsValue.tagIds }) ?? current.tagIds,
 				billable:
 					clockifyUtils.toOptionalBoolean({ value: propsValue.billable }) ?? current.billable,
 				type: current.type,

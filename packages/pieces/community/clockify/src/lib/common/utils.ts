@@ -21,10 +21,14 @@ function toOptionalBoolean({ value }: { value: string | undefined }): boolean | 
 	return value === undefined ? undefined : value === 'true';
 }
 
+function nonEmptyIds({ values }: { values: unknown[] | undefined }): string[] | undefined {
+	return values && values.length > 0 ? values.map(String) : undefined;
+}
+
 function entityFilter({ ids }: { ids: unknown[] | undefined }): ClockifyEntityFilter | undefined {
 	return ids && ids.length > 0
 		? { ids: ids.map(String), contains: 'CONTAINS', status: 'ALL' }
 		: undefined;
 }
 
-export const clockifyUtils = { toQuery, toOptionalBoolean, entityFilter };
+export const clockifyUtils = { toQuery, toOptionalBoolean, nonEmptyIds, entityFilter };

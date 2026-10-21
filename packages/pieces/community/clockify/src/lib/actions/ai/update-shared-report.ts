@@ -3,7 +3,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../../auth';
 import { clockifyAiProps } from '../../common/ai-props';
 import { clockifyApi } from '../../common/api';
+import { clockifyUtils } from '../../common/utils';
 import { sharedReportOutputSchema } from '../../output-schemas';
+
+import type { ClockifyAuthValue, ClockifySharedReportListItem } from '../../common/types';
+
+const YES_NO = [
+	{ label: 'Yes', value: 'true' },
+	{ label: 'No', value: 'false' },
+];
 
 export const updateSharedReportAction = createAction({
 	auth: clockifyAuth,
@@ -22,34 +30,36 @@ export const updateSharedReportAction = createAction({
 		workspaceId: clockifyAiProps.workspaceId({ required: true }),
 		sharedReportId: clockifyAiProps.sharedReportId({ required: true }),
 		name: Property.ShortText({ displayName: 'Name', required: false }),
-		isPublic: Property.Checkbox({
+		isPublic: Property.StaticDropdown({
 			displayName: 'Public',
-			description: 'Anyone with the link can view it; replaces the list. Empty = unchanged.',
+			description: 'Anyone with the link can view it. Empty = unchanged.',
 			required: false,
+			options: { disabled: false, options: YES_NO },
 		}),
-		fixedDate: Property.Checkbox({
+		fixedDate: Property.StaticDropdown({
 			displayName: 'Fixed Period',
 			description: 'Viewers cannot change the period. Empty = unchanged.',
 			required: false,
+			options: { disabled: false, options: YES_NO },
 		}),
 		visibleToUsers: clockifyAiProps.idList({
 			required: false,
 			displayName: 'Visible to Users',
-			description: 'User IDs that can view it; replaces the list.',
+			description: 'User IDs that can view it; replaces the list. Empty = unchanged.',
 		}),
 		visibleToUserGroups: clockifyAiProps.idList({
 			required: false,
 			displayName: 'Visible to User Groups',
-			description: 'User group IDs that can view it; replaces the list.',
+			description: 'User group IDs that can view it; replaces the list. Empty = unchanged.',
 		}),
 	},
 	async run({ auth, propsValue }) {
-		const page = await clockifyApi.listSharedReports({
+		const current = await findSharedReport({
 			auth,
 			workspaceId: propsValue.workspaceId,
-			query: { sharedReportsFilter: 'ALL', page: '1', pageSize: '1000' },
+			sharedReportId: propsValue.sharedReportId,
+			page: 1,
 		});
-		const current = page.reports?.find((report) => report.id === propsValue.sharedReportId);
 		if (!current) {
 			throw new Error(
 				`Shared report ${propsValue.sharedReportId} not found in this workspace. Use List Shared Reports to find it.`,
@@ -61,12 +71,47 @@ export const updateSharedReportAction = createAction({
 			sharedReportId: propsValue.sharedReportId,
 			sharedReport: {
 				name: propsValue.name ?? current.name,
-				isPublic: propsValue.isPublic ?? current.isPublic,
-				fixedDate: propsValue.fixedDate ?? current.fixedDate,
-				visibleToUsers: propsValue.visibleToUsers?.map(String) ?? current.visibleToUsers,
+				isPublic:
+					clockifyUtils.toOptionalBoolean({ value: propsValue.isPublic }) ?? current.isPublic,
+				fixedDate:
+					clockifyUtils.toOptionalBoolean({ value: propsValue.fixedDate }) ?? current.fixedDate,
+				visibleToUsers:
+					clockifyUtils.nonEmptyIds({ values: propsValue.visibleToUsers }) ??
+					current.visibleToUsers?.map((user) => user.id),
 				visibleToUserGroups:
-					propsValue.visibleToUserGroups?.map(String) ?? current.visibleToUserGroups,
+					clockifyUtils.nonEmptyIds({ values: propsValue.visibleToUserGroups }) ??
+					current.visibleToUserGroups?.map((group) => group.id),
 			},
 		});
 	},
 });
+
+async function findSharedReport({
+	auth,
+	workspaceId,
+	sharedReportId,
+	page,
+}: {
+	auth: ClockifyAuthValue;
+	workspaceId: string;
+	sharedReportId: string;
+	page: number;
+}): Promise<ClockifySharedReportListItem | undefined> {
+	const result = await clockifyApi.listSharedReports({
+		auth,
+		workspaceId,
+		query: {
+			sharedReportsFilter: 'ALL',
+			page: String(page),
+			pageSize: String(SHARED_REPORTS_PAGE_SIZE),
+		},
+	});
+	const reports = result.reports ?? [];
+	const match = reports.find((report) => report.id === sharedReportId);
+	if (match || reports.length < SHARED_REPORTS_PAGE_SIZE) {
+		return match;
+	}
+	return await findSharedReport({ auth, workspaceId, sharedReportId, page: page + 1 });
+}
+
+const SHARED_REPORTS_PAGE_SIZE = 1000;

@@ -83,7 +83,7 @@ export const bulkUpdateTimeEntriesAction = createAction({
 						description: propsValue.description ?? entry.description,
 						projectId: propsValue.projectId ?? entry.projectId,
 						taskId: propsValue.taskId ?? entry.taskId,
-						tagIds: propsValue.tagIds?.map(String) ?? entry.tagIds,
+						tagIds: clockifyUtils.nonEmptyIds({ values: propsValue.tagIds }) ?? entry.tagIds,
 						billable: billable ?? entry.billable,
 						type: entry.type,
 						customFields: entry.customFieldValues?.map((field) => ({

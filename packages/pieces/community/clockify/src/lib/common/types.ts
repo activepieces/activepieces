@@ -139,7 +139,17 @@ export type ClockifySharedReportInput = {
 	filter: ClockifyReportRequest;
 };
 export type ClockifySharedReportUpdate = Omit<ClockifySharedReport, 'id' | 'type'>;
-export type ClockifySharedReportPage = { count?: number; reports?: ClockifySharedReport[] };
+export type ClockifySharedReportListItem = Omit<
+	ClockifySharedReport,
+	'visibleToUsers' | 'visibleToUserGroups'
+> & {
+	visibleToUsers?: { id: string }[];
+	visibleToUserGroups?: { id: string }[];
+};
+export type ClockifySharedReportPage = {
+	count?: number;
+	reports?: ClockifySharedReportListItem[];
+};
 export type ClockifyTemplate = { id: string; name: string };
 export type ClockifyHoliday = {
 	id: string;

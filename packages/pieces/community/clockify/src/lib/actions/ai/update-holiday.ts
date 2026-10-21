@@ -36,12 +36,13 @@ export const updateHolidayAction = createAction({
 		userIds: clockifyAiProps.idList({
 			required: false,
 			displayName: 'User IDs',
-			description: 'Users it applies to. Use List Users.',
+			description: 'Replaces the users it applies to. Use List Users. Empty = unchanged.',
 		}),
 		userGroupIds: clockifyAiProps.idList({
 			required: false,
 			displayName: 'User Group IDs',
-			description: 'User groups it applies to. Use List User Groups.',
+			description:
+				'Replaces the user groups it applies to. Use List User Groups. Empty = unchanged.',
 		}),
 		everyone: Property.StaticDropdown({
 			displayName: 'Everyone',
@@ -98,9 +99,12 @@ export const updateHolidayAction = createAction({
 					clockifyUtils.toOptionalBoolean({ value: propsValue.everyone }) ??
 					current.everyoneIncludingNew ??
 					false,
-				users: clockifyUtils.entityFilter({ ids: propsValue.userIds ?? current.userIds }),
+				users: clockifyUtils.entityFilter({
+					ids: clockifyUtils.nonEmptyIds({ values: propsValue.userIds }) ?? current.userIds,
+				}),
 				userGroups: clockifyUtils.entityFilter({
-					ids: propsValue.userGroupIds ?? current.userGroupIds,
+					ids:
+						clockifyUtils.nonEmptyIds({ values: propsValue.userGroupIds }) ?? current.userGroupIds,
 				}),
 				automaticTimeEntryCreation:
 					typeof current.automaticTimeEntryCreation === 'object'

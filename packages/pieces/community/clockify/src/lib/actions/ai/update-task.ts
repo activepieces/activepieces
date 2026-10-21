@@ -38,12 +38,12 @@ export const updateTaskAction = createAction({
 		}),
 		assigneeIds: Property.Array({
 			displayName: 'Assignee IDs',
-			description: 'User IDs to assign. Use List Users to find them.',
+			description: 'Replaces the assignees. Use List Users to find them. Empty = unchanged.',
 			required: false,
 		}),
 		userGroupIds: Property.Array({
 			displayName: 'User Group IDs',
-			description: 'User group IDs to assign. Use List User Groups to find them.',
+			description: 'Replaces the assigned user groups. Use List User Groups. Empty = unchanged.',
 			required: false,
 		}),
 		estimate: Property.ShortText({
@@ -79,8 +79,10 @@ export const updateTaskAction = createAction({
 			task: {
 				name: propsValue.name ?? current.name,
 				status: propsValue.status ?? current.status,
-				assigneeIds: propsValue.assigneeIds?.map(String) ?? current.assigneeIds,
-				userGroupIds: propsValue.userGroupIds?.map(String) ?? current.userGroupIds,
+				assigneeIds:
+					clockifyUtils.nonEmptyIds({ values: propsValue.assigneeIds }) ?? current.assigneeIds,
+				userGroupIds:
+					clockifyUtils.nonEmptyIds({ values: propsValue.userGroupIds }) ?? current.userGroupIds,
 				estimate: propsValue.estimate ?? current.estimate,
 				billable:
 					clockifyUtils.toOptionalBoolean({ value: propsValue.billable }) ?? current.billable,
