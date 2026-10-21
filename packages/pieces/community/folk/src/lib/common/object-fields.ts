@@ -19,7 +19,7 @@ function objectProps() {
 }
 
 function objectBodyProps({ forUpdate }: { forUpdate: boolean }) {
-  const replaces = forUpdate ? ' Replaces the current list.' : '';
+  const replaces = forUpdate ? ' Replaces the current list; an empty list removes every link.' : '';
   return {
     personIds: folkAi.listProp({ displayName: 'Person IDs', description: `People in this group to link (per_...); Folk ignores records outside the group.${replaces}` }),
     companyIds: folkAi.listProp({ displayName: 'Company IDs', description: `Companies in this group to link (com_...); Folk ignores records outside the group.${replaces}` }),
@@ -39,8 +39,8 @@ function objectBody({ props }: { props: ObjectInput }): Record<string, unknown> 
   const fields = folkFields.jsonObject({ value: props.customFieldValues, label: 'Custom Field Values' });
   return {
     ...(name !== undefined ? { name } : {}),
-    ...(people !== undefined && people.length > 0 ? { people: people.map((id) => ({ id })) } : {}),
-    ...(companies !== undefined && companies.length > 0 ? { companies: companies.map((id) => ({ id })) } : {}),
+    ...(people !== undefined ? { people: people.map((id) => ({ id })) } : {}),
+    ...(companies !== undefined ? { companies: companies.map((id) => ({ id })) } : {}),
     ...(fields !== undefined ? { customFieldValues: fields } : {}),
   };
 }

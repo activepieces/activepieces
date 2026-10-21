@@ -50,6 +50,29 @@ describe('signature + dedupe', () => {
     expect(result.seen).toHaveLength(folkWebhook.MAX_SEEN_IDS);
     expect(result.seen.at(-1)).toBe('new');
     expect(result.seen).not.toContain('e0');
+    expect(result.evicted).toEqual(['e0']);
+  });
+
+  it('lets only one of two parallel deliveries of the same event through', async () => {
+    const store = memoryStore();
+    store.data.set('_signingSecret', SECRET);
+    const first = delivery({ id: 'msg_a' });
+    const second = delivery({ id: 'msg_b' });
+    const results = await Promise.all([
+      handlers.run({ store, payload: first }),
+      handlers.run({ store, payload: second }),
+    ]);
+    expect(results.flat()).toHaveLength(1);
+  });
+
+  it('clears claim keys on disable', async () => {
+    const store = memoryStore();
+    store.data.set('_signingSecret', SECRET);
+    await handlers.run({ store, payload: delivery() });
+    const claimKeys = [...store.data.keys()].filter((key) => key.startsWith('_evt_'));
+    expect(claimKeys).toHaveLength(1);
+    await handlers.onDisable({ auth: TEST_AUTH, store });
+    expect([...store.data.keys()]).toEqual([]);
   });
 });
 

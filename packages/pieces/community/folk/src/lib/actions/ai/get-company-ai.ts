@@ -14,7 +14,7 @@ export const getCompanyAi = createAction({
   outputSchema: folkOutputSchemas.company,
   aiMetadata: {
     description:
-      'Returns one Folk company by ID.(per_...): names, job title, emails, phones, URLs, addresses, companies, groups, custom field values and interaction stats. Use Search People to find the ID from a name or email. Read-only.',
+      'Returns one Folk company by ID (com_...): name, description, industry, employee range, foundation year, funding, emails, phones, URLs, addresses, groups and custom field values. Use Search Companies to find the ID from a name. Read-only.',
     idempotent: true,
   },
   props: {

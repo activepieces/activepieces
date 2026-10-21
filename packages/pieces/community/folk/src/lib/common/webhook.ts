@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Store } from '@activepieces/pieces-framework';
 import { folkClient, FolkAuthValue } from './client';
@@ -50,12 +50,39 @@ function sign({ secret, webhookId, timestamp, body }: { secret: string; webhookI
   return `v1,${createHmac('sha256', secretKey({ secret })).update(`${webhookId}.${timestamp}.${body}`).digest('base64')}`;
 }
 
-function rememberDelivery({ seen, deliveryId }: { seen: unknown; deliveryId: string }): { duplicate: boolean; seen: string[] } {
+function rememberDelivery({ seen, deliveryId }: { seen: unknown; deliveryId: string }): { duplicate: boolean; seen: string[]; evicted: string[] } {
   const ids = Array.isArray(seen) ? seen.filter((id): id is string => typeof id === 'string') : [];
   if (ids.includes(deliveryId)) {
-    return { duplicate: true, seen: ids };
+    return { duplicate: true, seen: ids, evicted: [] };
   }
-  return { duplicate: false, seen: [...ids, deliveryId].slice(-MAX_SEEN_IDS) };
+  const all = [...ids, deliveryId];
+  const cut = Math.max(all.length - MAX_SEEN_IDS, 0);
+  return { duplicate: false, seen: all.slice(cut), evicted: all.slice(0, cut) };
+}
+
+function claimKeyOf({ deliveryId }: { deliveryId: string }): string {
+  return `_evt_${createHash('sha256').update(deliveryId).digest('hex').slice(0, 40)}`;
+}
+
+async function claimDelivery({ store, deliveryId }: { store: Store; deliveryId: string }): Promise<boolean> {
+  const key = claimKeyOf({ deliveryId });
+  if ((await store.get<string>(key)) !== null) {
+    return false;
+  }
+  const token = randomUUID();
+  await store.put(key, token);
+  await sleep(CLAIM_SETTLE_MS);
+  if ((await store.get<string>(key)) !== token) {
+    return false;
+  }
+  const remembered = rememberDelivery({ seen: await store.get<unknown>(SEEN_KEY), deliveryId: key });
+  await store.put(SEEN_KEY, remembered.seen);
+  await Promise.all(remembered.evicted.map((evictedKey) => store.delete(evictedKey)));
+  return true;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function handlers({ eventType, label }: { eventType: string; label: string }) {
@@ -92,6 +119,9 @@ function handlers({ eventType, label }: { eventType: string; label: string }) {
       }
       await context.store.delete(WEBHOOK_ID_KEY);
       await context.store.delete(SECRET_KEY);
+      const seen = await context.store.get<unknown>(SEEN_KEY);
+      const claimKeys = Array.isArray(seen) ? seen.filter((key): key is string => typeof key === 'string') : [];
+      await Promise.all(claimKeys.map((key) => context.store.delete(key)));
       await context.store.delete(SEEN_KEY);
     },
     async run(context: RunContext): Promise<unknown[]> {
@@ -114,12 +144,8 @@ function handlers({ eventType, label }: { eventType: string; label: string }) {
         }
         deliveryId = deliveryId ?? verification.webhookId;
       }
-      if (deliveryId) {
-        const remembered = rememberDelivery({ seen: await context.store.get<unknown>(SEEN_KEY), deliveryId });
-        if (remembered.duplicate) {
-          return [];
-        }
-        await context.store.put(SEEN_KEY, remembered.seen);
+      if (deliveryId && !(await claimDelivery({ store: context.store, deliveryId }))) {
+        return [];
       }
       return [body];
     },
@@ -146,6 +172,7 @@ const MAX_SEEN_IDS = 200;
 const WEBHOOK_ID_KEY = '_webhookId';
 const SECRET_KEY = '_signingSecret';
 const SEEN_KEY = '_seenEventIds';
+const CLAIM_SETTLE_MS = 300;
 
 export const folkWebhook = { verifySignature, sign, rememberDelivery, handlers, TOLERANCE_SECONDS, MAX_SEEN_IDS };
 

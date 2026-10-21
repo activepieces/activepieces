@@ -40,6 +40,7 @@ export const folkCustomApiCall = createAction({
       followRedirects: propsValue.followRedirects === true,
       body: bodyOf({ body: propsValue.body, bodyType: propsValue.body_type }),
       responseType: propsValue.response_is_binary ? ('arraybuffer' as const) : ('json' as const),
+      redactBodyInErrors: true,
     };
     try {
       const response = await httpClient.sendRequest(request, { dispatcher: await folkClient.verifiedTls() });

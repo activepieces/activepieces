@@ -22,6 +22,7 @@ import { findCompany } from '../src/lib/actions/find-company';
 import { folkAuth } from '../src/lib/common/auth';
 import { deleteGroupObject } from '../src/lib/actions/ai/delete-group-object';
 import { createGroupObject } from '../src/lib/actions/ai/create-group-object';
+import { updateGroupObject } from '../src/lib/actions/ai/update-group-object';
 import { folkCustomApiCall } from '../src/lib/actions/custom-api-call';
 
 const GRP = 'grp_0a873e70-8534-40e7-a275-1a187381118f';
@@ -228,6 +229,12 @@ describe('group objects', () => {
     expect(call().body).toEqual({ name: 'Deal', people: [{ id: PER }], customFieldValues: { Status: 'Lead' } });
   });
 
+  it('update keeps an empty link list so all links can be removed', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { id: 'obj_1' } }));
+    await runAction({ action: updateGroupObject, propsValue: { groupId: GRP, objectType: 'Object', objectId: 'obj_1', personIds: [], companyIds: [] } });
+    expect(call().body).toEqual({ people: [], companies: [] });
+  });
+
   it('delete sends DELETE to the object path', async () => {
     sendRequest.mockResolvedValueOnce(ok({ data: { id: 'obj_1' } }));
     const result = await runAction({ action: deleteGroupObject, propsValue: { groupId: GRP, objectType: 'Object', objectId: 'obj_1' } });
@@ -251,6 +258,7 @@ describe('TLS and custom API call', () => {
     expect(call().url).toBe('https://api.folk.app/v1/users/me');
     expect(call().headers.Authorization).toBe('Bearer folk_key');
     expect(sendRequest.mock.calls[0][1].dispatcher).toBeDefined();
+    expect(call().redactBodyInErrors).toBe(true);
     expect(result).toEqual({ status: 200, headers: {}, body: { data: { id: 'usr_1' } } });
   });
 

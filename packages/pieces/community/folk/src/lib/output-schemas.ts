@@ -234,6 +234,7 @@ const webhookEventFields: Field[] = [
     children: [
       { key: 'id', label: 'Record ID' },
       { key: 'url', label: 'Record API URL', format: 'url' },
+      { key: 'details', label: 'Details', description: 'Snapshot of a deleted record, e.g. its name and emails.' },
       {
         key: 'changes',
         label: 'Changes',
@@ -286,6 +287,7 @@ export const folkOutputSchemas = {
     fields: [
       { key: 'companies', label: 'Companies', labelKey: 'name', listItems: companyFields },
       { key: 'count', label: 'Items On This Page', format: 'number' },
+      { key: 'pagination', label: 'Pagination', children: [{ key: 'nextLink', label: 'Next Page Link', format: 'url' }] },
       { key: 'hasMore', label: 'Has More', format: 'boolean' },
       { key: 'nextCursor', label: 'Next Cursor' },
     ],
@@ -295,7 +297,10 @@ export const folkOutputSchemas = {
       {
         key: 'data',
         label: 'Data',
-        children: [{ key: 'items', label: 'People', labelKey: 'fullName', listItems: personFields }],
+        children: [
+          { key: 'items', label: 'People', labelKey: 'fullName', listItems: personFields },
+          { key: 'pagination', label: 'Pagination', children: [{ key: 'nextLink', label: 'Next Page Link', format: 'url' }] },
+        ],
       },
       { key: 'hasMore', label: 'Has More', format: 'boolean' },
       { key: 'nextCursor', label: 'Next Cursor' },
