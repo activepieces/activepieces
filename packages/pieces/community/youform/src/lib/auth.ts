@@ -25,4 +25,12 @@ export const youformAuth = PieceAuth.SecretText({
           valid: true,
         };
   },
+  getConnectionIdentifier: async ({ auth }) => {
+    const { data } = await tryCatch(() =>
+      youformApi.getMe({
+        auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth },
+      })
+    );
+    return data?.data.email;
+  },
 });
