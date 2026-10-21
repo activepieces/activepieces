@@ -2,8 +2,6 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mailflossAuth } from '../auth';
 import { mailflossWebhook } from '../common/webhook';
 
-const WEBHOOK_ID_KEY = 'mailfloss_undeliverable_webhook_id';
-
 export const emailUndeliverableTrigger = createTrigger({
   auth: mailflossAuth,
   name: 'email_undeliverable',
@@ -30,7 +28,6 @@ export const emailUndeliverableTrigger = createTrigger({
   async onEnable(context) {
     await mailflossWebhook.enable({
       store: context.store,
-      storeKey: WEBHOOK_ID_KEY,
       apiKey: context.auth.secret_text,
       url: context.webhookUrl,
       name: 'Activepieces: Email Undeliverable',
@@ -40,7 +37,6 @@ export const emailUndeliverableTrigger = createTrigger({
   async onDisable(context) {
     await mailflossWebhook.disable({
       store: context.store,
-      storeKey: WEBHOOK_ID_KEY,
       apiKey: context.auth.secret_text,
     });
   },

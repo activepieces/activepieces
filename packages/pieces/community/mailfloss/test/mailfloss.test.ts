@@ -239,3 +239,24 @@ describe.each([
     expect(await trigger.run(triggerContext(new Map(), body))).toEqual([body]);
   });
 });
+
+it('switching trigger types still removes the webhook a failed disable left behind', async () => {
+  const store = new Map<string, unknown>();
+  sendRequest.mockResolvedValueOnce(ok({ id: 'wh_jobs' }));
+  await verificationJobFinishedTrigger.onEnable(triggerContext(store));
+  sendRequest.mockRejectedValueOnce(httpError(500));
+  await expect(
+    verificationJobFinishedTrigger.onDisable(triggerContext(store))
+  ).rejects.toThrow();
+
+  sendRequest
+    .mockResolvedValueOnce(ok({ id: 'wh_jobs', deleted: true }))
+    .mockResolvedValueOnce(ok({ id: 'wh_undeliverable' }));
+  await emailUndeliverableTrigger.onEnable(triggerContext(store));
+  expect(request(2)).toMatchObject({
+    method: 'DELETE',
+    url: 'https://api.mailfloss.com/v1/webhooks/wh_jobs',
+  });
+  expect(request(3).body).toMatchObject({ events: ['status-undeliverable'] });
+  expect([...store.values()]).toEqual(['wh_undeliverable']);
+});

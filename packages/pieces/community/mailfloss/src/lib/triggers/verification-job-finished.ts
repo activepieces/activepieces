@@ -2,8 +2,6 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mailflossAuth } from '../auth';
 import { mailflossWebhook } from '../common/webhook';
 
-const WEBHOOK_ID_KEY = 'mailfloss_job_finished_webhook_id';
-
 export const verificationJobFinishedTrigger = createTrigger({
   auth: mailflossAuth,
   name: 'verification_job_finished',
@@ -18,7 +16,7 @@ export const verificationJobFinishedTrigger = createTrigger({
   sampleData: {
     id: 'job_a1b2c3d4e5f6g7h8',
     processed: true,
-    status: 'finished',
+    status: 'processed',
     finished_at: '2026-10-21T10:18:22.000Z',
     stats: {
       total: 1000,
@@ -49,7 +47,6 @@ export const verificationJobFinishedTrigger = createTrigger({
   async onEnable(context) {
     await mailflossWebhook.enable({
       store: context.store,
-      storeKey: WEBHOOK_ID_KEY,
       apiKey: context.auth.secret_text,
       url: context.webhookUrl,
       name: 'Activepieces: Verification Job Finished',
@@ -59,7 +56,6 @@ export const verificationJobFinishedTrigger = createTrigger({
   async onDisable(context) {
     await mailflossWebhook.disable({
       store: context.store,
-      storeKey: WEBHOOK_ID_KEY,
       apiKey: context.auth.secret_text,
     });
   },
