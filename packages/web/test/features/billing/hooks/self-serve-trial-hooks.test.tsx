@@ -43,15 +43,15 @@ vi.mock('@/hooks/platform-hooks', () => ({
         id: 'platform-1',
         plan: {
           plan: 'free',
-          seatGraceEndsAt,
           usersLimit,
         },
         selfServeTrial:
-          planTrialEndsAt === null
+          planTrialEndsAt === null && seatGraceEndsAt === null
             ? undefined
             : {
-                startedAt: '2026-10-14T09:00:00.000Z',
-                endsAt: planTrialEndsAt,
+                startedAt: '2026-10-07T09:00:00.000Z',
+                endsAt: planTrialEndsAt ?? '2026-10-14T09:00:00.000Z',
+                seatGraceEndsAt,
               },
       },
     }),
@@ -237,7 +237,7 @@ describe('plan refresh after the trial', () => {
     extended: false,
   });
 
-  it('runs once when the trial ended but the plan still carries its dates', async () => {
+  it('runs once on the first day after the trial ended', async () => {
     status = endedStatus();
     planTrialEndsAt = dayjs().subtract(1, 'hour').toISOString();
 
@@ -250,8 +250,9 @@ describe('plan refresh after the trial', () => {
     );
   });
 
-  it('stays quiet once the plan no longer carries the trial', async () => {
+  it('stays quiet once the trial ended more than a day ago', async () => {
     status = endedStatus();
+    planTrialEndsAt = dayjs().subtract(2, 'day').toISOString();
 
     const { result } = renderHook(
       () => {
