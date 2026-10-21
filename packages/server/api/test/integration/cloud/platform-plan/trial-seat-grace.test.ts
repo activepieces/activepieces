@@ -1,4 +1,4 @@
-import { PlatformRole, PrincipalType, SelfServeTrialDates, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, PlanName, PlatformRole, PrincipalType, SelfServeTrialDates, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -11,7 +11,8 @@ import { trialSeatGrace } from '../../../../src/app/ee/platform/platform-plan/tr
 import { BillingOverview } from '../../../../src/app/platform/billing-provider'
 import { userRepo } from '../../../../src/app/user/user-service'
 import { generateMockToken } from '../../../helpers/auth'
-import { mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
+import { db } from '../../../helpers/db'
+import { createMockUserInvitation, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -27,6 +28,7 @@ afterAll(async () => {
 })
 
 afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
 })
 
@@ -186,6 +188,52 @@ describe('Seat grace after the self-serve trial', () => {
         }
     })
 
+    it('waits for the deadline time on the deadline day', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(todayAtUtc({ hour: 10 }))
+        const { trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 7 })
+        stubRefresh()
+
+        await trialSeatGrace(log).sweep()
+
+        for (const user of trialUsers) {
+            expect(await statusOf(user)).toBe(UserStatus.ACTIVE)
+        }
+    })
+
+    it('refreshes a platform the trial left with unlimited seats, then ends its grace', async () => {
+        const { platformId, owner, trialUsers } = await setupPlatform({ usersLimit: null, trialUsers: 2, trialEndedDaysAgo: 8 })
+        await platformPlanRepo().update({ platformId }, { plan: PlanName.FREE })
+        vi.spyOn(autumnUtils, 'refreshEntitlements').mockImplementation(async (_log, refreshed) => {
+            if (refreshed === platformId) {
+                await platformPlanRepo().update({ platformId }, { usersLimit: 1 })
+            }
+        })
+
+        await trialSeatGrace(log).sweep()
+
+        expect(await statusOf(trialUsers[1])).toBe(UserStatus.INACTIVE)
+        expect(await statusOf(trialUsers[0])).toBe(UserStatus.INACTIVE)
+        expect(await statusOf(owner)).toBe(UserStatus.ACTIVE)
+    })
+
+    it('counts the seats held by pending invitations when it ends a grace', async () => {
+        const { platformId, owner, trialUsers } = await setupPlatform({ usersLimit: 2, trialUsers: 1, trialEndedDaysAgo: 8 })
+        await db.save('user_invitation', createMockUserInvitation({
+            platformId,
+            type: InvitationType.PLATFORM,
+            platformRole: PlatformRole.MEMBER,
+            status: InvitationStatus.PENDING,
+            updated: dayjs().toISOString(),
+        }))
+        stubRefresh()
+
+        await trialSeatGrace(log).sweep()
+
+        expect(await statusOf(trialUsers[0])).toBe(UserStatus.INACTIVE)
+        expect(await statusOf(owner)).toBe(UserStatus.ACTIVE)
+    })
+
     it('skips a platform over its seats that never had a trial, without asking Autumn', async () => {
         const { platformId, trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 8 })
         await selfServeTrialUtils.save({ platformId, dates: null })
@@ -259,6 +307,16 @@ describe('Seat grace after the self-serve trial', () => {
         expect(response.json().seatGrace).toEqual({ usedSeats: 5, seatLimit: 3, userIds: [trialUsers[2].id, trialUsers[1].id] })
     })
 
+    it('shows no grace while billing is known not to be enforced', async () => {
+        const { platformId, dates } = await setupPlatform({ usersLimit: 1, trialUsers: 2 })
+        await distributedStore.put(getBillingEnforcedKey(platformId), false, 300)
+
+        const plan = await platformPlanRepo().findOneByOrFail({ platformId })
+
+        expect(await trialSeatGrace(log).get({ plan })).toBeNull()
+        expect(await trialSeatGrace(log).endsAt({ platformId, dates })).toBeNull()
+    })
+
     it('tells every member the deadline on the platform while the grace runs', async () => {
         const { platformId, dates, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3 })
         const token = await generateMockToken({ id: trialUsers[0].id, type: PrincipalType.USER, platform: { id: platformId } })
@@ -312,6 +370,12 @@ async function addUsers({ platformId, count, firstCreatedAt, provider = UserIden
     }))
 }
 
+function todayAtUtc({ hour }: { hour: number }): Date {
+    const moment = new Date()
+    moment.setUTCHours(hour, 0, 0, 0)
+    return moment
+}
+
 function stubRefresh() {
     return vi.spyOn(autumnUtils, 'refreshEntitlements').mockResolvedValue(undefined)
 }
@@ -346,7 +410,7 @@ const FREE_OVERVIEW: BillingOverview = {
 }
 
 type SetupPlatformParams = {
-    usersLimit: number
+    usersLimit: number | null
     preTrialUsers?: number
     trialUsers?: number
     embeddedTrialUsers?: number

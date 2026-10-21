@@ -24,9 +24,11 @@ const state = vi.hoisted<TestState>(() => ({
   isPlatformAdmin: true,
   grace: null,
   info: undefined,
+  subscriptionFailed: false,
   subscriptionEnabled: undefined,
   dialogProps: null,
 }));
+const refetchSubscription = vi.hoisted(() => vi.fn());
 const refreshSubscriptionInfo = vi.hoisted(() => vi.fn());
 const refreshBillingCaches = vi.hoisted(() => vi.fn());
 const upgradeClick = vi.hoisted(() => vi.fn());
@@ -56,7 +58,11 @@ vi.mock('@/features/billing/hooks/billing-hooks', () => ({
   billingQueries: {
     usePlatformSubscription: (_platformId: string, enabled: boolean) => {
       state.subscriptionEnabled = enabled;
-      return { data: enabled ? state.info : undefined };
+      return {
+        data: enabled ? state.info : undefined,
+        isError: enabled && state.subscriptionFailed,
+        refetch: refetchSubscription,
+      };
     },
   },
   refreshBillingCaches,
@@ -137,7 +143,9 @@ beforeEach(() => {
   state.isPlatformAdmin = true;
   state.grace = graceOf();
   state.info = infoOf();
+  state.subscriptionFailed = false;
   state.subscriptionEnabled = undefined;
+  refetchSubscription.mockReset().mockResolvedValue(undefined);
   state.dialogProps = null;
   refreshSubscriptionInfo.mockReset().mockResolvedValue(undefined);
   refreshBillingCaches.mockReset();
@@ -210,6 +218,18 @@ describe('seat dialog after the trial', () => {
     renderSeatDialog();
 
     expect(state.dialogProps).toBeNull();
+  });
+
+  it('shows the failed seat read with a retry when an admin opens it', async () => {
+    state.info = undefined;
+    state.subscriptionFailed = true;
+    openDialog();
+
+    renderSeatDialog();
+
+    expect(screen.getByText('Trouble loading users')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(refetchSubscription).toHaveBeenCalledTimes(1));
   });
 
   it('asks for the subscription of an admin while the grace runs', () => {
@@ -296,6 +316,7 @@ type TestState = {
   isPlatformAdmin: boolean;
   grace: SeatGrace | null;
   info: InfoState | undefined;
+  subscriptionFailed: boolean;
   subscriptionEnabled: boolean | undefined;
   dialogProps: DialogProps | null;
 };
