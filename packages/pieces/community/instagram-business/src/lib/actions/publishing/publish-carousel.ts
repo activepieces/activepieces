@@ -22,21 +22,26 @@ export const publishCarousel = createAction({
       'Publishes a single Instagram carousel album containing between 2 and 10 photos or videos, given their public URLs, with an optional caption. Every item is uploaded first and processed in parallel, with up to five minutes for the items and two more for the album. A carousel counts as one post against the 100-per-24-hours publishing quota. Not idempotent — each call publishes a new album.',
     idempotent: false,
   },
+  propertyGroups: [
+    { key: 'account', display: 'section', label: 'Account', icon: 'user', props: ['page'] },
+    { key: 'post', display: 'section', label: 'Post', icon: 'file', props: ['items', 'caption'] },
+  ],
   props: {
     page: instagramCommon.page,
     items: Property.Array({
       displayName: 'Items',
-      description: 'Between 2 and 10 photos or videos, in the order they should appear.',
+      description: '2 to 10 photos or videos, in the order they appear.',
       required: true,
       properties: {
         url: Property.ShortText({
           displayName: 'Media URL',
-          description: 'Public URL of the photo (JPG) or video.',
+          description: 'Public link to a JPG photo or a video.',
+          placeholder: 'https://example.com/photo.jpg',
           required: true,
         }),
         is_video: Property.Checkbox({
           displayName: 'Is Video',
-          description: 'Turn on when this item is a video rather than a photo.',
+          description: 'Turn on for a video, leave off for a photo.',
           required: false,
           defaultValue: false,
         }),

@@ -632,5 +632,7 @@
   "Only disputes for this charge. Empty: all.": "この課金の不審請求のみ。空欄: すべて。",
   "Only disputes for this payment. Empty: all.": "この支払いの不審請求のみ。空欄: すべて。",
   "Only updates where the subscription's status is this.": "サブスクリプションのステータスがこれである更新のみ。",
-  "Only sessions for this customer. Empty: all.": "この顧客のセッションのみ。空欄: すべて。"
+  "Only sessions for this customer. Empty: all.": "この顧客のセッションのみ。空欄: すべて。",
+  "Markdown": "Markdown",
+  "Empty fields keep their current value.": "空欄のフィールドは現在の値のままです。"
 }

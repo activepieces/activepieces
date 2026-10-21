@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
 import { updateProduct } from '../common';
-import { ShopifyImage, ShopifyProductStatuses } from '../common/types';
+import { ShopifyProductStatuses } from '../common/types';
 
 export const updateProductAction = createAction({
   auth: shopifyAuth,
@@ -11,34 +11,67 @@ export const updateProductAction = createAction({
   description: 'Update an existing product.',
   audience: 'both',
   aiMetadata: { description: 'Update fields on an existing Shopify product by product ID (title, description, type, vendor, tags, status, and an optional image). Pick this to edit a known product rather than creating one; the product ID is required. Sets absolute field values, but a supplied image is appended on every call, so repeating a call that includes an image adds duplicate images.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'product',
+      display: 'section',
+      label: 'Product to update',
+      icon: 'inbox',
+      props: ['id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'sliders',
+      props: [
+        'changes_info',
+        'title',
+        'bodyHtml',
+        'productType',
+        'vendor',
+        'tags',
+        'productImage',
+        'status',
+      ],
+    },
+  ],
   props: {
     id: Property.ShortText({
-      displayName: 'Product',
-      description: 'The ID of the product.',
+      displayName: 'Product ID',
+      description: "The number at the end of the product's URL in Shopify admin.",
+      placeholder: '1234567890',
       required: true,
+    }),
+    changes_info: Property.MarkDown({
+      value: 'Empty fields keep their current value.',
     }),
     title: Property.ShortText({
       displayName: 'Title',
+      placeholder: 'Organic cotton T-shirt',
       required: false,
     }),
     bodyHtml: Property.LongText({
       displayName: 'Description',
-      description: 'Product description (supports HTML)',
+      description: 'HTML is allowed.',
+      placeholder: '<p>Soft and breathable.</p>',
       required: false,
     }),
     productType: Property.ShortText({
       displayName: 'Product Type',
-      description:
-        'A categorization for the product used for filtering and searching products',
+      description: 'Your own category, used to filter products.',
+      placeholder: 'Shirts',
       required: false,
+      width: 'half',
     }),
     productImage: Property.File({
       displayName: 'Product Image',
-      description: 'The public URL or the base64 image to use',
+      description: 'A file, or a public URL to an image.',
       required: false,
     }),
     status: Property.StaticDropdown({
       displayName: 'Status',
+      description: 'Not sent to Shopify yet, so this choice has no effect.',
       required: true,
       defaultValue: ShopifyProductStatuses.DRAFT,
       options: {
@@ -60,24 +93,20 @@ export const updateProductAction = createAction({
     }),
     vendor: Property.ShortText({
       displayName: 'Vendor',
+      placeholder: 'Acme',
       required: false,
+      width: 'half',
     }),
     tags: Property.ShortText({
       displayName: 'Tags',
-      description: 'A string of comma-separated tags for filtering and search',
+      description: 'Replaces the current tags. Separate them with commas.',
+      placeholder: 'sale, summer',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
     const { id, title, bodyHtml, vendor, productType, tags, productImage } =
       propsValue;
-
-    const images: Partial<ShopifyImage>[] = [];
-    if (productImage) {
-      images.push({
-        attachment: productImage.base64,
-      });
-    }
 
     return await updateProduct(
       +id,
@@ -87,7 +116,9 @@ export const updateProductAction = createAction({
         vendor,
         product_type: productType,
         tags,
-        images,
+        ...(productImage
+          ? { images: [{ attachment: productImage.base64 }] }
+          : {}),
       },
       auth
     );
