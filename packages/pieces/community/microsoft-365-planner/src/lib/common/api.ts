@@ -110,7 +110,7 @@ async function listGroupMembers({
   const response: Microsoft365PlannerList<Microsoft365PlannerDirectoryObject> =
     await client
       .api(`/groups/${groupId}/members`)
-      .select('id,displayName,mail,userPrincipalName,jobTitle')
+      .select('id,displayName,mail,userPrincipalName')
       .top(limit)
       .query(cursor ? { $skiptoken: cursor } : {})
       .get();
@@ -158,7 +158,7 @@ async function listUserPage({
   const prefix = startsWith?.replace(/'/g, "''");
   const request = client
     .api('/users')
-    .select('id,displayName,mail,userPrincipalName,jobTitle')
+    .select('id,displayName,mail,userPrincipalName')
     .top(limit)
     .query(cursor ? { $skiptoken: cursor } : {});
   const response: Microsoft365PlannerList<User> = await (prefix

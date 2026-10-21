@@ -5,7 +5,8 @@ If you'd like to use your own custom Azure app instead of the default app, follo
  set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:
  - Group.Read.All
  - Tasks.ReadWrite
- - User.Read`;
+ - User.Read
+ - User.ReadBasic.All`;
 
 const microsoftCloudProperty = Property.StaticDropdown({
   displayName: 'Cloud Environment',
@@ -32,6 +33,7 @@ export const microsoft365PlannerAuth = PieceAuth.OAuth2({
   scope: [
     'Tasks.ReadWrite',
     'User.Read',
+    'User.ReadBasic.All',
     'Group.Read.All',
     'openid',
     'email',

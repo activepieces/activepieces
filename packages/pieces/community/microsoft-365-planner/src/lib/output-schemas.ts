@@ -155,7 +155,6 @@ const userFields: OutputSchema['fields'] = [
   { key: 'displayName', label: 'Display Name' },
   { key: 'mail', label: 'Email', format: 'email' },
   { key: 'userPrincipalName', label: 'User Principal Name', format: 'email' },
-  { key: 'jobTitle', label: 'Job Title' },
 ];
 
 export const microsoft365PlannerPlanOutputSchema: OutputSchema = {
@@ -249,6 +248,7 @@ export const microsoft365PlannerSuccessOutputSchema: OutputSchema = {
 export const microsoft365PlannerCurrentUserOutputSchema: OutputSchema = {
   fields: [
     ...userFields,
+    { key: 'jobTitle', label: 'Job Title' },
     { key: 'givenName', label: 'First Name' },
     { key: 'surname', label: 'Last Name' },
     { key: 'businessPhones', label: 'Business Phones' },
