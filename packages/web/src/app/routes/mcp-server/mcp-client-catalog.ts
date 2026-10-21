@@ -520,7 +520,7 @@ function agentPrompt({
   if (config?.snippet && config.path) {
     return {
       intro: t(
-        'Add the {brand} MCP server for me. Put this in {path}, and create the file if it doesn’t exist:',
+        'Add the {brand} MCP server for me. Merge this into {path} and keep any servers that are already there. Create the file if it doesn’t exist:',
         { brand: brandName, path: config.path },
       ),
       code: config.snippet,

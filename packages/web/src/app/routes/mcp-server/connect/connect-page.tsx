@@ -211,7 +211,7 @@ function SectionTitle({ children }: { children: ReactNode }) {
 
 function appsLabel(total: number): string {
   if (total === 0) {
-    return t('Your apps');
+    return t('your apps');
   }
   if (total < EXACT_COUNT_LIMIT) {
     return t('{count, plural, =1 {# app} other {# apps}}', { count: total });

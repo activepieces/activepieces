@@ -9,7 +9,7 @@ import { mcpGrantsQueries } from '../mcp-grants-hooks';
 export function useConnectHome({ clients }: { clients: CatalogClient[] }) {
   const ordered = useMemo(() => orderClients(clients), [clients]);
   const userId = authenticationSession.getCurrentUserId();
-  const grantsQuery = mcpGrantsQueries.useAllGrants({
+  const grantsQuery = mcpGrantsQueries.useGrants({
     request: {
       limit: GRANTS_LIMIT,
       ...(userId === null ? {} : { memberIds: [userId] }),
@@ -19,7 +19,7 @@ export function useConnectHome({ clients }: { clients: CatalogClient[] }) {
   const grantsByClient = useMemo(
     () =>
       groupByClient({
-        grants: grantsQuery.data ?? [],
+        grants: grantsQuery.data?.data ?? [],
         clients: ordered,
       }),
     [grantsQuery.data, ordered],
