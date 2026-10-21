@@ -202,6 +202,32 @@ describe('Enterprise User API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
 
+        it('Leaves embedded users out when asked to exclude them', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: embeddedUser } = await mockBasicUser({
+                userIdentity: { provider: UserIdentityProvider.JWT },
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER },
+            })
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: { id: mockPlatform.id },
+            })
+            const listUserIds = async (query: Record<string, string>): Promise<string[]> => {
+                const response = await app?.inject({
+                    method: 'GET',
+                    url: '/api/v1/users',
+                    query,
+                    headers: { authorization: `Bearer ${mockOwnerToken}` },
+                })
+                return response?.json().data.map((user: { id: string }) => user.id)
+            }
+
+            expect(await listUserIds({})).toContain(embeddedUser.id)
+            expect(await listUserIds({ excludeEmbedded: 'true' })).toEqual([mockOwner.id])
+            expect(await listUserIds({ excludeEmbedded: 'false' })).toContain(embeddedUser.id)
+        })
+
     })
 
     describe('Update user endpoint', () => {
