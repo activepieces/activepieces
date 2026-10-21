@@ -1,25 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
-import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
-  snowflakeCommonProps,
-  SnowflakeAuthValue,
-} from '../common';
+import { snowflakeCommonProps, toAuthValue, withSnowflake } from '../common';
+import { mapCopyFile } from '../common/mappers';
+import { legacyLoadOutputSchema } from '../common/output-schemas';
+import { buildCopyInto, stageReference } from '../common/stage';
 
 export const loadDataFromStageAction = createAction({
   name: 'load_data_from_stage',
+  classification: 'WRITE',
   displayName: 'Load Data from Stage',
   description:
     'Load data into a Snowflake table from a named internal or external stage using COPY INTO.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Bulk-loads files from a named internal or external Snowflake stage into a target table via COPY INTO, with configurable file format, file-name pattern, header skipping, and on-error behavior. Use to ingest staged CSV/JSON/Parquet/etc. data. By default COPY INTO skips files it has already loaded, but re-running may load newly added files; treat as a mutating load (not strictly idempotent).',
+      'COPY INTO a table picked from dropdowns from a named stage path. Human-only; agents use Copy Stage Files into Table. Snowflake skips files it already loaded in the last 64 days, but new files in the path are loaded on a re-run.',
     idempotent: false,
   },
+  outputSchema: legacyLoadOutputSchema,
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -67,7 +65,7 @@ export const loadDataFromStageAction = createAction({
     error_on_column_count_mismatch: Property.Checkbox({
       displayName: 'Fail on Column Count Mismatch',
       description:
-        'When enabled, the load fails if the number of columns in a file does not match the number of columns in the target table. Disable to allow files with fewer columns.',
+        'When enabled, the load fails if the number of columns in a file does not match the number of columns in the target table. Disable to allow files with fewer columns. Only applies to CSV files.',
       required: false,
       defaultValue: true,
     }),
@@ -86,60 +84,31 @@ export const loadDataFromStageAction = createAction({
     }),
   },
   async run(context) {
-    const {
-      table,
-      stage_path,
-      file_format_type,
-      file_pattern,
-      skip_header,
-      error_on_column_count_mismatch,
-      on_error,
-    } = context.propsValue;
-
-    let fileFormatClause = `TYPE = '${file_format_type}'`;
-    if (skip_header)
-      fileFormatClause += ` SKIP_HEADER = ${Number(skip_header)}`;
-    if (error_on_column_count_mismatch !== undefined) {
-      fileFormatClause += ` ERROR_ON_COLUMN_COUNT_MISMATCH = ${
-        error_on_column_count_mismatch ? 'TRUE' : 'FALSE'
-      }`;
-    }
-
-    let sql = `COPY INTO ${table} FROM ${stage_path} FILE_FORMAT = (${fileFormatClause})`;
-    if (file_pattern) sql += ` PATTERN = '${file_pattern.replace(/'/g, "''")}'`;
-    sql += ` ON_ERROR = '${on_error ?? 'ABORT_STATEMENT'}'`;
-
-    const connection = configureConnection(context.auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      const result = await execute(connection, sql, []);
-      if (!result || result.length === 0) {
-        return { success: true, files_processed: 0, rows_loaded: 0 };
-      }
-
-      const summary = (result as Record<string, unknown>[]).map((row) => ({
-        file: row['file'] ?? null,
-        status: row['status'] ?? null,
-        rows_parsed: row['rows_parsed'] ?? null,
-        rows_loaded: row['rows_loaded'] ?? null,
-        error_limit: row['error_limit'] ?? null,
-        errors_seen: row['errors_seen'] ?? null,
-        first_error: row['first_error'] ?? null,
-      }));
-
-      const totalLoaded = summary.reduce(
-        (sum, r) => sum + (Number(r.rows_loaded) || 0),
+    const p = context.propsValue;
+    const sql = buildCopyInto({
+      table: p.table,
+      stage: stageReference({ stage: p.stage_path }),
+      fileFormat: p.file_format_type,
+      pattern: p.file_pattern,
+      skipHeader: p.skip_header,
+      errorOnColumnCountMismatch: p.error_on_column_count_mismatch,
+      onError: p.on_error,
+    });
+    const result = await withSnowflake({
+      auth: toAuthValue(context.auth),
+      fn: (session) => session.query({ sql }),
+    });
+    const files = result.rows
+      .filter((row) => row['file'] !== undefined)
+      .map(mapCopyFile);
+    return {
+      success: true,
+      files_processed: files.length,
+      rows_loaded: files.reduce(
+        (sum, file) => sum + (Number(file.rows_loaded) || 0),
         0
-      );
-
-      return {
-        success: true,
-        files_processed: summary.length,
-        rows_loaded: totalLoaded,
-        files: summary,
-      };
-    } finally {
-      await destroy(connection);
-    }
+      ),
+      files,
+    };
   },
 });

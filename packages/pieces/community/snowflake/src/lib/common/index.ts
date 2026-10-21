@@ -1,149 +1,112 @@
 import {
-  DynamicPropsValue,
   DropdownState,
+  DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
-import snowflake from 'snowflake-sdk';
+import { SnowflakeAuthValue, withSnowflake } from './client';
+import { qualifiedName } from './sql';
 
-const DEFAULT_APPLICATION_NAME = 'ActivePieces';
-const DEFAULT_QUERY_TIMEOUT = 30000;
+export * from './client';
 
-export type SnowflakeAuthValue =
-  | {
-      type: AppConnectionType.OAUTH2;
-      access_token: string;
-      props: {
-        account: string;
-        database?: string;
-        warehouse?: string;
-        role?: string;
-      };
-    }
-  | {
-      type: AppConnectionType.CUSTOM_AUTH;
-      props: {
-        account: string;
-        username: string;
-        password?: string;
-        privateKey?: string;
-        privateKeyPassphrase?: string;
-        database?: string;
-        role?: string;
-        warehouse?: string;
-      };
+export function toAuthValue(auth: unknown): SnowflakeAuthValue {
+  if (isSnowflakeAuthValue(auth)) {
+    return auth;
+  }
+  throw new Error('Connect a Snowflake account to this step first.');
+}
+
+function isSnowflakeAuthValue(auth: unknown): auth is SnowflakeAuthValue {
+  if (typeof auth !== 'object' || auth === null) return false;
+  if (!('type' in auth) || !('props' in auth)) return false;
+  const props = auth.props;
+  return (
+    typeof props === 'object' &&
+    props !== null &&
+    'account' in props &&
+    typeof props.account === 'string'
+  );
+}
+
+async function loadDropdown({
+  auth,
+  sql,
+  toOption,
+}: {
+  auth: unknown;
+  sql: string;
+  toOption: (row: Record<string, unknown>) => { label: string; value: string };
+}): Promise<DropdownState<string>> {
+  try {
+    const result = await withSnowflake({
+      auth: toAuthValue(auth),
+      statementTimeoutSeconds: 60,
+      fn: (session) => session.query({ sql, maxRows: 5000 }),
+    });
+    return { disabled: false, options: result.rows.map(toOption) };
+  } catch (error) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: `Could not load options: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     };
-
-function formatPrivateKey(privateKey: string): string {
-  const privateKeyLines = privateKey
-    .replace('-----BEGIN PRIVATE KEY-----', '')
-    .replace('-----END PRIVATE KEY-----', '')
-    .trim()
-    .split(' ');
-
-  return [
-    '-----BEGIN PRIVATE KEY-----',
-    ...privateKeyLines,
-    '-----END PRIVATE KEY-----',
-  ].join('\n');
-}
-
-export function configureConnection(
-  auth: SnowflakeAuthValue,
-  application = DEFAULT_APPLICATION_NAME,
-  timeout = DEFAULT_QUERY_TIMEOUT
-) {
-  if (auth.type === AppConnectionType.OAUTH2) {
-    return snowflake.createConnection({
-      account: auth.props.account,
-      authenticator: 'OAUTH',
-      token: auth.access_token,
-      database: auth.props.database,
-      warehouse: auth.props.warehouse,
-      role: auth.props.role,
-      application,
-      timeout,
-    });
   }
+}
 
-  const {
-    account,
-    username,
-    password,
-    privateKey,
-    privateKeyPassphrase,
-    database,
-    role,
-    warehouse,
-  } = auth.props;
+function nameOption(row: Record<string, unknown>) {
+  const name = String(row['name'] ?? '');
+  return { label: name, value: name };
+}
 
-  const connectionOptions: snowflake.ConnectionOptions = {
-    account,
-    username,
-    role,
-    database,
-    warehouse,
-    application,
-    timeout,
-  };
+export async function getTableColumnOptions({
+  auth,
+  table,
+}: {
+  auth: SnowflakeAuthValue;
+  table: string;
+}): Promise<DropdownState<string>> {
+  return loadDropdown({
+    auth,
+    sql: `DESCRIBE TABLE ${qualifiedName({ value: table, label: 'Table' })}`,
+    toOption: nameOption,
+  });
+}
 
-  if (privateKey) {
-    connectionOptions.privateKey = formatPrivateKey(privateKey);
-    connectionOptions.authenticator = 'SNOWFLAKE_JWT';
-    if (privateKeyPassphrase) {
-      connectionOptions.privateKeyPass = privateKeyPassphrase;
-    }
-  } else {
-    connectionOptions.password = password;
+async function describeColumns({
+  auth,
+  table,
+}: {
+  auth: unknown;
+  table: unknown;
+}): Promise<DynamicPropsValue> {
+  if (!auth || typeof table !== 'string' || table === '') return {};
+  const result = await withSnowflake({
+    auth: toAuthValue(auth),
+    statementTimeoutSeconds: 60,
+    fn: (session) =>
+      session.query({
+        sql: `DESCRIBE TABLE ${qualifiedName({
+          value: table,
+          label: 'Table',
+        })}`,
+      }),
+  });
+  const fields: DynamicPropsValue = {};
+  for (const column of result.rows) {
+    const name = String(column['name'] ?? '');
+    if (name === '') continue;
+    fields[name] = Property.ShortText({ displayName: name, required: false });
   }
-
-  return snowflake.createConnection(connectionOptions);
+  return fields;
 }
 
-export async function connect(conn: snowflake.Connection) {
-  return await new Promise<void>((resolve, reject) => {
-    conn.connect((error) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve();
-      }
-    });
-  });
-}
-
-export async function destroy(conn: snowflake.Connection) {
-  return await new Promise<void>((resolve, reject) => {
-    conn.destroy((error) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve();
-      }
-    });
-  });
-}
-
-export async function execute(
-  conn: snowflake.Connection,
-  sqlText: string,
-  binds: snowflake.Binds
-) {
-  return await new Promise<any[] | undefined>((resolve, reject) => {
-    conn.execute({
-      sqlText,
-      binds,
-      complete: (error, _, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      },
-    });
-  });
-}
+const notConnected = {
+  disabled: true,
+  options: [],
+  placeholder: 'Please connect your account first',
+};
 
 export const snowflakeCommonProps = {
   database: Property.Dropdown({
@@ -154,28 +117,12 @@ export const snowflakeCommonProps = {
     refreshers: [],
     required: true,
     options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your account first',
-        };
-      }
-
-      const connection = configureConnection(auth as SnowflakeAuthValue);
-      await connect(connection);
-      const response = await execute(connection, 'SHOW DATABASES', []);
-      await destroy(connection);
-
-      return {
-        disabled: false,
-        options: response
-          ? response.map((db: Record<string, unknown>) => ({
-              label: db['name'] as string,
-              value: db['name'] as string,
-            }))
-          : [],
-      };
+      if (!auth) return notConnected;
+      return loadDropdown({
+        auth,
+        sql: 'SHOW DATABASES',
+        toOption: nameOption,
+      });
     },
   }),
   schema: Property.Dropdown({
@@ -186,13 +133,7 @@ export const snowflakeCommonProps = {
     refreshers: ['database'],
     required: true,
     options: async ({ auth, database }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your account first',
-        };
-      }
+      if (!auth) return notConnected;
       if (!database) {
         return {
           disabled: true,
@@ -200,25 +141,15 @@ export const snowflakeCommonProps = {
           placeholder: 'Please select a database first',
         };
       }
-
-      const connection = configureConnection(auth as SnowflakeAuthValue);
-      await connect(connection);
-      const response = await execute(
-        connection,
-        `SHOW SCHEMAS IN DATABASE ${database}`,
-        []
-      );
-      await destroy(connection);
-
-      return {
-        disabled: false,
-        options: response
-          ? response.map((schema: Record<string, unknown>) => ({
-              label: schema['name'] as string,
-              value: schema['name'] as string,
-            }))
-          : [],
-      };
+      return loadDropdown({
+        auth,
+        sql: `SHOW SCHEMAS IN DATABASE ${qualifiedName({
+          value: String(database),
+          maxParts: 1,
+          label: 'Database',
+        })}`,
+        toOption: nameOption,
+      });
     },
   }),
   table: Property.Dropdown({
@@ -228,13 +159,7 @@ export const snowflakeCommonProps = {
     refreshers: ['database', 'schema'],
     required: true,
     options: async ({ auth, database, schema }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your account first',
-        };
-      }
+      if (!auth) return notConnected;
       if (!database) {
         return {
           disabled: true,
@@ -249,25 +174,18 @@ export const snowflakeCommonProps = {
           placeholder: 'Please select a schema first',
         };
       }
-
-      const connection = configureConnection(auth as SnowflakeAuthValue);
-      await connect(connection);
-      const response = await execute(
-        connection,
-        `SHOW TABLES IN SCHEMA ${database}.${schema}`,
-        []
-      );
-      await destroy(connection);
-
-      return {
-        disabled: false,
-        options: response
-          ? response.map((table: Record<string, unknown>) => ({
-              label: table['name'] as string,
-              value: `${database}.${schema}.${table['name']}`,
-            }))
-          : [],
-      };
+      return loadDropdown({
+        auth,
+        sql: `SHOW TABLES IN SCHEMA ${qualifiedName({
+          value: `${database}.${schema}`,
+          maxParts: 2,
+          label: 'Schema',
+        })}`,
+        toOption: (row) => {
+          const name = String(row['name'] ?? '');
+          return { label: name, value: `${database}.${schema}.${name}` };
+        },
+      });
     },
   }),
   warehouse: Property.Dropdown({
@@ -278,28 +196,12 @@ export const snowflakeCommonProps = {
     refreshers: [],
     required: false,
     options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Please connect your account first',
-        };
-      }
-
-      const connection = configureConnection(auth as SnowflakeAuthValue);
-      await connect(connection);
-      const response = await execute(connection, 'SHOW WAREHOUSES', []);
-      await destroy(connection);
-
-      return {
-        disabled: false,
-        options: response
-          ? response.map((wh: Record<string, unknown>) => ({
-              label: wh['name'] as string,
-              value: wh['name'] as string,
-            }))
-          : [],
-      };
+      if (!auth) return notConnected;
+      return loadDropdown({
+        auth,
+        sql: 'SHOW WAREHOUSES',
+        toOption: nameOption,
+      });
     },
   }),
   table_column_values: Property.DynamicProperties({
@@ -308,28 +210,7 @@ export const snowflakeCommonProps = {
     description: 'Enter the value for each column in the new row.',
     required: true,
     refreshers: ['database', 'schema', 'table'],
-    props: async ({ auth, table }) => {
-      if (!auth) return {};
-      if (!table) return {};
-
-      const connection = configureConnection(auth as SnowflakeAuthValue);
-      await connect(connection);
-      const response = await execute(connection, `DESCRIBE TABLE ${table}`, []);
-      await destroy(connection);
-
-      const fields: DynamicPropsValue = {};
-
-      if (response) {
-        for (const column of response) {
-          fields[column.name] = Property.ShortText({
-            displayName: column.name,
-            required: false,
-          });
-        }
-      }
-
-      return fields;
-    },
+    props: async ({ auth, table }) => describeColumns({ auth, table }),
   }),
   table_update_values: Property.DynamicProperties({
     auth: snowflakeAuth,
@@ -338,46 +219,6 @@ export const snowflakeCommonProps = {
       'Only filled columns will be updated. Leave a column empty to keep its existing value.',
     required: true,
     refreshers: ['database', 'schema', 'table'],
-    props: async ({ auth, table }) => {
-      if (!auth) return {};
-      if (!table) return {};
-
-      const connection = configureConnection(auth as SnowflakeAuthValue);
-      await connect(connection);
-      const response = await execute(connection, `DESCRIBE TABLE ${table}`, []);
-      await destroy(connection);
-
-      const fields: DynamicPropsValue = {};
-
-      if (response) {
-        for (const column of response) {
-          fields[column.name] = Property.ShortText({
-            displayName: column.name,
-            required: false,
-          });
-        }
-      }
-
-      return fields;
-    },
+    props: async ({ auth, table }) => describeColumns({ auth, table }),
   }),
 };
-
-export async function getTableColumnOptions(
-  auth: SnowflakeAuthValue,
-  table: string
-): Promise<DropdownState<string>> {
-  const connection = configureConnection(auth);
-  await connect(connection);
-  const response = await execute(connection, `DESCRIBE TABLE ${table}`, []);
-  await destroy(connection);
-  return {
-    disabled: false,
-    options: response
-      ? (response as { name: string }[]).map((col) => ({
-          label: col.name,
-          value: col.name,
-        }))
-      : [],
-  };
-}

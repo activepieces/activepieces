@@ -4,6 +4,7 @@ import {
     Flow,
     FlowApprovalRequest,
     FlowApprovalRequestState,
+    FlowOperationType,
     FlowStatus,
     FlowVersion,
     FlowVersionState,
@@ -141,6 +142,26 @@ describe('flow-approval — routing', () => {
             userId: memberCtx.user.id,
         })
         expect(route).toBe('NEEDS_APPROVAL')
+    })
+})
+
+describe('flow-approval — submit through publish', () => {
+    it('refuses a draft with an empty trigger before it is locked or submitted', async () => {
+        const ctx = await setupSensitiveCtx()
+        const memberCtx = await createMemberContext(app!, ctx, {
+            projectRole: DefaultProjectRole.EDITOR,
+        })
+        const { flow, version } = await createDraftFlow(ctx)
+
+        const response = await memberCtx.post(`/v1/flows/${flow.id}`, {
+            type: FlowOperationType.LOCK_AND_PUBLISH,
+            request: {},
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        expect(await db.findOneBy('flow_approval_request', { flowId: flow.id })).toBeNull()
+        const versionRow = await db.findOneByOrFail<{ state: string }>('flow_version', { id: version.id })
+        expect(versionRow.state).toBe(FlowVersionState.DRAFT)
     })
 })
 
