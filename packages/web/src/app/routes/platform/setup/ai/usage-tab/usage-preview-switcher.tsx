@@ -101,7 +101,7 @@ function presetHint({ preset }: { preset: UsagePreset }): string {
     case 'minimal':
       return t('One project, two flows, one OpenAI key');
     case 'half':
-      return t('Three projects, two agents, credits and limits');
+      return t('Three projects, two agents and Activepieces credits');
     case 'short-history':
       return t(
         'Tracking started 25 days ago, so longer periods have no full comparison',

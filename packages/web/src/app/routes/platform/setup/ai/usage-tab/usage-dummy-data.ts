@@ -47,17 +47,6 @@ function buildOverview({ period, scope, preset }: ViewParams): UsageOverview {
       ),
     bySource: sourcesFor({ preset, spendUsd }),
     top: topByDimension({ items }),
-    limits: projects
-      .filter(
-        (item) =>
-          item.monthlyLimitUsd !== undefined &&
-          (item.monthToDateUsd ?? 0) / item.monthlyLimitUsd >= LIMIT_WARN_SHARE,
-      )
-      .sort(
-        (a, b) =>
-          (b.monthToDateUsd ?? 0) / (b.monthlyLimitUsd ?? 1) -
-          (a.monthToDateUsd ?? 0) / (a.monthlyLimitUsd ?? 1),
-      ),
   };
 }
 
@@ -182,10 +171,6 @@ function allItems({
             : 0,
         flowCount: childCount({ entry, dimension: 'flow' }),
         agentCount: childCount({ entry, dimension: 'agent' }),
-        monthToDateUsd:
-          entry.monthlyLimitUsd === undefined
-            ? undefined
-            : entry.monthlyLimitUsd * (entry.limitUsed ?? 0.4),
       };
     })
     .sort((a, b) => b.spendUsd - a.spendUsd);
@@ -402,7 +387,6 @@ const CREDIT_USD_VALUE = 0.0005;
 const NOW = new Date('2026-10-20T10:20:00Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TRACKING_SINCE = '2025-09-01';
-const LIMIT_WARN_SHARE = 0.8;
 const TOP_COUNT = 5;
 const DAY_MINUTES = 24 * 60;
 const MONTH_DAYS = 31;
@@ -562,8 +546,6 @@ const CATALOG: CatalogEntry[] = [
     name: 'Sales ops',
     weight: 9,
     change: 0.22,
-    monthlyLimitUsd: 120,
-    limitUsed: 0.86,
   },
   {
     dimension: 'project',
@@ -571,8 +553,6 @@ const CATALOG: CatalogEntry[] = [
     name: 'Support desk',
     weight: 7,
     change: 0.08,
-    monthlyLimitUsd: 300,
-    limitUsed: 0.31,
   },
   {
     dimension: 'project',
@@ -587,8 +567,6 @@ const CATALOG: CatalogEntry[] = [
     name: 'Finance',
     weight: 2.5,
     change: 0.41,
-    monthlyLimitUsd: 60,
-    limitUsed: 0.97,
   },
   {
     dimension: 'project',
@@ -956,7 +934,6 @@ export type UsageItem = CatalogEntry & {
   credits: number;
   flowCount?: number;
   agentCount?: number;
-  monthToDateUsd?: number;
 };
 
 export type UsagePoint = {
@@ -993,7 +970,6 @@ export type UsageOverview = {
   avgPerDayUsd: number;
   bySource: UsageSourceSpend[];
   top: Record<UsageDimension, UsageItem[]>;
-  limits: UsageItem[];
 };
 
 export type UsageDetail = {
@@ -1017,8 +993,6 @@ type CatalogEntry = {
   change?: number;
   estimatedShare?: number;
   dashboardUrl?: string;
-  monthlyLimitUsd?: number;
-  limitUsed?: number;
   inputPrice?: number;
   outputPrice?: number;
   keyId?: string;

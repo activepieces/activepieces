@@ -11,7 +11,7 @@ import {
   Receipt,
   Type,
 } from 'lucide-react';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 
 import {
@@ -23,12 +23,9 @@ import {
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 
-import { SetLimitDialog } from './set-limit-dialog';
-import { ItemIcon } from './usage-bits';
+import { ItemIcon, itemSubtitle } from './usage-bits';
 import {
   USAGE_DIMENSIONS,
   UsageDetail,
@@ -209,7 +206,17 @@ function DetailTiles({
     />
   );
   const tilesByType: Record<UsageDimension, ReactNode[]> = {
-    project: [<ProjectLimitTile key="limit" detail={detail} />, calls, tokens],
+    project: [
+      <StatCard
+        key="spend"
+        label={t('Spend')}
+        icon={<CircleDollarSign />}
+        value={usageFormat.usd(item.spendUsd)}
+        hint={itemSubtitle({ item })}
+      />,
+      calls,
+      tokens,
+    ],
     flow: [
       <StatCard
         key="runs"
@@ -293,60 +300,6 @@ function DetailTiles({
   return <StatGrid columns={3}>{tilesByType[dimension]}</StatGrid>;
 }
 
-function ProjectLimitTile({ detail }: { detail: UsageDetail }) {
-  const [limitUsd, setLimitUsd] = useState<number | null>(
-    detail.item.monthlyLimitUsd ?? null,
-  );
-  const [editing, setEditing] = useState(false);
-  const spent = detail.item.monthToDateUsd ?? detail.item.spendUsd;
-  const used = isNil(limitUsd) ? 0 : spent / limitUsd;
-  return (
-    <StatCard
-      label={t('Monthly limit')}
-      icon={<Gauge />}
-      value={isNil(limitUsd) ? t('No limit') : usageFormat.usd(limitUsd)}
-      tone={used >= 1 ? 'danger' : used >= LIMIT_WARN ? 'warning' : 'default'}
-      hint={
-        isNil(limitUsd)
-          ? t('New AI calls never stop for this project')
-          : t('{spent} used this month', { spent: usageFormat.usd(spent) })
-      }
-    >
-      {!isNil(limitUsd) && (
-        <Progress
-          value={Math.min(used * 100, 100)}
-          className={cn(
-            'h-1.5',
-            used >= 1
-              ? '*:bg-danger-9'
-              : used >= LIMIT_WARN
-              ? '*:bg-warning-9'
-              : '',
-          )}
-        />
-      )}
-      <Button
-        variant="outline"
-        size="xs"
-        className="w-fit"
-        onClick={() => setEditing(true)}
-      >
-        {isNil(limitUsd) ? t('Set limit') : t('Change limit')}
-      </Button>
-      <SetLimitDialog
-        open={editing}
-        onOpenChange={setEditing}
-        projectName={detail.item.name}
-        currentLimitUsd={limitUsd}
-        onSave={(value) => {
-          setLimitUsd(value);
-          setEditing(false);
-        }}
-      />
-    </StatCard>
-  );
-}
-
 function DashboardTile({ url }: { url: string | undefined }) {
   const internal = !isNil(url) && url.startsWith('/');
   return (
@@ -385,5 +338,3 @@ function spanFor({ index, count }: { index: number; count: number }): string {
   }
   return 'lg:col-span-6';
 }
-
-const LIMIT_WARN = 0.8;

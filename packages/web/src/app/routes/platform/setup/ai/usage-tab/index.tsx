@@ -30,7 +30,6 @@ import {
   useUsageView,
 } from './usage-header-controls';
 import { UsageHero } from './usage-hero';
-import { UsageLimitsCard } from './usage-insight-cards';
 import { UsagePreviewSwitcher } from './usage-preview-switcher';
 import { UsageProviderTree } from './usage-provider-tree';
 import { UsageSourceDonut } from './usage-source-donut';
@@ -275,24 +274,19 @@ function FlatBento({
         search={view.search}
       />
       <UsageTopList
-        className="lg:col-span-4"
+        className="lg:col-span-6"
         dimension="key"
         items={overview.top.key}
         totalUsd={overview.totals.spendUsd}
         search={view.search}
       />
       <UsageTopList
-        className={
-          overview.limits.length === 0 ? 'lg:col-span-8' : 'lg:col-span-4'
-        }
+        className="lg:col-span-6"
         dimension="model"
         items={overview.top.model}
         totalUsd={overview.totals.spendUsd}
         search={view.search}
       />
-      {overview.limits.length > 0 && (
-        <UsageLimitsCard className="lg:col-span-4" projects={overview.limits} />
-      )}
     </div>
   );
 }
@@ -362,14 +356,9 @@ function TreeBento({
         search={view.search}
       />
       <UsageSourceDonut
-        className={
-          overview.limits.length === 0 ? 'lg:col-span-12' : 'lg:col-span-8'
-        }
+        className="lg:col-span-12"
         sources={overview.bySource}
       />
-      {overview.limits.length > 0 && (
-        <UsageLimitsCard className="lg:col-span-4" projects={overview.limits} />
-      )}
     </div>
   );
 }
