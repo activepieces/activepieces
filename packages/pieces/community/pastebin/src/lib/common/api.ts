@@ -38,6 +38,20 @@ async function getUserKey({
   return undefined;
 }
 
+async function requireUserKey({
+  auth,
+}: {
+  auth: PastebinAuthValue;
+}): Promise<string> {
+  const userKey = await getUserKey({ auth });
+  if (!userKey) {
+    throw new Error(
+      'This action works on your own pastes: add your Pastebin username and password to the connection.'
+    );
+  }
+  return userKey;
+}
+
 async function createPaste({
   auth,
   paste,
@@ -89,7 +103,7 @@ async function isDevKeyValid({
     });
     return true;
   } catch (error) {
-    if (error instanceof HttpError) {
+    if (error instanceof HttpError && error.response.status === 422) {
       return !JSON.stringify(error.response.body).includes(
         'invalid api_dev_key'
       );
@@ -105,7 +119,7 @@ async function listPastes({
   auth: PastebinAuthValue;
   limit?: number;
 }): Promise<PastebinPaste[]> {
-  const userKey = await getUserKey({ auth });
+  const userKey = await requireUserKey({ auth });
   const xml = await pastebinClient.request({
     auth,
     userKey,
@@ -125,7 +139,7 @@ async function deletePaste({
   auth: PastebinAuthValue;
   pasteKey: string;
 }): Promise<string> {
-  const userKey = await getUserKey({ auth });
+  const userKey = await requireUserKey({ auth });
   return await pastebinClient.request({
     auth,
     userKey,
@@ -140,7 +154,7 @@ async function getAccountDetails({
 }: {
   auth: PastebinAuthValue;
 }): Promise<PastebinAccount> {
-  const userKey = await getUserKey({ auth });
+  const userKey = await requireUserKey({ auth });
   const xml = await pastebinClient.request({
     auth,
     userKey,
