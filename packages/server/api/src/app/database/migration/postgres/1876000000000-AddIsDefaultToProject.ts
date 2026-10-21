@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddIsDefaultToProject1875000000000 implements Migration {
-    name = 'AddIsDefaultToProject1875000000000'
+export class AddIsDefaultToProject1876000000000 implements Migration {
+    name = 'AddIsDefaultToProject1876000000000'
     breaking = false
     release = '0.93.0'
 
