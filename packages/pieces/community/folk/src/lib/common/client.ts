@@ -1,329 +1,309 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { folkAuth } from './auth';
+import { httpClient, HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import type { folkAuth } from './auth';
+
+const BASE_URL = 'https://api.folk.app';
+const MAX_RATE_LIMIT_RETRIES = 2;
+const MAX_RETRY_WAIT_MS = 10_000;
+const DEFAULT_RETRY_WAIT_MS = 2_000;
+const DROPDOWN_PAGE_LIMIT = 20;
+const DROPDOWN_PAGE_DELAY_MS = 150;
+let verifiedTlsAgent: Promise<unknown> | undefined;
+
+export class FolkApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code: string | undefined,
+    public readonly responseBody: unknown
+  ) {
+    super(message);
+    this.name = 'FolkApiError';
+  }
+}
+
+function readHttpFailure(error: unknown): { status: number; body: unknown } | null {
+  if (typeof error !== 'object' || error === null) {
+    return null;
+  }
+  const response: unknown = Reflect.get(error, 'response');
+  if (typeof response !== 'object' || response === null) {
+    return null;
+  }
+  const status: unknown = Reflect.get(response, 'status');
+  if (typeof status !== 'number') {
+    return null;
+  }
+  return { status, body: Reflect.get(response, 'body') };
+}
+
+function vendorError(body: unknown): { code?: string; message?: string; retryAfter?: string } {
+  if (typeof body !== 'object' || body === null) {
+    return {};
+  }
+  const error: unknown = Reflect.get(body, 'error');
+  if (typeof error !== 'object' || error === null) {
+    return {};
+  }
+  const code: unknown = Reflect.get(error, 'code');
+  const message: unknown = Reflect.get(error, 'message');
+  const details: unknown = Reflect.get(error, 'details');
+  const retryAfter: unknown =
+    typeof details === 'object' && details !== null ? Reflect.get(details, 'retryAfter') : undefined;
+  return {
+    code: typeof code === 'string' ? code : undefined,
+    message: typeof message === 'string' ? message : undefined,
+    retryAfter: typeof retryAfter === 'string' ? retryAfter : undefined,
+  };
+}
+
+function retryWaitMs({ retryAfter, now }: { retryAfter: string | undefined; now: number }): number {
+  if (!retryAfter) {
+    return DEFAULT_RETRY_WAIT_MS;
+  }
+  const at = Date.parse(retryAfter);
+  if (Number.isNaN(at)) {
+    return DEFAULT_RETRY_WAIT_MS;
+  }
+  return Math.min(Math.max(at - now, 0), MAX_RETRY_WAIT_MS);
+}
+
+function toFolkError({ status, body }: { status: number; body: unknown }): FolkApiError {
+  const { code, message } = vendorError(body);
+  const prefix = STATUS_HINTS[status] ?? `Folk API request failed (HTTP ${status}).`;
+  return new FolkApiError(message ? `${prefix} ${message}` : prefix, status, code, body);
+}
+
+const STATUS_HINTS: Record<number, string> = {
+  400: 'Folk rejected the request (HTTP 400).',
+  401: 'Folk rejected the API key (HTTP 401). Check the key in the connection.',
+  402: 'Your Folk workspace is out of credits or the plan does not allow this (HTTP 402).',
+  403: 'The Folk API key is not allowed to do this (HTTP 403).',
+  404: 'Folk could not find that record (HTTP 404). Check the ID.',
+  409: 'Folk reported a conflict (HTTP 409).',
+  422: 'Folk could not process the input (HTTP 422).',
+  429: 'Folk rate limit reached (HTTP 429). Try again in a few seconds.',
+};
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function request<T>({
+  auth,
+  method,
+  path,
+  query,
+  body,
+  idempotencyKey,
+}: {
+  auth: FolkAuthValue;
+  method: HttpMethod;
+  path: string;
+  query?: QueryParams;
+  body?: FolkBody;
+  idempotencyKey?: string;
+}): Promise<T> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${auth.secret_text.trim()}`,
+    Accept: 'application/json',
+  };
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
+  if (idempotencyKey) {
+    headers['Idempotency-Key'] = idempotencyKey;
+  }
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const response = await httpClient.sendRequest<T>(
+        {
+          method,
+          url: `${BASE_URL}${path}`,
+          headers,
+          queryParams: query,
+          body,
+          redactBodyInErrors: true,
+        },
+        { dispatcher: await verifiedTls() }
+      );
+      return response.body;
+    } catch (error) {
+      const failure = readHttpFailure(error);
+      if (!failure) {
+        throw error;
+      }
+      if (failure.status === 429 && attempt < MAX_RATE_LIMIT_RETRIES) {
+        await sleep(retryWaitMs({ retryAfter: vendorError(failure.body).retryAfter, now: Date.now() }));
+        continue;
+      }
+      throw toFolkError({ status: failure.status, body: failure.body });
+    }
+  }
+}
+
+function verifiedTls(): Promise<unknown> {
+  verifiedTlsAgent ??= import('undici').then(({ Agent }) => new Agent({ connect: { rejectUnauthorized: true } }));
+  return verifiedTlsAgent;
+}
+
+function cursorFromNextLink({ nextLink }: { nextLink: string | undefined | null }): string | undefined {
+  if (!nextLink) {
+    return undefined;
+  }
+  try {
+    const cursor = new URL(nextLink, BASE_URL).searchParams.get('cursor');
+    return cursor ? cursor : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function listPage<T>({
+  auth,
+  path,
+  query,
+  limit,
+  cursor,
+}: {
+  auth: FolkAuthValue;
+  path: string;
+  query?: QueryParams;
+  limit?: number;
+  cursor?: string;
+}): Promise<FolkPage<T>> {
+  const params: QueryParams = { ...(query ?? {}) };
+  if (limit !== undefined) {
+    params['limit'] = String(limit);
+  }
+  if (cursor) {
+    params['cursor'] = cursor;
+  }
+  const response = await request<FolkListResponse<T>>({
+    auth,
+    method: HttpMethod.GET,
+    path,
+    query: params,
+  });
+  const items = response.data?.items ?? [];
+  const nextLink = response.data?.pagination?.nextLink ?? null;
+  const nextCursor = cursorFromNextLink({ nextLink });
+  return { items, count: items.length, hasMore: nextCursor !== undefined, nextCursor: nextCursor ?? null, nextLink };
+}
+
+async function listForDropdown<T>({
+  auth,
+  path,
+  query,
+  maxPages = DROPDOWN_PAGE_LIMIT,
+}: {
+  auth: FolkAuthValue;
+  path: string;
+  query?: QueryParams;
+  maxPages?: number;
+}): Promise<{ items: T[]; truncated: boolean }> {
+  const items: T[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < maxPages; page++) {
+    if (page > 0) {
+      await sleep(DROPDOWN_PAGE_DELAY_MS);
+    }
+    const result = await listPage<T>({ auth, path, query, limit: 100, cursor });
+    items.push(...result.items);
+    if (!result.nextCursor) {
+      return { items, truncated: false };
+    }
+    cursor = result.nextCursor;
+  }
+  return { items, truncated: true };
+}
+
+async function getData<T>({ auth, path }: { auth: FolkAuthValue; path: string }): Promise<T> {
+  const response = await request<{ data: T }>({ auth, method: HttpMethod.GET, path });
+  return response.data;
+}
+
+async function sendData<T>({
+  auth,
+  method,
+  path,
+  body,
+  idempotencyKey,
+}: {
+  auth: FolkAuthValue;
+  method: HttpMethod;
+  path: string;
+  body?: FolkBody;
+  idempotencyKey?: string;
+}): Promise<T> {
+  const response = await request<{ data: T }>({ auth, method, path, body, idempotencyKey });
+  return response.data;
+}
+
+function idSegment({ value, label }: { value: unknown; label: string }): string {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  if (trimmed.length === 0) {
+    throw new Error(`${label} is required.`);
+  }
+  if (!/^[A-Za-z0-9_-]+$/.test(trimmed)) {
+    throw new Error(`${label} "${trimmed}" is not a valid Folk ID. It should look like per_..., com_..., grp_... or similar.`);
+  }
+  return encodeURIComponent(trimmed);
+}
+
+function nameSegment({ value, label }: { value: unknown; label: string }): string {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  if (trimmed.length === 0) {
+    throw new Error(`${label} is required.`);
+  }
+  return encodeURIComponent(trimmed);
+}
+
+async function deleteWebhook({ auth, webhookId }: { auth: FolkAuthValue; webhookId: string }): Promise<void> {
+  try {
+    await request<unknown>({
+      auth,
+      method: HttpMethod.DELETE,
+      path: `/v1/webhooks/${idSegment({ value: webhookId, label: 'Webhook ID' })}`,
+    });
+  } catch (error) {
+    if (error instanceof FolkApiError && error.status === 404) {
+      return;
+    }
+    throw error;
+  }
+}
 
 export const folkClient = {
-  baseUrl: 'https://api.folk.app',
-
-  async testConnection(apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>): Promise<void> {
-    await this.makeRequest<any>({
-      method: HttpMethod.GET,
-      url: '/v1/people?limit=1',
-      apiKey,
-    });
-  },
-
-  async makeRequest<T>({
-    method,
-    url,
-    apiKey,
-    body,
-    headers,
-  }: {
-    method: HttpMethod;
-    url: string;
-    apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>;
-    body?: any;
-    headers?: Record<string, string>;
-  }): Promise<T> {
-    const response = await httpClient.sendRequest<T>({
-      method,
-      url: `${this.baseUrl}${url}`,
-      headers: {
-        Authorization: `Bearer ${apiKey.secret_text}`,
-        'Content-Type': 'application/json',
-        ...headers,
-      },
-      body,
-    });
-
-    if (response.status >= 400) {
-      throw new Error(
-        `Folk API error: ${response.status} ${JSON.stringify(response.body)}`
-      );
-    }
-
-    return response.body;
-  },
-
-  async getPeople({
-    apiKey,
-    limit = 100,
-    offset = 0,
-  }: {
-    apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>;
-    limit?: number;
-    offset?: number;
-  }) {
-    return this.makeRequest<{ people: any[] }>({
-      method: HttpMethod.GET,
-      url: `/v1/people/list?limit=${limit}&offset=${offset}`,
-      apiKey,
-    });
-  },
-
-  async getPeopleWithFilters({
-    apiKey,
-    limit = 20,
-    cursor,
-    combinator = 'and',
-    nameFilter,
-    emailFilter,
-  }: {
-    apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>;
-    limit?: number;
-    cursor?: string;
-    combinator?: 'and' | 'or';
-    nameFilter?: string;
-    emailFilter?: string;
-  }) {
-    const params = new URLSearchParams();
-
-    if (limit) params.append('limit', limit.toString());
-    if (cursor) params.append('cursor', cursor);
-    
-    // Only add combinator and filters if we actually have filters
-    const hasFilters = nameFilter || emailFilter;
-    if (hasFilters) {
-      if (combinator) params.append('combinator', combinator);
-      if (nameFilter) {
-        params.append('filter[fullName][like]', nameFilter);
-      }
-      if (emailFilter) {
-        params.append('filter[emails][like]', emailFilter);
-      }
-    }
-
-    const queryString = params.toString();
-    const url = queryString ? `/v1/people?${queryString}` : '/v1/people';
-
-    return this.makeRequest<{
-      data: {
-        items: any[];
-        pagination: { nextLink?: string };
-      };
-    }>({
-      method: HttpMethod.GET,
-      url,
-      apiKey,
-    });
-  },
-
-  async getPerson({
-    apiKey,
-    contactId,
-  }: {
-    apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>;
-    contactId: string;
-  }) {
-    return this.makeRequest<{ data: any }>({
-      method: HttpMethod.GET,
-      url: `/v1/people/${contactId}`,
-      apiKey,
-    });
-  },
-
-  async searchPerson({ apiKey, query }: { apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>; query: string }) {
-    return this.makeRequest<{ people: any[] }>({
-      method: HttpMethod.GET,
-      url: `/v1/people/search?query=${encodeURIComponent(query)}`,
-      apiKey,
-    });
-  },
-
-  async createPerson({ apiKey, data }: { apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>; data: any }) {
-    return this.makeRequest<{ data: any }>({
-      method: HttpMethod.POST,
-      url: '/v1/people',
-      apiKey: apiKey,
-      body: data,
-    });
-  },
-
-  async updatePerson({
-    apiKey,
-    contactId,
-    data,
-  }: {
-    apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>;
-    contactId: string;
-    data: any;
-  }) {
-    return this.makeRequest<{ data: any }>({
-      method: HttpMethod.PATCH,
-      url: `/v1/people/${contactId}`,
-      apiKey,
-      body: data,
-    });
-  },
-
-  async getCompanies({
-    apiKey,
-    limit = 100,
-    offset = 0,
-  }: {
-    apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>;
-    limit?: number;
-    offset?: number;
-  }) {
-    return this.makeRequest<{ companies: any[] }>({
-      method: HttpMethod.GET,
-      url: `/v1/companies/list?limit=${limit}&offset=${offset}`,
-      apiKey,
-    });
-  },
-
-  async getCompaniesWithFilters({ 
-    apiKey, 
-    limit = 20, 
-    cursor, 
-    combinator = 'and',
-    nameFilter 
-  }: { 
-    apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>; 
-    limit?: number; 
-    cursor?: string;
-    combinator?: 'and' | 'or';
-    nameFilter?: string;
-  }) {
-    const params = new URLSearchParams();
-    
-    if (limit) params.append('limit', limit.toString());
-    if (cursor) params.append('cursor', cursor);
-    
-    // Only add combinator and filters if we actually have filters
-    if (nameFilter) {
-      if (combinator) params.append('combinator', combinator);
-      params.append('filter[name][like]', nameFilter);
-    }
-
-    const queryString = params.toString();
-    const url = queryString ? `/v1/companies?${queryString}` : '/v1/companies';
-
-    return this.makeRequest<{ 
-      data: { 
-        items: any[]; 
-        pagination: { nextLink?: string } 
-      } 
-    }>({
-      method: HttpMethod.GET,
-      url,
-      apiKey,
-    });
-  },
-
-  async getCompany({
-    apiKey,
-    companyId,
-  }: {
-    apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>;
-    companyId: string;
-  }) {
-    return this.makeRequest<{ data: any }>({
-      method: HttpMethod.GET,
-      url: `/v1/companies/${companyId}`,
-      apiKey,
-    });
-  },
-
-  async searchCompany({ apiKey, query }: { apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>; query: string }) {
-    return this.makeRequest<{
-      data: { items: any[]; pagination: { nextLink: string } };
-    }>({
-      method: HttpMethod.GET,
-      url: `/v1/companies?limit=100&filter[name][like]=${encodeURIComponent(
-        query
-      )}`,
-      apiKey,
-    });
-  },
-
-  async createCompany({ apiKey, data }: { apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>; data: any }) {
-    return this.makeRequest<{ data: any }>({
-      method: HttpMethod.POST,
-      url: '/v1/companies',
-      apiKey: apiKey,
-      body: data,
-    });
-  },
-
-  async updateCompany({
-    apiKey,
-    companyId,
-    data,
-  }: {
-    apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>;
-    companyId: string;
-    data: any;
-  }) {
-    return this.makeRequest<{ data: any }>({
-      method: HttpMethod.PATCH,
-      url: `/v1/companies/${companyId}`,
-      apiKey,
-      body: data,
-    });
-  },
-
-  async getGroups({ apiKey }: { apiKey: AppConnectionValueForAuthProperty<typeof folkAuth> }) {
-    return this.makeRequest<{
-      data: { items: any[]; pagination: { nextLink?: string } };
-    }>({
-      method: HttpMethod.GET,
-      url: '/v1/groups',
-      apiKey,
-    });
-  },
-
-  async createWebhook({
-    apiKey,
-    name,
-    targetUrl,
-    subscribedEvents,
-  }: {
-    apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>;
-    name: string;
-    targetUrl: string;
-    subscribedEvents: Array<{
-      eventType: string;
-      filter?: {
-        groupId?: string;
-        objectType?: string;
-        path?: string[];
-        value?: string;
-      };
-    }>;
-  }) {
-    return this.makeRequest<{
-      data: {
-        id: string;
-        name: string;
-        targetUrl: string;
-        subscribedEvents: Array<{
-          eventType: string;
-          filter: Record<string, any>;
-        }>;
-        signingSecret: string;
-        status: string;
-        createdAt: string;
-      };
-    }>({
-      method: HttpMethod.POST,
-      url: '/v1/webhooks',
-      apiKey,
-      body: {
-        name,
-        targetUrl,
-        subscribedEvents,
-      },
-    });
-  },
-
-  async deleteWebhook({ apiKey, webhookId }: { apiKey: AppConnectionValueForAuthProperty<typeof folkAuth>; webhookId: string }) {
-    return this.makeRequest<void>({
-      method: HttpMethod.DELETE,
-      url: `/v1/webhooks/${webhookId}`,
-      apiKey,
-      body: {}
-    });
-  },
+  request,
+  listPage,
+  listForDropdown,
+  getData,
+  sendData,
+  idSegment,
+  nameSegment,
+  cursorFromNextLink,
+  retryWaitMs,
+  deleteWebhook,
+  verifiedTls,
+  baseUrl: BASE_URL,
 };
+
+export type FolkAuthValue = AppConnectionValueForAuthProperty<typeof folkAuth>;
+
+export type FolkPage<T> = {
+  items: T[];
+  count: number;
+  hasMore: boolean;
+  nextCursor: string | null;
+  nextLink: string | null;
+};
+
+type FolkListResponse<T> = {
+  data?: {
+    items?: T[];
+    pagination?: { nextLink?: string | null };
+  };
+};
+
+export type FolkBody = Record<string, unknown>;

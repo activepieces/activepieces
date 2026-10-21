@@ -1,11 +1,8 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
-import { folkClient } from '../common/client';
 import { folkProps } from '../common/props';
+import { folkWebhook } from '../common/webhook';
+import { folkOutputSchemas } from '../output-schemas';
 
 export const companyAdded = createTrigger({
   auth: folkAuth,
@@ -14,7 +11,7 @@ export const companyAdded = createTrigger({
   displayName: 'Company Added',
   description: 'Fires when a new company is added to your Folk workspace.',
   aiMetadata: {
-    description: 'Fires when a new company is created in the connected Folk workspace, optionally scoped to a single group. The event payload carries the new company ID and a URL to fetch its full details.',
+    description: 'Fires when a new company is created in the connected Folk workspace, optionally scoped to a single group. The event payload carries the new company ID and a URL to fetch its full details. Deliveries are signature-checked and retried deliveries are de-duplicated.',
   },
   props: {
     groupId: folkProps.group_id(false, 'Group ID'),
@@ -30,51 +27,8 @@ export const companyAdded = createTrigger({
       url: 'https://api.folk.app/v1/companies/com_05837e2d-9bf7-4f17-8729-e95f1be4de67',
     },
   },
+  outputSchema: folkOutputSchemas.webhookEvent,
   type: TriggerStrategy.WEBHOOK,
 
-  async onEnable(context) {
-    const eventConfig: any = {
-      eventType: 'company.created',
-    };
-
-    if (context.propsValue?.groupId) {
-      eventConfig.filter = {
-        groupId: context.propsValue.groupId,
-      };
-    }
-
-    const subscribedEvents = [eventConfig];
-
-    const webhook = await folkClient.createWebhook({
-      apiKey: context.auth,
-      name: `Activepieces Company Added - ${Date.now()}`,
-      targetUrl: context.webhookUrl,
-      subscribedEvents,
-    });
-
-    await context.store?.put('_webhookId', webhook.data.id);
-    // await context.store?.put('_signingSecret', webhook.data.signingSecret);
-  },
-
-  async onDisable(context) {
-    const webhookId = (await context.store?.get('_webhookId')) as string;
-    if (webhookId) {
-      try {
-        await folkClient.deleteWebhook({
-          apiKey: context.auth,
-          webhookId,
-        });
-      } catch (error) {
-        console.warn('Failed to delete webhook:', error);
-      }
-    }
-  },
-
-  async run(context) {
-    const payloadBody = context.payload.body as any;
-    if (payloadBody.type !== 'company.created') {
-      return [];
-    }
-    return [payloadBody];
-  },
+  ...folkWebhook.handlers({ eventType: 'company.created', label: 'Company Added' }),
 });
