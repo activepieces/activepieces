@@ -18,6 +18,14 @@ The new piece provides a separate native action for each of the 425 public API o
 
 Flows remain on the piece version they were built with until you upgrade. Before upgrading, reconnect with a workspace key carrying the required scopes, replace numeric IDs with workspace UUIDs, reconfigure step inputs and remap downstream fields from the current response. Check polling intervals and use test data before testing billable actions. Existing assistant/channel webhook destinations remain unchanged.
 
+#### Shopify 0.11.0: Update Customer toggles that are off no longer unverify or unsubscribe the customer
+
+Update Customer sent **Verified Email**, **Send Email Invite** and **Accepts Marketing** on every run. A fresh step saves an untouched toggle as `false`, so every update marked the customer's email as unverified and unsubscribed them from email marketing, whatever the rest of the step changed. From Shopify 0.11.0 a toggle that is off sends nothing and the customer's current setting is kept; a toggle that is on still verifies the email, sends the invite or subscribes the customer. New Update Customer steps no longer start with Verified Email switched on.
+
+#### What you need to do
+
+Nothing for flows that only ever verify or subscribe customers. A flow that relied on Update Customer to unsubscribe a customer or mark their email as unverified can no longer do it from this action; use **Custom API Call** with `PUT /customers/{id}.json` and a body of `{"customer": {"email_marketing_consent": {"state": "unsubscribed", "opt_in_level": "unknown"}}}` (or `"verified_email": false`). Steps keep running on the version they were built with until you upgrade them.
+
 #### PostHog requires https hosts, and agents can no longer create projects
 
 PostHog 0.7.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
