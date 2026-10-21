@@ -12,7 +12,7 @@ import {
   User,
   Workflow,
 } from 'lucide-react';
-import { Fragment, ReactNode } from 'react';
+import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 
 import { LogoPlate } from '@/components/custom/logo-plate';
@@ -117,11 +117,9 @@ export function UsageEmptyState({
 export function UsageTrail({
   crumbs,
   current,
-  icon,
 }: {
   crumbs: { label: string; to: string }[];
   current: string;
-  icon?: ReactNode;
 }) {
   return (
     <Breadcrumb>
@@ -141,8 +139,7 @@ export function UsageTrail({
             </BreadcrumbSeparator>
           </Fragment>
         ))}
-        <BreadcrumbItem className="min-w-0 gap-2.5">
-          {icon}
+        <BreadcrumbItem className="min-w-0">
           <h1 aria-current="page" className="min-w-0 break-words text-gray-12">
             {current}
           </h1>

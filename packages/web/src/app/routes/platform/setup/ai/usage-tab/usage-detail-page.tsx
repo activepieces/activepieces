@@ -24,7 +24,7 @@ import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state'
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { ItemIcon, itemSubtitle, UsageTrail } from './usage-bits';
+import { itemSubtitle, UsageTrail } from './usage-bits';
 import {
   USAGE_DIMENSIONS,
   UsageDetail,
@@ -79,7 +79,6 @@ export function UsageDetailPage() {
             current={
               detail?.item.name ?? usageFormat.dimensionBadge({ dimension })
             }
-            icon={detail && <ItemIcon item={detail.item} />}
           />
         }
         description={detail ? itemSubtitle({ item: detail.item }) : undefined}
