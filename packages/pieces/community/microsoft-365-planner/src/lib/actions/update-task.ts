@@ -1,12 +1,9 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
-import { PlanDropdown, TaskDropdown } from '../common/properties';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
+import { microsoft365PlannerProps } from '../common/props';
 
-export const updateTask = createAction({
+export const updateTaskAction = createAction({
   auth: microsoft365PlannerAuth,
   name: 'updateTask',
   classification: 'WRITE',
@@ -19,39 +16,14 @@ export const updateTask = createAction({
     idempotent: true,
   },
   props: {
-    planId: PlanDropdown({ required: true }),
-    id: TaskDropdown({ required: true }),
+    planId: microsoft365PlannerProps.planId({ required: true }),
+    id: microsoft365PlannerProps.taskId({ required: true }),
     title: Property.ShortText({
       displayName: 'Title',
       description: 'The new title of the task',
       required: false,
     }),
-    assignments: Property.MultiSelectDropdown({
-      displayName: 'Assignments',
-      description:
-        'Select users to assign the task to. If left empty, the task will be unassigned.',
-      required: false,
-      refreshers: ['auth'],
-      auth: microsoft365PlannerAuth,
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            options: [],
-            disabled: true,
-            placeholder: 'Please select an authentication first',
-          };
-        }
-        const users = await microsoft365PlannerCommon.listUsers({ auth: auth });
-        return {
-          options: users.map((user) => ({
-            label: user.displayName || user.userPrincipalName || 'No Name',
-            value: user.id || '',
-          })),
-          disabled: false,
-          placeholder: 'Select users to assign the task to',
-        };
-      },
-    }),
+    assignments: microsoft365PlannerProps.assignments({ required: false }),
     dueDateTime: Property.DateTime({
       displayName: 'Due Date',
       description: 'The due date and time for the task',
@@ -75,7 +47,7 @@ export const updateTask = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { planId, id, ...updateParams } = propsValue;
+    const { planId: _planId, id, ...updateParams } = propsValue;
     if (!id) {
       throw new Error('Task ID is required to update a task.');
     }
@@ -90,7 +62,7 @@ export const updateTask = createAction({
           )
         : undefined,
     };
-    return await microsoft365PlannerCommon.updateTask({
+    return await microsoft365PlannerApi.updateTask({
       auth,
       id,
       ...formattedParams,

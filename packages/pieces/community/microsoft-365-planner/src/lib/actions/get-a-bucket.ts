@@ -1,8 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
-import { BucketDropdown, PlanDropdown } from '../common/properties';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
+import { microsoft365PlannerProps } from '../common/props';
 
-export const getABucket = createAction({
+export const getABucketAction = createAction({
   auth: microsoft365PlannerAuth,
   name: 'getABucket',
   classification: 'READ',
@@ -14,14 +15,14 @@ export const getABucket = createAction({
     idempotent: true,
   },
   props: {
-    planId: PlanDropdown({ required: true }),
-    bucketId: BucketDropdown({ required: true }),
+    planId: microsoft365PlannerProps.planId({ required: true }),
+    bucketId: microsoft365PlannerProps.bucketId({ required: true }),
   },
   async run({ auth, propsValue: { bucketId } }) {
     if (!bucketId) {
       throw new Error('Bucket ID is required to fetch bucket details.');
     }
-    return await microsoft365PlannerCommon.getBucketDetails({
+    return await microsoft365PlannerApi.getBucket({
       auth,
       bucketId,
     });

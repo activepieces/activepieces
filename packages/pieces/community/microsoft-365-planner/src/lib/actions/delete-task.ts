@@ -1,8 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
-import { PlanDropdown, TaskDropdown } from '../common/properties';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
+import { microsoft365PlannerProps } from '../common/props';
 
-export const deleteTask = createAction({
+export const deleteTaskAction = createAction({
   auth: microsoft365PlannerAuth,
   name: 'deleteTask',
   classification: 'DESTRUCTIVE',
@@ -14,14 +15,14 @@ export const deleteTask = createAction({
     idempotent: false,
   },
   props: {
-    planId: PlanDropdown({ required: true }),
-    id: TaskDropdown({ required: true }),
+    planId: microsoft365PlannerProps.planId({ required: true }),
+    id: microsoft365PlannerProps.taskId({ required: true }),
   },
   async run({ auth, propsValue: { id } }) {
     if (!id) {
       throw new Error('Task id is required');
     }
-    return await microsoft365PlannerCommon.deleteTask({
+    return await microsoft365PlannerApi.deleteTask({
       auth,
       id,
     });

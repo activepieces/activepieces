@@ -6,11 +6,11 @@ import {
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof microsoft365PlannerAuth>,
@@ -18,7 +18,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const items = await microsoft365PlannerCommon.listPlans({
+    const items = await microsoft365PlannerApi.listPlans({
       auth,
     });
     return items.map((item) => ({
@@ -28,7 +28,7 @@ const polling: Polling<
   },
 };
 
-export const newPlanCreated = createTrigger({
+export const newPlanCreatedTrigger = createTrigger({
   auth: microsoft365PlannerAuth,
   name: 'newPlanCreated',
   classification: 'READ',

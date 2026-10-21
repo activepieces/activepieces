@@ -1,8 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
-import { BucketDropdown, PlanDropdown } from '../common/properties';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
+import { microsoft365PlannerProps } from '../common/props';
 
-export const deleteBucket = createAction({
+export const deleteBucketAction = createAction({
   auth: microsoft365PlannerAuth,
   name: 'deleteBucket',
   classification: 'DESTRUCTIVE',
@@ -14,14 +15,14 @@ export const deleteBucket = createAction({
     idempotent: false,
   },
   props: {
-    planId: PlanDropdown({ required: true }),
-    id: BucketDropdown({ required: true }),
+    planId: microsoft365PlannerProps.planId({ required: true }),
+    id: microsoft365PlannerProps.bucketId({ required: true }),
   },
   async run({ auth, propsValue: { id } }) {
     if (!id) {
       throw new Error('Bucket id is required');
     }
-    return await microsoft365PlannerCommon.deleteBucket({
+    return await microsoft365PlannerApi.deleteBucket({
       auth,
       id,
     });

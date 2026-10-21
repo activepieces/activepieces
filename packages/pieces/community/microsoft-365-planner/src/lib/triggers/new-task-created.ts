@@ -6,16 +6,16 @@ import {
 import {
     AppConnectionValueForAuthProperty,
     createTrigger,
-    PiecePropValueSchema,
     StaticPropsValue,
     TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
-import { PlanDropdown } from '../common/properties';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
+import { microsoft365PlannerProps } from '../common/props';
 
 const props = {
-  planId: PlanDropdown({ required: true }),
+  planId: microsoft365PlannerProps.planId({ required: true }),
 };
 
 const polling: Polling<
@@ -27,7 +27,7 @@ const polling: Polling<
     if (!planId) {
       return [];
     }
-    const items = await microsoft365PlannerCommon.listTasks({
+    const items = await microsoft365PlannerApi.listTasks({
       auth,
       planId,
     });
@@ -38,7 +38,7 @@ const polling: Polling<
   },
 };
 
-export const newTaskCreated = createTrigger({
+export const newTaskCreatedTrigger = createTrigger({
   auth: microsoft365PlannerAuth,
   name: 'newTaskCreated',
   classification: 'READ',

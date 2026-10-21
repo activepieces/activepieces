@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
-import { PlanDropdown } from '../common/properties';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
+import { microsoft365PlannerProps } from '../common/props';
 
-export const updatePlan = createAction({
+export const updatePlanAction = createAction({
   auth: microsoft365PlannerAuth,
   name: 'updatePlan',
   classification: 'WRITE',
@@ -14,7 +15,7 @@ export const updatePlan = createAction({
     idempotent: true,
   },
   props: {
-    id: PlanDropdown({ required: true }),
+    id: microsoft365PlannerProps.planId({ required: true }),
     title: Property.ShortText({
       displayName: 'Title',
       description: 'The new title of the plan',
@@ -25,7 +26,7 @@ export const updatePlan = createAction({
     if (!id) {
       throw new Error('Plan id is required');
     }
-    return await microsoft365PlannerCommon.updatePlan({
+    return await microsoft365PlannerApi.updatePlan({
       auth,
       id,
       title,

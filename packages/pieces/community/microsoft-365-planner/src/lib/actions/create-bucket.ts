@@ -1,8 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
-import { OrderHintProperty, PlanDropdown } from '../common/properties';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
+import { microsoft365PlannerProps } from '../common/props';
 
-export const createBucket = createAction({
+export const createBucketAction = createAction({
   auth: microsoft365PlannerAuth,
   name: 'createBucket',
   classification: 'WRITE',
@@ -14,16 +15,16 @@ export const createBucket = createAction({
     idempotent: false,
   },
   props: {
-    planId: PlanDropdown({ required: true }),
+    planId: microsoft365PlannerProps.planId({ required: true }),
     name: Property.ShortText({
       displayName: 'Bucket Name',
       description: 'The name of the bucket to be created',
       required: true,
     }),
-    orderHint: OrderHintProperty({ required: false }),
+    orderHint: microsoft365PlannerProps.orderHint({ required: false }),
   },
   async run({ auth, propsValue }) {
-    return await microsoft365PlannerCommon.createBucket({
+    return await microsoft365PlannerApi.createBucket({
       auth,
       ...propsValue,
     });

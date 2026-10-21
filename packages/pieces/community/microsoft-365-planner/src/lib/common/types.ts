@@ -1,108 +1,49 @@
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import {
+import type { AppConnectionType } from '@activepieces/pieces-framework';
+import type {
+  PlannerBucket,
+  PlannerTask,
+} from '@microsoft/microsoft-graph-types';
+
+export type {
   Group,
   PlannerBucket,
   PlannerPlan,
-  PlannerPlanContainer,
   PlannerTask,
-  User
+  User,
 } from '@microsoft/microsoft-graph-types';
 
-export interface AuthenticationParams {
-  auth: OAuth2PropertyValue;
-}
+export type Microsoft365PlannerAuthValue = {
+  type:
+    | AppConnectionType.OAUTH2
+    | AppConnectionType.CLOUD_OAUTH2
+    | AppConnectionType.PLATFORM_OAUTH2;
+  access_token: string;
+  props?: { cloud?: string | null };
+};
 
-export interface GenericDetailParams extends AuthenticationParams {
-  id: string;
-}
+export type Microsoft365PlannerList<T> = { value: T[] };
 
-// API Types
-export interface ListPlansResponse {
-  value: PlannerPlan[];
-}
+export type Microsoft365PlannerEtagged = { '@odata.etag': string };
 
-export interface ListGroupsResponse {
-  value: Group[];
-}
+export type Microsoft365PlannerCreateBucketParams = Omit<PlannerBucket, 'id'>;
 
-export interface ListBucketsParams extends AuthenticationParams {
-  planId: string;
-}
+export type Microsoft365PlannerCreateTaskParams = Omit<PlannerTask, 'id'>;
 
-export interface ListBucketsResponse {
-  value: PlannerBucket[];
-}
-
-export interface ListTasksParams extends AuthenticationParams {
-  planId: string;
-}
-
-export interface ListTasksResponse {
-  value: PlannerTask[];
-}
-
-export interface CreatePlanParams extends AuthenticationParams {
-  title: string;
-  container: PlannerPlanContainer;
-}
-
-export type CreatePlanResponse = PlannerPlan;
-
-export interface CreateBucketParams
-  extends AuthenticationParams,
-    Omit<PlannerBucket, 'id'> {}
-
-export type CreateBucketResponse = PlannerBucket;
-
-export interface CreateTaskParams
-  extends AuthenticationParams,
-    Omit<PlannerTask, 'id'> {}
-
-export type CreateTaskResponse = PlannerTask;
-
-export type DeleteBucketParams = GenericDetailParams;
-
-export type DeleteTaskParams = GenericDetailParams;
-
-export interface UpdatePlanParams extends AuthenticationParams {
-  id: string;
-  title: string;
-}
-
-export interface UpdateBucketParams extends AuthenticationParams {
-  id: string;
-  name?: string;
-  orderHint?: string;
-}
-
-export interface UpdateTaskParams
-  extends AuthenticationParams,
-    Omit<
-      PlannerTask,
-      | 'activeChecklistItemCount'
-      | 'checklistItemCount'
-      | 'completedBy'
-      | 'completedDateTime'
-      | 'createdBy'
-      | 'createdDateTime'
-      | 'hasDescription'
-      | 'planId'
-      | 'previewType'
-      | 'referenceCount'
-      | 'assignedToTaskBoardFormat'
-      | 'bucketTaskBoardFormat'
-      | 'details'
-      | 'progressTaskBoardFormat'
-    > {
-  id: string;
-}
-
-export interface GetBucketDetailsParams extends AuthenticationParams {
-  bucketId: string;
-}
-
-export type GetUserResponse = User;
-
-export interface ListUserResponse {
-  value: User[];
-}
+export type Microsoft365PlannerUpdateTaskParams = Omit<
+  PlannerTask,
+  | 'id'
+  | 'activeChecklistItemCount'
+  | 'checklistItemCount'
+  | 'completedBy'
+  | 'completedDateTime'
+  | 'createdBy'
+  | 'createdDateTime'
+  | 'hasDescription'
+  | 'planId'
+  | 'previewType'
+  | 'referenceCount'
+  | 'assignedToTaskBoardFormat'
+  | 'bucketTaskBoardFormat'
+  | 'details'
+  | 'progressTaskBoardFormat'
+>;

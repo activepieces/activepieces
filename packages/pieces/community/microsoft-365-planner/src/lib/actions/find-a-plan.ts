@@ -1,7 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
 
-export const findAPlan = createAction({
+export const findAPlanAction = createAction({
   auth: microsoft365PlannerAuth,
   name: 'findAPlan',
   classification: 'SEARCH',
@@ -20,7 +21,7 @@ export const findAPlan = createAction({
     }),
   },
   async run({ auth, propsValue: { title } }) {
-    const plans = await microsoft365PlannerCommon.listPlans({ auth });
+    const plans = await microsoft365PlannerApi.listPlans({ auth });
     return plans.filter(
       (plan) =>
         plan.title && plan.title.toLowerCase().includes(title.toLowerCase())
