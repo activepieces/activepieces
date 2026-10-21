@@ -33,7 +33,7 @@ describe('Activepieces AI provider visibility', () => {
         expect(chat).toBeNull()
     })
 
-    it('keeps the provider when Embedding comes only from the Enterprise trial', async () => {
+    it('keeps the provider when Embedding comes only from the self-serve trial', async () => {
         const { listed, chat } = await visibleProviders({ activepiecesAiProviderHidden: false })
 
         expect(listed).toContain(AIProviderName.ACTIVEPIECES)

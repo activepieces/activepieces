@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddActivepiecesAiProviderHiddenToPlatformPlan1872000000000 implements Migration {
-    name = 'AddActivepiecesAiProviderHiddenToPlatformPlan1872000000000'
+export class AddActivepiecesAiProviderHiddenToPlatformPlan1876000000000 implements Migration {
+    name = 'AddActivepiecesAiProviderHiddenToPlatformPlan1876000000000'
     breaking = false
     release = '0.93.0'
 

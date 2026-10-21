@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, isEmpty, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil, safeHttp } from '@activepieces/server-utils'
 import { ApEdition, ConsumableFeatureId, FeatureFlagId, isFreeLegacyEligible, PlanName, PlatformPlanLimits, PurchasablePlan, UnconsumableFeatureId } from '@activepieces/shared'
 import {
@@ -16,7 +16,7 @@ import {
 import { type AxiosRequestConfig, isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, ENTITLEMENTS_WRITE_LOCK_TIMEOUT_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey, getEntitlementsWriteLockKey, getFreeLegacyCompAttemptKey } from '../../../../database/redis/keys'
+import { AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS, BILLING_ENFORCED_TTL_SECONDS, getAppSumoAiCreditsBalanceKey, getAutumnEnrollLockKey, getBillingEnforcedKey, getBillingOverviewKey, getCreditsBalanceKey, getFreeLegacyCompAttemptKey } from '../../../../database/redis/keys'
 import { distributedLock, distributedStore } from '../../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { system } from '../../../../helper/system/system'
@@ -26,6 +26,7 @@ import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanTelemetry } from '../platform-plan-telemetry'
 import { platformPlanRepo, platformPlanService } from '../platform-plan.service'
+import { selfServeTrialWindow } from '../self-serve-trial-window'
 
 const AUTUMN_CONSOLE_URL = system.getOrThrow(AppSystemProp.AUTUMN_CONSOLE_URL).replace(/\/+$/, '')
 const edition = system.getEdition()
@@ -38,6 +39,7 @@ const PROJECT_ID_PROPERTY = 'projectId'
 const CREDIT_USAGE_MAX_GROUPS = 250
 const AI_CREDIT_USAGE_SOURCES = [CreditUsageSource.AI, CreditUsageSource.CHAT]
 const BASELINE_PLAN_IDS: readonly string[] = [PlanName.FREE, PlanName.FREE_LEGACY, PlanName.APPSUMO]
+const SELF_SERVE_TRIAL_ENDED_REPORT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 
 export const autumnUtils = {
     client({ secretKey, customerId }: AutumnClientParams) {
@@ -57,7 +59,7 @@ export const autumnUtils = {
                     { customerId, expand: params?.expand },
                     { timeoutMs: AUTUMN_GET_CUSTOMER_TIMEOUT_MS },
                 )
-                return autumnUtils.withoutExpiredEnterpriseTrial(customer)
+                return autumnUtils.withoutExpiredSelfServeTrial(customer)
             },
             listPlans(params?: ListPlansParams) {
                 return client.plans.list(params)
@@ -159,13 +161,6 @@ export const autumnUtils = {
         )
     },
     async refreshEntitlements(log: FastifyBaseLogger, platformId: string): Promise<void> {
-        await distributedLock(log).runExclusive({
-            key: getEntitlementsWriteLockKey(platformId),
-            timeoutInSeconds: ENTITLEMENTS_WRITE_LOCK_TIMEOUT_SECONDS,
-            fn: () => autumnUtils.writeEntitlementsFromAutumn(log, platformId),
-        })
-    },
-    async writeEntitlementsFromAutumn(log: FastifyBaseLogger, platformId: string): Promise<void> {
         const client = await autumnUtils.resolveClientForPlatform(log, platformId)
         if (isNil(client)) {
             return
@@ -173,20 +168,16 @@ export const autumnUtils = {
         const previousPlan = await platformPlanRepo().findOneBy({ platformId })
         const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan'] })
         const entitlements = toAutumnEntitlements(customer)
-        const previousTrialEndsAt = previousPlan?.enterpriseTrialEndsAt ?? null
-        const trialEndedAt = !isNil(previousTrialEndsAt) && isNil(entitlements.enterpriseTrial)
-            ? new Date(Math.min(Date.now(), new Date(previousTrialEndsAt).getTime()))
-            : null
         await platformPlanService(log).update({
             platformId,
             ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements),
-            ...spreadIfDefined('enterpriseTrialEndedAt', trialEndedAt?.toISOString()),
         })
-        if (!isNil(previousTrialEndsAt) && !isNil(trialEndedAt)) {
-            rejectedPromiseHandler(platformPlanTelemetry(log).onEnterpriseTrialEnded({
+        const trialWindow = await selfServeTrialWindow.saveFromCustomer({ platformId, customer })
+        if (!isNil(trialWindow) && endedRecently(trialWindow.endsAt)) {
+            rejectedPromiseHandler(platformPlanTelemetry(log).onSelfServeTrialEnded({
                 platformId,
-                trialEndsAt: new Date(previousTrialEndsAt).toISOString(),
-                endedAt: trialEndedAt.toISOString(),
+                trialEndsAt: trialWindow.endsAt,
+                endedAt: trialWindow.endsAt,
             }), log)
         }
         await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
@@ -234,12 +225,10 @@ export const autumnUtils = {
             plan: entitlements.planId,
             billedTeamProjectsLimit: toPlatformPlanLimit(teamProjects, 1),
             usersLimit: toPlatformPlanLimit(users, null),
-            scheduledUsersLimit: isNil(entitlements.enterpriseTrial) ? entitlements.scheduledUsersLimit : null,
+            scheduledUsersLimit: isNil(entitlements.selfServeTrial) ? entitlements.scheduledUsersLimit : null,
             activeFlowsLimit: toPlatformPlanLimit(activeFlows, null),
             includedCredits: credits?.granted ?? 0,
-            enterpriseTrialStartedAt: msToIsoOrNull(entitlements.enterpriseTrial?.startedAt),
-            enterpriseTrialEndsAt: msToIsoOrNull(entitlements.enterpriseTrial?.endsAt),
-            activepiecesAiProviderHidden: entitlements.embeddingOutsideEnterpriseTrial,
+            activepiecesAiProviderHidden: entitlements.embeddingOutsideSelfServeTrial,
         }
     },
     async readBalance({ platformId, featureId }: BalanceCacheRef): Promise<CreditsBalanceCache | null> {
@@ -248,7 +237,7 @@ export const autumnUtils = {
     async writeBalance({ platformId, featureId, balance }: WriteBalanceParams): Promise<void> {
         await distributedStore.put(balanceCacheKey({ platformId, featureId }), autumnUtils.toBalanceCache(balance), CREDITS_CACHE_TTL_SECONDS)
     },
-    grantsEmbeddingOutsideEnterpriseTrial(attachments: AutumnPlanAttachments): boolean {
+    grantsEmbeddingOutsideSelfServeTrial(attachments: AutumnPlanAttachments): boolean {
         return toEntitlementPlans(attachments).some((plan) =>
             plan.planId !== PlanName.ENTERPRISE_TRIAL && plan.featureIds.includes(FeatureFlagId.EMBEDDING_ENABLED))
     },
@@ -285,14 +274,14 @@ export const autumnUtils = {
             syncedAt: Date.now(),
         }
     },
-    withoutExpiredEnterpriseTrial(customer: GetCustomerResponse): GetCustomerResponse {
+    withoutExpiredSelfServeTrial(customer: GetCustomerResponse): GetCustomerResponse {
         const now = Date.now()
-        if (!customer.subscriptions.some((subscription) => isExpiredEnterpriseTrial({ subscription, now }))) {
+        if (!customer.subscriptions.some((subscription) => isExpiredSelfServeTrial({ subscription, now }))) {
             return customer
         }
         return {
             ...customer,
-            subscriptions: customer.subscriptions.filter((subscription) => !isExpiredEnterpriseTrial({ subscription, now })),
+            subscriptions: customer.subscriptions.filter((subscription) => !isExpiredSelfServeTrial({ subscription, now })),
             balances: Object.entries(customer.balances).reduce<GetCustomerResponse['balances']>((balances, [featureId, balance]) => {
                 const trimmed = withoutPlanGrants({ balance, planId: PlanName.ENTERPRISE_TRIAL })
                 return isNil(trimmed) ? balances : { ...balances, [featureId]: trimmed }
@@ -388,20 +377,24 @@ export const autumnConsole = {
             body: { autumnCustomerId: creds.autumnCustomerId, action },
         })
     },
-    async startEnterpriseTrial({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<StartedEnterpriseTrial | null> {
-        const { data, error } = await tryCatch(() => consoleRequest<StartedEnterpriseTrial>({
-            path: '/api/v1/billing/enterprise-trial',
+    async startSelfServeTrial({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<SelfServeTrialStartOutcome> {
+        const { data, error } = await tryCatch(() => consoleRequest<StartedSelfServeTrial>({
+            path: '/api/v1/billing/self-serve-trial',
             token: edition === ApEdition.CLOUD ? consoleSecretOrThrow() : autumnApiKey,
             body: { autumnCustomerId },
-            expectedErrorStatus: StatusCodes.CONFLICT,
+            expectedErrorStatuses: [StatusCodes.CONFLICT, StatusCodes.FORBIDDEN],
         }))
         if (isAxiosError(error) && error.response?.status === StatusCodes.CONFLICT) {
-            return null
+            return { result: 'used' }
+        }
+        if (isAxiosError(error) && error.response?.status === StatusCodes.FORBIDDEN) {
+            return { result: 'ineligible' }
         }
         if (!isNil(error)) {
             throw error
         }
-        return data
+        assertNotNullOrUndefined(data, 'data')
+        return { result: 'started', startedAt: data.startedAt, endsAt: data.endsAt }
     },
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
@@ -411,7 +404,7 @@ export const autumnConsole = {
     },
 }
 
-async function consoleRequest<T>({ path, method = 'post', token, body, query, expectedErrorStatus }: ConsoleRequestParams): Promise<T> {
+async function consoleRequest<T>({ path, method = 'post', token, body, query, expectedErrorStatuses = [] }: ConsoleRequestParams): Promise<T> {
     const url = `${AUTUMN_CONSOLE_URL}${path}`
     const config: AxiosRequestConfig = {
         timeout: CONSOLE_REQUEST_TIMEOUT_MS,
@@ -422,7 +415,7 @@ async function consoleRequest<T>({ path, method = 'post', token, body, query, ex
         ? safeHttp.axios.get<ConsoleEnvelope<T>>(url, config)
         : safeHttp.axios.post<ConsoleEnvelope<T>>(url, body ?? {}, config))
     if (!isNil(error)) {
-        if (!isAxiosError(error) || error.response?.status !== expectedErrorStatus) {
+        if (!isAxiosError(error) || isNil(error.response) || !expectedErrorStatuses.includes(error.response.status)) {
             system.globalLogger().error({ error, url }, 'Autumn console request failed')
         }
         throw error
@@ -533,12 +526,12 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
         grantedFeatureIds: autumnUtils.toGrantedFeatureIds(customer),
         balances,
         scheduledUsersLimit: toScheduledUsersLimit(baseSubscriptions),
-        enterpriseTrial: toLiveEnterpriseTrial(customer),
-        embeddingOutsideEnterpriseTrial: autumnUtils.grantsEmbeddingOutsideEnterpriseTrial(customer),
+        selfServeTrial: toLiveSelfServeTrial(customer),
+        embeddingOutsideSelfServeTrial: autumnUtils.grantsEmbeddingOutsideSelfServeTrial(customer),
     }
 }
 
-function toLiveEnterpriseTrial(customer: GetCustomerResponse): LiveEnterpriseTrial | null {
+function toLiveSelfServeTrial(customer: GetCustomerResponse): LiveSelfServeTrial | null {
     const now = Date.now()
     const subscription = customer.subscriptions.find((candidate) =>
         candidate.planId === PlanName.ENTERPRISE_TRIAL
@@ -551,11 +544,12 @@ function toLiveEnterpriseTrial(customer: GetCustomerResponse): LiveEnterpriseTri
     return { startedAt: subscription.startedAt, endsAt: subscription.trialEndsAt }
 }
 
-function msToIsoOrNull(ms: number | null | undefined): string | null {
-    return isNil(ms) ? null : new Date(ms).toISOString()
+function endedRecently(endsAt: string): boolean {
+    const sinceEnd = Date.now() - Date.parse(endsAt)
+    return sinceEnd >= 0 && sinceEnd < SELF_SERVE_TRIAL_ENDED_REPORT_WINDOW_MS
 }
 
-function isExpiredEnterpriseTrial({ subscription, now }: ExpiredEnterpriseTrialParams): boolean {
+function isExpiredSelfServeTrial({ subscription, now }: ExpiredSelfServeTrialParams): boolean {
     return subscription.planId === PlanName.ENTERPRISE_TRIAL && !isNil(subscription.trialEndsAt) && subscription.trialEndsAt <= now
 }
 
@@ -667,16 +661,16 @@ type AutumnEntitlements = {
     grantedFeatureIds: ReadonlySet<string>
     balances: Record<string, AutumnFeatureBalance>
     scheduledUsersLimit: number | null
-    enterpriseTrial: LiveEnterpriseTrial | null
-    embeddingOutsideEnterpriseTrial: boolean
+    selfServeTrial: LiveSelfServeTrial | null
+    embeddingOutsideSelfServeTrial: boolean
 }
 
-type LiveEnterpriseTrial = {
+type LiveSelfServeTrial = {
     startedAt: number
     endsAt: number
 }
 
-type ExpiredEnterpriseTrialParams = {
+type ExpiredSelfServeTrialParams = {
     subscription: GetCustomerResponse['subscriptions'][number]
     now: number
 }
@@ -724,8 +718,7 @@ type NotProjectedFromAutumn =
     | 'canary'
     | 'customDomainsEnabled'
     | 'workerGroupId'
-    | 'enterpriseTrialEndedAt'
-    | 'enterpriseTrialUsedElsewhereAt'
+    | 'selfServeTrialUsedElsewhereAt'
 
 type PlatformPlanProjection = Required<Pick<PlatformPlanLimits, Exclude<keyof PlatformPlanLimits, NotProjectedFromAutumn>>>
 
@@ -734,10 +727,15 @@ type AutumnEnrollmentCredentials = {
     autumnApiKey: string
 }
 
-type StartedEnterpriseTrial = {
+type StartedSelfServeTrial = {
     startedAt: string
     endsAt: string
 }
+
+export type SelfServeTrialStartOutcome =
+    | { result: 'started', startedAt: string, endsAt: string }
+    | { result: 'used' }
+    | { result: 'ineligible' }
 
 export type ConsoleCustomerCall = {
     autumnCustomerId: string
@@ -770,7 +768,7 @@ type ConsoleRequestParams = {
     token?: string
     body?: unknown
     query?: Record<string, string>
-    expectedErrorStatus?: number
+    expectedErrorStatuses?: number[]
 }
 
 export type BalanceCacheRef = {

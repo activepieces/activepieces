@@ -167,19 +167,7 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        enterpriseTrialStartedAt: {
-            type: 'timestamp with time zone',
-            nullable: true,
-        },
-        enterpriseTrialEndsAt: {
-            type: 'timestamp with time zone',
-            nullable: true,
-        },
-        enterpriseTrialEndedAt: {
-            type: 'timestamp with time zone',
-            nullable: true,
-        },
-        enterpriseTrialUsedElsewhereAt: {
+        selfServeTrialUsedElsewhereAt: {
             type: 'timestamp with time zone',
             nullable: true,
         },
