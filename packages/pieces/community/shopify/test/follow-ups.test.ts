@@ -204,6 +204,26 @@ describe('new_abandoned_checkout polling', () => {
         expect(sent[42].queryParams).toEqual({ limit: '250', since_id: '10251' });
         expect(nextPoll).toEqual([{ id: 10252 }]);
     });
+
+    it('reports checkouts created after enabling that the unfinished scan reaches, but not older ones', async () => {
+        const oldCheckout = { created_at: '2020-01-01T00:00:00Z' };
+        const fullPages = Array.from({ length: 41 }, (_, page) => ({
+            body: { checkouts: Array.from({ length: 250 }, (_, index) => ({ id: page * 250 + index + 1, ...oldCheckout })) },
+        }));
+        const newCheckout = { id: 10252, created_at: '2999-01-01T00:00:00Z' };
+        mockRest({
+            replies: [...fullPages, { body: { checkouts: [{ id: 10251, ...oldCheckout }, newCheckout] } }],
+        });
+        const store = createStore({ entries: {} });
+
+        await newAbandonedCheckout.onEnable(pollingContext({ store }));
+        const resumedPoll = await newAbandonedCheckout.run(pollingContext({ store }));
+
+        expect(store.put).toHaveBeenCalledWith('newestCheckoutScanEnabledAt', expect.any(Number));
+        expect(resumedPoll).toEqual([newCheckout]);
+        expect(store.put).toHaveBeenCalledWith('lastItem', 10252);
+        expect(store.delete).toHaveBeenCalledWith('newestCheckoutScanEnabledAt');
+    });
 });
 
 function webhookContext({ store }: { store: ReturnType<typeof createStore> }) {

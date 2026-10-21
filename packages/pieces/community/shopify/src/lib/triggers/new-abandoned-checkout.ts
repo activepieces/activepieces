@@ -113,8 +113,13 @@ export const newAbandonedCheckout = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async onEnable({ auth, store }) {
-    const scan = await scanForNewest({ auth, fromId: undefined });
-    await saveScan({ store, scan });
+    const enabledAt = Date.now();
+    const scan = await scanForNewest({
+      auth,
+      fromId: undefined,
+      enabledAt: undefined,
+    });
+    await saveScan({ store, scan, enabledAt });
   },
   async onDisable({ auth, propsValue, store }) {
     await pollingHelper.onDisable(polling, { auth, propsValue, store });
@@ -122,9 +127,10 @@ export const newAbandonedCheckout = createTrigger({
   async run({ auth, propsValue, store, files }) {
     const scanCursor = await store.get<number>(SCAN_CURSOR_KEY);
     if (!isNil(scanCursor)) {
-      const scan = await scanForNewest({ auth, fromId: scanCursor });
-      await saveScan({ store, scan });
-      return [];
+      const enabledAt = (await store.get<number>(SCAN_ENABLED_AT_KEY)) ?? undefined;
+      const scan = await scanForNewest({ auth, fromId: scanCursor, enabledAt });
+      await saveScan({ store, scan, enabledAt });
+      return sortNewestFirst({ checkouts: scan.createdAfterEnable });
     }
     if (isNil(await store.get(LAST_ITEM_KEY))) {
       await store.put(LAST_ITEM_KEY, READ_FROM_FIRST_CHECKOUT);
@@ -141,7 +147,8 @@ const polling: Polling<ShopifyAuth, unknown> = {
   items: async ({ auth, lastItemId }) => {
     const sinceId = toSinceId({ lastItemId });
     const checkouts = isNil(sinceId)
-      ? (await scanForNewest({ auth, fromId: undefined })).checkouts
+      ? (await scanForNewest({ auth, fromId: undefined, enabledAt: undefined }))
+          .checkouts
       : await getAbandonedCheckouts(auth, { sinceId });
     return sortNewestFirst({ checkouts }).map((checkout) => ({
       id: checkout.id,
@@ -153,14 +160,17 @@ const polling: Polling<ShopifyAuth, unknown> = {
 async function scanForNewest({
   auth,
   fromId,
+  enabledAt,
 }: {
   auth: ShopifyAuth;
   fromId: number | undefined;
+  enabledAt: number | undefined;
 }): Promise<NewestCheckoutScan> {
   let page = await getAbandonedCheckouts(auth, {
     sinceId: isNil(fromId) ? '' : String(fromId),
   });
   let newestId = page.length > 0 ? maxId({ checkouts: page }) : fromId;
+  let createdAfterEnable = createdSince({ checkouts: page, since: enabledAt });
   for (
     let hop = 0;
     hop < MAX_PAGES_TO_FIND_NEWEST &&
@@ -171,31 +181,42 @@ async function scanForNewest({
       sinceId: String(newestId),
     });
     if (next.length === 0) {
-      return { checkouts: page, newestId, complete: true };
+      return { checkouts: page, newestId, complete: true, createdAfterEnable };
     }
     page = next;
     newestId = maxId({ checkouts: page });
+    createdAfterEnable = [
+      ...createdAfterEnable,
+      ...createdSince({ checkouts: page, since: enabledAt }),
+    ];
   }
   return {
     checkouts: page,
     newestId,
     complete: page.length < ABANDONED_CHECKOUTS_PAGE_LIMIT,
+    createdAfterEnable,
   };
 }
 
 async function saveScan({
   store,
   scan,
+  enabledAt,
 }: {
   store: Store;
   scan: NewestCheckoutScan;
+  enabledAt: number | undefined;
 }): Promise<void> {
   if (!scan.complete) {
     await store.put(SCAN_CURSOR_KEY, scan.newestId);
+    if (!isNil(enabledAt)) {
+      await store.put(SCAN_ENABLED_AT_KEY, enabledAt);
+    }
     await store.delete(LAST_ITEM_KEY);
     return;
   }
   await store.delete(SCAN_CURSOR_KEY);
+  await store.delete(SCAN_ENABLED_AT_KEY);
   if (isNil(scan.newestId)) {
     await store.delete(LAST_ITEM_KEY);
     return;
@@ -222,13 +243,30 @@ function maxId({ checkouts }: { checkouts: ShopifyCheckout[] }): number {
   return checkouts.reduce((max, checkout) => Math.max(max, checkout.id), 0);
 }
 
+function createdSince({
+  checkouts,
+  since,
+}: {
+  checkouts: ShopifyCheckout[];
+  since: number | undefined;
+}): ShopifyCheckout[] {
+  if (isNil(since)) {
+    return [];
+  }
+  return checkouts.filter(
+    (checkout) => Date.parse(checkout.created_at) >= since
+  );
+}
+
 const MAX_PAGES_TO_FIND_NEWEST = 40;
 const LAST_ITEM_KEY = 'lastItem';
 const SCAN_CURSOR_KEY = 'newestCheckoutScanCursor';
+const SCAN_ENABLED_AT_KEY = 'newestCheckoutScanEnabledAt';
 const READ_FROM_FIRST_CHECKOUT = 0;
 
 type NewestCheckoutScan = {
   checkouts: ShopifyCheckout[];
   newestId: number | undefined;
   complete: boolean;
+  createdAfterEnable: ShopifyCheckout[];
 };
