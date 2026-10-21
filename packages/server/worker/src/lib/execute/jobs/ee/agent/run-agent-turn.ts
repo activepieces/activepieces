@@ -1,7 +1,7 @@
 import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
-import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, smoothStream, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
+import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
 import { buildSkillSurface } from './tools/skill-tools'
 
 const MAX_AUTO_CONTINUATIONS = 3
@@ -147,7 +147,6 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         tools: guardedTools,
         stopWhen: loopStopCondition,
         telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-turn' }),
-        experimental_transform: smoothStream({ delayInMs: 10, chunking: 'word' }),
         // providerOptions/model are supplied per-step by prepareStep (authoritative). A
         // call-level providerOptions would deep-merge into every step and leak the enabled
         // thinking budget back into the disabled first step.
