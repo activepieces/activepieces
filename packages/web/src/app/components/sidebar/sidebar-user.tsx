@@ -1,11 +1,15 @@
 import { isNil } from '@activepieces/core-utils';
+import { PlatformRole } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,90 +32,119 @@ import { cn } from '@/lib/utils';
 import { AccountSettingsDialog } from '../account-settings';
 import { HelpAndFeedback } from '../help-and-feedback';
 
+import { sidebarStyles } from './sidebar-styles';
+
 export function SidebarUser() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
+  const navigate = useNavigate();
+  const { state, isMobile } = useSidebar();
+  const isCollapsed = state === 'collapsed' && !isMobile;
+
   if (!user || embedState.isEmbedded) {
     return null;
   }
 
+  const fullName = `${user.firstName} ${user.lastName}`;
+
   const handleLogout = () => {
     userHooks.invalidateCurrentUser(queryClient);
     authenticationSession.logOut();
+    navigate('/sign-in');
   };
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
-          <DropdownMenuTrigger asChild className="w-full">
-            <SidebarMenuButton className="h-10! pl-2! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:pl-2!">
-              <div className="size-[22px] shrink-0 overflow-hidden flex items-center justify-center rounded-full">
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              size="lg"
+              tooltip={fullName}
+              className="h-10 p-1 pr-2 data-[state=open]:bg-gray-4"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <span className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full">
                 <UserAvatar
                   className={cn('size-full object-cover', {
                     'scale-150': isNil(user.imageUrl),
                   })}
-                  name={user.firstName + ' ' + user.lastName}
+                  name={fullName}
                   email={user.email}
                   imageUrl={user.imageUrl}
-                  size={22}
+                  size={24}
                   disableTooltip={true}
                 />
-              </div>
-
-              {!isCollapsed && (
-                <>
-                  <span className="truncate">
-                    {user.firstName + ' ' + user.lastName}
-                  </span>
-                  <ChevronsUpDown className="ml-auto size-4" />
-                </>
-              )}
+              </span>
+              <span
+                className={cn(
+                  'flex min-w-0 flex-1 flex-col',
+                  sidebarStyles.labelFade,
+                )}
+              >
+                <SidebarRowText
+                  text={fullName}
+                  className="font-medium text-gray-12"
+                  plain={isCollapsed}
+                />
+                <SidebarRowText
+                  text={user.email}
+                  className="text-xs text-gray-11"
+                  plain={isCollapsed}
+                />
+              </span>
+              <ChevronsUpDown
+                className={cn('ml-auto text-gray-9', sidebarStyles.labelFade)}
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg z-999"
+            className={cn(
+              'w-(--radix-dropdown-menu-trigger-width) min-w-60',
+              sidebarStyles.menuSurface,
+            )}
             side="top"
             align="start"
-            sideOffset={10}
+            sideOffset={8}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <div className="size-8 shrink-0 overflow-hidden rounded-full">
-                  <UserAvatar
-                    className="size-full object-cover"
-                    name={user.firstName + ' ' + user.lastName}
-                    email={user.email}
-                    imageUrl={user.imageUrl}
-                    size={32}
-                    disableTooltip={true}
+            <DropdownMenuLabel className="flex flex-col items-start gap-2 px-2 py-1.5 font-normal">
+              <span className="flex w-full min-w-0 items-center gap-2.5">
+                <UserAvatar
+                  className="size-8 shrink-0 overflow-hidden rounded-full object-cover"
+                  name={fullName}
+                  email={user.email}
+                  imageUrl={user.imageUrl}
+                  size={32}
+                  disableTooltip={true}
+                />
+                <span className="flex min-w-0 flex-col">
+                  <SidebarRowText
+                    text={fullName}
+                    className="text-sm font-medium text-gray-12"
                   />
-                </div>
-
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    {user.firstName + ' ' + user.lastName}
-                  </span>
-                  <span className="truncate text-xs">{user.email}</span>
-                </div>
-              </div>
+                  <SidebarRowText
+                    text={user.email}
+                    className="text-xs text-gray-11"
+                  />
+                </span>
+              </span>
+              <Badge variant="secondary">
+                {platformRoleLabel(user.platformRole)}
+              </Badge>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => setAccountSettingsOpen(true)}>
-                <UserCogIcon className="w-4 h-4 mr-2" />
+                <UserCogIcon className="size-4" />
                 {t('Account Settings')}
               </DropdownMenuItem>
-
               <HelpAndFeedback />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut className="size-4" />
               {t('Log out')}
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -124,4 +157,33 @@ export function SidebarUser() {
       />
     </SidebarMenu>
   );
+}
+
+function SidebarRowText({
+  text,
+  className,
+  plain = false,
+}: {
+  text: string;
+  className: string;
+  plain?: boolean;
+}) {
+  if (plain) {
+    return <span className={cn('truncate', className)}>{text}</span>;
+  }
+  return (
+    <TextWithTooltip tooltipMessage={text}>
+      <span className={className}>{text}</span>
+    </TextWithTooltip>
+  );
+}
+
+function platformRoleLabel(role: PlatformRole): string {
+  if (role === PlatformRole.ADMIN) {
+    return t('Platform Admin');
+  }
+  if (role === PlatformRole.OPERATOR) {
+    return t('Operator');
+  }
+  return t('Member');
 }

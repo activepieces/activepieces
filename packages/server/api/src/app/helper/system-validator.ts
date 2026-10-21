@@ -165,6 +165,7 @@ const systemPropValidators: {
     [AppSystemProp.POSTGRES_PORT]: numberValidator,
     [AppSystemProp.POSTGRES_SSL_CA]: stringValidator,
     [AppSystemProp.POSTGRES_URL]: stringValidator,
+    [AppSystemProp.POSTGRES_MIGRATION_URL]: stringValidator,
     [AppSystemProp.POSTGRES_USERNAME]: stringValidator,
     [AppSystemProp.POSTGRES_USE_SSL]: booleanValidator,
     [AppSystemProp.POSTGRES_POOL_SIZE]: numberValidator,

@@ -63,6 +63,11 @@ const EmbedPage = React.lazy(() =>
 const SSOPage = React.lazy(() =>
   import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
 );
+const SamlSetupPage = React.lazy(() =>
+  import('./platform/security/sso/saml-setup-page').then((m) => ({
+    default: m.SamlSetupPage,
+  })),
+);
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
 const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const GeneralPage = React.lazy(() =>
@@ -162,11 +167,9 @@ export const platformRoutes = [
       <PlatformLayout>
         <PageTitle title="AI Center">
           <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
-            <PlanFeatureSample feature="aiProviders">
-              <SuspenseWrapper>
-                <AIProvidersPage section="providers" />
-              </SuspenseWrapper>
-            </PlanFeatureSample>
+            <SuspenseWrapper>
+              <AIProvidersPage section="providers" />
+            </SuspenseWrapper>
           </LegacyTabRedirect>
         </PageTitle>
       </PlatformLayout>
@@ -422,12 +425,26 @@ export const platformRoutes = [
     path: '/platform/sso',
     element: (
       <PlatformLayout>
-        <PageTitle title="SSO">
+        <PageTitle title="Authentication">
           <PlanFeatureSample feature="sso">
             <SuspenseWrapper>
               <SSOPage />
             </SuspenseWrapper>
           </PlanFeatureSample>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/sso/saml',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Single sign-on">
+          <PlanFeatureGuard feature="sso">
+            <SuspenseWrapper>
+              <SamlSetupPage />
+            </SuspenseWrapper>
+          </PlanFeatureGuard>
         </PageTitle>
       </PlatformLayout>
     ),

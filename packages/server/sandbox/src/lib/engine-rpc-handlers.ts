@@ -36,7 +36,7 @@ export const engineRpcHandlers = ({ log, basePath, getSettings, provision }: Eng
                 await installer.install({
                     pieces: piecesToReinstall,
                     includeFilters: true,
-                    publicApiUrl: provision.publicApiUrl,
+                    internalApiUrl: provision.internalApiUrl,
                     engineToken: provision.engineToken,
                     force: true,
                 })

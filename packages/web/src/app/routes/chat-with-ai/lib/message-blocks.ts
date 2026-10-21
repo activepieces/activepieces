@@ -1,5 +1,5 @@
 import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
-import { BatchProgressData } from '@activepieces/shared';
+import { BatchProgressData, subagentProgressId } from '@activepieces/shared';
 
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
 import {
@@ -190,6 +190,17 @@ export function buildMessageBlocks({
         }
         continue;
       }
+      if (toolName === 'ap_run_task' || toolName === 'ap_deep_research') {
+        endSegment();
+        const tasks = taskRows({ part: p, toolName });
+        const previous = result[result.length - 1];
+        if (previous?.kind === 'tasks') {
+          previous.tasks.push(...tasks);
+        } else {
+          result.push({ kind: 'tasks', tasks });
+        }
+        continue;
+      }
       if (toolName === 'ap_remember') {
         const memory = (
           p.input as { memory?: string } | undefined
@@ -207,6 +218,7 @@ export function buildMessageBlocks({
         continue;
       }
       if (chatPartUtils.isDisplayTool(toolName)) {
+        endSegment();
         result.push({ kind: 'display-tool', part: p });
         continue;
       }
@@ -242,6 +254,35 @@ export function buildMessageBlocks({
     hasContent: hasText,
     sources,
   };
+}
+
+function taskRows({
+  part,
+  toolName,
+}: {
+  part: AnyToolPart;
+  toolName: string;
+}): TaskRow[] {
+  const toolCallId = chatPartUtils.getToolCallId(part);
+  const parsed = chatPartUtils.parseToolOutput(part);
+  const output = parsed.state === 'success' ? parsed.data : undefined;
+  if (toolName !== 'ap_deep_research') {
+    return [{ toolCallId, part, output }];
+  }
+  const input = isObject(part.input) ? part.input : {};
+  const subjects = Array.isArray(input['subjects'])
+    ? input['subjects'].filter(
+        (subject): subject is string => typeof subject === 'string',
+      )
+    : [];
+  const outputs =
+    isObject(output) && Array.isArray(output['tasks']) ? output['tasks'] : [];
+  return subjects.map((subject, index) => ({
+    toolCallId: subagentProgressId.forSubject({ toolCallId, index }),
+    part,
+    output: outputs[index],
+    subject,
+  }));
 }
 
 // Several genuine outcomes in a row (e.g. a handful of individual writes) would
@@ -376,6 +417,10 @@ export type MessageBlock =
   | { kind: 'display-tool'; part: AnyToolPart }
   | { kind: 'memory-saved'; memory: string }
   | { kind: 'batch-progress'; data: BatchProgressData }
+  | {
+      kind: 'tasks';
+      tasks: TaskRow[];
+    }
   | OutcomeCardBlock
   | { kind: 'card-group'; cards: OutcomeCardBlock[] }
   | {
@@ -397,5 +442,12 @@ export type OutcomeCardBlock =
   | { kind: 'action-receipt'; toolCallId: string }
   | { kind: 'image'; toolCallId: string }
   | { kind: 'files'; toolCallId: string };
+
+export type TaskRow = {
+  toolCallId: string;
+  part: AnyToolPart;
+  output: unknown;
+  subject?: string;
+};
 
 export type SourceItem = { key: string; href?: string; title?: string };

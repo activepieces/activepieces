@@ -1,6 +1,7 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
 import { OutputSchema, createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mailerLiteAuth } from '../lib/auth';
+import { mailerLiteApi } from '../lib/common/client';
 import {
 	subscriberAddedToGroupTriggerOutputSchema,
 	subscriberEventTriggerOutputSchema,
@@ -47,7 +48,7 @@ export const triggers = [
 		name: 'subscriber.created',
 		outputSchema: subscriberEventTriggerOutputSchema,
 		displayName: 'Subscriber Created',
-		description: 'Triggers when a subscriber was created on your mailing list.',
+		description: 'Triggers when a subscriber is added to your list.',
 		aiMetadata: {
 			description:
 				'Fires when a new subscriber is added to the MailerLite account, regardless of source (manual, form, import, API). Represents a newly created contact and carries the subscriber record.',
@@ -58,18 +59,18 @@ export const triggers = [
 		name: 'subscriber.updated',
 		outputSchema: subscriberEventTriggerOutputSchema,
 		displayName: 'Subscriber Fields Updated',
-		description: 'Triggers when the subscriber fields have been updated.',
+		description: "Triggers when a subscriber's fields are updated.",
 		aiMetadata: {
 			description:
 				"Fires when an existing subscriber's fields (name, custom fields, or other profile attributes) are changed. Represents an update to a contact's record and carries the updated subscriber.",
 		},
-		sampleData: subscriberSample,
+		sampleData: { ...subscriberSample, event: 'subscriber.updated' },
 	},
 	{
 		name: 'subscriber.unsubscribed',
 		outputSchema: subscriberEventTriggerOutputSchema,
 		displayName: 'Subscriber Unsubscribed',
-		description: 'Triggers when a subscriber has unsubscribed from your mailing list.',
+		description: 'Triggers when a subscriber unsubscribes.',
 		aiMetadata: {
 			description:
 				'Fires when a subscriber unsubscribes from the mailing list, with their status set to unsubscribed. Represents a contact opting out and carries the affected subscriber.',
@@ -188,6 +189,8 @@ export function register({
 		props: {
 			name: Property.ShortText({
 				displayName: 'Webhook Name',
+				description: "The name shown in MailerLite's webhook list.",
+				placeholder: 'New subscribers flow',
 				required: true,
 			}),
 		},
@@ -196,25 +199,23 @@ export function register({
 		type: TriggerStrategy.WEBHOOK,
 		async onEnable(context) {
 			const mailerLite = new MailerLite({ api_key: context.auth.secret_text });
-			mailerLite.webhooks
+			const response = await mailerLite.webhooks
 				.create({
 					name: context.propsValue.name,
 					events: [name],
 					url: context.webhookUrl,
 				})
-				.then(async (response) => {
-					await context.store.put<Webhook>(name, response.data);
-				})
-				.catch((error) => {
-					if (error.response) console.log(error.response.data);
+				.catch((error: unknown) => {
+					throw mailerLiteApi.readableSdkError({ error, resource: 'the webhook' });
 				});
+			await context.store.put<Webhook>(name, response.data);
 		},
 		async onDisable(context) {
 			const webhook = await context.store.get<Webhook>(name);
 
 			if (webhook?.data.id) {
 				const mailerLite = new MailerLite({ api_key: context.auth.secret_text });
-				mailerLite.webhooks.delete(webhook?.data.id);
+				await mailerLite.webhooks.delete(webhook.data.id).catch(() => undefined);
 			}
 		},
 		async run(context) {

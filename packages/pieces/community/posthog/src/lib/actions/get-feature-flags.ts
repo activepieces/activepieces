@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { posthogAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { posthogAuth } from '../auth';
+import { posthogClient } from '../common/client';
+import { posthogOutputSchemas } from '../common/output-schemas';
 
 export const posthogGetFeatureFlags = createAction({
   auth: posthogAuth,
@@ -9,63 +11,42 @@ export const posthogGetFeatureFlags = createAction({
   displayName: 'Get Feature Flags',
   description: 'List all feature flags in your PostHog project',
   audience: 'both',
-  aiMetadata: { description: 'Retrieves feature flags defined in the connected PostHog project, including each flag key, name, and active state, with an optional result limit. Use to inspect or audit which feature flags exist. Idempotent: a read-only lookup with no side effects.', idempotent: true },
+  aiMetadata: {
+    description: 'Lists feature flags in the connected PostHog project (deleted flags excluded), up to limit (1-200, default 100). Returns each flag id, key, name (description), active, tags and creator. Use the numeric id with Get, Update or Delete Feature Flag. Read-only.',
+    idempotent: true,
+  },
+  outputSchema: posthogOutputSchemas.legacyFlags,
   props: {
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Maximum number of feature flags to return (default: 100)',
+      description: 'Maximum number of feature flags to return, 1-200 (default: 100)',
       required: false,
       defaultValue: 100,
     }),
   },
-  async run(context) {
-    const { personal_api_key, project_id, api_host } = context.auth.props;
-    const apiBase = api_host || 'https://us.posthog.com';
-
-    const result = await httpClient.sendRequest<FeatureFlagsResponse>({
+  async run({ auth, propsValue }) {
+    const limit = posthogClient.parseInteger({ value: propsValue.limit, label: 'Limit', min: 1, max: 200, fallback: 100 });
+    const body = await posthogClient.request({
+      auth: auth.props,
       method: HttpMethod.GET,
-      url: `${apiBase}/api/projects/${project_id}/feature_flags/`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: personal_api_key,
-      },
-      queryParams: {
-        limit: String(context.propsValue.limit ?? 100),
-      },
+      path: posthogClient.projectPath({ auth: auth.props, segments: ['feature_flags'] }),
+      query: { limit },
     });
-
-    return (result.body.results ?? []).map((flag) => ({
-      id: flag.id,
-      name: flag.name,
-      key: flag.key,
-      active: flag.active,
-      deleted: flag.deleted,
-      created_at: flag.created_at,
-      updated_at: flag.updated_at,
-      tags: Array.isArray(flag.tags) ? flag.tags.join(', ') : null,
-      created_by_email: flag.created_by?.email ?? null,
-      created_by_name: flag.created_by
-        ? `${flag.created_by.first_name} ${flag.created_by.last_name}`.trim()
-        : null,
-    }));
+    return posthogClient.arrayOf(posthogClient.recordOf(body)['results']).slice(0, limit).map((raw) => {
+      const flag = posthogClient.recordOf(raw);
+      const tags = posthogClient.arrayOf(flag['tags']).filter((t): t is string => typeof t === 'string');
+      return {
+        id: posthogClient.num(flag['id']),
+        name: posthogClient.str(flag['name']),
+        key: posthogClient.str(flag['key']),
+        active: flag['active'] === true,
+        deleted: flag['deleted'] === true,
+        created_at: posthogClient.str(flag['created_at']),
+        updated_at: posthogClient.str(flag['updated_at']),
+        tags: tags.length > 0 ? tags.join(', ') : null,
+        created_by_email: posthogClient.str(posthogClient.recordOf(flag['created_by'])['email']),
+        created_by_name: posthogClient.userName(flag['created_by']),
+      };
+    });
   },
 });
-
-type FeatureFlag = {
-  id: number;
-  name: string;
-  key: string;
-  active: boolean;
-  deleted: boolean;
-  created_at: string;
-  updated_at: string;
-  tags: string[];
-  created_by: { email: string; first_name: string; last_name: string } | null;
-};
-
-type FeatureFlagsResponse = {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: FeatureFlag[];
-};

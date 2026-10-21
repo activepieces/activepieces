@@ -32,8 +32,6 @@ const TemplatesPage = () => {
       isShowingOfficialTemplates ? TemplateType.OFFICIAL : TemplateType.CUSTOM,
     );
   const selectedCategory = category as string;
-  const { data: allOfficialTemplates, isLoading: isAllTemplatesLoading } =
-    templatesHooks.useAllOfficialTemplates();
   const { mutate: createFlow, isPending: isCreateFlowPending } =
     flowHooks.useStartFromScratch(UncategorizedFolderId);
 
@@ -54,14 +52,17 @@ const TemplatesPage = () => {
     [navigate],
   );
 
+  const showAllCategories =
+    isShowingOfficialTemplates && selectedCategory === 'All';
+
   const templatesByCategory = useMemo(() => {
     const grouped: Record<string, Template[]> = {} as Record<
       string,
       Template[]
     >;
 
-    if (isShowingOfficialTemplates) {
-      allOfficialTemplates?.forEach((template: Template) => {
+    if (showAllCategories) {
+      templates?.forEach((template: Template) => {
         if (template.categories?.length) {
           template.categories?.forEach((category: string) => {
             if (!grouped[category]) {
@@ -74,24 +75,15 @@ const TemplatesPage = () => {
     }
 
     return grouped;
-  }, [allOfficialTemplates, isShowingOfficialTemplates]);
+  }, [templates, showAllCategories]);
 
   const categories = useMemo(() => {
     return ['All', ...(templateCategories || [])];
   }, [templateCategories]);
 
-  const selectedCategoryTemplates = useMemo(() => {
-    if (selectedCategory === 'All') {
-      return templates || [];
-    }
-    return templatesByCategory[selectedCategory] || [];
-  }, [selectedCategory, templates, templatesByCategory]);
-
-  const showLoading =
-    isLoading || (isShowingOfficialTemplates && isAllTemplatesLoading);
-  const showAllCategories =
-    isShowingOfficialTemplates && selectedCategory === 'All';
-  const hasTemplates = templates && templates.length > 0;
+  const hasTemplates = showAllCategories
+    ? Object.keys(templatesByCategory).length > 0
+    : templates && templates.length > 0;
   const showCategoryTitleForOfficialTemplates =
     isShowingOfficialTemplates && selectedCategory !== 'All';
 
@@ -134,23 +126,25 @@ const TemplatesPage = () => {
           )}
         </div>
         <div className={DASHBOARD_CONTENT_PADDING_X}>
-          {!hasTemplates && !showLoading ? (
+          {!hasTemplates && !isLoading ? (
             <EmptyTemplatesView />
           ) : showAllCategories ? (
             <AllCategoriesView
               templatesByCategory={templatesByCategory}
-              categories={categories}
+              categories={categories.filter(
+                (category) => templatesByCategory[category],
+              )}
               onCategorySelect={setCategory}
               onTemplateSelect={handleTemplateSelect}
-              isLoading={showLoading}
+              isLoading={isLoading}
               hideHeader={!isShowingOfficialTemplates}
             />
           ) : (
             <SelectedCategoryView
               category={selectedCategory}
-              templates={selectedCategoryTemplates}
+              templates={templates ?? []}
               onTemplateSelect={handleTemplateSelect}
-              isLoading={showLoading}
+              isLoading={isLoading}
               showCategoryTitle={showCategoryTitleForOfficialTemplates}
             />
           )}

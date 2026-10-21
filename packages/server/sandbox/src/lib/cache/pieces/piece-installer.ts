@@ -15,10 +15,10 @@ const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () => SandboxSettings) => ({
-    async install({ pieces, includeFilters, publicApiUrl, engineToken, bestEffort, force }: InstallParams): Promise<void> {
+    async install({ pieces, includeFilters, internalApiUrl, engineToken, bestEffort, force }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces, basePath, getSettings)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            await installPieces(packagePath, piecesInGroup, includeFilters, log, { publicApiUrl, engineToken }, getSettings, bestEffort ?? false, force ?? false)
+            await installPieces(packagePath, piecesInGroup, includeFilters, log, { internalApiUrl, engineToken }, getSettings, bestEffort ?? false, force ?? false)
         })
         await Promise.all(installPromises)
     },
@@ -305,12 +305,12 @@ async function downloadBundleWithRetry({ rootWorkspace, piece, bundleSource }: D
     throw lastError
 }
 
-async function downloadBundleIfNotCached({ rootWorkspace, piece, bundleSource: { publicApiUrl, engineToken } }: DownloadBundleParams): Promise<void> {
+async function downloadBundleIfNotCached({ rootWorkspace, piece, bundleSource: { internalApiUrl, engineToken } }: DownloadBundleParams): Promise<void> {
     const bundlePath = bundleTgzPath(rootWorkspace, piece)
     if (await fileSystemUtils.fileExists(bundlePath)) {
         return
     }
-    const url = pieceBundleEndpointUrl(publicApiUrl, piece)
+    const url = pieceBundleEndpointUrl(internalApiUrl, piece)
     const response = await fetch(url, { headers: { Authorization: `Bearer ${engineToken}` } })
     if (!response.ok) {
         if (response.status === 404 || response.status === 410) {
@@ -325,8 +325,8 @@ async function downloadBundleIfNotCached({ rootWorkspace, piece, bundleSource: {
     await writeFile(bundlePath, Buffer.from(await response.arrayBuffer()))
 }
 
-function pieceBundleEndpointUrl(publicApiUrl: string, piece: PiecePackage): string {
-    const base = `${ensureTrailingSlash(publicApiUrl)}v1/engine/pieces/bundle`
+function pieceBundleEndpointUrl(internalApiUrl: string, piece: PiecePackage): string {
+    const base = `${ensureTrailingSlash(internalApiUrl)}v1/engine/pieces/bundle`
     if (piece.packageType === PackageType.ARCHIVE) {
         return `${base}?archiveId=${encodeURIComponent(piece.archiveId)}`
     }
@@ -416,14 +416,14 @@ type PieceEntryFileExistsParams = {
 type InstallParams = {
     pieces: PiecePackage[]
     includeFilters: boolean
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
     bestEffort?: boolean
     force?: boolean
 }
 
 type BundleSource = {
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
 }
 

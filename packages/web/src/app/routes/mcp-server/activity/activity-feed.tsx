@@ -1,6 +1,7 @@
 import {
   McpActivityStatus,
   McpOAuthClientKey,
+  PieceAudienceFilter,
   PopulatedMcpActivity,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -86,7 +87,10 @@ export function ActivityFeed({
     () => distinctPieceNames(data?.data ?? []),
     [data?.data],
   );
-  const piecesByName = piecesHooks.usePiecesByName({ names: pieceNames });
+  const piecesByName = piecesHooks.usePiecesByName({
+    names: pieceNames,
+    audience: PieceAudienceFilter.ALL,
+  });
 
   const resolvePieceDisplayName = useCallback(
     (row: PopulatedMcpActivity) =>

@@ -165,7 +165,7 @@
   "For example +14155550123.": "For example +14155550123.",
   "Exact match, or partial match (contains) for email, phone and reference ID.": "Exact match, or partial match (contains) for email, phone and reference ID.",
   "How many results to return (1-100, default 50).": "How many results to return (1-100, default 50).",
-  "Pick a customer. Type part of a name or email to search.": "Pick a customer. Type part of a name or email to search.",
+  "Pick a customer. Type an email to search all customers, or part of a name to search up to the 10,000 newest (the search stops after 20 seconds). For an older customer, search by email or map the Customer ID.": "Pick a customer. Type an email to search all customers, or part of a name to search up to the 10,000 newest (the search stops after 20 seconds). For an older customer, search by email or map the Customer ID.",
   "Given name. Leave empty to keep the current value.": "Given name. Leave empty to keep the current value.",
   "Family name. Leave empty to keep the current value.": "Family name. Leave empty to keep the current value.",
   "Leave empty to keep the current value.": "Leave empty to keep the current value.",

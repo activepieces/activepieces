@@ -65,8 +65,9 @@ export const worker = {
         await modelTierCatalog.warmUp()
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
+        const workerGroupScope = system.get(WorkerSystemProp.WORKER_GROUP_SCOPE)
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId, projectWorker },
+            auth: { token: workerToken, workerId, workerGroupId, projectWorker, workerGroupScope },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -123,7 +124,7 @@ export const worker = {
         createNotifyServer<ApiToWorkerContract>(socket, createApiToWorkerHandlers({
             getRuntime: () => runtime,
             apiClient,
-            getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            getInternalApiUrl: getApiUrl,
             log: logger,
         }), logger)
 
@@ -149,6 +150,10 @@ export const worker = {
         socket = null
         stopHealthServer()
         logger.info('Worker stopped')
+    },
+
+    stopPolling(): void {
+        polling = false
     },
 }
 
@@ -196,7 +201,7 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
             const { error: prewarmError } = await tryCatch(() => createdRuntime.prewarm({
                 log: logger,
                 apiClient,
-                publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+                internalApiUrl: getApiUrl(),
             }))
             if (prewarmError) {
                 logger.error({ error: prewarmError }, 'Prewarm failed, continuing without a warm cache')
@@ -355,6 +360,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         ...spreadIfDefined('run', isAgentJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
         ...spreadIfDefined('conversation', 'conversationId' in jobData ? { id: jobData.conversationId } : undefined),
         ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
+        ...spreadIfDefined('waitpoint', 'parentWaitpointId' in jobData && jobData.parentWaitpointId != null ? { id: jobData.parentWaitpointId } : undefined),
     })
     return wideEvent.run({
         logger: jobLogger,

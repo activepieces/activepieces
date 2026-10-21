@@ -1,6 +1,7 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { Navigate } from 'react-router-dom';
 
+import { AdminPage } from '@/app/components/admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { CapabilitiesTab } from './capabilities-tab';
@@ -19,19 +20,15 @@ function AICenter({ section }: { section: AISection }) {
   }
 
   return (
-    <div className="flex w-full flex-1 min-h-0 flex-col overflow-auto">
-      <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col px-8 py-6">
-        {section === 'providers' ? (
-          <div className="flex flex-1 flex-col">
-            <ProvidersTab />
-          </div>
-        ) : section === 'tiers' ? (
-          <TiersTab />
-        ) : (
-          <CapabilitiesTab />
-        )}
-      </div>
-    </div>
+    <AdminPage width="wide">
+      {section === 'providers' ? (
+        <ProvidersTab />
+      ) : section === 'tiers' ? (
+        <TiersTab />
+      ) : (
+        <CapabilitiesTab />
+      )}
+    </AdminPage>
   );
 }
 

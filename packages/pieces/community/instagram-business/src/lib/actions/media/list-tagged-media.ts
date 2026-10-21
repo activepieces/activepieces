@@ -17,9 +17,30 @@ export const listTaggedMedia = createAction({
       'Lists posts published by other Instagram accounts in which the connected account was tagged. These belong to other people, so they cannot be edited or deleted, and the list is useful for monitoring brand mentions. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'account',
+      display: 'section',
+      label: 'Account',
+      icon: 'user',
+      props: ['page'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['limit'],
+    },
+  ],
   props: {
     page: instagramCommon.page,
-    limit: Property.Number({ displayName: 'Limit', required: false }),
+    limit: Property.Number({
+      displayName: 'Max Results',
+      description: 'Posts to return per run, up to 100.',
+      required: false,
+      defaultValue: 25,
+    }),
     cursor: instagramCommon.cursor,
   },
   async run({ propsValue }) {

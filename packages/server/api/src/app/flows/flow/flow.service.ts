@@ -1,6 +1,6 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowVersionId, isNil, Metadata, PlatformId, ProjectId, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
-import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
+import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, requiredActionsUtil, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
@@ -17,6 +17,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { triggerUtils } from '../../trigger/trigger-source/trigger-utils'
 import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
@@ -180,7 +181,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 'ff.triggerSource',
                 'trigger_source',
                 'ts',
-                'ts."flowId" = ff.id AND ts.deleted IS NULL',
+                'ts."flowId" = ff.id AND ts.deleted IS NULL AND ts.simulate = false',
             )
         }
 
@@ -226,6 +227,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 triggerSource: includeTriggerSource && flow.triggerSource
                     ? {
                         schedule: flow.triggerSource.schedule,
+                        pieceName: flow.triggerSource.pieceName,
                     }
                     : undefined,
             }
@@ -301,7 +303,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const triggerSource = await triggerSourceService(log).getByFlowId({
             flowId: id,
             projectId,
-            simulate: undefined,
+            simulate: false,
         })
 
         return {
@@ -309,6 +311,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             version: flowVersion,
             triggerSource: triggerSource ? {
                 schedule: triggerSource.schedule,
+                pieceName: triggerSource.pieceName,
             } : undefined,
         }
     },
@@ -359,6 +362,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     })
                 }
                 const requestedStatus = operation.request.status ?? FlowStatus.ENABLED
+                if (requestedStatus === FlowStatus.ENABLED) {
+                    assertTriggerIsSelected({ trigger: flowVersionToPublish.trigger })
+                    await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion: flowVersionToPublish, projectId })
+                }
                 const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
                 if (route === 'NEEDS_APPROVAL') {
                     await publishHooksFactory.get(log).submitForApproval({
@@ -428,42 +435,46 @@ export const flowService = (log: FastifyBaseLogger) => ({
             case FlowOperationType.ADD_NOTE:
             case FlowOperationType.UPDATE_NOTE:
             case FlowOperationType.DELETE_NOTE: {
-                const lastVersion = await flowVersionService(
-                    log,
-                ).getFlowVersionOrThrow({
-                    flowId: id,
-                    versionId: undefined,
-                })
-                await flowVersionService(log).applyOperation({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersion: lastVersion,
-                    userOperation: operation,
-                })
+                await withDraftLock({ flowId: id, log, fn: async () => {
+                    const lastVersion = await flowVersionService(
+                        log,
+                    ).getFlowVersionOrThrow({
+                        flowId: id,
+                        versionId: undefined,
+                    })
+                    await flowVersionService(log).applyOperation({
+                        userId,
+                        projectId,
+                        platformId,
+                        flowVersion: lastVersion,
+                        userOperation: operation,
+                    })
+                } })
                 break
             }
             default: {
-                const { version: lastVersion, createdNewDraft } = await createNewDraftIfVersionIsPublished({
-                    flowId: id,
-                    projectId,
-                    platformId,
-                    userId,
-                    log,
-                })
-                const { error } = await tryCatch(() => flowVersionService(log).applyOperation({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersion: lastVersion,
-                    userOperation: operation,
-                }))
-                if (!isNil(error)) {
-                    if (createdNewDraft) {
-                        await tryCatch(() => flowVersionRepo().delete({ id: lastVersion.id, flowId: id }))
+                await withDraftLock({ flowId: id, log, fn: async () => {
+                    const { version: lastVersion, createdNewDraft } = await createNewDraftIfVersionIsPublished({
+                        flowId: id,
+                        projectId,
+                        platformId,
+                        userId,
+                        log,
+                    })
+                    const { error } = await tryCatch(() => flowVersionService(log).applyOperation({
+                        userId,
+                        projectId,
+                        platformId,
+                        flowVersion: lastVersion,
+                        userOperation: operation,
+                    }))
+                    if (!isNil(error)) {
+                        if (createdNewDraft) {
+                            await tryCatch(() => flowVersionRepo().delete({ id: lastVersion.id, flowId: id }))
+                        }
+                        throw error
                     }
-                    throw error
-                }
+                } })
             }
         }
 
@@ -763,6 +774,16 @@ async function assertRequiredActionsPresent({ projectId, platformId, flowVersion
     })
 }
 
+function assertTriggerIsSelected({ trigger }: { trigger: FlowTrigger }): void {
+    if (trigger.type === FlowTriggerType.PIECE && !isNil(trigger.settings.triggerName)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.FLOW_OPERATION_INVALID,
+        params: { message: 'Cannot enable a flow without a trigger, select a trigger first' },
+    })
+}
+
 const lockFlowVersionIfNotLocked = async ({
     flowVersion,
     userId,
@@ -789,6 +810,18 @@ const lockFlowVersionIfNotLocked = async ({
 }
 
 
+async function withDraftLock({ flowId, log, fn }: {
+    flowId: FlowId
+    log: FastifyBaseLogger
+    fn: () => Promise<void>
+}): Promise<void> {
+    await distributedLock(log).runExclusive({
+        key: `flow-draft-update-${flowId}`,
+        timeoutInSeconds: DRAFT_UPDATE_LOCK_TIMEOUT_SECONDS,
+        fn,
+    })
+}
+
 async function applyStatusChange(params: {
     id: FlowId
     projectId: ProjectId
@@ -809,11 +842,19 @@ async function applyStatusChange(params: {
             }
 
             const publishedFlowVersionId = flowToUpdate.publishedVersionId
-            assertNotNullOrUndefined(publishedFlowVersionId, 'publishedFlowVersionId is required')
+            if (isNil(publishedFlowVersionId)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.FLOW_OPERATION_INVALID,
+                    params: { message: 'Publish the flow before turning it on' },
+                })
+            }
             const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flowToUpdate.id,
                 versionId: publishedFlowVersionId,
             })
+            if (params.newStatus === FlowStatus.ENABLED) {
+                assertTriggerIsSelected({ trigger: publishedFlowVersion.trigger })
+            }
 
             await flowSideEffects(log).preUpdateStatus({
                 flowToUpdate,
@@ -1078,3 +1119,5 @@ async function createNewDraftIfVersionIsPublished({
     }
     return { version: lastVersion, createdNewDraft }
 }
+
+const DRAFT_UPDATE_LOCK_TIMEOUT_SECONDS = 60
