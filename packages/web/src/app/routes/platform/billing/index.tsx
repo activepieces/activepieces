@@ -32,10 +32,10 @@ import {
   UsersCard,
   billingMutations,
   billingUtils,
-  EnterpriseTrialBillingStatus,
+  SelfServeTrialBillingStatus,
   useCancelSubscriptionGuard,
   billingDialogHooks,
-  enterpriseTrialHooks,
+  selfServeTrialHooks,
 } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -102,7 +102,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
   const { openDialog } = billingDialogHooks.useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
-  const trial = enterpriseTrialHooks.useTrial();
+  const trial = selfServeTrialHooks.useTrial();
   const { mutate: redirectToPortalSession, isPending: isOpeningPortal } =
     billingMutations.usePortalLink();
   const [isKeepPlanOpen, setIsKeepPlanOpen] = useState(false);
@@ -146,7 +146,7 @@ function PlanTab({ platform, info }: PlanTabProps) {
           </AlertDescription>
         </Alert>
       )}
-      <EnterpriseTrialBillingStatus />
+      <SelfServeTrialBillingStatus />
       <div className="flex flex-col gap-6">
         {!isCommunity && (
           <BillingSection

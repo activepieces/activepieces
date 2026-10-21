@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { useEnterpriseGate } from '../hooks/use-enterprise-gate';
 import { enterpriseMotion } from '../utils/enterprise-motion';
 
-import { EnterpriseTrialLockedActions } from './enterprise-trial-locked-actions';
+import { SelfServeTrialLockedActions } from './self-serve-trial-locked-actions';
 import { PlanBadge } from './plan-badge';
 import { FeatureKey } from './request-trial';
 
@@ -31,7 +31,7 @@ export function EnterpriseLockedRow({
         <PlanBadge featureKey={featureKey} />
         <p className="min-w-0 text-sm text-gray-12">{line}</p>
       </div>
-      <EnterpriseTrialLockedActions
+      <SelfServeTrialLockedActions
         featureKey={featureKey}
         surface={PlatformAdminSurface.TEASER}
         compact

@@ -7,14 +7,14 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 
 import { FeatureKey, useSalesUrl } from './request-trial';
 
-export function EnterpriseTrialSalesLink({
+export function SelfServeTrialSalesLink({
   surface,
   size,
   variant = 'outline',
   className,
   featureKey,
   onClick,
-}: EnterpriseTrialSalesLinkProps) {
+}: SelfServeTrialSalesLinkProps) {
   const { capture } = useTelemetry();
   const salesUrl = useSalesUrl(featureKey);
   return (
@@ -39,7 +39,7 @@ export function EnterpriseTrialSalesLink({
   );
 }
 
-type EnterpriseTrialSalesLinkProps = {
+type SelfServeTrialSalesLinkProps = {
   surface: string;
   size?: 'xs' | 'sm' | 'default';
   variant?: 'outline' | 'default' | 'link';

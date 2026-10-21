@@ -16,45 +16,45 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
+import { selfServeTrialHooks } from '../hooks/self-serve-trial-hooks';
 import { useUpgradeClick } from '../hooks/use-upgrade-click';
-import { enterpriseTrialFeatures } from '../utils/enterprise-trial-features';
-import { enterpriseTrialTime } from '../utils/enterprise-trial-time';
-import { enterpriseTrialUi } from '../utils/enterprise-trial-ui';
+import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
+import { selfServeTrialTime } from '../utils/self-serve-trial-time';
+import { selfServeTrialUi } from '../utils/self-serve-trial-ui';
 
-import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
+import { SelfServeTrialSalesLink } from './self-serve-trial-sales-link';
 
-export function EnterpriseTrialEndedDialog() {
+export function SelfServeTrialEndedDialog() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const trial = enterpriseTrialHooks.useTrial();
+  const trial = selfServeTrialHooks.useTrial();
   const upgradeClick = useUpgradeClick();
-  const storageKey = `${SEEN_KEY_PREFIX}${enterpriseTrialUi.trialStorageId({
+  const storageKey = `${SEEN_KEY_PREFIX}${selfServeTrialUi.trialStorageId({
     platformId: platform.id,
     userId: authenticationSession.getCurrentUserId(),
     endsAt: trial.endsAt,
   })}`;
   const [seenKey, setSeenKey] = useState<string | null>(null);
-  const seen = seenKey === storageKey || enterpriseTrialUi.readFlag(storageKey);
+  const seen = seenKey === storageKey || selfServeTrialUi.readFlag(storageKey);
 
   const recent =
     !isNil(trial.endsAt) &&
-    enterpriseTrialTime.calendarDaysBetween({
+    selfServeTrialTime.calendarDaysBetween({
       from: trial.endsAt,
       to: Date.now(),
     }) <= SHOW_FOR_DAYS;
   const open =
     trial.state === 'ended' && trial.isPlatformAdmin && recent && !seen;
   const close = () => {
-    enterpriseTrialUi.writeFlag(storageKey);
+    selfServeTrialUi.writeFlag(storageKey);
     setSeenKey(storageKey);
   };
-  const locked = enterpriseTrialFeatures.lockedAfterTrial(platform.plan.plan);
+  const locked = selfServeTrialFeatures.lockedAfterTrial(platform.plan.plan);
   const kept = [t('Flows, connections and data'), t('Your credits')];
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
       <DialogContent
-        onOpenAutoFocus={enterpriseTrialUi.focusDialogItself}
+        onOpenAutoFocus={selfServeTrialUi.focusDialogItself}
         className="max-h-[calc(100dvh-2rem)] gap-5 overflow-y-auto p-7 sm:max-w-lg sm:rounded-2xl"
       >
         <div className="flex flex-col gap-2 pr-6">
@@ -122,7 +122,7 @@ export function EnterpriseTrialEndedDialog() {
           >
             {t('Explore plans')}
           </Button>
-          <EnterpriseTrialSalesLink
+          <SelfServeTrialSalesLink
             surface="enterprise_trial_ended"
             variant="default"
           />
@@ -132,5 +132,5 @@ export function EnterpriseTrialEndedDialog() {
   );
 }
 
-const SEEN_KEY_PREFIX = 'ap-enterprise-trial-ended-seen-';
+const SEEN_KEY_PREFIX = 'ap-self-serve-trial-ended-seen-';
 const SHOW_FOR_DAYS = 14;

@@ -6,16 +6,16 @@ import dayjs from 'dayjs';
 import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EnterpriseTrialEndingAlert } from '@/features/billing/components/enterprise-trial-ending-alert';
-import type { EnterpriseTrial } from '@/features/billing/hooks/enterprise-trial-hooks';
+import { SelfServeTrialEndingAlert } from '@/features/billing/components/self-serve-trial-ending-alert';
+import type { SelfServeTrial } from '@/features/billing/hooks/self-serve-trial-hooks';
 
-let trial: EnterpriseTrial;
+let trial: SelfServeTrial;
 let currentUserId = 'user-1';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
-vi.mock('@/features/billing/hooks/enterprise-trial-hooks', () => ({
-  enterpriseTrialHooks: { useTrial: () => trial },
+vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
+  selfServeTrialHooks: { useTrial: () => trial },
 }));
 
 vi.mock('@/hooks/platform-hooks', () => ({
@@ -34,13 +34,13 @@ vi.mock('@/features/billing/hooks/use-upgrade-click', () => ({
   useUpgradeClick: () => vi.fn(),
 }));
 
-vi.mock('@/features/billing/components/enterprise-trial-sales-link', () => ({
-  EnterpriseTrialSalesLink: () => null,
+vi.mock('@/features/billing/components/self-serve-trial-sales-link', () => ({
+  SelfServeTrialSalesLink: () => null,
 }));
 
 const NOW = new Date(2026, 9, 12, 10, 0, 0);
 
-const trialEnding = (ending: boolean): EnterpriseTrial => ({
+const trialEnding = (ending: boolean): SelfServeTrial => ({
   state: 'active',
   startedAt: NOW,
   endsAt: dayjs(NOW).add(ending ? 1 : 7, 'day').toDate(),
@@ -54,13 +54,13 @@ const trialEnding = (ending: boolean): EnterpriseTrial => ({
 });
 
 const dismissAndRemount = (name: string) => {
-  const view = render(<EnterpriseTrialEndingAlert />);
+  const view = render(<SelfServeTrialEndingAlert />);
   fireEvent.click(screen.getByRole('button', { name }));
   view.unmount();
 };
 
 const bannerShown = () => {
-  const view = render(<EnterpriseTrialEndingAlert />);
+  const view = render(<SelfServeTrialEndingAlert />);
   const shown = screen.queryByRole('status') !== null;
   view.unmount();
   return shown;

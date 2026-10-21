@@ -11,19 +11,19 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
 
-import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
+import { selfServeTrialHooks } from '../hooks/self-serve-trial-hooks';
 import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import { enterpriseMotion } from '../utils/enterprise-motion';
-import { enterpriseTrialCopy } from '../utils/enterprise-trial-copy';
-import { enterpriseTrialUi } from '../utils/enterprise-trial-ui';
+import { selfServeTrialCopy } from '../utils/self-serve-trial-copy';
+import { selfServeTrialUi } from '../utils/self-serve-trial-ui';
 
-import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
+import { SelfServeTrialSalesLink } from './self-serve-trial-sales-link';
 
-export function EnterpriseTrialEndingAlert() {
-  const trial = enterpriseTrialHooks.useTrial();
+export function SelfServeTrialEndingAlert() {
+  const trial = selfServeTrialHooks.useTrial();
   const { platform } = platformHooks.useCurrentPlatform();
   const upgradeClick = useUpgradeClick();
-  const trialId = enterpriseTrialUi.trialStorageId({
+  const trialId = selfServeTrialUi.trialStorageId({
     platformId: platform.id,
     userId: authenticationSession.getCurrentUserId(),
     endsAt: trial.endsAt,
@@ -33,7 +33,7 @@ export function EnterpriseTrialEndingAlert() {
     : `${STARTED_DISMISS_KEY_PREFIX}${trialId}`;
   const [dismissedKey, setDismissedKey] = useState<string | null>(null);
   const dismissed =
-    dismissedKey === dismissKey || enterpriseTrialUi.readFlag(dismissKey);
+    dismissedKey === dismissKey || selfServeTrialUi.readFlag(dismissKey);
   const visible =
     trial.isPlatformAdmin &&
     trial.state === 'active' &&
@@ -50,7 +50,7 @@ export function EnterpriseTrialEndingAlert() {
   const date = dayjs(trial.endsAt).format('MMM D');
 
   const title = ending
-    ? enterpriseTrialCopy.endsSentence(trial)
+    ? selfServeTrialCopy.endsSentence(trial)
     : trial.extended
     ? t('Your Enterprise plan trial was extended until {date}.', { date })
     : t('You are on a free trial of the Enterprise plan until {date}.', {
@@ -68,7 +68,7 @@ export function EnterpriseTrialEndingAlert() {
     <div className={cn(DASHBOARD_CONTENT_PADDING_X, 'w-full pt-3')}>
       <div
         role="status"
-        data-slot="enterprise-trial-banner"
+        data-slot="self-serve-trial-banner"
         className={cn(
           'flex items-start gap-3 rounded-xl border py-3 pr-2 pl-4 text-sm',
           tone.surface,
@@ -94,7 +94,7 @@ export function EnterpriseTrialEndingAlert() {
               >
                 {t('Explore plans')}
               </Button>
-              <EnterpriseTrialSalesLink
+              <SelfServeTrialSalesLink
                 surface="enterprise_trial_ending"
                 size="sm"
                 variant="default"
@@ -109,7 +109,7 @@ export function EnterpriseTrialEndingAlert() {
           aria-label={ending ? t('Dismiss for today') : t('Dismiss')}
           className={cn('shrink-0', tone.dismiss)}
           onClick={() => {
-            enterpriseTrialUi.writeFlag(dismissKey);
+            selfServeTrialUi.writeFlag(dismissKey);
             setDismissedKey(dismissKey);
           }}
         >
@@ -139,5 +139,5 @@ const TONE = {
   },
 };
 
-const ENDING_DISMISS_KEY_PREFIX = 'ap-enterprise-trial-ending-dismissed-';
-const STARTED_DISMISS_KEY_PREFIX = 'ap-enterprise-trial-started-dismissed-';
+const ENDING_DISMISS_KEY_PREFIX = 'ap-self-serve-trial-ending-dismissed-';
+const STARTED_DISMISS_KEY_PREFIX = 'ap-self-serve-trial-started-dismissed-';

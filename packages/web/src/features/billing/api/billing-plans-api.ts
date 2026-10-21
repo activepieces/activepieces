@@ -9,7 +9,7 @@ import {
   SetupPaymentParams,
   AdjustUnconsumableFeatureQuantityParams,
   CancelSubscriptionRequest,
-  EnterpriseTrialStatus,
+  SelfServeTrialStatus,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -62,14 +62,14 @@ export const platformBillingApi = {
       params,
     );
   },
-  getEnterpriseTrial() {
-    return api.get<EnterpriseTrialStatus>(
-      '/v1/platform-billing/enterprise-trial',
+  getSelfServeTrial() {
+    return api.get<SelfServeTrialStatus>(
+      '/v1/platform-billing/self-serve-trial',
     );
   },
-  startEnterpriseTrial() {
-    return api.post<EnterpriseTrialStatus>(
-      '/v1/platform-billing/enterprise-trial/start',
+  startSelfServeTrial() {
+    return api.post<SelfServeTrialStatus>(
+      '/v1/platform-billing/self-serve-trial/start',
       {},
     );
   },
