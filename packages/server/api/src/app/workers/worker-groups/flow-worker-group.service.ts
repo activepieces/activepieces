@@ -1,9 +1,11 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
+import { FlowOperationStatus, WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
+import { machineService } from '../machine/machine-service'
 import { platformQueueMigrationService } from './queue-migration.service'
 import { NO_WORKER_GROUP_SENTINEL, workerGroupQueues } from './worker-group-queues'
 import { workerGroupRouting } from './worker-group-routing'
@@ -30,6 +32,41 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
         await distributedStore.delete(getFlowWorkerGroupCacheKey(flowId))
     },
 
+    async listGroupFlows({ platformId, workerGroupId }: ListGroupFlowsParams): Promise<WorkerGroupFlows> {
+        const groupFlowsQuery = flowRepo()
+            .createQueryBuilder('flow')
+            .innerJoin('project', 'project', 'project.id = flow."projectId"')
+            .where('project."platformId" = :platformId', { platformId })
+            .andWhere('flow."workerGroupId" = :workerGroupId', { workerGroupId })
+            .andWhere('flow."operationStatus" != :deleting', { deleting: FlowOperationStatus.DELETING })
+        const total = await groupFlowsQuery.getCount()
+        const flows = await groupFlowsQuery
+            .orderBy('flow.created', 'DESC')
+            .take(GROUP_FLOWS_LIMIT)
+            .getMany()
+        if (flows.length === 0) {
+            return { flows: [], total }
+        }
+        const latestVersions = await flowVersionRepo()
+            .createQueryBuilder('fv')
+            .select('fv."flowId"', 'flowId')
+            .addSelect('fv."displayName"', 'displayName')
+            .distinctOn(['fv."flowId"'])
+            .where('fv."flowId" IN (:...flowIds)', { flowIds: flows.map((flow) => flow.id) })
+            .orderBy('fv."flowId"')
+            .addOrderBy('fv.created', 'DESC')
+            .getRawMany<{ flowId: string, displayName: string }>()
+        const displayNameByFlowId = new Map(latestVersions.map((version) => [version.flowId, version.displayName]))
+        return {
+            flows: flows.map((flow) => ({
+                id: flow.id,
+                projectId: flow.projectId,
+                displayName: displayNameByFlowId.get(flow.id) ?? flow.id,
+            })),
+            total,
+        }
+    },
+
     async assignFlowToGroup({ flowId, projectId, platformId, workerGroupId }: AssignFlowToGroupParams): Promise<void> {
         if (!isNil(workerGroupId) && !workerGroupQueues.isRoutableWorkerGroupId(workerGroupId)) {
             throw new ActivepiecesError({
@@ -38,6 +75,17 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
                     message: `"${workerGroupId}" is not a valid worker group id`,
                 },
             })
+        }
+        if (!isNil(workerGroupId)) {
+            const groupScopes = await machineService(log).getWorkerGroupScopes({ workerGroupId })
+            if (groupScopes.length > 0 && !groupScopes.includes(WorkerGroupScope.FLOW)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `"${workerGroupId}" has no flow-scope workers and cannot be assigned to a flow`,
+                    },
+                })
+            }
         }
         const flow = await flowRepo().findOneOrFail({
             select: ['id', 'workerGroupId'],
@@ -64,10 +112,25 @@ export const flowWorkerGroupService = (log: FastifyBaseLogger) => ({
 const getFlowWorkerGroupCacheKey = (flowId: string): string => `flow:${flowId}:worker_group`
 
 const CACHE_TTL_SECONDS = apDayjsDuration(5, 'minute').asSeconds()
+const GROUP_FLOWS_LIMIT = 10
 
 type AssignFlowToGroupParams = {
     flowId: string
     projectId: string
     platformId: string
     workerGroupId: string | null
+}
+
+type ListGroupFlowsParams = {
+    platformId: string
+    workerGroupId: string
+}
+
+type WorkerGroupFlows = {
+    flows: Array<{
+        id: string
+        projectId: string
+        displayName: string
+    }>
+    total: number
 }

@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { projectRepo } from '../../project/project-repo'
 import { QueueName } from '../job'
+import { machineService } from '../machine/machine-service'
 import { platformWorkerGroupService } from './platform-worker-group.service'
 import { platformQueueMigrationService } from './queue-migration.service'
 import { NO_WORKER_GROUP_SENTINEL, workerGroupQueues } from './worker-group-queues'
@@ -46,6 +47,17 @@ export const projectWorkerGroupService = (log: FastifyBaseLogger) => ({
                     message: `"${workerGroupId}" is not a valid worker group id`,
                 },
             })
+        }
+        if (!isNil(workerGroupId)) {
+            const groupScopes = await machineService(log).getWorkerGroupScopes({ workerGroupId })
+            if (groupScopes.length > 0 && !groupScopes.includes(WorkerGroupScope.PROJECT)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `"${workerGroupId}" has no project-scope workers and cannot be assigned to a project`,
+                    },
+                })
+            }
         }
         const project = await projectRepo().findOne({
             select: ['id', 'workerGroupId'],

@@ -20,6 +20,9 @@ export const workersQueries = {
   useWorkerGroups: (enabled: boolean) =>
     useQuery<WorkerPoolCapacity>({
       queryKey: workersKeys.groups,
+      staleTime: 0,
+      gcTime: 0,
+      refetchInterval: 5000,
       queryFn: () => workersApi.listWorkerGroups(),
       enabled,
     }),

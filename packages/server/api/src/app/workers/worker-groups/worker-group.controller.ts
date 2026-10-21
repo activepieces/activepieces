@@ -1,5 +1,5 @@
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/core-utils'
-import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, WorkerGroupScope } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -15,7 +15,15 @@ import { projectWorkerGroupService } from './project-worker-group.service'
 export const workerGroupController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListWorkerGroupsRequestOptions, async (request) => {
         await assertWorkerGroupsEnabled(request.principal.platform.id, request.log)
-        return machineService(request.log).listProjectWorkerGroups()
+        return machineService(request.log).listWorkerGroups()
+    })
+
+    app.get('/flows', ListWorkerGroupFlowsRequestOptions, async (request) => {
+        await assertWorkerGroupsEnabled(request.principal.platform.id, request.log)
+        return flowWorkerGroupService(request.log).listGroupFlows({
+            platformId: request.principal.platform.id,
+            workerGroupId: request.query.workerGroupId,
+        })
     })
 
     app.post('/projects/:id', UpdateProjectWorkerGroupRequestOptions, async (request, reply) => {
@@ -81,8 +89,33 @@ const ListWorkerGroupsRequestOptions = {
                 groups: z.array(z.object({
                     label: z.string(),
                     slots: z.number(),
+                    scope: z.enum(WorkerGroupScope),
                 })),
                 sharedSlots: z.number(),
+            }),
+        },
+    },
+}
+
+const ListWorkerGroupFlowsRequestOptions = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['worker-groups'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List the flows assigned to a worker group',
+        querystring: z.object({
+            workerGroupId: z.string().min(1),
+        }),
+        response: {
+            [StatusCodes.OK]: z.object({
+                flows: z.array(z.object({
+                    id: z.string(),
+                    projectId: z.string(),
+                    displayName: z.string(),
+                })),
+                total: z.number(),
             }),
         },
     },

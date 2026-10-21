@@ -11,6 +11,7 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
 import { platformService } from '../../../platform/platform.service'
 import { workerCapacity } from '../../machine/worker-capacity'
+import { flowWorkerGroupService } from '../../worker-groups/flow-worker-group.service'
 import { platformWorkerGroupService } from '../../worker-groups/platform-worker-group.service'
 import { projectWorkerGroupService } from '../../worker-groups/project-worker-group.service'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
@@ -22,6 +23,11 @@ const ParkedMember = z.tuple([z.string(), z.string(), z.number()])
 const FREE_CONCURRENT_JOBS_LIMIT = 5
 const SELF_SERVE_CONCURRENT_JOBS_LIMIT = 15
 const ENTERPRISE_CONCURRENT_JOBS_LIMIT = 30
+
+async function isPinnedToFlowGroup(jobData: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<boolean> {
+    const { data: flowGroupId } = await tryCatch(() => flowWorkerGroupService(log).getFlowWorkerGroup({ flowId: jobData.flowId }))
+    return !isNil(flowGroupId)
+}
 
 function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
     if (!system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)) {
@@ -113,16 +119,18 @@ function decodeParkedMember(member: string): { queueName: string, jobId: string,
     return { queueName, jobId, priority }
 }
 
-async function tryAcquireSlot({ jobId, jobData, job, log }: { jobId: string, jobData: ExecuteFlowJobData, job: Job, log: FastifyBaseLogger }): Promise<boolean> {
+async function tryAcquireSlot({ jobId, jobData, job, pinnedToFlowGroup, log }: { jobId: string, jobData: ExecuteFlowJobData, job: Job, pinnedToFlowGroup: boolean, log: FastifyBaseLogger }): Promise<boolean> {
     const flowTimeoutInMilliseconds = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS), 'seconds').add(1, 'minute').asMilliseconds()
     const { data: poolId } = await tryCatch(() => concurrencyPoolService(log).getProjectPoolId(jobData.projectId))
     const effectivePoolId = poolId ?? jobData.projectId
-    const maxConcurrentJobs = await getMaxConcurrentJobs({
-        poolId,
-        platformId: jobData.platformId,
-        projectId: jobData.projectId,
-        log,
-    })
+    const maxConcurrentJobs = pinnedToFlowGroup
+        ? await getMaxConcurrentJobsForPlatformPlan({ platformId: jobData.platformId, log })
+        : await getMaxConcurrentJobs({
+            poolId,
+            platformId: jobData.platformId,
+            projectId: jobData.projectId,
+            log,
+        })
     const setKey = getConcurrencyPoolSetKey(effectivePoolId)
     const parkedKey = getConcurrencyPoolParkedKey(effectivePoolId)
     const currentTime = Date.now()
@@ -235,7 +243,8 @@ export const rateLimiterInterceptor: JobInterceptor = {
             return { verdict: InterceptorVerdict.ALLOW }
         }
 
-        const allowed = await tryAcquireSlot({ jobId, jobData, job, log })
+        const pinnedToFlowGroup = await isPinnedToFlowGroup(jobData, log)
+        const allowed = await tryAcquireSlot({ jobId, jobData, job, pinnedToFlowGroup, log })
         if (allowed) {
             log.debug({ job: { id: jobId }, project: { id: jobData.projectId } }, '[rateLimiterInterceptor] Job allowed')
             return { verdict: InterceptorVerdict.ALLOW }

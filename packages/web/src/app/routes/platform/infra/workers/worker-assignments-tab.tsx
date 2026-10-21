@@ -8,6 +8,7 @@ import { projectCollectionUtils } from '@/features/projects/stores/project-colle
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 
+import { ByFlowView } from './by-flow-view';
 import { ByGroupView } from './by-group-view';
 import { ByProjectView } from './by-project-view';
 
@@ -47,6 +48,9 @@ export function WorkerAssignmentsTab() {
           <TabsTrigger variant="default" value="by-project">
             {t('By project')}
           </TabsTrigger>
+          <TabsTrigger variant="default" value="by-flow">
+            {t('By flow')}
+          </TabsTrigger>
           <TabsTrigger variant="default" value="by-group">
             {t('By group')}
           </TabsTrigger>
@@ -57,6 +61,10 @@ export function WorkerAssignmentsTab() {
             workerGroups={workerGroups}
             sharedSlots={sharedSlots}
           />
+        </TabsContent>
+
+        <TabsContent value="by-flow">
+          <ByFlowView projects={projects} workerGroups={workerGroups} />
         </TabsContent>
 
         <TabsContent value="by-group">
