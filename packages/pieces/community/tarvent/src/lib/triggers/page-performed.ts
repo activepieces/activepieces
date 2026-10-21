@@ -1,7 +1,8 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
-import { CreateWebhookResponse } from '../common/types';
+import { tarventCommon } from '../common';
+import { tarventWebhook } from '../common/webhook';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const pagePerformedTrigger = createTrigger({
   auth: tarventAuth,
@@ -10,9 +11,10 @@ export const pagePerformedTrigger = createTrigger({
   displayName: 'Landing Page CTA Performed',
   description: 'Triggers when a known or unknown contact performs a Call-To-Action within a landing page.',
   aiMetadata: {
-    description: 'Fires when a known or unknown contact performs a call-to-action on a Tarvent landing page. Represents a landing-page CTA interaction.',
+    description: 'Fires when a known or unknown contact performs a call-to-action on a Tarvent landing page. Retried deliveries with the same event ID are ignored. Represents a landing-page CTA interaction.',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: tarventOutputSchemas.pageEvent,
   props: {
     include: tarventCommon.include,
     landingPageId: tarventCommon.landingPageId,
@@ -20,23 +22,7 @@ export const pagePerformedTrigger = createTrigger({
     groupId: tarventCommon.audienceGroupId(false, 'If specified, the trigger will only fire if contact is in the selected group.'),
     tagId: tarventCommon.tagId(false, 'If specified, the trigger will only fire if contact has the selected tag.')
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth);
-    const res = await client.createWebhook(context, 'landingPageCtaPerformed');
-    await context.store.put<CreateWebhookResponse>('tarvent_page_performed', res);
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  async onDisable(context) {
-    const webhook = await context.store.get<CreateWebhookResponse>(
-      'tarvent_page_performed',
-    );
-    if (webhook != null) {
-      const client = makeClient(context.auth);
-      await client.deleteWebhook(webhook.data.createWebhook.id);
-    }
-  },
+  ...tarventWebhook.handlers({ type: 'landingPageCtaPerformed', storeKey: 'tarvent_page_performed' }),
   sampleData: {
     "id": "000000000000000000",
     "dateUtc": "2022-09-27T17:37:26.482913Z",

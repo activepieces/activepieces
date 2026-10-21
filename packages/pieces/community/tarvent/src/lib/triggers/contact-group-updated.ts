@@ -1,7 +1,8 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
-import { CreateWebhookResponse } from '../common/types';
+import { tarventCommon } from '../common';
+import { tarventWebhook } from '../common/webhook';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const contactGroupUpdatedTrigger = createTrigger({
   auth: tarventAuth,
@@ -10,9 +11,10 @@ export const contactGroupUpdatedTrigger = createTrigger({
   displayName: 'Contact Added Or Removed From A Group',
   description: 'Triggers when a contact is added or removed from a group.',
   aiMetadata: {
-    description: 'Fires when a contact is added to or removed from an audience group, with the direction (added vs. removed) selectable. Represents a change in group membership.',
+    description: 'Fires when a contact is added to or removed from an audience group, with the direction (added vs. removed) selectable. Retried deliveries with the same event ID are ignored. Represents a change in group membership.',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: tarventOutputSchemas.contactEvent,
   props: {
     include: tarventCommon.include,
     audienceId: tarventCommon.audienceId(false, 'If specified, the trigger will only fire if contact is in the selected audience.'),
@@ -37,23 +39,7 @@ export const contactGroupUpdatedTrigger = createTrigger({
       },
     }),
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth);
-    const res = await client.createWebhook(context, 'contactGroupUpdated');
-    await context.store.put<CreateWebhookResponse>('tarvent_contact_group_updated', res);
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  async onDisable(context) {
-    const webhook = await context.store.get<CreateWebhookResponse>(
-      'tarvent_contact_group_updated',
-    );
-    if (webhook != null) {
-      const client = makeClient(context.auth);
-      await client.deleteWebhook(webhook.data.createWebhook.id);
-    }
-  },
+  ...tarventWebhook.handlers({ type: 'contactGroupUpdated', storeKey: 'tarvent_contact_group_updated' }),
   sampleData: {
     "id": "000000000000000000",
     "dateUtc": "2022-09-27T17:37:26.482913Z",

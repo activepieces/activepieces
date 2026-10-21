@@ -1,8 +1,8 @@
-import { tarventAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { makeClient, tarventCommon } from '../common';
-import { propsValidation } from '@activepieces/pieces-common';
-import * as z from 'zod/mini'
+import { tarventAuth } from '../auth';
+import { tarventCommon } from '../common';
+import { tarventTransport } from '../common/transport';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const createAudienceGroup = createAction({
   auth: tarventAuth,
@@ -11,39 +11,41 @@ export const createAudienceGroup = createAction({
   displayName: 'Create An Audience Group',
   description: 'Creates an audience group in the selected audience.',
   audience: 'both',
-  aiMetadata: { description: 'Creates a new group within a Tarvent audience, optionally marked public so it appears as a question on forms. Use to set up a segment before assigning contacts to it. Not idempotent: each call creates another group, even with the same name.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Creates a new static group in a Tarvent audience (name up to 100 characters, optional description up to 255), optionally public so it appears as a question on forms. Use to set up a segment before assigning contacts. Returns the new group with its ID. Not idempotent: each call creates another group, even with the same name.',
+    idempotent: false,
+  },
+  outputSchema: tarventOutputSchemas.audienceGroup,
   props: {
     audienceId: tarventCommon.audienceId(true, 'Audience to create the group in.'),
     name: tarventCommon.name('Group name', true, 'Enter the group name. (100 character limit)'),
-    description: tarventCommon.name('Group description', false, 'Use the description to describe what the group is for. NOTE: If the group is public this description will show up in forms that have the groups question.'),
+    description: tarventCommon.name('Group description', false, 'What the group is for (255 character limit). If the group is public this description shows in forms that have the groups question.'),
     isPublic: Property.StaticDropdown({
       displayName: 'Public group',
-      description: 'Select whether the group is public or not. Public groups are shown in forms with the groups question.',
+      description: 'Public groups are shown in forms with the groups question.',
       required: true,
+      defaultValue: 'false',
       options: {
         options: [
-          {
-            label: 'True',
-
-            value: 'true',
-          },
-          {
-            label: 'False',
-            value: 'false',
-          },
+          { label: 'True', value: 'true' },
+          { label: 'False', value: 'false' },
         ],
       },
     }),
   },
   async run(context) {
-    const { audienceId, name, description, isPublic } = context.propsValue;
-
-    await propsValidation.validateZod(context.propsValue, {
-      name: z.string().check(z.minLength(1), z.maxLength(100, 'Name has to be less than 100 characters.')),
-      description: z.string().check(z.minLength(1), z.maxLength(255, 'Description has to be less than 255 characters.')),
+    const audienceId = tarventCommon.requireText({ value: context.propsValue.audienceId, label: 'Audience' });
+    const name = tarventCommon.requireText({ value: context.propsValue.name, label: 'Group name' });
+    const description = tarventCommon.trimmed(context.propsValue.description);
+    tarventCommon.checkLength({ value: name, label: 'Group name', max: 100 });
+    tarventCommon.checkLength({ value: description, label: 'Group description', max: 255 });
+    const isPublic = String(context.propsValue.isPublic) === 'true';
+    return tarventTransport.field<Record<string, unknown>>({
+      auth: context.auth.props,
+      query: 'mutation CreateAudienceGroup($input: CreateGroupInput!) { createAudienceGroup(input: $input) { id name description isPublic isDynamic } }',
+      variables: { input: { name, description: description ?? '', isDynamic: false, isPublic, audienceId, criteria: null } },
+      name: 'createAudienceGroup',
     });
-
-    const client = makeClient(context.auth);
-    return await client.createAudienceGroup(audienceId, name, description, isPublic);
   },
 });

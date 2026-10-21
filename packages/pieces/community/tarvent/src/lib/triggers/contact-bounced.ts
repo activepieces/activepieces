@@ -1,7 +1,8 @@
 import { tarventAuth } from '../auth';
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { makeClient, tarventCommon } from '../common';
-import { CreateWebhookResponse } from '../common/types';
+import { tarventCommon } from '../common';
+import { tarventWebhook } from '../common/webhook';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const contactBouncedTrigger = createTrigger({
   auth: tarventAuth,
@@ -10,9 +11,10 @@ export const contactBouncedTrigger = createTrigger({
   displayName: 'Campaign Or Transactional Email Bounced',
   description: 'Triggers when a campaign or transactional email bounces (is rejected) for a contact.',
   aiMetadata: {
-    description: 'Fires when a campaign or transactional email bounces (is rejected) for a contact. Can be scoped by entity (campaign vs. transactional) and by bounce type (any, hard, soft, block, DNS failure, etc.), and optionally by audience, group, or tag. Represents a failed delivery.',
+    description: 'Fires when a campaign or transactional email bounces (is rejected) for a contact. Can be scoped by entity (campaign vs. transactional) and by bounce type (any, hard, soft, block, DNS failure, etc.), and optionally by audience, group, or tag. Retried deliveries with the same event ID are ignored. Represents a failed delivery.',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: tarventOutputSchemas.bounceEvent,
   props: {
     include: tarventCommon.include,
     entity: tarventCommon.entity,
@@ -39,23 +41,7 @@ export const contactBouncedTrigger = createTrigger({
     groupId: tarventCommon.audienceGroupId(false, 'If specified, the trigger will only fire if contact is in the selected group.'),
     tagId: tarventCommon.tagId(false, 'If specified, the trigger will only fire if contact has the selected tag.')
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth);
-    const res = await client.createWebhook(context, 'contactBounced');
-    await context.store.put<CreateWebhookResponse>('tarvent_contact_bounced', res);
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  async onDisable(context) {
-    const webhook = await context.store.get<CreateWebhookResponse>(
-      'tarvent_contact_bounced',
-    );
-    if (webhook != null) {
-      const client = makeClient(context.auth);
-      await client.deleteWebhook(webhook.data.createWebhook.id);
-    }
-  },
+  ...tarventWebhook.handlers({ type: 'contactBounced', storeKey: 'tarvent_contact_bounced' }),
   sampleData: {
     id: '000000000000000000',
     dateUtc: '2022-09-27T17:37:26.482913Z',

@@ -1,7 +1,8 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
-import { CreateWebhookResponse } from '../common/types';
+import { tarventCommon } from '../common';
+import { tarventWebhook } from '../common/webhook';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const contactRepliedTrigger = createTrigger({
   auth: tarventAuth,
@@ -10,9 +11,10 @@ export const contactRepliedTrigger = createTrigger({
   displayName: 'Contact Replied',
   description: 'Triggers when a contact replies.',
   aiMetadata: {
-    description: 'Fires when a contact replies to a campaign or transactional email. Represents an inbound reply from a recipient.',
+    description: 'Fires when a contact replies to a campaign or transactional email. Retried deliveries with the same event ID are ignored. Represents an inbound reply from a recipient.',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: tarventOutputSchemas.emailEvent,
   props: {
     include: tarventCommon.include,
     entity: tarventCommon.entity,
@@ -20,23 +22,7 @@ export const contactRepliedTrigger = createTrigger({
     groupId: tarventCommon.audienceGroupId(false, 'If specified, the trigger will only fire if contact is in the selected group.'),
     tagId: tarventCommon.tagId(false, 'If specified, the trigger will only fire if contact has the selected tag.')
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth);
-    const res = await client.createWebhook(context, 'contactReplied');
-    await context.store.put<CreateWebhookResponse>('tarvent_contact_replied', res);
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  async onDisable(context) {
-    const webhook = await context.store.get<CreateWebhookResponse>(
-      'tarvent_contact_replied',
-    );
-    if (webhook != null) {
-      const client = makeClient(context.auth);
-      await client.deleteWebhook(webhook.data.createWebhook.id);
-    }
-  },
+  ...tarventWebhook.handlers({ type: 'contactReplied', storeKey: 'tarvent_contact_replied' }),
   sampleData: {
     id: '000000000000000000',
     dateUtc: '2022-09-27T17:37:26.482913Z',

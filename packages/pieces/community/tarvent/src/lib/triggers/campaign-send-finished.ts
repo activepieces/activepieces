@@ -1,7 +1,8 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
-import { CreateWebhookResponse } from '../common/types';
+import { tarventCommon } from '../common';
+import { tarventWebhook } from '../common/webhook';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const campaignSendFinishedTrigger = createTrigger({
   auth: tarventAuth,
@@ -13,29 +14,14 @@ export const campaignSendFinishedTrigger = createTrigger({
     description: 'Fires once per contact each time a campaign is delivered to them, optionally scoped to a specific audience, group, or tag. High volume: it fires for every recipient of the campaign.',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: tarventOutputSchemas.contactEvent,
   props: {
     include: tarventCommon.include,
     audienceId: tarventCommon.audienceId(false, 'If specified, the trigger will only fire if contact is in the selected audience.'),
     groupId: tarventCommon.audienceGroupId(false, 'If specified, the trigger will only fire if contact is in the selected group.'),
     tagId: tarventCommon.tagId(false, 'If specified, the trigger will only fire if contact has the selected tag.')
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth);
-    const res = await client.createWebhook(context, 'campaignSendFinished');
-    await context.store.put<CreateWebhookResponse>('tarvent_campaign_send_finished', res);
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  async onDisable(context) {
-    const webhook = await context.store.get<CreateWebhookResponse>(
-      'tarvent_campaign_send_finished',
-    );
-    if (webhook != null) {
-      const client = makeClient(context.auth);
-      await client.deleteWebhook(webhook.data.createWebhook.id);
-    }
-  },
+  ...tarventWebhook.handlers({ type: 'campaignSendFinished', storeKey: 'tarvent_campaign_send_finished' }),
   sampleData: {
     id: '000000000000000000',
     dateUtc: '2022-09-27T17:37:26.482913Z',

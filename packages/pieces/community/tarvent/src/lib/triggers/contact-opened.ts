@@ -1,7 +1,8 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
-import { CreateWebhookResponse } from '../common/types';
+import { tarventCommon } from '../common';
+import { tarventWebhook } from '../common/webhook';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const contactOpenedTrigger = createTrigger({
   auth: tarventAuth,
@@ -10,9 +11,10 @@ export const contactOpenedTrigger = createTrigger({
   displayName: 'Campaign Or Transactional Email Opened',
   description: 'Triggers when a campaign or transactional email is opened by a recipient.',
   aiMetadata: {
-    description: 'Fires when a recipient opens a campaign or transactional email. Can be scoped by entity (campaign vs. transactional), by which campaign(s) qualify (any/all of the last 5, any within a recent window, or a specific campaign), and optionally by audience, group, or tag. Represents an open engagement event.',
+    description: 'Fires when a recipient opens a campaign or transactional email. Can be scoped by entity (campaign vs. transactional), by which campaign(s) qualify (any/all of the last 5, any within a recent window, or a specific campaign), and optionally by audience, group, or tag. Retried deliveries with the same event ID are ignored. Represents an open engagement event.',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: tarventOutputSchemas.emailEvent,
   props: {
     include: tarventCommon.include,
     entity: tarventCommon.entity,
@@ -23,6 +25,10 @@ export const contactOpenedTrigger = createTrigger({
       defaultValue: 'BOTH',
       options: {
         options: [
+          {
+            label: 'Any campaign',
+            value: 'BOTH',
+          },
           {
             label: 'Any of the last 5 campaigns',
 
@@ -50,23 +56,7 @@ export const contactOpenedTrigger = createTrigger({
     groupId: tarventCommon.audienceGroupId(false, 'If specified, the trigger will only fire if contact is in the selected group.'),
     tagId: tarventCommon.tagId(false, 'If specified, the trigger will only fire if contact has the selected tag.')
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth);
-    const res = await client.createWebhook(context, 'contactOpened');
-    await context.store.put<CreateWebhookResponse>('tarvent_contact_opened', res);
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  async onDisable(context) {
-    const webhook = await context.store.get<CreateWebhookResponse>(
-      'tarvent_contact_opened',
-    );
-    if (webhook != null) {
-      const client = makeClient(context.auth);
-      await client.deleteWebhook(webhook.data.createWebhook.id);
-    }
-  },
+  ...tarventWebhook.handlers({ type: 'contactOpened', storeKey: 'tarvent_contact_opened' }),
   sampleData: {
     id: '000000000000000000',
     dateUtc: '2022-09-27T17:37:26.482913Z',

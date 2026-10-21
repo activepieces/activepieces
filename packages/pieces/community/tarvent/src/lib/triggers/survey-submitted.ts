@@ -1,7 +1,8 @@
 import { tarventAuth } from '../auth';
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { makeClient, tarventCommon } from '../common';
-import { CreateWebhookResponse } from '../common/types';
+import { tarventCommon } from '../common';
+import { tarventWebhook } from '../common/webhook';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const surveySubmittedTrigger = createTrigger({
   auth: tarventAuth,
@@ -10,9 +11,10 @@ export const surveySubmittedTrigger = createTrigger({
   displayName: 'Survey Submission Received',
   description: 'Triggers when a known or unknown contact submits a survey.',
   aiMetadata: {
-    description: 'Fires when a known or unknown contact submits a Tarvent survey. Represents a survey submission and its responses.',
+    description: 'Fires when a known or unknown contact submits a Tarvent survey. Retried deliveries with the same event ID are ignored. Represents a survey submission and its responses.',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: tarventOutputSchemas.pageEvent,
   props: {
     include: tarventCommon.include,
     surveyId: tarventCommon.surveyId,
@@ -20,23 +22,7 @@ export const surveySubmittedTrigger = createTrigger({
     groupId: tarventCommon.audienceGroupId(false, 'If specified, the trigger will only fire if contact is in the selected group.'),
     tagId: tarventCommon.tagId(false, 'If specified, the trigger will only fire if contact has the selected tag.')
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth);
-    const res = await client.createWebhook(context, 'surveySubmitted');
-    await context.store.put<CreateWebhookResponse>('tarvent_survey_submitted', res);
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  async onDisable(context) {
-    const webhook = await context.store.get<CreateWebhookResponse>(
-      'tarvent_survey_submitted',
-    );
-    if (webhook != null) {
-      const client = makeClient(context.auth);
-      await client.deleteWebhook(webhook.data.createWebhook.id);
-    }
-  },
+  ...tarventWebhook.handlers({ type: 'surveySubmitted', storeKey: 'tarvent_survey_submitted' }),
   sampleData: {
     "id": "000000000000000000",
     "dateUtc": "2022-09-27T17:37:26.482913Z",

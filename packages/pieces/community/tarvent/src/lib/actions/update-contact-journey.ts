@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
+import { tarventCommon } from '../common';
+import { tarventClient } from '../common/client';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const updateContactJourney = createAction({
   auth: tarventAuth,
@@ -9,33 +11,40 @@ export const updateContactJourney = createAction({
   displayName: 'Add/Remove A Contact From A Journey',
   description: 'Adds or removes the contact from a journey.',
   audience: 'both',
-  aiMetadata: { description: 'Enrolls a Tarvent contact into an automation journey or removes them from it, with the direction (add vs. remove) chosen by the action input. Use to start or stop a contact in an automated flow. Not idempotent on add: re-adding can re-enter the contact and re-run journey steps.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Enters one Tarvent contact into an automation journey, or removes it, by contact ID and journey ID. Entering can start the journey\'s emails for that contact. Returns the contact ID, journey ID and action. Not idempotent on add: re-entering can re-run journey steps, depending on the journey\'s re-entry setting.',
+    idempotent: false,
+  },
+  outputSchema: tarventOutputSchemas.contactJourney,
   props: {
     contactId: tarventCommon.contactId,
-    journeyId: tarventCommon.journeyId(true, 'Select which journey to start or stop.'),
+    journeyId: tarventCommon.journeyId(true, 'Journey to add the contact to or remove it from.'),
     action: Property.StaticDropdown({
       displayName: 'Add or remove',
       description: 'Select whether to add or remove the contact from the journey.',
       required: true,
       options: {
         options: [
-          {
-            label: 'Add',
-
-            value: 'Add',
-          },
-          {
-            label: 'Remove',
-            value: 'Remove',
-          },
+          { label: 'Add', value: 'Add' },
+          { label: 'Remove', value: 'Remove' },
         ],
       },
     }),
   },
   async run(context) {
-    const { contactId, journeyId, action } = context.propsValue;
-
-    const client = makeClient(context.auth);
-    return await client.addRemoveJourneyContact(action, contactId, journeyId);
+    const id = tarventCommon.requireText({ value: context.propsValue.contactId, label: 'Contact ID' });
+    const journeyId = tarventCommon.requireText({ value: context.propsValue.journeyId, label: 'Journey' });
+    const add = context.propsValue.action === 'Add';
+    const field = add ? 'enterContactIntoJourney' : 'exitContactFromJourney';
+    await tarventClient.booleanMutation({
+      auth: context.auth.props,
+      operation: add ? 'EnterContactIntoJourney' : 'ExitContactFromJourney',
+      field,
+      argDefs: '$id: String!, $journeyId: String!',
+      args: 'id: $id, journeyId: $journeyId',
+      variables: { id, journeyId },
+    });
+    return { success: true, contactId: id, journeyId, action: add ? 'ADD' : 'REMOVE' };
   },
 });

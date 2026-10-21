@@ -1,7 +1,8 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
-import { CreateWebhookResponse } from '../common/types';
+import { tarventCommon } from '../common';
+import { tarventWebhook } from '../common/webhook';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const contactUpdatedTrigger = createTrigger({
   auth: tarventAuth,
@@ -10,32 +11,17 @@ export const contactUpdatedTrigger = createTrigger({
   displayName: 'Contact Profile Updated',
   description: 'Triggers when a contact\'s profile is updated.',
   aiMetadata: {
-    description: 'Fires when a contact\'s profile fields are updated in Tarvent. Represents a change to an existing contact\'s details.',
+    description: 'Fires when a contact\'s profile fields are updated in Tarvent. Retried deliveries with the same event ID are ignored. Represents a change to an existing contact\'s details.',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: tarventOutputSchemas.contactEvent,
   props: {
     include: tarventCommon.include,
     audienceId: tarventCommon.audienceId(false, 'If specified, the trigger will only fire if contact is in the selected audience.'),
     groupId: tarventCommon.audienceGroupId(false, 'If specified, the trigger will only fire if contact is in the selected group.'),
     tagId: tarventCommon.tagId(false, 'If specified, the trigger will only fire if contact has the selected tag.')
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth);
-    const res = await client.createWebhook(context, 'contactUpdated');
-    await context.store.put<CreateWebhookResponse>('tarvent_contact_updated', res);
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  async onDisable(context) {
-    const webhook = await context.store.get<CreateWebhookResponse>(
-      'tarvent_contact_updated',
-    );
-    if (webhook != null) {
-      const client = makeClient(context.auth);
-      await client.deleteWebhook(webhook.data.createWebhook.id);
-    }
-  },
+  ...tarventWebhook.handlers({ type: 'contactUpdated', storeKey: 'tarvent_contact_updated' }),
   sampleData: {
     "id": "000000000000000000",
     "dateUtc": "2022-09-27T17:37:26.482913Z",

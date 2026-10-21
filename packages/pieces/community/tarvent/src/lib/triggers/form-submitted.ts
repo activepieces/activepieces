@@ -1,7 +1,8 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
-import { makeClient, tarventCommon } from '../common';
-import { CreateWebhookResponse } from '../common/types';
+import { tarventCommon } from '../common';
+import { tarventWebhook } from '../common/webhook';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const formSubmittedTrigger = createTrigger({
   auth: tarventAuth,
@@ -10,9 +11,10 @@ export const formSubmittedTrigger = createTrigger({
   displayName: 'Form Submission Received',
   description: 'Triggers when a known or unknown contact submits a sign up, profile update, or other form.',
   aiMetadata: {
-    description: 'Fires when a known or unknown contact submits a Tarvent form (sign-up, profile update, or other). Represents a form submission and its captured data.',
+    description: 'Fires when a known or unknown contact submits a Tarvent form (sign-up, profile update, or other). Retried deliveries with the same event ID are ignored. Represents a form submission and its captured data.',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: tarventOutputSchemas.formEvent,
   props: {
     include: tarventCommon.include,
     audienceId: tarventCommon.audienceId(false, 'If specified, the trigger will only fire if contact is in the selected audience.'),
@@ -20,23 +22,7 @@ export const formSubmittedTrigger = createTrigger({
     groupId: tarventCommon.audienceGroupId(false, 'If specified, the trigger will only fire if contact is in the selected group.'),
     tagId: tarventCommon.tagId(false, 'If specified, the trigger will only fire if contact has the selected tag.')
   },
-  async onEnable(context) {
-    const client = makeClient(context.auth);
-    const res = await client.createWebhook(context, 'formSubmitted');
-    await context.store.put<CreateWebhookResponse>('tarvent_form_submitted', res);
-  },
-  async run(context) {
-    return [context.payload.body];
-  },
-  async onDisable(context) {
-    const webhook = await context.store.get<CreateWebhookResponse>(
-      'tarvent_form_submitted',
-    );
-    if (webhook != null) {
-      const client = makeClient(context.auth);
-      await client.deleteWebhook(webhook.data.createWebhook.id);
-    }
-  },
+  ...tarventWebhook.handlers({ type: 'formSubmitted', storeKey: 'tarvent_form_submitted' }),
   sampleData: {
     "id": "000000000000000000",
     "dateUtc": "2022-09-27T17:37:26.482913Z",
