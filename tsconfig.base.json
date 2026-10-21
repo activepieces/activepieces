@@ -1212,6 +1212,9 @@
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
       ],
+      "@activepieces/piece-sell-to-state": [
+        "packages/pieces/community/sell-to-state/src/index.ts"
+      ],
       "@activepieces/piece-sender": [
         "packages/pieces/community/sender/src/index.ts"
       ],
