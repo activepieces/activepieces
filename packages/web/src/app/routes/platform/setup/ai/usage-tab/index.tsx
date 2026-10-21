@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 import { UsageOverview, UsagePeriod, usageDummyData } from './usage-dummy-data';
+import { UsageEstimateNote } from './usage-estimate-note';
 import { usageFormat } from './usage-format';
 import {
   UsageHeaderControls,
@@ -50,9 +51,7 @@ export function UsageTab({ layout = 'flat' }: { layout?: UsageLayout }) {
     <>
       <AdminPageHeader
         title={t('AI usage')}
-        description={t(
-          'Where your AI spend goes across flows, agents and chat.',
-        )}
+        description={<UsageEstimateNote />}
       >
         <UsageHeaderControls view={view} />
       </AdminPageHeader>
@@ -142,11 +141,6 @@ function UsageBody({
         <FlatBento view={view} overview={overview} />
       )}
 
-      <p className="text-xs text-gray-11">
-        {t(
-          'Own-key costs come from your provider when it reports them, otherwise from list prices. Open a key to see the split.',
-        )}
-      </p>
       {layout === 'trees' && (
         <p className="text-xs text-gray-11">
           {t(
