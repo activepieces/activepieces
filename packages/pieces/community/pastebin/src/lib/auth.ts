@@ -1,4 +1,12 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import {
+  AppConnectionType,
+  PieceAuth,
+  Property,
+  tryCatch,
+} from '@activepieces/pieces-framework';
+
+import { pastebinApi } from './common/api';
+import type { PastebinAuthValue } from './common/types';
 
 const markdownDescription = `
 Here are the simple steps to get your credentials:
@@ -25,5 +33,31 @@ export const pastebinAuth = PieceAuth.CustomAuth({
       displayName: 'Password',
       required: false,
     }),
+  },
+  validate: async ({ auth }) => {
+    const connection: PastebinAuthValue = {
+      type: AppConnectionType.CUSTOM_AUTH,
+      props: auth,
+    };
+    if (Boolean(auth.username) !== Boolean(auth.password)) {
+      return {
+        valid: false,
+        error: 'Enter both username and password, or leave both empty.',
+      };
+    }
+    if (auth.username && auth.password) {
+      const { error } = await tryCatch(() =>
+        pastebinApi.getUserKey({ auth: connection })
+      );
+      return error
+        ? { valid: false, error: 'Invalid developer key, username or password.' }
+        : { valid: true };
+    }
+    const { data } = await tryCatch(() =>
+      pastebinApi.isDevKeyValid({ auth: connection })
+    );
+    return data
+      ? { valid: true }
+      : { valid: false, error: 'Invalid developer key.' };
   },
 });

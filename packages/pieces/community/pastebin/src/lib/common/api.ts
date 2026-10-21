@@ -1,3 +1,5 @@
+import { HttpError } from '@activepieces/pieces-common';
+
 import { pastebinClient } from './client';
 
 import type { PastebinAuthValue, PastebinCreatePasteRequest } from './types';
@@ -68,4 +70,32 @@ async function getPasteContent({
   return await pastebinClient.getText({ path: `/raw/${pasteKey}` });
 }
 
-export const pastebinApi = { getUserKey, createPaste, getPasteContent };
+async function isDevKeyValid({
+  auth,
+}: {
+  auth: PastebinAuthValue;
+}): Promise<boolean> {
+  try {
+    await pastebinClient.request({
+      auth,
+      script: 'api_post.php',
+      option: 'userdetails',
+      fields: {},
+    });
+    return true;
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return !JSON.stringify(error.response.body).includes(
+        'invalid api_dev_key'
+      );
+    }
+    throw error;
+  }
+}
+
+export const pastebinApi = {
+  getUserKey,
+  createPaste,
+  getPasteContent,
+  isDevKeyValid,
+};
