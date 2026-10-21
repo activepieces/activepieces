@@ -109,7 +109,7 @@ describe('Self-serve trial API', () => {
         expect(startTrial).toHaveBeenCalledTimes(1)
     })
 
-    it('remembers a start the console refuses as used and stops offering the trial', async () => {
+    it('answers a start the console refuses as used and asks the console again on the next start', async () => {
         const ctx = await createTestContext(app!)
         await onPlan({ platformId: ctx.platform.id, plan: PlanName.FREE })
         const { startTrial } = stubBilling({ outcome: { result: 'used' } })
@@ -119,9 +119,9 @@ describe('Self-serve trial API', () => {
         const second = await ctx.post('/v1/platform-billing/self-serve-trial/start')
 
         expect(first.json()).toEqual(USED)
-        expect(status.json()).toEqual(USED)
+        expect(status.json()).toEqual(ELIGIBLE)
         expect(second.json()).toEqual(USED)
-        expect(startTrial).toHaveBeenCalledTimes(1)
+        expect(startTrial).toHaveBeenCalledTimes(2)
     })
 
     it('shows the running trial to every member on the platform, and nothing before it starts', async () => {

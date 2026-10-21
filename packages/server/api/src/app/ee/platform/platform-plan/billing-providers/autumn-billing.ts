@@ -204,7 +204,6 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                     }
                     const outcome = await autumnConsole.startSelfServeTrial(creds)
                     if (outcome.result === 'used') {
-                        await platformPlanService(log).update({ platformId, selfServeTrialUsedElsewhereAt: new Date().toISOString() })
                         return USED_SELF_SERVE_TRIAL
                     }
                     if (outcome.result === 'ineligible') {
@@ -264,9 +263,6 @@ function toSelfServeTrialStatus({ plan, window }: ToSelfServeTrialStatusParams):
             endsAt: window.endsAt,
             extended: false,
         }
-    }
-    if (!isNil(plan.selfServeTrialUsedElsewhereAt)) {
-        return USED_SELF_SERVE_TRIAL
     }
     return isSelfServeTrialPlan(plan.plan) ? ELIGIBLE_SELF_SERVE_TRIAL : INELIGIBLE_SELF_SERVE_TRIAL
 }
