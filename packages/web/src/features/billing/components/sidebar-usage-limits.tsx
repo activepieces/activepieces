@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { SquareArrowOutUpRight } from 'lucide-react';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -16,12 +16,16 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { billingQueries } from '../hooks/billing-hooks';
-import { selfServeTrialHooks } from '../hooks/self-serve-trial-hooks';
+import {
+  SelfServeTrial,
+  selfServeTrialHooks,
+  SeatGrace,
+} from '../hooks/self-serve-trial-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
 import { billingUtils, BILLING_DATE_FORMAT } from '../utils/billing-utils';
 
 import { CreditsActionButton } from './credits-action-button';
-import { SelfServeTrialLine } from './self-serve-trial-pill';
+import { SelfServeTrialLine, SeatGraceLine } from './self-serve-trial-pill';
 
 export const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -37,7 +41,8 @@ export const SidebarUsageLimits = React.memo(() => {
   } = useCreditsUsage();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const trial = selfServeTrialHooks.useTrial();
-  const inTrial = trial.state === 'active';
+  const grace = selfServeTrialHooks.useSeatGrace();
+  const noticeLine = resolveNoticeLine({ trial, grace });
 
   const inWarning = !isUnlimited && severity !== 'default';
   const canManage = isPlatformAdmin && inWarning;
@@ -69,11 +74,11 @@ export const SidebarUsageLimits = React.memo(() => {
   }
 
   if (isNil(creditsRemaining)) {
-    return inTrial ? (
+    return isNil(noticeLine) ? null : (
       <div className="flex w-full flex-col rounded-md border bg-gray-1 p-2.5">
-        <SelfServeTrialLine trial={trial} />
+        {noticeLine}
       </div>
-    ) : null;
+    );
   }
 
   const creditsText = billingUtils.formatCredits(creditsRemaining);
@@ -85,10 +90,8 @@ export const SidebarUsageLimits = React.memo(() => {
   });
   return (
     <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
-      {inTrial && (
-        <div className="flex border-b border-gray-5 pb-2">
-          <SelfServeTrialLine trial={trial} />
-        </div>
+      {!isNil(noticeLine) && (
+        <div className="flex border-b border-gray-5 pb-2">{noticeLine}</div>
       )}
       <div className="flex h-5 items-center justify-between gap-2">
         <div className="flex items-baseline gap-1 min-w-0">
@@ -129,3 +132,18 @@ export const SidebarUsageLimits = React.memo(() => {
 });
 
 SidebarUsageLimits.displayName = 'SidebarUsageLimits';
+
+function resolveNoticeLine({
+  trial,
+  grace,
+}: ResolveNoticeLineParams): ReactNode {
+  if (trial.state === 'active') {
+    return <SelfServeTrialLine trial={trial} />;
+  }
+  return isNil(grace) ? null : <SeatGraceLine grace={grace} />;
+}
+
+type ResolveNoticeLineParams = {
+  trial: SelfServeTrial;
+  grace: SeatGrace | null;
+};

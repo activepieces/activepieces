@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, ListUserInvitationsRequest, Principal, PrincipalType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, ListUserInvitationsRequest, PlatformRole, Principal, PrincipalType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, ServicePrincipal, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink, UserPrincipal } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -98,6 +98,14 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         await reply.status(StatusCodes.OK).send(invitations)
     })
 
+    app.get('/reserving-seats', ListInvitationsReservingSeatsRequestParams, async (request) => {
+        return userInvitationsService(request.log).listInvitesReservingSeats({
+            platformId: request.principal.platform.id,
+            cursor: request.query.cursor ?? null,
+            limit: request.query.limit ?? 10,
+        })
+    })
+
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
         const invitation = await userInvitationsService(request.log).getOneByInvitationTokenOrThrow(request.body.invitationToken)
         const { registered } = await userInvitationsService(request.log).accept({
@@ -115,7 +123,10 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
         switch (invitation.type) {
             case InvitationType.PROJECT: {
                 assertNotNullOrUndefined(invitation.projectId, 'projectId')
-                await assertPrincipalHasPermissionToProject(app, request, reply, request.principal, invitation.projectId, Permission.WRITE_INVITATION)
+                const platformAdmin = await isPlatformAdmin({ principal: request.principal, log: request.log })
+                if (!platformAdmin) {
+                    await assertPrincipalHasPermissionToProject(app, request, reply, request.principal, invitation.projectId, Permission.WRITE_INVITATION)
+                }
                 break
             }
             case InvitationType.PLATFORM:
@@ -199,6 +210,14 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
     await assertRoleHasPermission(request.principal, projectId, permission, request.log)
 }
 
+async function isPlatformAdmin({ principal, log }: IsPlatformAdminParams): Promise<boolean> {
+    if (principal.type === PrincipalType.SERVICE) {
+        return true
+    }
+    const user = await userService(log).getOneOrFail({ id: principal.id })
+    return user.platformRole === PlatformRole.ADMIN && user.platformId === principal.platform.id
+}
+
 
 async function trackInviteSent({ principal, platformId, event, log }: TrackInviteSentParams): Promise<void> {
     if (principal.type === PrincipalType.USER) {
@@ -219,6 +238,21 @@ const ListUserInvitationsRequestParams = {
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListUserInvitationsRequest,
+        response: {
+            [StatusCodes.OK]: SeekPage(UserInvitation),
+        },
+    },
+}
+
+const ListInvitationsReservingSeatsRequestParams = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        querystring: z.object({
+            cursor: z.string().optional(),
+            limit: z.coerce.number().optional(),
+        }),
         response: {
             [StatusCodes.OK]: SeekPage(UserInvitation),
         },
@@ -273,5 +307,10 @@ type TrackInviteSentParams = {
     principal: Principal
     platformId: string
     event: TelemetryEvent
+    log: FastifyBaseLogger
+}
+
+type IsPlatformAdminParams = {
+    principal: UserPrincipal | ServicePrincipal
     log: FastifyBaseLogger
 }
