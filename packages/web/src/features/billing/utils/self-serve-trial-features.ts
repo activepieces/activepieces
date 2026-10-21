@@ -15,7 +15,7 @@ import { FeatureKey } from '../components/request-trial';
 
 import { planTiers } from './plan-tiers';
 
-function list(): EnterpriseTrialFeature[] {
+function list(): SelfServeTrialFeature[] {
   return [
     {
       icon: KeyRound,
@@ -72,7 +72,7 @@ function list(): EnterpriseTrialFeature[] {
 
 function lockedAfterTrial(
   plan: string | null | undefined,
-): EnterpriseTrialFeature[] {
+): SelfServeTrialFeature[] {
   return list().filter(
     (feature) =>
       !feature.featureKeys.every((featureKey) =>
@@ -315,7 +315,7 @@ function lockedCopyByFeature(): Partial<Record<FeatureKey, LockedFeatureCopy>> {
   };
 }
 
-export const enterpriseTrialFeatures = {
+export const selfServeTrialFeatures = {
   list,
   lockedAfterTrial,
   name,
@@ -323,7 +323,7 @@ export const enterpriseTrialFeatures = {
   lockedCopy,
 };
 
-type EnterpriseTrialFeature = {
+type SelfServeTrialFeature = {
   icon: LucideIcon;
   title: string;
   benefit: string;

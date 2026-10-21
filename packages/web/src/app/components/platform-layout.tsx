@@ -4,8 +4,8 @@ import { Navigate } from 'react-router-dom';
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import {
-  EnterpriseTrialDialog,
-  EnterpriseTrialEndingAlert,
+  SelfServeTrialDialog,
+  SelfServeTrialEndingAlert,
   ManagePlanDialog,
 } from '@/features/billing';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
@@ -36,7 +36,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
                     id="dashboard-content-container"
                     className="relative flex flex-col h-full bg-(--admin-page) rounded-xl shadow-panel border overflow-clip"
                   >
-                    <EnterpriseTrialEndingAlert />
+                    <SelfServeTrialEndingAlert />
                     <div className="flex flex-col flex-1 overflow-auto [scrollbar-gutter:stable]">
                       {children}
                     </div>
@@ -49,7 +49,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
           <Navigate to="/" />
         )}
         {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-        <EnterpriseTrialDialog />
+        <SelfServeTrialDialog />
       </GlobalSearchProvider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );

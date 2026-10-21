@@ -16,12 +16,12 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { billingQueries } from '../hooks/billing-hooks';
-import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
+import { selfServeTrialHooks } from '../hooks/self-serve-trial-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
 import { billingUtils, BILLING_DATE_FORMAT } from '../utils/billing-utils';
 
 import { CreditsActionButton } from './credits-action-button';
-import { EnterpriseTrialLine } from './enterprise-trial-pill';
+import { SelfServeTrialLine } from './self-serve-trial-pill';
 
 export const SidebarUsageLimits = React.memo(() => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -36,7 +36,7 @@ export const SidebarUsageLimits = React.memo(() => {
     severity,
   } = useCreditsUsage();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const trial = enterpriseTrialHooks.useTrial();
+  const trial = selfServeTrialHooks.useTrial();
   const inTrial = trial.state === 'active';
 
   const inWarning = !isUnlimited && severity !== 'default';
@@ -71,7 +71,7 @@ export const SidebarUsageLimits = React.memo(() => {
   if (isNil(creditsRemaining)) {
     return inTrial ? (
       <div className="flex w-full flex-col rounded-md border bg-gray-1 p-2.5">
-        <EnterpriseTrialLine trial={trial} />
+        <SelfServeTrialLine trial={trial} />
       </div>
     ) : null;
   }
@@ -87,7 +87,7 @@ export const SidebarUsageLimits = React.memo(() => {
     <div className="flex flex-col w-full gap-2 p-2.5 bg-gray-1 rounded-md border">
       {inTrial && (
         <div className="flex border-b border-gray-5 pb-2">
-          <EnterpriseTrialLine trial={trial} />
+          <SelfServeTrialLine trial={trial} />
         </div>
       )}
       <div className="flex h-5 items-center justify-between gap-2">

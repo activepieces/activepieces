@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
-import { enterpriseTrialHooks } from '../hooks/enterprise-trial-hooks';
+import { selfServeTrialHooks } from '../hooks/self-serve-trial-hooks';
 import { billingUtils } from '../utils/billing-utils';
-import { enterpriseTrialCopy } from '../utils/enterprise-trial-copy';
+import { selfServeTrialCopy } from '../utils/self-serve-trial-copy';
 
-import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
+import { SelfServeTrialSalesLink } from './self-serve-trial-sales-link';
 
 type CurrentSubscriptionCardProps = {
   info: PlatformBillingInformation;
@@ -27,7 +27,7 @@ export const CurrentSubscriptionCard = ({
 }: CurrentSubscriptionCardProps) => {
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const isYearly = billingUtils.isYearlyPlan(info);
-  const trial = enterpriseTrialHooks.useTrial();
+  const trial = selfServeTrialHooks.useTrial();
   const trialEndsAt = trial.state === 'active' ? trial.endsAt : null;
 
   if (!isNil(trialEndsAt) && !isPaid) {
@@ -43,7 +43,7 @@ export const CurrentSubscriptionCard = ({
               {t('Enterprise plan trial')}
             </span>
             <Badge variant="outline" className="rounded-full">
-              {enterpriseTrialCopy.daysLeftLabel(trial)}
+              {selfServeTrialCopy.daysLeftLabel(trial)}
             </Badge>
           </span>
           <span className="text-sm text-gray-11">
@@ -56,7 +56,7 @@ export const CurrentSubscriptionCard = ({
             )}
           </span>
         </div>
-        <EnterpriseTrialSalesLink
+        <SelfServeTrialSalesLink
           surface="enterprise_trial_billing"
           variant="default"
         />

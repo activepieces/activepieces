@@ -38,7 +38,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
-  EnterpriseTrialSalesLink,
+  SelfServeTrialSalesLink,
   LockedGem,
   PlanBadge,
   useEnterpriseGate,
@@ -224,7 +224,7 @@ export const AppearanceSection = ({
         canSaveRest: nameDirty,
         action:
           edition === ApEdition.COMMUNITY ? (
-            <EnterpriseTrialSalesLink
+            <SelfServeTrialSalesLink
               surface="locked_feature"
               variant="default"
               featureKey="BRANDING"

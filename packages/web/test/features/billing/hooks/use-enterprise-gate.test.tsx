@@ -25,8 +25,8 @@ vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: state.edition }) },
 }));
 
-vi.mock('@/features/billing/hooks/enterprise-trial-hooks', () => ({
-  enterpriseTrialHooks: {
+vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
+  selfServeTrialHooks: {
     useTrial: () => ({
       state: state.trialState,
       isPlatformAdmin: state.isPlatformAdmin,
@@ -36,7 +36,7 @@ vi.mock('@/features/billing/hooks/enterprise-trial-hooks', () => ({
 }));
 
 const trialDialogPayload = () =>
-  billingDialogHooks.useEnterpriseTrialDialogStore.getState().payload;
+  billingDialogHooks.useSelfServeTrialDialogStore.getState().payload;
 
 const plansDialogOpen = () =>
   billingDialogHooks.useManagePlanDialogStore.getState().isOpen;
@@ -46,7 +46,7 @@ beforeEach(() => {
   state.offer = false;
   state.isPlatformAdmin = true;
   state.edition = ApEdition.CLOUD;
-  billingDialogHooks.useEnterpriseTrialDialogStore.getState().closeDialog();
+  billingDialogHooks.useSelfServeTrialDialogStore.getState().closeDialog();
   billingDialogHooks.useManagePlanDialogStore.getState().closeDialog();
   state.openWindow.mockClear();
   vi.stubGlobal('open', state.openWindow);
