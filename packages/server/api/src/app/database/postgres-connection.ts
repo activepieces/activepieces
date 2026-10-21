@@ -464,7 +464,6 @@ import { AddPieceTranslationTable1873000000000 } from './migration/postgres/1873
 import { AddDefaultChatModelToPlatformConfiguration1875000000000 } from './migration/postgres/1875000000000-AddDefaultChatModelToPlatformConfiguration'
 import { AddAgentConversationWaitpointId1876000000000 } from './migration/postgres/1876000000000-AddAgentConversationWaitpointId'
 import { AddActivepiecesAiProviderHiddenToPlatformPlan1876000000000 } from './migration/postgres/1876000000000-AddActivepiecesAiProviderHiddenToPlatformPlan'
-import { AddSelfServeTrialUsedElsewhereToPlatformPlan1877000000000 } from './migration/postgres/1877000000000-AddSelfServeTrialUsedElsewhereToPlatformPlan'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
@@ -954,7 +953,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddDefaultChatModelToPlatformConfiguration1875000000000,
         AddAgentConversationWaitpointId1876000000000,
         AddActivepiecesAiProviderHiddenToPlatformPlan1876000000000,
-        AddSelfServeTrialUsedElsewhereToPlatformPlan1877000000000,
     ]
     return migrations
 }

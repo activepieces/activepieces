@@ -75,7 +75,7 @@ const PAST = { startedAt: '2026-10-01T09:00:00.000Z', endsAt: '2026-10-08T09:00:
 const ACTIVE: SelfServeTrialStatus = { state: 'active', ...STARTED, extended: false }
 const USED: SelfServeTrialStatus = { state: 'used', startedAt: null, endsAt: null, extended: false }
 const INELIGIBLE: SelfServeTrialStatus = { state: 'ineligible', startedAt: null, endsAt: null, extended: false }
-const FREE_PLAN = { plan: PlanName.FREE, selfServeTrialUsedElsewhereAt: null }
+const FREE_PLAN = { plan: PlanName.FREE }
 const log = { warn: vi.fn(), error: vi.fn(), info: vi.fn() } as never
 
 async function loadModules() {
@@ -122,7 +122,6 @@ describe('self-serve trial', () => {
             { name: 'no trial on Free', window: null, plan: FREE_PLAN, expected: { state: 'eligible', startedAt: null, endsAt: null } },
             { name: 'a running trial', window: STARTED, plan: FREE_PLAN, expected: { state: 'active', ...STARTED } },
             { name: 'a trial past its end', window: PAST, plan: FREE_PLAN, expected: { state: 'ended', ...PAST } },
-            { name: 'a trial used on another platform', window: null, plan: { ...FREE_PLAN, selfServeTrialUsedElsewhereAt: '2026-10-09T09:00:00.000Z' }, expected: { state: 'used', startedAt: null, endsAt: null } },
             { name: 'an AppSumo platform', window: null, plan: { ...FREE_PLAN, plan: PlanName.APPSUMO }, expected: { state: 'ineligible', startedAt: null, endsAt: null } },
             { name: 'an Enterprise platform', window: null, plan: { ...FREE_PLAN, plan: PlanName.ENTERPRISE }, expected: { state: 'ineligible', startedAt: null, endsAt: null } },
             { name: 'a Plus chat platform', window: null, plan: { ...FREE_PLAN, plan: PlanName.PLUS_CHAT }, expected: { state: 'ineligible', startedAt: null, endsAt: null } },
@@ -209,11 +208,12 @@ describe('self-serve trial', () => {
             expect(consoleStart).not.toHaveBeenCalled()
         })
 
-        it('remembers a start the console refuses as used, as a trial used elsewhere', async () => {
+        it('reads a start the console refuses as used, without remembering it', async () => {
             const { status } = await startTrial({ outcome: { result: 'used' } })
 
             expect(status).toEqual(USED)
-            expect(mockPlanUpdate).toHaveBeenCalledWith({ platformId: PLATFORM_ID, selfServeTrialUsedElsewhereAt: expect.any(String) })
+            expect(mockPlanUpdate).not.toHaveBeenCalled()
+            expect(store.get(WINDOW_KEY)).toEqual({ window: null })
             expect(mockOnTrialStarted).not.toHaveBeenCalled()
         })
 
@@ -283,7 +283,6 @@ describe('self-serve trial', () => {
             await refreshWith({ customer: customerWith({ addOn: STARTED }) })
 
             expect(store.get(WINDOW_KEY)).toEqual({ window: STARTED })
-            expect(mockPlanUpdate).toHaveBeenCalledWith(expect.not.objectContaining({ selfServeTrialUsedElsewhereAt: expect.anything() }))
         })
 
         it('keeps the dates saved on the customer once the add-on is gone', async () => {

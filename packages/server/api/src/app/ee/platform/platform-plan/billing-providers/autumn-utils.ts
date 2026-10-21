@@ -718,7 +718,6 @@ type NotProjectedFromAutumn =
     | 'canary'
     | 'customDomainsEnabled'
     | 'workerGroupId'
-    | 'selfServeTrialUsedElsewhereAt'
 
 type PlatformPlanProjection = Required<Pick<PlatformPlanLimits, Exclude<keyof PlatformPlanLimits, NotProjectedFromAutumn>>>
 
