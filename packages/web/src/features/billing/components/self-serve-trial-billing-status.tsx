@@ -16,8 +16,8 @@ import {
 } from '../hooks/self-serve-trial-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
 import { enterpriseMotion } from '../utils/enterprise-motion';
-import { selfServeTrialTime } from '../utils/self-serve-trial-time';
 import { planTiers } from '../utils/plan-tiers';
+import { selfServeTrialTime } from '../utils/self-serve-trial-time';
 
 import { SelfServeTrialSalesLink } from './self-serve-trial-sales-link';
 

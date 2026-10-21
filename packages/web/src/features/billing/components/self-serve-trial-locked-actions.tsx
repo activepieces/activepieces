@@ -15,8 +15,8 @@ import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import { enterpriseDocs } from '../utils/enterprise-docs';
 import { planTiers } from '../utils/plan-tiers';
 
-import { SelfServeTrialSalesLink } from './self-serve-trial-sales-link';
 import { FeatureKey } from './request-trial';
+import { SelfServeTrialSalesLink } from './self-serve-trial-sales-link';
 
 export function SelfServeTrialLockedActions({
   featureKey,

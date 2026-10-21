@@ -5,9 +5,9 @@ import { cn } from '@/lib/utils';
 import { useEnterpriseGate } from '../hooks/use-enterprise-gate';
 import { enterpriseMotion } from '../utils/enterprise-motion';
 
-import { SelfServeTrialLockedActions } from './self-serve-trial-locked-actions';
 import { PlanBadge } from './plan-badge';
 import { FeatureKey } from './request-trial';
+import { SelfServeTrialLockedActions } from './self-serve-trial-locked-actions';
 
 export function EnterpriseLockedRow({
   unlocked,

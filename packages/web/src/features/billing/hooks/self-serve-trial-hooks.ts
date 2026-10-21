@@ -23,10 +23,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { platformBillingApi } from '../api/billing-plans-api';
 import { billingUtils } from '../utils/billing-utils';
-import {
-  selfServeTrialTime,
-  TRIAL_DAYS,
-} from '../utils/self-serve-trial-time';
+import { selfServeTrialTime, TRIAL_DAYS } from '../utils/self-serve-trial-time';
 
 import { refreshBillingCaches } from './billing-hooks';
 
