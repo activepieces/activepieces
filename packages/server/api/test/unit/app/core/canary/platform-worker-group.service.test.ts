@@ -41,16 +41,16 @@ const mockLog: FastifyBaseLogger = {
     level: 'info',
 } as unknown as FastifyBaseLogger
 
-type WorkerGroupService = ReturnType<typeof import('../../../../../src/app/ee/platform/platform-plan/worker-group.service').workerGroupService>
+type WorkerGroupService = ReturnType<typeof import('../../../../../src/app/workers/worker-groups/platform-worker-group.service').platformWorkerGroupService>
 
 const CANARY_WORKER_GROUP_ID = 'canary'
 
 async function loadService(): Promise<WorkerGroupService> {
-    const mod = await import('../../../../../src/app/ee/platform/platform-plan/worker-group.service')
-    return mod.workerGroupService(mockLog)
+    const mod = await import('../../../../../src/app/workers/worker-groups/platform-worker-group.service')
+    return mod.platformWorkerGroupService(mockLog)
 }
 
-describe('workerGroupService', () => {
+describe('platformWorkerGroupService', () => {
     let service: WorkerGroupService
 
     beforeEach(async () => {

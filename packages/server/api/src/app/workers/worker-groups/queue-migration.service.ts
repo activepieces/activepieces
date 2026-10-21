@@ -1,7 +1,8 @@
 import { isNil } from '@activepieces/core-utils'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
-import { jobQueue, PROJECT_GROUP_ROUTABLE_JOB_TYPES } from './job-queue/job-queue'
+import { jobQueue } from '../job-queue/job-queue'
+import { PROJECT_GROUP_ROUTABLE_JOB_TYPES } from './worker-group-queues'
 
 export const platformQueueMigrationService = (log: FastifyBaseLogger) => ({
     async migrateJobs({ fromQueueName, toQueueName, platformId, batchSize = 200 }: MigrateJobsParams): Promise<void> {
@@ -110,7 +111,7 @@ async function migrateSchedulers({ sourceQueue, targetQueue, platformId, batchSi
                     migrationFailed = true
                 }
             })
-            
+
         }
 
         offset += skipped
