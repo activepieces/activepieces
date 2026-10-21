@@ -22,6 +22,7 @@ import {
   ItemIcon,
   itemSubtitle,
   UsageEmptyState,
+  UsageTrail,
 } from './usage-bits';
 import {
   USAGE_DIMENSIONS,
@@ -63,8 +64,14 @@ export function UsageListPage() {
   return (
     <>
       <AdminPageHeader
-        back={{ to: `/platform/ai/usage${view.search}`, label: t('AI usage') }}
-        title={usageFormat.dimensionLabel({ dimension })}
+        title={
+          <UsageTrail
+            crumbs={[
+              { label: t('AI usage'), to: `/platform/ai/usage${view.search}` },
+            ]}
+            current={usageFormat.dimensionLabel({ dimension })}
+          />
+        }
         description={
           ready && items.length > 0
             ? t('{amount} across {items}', {

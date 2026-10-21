@@ -21,11 +21,10 @@ import {
   StatGrid,
 } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { ItemIcon, itemSubtitle } from './usage-bits';
+import { ItemIcon, itemSubtitle, UsageTrail } from './usage-bits';
 import {
   USAGE_DIMENSIONS,
   UsageDetail,
@@ -68,23 +67,22 @@ export function UsageDetailPage() {
   return (
     <>
       <AdminPageHeader
-        back={{ to: overviewLink, label: t('AI usage') }}
         title={
-          <div className="flex min-w-0 items-center gap-2.5">
-            {detail && <ItemIcon item={detail.item} />}
-            <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-gray-12">
-              {detail?.item.name ?? usageFormat.dimensionBadge({ dimension })}
-            </h1>
-            <Badge variant="secondary">
-              {usageFormat.dimensionBadge({ dimension })}
-            </Badge>
-          </div>
+          <UsageTrail
+            crumbs={[
+              { label: t('AI usage'), to: overviewLink },
+              {
+                label: usageFormat.dimensionLabel({ dimension }),
+                to: `/platform/ai/usage/${dimension}${view.search}`,
+              },
+            ]}
+            current={
+              detail?.item.name ?? usageFormat.dimensionBadge({ dimension })
+            }
+            icon={detail && <ItemIcon item={detail.item} />}
+          />
         }
-        description={
-          detail?.item.parent
-            ? t('In {parent}', { parent: detail.item.parent })
-            : undefined
-        }
+        description={detail ? itemSubtitle({ item: detail.item }) : undefined}
       >
         <UsageHeaderControls view={view} />
       </AdminPageHeader>
