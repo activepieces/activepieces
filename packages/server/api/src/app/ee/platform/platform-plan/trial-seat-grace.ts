@@ -96,8 +96,11 @@ async function findPlatformsOverTheirSeats(): Promise<string[]> {
     const rows = await platformPlanRepo()
         .createQueryBuilder('platform_plan')
         .select('platform_plan.platformId', 'platformId')
+        .innerJoin(`(${ACTIVE_NON_EMBEDDED_USERS_PER_PLATFORM})`, 'active_users', 'active_users."platformId" = platform_plan."platformId"')
+        .leftJoin(`(${SEAT_RESERVING_INVITES_PER_PLATFORM})`, 'invites', 'invites."platformId" = platform_plan."platformId"')
         .where('platform_plan.usersLimit IS NOT NULL')
-        .andWhere(`(${ACTIVE_NON_EMBEDDED_USERS}) + (${SEAT_RESERVING_INVITES}) > platform_plan."usersLimit"`, {
+        .andWhere('active_users.seats + COALESCE(invites.seats, 0) > platform_plan."usersLimit"')
+        .setParameters({
             active: UserStatus.ACTIVE,
             embedded: UserIdentityProvider.JWT,
             reserving: [InvitationStatus.PENDING, InvitationStatus.ACCEPTED],
@@ -166,22 +169,22 @@ const USER_IS_NOT_THE_PLATFORM_OWNER = `NOT EXISTS (
     AND platform."ownerId" = "user".id
 )`
 
-const ACTIVE_NON_EMBEDDED_USERS = `SELECT COUNT(*)
+const ACTIVE_NON_EMBEDDED_USERS_PER_PLATFORM = `SELECT "user"."platformId", COUNT(*) AS seats
     FROM "user"
-    WHERE "user"."platformId" = platform_plan."platformId"
-    AND "user".status = :active
+    WHERE "user".status = :active
     AND NOT EXISTS (
         SELECT 1
         FROM user_identity identity
         WHERE identity.id = "user"."identityId"
         AND identity.provider = :embedded
-    )`
+    )
+    GROUP BY "user"."platformId"`
 
-const SEAT_RESERVING_INVITES = `SELECT COUNT(*)
+const SEAT_RESERVING_INVITES_PER_PLATFORM = `SELECT invitation."platformId", COUNT(*) AS seats
     FROM user_invitation invitation
-    WHERE invitation."platformId" = platform_plan."platformId"
-    AND invitation.status IN (:...reserving)
-    AND invitation.updated > :expiryCutoff`
+    WHERE invitation.status IN (:...reserving)
+    AND invitation.updated > :expiryCutoff
+    GROUP BY invitation."platformId"`
 
 type GetParams = {
     plan: PlatformPlan
