@@ -1,14 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../auth';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { chargekeepOutputSchemas } from '../common/output-schemas';
+import { CURRENCY_OPTIONS } from '../common/props';
+import { chargekeepServices } from '../common/services';
 
 export const createProduct = createAction({
   name: 'createProduct',
   classification: 'WRITE',
   displayName: 'Create Product',
-  description: 'Creates a new product in the CRM',
+  description: 'Creates a product in the CRM, or updates the product with the same SKU.',
   audience: 'both',
-  aiMetadata: { description: 'Imports a product (General, Event, Subscription, or Digital) into the ChargeKeep/Sperse CRM along with a subscription/pricing option. Use to add a sellable product or plan; requires a product Type, Name, and SKU (the unique product Code), with price/unit/payment-cycle fields needed depending on the type. Because the import is keyed on the SKU, reusing the same code updates that product rather than creating a duplicate.', idempotent: true },
+  aiMetadata: { description: 'Creates or updates a product in the ChargeKeep/Sperse CRM with one price option. Requires productType (General, Event, Subscription, Digital), name and SKU (code, the upsert key). General/Event/Digital products take price and unit (one-time price). Subscription products take the subscription fee and payment cycle (Monthly, Annual, LifeTime, OneTime, Custom), plus optional signup fee, cycles, trial days and grace period. Reusing the same SKU updates that product and replaces its price option. Returns the product with its price options.', idempotent: true },
+  outputSchema: chargekeepOutputSchemas.product,
   auth: chargekeepAuth,
   props: {
     productType: Property.StaticDropdown({
@@ -66,68 +69,18 @@ export const createProduct = createAction({
     price: Property.Number({
       displayName: 'Price',
       required: false,
-      description: 'Required for General , Digital and Event Product Type',
-      defaultValue: 0,
+      description: 'One-time price. Required for General, Digital and Event products.',
     }),
     currencyId: Property.StaticDropdown({
       displayName: 'Currency Id',
       required: false,
       defaultValue: 'USD',
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'USD',
-            value: 'USD',
-          },
-          {
-            label: 'JPY',
-            value: 'JPY',
-          },
-          {
-            label: 'IND',
-            value: 'IND',
-          },
-          {
-            label: 'EUR',
-            value: 'EUR',
-          },
-          {
-            label: 'GBP',
-            value: 'GBP',
-          },
-          {
-            label: 'AUD',
-            value: 'AUD',
-          },
-          {
-            label: 'CAD',
-            value: 'CAD',
-          },
-          {
-            label: 'CHF',
-            value: 'CHF',
-          },
-          {
-            label: 'CNY',
-            value: 'CNY',
-          },
-          {
-            label: 'SEK',
-            value: 'SEK',
-          },
-          {
-            label: 'NZD',
-            value: 'NZD',
-          },
-        ],
-      },
+      options: { disabled: false, options: CURRENCY_OPTIONS },
     }),
     unit: Property.StaticDropdown({
       displayName: 'Unit',
       required: false,
-      description: 'Required for General and Digital Product Type',
-      defaultValue: 'Day',
+      description: 'Price unit for General, Digital and Event products. Defaults to Unit.',
       options: {
         disabled: false,
         options: [
@@ -185,8 +138,7 @@ export const createProduct = createAction({
     frequency: Property.StaticDropdown({
       displayName: 'Payment Cycle',
       required: false,
-      description: 'Required for General and Digital Product Type',
-      defaultValue: 'Monthly',
+      description: 'Payment cycle for Subscription products. Defaults to Monthly.',
       options: {
         disabled: false,
         options: [
@@ -215,26 +167,23 @@ export const createProduct = createAction({
     }),
     fee: Property.Number({
       displayName: 'Subscription fee',
+      description: 'Fee per cycle. Required for Subscription products.',
       required: false,
-      defaultValue: 0,
     }),
     cycles: Property.Number({
       displayName: 'No of cycles',
       required: false,
-      description: 'Required for all except LifeTime or OneTime plan',
-      defaultValue: 0,
+      description: 'Number of billing cycles (Subscription products). Leave empty for no limit.',
     }),
     signupFee: Property.Number({
       displayName: 'Signup fee',
       required: false,
-      description: 'Required for all except LifeTime or OneTime plan',
-      defaultValue: 0,
+      description: 'One-time signup fee (Subscription products).',
     }),
     customPeriodType: Property.StaticDropdown({
       displayName: 'Custom Period Type',
       required: false,
-      description: 'Required for Custom or OneTime Plan',
-      defaultValue: 'Days',
+      description: 'Period type when the Payment Cycle is Custom.',
       options: {
         disabled: false,
         options: [
@@ -260,62 +209,44 @@ export const createProduct = createAction({
     customPeriodCount: Property.Number({
       displayName: 'Custom No of Period',
       required: false,
-      description: 'Required for Custom or OneTime Plan',
-      defaultValue: 0,
+      description: 'Number of periods when the Payment Cycle is Custom or OneTime.',
     }),
     trialDayCount: Property.Number({
-      displayName: 'Custom No of Period',
+      displayName: 'Trial Days',
       required: false,
-      description: 'Required for OneTime plan',
-      defaultValue: 0,
+      description: 'Free trial length in days (Subscription products).',
     }),
     gracePeriodDayCount: Property.Number({
       displayName: 'Grace Period Count',
+      description: 'Grace period in days after a missed payment (Subscription products).',
       required: false,
-      defaultValue: 0,
     }),
   },
   async run(context) {
-    const product = {
-      code: context.propsValue.code,
-      name: context.propsValue.name,
-      logoUrl: context.propsValue.logoURL,
-      description: context.propsValue.description,
-      descriptionHtml: context.propsValue.descriptionHTML,
-      groupName: context.propsValue.groupName,
-      type: context.propsValue.productType,
-      price: context.propsValue.price,
-      currencyId: context.propsValue.currencyId,
-      unit: context.propsValue.unit,
-      productSubscriptionOptions: [
-        {
-          frequency: context.propsValue.frequency,
-          signupFee: context.propsValue.signupFee,
-          fee: context.propsValue.fee,
-          trialDayCount: context.propsValue.trialDayCount,
-          customPeriodCount: context.propsValue.customPeriodCount,
-          customPeriodType: context.propsValue.customPeriodType,
-          cycles: context.propsValue.cycles,
-          gracePeriodDayCount: context.propsValue.gracePeriodDayCount,
-        },
-      ],
-    };
-
-    const res = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportProduct`,
-      headers: {
-        'api-key': context.auth.props.api_key, // Pass API key in headers
-        'Content-Type': 'application/json',
-      },
-      body: {
-        ...product,
+    const p = context.propsValue;
+    const { mapped } = await chargekeepServices.importProduct({
+      auth: context.auth,
+      input: {
+        type: p.productType,
+        name: p.name,
+        code: p.code,
+        description: p.description,
+        descriptionHtml: p.descriptionHTML,
+        logoUrl: p.logoURL,
+        groupName: p.groupName,
+        currencyId: p.currencyId,
+        price: p.price,
+        fee: p.fee,
+        unit: p.unit,
+        frequency: p.frequency,
+        signupFee: p.signupFee,
+        cycles: p.cycles,
+        trialDayCount: p.trialDayCount,
+        customPeriodCount: p.customPeriodCount,
+        customPeriodType: p.customPeriodType,
+        gracePeriodDayCount: p.gracePeriodDayCount,
       },
     });
-
-    return {
-      status: res.status,
-      body: res.body,
-    };
+    return mapped();
   },
 });
