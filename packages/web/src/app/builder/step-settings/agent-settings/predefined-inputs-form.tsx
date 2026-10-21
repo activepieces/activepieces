@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { connectionTemplate, isNil } from '@activepieces/core-utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import { FieldControlMode, PredefinedInputField } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -67,8 +67,9 @@ export const PredefinedInputsForm = () => {
   );
   const defaultValues = useMemo<PredefinedInputsFormValues>(() => {
     const values: PredefinedInputsFormValues = {};
-    if (requireAuth && predefinedInputs?.auth) {
-      values.auth = predefinedInputs.auth;
+    const auth = connectionTemplate.wrapExternalId(predefinedInputs?.auth);
+    if (requireAuth && !isNil(auth)) {
+      values.auth = auth;
     }
     if (predefinedInputs?.fields) {
       Object.entries(predefinedInputs.fields).forEach(([key, field]) => {
@@ -119,7 +120,7 @@ export const PredefinedInputsForm = () => {
       auth: newAuth,
       fields: predefinedInputs?.fields || {},
     });
-    form.setValue('auth', value ?? '');
+    form.setValue('auth', connectionTemplate.wrapExternalId(value) ?? '');
   };
   const getModeForProperty = (propertyName: string): FieldControlMode =>
     predefinedInputs?.fields?.[propertyName]?.mode ??
