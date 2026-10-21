@@ -37,7 +37,7 @@ export const listPlansAction = createAction({
           auth,
           groupId: propsValue.groupId,
         })
-      : await microsoft365PlannerApi.listPlans({ auth });
+      : await microsoft365PlannerApi.listAllPlans({ auth });
     const titleContains = propsValue.titleContains?.toLowerCase();
     const matching = titleContains
       ? plans.filter((plan) =>

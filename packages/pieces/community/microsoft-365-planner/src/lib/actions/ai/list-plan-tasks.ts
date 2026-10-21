@@ -28,7 +28,7 @@ export const listPlanTasksAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const tasks = await microsoft365PlannerApi.listTasks({
+    const tasks = await microsoft365PlannerApi.listAllTasks({
       auth,
       planId: propsValue.planId,
     });

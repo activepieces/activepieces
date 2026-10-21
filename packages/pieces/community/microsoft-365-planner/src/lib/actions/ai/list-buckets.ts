@@ -22,7 +22,7 @@ export const listBucketsAction = createAction({
     planId: microsoft365PlannerAiProps.planId({ required: true }),
   },
   async run({ auth, propsValue }) {
-    const buckets = await microsoft365PlannerApi.listBuckets({
+    const buckets = await microsoft365PlannerApi.listAllBuckets({
       auth,
       planId: propsValue.planId,
     });

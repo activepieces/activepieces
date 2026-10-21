@@ -17,6 +17,7 @@ import type {
   PlannerTaskDetails,
   User,
 } from './types';
+import type { Client } from '@microsoft/microsoft-graph-client';
 
 async function getEtag({
   auth,
@@ -196,6 +197,40 @@ async function listPlans({
   return response.value;
 }
 
+async function listAllPlans({
+  auth,
+}: {
+  auth: Microsoft365PlannerAuthValue;
+}): Promise<PlannerPlan[]> {
+  return await listAllPages<PlannerPlan>({ auth, path: '/me/planner/plans' });
+}
+
+async function listAllBuckets({
+  auth,
+  planId,
+}: {
+  auth: Microsoft365PlannerAuthValue;
+  planId: string;
+}): Promise<PlannerBucket[]> {
+  return await listAllPages<PlannerBucket>({
+    auth,
+    path: `/planner/plans/${planId}/buckets`,
+  });
+}
+
+async function listAllTasks({
+  auth,
+  planId,
+}: {
+  auth: Microsoft365PlannerAuthValue;
+  planId: string;
+}): Promise<PlannerTask[]> {
+  return await listAllPages<PlannerTask>({
+    auth,
+    path: `/planner/plans/${planId}/tasks`,
+  });
+}
+
 async function listGroupPlans({
   auth,
   groupId,
@@ -203,11 +238,10 @@ async function listGroupPlans({
   auth: Microsoft365PlannerAuthValue;
   groupId: string;
 }): Promise<PlannerPlan[]> {
-  const client = microsoft365PlannerClient.create({ auth });
-  const response: Microsoft365PlannerList<PlannerPlan> = await client
-    .api(`/groups/${groupId}/planner/plans`)
-    .get();
-  return response.value;
+  return await listAllPages<PlannerPlan>({
+    auth,
+    path: `/groups/${groupId}/planner/plans`,
+  });
 }
 
 async function getPlan({
@@ -429,11 +463,10 @@ async function listBucketTasks({
   auth: Microsoft365PlannerAuthValue;
   bucketId: string;
 }): Promise<PlannerTask[]> {
-  const client = microsoft365PlannerClient.create({ auth });
-  const response: Microsoft365PlannerList<PlannerTask> = await client
-    .api(`/planner/buckets/${bucketId}/tasks`)
-    .get();
-  return response.value;
+  return await listAllPages<PlannerTask>({
+    auth,
+    path: `/planner/buckets/${bucketId}/tasks`,
+  });
 }
 
 async function listMyTasks({
@@ -441,11 +474,7 @@ async function listMyTasks({
 }: {
   auth: Microsoft365PlannerAuthValue;
 }): Promise<PlannerTask[]> {
-  const client = microsoft365PlannerClient.create({ auth });
-  const response: Microsoft365PlannerList<PlannerTask> = await client
-    .api('/me/planner/tasks')
-    .get();
-  return response.value;
+  return await listAllPages<PlannerTask>({ auth, path: '/me/planner/tasks' });
 }
 
 async function getTask({
@@ -559,6 +588,7 @@ export const microsoft365PlannerApi = {
   listUnifiedGroups,
   listGroupMembers,
   listPlans,
+  listAllPlans,
   listGroupPlans,
   getPlan,
   createPlan,
@@ -568,12 +598,14 @@ export const microsoft365PlannerApi = {
   getPlanDetails,
   patchPlanDetails,
   listBuckets,
+  listAllBuckets,
   getBucket,
   createBucket,
   updateBucket,
   patchBucket,
   deleteBucket,
   listTasks,
+  listAllTasks,
   listBucketTasks,
   listMyTasks,
   getTask,
@@ -584,3 +616,28 @@ export const microsoft365PlannerApi = {
   patchTaskDetails,
   deleteTask,
 };
+
+async function listAllPages<T>({
+  auth,
+  path,
+}: {
+  auth: Microsoft365PlannerAuthValue;
+  path: string;
+}): Promise<T[]> {
+  const client = microsoft365PlannerClient.create({ auth });
+  return await collectPages<T>({ client, url: path });
+}
+
+async function collectPages<T>({
+  client,
+  url,
+}: {
+  client: Client;
+  url: string;
+}): Promise<T[]> {
+  const response: Microsoft365PlannerList<T> = await client.api(url).get();
+  const nextLink = response['@odata.nextLink'];
+  return nextLink
+    ? [...response.value, ...(await collectPages<T>({ client, url: nextLink }))]
+    : response.value;
+}
