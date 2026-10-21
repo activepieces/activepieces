@@ -2078,5 +2078,9 @@
   "Triggers when a customer is created.": "Triggers when a customer is created.",
   "Triggers when an order is created.": "Triggers when an order is created.",
   "Triggers when a product is updated.": "Triggers when a product is updated.",
-  "Triggers when an order is paid.": "Triggers when an order is paid."
+  "Triggers when an order is paid.": "Triggers when an order is paid.",
+  "Leave empty to use Shopify's default.": "留空则使用 Shopify 的默认值。",
+  "Switched off, these leave the customer's current setting unchanged.": "关闭时，这些设置会保持客户当前的设置不变。",
+  "Mark the customer's email as verified.": "将客户的电子邮件地址标记为已验证。",
+  "Leave empty to keep the current status.": "留空则保留当前状态。"
 }
