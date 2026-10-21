@@ -22,7 +22,6 @@ import {
 } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 
 import { itemSubtitle, UsageTrail } from './usage-bits';
 import {
@@ -39,6 +38,7 @@ import {
 } from './usage-header-controls';
 import { UsageHero } from './usage-hero';
 import { UsagePreviewSwitcher } from './usage-preview-switcher';
+import { UsageDetailSkeleton } from './usage-skeletons';
 import { UsageSourceDonut } from './usage-source-donut';
 import { UsageTopList } from './usage-top-list';
 
@@ -101,16 +101,7 @@ function DetailBody({
   detail: UsageDetail | undefined;
 }) {
   if (view.preset === 'loading') {
-    return (
-      <>
-        <StatGrid columns={3}>
-          {['a', 'b', 'c'].map((key) => (
-            <Skeleton key={key} className="h-[118px] rounded-xl" />
-          ))}
-        </StatGrid>
-        <Skeleton className="h-[380px] rounded-xl" />
-      </>
-    );
+    return <UsageDetailSkeleton />;
   }
   if (view.preset === 'error') {
     return (

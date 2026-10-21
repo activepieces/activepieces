@@ -15,12 +15,9 @@ import {
   AdminPageHeader,
   StatCard,
   StatGrid,
-  adminSurface,
 } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 
 import { UsageOverview, UsagePeriod, usageDummyData } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
@@ -32,6 +29,7 @@ import {
 import { UsageHero } from './usage-hero';
 import { UsagePreviewSwitcher } from './usage-preview-switcher';
 import { UsageProviderTree } from './usage-provider-tree';
+import { UsageOverviewSkeleton } from './usage-skeletons';
 import { UsageSourceDonut } from './usage-source-donut';
 import { UsageTopList } from './usage-top-list';
 
@@ -72,7 +70,7 @@ function UsageBody({
   layout: UsageLayout;
 }) {
   if (view.preset === 'loading') {
-    return <UsageSkeleton />;
+    return <UsageOverviewSkeleton />;
   }
   if (view.preset === 'error') {
     return (
@@ -358,44 +356,7 @@ function TreeBento({
   );
 }
 
-function UsageSkeleton() {
-  return (
-    <>
-      <StatGrid columns={3}>
-        {SKELETON_TILES.map((key) => (
-          <Skeleton key={key} className="h-[118px] rounded-xl" />
-        ))}
-      </StatGrid>
-      <div className={cn(adminSurface.card, 'flex flex-col gap-5 p-5')}>
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-9 w-48" />
-        </div>
-        <Skeleton className="h-[280px] w-full" />
-      </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {SKELETON_CARDS.map((card) => (
-          <Skeleton
-            key={card.key}
-            className={cn('h-72 rounded-xl', card.span)}
-          />
-        ))}
-      </div>
-    </>
-  );
-}
-
 const SHORT_PERIODS: UsagePeriod[] = ['1h', '6h', '12h', '24h'];
 const MONTH_END_LABEL = 'Oct 31';
-
-const SKELETON_TILES = ['forecast', 'calls', 'tokens'];
-
-const SKELETON_CARDS = [
-  { key: 'projects', span: 'lg:col-span-4' },
-  { key: 'flows', span: 'lg:col-span-4' },
-  { key: 'agents', span: 'lg:col-span-4' },
-  { key: 'source', span: 'lg:col-span-8' },
-  { key: 'users', span: 'lg:col-span-4' },
-];
 
 type UsageLayout = 'flat' | 'trees';

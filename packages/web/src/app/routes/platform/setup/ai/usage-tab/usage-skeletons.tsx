@@ -1,0 +1,154 @@
+import { adminSurface, StatGrid } from '@/app/components/admin';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+
+export function UsageOverviewSkeleton() {
+  return (
+    <>
+      <TilesSkeleton />
+      <HeroSkeleton />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <DonutCardSkeleton className="lg:col-span-8" />
+        <ListCardSkeleton className="lg:col-span-4" />
+        <ListCardSkeleton className="lg:col-span-4" />
+        <ListCardSkeleton className="lg:col-span-4" />
+        <ListCardSkeleton className="lg:col-span-4" />
+        <ListCardSkeleton className="lg:col-span-6" />
+        <ListCardSkeleton className="lg:col-span-6" />
+      </div>
+    </>
+  );
+}
+
+export function UsageDetailSkeleton() {
+  return (
+    <>
+      <TilesSkeleton />
+      <HeroSkeleton />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <ListCardSkeleton className="lg:col-span-4" />
+        <ListCardSkeleton className="lg:col-span-4" />
+        <ListCardSkeleton className="lg:col-span-4" />
+      </div>
+    </>
+  );
+}
+
+function TilesSkeleton() {
+  return (
+    <StatGrid columns={3}>
+      {TILES.map((tile) => (
+        <div
+          key={tile}
+          className={cn(adminSurface.card, 'flex flex-col gap-3 p-5')}
+        >
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-4 rounded-sm" />
+            <Skeleton className="h-3.5 w-24" />
+          </div>
+          <Skeleton className="h-8 w-28" />
+          <Skeleton className="h-3 w-40" />
+        </div>
+      ))}
+    </StatGrid>
+  );
+}
+
+function HeroSkeleton() {
+  return (
+    <section className={cn(adminSurface.card, 'flex flex-col gap-5 p-5')}>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-3.5 w-24" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-36" />
+            <Skeleton className="h-5 w-14 rounded-md" />
+            <Skeleton className="h-3.5 w-28" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-48 rounded-lg" />
+          <Skeleton className="h-8 w-16 rounded-lg" />
+        </div>
+      </div>
+      <div className="flex items-center gap-5">
+        <Skeleton className="h-3 w-40" />
+        <Skeleton className="h-3 w-40" />
+      </div>
+      <div className="flex h-[280px] items-end gap-2">
+        {BARS.map((height, index) => (
+          <Skeleton
+            key={index}
+            className="flex-1 rounded-sm"
+            style={{ height: `${height}%` }}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DonutCardSkeleton({ className }: { className?: string }) {
+  return (
+    <section
+      className={cn(adminSurface.card, 'flex flex-col gap-4 p-5', className)}
+    >
+      <CardTitleSkeleton />
+      <div className="flex flex-1 flex-col items-center gap-6 sm:flex-row sm:gap-10">
+        <Skeleton className="aspect-square w-full max-w-56 shrink-0 rounded-full" />
+        <div className="flex w-full flex-col gap-4">
+          {ROWS.map((row) => (
+            <div key={row} className="flex items-center gap-3">
+              <Skeleton className="size-2.5 rounded-full" />
+              <Skeleton className="h-3.5 flex-1" />
+              <Skeleton className="h-3.5 w-14" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ListCardSkeleton({ className }: { className?: string }) {
+  return (
+    <section
+      className={cn(adminSurface.card, 'flex flex-col gap-3 p-5', className)}
+    >
+      <CardTitleSkeleton />
+      <ul className="flex flex-col gap-1">
+        {ROWS.map((row) => (
+          <li key={row} className="flex flex-col gap-1.5 py-1.5">
+            <div className="flex items-center gap-2.5">
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Skeleton className="h-3.5 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+              <Skeleton className="h-3.5 w-14" />
+            </div>
+            <Skeleton className="h-1 w-full rounded-full" />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function CardTitleSkeleton() {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        <Skeleton className="size-4 rounded-sm" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <Skeleton className="h-3.5 w-12" />
+    </div>
+  );
+}
+
+const TILES = ['pace', 'calls', 'tokens'];
+const ROWS = ['a', 'b', 'c', 'd', 'e'];
+const BARS = [
+  38, 44, 41, 52, 48, 57, 61, 55, 63, 70, 66, 72, 68, 75, 80, 74, 82, 78, 86,
+  90,
+];
