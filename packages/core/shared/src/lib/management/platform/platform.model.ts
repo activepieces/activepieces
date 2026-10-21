@@ -136,7 +136,6 @@ export const PlatformPlan = z.object({
     scimEnabled: z.boolean(),
     licenseKey: Nullable(z.string()),
     licenseExpiresAt: Nullable(DateOrString),
-    selfServeTrialUsedElsewhereAt: Nullable(DateOrString),
 
     projectsLimit: Nullable(z.number()),
     activeFlowsLimit: Nullable(z.number()),
