@@ -12,8 +12,8 @@ import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import {
   CreditsUsageAlert,
-  EnterpriseTrialDialog,
-  EnterpriseTrialEndingAlert,
+  SelfServeTrialDialog,
+  SelfServeTrialEndingAlert,
   ManagePlanDialog,
 } from '@/features/billing';
 import { projectHooks } from '@/features/projects';
@@ -116,7 +116,7 @@ export function ProjectDashboardLayout({
         {children}
       </ProjectDashboardLayoutInner>
       {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-      <EnterpriseTrialDialog />
+      <SelfServeTrialDialog />
     </GlobalSearchProvider>
   );
 
@@ -175,7 +175,7 @@ function ProjectDashboardLayoutInner({
                 !isEmbedded && 'rounded-xl shadow-panel border',
               )}
             >
-              <EnterpriseTrialEndingAlert />
+              <SelfServeTrialEndingAlert />
               {!hideHeader && (
                 <ProjectDashboardLayoutHeader key={currentProjectId} />
               )}

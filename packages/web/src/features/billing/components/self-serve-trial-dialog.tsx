@@ -27,40 +27,40 @@ import { cn } from '@/lib/utils';
 
 import {
   billingDialogHooks,
-  EnterpriseTrialDialogPayload,
+  SelfServeTrialDialogPayload,
 } from '../hooks/billing-dialog-hooks';
 import {
-  ENTERPRISE_TRIAL_DAYS,
-  enterpriseTrialHooks,
-} from '../hooks/enterprise-trial-hooks';
+  SELF_SERVE_TRIAL_DAYS,
+  selfServeTrialHooks,
+} from '../hooks/self-serve-trial-hooks';
 import {
   EnterpriseAccess,
   useEnterpriseAccess,
 } from '../hooks/use-enterprise-gate';
 import { usePlanTier } from '../hooks/use-plan-tier';
 import { enterpriseMotion } from '../utils/enterprise-motion';
-import { enterpriseTrialFeatures } from '../utils/enterprise-trial-features';
-import { enterpriseTrialUi } from '../utils/enterprise-trial-ui';
+import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
+import { selfServeTrialUi } from '../utils/self-serve-trial-ui';
 import { FeatureTier } from '../utils/feature-tier';
 import { planTiers } from '../utils/plan-tiers';
 
-import { EnterpriseTrialEndedDialog } from './enterprise-trial-ended-dialog';
-import { EnterpriseTrialLockedActions } from './enterprise-trial-locked-actions';
-import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
+import { SelfServeTrialEndedDialog } from './self-serve-trial-ended-dialog';
+import { SelfServeTrialLockedActions } from './self-serve-trial-locked-actions';
+import { SelfServeTrialSalesLink } from './self-serve-trial-sales-link';
 import { PlanBadge } from './plan-badge';
 import { FeatureKey } from './request-trial';
 
-export function EnterpriseTrialDialog() {
+export function SelfServeTrialDialog() {
   const { payload, returnFocus, closeDialog } =
-    billingDialogHooks.useEnterpriseTrialDialogStore();
+    billingDialogHooks.useSelfServeTrialDialogStore();
   const queryClient = useQueryClient();
-  const { data: liveStatus } = enterpriseTrialHooks.useStatus();
-  const offer = enterpriseTrialHooks.useOffer();
+  const { data: liveStatus } = selfServeTrialHooks.useStatus();
+  const offer = selfServeTrialHooks.useOffer();
   const [resumeState, setResumeState] = useState<ResumeState>('idle');
   const resumeOnStart =
-    useRef<EnterpriseTrialDialogPayload['resume']>(undefined);
+    useRef<SelfServeTrialDialogPayload['resume']>(undefined);
   const resumeRan = useRef(false);
-  const start = enterpriseTrialHooks.useStart((status) => {
+  const start = selfServeTrialHooks.useStart((status) => {
     if (status.state !== 'active') {
       return;
     }
@@ -87,7 +87,7 @@ export function EnterpriseTrialDialog() {
   const resume = payload?.resume;
 
   const finishBlockedWork = useCallback(
-    async (work: EnterpriseTrialDialogPayload['resume']) => {
+    async (work: SelfServeTrialDialogPayload['resume']) => {
       if (isNil(work)) {
         return;
       }
@@ -122,7 +122,7 @@ export function EnterpriseTrialDialog() {
 
   return (
     <>
-      <EnterpriseTrialEndedDialog />
+      <SelfServeTrialEndedDialog />
       <Dialog open={open} onOpenChange={(next) => !next && close()}>
         <DialogContent
           showCloseButton={!busy}
@@ -136,7 +136,7 @@ export function EnterpriseTrialDialog() {
               event.preventDefault();
             }
           }}
-          onOpenAutoFocus={enterpriseTrialUi.focusDialogItself}
+          onOpenAutoFocus={selfServeTrialUi.focusDialogItself}
           onCloseAutoFocus={(event) => {
             if (returnFocus?.isConnected) {
               event.preventDefault();
@@ -207,8 +207,8 @@ function StartTrial({
   isError: boolean;
   onStart: () => void;
 }) {
-  const trial = enterpriseTrialHooks.useTrial();
-  const featureName = enterpriseTrialFeatures.name(featureKey);
+  const trial = selfServeTrialHooks.useTrial();
+  const featureName = selfServeTrialFeatures.name(featureKey);
 
   return (
     <DialogFrame
@@ -223,7 +223,7 @@ function StartTrial({
         )
       }
       title={t('Try the Enterprise plan free for {days} days', {
-        days: ENTERPRISE_TRIAL_DAYS,
+        days: SELF_SERVE_TRIAL_DAYS,
       })}
       description={t(
         'Everything in the Enterprise plan turns on for everyone on your platform. No credit card, nothing to set up.',
@@ -247,7 +247,7 @@ function StartTrial({
       footerNote={
         <>
           {t('Want to keep the Enterprise plan?')}
-          <EnterpriseTrialSalesLink
+          <SelfServeTrialSalesLink
             surface="enterprise_trial_start"
             variant="link"
             className="h-auto p-0"
@@ -281,7 +281,7 @@ function IncludedFeatures({
 }: {
   featureKey: FeatureKey | undefined;
 }) {
-  const features = enterpriseTrialFeatures.list();
+  const features = selfServeTrialFeatures.list();
   return (
     <ul className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
       {features.map((feature) => {
@@ -319,10 +319,10 @@ function LockedFeature({
 }) {
   const access = useEnterpriseAccess({ unlocked: false });
   const plan = usePlanTier(featureKey);
-  const copy = enterpriseTrialFeatures.lockedCopy(featureKey);
+  const copy = selfServeTrialFeatures.lockedCopy(featureKey);
   const headline =
     copy?.headline ??
-    enterpriseTrialFeatures.name(featureKey) ??
+    selfServeTrialFeatures.name(featureKey) ??
     t('The Enterprise plan for your whole team');
   const description =
     copy?.description ??
@@ -358,7 +358,7 @@ function LockedFeature({
         </p>
       }
       actions={
-        <EnterpriseTrialLockedActions
+        <SelfServeTrialLockedActions
           featureKey={featureKey}
           surface={PlatformAdminSurface.DIALOG}
           onAction={onAction}
@@ -487,7 +487,7 @@ function TrialTimeline({
   startedAt?: Date;
   endsAt?: Date;
 }) {
-  const endDate = dayjs(endsAt ?? dayjs().add(ENTERPRISE_TRIAL_DAYS, 'day'));
+  const endDate = dayjs(endsAt ?? dayjs().add(SELF_SERVE_TRIAL_DAYS, 'day'));
   const steps = [
     started
       ? {
@@ -496,7 +496,7 @@ function TrialTimeline({
           }),
           what: t(
             'Your Enterprise plan trial started. Everything is unlocked for {days} days.',
-            { days: ENTERPRISE_TRIAL_DAYS },
+            { days: SELF_SERVE_TRIAL_DAYS },
           ),
         }
       : {
@@ -562,8 +562,8 @@ function TrialStarted({
   onRetry: () => void;
   onClose: () => void;
 }) {
-  const trial = enterpriseTrialHooks.useTrial();
-  const featureName = enterpriseTrialFeatures.nameInSentence(featureKey);
+  const trial = selfServeTrialHooks.useTrial();
+  const featureName = selfServeTrialFeatures.nameInSentence(featureKey);
   const shortcuts = [
     { label: t('Set up single sign-on'), to: '/platform/sso' },
     { label: t('Review audit logs'), to: '/platform/audit-log' },
@@ -679,7 +679,7 @@ function TrialAlreadyUsed() {
         'Each platform owner can start the Enterprise plan trial once. Talk to our team to get more time.',
       )}
       actions={
-        <EnterpriseTrialSalesLink
+        <SelfServeTrialSalesLink
           surface="enterprise_trial_used"
           variant="default"
         />
@@ -700,7 +700,7 @@ function TrialNotStarted({ onClose }: { onClose: () => void }) {
           <Button variant="outline" onClick={onClose}>
             {t('Close')}
           </Button>
-          <EnterpriseTrialSalesLink
+          <SelfServeTrialSalesLink
             surface="enterprise_trial_unavailable"
             variant="default"
           />

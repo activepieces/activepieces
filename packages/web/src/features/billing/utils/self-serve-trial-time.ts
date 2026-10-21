@@ -51,7 +51,7 @@ function nextBoundary({
   return Math.min(...upcoming);
 }
 
-export const enterpriseTrialTime = {
+export const selfServeTrialTime = {
   calendarDaysBetween,
   activeTrialTiming,
   nextBoundary,

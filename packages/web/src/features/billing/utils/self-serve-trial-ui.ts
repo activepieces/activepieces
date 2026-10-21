@@ -26,7 +26,7 @@ function trialStorageId({
   }`;
 }
 
-export const enterpriseTrialUi = {
+export const selfServeTrialUi = {
   focusDialogItself,
   readFlag,
   writeFlag,

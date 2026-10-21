@@ -25,7 +25,7 @@ const usePlanSwitchSuccessDialogStore = create<PlanSwitchSuccessDialogStore>(
   }),
 );
 
-const useEnterpriseTrialDialogStore = create<EnterpriseTrialDialogStore>(
+const useSelfServeTrialDialogStore = create<SelfServeTrialDialogStore>(
   (set) => ({
     payload: null,
     returnFocus: null,
@@ -45,10 +45,10 @@ export const billingDialogHooks = {
   useManagePlanDialogStore,
   useConfirmPurchaseDialogStore,
   usePlanSwitchSuccessDialogStore,
-  useEnterpriseTrialDialogStore,
+  useSelfServeTrialDialogStore,
 };
 
-export type EnterpriseTrialDialogPayload = {
+export type SelfServeTrialDialogPayload = {
   featureKey?: FeatureKey;
   resume?: () => Promise<unknown>;
 };
@@ -80,9 +80,9 @@ type PlanSwitchSuccessDialogStore = {
   closeDialog: () => void;
 };
 
-type EnterpriseTrialDialogStore = {
-  payload: EnterpriseTrialDialogPayload | null;
+type SelfServeTrialDialogStore = {
+  payload: SelfServeTrialDialogPayload | null;
   returnFocus: HTMLElement | null;
-  openDialog: (payload: EnterpriseTrialDialogPayload) => void;
+  openDialog: (payload: SelfServeTrialDialogPayload) => void;
   closeDialog: () => void;
 };

@@ -125,7 +125,7 @@ vi.mock('@/app/routes/platform/setup/general/color-preview', () => ({
 vi.mock('@/features/billing', () => ({
   LockedGem: () => null,
   PlanBadge: () => null,
-  EnterpriseTrialSalesLink: () => null,
+  SelfServeTrialSalesLink: () => null,
   useEnterpriseGate: ({ unlocked }: { unlocked: boolean }) => ({
     access: unlocked ? 'entitled' : 'trial_available',
     locked: !unlocked,

@@ -8,29 +8,29 @@ import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
 import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
-import { ENTERPRISE_TRIAL_DAYS } from '../hooks/enterprise-trial-hooks';
+import { SELF_SERVE_TRIAL_DAYS } from '../hooks/self-serve-trial-hooks';
 import { useEnterpriseAccess } from '../hooks/use-enterprise-gate';
 import { usePlanTier } from '../hooks/use-plan-tier';
 import { useUpgradeClick } from '../hooks/use-upgrade-click';
 import { enterpriseDocs } from '../utils/enterprise-docs';
 import { planTiers } from '../utils/plan-tiers';
 
-import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
+import { SelfServeTrialSalesLink } from './self-serve-trial-sales-link';
 import { FeatureKey } from './request-trial';
 
-export function EnterpriseTrialLockedActions({
+export function SelfServeTrialLockedActions({
   featureKey,
   surface,
   onAction,
   compact = false,
   finePrintBelow = false,
   showContactSales = true,
-}: EnterpriseTrialLockedActionsProps) {
+}: SelfServeTrialLockedActionsProps) {
   const size = compact ? 'sm' : 'default';
   const secondary = compact ? 'link' : 'outline';
   const access = useEnterpriseAccess({ unlocked: false });
   const plan = usePlanTier(featureKey);
-  const { openDialog } = billingDialogHooks.useEnterpriseTrialDialogStore();
+  const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
   const { capture } = useTelemetry();
   const upgradeClick = useUpgradeClick();
   const contactSales = () => {
@@ -90,7 +90,7 @@ export function EnterpriseTrialLockedActions({
         {!compact && (
           <span className="text-xs text-gray-11">
             {t('{days}-day Enterprise plan trial. No credit card.', {
-              days: ENTERPRISE_TRIAL_DAYS,
+              days: SELF_SERVE_TRIAL_DAYS,
             })}
           </span>
         )}
@@ -99,7 +99,7 @@ export function EnterpriseTrialLockedActions({
   }
 
   const salesLink = (variant: 'default' | 'link') => (
-    <EnterpriseTrialSalesLink
+    <SelfServeTrialSalesLink
       surface="locked_feature"
       variant={variant}
       size={size}
@@ -145,7 +145,7 @@ export function EnterpriseTrialLockedActions({
   );
 }
 
-type EnterpriseTrialLockedActionsProps = {
+type SelfServeTrialLockedActionsProps = {
   featureKey?: FeatureKey;
   surface: PlatformAdminSurface;
   onAction?: () => void;

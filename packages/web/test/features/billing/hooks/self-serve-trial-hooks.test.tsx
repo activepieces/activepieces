@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { ApEdition, EnterpriseTrialStatus } from '@activepieces/shared';
+import { ApEdition, SelfServeTrialStatus } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import dayjs from 'dayjs';
@@ -9,14 +9,14 @@ import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  enterpriseTrialHooks,
-  enterpriseTrialKey,
-} from '@/features/billing/hooks/enterprise-trial-hooks';
+  selfServeTrialHooks,
+  selfServeTrialKey,
+} from '@/features/billing/hooks/self-serve-trial-hooks';
 
 let isPlatformAdmin = true;
 let planTrialEndsAt: string | null = null;
-let status: EnterpriseTrialStatus;
-const startEnterpriseTrial = vi.fn();
+let status: SelfServeTrialStatus;
+const startSelfServeTrial = vi.fn();
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -39,9 +39,11 @@ vi.mock('@/hooks/platform-hooks', () => ({
         id: 'platform-1',
         plan: {
           plan: 'free',
-          enterpriseTrialStartedAt: null,
-          enterpriseTrialEndsAt: planTrialEndsAt,
         },
+        selfServeTrial:
+          planTrialEndsAt === null
+            ? undefined
+            : { startedAt: '2026-10-14T09:00:00.000Z', endsAt: planTrialEndsAt },
       },
     }),
   },
@@ -49,12 +51,12 @@ vi.mock('@/hooks/platform-hooks', () => ({
 
 vi.mock('@/features/billing/api/billing-plans-api', () => ({
   platformBillingApi: {
-    getEnterpriseTrial: async () => status,
-    startEnterpriseTrial: () => startEnterpriseTrial(),
+    getSelfServeTrial: async () => status,
+    startSelfServeTrial: () => startSelfServeTrial(),
   },
 }));
 
-const activeStatus = (endsAt: Date): EnterpriseTrialStatus => ({
+const activeStatus = (endsAt: Date): SelfServeTrialStatus => ({
   state: 'active',
   startedAt: dayjs(endsAt).subtract(7, 'day').toISOString(),
   endsAt: endsAt.toISOString(),
@@ -72,7 +74,7 @@ function queryWrapper(
 }
 
 const readTrial = (wrapper = queryWrapper()) =>
-  renderHook(() => enterpriseTrialHooks.useTrial(), { wrapper });
+  renderHook(() => selfServeTrialHooks.useTrial(), { wrapper });
 
 beforeEach(() => {
   isPlatformAdmin = true;
@@ -125,10 +127,10 @@ describe('trial clock', () => {
 
 describe('starting the trial fails', () => {
   it('re-reads the real trial state', async () => {
-    startEnterpriseTrial.mockRejectedValueOnce(new Error('network lost'));
+    startSelfServeTrial.mockRejectedValueOnce(new Error('network lost'));
     const client = new QueryClient();
     const invalidate = vi.spyOn(client, 'invalidateQueries');
-    const { result } = renderHook(() => enterpriseTrialHooks.useStart(), {
+    const { result } = renderHook(() => selfServeTrialHooks.useStart(), {
       wrapper: queryWrapper(client),
     });
 
@@ -140,7 +142,7 @@ describe('starting the trial fails', () => {
     const keys = invalidate.mock.calls.map(([filters]) =>
       JSON.stringify(filters?.queryKey),
     );
-    expect(keys).toContain(JSON.stringify(enterpriseTrialKey('platform-1')));
+    expect(keys).toContain(JSON.stringify(selfServeTrialKey('platform-1')));
     expect(keys).toContain(JSON.stringify(['platform']));
   });
 });

@@ -5,9 +5,9 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 import { enterpriseMotion } from '../utils/enterprise-motion';
-import { enterpriseTrialFeatures } from '../utils/enterprise-trial-features';
+import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
 
-import { EnterpriseTrialLockedActions } from './enterprise-trial-locked-actions';
+import { SelfServeTrialLockedActions } from './self-serve-trial-locked-actions';
 import { PlanBadge } from './plan-badge';
 import { FeatureKey } from './request-trial';
 
@@ -19,11 +19,11 @@ export function EnterpriseLockedCard({
   showContactSales = true,
   surface,
 }: EnterpriseLockedCardProps) {
-  const copy = enterpriseTrialFeatures.lockedCopy(featureKey);
+  const copy = selfServeTrialFeatures.lockedCopy(featureKey);
   const headline =
     copy?.headline ??
     fallbackHeadline ??
-    enterpriseTrialFeatures.name(featureKey);
+    selfServeTrialFeatures.name(featureKey);
   const description = copy?.description ?? fallbackDescription;
   const benefits = showBenefits ? copy?.benefits ?? [] : [];
 
@@ -63,7 +63,7 @@ export function EnterpriseLockedCard({
           )}
         </div>
         <div className="shrink-0">
-          <EnterpriseTrialLockedActions
+          <SelfServeTrialLockedActions
             featureKey={featureKey}
             surface={surface}
             finePrintBelow

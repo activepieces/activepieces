@@ -2,8 +2,8 @@ import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
-  EnterpriseTrialState,
-  EnterpriseTrialStatus,
+  SelfServeTrialState,
+  SelfServeTrialStatus,
 } from '@activepieces/shared';
 import {
   QueryClient,
@@ -24,61 +24,61 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { platformBillingApi } from '../api/billing-plans-api';
 import { billingUtils } from '../utils/billing-utils';
 import {
-  enterpriseTrialTime,
+  selfServeTrialTime,
   TRIAL_DAYS,
-} from '../utils/enterprise-trial-time';
+} from '../utils/self-serve-trial-time';
 
 import { refreshBillingCaches } from './billing-hooks';
 
-export const enterpriseTrialHooks = {
+export const selfServeTrialHooks = {
   useStatus: () => {
     const { platform } = platformHooks.useCurrentPlatform();
-    const enabled = useCanManageEnterpriseTrial();
+    const enabled = useCanManageSelfServeTrial();
     return useQuery({
-      queryKey: enterpriseTrialKey(platform.id),
-      queryFn: platformBillingApi.getEnterpriseTrial,
+      queryKey: selfServeTrialKey(platform.id),
+      queryFn: platformBillingApi.getSelfServeTrial,
       staleTime: 60 * 1000,
       refetchInterval: (query) => refetchAfterTrialEnds(query.state.data),
       enabled,
     });
   },
   useOffer: (): boolean => {
-    const { data } = enterpriseTrialHooks.useStatus();
+    const { data } = selfServeTrialHooks.useStatus();
     return data?.state === 'eligible';
   },
-  useStart: (onStarted?: (status: EnterpriseTrialStatus) => void) => {
+  useStart: (onStarted?: (status: SelfServeTrialStatus) => void) => {
     const queryClient = useQueryClient();
     const { platform } = platformHooks.useCurrentPlatform();
     return useMutation({
-      mutationFn: platformBillingApi.startEnterpriseTrial,
-      onSuccess: (status: EnterpriseTrialStatus) => {
-        queryClient.setQueryData(enterpriseTrialKey(platform.id), status);
+      mutationFn: platformBillingApi.startSelfServeTrial,
+      onSuccess: (status: SelfServeTrialStatus) => {
+        queryClient.setQueryData(selfServeTrialKey(platform.id), status);
         refreshBillingCaches(queryClient);
         onStarted?.(status);
       },
       onError: () => {
         queryClient
-          .invalidateQueries({ queryKey: enterpriseTrialKey(platform.id) })
+          .invalidateQueries({ queryKey: selfServeTrialKey(platform.id) })
           .catch(() => undefined);
         refreshBillingCaches(queryClient);
       },
     });
   },
-  useTrial: (): EnterpriseTrial => {
+  useTrial: (): SelfServeTrial => {
     const { platform } = platformHooks.useCurrentPlatform();
-    const { data: status } = enterpriseTrialHooks.useStatus();
+    const { data: status } = selfServeTrialHooks.useStatus();
     const { embedState } = useEmbedding();
     const isPlatformAdmin = useIsPlatformAdmin();
     const basePlanName = toBasePlanName(platform.plan.plan);
     useTrialClock(
       status?.state === 'active'
         ? status.endsAt
-        : platform.plan.enterpriseTrialEndsAt,
+        : platform.selfServeTrial?.endsAt,
     );
     if (embedState.isEmbedded) {
       return NO_TRIAL;
     }
-    const planEndsAt = platform.plan.enterpriseTrialEndsAt;
+    const planEndsAt = platform.selfServeTrial?.endsAt;
     if (status?.state === 'active' && !isNil(status.endsAt)) {
       if (!dayjs(status.endsAt).isAfter(dayjs())) {
         return {
@@ -90,7 +90,7 @@ export const enterpriseTrialHooks = {
         };
       }
       return toActiveTrial({
-        startedAt: status.startedAt ?? platform.plan.enterpriseTrialStartedAt,
+        startedAt: status.startedAt ?? platform.selfServeTrial?.startedAt,
         endsAt: status.endsAt,
         extended: status.extended,
         isPlatformAdmin,
@@ -99,7 +99,7 @@ export const enterpriseTrialHooks = {
     }
     if (!isNil(planEndsAt) && dayjs(planEndsAt).isAfter(dayjs())) {
       return toActiveTrial({
-        startedAt: platform.plan.enterpriseTrialStartedAt,
+        startedAt: platform.selfServeTrial?.startedAt,
         endsAt: planEndsAt,
         extended: false,
         isPlatformAdmin,
@@ -119,11 +119,11 @@ export const enterpriseTrialHooks = {
   },
 };
 
-export function enterpriseTrialKey(platformId: string) {
-  return ['enterprise-trial', platformId] as const;
+export function selfServeTrialKey(platformId: string) {
+  return ['self-serve-trial', platformId] as const;
 }
 
-function useCanManageEnterpriseTrial(): boolean {
+function useCanManageSelfServeTrial(): boolean {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isPlatformAdmin = useIsPlatformAdmin();
   const { embedState } = useEmbedding();
@@ -183,7 +183,7 @@ function scheduleTrialBoundary({
   if (isNil(clock)) {
     return;
   }
-  const next = enterpriseTrialTime.nextBoundary({ end, now: Date.now() });
+  const next = selfServeTrialTime.nextBoundary({ end, now: Date.now() });
   if (isNil(next) || next - Date.now() > MAX_TIMER_MS) {
     clock.timer = null;
     return;
@@ -201,7 +201,7 @@ function scheduleTrialBoundary({
 }
 
 function refetchAfterTrialEnds(
-  status: EnterpriseTrialStatus | undefined,
+  status: SelfServeTrialStatus | undefined,
 ): number | false {
   if (status?.state !== 'active' || isNil(status.endsAt)) {
     return false;
@@ -232,10 +232,10 @@ function toActiveTrial({
   extended: boolean;
   isPlatformAdmin: boolean;
   basePlanName: string;
-}): EnterpriseTrial {
+}): SelfServeTrial {
   return {
     state: 'active',
-    ...enterpriseTrialTime.activeTrialTiming({
+    ...selfServeTrialTime.activeTrialTiming({
       startedAt,
       endsAt,
       now: Date.now(),
@@ -246,7 +246,7 @@ function toActiveTrial({
   };
 }
 
-const NO_TRIAL: EnterpriseTrial = {
+const NO_TRIAL: SelfServeTrial = {
   state: 'none',
   startedAt: null,
   endsAt: null,
@@ -276,14 +276,14 @@ type TrialClock = {
   timer: ReturnType<typeof setTimeout> | null;
 };
 
-export const ENTERPRISE_TRIAL_DAYS = TRIAL_DAYS;
+export const SELF_SERVE_TRIAL_DAYS = TRIAL_DAYS;
 const BOUNDARY_GRACE_MS = 5 * 1000;
 const EXPIRED_POLL_MS = 60 * 1000;
 const MAX_POLL_MS = 60 * 60 * 1000;
 const MAX_TIMER_MS = 2 ** 31 - 1;
 
-export type EnterpriseTrial = {
-  state: EnterpriseTrialState | 'none';
+export type SelfServeTrial = {
+  state: SelfServeTrialState | 'none';
   startedAt: Date | null;
   endsAt: Date | null;
   daysLeft: number;

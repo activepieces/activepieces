@@ -8,7 +8,7 @@ import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EnterpriseTrialDialog } from '@/features/billing/components/enterprise-trial-dialog';
+import { SelfServeTrialDialog } from '@/features/billing/components/self-serve-trial-dialog';
 
 let offer = false;
 let payload: { featureKey?: string; resume?: () => Promise<unknown> } | null =
@@ -28,7 +28,7 @@ vi.mock('canvas-confetti', () => ({
 
 vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
   billingDialogHooks: {
-    useEnterpriseTrialDialogStore: () => ({
+    useSelfServeTrialDialogStore: () => ({
       payload,
       openDialog: vi.fn(),
       closeDialog: vi.fn(),
@@ -55,9 +55,9 @@ vi.mock('@/features/billing/hooks/use-upgrade-click', () => ({
   useUpgradeClick: () => vi.fn(),
 }));
 
-vi.mock('@/features/billing/hooks/enterprise-trial-hooks', () => ({
-  ENTERPRISE_TRIAL_DAYS: 7,
-  enterpriseTrialHooks: {
+vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
+  SELF_SERVE_TRIAL_DAYS: 7,
+  selfServeTrialHooks: {
     useStatus: () => ({ data: liveStatus }),
     useOffer: () => offer,
     useStart: (callback?: (status: { state: string }) => void) => {
@@ -80,12 +80,12 @@ vi.mock('@/features/billing/hooks/enterprise-trial-hooks', () => ({
   },
 }));
 
-vi.mock('@/features/billing/components/enterprise-trial-ended-dialog', () => ({
-  EnterpriseTrialEndedDialog: () => null,
+vi.mock('@/features/billing/components/self-serve-trial-ended-dialog', () => ({
+  SelfServeTrialEndedDialog: () => null,
 }));
 
-vi.mock('@/features/billing/components/enterprise-trial-sales-link', () => ({
-  EnterpriseTrialSalesLink: () => null,
+vi.mock('@/features/billing/components/self-serve-trial-sales-link', () => ({
+  SelfServeTrialSalesLink: () => null,
 }));
 
 const client = new QueryClient();
@@ -93,7 +93,7 @@ const client = new QueryClient();
 const dialog = () => (
   <QueryClientProvider client={client}>
     <MemoryRouter>
-      <EnterpriseTrialDialog />
+      <SelfServeTrialDialog />
     </MemoryRouter>
   </QueryClientProvider>
 );

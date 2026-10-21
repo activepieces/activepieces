@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import * as React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { EnterpriseTrialBillingStatus } from '@/features/billing/components/enterprise-trial-billing-status';
+import { SelfServeTrialBillingStatus } from '@/features/billing/components/self-serve-trial-billing-status';
 
 const state = vi.hoisted(() => ({
   plan: 'free',
@@ -23,9 +23,9 @@ vi.mock('@/hooks/platform-hooks', () => ({
   },
 }));
 
-vi.mock('@/features/billing/hooks/enterprise-trial-hooks', () => ({
-  ENTERPRISE_TRIAL_DAYS: 7,
-  enterpriseTrialHooks: {
+vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
+  SELF_SERVE_TRIAL_DAYS: 7,
+  selfServeTrialHooks: {
     useTrial: () => ({ state: state.trialState, endsAt: state.endsAt }),
   },
 }));
@@ -34,8 +34,8 @@ vi.mock('@/features/billing/hooks/use-credits-usage', () => ({
   useCreditsUsage: () => ({ isPaid: state.plan !== 'free' }),
 }));
 
-vi.mock('@/features/billing/components/enterprise-trial-sales-link', () => ({
-  EnterpriseTrialSalesLink: () => null,
+vi.mock('@/features/billing/components/self-serve-trial-sales-link', () => ({
+  SelfServeTrialSalesLink: () => null,
 }));
 
 describe('billing page after the trial', () => {
@@ -52,7 +52,7 @@ describe('billing page after the trial', () => {
         plan,
         endsAt: dayjs().subtract(daysAgo, 'day').toDate(),
       });
-      render(<EnterpriseTrialBillingStatus />);
+      render(<SelfServeTrialBillingStatus />);
       expect(
         screen.queryAllByText(/Enterprise plan settings are locked/),
       ).toHaveLength(shown ? 1 : 0);

@@ -11,28 +11,28 @@ import { cn } from '@/lib/utils';
 
 import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import {
-  ENTERPRISE_TRIAL_DAYS,
-  enterpriseTrialHooks,
-} from '../hooks/enterprise-trial-hooks';
+  SELF_SERVE_TRIAL_DAYS,
+  selfServeTrialHooks,
+} from '../hooks/self-serve-trial-hooks';
 import { useCreditsUsage } from '../hooks/use-credits-usage';
 import { enterpriseMotion } from '../utils/enterprise-motion';
-import { enterpriseTrialTime } from '../utils/enterprise-trial-time';
+import { selfServeTrialTime } from '../utils/self-serve-trial-time';
 import { planTiers } from '../utils/plan-tiers';
 
-import { EnterpriseTrialSalesLink } from './enterprise-trial-sales-link';
+import { SelfServeTrialSalesLink } from './self-serve-trial-sales-link';
 
-export function EnterpriseTrialBillingStatus() {
-  const trial = enterpriseTrialHooks.useTrial();
+export function SelfServeTrialBillingStatus() {
+  const trial = selfServeTrialHooks.useTrial();
   const { isPaid } = useCreditsUsage();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { openDialog } = billingDialogHooks.useEnterpriseTrialDialogStore();
+  const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
 
   if (trial.state === 'eligible') {
     return (
       <StatusCallout
         tone="accent"
         title={t('Try the Enterprise plan free for {days} days', {
-          days: ENTERPRISE_TRIAL_DAYS,
+          days: SELF_SERVE_TRIAL_DAYS,
         })}
         description={t(
           'Single sign-on, audit logs, your own AI providers and more, for everyone on your platform. No credit card, nothing to cancel.',
@@ -59,7 +59,7 @@ export function EnterpriseTrialBillingStatus() {
           'Enterprise plan features run next to your {plan} plan until then. Talk to our team to keep them.',
           { plan: trial.basePlanName },
         )}
-        action={<EnterpriseTrialSalesLink surface="enterprise_trial_billing" />}
+        action={<SelfServeTrialSalesLink surface="enterprise_trial_billing" />}
       />
     );
   }
@@ -84,7 +84,7 @@ export function EnterpriseTrialBillingStatus() {
         description={t(
           'Enterprise plan settings are locked and nothing was deleted. Our team can extend your trial or set you up on the Enterprise plan.',
         )}
-        action={<EnterpriseTrialSalesLink surface="enterprise_trial_billing" />}
+        action={<SelfServeTrialSalesLink surface="enterprise_trial_billing" />}
       />
     );
   }
@@ -108,7 +108,7 @@ function showsTrialAftermath({
     return !isPaid;
   }
   return (
-    enterpriseTrialTime.calendarDaysBetween({ from: endsAt, to: Date.now() }) <=
+    selfServeTrialTime.calendarDaysBetween({ from: endsAt, to: Date.now() }) <=
     AFTERMATH_DAYS
   );
 }

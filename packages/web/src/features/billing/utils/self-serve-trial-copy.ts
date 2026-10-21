@@ -1,9 +1,9 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 
-import type { EnterpriseTrial } from '../hooks/enterprise-trial-hooks';
+import type { SelfServeTrial } from '../hooks/self-serve-trial-hooks';
 
-function daysLeftLabel(trial: EnterpriseTrial): string {
+function daysLeftLabel(trial: SelfServeTrial): string {
   if (trial.endsToday) {
     return t('Ends today');
   }
@@ -15,7 +15,7 @@ function daysLeftLabel(trial: EnterpriseTrial): string {
   });
 }
 
-function cardStatus(trial: EnterpriseTrial): string {
+function cardStatus(trial: SelfServeTrial): string {
   if (trial.endsToday) {
     return t('last day');
   }
@@ -24,7 +24,7 @@ function cardStatus(trial: EnterpriseTrial): string {
   });
 }
 
-function sidebarDetail(trial: EnterpriseTrial): string {
+function sidebarDetail(trial: SelfServeTrial): string {
   const end = dayjs(trial.endsAt);
   if (trial.endsToday) {
     return t('Ends today at {time}', { time: end.format('h:mm A') });
@@ -38,7 +38,7 @@ function sidebarDetail(trial: EnterpriseTrial): string {
   );
 }
 
-function endsSentence(trial: EnterpriseTrial): string {
+function endsSentence(trial: SelfServeTrial): string {
   const end = dayjs(trial.endsAt);
   const time = end.format('h:mm A');
   if (trial.endsToday) {
@@ -52,7 +52,7 @@ function endsSentence(trial: EnterpriseTrial): string {
   });
 }
 
-function details(trial: EnterpriseTrial): string {
+function details(trial: SelfServeTrial): string {
   const end = dayjs(trial.endsAt);
   const plan = trial.basePlanName;
   if (trial.endsToday) {
@@ -73,7 +73,7 @@ function details(trial: EnterpriseTrial): string {
   );
 }
 
-export const enterpriseTrialCopy = {
+export const selfServeTrialCopy = {
   daysLeftLabel,
   sidebarDetail,
   cardStatus,

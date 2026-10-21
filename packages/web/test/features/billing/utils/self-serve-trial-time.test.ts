@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { describe, expect, it } from 'vitest';
 
-import { enterpriseTrialTime } from '@/features/billing/utils/enterprise-trial-time';
+import { selfServeTrialTime } from '@/features/billing/utils/self-serve-trial-time';
 
 const NOW = new Date(2026, 9, 12, 10, 0, 0);
 const LATE = new Date(2026, 9, 12, 23, 30, 0);
@@ -45,7 +45,7 @@ describe('active trial timing', () => {
     },
   ])('$name', ({ now, startedAt, endsAt, expected }) => {
     expect(
-      enterpriseTrialTime.activeTrialTiming({
+      selfServeTrialTime.activeTrialTiming({
         startedAt,
         endsAt,
         now: now.getTime(),
@@ -67,7 +67,7 @@ describe('next clock boundary', () => {
       expected: dayjs(NOW).hour(18).valueOf(),
     },
   ])('$name', ({ end, expected }) => {
-    expect(enterpriseTrialTime.nextBoundary({ end, now: NOW.getTime() })).toBe(
+    expect(selfServeTrialTime.nextBoundary({ end, now: NOW.getTime() })).toBe(
       expected,
     );
   });

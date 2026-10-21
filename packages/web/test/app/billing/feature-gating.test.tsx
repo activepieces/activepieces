@@ -104,8 +104,8 @@ import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { billingDialogHooks } from '@/features/billing/hooks/billing-dialog-hooks';
 import { CreateProjectButton } from '@/features/projects/components/create-project-button';
 
-const useEnterpriseTrialDialogStore =
-  billingDialogHooks.useEnterpriseTrialDialogStore;
+const useSelfServeTrialDialogStore =
+  billingDialogHooks.useSelfServeTrialDialogStore;
 
 const renderWithQueryClient = (ui: React.ReactElement) =>
   render(
@@ -133,7 +133,7 @@ const quotaExceededError = () => {
 };
 
 beforeEach(() => {
-  useEnterpriseTrialDialogStore.getState().closeDialog();
+  useSelfServeTrialDialogStore.getState().closeDialog();
   teamProjectsLimit = 0;
   aiProvidersEnabled = false;
   edition = 'cloud';
@@ -180,7 +180,7 @@ describe('create project gating', () => {
         />,
       );
       fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-      const payload = useEnterpriseTrialDialogStore.getState().payload;
+      const payload = useSelfServeTrialDialogStore.getState().payload;
       expect(payload?.featureKey).toBe('PROJECTS');
       expect(payload?.resume).toBeUndefined();
       expect(screen.queryAllByRole('textbox')).toHaveLength(0);
@@ -198,7 +198,7 @@ describe('create project gating', () => {
     act(() => {
       createProjectHandlers.onError?.(quotaExceededError());
     });
-    expect(useEnterpriseTrialDialogStore.getState().payload?.featureKey).toBe(
+    expect(useSelfServeTrialDialogStore.getState().payload?.featureKey).toBe(
       'PROJECTS',
     );
     expect(screen.queryAllByRole('textbox')).toHaveLength(0);
@@ -210,7 +210,7 @@ describe('create project gating', () => {
       <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /new project/i }));
-    expect(useEnterpriseTrialDialogStore.getState().payload).toBeNull();
+    expect(useSelfServeTrialDialogStore.getState().payload).toBeNull();
     expect(screen.queryAllByRole('textbox').length).toBeGreaterThan(0);
   });
 });
