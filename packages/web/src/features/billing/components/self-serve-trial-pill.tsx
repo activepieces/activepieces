@@ -19,8 +19,8 @@ import {
   selfServeTrialHooks,
   SeatGrace,
 } from '../hooks/self-serve-trial-hooks';
-import { selfServeTrialCopy } from '../utils/self-serve-trial-copy';
 import { planTiers } from '../utils/plan-tiers';
+import { selfServeTrialCopy } from '../utils/self-serve-trial-copy';
 
 export function SelfServeTrialLine({ trial }: { trial: SelfServeTrial }) {
   const line = (

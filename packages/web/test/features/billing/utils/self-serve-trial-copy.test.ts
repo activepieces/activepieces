@@ -38,9 +38,7 @@ describe('seat grace tooltip', () => {
 
   it('tells an admin what is deactivated and where to act', () => {
     expect(
-      selfServeTrialCopy.seatGraceTooltip(
-        seatGrace({ isPlatformAdmin: true }),
-      ),
+      selfServeTrialCopy.seatGraceTooltip(seatGrace({ isPlatformAdmin: true })),
     ).toBe(
       "Users added during the trial beyond the plan's 5 seats will be deactivated on Oct 26. Manage seats, or upgrade to keep them.",
     );
