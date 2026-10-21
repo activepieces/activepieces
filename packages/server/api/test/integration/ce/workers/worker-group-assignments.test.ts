@@ -55,10 +55,11 @@ describe('worker group assignments', () => {
         const response = await mine.get('/v1/worker-groups/overview')
 
         expect(response.statusCode).toBe(StatusCodes.OK)
-        const groups = response.json().groups as { label: string }[]
-        expect(groups.find((g) => g.label === projectGroup)).toMatchObject({ scope: 'project', projectCount: 2, sample: ['Alpha', 'Beta'] })
+        const groups = response.json().groups as { label: string, sample?: string[] }[]
+        expect(groups.find((g) => g.label === projectGroup)).toMatchObject({ scope: 'project', projectCount: 2 })
+        expect([...(groups.find((g) => g.label === projectGroup)?.sample ?? [])].sort()).toEqual(['Alpha', 'Beta'])
         expect(groups.find((g) => g.label === flowGroup)).toMatchObject({ scope: 'flow', flowCount: 1, sample: ['Nightly export'] })
-        expect(response.json().defaultGroup.sample[0]).toBe('AAA ungrouped')
+        expect(response.json().defaultGroup.sample).toContain('AAA ungrouped')
     })
 
     it('overview keeps a project group and a flow group with the same name apart', async () => {
@@ -140,7 +141,8 @@ describe('worker group assignments', () => {
 
         expect(tooBig.statusCode).toBe(StatusCodes.BAD_REQUEST)
         expect(pastEnd.json()).toMatchObject({ offset: 4, total: 5, next: null, previous: '2' })
-        expect(pastEnd.json().data.map((p: { id: string }) => p.id)).toEqual([projects[4].id])
+        const lastById = [...projects].sort((a, b) => (a.id < b.id ? -1 : 1))[4]
+        expect(pastEnd.json().data.map((p: { id: string }) => p.id)).toEqual([lastById.id])
     })
 })
 

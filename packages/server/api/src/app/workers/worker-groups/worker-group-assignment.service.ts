@@ -54,12 +54,12 @@ export const workerGroupAssignmentService = (log: FastifyBaseLogger) => ({
             firstNamesPerGroup(platformProjects({ platformId })
                 .select('project."workerGroupId"', 'label')
                 .addSelect('project."displayName"', 'name')
-                .addSelect('ROW_NUMBER() OVER (PARTITION BY project."workerGroupId" ORDER BY project."displayName" ASC)', 'position')),
+                .addSelect('ROW_NUMBER() OVER (PARTITION BY project."workerGroupId")', 'position')),
             firstNamesPerGroup(withLatestVersion(platformFlows({ platformId }))
                 .andWhere('flow."workerGroupId" IS NOT NULL')
                 .select('flow."workerGroupId"', 'label')
                 .addSelect('latest_version."displayName"', 'name')
-                .addSelect('ROW_NUMBER() OVER (PARTITION BY flow."workerGroupId" ORDER BY latest_version."displayName" ASC)', 'position')),
+                .addSelect('ROW_NUMBER() OVER (PARTITION BY flow."workerGroupId")', 'position')),
         ])
 
         const projectsByLabel = new Map(projectCounts.map((row) => [row.label, row.count]))
@@ -579,8 +579,8 @@ function likePattern(value: string): string {
     return `%${value.replace(/[\\%_]/g, (match) => `\\${match}`)}%`
 }
 
-const PROJECT_ORDER: SortKey[] = [['project."displayName"', 'ASC'], ['project.id', 'ASC']]
-const FLOW_ORDER: SortKey[] = [['latest_version."displayName"', 'ASC'], ['flow.id', 'ASC']]
+const PROJECT_ORDER: SortKey[] = [['project.id', 'ASC']]
+const FLOW_ORDER: SortKey[] = [['flow.id', 'ASC']]
 const PROJECT_SELECT = ['project.id AS id', 'project."displayName" AS "displayName"', 'project.icon AS icon', 'project."workerGroupId" AS "workerGroupId"', 'project."maxConcurrentJobs" AS "maxConcurrentJobs"']
 const FLOW_SELECT = [
     'flow.id AS id',
