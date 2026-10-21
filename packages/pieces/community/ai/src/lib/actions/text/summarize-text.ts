@@ -1,6 +1,6 @@
-import { AiStepAction, createAction, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { AgentPieceProps, AiStepAction, createAction, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import { runOnWorker } from '../../common/ai-step';
-import { aiProps, aiProviderSelection } from '../../common/props';
+import { aiModel } from '../../common/props';
 
 export const summarizeText = createAction({
   audience: 'both',
@@ -8,10 +8,9 @@ export const summarizeText = createAction({
   classification: 'READ',
   displayName: 'Summarize Text',
   description: 'Summarize long emails, articles, or documents into what matters.',
-  aiMetadata: { description: 'Condenses one block of supplied text into a shorter summary using a chosen text model. Pick it when the goal is a shorter version of text you already have; use extractStructuredData for specific typed fields, classifyText for a label, or askAi for open-ended questions. Requires a provider/model, the text inline (it fetches no URLs and reads no files) and the Prompt prop, which carries a default guide instruction but is still required; not idempotent, as generation is non-deterministic, so identical text returns differently worded summaries.', idempotent: false },
+  aiMetadata: { description: 'Condenses one block of supplied text into a shorter summary using a chosen text model. Pick it when the goal is a shorter version of text you already have; use extractStructuredData for specific typed fields, classifyText for a label, or askAi for open-ended questions. Requires an AI Model (a tier or a provider/model), the text inline (it fetches no URLs and reads no files) and the Prompt prop, which carries a default guide instruction but is still required; not idempotent, as generation is non-deterministic, so identical text returns differently worded summaries.', idempotent: false },
   props: {
-    provider: aiProps({ modelType: 'text' }).provider,
-    model: aiProps({ modelType: 'text' }).model,
+    [AgentPieceProps.AI_PROVIDER_MODEL]: aiModel.prop(),
     text: Property.LongText({
       displayName: 'Text',
       required: true,
@@ -32,15 +31,13 @@ export const summarizeText = createAction({
     }),
   },
   async run(context) {
-    const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
+    const model = aiModel.resolveOrThrow(context.propsValue.aiProviderModel);
 
     const result = await runOnWorker({
       context,
       buildRequest: async () => ({
         action: AiStepAction.SUMMARIZE_TEXT,
-        provider,
-        ...spreadIfDefined('providerConfigId', configId),
-        modelId: context.propsValue.model,
+        ...model,
         prompt: context.propsValue.prompt,
         text: context.propsValue.text,
         ...spreadIfDefined('maxOutputTokens', context.propsValue.maxOutputTokens),
