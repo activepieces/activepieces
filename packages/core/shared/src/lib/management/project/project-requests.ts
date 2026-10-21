@@ -16,8 +16,6 @@ export const UpdateProjectPlatformRequest = z.object({
     }).optional(),
     globalConnectionExternalIds: z.array(z.string()).optional(),
     maxConcurrentJobs: z.optional(Nullable(z.number().int().positive())),
-    /** @deprecated use POST /v1/worker-groups/projects/:id instead */
-    workerGroupId: z.optional(Nullable(z.string())),
     executionDataRetentionDays: z.optional(Nullable(z.number().int().positive())),
     sensitive: z.boolean().optional(),
 })

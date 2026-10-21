@@ -32,7 +32,7 @@ const getQueueName = ({ scope, workerGroupId }: GetQueueNameParams): string => {
 }
 
 const isRoutableWorkerGroupId = (value: string): boolean => {
-    return value.length > 0 && value !== NO_WORKER_GROUP_SENTINEL
+    return value.length > 0 && value !== NO_WORKER_GROUP_SENTINEL && !value.includes(':')
 }
 
 export const workerGroupQueues = {

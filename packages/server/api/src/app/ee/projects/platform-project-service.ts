@@ -16,7 +16,6 @@ import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { projectWorkerGroupService } from '../../workers/worker-groups/project-worker-group.service'
 import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { projectMemberService } from './project-members/project-member.service'
@@ -129,7 +128,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     }: UpdateParams): Promise<ProjectWithLimits> {
         const project = await projectService(log).getOneOrThrow(projectId)
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-        const { globalConnectionExternalIds, maxConcurrentJobs, workerGroupId, ...rest } = request
+        const { globalConnectionExternalIds, maxConcurrentJobs, ...rest } = request
         let resolvedPoolId: string | null | undefined
         await transaction(async (entityManager) => {
             resolvedPoolId = await resolvePoolId({ platformId: project.platformId, projectId, maxConcurrentJobs, log })
@@ -193,13 +192,6 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         })
         if (resolvedPoolId !== undefined) {
             await concurrencyPoolService(log).assignProject({ projectId, poolId: resolvedPoolId })
-        }
-        if (platformPlan.workerGroupsEnabled && workerGroupId !== undefined) {
-            await projectWorkerGroupService(log).assignProjectToGroup({
-                projectId,
-                platformId: project.platformId,
-                workerGroupId,
-            })
         }
         return this.getWithPlanAndUsageOrThrow(projectId)
     },

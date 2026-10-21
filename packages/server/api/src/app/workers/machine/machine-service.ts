@@ -141,6 +141,15 @@ export const machineService = (log: FastifyBaseLogger) => {
                 sharedSlots,
             }
         },
+        async listOnlineWorkersByGroup(): Promise<OnlineWorkerSummary[]> {
+            const { online: onlineWorkers } = workerLiveness.partitionByLiveness(await workerMachineCache().find())
+            return onlineWorkers.map((worker) => ({
+                id: worker.id,
+                slots: parseWorkerConcurrency(worker.information.workerProps.WORKER_CONCURRENCY),
+                workerGroupId: isNil(worker.workerGroupId) || worker.workerGroupId.length === 0 ? null : worker.workerGroupId,
+                scope: resolveDedicatedScope(worker),
+            }))
+        },
         async getWorkerGroupScopes({ workerGroupId }: { workerGroupId: string }): Promise<WorkerGroupScope[]> {
             const { online: onlineWorkers } = workerLiveness.partitionByLiveness(await workerMachineCache().find())
             const scopes = onlineWorkers
@@ -157,6 +166,13 @@ function resolveDedicatedScope(worker: { workerGroupId?: string, workerGroupScop
         return null
     }
     return worker.workerGroupScope ?? WorkerGroupScope.PROJECT
+}
+
+type OnlineWorkerSummary = {
+    id: string
+    slots: number
+    workerGroupId: string | null
+    scope: WorkerGroupScope | null
 }
 
 type WorkerGroupInfo = {
