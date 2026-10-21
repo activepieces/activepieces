@@ -167,6 +167,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Or Updated Contact": "New Or Updated Contact",
   "Triggers when there is a new or updated contact": "Triggers when there is a new or updated contact"
 }
