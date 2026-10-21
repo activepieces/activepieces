@@ -63,26 +63,36 @@ export const bulkUpdateTimeEntriesAction = createAction({
 			workspaceId: propsValue.workspaceId,
 			timeEntryIds: propsValue.timeEntryIds.map(String),
 		});
-		const billable = clockifyUtils.toOptionalBoolean({ value: propsValue.billable });
+		const billable = clockifyUtils.toOptionalBoolean({
+			value: propsValue.billable,
+		});
 		const timeEntries = await clockifyApi.bulkUpdateTimeEntries({
 			auth,
 			workspaceId: propsValue.workspaceId,
 			userId,
-			entries: current.map((entry) => ({
-				id: entry.id,
-				start: entry.timeInterval?.start ?? '',
-				end: entry.timeInterval?.end,
-				description: propsValue.description ?? entry.description,
-				projectId: propsValue.projectId ?? entry.projectId,
-				taskId: propsValue.taskId ?? entry.taskId,
-				tagIds: propsValue.tagIds?.map(String) ?? entry.tagIds,
-				billable: billable ?? entry.billable,
-				type: entry.type,
-				customFields: entry.customFieldValues?.map((field) => ({
-					customFieldId: field.customFieldId,
-					value: field.value,
-				})),
-			})),
+			entries: current.flatMap((entry) => {
+				const start = entry.timeInterval?.start;
+				if (!start) {
+					return [];
+				}
+				return [
+					{
+						id: entry.id,
+						start,
+						end: entry.timeInterval?.end,
+						description: propsValue.description ?? entry.description,
+						projectId: propsValue.projectId ?? entry.projectId,
+						taskId: propsValue.taskId ?? entry.taskId,
+						tagIds: propsValue.tagIds?.map(String) ?? entry.tagIds,
+						billable: billable ?? entry.billable,
+						type: entry.type,
+						customFields: entry.customFieldValues?.map((field) => ({
+							customFieldId: field.customFieldId,
+							value: field.value,
+						})),
+					},
+				];
+			}),
 		});
 		return { timeEntries, count: timeEntries.length };
 	},

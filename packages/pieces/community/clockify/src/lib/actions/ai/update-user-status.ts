@@ -12,7 +12,7 @@ export const updateUserStatusAction = createAction({
 	displayName: 'Update User Status',
 	description: 'Activates or deactivates a workspace member.',
 	audience: 'ai',
-	classification: 'WRITE',
+	classification: 'DESTRUCTIVE',
 	aiMetadata: {
 		description:
 			'Sets a workspace member to ACTIVE or INACTIVE. Inactive users keep their data but cannot track time in the workspace. Needs workspace admin. Returns the updated workspace.',
