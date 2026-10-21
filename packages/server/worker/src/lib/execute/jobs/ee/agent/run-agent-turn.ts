@@ -1,4 +1,4 @@
-import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, isProviderBillingError, isTransientProviderError, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, isProviderBillingError, isTransientProviderError, spreadIfDefined, toError, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike, modelCatalog } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, PersistedAgentPart } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
@@ -170,7 +170,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         },
         onError: ({ error }) => {
             log.error({ error }, 'Chat streamText error')
-            streamError = error instanceof Error ? error : new Error(String(error))
+            streamError = toError(error)
         },
     })
 
