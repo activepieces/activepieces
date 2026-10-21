@@ -5592,6 +5592,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/mailfloss": {
+      "name": "@activepieces/piece-mailfloss",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/mailgun": {
       "name": "@activepieces/piece-mailgun",
       "version": "0.1.1",
@@ -12195,6 +12207,8 @@
     "@activepieces/piece-mailercheck": ["@activepieces/piece-mailercheck@workspace:packages/pieces/community/mailercheck"],
 
     "@activepieces/piece-maileroo": ["@activepieces/piece-maileroo@workspace:packages/pieces/community/maileroo"],
+
+    "@activepieces/piece-mailfloss": ["@activepieces/piece-mailfloss@workspace:packages/pieces/community/mailfloss"],
 
     "@activepieces/piece-mailgun": ["@activepieces/piece-mailgun@workspace:packages/pieces/community/mailgun"],
 
