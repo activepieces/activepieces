@@ -43,7 +43,9 @@ const NOW = new Date(2026, 9, 12, 10, 0, 0);
 const trialEnding = (ending: boolean): SelfServeTrial => ({
   state: 'active',
   startedAt: NOW,
-  endsAt: dayjs(NOW).add(ending ? 1 : 7, 'day').toDate(),
+  endsAt: dayjs(NOW)
+    .add(ending ? 1 : 7, 'day')
+    .toDate(),
   daysLeft: ending ? 1 : 7,
   endsToday: false,
   ending,

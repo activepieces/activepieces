@@ -7,9 +7,9 @@ import { cn } from '@/lib/utils';
 import { enterpriseMotion } from '../utils/enterprise-motion';
 import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
 
-import { SelfServeTrialLockedActions } from './self-serve-trial-locked-actions';
 import { PlanBadge } from './plan-badge';
 import { FeatureKey } from './request-trial';
+import { SelfServeTrialLockedActions } from './self-serve-trial-locked-actions';
 
 export function EnterpriseLockedCard({
   featureKey,

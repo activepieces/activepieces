@@ -39,16 +39,16 @@ import {
 } from '../hooks/use-enterprise-gate';
 import { usePlanTier } from '../hooks/use-plan-tier';
 import { enterpriseMotion } from '../utils/enterprise-motion';
-import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
-import { selfServeTrialUi } from '../utils/self-serve-trial-ui';
 import { FeatureTier } from '../utils/feature-tier';
 import { planTiers } from '../utils/plan-tiers';
+import { selfServeTrialFeatures } from '../utils/self-serve-trial-features';
+import { selfServeTrialUi } from '../utils/self-serve-trial-ui';
 
+import { PlanBadge } from './plan-badge';
+import { FeatureKey } from './request-trial';
 import { SelfServeTrialEndedDialog } from './self-serve-trial-ended-dialog';
 import { SelfServeTrialLockedActions } from './self-serve-trial-locked-actions';
 import { SelfServeTrialSalesLink } from './self-serve-trial-sales-link';
-import { PlanBadge } from './plan-badge';
-import { FeatureKey } from './request-trial';
 
 export function SelfServeTrialDialog() {
   const { payload, returnFocus, closeDialog } =

@@ -43,7 +43,10 @@ vi.mock('@/hooks/platform-hooks', () => ({
         selfServeTrial:
           planTrialEndsAt === null
             ? undefined
-            : { startedAt: '2026-10-14T09:00:00.000Z', endsAt: planTrialEndsAt },
+            : {
+                startedAt: '2026-10-14T09:00:00.000Z',
+                endsAt: planTrialEndsAt,
+              },
       },
     }),
   },

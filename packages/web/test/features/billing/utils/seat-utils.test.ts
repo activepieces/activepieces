@@ -20,10 +20,7 @@ describe('reserved seats', () => {
     {
       name: 'counts pending invitations like the server does',
       users: ACTIVE_AND_INACTIVE,
-      invitations: [
-        invite({ email: 'c@x.com' }),
-        invite({ email: 'C@x.com' }),
-      ],
+      invitations: [invite({ email: 'c@x.com' }), invite({ email: 'C@x.com' })],
       expected: 2,
     },
     {
