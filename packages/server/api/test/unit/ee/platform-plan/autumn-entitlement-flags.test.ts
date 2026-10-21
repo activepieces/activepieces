@@ -224,39 +224,39 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
     })
 
     it.each([
-        { name: 'drops', enterpriseTrial: { startedAt: 1, endsAt: 2 }, expected: null },
-        { name: 'keeps', enterpriseTrial: null, expected: 5 },
-    ])('$name a scheduled seat reduction depending on whether an Enterprise trial runs', ({ enterpriseTrial, expected }) => {
+        { name: 'drops', selfServeTrial: { startedAt: 1, endsAt: 2 }, expected: null },
+        { name: 'keeps', selfServeTrial: null, expected: 5 },
+    ])('$name a scheduled seat reduction depending on whether a self-serve trial runs', ({ selfServeTrial, expected }) => {
         const projection = autumnUtils.mapAutumnFeaturesToPlatformPlan({
             planId: 'team',
             grantedFeatureIds: new Set(FREE_FLAGS),
             balances: {},
             scheduledUsersLimit: 5,
-            enterpriseTrial,
-            embeddingOutsideEnterpriseTrial: false,
+            selfServeTrial,
+            embeddingOutsideSelfServeTrial: false,
         })
         expect(projection.scheduledUsersLimit).toBe(expected)
     })
 })
 
-describe('grantsEmbeddingOutsideEnterpriseTrial', () => {
+describe('grantsEmbeddingOutsideSelfServeTrial', () => {
     const TRIAL = subscription({ planId: PlanName.ENTERPRISE_TRIAL, featureIds: ['embeddingEnabled', 'ssoEnabled'], addOn: true })
     const EMBED_DEAL = subscription({ planId: 'custom_embed', featureIds: [...FREE_FLAGS, 'embeddingEnabled'] })
 
-    it('is false when only the Enterprise trial grants Embedding', () => {
+    it('is false when only the self-serve trial grants Embedding', () => {
         const free = subscription({ planId: PlanName.FREE, featureIds: FREE_FLAGS })
 
-        expect(autumnUtils.grantsEmbeddingOutsideEnterpriseTrial({ subscriptions: [free, TRIAL], purchases: [] })).toBe(false)
-        expect(autumnUtils.grantsEmbeddingOutsideEnterpriseTrial({ subscriptions: [free], purchases: [] })).toBe(false)
+        expect(autumnUtils.grantsEmbeddingOutsideSelfServeTrial({ subscriptions: [free, TRIAL], purchases: [] })).toBe(false)
+        expect(autumnUtils.grantsEmbeddingOutsideSelfServeTrial({ subscriptions: [free], purchases: [] })).toBe(false)
     })
 
     it('is true when the customer\'s own plan grants Embedding, with or without a trial', () => {
-        expect(autumnUtils.grantsEmbeddingOutsideEnterpriseTrial({ subscriptions: [EMBED_DEAL], purchases: [] })).toBe(true)
-        expect(autumnUtils.grantsEmbeddingOutsideEnterpriseTrial({ subscriptions: [EMBED_DEAL, TRIAL], purchases: [] })).toBe(true)
+        expect(autumnUtils.grantsEmbeddingOutsideSelfServeTrial({ subscriptions: [EMBED_DEAL], purchases: [] })).toBe(true)
+        expect(autumnUtils.grantsEmbeddingOutsideSelfServeTrial({ subscriptions: [EMBED_DEAL, TRIAL], purchases: [] })).toBe(true)
     })
 })
 
-describe('withoutExpiredEnterpriseTrial', () => {
+describe('withoutExpiredSelfServeTrial', () => {
     const TRIAL_FLAGS = ['auditLogEnabled', 'ssoEnabled']
     const HOUR_MS = 60 * 60 * 1000
 
@@ -282,7 +282,7 @@ describe('withoutExpiredEnterpriseTrial', () => {
     it('drops a trial that Autumn still shows as active after its end date', () => {
         const customer = customerOnFreeWithTrial({ trialEndsAt: Date.now() - HOUR_MS })
 
-        const trimmed = autumnUtils.withoutExpiredEnterpriseTrial(customer as never)
+        const trimmed = autumnUtils.withoutExpiredSelfServeTrial(customer as never)
 
         expect([...autumnUtils.toGrantedFeatureIds(trimmed)].sort()).toEqual([...FREE_FLAGS].sort())
         expect(trimmed.balances[UnconsumableFeatureId.USERS_LIMIT]).toMatchObject({ granted: 1, unlimited: false })
@@ -292,7 +292,7 @@ describe('withoutExpiredEnterpriseTrial', () => {
     it('keeps a trial that is still running', () => {
         const customer = customerOnFreeWithTrial({ trialEndsAt: Date.now() + HOUR_MS })
 
-        expect(autumnUtils.withoutExpiredEnterpriseTrial(customer as never)).toBe(customer)
+        expect(autumnUtils.withoutExpiredSelfServeTrial(customer as never)).toBe(customer)
     })
 })
 
