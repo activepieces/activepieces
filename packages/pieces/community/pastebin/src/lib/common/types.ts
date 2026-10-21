@@ -9,7 +9,7 @@ export type PastebinCreatePasteRequest = {
   paste_code: string;
   paste_private?: string;
   paste_name?: string;
-  paste_expiry_date?: string;
+  paste_expire_date?: string;
   paste_format?: string;
   folder_key?: string;
 };

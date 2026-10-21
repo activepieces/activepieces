@@ -336,7 +336,7 @@ export const createPasteAction = createAction({
         paste_format: context.propsValue.format,
         paste_name: context.propsValue.name,
         paste_private: context.propsValue.privacy,
-        paste_expiry_date: context.propsValue.expiry,
+        paste_expire_date: context.propsValue.expiry,
         folder_key: context.propsValue.folder,
       },
     });

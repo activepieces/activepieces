@@ -30,6 +30,7 @@ async function request({
     url: `${BASE_URL}/api/${script}`,
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
+      Accept: '*/*',
     },
     body,
     responseType: 'text',
