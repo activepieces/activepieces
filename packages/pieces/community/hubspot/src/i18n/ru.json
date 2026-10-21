@@ -311,5 +311,6 @@
   "Note": "Примечание",
   "Task": "Задача",
   "Meeting": "Встреча",
-  "Call": "Звонок"
+  "Call": "Звонок",
+  "Fields left empty keep their current value.": "Пустые поля сохраняют текущее значение."
 }

@@ -3,6 +3,8 @@ import os from 'os'
 import { tryCatch } from '@activepieces/core-utils';
 import { MachineInformation } from '@activepieces/shared';
 import checkDiskSpace from 'check-disk-space'
+import pidtree from 'pidtree'
+import pidusage from 'pidusage'
 import si from 'systeminformation'
 import { fileSystemUtils } from './file-system-utils'
 
@@ -205,30 +207,14 @@ export const systemUsage = {
     },
 
     async getProcessTreeMemoryBytesByPids(pids: number[]): Promise<Map<number, number>> {
-        const result = new Map<number, number>()
         if (pids.length === 0) {
-            return result
+            return new Map()
         }
-        // si.processes() walks the whole process table — do it once for all pids, never per-pid.
-        const { data, error } = await tryCatch(() => si.processes())
-        if (error || !data) {
-            for (const pid of pids) {
-                result.set(pid, 0)
-            }
-            return result
+        const { data, error } = await tryCatch(() => readProcessTreeMemoryBytes(pids))
+        if (error) {
+            return new Map(pids.map((pid) => [pid, 0]))
         }
-        const childrenByParent = new Map<number, number[]>()
-        const rssBytesByPid = new Map<number, number>()
-        for (const proc of data.list) {
-            rssBytesByPid.set(proc.pid, proc.memRss * 1024)
-            const siblings = childrenByParent.get(proc.parentPid) ?? []
-            siblings.push(proc.pid)
-            childrenByParent.set(proc.parentPid, siblings)
-        }
-        for (const pid of pids) {
-            result.set(pid, sumProcessTreeRssBytes({ rootPid: pid, rssBytesByPid, childrenByParent }))
-        }
-        return result
+        return data
     },
 }
 
@@ -236,16 +222,26 @@ type CpuCounters = { steal: number, total: number }
 type CfsCounters = { throttled: number, periods: number }
 export type CpuPressure = { cpuStealPercentage?: number, cpuThrottledPercentage?: number }
 
-function sumProcessTreeRssBytes({ rootPid, rssBytesByPid, childrenByParent }: { rootPid: number, rssBytesByPid: Map<number, number>, childrenByParent: Map<number, number[]> }): number {
-    let total = 0
-    const queue = [rootPid]
-    const visited = new Set<number>()
-    while (queue.length > 0) {
-        const current = queue.shift()!
-        if (visited.has(current)) continue
-        visited.add(current)
-        total += rssBytesByPid.get(current) ?? 0
-        queue.push(...(childrenByParent.get(current) ?? []))
+async function readProcessTreeMemoryBytes(rootPids: number[]): Promise<Map<number, number>> {
+    const processTable = await pidtree(-1, { advanced: true })
+    const childrenByParent = new Map<number, number[]>()
+    for (const { ppid, pid } of processTable) {
+        const children = childrenByParent.get(ppid) ?? []
+        children.push(pid)
+        childrenByParent.set(ppid, children)
     }
-    return total
+    const processTrees = rootPids.map((rootPid) => ({ rootPid, selfAndDescendantPids: collectSelfAndDescendants({ rootPid, childrenByParent }) }))
+    const statsByPid = await pidusage([...new Set(processTrees.flatMap(({ selfAndDescendantPids }) => selfAndDescendantPids))])
+    return new Map(processTrees.map(({ rootPid, selfAndDescendantPids }) => [
+        rootPid,
+        selfAndDescendantPids.reduce((total, pid) => total + (statsByPid[pid]?.memory ?? 0), 0),
+    ]))
+}
+
+function collectSelfAndDescendants({ rootPid, childrenByParent }: { rootPid: number, childrenByParent: Map<number, number[]> }): number[] {
+    const pids = [rootPid]
+    for (let i = 0; i < pids.length; i++) {
+        pids.push(...(childrenByParent.get(pids[i]) ?? []).filter((child) => !pids.includes(child)))
+    }
+    return pids
 }

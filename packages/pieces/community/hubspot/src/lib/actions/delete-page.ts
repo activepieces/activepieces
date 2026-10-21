@@ -11,6 +11,15 @@ export const deletePageAction = createAction({
 	description: 'Deletes a landing page or site page.',
 	audience: 'both',
 	aiMetadata: { description: 'Archive (delete) a HubSpot CMS landing page or site page by its ID; select the matching Page Type. Deleting an already-deleted page is harmless, so the operation is effectively idempotent on the end state. This is destructive and cannot be undone here.', idempotent: true },
+	propertyGroups: [
+		{
+			key: 'page',
+			display: 'section',
+			label: 'Page to Delete',
+			icon: 'trash',
+			props: ['pageType', 'pageId'],
+		},
+	],
 	props: {
 		pageType: pageType,
 		pageId: Property.ShortText({
