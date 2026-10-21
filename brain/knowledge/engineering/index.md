@@ -39,4 +39,5 @@ The **Activepieces engineering brain**: how the system works, and *why* it was b
 - **CI PR Review Hygiene** — draft-first Greptile review, the per-area PR size gate, and the workflow conventions reviewers keep re-litigating
 - **E2E Tests & Monitors** — the one Playwright suite behind CI, the Checkly monitors that run it against production Cloud, and the BetterStack script the repo pushes on merge
 - **Architecture Spine** — the load-bearing structure of the codebase, and the gotchas that come with it: request-body `.max()` as data loss, TypeORM soft-delete across a canary window, and canary not proxying websockets
+- **Boxes** — cloud dev machines with Claude on them: how to make one, share a preview link, and why a local-only branch shows main's code
 - **Reproduce a Self-Hoster's Proxy Topology** — standing up a reverse proxy, a second hostname, a path prefix and a real SAML IdP locally, so a redirect or discovery bug can be measured instead of argued about
