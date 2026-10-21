@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { ArrowDown, ArrowUp, ChevronRight } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 
 import { AdminPageHeader, adminSurface } from '@/app/components/admin';
@@ -108,7 +108,8 @@ function UsageListBody({
 }) {
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<UsageSort>(DEFAULT_SORT);
-  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(1);
+  const listRef = useRef<HTMLElement>(null);
   const plural = usageFormat.dimensionLabel({ dimension }).toLowerCase();
 
   if (view.preset === 'loading') {
@@ -153,17 +154,30 @@ function UsageListBody({
     ),
     sort,
   });
-  const shown = matches.slice(0, visible);
+  const pageCount = Math.max(1, Math.ceil(matches.length / PAGE_SIZE));
+  const current = Math.min(page, pageCount);
+  const shown = matches.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+  const changeSort = (next: UsageSort): void => {
+    setSort(next);
+    setPage(1);
+  };
+  const goTo = (next: number): void => {
+    setPage(next);
+    listRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  };
 
   return (
-    <section className={cn(adminSurface.card, 'flex flex-col')}>
+    <section
+      ref={listRef}
+      className={cn(adminSurface.card, 'flex scroll-mt-4 flex-col')}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 p-3">
         <div className="w-full sm:max-w-xs">
           <SearchInput
             value={query}
             onChange={(value) => {
               setQuery(value);
-              setVisible(PAGE_SIZE);
+              setPage(1);
             }}
             placeholder={t('Search {items}', { items: plural })}
           />
@@ -187,34 +201,34 @@ function UsageListBody({
           label={usageFormat.dimensionBadge({ dimension })}
           column="name"
           sort={sort}
-          onSort={setSort}
+          onSort={changeSort}
         />
         <SortHeader
           label={t('Change')}
           column="change"
           sort={sort}
-          onSort={setSort}
+          onSort={changeSort}
           className="hidden md:flex"
         />
         <SortHeader
           label={t('Calls')}
           column="calls"
           sort={sort}
-          onSort={setSort}
+          onSort={changeSort}
           className="hidden md:flex"
         />
         <SortHeader
           label={t('Tokens')}
           column="tokens"
           sort={sort}
-          onSort={setSort}
+          onSort={changeSort}
           className="hidden md:flex"
         />
         <SortHeader
           label={t('Spend')}
           column="spend"
           sort={sort}
-          onSort={setSort}
+          onSort={changeSort}
         />
         <span />
       </div>
@@ -239,21 +253,41 @@ function UsageListBody({
           ))}
         </ul>
       )}
-      {matches.length > shown.length && (
+      {pageCount > 1 && (
         <div className="flex items-center justify-between gap-3 border-t border-gray-6 px-5 py-3">
           <span className="text-xs tabular-nums text-gray-11">
-            {t('Showing {shown} of {total}', {
-              shown: usageFormat.whole(shown.length),
+            {t('{from}–{to} of {total}', {
+              from: usageFormat.whole((current - 1) * PAGE_SIZE + 1),
+              to: usageFormat.whole((current - 1) * PAGE_SIZE + shown.length),
               total: usageFormat.whole(matches.length),
             })}
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setVisible(visible + PAGE_SIZE)}
-          >
-            {t('Show more')}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon-sm"
+              disabled={current === 1}
+              onClick={() => goTo(current - 1)}
+              aria-label={t('Previous page')}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="min-w-20 text-center text-xs tabular-nums text-gray-11">
+              {t('Page {page} of {pages}', {
+                page: usageFormat.whole(current),
+                pages: usageFormat.whole(pageCount),
+              })}
+            </span>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              disabled={current === pageCount}
+              onClick={() => goTo(current + 1)}
+              aria-label={t('Next page')}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
         </div>
       )}
     </section>
