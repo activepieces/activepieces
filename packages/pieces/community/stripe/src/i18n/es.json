@@ -632,5 +632,7 @@
   "Only disputes for this charge. Empty: all.": "Solo disputas de este cargo. Vacío: todas.",
   "Only disputes for this payment. Empty: all.": "Solo disputas de este pago. Vacío: todas.",
   "Only updates where the subscription's status is this.": "Solo cambios en los que la suscripción tiene este estado.",
-  "Only sessions for this customer. Empty: all.": "Solo sesiones de este cliente. Vacío: todas."
+  "Only sessions for this customer. Empty: all.": "Solo sesiones de este cliente. Vacío: todas.",
+  "Markdown": "Markdown",
+  "Empty fields keep their current value.": "Los campos vacíos conservan su valor actual."
 }

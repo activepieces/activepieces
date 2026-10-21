@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { LocalesEnum } from '@activepieces/core-utils';
-import { PackageType, PieceType } from '@activepieces/core-piece-types';
+import { PackageType, PieceCategory, PieceType } from '@activepieces/core-piece-types';
 import { createAction } from '../src/lib/action/action';
 import { pieceTranslation } from '../src/lib/i18n';
 import { createPiece } from '../src/lib/piece';
 import { PieceMetadataModel } from '../src/lib/piece-metadata';
 import { PieceAuth, Property } from '../src/lib/property';
 
-const buildPiece = (): PieceMetadataModel => JSON.parse(JSON.stringify({
+const buildPiece = (categories: PieceCategory[] = []): PieceMetadataModel => JSON.parse(JSON.stringify({
   ...createPiece({
     displayName: 'Mailer',
+    categories,
     description: 'Send mail',
     logoUrl: 'https://example.com/logo.png',
     auth: PieceAuth.SecretText({ displayName: 'API key', description: 'Your API key', required: true }),
@@ -44,6 +45,7 @@ const buildPiece = (): PieceMetadataModel => JSON.parse(JSON.stringify({
   packageType: PackageType.REGISTRY,
   i18n: {
     [LocalesEnum.JAPANESE]: {
+      'Mailer': 'メーラー',
       'Send mail': 'メール送信',
       'Your API key': 'あなたのAPIキー',
       'Send email': 'メールを送信',
@@ -187,6 +189,18 @@ describe('pieceTranslation.translatePiece', () => {
     const piece = buildPiece();
 
     expect(pieceTranslation.translatePiece({ piece, locale: LocalesEnum.GERMAN })).toBe(piece);
+  });
+
+  it('translates the display name of a core piece', () => {
+    const translated = pieceTranslation.translatePiece({ piece: buildPiece([PieceCategory.CORE]), locale: LocalesEnum.JAPANESE });
+
+    expect(translated.displayName).toBe('メーラー');
+  });
+
+  it('keeps the display name of a non-core piece untranslated', () => {
+    const translated = pieceTranslation.translatePiece({ piece: buildPiece([PieceCategory.COMMUNICATION]), locale: LocalesEnum.JAPANESE });
+
+    expect(translated.displayName).toBe('Mailer');
   });
 });
 

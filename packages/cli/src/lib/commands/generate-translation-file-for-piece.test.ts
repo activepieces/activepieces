@@ -52,13 +52,7 @@ const extract = (auth: PieceAuthProperty | PieceAuthProperty[]) => {
         actions: [listRows()],
         triggers: [],
     })
-    return Object.keys(generateTranslationFileFromPiece({
-        actions: piece.actions(),
-        triggers: piece.triggers(),
-        description: piece.description,
-        displayName: piece.displayName,
-        auth: piece.auth,
-    })).sort()
+    return Object.keys(generateTranslationFileFromPiece(piece.metadata())).sort()
 }
 
 describe('generateTranslationFileFromPiece', () => {

@@ -16,6 +16,15 @@ export const getTicketAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single support ticket by its HubSpot ticket ID, returning default and any requested additional properties. Use when you already have the ticket ID; use Find Ticket to look one up by another property first. Read-only and idempotent.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Ticket',
+			icon: 'tag',
+			props: ['ticketId'],
+		},
+	],
 	props: {
 		ticketId: Property.ShortText({
 			displayName: 'Ticket ID',

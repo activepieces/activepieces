@@ -122,7 +122,7 @@ export function PlatformNav() {
       items: [
         {
           to: '/platform/sso',
-          label: t('Single Sign On'),
+          label: t('Authentication'),
           icon: LogInIcon,
           locked: !platform.plan.ssoEnabled,
           tier: PLATFORM_FEATURES.sso.tier,

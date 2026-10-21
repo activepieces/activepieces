@@ -107,22 +107,30 @@ export const statusId = (objectType: string, required = false) =>
 				};
 			}
 
-			const response = await closePaginatedApiCall<{
-				id: string;
-				label: string;
-			}>({
-				accessToken: auth.secret_text,
-				method: HttpMethod.GET,
-				resourceUri: `/status/${objectType}/`,
-			});
+			try {
+				const response = await closePaginatedApiCall<{
+					id: string;
+					label: string;
+				}>({
+					accessToken: auth.secret_text,
+					method: HttpMethod.GET,
+					resourceUri: `/status/${objectType}/`,
+				});
 
-			return {
-				disabled: false,
-				options: response.map((status) => ({
-					label: status.label,
-					value: status.id,
-				})),
-			};
+				return {
+					disabled: false,
+					options: response.map((status) => ({
+						label: status.label,
+						value: status.id,
+					})),
+				};
+			} catch (error) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: error instanceof Error ? error.message : 'Could not fetch statuses. Check your connection.',
+				};
+			}
 		},
 	});
 
@@ -202,7 +210,7 @@ export const userId = (required = false) =>
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Could not fetch uers. Check your connection.',
+					placeholder: error instanceof Error ? error.message : 'Could not fetch users. Check your connection.',
 				};
 			}
 		},

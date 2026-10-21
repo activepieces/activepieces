@@ -19,7 +19,7 @@ export const newIssueType = createTrigger({
   props: {
     projectId: getProjectIdDropdown({
       displayName: 'Project',
-      description: 'Select the project to watch for new issue types',
+      description: 'The project to watch for new issue types.',
       required: true,
     }),
   },

@@ -16,6 +16,15 @@ export const findContactAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Search HubSpot contacts by one or two property/value pairs (matched with equality) and return the matching contacts. Read-only and repeatable. Use this to resolve a contact before updating or enrolling it; pick a create action instead when no match should exist.', idempotent: true },
 	outputSchema: contactSearchOutputSchema,
+	propertyGroups: [
+		{
+			key: 'search',
+			display: 'section',
+			label: 'Search',
+			icon: 'filter',
+			props: ['firstSearchPropertyName', 'firstSearchPropertyValue'],
+		},
+	],
 	props: {
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{

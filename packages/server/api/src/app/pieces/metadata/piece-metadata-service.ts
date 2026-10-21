@@ -7,11 +7,13 @@ import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { EntityManager, FindOptionsSelect, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
 import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { projectService } from '../../project/project-service'
 import { pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
+import { pieceTranslationService } from './piece-translation-service'
 import { filterActionsByAudience, filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
@@ -23,7 +25,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const locale = params.locale ?? LocalesEnum.ENGLISH
-            const translatedPieces = await dedupe(`list:${params.platformId ?? ''}:${locale}`, () => fetchLatestPieces({
+            const { pieces: translatedPieces, untranslatedNames } = await dedupe(`list:${params.platformId ?? ''}:${locale}`, () => fetchLatestPieces({
                 platformId: params.platformId,
                 locale,
                 log,
@@ -34,6 +36,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             const sortedPieces = await pieceListUtils(log).sortAndSearchPieces({
                 ...params,
                 pieces: audiencePieces,
+                untranslatedNames,
                 suggestionType: params.suggestionType,
             })
             const visiblePieces = params.includeHidden ? sortedPieces : sortedPieces.filter((piece) => !piece.deprecated)
@@ -167,7 +170,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 name: pieceMetadata.name,
                 platformId,
             })
-            const savedPiece = await pieceRepos().save({
+            const pieceRow = {
                 id: apId(),
                 packageType,
                 pieceType,
@@ -175,6 +178,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 platformId,
                 created: createdDate,
                 ...pieceMetadata,
+            }
+            const savedPiece = await transaction(async (entityManager) => {
+                const piece = await pieceRepos(entityManager).save(pieceRow)
+                await pieceTranslationService.save({ pieceMetadataId: pieceRow.id, i18n: pieceMetadata.i18n, entityManager })
+                return piece
             })
             if (publishCacheRefresh) {
                 await pieceCache(log).invalidate()
@@ -425,7 +433,7 @@ const increaseMajorVersion = (version: string): string => {
     return incrementedVersion
 }
 
-async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log }: FetchLatestPiecesParams): Promise<PieceMetadataSchema[]> {
+async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log }: FetchLatestPiecesParams): Promise<LatestPieces> {
     const currentRelease = apVersionUtil.getCurrentRelease()
 
     const latestPieces = await dedupe(`latest-pieces:${currentRelease}`, () => fetchLatestCompatiblePiecesFromDB(currentRelease))
@@ -435,7 +443,15 @@ async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log
     const merged = [...latestPieces.filter((p) => !devPieceNames.has(p.name)), ...devPieces]
         .filter((piece) => filterPieceBasedOnType(platformId, piece))
         .filter((piece) => isSupportedRelease(currentRelease, piece))
-    return translatePieces({ pieces: lastVersionOfEachPiece(merged), locale })
+    const newestVersions = lastVersionOfEachPiece(merged)
+    const translatedPieces = await translatePieces({ pieces: newestVersions, locale })
+    return { pieces: translatedPieces, untranslatedNames: untranslatedNamesOf({ originalPieces: newestVersions, translatedPieces }) }
+}
+
+function untranslatedNamesOf({ originalPieces, translatedPieces }: UntranslatedNamesOfParams): Map<string, string> {
+    return new Map(originalPieces
+        .filter((piece, index) => piece.displayName !== translatedPieces[index].displayName)
+        .map((piece) => [piece.name, piece.displayName]))
 }
 
 async function fetchPieceVersion({ pieceName, version, platformId, log }: FetchPieceVersionParams): Promise<PieceMetadataSchema | null> {
@@ -510,7 +526,7 @@ async function translatePieces({ pieces, locale }: TranslatePiecesParams): Promi
     if (locale === LocalesEnum.ENGLISH) {
         return pieces.map((piece) => ({ ...piece, i18n: undefined }))
     }
-    const translationsByPieceId = await fetchTranslationsForLocale({ pieceIds: pieces.map((piece) => piece.id), locale })
+    const translationsByPieceId = await pieceTranslationService.getForLocale({ pieceIds: pieces.map((piece) => piece.id), locale })
     return pieces.map((piece) => {
         const translations = translationsByPieceId.get(piece.id) ?? piece.i18n?.[locale]
         if (isNil(translations)) {
@@ -522,26 +538,6 @@ async function translatePieces({ pieces, locale }: TranslatePiecesParams): Promi
         })
         return { ...translated, i18n: undefined }
     })
-}
-
-async function fetchTranslationsForLocale({ pieceIds, locale }: FetchTranslationsForLocaleParams): Promise<Map<string, Record<string, string>>> {
-    const translationsByPieceId = new Map<string, Record<string, string>>()
-    if (pieceIds.length === 0) {
-        return translationsByPieceId
-    }
-    const rows = await pieceRepos()
-        .createQueryBuilder('pm')
-        .select('pm."id"', 'id')
-        .addSelect('pm."i18n" -> :locale', 'translations')
-        .where('pm."id" IN (:...pieceIds)', { pieceIds })
-        .setParameter('locale', locale)
-        .getRawMany<{ id: string, translations: Record<string, string> | null }>()
-    for (const row of rows) {
-        if (!isNil(row.translations)) {
-            translationsByPieceId.set(row.id, row.translations)
-        }
-    }
-    return translationsByPieceId
 }
 
 const inflightFetches = new Map<string, Promise<unknown>>()
@@ -572,8 +568,6 @@ function filterRegistry(registry: PieceRegistryEntry[], params: { release: strin
         .filter((piece) => filterPieceBasedOnType(params.platformId, piece))
         .filter((piece) => isNil(params.release) || isSupportedRelease(params.release, piece))
 }
-
-
 
 type ListParams = {
     projectId?: string
@@ -658,13 +652,18 @@ type ToPieceMetadataModelSummaryParams<T extends PieceMetadataSchema | PieceMeta
     suggestionType?: SuggestionType
 }
 
-type TranslatePiecesParams = {
+type LatestPieces = {
     pieces: PieceMetadataSchema[]
-    locale: LocalesEnum
+    untranslatedNames: Map<string, string>
 }
 
-type FetchTranslationsForLocaleParams = {
-    pieceIds: string[]
+type UntranslatedNamesOfParams = {
+    originalPieces: PieceMetadataSchema[]
+    translatedPieces: PieceMetadataSchema[]
+}
+
+type TranslatePiecesParams = {
+    pieces: PieceMetadataSchema[]
     locale: LocalesEnum
 }
 

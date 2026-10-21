@@ -1,11 +1,12 @@
 import { AIProviderName, assertNotNullOrUndefined, ErrorCode } from '@activepieces/core-utils'
-import { aiUtils, modelTierCatalog } from '@activepieces/server-utils'
+import { aiUtils, modelCatalog, modelTierCatalog } from '@activepieces/server-utils'
 import { AgentConversation, AIProviderModelType, aiProviderUtils, AiToolCapability, AiToolProvider, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { aiToolConfigService } from '../../../../src/app/ai/ai-tool-config-service'
+import { aiProviders } from '../../../../src/app/ai/providers'
 import { agentChatModel } from '../../../../src/app/ee/agent/agent-chat-model'
 import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
 import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
@@ -45,6 +46,19 @@ describe('a chat pinned to a key', () => {
         expect(config.modelId).toBe('team-model')
     })
 
+    it('accepts and runs a model the key lists that is not on the recommended list', async () => {
+        const ctx = await context()
+        vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockResolvedValue([{ id: 'gpt-4o', name: 'GPT-4o', type: AIProviderModelType.TEXT }])
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue({ lookup: ({ modelId }) => modelId === 'gpt-4o' ? { supportsToolCalling: true } : undefined })
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+
+        const conversation = await createConversation({ ctx, body: { projectId: ctx.project.id, providerConfigId: key.id, modelName: 'gpt-4o' } })
+        const config = await getConfig({ ctx, conversationId: conversation.id })
+
+        expect(config.providerConfigId).toBe(key.id)
+        expect(config.modelId).toBe('gpt-4o')
+    })
+
     it('is refused when the key does not serve the chat\'s project', async () => {
         const ctx = await context()
         const key = await customKey({ ctx, name: 'Elsewhere', models: ['team-model'], projectScope: 'selected', projectIds: [] })
@@ -63,8 +77,9 @@ describe('a chat pinned to a key', () => {
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
     })
 
-    it('fails clearly when its curated model is retired, instead of sending it to the vendor', async () => {
+    it('fails clearly when the key no longer lists its model, instead of sending it to the vendor', async () => {
         const ctx = await context()
+        vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockResolvedValue([{ id: 'gpt-5.5', name: 'GPT-5.5', type: AIProviderModelType.TEXT }])
         const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
         const conversation = await createConversation({ ctx, body: { projectId: ctx.project.id } })
         await db.update('agent_conversation', conversation.id, { providerConfigId: key.id, modelName: 'gpt-retired-model' })
@@ -230,6 +245,42 @@ describe('a chat with no model picked', () => {
         expect(stored).toMatchObject({ modelTierId: tier.id, providerConfigId: null, modelName: null })
     })
 
+    it('stores the Default AI key and its first known chat model when no default chat model is set', async () => {
+        const ctx = await context()
+        vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockResolvedValue([{ id: 'gpt-4o', name: 'GPT-4o', type: AIProviderModelType.TEXT }, { id: curatedOpenAiModel(), name: 'Curated', type: AIProviderModelType.TEXT }])
+        const key = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
+        const conversation = await createConversation({ ctx, body: { projectId: ctx.project.id } })
+
+        await getConfig({ ctx, conversationId: conversation.id, dryRun: false })
+
+        const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
+        expect(stored).toMatchObject({ modelTierId: null, providerConfigId: key.id, modelName: curatedOpenAiModel() })
+    })
+
+    it('stores the platform default chat model, even when a Default tier exists', async () => {
+        const ctx = await context()
+        const key = await customKey({ ctx, name: 'Team', models: ['team-model', 'other-model'] })
+        await createTier({ ctx, entries: [{ configId: key.id, modelId: 'team-model' }] })
+        const saved = await ctx.post('/v1/platform-configurations', { defaultChatModel: { type: 'model', provider: AIProviderName.CUSTOM, providerConfigId: key.id, modelId: 'other-model' } })
+        expect(saved.statusCode).toBe(StatusCodes.OK)
+        const conversation = await createConversation({ ctx, body: { projectId: ctx.project.id } })
+
+        await getConfig({ ctx, conversationId: conversation.id, dryRun: false })
+
+        const stored = await db.findOneByOrFail<AgentConversation>('agent_conversation', { id: conversation.id })
+        expect(stored).toMatchObject({ modelTierId: null, providerConfigId: key.id, modelName: 'other-model' })
+    })
+
+    it('keeps the legacy path when the Default AI key\'s models cannot be listed', async () => {
+        const ctx = await context()
+        vi.spyOn(aiProviders[AIProviderName.OPENAI], 'listModels').mockRejectedValue(new Error('provider down'))
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
+
+        const pick = await agentChatModel(app.log).defaultPick({ platformId: ctx.platform.id, projectId: ctx.project.id })
+
+        expect(pick).toBeNull()
+    })
+
     it('can be talked to on a platform that has tiers but no Default AI key', async () => {
         const ctx = await context()
         const key = await customKey({ ctx, name: 'Team', models: ['team-model'] })
@@ -291,6 +342,71 @@ describe('knowledge base embeddings', () => {
         await knowledgeBaseService(app.log).embedderFor({ platformId: ctx.platform.id, projectId: ctx.project.id })
 
         expect(createEmbeddingModel).toHaveBeenCalledWith(expect.objectContaining({ providerConfigId: embeddingsKey.id }))
+    })
+
+    it('embeds with the picked model, even on a key whose chat models are narrowed', async () => {
+        const ctx = await context()
+        const embeddingsKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, modelScope: 'selected', modelIds: ['gpt-4o'] })
+        await aiToolConfigService(app.log).upsert(ctx.platform.id, { capability: AiToolCapability.EMBEDDINGS, provider: AiToolProvider.AI_PROVIDER, config: { aiProviderId: embeddingsKey.id, modelId: 'text-embedding-3-large' } })
+        const createEmbeddingModel = vi.spyOn(aiUtils, 'createEmbeddingModel')
+
+        await knowledgeBaseService(app.log).embedderFor({ platformId: ctx.platform.id, projectId: ctx.project.id })
+        await aiProviderService(app.log).update(ctx.platform.id, embeddingsKey.id, { displayName: 'OpenAI', modelScope: 'selected', modelIds: ['gpt-4o-mini'] })
+
+        expect(createEmbeddingModel).toHaveBeenCalledWith(expect.objectContaining({ providerConfigId: embeddingsKey.id, modelId: 'text-embedding-3-large' }))
+    })
+
+    it('refuses an embedding model the provider does not list', async () => {
+        const ctx = await context()
+        const embeddingsKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+
+        await expect(aiToolConfigService(app.log).upsert(ctx.platform.id, { capability: AiToolCapability.EMBEDDINGS, provider: AiToolProvider.AI_PROVIDER, config: { aiProviderId: embeddingsKey.id, modelId: 'gpt-4o' } }))
+            .rejects.toMatchObject({ error: { code: ErrorCode.VALIDATION } })
+    })
+
+    it('tells project members which provider and model embed their files', async () => {
+        const ctx = await context()
+        const embeddingsKey = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        await aiToolConfigService(app.log).upsert(ctx.platform.id, { capability: AiToolCapability.EMBEDDINGS, provider: AiToolProvider.AI_PROVIDER, config: { aiProviderId: embeddingsKey.id, modelId: 'text-embedding-3-large' } })
+
+        const response = await ctx.get(EMBEDDING_SOURCE_URL, { projectId: ctx.project.id })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json()).toEqual({ provider: AIProviderName.OPENAI, modelId: 'text-embedding-3-large' })
+    })
+
+    it('reports no embedding source when the Default AI key cannot embed and nothing is picked', async () => {
+        const ctx = await context()
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.ANTHROPIC, enabledForChat: true })
+
+        const response = await ctx.get(EMBEDDING_SOURCE_URL, { projectId: ctx.project.id })
+
+        expect(response.json()).toEqual({ provider: null, modelId: null })
+    })
+
+    it('does not tell another platform\'s user about a project\'s embedding source', async () => {
+        const ctx = await context()
+        const outsider = await context()
+
+        const response = await outsider.get(EMBEDDING_SOURCE_URL, { projectId: ctx.project.id })
+
+        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+    })
+
+    it('indexes with Credits when the Default AI key cannot embed', async () => {
+        process.env.AP_OPENROUTER_PROVISION_KEY = 'test-provision-key'
+        try {
+            const ctx = await context()
+            await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.ANTHROPIC, enabledForChat: true })
+            await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.ACTIVEPIECES })
+
+            const response = await ctx.get(EMBEDDING_SOURCE_URL, { projectId: ctx.project.id })
+
+            expect(response.json()).toMatchObject({ provider: AIProviderName.ACTIVEPIECES })
+        }
+        finally {
+            delete process.env.AP_OPENROUTER_PROVISION_KEY
+        }
     })
 
     it('refuses an Embeddings choice that is not one of the platform\'s AI keys', async () => {
@@ -371,3 +487,4 @@ function curatedOpenAiModel(): string {
 }
 
 const CONVERSATIONS_URL = '/v1/agents/conversations'
+const EMBEDDING_SOURCE_URL = '/v1/knowledge-base/files/embedding-source'
