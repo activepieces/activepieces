@@ -15,7 +15,7 @@ export const youformGetFormAction = createAction({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Gets one form by slug (from List Forms), including its questions (`draft_fields.blocks`), settings, hidden fields and submission count. Use it to learn what each answer key in List Submissions means. Returns found: false when no form has that slug.',
+      'Gets one form by slug (from List Forms), including its published questions (`fields.blocks`, whose block ids are the answer keys in List Submissions; `draft_fields` holds unpublished edits), settings, hidden fields and submission count. Returns found: false when no form has that slug.',
     idempotent: true,
   },
   props: {

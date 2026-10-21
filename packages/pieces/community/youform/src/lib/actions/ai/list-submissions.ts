@@ -41,7 +41,7 @@ export const youformListSubmissionsAction = createAction({
     isComplete: Property.StaticDropdown({
       displayName: 'Completion',
       description:
-        'Only complete or only partial submissions. Partial only needs a Pro plan. Leave unset for all submissions.',
+        'Complete or partial submissions only. Partial needs Pro. Unset returns all.',
       required: false,
       options: {
         disabled: false,

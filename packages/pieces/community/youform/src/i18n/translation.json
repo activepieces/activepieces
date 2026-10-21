@@ -26,7 +26,7 @@
   "The form's slug, e.g. \"kyir3qrg\" (the `slug` field from List Forms, also the last part of the form's share link).": "The form's slug, e.g. \"kyir3qrg\" (the `slug` field from List Forms, also the last part of the form's share link).",
   "Submissions per page, 1-100. Defaults to 20.": "Submissions per page, 1-100. Defaults to 20.",
   "Order by submission time. Defaults to oldest first.": "Order by submission time. Defaults to oldest first.",
-  "Only complete or only partial submissions. Partial only needs a Pro plan. Leave unset for all submissions.": "Only complete or only partial submissions. Partial only needs a Pro plan. Leave unset for all submissions.",
+  "Complete or partial submissions only. Partial needs Pro. Unset returns all.": "Complete or partial submissions only. Partial needs Pro. Unset returns all.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
   "Appended to the URL as ?key=value.": "Appended to the URL as ?key=value.",
   "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
