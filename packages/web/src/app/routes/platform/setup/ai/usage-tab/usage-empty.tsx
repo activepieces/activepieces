@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Bot, MessageSquare, Workflow } from 'lucide-react';
+import { ChartLine, Info } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { adminSurface } from '@/app/components/admin';
@@ -9,140 +9,104 @@ import { cn } from '@/lib/utils';
 import { usageFormat } from './usage-format';
 import { UsageView } from './usage-header-controls';
 
-export function UsageEmpty({
-  view,
-  ghost,
-  title,
-  extraAction,
-}: UsageEmptyProps) {
-  const never = view.preset === 'empty';
-  const widerPeriod = view.period !== LONGEST_PERIOD;
-  const widerScope = view.scope !== 'all';
+export function UsageEmptyNote({ view }: { view: UsageView }) {
   return (
-    <section
-      className={cn(
-        adminSurface.card,
-        'relative flex min-h-[360px] flex-col items-center justify-center overflow-hidden px-6 py-12',
-      )}
-    >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 opacity-70 [mask-image:linear-gradient(to_top,black,transparent)]"
-      >
-        {ghost === 'chart' ? <GhostChart /> : <GhostRows />}
-      </div>
-      <div className="relative flex max-w-md flex-col items-center gap-3 text-center">
-        <h2 className="text-lg font-semibold text-gray-12">
-          {never
-            ? t('No AI spend yet')
-            : title ?? t('No AI spend in this view')}
-        </h2>
-        <p className="text-sm text-gray-11">
-          {never
-            ? t(
-                'Spend shows up here about a minute after the first AI call, from any project.',
-              )
-            : t('Nothing used AI in {scope} for {period}.', {
-                scope: usageFormat.scopeLabel({ scope: view.scope }),
-                period: usageFormat
-                  .periodLabel({ period: view.period })
-                  .toLowerCase(),
-              })}
-        </p>
-        {never ? (
-          <ul className="mt-2 flex flex-wrap justify-center gap-2">
-            {trackedSources().map((source) => (
-              <li
-                key={source.label}
-                className="flex items-center gap-1.5 rounded-full border border-gray-6 bg-gray-1 px-3 py-1 text-xs text-gray-11"
-              >
-                {source.icon}
-                {source.label}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          (widerPeriod || widerScope || extraAction) && (
-            <div className="mt-2 flex flex-wrap justify-center gap-2">
-              {widerPeriod && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => view.setPeriod(LONGEST_PERIOD)}
-                >
-                  {t('Show last 90 days')}
-                </Button>
-              )}
-              {widerScope && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => view.setScope('all')}
-                >
-                  {view.scope === 'production'
-                    ? t('Include testing')
-                    : t('Include production')}
-                </Button>
-              )}
-              {extraAction}
-            </div>
-          )
-        )}
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-gray-6 bg-gray-1 px-4 py-3">
+      <Info className="size-4 shrink-0 text-gray-11" />
+      <p className="min-w-0 flex-1 text-sm text-gray-11">
+        <span className="font-medium text-gray-12">
+          {neverUsed({ view })
+            ? t('No AI spend yet.')
+            : t('No AI spend in this view.')}
+        </span>{' '}
+        {emptyReason({ view })}
+      </p>
+      <EmptyActions view={view} />
+    </div>
+  );
+}
+
+export function UsageEmpty({ view, title, extraAction }: UsageEmptyProps) {
+  return (
+    <section className={cn(adminSurface.card, 'flex items-start gap-4 p-5')}>
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gray-3 text-gray-11">
+        <ChartLine className="size-4" />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-sm font-medium text-gray-12">
+            {neverUsed({ view }) ? t('No AI spend yet') : title}
+          </h2>
+          <p className="text-sm text-gray-11">{emptyReason({ view })}</p>
+        </div>
+        <EmptyActions view={view} extraAction={extraAction} />
       </div>
     </section>
   );
 }
 
-function GhostChart() {
+function EmptyActions({
+  view,
+  extraAction,
+}: {
+  view: UsageView;
+  extraAction?: ReactNode;
+}) {
+  if (neverUsed({ view })) {
+    return null;
+  }
+  const widerPeriod = view.period !== LONGEST_PERIOD;
+  const widerScope = view.scope !== 'all';
+  if (!widerPeriod && !widerScope && !extraAction) {
+    return null;
+  }
   return (
-    <svg viewBox="0 0 600 200" preserveAspectRatio="none" className="size-full">
-      <path
-        d="M0 150 C 60 140, 90 120, 140 128 S 230 90, 290 100 S 380 60, 440 72 S 540 40, 600 30 L 600 200 L 0 200 Z"
-        fill="var(--gray-3)"
-      />
-      <path
-        d="M0 150 C 60 140, 90 120, 140 128 S 230 90, 290 100 S 380 60, 440 72 S 540 40, 600 30"
-        fill="none"
-        stroke="var(--gray-7)"
-        strokeWidth={2}
-        strokeDasharray="6 6"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
+    <div className="flex flex-wrap items-center gap-2">
+      {widerPeriod && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => view.setPeriod(LONGEST_PERIOD)}
+        >
+          {t('Show last 90 days')}
+        </Button>
+      )}
+      {widerScope && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => view.setScope('all')}
+        >
+          {view.scope === 'production'
+            ? t('Include testing')
+            : t('Include production')}
+        </Button>
+      )}
+      {extraAction}
+    </div>
   );
 }
 
-function GhostRows() {
-  return (
-    <ul className="flex flex-col gap-5 px-8 pt-6">
-      {GHOST_ROWS.map((width) => (
-        <li key={width} className="flex items-center gap-3">
-          <span className="size-8 shrink-0 rounded-lg bg-gray-3" />
-          <span className="flex flex-1 flex-col gap-1.5">
-            <span className="h-3 rounded-full bg-gray-3" style={{ width }} />
-            <span className="h-1 w-24 rounded-full bg-gray-3" />
-          </span>
-          <span className="h-3 w-14 rounded-full bg-gray-3" />
-        </li>
-      ))}
-    </ul>
-  );
+function emptyReason({ view }: { view: UsageView }): string {
+  if (neverUsed({ view })) {
+    return t(
+      'It shows up about a minute after the first AI step, agent run or chat message.',
+    );
+  }
+  return t('Nothing used AI in {scope} for {period}.', {
+    scope: usageFormat.scopeLabel({ scope: view.scope }),
+    period: usageFormat.periodLabel({ period: view.period }).toLowerCase(),
+  });
 }
 
-function trackedSources(): { label: string; icon: ReactNode }[] {
-  return [
-    { label: t('AI steps in flows'), icon: <Workflow className="size-3.5" /> },
-    { label: t('Agent runs'), icon: <Bot className="size-3.5" /> },
-    { label: t('Chat'), icon: <MessageSquare className="size-3.5" /> },
-  ];
+function neverUsed({ view }: { view: UsageView }): boolean {
+  return view.preset === 'empty';
 }
 
 const LONGEST_PERIOD = '90d';
-const GHOST_ROWS = ['40%', '32%', '36%', '28%'];
 
 type UsageEmptyProps = {
   view: UsageView;
-  ghost: 'chart' | 'rows';
-  title?: string;
+  title: string;
   extraAction?: ReactNode;
 };

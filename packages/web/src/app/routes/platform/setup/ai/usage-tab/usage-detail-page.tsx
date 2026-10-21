@@ -110,7 +110,6 @@ function DetailBody({
     return (
       <UsageEmpty
         view={view}
-        ghost="chart"
         title={t('No spend for this {type} in this period', {
           type: usageFormat.dimensionBadge({ dimension }).toLowerCase(),
         })}

@@ -128,7 +128,6 @@ function UsageListBody({
     return (
       <UsageEmpty
         view={view}
-        ghost="rows"
         title={t('No {item} spend in this period', {
           item: usageFormat.dimensionBadge({ dimension }).toLowerCase(),
         })}

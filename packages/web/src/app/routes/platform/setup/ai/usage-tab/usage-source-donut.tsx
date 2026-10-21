@@ -41,6 +41,17 @@ export function UsageSourceDonut({
         <div className="relative aspect-square w-full max-w-56 shrink-0">
           <ChartContainer config={config} className="aspect-square w-full">
             <PieChart>
+              {totalUsd === 0 && (
+                <Pie
+                  data={EMPTY_RING}
+                  dataKey="value"
+                  innerRadius="62%"
+                  outerRadius="86%"
+                  strokeWidth={0}
+                  fill="var(--gray-3)"
+                  isAnimationActive={false}
+                />
+              )}
               <Pie
                 data={sources}
                 dataKey="spendUsd"
@@ -85,7 +96,14 @@ export function UsageSourceDonut({
             )}
           </div>
         </div>
-        <ul className="flex w-full min-w-0 flex-1 flex-col gap-1">
+        {sources.length === 0 && (
+          <p className="w-full flex-1 text-sm text-gray-11">
+            {t(
+              'Flow steps, Run Agent steps, agents, chat and knowledge base each get a slice once they use AI.',
+            )}
+          </p>
+        )}
+        <ul className="flex w-full min-w-0 flex-1 flex-col gap-1 empty:hidden">
           {sources.map((item, index) => {
             const share = totalUsd === 0 ? 0 : item.spendUsd / totalUsd;
             const dimmed = !isNil(activeIndex) && activeIndex !== index;
@@ -142,6 +160,7 @@ function colorAt({ index }: { index: number }): string {
   return SLICE_COLORS[index % SLICE_COLORS.length];
 }
 
+const EMPTY_RING = [{ value: 1 }];
 const ACTIVE_GROWTH = 6;
 
 const SLICE_COLORS = [

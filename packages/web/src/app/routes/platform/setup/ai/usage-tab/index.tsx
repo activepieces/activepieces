@@ -6,7 +6,7 @@ import { AdminPageHeader, StatCard, StatGrid } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 
 import { UsageOverview, UsagePeriod, usageDummyData } from './usage-dummy-data';
-import { UsageEmpty } from './usage-empty';
+import { UsageEmptyNote } from './usage-empty';
 import { usageFormat } from './usage-format';
 import {
   UsageHeaderControls,
@@ -67,12 +67,10 @@ function UsageBody({
       />
     );
   }
-  if (overview.totals.calls === 0) {
-    return <UsageEmpty view={view} ghost="chart" />;
-  }
   const { totals } = overview;
   return (
     <>
+      {totals.calls === 0 && <UsageEmptyNote view={view} />}
       <StatGrid columns={3}>
         <PaceTile view={view} overview={overview} />
         <StatCard
@@ -89,9 +87,13 @@ function UsageBody({
           label={t('Tokens')}
           icon={<Type />}
           value={usageFormat.compact(totals.tokens)}
-          hint={t('{share} of input served from cache', {
-            share: usageFormat.percent(totals.cacheShare),
-          })}
+          hint={
+            totals.tokens === 0
+              ? undefined
+              : t('{share} of input served from cache', {
+                  share: usageFormat.percent(totals.cacheShare),
+                })
+          }
         />
       </StatGrid>
 

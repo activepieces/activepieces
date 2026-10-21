@@ -70,7 +70,7 @@ export function UsageHero({
             <span className="text-4xl font-semibold tracking-tight tabular-nums text-gray-12">
               {usageFormat.metricValue({ metric, value: current })}
             </span>
-            {comparable ? (
+            {current === 0 && previous === 0 ? null : comparable ? (
               <>
                 <DeltaChip value={usageFormat.change({ current, previous })} />
                 <span className="text-sm text-gray-11">
