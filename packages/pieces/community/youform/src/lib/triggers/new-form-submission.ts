@@ -3,11 +3,13 @@ import { youformAuth } from '../auth';
 import { youformProps } from '../common/props';
 import { youformApi } from '../common/api';
 import { isNil } from '@activepieces/pieces-framework';
+import { newSubmissionOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'youform-new-submission-trigger';
 
 export const newSubmissionTrigger = createTrigger({
   name: 'new-submission',
+  outputSchema: newSubmissionOutputSchema,
   classification: 'READ',
   auth: youformAuth,
   displayName: 'New Submission',
