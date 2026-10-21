@@ -218,5 +218,9 @@
   "Triggers when a customer is created.": "Срабатывает при создании клиента.",
   "Triggers when an order is created.": "Срабатывает при создании заказа.",
   "Triggers when a product is updated.": "Срабатывает при обновлении товара.",
-  "Triggers when an order is paid.": "Срабатывает при оплате заказа."
+  "Triggers when an order is paid.": "Срабатывает при оплате заказа.",
+  "Leave empty to use Shopify's default.": "Оставьте пустым, чтобы использовать значение Shopify по умолчанию.",
+  "Switched off, these leave the customer's current setting unchanged.": "Выключенные параметры не меняют текущие настройки клиента.",
+  "Mark the customer's email as verified.": "Отметить email клиента как подтверждённый.",
+  "Leave empty to keep the current status.": "Оставьте пустым, чтобы сохранить текущий статус."
 }
