@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { AppConnectionType, PropertyType } from '@activepieces/pieces-framework';
+import {
+  AppConnectionType,
+  createMockActionContext,
+  InputPropertyMap,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import { githubUpdateRepositoryAction } from '../src/lib/actions/ai/update-repository';
 import { githubApiCall } from '../src/lib/common';
 import { GithubAuthValue } from '../src/lib/common/auth-helpers';
@@ -18,8 +23,12 @@ const auth: GithubAuthValue = {
 
 function runUpdate(propsValue: Record<string, unknown>) {
   apiCall.mockResolvedValueOnce({ status: 200, headers: {}, body: {} });
-  const run = githubUpdateRepositoryAction.run as (ctx: unknown) => Promise<unknown>;
-  return run({ auth, propsValue: { owner: 'octo', repo: 'repo', ...propsValue } });
+  const fullPropsValue = { owner: 'octo', repo: 'repo', ...propsValue };
+  return githubUpdateRepositoryAction.run({
+    ...createMockActionContext<InputPropertyMap>({ propsValue: fullPropsValue }),
+    auth,
+    propsValue: fullPropsValue,
+  });
 }
 
 function sentBody() {
