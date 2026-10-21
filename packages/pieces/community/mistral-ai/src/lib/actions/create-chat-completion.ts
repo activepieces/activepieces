@@ -100,10 +100,10 @@ export const createChatCompletion = createAction({
 						continue;
 					}
 				}
-				throw new Error(parseMistralError(e));
+				throw new Error(parseMistralError({ error: e, baseUrl }));
 			}
 		}
-		throw new Error(parseMistralError(lastErr));
+		throw new Error(parseMistralError({ error: lastErr, baseUrl }));
 	},
 });
 

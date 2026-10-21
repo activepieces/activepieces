@@ -144,10 +144,10 @@ export const runOcr = createAction({
 						continue;
 					}
 				}
-				throw new Error(parseMistralError(e));
+				throw new Error(parseMistralError({ error: e, baseUrl: config.baseUrl }));
 			}
 		}
-		throw new Error(parseMistralError(lastErr));
+		throw new Error(parseMistralError({ error: lastErr, baseUrl: config.baseUrl }));
 	},
 });
 

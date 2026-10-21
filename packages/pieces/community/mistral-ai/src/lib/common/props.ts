@@ -51,6 +51,6 @@ export const modelDropdown = Property.Dropdown({
 	},
 });
 
-export function parseMistralError(e: unknown): string {
-	return mistralApi.describeError({ error: e, isGateway: false });
+export function parseMistralError({ error, baseUrl }: { error: unknown; baseUrl: string }): string {
+	return mistralApi.describeError({ error, isGateway: mistralApi.isGatewayBaseUrl(baseUrl) });
 }

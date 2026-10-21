@@ -89,7 +89,7 @@ export const uploadFile = createAction({
 			});
 			return response.body;
 		} catch (e: any) {
-			throw new Error(parseMistralError(e));
+			throw new Error(parseMistralError({ error: e, baseUrl }));
 		}
 	},
 });
