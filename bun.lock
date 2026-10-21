@@ -8211,6 +8211,17 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/sell-to-state": {
+      "name": "@activepieces/piece-sell-to-state",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "^2.3.0",
+      },
+    },
     "packages/pieces/community/send-it": {
       "name": "@activepieces/piece-send-it",
       "version": "0.2.0",
@@ -12585,6 +12596,7 @@
 
     "@activepieces/piece-segment": ["@activepieces/piece-segment@workspace:packages/pieces/community/segment"],
 
+    "@activepieces/piece-sell-to-state": ["@activepieces/piece-sell-to-state@workspace:packages/pieces/community/sell-to-state"],
     "@activepieces/piece-send-it": ["@activepieces/piece-send-it@workspace:packages/pieces/community/send-it"],
 
     "@activepieces/piece-sender": ["@activepieces/piece-sender@workspace:packages/pieces/community/sender"],
@@ -18879,6 +18891,7 @@
 
     "@activepieces/piece-seek-table/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
+    "@activepieces/piece-sell-to-state/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
     "@activepieces/piece-sendpulse/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-service-now/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
