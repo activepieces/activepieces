@@ -162,6 +162,22 @@ export function itemSubtitle({ item }: { item: UsageItem }): string {
   return item.parent ?? '';
 }
 
+export function relatedSpan({
+  index,
+  count,
+}: {
+  index: number;
+  count: number;
+}): string {
+  if (count % 3 === 0) {
+    return 'lg:col-span-4';
+  }
+  if (count % 3 === 2) {
+    return index >= count - 2 ? 'lg:col-span-6' : 'lg:col-span-4';
+  }
+  return 'lg:col-span-6';
+}
+
 export function dimensionIcon({
   dimension,
 }: {
@@ -180,3 +196,6 @@ const DIMENSION_ICONS: Record<UsageDimension, LucideIcon> = {
   key: KeyRound,
   model: Cpu,
 };
+
+export const USAGE_LIST_GRID =
+  'grid grid-cols-[minmax(0,1fr)_6rem_1rem] items-center gap-4 md:grid-cols-[minmax(0,1fr)_5rem_5rem_5rem_6rem_1rem]';

@@ -76,7 +76,7 @@ function buildDetail({
       pick: (candidate) => candidate.spendUsd,
     });
   const related = Object.fromEntries(
-    RELATED_DIMENSIONS[dimension].map((other) => [
+    USAGE_RELATED_DIMENSIONS[dimension].map((other) => [
       other,
       itemsOf({ items, dimension: other })
         .slice(0, TOP_COUNT)
@@ -102,10 +102,9 @@ function buildDetail({
       random,
     }),
     related,
-    bySource:
-      dimension === 'project' || dimension === 'agent'
-        ? sourcesFor({ preset, spendUsd: item.spendUsd })
-        : undefined,
+    bySource: USAGE_SOURCE_DIMENSIONS.includes(dimension)
+      ? sourcesFor({ preset, spendUsd: item.spendUsd })
+      : undefined,
     runs: dimension === 'flow' ? Math.round(item.calls / 2.4) : undefined,
     reportedUsd:
       dimension === 'key'
@@ -609,15 +608,6 @@ const PRESET_PROFILES: Record<UsageDataPreset, PresetProfile> = {
     sources: ALL_SOURCES,
     extra: true,
   },
-};
-
-const RELATED_DIMENSIONS: Record<UsageDimension, UsageDimension[]> = {
-  project: ['flow', 'agent', 'user', 'model', 'key'],
-  flow: ['model', 'key'],
-  agent: ['user', 'model', 'key'],
-  user: ['agent', 'project', 'model'],
-  key: ['project', 'flow', 'model'],
-  model: ['project', 'flow', 'agent', 'key'],
 };
 
 const CATALOG: CatalogEntry[] = [
@@ -1136,6 +1126,18 @@ export const USAGE_PERIODS: UsagePeriod[] = [
   'this-month',
   'last-month',
 ];
+export const USAGE_RELATED_DIMENSIONS: Record<
+  UsageDimension,
+  UsageDimension[]
+> = {
+  project: ['flow', 'agent', 'user', 'model', 'key'],
+  flow: ['model', 'key'],
+  agent: ['user', 'model', 'key'],
+  user: ['agent', 'project', 'model'],
+  key: ['project', 'flow', 'model'],
+  model: ['project', 'flow', 'agent', 'key'],
+};
+export const USAGE_SOURCE_DIMENSIONS: UsageDimension[] = ['project', 'agent'];
 export const USAGE_DIMENSIONS: UsageDimension[] = [
   'project',
   'flow',

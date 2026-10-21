@@ -9,7 +9,6 @@ import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state'
 import { SearchInput } from '@/components/custom/search-input';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -22,6 +21,7 @@ import {
   ItemIcon,
   itemSubtitle,
   UsageEmptyState,
+  USAGE_LIST_GRID,
   UsageTrail,
 } from './usage-bits';
 import {
@@ -37,6 +37,7 @@ import {
   useUsageView,
 } from './usage-header-controls';
 import { UsagePreviewSwitcher } from './usage-preview-switcher';
+import { UsageListSkeleton } from './usage-skeletons';
 import { SharedBadge } from './usage-top-list';
 
 export function UsageListPage() {
@@ -113,20 +114,7 @@ function UsageListBody({
   const plural = usageFormat.dimensionLabel({ dimension }).toLowerCase();
 
   if (view.preset === 'loading') {
-    return (
-      <section className={cn(adminSurface.card, 'flex flex-col p-2')}>
-        {SKELETON_ROWS.map((row) => (
-          <div key={row} className="flex items-center gap-3 px-3 py-3.5">
-            <Skeleton className="size-8 rounded-lg" />
-            <div className="flex flex-1 flex-col gap-2">
-              <Skeleton className="h-3.5 w-40" />
-              <Skeleton className="h-1 w-48" />
-            </div>
-            <Skeleton className="h-3.5 w-16" />
-          </div>
-        ))}
-      </section>
-    );
+    return <UsageListSkeleton />;
   }
   if (view.preset === 'error') {
     return (
@@ -193,7 +181,7 @@ function UsageListBody({
       </div>
       <div
         className={cn(
-          ROW_GRID,
+          USAGE_LIST_GRID,
           'border-y border-gray-6 px-5 py-2 text-xs text-gray-11',
         )}
       >
@@ -309,7 +297,7 @@ function UsageListRow({
       <Link
         to={`/platform/ai/usage/${item.dimension}/${item.id}${search}`}
         className={cn(
-          ROW_GRID,
+          USAGE_LIST_GRID,
           'group px-5 py-3.5 transition-colors hover:bg-gray-2 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-inset focus-visible:ring-gray-8/50',
         )}
       >
@@ -475,10 +463,7 @@ function itemCount({
   return `${usageFormat.whole(count)} ${noun.toLowerCase()}`;
 }
 
-const ROW_GRID =
-  'grid grid-cols-[minmax(0,1fr)_6rem_1rem] items-center gap-4 md:grid-cols-[minmax(0,1fr)_5rem_5rem_5rem_6rem_1rem]';
 const PAGE_SIZE = 25;
-const SKELETON_ROWS = ['a', 'b', 'c', 'd', 'e'];
 const DEFAULT_SORT: UsageSort = { column: 'spend', desc: true };
 
 type UsageSortColumn = 'name' | 'spend' | 'change' | 'calls' | 'tokens';

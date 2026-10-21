@@ -2,6 +2,13 @@ import { adminSurface, StatGrid } from '@/app/components/admin';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
+import { relatedSpan, USAGE_LIST_GRID } from './usage-bits';
+import {
+  USAGE_RELATED_DIMENSIONS,
+  USAGE_SOURCE_DIMENSIONS,
+  UsageDimension,
+} from './usage-dummy-data';
+
 export function UsageOverviewSkeleton() {
   return (
     <>
@@ -20,17 +27,68 @@ export function UsageOverviewSkeleton() {
   );
 }
 
-export function UsageDetailSkeleton() {
+export function UsageDetailSkeleton({
+  dimension,
+}: {
+  dimension: UsageDimension;
+}) {
+  const related = USAGE_RELATED_DIMENSIONS[dimension];
   return (
     <>
       <TilesSkeleton />
       <HeroSkeleton />
+      {USAGE_SOURCE_DIMENSIONS.includes(dimension) && <DonutCardSkeleton />}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <ListCardSkeleton className="lg:col-span-4" />
-        <ListCardSkeleton className="lg:col-span-4" />
-        <ListCardSkeleton className="lg:col-span-4" />
+        {related.map((other, index) => (
+          <ListCardSkeleton
+            key={other}
+            className={relatedSpan({ index, count: related.length })}
+          />
+        ))}
       </div>
     </>
+  );
+}
+
+export function UsageListSkeleton() {
+  return (
+    <section className={cn(adminSurface.card, 'flex flex-col')}>
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3">
+        <Skeleton className="h-9 w-full rounded-lg sm:max-w-xs" />
+        <Skeleton className="h-3 w-16" />
+      </div>
+      <div
+        className={cn(USAGE_LIST_GRID, 'border-y border-gray-6 px-5 py-2.5')}
+      >
+        <Skeleton className="h-3 w-12" />
+        <Skeleton className="hidden h-3 w-12 justify-self-end md:block" />
+        <Skeleton className="hidden h-3 w-10 justify-self-end md:block" />
+        <Skeleton className="hidden h-3 w-12 justify-self-end md:block" />
+        <Skeleton className="h-3 w-12 justify-self-end" />
+        <span />
+      </div>
+      <ul className="flex flex-col divide-y divide-gray-6">
+        {LIST_ROWS.map((row) => (
+          <li key={row} className={cn(USAGE_LIST_GRID, 'px-5 py-3.5')}>
+            <div className="flex min-w-0 items-center gap-3">
+              <Skeleton className="size-8 shrink-0 rounded-lg" />
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Skeleton className="h-3.5 w-40" />
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-1 w-24 rounded-full" />
+                </div>
+              </div>
+            </div>
+            <Skeleton className="hidden h-3.5 w-10 justify-self-end md:block" />
+            <Skeleton className="hidden h-3.5 w-12 justify-self-end md:block" />
+            <Skeleton className="hidden h-3.5 w-10 justify-self-end md:block" />
+            <Skeleton className="h-3.5 w-14 justify-self-end" />
+            <Skeleton className="size-4 rounded-sm" />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -75,15 +133,7 @@ function HeroSkeleton() {
         <Skeleton className="h-3 w-40" />
         <Skeleton className="h-3 w-40" />
       </div>
-      <div className="flex h-[280px] items-end gap-2">
-        {BARS.map((height, index) => (
-          <Skeleton
-            key={index}
-            className="flex-1 rounded-sm"
-            style={{ height: `${height}%` }}
-          />
-        ))}
-      </div>
+      <Skeleton className="h-[280px] w-full rounded-lg" />
     </section>
   );
 }
@@ -148,7 +198,4 @@ function CardTitleSkeleton() {
 
 const TILES = ['pace', 'calls', 'tokens'];
 const ROWS = ['a', 'b', 'c', 'd', 'e'];
-const BARS = [
-  38, 44, 41, 52, 48, 57, 61, 55, 63, 70, 66, 72, 68, 75, 80, 74, 82, 78, 86,
-  90,
-];
+const LIST_ROWS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];

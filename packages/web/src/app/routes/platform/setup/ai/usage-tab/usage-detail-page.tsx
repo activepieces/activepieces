@@ -23,7 +23,7 @@ import {
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 
-import { itemSubtitle, UsageTrail } from './usage-bits';
+import { itemSubtitle, relatedSpan, UsageTrail } from './usage-bits';
 import {
   USAGE_DIMENSIONS,
   UsageDetail,
@@ -101,7 +101,7 @@ function DetailBody({
   detail: UsageDetail | undefined;
 }) {
   if (view.preset === 'loading') {
-    return <UsageDetailSkeleton />;
+    return <UsageDetailSkeleton dimension={dimension} />;
   }
   if (view.preset === 'error') {
     return (
@@ -153,7 +153,7 @@ function DetailBody({
           {related.map((group, index) => (
             <UsageTopList
               key={group.dimension}
-              className={spanFor({ index, count: related.length })}
+              className={relatedSpan({ index, count: related.length })}
               dimension={group.dimension}
               items={group.items}
               totalUsd={relatedTotal}
@@ -315,14 +315,4 @@ function DashboardTile({ url }: { url: string | undefined }) {
       )}
     </StatCard>
   );
-}
-
-function spanFor({ index, count }: { index: number; count: number }): string {
-  if (count % 3 === 0) {
-    return 'lg:col-span-4';
-  }
-  if (count % 3 === 2) {
-    return index >= count - 2 ? 'lg:col-span-6' : 'lg:col-span-4';
-  }
-  return 'lg:col-span-6';
 }
