@@ -13,7 +13,7 @@ export const getGeneration = createAction({
   outputSchema: alaiOutputSchemas.generation,
   aiMetadata: {
     description:
-      'Reads the status of an Alai job by generation_id (from Generate Presentation, Add Slide, Export Presentation or Generate Speaker Notes). Returns status (pending, in_progress, completed, failed), presentation_id, slide_id, link/pdf/ppt URLs (signed, valid about 24 h) and speaker notes when ready. Alai suggests polling no more than every 5 seconds. Read-only and idempotent.',
+      'Reads the status of an Alai job by generation_id (from Generate Presentation, Add Slide, Export Presentation or Generate Speaker Notes). Returns status (pending, in_progress, completed, failed), presentation_id, slide_id, link/pdf/ppt URLs (signed, valid about 24 h) and speaker notes when ready. Poll it about every 5 seconds until status is completed or failed. Read-only and idempotent.',
     idempotent: true,
   },
   props: {

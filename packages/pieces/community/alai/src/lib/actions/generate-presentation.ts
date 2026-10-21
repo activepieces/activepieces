@@ -4,23 +4,23 @@ import { alaiClient } from '../common/client';
 import { alaiOutputSchemas } from '../common/output-schemas';
 import { exportFormatOptions, optionalInt } from './shared-props';
 
-const LANGUAGES = [
+export const LANGUAGES = [
   'English (US)', 'English (UK)', 'Spanish (Latin America)', 'Spanish (Mexico)', 'Spanish (Spain)', 'French', 'German',
   'Italian', 'Portuguese (Brazil)', 'Portuguese (Portugal)', 'Dutch', 'Polish', 'Russian', 'Japanese', 'Korean',
   'Chinese (Simplified)', 'Hindi', 'Swedish', 'Norwegian', 'Danish', 'Finnish', 'Greek', 'Turkish', 'Czech', 'Hungarian',
   'Romanian', 'Bulgarian', 'Ukrainian', 'Vietnamese', 'Thai', 'Indonesian', 'Serbian', 'Croatian', 'Bosnian', 'Slovenian',
   'Macedonian', 'Albanian', 'Montenegrin', 'Lithuanian',
 ];
-const SLIDE_RANGES = ['auto', '1', '2-5', '6-10', '11-15', '16-20', '21-25', '26-50'];
-const TONES = ['DEFAULT', 'PROFESSIONAL', 'CASUAL', 'TECHNICAL', 'EDUCATIONAL', 'INSPIRATIONAL', 'NARRATIVE', 'PERSUASIVE', 'AUTHORITATIVE', 'EMPATHETIC'];
-const CONTENT_MODES = ['PRESERVE', 'CONDENSE', 'ENHANCE', 'CUSTOM'];
-const AMOUNT_MODES = ['MINIMAL', 'ESSENTIAL', 'BALANCED', 'DETAILED'];
+export const SLIDE_RANGES = ['auto', '1', '2-5', '6-10', '11-15', '16-20', '21-25', '26-50'];
+export const TONES = ['DEFAULT', 'PROFESSIONAL', 'CASUAL', 'TECHNICAL', 'EDUCATIONAL', 'INSPIRATIONAL', 'NARRATIVE', 'PERSUASIVE', 'AUTHORITATIVE', 'EMPATHETIC'];
+export const CONTENT_MODES = ['PRESERVE', 'CONDENSE', 'ENHANCE', 'CUSTOM'];
+export const AMOUNT_MODES = ['MINIMAL', 'ESSENTIAL', 'BALANCED', 'DETAILED'];
 const CONTENT_MODE_HINTS: Record<string, string> = {
   PRESERVE: 'Keep the input text as written.',
   CONDENSE: 'Condense the input text.',
   ENHANCE: 'Expand and enhance the input text.',
 };
-const IMAGE_STYLES = ['auto', 'realistic', 'artistic', 'cartoon', 'three_d', 'custom'];
+export const IMAGE_STYLES = ['auto', 'realistic', 'artistic', 'cartoon', 'three_d', 'custom'];
 
 export const generatePresentation = createAction({
   auth: alaiAuth,
@@ -28,7 +28,7 @@ export const generatePresentation = createAction({
   classification: 'WRITE',
   displayName: 'Generate Presentation',
   description: 'Create a new AI-generated presentation from text.',
-  audience: 'both',
+  audience: 'human',
   outputSchema: alaiOutputSchemas.generation,
   aiMetadata: {
     description:
@@ -146,69 +146,94 @@ export const generatePresentation = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const inputText = (propsValue.inputText ?? '').trim();
-    if (inputText.length === 0) {
-      throw new Error('Input Text is required.');
-    }
-    const formats = alaiClient.exportFormats(propsValue.exportFormats);
-    const style = propsValue.imageStyle;
-    if (style !== undefined && style !== null && !IMAGE_STYLES.includes(style)) {
-      throw new Error(`Image Style must be one of ${IMAGE_STYLES.join(', ')}.`);
-    }
-    const styleInstructions = propsValue.imageStyleInstructions?.trim();
-    if (style === 'custom' && !styleInstructions) {
-      throw new Error('Image Style Instructions are required when Image Style is "custom".');
-    }
-    const slideRange = propsValue.slideRange;
-    if (slideRange !== undefined && slideRange !== null && !SLIDE_RANGES.includes(String(slideRange))) {
-      throw new Error(`Slide Range must be one of ${SLIDE_RANGES.join(', ')}.`);
-    }
-    const language = propsValue.language;
-    if (language !== undefined && language !== null && !LANGUAGES.includes(language)) {
-      throw new Error(`Language "${language}" is not supported by Alai.`);
-    }
-    const variants = optionalInt({ value: propsValue.variantsPerSlide, label: 'Variants per Slide', min: 1, max: 4 });
-    const imageIds = (propsValue.imageIds ?? []).map((id) => String(id).trim()).filter((id) => id.length > 0);
-
-    const presentationOptions: Record<string, unknown> = {};
-    if (propsValue.title?.trim()) presentationOptions['title'] = propsValue.title.trim();
-    if (propsValue.themeId?.trim()) presentationOptions['theme_id'] = propsValue.themeId.trim();
-    if (propsValue.vibeId?.trim()) presentationOptions['vibe_id'] = propsValue.vibeId.trim();
-    if (slideRange) presentationOptions['slide_range'] = String(slideRange);
-    if (variants !== undefined) presentationOptions['total_variants_per_slide'] = variants;
-
-    const imageOptions: Record<string, unknown> = {};
-    if (typeof propsValue.includeAiImages === 'boolean') imageOptions['include_ai_images'] = propsValue.includeAiImages;
-    if (typeof propsValue.includeWebImages === 'boolean') imageOptions['include_web_images'] = propsValue.includeWebImages;
-    if (style) imageOptions['style'] = style;
-    if (styleInstructions) imageOptions['style_instructions'] = styleInstructions;
-
-    const body: Record<string, unknown> = {
-      input_text: inputText,
-      export_formats: formats.length > 0 ? formats : ['link'],
-    };
-    const instructions = buildInstructions({
-      additionalInstructions: propsValue.additionalInstructions,
-      tone: propsValue.tone,
-      contentMode: propsValue.contentMode,
-      amountMode: propsValue.amountMode,
-    });
-    if (instructions) body['additional_instructions'] = instructions;
-    if (imageIds.length > 0) body['image_ids'] = imageIds;
-    if (Object.keys(presentationOptions).length > 0) body['presentation_options'] = presentationOptions;
-    if (language) body['text_options'] = { language };
-    if (Object.keys(imageOptions).length > 0) body['image_options'] = imageOptions;
-
+    const { body, formats } = buildGenerationBody({ input: propsValue });
     return alaiClient.startGeneration({
       apiKey: auth.props.apiKey,
       path: '/generations',
       body,
       waitForCompletion: propsValue.waitForCompletion,
       maxWaitTime: propsValue.maxWaitTime,
-      requestedFormats: formats.length > 0 ? formats : ['link'],
+      requestedFormats: formats,
     });
   },
 });
+
+
+export type GenerationInput = {
+  inputText?: string;
+  additionalInstructions?: string;
+  title?: string;
+  slideRange?: unknown;
+  tone?: unknown;
+  contentMode?: unknown;
+  amountMode?: unknown;
+  themeId?: string;
+  vibeId?: string;
+  language?: string;
+  variantsPerSlide?: unknown;
+  imageIds?: unknown[];
+  includeAiImages?: boolean;
+  includeWebImages?: boolean;
+  imageStyle?: string;
+  imageStyleInstructions?: string;
+  exportFormats?: unknown;
+};
+
+export function buildGenerationBody({ input }: { input: GenerationInput }): { body: Record<string, unknown>; formats: string[] } {
+  const inputText = (input.inputText ?? '').trim();
+  if (inputText.length === 0) {
+    throw new Error('Input Text is required.');
+  }
+  const formats = alaiClient.exportFormats(input.exportFormats);
+  const style = input.imageStyle;
+  if (style !== undefined && style !== null && !IMAGE_STYLES.includes(style)) {
+    throw new Error(`Image Style must be one of ${IMAGE_STYLES.join(', ')}.`);
+  }
+  const styleInstructions = input.imageStyleInstructions?.trim();
+  if (style === 'custom' && !styleInstructions) {
+    throw new Error('Image Style Instructions are required when Image Style is "custom".');
+  }
+  const slideRange = input.slideRange;
+  if (slideRange !== undefined && slideRange !== null && !SLIDE_RANGES.includes(String(slideRange))) {
+    throw new Error(`Slide Range must be one of ${SLIDE_RANGES.join(', ')}.`);
+  }
+  const language = input.language;
+  if (language !== undefined && language !== null && !LANGUAGES.includes(language)) {
+    throw new Error(`Language "${language}" is not supported by Alai.`);
+  }
+  const variants = optionalInt({ value: input.variantsPerSlide, label: 'Variants per Slide', min: 1, max: 4 });
+  const imageIds = (input.imageIds ?? []).map((id) => String(id).trim()).filter((id) => id.length > 0);
+
+  const presentationOptions: Record<string, unknown> = {};
+  if (input.title?.trim()) presentationOptions['title'] = input.title.trim();
+  if (input.themeId?.trim()) presentationOptions['theme_id'] = input.themeId.trim();
+  if (input.vibeId?.trim()) presentationOptions['vibe_id'] = input.vibeId.trim();
+  if (slideRange) presentationOptions['slide_range'] = String(slideRange);
+  if (variants !== undefined) presentationOptions['total_variants_per_slide'] = variants;
+
+  const imageOptions: Record<string, unknown> = {};
+  if (typeof input.includeAiImages === 'boolean') imageOptions['include_ai_images'] = input.includeAiImages;
+  if (typeof input.includeWebImages === 'boolean') imageOptions['include_web_images'] = input.includeWebImages;
+  if (style) imageOptions['style'] = style;
+  if (styleInstructions) imageOptions['style_instructions'] = styleInstructions;
+
+  const body: Record<string, unknown> = {
+    input_text: inputText,
+    export_formats: formats.length > 0 ? formats : ['link'],
+  };
+  const instructions = buildInstructions({
+    additionalInstructions: input.additionalInstructions,
+    tone: input.tone,
+    contentMode: input.contentMode,
+    amountMode: input.amountMode,
+  });
+  if (instructions) body['additional_instructions'] = instructions;
+  if (imageIds.length > 0) body['image_ids'] = imageIds;
+  if (Object.keys(presentationOptions).length > 0) body['presentation_options'] = presentationOptions;
+  if (language) body['text_options'] = { language };
+  if (Object.keys(imageOptions).length > 0) body['image_options'] = imageOptions;
+  return { body, formats: formats.length > 0 ? formats : ['link'] };
+}
 
 function titleCase(value: string): string {
   return value[0] + value.slice(1).toLowerCase();

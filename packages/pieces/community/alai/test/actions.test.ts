@@ -12,6 +12,7 @@ import { getGeneration } from '../src/lib/actions/get-generation';
 import { listPresentations, listThemes } from '../src/lib/actions/list-resources';
 import { uploadImages } from '../src/lib/actions/upload-images';
 import { alaiAuth } from '../src/lib/common/auth';
+import { addSlideAi, exportPresentationAi, generatePresentationAi, generateSpeakerNotesAi } from '../src/lib/actions/ai-actions';
 
 const AUTH = { props: { apiKey: ' key123 ' } };
 
@@ -252,5 +253,40 @@ describe('auth validate', () => {
     const spy = mockResponses({ bodies: [{ user_id: 'u' }] });
     expect(await validate({ auth: { apiKey: ' k ' } })).toEqual({ valid: true });
     expect(spy.mock.calls[0][0].headers).toMatchObject({ Authorization: 'Bearer k' });
+  });
+});
+
+describe('agent tools', () => {
+  it('generate_presentation_ai sends one request, maps tone and never waits', async () => {
+    const spy = mockResponses({ bodies: [{ generation_id: 'a1' }] });
+    const out = await run({ action: generatePresentationAi, propsValue: { inputText: 'x', tone: 'CASUAL', slideRange: '1', themeId: 't1' } });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0].body).toEqual({
+      input_text: 'x',
+      export_formats: ['link'],
+      additional_instructions: 'Use a casual tone.',
+      presentation_options: { theme_id: 't1', slide_range: '1' },
+    });
+    expect(out).toMatchObject({ generation_id: 'a1', status: 'pending' });
+  });
+
+  it('add_slide_ai sends an integer slideOrder', async () => {
+    const spy = mockResponses({ bodies: [{ generation_id: 'a2' }] });
+    await run({ action: addSlideAi, propsValue: { presentationId: 'p1', slideContext: 'S', slideOrder: 0, slideType: 'classic' } });
+    expect(spy.mock.calls[0][0].url).toBe('https://slides-api.getalai.com/api/v1/presentations/p1/slides');
+    expect(spy.mock.calls[0][0].body).toEqual({ slide_context: 'S', options: { slide_type: 'classic', slide_order: 0 }, export_formats: ['link'] });
+  });
+
+  it('export_presentation_ai posts formats and requires one', async () => {
+    const spy = mockResponses({ bodies: [{ generation_id: 'a3' }] });
+    await run({ action: exportPresentationAi, propsValue: { presentationId: 'p1', formats: ['pdf'] } });
+    expect(spy.mock.calls[0][0].body).toEqual({ formats: ['pdf'] });
+    await expect(run({ action: exportPresentationAi, propsValue: { presentationId: 'p1', formats: [] } })).rejects.toThrow('at least one format');
+  });
+
+  it('generate_speaker_notes_ai posts all slides when none given', async () => {
+    const spy = mockResponses({ bodies: [{ generation_id: 'a4' }] });
+    await run({ action: generateSpeakerNotesAi, propsValue: { presentationId: 'p1' } });
+    expect(spy.mock.calls[0][0].body).toEqual({});
   });
 });

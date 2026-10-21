@@ -1,5 +1,6 @@
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { addSlide } from './lib/actions/add-slide';
+import { addSlideAi, exportPresentationAi, generatePresentationAi, generateSpeakerNotesAi } from './lib/actions/ai-actions';
 import { alaiCustomApiCall } from './lib/actions/custom-api-call';
 import { deletePresentation } from './lib/actions/delete-presentation';
 import { deleteSlide } from './lib/actions/delete-slide';
@@ -21,6 +22,10 @@ export const alai = createPiece({
   categories: [PieceCategory.CONTENT_AND_FILES, PieceCategory.ARTIFICIAL_INTELLIGENCE],
   actions: [
     generatePresentation,
+    generatePresentationAi,
+    addSlideAi,
+    exportPresentationAi,
+    generateSpeakerNotesAi,
     getGeneration,
     exportPresentation,
     addSlide,

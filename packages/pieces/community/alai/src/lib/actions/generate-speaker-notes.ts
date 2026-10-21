@@ -10,7 +10,7 @@ export const generateSpeakerNotes = createAction({
   classification: 'WRITE',
   displayName: 'Generate Speaker Notes',
   description: 'Generate speaker notes for the slides of a presentation.',
-  audience: 'both',
+  audience: 'human',
   outputSchema: alaiOutputSchemas.generation,
   aiMetadata: {
     description:

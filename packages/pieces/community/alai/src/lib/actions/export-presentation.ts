@@ -10,7 +10,7 @@ export const exportPresentation = createAction({
   classification: 'WRITE',
   displayName: 'Export Presentation',
   description: 'Export a presentation as a link, PDF and/or PowerPoint file.',
-  audience: 'both',
+  audience: 'human',
   outputSchema: alaiOutputSchemas.generation,
   aiMetadata: {
     description:

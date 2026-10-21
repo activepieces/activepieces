@@ -10,7 +10,7 @@ export const addSlide = createAction({
   classification: 'WRITE',
   displayName: 'Add Slide',
   description: 'Generate a new slide and add it to an existing presentation.',
-  audience: 'both',
+  audience: 'human',
   outputSchema: alaiOutputSchemas.generation,
   aiMetadata: {
     description:
@@ -75,35 +75,51 @@ export const addSlide = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const presentationId = alaiClient.pathId({ value: propsValue.presentationId, label: 'Presentation ID' });
-    const slideContext = (propsValue.slide_context ?? '').trim();
-    if (slideContext.length === 0) {
-      throw new Error('Slide Content is required.');
-    }
-    const rawOrder = typeof propsValue.slide_order === 'string' ? propsValue.slide_order.trim() : propsValue.slide_order;
-    const slideOrder = rawOrder === 'end' ? undefined : optionalInt({ value: rawOrder, label: 'Slide Position', min: 0 });
-    const variants = optionalInt({ value: propsValue.variantsPerSlide, label: 'Variants', min: 1, max: 4 });
-    const slideType = propsValue.slideType;
-    if (slideType !== undefined && slideType !== null && slideType !== 'classic' && slideType !== 'creative') {
-      throw new Error('Slide Type must be classic or creative.');
-    }
-    const options: Record<string, unknown> = {};
-    const hints = [
-      propsValue.includeAiImages === false ? 'Do not use images on this slide.' : '',
-      propsValue.includeAiImages !== false && propsValue.imageStyle?.trim() ? `Image style: ${propsValue.imageStyle.trim()}.` : '',
-      propsValue.additionalInstructions?.trim() ?? '',
-    ].filter((part) => part.length > 0);
-    if (hints.length > 0) options['additional_instructions'] = hints.join(' ');
-    if (slideType) options['slide_type'] = slideType;
-    if (slideOrder !== undefined) options['slide_order'] = slideOrder;
-    if (variants !== undefined) options['total_variants_per_slide'] = variants;
+    const { presentationId, body } = buildSlideRequest({ input: propsValue });
     return alaiClient.startGeneration({
       apiKey: auth.props.apiKey,
       path: `/presentations/${presentationId}/slides`,
-      body: { slide_context: slideContext, options, export_formats: ['link'] },
+      body,
       waitForCompletion: propsValue.waitForCompletion,
       maxWaitTime: propsValue.maxWaitTime,
       requestedFormats: ['link'],
     });
   },
 });
+
+export type SlideInput = {
+  presentationId?: string;
+  slide_context?: string;
+  additionalInstructions?: string;
+  slide_order?: unknown;
+  slideType?: string;
+  includeAiImages?: boolean;
+  imageStyle?: string;
+  variantsPerSlide?: unknown;
+};
+
+export function buildSlideRequest({ input }: { input: SlideInput }): { presentationId: string; body: Record<string, unknown> } {
+  const presentationId = alaiClient.pathId({ value: input.presentationId, label: 'Presentation ID' });
+  const slideContext = (input.slide_context ?? '').trim();
+  if (slideContext.length === 0) {
+    throw new Error('Slide Content is required.');
+  }
+  const rawOrder = typeof input.slide_order === 'string' ? input.slide_order.trim() : input.slide_order;
+  const slideOrder = rawOrder === 'end' ? undefined : optionalInt({ value: rawOrder, label: 'Slide Position', min: 0 });
+  const variants = optionalInt({ value: input.variantsPerSlide, label: 'Variants', min: 1, max: 4 });
+  const slideType = input.slideType;
+  if (slideType !== undefined && slideType !== null && slideType !== 'classic' && slideType !== 'creative') {
+    throw new Error('Slide Type must be classic or creative.');
+  }
+  const options: Record<string, unknown> = {};
+  const hints = [
+    input.includeAiImages === false ? 'Do not use images on this slide.' : '',
+    input.includeAiImages !== false && input.imageStyle?.trim() ? `Image style: ${input.imageStyle.trim()}.` : '',
+    input.additionalInstructions?.trim() ?? '',
+  ].filter((part) => part.length > 0);
+  if (hints.length > 0) options['additional_instructions'] = hints.join(' ');
+  if (slideType) options['slide_type'] = slideType;
+  if (slideOrder !== undefined) options['slide_order'] = slideOrder;
+  if (variants !== undefined) options['total_variants_per_slide'] = variants;
+  return { presentationId, body: { slide_context: slideContext, options, export_formats: ['link'] } };
+}
