@@ -166,11 +166,12 @@ describe('actions', () => {
     expect(request(1).queryParams).toEqual({ per_page: '1000', next: 'c1' });
   });
 
-  it('Get Batch Results stops when the cursor repeats', async () => {
+  it('Get Batch Results fails instead of returning partial results when the cursor repeats', async () => {
     sendRequest.mockResolvedValue(ok({ data: [{ email: 'a@example.com' }], next: 'same' }));
-    const results = await runAction(getBatchResultsAction, { jobId: 'job_1' });
+    await expect(
+      runAction(getBatchResultsAction, { jobId: 'job_1' })
+    ).rejects.toThrow('results are incomplete');
     expect(sendRequest).toHaveBeenCalledTimes(2);
-    expect(results).toHaveLength(2);
   });
 });
 

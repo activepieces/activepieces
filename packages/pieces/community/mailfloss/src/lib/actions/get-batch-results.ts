@@ -25,7 +25,6 @@ export const getBatchResultsAction = createAction({
     )}/results`;
     const results: Record<string, unknown>[] = [];
     let next: string | undefined;
-    let previous: string | undefined;
     do {
       const page = await mailflossApi.send<ResultsPage>({
         apiKey: context.auth.secret_text,
@@ -33,10 +32,14 @@ export const getBatchResultsAction = createAction({
         path,
         queryParams: { per_page: '1000', ...(next ? { next } : {}) },
       });
+      if (next && page.next === next) {
+        throw new Error(
+          'mailfloss returned the same results page twice, so the results are incomplete. Try again.'
+        );
+      }
       results.push(...page.data);
-      previous = next;
       next = page.next;
-    } while (next && next !== previous);
+    } while (next);
     return results;
   },
 });
