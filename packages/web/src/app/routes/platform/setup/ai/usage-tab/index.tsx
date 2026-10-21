@@ -23,7 +23,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 import { UsageOverview, UsagePeriod, usageDummyData } from './usage-dummy-data';
-import { UsageEstimateNote } from './usage-estimate-note';
 import { usageFormat } from './usage-format';
 import {
   UsageHeaderControls,
@@ -51,7 +50,9 @@ export function UsageTab({ layout = 'flat' }: { layout?: UsageLayout }) {
     <>
       <AdminPageHeader
         title={t('AI usage')}
-        description={<UsageEstimateNote />}
+        description={t(
+          'Where your AI spend goes across flows, agents and chat.',
+        )}
       >
         <UsageHeaderControls view={view} />
       </AdminPageHeader>
