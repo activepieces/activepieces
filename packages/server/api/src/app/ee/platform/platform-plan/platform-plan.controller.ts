@@ -1,5 +1,5 @@
 import { SeekPage, tryCatch } from '@activepieces/core-utils'
-import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, EnterpriseTrialStatus, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
+import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, SelfServeTrialStatus, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -120,12 +120,12 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
         return {}
     })
 
-    app.get('/enterprise-trial', GetEnterpriseTrialRequest, async (request) => {
-        return billingProvider.get(request.log).getEnterpriseTrial(request.principal.platform.id)
+    app.get('/self-serve-trial', GetSelfServeTrialRequest, async (request) => {
+        return billingProvider.get(request.log).getSelfServeTrial(request.principal.platform.id)
     })
 
-    app.post('/enterprise-trial/start', StartEnterpriseTrialRequest, async (request) => {
-        return billingProvider.get(request.log).startEnterpriseTrial(request.principal.platform.id)
+    app.post('/self-serve-trial/start', StartSelfServeTrialRequest, async (request) => {
+        return billingProvider.get(request.log).startSelfServeTrial(request.principal.platform.id)
     })
 
     app.post('/setup-payment', SetupPaymentRequest, async (request) => {
@@ -309,19 +309,19 @@ const SetupPaymentRequest = {
     config: PLATFORM_ADMIN_ONLY,
 }
 
-const GetEnterpriseTrialRequest = {
+const GetSelfServeTrialRequest = {
     schema: {
         response: {
-            [StatusCodes.OK]: EnterpriseTrialStatus,
+            [StatusCodes.OK]: SelfServeTrialStatus,
         },
     },
     config: PLATFORM_ADMIN_ONLY,
 }
 
-const StartEnterpriseTrialRequest = {
+const StartSelfServeTrialRequest = {
     schema: {
         response: {
-            [StatusCodes.OK]: EnterpriseTrialStatus,
+            [StatusCodes.OK]: SelfServeTrialStatus,
         },
     },
     config: {

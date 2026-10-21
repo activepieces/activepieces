@@ -173,18 +173,29 @@ export const isFreeLegacyEligible = ({ plan, created }: { plan?: string | null, 
     return !Number.isNaN(createdAt) && createdAt < Date.parse(FREE_LEGACY_CUTOFF_ISO)
 }
 
-export const EnterpriseTrialState = z.enum(['eligible', 'active', 'ended', 'used', 'unavailable'])
-export type EnterpriseTrialState = z.infer<typeof EnterpriseTrialState>
+export const SelfServeTrialState = z.enum(['eligible', 'ineligible', 'active', 'ended', 'used', 'unavailable'])
+export type SelfServeTrialState = z.infer<typeof SelfServeTrialState>
 
-export const EnterpriseTrialStatus = z.object({
-    state: EnterpriseTrialState,
+export const SelfServeTrialStatus = z.object({
+    state: SelfServeTrialState,
     startedAt: z.string().nullable(),
     endsAt: z.string().nullable(),
     extended: z.boolean(),
 })
-export type EnterpriseTrialStatus = z.infer<typeof EnterpriseTrialStatus>
+export type SelfServeTrialStatus = z.infer<typeof SelfServeTrialStatus>
 
-export const UNAVAILABLE_ENTERPRISE_TRIAL: EnterpriseTrialStatus = {
+export const SELF_SERVE_TRIAL_PLANS: readonly string[] = [
+    PlanName.FREE,
+    PlanName.FREE_LEGACY,
+    PlanName.PLUS,
+    PlanName.PLUS_ANNUAL,
+    PlanName.TEAM,
+    PlanName.TEAM_ANNUAL,
+]
+
+export const isSelfServeTrialPlan = (plan: string | null | undefined): boolean => !isNil(plan) && SELF_SERVE_TRIAL_PLANS.includes(plan)
+
+export const UNAVAILABLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = {
     state: 'unavailable',
     startedAt: null,
     endsAt: null,
