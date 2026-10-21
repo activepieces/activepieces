@@ -1,8 +1,7 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
-import { clockifyApiCall } from '../common/client';
-import { workspaceId } from '../common/props';
+import { clockifyApi } from '../common/api';
+import { clockifyProps } from '../common/props';
 
 export const stopTimerAction = createAction({
 	auth: clockifyAuth,
@@ -17,31 +16,18 @@ export const stopTimerAction = createAction({
 		idempotent: false,
 	},
 	props: {
-		workspaceId: workspaceId({
-			displayName: 'Workspace',
-			required: true,
-		}),
+		workspaceId: clockifyProps.workspaceId({ required: true }),
 	},
 	async run(context) {
 		const { workspaceId } = context.propsValue;
 
-		const currentUserResponse = await clockifyApiCall<{ id: string; email: string }>({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/user`,
+		const currentUser = await clockifyApi.getCurrentUser({ auth: context.auth });
+
+		return await clockifyApi.stopUserTimer({
+			auth: context.auth,
+			workspaceId,
+			userId: currentUser.id,
+			end: new Date().toISOString(),
 		});
-
-		const userId = currentUserResponse.id;
-
-		const response = await clockifyApiCall({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.PATCH,
-			resourceUri: `/workspaces/${workspaceId}/user/${userId}/time-entries`,
-			body: {
-				end: new Date().toISOString(),
-			},
-		});
-
-		return response;
 	},
 });

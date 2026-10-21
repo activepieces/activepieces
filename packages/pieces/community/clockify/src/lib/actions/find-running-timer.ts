@@ -1,8 +1,7 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
-import { clockifyApiCall } from '../common/client';
-import { workspaceId } from '../common/props';
+import { clockifyApi } from '../common/api';
+import { clockifyProps } from '../common/props';
 
 export const findRunningTimerAction = createAction({
 	auth: clockifyAuth,
@@ -17,20 +16,11 @@ export const findRunningTimerAction = createAction({
 		idempotent: true,
 	},
 	props: {
-		workspaceId: workspaceId({
-			displayName: 'Workspace',
-			required: true,
-		}),
+		workspaceId: clockifyProps.workspaceId({ required: true }),
 	},
 	async run(context) {
 		const { workspaceId } = context.propsValue;
 
-		const response = await clockifyApiCall({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/workspaces/${workspaceId}/time-entries/status/in-progress`,
-		});
-
-		return response;
+		return await clockifyApi.listInProgressTimeEntries({ auth: context.auth, workspaceId });
 	},
 });

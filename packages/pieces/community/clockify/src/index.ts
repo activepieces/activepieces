@@ -1,5 +1,5 @@
-import { createCustomApiCallAction, HttpMethod } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece } from '@activepieces/pieces-framework';
 import { createTaskAction } from './lib/actions/create-task';
 import { createTimeEntryAction } from './lib/actions/create-time-entry';
 import { findRunningTimerAction } from './lib/actions/find-running-timer';
@@ -7,7 +7,7 @@ import { findTaskAction } from './lib/actions/find-task';
 import { findTimeEntryAction } from './lib/actions/find-time-entry';
 import { startTimerAction } from './lib/actions/start-timer';
 import { stopTimerAction } from './lib/actions/stop-timer';
-import { BASE_URL, clockifyApiCall } from './lib/common/client';
+import { clockifyClient } from './lib/common/client';
 import { newTaskTrigger } from './lib/triggers/new-task';
 import { newTimeEntryTrigger } from './lib/triggers/new-time-entry';
 import { newTimerStartedTrigger } from './lib/triggers/new-timer-started';
@@ -29,7 +29,7 @@ export const clockify = createPiece({
 		findRunningTimerAction,
 		createCustomApiCallAction({
 			auth: clockifyAuth,
-			baseUrl: () => BASE_URL,
+			baseUrl: () => clockifyClient.baseUrl(),
 			authMapping: async (auth) => {
 				return {
 					'X-Api-Key': auth.secret_text,

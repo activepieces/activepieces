@@ -1,8 +1,7 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
-import { clockifyApiCall } from '../common/client';
-import { projectId, workspaceId } from '../common/props';
+import { clockifyApi } from '../common/api';
+import { clockifyProps } from '../common/props';
 
 export const findTaskAction = createAction({
 	auth: clockifyAuth,
@@ -17,14 +16,8 @@ export const findTaskAction = createAction({
 		idempotent: true,
 	},
 	props: {
-		workspaceId: workspaceId({
-			displayName: 'Workspace',
-			required: true,
-		}),
-		projectId: projectId({
-			displayName: 'Project',
-			required: true,
-		}),
+		workspaceId: clockifyProps.workspaceId({ required: true }),
+		projectId: clockifyProps.projectId({ required: true }),
 		name: Property.ShortText({
 			displayName: 'Task Name',
 			required: true,
@@ -37,16 +30,14 @@ export const findTaskAction = createAction({
 	async run(context) {
 		const { workspaceId, projectId, name, exactMatch } = context.propsValue;
 
-		const response = await clockifyApiCall({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
+		return await clockifyApi.listTasks({
+			auth: context.auth,
+			workspaceId,
+			projectId,
 			query: {
 				name,
 				'strict-name-search': exactMatch ? 'true' : 'false',
 			},
-		});	
-
-		return response;
+		});
 	},
 });
