@@ -69,7 +69,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export const mistralApi = { call, parseJsonInput, toStringArray, contentToText, compact, isRecord };
+export const mistralApi = { call, parseJsonInput, toStringArray, contentToText, compact, isRecord, describeError };
 
 function toQueryParams(params: MistralCallParams['queryParams']): Record<string, string> | undefined {
 	if (isNil(params)) {
