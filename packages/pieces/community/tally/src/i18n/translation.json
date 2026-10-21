@@ -122,10 +122,6 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
-  "None": "None",
-  "JSON": "JSON",
-  "Form Data": "Form Data",
-  "Raw": "Raw",
   "New Submission": "New Submission",
   "Triggers when someone submits the selected form": "Triggers when someone submits the selected form"
 }

@@ -8,6 +8,7 @@ import {
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
   PieceAction,
+  PieceAudienceFilter,
   PieceTrigger,
   PropertyExecutionType,
 } from '@activepieces/shared';
@@ -66,6 +67,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
     piecesHooks.usePiece({
       name: params.piece.name,
       version: reconnectConnection?.pieceVersion ?? params.piece.version,
+      audience: PieceAudienceFilter.ALL,
     });
   const form = useFormContext<PieceAction | PieceTrigger>();
   const hasPermissionToCreateConnection = useAuthorization().checkAccess(

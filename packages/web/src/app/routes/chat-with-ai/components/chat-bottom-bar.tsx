@@ -19,7 +19,6 @@ import {
 import { ActionPreviewCard } from './action-preview-card';
 import { ChatCardSkeleton } from './chat-card-primitives';
 import { ChatInput } from './chat-input';
-import { ChatModelSelector } from './chat-model-selector';
 import { ConnectionPickerCard } from './connection-picker-card';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { MultiQuestionForm } from './multi-question-form';
@@ -30,9 +29,8 @@ export function ChatBottomBar({
   onSend,
   onStop,
   onInputChange,
-  selectedModel,
-  onModelChange,
-  hideModelSelector,
+  modelPicker,
+  sendBlockedReason,
   lastAssistantMessage,
   lastMessageId,
   placeholder,
@@ -125,7 +123,7 @@ export function ChatBottomBar({
       {activeCard}
       <div
         className={cn(
-          'overflow-hidden rounded-2xl border transition-colors',
+          'overflow-hidden rounded-xl border transition-colors',
           minimal
             ? 'border-transparent bg-transparent hover:bg-gray-3/30'
             : 'border-gray-6 hover:border-gray-8 focus-within:border-gray-8',
@@ -144,14 +142,8 @@ export function ChatBottomBar({
               ? t('Or reply in your own words')
               : placeholder ?? t('Reply...')
           }
-          rightActions={
-            hideModelSelector === true ? null : (
-              <ChatModelSelector
-                selectedModel={selectedModel}
-                onModelChange={onModelChange}
-              />
-            )
-          }
+          rightActions={modelPicker}
+          sendBlockedReason={sendBlockedReason}
         />
       </div>
     </div>
@@ -224,9 +216,8 @@ type ChatBottomBarProps = {
   onSend: (text: string, files?: File[]) => void;
   onStop: () => void;
   onInputChange?: (hasInput: boolean) => void;
-  selectedModel: string | null;
-  onModelChange: (modelId: string) => void;
-  hideModelSelector?: boolean;
+  modelPicker?: ReactNode;
+  sendBlockedReason?: string;
   lastAssistantMessage: ChatUIMessage | undefined;
   lastMessageId: string | undefined;
   placeholder?: string;

@@ -203,7 +203,6 @@ const DynamicPropertiesImplementation = React.memo(
             disabled={props.disabled}
             propertySettings={props.propertySettings}
             dynamicPropsInfo={null}
-            markdownVariables={props.markdownVariables}
             onValueChange={() => {
               form.trigger();
             }}
@@ -242,7 +241,6 @@ type DynamicPropertiesProps = {
   pieceVersion: string;
   actionOrTriggerName: string;
   disabled: boolean;
-  markdownVariables?: Record<string, string>;
   placedInside: 'stepSettings' | 'predefinedAgentInputs';
   updateFormSchema:
     | ((key: string, newFieldSchema: PiecePropertyMap) => void)

@@ -11,7 +11,6 @@ import {
   Brain,
   Info,
   Loader2,
-  MessageSquare,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -141,7 +140,7 @@ export function TierCard({
     >
       <header className="flex items-center gap-3 px-5 py-4">
         <span
-          className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gray-3 text-xl"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-3 text-xl"
           aria-hidden="true"
         >
           {tier.emoji}
@@ -169,11 +168,6 @@ export function TierCard({
             )}
             {thinkingChip !== undefined && (
               <TierTag icon={Brain}>{thinkingChip}</TierTag>
-            )}
-            {tools === 'recommended' && (
-              <TierTag icon={MessageSquare}>
-                {t('Recommended for chat')}
-              </TierTag>
             )}
             {showSpinner && (
               <Loader2
@@ -267,7 +261,7 @@ export function TierCard({
 
       <div className="flex flex-col gap-1 border-t border-gray-6/60 px-3 pb-3 pt-3">
         <div className="flex items-center gap-1.5 px-2 pb-1">
-          <span className="text-xss font-medium uppercase tracking-wide text-gray-11">
+          <span className="text-xs font-medium text-gray-11">
             {t('Model & fallbacks')}
           </span>
           <Tooltip>
@@ -384,7 +378,7 @@ export function TierCard({
               <span className="my-1 size-2 shrink-0 rounded-full border-2 border-gray-7 bg-panel" />
               <span className="w-px flex-1" />
             </div>
-            <div className="my-1 flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg border border-dashed border-gray-7 px-3 py-2.5">
+            <div className="my-1 flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border border-dashed border-gray-7 px-3 py-2.5">
               <div className="flex min-w-0 items-center gap-1.5">
                 <span className="truncate text-sm font-medium text-gray-11">
                   {t('No fallback model')}

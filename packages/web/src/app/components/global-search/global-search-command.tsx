@@ -20,9 +20,10 @@ export function GlobalSearchCommand() {
   return (
     <Button
       variant="ghost"
+      size="sm"
       onClick={() => setOpen(true)}
       className={cn(
-        'h-8 w-full justify-start gap-2 overflow-hidden rounded-md p-2!  text-sm font-normal mr-auto',
+        'w-full justify-start gap-2 overflow-hidden p-2! font-normal mr-auto',
         'border border-gray-6 bg-gray-1 hover:bg-gray-4 hover:text-gray-12',
         'group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-2!',
       )}
@@ -31,7 +32,7 @@ export function GlobalSearchCommand() {
       <span className="flex-1 text-left text-gray-11 group-data-[collapsible=icon]:hidden">
         {t('Search...')}
       </span>
-      <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-gray-3 py-0.5 px-1 font-mono text-[9px] font-medium sm:flex group-data-[collapsible=icon]:hidden!">
+      <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded-md border bg-gray-3 py-0.5 px-1 font-mono text-xs font-medium sm:flex group-data-[collapsible=icon]:hidden!">
         {isMac ? '⌘' : 'Ctrl'}&nbsp;K
       </kbd>
     </Button>

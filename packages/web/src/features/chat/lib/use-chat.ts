@@ -12,10 +12,14 @@ import {
   PersistedAgentMessage,
   ToolProgressEvent,
   AgentMessageSource,
+  SubagentActivity,
+  subagentProgressId,
+  SubagentProgressEvent,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { api } from '@/lib/api';
 import { chatDebug } from '@/lib/chat-debug-logger';
@@ -27,9 +31,9 @@ import {
   SetChatStore,
   ToolCallMeta,
 } from './chat-store';
-import { useChatStoreApi } from './chat-store-context';
+import { useChatStoreApi, useChatStoreContext } from './chat-store-context';
 import { ChatUIMessage, QuickRepliesData, chatPartUtils } from './chat-types';
-import { chatUtils } from './chat-utils';
+import { ChatModelPick, chatUtils } from './chat-utils';
 import { useStreamingReducer } from './use-streaming-reducer';
 
 function applyQuickRepliesToStore({
@@ -89,6 +93,7 @@ function restoreReceiptsIntoStore({
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const AGENT_POLL_INTERVAL_MS = 5_000;
 const TOOL_GATES_WITHOUT_A_PIECE = new Set([
+  'ap_send_email',
   'ap_test_flow',
   'ap_delete_records',
   'ap_delete_table',
@@ -147,7 +152,14 @@ function buildToolCallMetaFromGate(
       isBatch: false,
     };
   }
-  return actionPreview ? { [gate.gateId]: { actionPreview } } : {};
+  if (!actionPreview) return {};
+  return {
+    [gate.gateId]: {
+      actionPreview: gate.taskTitle
+        ? { ...actionPreview, taskTitle: gate.taskTitle }
+        : actionPreview,
+    },
+  };
 }
 
 // History only persists resolved tool calls, so a live pending gate loses its `input-available`
@@ -163,6 +175,23 @@ function buildGatePart(gate: PendingGate) {
   };
 }
 
+function buildRunningTaskPart({
+  toolCallId,
+  title,
+}: {
+  toolCallId: string;
+  title: string;
+}) {
+  return {
+    type: 'dynamic-tool' as const,
+    toolCallId,
+    toolName: 'ap_run_task',
+    title,
+    state: 'input-available' as const,
+    input: { title },
+  };
+}
+
 function appendGatePart({
   messages,
   gate,
@@ -170,32 +199,69 @@ function appendGatePart({
   messages: ChatUIMessage[];
   gate: PendingGate;
 }): ChatUIMessage[] {
+  return appendTrailingPart({ messages, part: buildGatePart(gate) });
+}
+
+function appendRunningTaskParts({
+  messages,
+  toolCallMeta,
+}: {
+  messages: ChatUIMessage[];
+  toolCallMeta: Record<string, ToolCallMeta>;
+}): ChatUIMessage[] {
+  return Object.entries(toolCallMeta).reduce(
+    (current, [toolCallId, meta]) =>
+      meta.subagent?.status === 'running'
+        ? appendTrailingPart({
+            messages: current,
+            part: buildRunningTaskPart({
+              toolCallId,
+              title: meta.subagent.title,
+            }),
+          })
+        : current,
+    messages,
+  );
+}
+
+function appendTrailingPart({
+  messages,
+  part,
+}: {
+  messages: ChatUIMessage[];
+  part: ReturnType<typeof buildGatePart>;
+}): ChatUIMessage[] {
+  const baseToolCallId = subagentProgressId.baseOf(part.toolCallId);
   const alreadyAnchored = messages.some((m) =>
     m.parts.some(
-      (part) => 'toolCallId' in part && part.toolCallId === gate.gateId,
+      (existing) =>
+        'toolCallId' in existing &&
+        (existing.toolCallId === part.toolCallId ||
+          existing.toolCallId === baseToolCallId),
     ),
   );
   if (alreadyAnchored) return messages;
-  // Anchor on the current turn, always at the tail. When the tail is the user's just-sent
-  // message (the worker is blocked on the gate before persisting its assistant turn), open a
-  // fresh trailing assistant message rather than attaching to an earlier, already-finished turn.
   const last = messages[messages.length - 1];
   if (last?.role === 'assistant') {
     const next = [...messages];
     next[next.length - 1] = {
       ...last,
-      parts: [...last.parts, buildGatePart(gate)],
+      parts: [...last.parts, part],
     };
     return next;
   }
   return [
     ...messages,
     {
-      id: `gate-${gate.gateId}`,
+      id: `live-${part.toolCallId}`,
       role: 'assistant',
-      parts: [buildGatePart(gate)],
+      parts: [part],
     },
   ];
+}
+
+function progressOf(activity: SubagentActivity): number {
+  return activity.stepCount + (activity.timeline?.length ?? 0);
 }
 
 const ALLOWED_MIME_SET: ReadonlySet<string> = new Set(CHAT_ALLOWED_MIME_TYPES);
@@ -259,6 +325,14 @@ function injectFilePartsIntoLastUserMessage({
   return result;
 }
 
+function isSendCancelled({
+  statusRef,
+}: {
+  statusRef: { current: SendStatus };
+}): boolean {
+  return statusRef.current.type === 'cancelled';
+}
+
 type SendStatus =
   | { type: 'idle' }
   | { type: 'submitting' }
@@ -268,7 +342,7 @@ type SendStatus =
 export function useAgentChat({
   agentId,
   builder,
-  defaultModelName,
+  projectId,
   onTitleUpdate,
   onConversationCreated,
   onCreditsExhausted,
@@ -276,18 +350,22 @@ export function useAgentChat({
 }: {
   agentId?: string;
   builder?: boolean;
-  defaultModelName?: string | null;
+  projectId?: string | null;
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
   onTurnEnd?: () => void;
 } = {}) {
   const store = useChatStoreApi();
+  const toolCallMeta = useChatStoreContext((state) => state.toolCallMeta);
 
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
   );
-  const [modelName, setModelNameState] = useState<string | null>(null);
+  const [modelPick, setModelPickState] = useState<ChatModelPick | null>(null);
+  const [conversationProjectId, setConversationProjectId] = useState<
+    string | null
+  >(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isPollingForAgentReply, setIsPollingForAgentReply] = useState(false);
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
@@ -310,9 +388,11 @@ export function useAgentChat({
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
-  const modelNameRef = useRef<string | null>(null);
-  const defaultModelNameRef = useRef(defaultModelName ?? null);
-  defaultModelNameRef.current = defaultModelName ?? null;
+  const modelPickRef = useRef<ChatModelPick | null>(null);
+  const savedPickRef = useRef<ChatModelPick | null>(null);
+  const pickSaveQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+  const projectIdRef = useRef(projectId ?? null);
+  projectIdRef.current = projectId ?? null;
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);
@@ -341,6 +421,38 @@ export function useAgentChat({
               batchProgress: event.data,
             },
           },
+        };
+      });
+    },
+    [store],
+  );
+
+  const handleSubagentProgress = useCallback(
+    (event: SubagentProgressEvent) => {
+      store.setState((prev) => {
+        const existing = prev.toolCallMeta[event.toolCallId]?.subagent;
+        const isStale =
+          existing !== undefined &&
+          (existing.status !== 'running' ||
+            progressOf(existing) > progressOf(event.data)) &&
+          event.data.status === 'running';
+        if (isStale) {
+          return prev;
+        }
+        const opensPanel =
+          prev.taskPanelAutoOpen &&
+          prev.taskPanelToolCallId === null &&
+          chatStoreSelectors.taskPanelDocks(prev) &&
+          (event.data.timeline ?? []).some((entry) => entry.kind === 'search');
+        return {
+          toolCallMeta: {
+            ...prev.toolCallMeta,
+            [event.toolCallId]: {
+              ...prev.toolCallMeta[event.toolCallId],
+              subagent: event.data,
+            },
+          },
+          ...(opensPanel ? { taskPanelToolCallId: event.toolCallId } : {}),
         };
       });
     },
@@ -470,6 +582,7 @@ export function useAgentChat({
     onImageGenerated: handleImageGenerated,
     onFileProduced: handleFileProduced,
     onBuildPlan: handleBuildPlan,
+    onSubagentProgress: handleSubagentProgress,
     onStreamFinished: (convId) => {
       chatDebug.info({ conversation: { id: convId } }, 'stream finished');
       settleStreamRef.current(convId);
@@ -580,11 +693,19 @@ export function useAgentChat({
     const base = [...persistedMessages];
     if (optimisticUserMessage) base.push(optimisticUserMessage);
     if (streamingMessage) base.push(streamingMessage);
-    return injectFilePartsIntoLastUserMessage({
-      messages: base,
-      fileNames: lastSentFileNamesRef.current,
+    return appendRunningTaskParts({
+      messages: injectFilePartsIntoLastUserMessage({
+        messages: base,
+        fileNames: lastSentFileNamesRef.current,
+      }),
+      toolCallMeta,
     });
-  }, [persistedMessages, optimisticUserMessage, streamingMessage]);
+  }, [
+    persistedMessages,
+    optimisticUserMessage,
+    streamingMessage,
+    toolCallMeta,
+  ]);
 
   const error =
     sendStatus.type === 'error'
@@ -642,16 +763,34 @@ export function useAgentChat({
   const createConversation = useCallback(
     async ({
       title,
-      modelName,
-    }: { title?: string | null; modelName?: string | null } = {}) => {
+      pick,
+    }: { title?: string | null; pick?: ChatModelPick | null } = {}) => {
+      const chatProjectId = projectIdRef.current;
       const conv = await chatApi.createConversation({
         title: title ?? null,
-        modelName: modelName ?? null,
-        ...(agentId === undefined ? {} : { agentId }),
+        ...(agentId === undefined
+          ? {
+              ...(pick ?? {}),
+              ...(isNil(chatProjectId) ? {} : { projectId: chatProjectId }),
+            }
+          : { agentId }),
         ...(builder === undefined ? {} : { builder }),
       });
+      setConversationProjectId(conv.projectId ?? null);
+      savedPickRef.current = pick ?? null;
       conversationIdRef.current = conv.id;
       setConversationIdState(conv.id);
+      const latestPick = modelPickRef.current;
+      if (!isNil(latestPick) && latestPick !== (pick ?? null)) {
+        pickSaveQueueRef.current = pickSaveQueueRef.current.then(async () => {
+          const { error } = await tryCatch(() =>
+            chatApi.updateConversation(conv.id, latestPick),
+          );
+          if (isNil(error)) {
+            savedPickRef.current = latestPick;
+          }
+        });
+      }
       return conv;
     },
     [agentId, builder],
@@ -664,6 +803,10 @@ export function useAgentChat({
       options?: { messageSource?: AgentMessageSource },
     ) => {
       updateSendStatus({ type: 'submitting' });
+      await pickSaveQueueRef.current;
+      if (isSendCancelled({ statusRef: sendStatusRef })) {
+        return;
+      }
 
       const fileNames = files?.map((f) => f.name) ?? [];
       lastSentFileNamesRef.current = fileNames;
@@ -715,7 +858,7 @@ export function useAgentChat({
         const { error: convError } = await tryCatch(async () => {
           const conv = await createConversation({
             title: content.slice(0, 100),
-            modelName: modelNameRef.current ?? defaultModelNameRef.current,
+            pick: modelPickRef.current,
           });
           onConversationCreatedRef.current?.(conv.id);
         });
@@ -727,7 +870,7 @@ export function useAgentChat({
           });
           return;
         }
-        if (sendStatusRef.current.type === 'cancelled') {
+        if (isSendCancelled({ statusRef: sendStatusRef })) {
           setOptimisticUserMessage(null);
           return;
         }
@@ -845,8 +988,15 @@ export function useAgentChat({
         data: historyResult.data.data,
         setState: store.setState,
       });
-      modelNameRef.current = convResult.data.modelName ?? null;
-      setModelNameState(convResult.data.modelName ?? null);
+      const savedPick: ChatModelPick = {
+        modelTierId: convResult.data.modelTierId ?? null,
+        providerConfigId: convResult.data.providerConfigId ?? null,
+        modelName: convResult.data.modelName ?? null,
+      };
+      modelPickRef.current = savedPick;
+      savedPickRef.current = savedPick;
+      setModelPickState(savedPick);
+      setConversationProjectId(convResult.data.projectId ?? null);
       if (convResult.data.status === AgentConversationStatus.STREAMING) {
         const lastAssistantIdx = mapped.findLastIndex(
           (m) => m.role === 'assistant',
@@ -943,20 +1093,35 @@ export function useAgentChat({
     refetchInterval: AGENT_POLL_INTERVAL_MS,
   });
 
-  const setModelName = useCallback(async (newModelName: string) => {
-    modelNameRef.current = newModelName;
-    setModelNameState(newModelName);
+  const setModelPick = useCallback(async (newPick: ChatModelPick) => {
+    modelPickRef.current = newPick;
+    setModelPickState(newPick);
     const convId = conversationIdRef.current;
-    if (convId) {
-      await chatApi
-        .updateConversation(convId, { modelName: newModelName })
-        .catch(() => undefined);
+    if (isNil(convId)) {
+      return;
+    }
+    const save = pickSaveQueueRef.current.then(() =>
+      tryCatch(() => chatApi.updateConversation(convId, newPick)),
+    );
+    pickSaveQueueRef.current = save;
+    const { error } = await save;
+    if (isNil(error)) {
+      savedPickRef.current = newPick;
+      return;
+    }
+    const stillLatest =
+      modelPickRef.current === newPick && conversationIdRef.current === convId;
+    if (stillLatest) {
+      modelPickRef.current = savedPickRef.current;
+      setModelPickState(savedPickRef.current);
+      toast.error(t("Couldn't switch the model. Try again."));
     }
   }, []);
 
   return {
     conversationId,
-    modelName,
+    conversationProjectId,
+    modelPick,
     messages,
     isStreaming,
     isResumedStream,
@@ -967,6 +1132,6 @@ export function useAgentChat({
     sendMessage,
     cancelStream,
     setConversationId,
-    setModelName,
+    setModelPick,
   };
 }

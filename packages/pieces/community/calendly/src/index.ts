@@ -35,7 +35,7 @@ import { updateEventTypeAction } from './lib/actions/update-event-type';
 export const calendly = createPiece({
   displayName: 'Calendly',
   description: 'Simple, modern scheduling',
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/calendly.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
@@ -73,6 +73,12 @@ export const calendly = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
       }),
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${calendlyCommon.baseUrl}`,
+          placeholder: '/users/me',
+        },
+      },
     }),
   ],
   triggers: [calendlyInviteeCreated, calendlyInviteeCanceled],

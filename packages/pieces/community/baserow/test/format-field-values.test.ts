@@ -24,7 +24,7 @@ describe('formatFieldValues', () => {
       ).toThrow('Field "compte_id": "L9PnbzEm" is not a row ID');
       expect(() =>
         formatFieldValues({ input: { compte_id: ['9ma8Kx3m'] }, fields, skipEmpty: true })
-      ).toThrow('set "compte_id — Link by" to "Primary field value"');
+      ).toThrow('set "compte_id — Link By" to "Primary field value"');
     });
 
     it('sends every value as text when linking by primary field value, even numeric ones', () => {
@@ -130,6 +130,16 @@ describe('formatFieldValues', () => {
       });
 
       expect(result).toEqual({ date_debut: '2026-09-09T15:30:00.000Z' });
+    });
+
+    it('clears an empty date with null for Clean Row, never an empty string', () => {
+      const result = formatFieldValues({
+        input: { date_naissance: '' },
+        fields: [dateField({ name: 'date_naissance', includeTime: false })],
+        skipEmpty: false,
+      });
+
+      expect(result).toEqual({ date_naissance: null });
     });
   });
 
