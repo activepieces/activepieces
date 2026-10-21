@@ -8,8 +8,8 @@ The AI Center page (`/platform/ai/usage`) that answers one question: **where is 
 
 ## Rules
 - **One dollar unit.** Credits are converted at their dollar value; credits only appear as a note ("Includes 6,479 credits"). Never two units side by side.
-- **Three scopes, one page.** A segmented control (filled pill = selected) in this order: **All** · **Production** (the default) · **Testing** (flow builder Test step and agent builder). No amounts on it; each option explains itself in a tooltip. The whole page follows it. No separate testing section, never a toggle switch.
-- **One toolbar row under the title** on every usage page: scope on the left, period select and Export on the right. The period shows its dates ("This month Oct 1 – Oct 20"). Export stays visible but disabled, with a tooltip saying why, while loading, on error, or when there is nothing to export.
+- **Three scopes, one page.** A scope select whose options each carry an icon and a one-line description, in this order: **All** · **Production** (the default) · **Testing** (flow builder Test step and agent builder). No amounts on it. The whole page follows it. No separate testing section, never a toggle switch.
+- **Controls sit in the header, right of the title**, on every usage page: scope select, period select (labels only, no date ranges), Export. Export stays visible but disabled, with a tooltip saying why, while loading, on error, or when there is nothing to export.
 - **Exact vs estimated stays out of the headline.** It shows only on a key's detail page (reported by provider vs estimated from list prices, plus the provider dashboard link), and as one footnote on the overview.
 - **Overview, then drill down.** Every item opens its own detail page (`/platform/ai/usage/:dimension/:id`), and every card has See all (`/platform/ai/usage/:dimension`). Period and scope ride in the URL.
 - **One detail template.** Header + the same chart + top 5 of the *other* dimensions + one extra card per type: project → monthly limit, flow → runs and cost per run, key → reported vs estimated, model → list price. A flow detail stops at flow level; there is no per-step split.
