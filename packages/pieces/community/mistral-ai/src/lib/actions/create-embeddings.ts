@@ -1,7 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, isNil, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { mistralAuth } from '../common/auth';
-import { mistralApi } from '../common/client';
 import { parseMistralError } from '../common/props';
 import { mistralRequest } from '../common/request';
 import { createEmbeddingsOutputSchema } from '../output-schemas';
@@ -35,9 +34,13 @@ export const createEmbeddings = createAction({
 	async run(context) {
 		const { input, timeout } = context.propsValue;
 		const { baseUrl, headers } = mistralRequest.getConfig(context.auth);
-		const inputArr = mistralApi.toStringArray(toInputList(input));
+		const inputArr = toTexts(input);
 		if (inputArr.length === 0) {
 			throw new Error('Add at least one text to embed.');
+		}
+		const blankIndex = inputArr.findIndex((text) => text.trim() === '');
+		if (blankIndex !== -1) {
+			throw new Error(`Text ${blankIndex + 1} is empty. Fill it in or remove it so each vector matches its text.`);
 		}
 		const body = {
 			model: 'mistral-embed',
@@ -64,12 +67,20 @@ export const createEmbeddings = createAction({
 						continue;
 					}
 				}
-				throw new Error(parseMistralError(e));
+				throw new Error(parseMistralError({ error: e, baseUrl }));
 			}
 		}
-		throw new Error(parseMistralError(lastErr));
+		throw new Error(parseMistralError({ error: lastErr, baseUrl }));
 	},
 });
+
+function toTexts(value: unknown): string[] {
+	const list = toInputList(value);
+	if (!Array.isArray(list)) {
+		return [];
+	}
+	return list.map((item) => (isNil(item) ? '' : String(item)));
+}
 
 function toInputList(value: unknown): unknown {
 	if (typeof value !== 'string') {
