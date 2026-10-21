@@ -167,6 +167,11 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             .getRawOne<{ count: string }>()
         return Number(result?.count ?? 0)
     },
+    async lockReservedSeats({ platformId, entityManager }: CountReservedSeatsParams): Promise<void> {
+        await withinReservationWindow(repo(entityManager).createQueryBuilder('invitation').select('invitation.id'), platformId)
+            .setLock('pessimistic_write')
+            .getMany()
+    },
     async listInvitesReservingSeats({ platformId, cursor, limit }: ListInvitesReservingSeatsParams): Promise<SeekPage<UserInvitation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({

@@ -4,7 +4,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -22,7 +29,11 @@ export function SelfServeTrialSeatDialog() {
   const { platform } = platformHooks.useCurrentPlatform();
   const isPlatformAdmin = useIsPlatformAdmin();
   const grace = selfServeTrialHooks.useSeatGrace();
-  const { data: info } = billingQueries.usePlatformSubscription(
+  const {
+    data: info,
+    isError,
+    refetch,
+  } = billingQueries.usePlatformSubscription(
     platform.id,
     isPlatformAdmin && !isNil(grace),
   );
@@ -34,8 +45,23 @@ export function SelfServeTrialSeatDialog() {
     refreshBillingCaches(queryClient);
   };
 
+  if (isNil(grace)) {
+    return null;
+  }
+  if (isNil(info) && isError) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(next) => !next && closeDialog()}>
+        <DialogContent className="max-w-[480px] gap-4">
+          <DialogHeader>
+            <DialogTitle>{t('Manage seats')}</DialogTitle>
+          </DialogHeader>
+          <DataFetchErrorState entity={t('users')} onRetry={refetch} />
+        </DialogContent>
+      </Dialog>
+    );
+  }
   const seatGrace = info?.seatGrace;
-  if (isNil(grace) || isNil(info) || isNil(seatGrace)) {
+  if (isNil(info) || isNil(seatGrace)) {
     return null;
   }
   const seatLimit = seatGrace.seatLimit;

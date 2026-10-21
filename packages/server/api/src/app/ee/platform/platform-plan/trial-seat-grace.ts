@@ -1,11 +1,13 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { InvitationStatus, PlatformPlan, SelfServeTrialDates, TrialSeatGrace, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { InvitationStatus, PlatformPlan, SELF_SERVE_TRIAL_PLANS, SelfServeTrialDates, TrialSeatGrace, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { JobsOptions } from 'bullmq'
 import dayjs, { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In, SelectQueryBuilder } from 'typeorm'
+import { EntityManager, In, IsNull, SelectQueryBuilder } from 'typeorm'
 import { transaction } from '../../../core/db/transaction'
+import { getBillingEnforcedKey } from '../../../database/redis/keys'
+import { distributedStore } from '../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { billingProvider } from '../../../platform/billing-provider'
 import { UserSchema } from '../../../user/user-entity'
@@ -26,35 +28,42 @@ export const trialSeatGrace = (log: FastifyBaseLogger) => ({
         if (isNil(dates) || !graceRunning(dates)) {
             return null
         }
-        return findSeatsOverPlan({ platformId: plan.platformId, seatLimit: plan.usersLimit, dates, billingEnforced: true, log })
+        return findSeatsOverPlan({ platformId: plan.platformId, seatLimit: plan.usersLimit, dates, billingEnforced: await billingEnforcedOrUnknown(plan.platformId), log })
     },
     async endsAt({ platformId, dates }: EndsAtParams): Promise<string | null> {
         if (!graceRunning(dates)) {
             return null
         }
         const plan = await platformPlanRepo().findOneBy({ platformId })
-        const grace = await findSeatsOverPlan({ platformId, seatLimit: plan?.usersLimit, dates, billingEnforced: true, log })
+        const grace = await findSeatsOverPlan({ platformId, seatLimit: plan?.usersLimit, dates, billingEnforced: await billingEnforcedOrUnknown(platformId), log })
         return isNil(grace) ? null : graceDeadline(dates).toISOString()
     },
     async sweep(): Promise<void> {
-        const today = apDayjs().utc().startOf('day')
-        const failedPlatformIds: string[] = []
-        for (const platformId of await findPlatformsOverTheirSeats()) {
-            const { error } = await tryCatch(() => endGraceIfDue({ platformId, today, log }))
+        const now = apDayjs()
+        const failedPlatformIds = new Set<string>()
+        for (const platformId of await findPlatformsHoldingTrialSeats()) {
+            const { error } = await tryCatch(() => billingProvider.get(log).refreshEntitlements(platformId))
             if (!isNil(error)) {
-                log.error({ error, platform: { id: platformId } }, 'Failed to end the seat grace')
-                failedPlatformIds.push(platformId)
+                log.error({ error, platform: { id: platformId } }, 'Failed to refresh a platform still holding trial seats')
+                failedPlatformIds.add(platformId)
             }
         }
-        if (failedPlatformIds.length > 0) {
-            throw new Error(`Failed to end the seat grace for ${failedPlatformIds.length} platform(s); the sweep job retries them`)
+        for (const platformId of await findPlatformsOverTheirSeats()) {
+            const { error } = await tryCatch(() => endGraceIfDue({ platformId, now, log }))
+            if (!isNil(error)) {
+                log.error({ error, platform: { id: platformId } }, 'Failed to end the seat grace')
+                failedPlatformIds.add(platformId)
+            }
+        }
+        if (failedPlatformIds.size > 0) {
+            throw new Error(`Failed to end the seat grace for ${failedPlatformIds.size} platform(s); the sweep job retries them`)
         }
     },
 })
 
-async function endGraceIfDue({ platformId, today, log }: EndGraceIfDueParams): Promise<void> {
+async function endGraceIfDue({ platformId, now, log }: EndGraceIfDueParams): Promise<void> {
     const dates = await trialDatesFor({ platformId, log })
-    if (isNil(dates) || !graceDueOn({ dates, today })) {
+    if (isNil(dates) || !graceDue({ dates, now })) {
         return
     }
     await deactivateUsersOverPlan({ platformId, dates, log })
@@ -79,6 +88,7 @@ async function deactivateUsersOverPlan({ platformId, dates, log }: DeactivateUse
             .where('platform_plan.platformId = :platformId', { platformId })
             .getOneOrFail()
         await activeUsers({ platformId, entityManager }).setLock('pessimistic_write').select('user.id').getMany()
+        await userInvitationsService(log).lockReservedSeats({ platformId, entityManager })
         const grace = await findSeatsOverPlan({ platformId, seatLimit: plan.usersLimit, dates, billingEnforced, log, entityManager })
         const userIds = grace?.userIds ?? []
         if (userIds.length > 0) {
@@ -90,6 +100,14 @@ async function deactivateUsersOverPlan({ platformId, dates, log }: DeactivateUse
         rejectedPromiseHandler(platformPlanTelemetry(log).onTrialSeatsDeactivated({ platformId, deactivatedUsers: deactivated }), log)
     }
     log.info({ platform: { id: platformId }, seatGrace: { deactivatedCount: deactivated } }, 'Seat grace ended')
+}
+
+async function findPlatformsHoldingTrialSeats(): Promise<string[]> {
+    const plans = await platformPlanRepo().find({
+        select: { platformId: true },
+        where: { usersLimit: IsNull(), plan: In([...SELF_SERVE_TRIAL_PLANS]) },
+    })
+    return plans.map((plan) => plan.platformId)
 }
 
 async function findPlatformsOverTheirSeats(): Promise<string[]> {
@@ -145,9 +163,13 @@ function graceRunning(dates: SelfServeTrialDates): boolean {
     return !dayjs(dates.endsAt).isAfter(now) && graceDeadline(dates).isAfter(now)
 }
 
-function graceDueOn({ dates, today }: GraceDueOnParams): boolean {
-    const deadlineDay = graceDeadline(dates).utc().startOf('day')
-    return !deadlineDay.isAfter(today) && today.diff(deadlineDay, 'day') <= SWEEP_CATCH_UP_DAYS
+function graceDue({ dates, now }: GraceDueParams): boolean {
+    const deadline = graceDeadline(dates)
+    return !deadline.isAfter(now) && now.diff(deadline, 'day') <= SWEEP_CATCH_UP_DAYS
+}
+
+async function billingEnforcedOrUnknown(platformId: string): Promise<boolean> {
+    return (await distributedStore.get<boolean>(getBillingEnforcedKey(platformId))) !== false
 }
 
 function firstSweepFrom(moment: Dayjs): Dayjs {
@@ -201,16 +223,16 @@ type PlatformLogParams = {
 }
 
 type EndGraceIfDueParams = PlatformLogParams & {
-    today: Dayjs
+    now: Dayjs
 }
 
 type DeactivateUsersOverPlanParams = PlatformLogParams & {
     dates: SelfServeTrialDates
 }
 
-type GraceDueOnParams = {
+type GraceDueParams = {
     dates: SelfServeTrialDates
-    today: Dayjs
+    now: Dayjs
 }
 
 type FindSeatsOverPlanParams = {
