@@ -178,6 +178,32 @@ describe('new_abandoned_checkout polling', () => {
         expect(firstPoll).toHaveLength(250);
         expect(secondPoll).toEqual([{ id: 251 }]);
     });
+
+    it('finishes finding the newest checkout before reporting any, when enable stops at the request cap', async () => {
+        const fullPages = Array.from({ length: 41 }, (_, page) => ({
+            body: { checkouts: Array.from({ length: 250 }, (_, index) => ({ id: page * 250 + index + 1 })) },
+        }));
+        const sent = mockRest({
+            replies: [...fullPages, { body: { checkouts: [{ id: 10251 }] } }, { body: { checkouts: [{ id: 10252 }] } }],
+        });
+        const store = createStore({ entries: {} });
+
+        await newAbandonedCheckout.onEnable(pollingContext({ store }));
+
+        expect(sent).toHaveLength(41);
+        expect(store.put).toHaveBeenCalledWith('newestCheckoutScanCursor', 10250);
+        expect(store.put).not.toHaveBeenCalledWith('lastItem', expect.anything());
+
+        const resumedPoll = await newAbandonedCheckout.run(pollingContext({ store }));
+        const nextPoll = await newAbandonedCheckout.run(pollingContext({ store }));
+
+        expect(sent[41].queryParams).toEqual({ limit: '250', since_id: '10250' });
+        expect(resumedPoll).toEqual([]);
+        expect(store.put).toHaveBeenCalledWith('lastItem', 10251);
+        expect(store.delete).toHaveBeenCalledWith('newestCheckoutScanCursor');
+        expect(sent[42].queryParams).toEqual({ limit: '250', since_id: '10251' });
+        expect(nextPoll).toEqual([{ id: 10252 }]);
+    });
 });
 
 function webhookContext({ store }: { store: ReturnType<typeof createStore> }) {

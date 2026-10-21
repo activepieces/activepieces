@@ -4,6 +4,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  Store,
   TriggerStrategy,
   createTrigger,
   isNil,
@@ -111,13 +112,20 @@ export const newAbandonedCheckout = createTrigger({
     },
   },
   type: TriggerStrategy.POLLING,
-  async onEnable({ auth, propsValue, store }) {
-    await pollingHelper.onEnable(polling, { auth, propsValue, store });
+  async onEnable({ auth, store }) {
+    const scan = await scanForNewest({ auth, fromId: undefined });
+    await saveScan({ store, scan });
   },
   async onDisable({ auth, propsValue, store }) {
     await pollingHelper.onDisable(polling, { auth, propsValue, store });
   },
   async run({ auth, propsValue, store, files }) {
+    const scanCursor = await store.get<number>(SCAN_CURSOR_KEY);
+    if (!isNil(scanCursor)) {
+      const scan = await scanForNewest({ auth, fromId: scanCursor });
+      await saveScan({ store, scan });
+      return [];
+    }
     if (isNil(await store.get(LAST_ITEM_KEY))) {
       await store.put(LAST_ITEM_KEY, READ_FROM_FIRST_CHECKOUT);
     }
@@ -133,7 +141,7 @@ const polling: Polling<ShopifyAuth, unknown> = {
   items: async ({ auth, lastItemId }) => {
     const sinceId = toSinceId({ lastItemId });
     const checkouts = isNil(sinceId)
-      ? await getNewestCheckouts({ auth })
+      ? (await scanForNewest({ auth, fromId: undefined })).checkouts
       : await getAbandonedCheckouts(auth, { sinceId });
     return sortNewestFirst({ checkouts }).map((checkout) => ({
       id: checkout.id,
@@ -142,12 +150,17 @@ const polling: Polling<ShopifyAuth, unknown> = {
   },
 };
 
-async function getNewestCheckouts({
+async function scanForNewest({
   auth,
+  fromId,
 }: {
   auth: ShopifyAuth;
-}): Promise<ShopifyCheckout[]> {
-  let page = await getAbandonedCheckouts(auth, { sinceId: '' });
+  fromId: number | undefined;
+}): Promise<NewestCheckoutScan> {
+  let page = await getAbandonedCheckouts(auth, {
+    sinceId: isNil(fromId) ? '' : String(fromId),
+  });
+  let newestId = page.length > 0 ? maxId({ checkouts: page }) : fromId;
   for (
     let hop = 0;
     hop < MAX_PAGES_TO_FIND_NEWEST &&
@@ -155,14 +168,39 @@ async function getNewestCheckouts({
     hop++
   ) {
     const next = await getAbandonedCheckouts(auth, {
-      sinceId: String(maxId({ checkouts: page })),
+      sinceId: String(newestId),
     });
     if (next.length === 0) {
-      return page;
+      return { checkouts: page, newestId, complete: true };
     }
     page = next;
+    newestId = maxId({ checkouts: page });
   }
-  return page;
+  return {
+    checkouts: page,
+    newestId,
+    complete: page.length < ABANDONED_CHECKOUTS_PAGE_LIMIT,
+  };
+}
+
+async function saveScan({
+  store,
+  scan,
+}: {
+  store: Store;
+  scan: NewestCheckoutScan;
+}): Promise<void> {
+  if (!scan.complete) {
+    await store.put(SCAN_CURSOR_KEY, scan.newestId);
+    await store.delete(LAST_ITEM_KEY);
+    return;
+  }
+  await store.delete(SCAN_CURSOR_KEY);
+  if (isNil(scan.newestId)) {
+    await store.delete(LAST_ITEM_KEY);
+    return;
+  }
+  await store.put(LAST_ITEM_KEY, scan.newestId);
 }
 
 function toSinceId({ lastItemId }: { lastItemId: unknown }): string | undefined {
@@ -186,4 +224,11 @@ function maxId({ checkouts }: { checkouts: ShopifyCheckout[] }): number {
 
 const MAX_PAGES_TO_FIND_NEWEST = 40;
 const LAST_ITEM_KEY = 'lastItem';
+const SCAN_CURSOR_KEY = 'newestCheckoutScanCursor';
 const READ_FROM_FIRST_CHECKOUT = 0;
+
+type NewestCheckoutScan = {
+  checkouts: ShopifyCheckout[];
+  newestId: number | undefined;
+  complete: boolean;
+};
