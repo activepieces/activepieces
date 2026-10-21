@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
 import { tarventCommon } from '../common';
-import { tarventClient } from '../common/client';
+import { tarventOperations } from '../common/operations';
 import { tarventOutputSchemas } from '../output-schemas';
 
 export const updateJourneyStatus = createAction({
@@ -10,7 +10,7 @@ export const updateJourneyStatus = createAction({
   classification: 'WRITE',
   displayName: 'Start/Stop Journey',
   description: 'Starts or stops a journey.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Starts or stops a whole Tarvent automation journey by journey ID (not one contact; use Add/Remove A Contact From A Journey for that). Starting a journey can begin sending its emails to every contact it targets. Returns the journey ID and action. Not marked idempotent: Tarvent may reject starting a journey that is already running.',
@@ -32,16 +32,6 @@ export const updateJourneyStatus = createAction({
     }),
   },
   async run(context) {
-    const id = tarventCommon.requireText({ value: context.propsValue.journeyId, label: 'Journey' });
-    const start = context.propsValue.action === 'Start';
-    await tarventClient.booleanMutation({
-      auth: context.auth.props,
-      operation: start ? 'StartJourney' : 'StopJourney',
-      field: start ? 'startJourney' : 'stopJourney',
-      argDefs: '$id: String!',
-      args: 'id: $id',
-      variables: { id },
-    });
-    return { success: true, journeyId: id, action: start ? 'START' : 'STOP' };
+    return tarventOperations.setJourneyStatus({ auth: context.auth.props, journeyId: context.propsValue.journeyId, start: context.propsValue.action === 'Start' });
   },
 });

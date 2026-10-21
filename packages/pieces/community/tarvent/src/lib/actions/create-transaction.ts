@@ -147,8 +147,12 @@ export const createTransactionAi = createAction({
 
 
 function agentProps() {
-  const { ignoreSuppressCheck: _ignoreSuppressCheck, ...rest } = createTransaction.props;
-  return rest;
+  const { ignoreSuppressCheck: _ignoreSuppressCheck, groupName: _groupName, templateId: _templateId, ...rest } = createTransaction.props;
+  return {
+    ...rest,
+    groupName: Property.ShortText({ displayName: 'Transaction group name', description: 'Optional reporting group name.', required: false }),
+    templateId: Property.ShortText({ displayName: 'Template ID', description: 'Tarvent template ID. Leave empty to send Content instead.', required: false }),
+  };
 }
 
 async function sendTransaction({ auth, p, ignoreSuppressCheck }: { auth: TarventCredentials; p: TransactionInput; ignoreSuppressCheck: boolean }) {

@@ -10,7 +10,7 @@ export const createContact = createAction({
   classification: 'WRITE',
   displayName: 'Create/Update Contact',
   description: 'Creates a contact in an audience, or updates it if the email already exists.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Upserts a contact into a Tarvent audience by email: creates it, or (when Update existing contact is "Update") updates the existing contact with that email; with "Return duplicate error" an existing email fails the step. Group and tag assignments either replace or add to the current ones. Use this to add a subscriber or to set profile fields by email; to change a known contact by ID (for example its email address) use Update Contact. Empty text fields are not sent, so they never blank existing values. Returns the full contact record including its ID. Not idempotent: in add-only mode repeated calls keep adding groups and tags.',

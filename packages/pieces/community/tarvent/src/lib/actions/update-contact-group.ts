@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { tarventAuth } from '../auth';
 import { tarventCommon } from '../common';
-import { tarventTransport } from '../common/transport';
+import { tarventOperations } from '../common/operations';
 import { tarventOutputSchemas } from '../output-schemas';
 
 export const updateContactGroup = createAction({
@@ -10,7 +10,7 @@ export const updateContactGroup = createAction({
   classification: 'WRITE',
   displayName: 'Add/Remove Contact From Audience Group',
   description: 'Adds or removes a contact from an audience group.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Adds one Tarvent contact to, or removes it from, one audience group (by audience ID, group ID and contact ID). Use to manage group membership for segmentation. Returns the contact ID, group ID and action. Not marked idempotent: Tarvent may reject adding a contact that is already in the group.',
@@ -34,17 +34,6 @@ export const updateContactGroup = createAction({
     }),
   },
   async run(context) {
-    const audienceId = tarventCommon.requireText({ value: context.propsValue.audienceId, label: 'Audience' });
-    const groupId = tarventCommon.requireText({ value: context.propsValue.groupId, label: 'Audience group' });
-    const id = tarventCommon.requireText({ value: context.propsValue.contactId, label: 'Contact ID' });
-    const add = context.propsValue.action === 'Add';
-    const mutation = add ? 'createGroupContact' : 'deleteGroupContact';
-    await tarventTransport.field<{ id?: string }>({
-      auth: context.auth.props,
-      query: `mutation ${add ? 'CreateGroupContact' : 'DeleteGroupContact'}($input: ${add ? 'CreateGroupContactInput' : 'DeleteGroupContactInput'}!) { ${mutation}(input: $input) { id } }`,
-      variables: { input: { id, groupId, audienceId } },
-      name: mutation,
-    });
-    return { success: true, contactId: id, groupId, audienceId, action: add ? 'ADD' : 'REMOVE' };
+    return tarventOperations.setGroupMembership({ auth: context.auth.props, audienceId: context.propsValue.audienceId, groupId: context.propsValue.groupId, contactId: context.propsValue.contactId, add: context.propsValue.action === 'Add' });
   },
 });

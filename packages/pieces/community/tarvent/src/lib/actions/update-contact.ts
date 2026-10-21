@@ -23,7 +23,7 @@ export const updateContact = createAction({
   classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Updates fields of an existing contact by its ID. Fields left empty are not changed.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Partially updates an existing Tarvent contact identified by audience ID and contact ID: only the fields you pass change, and fields listed in Fields to clear are blanked. Can change the contact\'s email address. Use this when you already have the contact ID; to create a contact or upsert by email use Create/Update Contact, and use the tag, group and status actions for those. Fails if the contact does not exist. Returns the updated contact. Idempotent: the same input sets the same values.',
