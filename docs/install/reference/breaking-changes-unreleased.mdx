@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Tarvent 0.2.0: actions return the record itself, and Tarvent errors now fail the step
+
+Tarvent actions used to return the raw GraphQL envelope, so later steps read values like `data.createContact.id` or `data.audiences.nodes`. From Tarvent 0.2.0 actions return the record itself (for example `id`), and searches return `items`, `hasMore` and `nextCursor`. Tarvent reports errors with HTTP 200, and earlier versions treated those as success; upgraded steps now fail with Tarvent's message, and a connection with a wrong API key or account ID no longer saves. **Send Campaign**, **Send A Transactional Email** and the dropdown-based contact, group, tag, journey and custom event actions are no longer offered to AI agents as tools. Agents get new **(AI)** tools that take plain IDs instead; **Send A Transactional Email (AI)** always respects suppression filters, and **Create or Update Contact (AI)** never replaces existing groups or tags. Flow steps are unchanged. Existing connections keep working: the API key is now a masked secret under the same field.
+
+#### What you need to do
+
+When you upgrade a Tarvent step, re-map the fields later steps use from its output (drop the `data.<operation>` prefix; searches use `items`). If a Run Agent step or MCP server used one of the demoted actions as a tool, switch it to the matching (AI) tool. Steps keep running on the version they were built with until you upgrade them.
+
 #### GitHub 0.11.0: Update Repository (Agent) no longer makes private repositories public
 
 When an AI agent used **Update Repository (Agent)** to change something else, such as the description, the agent path filled the three toggles it left out (**Private**, **Has Issues** and **Archived**) with `false` and sent them. Each such update could make a private repository public, turn off Issues and unarchive an archived repository. From GitHub 0.11.0 these three fields are dropdowns with **Yes**, **No** and **Leave unchanged**. A field the agent leaves out, or sets to Leave unchanged, is not sent, so the repository keeps its current setting.
