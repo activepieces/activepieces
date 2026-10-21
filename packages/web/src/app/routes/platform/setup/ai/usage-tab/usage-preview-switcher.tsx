@@ -77,6 +77,8 @@ function presetLabel({ preset }: { preset: UsagePreset }): string {
       return t('Error');
     case 'empty':
       return t('Empty');
+    case 'tiny':
+      return t('Very minimal');
     case 'minimal':
       return t('Minimal setup');
     case 'half':
@@ -98,6 +100,8 @@ function presetHint({ preset }: { preset: UsagePreset }): string {
       return t('The usage request failed');
     case 'empty':
       return t('No AI calls yet');
+    case 'tiny':
+      return t('One flow, one key, one model, under a dollar this month');
     case 'minimal':
       return t('One project, two flows, one OpenAI key');
     case 'half':

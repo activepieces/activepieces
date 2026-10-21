@@ -544,6 +544,13 @@ const PRESET_PROFILES: Record<UsageDataPreset, PresetProfile> = {
     creditShare: 0,
     sources: [],
   },
+  tiny: {
+    members: ['sales-ops', 'crm-sync', 'openai-prod', 'gpt-5-mini'],
+    scale: 0.01,
+    testingShare: 0.02,
+    creditShare: 0,
+    sources: ['flow-steps'],
+  },
   minimal: {
     members: [
       'sales-ops',
@@ -1109,6 +1116,7 @@ export const USAGE_PRESETS: UsagePreset[] = [
   'loading',
   'error',
   'empty',
+  'tiny',
   'minimal',
   'half',
   'short-history',
@@ -1152,6 +1160,7 @@ export const USAGE_METRICS: UsageMetric[] = ['spend', 'calls', 'tokens'];
 export type UsagePreset = 'loading' | 'error' | UsageDataPreset;
 export type UsageDataPreset =
   | 'empty'
+  | 'tiny'
   | 'minimal'
   | 'half'
   | 'short-history'
