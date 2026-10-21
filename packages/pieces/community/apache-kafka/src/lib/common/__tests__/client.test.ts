@@ -16,6 +16,11 @@ const kafkaMock = vi.hoisted(() => {
     ],
   }])
   const setOffsets = vi.fn(async () => undefined)
+  const deleteGroups = vi.fn(async () => undefined)
+  const fetchTopicMetadata = vi.fn(async () => ({
+    topics: [{ name: 'orders', partitions: [{ partitionId: 0, leader: 1 }, { partitionId: 1, leader: 1 }] }],
+  }))
+  const kafkaConfigs: unknown[] = []
   const producerConnect = vi.fn(async () => undefined)
   const producerDisconnect = vi.fn(async () => undefined)
   const send = vi.fn(async () => [{
@@ -61,6 +66,9 @@ const kafkaMock = vi.hoisted(() => {
     fetchTopicOffsets,
     fetchOffsets,
     setOffsets,
+    deleteGroups,
+    fetchTopicMetadata,
+    kafkaConfigs,
     producerConnect,
     producerDisconnect,
     send,
@@ -76,9 +84,13 @@ const kafkaMock = vi.hoisted(() => {
 vi.mock('kafkajs', () => ({
   logLevel: { NOTHING: 0 },
   Partitioners: {
-    DefaultPartitioner: () => () => 0,
+    DefaultPartitioner: () => ({ message }: { message: { key?: string } }) => (message.key === 'a' ? 0 : 1),
   },
   Kafka: class Kafka {
+    constructor(config: unknown) {
+      kafkaMock.kafkaConfigs.push(config)
+    }
+
     admin() {
       return {
         connect: kafkaMock.adminConnect,
@@ -87,6 +99,8 @@ vi.mock('kafkajs', () => ({
         fetchTopicOffsets: kafkaMock.fetchTopicOffsets,
         fetchOffsets: kafkaMock.fetchOffsets,
         setOffsets: kafkaMock.setOffsets,
+        deleteGroups: kafkaMock.deleteGroups,
+        fetchTopicMetadata: kafkaMock.fetchTopicMetadata,
       }
     }
 
@@ -118,9 +132,19 @@ const auth = {
   securityProtocol: 'PLAINTEXT',
 }
 
+const pollInput = {
+  auth,
+  topic: 'orders',
+  consumerGroup: 'activepieces-orders',
+  maxMessages: 10,
+  pollTimeoutSeconds: 20,
+  fromBeginning: false,
+}
+
 describe('kafkaClient', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    kafkaMock.kafkaConfigs.length = 0
   })
 
   it('rejects a connection when the cluster cannot be described', async () => {
@@ -139,6 +163,14 @@ describe('kafkaClient', () => {
     expect(kafkaMock.adminDisconnect).toHaveBeenCalled()
   })
 
+  it('validates with a single short connection attempt', async () => {
+    await kafkaClient.validate(auth)
+    expect(kafkaMock.kafkaConfigs[0]).toMatchObject({
+      connectionTimeout: 5_000,
+      retry: { retries: 0 },
+    })
+  })
+
   it('does not open a socket when the broker list is invalid', async () => {
     const result = await kafkaClient.validate({
       brokers: 'not-a-broker',
@@ -148,34 +180,78 @@ describe('kafkaClient', () => {
     expect(kafkaMock.adminConnect).not.toHaveBeenCalled()
   })
 
-  it('returns the partition and offset for each published message', async () => {
+  it('publishes every message in one send and derives each offset from the partition base offset', async () => {
+    kafkaMock.send.mockResolvedValueOnce([
+      { topicName: 'orders', partition: 0, errorCode: 0, baseOffset: '10' },
+      { topicName: 'orders', partition: 1, errorCode: 0, baseOffset: '20' },
+    ])
     const results = await kafkaClient.publishMessages({
       auth,
       topic: 'orders',
       messages: [
-        { key: 'order-1', value: 'hello' },
-        { value: 'world' },
+        { key: 'a', value: 'first' },
+        { key: 'b', value: 'second' },
+        { key: 'a', value: 'third' },
+      ],
+    })
+    expect(kafkaMock.send).toHaveBeenCalledTimes(1)
+    expect(kafkaMock.send).toHaveBeenCalledWith({
+      topic: 'orders',
+      acks: -1,
+      messages: [
+        expect.objectContaining({ key: 'a', value: 'first', partition: 0 }),
+        expect.objectContaining({ key: 'b', value: 'second', partition: 1 }),
+        expect.objectContaining({ key: 'a', value: 'third', partition: 0 }),
       ],
     })
     expect(results).toEqual([
-      { topic: 'orders', key: 'order-1', partition: 3, offset: '15' },
-      { topic: 'orders', key: null, partition: 3, offset: '15' },
+      { topic: 'orders', key: 'a', partition: 0, offset: '10' },
+      { topic: 'orders', key: 'b', partition: 1, offset: '20' },
+      { topic: 'orders', key: 'a', partition: 0, offset: '11' },
     ])
-    expect(kafkaMock.send).toHaveBeenCalledTimes(2)
     expect(kafkaMock.producerDisconnect).toHaveBeenCalled()
   })
 
-  it('commits the next offset only when the trigger run asks it to', async () => {
-    const committed = await kafkaClient.consume({
+  it('publishes a single message without fetching topic metadata', async () => {
+    const results = await kafkaClient.publishMessages({
       auth,
       topic: 'orders',
-      consumerGroup: 'activepieces-orders',
-      maxMessages: 1,
-      pollTimeoutSeconds: 1,
-      fromBeginning: false,
-      commit: true,
+      messages: [{ value: 'hello' }],
     })
-    expect(committed).toEqual([{
+    expect(results).toEqual([{ topic: 'orders', key: null, partition: 3, offset: '15' }])
+    expect(kafkaMock.fetchTopicMetadata).not.toHaveBeenCalled()
+  })
+
+  it('fails when the broker rejects a partition', async () => {
+    kafkaMock.send.mockResolvedValueOnce([
+      { topicName: 'orders', partition: 0, errorCode: 0, baseOffset: '10' },
+      { topicName: 'orders', partition: 1, errorCode: 6, baseOffset: '-1' },
+    ])
+    await expect(kafkaClient.publishMessages({
+      auth,
+      topic: 'orders',
+      messages: [{ key: 'a', value: 'first' }, { key: 'b', value: 'second' }],
+    })).rejects.toThrow('Broker returned error code 6')
+  })
+
+  it('returns at once without joining the group when nothing is pending', async () => {
+    kafkaMock.fetchOffsets.mockResolvedValueOnce([{
+      topic: 'orders',
+      partitions: [
+        { partition: 0, offset: '20', metadata: null },
+        { partition: 1, offset: '9', metadata: null },
+      ],
+    }])
+    const records = await kafkaClient.poll(pollInput)
+    expect(records).toEqual([])
+    expect(kafkaMock.consumerConnect).not.toHaveBeenCalled()
+    expect(kafkaMock.setOffsets).not.toHaveBeenCalled()
+  })
+
+  it('reads up to the pending end, commits the next offset and returns without waiting for the timeout', async () => {
+    const started = Date.now()
+    const records = await kafkaClient.poll(pollInput)
+    expect(records).toEqual([{
       topic: 'orders',
       partition: 1,
       offset: '8',
@@ -187,32 +263,11 @@ describe('kafkaClient', () => {
     expect(kafkaMock.commitOffsets).toHaveBeenCalledWith([
       { topic: 'orders', partition: 1, offset: '9' },
     ])
-
-    kafkaMock.commitOffsets.mockClear()
-    kafkaMock.setOffsets.mockClear()
-    await kafkaClient.consume({
-      auth,
-      topic: 'orders',
-      consumerGroup: 'activepieces-orders',
-      maxMessages: 1,
-      pollTimeoutSeconds: 1,
-      fromBeginning: false,
-      commit: false,
-    })
-    expect(kafkaMock.commitOffsets).not.toHaveBeenCalled()
-    expect(kafkaMock.setOffsets).not.toHaveBeenCalled()
+    expect(Date.now() - started).toBeLessThan(1_000)
   })
 
   it('pins the start offset of every partition without a commit before a trigger run reads', async () => {
-    await kafkaClient.consume({
-      auth,
-      topic: 'orders',
-      consumerGroup: 'activepieces-orders',
-      maxMessages: 1,
-      pollTimeoutSeconds: 1,
-      fromBeginning: false,
-      commit: true,
-    })
+    await kafkaClient.poll(pollInput)
     expect(kafkaMock.setOffsets).toHaveBeenCalledWith({
       groupId: 'activepieces-orders',
       topic: 'orders',
@@ -239,16 +294,48 @@ describe('kafkaClient', () => {
     expect(kafkaMock.adminDisconnect).toHaveBeenCalled()
   })
 
+  it('samples recent messages through a throwaway group without committing or touching the live group', async () => {
+    const records = await kafkaClient.sample({
+      auth,
+      topic: 'orders',
+      consumerGroup: 'activepieces-orders',
+      count: 5,
+      pollTimeoutSeconds: 1,
+    })
+    expect(records.map((record) => record.offset)).toEqual(['8'])
+    const [setCall] = kafkaMock.setOffsets.mock.calls
+    expect(setCall[0]).toMatchObject({
+      topic: 'orders',
+      partitions: [{ partition: 0, offset: '15' }, { partition: 1, offset: '4' }],
+    })
+    expect(setCall[0].groupId).toMatch(/^activepieces-orders-activepieces-test-/)
+    expect(kafkaMock.fetchOffsets).not.toHaveBeenCalled()
+    expect(kafkaMock.commitOffsets).not.toHaveBeenCalled()
+    expect(kafkaMock.deleteGroups).toHaveBeenCalledWith([setCall[0].groupId])
+  })
+
+  it('samples nothing from an empty topic without starting a consumer', async () => {
+    kafkaMock.fetchTopicOffsets.mockResolvedValueOnce([{ partition: 0, offset: '0', low: '0', high: '0' }])
+    const records = await kafkaClient.sample({
+      auth,
+      topic: 'orders',
+      consumerGroup: 'activepieces-orders',
+      count: 5,
+      pollTimeoutSeconds: 5,
+    })
+    expect(records).toEqual([])
+    expect(kafkaMock.consumerConnect).not.toHaveBeenCalled()
+  })
+
   it('returns only the committed batch when a message arrives while committing', async () => {
+    kafkaMock.fetchTopicOffsets.mockResolvedValueOnce([
+      { partition: 0, offset: '20', low: '3', high: '20' },
+      { partition: 1, offset: '12', low: '0', high: '12' },
+    ])
     const late = {
       topic: 'orders',
       partition: 1,
-      message: {
-        key: null,
-        value: Buffer.from('late'),
-        offset: '9',
-        timestamp: '1710000000001',
-      },
+      message: { key: null, value: Buffer.from('late'), offset: '9', timestamp: '1710000000001' },
     }
     let deliver: ((payload: typeof late) => Promise<void>) | undefined
     kafkaMock.run.mockImplementationOnce(async (config) => {
@@ -256,27 +343,14 @@ describe('kafkaClient', () => {
       await config.eachMessage({
         topic: 'orders',
         partition: 1,
-        message: {
-          key: Buffer.from('order-1'),
-          value: Buffer.from('hello'),
-          offset: '8',
-          timestamp: '1710000000000',
-        },
+        message: { key: Buffer.from('order-1'), value: Buffer.from('hello'), offset: '8', timestamp: '1710000000000' },
       })
     })
     kafkaMock.commitOffsets.mockImplementationOnce(async () => {
       await deliver?.(late)
     })
 
-    const records = await kafkaClient.consume({
-      auth,
-      topic: 'orders',
-      consumerGroup: 'activepieces-orders',
-      maxMessages: 10,
-      pollTimeoutSeconds: 5,
-      fromBeginning: false,
-      commit: true,
-    })
+    const records = await kafkaClient.poll({ ...pollInput, pollTimeoutSeconds: 1 })
 
     expect(records.map((record) => record.offset)).toEqual(['8'])
     expect(kafkaMock.commitOffsets).toHaveBeenCalledWith([
@@ -290,21 +364,13 @@ describe('kafkaClient', () => {
       setTimeout(() => {
         config.eachMessage({
           topic: 'orders',
-          partition: 0,
-          message: { key: null, value: Buffer.from('after join'), offset: '3', timestamp: '1710000000000' },
+          partition: 1,
+          message: { key: null, value: Buffer.from('after join'), offset: '8', timestamp: '1710000000000' },
         }).catch(() => undefined)
       }, 50)
     })
 
-    const records = await kafkaClient.consume({
-      auth,
-      topic: 'orders',
-      consumerGroup: 'activepieces-orders',
-      maxMessages: 10,
-      pollTimeoutSeconds: 1,
-      fromBeginning: false,
-      commit: false,
-    })
+    const records = await kafkaClient.poll({ ...pollInput, pollTimeoutSeconds: 1 })
 
     expect(records.map((record) => record.payload)).toEqual(['after join'])
   })
@@ -312,30 +378,7 @@ describe('kafkaClient', () => {
   it('reports a consumer that fails to start', async () => {
     kafkaMock.run.mockRejectedValueOnce(new Error('Group coordinator not available'))
 
-    await expect(kafkaClient.consume({
-      auth,
-      topic: 'orders',
-      consumerGroup: 'activepieces-orders',
-      maxMessages: 10,
-      pollTimeoutSeconds: 1,
-      fromBeginning: false,
-      commit: false,
-    })).rejects.toThrow()
+    await expect(kafkaClient.poll({ ...pollInput, pollTimeoutSeconds: 1 })).rejects.toThrow()
     expect(kafkaMock.consumerDisconnect).toHaveBeenCalled()
-  })
-
-  it('returns a partial batch once messages stop arriving', async () => {
-    const started = Date.now()
-    const records = await kafkaClient.consume({
-      auth,
-      topic: 'orders',
-      consumerGroup: 'activepieces-orders',
-      maxMessages: 10,
-      pollTimeoutSeconds: 20,
-      fromBeginning: false,
-      commit: false,
-    })
-    expect(records).toHaveLength(1)
-    expect(Date.now() - started).toBeLessThan(2_000)
   })
 })

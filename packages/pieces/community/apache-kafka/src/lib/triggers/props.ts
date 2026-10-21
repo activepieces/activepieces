@@ -23,7 +23,7 @@ export const kafkaTriggerProps = {
       }),
       pollTimeoutSeconds: Property.Number({
         displayName: 'Poll timeout (seconds)',
-        description: 'How long to wait for messages on each check. Whole number from 1 to 20. The flow schedule controls how often checks run.',
+        description: 'Longest time one check spends reading. A check with no new messages ends at once. Whole number from 1 to 20.',
         required: true,
         defaultValue: 10,
       }),
