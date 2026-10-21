@@ -54,7 +54,7 @@ export const kafkaAuth = PieceAuth.CustomAuth({
     }),
     rejectUnauthorized: Property.Checkbox({
       displayName: 'Verify server certificate',
-      description: 'Applies to SSL and SASL_SSL. Turn this off only for a cluster that uses a certificate this worker cannot verify.',
+      description: 'Applies to SSL and SASL_SSL. Keep this on. For a private or self-signed certificate, paste its CA certificate instead. Turning this off disables certificate checks and is unsafe outside testing.',
       required: true,
       defaultValue: true,
     }),

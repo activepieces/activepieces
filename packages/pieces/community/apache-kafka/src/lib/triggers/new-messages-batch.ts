@@ -30,9 +30,9 @@ export const newMessagesBatch = createTrigger({
   auth: kafkaAuth,
   name: 'new_messages_batch',
   displayName: 'New messages in topic',
-  description: 'Reads a batch of new messages on a topic in one run.',
+  description: 'Reads a batch of new messages on a topic in one run. Messages are marked as read before the flow runs, so if a run fails, those messages are not delivered again.',
   aiMetadata: {
-    description: 'Read a batch of new Apache Kafka messages from a topic in one flow run. Choose the single-message trigger when each message should start its own run. Offsets are committed to the consumer group after a successful read. The flow polling schedule decides how often the topic is checked.',
+    description: 'Read a batch of new Apache Kafka messages from a topic in one flow run. Choose the single-message trigger when each message should start its own run. Offsets are committed to the consumer group before the flow runs, so messages from a failed run are not delivered again. The flow polling schedule decides how often the topic is checked.',
   },
   classification: 'READ',
   props: kafkaTriggerProps.fields({ batch: true }),
