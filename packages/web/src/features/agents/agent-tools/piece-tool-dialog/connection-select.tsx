@@ -59,10 +59,10 @@ export const ConnectionDropdown = React.memo(
     ];
 
     const handleChange = (selectedValue: string | null) => {
-      if (selectedValue) {
-        onChange(selectedValue);
-      } else {
+      if (selectedValue === '') {
         setConnectionDialogOpen(true);
+      } else {
+        onChange(selectedValue);
       }
     };
 
