@@ -31,8 +31,8 @@ export const ActiveUsersMetric = ({ report }: ActiveUsersMetricProps) => {
         rate: adoptionRate,
         total: totalUsers.toLocaleString(),
       })}
-      iconColor="text-swatch-6-mark"
-      iconBgColor="bg-swatch-6-surface"
+      iconColor="text-warning-9"
+      iconBgColor="bg-warning-3"
     />
   );
 };

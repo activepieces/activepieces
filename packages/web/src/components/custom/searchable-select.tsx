@@ -161,7 +161,10 @@ export const SearchableSelect = <T,>({
             role="combobox"
             loading={loading}
             aria-expanded={open}
-            className={cn('w-full justify-between', triggerClassName)}
+            className={cn(
+              'w-full justify-between border-gray-8 bg-transparent',
+              triggerClassName,
+            )}
             onClick={(e) => {
               handleOpenChange(!open);
               e.preventDefault();

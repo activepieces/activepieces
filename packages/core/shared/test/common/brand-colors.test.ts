@@ -133,10 +133,24 @@ describe('brandColors.ramp contrast', () => {
 })
 
 describe('brandColors.swatches', () => {
-    it('gives every chip a label that reads at 4.5:1 on its mark, in both themes', () => {
+    it('uses the same mark in both themes', () => {
+        const swatches = brandColors.swatches()
+        expect(swatches.map((swatch) => swatch.dark.mark)).toEqual(swatches.map((swatch) => swatch.light.mark))
+    })
+
+    it('puts a dark letter only on yellow and lime', () => {
+        const darkLetters = brandColors.swatches().flatMap((swatch, index) =>
+            (['light', 'dark'] as const)
+                .filter((theme) => swatch[theme].on !== '#ffffff')
+                .map((theme) => `swatch ${index + 1} ${theme}`),
+        )
+        expect(darkLetters).toEqual(['swatch 6 light', 'swatch 6 dark', 'swatch 7 light', 'swatch 7 dark'])
+    })
+
+    it('keeps every chip letter at 3:1 or more on its mark', () => {
         const failures = brandColors.swatches().flatMap((swatch, index) =>
             (['light', 'dark'] as const)
-                .filter((theme) => contrast({ first: swatch[theme].on, second: swatch[theme].mark }) < 4.5)
+                .filter((theme) => contrast({ first: swatch[theme].on, second: swatch[theme].mark }) < 3)
                 .map((theme) => `swatch ${index + 1} ${theme}`),
         )
         expect(failures).toEqual([])
@@ -159,6 +173,18 @@ describe('brandColors.onPrimaryFor', () => {
 
     it('picks black on a bright yellow, where white measures 1.9:1', () => {
         expect(brandColors.onPrimaryFor({ hex: '#eab308' })).toBe('#000000')
+    })
+
+    it('picks white on the default success green, where WCAG 2 would pick black', () => {
+        expect(brandColors.onPrimaryFor({ hex: '#00a63e' })).toBe('#ffffff')
+    })
+
+    it('keeps black on a sky blue, where white falls just short of Lc 60', () => {
+        expect(brandColors.onPrimaryFor({ hex: '#0ea5e9' })).toBe('#000000')
+    })
+
+    it('keeps black on the default warning amber, where white does not reach Lc 60', () => {
+        expect(brandColors.onPrimaryFor({ hex: '#fe9a00' })).toBe('#000000')
     })
 })
 

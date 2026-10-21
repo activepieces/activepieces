@@ -4,8 +4,34 @@ icon: 🎨
 
 # Colour
 
-Five scales of twelve steps, plus six exceptions. **There is no semantic layer**: the step number
-*is* the meaning, in both themes, and the table below is the contract.
+> **This is a starting point, not a rulebook.** Only the *Hard rules* below are binding. Everything else
+> shows how the palette is usually used: break it when a screen looks or reads better another way.
+> You own the colours in your PR. Before you ship, check them yourself:
+> - Look at every changed screen in light and dark.
+> - Text and icons must be readable on their background.
+> - It must match the screens around it.
+>
+> "The guide said step 11" is not a reason. "It looks right and reads well" is.
+
+## Hard rules
+
+- **Dark mode is `[data-theme='dark']` on `<html>`, not a `.dark` class.** Anything injecting a
+  theme-scoped selector at runtime must use the attribute — see `THEMES` in `components/ui/chart.tsx`.
+- **Read `resolvedTheme`, never `preference`,** to decide what something looks like. `preference` can
+  be `'system'`, and comparing it to `'dark'` is how the code editors ended up light in a dark app.
+- **No `dark:` colour utility in application code** (`dark:bg-`, `dark:text-`, `dark:border-` …). Dark values
+  belong in the `[data-theme='dark']` block of `styles.css`. Exceptions are listed under *Conventions*.
+- **`<LogoPlate>` renders every logo we did not make** in a list, picker or card (sign-in provider icons excepted), so a black logo stays visible in dark mode.
+- **A surface that is dark in both themes is a dark island** (`data-theme="dark"`), never `bg-gray-12`, which is
+  near-white in dark mode.
+- **Store a colour's name (`ColorName.YELLOW`), never its rendered value**, so the value can differ per theme.
+- **The stock values in `styles.css` match the generator** (`brandColors.ramp`, `brandColors.swatches`). Change
+  the generator, then copy its output; `status-scales.test.ts` fails if they drift.
+
+## How the palette is built
+
+Five scales of twelve steps, plus six exceptions. There is no semantic layer: the step number
+carries the meaning, in both themes. The table below is the usual job of each step.
 
 ```
 --gray-1 … --gray-12       the neutral, pure grey whatever the brand
@@ -48,7 +74,7 @@ inside an island, can do it, it is not an exception.
 | --- | --- |
 | `--panel` | elevation runs opposite ways: a raised surface is whiter than the page in light and lighter in dark |
 | `--on-accent` | `accent-9` is the tenant's hex, so the label on it is measured at runtime — white for a violet brand, black for a yellow one |
-| `--on-success` `--on-warning` | dark in both themes: `success-9` and `warning-9` are bright solids in light and dark, and no step is dark in both. With a status seed, it is measured against the seed like `--on-accent` |
+| `--on-success` `--on-warning` | white on the green, black on the amber, in both themes; no step is white or black in both. With a status seed, it is measured against the seed like `--on-accent` |
 | `--on-danger` | white in both themes; `gray-1` measures under 4.5:1 on the dark `danger-9`. With a status seed, it is measured against the seed like `--on-accent` |
 | `--scrim` | black at an alpha in both themes; not a member of any scale |
 
@@ -59,10 +85,9 @@ steps 1–8 use the family's 950–700 hue and chroma on a ladder that sits a st
 are 400, 300 and 100. The family's hue drift and chroma follow the hex, so a custom teal behaves like our teal.
 Step 11 is then lowered (light) or raised (dark) until it reads 4.5:1 on every ground and on its own tint, and step
 10 until it reads 3:1 on the page. The defaults in `styles.css` are this generator's output for violet (`#6e41e2`),
-red, amber and green; `status-scales.test.ts` fails if
-the CSS and the generator drift apart.
+red, amber and green.
 
-`success-9` and `warning-9` are bright in both themes, so the health bars read as green and amber; in light mode `warning-9` is lighter than `warning-8`, the one place a light ramp is not monotonic.
+`success-9` and `warning-9` are bright in both themes, so the health bars read as green and amber.
 
 In light mode the page (`gray-1`) is an off-white and panels are pure white, so a card lifts off
 the page by a hair (about 1.02:1); borders and shadows carry the rest. That is designed, not a patch.
@@ -70,8 +95,7 @@ the page by a hair (about 1.02:1); borders and shadows carry the rest. That is d
 ## Light and dark
 
 Light and dark are **authored independently**; dark is not an inversion of light, because an inverted
-ramp crowds the dark steps together. Dark mode is the `[data-theme='dark']` binding block in `styles.css`,
-not overrides in components.
+ramp crowds the dark steps together.
 
 ## The greys are not tinted, and they are light
 
@@ -83,10 +107,8 @@ Each grey step's lightness is anchored on the token its call sites used before t
 chip `97%`, border `92.2%`, muted text `52%`, strong text `16%` in light), so the app keeps its old weight. Step 11
 sits at the lightest value that still reads 4.5:1 on every chip ground; do not lighten it further.
 
-Dark follows the same rules as light: neutral greys, and swatches from the same colour families. Its greys
-are Radix gray steps 1–8 (`gray-1` 17.8% = `#111111`, `gray-2` 21.3% = `#191919`): soft enough not to read as
-black, and still far enough apart that the sidebar, page and panels separate. Its swatch marks are the family's
-500 at 80% chroma with the family's 950 as the label, calmer than light mode's 600 on a near-black ground.
+Dark greys are Radix gray steps 1–8 (`gray-1` 17.8% = `#111111`, `gray-2` 21.3% = `#191919`): soft enough not to read as
+black, and still far enough apart that the sidebar, page and panels separate.
 
 ## White-labelling
 
@@ -94,35 +116,34 @@ A platform's `primaryColor` drives the accent scale; the optional danger, warnin
 (`themeColors.status`, served by the `theme` flag as `statusColors`) each drive their own scale. They are never
 derived from one another. `brandColors.cssVariables` and `brandColors.statusCssVariables` run the generator on the
 chosen hex and write every step for both themes on `<html>` (`--accent-light-3`, `--accent-dark-3`, …), plus the
-label (`--on-accent`, `--on-danger-seed`, …: white or black, whichever measures higher). Each theme block reads
+label (`--on-accent`, `--on-danger-seed`, …). Each theme block reads
 `--accent-3: var(--accent-light-3, <stock value>)`, so a platform with no colour chosen gets the stock ramp and an
 island (`data-theme`) picks its own theme's half. A black, grey or white colour renders a neutral ramp. Each colour
 in the *Colors* block has a live preview under its picker (`color-preview.tsx`). The seeds live under their own key
 because the previous form wrote `danger`, `warn` and `success` with pre-filled defaults the admin never chose; those
 fields, like the rest of `themeColors`, are kept as stored and never rendered.
 
+**Label rule** (`brandColors.onPrimaryFor`): white if it reaches APCA Lc 60, otherwise whichever of white or black has
+the higher WCAG 2 ratio. WCAG 2 alone picks black on mid-tone greens, oranges and blues, where people expect white.
+
 ## Categorical colour
 
 A scale answers *"what does this mean?"*. For *"which one is this?"* — projects, notes, avatars, chart
 series, tag categories — use the twelve-hue swatch set: `swatch-1` … `swatch-12`, each with `-mark`,
 `-surface`, `-ink`, `-line` and `-on`, all generated by `brandColors.swatches()` from one of our colour families
-(purple, fuchsia, pink, red, orange, yellow, lime, green, emerald, cyan, blue, indigo). The mark is the most vivid
-shade whose label still reads at 4.5:1: the 500 with the family's own 950 as the letter where that reads (the warm
-and green families), otherwise the 600 with a white letter. Dark mode takes a calmer 500/400 at 85% chroma with the
-950 letter. The surface, line and ink are the same steps the ramps use (3, 5 or 7, and 11), so swatch text reads at
-4.5:1 on its own tint. The CSS values are the generator's output, and `status-scales.test.ts` fails if they drift.
+(purple, fuchsia, pink, red, orange, yellow, lime, green, emerald, cyan, blue, indigo). The mark is one fixed shade per family, the same in both themes: the 600 for most
+families, the 500 for yellow, lime and indigo, and the 700 for emerald so "dark green" stays darker than green. The letter
+follows the label rule, with the family's 950 in place of black, so only yellow and lime get a dark letter. The surface,
+line and ink are the same steps the ramps use (3, 5 or 7, and 11), so swatch text reads at 4.5:1 on its own tint.
 
-Store the **name** (`ColorName.YELLOW`), never the rendered value, so the value is free to differ per
-theme. A name maps to the same swatch for projects (`PROJECT_COLOR_SWATCH`) and notes. There are four warm
+A name maps to the same swatch for projects (`PROJECT_COLOR_SWATCH`) and notes. There are four warm
 names and three warm swatches, so `ORANGE` and `DEEP_ORANGE` share swatch 5 and no name uses swatch 7; `PICKABLE_COLOR_NAMES` leaves `DEEP_ORANGE` out of the pickers so
 they show no duplicate. Charts sample swatches 1, 5, 9, 3 and 7 through `--chart-1..5`. `swatchUtils.varsForSeed` picks a swatch deterministically from any string.
 
 ## Logos
 
-**`<LogoPlate>` is the way to render a logo we did not make in a list, picker or card.** The sign-in
-provider icons (Google, SAML) are drawn for both grounds, and a tenant's own uploaded logo renders as-is. It is a
-light island (`data-theme="light"`, `bg-gray-1`, `text-gray-12`), so the chip stays light and a black mark stays visible in
-dark mode; a fallback glyph or monogram inside it inherits the dark `gray-12`. A border or ring passed in `className`
+The sign-in provider icons (Google, SAML) are drawn for both grounds and skip the plate; a tenant's own uploaded logo
+renders as-is. `<LogoPlate>` is a light island (`data-theme="light"`, `bg-gray-1`, `text-gray-12`); a fallback glyph or monogram inside it inherits the dark `gray-12`. A border or ring passed in `className`
 resolves in the island's light values. `className` styles the plate and `innerClassName` the box that holds the image
 inside it (a percentage padding would resolve against the plate's *parent*). `PieceIcon` is a tooltip wrapper
 over it.
@@ -162,23 +183,16 @@ the wrapper clips) and `imageClassName` the image. On failure it renders a monog
   `automations-empty-state.tsx` and `theme-provider.tsx`. They predate the scales and read the same in both
   themes; move one onto steps when you next touch it.
 
-## Rules
+## Conventions
 
-- **No `dark:` colour utility in application code** (`dark:bg-`, `dark:text-`, `dark:border-` …). If the
-  system works, one is either redundant or a bug. It is legal in `src/styles.css` and in the shadcn
-  primitives under `src/components/ui/`. A `dark:` on something tokens cannot express, like an opacity,
-  is fine. So is a `dark:` that cancels a primitive's own `dark:` tint on a bare use (the chat answer
-  `Input`, the time and AM/PM segments, the sign-in fields): nothing else outranks the primitive's `dark:`.
-- **Dark mode is `[data-theme='dark']` on `<html>`, not a `.dark` class.** Anything injecting a
-  theme-scoped selector at runtime must use the attribute — see `THEMES` in `components/ui/chart.tsx`.
+- **Where `dark:` is allowed:** `src/styles.css`; the shadcn primitives in `src/components/ui/`; things tokens
+  cannot express, like an opacity; and cancelling a primitive's own `dark:` tint on a bare use (the chat answer
+  `Input`, the time and AM/PM segments, the sign-in fields), since nothing else outranks the primitive's `dark:`.
 - **A surface that is light in both themes is a light island** — `data-theme="light"`, then ordinary steps
   inside. `<LogoPlate>` and the plan card are the two.
 - **A surface that is dark in both themes is a dark island** — `data-theme="dark"` on it, then ordinary
-  steps inside (the terminal, the function tooltip, anything on `--scrim`). Never `bg-gray-12`: that is the
-  inverse ground, near-white in dark mode, and step 11 is not tuned for it. A chosen colour is written on `<html>` as
+  steps inside (the terminal, the function tooltip, anything on `--scrim`). A chosen colour is written on `<html>` as
   both themes' values, so an island keeps the tenant's brand and picks its own theme's half; `dark:` resolves to the nearest island, one level deep.
-- **Read `resolvedTheme`, never `preference`,** to decide what something looks like. `preference` can
-  be `'system'`, and comparing it to `'dark'` is how the code editors ended up light in a dark app.
 - **Never tint a surface or border with a solid at an opacity.** `bg-accent-9/10` is `accent-3` and `border-danger-9/40` is
   `danger-7`: use the step. A solid's own hover (`bg-accent-9/90`) is fine, and so is an opacity on an ink
   (`text-gray-12/80` is a prominence no step provides). A translucent *neutral* (`bg-gray-3/50`,

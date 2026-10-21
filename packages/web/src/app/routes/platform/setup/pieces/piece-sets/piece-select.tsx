@@ -50,7 +50,7 @@ export function PieceSelect({
           role="combobox"
           aria-expanded={open}
           disabled={loading}
-          className="w-full justify-start gap-2 font-normal"
+          className="w-full justify-start gap-2 border-gray-8 bg-transparent font-normal"
         >
           {selectedPiece ? (
             <>

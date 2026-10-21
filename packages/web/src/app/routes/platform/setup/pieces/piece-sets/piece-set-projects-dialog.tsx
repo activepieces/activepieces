@@ -224,7 +224,7 @@ export const PieceSetProjectsDialog = ({
           variant="outline"
           role="combobox"
           disabled={isLoading}
-          className="font-normal"
+          className="border-gray-8 bg-transparent font-normal"
         >
           {assignedProjects.length === 0 ? (
             <span className="text-gray-11">{t('No projects assigned')}</span>
