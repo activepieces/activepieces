@@ -266,7 +266,7 @@ const AgentsPageContent = () => {
                 className={cn(
                   'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-xl border border-gray-6 bg-gray-3 ps-5 pe-2 py-2 transition-colors',
                   firstRun &&
-                    'relative mt-6 max-w-[632px] flex-col items-stretch gap-4 rounded-xl bg-gray-1 px-[18px] pb-[14px] pt-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]',
+                    'relative mt-6 max-w-[632px] flex-col items-stretch gap-4 rounded-xl bg-gray-1 px-[18px] pb-[14px] pt-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-rest',
                 )}
               >
                 <Textarea

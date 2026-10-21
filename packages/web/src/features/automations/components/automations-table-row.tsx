@@ -167,7 +167,7 @@ export const AutomationsTableRow = ({
                   className={cn(
                     'h-4 w-4',
                     isPinned
-                      ? 'text-yellow-500 fill-yellow-500'
+                      ? 'text-warning-9 fill-warning-9'
                       : 'text-gray-11 hover:text-gray-11',
                   )}
                 />
