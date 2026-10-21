@@ -59,6 +59,10 @@ vi.mock('../../../../../src/app/database/redis-connections', () => ({
     },
 }))
 
+vi.mock('../../../../../src/app/ee/platform/platform-plan/trial-seat-grace', () => ({
+    trialSeatGrace: () => ({ endsAt: vi.fn().mockResolvedValue(null) }),
+}))
+
 vi.mock('../../../../../src/app/platform/platform.service', () => ({
     platformService: () => ({ getOneOrThrow: async () => ({ id: 'platform-1', ownerId: 'user-1' }) }),
 }))

@@ -163,14 +163,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        seatGraceEndsAt: {
-            type: 'timestamp with time zone',
-            nullable: true,
-        },
-        seatGraceTrialStartedAt: {
-            type: 'timestamp with time zone',
-            nullable: true,
-        },
         /** @deprecated see RetiredPlatformPlanColumns */
         stripeCustomerId: {
             type: String,

@@ -3,16 +3,24 @@ import { SelfServeTrialState } from '@activepieces/shared';
 
 function needsPlanRefresh({
   trialState,
-  planTrialEndsAt,
+  trialEndsAt,
+  now,
 }: NeedsPlanRefreshParams): boolean {
-  return trialState === 'ended' && !isNil(planTrialEndsAt);
+  if (trialState !== 'ended' || isNil(trialEndsAt)) {
+    return false;
+  }
+  const sinceEnd = now - Date.parse(trialEndsAt);
+  return sinceEnd >= 0 && sinceEnd < PLAN_REFRESH_WINDOW_MS;
 }
 
 export const trialSeatEnforcement = {
   needsPlanRefresh,
 };
 
+const PLAN_REFRESH_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 type NeedsPlanRefreshParams = {
   trialState: SelfServeTrialState | undefined;
-  planTrialEndsAt: string | null | undefined;
+  trialEndsAt: string | null | undefined;
+  now: number;
 };

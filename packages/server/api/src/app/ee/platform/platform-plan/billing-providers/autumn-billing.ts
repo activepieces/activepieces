@@ -10,6 +10,7 @@ import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, B
 import { platformPlanTelemetry } from '../platform-plan-telemetry'
 import { assertSeatsNotBelowActiveUsers, platformPlanRepo, platformPlanService } from '../platform-plan.service'
 import { selfServeTrialUtils } from '../self-serve-trial-utils'
+import { trialSeatGrace } from '../trial-seat-grace'
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache } from './autumn-utils'
 
 const CREDITS_REFETCH_PERIOD_MS = 180 * 1000
@@ -223,7 +224,11 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         return status
     },
     getPlatformSelfServeTrial: async (platformId: string) => {
-        return (await selfServeTrialUtils.read(platformId))?.dates ?? null
+        const dates = (await selfServeTrialUtils.read(platformId))?.dates ?? null
+        if (isNil(dates)) {
+            return null
+        }
+        return { ...dates, seatGraceEndsAt: await trialSeatGrace(log).endsAt({ platformId, dates }) }
     },
     planCarriesSelfServeTrial: async (platformId: string) => {
         const { data: dates, error } = await tryCatch(() => readOrFetchSelfServeTrialDates({ log, platformId }))
