@@ -296,7 +296,7 @@ async function assertProjectsAssignable({ workerGroupId, log }: AssertAssignable
     if (isNil(workerGroupId)) {
         return
     }
-    if (!workerGroupQueues.isRoutableWorkerGroupId(workerGroupId) || workerGroupId.includes(':')) {
+    if (!workerGroupQueues.isRoutableWorkerGroupId(workerGroupId)) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: { message: `"${workerGroupId}" is not a valid worker group id` },
@@ -315,7 +315,7 @@ async function assertFlowsAssignable({ workerGroupId, log }: AssertAssignablePar
     if (isNil(workerGroupId)) {
         return
     }
-    if (!workerGroupQueues.isRoutableWorkerGroupId(workerGroupId) || workerGroupId.includes(':')) {
+    if (!workerGroupQueues.isRoutableWorkerGroupId(workerGroupId)) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: { message: `"${workerGroupId}" is not a valid worker group id` },
@@ -454,7 +454,7 @@ function compareGroups(a: WorkerGroupSummary, b: WorkerGroupSummary): number {
 }
 
 function isListedLabel(label: string): boolean {
-    return workerGroupQueues.isRoutableWorkerGroupId(label) && !label.includes(':')
+    return workerGroupQueues.isRoutableWorkerGroupId(label)
 }
 
 function clampOffset({ offset, total, limit }: { offset: number, total: number, limit: number }): number {

@@ -81,9 +81,9 @@ describe('worker group assignments', () => {
     it('rejects a group name the queues cannot use and changes nothing', async () => {
         const ctx = await createTestContext(app, { plan: { workerGroupsEnabled: true } })
 
-        const response = await ctx.post('/v1/worker-groups/assignments/projects', { projects: [ctx.project.id], workerGroupId: 'gpu:eu' })
+        const response = await ctx.post('/v1/worker-groups/assignments/projects', { projects: [ctx.project.id], workerGroupId: '__none__' })
 
-        expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect((await db.findOneByOrFail<{ workerGroupId: string | null }>('project', { id: ctx.project.id })).workerGroupId).toBeNull()
     })
 

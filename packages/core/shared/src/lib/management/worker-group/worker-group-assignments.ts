@@ -7,9 +7,6 @@ export const WORKER_GROUP_ASSIGNMENTS_MAX_PAGE_SIZE = 100
 export const WORKER_GROUP_BULK_ASSIGN_MAX_ITEMS = 500
 
 const WorkerGroupLabel = z.string().min(1).max(128)
-const WorkerGroupTarget = WorkerGroupLabel.refine((value) => !value.includes(':'), {
-    message: 'This group name is not allowed.',
-})
 
 export const WorkerGroupSummary = z.object({
     label: z.string(),
@@ -110,19 +107,19 @@ export type WorkerGroupFlowAssignmentPage = z.infer<typeof WorkerGroupFlowAssign
 
 export const AssignWorkerGroupProjectsRequest = z.object({
     projects: z.array(ApId).min(1).max(WORKER_GROUP_BULK_ASSIGN_MAX_ITEMS),
-    workerGroupId: WorkerGroupTarget.nullable(),
+    workerGroupId: WorkerGroupLabel.nullable(),
 })
 export type AssignWorkerGroupProjectsRequest = z.infer<typeof AssignWorkerGroupProjectsRequest>
 
 export const AssignWorkerGroupFlowsRequest = z.object({
     flows: z.array(ApId).min(1).max(WORKER_GROUP_BULK_ASSIGN_MAX_ITEMS),
-    workerGroupId: WorkerGroupTarget.nullable(),
+    workerGroupId: WorkerGroupLabel.nullable(),
 })
 export type AssignWorkerGroupFlowsRequest = z.infer<typeof AssignWorkerGroupFlowsRequest>
 
 export const MoveAllWorkerGroupRequest = z.object({
     from: WorkerGroupLabel,
-    to: WorkerGroupTarget.nullable(),
+    to: WorkerGroupLabel.nullable(),
     scope: z.enum([WorkerGroupScope.PROJECT, WorkerGroupScope.FLOW]),
 })
 export type MoveAllWorkerGroupRequest = z.infer<typeof MoveAllWorkerGroupRequest>
