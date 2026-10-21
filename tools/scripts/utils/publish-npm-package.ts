@@ -118,12 +118,12 @@ function isVersionOnRegistry({ name, version }: { name: string, version: string 
 
 async function waitForStagedVersion({ name, version, path }: { name: string, version: string, path: string }): Promise<void> {
   for (let attempt = 1; attempt <= STAGED_VERSION_POLL_ATTEMPTS; attempt++) {
+    console.info(`[publishProject] version staged on registry but not live yet, path=${path}, version=${version}, attempt=${attempt}/${STAGED_VERSION_POLL_ATTEMPTS}`)
+    await sleep(STAGED_VERSION_POLL_INTERVAL_MS)
     if (isVersionOnRegistry({ name, version })) {
       console.info(`[publishProject] staged version is now live on registry, path=${path}, version=${version}`)
       return
     }
-    console.info(`[publishProject] version staged on registry but not live yet, path=${path}, version=${version}, attempt=${attempt}/${STAGED_VERSION_POLL_ATTEMPTS}`)
-    await sleep(STAGED_VERSION_POLL_INTERVAL_MS)
   }
   throw new Error(`[publishProject] ${name}@${version} is staged on npm but still not live after ${STAGED_VERSION_POLL_ATTEMPTS * STAGED_VERSION_POLL_INTERVAL_MS / 60000} minutes; inspect it with "npm stage list ${name}"`)
 }
