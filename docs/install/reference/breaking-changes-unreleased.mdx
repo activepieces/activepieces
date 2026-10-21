@@ -8,6 +8,50 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Shopify 0.11.0: Update Customer toggles that are off no longer unverify or unsubscribe the customer
+
+Update Customer sent **Verified Email**, **Send Email Invite** and **Accepts Marketing** on every run. A fresh step saves an untouched toggle as `false`, so every update marked the customer's email as unverified and unsubscribed them from email marketing, whatever the rest of the step changed. From Shopify 0.11.0 a toggle that is off sends nothing and the customer's current setting is kept; a toggle that is on still verifies the email, sends the invite or subscribes the customer. New Update Customer steps no longer start with Verified Email switched on.
+
+#### What you need to do
+
+Nothing for flows that only ever verify or subscribe customers. A flow that relied on Update Customer to unsubscribe a customer or mark their email as unverified can no longer do it from this action; use **Custom API Call** with `PUT /customers/{id}.json` and a body of `{"customer": {"email_marketing_consent": {"state": "unsubscribed", "opt_in_level": "unknown"}}}` (or `"verified_email": false`). Steps keep running on the version they were built with until you upgrade them.
+
+#### PostHog requires https hosts, and agents can no longer create projects
+
+PostHog 0.7.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+The PostHog host on a connection must now start with `https://`. A plain `http://` host is accepted only for `localhost`, so a connection that points at a self-hosted PostHog over plain http fails on upgraded steps. Inputs are also validated more strictly before the request is sent, so a step that used to send an empty or malformed value now stops with a clear error instead.
+
+**Create Project** is no longer offered as a tool to AI agents. It still works as a normal flow step.
+
+The **New Event** trigger now follows up to 10 pages of new events per poll instead of only the first 100 events, so a busy project can start more runs per poll. **Capture Event** returns extra fields next to the unchanged `status`.
+
+**Custom API Call** now only calls the API Host set on the connection. A step that points at a full URL on another host fails after the upgrade.
+
+#### What you need to do
+
+If your PostHog host uses plain http, serve it over https and update the connection's host. Remove Create Project from any agent's tool list and use a flow step instead.
+
+If a Custom API Call step targets a host other than your PostHog API Host, change it to a path on the API Host, or use an HTTP step for the other host.
+
+#### PDFMonkey 0.3.0: Generate Document, Find Document and Delete Document are builder-only
+
+Generate Document, Find Document and Delete Document are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
+
+#### What you need to do
+
+Agents that used these actions switch to their twins: Generate Document (AI), Get Document (AI) and Delete Document (AI). Flow steps keep running on the version they were built with until you upgrade them.
+
+#### Netlify 0.2.0: Start Deploy returns a build, and four actions are builder-only
+
+Start Deploy used to return a deploy. From Netlify 0.2.0 it starts a build through `/sites/{id}/builds` and returns that build: `id` is now the build ID, the deploy fields are gone, and the new `deploy_id` points to the deploy the build creates.
+
+Get Site, List Files, List Site Deploys and Start Deploy are no longer offered to AI agents. They keep working in flows.
+
+#### What you need to do
+
+If a later step reads `{{start_deploy.id}}` or other deploy fields, read `deploy_id` instead, and use Get Deploy with it for the deploy's details. Agents that used these actions switch to Get Site by ID, List Files by Site ID, List Site Deploys by Site ID and Start Deploy by Site ID. Steps keep running on the version they were built with until you upgrade them.
+
 #### Invoice Ninja 0.5.0: Get Report returns columns and rows, the existing actions are builder-only, and some text inputs changed type
 
 Get Report used to send a GET to `/api/v1/reports/<type>`, which does not return report data, and returned whatever came back (or an error message as a successful step). From Invoice Ninja 0.5.0 it runs the report and returns `{ reportType, columns, rows, rowCount }`, where each row is keyed by column key (for example `client.name`). It also gains a date range and fails the step on API errors.
