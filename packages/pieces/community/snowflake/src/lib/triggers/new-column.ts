@@ -9,14 +9,9 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { snowflakeAuth } from '../auth';
-import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
-  snowflakeCommonProps,
-  SnowflakeAuthValue,
-} from '../common';
+import { snowflakeCommonProps, toAuthValue, withSnowflake } from '../common';
+import { newColumnOutputSchema } from '../common/output-schemas';
+import { qualifiedName } from '../common/sql';
 
 type NewColumnProps = {
   database: string;
@@ -39,18 +34,25 @@ const polling: Polling<
     const { table } = propsValue;
     if (!table) return [];
 
-    const connection = configureConnection(auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      const result = await execute(connection, `DESCRIBE TABLE ${table}`, []);
-
-      if (!result) return [];
+    {
+      const result = (
+        await withSnowflake({
+          auth: toAuthValue(auth),
+          fn: (session) =>
+            session.query({
+              sql: `DESCRIBE TABLE ${qualifiedName({
+                value: table,
+                label: 'Table',
+              })}`,
+            }),
+        })
+      ).rows;
 
       // Columns are returned in ordinal-position order (lowest first).
       // New columns are always appended at the end → highest index = newest.
       // Reverse so that LAST_ITEM deduplication stores the newest column's id
       // and emits only columns added after that position on subsequent polls.
-      return (result as Record<string, unknown>[])
+      return result
         .map((col, index) => ({
           id: index + 1,
           data: {
@@ -66,8 +68,6 @@ const polling: Polling<
           },
         }))
         .reverse();
-    } finally {
-      await destroy(connection);
     }
   },
 };
@@ -78,6 +78,8 @@ export const newColumnTrigger = createTrigger({
   displayName: 'New Column',
   description:
     'Triggers when a new column is added to the selected table. Checked by polling every few minutes.',
+  classification: 'READ',
+  outputSchema: newColumnOutputSchema,
   aiMetadata: {
     description:
       "Fires when a new column is added to the selected Snowflake table, detected by polling the table's column list and emitting columns appended since the last check. Each newly added column produces one event with its name, data type, and constraints.",

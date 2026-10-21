@@ -522,3 +522,15 @@ describe('deno code sandbox memory limit', () => {
         await expect(uncapped.runCodeModule({ codeFilePath, inputs: {} })).resolves.toBe(30)
     })
 })
+
+describe('post-result rejections', () => {
+    it('does not fail the run when a promise the step left unawaited rejects after the result was already returned', async () => {
+        const source = `export const code = async () => {
+    setTimeout(() => {
+        Promise.reject(new Error('late boom'));
+    }, 50);
+    return 'ok';
+};`
+        await expect(runModule(source)).resolves.toBe('ok')
+    })
+})

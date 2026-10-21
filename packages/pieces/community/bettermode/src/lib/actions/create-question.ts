@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createQuestion } from '../api';
-import { buildMemberSpacesDropdown } from '../props';
+import { bindTokenStore } from '../common/client';
 import { bettermodeAuth } from '../auth';
+import { bettermodeSchemas } from '../common/schemas';
+import { memberSpacesDropdown } from '../common/props';
+import { createLegacyPost } from './create-post-of-type';
 
 export const createQuestionAction = createAction({
   name: 'create_question',
@@ -9,18 +11,14 @@ export const createQuestionAction = createAction({
   auth: bettermodeAuth,
   displayName: 'Create Question Post',
   description: 'Create a new question post in a space',
-  audience: 'both',
-  aiMetadata: { description: 'Publishes a new question post (title, HTML content, optional comma-separated tags, optional locked flag) into a Bettermode community space identified by its space ID. Use to post a question thread programmatically; the post type is "Question" rather than a discussion. Not idempotent: each call publishes a separate post.', idempotent: false },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Publishes a new post of the community post type named exactly "Question" into a space the connected member has joined. Agents should use List Post Types and Create Post instead. Each call creates a separate post, so retries duplicate.',
+    idempotent: false,
+  },
   props: {
-    spaceId: Property.Dropdown({
-      auth: bettermodeAuth,
-      displayName: 'Space',
-      description: 'The space to create the question in',
-      required: true,
-      refreshers: [],
-      options: async ({ auth }) =>
-        await buildMemberSpacesDropdown(auth?.props),
-    }),
+    spaceId: memberSpacesDropdown,
     title: Property.ShortText({
       displayName: 'Title',
       description: 'The title of the question',
@@ -28,12 +26,12 @@ export const createQuestionAction = createAction({
     }),
     content: Property.LongText({
       displayName: 'Content',
-      description: 'The content of the question',
+      description: 'The content of the question. HTML is supported.',
       required: true,
     }),
     tagNames: Property.ShortText({
       displayName: 'Tags',
-      description: 'The tags to add to the question',
+      description: 'Comma-separated tag names to add, for example onboarding, feedback. Leave empty for no tags.',
       required: false,
     }),
     locked: Property.Checkbox({
@@ -43,14 +41,13 @@ export const createQuestionAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: bettermodeSchemas.legacyPost,
   async run(context) {
-    return await createQuestion(
-      context.auth.props,
-      context.propsValue.spaceId,
-      context.propsValue.tagNames ?? '',
-      context.propsValue.title,
-      context.propsValue.content,
-      context.propsValue.locked
-    );
+    bindTokenStore({ credentials: context.auth.props, store: context.store });
+    return createLegacyPost({
+      auth: context.auth.props,
+      postTypeName: 'Question',
+      propsValue: context.propsValue,
+    });
   },
 });
