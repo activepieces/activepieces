@@ -3113,7 +3113,7 @@
   "Split your flow into branches depending on condition(s)": "条件に応じてフローを分岐します",
   "AI Router": "AI Router",
   "Ask one question and Jev, an evaluation model, picks the route": "Ask one question and Jev, an evaluation model, picks the route",
-  "Empty Trigger": "空のトリガー",
+  "Empty Trigger": "クリックして設定",
   "Retention: {period}": "Retention: {period}",
   "Events older than the retention period are deleted every hour.": "Events older than the retention period are deleted every hour.",
   "Keep events for": "Keep events for",
