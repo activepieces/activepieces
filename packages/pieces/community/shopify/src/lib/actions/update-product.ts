@@ -32,7 +32,7 @@ export const updateProductAction = createAction({
         'vendor',
         'tags',
         'productImage',
-        'status',
+        'productStatus',
       ],
     },
   ],
@@ -69,11 +69,10 @@ export const updateProductAction = createAction({
       description: 'A file, or a public URL to an image.',
       required: false,
     }),
-    status: Property.StaticDropdown({
+    productStatus: Property.StaticDropdown({
       displayName: 'Status',
-      description: 'Not sent to Shopify yet, so this choice has no effect.',
-      required: true,
-      defaultValue: ShopifyProductStatuses.DRAFT,
+      description: 'Leave empty to keep the current status.',
+      required: false,
       options: {
         options: [
           {
@@ -105,8 +104,16 @@ export const updateProductAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { id, title, bodyHtml, vendor, productType, tags, productImage } =
-      propsValue;
+    const {
+      id,
+      title,
+      bodyHtml,
+      vendor,
+      productType,
+      tags,
+      productImage,
+      productStatus,
+    } = propsValue;
 
     return await updateProduct(
       +id,
@@ -119,6 +126,7 @@ export const updateProductAction = createAction({
         ...(productImage
           ? { images: [{ attachment: productImage.base64 }] }
           : {}),
+        ...(productStatus ? { status: productStatus } : {}),
       },
       auth
     );
