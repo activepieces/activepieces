@@ -3,14 +3,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
 import { clockifyApi } from '../common/api';
 import { clockifyProps } from '../common/props';
+import { foundTimeEntriesOutputSchema } from '../output-schemas';
 
 export const findTimeEntryAction = createAction({
 	auth: clockifyAuth,
 	name: 'find-time-entry',
+	outputSchema: foundTimeEntriesOutputSchema,
 	classification: 'SEARCH',
 	displayName: 'Find Time Entry',
 	description: 'Finds a time entry by description, start datetime or end datetime.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			"Searches the authenticated user's time entries on a workspace, optionally filtered by description, start/end datetime, project, or task. With no filters it returns recent entries; supplied filters narrow the results. Use to locate an existing entry or verify logged time. Read-only and idempotent.",

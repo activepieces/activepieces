@@ -3,12 +3,14 @@ import { isNil } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
 import { clockifyApi } from '../common/api';
 import { clockifyProps } from '../common/props';
+import { webhookTimeEntryOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'new-timer-started-trigger';
 
 export const newTimerStartedTrigger = createTrigger({
 	auth: clockifyAuth,
 	name: 'new-timer-started',
+	outputSchema: webhookTimeEntryOutputSchema,
 	classification: 'READ',
 	displayName: 'New Timer Started',
 	description: 'Triggers when a new entry is started and running.',

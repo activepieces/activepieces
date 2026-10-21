@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
 import { clockifyApi } from '../common/api';
 import { clockifyProps } from '../common/props';
+import { taskOutputSchema } from '../output-schemas';
 
 export const createTaskAction = createAction({
 	auth: clockifyAuth,
 	name: 'create-task',
+	outputSchema: taskOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Task',
 	description: 'Creates a new in a specific project.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Creates a new task inside a specific Clockify project, optionally setting a status and assignees. Requires the workspace and project to target. Not idempotent: each call creates a separate task even with identical inputs.',

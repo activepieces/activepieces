@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
 import { clockifyApi } from '../common/api';
 import { clockifyProps } from '../common/props';
+import { timeEntryOutputSchema } from '../output-schemas';
 
 export const startTimerAction = createAction({
 	auth: clockifyAuth,
 	name: 'start-timer',
+	outputSchema: timeEntryOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Start Timer',
 	description: 'Starts a new time entry.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Starts a live, currently-running timer on a Clockify workspace from the current moment, optionally tied to a project, task, tags, and billable flag. Use to begin tracking ongoing work; use Stop Timer to end it and Create Time Entry to log a finished interval. Not idempotent: each call starts a new running entry.',

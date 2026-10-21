@@ -11,12 +11,13 @@ import { clockifyClient } from './lib/common/client';
 import { newTaskTrigger } from './lib/triggers/new-task';
 import { newTimeEntryTrigger } from './lib/triggers/new-time-entry';
 import { newTimerStartedTrigger } from './lib/triggers/new-timer-started';
+import { clockifyAiActions } from './lib/actions/ai';
 import { clockifyAuth } from './lib/auth';
 
 export const clockify = createPiece({
 	displayName: 'Clockify',
 	auth: clockifyAuth,
-	minimumSupportedRelease: '0.36.1',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/clockify.png',
 	authors: ['rimjhimyadav', 'kishanprmr'],
 	actions: [
@@ -27,6 +28,7 @@ export const clockify = createPiece({
 		findTaskAction,
 		findTimeEntryAction,
 		findRunningTimerAction,
+		...clockifyAiActions,
 		createCustomApiCallAction({
 			auth: clockifyAuth,
 			baseUrl: () => clockifyClient.baseUrl(),

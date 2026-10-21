@@ -2,7 +2,7 @@ import { httpClient, HttpMethod, QueryParams } from '@activepieces/pieces-common
 import type { ClockifyAuthValue } from './types';
 
 function baseUrl(): string {
-	return 'https://api.clockify.me/api/v1';
+	return HOSTS.api;
 }
 
 async function request<T>({
@@ -11,10 +11,11 @@ async function request<T>({
 	path,
 	query,
 	body,
+	host = 'api',
 }: RequestParams & { auth: ClockifyAuthValue }): Promise<T> {
 	const response = await httpClient.sendRequest<T>({
 		method,
-		url: `${baseUrl()}${path}`,
+		url: `${HOSTS[host]}${path}`,
 		headers: {
 			'X-Api-Key': auth.secret_text,
 		},
@@ -26,9 +27,15 @@ async function request<T>({
 
 export const clockifyClient = { baseUrl, request };
 
+const HOSTS = {
+	api: 'https://api.clockify.me/api/v1',
+	reports: 'https://reports.api.clockify.me/v1',
+};
+
 type RequestParams = {
 	method: HttpMethod;
 	path: string;
 	query?: QueryParams;
 	body?: unknown;
+	host?: keyof typeof HOSTS;
 };

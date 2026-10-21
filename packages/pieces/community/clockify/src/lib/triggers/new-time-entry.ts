@@ -4,12 +4,14 @@ import { isNil } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
 import { clockifyApi } from '../common/api';
 import { clockifyProps } from '../common/props';
+import { webhookTimeEntryOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'new-time-entry-trigger';
 
 export const newTimeEntryTrigger = createTrigger({
 	auth: clockifyAuth,
 	name: 'new-time-entry',
+	outputSchema: webhookTimeEntryOutputSchema,
 	classification: 'READ',
 	displayName: 'New Time Entry',
 	description: 'Triggers when a new time entry is created.',
