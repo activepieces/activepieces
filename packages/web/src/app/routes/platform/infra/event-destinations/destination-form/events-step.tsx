@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { useId, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
+import { adminSurface } from '@/app/components/admin';
 import { SearchInput } from '@/components/custom/search-input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -115,7 +116,12 @@ export const EventsStep = ({
               </Button>
             </div>
 
-            <div className="grid min-h-[340px] grid-cols-[240px_minmax(0,1fr)] overflow-hidden rounded-xl border">
+            <div
+              className={cn(
+                adminSurface.card,
+                'grid min-h-85 grid-cols-[240px_minmax(0,1fr)] overflow-hidden',
+              )}
+            >
               <nav className="flex flex-col gap-0.5 border-r bg-gray-3 p-1.5">
                 {visibleGroups.map((group) => {
                   const isActive = group.key === activeGroup?.key;
@@ -129,7 +135,7 @@ export const EventsStep = ({
                       onClick={() => setActiveGroupKey(group.key)}
                       aria-current={isActive ? 'true' : undefined}
                       className={cn(
-                        'flex h-[34px] items-center gap-2.5 rounded-md px-2.5 text-left text-sm transition-colors',
+                        'flex h-8 items-center gap-2 rounded-md px-2.5 text-left text-sm transition-colors',
                         isActive
                           ? 'bg-panel font-semibold text-gray-12'
                           : 'hover:bg-gray-4',
@@ -147,7 +153,7 @@ export const EventsStep = ({
                 })}
               </nav>
 
-              <div className="flex flex-col gap-1 px-[18px] py-3.5">
+              <div className="flex flex-col gap-1 px-5 py-4">
                 {activeGroup === undefined ? (
                   <p className="py-6 text-center text-sm text-gray-11">
                     {t('No events match your search')}

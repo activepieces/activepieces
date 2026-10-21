@@ -60,12 +60,10 @@ export const deno = {
                     return
                 }
 
-                if (!message.success) {
+                if (message.success === false) {
                     reject(sandboxError.build({ error: message.error, stdout: userOutput, stderr: capturedStderr }))
                 }
                 else if (code !== 0) {
-                    // e.g. an unhandled rejection fired after the result was printed — deno exits
-                    // non-zero, so the run must fail even though a success marker exists.
                     reject(sandboxError.build({ error: `Deno process exited with code ${code} and signal ${signal} after producing a result`, stdout: userOutput, stderr: capturedStderr }))
                 }
                 else {
@@ -135,7 +133,7 @@ export const deno = {
             }
             pending.delete(message.id)
             refreshWatchdog()
-            if (message.success) {
+            if (message.success === true) {
                 command.resolve(message.result)
             }
             else {
@@ -346,6 +344,11 @@ const emit = (payload) => {
 };
 globalThis.addEventListener('unhandledrejection', (event) => {
     event.preventDefault();
+    if (settled) {
+        const payload = toErrorPayload(event.reason);
+        console.error(\`Unhandled rejection after the step already returned a result: \${payload.message}\`);
+        return;
+    }
     emit({ success: false, error: toErrorPayload(event.reason) });
     Deno.exit(1);
 });

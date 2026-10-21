@@ -1,6 +1,7 @@
 import {
   AIProviderWithoutSensitiveData,
   CreatePlatformModelTierRequest,
+  ModelChoice,
   PlatformConfiguration,
   PlatformModelTier,
   UpdatePlatformModelTierRequest,
@@ -186,6 +187,46 @@ export const platformModelTierMutations = {
       onError: (error) =>
         toastError({ error, fallback: t('Could not delete this tier') }),
       onSettled: () => settle({ queryClient }),
+    });
+  },
+  useSetDefaultChatModel: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (defaultChatModel: ModelChoice | null) =>
+        platformConfigurationApi.update({ defaultChatModel }),
+      onMutate: async (defaultChatModel) => {
+        await queryClient.cancelQueries({
+          queryKey: platformConfigurationHooks.queryKey,
+        });
+        const previous = queryClient.getQueryData<PlatformConfiguration>(
+          platformConfigurationHooks.queryKey,
+        );
+        queryClient.setQueryData<PlatformConfiguration>(
+          platformConfigurationHooks.queryKey,
+          (old) => old && { ...old, defaultChatModel },
+        );
+        return { previous };
+      },
+      onSuccess: (configuration) => {
+        queryClient.setQueryData(
+          platformConfigurationHooks.queryKey,
+          configuration,
+        );
+        queryClient.invalidateQueries({ queryKey: aiProviderKeys.configs });
+        queryClient.invalidateQueries({ queryKey: ['ai-model-options'] });
+        toast.success(t('Default chat model updated'), {
+          duration: TOAST_SUCCESS_MS,
+        });
+      },
+      onError: (error, _variables, context) => {
+        if (context?.previous !== undefined) {
+          queryClient.setQueryData(
+            platformConfigurationHooks.queryKey,
+            context.previous,
+          );
+        }
+        toastError({ error, fallback: t('Could not save this setting') });
+      },
     });
   },
   useSetSpecificModelsVisible: () => {

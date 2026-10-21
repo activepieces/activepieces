@@ -7,8 +7,8 @@ export const findSubscriberAction = createAction({
 	auth: mailerLiteAuth,
 	name: 'find_subscriber',
 	classification: 'READ',
-	displayName: 'Find a Subscriber',
-	description: 'Search for subscriber by email or name.',
+	displayName: 'Find Subscriber',
+	description: 'Find a subscriber by email or ID.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -18,7 +18,8 @@ export const findSubscriberAction = createAction({
 	outputSchema: findSubscriberOutputSchema,
 	props: {
 		searchValue: Property.ShortText({
-			displayName: 'Subscriber ID or Email',
+			displayName: 'Email or Subscriber ID',
+			placeholder: 'jane@example.com',
 			required: true,
 		}),
 	},

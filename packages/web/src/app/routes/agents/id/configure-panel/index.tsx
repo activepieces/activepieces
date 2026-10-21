@@ -49,7 +49,8 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   AgentStructuredOutput,
   ModelPicker,
-  PROVIDER_EMBEDDING_MODELS,
+  NoEmbeddingSourceNote,
+  useKnowledgeBaseEmbeddingSource,
 } from '@/features/agents';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { DeleteAgentDialog } from '@/features/agents/delete-agent-dialog';
@@ -223,7 +224,7 @@ const ConfigureBehaviorTab = ({
 }) => {
   const tools = form.watch('draft.tools') ?? [];
   const draft = form.watch('draft');
-  const provider = draft.provider;
+  const { data: embeddingSource } = useKnowledgeBaseEmbeddingSource();
   const knowledgeCount = tools.filter(
     (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
   ).length;
@@ -290,25 +291,24 @@ const ConfigureBehaviorTab = ({
             });
           }}
         />
-        {knowledgeCount > 0 && !isNil(provider) && (
-          <p className="text-xs text-gray-11">
-            {PROVIDER_EMBEDDING_MODELS[provider]
-              ? t('Embedding model for knowledge base: {model}', {
-                  model: PROVIDER_EMBEDDING_MODELS[provider],
-                })
-              : t('This provider does not support knowledge base embeddings.')}
-          </p>
-        )}
+        {knowledgeCount > 0 &&
+          !isNil(embeddingSource) &&
+          (isNil(embeddingSource.modelId) ? (
+            <NoEmbeddingSourceNote className="text-xs text-gray-11" />
+          ) : (
+            <p className="text-xs text-gray-11">
+              {t('Embedding model for knowledge base: {model}', {
+                model: embeddingSource.modelId,
+              })}
+            </p>
+          ))}
       </FormItem>
       <FormField
         control={form.control}
         name="draft.tools"
         render={({ field }) => (
           <FormItem className="flex flex-col gap-2">
-            <AgentTools
-              toolsField={field}
-              selectedProvider={form.watch('draft.provider') ?? undefined}
-            />
+            <AgentTools toolsField={field} />
             <FormMessage />
           </FormItem>
         )}
