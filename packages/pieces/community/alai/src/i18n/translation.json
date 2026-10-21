@@ -35,7 +35,7 @@
   "Permanently delete one slide from a presentation.": "Permanently delete one slide from a presentation.",
   "Generate speaker notes for the slides of a presentation.": "Generate speaker notes for the slides of a presentation.",
   "Upload up to 10 images (PNG, JPEG, WebP, GIF, AVIF or SVG, 10 MB each) to use in a new presentation.": "Upload up to 10 images (PNG, JPEG, WebP, GIF, AVIF or SVG, 10 MB each) to use in a new presentation.",
-  "Make a request to any Alai API endpoint under https://slides-api.getalai.com/api, e.g. /v1/themes or /modern/v1/ping. The API key is added for you.": "Make a request to any Alai API endpoint under https://slides-api.getalai.com/api, e.g. /v1/themes or /modern/v1/ping. The API key is added for you.",
+  "Make a request to any Alai API endpoint, e.g. /themes (Classic v1) or /modern/v1/ping. The API key is added for you.": "Make a request to any Alai API endpoint, e.g. /themes (Classic v1) or /modern/v1/ping. The API key is added for you.",
   "Input Text": "Input Text",
   "Additional Instructions": "Additional Instructions",
   "Title": "Title",

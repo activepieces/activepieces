@@ -2,7 +2,7 @@ import { httpClient, HttpError } from '@activepieces/pieces-common';
 import { createMockActionContext, InputPropertyMap } from '@activepieces/pieces-framework';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { addSlide } from '../src/lib/actions/add-slide';
-import { urlOf } from '../src/lib/actions/custom-api-call';
+import { alaiCustomApiCall, urlOf } from '../src/lib/actions/custom-api-call';
 import { deletePresentation } from '../src/lib/actions/delete-presentation';
 import { deleteSlide } from '../src/lib/actions/delete-slide';
 import { exportPresentation } from '../src/lib/actions/export-presentation';
@@ -223,6 +223,9 @@ describe('uploadImages', () => {
 describe('custom api call url guard', () => {
   it('accepts relative and same-host URLs', () => {
     expect(urlOf({ url: '/v1/themes' })).toBe('https://slides-api.getalai.com/api/v1/themes');
+    expect(urlOf({ url: '/themes' })).toBe('https://slides-api.getalai.com/api/v1/themes');
+    expect(urlOf({ url: 'presentations?x=1' })).toBe('https://slides-api.getalai.com/api/v1/presentations?x=1');
+    expect(urlOf({ url: '/modern/v1/ping' })).toBe('https://slides-api.getalai.com/api/modern/v1/ping');
     expect(urlOf({ url: 'https://slides-api.getalai.com/api/modern/v1/ping' })).toBe('https://slides-api.getalai.com/api/modern/v1/ping');
   });
 
@@ -288,5 +291,20 @@ describe('agent tools', () => {
     const spy = mockResponses({ bodies: [{ generation_id: 'a4' }] });
     await run({ action: generateSpeakerNotesAi, propsValue: { presentationId: 'p1' } });
     expect(spy.mock.calls[0][0].body).toEqual({});
+  });
+});
+
+describe('custom api call binary download', () => {
+  it('keeps the file extension from content-type', async () => {
+    vi.spyOn(httpClient, 'sendRequest').mockResolvedValueOnce({ status: 200, headers: { 'content-type': 'application/pdf; charset=binary' }, body: Buffer.from('%PDF') });
+    const base = createMockActionContext<InputPropertyMap>({ propsValue: {} });
+    const write = vi.fn(async ({ fileName }: { fileName: string }) => `file://${fileName}`);
+    const out = await Promise.resolve(
+      Reflect.apply(alaiCustomApiCall.run, alaiCustomApiCall, [
+        { ...base, files: { write }, auth: AUTH, propsValue: { method: 'GET', url: { url: '/presentations/p1/file' }, headers: {}, queryParams: {}, response_is_binary: true } },
+      ])
+    );
+    expect(write).toHaveBeenCalledWith(expect.objectContaining({ fileName: 'output.pdf' }));
+    expect(out).toMatchObject({ status: 200, body: 'file://output.pdf' });
   });
 });

@@ -8,7 +8,7 @@ const API_ROOT = `${alaiClient.baseUrl}/api`;
 
 const base = createCustomApiCallAction({
   auth: alaiAuth,
-  baseUrl: () => API_ROOT,
+  baseUrl: () => `${API_ROOT}/v1`,
   authMapping: async (auth) => alaiClient.authHeaders(auth.props.apiKey),
 });
 
@@ -16,7 +16,7 @@ export const alaiCustomApiCall = createAction({
   auth: alaiAuth,
   name: base.name,
   displayName: base.displayName,
-  description: 'Make a request to any Alai API endpoint under https://slides-api.getalai.com/api, e.g. /v1/themes or /modern/v1/ping. The API key is added for you.',
+  description: 'Make a request to any Alai API endpoint, e.g. /themes (Classic v1) or /modern/v1/ping. The API key is added for you.',
   audience: 'human',
   classification: 'WRITE',
   outputSchema: alaiOutputSchemas.customApiCall,
@@ -43,7 +43,11 @@ export const alaiCustomApiCall = createAction({
       const data: unknown = response.body;
       if (propsValue.response_is_binary && (Buffer.isBuffer(data) || data instanceof ArrayBuffer)) {
         const buffer = Buffer.isBuffer(data) ? data : Buffer.from(new Uint8Array(data));
-        return { status: response.status, headers: response.headers, body: await files.write({ fileName: 'output.bin', data: buffer }) };
+        return {
+          status: response.status,
+          headers: response.headers,
+          body: await files.write({ fileName: `output.${extensionOf(response.headers?.['content-type'])}`, data: buffer }),
+        };
       }
       return { status: response.status, headers: response.headers, body: data };
     } catch (error) {
@@ -76,12 +80,44 @@ export function urlOf(value: unknown): string {
     throw new Error('The URL must not contain backslashes.');
   }
   const absolute = /^[a-z][a-z0-9+.-]*:/i.test(text) || text.startsWith('//');
-  const parsed = new URL(absolute ? text : `${API_ROOT}/${text.replace(/^\/+/, '')}`);
+  const parsed = new URL(absolute ? text : relativeUrl(text));
   if (parsed.origin !== alaiClient.baseUrl || parsed.username || parsed.password || !(parsed.pathname === '/api' || parsed.pathname.startsWith('/api/'))) {
     throw new Error(`The URL must be under ${API_ROOT}, so your Alai API key is not sent anywhere else.`);
   }
   return parsed.toString();
 }
+
+function relativeUrl(text: string): string {
+  const path = text.replace(/^\/+/, '');
+  if (/^(v1|modern\/v1)(\/|$|\?)/.test(path)) {
+    return `${API_ROOT}/${path}`;
+  }
+  return `${API_ROOT}/v1/${path}`;
+}
+
+function extensionOf(contentType: unknown): string {
+  const raw = Array.isArray(contentType) ? contentType[0] : contentType;
+  const type = typeof raw === 'string' ? raw.split(';')[0].trim().toLowerCase() : '';
+  return CONTENT_TYPE_EXTENSIONS[type] ?? 'txt';
+}
+
+const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
+  'application/pdf': 'pdf',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+  'application/vnd.ms-powerpoint': 'ppt',
+  'application/json': 'json',
+  'application/zip': 'zip',
+  'application/octet-stream': 'bin',
+  'text/plain': 'txt',
+  'text/html': 'html',
+  'text/csv': 'csv',
+  'image/png': 'png',
+  'image/jpeg': 'jpeg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/avif': 'avif',
+  'image/svg+xml': 'svg',
+};
 
 function stringRecord(value: unknown): Record<string, string> {
   if (typeof value !== 'object' || value === null) {
