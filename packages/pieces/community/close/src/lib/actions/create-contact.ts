@@ -1,9 +1,11 @@
+import { closeMappers } from '../common/mappers';
+import { closeOutputSchemas } from '../common/output-schemas';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { closeAuth } from '../auth';
 import { CloseCRMContact } from '../common/types';
 import { customFields, leadId } from '../common/props';
-import { closeApiCall } from '../common/client';
+import { CloseApiError, closeApiCall } from '../common/client';
 
 export const createContact = createAction({
 	auth: closeAuth,
@@ -11,11 +13,12 @@ export const createContact = createAction({
 	classification: 'WRITE',
 	displayName: 'Create Contact',
 	description: 'Creates a new contact.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description: 'Creates a new contact attached to an existing lead in Close CRM, with optional phones, emails, URL, and custom fields. Use to add a person to a known lead. Requires the target lead ID and a contact name. Not idempotent; each call creates a new contact and repeating produces duplicates.',
 		idempotent: false,
 	},
+	outputSchema: closeOutputSchemas.raw.contact,
 	props: {
 		lead_id: leadId(),
 		name: Property.ShortText({
@@ -132,15 +135,12 @@ export const createContact = createAction({
 				body: payload,
 			});
 
-			return response;
-		} catch (error: any) {
-			if (error.response?.status === 400) {
-				throw new Error(`Bad request: ${JSON.stringify(error.response.body)}`);
+			return closeMappers.withCustomMap({ objectType: 'contact', record: response });
+		} catch (error) {
+			if (error instanceof CloseApiError && error.status === 404) {
+				throw new Error(`Lead not found with ID: ${lead_id}. ${error.message}`);
 			}
-			if (error.response?.status === 404) {
-				throw new Error(`Lead not found with ID: ${lead_id}`);
-			}
-			throw new Error(`Error creating contact: ${error.message}`);
+			throw error;
 		}
 	},
 });

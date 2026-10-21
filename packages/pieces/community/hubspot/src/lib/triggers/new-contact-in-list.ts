@@ -97,6 +97,15 @@ export const newContactInListTrigger = createTrigger({
 	},
 	outputSchema: newContactInListTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
+	propertyGroups: [
+		{
+			key: 'list',
+			display: 'section',
+			label: 'List',
+			icon: 'users',
+			props: ['listId'],
+		},
+	],
 	props: {
 		listId: Property.Dropdown({
 			displayName: 'Contact List',

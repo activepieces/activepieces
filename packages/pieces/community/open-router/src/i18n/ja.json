@@ -35,5 +35,6 @@
   "None": "なし",
   "JSON": "JSON",
   "Form Data": "フォームデータ",
-  "Raw": "Raw"
+  "Raw": "Raw",
+  "Full URL, or a path relative to https://openrouter.ai/api/v1": "完全な URL、または https://openrouter.ai/api/v1 からの相対パス"
 }

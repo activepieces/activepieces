@@ -236,6 +236,22 @@ jobs:
         if: always()
         run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml down -v
 
+      - name: Report pipeline health to Betterstack (scheduled runs only)
+        if: '!cancelled() && github.event_name == ''schedule'''
+        env:
+          BETTERSTACK_WEBHOOK_URL: ${{ secrets.BETTERSTACK_WEBHOOK_URL }}
+          JOB_STATUS: ${{ job.status }}
+          LABEL: ${{ matrix.label }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$JOB_STATUS" = "success" ]; then STATE=ok; else STATE=alert; fi
+          jq -n --arg cell "$LABEL" --arg state "$STATE" --arg status "$JOB_STATUS" --arg url "$RUN_URL" '{
+            name: "Nightly bench pipeline failed: \($cell)",
+            cause: "Nightly benchmark job `\($cell)` finished with status `\($status)`.\n\n[Run details →](\($url))",
+            alertId: "bench-pipeline-\($cell)",
+            state: $state
+          }' | curl -sS --fail-with-body -H 'Content-Type: application/json; charset=utf-8' --data-binary @- "$BETTERSTACK_WEBHOOK_URL"
+
   summary:
     runs-on: ubuntu-latest
     needs: benchmark

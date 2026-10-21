@@ -1,30 +1,25 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { clockifyAuth } from '../auth';
-import { clockifyApiCall } from '../common/client';
-import { assigneeIds, projectId, workspaceId } from '../common/props';
+import { clockifyApi } from '../common/api';
+import { clockifyProps } from '../common/props';
+import { taskOutputSchema } from '../output-schemas';
 
 export const createTaskAction = createAction({
 	auth: clockifyAuth,
 	name: 'create-task',
+	outputSchema: taskOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Task',
 	description: 'Creates a new in a specific project.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Creates a new task inside a specific Clockify project, optionally setting a status and assignees. Requires the workspace and project to target. Not idempotent: each call creates a separate task even with identical inputs.',
 		idempotent: false,
 	},
 	props: {
-		workspaceId: workspaceId({
-			displayName: 'Workspace',
-			required: true,
-		}),
-		projectId: projectId({
-			displayName: 'Project',
-			required: true,
-		}),
+		workspaceId: clockifyProps.workspaceId({ required: true }),
+		projectId: clockifyProps.projectId({ required: true }),
 		name: Property.ShortText({
 			displayName: 'Task Name',
 			required: true,
@@ -50,26 +45,19 @@ export const createTaskAction = createAction({
 				],
 			},
 		}),
-		assigneeIds: assigneeIds({
-			displayName: 'Assignee',
-			required: false,
-		}),
+		assigneeIds: clockifyProps.assigneeIds({ required: false }),
 	},
 	async run(context) {
 		const { workspaceId, projectId, name, status } = context.propsValue;
 		const assigneeIds = context.propsValue.assigneeIds ?? [];
 
-		const response = await clockifyApiCall({
-			apiKey: context.auth.secret_text,
-			method: HttpMethod.POST,
-			resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
-			body: {
-				name,
-				status,
-				assigneeIds,
-			},
+		return await clockifyApi.createTask({
+			auth: context.auth,
+			workspaceId,
+			projectId,
+			name,
+			status,
+			assigneeIds,
 		});
-
-		return response;
 	},
 });

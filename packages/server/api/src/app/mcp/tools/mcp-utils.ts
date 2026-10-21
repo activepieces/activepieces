@@ -1,4 +1,4 @@
-import { applyFunctionToValuesSync, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { applyFunctionToValuesSync, connectionTemplate, extractMustacheTokens, isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AiMetadata, OutputSchema, OutputSchemaField, PieceMetadataModel, PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { BranchOperator, EngineResponse, EngineResponseStatus, flowStructureUtil, McpServerType, McpToolResult, ProjectScopedMcpServer, PropertyExecutionType, PropertySettings, singleValueConditions, WorkerJobType } from '@activepieces/shared'
 import type { BranchedAction, Step } from '@activepieces/shared'
@@ -528,10 +528,10 @@ function publishedFlowWarning(publishedVersionId: string | null | undefined): st
 
 function resolveConnectionExternalId({ connectionExternalId, input }: { connectionExternalId: unknown, input: unknown }): string | undefined {
     if (typeof connectionExternalId === 'string') {
-        return connectionExternalId
+        return normalizeAuth(connectionExternalId)
     }
     const inlineAuth = isObject(input) ? input.auth : undefined
-    return typeof inlineAuth === 'string' ? inlineAuth : undefined
+    return typeof inlineAuth === 'string' ? normalizeAuth(inlineAuth) : undefined
 }
 
 async function resolveFolder({ projectId, folderName, log }: { projectId: string, folderName: string | undefined, log: FastifyBaseLogger }): Promise<ResolveFolderResult> {
@@ -547,6 +547,10 @@ async function resolveFolder({ projectId, folderName, log }: { projectId: string
 
 function folderSuffix(folderName: string | undefined): string {
     return isNil(folderName) ? '' : ` in folder "${folderName}"`
+}
+
+function normalizeAuth(auth: string | undefined): string | undefined {
+    return connectionTemplate.unwrapExternalId(auth) ?? auth
 }
 
 function validateAuth(auth: string | undefined): McpToolResult | null {
@@ -938,6 +942,7 @@ export const mcpUtils = {
     findResolvableProps,
     resolveConnectionExternalId,
     validateAuth,
+    normalizeAuth,
     folderSuffix,
     resolveFolder,
     fillDefaultsForMissingOptionalProps,

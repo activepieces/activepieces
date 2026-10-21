@@ -25,10 +25,11 @@ describe('AI_PROVIDER_CAPABILITIES', () => {
         ].sort())
     })
 
-    it('marks embedding support iff a default embedding model exists', () => {
+    it('marks embedding support iff the provider lists embedding models, the first being the default', () => {
         for (const provider of Object.values(AIProviderName)) {
             const caps = AI_PROVIDER_CAPABILITIES[provider]
-            expect(caps.supportsEmbedding).toBe(caps.defaultEmbeddingModel !== undefined)
+            expect(caps.supportsEmbedding).toBe(caps.embeddingModels.length > 0)
+            expect(caps.defaultEmbeddingModel).toBe(caps.embeddingModels[0])
         }
     })
 })
@@ -117,14 +118,14 @@ describe('managed chat model vocabulary', () => {
 })
 
 describe('canDisableReasoning', () => {
-    it('is true for every tier model, so the default path keeps its zero-reasoning first step', () => {
-        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
-            expect(aiProviderUtils.canDisableReasoning({ modelId: tier.modelId }), tier.modelId).toBe(true)
+    it('is true for the models observed accepting a disable directive', () => {
+        for (const id of ['anthropic/claude-haiku-4.5', 'anthropic/claude-sonnet-4.6', 'deepseek/deepseek-v4.1-flash']) {
+            expect(aiProviderUtils.canDisableReasoning({ modelId: id }), id).toBe(true)
         }
     })
 
-    it('is false for the reasoning-native models that rejected a disable directive in production', () => {
-        for (const id of ['google/gemini-3.8-flash', 'openai/gpt-6-astra', 'openai/gpt-6-astra-pro', 'anthropic/claude-fable-5.1']) {
+    it('is false for the reasoning-native models that rejected a disable directive', () => {
+        for (const id of ['google/gemini-3.8-flash', 'openai/gpt-6-astra', 'openai/gpt-6-astra-pro', 'anthropic/claude-fable-5.1', 'minimax/minimax-m3', 'z-ai/glm-5.3']) {
             expect(aiProviderUtils.canDisableReasoning({ modelId: id }), id).toBe(false)
         }
     })
@@ -138,7 +139,7 @@ describe('canDisableReasoning', () => {
 describe('tier native model ids', () => {
     it('names a model the native Anthropic list actually offers, so no tier resolves to an id that does not exist', () => {
         for (const tier of ACTIVEPIECES_CHAT_TIERS) {
-            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ANTHROPIC], tier.id).toContain(tier.nativeModelId)
+            expect(aiProviderUtils.runnableChatModelIds({ provider: AIProviderName.ANTHROPIC }), tier.id).toContain(tier.nativeModelId)
         }
     })
 

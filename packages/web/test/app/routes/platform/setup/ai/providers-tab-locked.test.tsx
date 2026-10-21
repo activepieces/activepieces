@@ -19,6 +19,10 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 
+vi.mock('@/features/platform-admin/hooks/platform-model-tier-hooks', () => ({
+  platformModelTierQueries: { useAdminList: () => ({ data: [] }) },
+}));
+
 vi.mock('@/hooks/platform-hooks', () => ({
   platformHooks: {
     useCurrentPlatform: () => ({
@@ -62,7 +66,6 @@ vi.mock('@/features/platform-admin', () => {
       }),
     },
     aiProviderMutations: {
-      useToggleChatProvider: mutation,
       useDeleteAiProvider: mutation,
       useRecheckAiProvider: mutation,
       useUpdateAiProvider: mutation,
@@ -95,6 +98,10 @@ vi.mock(
   () => ({ ConnectProviderDialog: () => null }),
 );
 
+vi.mock(
+  '@/app/routes/platform/setup/ai/providers-tab/default-chat-model-card',
+  () => ({ DefaultChatModelCard: () => null }),
+);
 vi.mock('@/app/routes/platform/setup/ai/providers-tab/config-detail', () => ({
   ConfigDetail: () => <h1>Key detail</h1>,
 }));
@@ -140,9 +147,9 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
     expect(screen.queryAllByRole('combobox')).toEqual([]);
     expect(screen.getByRole('button', { name: 'Delete' })).toBeDefined();
     expect(screen.queryAllByRole('button', { name: /Add key/ })).toEqual([]);
-    expect(screen.queryAllByRole('button', { name: /Trial Anthropic/ })).toEqual(
-      [],
-    );
+    expect(
+      screen.queryAllByRole('button', { name: /Trial Anthropic/ }),
+    ).toEqual([]);
     expect(screen.queryAllByText('Also available')).toEqual([]);
   });
 
@@ -163,7 +170,9 @@ describe('providers tab on a plan without aiProvidersEnabled', () => {
       screen.getByRole('heading', { name: 'Unlock AI Center' }),
     ).toBeDefined();
     expect(
-      screen.queryAllByText('Your plan does not include Bring your own AI keys'),
+      screen.queryAllByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toEqual([]);
   });
 });
@@ -179,7 +188,9 @@ describe('providers tab on a plan with aiProvidersEnabled', () => {
       screen.getAllByRole('button', { name: /Add key/ }).length,
     ).toBeGreaterThan(0);
     expect(
-      screen.queryAllByText('Your plan does not include Bring your own AI keys'),
+      screen.queryAllByText(
+        'Your plan does not include Bring your own AI keys',
+      ),
     ).toEqual([]);
     expect(
       screen.queryAllByRole('heading', { name: 'Unlock AI Center' }),

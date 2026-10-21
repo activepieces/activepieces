@@ -16,6 +16,22 @@ export const stripeCreatePaymentLink = createAction({
       'Creates a reusable, Stripe-hosted payment link for the given line items (price IDs and quantities), with optional after-completion redirect, promotion codes, and billing-address collection. Use to generate a shareable checkout URL without building a custom flow. Not idempotent: each call creates a new payment link.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'items',
+      display: 'section',
+      label: 'Line Items',
+      icon: 'tag',
+      props: ['line_items'],
+    },
+    {
+      key: 'after_payment',
+      display: 'section',
+      label: 'After Payment',
+      icon: 'send',
+      props: ['after_completion_type', 'after_completion_redirect_url'],
+    },
+  ],
   props: {
     line_items: Property.Array({
       displayName: 'Line Items',
@@ -38,18 +54,15 @@ export const stripeCreatePaymentLink = createAction({
     after_completion_type: Property.StaticDropdown({
       displayName: 'After Payment',
       required: false,
-      display: 'cards',
       options: {
         options: [
           {
             label: 'Thank-You Page',
             value: 'hosted_confirmation',
-            icon: 'inbox',
           },
           {
             label: 'Redirect to URL',
             value: 'redirect',
-            icon: 'send',
           },
         ],
       },

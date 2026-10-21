@@ -2,30 +2,20 @@ import {
   createTrigger,
   TriggerStrategy,
   Property,
-  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
 import { snowflakeAuth } from '../auth';
 import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
   getTableColumnOptions,
   snowflakeCommonProps,
-  SnowflakeAuthValue,
+  toAuthValue,
 } from '../common';
-
-type NewRowProps = {
-  database: string;
-  schema: string;
-  table: string;
-  created_at_column: string;
-};
+import { rowTriggerOutputSchema } from '../common/output-schemas';
+import {
+  fetchBaseline,
+  fetchLatestRows,
+  fetchNewRows,
+  ROW_CURSOR_STORE_KEY,
+} from '../common/row-poll';
 
 const props = {
   database: snowflakeCommonProps.database,
@@ -35,8 +25,7 @@ const props = {
     auth: snowflakeAuth,
     displayName: 'Created At Column',
     description:
-      'Select the column that stores when each row was inserted (e.g. `CREATED_AT`, `INSERT_TIME`). ' +
-      'Only rows with a timestamp in this column newer than the last check will fire the trigger.',
+      'Select the column that stores when each row was inserted (e.g. `CREATED_AT`, `INSERT_TIME`). Only rows with a timestamp in this column newer than the last check will fire the trigger.',
     refreshers: ['table'],
     required: true,
     options: async ({ auth, table }) => {
@@ -54,60 +43,28 @@ const props = {
           placeholder: 'Please select a table first',
         };
       }
-      return getTableColumnOptions(auth as SnowflakeAuthValue, table as string);
+      return getTableColumnOptions({
+        auth: toAuthValue(auth),
+        table: String(table),
+      });
     },
   }),
-};
-
-function toEpochMs(value: unknown): number {
-  if (value instanceof Date) return value.getTime();
-  if (typeof value === 'string') return new Date(value).getTime();
-  return 0;
-}
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof snowflakeAuth>,
-  NewRowProps
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue }) => {
-    const { table, created_at_column } = propsValue;
-    if (!table || !created_at_column) return [];
-
-    const connection = configureConnection(auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      // Fetch the 100 most-recently inserted rows. pollingHelper keeps only
-      // rows whose timestamp exceeds the last stored watermark.
-      const result = await execute(
-        connection,
-        `SELECT * FROM ${table} ORDER BY ${created_at_column} DESC LIMIT 100`,
-        []
-      );
-
-      if (!result) return [];
-
-      return (result as Record<string, unknown>[]).map((row) => ({
-        epochMilliSeconds: toEpochMs(row[created_at_column]),
-        data: row,
-      }));
-    } finally {
-      await destroy(connection);
-    }
-  },
 };
 
 export const newRowTrigger = createTrigger({
   auth: snowflakeAuth,
   name: 'new_row',
+  classification: 'READ',
   displayName: 'New Row',
   description:
     'Triggers when a new row is inserted into the selected table. Uses a timestamp column you choose to detect rows added since the last check.',
   aiMetadata: {
     description:
-      'Fires for each newly inserted row in the selected Snowflake table, detected by polling and comparing a chosen "created at" timestamp column against the last-seen watermark. Each new row whose timestamp is later than the previous poll produces one event.',
+      'Fires once per row whose chosen "created at" timestamp is later than the newest one already seen, oldest first, up to 1000 rows per poll (all rows sharing one exact timestamp are sent together, up to 10,000) (the rest follow on the next poll). Rows with an empty timestamp, or inserted with a timestamp older than the last seen one, never fire.',
   },
+  outputSchema: rowTriggerOutputSchema,
   props,
+
   sampleData: {
     ID: 1001,
     NAME: 'Jane Doe',
@@ -116,15 +73,56 @@ export const newRowTrigger = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    const { table, created_at_column } = context.propsValue;
+    return fetchLatestRows({
+      auth: toAuthValue(context.auth),
+      table,
+      column: created_at_column,
+      limit: 5,
+    });
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    if (
+      context.isRepublish &&
+      (await context.store.get(ROW_CURSOR_STORE_KEY))
+    ) {
+      return;
+    }
+    const { table, created_at_column } = context.propsValue;
+    const cursor = await fetchBaseline({
+      auth: toAuthValue(context.auth),
+      table,
+      column: created_at_column,
+    });
+    await context.store.put(ROW_CURSOR_STORE_KEY, { cursor });
   },
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const { table, created_at_column } = context.propsValue;
+    const auth = toAuthValue(context.auth);
+    const stored = await context.store.get<{ cursor: string | null }>(
+      ROW_CURSOR_STORE_KEY
+    );
+    if (!stored) {
+      const cursor = await fetchBaseline({
+        auth,
+        table,
+        column: created_at_column,
+      });
+      await context.store.put(ROW_CURSOR_STORE_KEY, { cursor });
+      return [];
+    }
+    const page = await fetchNewRows({
+      auth,
+      table,
+      column: created_at_column,
+      after: stored.cursor,
+    });
+    if (page.rows.length > 0) {
+      await context.store.put(ROW_CURSOR_STORE_KEY, { cursor: page.cursor });
+    }
+    return page.rows;
   },
 });
