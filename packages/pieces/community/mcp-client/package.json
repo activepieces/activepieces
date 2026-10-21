@@ -9,7 +9,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
-    "@modelcontextprotocol/sdk": "1.26.0"
+    "@modelcontextprotocol/sdk": "1.32.0"
   },
   "devDependencies": {
     "tslib": "^2.3.0"
