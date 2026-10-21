@@ -180,9 +180,6 @@ export const autumnUtils = {
                 endedAt: trialDates.endsAt,
             }), log)
         }
-        if (!trialEnded && !isNil(previousPlan?.seatGraceEndsAt)) {
-            await trialSeatGrace(log).settle({ platformId, billingEnforced })
-        }
         await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
         await autumnUtils.invalidateBillingOverview(platformId)
         await autumnUtils.provisionLicenseKeyIfPaid(log, platformId, entitlements.planId)

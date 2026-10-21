@@ -23,10 +23,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 
 import { platformBillingApi } from '../api/billing-plans-api';
 import { billingUtils } from '../utils/billing-utils';
-import {
-  selfServeTrialTime,
-  TRIAL_DAYS,
-} from '../utils/self-serve-trial-time';
+import { selfServeTrialTime, TRIAL_DAYS } from '../utils/self-serve-trial-time';
 import { trialSeatEnforcement } from '../utils/trial-seat-enforcement';
 
 import { refreshBillingCaches } from './billing-hooks';
@@ -131,7 +128,8 @@ export const selfServeTrialHooks = {
       },
       enabled: trialSeatEnforcement.needsPlanRefresh({
         trialState: status?.state,
-        planTrialEndsAt: platform.selfServeTrial?.endsAt,
+        trialEndsAt: platform.selfServeTrial?.endsAt,
+        now: Date.now(),
       }),
       staleTime: Infinity,
       retry: false,
@@ -141,7 +139,7 @@ export const selfServeTrialHooks = {
     const { platform } = platformHooks.useCurrentPlatform();
     const { embedState } = useEmbedding();
     const isPlatformAdmin = useIsPlatformAdmin();
-    const endsAt = platform.plan.seatGraceEndsAt;
+    const endsAt = platform.selfServeTrial?.seatGraceEndsAt;
     const seats = platform.plan.usersLimit;
     useTrialClock(endsAt);
     if (embedState.isEmbedded || isNil(endsAt) || isNil(seats)) {
