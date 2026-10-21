@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 import { pastebinApi } from './common/api';
+
 import type { PastebinAuthValue } from './common/types';
 
 const markdownDescription = `
@@ -50,7 +51,10 @@ export const pastebinAuth = PieceAuth.CustomAuth({
         pastebinApi.getUserKey({ auth: connection })
       );
       return error
-        ? { valid: false, error: 'Invalid developer key, username or password.' }
+        ? {
+            valid: false,
+            error: 'Invalid developer key, username or password.',
+          }
         : { valid: true };
     }
     const { data } = await tryCatch(() =>

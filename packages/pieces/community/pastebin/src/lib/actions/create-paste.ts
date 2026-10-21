@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { pastebinAuth } from '../auth';
 import { pastebinApi } from '../common/api';
+import { createPasteOutputSchema } from '../output-schemas';
 
 const FORMAT_OPTIONS = [
       { label: '4CS4cs', value: '4cs' },
@@ -274,6 +275,7 @@ const FORMAT_OPTIONS = [
 export const createPasteAction = createAction({
   auth: pastebinAuth,
   name: 'create_paste',
+  outputSchema: createPasteOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Paste',
   description: 'Creates a new paste',

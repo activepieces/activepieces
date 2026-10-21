@@ -1,10 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { pastebinAuth } from '../auth';
 import { pastebinApi } from '../common/api';
+import { getPasteContentOutputSchema } from '../output-schemas';
 
 export const getPasteContentAction = createAction({
   auth: pastebinAuth,
   name: 'get_paste_content',
+  outputSchema: getPasteContentOutputSchema,
   classification: 'READ',
   displayName: 'Get Paste Content',
   description: 'Retrieves the content of a paste',

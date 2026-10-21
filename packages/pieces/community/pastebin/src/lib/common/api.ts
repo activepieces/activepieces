@@ -2,7 +2,12 @@ import { HttpError } from '@activepieces/pieces-common';
 
 import { pastebinClient } from './client';
 
-import type { PastebinAuthValue, PastebinCreatePasteRequest } from './types';
+import type {
+  PastebinAuthValue,
+  PastebinAccount,
+  PastebinCreatePasteRequest,
+  PastebinPaste,
+} from './types';
 
 async function login({
   auth,
@@ -93,9 +98,95 @@ async function isDevKeyValid({
   }
 }
 
+async function listPastes({
+  auth,
+  limit,
+}: {
+  auth: PastebinAuthValue;
+  limit?: number;
+}): Promise<PastebinPaste[]> {
+  const userKey = await getUserKey({ auth });
+  const xml = await pastebinClient.request({
+    auth,
+    userKey,
+    script: 'api_post.php',
+    option: 'list',
+    fields: {
+      results_limit: limit === undefined ? undefined : String(limit),
+    },
+  });
+  return parseElements({ xml, tag: 'paste' });
+}
+
+async function deletePaste({
+  auth,
+  pasteKey,
+}: {
+  auth: PastebinAuthValue;
+  pasteKey: string;
+}): Promise<string> {
+  const userKey = await getUserKey({ auth });
+  return await pastebinClient.request({
+    auth,
+    userKey,
+    script: 'api_post.php',
+    option: 'delete',
+    fields: { paste_key: pasteKey },
+  });
+}
+
+async function getAccountDetails({
+  auth,
+}: {
+  auth: PastebinAuthValue;
+}): Promise<PastebinAccount> {
+  const userKey = await getUserKey({ auth });
+  const xml = await pastebinClient.request({
+    auth,
+    userKey,
+    script: 'api_post.php',
+    option: 'userdetails',
+    fields: {},
+  });
+  const [account] = parseElements({ xml, tag: 'user' });
+  if (!account) {
+    throw new Error(`Unexpected response from Pastebin: ${xml}`);
+  }
+  return account;
+}
+
+function parseElements({
+  xml,
+  tag,
+}: {
+  xml: string;
+  tag: string;
+}): Record<string, string>[] {
+  const pattern = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'g');
+  return [...xml.matchAll(pattern)].map((match) =>
+    Object.fromEntries(
+      [...match[1].matchAll(/<(\w+)>([\s\S]*?)<\/\1>/g)].map(
+        ([, key, value]) => [key, decodeEntities({ text: value })]
+      )
+    )
+  );
+}
+
+function decodeEntities({ text }: { text: string }): string {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
 export const pastebinApi = {
   getUserKey,
   createPaste,
   getPasteContent,
   isDevKeyValid,
+  listPastes,
+  deletePaste,
+  getAccountDetails,
 };

@@ -13,3 +13,7 @@ export type PastebinCreatePasteRequest = {
   paste_format?: string;
   folder_key?: string;
 };
+
+export type PastebinPaste = Record<string, string>;
+
+export type PastebinAccount = Record<string, string>;
