@@ -38,6 +38,7 @@ export const newMessage = createTrigger({
     }),
   },
   type: TriggerStrategy.WEBHOOK,
+  requireAuth: false,
   sampleData: {},
   async onEnable(context) {
     // Empty
