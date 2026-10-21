@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoft365PlannerAuth } from '../auth';
 import { microsoft365PlannerApi } from '../common/api';
 import { microsoft365PlannerProps } from '../common/props';
+import { microsoft365PlannerUtils } from '../common/utils';
 
 export const createTaskAction = createAction({
   auth: microsoft365PlannerAuth,
@@ -50,12 +51,9 @@ export const createTaskAction = createAction({
     const taskParams = {
       ...propsValue,
       assignments: propsValue.assignments
-        ? Object.fromEntries(
-            propsValue.assignments.map((userId) => [
-              userId,
-              { '@odata.type': 'microsoft.graph.plannerAssignment' },
-            ])
-          )
+        ? microsoft365PlannerUtils.assignmentsFor({
+            userIds: propsValue.assignments,
+          })
         : undefined,
       dueDateTime: propsValue.dueDateTime
         ? new Date(propsValue.dueDateTime).toISOString()
