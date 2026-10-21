@@ -6,7 +6,15 @@ import {
   AiToolConfigWithoutSensitiveData,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Globe, Image, LucideIcon, Search, Trash2 } from 'lucide-react';
+import {
+  Database,
+  Globe,
+  Image,
+  LucideIcon,
+  Search,
+  Trash2,
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import {
   AdminPageHeader,
@@ -46,11 +54,11 @@ export function CapabilitiesTab() {
   } = aiProviderQueries.useAiProviderConfigs();
   const isError = configsFailed || providersFailed;
   const refetch = () => Promise.all([refetchConfigs(), refetchProviders()]);
+  const creditsProvider = providers?.find(
+    (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
+  );
   const chatProvider =
-    providers?.find((provider) => provider.enabledForChat) ??
-    providers?.find(
-      (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
-    );
+    providers?.find((provider) => provider.enabledForChat) ?? creditsProvider;
 
   const { mutate: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
     onSuccess: () => refetchConfigs(),
@@ -84,15 +92,13 @@ export function CapabilitiesTab() {
                 capabilityInfo={capabilityInfo}
                 config={config}
                 providers={providers ?? []}
-                chatProviderFallback={
-                  chatProvider &&
-                  aiCapabilitySources.servesByDefault({
-                    capability: capabilityInfo.capability,
-                    provider: chatProvider,
-                  })
-                    ? chatProvider
-                    : undefined
-                }
+                chatProviderFallback={fallbackFor({
+                  capability: capabilityInfo.capability,
+                  candidates:
+                    capabilityInfo.capability === AiToolCapability.EMBEDDINGS
+                      ? [chatProvider, creditsProvider]
+                      : [chatProvider],
+                })}
                 onDelete={() => config && remove(config.id)}
                 onSaved={() => refetchConfigs()}
               />
@@ -101,6 +107,20 @@ export function CapabilitiesTab() {
         </div>
       )}
     </>
+  );
+}
+
+function fallbackFor({
+  capability,
+  candidates,
+}: {
+  capability: AiToolCapability;
+  candidates: (AIProviderWithoutSensitiveData | undefined)[];
+}): AIProviderWithoutSensitiveData | undefined {
+  return candidates.find(
+    (candidate): candidate is AIProviderWithoutSensitiveData =>
+      candidate !== undefined &&
+      aiCapabilitySources.servesByDefault({ capability, provider: candidate }),
   );
 }
 
@@ -120,6 +140,14 @@ function CapabilityCard({
   onSaved: () => void;
 }) {
   const Icon = CAPABILITY_ICON[capabilityInfo.capability];
+  const isEmbeddings =
+    capabilityInfo.capability === AiToolCapability.EMBEDDINGS;
+  const needsProviderKey =
+    isEmbeddings &&
+    aiCapabilitySources.eligibleProviders({
+      capability: capabilityInfo.capability,
+      providers,
+    }).length === 0;
   const connectedProvider = capabilityInfo.providers.find(
     (provider) => provider.id === config?.provider,
   );
@@ -166,9 +194,13 @@ function CapabilityCard({
             title={t('Reset {name}', { name: capabilityInfo.name })}
             message={
               chatProviderFallback
-                ? t('Chat goes back to using {provider}.', {
-                    provider: chatProviderFallback.name,
-                  })
+                ? isEmbeddings
+                  ? t('Knowledge bases go back to using {provider}.', {
+                      provider: chatProviderFallback.name,
+                    })
+                  : t('Chat goes back to using {provider}.', {
+                      provider: chatProviderFallback.name,
+                    })
                 : t(
                     'This removes the saved API key and disables this capability.',
                   )
@@ -193,24 +225,34 @@ function CapabilityCard({
       </p>
       <div className="mt-auto flex items-center justify-between gap-4 border-t px-5 py-3">
         <span className="text-xs text-gray-11">
-          {inUse
+          {isEmbeddings
+            ? inUse
+              ? t('Knowledge bases can index files')
+              : t("Knowledge bases can't index files yet")
+            : inUse
             ? t('Available to the assistant')
             : t("The assistant can't do this yet")}
         </span>
-        <AiCapabilityDialog
-          capabilityInfo={capabilityInfo}
-          existingConfig={config}
-          defaultProviderId={chatProviderFallback?.id}
-          onSaved={onSaved}
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
-          >
-            {inUse ? t('Change') : t('Connect')}
+        {needsProviderKey ? (
+          <Button asChild variant="outline" size="sm">
+            <Link to="/platform/ai">{t('Add a provider key')}</Link>
           </Button>
-        </AiCapabilityDialog>
+        ) : (
+          <AiCapabilityDialog
+            capabilityInfo={capabilityInfo}
+            existingConfig={config}
+            defaultProviderId={chatProviderFallback?.id}
+            onSaved={onSaved}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
+            >
+              {inUse ? t('Change') : t('Connect')}
+            </Button>
+          </AiCapabilityDialog>
+        )}
       </div>
     </div>
   );
@@ -220,4 +262,5 @@ const CAPABILITY_ICON: Record<AiToolCapability, LucideIcon> = {
   [AiToolCapability.WEB_SEARCH]: Search,
   [AiToolCapability.WEB_SCRAPING]: Globe,
   [AiToolCapability.IMAGE_GENERATION]: Image,
+  [AiToolCapability.EMBEDDINGS]: Database,
 };

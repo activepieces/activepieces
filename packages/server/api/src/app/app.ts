@@ -59,6 +59,7 @@ import { pieceSetRequiredActions } from './ee/pieces/piece-set/piece-set-require
 import { pieceSetModule } from './ee/pieces/piece-set/piece-set.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
+import { denoMigrationModule } from './ee/platform/admin/deno-migration.module'
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
 import { autumnBillingProvider } from './ee/platform/platform-plan/billing-providers/autumn-billing'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
@@ -350,6 +351,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(adminPlatformModule)
+            await app.register(denoMigrationModule)
             await app.register(pieceUpgradeModule)
             await app.register(adminPlatformTemplatesCloudModule)
             await app.register(platformProjectModule)
@@ -394,6 +396,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
         case ApEdition.ENTERPRISE:
+            await app.register(denoMigrationModule)
             await app.register(pieceUpgradeModule)
             await app.register(platformPlanModule)
             await app.register(platformProjectModule)
@@ -433,6 +436,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
             break
         case ApEdition.COMMUNITY:
+            await app.register(denoMigrationModule)
             await app.register(platformProjectModule)
             await app.register(communityPiecesModule)
             await app.register(otpModule)

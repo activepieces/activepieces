@@ -910,6 +910,20 @@
     cursor: default !important;
   }
 
+  /* React Flow sets position: absolute on every svg in the edges layer, including
+     icons inside edge labels (foreignObject). Safari then draws those icons outside
+     their box, e.g. the menu dots on router branch labels disappear. */
+  .react-flow__edges foreignObject svg {
+    position: static !important;
+  }
+
+  /* Safari starts a native text selection while drag-selecting on the canvas and
+     paints large blue boxes over steps and edges. Chrome does not. */
+  .react-flow__pane {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
   .react-flow__edge.selectable > path {
     /* If necessary, add !important to the rule */
     pointer-events: none !important;

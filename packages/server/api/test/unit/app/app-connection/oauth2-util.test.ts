@@ -1,6 +1,18 @@
+import { PropertyType } from '@activepieces/pieces-framework'
 import { OAuth2GrantType } from '@activepieces/shared'
 import { AxiosError, AxiosHeaders } from 'axios'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+
+const mockGetOrThrow = vi.fn()
+vi.mock('../../../../src/app/pieces/metadata/piece-metadata-service', () => ({
+    pieceMetadataService: () => ({ getOrThrow: mockGetOrThrow }),
+}))
+
+const mockResolveString = vi.fn()
+vi.mock('../../../../src/app/ee/secret-managers/secret-managers.service', () => ({
+    secretManagersService: () => ({ resolveString: mockResolveString }),
+}))
+
 import { oauth2Util } from '../../../../src/app/app-connection/app-connection-service/oauth2/oauth2-util'
 
 const util = oauth2Util({} as never)
@@ -121,5 +133,33 @@ describe('oauth2Util.isUserError', () => {
 
     it('treats an axios error with no response as a non-user error', () => {
         expect(util.isUserError(new AxiosError('socket hang up', AxiosError.ECONNABORTED))).toBe(false)
+    })
+})
+
+describe('oauth2Util.buildAuthorizationUrl', () => {
+    it('omits scope from the authorize url rather than sending the literal placeholder when an optional scope prop is not provided', async () => {
+        mockGetOrThrow.mockResolvedValue({
+            auth: {
+                type: PropertyType.OAUTH2,
+                authUrl: 'https://as.example.com/authorize',
+                tokenUrl: 'https://as.example.com/token',
+                scope: ['{scopes}'],
+                props: {
+                    scopes: { required: false, displayName: 'Scopes' },
+                },
+            },
+        })
+        mockResolveString.mockResolvedValue('client-id')
+
+        const result = await util.buildAuthorizationUrl({
+            platformId: 'platform',
+            pieceName: 'piece',
+            clientId: 'client-id',
+            redirectUrl: 'https://redirect',
+            props: {},
+        } as never)
+
+        const url = new URL(result.authorizationUrl)
+        expect(url.searchParams.has('scope')).toBe(false)
     })
 })

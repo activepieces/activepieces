@@ -121,6 +121,7 @@
   "Pick a database, then fill one or more of its fields. Items must match every value exactly.": "Pick a database, then fill one or more of its fields. Items must match every value exactly.",
   "How many pages to return, up to 100.": "How many pages to return, up to 100.",
   "Pick a database, then fill any of its fields below to filter. Empty fields are ignored.": "Pick a database, then fill any of its fields below to filter. Empty fields are ignored.",
+  "Empty fields keep their current value. Checkboxes are always saved as shown.": "Empty fields keep their current value. Checkboxes are always saved as shown.",
   "The new page is created inside this page.": "The new page is created inside this page.",
   "Plain text body. Markdown is not rendered.": "Plain text body. Markdown is not rendered.",
   "Your 100 most recently edited pages shared with the integration.": "Your 100 most recently edited pages shared with the integration.",
@@ -207,10 +208,6 @@
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
   "HEAD": "TÊTE",
-  "None": "Aucun",
-  "JSON": "JSON",
-  "Form Data": "Données du formulaire",
-  "Raw": "Brut",
   "New Database Item": "Nouvel élément de la base de données",
   "Updated Database Item": "Élément de la base de données mis à jour",
   "New Comment": "Nouveau commentaire",
@@ -218,5 +215,6 @@
   "Triggers when an item is added to a database.": "Déclenche lorsqu'un élément est ajouté à une base de données.",
   "Triggers when an item is updated in a database.": "Déclenche lorsqu'un élément est mis à jour dans une base de données.",
   "Triggers when a comment is added to a page.": "Triggers when a comment is added to a page.",
-  "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited."
+  "Triggers when any page shared with the integration is edited.": "Triggers when any page shared with the integration is edited.",
+  "Add Notion-Version, e.g. 2022-02-22. Authorization is added for you.": "Add Notion-Version, e.g. 2022-02-22. Authorization is added for you."
 }

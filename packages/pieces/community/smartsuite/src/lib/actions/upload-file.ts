@@ -1,23 +1,18 @@
-import {
-	DropdownOption,
-	PiecePropValueSchema,
-	Property,
-	createAction,
-} from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { Property, createAction } from '@activepieces/pieces-framework';
 import { smartsuiteAuth } from '../auth';
-import { smartsuiteCommon, transformRecordFields } from '../common/props';
-import { smartSuiteApiCall, TableStucture } from '../common';
-import FormData from 'form-data';
+import { smartsuiteCommon } from '../common/props';
+import { smartSuiteClient } from '../common/client';
+import { recordFiles } from '../common/record-files';
+import { outputSchemas } from '../output-schemas';
 
 export const uploadFile = createAction({
 	name: 'upload_file',
 	classification: 'WRITE',
 	displayName: 'Upload File',
 	description: 'Uploads a file and attaches it to a record.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
-		description: 'Uploads a file and attaches it to a file-type field on an existing SmartSuite record. Use when an agent needs to add an attachment or image to a known record; requires the solution, table, record ID, a target field that is a file field, and the file contents. Not idempotent — each call appends another attachment to the field.',
+		description: 'Uploads a file to a Files & Images field picked from the table schema, then returns the files now in that field. Agents should use Attach File to Record (by ID). Not idempotent: each call adds another attachment.',
 		idempotent: false,
 	},
 	auth: smartsuiteAuth,
@@ -25,105 +20,21 @@ export const uploadFile = createAction({
 		solutionId: smartsuiteCommon.solutionId,
 		tableId: smartsuiteCommon.tableId,
 		recordId: smartsuiteCommon.recordId,
-		field: Property.Dropdown({
-			auth: smartsuiteAuth,
-			displayName: 'Search Field',
+		field: smartsuiteCommon.tableFieldDropdown({
+			displayName: 'File Field',
+			description: 'The Files & Images field to attach the file to.',
 			required: true,
-			refreshers: ['tableId'],
-			options: async ({ auth, tableId }) => {
-				if (!auth || !tableId) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account first.',
-					};
-				}
-
-				const { apiKey, accountId } = auth.props;
-
-				const response = await smartSuiteApiCall<{
-					structure: TableStucture[];
-				}>({
-					apiKey,
-					accountId,
-					method: HttpMethod.GET,
-					resourceUri: `/applications/${tableId}`,
-				});
-
-				const options: DropdownOption<string>[] = [];
-
-				for (const field of response.structure) {
-					if (field.field_type === 'filefield') {
-						options.push({ label: field.label, value: field.slug });
-					}
-				}
-				return {
-					disabled: false,
-					options,
-				};
-			},
+			onlyTypes: ['filefield'],
 		}),
 		file: Property.File({
 			displayName: 'File',
-			description: 'The file to upload',
+			description: 'The file to upload (up to 100 MB).',
 			required: true,
 		}),
 	},
+	outputSchema: outputSchemas['uploadFile'],
 	async run({ auth, propsValue }) {
 		const { recordId, field, tableId, file } = propsValue;
-		try {
-			const formData = new FormData();
-
-			formData.append('files', Buffer.from(file.base64, 'base64'), file.filename);
-
-			const response = await httpClient.sendRequest({
-				method: HttpMethod.POST,
-				url: `https://app.smartsuite.com/api/v1/recordfiles/${tableId}/${recordId}/${field}/`,
-				body: formData,
-				headers: {
-					...formData.getHeaders(),
-					Authorization: `Token ${auth.props.apiKey}`,
-					'ACCOUNT-ID': auth.props.accountId,
-				},
-			});
-
-			const tableResponse = await smartSuiteApiCall<{
-				structure: TableStucture[];
-			}>({
-				apiKey: auth.props.apiKey,
-				accountId: auth.props.accountId,
-				method: HttpMethod.GET,
-				resourceUri: `/applications/${tableId}`,
-			});
-			const tableSchema = tableResponse.structure;
-
-			const formattedFields = transformRecordFields(tableSchema, response.body);
-
-			return formattedFields;
-		} catch (error: any) {
-			if (error.response?.status === 400) {
-				throw new Error(
-					`Invalid file format or size: ${
-						error.response?.body?.message || 'File may be too large or in an unsupported format'
-					}`,
-				);
-			}
-
-			if (error.response?.status === 403) {
-				throw new Error('You do not have permission to upload files to this record');
-			}
-
-			if (error.response?.status === 404) {
-				throw new Error(
-					`Record with ID ${recordId} not found or field ${field} is not a file field`,
-				);
-			}
-
-			if (error.response?.status === 413) {
-				throw new Error('File is too large. SmartSuite has file size limits');
-			}
-
-			throw new Error(`Failed to upload file: ${error.message || 'Unknown error'}`);
-		}
+		return recordFiles.attach({ credentials: smartSuiteClient.credentialsOf(auth), tableId, recordId, field, file });
 	},
 });

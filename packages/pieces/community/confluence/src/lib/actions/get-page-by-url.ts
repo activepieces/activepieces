@@ -1,11 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { confluenceAuth } from '../auth';
-import { confluenceApiCall, parsePageIdFromUrl } from '../common';
+import { confluenceApi } from '../common/api';
+import { getPageByUrlOutputSchema } from '../output-schemas';
 
 export const getPageByUrlAction = createAction({
 	auth: confluenceAuth,
 	name: 'get-page-by-url',
+	outputSchema: getPageByUrlOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Page by URL',
 	description:
@@ -42,14 +43,14 @@ export const getPageByUrlAction = createAction({
 			throw new Error(`Could not extract a page ID from the URL: ${url}`);
 		}
 
-		return await confluenceApiCall({
-			domain: context.auth.props.confluenceDomain,
-			username: context.auth.props.username,
-			password: context.auth.props.password,
-			method: HttpMethod.GET,
-			version: 'v2',
-			resourceUri: `/pages/${pageId}`,
-			query: bodyFormat ? { 'body-format': bodyFormat } : undefined,
-		});
+		return await confluenceApi.getPage({ auth: context.auth, pageId, bodyFormat });
 	},
 });
+
+function parsePageIdFromUrl(url: string): string | null {
+	const pageIdFromPath = url.match(/\/pages\/(\d+)/);
+	if (pageIdFromPath) return pageIdFromPath[1];
+	const pageIdFromQuery = url.match(/[?&]pageId=(\d+)/);
+	if (pageIdFromQuery) return pageIdFromQuery[1];
+	return null;
+}

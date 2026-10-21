@@ -2,18 +2,12 @@ import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import {
   AIProviderWithoutSensitiveData,
   PlatformAdminSurface,
+  PlatformModelTier,
   Project,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Bot,
-  ChevronRight,
-  Lock,
-  MessageSquare,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { Bot, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -23,7 +17,6 @@ import {
   AdminPageHeader,
   AdminSection,
   SettingsPanel,
-  SettingsRow,
   adminPageResources,
   adminSurface,
 } from '@/app/components/admin';
@@ -32,13 +25,6 @@ import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state'
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -56,6 +42,7 @@ import {
   aiProviderMutations,
   aiProviderQueries,
 } from '@/features/platform-admin';
+import { platformModelTierQueries } from '@/features/platform-admin/hooks/platform-model-tier-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
@@ -63,6 +50,7 @@ import { cn } from '@/lib/utils';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
+import { DefaultChatModelCard } from './default-chat-model-card';
 import { KeyStatusBadge, keyStatusText } from './key-status';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
@@ -88,20 +76,14 @@ export function ProvidersTab() {
     refetch,
   } = aiProviderQueries.useAiProviderConfigs();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
+  const { data: tiers } = platformModelTierQueries.useAdminList();
   const configs = (providers ?? []).filter(
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
   );
-  const chatProviderRow = (providers ?? []).find(
-    (provider) => provider.enabledForChat,
+  const hasCredits = (providers ?? []).some(
+    (provider) => provider.provider === AIProviderName.ACTIVEPIECES,
   );
 
-  const { mutate: toggleChatProvider, isPending: isSwitchingChatProvider } =
-    aiProviderMutations.useToggleChatProvider({
-      onSuccess: () => {
-        refetch();
-        toast.success(t('Chat provider updated'));
-      },
-    });
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
       onSuccess: () => refetch(),
@@ -177,12 +159,6 @@ export function ProvidersTab() {
       return;
     }
     setCredentialsVersion((version) => version + 1);
-  };
-  const selectChatConfig = (configId: string) => {
-    const row = (providers ?? []).find((config) => config.id === configId);
-    if (row) {
-      toggleChatProvider({ providerId: row.id, displayName: row.name });
-    }
   };
 
   const connectedProviders = [...new Set(configs.map((c) => c.provider))];
@@ -260,6 +236,13 @@ export function ProvidersTab() {
         )}
       </AdminPageHeader>
 
+      {!locked && !isProvidersError && (configs.length > 0 || hasCredits) && (
+        <DefaultChatModelCard
+          configs={configs}
+          tiers={tiers ?? []}
+          projectIds={(projects ?? []).map((project) => project.id)}
+        />
+      )}
       {isProvidersError ? (
         <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
       ) : configs.length === 0 ? (
@@ -267,20 +250,13 @@ export function ProvidersTab() {
       ) : (
         <>
           {locked && <LockedProvidersAlert />}
-          {!locked && (
-            <ChatProviderRow
-              configs={providers ?? []}
-              value={chatProviderRow?.id ?? null}
-              isSwitching={isSwitchingChatProvider}
-              onChange={selectChatConfig}
-            />
-          )}
           {connectedProviders.map((provider) => (
             <ProviderGroup
               key={provider}
               provider={provider}
               configs={configs.filter((config) => config.provider === provider)}
               projects={projects}
+              tiers={tiers ?? []}
               locked={locked}
               onAdd={() => openConnect(provider)}
               onOpen={openConfig}
@@ -370,6 +346,7 @@ function ProviderGroup({
   provider,
   configs,
   projects,
+  tiers,
   locked,
   onAdd,
   onOpen,
@@ -378,6 +355,7 @@ function ProviderGroup({
   provider: AIProviderName;
   configs: AIProviderWithoutSensitiveData[];
   projects: Project[];
+  tiers: PlatformModelTier[];
   locked: boolean;
   onAdd: () => void;
   onOpen: (id: string) => void;
@@ -418,6 +396,11 @@ function ProviderGroup({
           key={config.id}
           config={config}
           projects={projects}
+          tierCount={
+            tiers.filter((tier) =>
+              tier.entries.some((entry) => entry.configId === config.id),
+            ).length
+          }
           locked={locked}
           onOpen={() => onOpen(config.id)}
           onDelete={() => onDelete(config.id)}
@@ -430,12 +413,14 @@ function ProviderGroup({
 function ConfigRow({
   config,
   projects,
+  tierCount,
   locked,
   onOpen,
   onDelete,
 }: {
   config: AIProviderWithoutSensitiveData;
   projects: Project[];
+  tierCount: number;
   locked: boolean;
   onOpen: () => void;
   onDelete: () => Promise<unknown>;
@@ -481,11 +466,6 @@ function ConfigRow({
           <p className="truncate text-sm font-medium text-gray-12">
             {config.name}
           </p>
-          {config.enabledForChat && (
-            <span className="shrink-0 rounded-md bg-accent-3 px-2 py-px text-xs font-medium text-accent-11">
-              {t('Chat')}
-            </span>
-          )}
           <KeyStatusBadge status={config.status} />
         </div>
         <Tooltip>
@@ -494,6 +474,12 @@ function ConfigRow({
               {modelsLabel}
               <span aria-hidden> · </span>
               {projectsLabel}
+              {tierCount > 0 && (
+                <>
+                  <span aria-hidden> · </span>
+                  {t('usedByTiersCount', { count: tierCount })}
+                </>
+              )}
             </p>
           </TooltipTrigger>
           {config.modelIds.length > 0 && (
@@ -596,53 +582,6 @@ function ProjectChips({
           : projects.map((project) => project.displayName).join(', ')}
       </TooltipContent>
     </Tooltip>
-  );
-}
-
-function ChatProviderRow({
-  configs,
-  value,
-  isSwitching,
-  onChange,
-}: {
-  configs: AIProviderWithoutSensitiveData[];
-  value: string | null;
-  isSwitching: boolean;
-  onChange: (configId: string) => void;
-}) {
-  return (
-    <SettingsPanel flush>
-      <SettingsRow
-        icon={<MessageSquare />}
-        title={t('Chat provider')}
-        description={t(
-          'Powers the built-in chat for everyone on this platform',
-        )}
-      >
-        <Select
-          value={value ?? undefined}
-          onValueChange={onChange}
-          disabled={isSwitching}
-        >
-          <SelectTrigger className="w-52">
-            <SelectValue placeholder={t('Select provider')} />
-          </SelectTrigger>
-          <SelectContent>
-            {configs.map((config) => {
-              const info = providerInfoOf({ provider: config.provider });
-              return (
-                <SelectItem key={config.id} value={config.id}>
-                  <div className="flex items-center gap-2">
-                    {info && <ProviderLogo info={info} size="sm" />}
-                    <span className="truncate">{config.name}</span>
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </SettingsRow>
-    </SettingsPanel>
   );
 }
 
