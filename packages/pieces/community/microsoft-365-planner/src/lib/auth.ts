@@ -36,6 +36,7 @@ export const microsoft365PlannerAuth = PieceAuth.OAuth2({
     'openid',
     'email',
     'profile',
+    'offline_access',
   ],
   prompt: 'omit',
 });
