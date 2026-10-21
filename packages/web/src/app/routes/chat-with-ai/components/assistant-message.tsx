@@ -37,7 +37,7 @@ import {
 } from '../lib/message-parsers';
 
 import { ActionReceiptCard } from './action-receipt-card';
-import { ThinkingBlock } from './activity-accordion';
+import { LiveReasoning, ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ConnectionPickerCard } from './connection-picker-card';
@@ -280,9 +280,7 @@ function MessageBlocks({
               !hasSkeletonAfter &&
               !hasBuildAfter;
             const lastStep =
-              block.steps.length > 0
-                ? block.steps[block.steps.length - 1]
-                : null;
+              block.steps.findLast((step) => step.kind !== 'reasoning') ?? null;
             // Collapsed view = ONLY the last segment: the last thought and the
             // tools after it. Earlier segments live in the expanded accordion.
             // The thought lives in the first tool's `description`, so derive the
@@ -302,7 +300,10 @@ function MessageBlocks({
               lastSegmentToolSteps[0]?.part.toolCallId ??
               'segment';
             const showLiveGroup =
-              isMessageStreaming && !isAccordionOpen && Boolean(lastStep);
+              isMessageStreaming &&
+              !isAccordionOpen &&
+              Boolean(lastStep) &&
+              block.trailingReasoningText.length === 0;
             return (
               <div
                 key={`thinking-${i}`}
@@ -310,7 +311,6 @@ function MessageBlocks({
               >
                 <ThinkingBlock
                   thinkingSteps={block.steps}
-                  reasoningText={block.reasoningText}
                   isStreaming={isMessageStreaming}
                   thinkingDurationMs={
                     i === lastThinkingIdx
@@ -349,6 +349,16 @@ function MessageBlocks({
                       />
                     </motion.div>
                   )}
+                </AnimatePresence>
+                <AnimatePresence initial={false}>
+                  {isMessageStreaming &&
+                    !isAccordionOpen &&
+                    block.trailingReasoningText.length > 0 && (
+                      <LiveReasoning
+                        key="live-reasoning"
+                        text={block.trailingReasoningText}
+                      />
+                    )}
                 </AnimatePresence>
               </div>
             );
