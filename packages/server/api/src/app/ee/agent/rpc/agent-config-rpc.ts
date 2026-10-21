@@ -40,7 +40,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT && !isBuilder
 
         const [conversation, userProjects, enabledAiTools, providerChoices] = await Promise.all([
-            loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName, agentId: linkedAgentId, flowRunId }),
+            loadOrStartConversation({ conversationId, runId: input.runId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName, agentId: linkedAgentId, flowRunId }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
             aiToolConfigService(log).getProviderChoices({ platformId }),
