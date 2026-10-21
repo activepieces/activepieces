@@ -89,12 +89,17 @@ async function getPasteContent({
   return await pastebinClient.getText({ path: `/raw/${pasteKey}` });
 }
 
-async function isDevKeyValid({
+async function verifyCredentials({
   auth,
 }: {
   auth: PastebinAuthValue;
 }): Promise<boolean> {
+  const { username, password } = auth.props;
   try {
+    if (username && password) {
+      await login({ auth, username, password });
+      return true;
+    }
     await pastebinClient.request({
       auth,
       script: 'api_post.php',
@@ -103,7 +108,13 @@ async function isDevKeyValid({
     });
     return true;
   } catch (error) {
-    if (error instanceof HttpError && error.response.status === 422) {
+    if (
+      error instanceof HttpError &&
+      REJECTED_STATUSES.includes(error.response.status)
+    ) {
+      if (username && password) {
+        return false;
+      }
       return !JSON.stringify(error.response.body).includes(
         'invalid api_dev_key'
       );
@@ -199,8 +210,10 @@ export const pastebinApi = {
   getUserKey,
   createPaste,
   getPasteContent,
-  isDevKeyValid,
+  verifyCredentials,
   listPastes,
   deletePaste,
   getAccountDetails,
 };
+
+const REJECTED_STATUSES = [401, 422];

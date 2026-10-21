@@ -46,22 +46,24 @@ export const pastebinAuth = PieceAuth.CustomAuth({
         error: 'Enter both username and password, or leave both empty.',
       };
     }
-    if (auth.username && auth.password) {
-      const { error } = await tryCatch(() =>
-        pastebinApi.getUserKey({ auth: connection })
-      );
-      return error
-        ? {
-            valid: false,
-            error: 'Invalid developer key, username or password.',
-          }
-        : { valid: true };
-    }
-    const { data } = await tryCatch(() =>
-      pastebinApi.isDevKeyValid({ auth: connection })
+    const { data: isValid, error } = await tryCatch(() =>
+      pastebinApi.verifyCredentials({ auth: connection })
     );
-    return data
-      ? { valid: true }
-      : { valid: false, error: 'Invalid developer key.' };
+    if (error) {
+      return {
+        valid: false,
+        error:
+          'Could not reach Pastebin to check the connection. Please try again.',
+      };
+    }
+    if (isValid) {
+      return { valid: true };
+    }
+    return {
+      valid: false,
+      error: auth.username
+        ? 'Invalid developer key, username or password.'
+        : 'Invalid developer key.',
+    };
   },
 });
