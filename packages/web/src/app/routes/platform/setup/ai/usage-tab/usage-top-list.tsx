@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-import { dimensionIcon, ItemIcon } from './usage-bits';
+import { dimensionIcon, ItemIcon, UsageEmptyState } from './usage-bits';
 import { UsageDimension, UsageItem } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 
@@ -52,21 +52,10 @@ export function UsageTopList({
         </div>
       )}
       {items.length === 0 ? (
-        <div className="flex min-h-36 flex-1 flex-col items-center justify-center gap-2 text-center">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-gray-3 text-gray-11">
-            <TitleIcon className="size-4" />
-          </span>
-          <p className="text-sm font-medium text-gray-12">
-            {t('No usage from {items}', {
-              items: (
-                title ?? usageFormat.dimensionLabel({ dimension })
-              ).toLowerCase(),
-            })}
-          </p>
-          <p className="max-w-56 text-xs text-gray-11">
-            {t('Nothing ran in this period. Try a longer period or All.')}
-          </p>
-        </div>
+        <UsageEmptyState
+          dimension={dimension}
+          label={title ?? usageFormat.dimensionLabel({ dimension })}
+        />
       ) : (
         <ul className="flex flex-col gap-1">
           {items.map((item) => (
@@ -170,7 +159,7 @@ export function UsageTopRow({
   );
 }
 
-function SharedBadge({ item }: { item: UsageItem }) {
+export function SharedBadge({ item }: { item: UsageItem }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>

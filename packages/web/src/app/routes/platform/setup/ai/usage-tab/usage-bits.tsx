@@ -1,4 +1,5 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
+import { t } from 'i18next';
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -67,6 +68,33 @@ export function ItemIcon({ item }: { item: UsageItem }) {
     <span className="flex size-4 shrink-0 items-center justify-center text-gray-11">
       <Icon className="size-4" />
     </span>
+  );
+}
+
+export function UsageEmptyState({
+  dimension,
+  label,
+}: {
+  dimension: UsageDimension;
+  label?: string;
+}) {
+  const Icon = DIMENSION_ICONS[dimension];
+  return (
+    <div className="flex min-h-36 flex-1 flex-col items-center justify-center gap-2 text-center">
+      <span className="flex size-9 items-center justify-center rounded-lg bg-gray-3 text-gray-11">
+        <Icon className="size-4" />
+      </span>
+      <p className="text-sm font-medium text-gray-12">
+        {t('No usage from {items}', {
+          items: (
+            label ?? usageFormat.dimensionLabel({ dimension })
+          ).toLowerCase(),
+        })}
+      </p>
+      <p className="max-w-56 text-xs text-gray-11">
+        {t('Nothing ran in this period. Try a longer period or All.')}
+      </p>
+    </div>
   );
 }
 
