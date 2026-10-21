@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { mailflossAuth } from '../auth';
-import { mailflossApi } from '../common/client';
+import { mailflossWebhook } from '../common/webhook';
 
 const WEBHOOK_ID_KEY = 'mailfloss_job_finished_webhook_id';
 
@@ -47,20 +47,21 @@ export const verificationJobFinishedTrigger = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const id = await mailflossApi.createWebhook({
+    await mailflossWebhook.enable({
+      store: context.store,
+      storeKey: WEBHOOK_ID_KEY,
       apiKey: context.auth.secret_text,
       url: context.webhookUrl,
       name: 'Activepieces: Verification Job Finished',
       event: 'job-finished',
     });
-    await context.store.put(WEBHOOK_ID_KEY, id);
   },
   async onDisable(context) {
-    const id = await context.store.get<string>(WEBHOOK_ID_KEY);
-    if (id) {
-      await mailflossApi.deleteWebhook({ apiKey: context.auth.secret_text, id });
-      await context.store.delete(WEBHOOK_ID_KEY);
-    }
+    await mailflossWebhook.disable({
+      store: context.store,
+      storeKey: WEBHOOK_ID_KEY,
+      apiKey: context.auth.secret_text,
+    });
   },
   async run(context) {
     return [context.payload.body];

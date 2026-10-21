@@ -19,8 +19,15 @@ export const mailflossAuth = PieceAuth.SecretText({
       return { valid: true };
     } catch (e) {
       const status = e instanceof HttpError ? e.response.status : undefined;
-      if (status === 401 || status === 403) {
+      if (status === 401) {
         return { valid: false, error: 'Invalid API key.' };
+      }
+      if (status === 403) {
+        return {
+          valid: false,
+          error:
+            'mailfloss refused this API key: it lacks the required permissions or the account is restricted.',
+        };
       }
       return {
         valid: false,

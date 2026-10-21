@@ -73,6 +73,13 @@ describe('auth', () => {
     });
   });
 
+  it('does not call a valid but restricted key invalid', async () => {
+    sendRequest.mockRejectedValue(httpError(403));
+    const result = await validate(API_KEY);
+    expect(result.valid).toBe(false);
+    expect(result).toHaveProperty('error', expect.stringContaining('permissions'));
+  });
+
   it('rejects a key that check-key refuses', async () => {
     sendRequest.mockRejectedValue(httpError(401));
     expect(await validate('bad')).toEqual({
@@ -191,6 +198,25 @@ describe.each([
       url: 'https://api.mailfloss.com/v1/webhooks/wh_1',
     });
     expect(store.size).toBe(0);
+  });
+
+  it('removes a webhook left behind by a failed disable before creating another', async () => {
+    const store = new Map<string, unknown>();
+    sendRequest.mockResolvedValueOnce(ok({ id: 'wh_old' }));
+    await trigger.onEnable(triggerContext(store));
+    sendRequest.mockRejectedValueOnce(httpError(500));
+    await expect(trigger.onDisable(triggerContext(store))).rejects.toThrow();
+
+    sendRequest
+      .mockResolvedValueOnce(ok({ id: 'wh_old', deleted: true }))
+      .mockResolvedValueOnce(ok({ id: 'wh_new' }));
+    await trigger.onEnable(triggerContext(store));
+    expect(request(2)).toMatchObject({
+      method: 'DELETE',
+      url: 'https://api.mailfloss.com/v1/webhooks/wh_old',
+    });
+    expect(request(3)).toMatchObject({ method: 'POST' });
+    expect([...store.values()]).toEqual(['wh_new']);
   });
 
   it('treats a webhook already deleted in mailfloss as disabled', async () => {
