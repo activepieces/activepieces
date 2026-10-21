@@ -1,4 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
+import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
 import { ChargekeepApiError, chargekeepClient } from '../common/client';
 
 const MAX_SEEN = 500;
@@ -63,24 +64,42 @@ export function createChargekeepWebhookHooks({ eventName, storeKey, deliveryKey 
       if (state && typeof state.webhookId === 'number') {
         await unsubscribe({ auth: context.auth, webhookId: state.webhookId });
       }
+      const index = (await context.store.get<string[]>(seenKey)) ?? [];
+      for (const key of index) {
+        await context.store.delete(`${seenKey}:${key}`);
+      }
       await context.store.delete(storeKey);
       await context.store.delete(seenKey);
     },
     async run(context: RunContext) {
       const body = context.payload.body;
       const events = (Array.isArray(body) ? body : [body]).filter(chargekeepClient.isRecord);
-      if (events.length === 0) return [];
-      const seen = (await context.store.get<string[]>(seenKey)) ?? [];
       const fresh: Record<string, unknown>[] = [];
       const keys: string[] = [];
       for (const event of events) {
         const key = deliveryKey(event);
-        if (key !== undefined && (seen.includes(key) || keys.includes(key))) continue;
-        if (key !== undefined) keys.push(key);
-        fresh.push(event);
+        if (key === undefined) {
+          fresh.push(event);
+          continue;
+        }
+        if (keys.includes(key) || (await context.store.get<boolean>(`${seenKey}:${key}`))) continue;
+        keys.push(key);
+        fresh.push({ ...event, [DEDUPE_KEY_PROPERTY]: `chargekeep:${eventName}:${key}` });
       }
-      if (keys.length > 0) await context.store.put<string[]>(seenKey, [...seen, ...keys].slice(-MAX_SEEN));
+      for (const key of keys) {
+        await context.store.put<boolean>(`${seenKey}:${key}`, true);
+      }
+      if (keys.length > 0) await trimSeen({ store: context.store, seenKey, added: keys });
       return fresh;
     },
   };
+}
+
+async function trimSeen({ store, seenKey, added }: { store: Store; seenKey: string; added: string[] }): Promise<void> {
+  const index = [...((await store.get<string[]>(seenKey)) ?? []).filter((k) => !added.includes(k)), ...added];
+  const expired = index.slice(0, Math.max(0, index.length - MAX_SEEN));
+  for (const key of expired) {
+    await store.delete(`${seenKey}:${key}`);
+  }
+  await store.put<string[]>(seenKey, index.slice(expired.length));
 }

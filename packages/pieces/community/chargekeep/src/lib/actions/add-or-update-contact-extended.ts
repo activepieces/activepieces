@@ -1265,7 +1265,7 @@ export const addOrUpdateContactExtended = createAction({
       firstName: context.propsValue.firstName,
       lastName: context.propsValue.lastName,
       companyName: context.propsValue.companyName,
-      emails: [context.propsValue.email1, context.propsValue.email2, context.propsValue.email3, context.propsValue.workEmail1],
+      emails: [context.propsValue.email1, context.propsValue.email2, context.propsValue.email3, context.propsValue.workEmail1, context.propsValue.workEmail2, context.propsValue.workEmail3],
       contactId: customer.contactId,
       contactXref: context.propsValue.contactXref,
     });

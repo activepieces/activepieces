@@ -5,6 +5,7 @@ import { chargekeepAuth } from '../src/lib/auth';
 import { ChargekeepApiError, chargekeepClient } from '../src/lib/common/client';
 import { newLead } from '../src/lib/triggers/new-lead';
 import { newPayment } from '../src/lib/triggers/new-payment';
+import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
 
 type Loose = { [key: string]: Loose };
 
@@ -355,8 +356,28 @@ describe('webhook triggers', () => {
     const store = memoryStore();
     const a = { eventType: 'Subscription.CreatedOrUpdated', id: 146911, statusId: 'U', eventTime: '2026-10-21T15:37:58' };
     const b = { eventType: 'Subscription.CreatedOrUpdated', id: 146912, statusId: 'A', eventTime: '2026-10-21T15:37:58' };
-    expect(await Reflect.apply(newLead.run, undefined, [{ store, payload: { body: [a, b, a] } }])).toEqual([a, b]);
+    expect(await Reflect.apply(newLead.run, undefined, [{ store, payload: { body: [a, b, a] } }])).toEqual([
+      { ...a, [DEDUPE_KEY_PROPERTY]: 'chargekeep:LeadCreated:146911:2026-10-21T15:37:58' },
+      { ...b, [DEDUPE_KEY_PROPERTY]: 'chargekeep:LeadCreated:146912:2026-10-21T15:37:58' },
+    ]);
     expect(await Reflect.apply(newLead.run, undefined, [{ store, payload: { body: [a, b] } }])).toEqual([]);
+  });
+  it('keeps per-event markers so overlapping deliveries never overwrite each other, and bounds them', async () => {
+    const store = memoryStore();
+    await Reflect.apply(newLead.run, undefined, [{ store, payload: { body: [{ id: 1, eventTime: 't' }] } }]);
+    await Reflect.apply(newLead.run, undefined, [{ store, payload: { body: [{ id: 2, eventTime: 't' }] } }]);
+    expect(store.data.get('_new_lead_trigger_seen:1:t')).toBe(true);
+    expect(store.data.get('_new_lead_trigger_seen:2:t')).toBe(true);
+    const many = Array.from({ length: 501 }, (_, i) => ({ id: 1000 + i, eventTime: 't' }));
+    await Reflect.apply(newLead.run, undefined, [{ store, payload: { body: many } }]);
+    const index = store.data.get('_new_lead_trigger_seen');
+    expect(Array.isArray(index) && index.length).toBe(500);
+    expect(store.data.has('_new_lead_trigger_seen:1:t')).toBe(false);
+    expect(store.data.has('_new_lead_trigger_seen:1500:t')).toBe(true);
+  });
+  it('extended contact accepts an identity given only as work email 2 or 3', async () => {
+    mockSeq({ contactId: 1, leadId: null });
+    await expect(run({ name: 'addOrUpdateContact(extended)', propsValue: { importType: 'Lead', workEmail3: 'w3@example.com' } })).resolves.toMatchObject({ contactId: 1 });
   });
   it('drops retried deliveries', async () => {
     const store = memoryStore();
