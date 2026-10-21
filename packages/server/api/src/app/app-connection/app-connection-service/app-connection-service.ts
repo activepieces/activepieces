@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { agentService } from '../../ee/agent/agent-service'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -327,6 +328,18 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             })
         }
 
+        const publishedAgentsBlockingDelete = deleteSourceConnection && !applyToPublishedVersions
+            ? await agentService(log).countUsingConnection({ projectId, externalId: sourceAppConnection.externalId, publishedOnly: true })
+            : 0
+        if (publishedAgentsBlockingDelete > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Cannot delete the old connection because it is still used by published agents that were not updated',
+                },
+            })
+        }
+
         if (!isNil(flowIds)) {
             const flows = await flowService(log).list({
                 projectIds: [projectId],
@@ -389,6 +402,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             flowsToRepoint.forEach((flow) => repointedFlowIds.add(flow.id))
         }
 
+        await agentService(log).replaceConnection({
+            projectId,
+            sourceExternalId: sourceAppConnection.externalId,
+            targetExternalId: targetAppConnection.externalId,
+            applyToPublishedVersions,
+        })
+
         log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: repointedFlowIds.size, deleteSourceConnection, applyToPublishedVersions }, 'App connection replaced')
 
         if (!deleteSourceConnection) {
@@ -412,11 +432,12 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const remainingPublishedFlows = remainingFlows.data.length > 0
             ? 0
             : await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions: false })
-        if (remainingFlows.data.length > 0 || remainingPublishedFlows > 0) {
+        const remainingAgents = await agentService(log).countUsingConnection({ projectId, externalId: sourceAppConnection.externalId, publishedOnly: false })
+        if (remainingFlows.data.length > 0 || remainingPublishedFlows > 0 || remainingAgents > 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'Cannot delete the old connection because some flows still use it',
+                    message: 'Cannot delete the old connection because some flows or agents still use it',
                 },
             })
         }

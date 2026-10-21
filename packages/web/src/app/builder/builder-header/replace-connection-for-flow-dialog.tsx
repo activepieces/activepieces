@@ -101,10 +101,8 @@ function ReplaceConnectionForFlowForm({
   });
 
   const projectConnections = connections?.data ?? [];
-  const flowConnectionExternalIds = [
-    ...flowStructureUtil.extractConnectionIds(flowVersion),
-    ...flowStructureUtil.extractAgentToolConnectionIds(flowVersion),
-  ];
+  const flowConnectionExternalIds =
+    flowStructureUtil.extractConnectionIds(flowVersion);
   const flowConnections = projectConnections.filter((connection) =>
     flowConnectionExternalIds.includes(connection.externalId),
   );

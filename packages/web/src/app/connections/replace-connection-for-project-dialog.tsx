@@ -2,10 +2,12 @@ import { isNil } from '@activepieces/core-utils';
 import {
   AppConnectionReplaceScope,
   AppConnectionScope,
+  MAX_AGENT_PAGE_SIZE,
+  Permission,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, WorkflowIcon } from 'lucide-react';
+import { Bot, ChevronDown, LucideIcon, WorkflowIcon } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -37,12 +39,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useAgentsAvailable } from '@/features/agents';
+import { agentsApi } from '@/features/agents/api/agents';
 import {
   appConnectionsMutations,
   appConnectionsQueries,
 } from '@/features/connections';
 import { flowsApi } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import {
   LabelWithTooltip,
@@ -78,7 +83,9 @@ function ReplaceConnectionForProjectForm({
   onConnectionMerged,
   setDialogOpen,
 }: ReplaceConnectionForProjectFormProps) {
-  const navigate = useNavigate();
+  const { checkAccess } = useAuthorization();
+  const agentsAvailable = useAgentsAvailable();
+  const canSeeAgents = agentsAvailable && checkAccess(Permission.READ_AGENT);
   const [step, setStep] = useState<ProjectReplaceStep>(
     ProjectReplaceStep.CHOOSE_CONNECTIONS,
   );
@@ -97,17 +104,28 @@ function ReplaceConnectionForProjectForm({
     });
 
   const {
-    mutate: fetchAffectedFlows,
-    data: affectedFlowsPage,
-    isPending: isFetchingAffectedFlows,
+    mutate: fetchAffectedItems,
+    data: affectedItems,
+    isPending: isFetchingAffectedItems,
   } = useMutation({
-    mutationFn: (externalId: string) =>
-      flowsApi.list({
-        projectId,
-        connectionExternalIds: [externalId],
-        cursor: undefined,
-        limit: 1000,
-      }),
+    mutationFn: async (externalId: string) => {
+      const [flowsPage, agentsPage] = await Promise.all([
+        flowsApi.list({
+          projectId,
+          connectionExternalIds: [externalId],
+          cursor: undefined,
+          limit: 1000,
+        }),
+        canSeeAgents
+          ? agentsApi.list({
+              projectId,
+              connectionExternalIds: [externalId],
+              limit: MAX_AGENT_PAGE_SIZE,
+            })
+          : null,
+      ]);
+      return { flows: flowsPage.data, agents: agentsPage?.data ?? [] };
+    },
     onSuccess: () => setStep(ProjectReplaceStep.REVIEW_AFFECTED_FLOWS),
     onError: () => {
       toast.error(t('Error'), {
@@ -144,10 +162,11 @@ function ReplaceConnectionForProjectForm({
         connectionPieceNames.has(piece.name),
     ) ?? [];
 
-  const affectedFlows = affectedFlowsPage?.data ?? [];
-  const hasPublishedAffectedFlows = affectedFlows.some(
-    (flow) => !isNil(flow.publishedVersionId),
-  );
+  const affectedFlows = affectedItems?.flows ?? [];
+  const affectedAgents = affectedItems?.agents ?? [];
+  const hasPublishedAffectedItems =
+    affectedFlows.some((flow) => !isNil(flow.publishedVersionId)) ||
+    affectedAgents.some((agent) => agent.isPublished);
   const sourceIsGlobalConnection =
     projectConnections.find(
       (connection) => connection.id === sourceConnectionId,
@@ -159,12 +178,12 @@ function ReplaceConnectionForProjectForm({
         (connection) => connection.id === values.sourceConnectionId,
       );
       if (sourceConnection) {
-        fetchAffectedFlows(sourceConnection.externalId);
+        fetchAffectedItems(sourceConnection.externalId);
       }
       return;
     }
     const deleteBlockedByPublishedFlows =
-      !values.applyToPublishedVersions && hasPublishedAffectedFlows;
+      !values.applyToPublishedVersions && hasPublishedAffectedItems;
     replaceConnections({
       scope: AppConnectionReplaceScope.PROJECT,
       sourceAppConnectionId: values.sourceConnectionId,
@@ -189,7 +208,7 @@ function ReplaceConnectionForProjectForm({
         <DialogDescription>
           {step === ProjectReplaceStep.CHOOSE_CONNECTIONS
             ? t(
-                'Switch flows from one connection to another. Choose the connection to replace and the one to use instead.',
+                'Switch flows and agents from one connection to another. Choose the connection to replace and the one to use instead.',
               )
             : t('Review what changes, then replace.')}
         </DialogDescription>
@@ -214,57 +233,52 @@ function ReplaceConnectionForProjectForm({
                     {t('Cancel')}
                   </Button>
                 </DialogClose>
-                <Button type="submit" loading={isFetchingAffectedFlows}>
+                <Button type="submit" loading={isFetchingAffectedItems}>
                   {t('Next')}
                 </Button>
               </DialogFooter>
             </>
           ) : (
             <>
-              {affectedFlows.length === 0 ? (
+              {affectedFlows.length === 0 && affectedAgents.length === 0 ? (
                 <div className="flex items-center gap-2 rounded-md border border-dashed px-3 py-2.5 text-sm text-gray-11">
                   <WorkflowIcon className="w-4 h-4 shrink-0" />
-                  {t('No flows use this connection yet')}
+                  {t('No flows or agents use this connection yet')}
                 </div>
               ) : (
-                <Collapsible defaultOpen className="rounded-md border">
-                  <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium">
-                    <span>
-                      {t('flowsUsingConnection', {
+                <>
+                  {affectedFlows.length > 0 && (
+                    <AffectedItemsList
+                      summary={t('flowsUsingConnection', {
                         count: affectedFlows.length,
                       })}
-                    </span>
-                    <ChevronDown className="w-4 h-4 shrink-0 text-gray-11 transition-transform group-data-[state=closed]:-rotate-90" />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <ScrollArea className="max-h-[140px] px-3 pb-3">
-                      <div className="flex flex-wrap gap-1.5">
-                        {affectedFlows.map((flow) => (
-                          <Badge
-                            key={flow.id}
-                            variant="secondary"
-                            className="max-w-[200px] cursor-pointer hover:bg-gray-3/70"
-                            onClick={() =>
-                              navigate(
-                                `/projects/${flow.projectId}/flows/${flow.id}`,
-                              )
-                            }
-                          >
-                            <WorkflowIcon className="w-3 h-3 shrink-0" />
-                            <span className="truncate">
-                              {flow.version.displayName}
-                            </span>
-                          </Badge>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </CollapsibleContent>
-                </Collapsible>
+                      icon={WorkflowIcon}
+                      items={affectedFlows.map((flow) => ({
+                        id: flow.id,
+                        name: flow.version.displayName,
+                        path: `/projects/${flow.projectId}/flows/${flow.id}`,
+                      }))}
+                    />
+                  )}
+                  {affectedAgents.length > 0 && (
+                    <AffectedItemsList
+                      summary={t('agentsUsingConnection', {
+                        count: affectedAgents.length,
+                      })}
+                      icon={Bot}
+                      items={affectedAgents.map((agent) => ({
+                        id: agent.id,
+                        name: agent.displayName,
+                        path: `/projects/${agent.projectId}/agents/${agent.id}`,
+                      }))}
+                    />
+                  )}
+                </>
               )}
 
               <ReplaceConnectionVersionsField
                 onValueChange={(applyToPublishedVersions) => {
-                  if (!applyToPublishedVersions && hasPublishedAffectedFlows) {
+                  if (!applyToPublishedVersions && hasPublishedAffectedItems) {
                     form.setValue('deleteSourceConnection', false);
                   }
                 }}
@@ -278,7 +292,7 @@ function ReplaceConnectionForProjectForm({
                     <LabelWithTooltip
                       label={t('After replacing')}
                       tooltip={t(
-                        'Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first. Global connections can only be deleted from the platform admin page.',
+                        'Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows or agents still use it — switch the option above to Draft and published first. Global connections can only be deleted from the platform admin page.',
                       )}
                     />
                     <Select
@@ -298,7 +312,7 @@ function ReplaceConnectionForProjectForm({
                           value="true"
                           disabled={
                             (!applyToPublishedVersions &&
-                              hasPublishedAffectedFlows) ||
+                              hasPublishedAffectedItems) ||
                             sourceIsGlobalConnection
                           }
                         >
@@ -330,6 +344,39 @@ function ReplaceConnectionForProjectForm({
   );
 }
 
+function AffectedItemsList({
+  summary,
+  icon: Icon,
+  items,
+}: AffectedItemsListProps) {
+  const navigate = useNavigate();
+  return (
+    <Collapsible defaultOpen className="rounded-md border">
+      <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium">
+        <span>{summary}</span>
+        <ChevronDown className="w-4 h-4 shrink-0 text-gray-11 transition-transform group-data-[state=closed]:-rotate-90" />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <ScrollArea className="max-h-[140px] px-3 pb-3">
+          <div className="flex flex-wrap gap-1.5">
+            {items.map((item) => (
+              <Badge
+                key={item.id}
+                variant="secondary"
+                className="max-w-[200px] cursor-pointer hover:bg-gray-3/70"
+                onClick={() => navigate(item.path)}
+              >
+                <Icon className="w-3 h-3 shrink-0" />
+                <span className="truncate">{item.name}</span>
+              </Badge>
+            ))}
+          </div>
+        </ScrollArea>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 ReplaceConnectionForProjectDialog.displayName =
   'ReplaceConnectionForProjectDialog';
 export { ReplaceConnectionForProjectDialog };
@@ -349,6 +396,12 @@ type ReplaceConnectionForProjectFormProps = {
   projectId: string;
   onConnectionMerged: () => void;
   setDialogOpen: (open: boolean) => void;
+};
+
+type AffectedItemsListProps = {
+  summary: string;
+  icon: LucideIcon;
+  items: { id: string; name: string; path: string }[];
 };
 
 type ProjectReplaceFormValues = ReplaceConnectionSelection & {
