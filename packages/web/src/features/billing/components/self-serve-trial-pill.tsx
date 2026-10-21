@@ -12,13 +12,13 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import {
-  EnterpriseTrial,
-  enterpriseTrialHooks,
-} from '../hooks/enterprise-trial-hooks';
-import { enterpriseTrialCopy } from '../utils/enterprise-trial-copy';
+  SelfServeTrial,
+  selfServeTrialHooks,
+} from '../hooks/self-serve-trial-hooks';
+import { selfServeTrialCopy } from '../utils/self-serve-trial-copy';
 import { planTiers } from '../utils/plan-tiers';
 
-export function EnterpriseTrialLine({ trial }: { trial: EnterpriseTrial }) {
+export function SelfServeTrialLine({ trial }: { trial: SelfServeTrial }) {
   const line = (
     <span
       className={cn(
@@ -36,7 +36,7 @@ export function EnterpriseTrialLine({ trial }: { trial: EnterpriseTrial }) {
         {t('Enterprise trial')}
       </span>
       <span className="shrink-0">
-        · {enterpriseTrialCopy.cardStatus(trial)}
+        · {selfServeTrialCopy.cardStatus(trial)}
       </span>
     </span>
   );
@@ -57,14 +57,14 @@ export function EnterpriseTrialLine({ trial }: { trial: EnterpriseTrial }) {
         )}
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-64">
-        {enterpriseTrialCopy.details(trial)}
+        {selfServeTrialCopy.details(trial)}
       </TooltipContent>
     </Tooltip>
   );
 }
 
 export function EnterprisePlanIndicator() {
-  const trial = enterpriseTrialHooks.useTrial();
+  const trial = selfServeTrialHooks.useTrial();
   const { platform } = platformHooks.useCurrentPlatform();
   const inTrial = trial.state === 'active' && !isNil(trial.endsAt);
   if (!trial.isPlatformAdmin) {
@@ -92,7 +92,7 @@ export function EnterprisePlanIndicator() {
               lastDay ? 'text-warning-11' : 'text-gray-11',
             )}
           >
-            {enterpriseTrialCopy.sidebarDetail(trial)}
+            {selfServeTrialCopy.sidebarDetail(trial)}
           </span>
         )}
       </span>
@@ -105,7 +105,7 @@ export function EnterprisePlanIndicator() {
     <Tooltip>
       <TooltipTrigger asChild>{row}</TooltipTrigger>
       <TooltipContent side="right" className="max-w-64">
-        {enterpriseTrialCopy.details(trial)}
+        {selfServeTrialCopy.details(trial)}
       </TooltipContent>
     </Tooltip>
   );

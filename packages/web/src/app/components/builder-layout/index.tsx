@@ -2,7 +2,7 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { EnterpriseTrialDialog, ManagePlanDialog } from '@/features/billing';
+import { SelfServeTrialDialog, ManagePlanDialog } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
@@ -61,7 +61,7 @@ function BuilderLayoutInner({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-          <EnterpriseTrialDialog />
+          <SelfServeTrialDialog />
         </SidebarInset>
       </SidebarProvider>
     </div>

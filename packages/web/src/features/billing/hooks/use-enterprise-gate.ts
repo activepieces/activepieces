@@ -12,9 +12,9 @@ import { planTiers } from '../utils/plan-tiers';
 
 import {
   billingDialogHooks,
-  EnterpriseTrialDialogPayload,
+  SelfServeTrialDialogPayload,
 } from './billing-dialog-hooks';
-import { enterpriseTrialHooks } from './enterprise-trial-hooks';
+import { selfServeTrialHooks } from './self-serve-trial-hooks';
 import { useUpgradeClick } from './use-upgrade-click';
 
 export function useEnterpriseAccess({
@@ -22,8 +22,8 @@ export function useEnterpriseAccess({
 }: {
   unlocked: boolean;
 }): EnterpriseAccess {
-  const trial = enterpriseTrialHooks.useTrial();
-  const offer = enterpriseTrialHooks.useOffer();
+  const trial = selfServeTrialHooks.useTrial();
+  const offer = selfServeTrialHooks.useOffer();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   if (unlocked) {
     return trial.state === 'active' ? 'trialing' : 'entitled';
@@ -77,10 +77,10 @@ export function useEnterpriseGate({
 function useOpenLockedFeature() {
   const access = useEnterpriseAccess({ unlocked: false });
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { openDialog } = billingDialogHooks.useEnterpriseTrialDialogStore();
+  const { openDialog } = billingDialogHooks.useSelfServeTrialDialogStore();
   const upgradeClick = useUpgradeClick();
 
-  return (payload: EnterpriseTrialDialogPayload) => {
+  return (payload: SelfServeTrialDialogPayload) => {
     if (access === 'trial_used') {
       upgradeClick({
         feature: payload.featureKey,
