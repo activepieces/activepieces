@@ -144,24 +144,27 @@ export const workerGroupAssignmentService = (log: FastifyBaseLogger) => ({
     },
 
     async listFlows({ platformId, request }: { platformId: string, request: ListWorkerGroupFlowsRequest }): Promise<WorkerGroupFlowAssignmentPage> {
-        const query = withLatestVersion(platformFlows({ platformId }))
+        const base = platformFlows({ platformId })
         if (!isNil(request.projectId)) {
-            query.andWhere('flow."projectId" = :projectId', { projectId: request.projectId })
+            base.andWhere('flow."projectId" = :projectId', { projectId: request.projectId })
         }
         if (request.filter === 'pinned') {
-            query.andWhere('flow."workerGroupId" IS NOT NULL')
+            base.andWhere('flow."workerGroupId" IS NOT NULL')
         }
         else if (!isNil(request.group) && request.filter !== 'all') {
-            query.andWhere('flow."workerGroupId" = :group', { group: request.group })
-        }
-        if (!isNil(request.search) && request.search.length > 0) {
-            query.andWhere('LOWER(latest_version."displayName") LIKE LOWER(:search)', { search: likePattern(request.search) })
+            base.andWhere('flow."workerGroupId" = :group', { group: request.group })
         }
         if (!isNil(request.exclude)) {
-            query.andWhere('flow."workerGroupId" IS DISTINCT FROM :exclude', { exclude: request.exclude })
+            base.andWhere('flow."workerGroupId" IS DISTINCT FROM :exclude', { exclude: request.exclude })
+        }
+        const search = request.search
+        const hasSearch = !isNil(search) && search.length > 0
+        const query = withLatestVersion(base.clone())
+        if (hasSearch) {
+            query.andWhere('LOWER(latest_version."displayName") LIKE LOWER(:search)', { search: likePattern(search) })
         }
         const order: SortKey[] = isNil(request.projectId) ? FLOW_ORDER : [['flow."workerGroupId" IS NULL', 'ASC'], ...FLOW_ORDER]
-        const total = await query.getCount()
+        const total = await (hasSearch ? query : base).getCount()
         const offset = clampOffset({ offset: request.cursor ?? 0, total, limit: request.limit })
         const rows = await applyOrder(query.select(FLOW_SELECT), order)
             .offset(offset)
