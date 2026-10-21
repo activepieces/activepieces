@@ -152,9 +152,9 @@ describe('buildMessageBlocks — one accordion per segment', () => {
       'tool',
     ]);
     expect(
-      blocks[0].steps
-        .filter((s) => s.kind === 'tool')
-        .map((s) => (s.kind === 'tool' ? s.description : null)),
+      blocks[0].steps.flatMap((s) =>
+        s.kind === 'tool' ? [s.description] : [],
+      ),
     ).toEqual(['Looking things up', 'Checking connections']);
   });
 

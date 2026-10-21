@@ -37,7 +37,7 @@ import {
 } from '../lib/message-parsers';
 
 import { ActionReceiptCard } from './action-receipt-card';
-import { LiveReasoning, ThinkingBlock } from './activity-accordion';
+import { ThinkingBlock } from './activity-accordion';
 import { BatchProgressCard } from './batch-progress-card';
 import { CardSkeleton } from './card-skeletons';
 import { ConnectionPickerCard } from './connection-picker-card';
@@ -45,6 +45,7 @@ import { CopyIconButton } from './copy-icon-button';
 import { FeedbackButtons } from './feedback-buttons';
 import { FlowBuildCard } from './flow-build-card';
 import { GeneratedImageCard } from './generated-image-card';
+import { LiveReasoning } from './live-reasoning';
 import { McpReconnectCard, McpReconnectData } from './mcp-reconnect-card';
 import { DocumentPreview } from './previews/document-preview';
 import { markdownPreviewComponents } from './previews/markdown-preview-components';
@@ -299,11 +300,11 @@ function MessageBlocks({
               lastThinkingStatus ??
               lastSegmentToolSteps[0]?.part.toolCallId ??
               'segment';
+            const isLive = isMessageStreaming && !isAccordionOpen;
+            const showLiveReasoning =
+              isLive && block.trailingReasoningText.length > 0;
             const showLiveGroup =
-              isMessageStreaming &&
-              !isAccordionOpen &&
-              Boolean(lastStep) &&
-              block.trailingReasoningText.length === 0;
+              isLive && Boolean(lastStep) && !showLiveReasoning;
             return (
               <div
                 key={`thinking-${i}`}
@@ -351,14 +352,12 @@ function MessageBlocks({
                   )}
                 </AnimatePresence>
                 <AnimatePresence initial={false}>
-                  {isMessageStreaming &&
-                    !isAccordionOpen &&
-                    block.trailingReasoningText.length > 0 && (
-                      <LiveReasoning
-                        key="live-reasoning"
-                        text={block.trailingReasoningText}
-                      />
-                    )}
+                  {showLiveReasoning && (
+                    <LiveReasoning
+                      key="live-reasoning"
+                      text={block.trailingReasoningText}
+                    />
+                  )}
                 </AnimatePresence>
               </div>
             );
