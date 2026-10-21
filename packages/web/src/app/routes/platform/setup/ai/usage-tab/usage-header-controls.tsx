@@ -1,9 +1,13 @@
 import { t } from 'i18next';
 import {
+  Activity,
   CalendarClock,
   ChartLine,
   ChevronDown,
   Download,
+  FlaskConical,
+  Layers,
+  LucideIcon,
   Table2,
 } from 'lucide-react';
 import { ReactNode } from 'react';
@@ -24,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -41,7 +44,6 @@ import {
   UsagePeriod,
   UsagePoint,
   UsageScope,
-  usageDummyData,
 } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 
@@ -90,31 +92,29 @@ export function useUsageView(): UsageView {
   };
 }
 
-export function UsageToolbar({
+export function UsageHeaderControls({
   view,
   exportRows,
   exportSeries,
   exportName,
-}: UsageToolbarProps) {
+}: UsageHeaderControlsProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <ScopeSwitch view={view} />
-      <div className="flex flex-wrap items-center gap-2">
-        <PeriodSelect view={view} />
-        <ExportMenu
-          view={view}
-          exportRows={exportRows}
-          exportSeries={exportSeries}
-          exportName={exportName}
-        />
-      </div>
-    </div>
+    <>
+      <ScopeSelect view={view} />
+      <PeriodSelect view={view} />
+      <ExportMenu
+        view={view}
+        exportRows={exportRows}
+        exportSeries={exportSeries}
+        exportName={exportName}
+      />
+    </>
   );
 }
 
-function ScopeSwitch({ view }: { view: UsageView }) {
+function ScopeSelect({ view }: { view: UsageView }) {
   return (
-    <Tabs
+    <Select
       value={view.scope}
       onValueChange={(value) =>
         view.setScope(
@@ -122,25 +122,44 @@ function ScopeSwitch({ view }: { view: UsageView }) {
         )
       }
     >
-      <TabsList size="sm" aria-label={t('Usage scope')}>
+      <SelectTrigger
+        size="sm"
+        className="w-auto cursor-pointer hover:bg-gray-3"
+        aria-label={t('Usage scope')}
+      >
+        <ScopeIcon scope={view.scope} />
+        <SelectValue>
+          {usageFormat.scopeLabel({ scope: view.scope })}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent side="bottom" align="end" className="w-64">
         {USAGE_SCOPES.map((scope) => (
-          <Tooltip key={scope}>
-            <TooltipTrigger asChild>
-              <TabsTrigger
-                value={scope}
-                className="cursor-pointer text-gray-11 hover:text-gray-12 focus-visible:ring-[3px] focus-visible:ring-gray-8/50"
-              >
+          <SelectItem
+            key={scope}
+            value={scope}
+            className="cursor-pointer items-start *:[span]:last:items-start"
+          >
+            <span className="flex pt-0.5">
+              <ScopeIcon scope={scope} />
+            </span>
+            <span className="flex flex-col">
+              <span className="text-gray-12">
                 {usageFormat.scopeLabel({ scope })}
-              </TabsTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={6}>
-              {scopeHint({ scope })}
-            </TooltipContent>
-          </Tooltip>
+              </span>
+              <span className="text-xs text-gray-11">
+                {scopeHint({ scope })}
+              </span>
+            </span>
+          </SelectItem>
         ))}
-      </TabsList>
-    </Tabs>
+      </SelectContent>
+    </Select>
   );
+}
+
+function ScopeIcon({ scope }: { scope: UsageScope }) {
+  const Icon = SCOPE_ICONS[scope];
+  return <Icon className="size-4 text-gray-11" />;
 }
 
 function PeriodSelect({ view }: { view: UsageView }) {
@@ -174,16 +193,8 @@ function PeriodOption({ period }: { period: UsagePeriod }) {
   return (
     <>
       {(period === '7d' || period === 'this-month') && <SelectSeparator />}
-      <SelectItem
-        value={period}
-        className="cursor-pointer *:[span]:last:w-full"
-      >
-        <span className="flex w-full items-center justify-between gap-6">
-          <span>{usageFormat.periodLabel({ period })}</span>
-          <span className="text-xs tabular-nums text-gray-11">
-            {usageFormat.periodRange({ period, now: usageDummyData.now })}
-          </span>
-        </span>
+      <SelectItem value={period} className="cursor-pointer">
+        {usageFormat.periodLabel({ period })}
       </SelectItem>
     </>
   );
@@ -194,7 +205,7 @@ function ExportMenu({
   exportRows,
   exportSeries,
   exportName,
-}: UsageToolbarProps) {
+}: UsageHeaderControlsProps) {
   const blocked = exportBlockedReason({ view, exportRows });
   if (blocked !== null) {
     return (
@@ -379,6 +390,11 @@ function downloadCsv({
   URL.revokeObjectURL(url);
 }
 
+const SCOPE_ICONS: Record<UsageScope, LucideIcon> = {
+  all: Layers,
+  production: Activity,
+  testing: FlaskConical,
+};
 const DEFAULT_PERIOD: UsagePeriod = 'this-month';
 const DEFAULT_SCOPE: UsageScope = 'production';
 const DEFAULT_PRESET: UsageDataPreset = 'rich';
@@ -394,7 +410,7 @@ export type UsageView = {
   setScope: (scope: UsageScope) => void;
 };
 
-type UsageToolbarProps = {
+type UsageHeaderControlsProps = {
   view: UsageView;
   exportRows: UsageItem[];
   exportSeries: UsagePoint[];

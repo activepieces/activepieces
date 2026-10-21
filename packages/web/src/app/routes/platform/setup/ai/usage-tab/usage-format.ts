@@ -99,37 +99,6 @@ function rangeLabel({
   };
 }
 
-function periodRange({
-  period,
-  now,
-}: {
-  period: UsagePeriod;
-  now: Date;
-}): string {
-  const end = now.getTime();
-  const hours = HOUR_PERIODS[period];
-  if (hours !== undefined) {
-    return `${pointLabel({
-      label: new Date(end - hours * HOUR_MS).toISOString(),
-    })} – ${pointLabel({ label: now.toISOString() })}`;
-  }
-  const day = (time: number): string =>
-    pointLabel({ label: new Date(time).toISOString().slice(0, 10) });
-  const monthStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
-  switch (period) {
-    case 'this-month':
-      return `${day(monthStart)} – ${day(end)}`;
-    case 'last-month':
-      return `${day(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
-      )} – ${day(monthStart - HOUR_MS)}`;
-    default:
-      return `${day(end - (PERIOD_DAYS_BACK[period] ?? 0) * DAY_MS)} – ${day(
-        end,
-      )}`;
-  }
-}
-
 function monthBefore({ time }: { time: number }): number {
   const date = new Date(time);
   date.setUTCMonth(date.getUTCMonth() - 1);
@@ -270,19 +239,6 @@ const COMPACT = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
 });
 const WHOLE = new Intl.NumberFormat('en-US');
-const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
-const HOUR_PERIODS: Partial<Record<UsagePeriod, number>> = {
-  '1h': 1,
-  '6h': 6,
-  '12h': 12,
-};
-const PERIOD_DAYS_BACK: Partial<Record<UsagePeriod, number>> = {
-  '24h': 1,
-  '7d': 6,
-  '30d': 29,
-  '90d': 89,
-};
 
 export const usageFormat = {
   usd,
@@ -294,7 +250,6 @@ export const usageFormat = {
   metricValue,
   pointLabel,
   rangeLabel,
-  periodRange,
   periodLabel,
   previousLabel,
   dimensionLabel,
