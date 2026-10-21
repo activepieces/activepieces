@@ -83,10 +83,10 @@ function presetLabel({ preset }: { preset: UsagePreset }): string {
       return t('Half rich');
     case 'short-history':
       return t('Short history');
-    case 'partial-history':
-      return t('Partial comparison');
     case 'rich':
       return t('Rich');
+    case 'super-rich':
+      return t('Super rich');
   }
 }
 
@@ -106,11 +106,11 @@ function presetHint({ preset }: { preset: UsagePreset }): string {
       return t(
         'Tracking started 25 days ago, so longer periods have no full comparison',
       );
-    case 'partial-history':
-      return t(
-        'Tracking started 45 days ago, so on 30 days and this month the previous period is only partly there',
-      );
     case 'rich':
       return t('A busy platform with every card filled');
+    case 'super-rich':
+      return t(
+        'A large platform: 20 projects, 130+ flows, 47 agents, 70 users, 9 keys',
+      );
   }
 }

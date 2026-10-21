@@ -146,9 +146,13 @@ function allItems({
     history.currentCoverage *
     profile.scale *
     SCOPE_FACTOR[scope]({ testingShare: profile.testingShare });
-  return CATALOG.filter(
-    (entry) => profile.members === 'all' || profile.members.includes(entry.id),
-  )
+  const catalog =
+    profile.extra === true ? [...CATALOG, ...EXTRA_CATALOG] : CATALOG;
+  return catalog
+    .filter(
+      (entry) =>
+        profile.members === 'all' || profile.members.includes(entry.id),
+    )
     .map((entry) => {
       const spendUsd = entry.weight * scale * (0.9 + random() * 0.2);
       const change = entry.change ?? random() * 0.6 - 0.25;
@@ -169,22 +173,24 @@ function allItems({
           entry.provider === AIProviderName.ACTIVEPIECES
             ? Math.round(spendUsd / CREDIT_USD_VALUE)
             : 0,
-        flowCount: childCount({ entry, dimension: 'flow' }),
-        agentCount: childCount({ entry, dimension: 'agent' }),
+        flowCount: childCount({ catalog, entry, dimension: 'flow' }),
+        agentCount: childCount({ catalog, entry, dimension: 'agent' }),
       };
     })
     .sort((a, b) => b.spendUsd - a.spendUsd);
 }
 
 function childCount({
+  catalog,
   entry,
   dimension,
 }: {
+  catalog: CatalogEntry[];
   entry: CatalogEntry;
   dimension: UsageDimension;
 }): number | undefined {
   return entry.dimension === 'project'
-    ? CATALOG.filter(
+    ? catalog.filter(
         (child) => child.dimension === dimension && child.parent === entry.name,
       ).length
     : undefined;
@@ -372,6 +378,81 @@ function pointLabels({ period }: { period: UsagePeriod }): string[] {
   });
 }
 
+function extraCatalog(): CatalogEntry[] {
+  const random = seededRandom({ seed: 'super-rich' });
+  const pick = <T>(list: T[]): T => list[Math.floor(random() * list.length)];
+  const tail = (): number => 0.15 + random() ** 2 * 3;
+  const swing = (): number => random() * 0.9 - 0.3;
+  const projects = EXTRA_PROJECTS.map(
+    (name): CatalogEntry => ({
+      dimension: 'project',
+      id: `x-project-${slug({ text: name })}`,
+      name,
+      weight: 2 + random() * 6,
+      change: swing(),
+    }),
+  );
+  const projectNames = [...BASE_PROJECT_NAMES, ...EXTRA_PROJECTS];
+  const flows = projectNames.flatMap((project) =>
+    Array.from({ length: 5 + Math.floor(random() * 5) }, (_, index) => {
+      const name = `${pick(FLOW_VERBS)} ${pick(FLOW_NOUNS)}`;
+      return {
+        dimension: 'flow' as const,
+        id: `x-flow-${slug({ text: project })}-${index}`,
+        name,
+        parent: project,
+        weight: tail(),
+        change: swing(),
+      };
+    }),
+  );
+  const agents = projectNames.flatMap((project) =>
+    Array.from({ length: 1 + Math.floor(random() * 3) }, (_, index) => ({
+      dimension: 'agent' as const,
+      id: `x-agent-${slug({ text: project })}-${index}`,
+      name: `${pick(AGENT_ROLES)} agent`,
+      parent: project,
+      weight: tail(),
+      change: swing(),
+    })),
+  );
+  const users = Array.from({ length: 64 }, (_, index) => {
+    const first = FIRST_NAMES[index % FIRST_NAMES.length];
+    const last =
+      LAST_NAMES[Math.floor(index / FIRST_NAMES.length) % LAST_NAMES.length];
+    return {
+      dimension: 'user' as const,
+      id: `x-user-${index}`,
+      name: `${first} ${last}`,
+      parent: `${first.toLowerCase()}.${last.toLowerCase()}@acme.com`,
+      weight: tail() * 0.6,
+      change: swing(),
+    };
+  });
+  const keys = EXTRA_KEYS.map(
+    (key): CatalogEntry => ({
+      dimension: 'key',
+      ...key,
+      weight: 1 + random() * 4,
+      change: swing(),
+      estimatedShare: random() * 0.3,
+    }),
+  );
+  const models = EXTRA_MODELS.map(
+    (model): CatalogEntry => ({
+      dimension: 'model',
+      ...model,
+      weight: tail() * 2,
+      change: swing(),
+    }),
+  );
+  return [...projects, ...flows, ...agents, ...users, ...keys, ...models];
+}
+
+function slug({ text }: { text: string }): string {
+  return text.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-');
+}
+
 function seededRandom({ seed }: { seed: string }): () => number {
   let state = [...seed].reduce(
     (hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0,
@@ -513,20 +594,20 @@ const PRESET_PROFILES: Record<UsageDataPreset, PresetProfile> = {
     sources: ALL_SOURCES,
     trackedDays: 25,
   },
-  'partial-history': {
-    members: 'all',
-    scale: 1,
-    testingShare: 0.09,
-    creditShare: 0.12,
-    sources: ALL_SOURCES,
-    trackedDays: 45,
-  },
   rich: {
     members: 'all',
     scale: 1,
     testingShare: 0.09,
     creditShare: 0.12,
     sources: ALL_SOURCES,
+  },
+  'super-rich': {
+    members: 'all',
+    scale: 1.4,
+    testingShare: 0.07,
+    creditShare: 0.1,
+    sources: ALL_SOURCES,
+    extra: true,
   },
 };
 
@@ -852,6 +933,182 @@ const CATALOG: CatalogEntry[] = [
   },
 ];
 
+const BASE_PROJECT_NAMES = [
+  'Sales ops',
+  'Support desk',
+  'Finance',
+  'Marketing',
+  'Data team',
+  'Internal tools',
+];
+const EXTRA_PROJECTS = [
+  'Growth',
+  'Customer success',
+  'Legal',
+  'People ops',
+  'Procurement',
+  'Product',
+  'Engineering',
+  'Security',
+  'Partnerships',
+  'Revenue ops',
+  'Field sales',
+  'EMEA support',
+  'APAC support',
+  'Brand',
+];
+const FLOW_VERBS = [
+  'Summarize',
+  'Classify',
+  'Enrich',
+  'Draft replies to',
+  'Translate',
+  'Route',
+  'Score',
+  'Extract data from',
+  'Tag',
+  'Review',
+];
+const FLOW_NOUNS = [
+  'tickets',
+  'leads',
+  'invoices',
+  'contracts',
+  'emails',
+  'call notes',
+  'reviews',
+  'resumes',
+  'orders',
+  'meeting notes',
+  'NPS replies',
+  'RFPs',
+];
+const AGENT_ROLES = [
+  'Research',
+  'Onboarding',
+  'Billing',
+  'Recruiting',
+  'Renewal',
+  'QA',
+  'Policy',
+  'Escalation',
+];
+const FIRST_NAMES = [
+  'Ava',
+  'Noah',
+  'Sara',
+  'Ali',
+  'Mia',
+  'Leo',
+  'Zoe',
+  'Ravi',
+  'Ines',
+  'Kai',
+  'Nora',
+  'Yusuf',
+  'Emma',
+  'Diego',
+  'Hana',
+  'Tom',
+];
+const LAST_NAMES = ['Park', 'Silva', 'Novak', 'Khan'];
+const EXTRA_KEYS: Omit<CatalogEntry, 'dimension' | 'weight'>[] = [
+  {
+    id: 'x-key-openai-staging',
+    name: 'Staging',
+    parent: 'OpenAI',
+    provider: AIProviderName.OPENAI,
+    dashboardUrl: 'https://platform.openai.com/usage',
+  },
+  {
+    id: 'x-key-anthropic-batch',
+    name: 'Batch jobs',
+    parent: 'Anthropic',
+    provider: AIProviderName.ANTHROPIC,
+    dashboardUrl: 'https://console.anthropic.com/usage',
+  },
+  {
+    id: 'x-key-google',
+    name: 'Workspace',
+    parent: 'Google',
+    provider: AIProviderName.GOOGLE,
+    dashboardUrl: 'https://aistudio.google.com/usage',
+  },
+  {
+    id: 'x-key-azure-us',
+    name: 'US East',
+    parent: 'Azure OpenAI',
+    provider: AIProviderName.AZURE,
+    dashboardUrl: 'https://portal.azure.com',
+  },
+];
+const EXTRA_MODELS: Omit<CatalogEntry, 'dimension' | 'weight'>[] = [
+  {
+    id: 'x-claude-opus-5',
+    keyId: 'anthropic-main',
+    name: 'Claude Opus 5',
+    parent: 'Anthropic',
+    provider: AIProviderName.ANTHROPIC,
+    inputPrice: 15,
+    outputPrice: 75,
+  },
+  {
+    id: 'x-gpt-5-nano',
+    keyId: 'openai-prod',
+    name: 'GPT-5 nano',
+    parent: 'OpenAI',
+    provider: AIProviderName.OPENAI,
+    inputPrice: 0.05,
+    outputPrice: 0.4,
+  },
+  {
+    id: 'x-gemini-3-flash',
+    keyId: 'x-key-google',
+    name: 'Gemini 3 Flash',
+    parent: 'Google',
+    provider: AIProviderName.GOOGLE,
+    inputPrice: 0.3,
+    outputPrice: 2.5,
+  },
+  {
+    id: 'x-llama-4',
+    keyId: 'openrouter',
+    name: 'Llama 4 Maverick',
+    parent: 'OpenRouter',
+    provider: AIProviderName.OPENROUTER,
+    inputPrice: 0.2,
+    outputPrice: 0.6,
+  },
+  {
+    id: 'x-mistral-large',
+    keyId: 'openrouter',
+    name: 'Mistral Large 3',
+    parent: 'OpenRouter',
+    provider: AIProviderName.OPENROUTER,
+    inputPrice: 2,
+    outputPrice: 6,
+  },
+  {
+    id: 'x-deepseek-v4',
+    keyId: 'openrouter',
+    name: 'DeepSeek V4',
+    parent: 'OpenRouter',
+    provider: AIProviderName.OPENROUTER,
+    inputPrice: 0.3,
+    outputPrice: 1.2,
+  },
+  {
+    id: 'x-gpt-5-azure',
+    keyId: 'x-key-azure-us',
+    name: 'GPT-5 (Azure)',
+    parent: 'Azure deployment',
+    provider: AIProviderName.AZURE,
+    inputPrice: 1.25,
+    outputPrice: 10,
+  },
+];
+const EXTRA_CATALOG = extraCatalog();
+
 export const usageDummyData = {
   buildOverview,
   buildDetail,
@@ -865,8 +1122,8 @@ export const USAGE_PRESETS: UsagePreset[] = [
   'minimal',
   'half',
   'short-history',
-  'partial-history',
   'rich',
+  'super-rich',
 ];
 export const USAGE_PERIODS: UsagePeriod[] = [
   '1h',
@@ -896,8 +1153,8 @@ export type UsageDataPreset =
   | 'minimal'
   | 'half'
   | 'short-history'
-  | 'partial-history'
-  | 'rich';
+  | 'rich'
+  | 'super-rich';
 
 export type UsagePeriod =
   | '1h'
@@ -1013,6 +1270,7 @@ type PresetProfile = {
   creditShare: number;
   sources: UsageSource[];
   trackedDays?: number;
+  extra?: boolean;
 };
 
 type SeriesParams = {
