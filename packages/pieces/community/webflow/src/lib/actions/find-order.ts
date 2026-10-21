@@ -8,10 +8,13 @@ export const webflowFindOrder = createAction({
 	auth: webflowAuth,
 	name: 'find_order',
 	classification: 'READ',
-	description: 'Find order',
-	displayName: 'Find an order',
+	description: 'Gets the details of an e-commerce order.',
+	displayName: 'Find Order',
 	audience: 'both',
 	aiMetadata: { description: 'Retrieves a single Webflow Ecommerce order by its site ID and order ID. Use to look up order details before fulfilling, refunding, or unfulfilling it. Read-only and idempotent.', idempotent: true },
+	propertyGroups: [
+		{ key: 'target', display: 'section', label: 'Order to Look Up', icon: 'inbox', props: ['site_id', 'order_id'] },
+	],
 	props: {
 		site_id: webflowProps.site_id,
 		order_id: webflowProps.order_id,
