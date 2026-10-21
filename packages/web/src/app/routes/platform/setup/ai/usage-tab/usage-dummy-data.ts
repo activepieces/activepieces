@@ -858,6 +858,7 @@ export const usageDummyData = {
   buildOverview,
   buildDetail,
   buildList,
+  now: NOW,
 };
 
 export const USAGE_PRESETS: UsagePreset[] = [

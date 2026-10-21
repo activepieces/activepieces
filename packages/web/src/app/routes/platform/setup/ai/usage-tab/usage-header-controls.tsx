@@ -1,5 +1,12 @@
 import { t } from 'i18next';
-import { CalendarClock, Download } from 'lucide-react';
+import {
+  CalendarClock,
+  ChartLine,
+  ChevronDown,
+  Download,
+  Table2,
+} from 'lucide-react';
+import { ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -34,6 +41,7 @@ import {
   UsagePeriod,
   UsagePoint,
   UsageScope,
+  usageDummyData,
 } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
 
@@ -82,67 +90,29 @@ export function useUsageView(): UsageView {
   };
 }
 
-export function UsageHeaderControls({
+export function UsageToolbar({
   view,
   exportRows,
   exportSeries,
   exportName,
-}: UsageHeaderControlsProps) {
+}: UsageToolbarProps) {
   return (
-    <>
-      <Select
-        value={view.period}
-        onValueChange={(value) =>
-          view.setPeriod(
-            USAGE_PERIODS.find((item) => item === value) ?? DEFAULT_PERIOD,
-          )
-        }
-      >
-        <SelectTrigger size="sm" className="w-auto">
-          <CalendarClock className="size-4" />
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent side="bottom" align="end">
-          {USAGE_PERIODS.map((period) => (
-            <PeriodOption key={period} period={period} />
-          ))}
-        </SelectContent>
-      </Select>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Download className="size-4" />
-            {t('Export')}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onSelect={() =>
-              downloadItemsCsv({
-                items: exportRows,
-                fileName: `${exportName}-${view.period}.csv`,
-              })
-            }
-          >
-            {t('This view (CSV)')}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() =>
-              downloadSeriesCsv({
-                points: exportSeries,
-                fileName: `${exportName}-over-time-${view.period}.csv`,
-              })
-            }
-          >
-            {t('Spend over time (CSV)')}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <ScopeSwitch view={view} />
+      <div className="flex flex-wrap items-center gap-2">
+        <PeriodSelect view={view} />
+        <ExportMenu
+          view={view}
+          exportRows={exportRows}
+          exportSeries={exportSeries}
+          exportName={exportName}
+        />
+      </div>
+    </div>
   );
 }
 
-export function UsageScopeTabs({ view }: { view: UsageView }) {
+function ScopeSwitch({ view }: { view: UsageView }) {
   return (
     <Tabs
       value={view.scope}
@@ -152,17 +122,13 @@ export function UsageScopeTabs({ view }: { view: UsageView }) {
         )
       }
     >
-      <TabsList
-        variant="outline"
-        className="flex w-full gap-1 border-b border-gray-6"
-      >
+      <TabsList size="sm" aria-label={t('Usage scope')}>
         {USAGE_SCOPES.map((scope) => (
           <Tooltip key={scope}>
             <TooltipTrigger asChild>
               <TabsTrigger
                 value={scope}
-                variant="outline"
-                className="cursor-pointer rounded-t-md px-2.5 pt-1.5 pb-2 text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 data-[state=active]:text-gray-12"
+                className="cursor-pointer text-gray-11 hover:text-gray-12 focus-visible:ring-[3px] focus-visible:ring-gray-8/50"
               >
                 {usageFormat.scopeLabel({ scope })}
               </TabsTrigger>
@@ -177,6 +143,165 @@ export function UsageScopeTabs({ view }: { view: UsageView }) {
   );
 }
 
+function PeriodSelect({ view }: { view: UsageView }) {
+  return (
+    <Select
+      value={view.period}
+      onValueChange={(value) =>
+        view.setPeriod(
+          USAGE_PERIODS.find((item) => item === value) ?? DEFAULT_PERIOD,
+        )
+      }
+    >
+      <SelectTrigger
+        size="sm"
+        className="w-auto cursor-pointer hover:bg-gray-3"
+        aria-label={t('Period')}
+      >
+        <CalendarClock className="size-4" />
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent side="bottom" align="end">
+        {USAGE_PERIODS.map((period) => (
+          <PeriodOption key={period} period={period} />
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function PeriodOption({ period }: { period: UsagePeriod }) {
+  return (
+    <>
+      {(period === '7d' || period === 'this-month') && <SelectSeparator />}
+      <SelectItem
+        value={period}
+        className="cursor-pointer *:[span]:last:w-full"
+      >
+        <span className="flex w-full items-center justify-between gap-6">
+          <span>{usageFormat.periodLabel({ period })}</span>
+          <span className="text-xs tabular-nums text-gray-11">
+            {usageFormat.periodRange({ period, now: usageDummyData.now })}
+          </span>
+        </span>
+      </SelectItem>
+    </>
+  );
+}
+
+function ExportMenu({
+  view,
+  exportRows,
+  exportSeries,
+  exportName,
+}: UsageToolbarProps) {
+  const blocked = exportBlockedReason({ view, exportRows });
+  if (blocked !== null) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span tabIndex={0} className="rounded-lg">
+            <Button variant="outline" size="sm" disabled>
+              <ExportLabel />
+            </Button>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={6}>
+          {blocked}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="data-[state=open]:bg-gray-3"
+        >
+          <ExportLabel />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <ExportItem
+          icon={<Table2 />}
+          label={t('Breakdown')}
+          hint={t('Every item on this page, one row each')}
+          onSelect={() =>
+            downloadItemsCsv({
+              items: exportRows,
+              fileName: `${exportName}-${view.scope}-${view.period}.csv`,
+            })
+          }
+        />
+        {exportSeries.length > 0 && (
+          <ExportItem
+            icon={<ChartLine />}
+            label={t('Spend over time')}
+            hint={t('One row per point on the chart')}
+            onSelect={() =>
+              downloadSeriesCsv({
+                points: exportSeries,
+                fileName: `${exportName}-over-time-${view.scope}-${view.period}.csv`,
+              })
+            }
+          />
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function ExportLabel() {
+  return (
+    <>
+      <Download className="size-4" />
+      {t('Export')}
+      <ChevronDown className="size-3.5 text-gray-11" />
+    </>
+  );
+}
+
+function ExportItem({
+  icon,
+  label,
+  hint,
+  onSelect,
+}: {
+  icon: ReactNode;
+  label: string;
+  hint: string;
+  onSelect: () => void;
+}) {
+  return (
+    <DropdownMenuItem onSelect={onSelect} className="items-start">
+      <span className="flex pt-0.5 text-gray-11">{icon}</span>
+      <span className="flex flex-col">
+        <span className="text-gray-12">{label}</span>
+        <span className="text-xs text-gray-11">{hint}</span>
+      </span>
+      <span className="ml-auto pt-0.5 text-xs text-gray-11">CSV</span>
+    </DropdownMenuItem>
+  );
+}
+
+function exportBlockedReason({
+  view,
+  exportRows,
+}: {
+  view: UsageView;
+  exportRows: UsageItem[];
+}): string | null {
+  if (view.preset === 'loading' || view.preset === 'error') {
+    return t('Export is ready once usage loads');
+  }
+  if (exportRows.length === 0) {
+    return t('Nothing to export in this period');
+  }
+  return null;
+}
+
 function scopeHint({ scope }: { scope: UsageScope }): string {
   switch (scope) {
     case 'production':
@@ -186,17 +311,6 @@ function scopeHint({ scope }: { scope: UsageScope }): string {
     case 'all':
       return t('Production and testing together');
   }
-}
-
-function PeriodOption({ period }: { period: UsagePeriod }) {
-  return (
-    <>
-      {(period === '7d' || period === 'this-month') && <SelectSeparator />}
-      <SelectItem value={period}>
-        {usageFormat.periodLabel({ period })}
-      </SelectItem>
-    </>
-  );
 }
 
 function downloadItemsCsv({
@@ -280,7 +394,7 @@ export type UsageView = {
   setScope: (scope: UsageScope) => void;
 };
 
-type UsageHeaderControlsProps = {
+type UsageToolbarProps = {
   view: UsageView;
   exportRows: UsageItem[];
   exportSeries: UsagePoint[];

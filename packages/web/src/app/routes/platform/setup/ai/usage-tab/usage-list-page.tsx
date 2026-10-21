@@ -16,11 +16,7 @@ import {
   UsageItem,
 } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
-import {
-  UsageHeaderControls,
-  UsageScopeTabs,
-  useUsageView,
-} from './usage-header-controls';
+import { UsageToolbar, useUsageView } from './usage-header-controls';
 import { UsagePreviewSwitcher } from './usage-preview-switcher';
 
 export function UsageListPage() {
@@ -72,15 +68,13 @@ export function UsageListPage() {
                 },
               )
         }
-      >
-        <UsageHeaderControls
-          view={view}
-          exportRows={rows}
-          exportSeries={[]}
-          exportName={`ai-usage-${dimension}`}
-        />
-      </AdminPageHeader>
-      {view.preset !== 'error' && <UsageScopeTabs view={view} />}
+      />
+      <UsageToolbar
+        view={view}
+        exportRows={rows}
+        exportSeries={[]}
+        exportName={`ai-usage-${dimension}`}
+      />
       <AdminDataTable
         columns={columnsFor({ dimension, totalUsd })}
         page={{ data: rows, next: null, previous: null }}

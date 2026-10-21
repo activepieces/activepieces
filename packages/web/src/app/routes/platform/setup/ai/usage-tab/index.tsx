@@ -24,12 +24,7 @@ import { cn } from '@/lib/utils';
 
 import { UsageOverview, UsagePeriod, usageDummyData } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
-import {
-  UsageHeaderControls,
-  UsageScopeTabs,
-  UsageView,
-  useUsageView,
-} from './usage-header-controls';
+import { UsageToolbar, UsageView, useUsageView } from './usage-header-controls';
 import { UsageHero } from './usage-hero';
 import { UsageLimitsCard } from './usage-insight-cards';
 import { UsagePreviewSwitcher } from './usage-preview-switcher';
@@ -55,16 +50,14 @@ export function UsageTab({ layout = 'flat' }: { layout?: UsageLayout }) {
         description={t(
           'Where your AI spend goes across flows, agents and chat.',
         )}
-      >
-        <UsageHeaderControls
-          view={view}
-          exportRows={Object.values(overview.top).flat()}
-          exportSeries={overview.series.spend}
-          exportName="ai-usage"
-        />
-      </AdminPageHeader>
+      />
 
-      {view.preset !== 'error' && <UsageScopeTabs view={view} />}
+      <UsageToolbar
+        view={view}
+        exportRows={Object.values(overview.top).flat()}
+        exportSeries={overview.series.spend}
+        exportName="ai-usage"
+      />
       <UsageBody view={view} overview={overview} layout={layout} />
       <UsagePreviewSwitcher view={view} />
     </>

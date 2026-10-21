@@ -36,12 +36,7 @@ import {
   UsageDimension,
 } from './usage-dummy-data';
 import { usageFormat } from './usage-format';
-import {
-  UsageHeaderControls,
-  UsageScopeTabs,
-  UsageView,
-  useUsageView,
-} from './usage-header-controls';
+import { UsageToolbar, UsageView, useUsageView } from './usage-header-controls';
 import { UsageHero } from './usage-hero';
 import { UsagePreviewSwitcher } from './usage-preview-switcher';
 import { UsageSourceDonut } from './usage-source-donut';
@@ -89,17 +84,15 @@ export function UsageDetailPage() {
             ? t('In {parent}', { parent: detail.item.parent })
             : undefined
         }
-      >
-        <UsageHeaderControls
-          view={view}
-          exportRows={
-            detail ? [detail.item, ...Object.values(detail.related).flat()] : []
-          }
-          exportSeries={detail?.series.spend ?? []}
-          exportName={`ai-usage-${dimension}-${id ?? ''}`}
-        />
-      </AdminPageHeader>
-      {view.preset !== 'error' && <UsageScopeTabs view={view} />}
+      />
+      <UsageToolbar
+        view={view}
+        exportRows={
+          detail ? [detail.item, ...Object.values(detail.related).flat()] : []
+        }
+        exportSeries={detail?.series.spend ?? []}
+        exportName={`ai-usage-${dimension}-${id ?? ''}`}
+      />
       <DetailBody view={view} dimension={dimension} detail={detail} />
       <UsagePreviewSwitcher view={view} />
     </>
