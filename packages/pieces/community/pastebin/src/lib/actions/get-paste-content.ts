@@ -1,8 +1,8 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient, pastebinCommon } from '../common';
-import { pastebinAuth } from '../..';
+import { pastebinAuth } from '../auth';
+import { pastebinApi } from '../common/api';
 
-export default createAction({
+export const getPasteContentAction = createAction({
   auth: pastebinAuth,
   name: 'get_paste_content',
   classification: 'READ',
@@ -17,8 +17,10 @@ export default createAction({
     }),
   },
   async run(context) {
-    const client = await makeClient(context.auth);
-    const content = await client.getPasteContent(context.propsValue.paste_id);
+    const content = await pastebinApi.getPasteContent({
+      auth: context.auth,
+      pasteKey: context.propsValue.paste_id,
+    });
     return {
       content,
     };
