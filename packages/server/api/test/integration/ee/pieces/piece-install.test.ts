@@ -118,6 +118,25 @@ describe('POST /v1/pieces — private piece installation (EE)', () => {
 
         expect(response.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })
+
+    it('should install a piece from the npm registry on a plan without managing pieces', async () => {
+        const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: false } })
+
+        const response = await ctx.post('/v1/pieces', {
+            pieceName: PIECE_NAME,
+            pieceVersion: PIECE_VERSION,
+            packageType: PackageType.REGISTRY,
+            scope: PieceScope.PLATFORM,
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.CREATED)
+        const saved = await pieceMetadataService(mockLog).getOrThrow({
+            name: PIECE_NAME,
+            version: PIECE_VERSION,
+            platformId: ctx.platform.id,
+        })
+        expect(saved.packageType).toBe(PackageType.REGISTRY)
+    })
 })
 
 describe('DELETE /v1/pieces/:id (EE)', () => {
