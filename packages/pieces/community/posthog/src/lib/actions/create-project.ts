@@ -1,6 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { posthogAuth, PostHogAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { posthogAuth } from '../auth';
+import { posthogClient } from '../common/client';
+import { posthogOutputSchemas } from '../common/output-schemas';
 
 export const posthogCreateProject = createAction({
   auth: posthogAuth,
@@ -8,8 +10,8 @@ export const posthogCreateProject = createAction({
   classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Create a new PostHog project in your organization',
-  audience: 'both',
-  aiMetadata: { description: 'Creates a new project within a chosen PostHog organization, optionally anonymizing incoming IP addresses. Use when provisioning a fresh analytics project. Not idempotent: each call creates a separate project even with the same name.', idempotent: false },
+  audience: 'human',
+  outputSchema: posthogOutputSchemas.project,
   props: {
     organization_id: Property.Dropdown({
       displayName: 'Organization',
@@ -21,26 +23,17 @@ export const posthogCreateProject = createAction({
         if (!auth) {
           return { disabled: true, options: [], placeholder: 'Connect your account first' };
         }
-        const { personal_api_key, api_host } = (auth as unknown as { props: PostHogAuth }).props;
-        const apiBase = api_host || 'https://us.posthog.com';
         try {
-          const result = await httpClient.sendRequest<OrganizationsResponse>({
-            method: HttpMethod.GET,
-            url: `${apiBase}/api/organizations/`,
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: personal_api_key,
-            },
-          });
+          const body = await posthogClient.request({ auth: auth.props, method: HttpMethod.GET, path: '/api/organizations/' });
           return {
             disabled: false,
-            options: (result.body.results ?? []).map((org) => ({
-              label: org.name,
-              value: org.id,
-            })),
+            options: posthogClient.arrayOf(posthogClient.recordOf(body)['results']).map((raw) => {
+              const org = posthogClient.recordOf(raw);
+              return { label: posthogClient.str(org['name']) ?? String(org['id']), value: String(org['id']) };
+            }),
           };
-        } catch {
-          return { disabled: true, options: [], placeholder: 'Failed to load organizations. Check your connection.' };
+        } catch (error) {
+          return { disabled: true, options: [], placeholder: error instanceof Error ? error.message : 'Failed to load organizations.' };
         }
       },
     }),
@@ -55,48 +48,28 @@ export const posthogCreateProject = createAction({
       required: false,
     }),
   },
-  async run(context) {
-    const { personal_api_key, api_host } = context.auth.props;
-    const apiBase = api_host || 'https://us.posthog.com';
-    const { organization_id, name, anonymize_ips } = context.propsValue;
-
-    const result = await httpClient.sendRequest<CreateProjectResponse>({
+  async run({ auth, propsValue }) {
+    const organizationId = posthogClient.requiredText({ value: propsValue.organization_id, label: 'Organization' });
+    const requestBody: Record<string, unknown> = { name: posthogClient.requiredText({ value: propsValue.name, label: 'Project Name' }) };
+    const anonymize = posthogClient.parseBoolean({ value: propsValue.anonymize_ips, label: 'Anonymize IPs' });
+    if (anonymize !== undefined) requestBody['anonymize_ips'] = anonymize;
+    const body = await posthogClient.request({
+      auth: auth.props,
       method: HttpMethod.POST,
-      url: `${apiBase}/api/organizations/${organization_id}/projects/`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: personal_api_key,
-      },
-      body: { name, anonymize_ips },
+      path: `/api/organizations/${encodeURIComponent(organizationId)}/projects/`,
+      body: requestBody,
     });
-
-    const p = result.body;
+    const p = posthogClient.recordOf(body);
     return {
-      id: p.id,
-      uuid: p.uuid,
-      name: p.name,
-      api_token: p.api_token,
-      organization: p.organization,
-      timezone: p.timezone ?? null,
-      anonymize_ips: p.anonymize_ips ?? false,
-      created_at: p.created_at,
-      updated_at: p.updated_at,
+      id: p['id'] ?? null,
+      uuid: posthogClient.str(p['uuid']),
+      name: posthogClient.str(p['name']),
+      api_token: posthogClient.str(p['api_token']),
+      organization: posthogClient.str(p['organization']),
+      timezone: posthogClient.str(p['timezone']),
+      anonymize_ips: p['anonymize_ips'] === true,
+      created_at: posthogClient.str(p['created_at']),
+      updated_at: posthogClient.str(p['updated_at']),
     };
   },
 });
-
-type OrganizationsResponse = {
-  results: { id: string; name: string }[];
-};
-
-type CreateProjectResponse = {
-  id: number;
-  uuid: string;
-  name: string;
-  api_token: string;
-  organization: string;
-  timezone: string;
-  anonymize_ips: boolean;
-  created_at: string;
-  updated_at: string;
-};

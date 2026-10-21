@@ -8,6 +8,134 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### GitHub 0.11.0: Update Repository (Agent) no longer makes private repositories public
+
+When an AI agent used **Update Repository (Agent)** to change something else, such as the description, the agent path filled the three toggles it left out (**Private**, **Has Issues** and **Archived**) with `false` and sent them. Each such update could make a private repository public, turn off Issues and unarchive an archived repository. From GitHub 0.11.0 these three fields are dropdowns with **Yes**, **No** and **Leave unchanged**. A field the agent leaves out, or sets to Leave unchanged, is not sent, so the repository keeps its current setting.
+
+#### What you need to do
+
+Nothing to configure. Agents read the new options themselves, and a Run Agent tool that already sets one of these fields to true or false keeps sending that value. If an agent ran this action on an earlier GitHub version, check that your private repositories are still private, that Issues are on where you expect them, and that archived repositories are still archived. Run Agent steps keep running on the version they were built with until you upgrade them.
+
+#### Shopify 0.11.0: Update Customer toggles that are off no longer unverify or unsubscribe the customer
+
+Update Customer sent **Verified Email**, **Send Email Invite** and **Accepts Marketing** on every run. A fresh step saves an untouched toggle as `false`, so every update marked the customer's email as unverified and unsubscribed them from email marketing, whatever the rest of the step changed. From Shopify 0.11.0 a toggle that is off sends nothing and the customer's current setting is kept; a toggle that is on still verifies the email, sends the invite or subscribes the customer. New Update Customer steps no longer start with Verified Email switched on.
+
+#### What you need to do
+
+Nothing for flows that only ever verify or subscribe customers. A flow that relied on Update Customer to unsubscribe a customer or mark their email as unverified can no longer do it from this action; use **Custom API Call** with `PUT /customers/{id}.json` and a body of `{"customer": {"email_marketing_consent": {"state": "unsubscribed", "opt_in_level": "unknown"}}}` (or `"verified_email": false`). Steps keep running on the version they were built with until you upgrade them.
+
+#### PostHog requires https hosts, and agents can no longer create projects
+
+PostHog 0.7.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+The PostHog host on a connection must now start with `https://`. A plain `http://` host is accepted only for `localhost`, so a connection that points at a self-hosted PostHog over plain http fails on upgraded steps. Inputs are also validated more strictly before the request is sent, so a step that used to send an empty or malformed value now stops with a clear error instead.
+
+**Create Project** is no longer offered as a tool to AI agents. It still works as a normal flow step.
+
+The **New Event** trigger now follows up to 10 pages of new events per poll instead of only the first 100 events, so a busy project can start more runs per poll. **Capture Event** returns extra fields next to the unchanged `status`.
+
+**Custom API Call** now only calls the API Host set on the connection. A step that points at a full URL on another host fails after the upgrade.
+
+#### What you need to do
+
+If your PostHog host uses plain http, serve it over https and update the connection's host. Remove Create Project from any agent's tool list and use a flow step instead.
+
+If a Custom API Call step targets a host other than your PostHog API Host, change it to a path on the API Host, or use an HTTP step for the other host.
+
+#### PDFMonkey 0.3.0: Generate Document, Find Document and Delete Document are builder-only
+
+Generate Document, Find Document and Delete Document are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
+
+#### What you need to do
+
+Agents that used these actions switch to their twins: Generate Document (AI), Get Document (AI) and Delete Document (AI). Flow steps keep running on the version they were built with until you upgrade them.
+
+#### Netlify 0.2.0: Start Deploy returns a build, and four actions are builder-only
+
+Start Deploy used to return a deploy. From Netlify 0.2.0 it starts a build through `/sites/{id}/builds` and returns that build: `id` is now the build ID, the deploy fields are gone, and the new `deploy_id` points to the deploy the build creates.
+
+Get Site, List Files, List Site Deploys and Start Deploy are no longer offered to AI agents. They keep working in flows.
+
+#### What you need to do
+
+If a later step reads `{{start_deploy.id}}` or other deploy fields, read `deploy_id` instead, and use Get Deploy with it for the deploy's details. Agents that used these actions switch to Get Site by ID, List Files by Site ID, List Site Deploys by Site ID and Start Deploy by Site ID. Steps keep running on the version they were built with until you upgrade them.
+
+#### Invoice Ninja 0.5.0: Get Report returns columns and rows, the existing actions are builder-only, and some text inputs changed type
+
+Get Report used to send a GET to `/api/v1/reports/<type>`, which does not return report data, and returned whatever came back (or an error message as a successful step). From Invoice Ninja 0.5.0 it runs the report and returns `{ reportType, columns, rows, rowCount }`, where each row is keyed by column key (for example `client.name`). It also gains a date range and fails the step on API errors.
+
+Create Task, Check Task Existence, Get Client Details from e-mail, Get Invoices, Get Report, Create Invoice, Create Recurring Invoice and Perform Action on Recurring Invoice are now builder-only. AI agents use their twins: Create Task (by IDs), List Tasks, Find Clients, List Invoices, Run Report, Create Invoice (from line items), Create Recurring Invoice (from line items), and Start, Stop, Send Now or Delete Recurring Invoice.
+
+Several single-line inputs (client name and address, task number, client email, recurring invoice ID) moved from long text to short text, Private Notes moved to long text, and Invoice Discount is now a number, and the Client ID text box on Get Invoices and Get Report is now a Client dropdown. Values saved by older steps still parse. The API token is now a secret and the connection is checked when it is saved.
+
+TLS certificates are now checked on every request. A self-hosted Invoice Ninja server with a self-signed or expired certificate fails after the upgrade.
+
+#### What you need to do
+
+If a later step reads Get Report's output, map it to `rows` and `columns`. If you self-host Invoice Ninja with a self-signed certificate, give the server a certificate from a trusted authority (for example Let's Encrypt). Agents that used the builder actions as tools switch to the twins above. Steps keep running on the version they were built with until you upgrade them.
+
+#### Gotify 0.5.0: Send Notification returns the message, and server URLs are checked
+
+Send Notification used to return the whole HTTP response, `{ status, headers, body }`. From Gotify 0.5.0 it returns the created message itself (`id`, `appid`, `message`, `title`, `priority`, `extras`, `date`), which was `body` before. The app token is now sent in the `X-Gotify-Key` header instead of the URL query string, and a priority of `0` is sent as `0` instead of being dropped.
+
+The connection's server URL must now be an `http` or `https` URL without a username, password, query string or fragment (a sub-path such as `https://example.com/gotify` is kept). Connections are checked against the server's `/health` endpoint when saved. TLS certificates are now checked on every request; the old Send Notification skipped this check, so a Gotify server with a self-signed certificate fails after the upgrade.
+
+#### What you need to do
+
+If a later step reads `body.id` or another field under `body` from Send Notification, read it from the top level instead (`id`). A connection whose server URL has credentials or a query string must be updated to the plain server URL. A server with a self-signed certificate needs a certificate from a trusted authority (for example Let's Encrypt), or its CA added to the trust store of the machine running Activepieces (`NODE_EXTRA_CA_CERTS`). Steps keep running on the version they were built with until you upgrade them.
+
+#### Discourse 0.3.0: the forum URL must use https and a public address, and actions return flat fields
+
+The Discourse connection used to send your API key to whatever URL was entered, including plain `http://` and local or private network addresses. From 0.3.0 the Website URL must start with `https://` and must not point to `localhost` or a private/LAN IP address; such connections now fail with a clear error, and new connections are checked when you save them.
+
+Create Post, Create Topic, Change User Trust Level and Send Private Message used to return the raw HTTP response (`{status, headers, body}`). From 0.3.0 they return the result fields directly (for example `id`, `topic_id`, `url`), so a reference such as `{{step.body.id}}` no longer resolves after the upgrade.
+
+Add Users to Group used to return Discourse's response as is (`success: "OK"` and `usernames` and `emails` as lists). From 0.3.0 it returns `{ group_id, success, usernames, skipped_usernames, emails }`, where `success` is `true` and the names and emails are comma-separated text.
+
+#### What you need to do
+
+If your Discourse forum is reached over `http://` or on a private network, serve it over https at a public address and update the connection's Website URL. After upgrading a step that uses Create Post, Create Topic, Change User Trust Level or Send Private Message, change later references from `{{step.body.<field>}}` to `{{step.<field>}}` (for example `{{step.body.id}}` becomes `{{step.id}}`). Change User Trust Level nested its fields under `user`, so `{{step.body.user.trust_level}}` becomes `{{step.trust_level}}`, `{{step.body.user.username}}` becomes `{{step.username}}`, and the user's ID is `{{step.user_id}}`. Steps keep running on the version they were built with until you upgrade them. If a later step reads Add Users to Group's output, use `{{step.usernames}}` (now comma-separated text) instead of the `usernames` list, and check `{{step.skipped_usernames}}` for users that were not added.
+
+#### Matrix 0.6.0: Send Message returns the event ID, is builder-only, and the Home Server must be the server's own URL
+
+Send Message used to return the raw HTTP response of the send call (`status`, `headers` and a `body` holding `event_id`). From Matrix 0.6.0 it returns `{ eventId, roomId, transactionId }`. The room is now picked from a dropdown of joined rooms (Room Alias stays as an optional fallback), and the action is builder-only: AI agents use the new **Send Text Message** action instead.
+
+The connection's **Home Server** is now checked when it is saved and on every run. It must be an `https` URL of the homeserver itself, such as `https://matrix-client.matrix.org` (plain `http` is accepted only for `localhost`). An Element web link such as `https://app.element.io/#/home` is rejected with a message that says which URL to use instead.
+
+Custom API Call now only accepts URLs on the connection's homeserver. A step that pointed it at another host fails after the upgrade.
+
+#### What you need to do
+
+If a later step reads `body.event_id` from Send Message, read `eventId` instead. If a Custom API Call step calls another host, point it at your homeserver or use the HTTP piece. Agents that used Send Message as a tool switch to Send Text Message. If a Matrix connection fails with the Home Server message, reconnect it with your homeserver's URL (shown in Element under Settings, Help & About). Steps keep running on the version they were built with until you upgrade them.
+
+#### Close 0.3.0: Find Lead and Find Contact drop the "Starts With" and "Ends With" match options
+
+Find Lead and Find Contact no longer offer the **Starts With** and **Ends With** match options. They never worked: Close's search ignored them, so a step using one did not filter as its label said. A step upgraded to Close 0.3.0 with one of these options saved fails validation until a supported option is picked.
+
+The New Lead, New Contact and other Close webhook triggers now drop duplicate deliveries of the same Close event, so a flow runs once per event. Opportunity **Value** is now labelled as cents, which is what Close always expected.
+
+#### What you need to do
+
+Steps keep running on the version they were built with until you upgrade them. When you upgrade a Find Lead or Find Contact step that used Starts With or Ends With, switch its Match Type to **All Words (any order)** or **Exact Phrase**.
+
+#### Snowflake 0.4.0: Update Row needs a WHERE condition, stricter limits, query timeout and stage paths
+
+From Snowflake 0.4.0 several actions validate their inputs where they used to pass them straight to Snowflake:
+
+- **Update Row** fails when the WHERE condition is empty, instead of updating every row in the table. A new **Update All Rows** toggle allows it.
+- **Search Rows** fails when **Row Limit** is not a whole number between 1 and 10,000. Before, any value went into `LIMIT`.
+- **Run Query** and **Run Multiple Queries**: the **Query Timeout (ms)** value used to be passed to the Snowflake driver as its connection timeout, so long queries were not stopped. It now sets Snowflake's `STATEMENT_TIMEOUT_IN_SECONDS`, which cancels any query that runs longer than the value (30 seconds by default, at most 540 seconds).
+- **Load Data from Stage**: the stage path is now parsed and checked. User (`@~`) and table (`@%`) stages are rejected, the stage name must be a valid (optionally qualified) name, and the folder part may only contain letters, digits, spaces and `- _ . / = + % ~` (no `..`).
+
+#### What you need to do
+
+- Update Row: if a step is meant to change every row, turn on **Update All Rows**; otherwise add a WHERE condition.
+- Search Rows: keep **Row Limit** between 1 and 10,000. For more rows, use **Run Query** with your own `LIMIT`.
+- Run Query and Run Multiple Queries: if a query takes longer than 30 seconds, raise **Query Timeout (ms)** (up to 540 000). Queries that need more than 540 seconds should run outside the flow, for example as a Snowflake task.
+- Load Data from Stage: use a named stage (`@stage_name/folder/` or `@schema.stage_name/folder/`). For user or table stages, or paths with other characters, use **Run Query** with your own `COPY INTO`.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Pdfcrowd 0.3.0: Convert URL to PDF and Convert HTML to PDF are builder-only
 
 Convert URL to PDF and Convert HTML to PDF are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
@@ -109,6 +237,7 @@ Most code steps keep working unchanged: sources are transpiled to CommonJS, so N
 - **Custom deployments** that do not use the official Docker images must provide a Deno binary and point `AP_DENO_PATH` at it; without it every code step fails at spawn.
 
 To find affected steps after upgrading, search your logs for the structured `Code step failed` warning — it carries the flow run, flow version, project, step name, the runtime that executed the step (`codeRuntime: deno|legacy`), and the error message, so you can group failures by step and error. To pin a misbehaving step to the legacy runtime while you fix it (available on every edition), set `AP_API_KEY` in your environment and call `POST /v1/admin/flows/revert-from-deno` with the `api-key` header and a body of exactly one of `flowIds`, `projectId`, or `platformId`; this sets `useDeno: false` on the affected steps, and `migrate-to-deno` moves them back.
+
 #### Each chat keeps the AI model and key it started on
 
 A chat used to run on whatever key was the **Default AI key** at the time of each message. Now a chat remembers the key and model it first ran on. Changing the Default AI key affects new chats only. An existing chat moves to the new default only when its key is deleted, or no longer covers the chat's project or model.

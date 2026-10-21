@@ -9,17 +9,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({
   options: undefined as unknown,
-  pickerProps: undefined as { withTiers?: boolean } | undefined,
+  pickerProps: undefined as
+    | { withTiers?: boolean; surface?: string }
+    | undefined,
+  hookSurface: undefined as string | undefined,
 }));
 
 vi.mock('@/features/agents/ai-model/hooks', () => ({
   aiModelHooks: {
-    useModelOptions: () => ({ data: state.options }),
+    useModelOptions: ({ surface }: { surface: string }) => {
+      state.hookSurface = surface;
+      return { data: state.options };
+    },
   },
 }));
 
 vi.mock('@/features/agents/ai-model/model-picker', () => ({
-  ModelPicker: (props: { withTiers?: boolean }) => {
+  ModelPicker: (props: { withTiers?: boolean; surface?: string }) => {
     state.pickerProps = props;
     return <div data-testid="model-picker" />;
   },
@@ -49,12 +55,16 @@ function render({
   value,
   onChange,
   pieceVersion = '0.14.1',
+  actionName = 'run_agent',
   disabled = false,
+  hideHeading,
 }: {
   value: unknown;
   onChange: (value: unknown) => void;
   pieceVersion?: string;
+  actionName?: string;
   disabled?: boolean;
+  hideHeading?: boolean;
 }) {
   act(() => {
     root.render(
@@ -62,8 +72,10 @@ function render({
         value={value}
         onChange={onChange}
         pieceVersion={pieceVersion}
+        actionName={actionName}
         disabled={disabled}
-      />
+        hideHeading={hideHeading}
+      />,
     );
   });
 }
@@ -136,12 +148,78 @@ describe('the model field on a Run Agent step', () => {
 
     expect(state.pickerProps?.withTiers).toBe(false);
     expect(container.textContent).toContain(
-      'Update this step to the latest version to use your tiers.'
+      'Update this step to the latest version to use your tiers.',
     );
     expect(onChange).toHaveBeenCalledWith({
       provider: AIProviderName.ACTIVEPIECES,
       model: 'fast',
       configId: 'managed',
     });
+  });
+});
+
+describe('the model field on an AI piece text step', () => {
+  it('lists flow models for Ask AI and leaves the heading to its section', () => {
+    render({
+      value: undefined,
+      onChange: vi.fn(),
+      pieceVersion: '0.15.0',
+      actionName: 'askAi',
+    });
+
+    expect(state.hookSurface).toBe('flow');
+    expect(state.pickerProps?.surface).toBe('flow');
+    expect(state.pickerProps?.withTiers).toBe(true);
+    expect(container.textContent).not.toContain('AI Model *');
+  });
+
+  it('lists tool-calling models for Extract, which answers through a tool', () => {
+    render({
+      value: undefined,
+      onChange: vi.fn(),
+      pieceVersion: '0.15.0',
+      actionName: 'extractStructuredData',
+    });
+
+    expect(state.pickerProps?.surface).toBe('agent');
+  });
+
+  it('writes the default once on a new Summarize step and shows its own heading', () => {
+    const onChange = vi.fn();
+
+    render({
+      value: undefined,
+      onChange,
+      pieceVersion: '0.15.0',
+      actionName: 'summarizeText',
+    });
+
+    expect(onChange).toHaveBeenCalledWith({ modelTierId: 'tier-1' });
+    expect(container.textContent).toContain('AI Model *');
+  });
+
+  it('drops its heading when the form label above it carries the expression switch', () => {
+    render({
+      value: undefined,
+      onChange: vi.fn(),
+      pieceVersion: '0.15.0',
+      actionName: 'summarizeText',
+      hideHeading: true,
+    });
+
+    expect(container.textContent).not.toContain('AI Model *');
+  });
+
+  it('never overwrites a model held in an expression', () => {
+    const onChange = vi.fn();
+
+    render({
+      value: '{{step_1.model}}',
+      onChange,
+      pieceVersion: '0.15.0',
+      actionName: 'askAi',
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

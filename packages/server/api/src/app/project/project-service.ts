@@ -5,6 +5,7 @@ import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { userService } from '../user/user-service'
+import { projectWorkerGroupService } from '../workers/worker-groups/project-worker-group.service'
 import { projectHooks, ProjectPostCreateContext } from './project-hooks'
 import { projectRepo } from './project-repo'
 

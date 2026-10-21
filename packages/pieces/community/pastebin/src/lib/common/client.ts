@@ -1,92 +1,59 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-export enum PastePrivacy {
-  PUBLIC = '0',
-  UNLISTED = '1',
-  PRIVATE = '2',
+import type { PastebinAuthValue } from './types';
+
+function baseUrl(): string {
+  return BASE_URL;
 }
 
-export enum PasteExpiry {
-  NEVER = 'N',
-  TEN_MINUTES = '10M',
-  ONE_HOUR = '1H',
-  ONE_DAY = '1D',
-  ONE_WEEK = '1W',
-  TWO_WEEKS = '2W',
-  ONE_MONTH = '1M',
-  SIX_MONTHS = '6M',
-  ONE_YEAR = '1Y',
-}
-
-export interface PasteCreateRequest {
-  paste_code: string;
-  paste_private?: PastePrivacy;
-  paste_name?: string;
-  paste_expiry_date?: string;
-  paste_format?: string;
-  folder_key?: string;
-}
-
-export class PastebinClient {
-  private user_key?: string;
-
-  constructor(private token: string) {}
-
-  setUserKey(user_key: string) {
-    this.user_key = user_key;
+async function request({
+  auth,
+  userKey,
+  script,
+  option,
+  fields,
+}: RequestParams & { auth: PastebinAuthValue }): Promise<string> {
+  const body = new URLSearchParams({
+    api_option: option,
+    api_dev_key: auth.props.token,
+  });
+  if (userKey) {
+    body.append('api_user_key', userKey);
   }
-
-  async makeRequest(
-    script: string,
-    option: string,
-    body: Record<string, any>
-  ): Promise<string> {
-    const req = new URLSearchParams({
-      api_option: option,
-      api_dev_key: this.token,
-    });
-    if (this.user_key) {
-      req.append('api_user_key', this.user_key);
-    }
-    Object.keys(body)
-      .filter((k) => body[k] !== undefined && body[k] !== null)
-      .forEach((k) => req.append('api_' + k, body[k]));
-    const res = await httpClient.sendRequest<string>({
-      method: HttpMethod.POST,
-      url: 'https://pastebin.com/api/' + script,
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded',
-      },
-      body: req,
-      responseType: 'text',
-    });
-    return res.body;
-  }
-
-  async login(username: string, password: string): Promise<string> {
-    return await this.makeRequest('api_login.php', 'login', {
-      user_name: username,
-      user_password: password,
-    });
-  }
-
-  async createPaste(request: PasteCreateRequest): Promise<string> {
-    return await this.makeRequest('api_post.php', 'paste', request);
-  }
-
-  async getPasteContent(id: string): Promise<string> {
-    if (this.user_key) {
-      return await this.makeRequest('api_raw.php', 'show_paste', {
-        paste_key: id,
-      });
-    } else {
-      return (
-        await httpClient.sendRequest<string>({
-          method: HttpMethod.GET,
-          url: 'https://pastebin.com/raw/' + id,
-          responseType: 'text',
-        })
-      ).body;
+  for (const [key, value] of Object.entries(fields)) {
+    if (value !== undefined && value !== null) {
+      body.append('api_' + key, value);
     }
   }
+  const response = await httpClient.sendRequest<string>({
+    method: HttpMethod.POST,
+    url: `${BASE_URL}/api/${script}`,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      Accept: '*/*',
+    },
+    body,
+    responseType: 'text',
+  });
+  return response.body;
 }
+
+async function getText({ path }: { path: string }): Promise<string> {
+  const response = await httpClient.sendRequest<string>({
+    method: HttpMethod.GET,
+    url: `${BASE_URL}${path}`,
+    responseType: 'text',
+  });
+  return response.body;
+}
+
+export const pastebinClient = { baseUrl, request, getText };
+
+const BASE_URL = 'https://pastebin.com';
+
+type RequestParams = {
+  userKey?: string;
+  script: string;
+  option: string;
+  fields: Record<string, string | undefined>;
+};

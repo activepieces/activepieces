@@ -1,4 +1,4 @@
-import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, AIProviderName, ErrorCode, formatPieceError, isFallbackWorthy, isNil, isObject, isProviderBillingError, isTransientProviderError, ProviderOutcomeSignal, spreadIfDefined, toError, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, agentToolSkills, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, apErrorOf, CHAT_CREDITS_PER_TOOL_CALL, chatBilling, ChatToolCall, LAZY_TOOL_NAME, PersistedAgentPart, SkillSurface, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolChoice, ToolExecutionOptions, ToolSet } from 'ai'
@@ -257,7 +257,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         },
         onError: ({ error }) => {
             log.error({ error }, 'Chat streamText error')
-            streamError = error instanceof Error ? error : new Error(String(error))
+            streamError = toError(error)
         },
     })
 
