@@ -18,8 +18,17 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.FETCH_WORKER_SETTINGS, (socket) => {
         return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
             const rawWorkerGroupValue = socket.handshake.auth?.workerGroupId
+            // AP_PROJECT_WORKER is deprecated in favor of AP_WORKER_GROUP_SCOPE but kept for backward compatibility.
             const projectWorker = socket.handshake.auth?.projectWorker === true
-            const assignment = workerGroupQueues.parseWorkerGroupValue({ value: typeof rawWorkerGroupValue === 'string' ? rawWorkerGroupValue : undefined, projectWorker })
+            const rawWorkerGroupScope = socket.handshake.auth?.workerGroupScope
+            const scope = workerGroupQueues.resolveScope({
+                projectWorker,
+                scope: typeof rawWorkerGroupScope === 'string' ? rawWorkerGroupScope : undefined,
+            })
+            const assignment = workerGroupQueues.parseWorkerGroupValue({
+                value: typeof rawWorkerGroupValue === 'string' ? rawWorkerGroupValue : undefined,
+                scope,
+            })
             const response = await machineService(app.log).onConnection(request, assignment)
             callback?.(response)
             createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, assignment, socket.id), app.log)

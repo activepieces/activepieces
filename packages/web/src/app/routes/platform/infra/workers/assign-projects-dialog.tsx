@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { workersApi } from '@/features/platform-admin/api/workers-api';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
@@ -75,18 +76,20 @@ function AssignProjectsContent({
   };
 
   const handleSave = async () => {
+    let changed = false;
     for (const project of allProjects) {
       const wasInGroup = project.workerGroupId === groupLabel;
       const isNowChecked = checkedIds.has(project.id);
       if (isNowChecked && !wasInGroup) {
-        await projectCollectionUtils.update(project.id, {
-          workerGroupId: groupLabel,
-        });
+        await workersApi.assignProject(project.id, groupLabel);
+        changed = true;
       } else if (!isNowChecked && wasInGroup) {
-        await projectCollectionUtils.update(project.id, {
-          workerGroupId: null,
-        });
+        await workersApi.assignProject(project.id, null);
+        changed = true;
       }
+    }
+    if (changed) {
+      await projectCollectionUtils.refetchProjects();
     }
     onOpenChange(false);
   };

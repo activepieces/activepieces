@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FlowTriggerType, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
+import { FlowTriggerType, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerGroupScope, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { workerGroupQueues } from '../../../../src/app/workers/worker-groups/worker-group-queues'
 import { jobQueue } from '../../../../src/app/workers/job-queue/job-queue'
@@ -21,8 +21,8 @@ describe('platformQueueMigrationService', () => {
     let toQueueName: string
 
     beforeEach(() => {
-        fromQueueName = workerGroupQueues.getPlatformGroupQueueName(apId())
-        toQueueName = workerGroupQueues.getPlatformGroupQueueName(apId())
+        fromQueueName = workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PLATFORM, workerGroupId: apId() })
+        toQueueName = workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PLATFORM, workerGroupId: apId() })
     })
 
     afterEach(async () => {
@@ -35,7 +35,7 @@ describe('platformQueueMigrationService', () => {
     it('returns early without touching queues when fromQueueName equals toQueueName', async () => {
         const platformId = apId()
         const flowVersionId = apId()
-        const sameQueue = workerGroupQueues.getPlatformGroupQueueName(apId())
+        const sameQueue = workerGroupQueues.getQueueName({ scope: WorkerGroupScope.PLATFORM, workerGroupId: apId() })
         const queue = await jobQueue(app.log).getOrCreateQueue({ queueName: sameQueue })
 
         await queue.upsertJobScheduler(
@@ -188,6 +188,43 @@ describe('platformQueueMigrationService', () => {
         expect(await toQueue.getWaitingCount()).toBe(1)
     })
 
+    describe('migrateFlowJobs', () => {
+        it('moves only the target flow executable jobs', async () => {
+            const flowA = apId()
+            const flowB = apId()
+            const fromQueue = await jobQueue(app.log).getOrCreateQueue({ queueName: fromQueueName })
+            const toQueue = await jobQueue(app.log).getOrCreateQueue({ queueName: toQueueName })
+
+            const jobIdA = apId()
+            const jobIdB = apId()
+            await fromQueue.add(jobIdA, buildWebhookJobData({ flowId: flowA }), { jobId: jobIdA })
+            await fromQueue.add(jobIdB, buildWebhookJobData({ flowId: flowB }), { jobId: jobIdB })
+
+            await platformQueueMigrationService(app.log).migrateFlowJobs({ fromQueueName, toQueueName, flowId: flowA })
+
+            expect(await fromQueue.getWaitingCount()).toBe(1)
+            expect(await toQueue.getWaitingCount()).toBe(1)
+
+            const [movedJob] = await toQueue.getJobs(['waiting'], 0, 0)
+            expect(movedJob.data.flowId).toBe(flowA)
+        })
+
+        it('does not move non-routable job types that carry the same flowId', async () => {
+            const flowId = apId()
+            const fromQueue = await jobQueue(app.log).getOrCreateQueue({ queueName: fromQueueName })
+            const toQueue = await jobQueue(app.log).getOrCreateQueue({ queueName: toQueueName })
+
+            const jobId = apId()
+            const pollingData = { ...buildPollingJobData({ platformId: apId(), flowVersionId: apId() }), flowId }
+            await fromQueue.add(jobId, pollingData, { jobId })
+
+            await platformQueueMigrationService(app.log).migrateFlowJobs({ fromQueueName, toQueueName, flowId })
+
+            expect(await fromQueue.getWaitingCount()).toBe(1)
+            expect(await toQueue.getWaitingCount()).toBe(0)
+        })
+    })
+
     describe('batch logic', () => {
         it('migrates all schedulers when count exceeds batchSize', async () => {
             const platformId = apId()
@@ -261,5 +298,15 @@ function buildPollingJobData({ platformId, flowVersionId }: { platformId: string
         flowId: apId(),
         triggerType: FlowTriggerType.PIECE,
         jobType: WorkerJobType.EXECUTE_POLLING,
+    }
+}
+
+function buildWebhookJobData({ flowId }: { flowId: string }) {
+    return {
+        projectId: apId(),
+        platformId: apId(),
+        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+        flowId,
+        jobType: WorkerJobType.EXECUTE_WEBHOOK,
     }
 }

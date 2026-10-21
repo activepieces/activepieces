@@ -299,7 +299,7 @@ const GetFlowRequestOptions = {
 const DeleteFlowRequestOptions = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.TABLE,
                 tableName: FlowEntity,
@@ -317,3 +317,4 @@ const DeleteFlowRequestOptions = {
         },
     },
 }
+
