@@ -32,6 +32,7 @@ describe('workerGroupQueues.isRoutableWorkerGroupId', () => {
     it('rejects values no worker can ever claim', () => {
         expect(workerGroupQueues.isRoutableWorkerGroupId('')).toBe(false)
         expect(workerGroupQueues.isRoutableWorkerGroupId('__none__')).toBe(false)
+        expect(workerGroupQueues.isRoutableWorkerGroupId('gpu:eu')).toBe(false)
     })
 
     it('accepts ordinary labels', () => {
