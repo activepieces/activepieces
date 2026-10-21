@@ -25,6 +25,10 @@ const SELF_SERVE_CONCURRENT_JOBS_LIMIT = 15
 const ENTERPRISE_CONCURRENT_JOBS_LIMIT = 30
 
 async function isPinnedToFlowGroup(jobData: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<boolean> {
+    const { data: workerGroupsEnabled } = await tryCatch(() => platformWorkerGroupService(log).isWorkerGroupsEnabled({ platformId: jobData.platformId }))
+    if (workerGroupsEnabled !== true) {
+        return false
+    }
     const { data: flowGroupId } = await tryCatch(() => flowWorkerGroupService(log).getFlowWorkerGroup({ flowId: jobData.flowId }))
     return !isNil(flowGroupId)
 }
