@@ -13,7 +13,7 @@ export const createContactNote = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Adds a free-text note (up to 255 characters) to one Tarvent contact by contact ID. Use to log context or activity against a contact. Returns the new note ID. Not idempotent: each call adds another note.',
+      'Adds a free-text note (up to 255 characters) to one Tarvent contact by contact ID. Use to log context or activity against a contact. Returns the contact ID and the note text; Tarvent does not return the new note ID (use List Contact Notes). Not idempotent: each call adds another note.',
     idempotent: false,
   },
   outputSchema: tarventOutputSchemas.contactNoteCreated,
@@ -29,12 +29,12 @@ export const createContactNote = createAction({
     const contactId = tarventCommon.requireText({ value: context.propsValue.contactId, label: 'Contact ID' });
     const message = tarventCommon.requireText({ value: context.propsValue.note, label: 'Note' });
     tarventCommon.checkLength({ value: message, label: 'Note', max: 255 });
-    const note = await tarventTransport.field<{ id: string }>({
+    await tarventTransport.field<{ id: string }>({
       auth: context.auth.props,
       query: 'mutation CreateContactNote($input: CreateContactNoteInput!) { createContactNote(input: $input) { id } }',
       variables: { input: { contactId, message } },
       name: 'createContactNote',
     });
-    return { id: note.id, contactId, message };
+    return { success: true, contactId, message };
   },
 });

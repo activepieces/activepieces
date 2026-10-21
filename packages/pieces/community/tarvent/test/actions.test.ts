@@ -11,6 +11,7 @@ vi.mock('@activepieces/pieces-common', async (importOriginal) => {
 import { tarventAuth } from '../src/lib/auth';
 import { createAudienceGroup } from '../src/lib/actions/create-audience-group';
 import { createContact } from '../src/lib/actions/create-contact';
+import { createContactNote } from '../src/lib/actions/create-contact-note';
 import { createSuppressionFilter } from '../src/lib/actions/create-suppression-filter';
 import { createTransaction, createTransactionAi } from '../src/lib/actions/create-transaction';
 import { tarventCustomApiCall } from '../src/lib/actions/custom-api-call';
@@ -120,11 +121,16 @@ describe('actions', () => {
     expect(input).toMatchObject({ lastName: 'Doe', updateExisting: true, profile: [{ dataFieldId: 'f1', value: '1' }] });
   });
 
-  it('Update Contact sends only set fields plus cleared ones', async () => {
+  it('Update Contact sends only the set fields', async () => {
     sendRequest.mockResolvedValueOnce(ok({ data: { updateContact: { id: 'c1' } } }));
-    await runAction({ action: updateContact, propsValue: { audienceId: 'a1', contactId: 'c1', firstName: 'Ann', clearFields: ['streetAddress2'] } });
-    expect(call().body.variables.input).toEqual({ id: 'c1', audienceId: 'a1', firstName: 'Ann', streetAddress2: '' });
+    await runAction({ action: updateContact, propsValue: { audienceId: 'a1', contactId: 'c1', firstName: 'Ann', lastName: '' } });
+    expect(call().body.variables.input).toEqual({ id: 'c1', audienceId: 'a1', firstName: 'Ann' });
     await expect(runAction({ action: updateContact, propsValue: { audienceId: 'a1', contactId: 'c1' } })).rejects.toThrow(/Nothing to update/);
+  });
+
+  it('Add Note To Contact does not report the contact ID as a note ID', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { createContactNote: { id: 'c1' } } }));
+    await expect(runAction({ action: createContactNote, propsValue: { contactId: 'c1', note: 'Hi' } })).resolves.toEqual({ success: true, contactId: 'c1', message: 'Hi' });
   });
 
   it('Add/Remove Contact Tag maps the legacy lower-case remove value', async () => {
