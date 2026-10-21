@@ -10,7 +10,7 @@ Daily job that finds enterprise Cloud platforms whose runs end in `MEMORY_LIMIT_
 **Source** — the read-only Postgres replica (`OOM_PG_URL` + `OOM_PG_SSL_CA` in the script's own `.env`), never the prod `/root/queue/.env`.
 **Table** — ClickHouse `ops.platform_oom_daily` on the `Activepieces` service: one row per `(day, platform_id)` with OOM > 0, carrying `platform_name`, `plan`, `oom_runs`, `distinct_flows_oom`, `total_runs`. `ReplacingMergeTree`, so read with `FINAL`; insert user `oom_tracker`.
 **Alert** — every enterprise platform with at least one OOM run yesterday, no dedup. One Discord message per day, posted straight to a channel webhook (`DISCORD_OOM_WEBHOOK_URL`), not through Betterstack, so no incident and no auto-created Linear ticket carrying customer names. One line per platform, sorted by OOM runs, trimmed to Discord's 2,000-character limit with "…and N more"; nothing is sent on a day with no OOMs.
-**Dashboard** — HyperDX "Enterprise OOM Tracker" (`6ad7451181c0f6e143965a5e`): top platforms, OOM runs and platforms hit per day, and the per-day list each alert sends.
+**Dashboard** — HyperDX [Enterprise OOM Tracker](https://hyperdx.clickhouse.cloud/dashboards/6ad7451181c0f6e143965a5e): top platforms, OOM runs and platforms hit per day, and the per-day list each alert sends.
 **Heartbeat** — Betterstack heartbeat 512932 "platform-oom-tracker (SRE-237)", 1d period + 3h grace, pinged only after insert and alert succeed; `/fail` on error.
 **Enterprise** — `plan` not in `free, appsumo, free_legacy, plus*, team*, standard, old_unlimited_trial*`. See the plan-name gotcha in *EE Platform Plans & Billing*.
 

@@ -104,4 +104,4 @@ Streams platform/project events to webhook URLs in real time — internal AP flo
 - **Analytics** — usage reporting
 - **Audit Logs** — the persisted security-action record
 - **Logging & Metrics (evlog)** — wide events, drains, log-based metrics, `system.snapshot`, OTLP queue gauge
-- **Enterprise OOM Tracker** — daily `MEMORY_LIMIT_EXCEEDED` count per enterprise platform in ClickHouse, alerting on new offenders
+- **Enterprise OOM Tracker** — daily `MEMORY_LIMIT_EXCEEDED` count per enterprise platform in ClickHouse, with a daily Discord report of every affected platform
