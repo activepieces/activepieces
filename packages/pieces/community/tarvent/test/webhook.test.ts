@@ -56,10 +56,18 @@ describe('webhook lifecycle', () => {
     expect(store.data.get('tarvent_contact_added')).toEqual({ id: 'w1' });
   });
 
+  it('keeps the stored id when Tarvent does not confirm the delete', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { deleteWebhook: false } }));
+    const store = memoryStore();
+    await store.put('tarvent_contact_added', { id: 'w1' });
+    await expect(handlers.onDisable({ auth: TEST_AUTH, store })).rejects.toThrow(/did not confirm deleteWebhook/);
+    expect(store.data.get('tarvent_contact_added')).toEqual({ id: 'w1' });
+  });
+
   it('drops a retried delivery with the same event id', async () => {
     const store = memoryStore();
     const body = { id: 'evt1', payload: {} };
-    expect(await handlers.run({ payload: { body }, store })).toEqual([body]);
+    expect(await handlers.run({ payload: { body }, store })).toEqual([{ ...body, _dedupe_key: 'evt1' }]);
     expect(await handlers.run({ payload: { body }, store })).toEqual([]);
     expect(await handlers.run({ payload: { body: { id: 'evt2' } }, store })).toHaveLength(1);
   });

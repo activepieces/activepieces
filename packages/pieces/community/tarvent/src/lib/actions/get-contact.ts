@@ -19,10 +19,10 @@ export const getContact = createAction({
   outputSchema: tarventOutputSchemas.findContact,
   props: {
     audienceId: tarventCommon.audienceId(true, 'Audience to search.'),
-    email: Property.ShortText({ displayName: 'Contact email', description: 'Find the contact by email. Leave empty when using Contact ID.', required: false }),
+    email: Property.ShortText({ displayName: 'Contact email', description: 'Find the contact by email. A value without @ is treated as a contact ID, as in earlier versions.', required: false }),
     contactId: Property.ShortText({ displayName: 'Contact ID', description: 'Find the contact by ID. Leave empty when using email.', required: false }),
   },
   async run(context) {
-    return tarventOperations.findContact({ auth: context.auth.props, audienceId: context.propsValue.audienceId, email: context.propsValue.email, contactId: context.propsValue.contactId });
+    return tarventOperations.findContact({ auth: context.auth.props, audienceId: context.propsValue.audienceId, email: context.propsValue.email, contactId: context.propsValue.contactId, legacyIdInEmail: true });
   },
 });

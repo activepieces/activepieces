@@ -101,8 +101,26 @@ describe('actions', () => {
 
   it('Find Contact needs exactly one of email or ID and reports not found', async () => {
     await expect(runAction({ action: getContact, propsValue: { audienceId: 'a1' } })).rejects.toThrow(/exactly one/);
-    sendRequest.mockResolvedValueOnce(ok({ errors: [{ message: 'NotFound: No contact not found.', extensions: { code: '1030' } }], data: { contact: null } }));
+    sendRequest
+      .mockResolvedValueOnce(ok({ errors: [{ message: 'NotFound: No contact not found.', extensions: { code: '1030' } }], data: { contact: null } }))
+      .mockResolvedValueOnce(ok({ data: { contacts: { nodes: [], pageInfo: { hasNextPage: false } } } }));
     await expect(runAction({ action: getContact, propsValue: { audienceId: 'a1', email: 'n@example.com' } })).resolves.toEqual({ found: false, contact: null });
+    expect(call(1).body.variables).toMatchObject({ input: { audienceId: 'a1' }, first: 1 });
+  });
+
+  it('Find Contact fails when the audience itself is missing or not granted', async () => {
+    sendRequest
+      .mockResolvedValueOnce(ok({ errors: [{ message: 'NotFound: No contact not found.', extensions: { code: '1030' } }], data: { contact: null } }))
+      .mockResolvedValueOnce(ok({ errors: [{ message: 'BadRequest: Access to audience has not been granted', extensions: { code: '1090' } }] }));
+    await expect(runAction({ action: getContact, propsValue: { audienceId: 'gone', email: 'n@example.com' } })).rejects.toThrow(/Access to audience/);
+    sendRequest.mockResolvedValueOnce(ok({ errors: [{ message: "NotFound: Entity 'Audience' was not found.", extensions: { code: '1030' } }] }));
+    await expect(runAction({ action: getContact, propsValue: { audienceId: 'gone', email: 'n@example.com' } })).rejects.toThrow(/Audience/);
+  });
+
+  it('Find Contact keeps treating an email value without @ as a contact ID', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { contact: { id: 'c9' } } }));
+    await runAction({ action: getContact, propsValue: { audienceId: 'a1', email: 'c9' } });
+    expect(call().body.variables.input).toEqual({ audienceId: 'a1', emailAddress: null, id: 'c9' });
   });
 
   it('Create Audience Group works without a description', async () => {

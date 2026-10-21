@@ -145,10 +145,25 @@ async function createAudienceGroup({
   });
 }
 
-async function findContact({ auth, audienceId, email, contactId }: { auth: TarventCredentials; audienceId: unknown; email: unknown; contactId: unknown }) {
+async function findContact({
+  auth,
+  audienceId,
+  email,
+  contactId,
+  legacyIdInEmail = false,
+}: {
+  auth: TarventCredentials;
+  audienceId: unknown;
+  email: unknown;
+  contactId: unknown;
+  legacyIdInEmail?: boolean;
+}) {
   const audience = tarventCommon.requireText({ value: audienceId, label: 'Audience' });
-  const byEmail = tarventCommon.trimmed(email);
-  const byId = tarventCommon.trimmed(contactId);
+  const rawEmail = tarventCommon.trimmed(email);
+  const rawId = tarventCommon.trimmed(contactId);
+  const emailIsLegacyId = legacyIdInEmail && rawId === undefined && rawEmail !== undefined && !rawEmail.includes('@');
+  const byEmail = emailIsLegacyId ? undefined : rawEmail;
+  const byId = emailIsLegacyId ? rawEmail : rawId;
   if ((byEmail === undefined) === (byId === undefined)) {
     throw new Error('Enter either Contact email or Contact ID (exactly one).');
   }

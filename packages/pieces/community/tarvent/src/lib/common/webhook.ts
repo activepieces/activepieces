@@ -1,3 +1,4 @@
+import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
 import { tarventClient, TarventWebhookEvent } from './client';
 import { TarventCredentials } from './transport';
 
@@ -175,6 +176,7 @@ function handlers({ type, storeKey }: { type: TarventWebhookType; storeKey: stri
           return [];
         }
         await context.store.put(`${storeKey}${SEEN_SUFFIX}`, remembered.seen);
+        return [{ ...body, [DEDUPE_KEY_PROPERTY]: eventId }];
       }
       return [body];
     },

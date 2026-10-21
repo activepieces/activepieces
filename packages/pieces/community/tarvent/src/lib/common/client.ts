@@ -16,6 +16,23 @@ function isNotFound(error: unknown): boolean {
   return error instanceof TarventApiError && error.code === NOT_FOUND_CODE;
 }
 
+async function assertAudienceReadable({ auth, audienceId }: { auth: TarventCredentials; audienceId: string }): Promise<void> {
+  await listPage<{ id: string }>({
+    auth,
+    operation: 'CheckAudience',
+    field: 'contacts',
+    selection: 'id',
+    argDefs: ', $input: GetAllContactsInput!',
+    args: ', input: $input',
+    variables: { input: { audienceId } },
+    first: 1,
+  });
+}
+
+function isContactNotFound(error: unknown): boolean {
+  return isNotFound(error) && error instanceof Error && /contact/i.test(error.message) && !/audience/i.test(error.message);
+}
+
 async function listPage<T>({
   auth,
   operation,
@@ -142,7 +159,8 @@ async function getContact({
       name: 'contact',
     });
   } catch (error) {
-    if (isNotFound(error)) {
+    if (isContactNotFound(error)) {
+      await assertAudienceReadable({ auth, audienceId });
       return null;
     }
     throw error;
@@ -220,11 +238,13 @@ async function createWebhook({
 
 async function deleteWebhook({ auth, id }: { auth: TarventCredentials; id: string }): Promise<void> {
   try {
-    await tarventTransport.field<unknown>({
+    await booleanMutation({
       auth,
-      query: 'mutation DeleteWebhook($id: String!) { deleteWebhook(id: $id) }',
+      operation: 'DeleteWebhook',
+      field: 'deleteWebhook',
+      argDefs: '$id: String!',
+      args: 'id: $id',
       variables: { id },
-      name: 'deleteWebhook',
     });
   } catch (error) {
     if (isNotFound(error)) {
