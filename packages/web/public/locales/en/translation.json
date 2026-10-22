@@ -2672,6 +2672,8 @@
   "Agent/Chat": "Agent/Chat",
   "sum of tools use + what each message costs": "sum of tools use + what each message costs",
   "Activepieces AI": "Activepieces AI",
+  "Activepieces AI is on for your trial": "Activepieces AI is on for your trial",
+  "Plans that include Embedding don't usually come with Activepieces AI. You can use both together only during the trial.": "Plans that include Embedding don't usually come with Activepieces AI. You can use both together only during the trial.",
   "what the call costs": "what the call costs",
   "AI Steps (per call)": "AI Steps (per call)",
   "BYOK": "BYOK",

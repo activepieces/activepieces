@@ -8,7 +8,7 @@ import { distributedLock, distributedStore } from '../../../../database/redis-co
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { ActivateLicenseParams, ApplyAppSumoPlanParams, AppSumoAiCreditsUsage, BillingInfo, BillingOverview, BillingProvider, CreditsAndAppSumoState, CreditsGateState, CreditsUsage, emptyBillingOverview, TrackFeatureParams } from '../../../../platform/billing-provider'
 import { platformPlanTelemetry } from '../platform-plan-telemetry'
-import { assertSeatsNotBelowActiveUsers, platformPlanService } from '../platform-plan.service'
+import { assertSeatsNotBelowActiveUsers, platformPlanRepo, platformPlanService } from '../platform-plan.service'
 import { selfServeTrialUtils } from '../self-serve-trial-utils'
 import { autumnConsole, autumnUtils, BalanceCacheSnapshot, ConsoleCustomerCall, CreditsBalanceCache } from './autumn-utils'
 
@@ -225,6 +225,21 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     getPlatformSelfServeTrial: async (platformId: string) => {
         return (await selfServeTrialUtils.read(platformId))?.dates ?? null
     },
+    planCarriesSelfServeTrial: async (platformId: string) => {
+        const { data: dates, error } = await tryCatch(() => readOrFetchSelfServeTrialDates({ log, platformId }))
+        if (!isNil(error)) {
+            log.warn({ error, platform: { id: platformId } }, 'Failed to read the self-serve trial dates; treating the plan as not carrying the trial')
+            return false
+        }
+        if (isNil(dates)) {
+            return false
+        }
+        if (isTrialRunning(dates)) {
+            return true
+        }
+        const plan = await platformPlanRepo().findOneBy({ platformId })
+        return !isNil(plan) && apDayjs(plan.updated).isBefore(dates.endsAt)
+    },
 })
 
 async function readSelfServeTrialStatus({ log, platformId }: PlatformLogParams): Promise<SelfServeTrialStatus> {
@@ -248,6 +263,7 @@ async function readOrFetchSelfServeTrialDates({ log, platformId }: PlatformLogPa
             }
             const client = await autumnUtils.resolveClientForPlatform(log, platformId)
             if (isNil(client)) {
+                await selfServeTrialUtils.save({ platformId, dates: null })
                 return null
             }
             return selfServeTrialUtils.saveFromCustomer({ platformId, customer: await client.getCustomer() })
@@ -258,13 +274,17 @@ async function readOrFetchSelfServeTrialDates({ log, platformId }: PlatformLogPa
 function toSelfServeTrialStatus({ plan, dates }: ToSelfServeTrialStatusParams): SelfServeTrialStatus {
     if (!isNil(dates)) {
         return {
-            state: Date.parse(dates.endsAt) > Date.now() ? 'active' : 'ended',
+            state: isTrialRunning(dates) ? 'active' : 'ended',
             startedAt: dates.startedAt,
             endsAt: dates.endsAt,
             extended: false,
         }
     }
     return isSelfServeTrialPlan(plan.plan) ? ELIGIBLE_SELF_SERVE_TRIAL : INELIGIBLE_SELF_SERVE_TRIAL
+}
+
+function isTrialRunning(dates: SelfServeTrialDates): boolean {
+    return Date.parse(dates.endsAt) > Date.now()
 }
 
 async function withEnrolledCreds<T>({ log, platformId, fallback, fn }: WithEnrolledCredsParams<T>): Promise<T> {
