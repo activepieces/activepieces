@@ -47,6 +47,7 @@ export const newImageCompletedTrigger = createTrigger({
       pending: images.filter((i) => i.status === 'pending').map((i) => toPendingEntry(i)).slice(0, MAX_PENDING),
       head: newestCreatedAt(images) ?? new Date().toISOString(),
       backfill: null,
+      recovery: null,
     });
   },
   async onDisable(context) {
@@ -63,6 +64,7 @@ export const newImageCompletedTrigger = createTrigger({
   },
   async run(context) {
     const apiKey = context.auth.secret_text;
+    const pollStartedAt = Date.now() - CLOCK_SKEW_MS;
     const stored = await context.store.get<StoredPollState>(STORE_KEY);
     const state: PollState = {
       seen: stored?.seen ?? [],
@@ -71,6 +73,7 @@ export const newImageCompletedTrigger = createTrigger({
       ),
       head: stored?.head ?? null,
       backfill: stored?.backfill ?? null,
+      recovery: stored?.recovery ?? null,
     };
     const seen = new Set(state.seen);
     const fresh = await scanPages({
@@ -98,7 +101,28 @@ export const newImageCompletedTrigger = createTrigger({
         ? null
         : { page: older.nextPage, until: backfill.until };
     }
-    const recent = dedupe([...fresh.images, ...backfillImages]);
+    let recovery = state.recovery;
+    const recoveredImages: NormalizedImage[] = [];
+    if (recovery && fresh.reachedStop) {
+      const since = Date.parse(recovery.since);
+      const scanned = await scanPages({
+        apiKey,
+        startPage: recovery.page,
+        stopAt: recovery.until,
+        maxPages: MAX_PAGES_PER_SCAN,
+      });
+      recoveredImages.push(
+        ...scanned.images.filter(
+          (i) =>
+            i.status !== 'completed' ||
+            (i.completed_at !== null && Date.parse(i.completed_at) >= since)
+        )
+      );
+      recovery = scanned.reachedStop
+        ? null
+        : { page: scanned.nextPage, until: recovery.until, since: recovery.since };
+    }
+    const recent = dedupe([...fresh.images, ...backfillImages, ...recoveredImages]);
     const recentByUid = new Map(recent.map((i) => [i.uid, i]));
     const pendingToCheck = state.pending.filter((entry) => !recentByUid.has(entry.uid));
     const pendingChecks = await Promise.all(
@@ -114,9 +138,10 @@ export const newImageCompletedTrigger = createTrigger({
     ]);
     const overflowFloor = oldestCreatedAt(stillPending.slice(MAX_PENDING));
     if (overflowFloor !== null) {
-      backfill = {
+      recovery = {
         page: 1,
-        until: backfill ? olderOf({ current: backfill.until, other: overflowFloor }) : overflowFloor,
+        until: recovery ? olderOf({ current: recovery.until, other: overflowFloor }) : overflowFloor,
+        since: recovery ? recovery.since : new Date(pollStartedAt).toISOString(),
       };
     }
     await context.store.put<PollState>(STORE_KEY, {
@@ -124,6 +149,7 @@ export const newImageCompletedTrigger = createTrigger({
       pending: stillPending.slice(0, MAX_PENDING),
       head: newestCreatedAt(fresh.images) ?? state.head,
       backfill,
+      recovery,
     });
     return emitted.reverse();
   },
@@ -239,6 +265,7 @@ const STORE_KEY = 'bannerbear_new_image_completed_state';
 const MAX_PAGES_PER_SCAN = 10;
 const MAX_SEEN = 5000;
 const MAX_PENDING = 2000;
+const CLOCK_SKEW_MS = 5 * 60 * 1000;
 const MAX_PENDING_CHECKS = 25;
 
 type PollState = {
@@ -246,6 +273,7 @@ type PollState = {
   pending: PendingEntry[];
   head: string | null;
   backfill: { page: number; until: string | null } | null;
+  recovery: { page: number; until: string | null; since: string } | null;
 };
 
 type PendingEntry = { uid: string; created_at: string | null };
