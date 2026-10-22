@@ -173,37 +173,10 @@ describe('EditFlowOrViewDraftButton', () => {
   });
 
   it('leaves a test run on the flow page in place and keeps the open step', async () => {
-    const draft: FlowVersion = {
-      ...publishedVersion(),
-      state: FlowVersionState.DRAFT,
-    };
-    const flow: PopulatedFlow = {
-      ...publishedFlowWithNoDraft(),
-      publishedVersionId: null,
-      version: draft,
-    };
-    const store = createStore({ flow });
+    const { flow, store } = await storeWithTestRun();
     store.getState().selectStepByName('step_1');
-    await act(async () => {
-      await store
-        .getState()
-        .setRun({ ...flowRun(), environment: RunEnvironment.TESTING }, draft);
-    });
     harness.getFlow.mockResolvedValue(flow);
-    render(
-      <MemoryRouter initialEntries={['/flows/flow-1']}>
-        <QueryClientProvider client={new QueryClient()}>
-          <BuilderStateContext.Provider value={store}>
-            <Routes>
-              <Route
-                path="/flows/:flowId"
-                element={<EditFlowOrViewDraftButton onCanvas={false} />}
-              />
-            </Routes>
-          </BuilderStateContext.Provider>
-        </QueryClientProvider>
-      </MemoryRouter>,
-    );
+    renderOnFlowPage(store);
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit flow' }));
 
@@ -216,7 +189,77 @@ describe('EditFlowOrViewDraftButton', () => {
     });
     expect(harness.getFlow).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps the tab read-only after leaving a test run until the newest draft arrives', async () => {
+    const { flow, store } = await storeWithTestRun();
+    const response = Promise.withResolvers<PopulatedFlow>();
+    harness.getFlow.mockReturnValue(response.promise);
+    renderOnFlowPage(store);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit flow' }));
+    await waitFor(() => {
+      expect(harness.getFlow).toHaveBeenCalledTimes(1);
+    });
+    expect(store.getState()).toMatchObject({ run: null, readonly: true });
+
+    await act(async () => {
+      response.resolve(flow);
+    });
+    await waitFor(() => {
+      expect(store.getState().readonly).toBe(false);
+    });
+  });
+
+  it('shows the test run again with the Edit flow button when the draft request fails', async () => {
+    const { store } = await storeWithTestRun();
+    harness.getFlow.mockRejectedValue(new Error('Network Error'));
+    renderOnFlowPage(store);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit flow' }));
+
+    await waitFor(() => {
+      expect(store.getState().run).toMatchObject({ id: 'run-1' });
+    });
+    expect(store.getState().readonly).toBe(true);
+    expect(screen.getByRole('button', { name: 'Edit flow' })).toBeTruthy();
+  });
 });
+
+async function storeWithTestRun() {
+  const draft: FlowVersion = {
+    ...publishedVersion(),
+    state: FlowVersionState.DRAFT,
+  };
+  const flow: PopulatedFlow = {
+    ...publishedFlowWithNoDraft(),
+    publishedVersionId: null,
+    version: draft,
+  };
+  const store = createStore({ flow });
+  await act(async () => {
+    await store
+      .getState()
+      .setRun({ ...flowRun(), environment: RunEnvironment.TESTING }, draft);
+  });
+  return { flow, store };
+}
+
+function renderOnFlowPage(store: BuilderStore) {
+  return render(
+    <MemoryRouter initialEntries={['/flows/flow-1']}>
+      <QueryClientProvider client={new QueryClient()}>
+        <BuilderStateContext.Provider value={store}>
+          <Routes>
+            <Route
+              path="/flows/:flowId"
+              element={<EditFlowOrViewDraftButton onCanvas={false} />}
+            />
+          </Routes>
+        </BuilderStateContext.Provider>
+      </QueryClientProvider>
+    </MemoryRouter>,
+  );
+}
 
 function renderBuilder(store: BuilderStore) {
   return render(
