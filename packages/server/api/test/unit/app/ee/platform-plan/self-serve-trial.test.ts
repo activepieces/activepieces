@@ -160,6 +160,62 @@ describe('self-serve trial', () => {
         })
     })
 
+    describe('planCarriesSelfServeTrial', () => {
+        it.each([
+            { name: 'a running trial', cached: { dates: STARTED }, expected: true },
+            { name: 'no trial', cached: { dates: null }, expected: false },
+        ])('reads $name from the cache', async ({ cached, expected }) => {
+            const { autumnBillingProvider, autumnUtils } = await loadModules()
+            const resolveClient = vi.spyOn(autumnUtils, 'resolveClientForPlatform')
+            store.set(TRIAL_KEY, cached)
+
+            expect(await autumnBillingProvider(log).planCarriesSelfServeTrial(PLATFORM_ID)).toBe(expected)
+            expect(resolveClient).not.toHaveBeenCalled()
+        })
+
+        it.each([
+            { name: 'still carries an ended trial while the plan was last written before the end', updated: '2026-10-08T08:59:00.000Z', expected: true },
+            { name: 'stops carrying an ended trial once the plan is written after the end', updated: '2026-10-08T09:01:00.000Z', expected: false },
+        ])('$name', async ({ updated, expected }) => {
+            const { autumnBillingProvider } = await loadModules()
+            store.set(TRIAL_KEY, { dates: PAST })
+            mockFindPlan.mockResolvedValue({ plan: PlanName.FREE, updated })
+
+            expect(await autumnBillingProvider(log).planCarriesSelfServeTrial(PLATFORM_ID)).toBe(expected)
+        })
+
+        it('asks Autumn once when the cache has nothing', async () => {
+            const { autumnBillingProvider, autumnUtils } = await loadModules()
+            const getCustomer = vi.fn().mockResolvedValue(customerWith({ addOn: STARTED }))
+            vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue({ getCustomer } as never)
+
+            expect(await autumnBillingProvider(log).planCarriesSelfServeTrial(PLATFORM_ID)).toBe(true)
+            expect(await autumnBillingProvider(log).planCarriesSelfServeTrial(PLATFORM_ID)).toBe(true)
+            expect(getCustomer).toHaveBeenCalledTimes(1)
+        })
+
+        it('remembers a platform without an Autumn customer as not on the trial', async () => {
+            const { autumnBillingProvider, autumnUtils } = await loadModules()
+            const resolveClient = vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue(null)
+
+            expect(await autumnBillingProvider(log).planCarriesSelfServeTrial(PLATFORM_ID)).toBe(false)
+            expect(await autumnBillingProvider(log).planCarriesSelfServeTrial(PLATFORM_ID)).toBe(false)
+            expect(resolveClient).toHaveBeenCalledTimes(1)
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: null })
+        })
+
+        it('treats the plan as not carrying the trial when Autumn fails, and asks again next time', async () => {
+            const { autumnBillingProvider, autumnUtils } = await loadModules()
+            const getCustomer = vi.fn().mockRejectedValue(new Error('Autumn is down'))
+            vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue({ getCustomer } as never)
+
+            expect(await autumnBillingProvider(log).planCarriesSelfServeTrial(PLATFORM_ID)).toBe(false)
+            expect(await autumnBillingProvider(log).planCarriesSelfServeTrial(PLATFORM_ID)).toBe(false)
+            expect(getCustomer).toHaveBeenCalledTimes(2)
+            expect(store.has(TRIAL_KEY)).toBe(false)
+        })
+    })
+
     describe('startSelfServeTrial', () => {
         async function startTrial({ plan, dates, outcome, refreshError }: StartTrialParams) {
             const { autumnBillingProvider, autumnConsole, autumnUtils } = await enrolledProvider()
