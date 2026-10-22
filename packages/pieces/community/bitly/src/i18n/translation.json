@@ -142,6 +142,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Bitlink Created": "New Bitlink Created",
   "Fires when a new Bitlink is created.": "Fires when a new Bitlink is created.",
   "Polling Interval": "Polling Interval",
