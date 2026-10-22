@@ -292,7 +292,8 @@ export const hiddenStateProp = (description: string) =>
 	});
 
 export const hiddenStateValue = (value: unknown): boolean | undefined => {
-	if (value === true || value === 'yes') return true;
-	if (value === false || value === 'no') return false;
+	const normalized = typeof value === 'string' ? value.trim().toLowerCase() : value;
+	if (normalized === true || normalized === 'yes' || normalized === 'true') return true;
+	if (normalized === false || normalized === 'no' || normalized === 'false') return false;
 	return undefined;
 };
