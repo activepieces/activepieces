@@ -13,6 +13,7 @@ import {
 } from '@activepieces/shared';
 import React from 'react';
 
+import { ConnectionSelect } from '@/app/connections/connection-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
@@ -22,8 +23,6 @@ import { filterPropertyUtils } from '../../piece-properties/filter-property-util
 import { GenericPropertiesForm } from '../../piece-properties/generic-properties-form';
 import { PieceNotAvailableAlert } from '../piece-not-available-alert';
 import { useStepSettingsContext } from '../step-settings-context';
-
-import { ConnectionSelect } from './connection-select';
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
   const {
