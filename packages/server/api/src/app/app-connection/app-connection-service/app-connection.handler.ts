@@ -422,7 +422,9 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
 }
 
 async function handleDraftVersion({ flow, latestVersion, userId, platformId, appConnection, newAppConnection, log }: HandleDraftVersionParams): Promise<void> {
-    if (!latestVersion.connectionIds.includes(appConnection.externalId)) {
+    const usesConnection = latestVersion.connectionIds.includes(appConnection.externalId)
+        || flowStructureUtil.extractConnectionIds(latestVersion).includes(appConnection.externalId)
+    if (!usesConnection) {
         return
     }
 

@@ -78,24 +78,50 @@ describe('flowStructureUtil.replaceConnection', () => {
         expect(authOf(result, 'step_1')).toBe("{{connections['old-2']}}")
     })
 
-    it('leaves the piece tools of an agent step unchanged', () => {
-        const agentTools = [slackTool({ toolName: 'send', auth: 'old' }), slackTool({ toolName: 'reply', auth: "{{connections['old']}}" })]
+    it('points agent tools that use the source connection at the target connection, in plain or wrapped form', () => {
         const agentStep: PieceAction = {
             ...pieceStep({ name: 'step_1' }),
             settings: {
                 pieceName: '@activepieces/piece-ai',
                 pieceVersion: '0.6.0',
                 actionName: 'run_agent',
-                input: { agentTools },
+                input: {
+                    agentTools: [
+                        slackTool({ toolName: 'send', auth: 'old' }),
+                        slackTool({ toolName: 'reply', auth: "{{connections['old']}}" }),
+                        slackTool({ toolName: 'read', auth: 'other' }),
+                        mcpTool,
+                    ],
+                },
                 propertySettings: {},
             },
         }
         const flowVersion = flowWith(agentStep)
-        expect(flowStructureUtil.extractConnectionIds(flowVersion)).toEqual([])
+        expect(flowStructureUtil.extractAgentToolConnectionIds(flowVersion)).toEqual(['old', 'other'])
+        expect(flowStructureUtil.extractConnectionIds(flowVersion)).toEqual(['old', 'other'])
 
         const result = flowStructureUtil.replaceConnection({ flowVersion, sourceExternalId: 'old', targetExternalId: 'new' })
 
-        expect(flowStructureUtil.getStepOrThrow('step_1', result.trigger).settings.input.agentTools).toEqual(agentTools)
+        expect(flowStructureUtil.getStepOrThrow('step_1', result.trigger).settings.input.agentTools).toEqual([
+            slackTool({ toolName: 'send', auth: 'new' }),
+            slackTool({ toolName: 'reply', auth: 'new' }),
+            slackTool({ toolName: 'read', auth: 'other' }),
+            mcpTool,
+        ])
+    })
+
+    it('ignores agentTools on a step that is not the AI piece', () => {
+        const step = pieceStep({ name: 'step_1' })
+        const otherPieceStep: PieceAction = {
+            ...step,
+            settings: { ...step.settings, input: { agentTools: [slackTool({ toolName: 'send', auth: 'old' })] } },
+        }
+        const flowVersion = flowWith(otherPieceStep)
+        expect(flowStructureUtil.extractAgentToolConnectionIds(flowVersion)).toEqual([])
+
+        const result = flowStructureUtil.replaceConnection({ flowVersion, sourceExternalId: 'old', targetExternalId: 'new' })
+
+        expect(flowStructureUtil.getStepOrThrow('step_1', result.trigger).settings.input.agentTools).toEqual([slackTool({ toolName: 'send', auth: 'old' })])
     })
 })
 
