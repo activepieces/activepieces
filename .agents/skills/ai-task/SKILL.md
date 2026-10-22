@@ -356,10 +356,10 @@ Runs on `/ai-task queue`, when Ship finds an approval, and inside Check.
    - Linear: priority, labels, customer requests (`list_customer_needs`), `blocks` relations, when it entered the column (`stateHistory`);
    - its PR: `gh pr view <n> --json number,author,files,additions,deletions,mergeable,reviewDecision,statusCheckRollup`.
 3. **Kick back first.** A card leaves the queue if its PR has conflicts, red CI, changes requested, or it's sat 5 working days without merging. Move it back to In Review with a one-line comment that says why and what unblocks it (mention the owner). A stale card at the bottom is worse than no card.
-4. **Rank the rest, top first.** Go down the list, and only use the next rule to break a tie:
+4. **Rank the rest, top first.** One hard rule first: a PR always sits above every queued PR that needs it (`blocks`, or "merge after #n" in the PR), so the top card can always land. Then go down the list, and only use the next rule to break a tie:
    1. **Something's on fire:** the "Start here" urgent list (live automations broken with no workaround, data loss or wrong data, security, billing, many customers at once).
    2. **Customers waiting:** more customer requests first, then the one waiting longest.
-   3. **Unblocks others:** it blocks another ticket, or another queued PR needs it first.
+   3. **Unblocks others:** it blocks a ticket outside the queue.
    4. **Linear priority.**
    5. **Smaller PR,** then **longest in the column.**
 5. **Find collisions.** Compare the queued PRs' `files`. Any overlap is a pair, and so is any two PRs touching the hot spots: `packages/server/api/src/assets/prompts/`, chat tool descriptions, the agent loop in `packages/server/worker/src/lib/execute/jobs/ee/agent/`. The higher one merges first and the lower one's owner rebases and re-runs CI right after. Put the pair on the card.
