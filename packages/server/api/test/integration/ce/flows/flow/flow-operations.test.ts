@@ -18,7 +18,7 @@ import {
     UncategorizedFolderId,
     UpdateActionRequest,
 } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { SelectQueryBuilder } from 'typeorm'
 import { MockInstance } from 'vitest'
@@ -35,6 +35,25 @@ import {
 } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
+
+const lockEntries = vi.hoisted(() => ({ listeners: new Set<(key: string) => void>() }))
+
+vi.mock('../../../../../src/app/database/redis-connections', async (importOriginal) => {
+    const original = await importOriginal<typeof import('../../../../../src/app/database/redis-connections')>()
+    return {
+        ...original,
+        distributedLock: (log: FastifyBaseLogger) => {
+            const lock = original.distributedLock(log)
+            return {
+                ...lock,
+                runExclusive: <T>(params: Parameters<typeof lock.runExclusive<T>>[0]): Promise<T> => {
+                    lockEntries.listeners.forEach((listener) => listener(params.key))
+                    return lock.runExclusive(params)
+                },
+            }
+        },
+    }
+})
 
 let app: FastifyInstance | null = null
 
@@ -1185,26 +1204,26 @@ describe('Flow Operations API', () => {
             const otherFlow = await createFlowWithTwoCodeSteps(ctx)
             const previousFlow = await flowService(app!.log).getOnePopulatedOrThrow({ id: busyFlow.id, projectId: ctx.project.id })
             const busyRead = pauseAfterTheNextVersionRead({ flowId: busyFlow.id })
+            const busySave = updateThroughTheService({
+                ctx,
+                previousFlow,
+                operation: renameCodeStep({ stepName: 'step_1', displayName: 'Renamed on the busy flow' }),
+            })
 
             try {
-                const busySave = updateThroughTheService({
-                    ctx,
-                    previousFlow,
-                    operation: renameCodeStep({ stepName: 'step_1', displayName: 'Renamed on the busy flow' }),
-                })
                 await busyRead.reached
                 const otherSave = ctx.post(`/v1/flows/${otherFlow.id}`, renameCodeStep({ stepName: 'step_1', displayName: 'Renamed on the other flow' }))
                 const firstToFinish = await Promise.race([
                     otherSave.then(() => 'the other flow'),
                     sleep(OTHER_FLOW_SAVE_LIMIT_MS).then(() => 'the time limit'),
                 ])
-                busyRead.resume()
-                await busySave
 
                 expect(firstToFinish).toBe('the other flow')
                 expect((await otherSave)?.statusCode).toBe(StatusCodes.OK)
             }
             finally {
+                busyRead.resume()
+                await busySave.catch(() => undefined)
                 busyRead.spy.mockRestore()
             }
         })
@@ -1260,7 +1279,7 @@ function insertADraftAfterTheNextRead({ flowId, displayName }: { flowId: string,
 
 function pauseAfterTheNextVersionRead({ flowId }: { flowId: string }): PausedCall {
     const pause = createPause()
-    return { reached: pause.reached, resume: pause.resume, spy: onTheNextVersionRead({ flowId, run: pause.hold }) }
+    return { flowId, reached: pause.reached, resume: pause.resume, spy: onTheNextVersionRead({ flowId, run: pause.hold }) }
 }
 
 function pauseBeforeTheNextVersionDelete({ flowId }: { flowId: string }): PausedCall {
@@ -1275,7 +1294,7 @@ function pauseBeforeTheNextVersionDelete({ flowId }: { flowId: string }): Paused
         }
         return realDelete(criteria)
     })
-    return { reached: pause.reached, resume: pause.resume, spy }
+    return { flowId, reached: pause.reached, resume: pause.resume, spy }
 }
 
 function onTheNextVersionRead({ flowId, run }: { flowId: string, run: () => Promise<void> }): MockInstance {
@@ -1318,10 +1337,28 @@ async function runASecondSaveWhileTheFirstIsPaused<First, Second>({ pause, first
 }): Promise<[First, Second]> {
     const first = firstSave()
     await pause.reached
+    const secondEntersTheLock = watchTheNextLockEntry({ flowId: pause.flowId })
     const second = secondSave()
-    await Promise.race([second.then(() => undefined, () => undefined), sleep(HEAD_START_MS)])
+    await Promise.race([secondEntersTheLock.entered, second.then(() => undefined, () => undefined)])
+    secondEntersTheLock.stop()
     pause.resume()
     return Promise.all([first, second])
+}
+
+function watchTheNextLockEntry({ flowId }: { flowId: string }): LockEntryWatch {
+    const entry = Promise.withResolvers<undefined>()
+    const listener = (key: string): void => {
+        if (key.endsWith(flowId)) {
+            entry.resolve(undefined)
+        }
+    }
+    lockEntries.listeners.add(listener)
+    return {
+        entered: entry.promise,
+        stop: () => {
+            lockEntries.listeners.delete(listener)
+        },
+    }
 }
 
 function updateThroughTheService({ ctx, previousFlow, operation }: {
@@ -1407,7 +1444,6 @@ function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-const HEAD_START_MS = 500
 const OTHER_FLOW_SAVE_LIMIT_MS = 5000
 
 type Pause = {
@@ -1417,5 +1453,11 @@ type Pause = {
 }
 
 type PausedCall = Pick<Pause, 'reached' | 'resume'> & {
+    flowId: string
     spy: MockInstance
+}
+
+type LockEntryWatch = {
+    entered: Promise<undefined>
+    stop: () => void
 }
