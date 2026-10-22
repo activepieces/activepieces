@@ -6514,7 +6514,7 @@
     },
     "packages/pieces/community/nocodb": {
       "name": "@activepieces/piece-nocodb",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
