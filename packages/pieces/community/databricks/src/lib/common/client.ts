@@ -21,8 +21,27 @@ function normalizeWorkspaceUrl({
 }: {
   workspaceUrl: string;
 }): string {
-  const url = workspaceUrl.trim().replace(/\/+$/, '');
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+  const host = workspaceUrl
+    .trim()
+    .replace(/^[a-z]+:\/\//i, '')
+    .replace(/\/+$/, '');
+  return `https://${host}`;
+}
+
+function isWorkspaceUrl({
+  auth,
+  url,
+}: {
+  auth: DatabricksAuthValue;
+  url: string;
+}): boolean {
+  if (!/^https?:\/\//i.test(url)) {
+    return true;
+  }
+  return (
+    URL.canParse(url) &&
+    new URL(url).origin === new URL(baseUrl({ auth })).origin
+  );
 }
 
 async function fetchToken({
@@ -90,7 +109,13 @@ async function paginate<K extends string, T>({
   return items.slice(0, maxItems);
 }
 
-export const databricksClient = { baseUrl, fetchToken, request, paginate };
+export const databricksClient = {
+  baseUrl,
+  isWorkspaceUrl,
+  fetchToken,
+  request,
+  paginate,
+};
 
 const MAX_ITEMS = 1000;
 

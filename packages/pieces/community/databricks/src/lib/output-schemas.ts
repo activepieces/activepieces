@@ -69,6 +69,7 @@ export const askGenieOutputSchema: OutputSchema = {
     },
     { key: 'columns', label: 'Column Names' },
     { key: 'rowCount', label: 'Rows Returned', format: 'number' },
+    { key: 'truncated', label: 'Truncated', format: 'boolean' },
     { key: 'conversationId', label: 'Conversation ID' },
     { key: 'messageId', label: 'Message ID' },
     { key: 'status', label: 'Status' },

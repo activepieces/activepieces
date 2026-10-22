@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { databricksAuth } from '../auth';
@@ -92,7 +94,16 @@ export const uploadFileToVolumeAction = createAction({
       fileFormat,
       shouldMergeSchema,
     } = context.propsValue;
-    const fileName = `${Date.now()}-${file.filename.replace(
+    if (tableName && !warehouseId) {
+      throw new Error(
+        'Select a SQL warehouse to load the file into the table.'
+      );
+    }
+    const format = FILE_FORMATS[fileFormat ?? 'CSV'];
+    if (!format) {
+      throw new Error(`Unsupported file format: ${fileFormat}`);
+    }
+    const fileName = `${Date.now()}-${randomUUID()}-${file.filename.replace(
       /[^A-Za-z0-9._-]/g,
       '_'
     )}`;
@@ -113,17 +124,8 @@ export const uploadFileToVolumeAction = createAction({
       path: filePath,
       data: file.data,
     });
-    if (!tableName) {
+    if (!tableName || !warehouseId) {
       return { filePath };
-    }
-    if (!warehouseId) {
-      throw new Error(
-        'Select a SQL warehouse to load the file into the table.'
-      );
-    }
-    const format = FILE_FORMATS[fileFormat ?? 'CSV'];
-    if (!format) {
-      throw new Error(`Unsupported file format: ${fileFormat}`);
     }
     const formatOptions = {
       ...format.options,

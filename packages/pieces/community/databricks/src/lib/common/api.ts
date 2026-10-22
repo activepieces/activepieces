@@ -211,7 +211,7 @@ async function uploadFile({
     auth,
     method: HttpMethod.PUT,
     path: `/api/2.0/fs/files${encodedPath}`,
-    query: { overwrite: 'true' },
+    query: { overwrite: 'false' },
     headers: { 'Content-Type': 'application/octet-stream' },
     body: data,
   });
@@ -277,6 +277,7 @@ async function askGenie({
     columns: result?.columns ?? [],
     rows: result?.rows ?? [],
     rowCount: result?.rowCount ?? 0,
+    truncated: result?.truncated ?? false,
   };
 }
 
@@ -389,10 +390,12 @@ async function getGenieQueryResult({
     method: HttpMethod.GET,
     path: `/api/2.0/genie/spaces/${spaceId}/conversations/${conversationId}/messages/${messageId}/attachments/${attachmentId}/query-result`,
   });
-  return toQueryResult({
-    statement: response.statement_response,
-    dataArray: response.statement_response.result?.data_array ?? [],
+  const dataArray = await fetchRemainingChunks({
+    auth,
+    statementId: response.statement_response.statement_id,
+    first: response.statement_response.result,
   });
+  return toQueryResult({ statement: response.statement_response, dataArray });
 }
 
 function toQueryResult({

@@ -36,9 +36,18 @@ export const databricks = createPiece({
     createCustomApiCallAction({
       auth: databricksAuth,
       baseUrl: (auth) => (auth ? databricksClient.baseUrl({ auth }) : ''),
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth.access_token}`,
-      }),
+      authMapping: async (auth, propsValue) => {
+        const url = propsValue['url']?.['url'];
+        if (
+          typeof url === 'string' &&
+          !databricksClient.isWorkspaceUrl({ auth, url })
+        ) {
+          throw new Error(
+            'Custom API Call only sends your Databricks credentials to the connected workspace. Use a path such as /api/2.0/clusters/list, or a URL on your workspace.'
+          );
+        }
+        return { Authorization: `Bearer ${auth.access_token}` };
+      },
     }),
   ],
   triggers: [],
