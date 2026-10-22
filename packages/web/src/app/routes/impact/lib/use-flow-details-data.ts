@@ -14,9 +14,7 @@ export type FlowDetailRow = PlatformAnalyticsReport['flows'][number] & {
 export type Owner = { id: string; name: string };
 
 export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
-  const { timeSavedPerRunOverrides, setTimeSavedPerRunOverride } = useContext(
-    RefreshAnalyticsContext,
-  );
+  const { timeSavedPerRunOverrides } = useContext(RefreshAnalyticsContext);
 
   const runsMap = useMemo(() => {
     if (!report) return new Map<string, number>();
@@ -27,7 +25,7 @@ export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
     if (!report) return undefined;
     return report.flows.map((flow) => {
       const override = timeSavedPerRunOverrides[flow.flowId];
-      const timeSavedPerRun = override?.value ?? flow.timeSavedPerRun;
+      const timeSavedPerRun = override ? override.value : flow.timeSavedPerRun;
       const runs = runsMap.get(flow.flowId) ?? 0;
       return {
         ...flow,
@@ -64,7 +62,5 @@ export function useFlowDetailsData(report?: PlatformAnalyticsReport) {
     flowDetails,
     uniqueOwners,
     flowsMissingTimeSaved,
-    timeSavedPerRunOverrides,
-    setTimeSavedPerRunOverride,
   };
 }
