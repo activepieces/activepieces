@@ -96,7 +96,6 @@ function buildPolling({
 }
 
 
-type PolledItem = { epochMilliSeconds: number; data: Record<string, unknown> };
 
 async function fetchViewPage({
   auth,
@@ -158,3 +157,5 @@ function reachesCheckpoint({
     return !Number.isNaN(epoch) && epoch <= lastFetchEpochMS;
   });
 }
+
+type PolledItem = { epochMilliSeconds: number; data: Record<string, unknown> };
