@@ -55,6 +55,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
 
+import { resolveBulkFlowRunIds } from './bulk-run-ids';
 import { runsTableColumns } from './columns';
 import { FailedRetryRunsDialog } from './failed-retry-runs-dialog';
 import { FailedStepDialog } from './failed-step-dialog';
@@ -102,6 +103,11 @@ export const RunsTable = () => {
     setHasSeededDefaultRange(true);
   }, [hasSeededDefaultRange, setSearchParams]);
 
+  const filteredRunIds = useMemo(
+    () => searchParams.getAll(RUN_IDS_QUERY_PARAM),
+    [searchParams],
+  );
+
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
     enabled: hasSeededDefaultRange,
@@ -111,7 +117,6 @@ export const RunsTable = () => {
       const status = searchParams.getAll('status') as FlowRunStatus[];
       const flowId = searchParams.getAll('flowId');
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const flowRunIds = searchParams.getAll(RUN_IDS_QUERY_PARAM);
       const failedStepName = searchParams.get('failedStepName') || undefined;
       const failedStepMessage =
         searchParams.get('failedStepMessage') || undefined;
@@ -134,7 +139,7 @@ export const RunsTable = () => {
         createdBefore: createdBefore ?? undefined,
         failedStepName,
         failedStepMessage,
-        flowRunIds,
+        flowRunIds: filteredRunIds,
       });
     },
     refetchInterval: (query) => {
@@ -289,10 +294,13 @@ export const RunsTable = () => {
                 size="sm"
                 loading={archiveRuns.isPending}
                 onClick={() => {
-                  const runIds = selectedRows.map((row) => row.id);
                   archiveRuns.mutate({
                     projectId,
-                    flowRunIds: selectedAll ? undefined : runIds,
+                    flowRunIds: resolveBulkFlowRunIds({
+                      selectedAll,
+                      selectedRows,
+                      filteredRunIds,
+                    }),
                     excludeFlowRunIds: selectedAll
                       ? Array.from(excludedRows)
                       : undefined,
@@ -357,13 +365,16 @@ export const RunsTable = () => {
                     size="sm"
                     loading={cancelRuns.isPending}
                     onClick={() => {
-                      const runIds = selectedRows.map((row) => row.id);
                       const status = searchParams.getAll(
                         'status',
                       ) as FlowRunStatus[];
                       cancelRuns.mutate({
                         projectId,
-                        flowRunIds: selectedAll ? undefined : runIds,
+                        flowRunIds: resolveBulkFlowRunIds({
+                          selectedAll,
+                          selectedRows,
+                          filteredRunIds,
+                        }),
                         excludeFlowRunIds: selectedAll
                           ? Array.from(excludedRows)
                           : undefined,
@@ -447,10 +458,13 @@ export const RunsTable = () => {
                       <DropdownMenuItem
                         disabled={!userHasPermissionToRetryRun}
                         onClick={() => {
-                          const runIds = selectedRows.map((row) => row.id);
                           retryRuns.mutate({
                             projectId,
-                            flowRunIds: selectedAll ? undefined : runIds,
+                            flowRunIds: resolveBulkFlowRunIds({
+                              selectedAll,
+                              selectedRows,
+                              filteredRunIds,
+                            }),
                             strategy: FlowRetryStrategy.ON_LATEST_VERSION,
                             excludeFlowRunIds: selectedAll
                               ? Array.from(excludedRows)
@@ -491,10 +505,13 @@ export const RunsTable = () => {
                         <DropdownMenuItem
                           disabled={!userHasPermissionToRetryRun || !allFailed}
                           onClick={() => {
-                            const runIds = selectedRows.map((row) => row.id);
                             retryRuns.mutate({
                               projectId,
-                              flowRunIds: selectedAll ? undefined : runIds,
+                              flowRunIds: resolveBulkFlowRunIds({
+                                selectedAll,
+                                selectedRows,
+                                filteredRunIds,
+                              }),
                               strategy: FlowRetryStrategy.FROM_FAILED_STEP,
                               excludeFlowRunIds: selectedAll
                                 ? Array.from(excludedRows)
@@ -543,6 +560,7 @@ export const RunsTable = () => {
       selectedAll,
       excludedRows,
       cancelRuns,
+      filteredRunIds,
     ],
   );
 
@@ -561,9 +579,8 @@ export const RunsTable = () => {
     [navigate, openNewWindow],
   );
 
-  const retriedRunsInQueryParams = searchParams.getAll(RUN_IDS_QUERY_PARAM);
   const customFilters =
-    retriedRunsInQueryParams.length > 0
+    filteredRunIds.length > 0
       ? [
           <Button
             key="retried-runs-filter"
@@ -574,7 +591,7 @@ export const RunsTable = () => {
             }}
           >
             <div className="flex flex-row gap-2 items-center">
-              {t('Viewing retried runs')} ({retriedRunsInQueryParams.length}){' '}
+              {t('Viewing retried runs')} ({filteredRunIds.length}){' '}
               <X className="size-4" />
             </div>
           </Button>,
@@ -600,7 +617,7 @@ export const RunsTable = () => {
         onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
         customFilters={customFilters}
         toolbarButtons={[<RunsStatusChart key="status-chart" />]}
-        hidePagination={retriedRunsInQueryParams.length > 0}
+        hidePagination={filteredRunIds.length > 0}
       />
       <RetriedRunsSnackbar
         retriedRunsIds={retriedRunsIds}
