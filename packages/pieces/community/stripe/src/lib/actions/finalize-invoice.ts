@@ -17,7 +17,7 @@ export const stripeFinalizeInvoice = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Finalizes a draft Stripe invoice, locking its line items and making it payable. Use after adding all line items and before Send Invoice. Not idempotent: it errors if the invoice is already finalized.',
+      'Finalizes a draft Stripe invoice, locking its line items and making it payable. Use after adding all line items and before Send Invoice. auto_advance takes yes, no or unchanged; leave it out or pass unchanged to keep the current automatic collection setting. Not idempotent: it errors if the invoice is already finalized.',
     idempotent: false,
   },
   props: {
@@ -27,16 +27,18 @@ export const stripeFinalizeInvoice = createAction({
         'The draft invoice ID (e.g., in_...). Obtain it from List/Search Invoices.',
       required: true,
     }),
-    auto_advance: Property.Checkbox({
+    auto_advance: stripeCommon.triStateProp({
       displayName: 'Auto Advance',
       description:
-        'If true, Stripe automatically collects the invoice (sends/charges per its settings) after finalizing.',
-      required: false,
+        'Yes makes Stripe collect the invoice automatically (sends/charges per its settings) after finalizing, No turns automatic collection off.',
     }),
   },
   outputSchema: invoiceOutputSchema,
   async run(context) {
-    const { invoice_id, auto_advance } = context.propsValue;
+    const { invoice_id } = context.propsValue;
+    const auto_advance = stripeCommon.triStateValue(
+      context.propsValue.auto_advance
+    );
 
     const body: { [key: string]: unknown } = {};
     if (auto_advance !== undefined) body.auto_advance = auto_advance;

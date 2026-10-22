@@ -17,7 +17,7 @@ export const stripeUpdateProduct = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates a Stripe product (rename, change description/metadata, or set active=false to archive it). Archiving is the agent path to "delete" a product, since products with prices cannot be hard-deleted. Only the fields you supply change. Idempotent: re-applying the same update converges.',
+      'Updates a Stripe product (rename, change description/metadata, or set active=no to archive it). Archiving is the agent path to "delete" a product, since products with prices cannot be hard-deleted. active takes yes, no or unchanged; leave it out or pass unchanged to keep the product active or archived as it is. Only the fields you supply change. Idempotent: re-applying the same update converges.',
     idempotent: true,
   },
   props: {
@@ -35,10 +35,9 @@ export const stripeUpdateProduct = createAction({
       displayName: 'Description',
       required: false,
     }),
-    active: Property.Checkbox({
+    active: stripeCommon.triStateProp({
       displayName: 'Active',
-      description: 'Set to false to archive the product.',
-      required: false,
+      description: 'No archives the product, Yes makes it available again.',
     }),
     metadata: Property.Json({
       displayName: 'Metadata',
@@ -47,8 +46,8 @@ export const stripeUpdateProduct = createAction({
   },
   outputSchema: productOutputSchema,
   async run(context) {
-    const { product_id, name, description, active, metadata } =
-      context.propsValue;
+    const { product_id, name, description, metadata } = context.propsValue;
+    const active = stripeCommon.triStateValue(context.propsValue.active);
 
     const body: { [key: string]: unknown } = {};
     if (name) body.name = name;

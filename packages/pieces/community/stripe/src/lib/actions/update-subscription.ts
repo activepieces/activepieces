@@ -17,7 +17,7 @@ export const stripeUpdateSubscription = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates an existing subscription: change its items (price + quantity), proration behavior, metadata, or schedule cancellation at period end. To cancel outright use Cancel Subscription. Only the fields you supply change. Idempotent: re-applying the same update converges.',
+      'Updates an existing subscription: change its items (price + quantity), proration behavior, metadata, or schedule cancellation at period end. cancel_at_period_end takes yes, no or unchanged; leave it out or pass unchanged to keep any scheduled cancellation as it is. To cancel outright use Cancel Subscription. Only the fields you supply change. Idempotent: re-applying the same update converges.',
     idempotent: true,
   },
   props: {
@@ -60,9 +60,10 @@ export const stripeUpdateSubscription = createAction({
         ],
       },
     }),
-    cancel_at_period_end: Property.Checkbox({
+    cancel_at_period_end: stripeCommon.triStateProp({
       displayName: 'Cancel at Period End',
-      required: false,
+      description:
+        'Yes cancels the subscription at the end of the current period, No removes a scheduled cancellation.',
     }),
     metadata: Property.Json({
       displayName: 'Metadata',
@@ -71,13 +72,11 @@ export const stripeUpdateSubscription = createAction({
   },
   outputSchema: subscriptionOutputSchema,
   async run(context) {
-    const {
-      subscription_id,
-      items,
-      proration_behavior,
-      cancel_at_period_end,
-      metadata,
-    } = context.propsValue;
+    const { subscription_id, items, proration_behavior, metadata } =
+      context.propsValue;
+    const cancel_at_period_end = stripeCommon.triStateValue(
+      context.propsValue.cancel_at_period_end
+    );
 
     const body: { [key: string]: unknown } = {};
     if (proration_behavior) body.proration_behavior = proration_behavior;
