@@ -85,5 +85,8 @@
   "DELETE": "DELETE",
   "HEAD": "HEAD",
   "New Record": "New Record",
-  "Triggers when a new record is added to a datasheet.": "Triggers when a new record is added to a datasheet."
+  "Triggers when a new record is added to a datasheet.": "Triggers when a new record is added to a datasheet.",
+  "Markdown": "Markdown",
+  "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.": "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.",
+  "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.": "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed."
 }
