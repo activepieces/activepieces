@@ -17,7 +17,7 @@ A persistent, project-scoped key-value store that piece steps read/write during 
 - Upsert overwrites on the `(projectId, key)` unique constraint.
 
 ### Gotchas
-- Value size check (`object-sizeof` > 512 KB → HTTP 413) happens in the controller before the DB.
+- Value size check (UTF-8 bytes of `JSON.stringify(value)` > 512 KB → HTTP 413) happens in the controller before the DB. It must stay the same measure as the engine's `utils.sizeof` check in `piece-context/store.ts`, or a value the engine accepted gets refused by the API.
 - No list endpoint — it's an opaque cache, not a queryable dataset.
 - `value` is nullable; a piece can store `null`/`undefined`. Values run through `sanitizeObjectForPostgresql` before storage.
 
