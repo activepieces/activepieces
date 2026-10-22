@@ -1,8 +1,10 @@
-import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { chmod, lstat, mkdir, readdir, readFile, realpath, rename, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const SETTINGS_PATH = join(homedir(), '.claude', 'settings.json')
+const CLAUDE_DIR = join(homedir(), '.claude')
+const SETTINGS_PATH = join(CLAUDE_DIR, 'settings.json')
 const COMMANDS = { setup, order }
 
 const [command, ...args] = process.argv.slice(2)
@@ -12,6 +14,7 @@ if (!COMMANDS[command]) {
 await COMMANDS[command](args)
 
 async function setup() {
+    await moveOldSkillCopies()
     if (!process.stdin.isTTY) {
         fail('Run this in your own terminal (not inside Claude Code), so the key stays hidden.')
     }
@@ -87,6 +90,35 @@ function askHidden(prompt) {
         }
         process.stdin.on('data', onData)
     })
+}
+
+async function moveOldSkillCopies() {
+    const skillsDir = join(CLAUDE_DIR, 'skills')
+    const oldCommand = join(CLAUDE_DIR, 'commands', 'ai-task.md')
+    const repoSkill = await realpath(dirname(fileURLToPath(import.meta.url)))
+    const entries = await readdir(skillsDir).catch(() => [])
+    const oldSkills = await Promise.all(entries.map((entry) => oldSkillAt({ path: join(skillsDir, entry), repoSkill })))
+    const hasOldCommand = (await lstat(oldCommand).catch(() => null)) !== null
+    const oldCopies = [...oldSkills.filter(Boolean), ...(hasOldCommand ? [oldCommand] : [])]
+    if (oldCopies.length === 0) {
+        return
+    }
+    const backupDir = join(CLAUDE_DIR, 'ai-task-old', String(Date.now()))
+    await mkdir(backupDir, { recursive: true })
+    for (const path of oldCopies) {
+        await rename(path, join(backupDir, basename(path)))
+        console.log(`Moved an old copy of /ai-task (${path}) to ${backupDir}, so the repo's version loads.`)
+    }
+    console.log('')
+}
+
+async function oldSkillAt({ path, repoSkill }) {
+    const real = await realpath(path).catch(() => null)
+    if (!real || real === repoSkill) {
+        return null
+    }
+    const skill = await readFile(join(path, 'SKILL.md'), 'utf8').catch(() => '')
+    return /^name:\s*ai-task\s*$/m.test(skill) ? path : null
 }
 
 async function readSettings() {
