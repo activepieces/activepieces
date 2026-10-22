@@ -13,13 +13,16 @@ export function AgentModelField({
   value,
   onChange,
   pieceVersion,
+  actionName,
   disabled,
+  hideHeading = false,
 }: AgentModelFieldProps) {
+  const { surface, showHeading } = agentModelUtils.fieldFor({ actionName });
   const { project } = projectCollectionUtils.useCurrentProject();
   const withTiers = agentModelUtils.supportsTiers({ pieceVersion });
   const { data: options } = aiModelHooks.useModelOptions({
     projectId: project.id,
-    surface: 'agent',
+    surface,
   });
   const wroteDefault = useRef(false);
 
@@ -42,10 +45,12 @@ export function AgentModelField({
 
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
+      {showHeading && !hideHeading && (
+        <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
+      )}
       <ModelPicker
         projectId={project.id}
-        surface="agent"
+        surface={surface}
         value={agentModelUtils.choiceOf({ value })}
         onChange={(choice) => onChange(agentModelUtils.valueOf({ choice }))}
         withTiers={withTiers}
@@ -64,5 +69,7 @@ type AgentModelFieldProps = {
   value: unknown;
   onChange: (value: AgentProviderModel) => void;
   pieceVersion: string;
+  actionName: string;
   disabled: boolean;
+  hideHeading?: boolean;
 };

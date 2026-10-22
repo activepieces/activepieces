@@ -13,7 +13,8 @@ export function ClientIcon({
       alt=""
       border
       className={className}
-      innerClassName="size-[62%]"
+      innerClassName="size-3/5 p-0"
+      imageClassName="transition-none"
     />
   );
 }

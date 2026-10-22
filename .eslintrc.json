@@ -32,7 +32,7 @@
         "no-restricted-syntax": [
           "error",
           {
-            "selector": "CallExpression[callee.object.name='pollingHelper'] > ObjectExpression:not(:has(> SpreadElement))",
+            "selector": "CallExpression[callee.object.name='pollingHelper'] > ObjectExpression:nth-child(2):not(:has(> SpreadElement))",
             "message": "Pass the trigger context to pollingHelper (e.g. `pollingHelper.onEnable(polling, context)`, or `{ ...context, override }`). A hand-picked object drops fields like isRepublish and files."
           }
         ]

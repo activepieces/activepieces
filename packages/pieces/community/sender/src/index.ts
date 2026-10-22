@@ -1,6 +1,8 @@
-import { createPiece} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-import { senderAuth } from './lib/common/common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { senderAuth } from './lib/auth';
+import { senderClient } from './lib/common/client';
+import { senderAiActions } from './lib/actions/ai';
 import { addUpdateSubscriberAction } from './lib/actions/add-subscriber';
 import { createCampaignAction } from './lib/actions/create-campaign';
 import { unsubscribeSubscriberAction } from './lib/actions/unsubscribe-subscriber';
@@ -19,7 +21,7 @@ import { updateSubscriberAction } from './lib/actions/update-subscriber';
 export const sender = createPiece({
   displayName: 'Sender',
   auth: senderAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/sender.png',
   authors: ['Ani-4x','sanket-a11y'],
   categories: [PieceCategory.MARKETING],
@@ -30,7 +32,15 @@ export const sender = createPiece({
     addSubscriberToGroupAction,
     removeSubscriberFromGroupAction,
     sendCampaignAction,
-    updateSubscriberAction
+    updateSubscriberAction,
+    ...senderAiActions,
+    createCustomApiCallAction({
+      auth: senderAuth,
+      baseUrl: () => senderClient.baseUrl(),
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth.secret_text}`,
+      }),
+    }),
   ],
   triggers: [
     newCampaignTrigger,
