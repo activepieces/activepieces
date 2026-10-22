@@ -13,7 +13,7 @@ const LEAVES_LABEL = 'Leaves Oct 26';
 
 let users: TestUser[] = [];
 let invitations: TestInvitation[] = [];
-const allUsers = vi.fn();
+const usersQuery = vi.fn();
 const updateUser = vi.fn();
 const deleteInvitation = vi.fn();
 const errorToast = vi.fn();
@@ -34,8 +34,8 @@ vi.mock('@/hooks/platform-hooks', () => ({
 vi.mock('@/features/platform-admin/hooks/platform-user-hooks', () => ({
   platformUserKeys: { users: ['users'], invitations: ['invitations'] },
   platformUserHooks: {
-    useAllUsers: (params: unknown) => allUsers(params),
-    useInvitesReservingSeats: () => ({
+    useUsers: () => usersQuery(),
+    usePlatformInvitations: () => ({
       data: invitations,
       refetch: () => Promise.resolve(),
     }),
@@ -127,7 +127,7 @@ beforeEach(() => {
   );
   users = [user(OWNER_ID)];
   invitations = [];
-  allUsers.mockReset().mockImplementation(() => ({ data: users }));
+  usersQuery.mockReset().mockImplementation(() => ({ data: { data: users } }));
   updateUser.mockReset().mockResolvedValue(undefined);
   deleteInvitation.mockReset().mockResolvedValue(undefined);
   errorToast.mockReset();
@@ -137,7 +137,7 @@ beforeEach(() => {
 describe('DeactivateUsersDialog preselection', () => {
   it('shows a retry instead of empty lists when the users cannot load', async () => {
     const refetch = vi.fn().mockResolvedValue(undefined);
-    allUsers.mockImplementation(() => ({
+    usersQuery.mockImplementation(() => ({
       data: undefined,
       isError: true,
       refetch,
@@ -153,18 +153,6 @@ describe('DeactivateUsersDialog preselection', () => {
     expect(submitButton().disabled).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(refetch).toHaveBeenCalled());
-  });
-
-  it('asks for the users without the embedded ones when told to hide them', () => {
-    renderDialog({ targetSeats: 1, currentUsers: 1, hideEmbeddedUsers: true });
-
-    expect(allUsers).toHaveBeenCalledWith({ excludeEmbedded: true });
-  });
-
-  it('asks for every user by default', () => {
-    renderDialog({ targetSeats: 1, currentUsers: 1 });
-
-    expect(allUsers).toHaveBeenCalledWith({ excludeEmbedded: false });
   });
 
   it('starts with the preselected users ticked and labels them', () => {
