@@ -2252,6 +2252,17 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/contextfetch": {
+      "name": "@activepieces/piece-contextfetch",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/contextual-ai": {
       "name": "@activepieces/piece-contextual-ai",
       "version": "0.1.8",
@@ -11707,6 +11718,8 @@
     "@activepieces/piece-constant-contact": ["@activepieces/piece-constant-contact@workspace:packages/pieces/community/constant-contact"],
 
     "@activepieces/piece-contentful": ["@activepieces/piece-contentful@workspace:packages/pieces/community/contentful"],
+
+    "@activepieces/piece-contextfetch": ["@activepieces/piece-contextfetch@workspace:packages/pieces/community/contextfetch"],
 
     "@activepieces/piece-contextual-ai": ["@activepieces/piece-contextual-ai@workspace:packages/pieces/community/contextual-ai"],
 

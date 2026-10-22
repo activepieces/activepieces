@@ -361,6 +361,9 @@
       "@activepieces/piece-contentful": [
         "packages/pieces/community/contentful/src/index.ts"
       ],
+      "@activepieces/piece-contextfetch": [
+        "packages/pieces/community/contextfetch/src/index.ts"
+      ],
       "@activepieces/piece-contiguity": [
         "packages/pieces/community/contiguity/src/index.ts"
       ],
