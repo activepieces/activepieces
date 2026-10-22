@@ -43,7 +43,7 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                     value,
                 }))
 
-                const updated = await recordService.update({
+                const { record: updated } = await recordService.update({
                     id: recordId,
                     projectId: mcp.projectId,
                     request: { tableId: resolvedTableId, cells },
