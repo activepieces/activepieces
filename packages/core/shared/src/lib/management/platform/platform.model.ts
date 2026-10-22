@@ -219,18 +219,18 @@ export const Platform = z.object({
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
 
-export const SelfServeTrialWindow = z.object({
+export const SelfServeTrialDates = z.object({
     startedAt: z.string(),
     endsAt: z.string(),
 })
-export type SelfServeTrialWindow = z.infer<typeof SelfServeTrialWindow>
+export type SelfServeTrialDates = z.infer<typeof SelfServeTrialDates>
 
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
     billingEnforced: z.boolean().optional(),
-    selfServeTrial: SelfServeTrialWindow.optional(),
+    selfServeTrial: SelfServeTrialDates.optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
