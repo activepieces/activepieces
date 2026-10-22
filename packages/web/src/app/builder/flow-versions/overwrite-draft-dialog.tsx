@@ -34,15 +34,18 @@ const OverwriteDraftDialog = ({
       state.flow,
       state.savePendingEdits,
     ]);
+  const [open, setOpen] = useState(false);
+  const [isSavingPendingEdits, setIsSavingPendingEdits] = useState(false);
   const { mutate: overWriteDraftWithVersion, isPending: isOverwritingDraft } =
     flowHooks.useOverWriteDraftWithVersion({
       onSuccess: (updatedFlow) => {
         setVersion(updatedFlow.version);
         setRightSidebar(RightSideBarType.NONE);
+        setOpen(false);
+        onConfirm?.();
       },
     });
   const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
-  const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
@@ -69,24 +72,23 @@ const OverwriteDraftDialog = ({
           <DialogClose asChild>
             <Button variant={'outline'}>{t('Cancel')}</Button>
           </DialogClose>
-          <DialogClose asChild>
-            <Button
-              loading={isOverwritingDraft}
-              onClick={async () => {
-                onConfirm?.();
-                const { error: saveError } = await tryCatch(savePendingEdits);
-                if (!isNil(saveError)) {
-                  return;
-                }
-                overWriteDraftWithVersion({
-                  flowId: flow.id,
-                  versionId: versionId,
-                });
-              }}
-            >
-              {t('Overwrite')}
-            </Button>
-          </DialogClose>
+          <Button
+            loading={isSavingPendingEdits || isOverwritingDraft}
+            onClick={async () => {
+              setIsSavingPendingEdits(true);
+              const { error: saveError } = await tryCatch(savePendingEdits);
+              setIsSavingPendingEdits(false);
+              if (!isNil(saveError)) {
+                return;
+              }
+              overWriteDraftWithVersion({
+                flowId: flow.id,
+                versionId: versionId,
+              });
+            }}
+          >
+            {t('Overwrite')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
