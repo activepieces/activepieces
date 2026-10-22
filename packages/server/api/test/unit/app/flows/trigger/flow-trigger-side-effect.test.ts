@@ -44,6 +44,7 @@ vi.mock('../../../../../src/app/trigger/app-event-routing/app-event-routing.serv
 }))
 
 import { system } from '../../../../../src/app/helper/system/system'
+import { AppSystemProp } from '../../../../../src/app/helper/system/system-props'
 import { flowTriggerSideEffect } from '../../../../../src/app/trigger/trigger-source/flow-trigger-side-effect'
 
 const mockLog = {
@@ -102,6 +103,14 @@ function failedEngineResponse() {
     }
 }
 
+function timedOutEngineResponse() {
+    return {
+        status: EngineResponseStatus.TIMEOUT,
+        response: undefined,
+        error: undefined,
+    }
+}
+
 describe('flowTriggerSideEffect', () => {
     beforeEach(() => {
         vi.clearAllMocks()
@@ -155,6 +164,38 @@ describe('flowTriggerSideEffect', () => {
             expect(mockAddJob).not.toHaveBeenCalled()
         })
 
+        it('should report a timeout when the enable hook times out without an engine error', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(timedOutEngineResponse())
+
+            await expect(
+                flowTriggerSideEffect(mockLog).enable({
+                    ...BASE_PARAMS,
+                    pieceTrigger: makePollingTrigger(),
+                }),
+            ).rejects.toMatchObject({
+                error: {
+                    code: ErrorCode.TRIGGER_UPDATE_STATUS,
+                    params: { standardError: 'The trigger timed out after 5 seconds without responding' },
+                },
+            })
+            expect(system.getNumberOrThrow).toHaveBeenCalledWith(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS)
+
+            expect(mockAddJob).not.toHaveBeenCalled()
+        })
+
+        it('should keep the engine error when a timed out enable hook reports one', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue({ ...timedOutEngineResponse(), error: 'Engine failed' })
+
+            await expect(
+                flowTriggerSideEffect(mockLog).enable({
+                    ...BASE_PARAMS,
+                    pieceTrigger: makePollingTrigger(),
+                }),
+            ).rejects.toMatchObject({
+                error: { params: { standardError: 'Engine failed' } },
+            })
+        })
+
         it('should keep engine-provided schedule options untouched', async () => {
             const engineSchedule = {
                 type: TriggerSourceScheduleType.CRON_EXPRESSION,
@@ -199,6 +240,24 @@ describe('flowTriggerSideEffect', () => {
                     ignoreError: false,
                 }),
             ).rejects.toThrow(ActivepiecesError)
+        })
+
+        it('should report a timeout when the disable hook times out and ignoreError is false', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(timedOutEngineResponse())
+
+            await expect(
+                flowTriggerSideEffect(mockLog).disable({
+                    ...BASE_PARAMS,
+                    pieceTrigger: makeManualTrigger(),
+                    ignoreError: false,
+                }),
+            ).rejects.toMatchObject({
+                error: {
+                    code: ErrorCode.TRIGGER_UPDATE_STATUS,
+                    params: { standardError: 'The trigger timed out after 5 seconds without responding' },
+                },
+            })
+            expect(system.getNumberOrThrow).toHaveBeenCalledWith(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS)
         })
 
         it('should not throw when engine response is bad and ignoreError is true', async () => {

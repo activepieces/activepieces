@@ -65,8 +65,9 @@ export const worker = {
         await modelTierCatalog.warmUp()
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
+        const workerGroupScope = system.get(WorkerSystemProp.WORKER_GROUP_SCOPE)
         socket = io(socketUrl.url, {
-            auth: { token: workerToken, workerId, workerGroupId, projectWorker },
+            auth: { token: workerToken, workerId, workerGroupId, projectWorker, workerGroupScope },
             path: socketUrl.path,
             transports: ['websocket'],
             reconnection: true,
@@ -149,6 +150,10 @@ export const worker = {
         socket = null
         stopHealthServer()
         logger.info('Worker stopped')
+    },
+
+    stopPolling(): void {
+        polling = false
     },
 }
 

@@ -224,7 +224,13 @@ const IGNORED_DISABLE_ERROR = '[flowTriggerSideEffect#disable] Ignored error dur
 
 function assertEngineResponseIsOk(engineHelperResponse: EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_ENABLE | TriggerHookType.ON_DISABLE>>, flowId: FlowId, flowVersionId: FlowVersionId) {
     if (isNil(engineHelperResponse) || engineHelperResponse.status !== EngineResponseStatus.OK) {
-        throwTriggerUpdateFailed({ flowId, flowVersionId, standardError: engineHelperResponse?.error ?? 'Engine response is undefined' })
+        throwTriggerUpdateFailed({
+            flowId,
+            flowVersionId,
+            standardError: engineHelperResponse?.error ?? (engineHelperResponse?.status === EngineResponseStatus.TIMEOUT
+                ? `The trigger timed out after ${system.getNumberOrThrow(AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS)} seconds without responding`
+                : 'Engine response is undefined'),
+        })
     }
 }
 

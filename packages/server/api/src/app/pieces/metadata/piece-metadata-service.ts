@@ -25,7 +25,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const locale = params.locale ?? LocalesEnum.ENGLISH
-            const translatedPieces = await dedupe(`list:${params.platformId ?? ''}:${locale}`, () => fetchLatestPieces({
+            const { pieces: translatedPieces, untranslatedNames } = await dedupe(`list:${params.platformId ?? ''}:${locale}`, () => fetchLatestPieces({
                 platformId: params.platformId,
                 locale,
                 log,
@@ -36,6 +36,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             const sortedPieces = await pieceListUtils(log).sortAndSearchPieces({
                 ...params,
                 pieces: audiencePieces,
+                untranslatedNames,
                 suggestionType: params.suggestionType,
             })
             const visiblePieces = params.includeHidden ? sortedPieces : sortedPieces.filter((piece) => !piece.deprecated)
@@ -432,7 +433,7 @@ const increaseMajorVersion = (version: string): string => {
     return incrementedVersion
 }
 
-async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log }: FetchLatestPiecesParams): Promise<PieceMetadataSchema[]> {
+async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log }: FetchLatestPiecesParams): Promise<LatestPieces> {
     const currentRelease = apVersionUtil.getCurrentRelease()
 
     const latestPieces = await dedupe(`latest-pieces:${currentRelease}`, () => fetchLatestCompatiblePiecesFromDB(currentRelease))
@@ -442,7 +443,15 @@ async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log
     const merged = [...latestPieces.filter((p) => !devPieceNames.has(p.name)), ...devPieces]
         .filter((piece) => filterPieceBasedOnType(platformId, piece))
         .filter((piece) => isSupportedRelease(currentRelease, piece))
-    return translatePieces({ pieces: lastVersionOfEachPiece(merged), locale })
+    const newestVersions = lastVersionOfEachPiece(merged)
+    const translatedPieces = await translatePieces({ pieces: newestVersions, locale })
+    return { pieces: translatedPieces, untranslatedNames: untranslatedNamesOf({ originalPieces: newestVersions, translatedPieces }) }
+}
+
+function untranslatedNamesOf({ originalPieces, translatedPieces }: UntranslatedNamesOfParams): Map<string, string> {
+    return new Map(originalPieces
+        .filter((piece, index) => piece.displayName !== translatedPieces[index].displayName)
+        .map((piece) => [piece.name, piece.displayName]))
 }
 
 async function fetchPieceVersion({ pieceName, version, platformId, log }: FetchPieceVersionParams): Promise<PieceMetadataSchema | null> {
@@ -641,6 +650,16 @@ type ToPieceMetadataModelSummaryParams<T extends PieceMetadataSchema | PieceMeta
     pieces: T[]
     originalPieces: T[]
     suggestionType?: SuggestionType
+}
+
+type LatestPieces = {
+    pieces: PieceMetadataSchema[]
+    untranslatedNames: Map<string, string>
+}
+
+type UntranslatedNamesOfParams = {
+    originalPieces: PieceMetadataSchema[]
+    translatedPieces: PieceMetadataSchema[]
 }
 
 type TranslatePiecesParams = {

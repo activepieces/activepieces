@@ -99,6 +99,9 @@
       "@activepieces/piece-anyhook-websocket": [
         "packages/pieces/community/anyhook-websocket/src/index.ts"
       ],
+      "@activepieces/piece-apache-kafka": [
+        "packages/pieces/community/apache-kafka/src/index.ts"
+      ],
       "@activepieces/piece-apify": [
         "packages/pieces/community/apify/src/index.ts"
       ],
@@ -225,6 +228,9 @@
       ],
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
+      ],
+      "@activepieces/piece-google-ads": [
+        "packages/pieces/community/google-ads/src/index.ts"
       ],
       "@activepieces/piece-google-translate": [
         "packages/pieces/community/google-translate/src/index.ts"

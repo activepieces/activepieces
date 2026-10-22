@@ -10,15 +10,25 @@ export const uploadProductImageAction = createAction({
   description: 'Upload a new product image.',
   audience: 'both',
   aiMetadata: { description: 'Add an image to an existing Shopify product from a public URL or base64 file; an optional position of 1 makes it the main image. Use to attach product photos; requires the product ID. Each call adds another image, so repeating it creates duplicates.', idempotent: false },
+  propertyGroups: [
+    {
+      key: 'upload',
+      display: 'section',
+      label: 'Upload',
+      icon: 'paperclip',
+      props: ['id', 'image', 'position'],
+    },
+  ],
   props: {
     id: Property.ShortText({
-      displayName: 'Product',
-      description: 'The ID of the product.',
+      displayName: 'Product ID',
+      description: "The number at the end of the product's URL in Shopify admin.",
+      placeholder: '1234567890',
       required: true,
     }),
     image: Property.File({
       displayName: 'Image',
-      description: 'The public URL or the base64 image to use',
+      description: 'A file, or a public URL to an image.',
       required: true,
     }),
     position: Property.Number({
