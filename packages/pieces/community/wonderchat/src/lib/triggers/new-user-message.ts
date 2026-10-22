@@ -77,7 +77,7 @@ export const newUserMessage = createTrigger({
   type: TriggerStrategy.POLLING,
 
   async test(context) {
-    return await pollingHelper.poll(polling, context);
+    return await pollingHelper.test(polling, context);
   },
 
   async onEnable(context) {
