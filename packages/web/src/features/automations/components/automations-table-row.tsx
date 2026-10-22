@@ -427,7 +427,7 @@ const RowItemIcon = ({ item }: { item: TreeItem }) => {
     case 'flow':
       return <Workflow className="h-4 w-4 text-accent-11" />;
     case 'agent':
-      return <Bot className="h-4 w-4 text-swatch-6-mark" />;
+      return <Bot className="h-4 w-4 text-warning-9" />;
     default:
       return <Table2 className="h-4 w-4 text-swatch-8-mark" />;
   }

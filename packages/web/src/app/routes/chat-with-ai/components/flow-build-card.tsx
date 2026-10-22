@@ -19,7 +19,8 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
-const CARD_BASE = 'bg-panel';
+const CARD_BASE =
+  'bg-[color-mix(in_oklab,var(--swatch-6-mark)_5%,color-mix(in_oklab,var(--panel)_75%,var(--gray-5)))]';
 
 export function FlowBuildCard({
   buildId,

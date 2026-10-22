@@ -390,7 +390,7 @@ const AgentsPageContent = () => {
               )}
             </div>
             <div className="ms-auto flex items-center gap-3">
-              <div className="flex h-8 w-[180px] shrink-0 items-center gap-2 rounded-full border border-gray-6 bg-gray-3 px-3">
+              <div className="flex h-8 w-[180px] shrink-0 items-center gap-2 rounded-full border border-gray-8 px-3">
                 <Search size={14} className="shrink-0 text-gray-11" />
                 <input
                   value={search}
@@ -415,7 +415,7 @@ const AgentsPageContent = () => {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex h-8 items-center gap-2 rounded-md border border-gray-6 px-3 text-sm leading-4 transition-colors hover:bg-gray-4"
+                    className="flex h-8 items-center gap-2 rounded-md border border-gray-8 px-3 text-sm leading-4 transition-colors hover:bg-gray-4"
                   >
                     {t(SORT_LABELS[sort])}
                     <ChevronsUpDown size={14} className="text-gray-11" />

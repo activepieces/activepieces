@@ -58,7 +58,7 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                 <TooltipTrigger asChild>
                   <div
                     className={cn(
-                      'flex-1 h-full rounded-md transition-colors',
+                      'flex-1 h-full rounded-md ring-1 ring-inset ring-gray-12/10 transition-colors',
                       healthy
                         ? 'bg-success-9 hover:bg-success-9/80'
                         : 'bg-danger-9 hover:bg-danger-9/80',
@@ -70,11 +70,11 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                     {dayjs(day.day).format('MMM DD, YYYY')}
                   </span>
                   {healthy ? (
-                    <span className="text-gray-11">{t('Healthy')}</span>
+                    <span className="text-gray-1/70">{t('Healthy')}</span>
                   ) : (
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center justify-between gap-6">
-                        <span className="text-gray-11">
+                        <span className="text-gray-1/70">
                           {t('Internal errors')}
                         </span>
                         <span className="font-medium tabular-nums">
@@ -82,7 +82,7 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-6">
-                        <span className="text-gray-11">
+                        <span className="text-gray-1/70">
                           {t('Affected flows')}
                         </span>
                         <span className="font-medium tabular-nums">
@@ -90,7 +90,9 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-6">
-                        <span className="text-gray-11">{t('Stuck jobs')}</span>
+                        <span className="text-gray-1/70">
+                          {t('Stuck jobs')}
+                        </span>
                         <span className="font-medium tabular-nums">
                           {day.stuckJobs}
                         </span>

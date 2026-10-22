@@ -22,4 +22,5 @@ export function SettingRow({
   );
 }
 
-export const SETTING_TRIGGER_CLASS = 'w-40 justify-between font-normal';
+export const SETTING_TRIGGER_CLASS =
+  'w-40 justify-between border-gray-8 bg-transparent font-normal';
