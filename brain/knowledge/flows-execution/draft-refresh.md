@@ -4,7 +4,7 @@ icon: 🔄
 
 # Draft Refresh
 
-How an open builder tab takes a change that a different writer saved to the same flow draft. Every Draft Write sends a Draft Push to the project room, and each open tab that shows the newest version refreshes the draft in place. Why there is no edit lease: [decision 000049](../decisions/000049-lost-flow-edits-are-fixed-by-a-draft-refresh-not-an-edit-lease.md).
+How an open builder tab takes a change that a different writer saved to the same flow draft. Every Draft Write sends a Draft Push to the project room, and each open tab that shows the newest version refreshes the draft in place. Why there is no edit lease: [decision 000050](../decisions/000050-lost-flow-edits-are-fixed-by-a-draft-refresh-not-an-edit-lease.md).
 
 **Draft Write** — a write that changes the content of a flow draft: every step, branch, trigger and note operation, `CHANGE_NAME`, `IMPORT_FLOW`, `USE_AS_DRAFT`, `SAVE_SAMPLE_DATA`, `UPDATE_SAMPLE_DATA_INFO`, `LOCK_FLOW`, `LOCK_AND_PUBLISH` and approval withdraw. Status, folder, owner, minutes-saved and metadata writes are not Draft Writes, and neither is the schema migration on read.
 
