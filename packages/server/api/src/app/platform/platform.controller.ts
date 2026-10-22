@@ -58,7 +58,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const platformId = req.principal.platform.id
-        await assertPlanCoversSettings({ request: req, reply, body: req.body })
+        await assertPlanAllowsBrandingAndEmbedOriginChanges({ request: req, reply, body: req.body })
 
         const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all([
             fileService(app.log).uploadPublicAsset({
@@ -91,7 +91,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             ip: networkUtils.clientIp(req),
         })
         const updated = await platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
-        return withSelfServeTrial({ platform: updated, log: req.log, include: req.principal.type === PrincipalType.USER })
+        return addSelfServeTrialToPlatform({ platform: updated, log: req.log, includeSelfServeTrial: req.principal.type === PrincipalType.USER })
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -107,9 +107,9 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         if (req.principal.type === PrincipalType.USER) {
             const isEmbedded = await userIdentityHelper(req.log).isUserEmbedded(req.principal.id)
             const chatEnabled = chatVisibilityHelper.resolveChatEnabledForUser({ platform, isEmbedded })
-            return withSelfServeTrial({
+            return addSelfServeTrialToPlatform({
                 log: req.log,
-                include: !isEmbedded,
+                includeSelfServeTrial: !isEmbedded,
                 platform: {
                     ...platform,
                     plan: {
@@ -195,12 +195,12 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
     }
 }
 
-async function assertPlanCoversSettings({ request, reply, body }: AssertPlanCoversSettingsParams): Promise<void> {
+async function assertPlanAllowsBrandingAndEmbedOriginChanges({ request, reply, body }: AssertPlanAllowsBrandingAndEmbedOriginChangesParams): Promise<void> {
     if (edition === ApEdition.COMMUNITY) {
         return
     }
-    const changesBranding = [body.logoIcon, body.fullLogo, body.favIcon, body.primaryColor, body.themeColors].some((value) => !isNil(value))
-    if (changesBranding) {
+    const isChangingBranding = [body.logoIcon, body.fullLogo, body.favIcon, body.primaryColor, body.themeColors].some((value) => !isNil(value))
+    if (isChangingBranding) {
         await platformMustHaveFeatureEnabled((platform) => platform.plan.customAppearanceEnabled).call(request.server, request, reply)
     }
     if (!isNil(body.allowedEmbedOrigins) && body.allowedEmbedOrigins.length > 0) {
@@ -208,11 +208,11 @@ async function assertPlanCoversSettings({ request, reply, body }: AssertPlanCove
     }
 }
 
-async function withSelfServeTrial<T extends PlatformWithoutSensitiveData>({ platform, log, include }: WithSelfServeTrialParams<T>): Promise<T & { selfServeTrial?: SelfServeTrialDates }> {
-    if (!include) {
+async function addSelfServeTrialToPlatform<T extends PlatformWithoutSensitiveData>({ platform, log, includeSelfServeTrial }: AddSelfServeTrialToPlatformParams<T>): Promise<T & { selfServeTrial?: SelfServeTrialDates }> {
+    if (!includeSelfServeTrial) {
         return platform
     }
-    const selfServeTrial = await billingProvider.get(log).getPlatformSelfServeTrial(platform.id)
+    const selfServeTrial = await billingProvider.get(log).getCachedSelfServeTrial(platform.id)
     return isNil(selfServeTrial) ? platform : { ...platform, selfServeTrial }
 }
 
@@ -284,13 +284,13 @@ const GetAssetRequest = {
     },
 }
 
-type WithSelfServeTrialParams<T> = {
+type AddSelfServeTrialToPlatformParams<T> = {
     platform: T
     log: FastifyBaseLogger
-    include: boolean
+    includeSelfServeTrial: boolean
 }
 
-type AssertPlanCoversSettingsParams = {
+type AssertPlanAllowsBrandingAndEmbedOriginChangesParams = {
     request: FastifyRequest
     reply: FastifyReply
     body: UpdatePlatformRequestBody

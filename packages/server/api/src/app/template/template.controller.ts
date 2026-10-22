@@ -66,7 +66,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
         switch (type) {
             case TemplateType.CUSTOM: {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
-                await assertCustomTemplatesOnPlan({ request, reply })
+                await assertPlanIncludesCustomTemplates({ request, reply })
                 platformId = request.principal.platform.id
             }
                 break
@@ -102,7 +102,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
                 })
             case TemplateType.CUSTOM: {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
-                await assertCustomTemplatesOnPlan({ request, reply })
+                await assertPlanIncludesCustomTemplates({ request, reply })
                 assertTemplateBelongsToPlatform({
                     templatePlatformId: template.platformId,
                     principalPlatformId: request.principal.platform.id,
@@ -127,7 +127,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
                 })
             case TemplateType.CUSTOM: {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
-                await assertCustomTemplatesOnPlan({ request, reply })
+                await assertPlanIncludesCustomTemplates({ request, reply })
                 assertTemplateBelongsToPlatform({
                     templatePlatformId: template.platformId,
                     principalPlatformId: request.principal.platform.id,
@@ -271,14 +271,14 @@ async function loadCustomTemplatesOrReturnEmpty(
     return customTemplates.data
 }
 
-async function assertCustomTemplatesOnPlan({ request, reply }: AssertCustomTemplatesOnPlanParams): Promise<void> {
+async function assertPlanIncludesCustomTemplates({ request, reply }: AssertPlanIncludesCustomTemplatesParams): Promise<void> {
     if (edition === ApEdition.COMMUNITY) {
         return
     }
     await platformMustHaveFeatureEnabled((platform) => platform.plan.manageTemplatesEnabled).call(request.server, request, reply)
 }
 
-type AssertCustomTemplatesOnPlanParams = {
+type AssertPlanIncludesCustomTemplatesParams = {
     request: FastifyRequest
     reply: FastifyReply
 }
