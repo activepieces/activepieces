@@ -42,6 +42,7 @@ const socketState = vi.hoisted(() => {
     event: string;
     payload: { resourceId: string; force?: boolean };
     ack?: (response: LockResponse) => void;
+    fail?: () => void;
   };
   type ClientHandler = (payload: unknown) => void;
   const emitCalls: EmitCall[] = [];
@@ -63,6 +64,20 @@ const socketState = vi.hoisted(() => {
       emitCalls.push({ event, payload, ack });
       return fakeSocket;
     },
+    timeout: () => ({
+      emit: (
+        event: string,
+        payload: { resourceId: string; force?: boolean },
+        ack: (error: Error | null, response?: LockResponse) => void,
+      ) => {
+        emitCalls.push({
+          event,
+          payload,
+          ack: (response) => ack(null, response),
+          fail: () => ack(new Error('operation has timed out')),
+        });
+      },
+    }),
   };
   const dispatch = (event: string, payload: unknown) => {
     (handlers[event] ?? []).forEach((handler) => handler(payload));
@@ -771,6 +786,27 @@ describe('useResourceLock with beforeRelease', () => {
       expect(latestHookResult?.lockedBy).toBeNull();
     },
   );
+
+  it('asks for the lock again, and keeps acquiring, when the answer of a page that comes back is lost', async () => {
+    await mountOwning({ beforeRelease: () => Promise.resolve() });
+    await act(async () => {
+      window.dispatchEvent(new Event('pagehide'));
+      window.dispatchEvent(new Event('pageshow'));
+    });
+
+    await act(async () => {
+      lockEmits()[1].fail?.();
+    });
+    expect(lockEmits()).toHaveLength(3);
+    expect(latestHookResult?.acquiring).toBe(true);
+    expect(unlockEmits()).toHaveLength(1);
+
+    await act(async () => {
+      lockEmits()[2].ack?.({ acquired: true, lock: null });
+    });
+    expect(latestHookResult?.acquiring).toBe(false);
+    expect(latestHookResult?.lockedBy).toBeNull();
+  });
 
   it('does not release or take the lock on page leave and return when the tab does not own it', async () => {
     await act(async () => {

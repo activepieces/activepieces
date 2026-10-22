@@ -106,28 +106,34 @@ function useResourceLock({
     const acquire = Symbol(resourceId);
     latestAcquireByResource.set(resourceId, acquire);
     currentAcquire.current = acquire;
-    socket.emit(
-      WebsocketServerEvent.LOCK_RESOURCE,
-      { resourceId, editorSessionId: editorSession.getId() },
-      (response: LockResourceResponse) => {
-        if (currentAcquire.current !== acquire) {
-          releaseLateAcquire({
-            acquired: response.acquired,
-            acquire,
-            resourceId,
-            socket,
-            beforeRelease: beforeReleaseRef.current,
-          });
-          return;
-        }
-        setAcquiring(false);
-        if (response.acquired) {
-          isOwner.current = true;
-        } else if (response.lock) {
-          setLockedBy(response.lock);
-        }
-      },
-    );
+    socket
+      .timeout(10_000)
+      .emit(
+        WebsocketServerEvent.LOCK_RESOURCE,
+        { resourceId, editorSessionId: editorSession.getId() },
+        (error: Error | null, response: LockResourceResponse) => {
+          if (currentAcquire.current !== acquire) {
+            releaseLateAcquire({
+              acquired: isNil(error) && response.acquired,
+              acquire,
+              resourceId,
+              socket,
+              beforeRelease: beforeReleaseRef.current,
+            });
+            return;
+          }
+          if (!isNil(error)) {
+            setLockSession((session) => session + 1);
+            return;
+          }
+          setAcquiring(false);
+          if (response.acquired) {
+            isOwner.current = true;
+          } else if (response.lock) {
+            setLockedBy(response.lock);
+          }
+        },
+      );
 
     const heartbeat = setInterval(() => {
       if (!isOwner.current) {

@@ -67,6 +67,19 @@ const socketHarness = vi.hoisted(() => {
       emitCalls.push({ event, payload, ack });
       return socket;
     },
+    timeout: () => ({
+      emit: (
+        event: string,
+        payload: { resourceId: string; force?: boolean },
+        ack: (error: Error | null, response?: LockResponse) => void,
+      ) => {
+        emitCalls.push({
+          event,
+          payload,
+          ack: (response) => ack(null, response),
+        });
+      },
+    }),
   };
   const sendFromServer = ({
     event,
