@@ -21,4 +21,8 @@ The `Benchmark` GitHub Actions workflow (`.github/workflows/benchmark.yml`) runs
 
 - **Results:** each scheduled run stores one row per shape in ClickHouse. The **Nightly Benchmark** dashboard in HyperDX charts throughput, latency, queue wait and worker resources over time.
 - **Regression alert:** `benchmark/detect-regression.mjs` compares the run with the median of the last 14 runs and alerts Betterstack when a metric is more than 5% worse on 2 runs in a row. It stays silent until a shape has 3 runs of history.
-- **Pipeline alert:** the job's last step opens a `bench-pipeline-<shape>` alert in Betterstack when anything in the job failed, and resolves it on the next green run.
+- **Pipeline alert:** on scheduled runs only, the job's last step opens a `bench-pipeline-<shape>` alert in Betterstack when anything in the job failed, and resolves it on the next green scheduled run.
+
+<Warning>
+Manual runs (`workflow_dispatch`) skip the ClickHouse writes and both Betterstack alert steps. A green manual run does not prove these steps work or resolve an existing pipeline alert. Check the next scheduled run after changing them or their secrets.
+</Warning>
