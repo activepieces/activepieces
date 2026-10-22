@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { googleCloudStorageAuth } from '../common/auth';
 import { gcsCommon } from '../common/client';
 import { bucketDropdown, projectIdProperty } from '../common/props';
@@ -17,10 +17,10 @@ export const deleteEmptyBucket = createAction({
   },
   async run(context) {
     const { bucket } = context.propsValue;
-    const auth = context.auth as OAuth2PropertyValue;
+    const accessToken = await gcsCommon.getAccessToken({ auth: context.auth, server: context.server });
 
     try {
-      await gcsCommon.makeRequest(HttpMethod.DELETE, `/b/${bucket}`, auth.access_token);
+      await gcsCommon.makeRequest(HttpMethod.DELETE, `/b/${bucket}`, accessToken);
 
       return {
         success: true,
