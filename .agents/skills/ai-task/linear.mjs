@@ -96,8 +96,9 @@ async function moveOldSkillCopies() {
     const skillsDir = join(claudeDir, 'skills')
     const repoSkill = await realpath(dirname(fileURLToPath(import.meta.url)))
     const entries = await readdir(skillsDir).catch(() => [])
-    const candidates = [...entries.map((entry) => join(skillsDir, entry)), join(claudeDir, 'commands', 'ai-task.md')]
-    const flags = await Promise.all(candidates.map((path) => isOldCopy({ path, repoSkill })))
+    const oldCommand = join(claudeDir, 'commands', 'ai-task.md')
+    const candidates = [...entries.map((entry) => join(skillsDir, entry)), oldCommand]
+    const flags = await Promise.all(candidates.map((path) => isOldCopy({ path, oldCommand, repoSkill })))
     const oldCopies = candidates.filter((_, i) => flags[i])
     if (oldCopies.length === 0) {
         return
@@ -111,8 +112,8 @@ async function moveOldSkillCopies() {
     console.log('')
 }
 
-async function isOldCopy({ path, repoSkill }) {
-    if (path.endsWith('.md')) {
+async function isOldCopy({ path, oldCommand, repoSkill }) {
+    if (path === oldCommand) {
         return (await lstat(path).catch(() => null)) !== null
     }
     const real = await realpath(path).catch(() => null)
