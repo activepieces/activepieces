@@ -24,10 +24,10 @@ async function setup() {
     const { viewer } = await linear({ key, query: '{ viewer { name } }' })
     const settings = await readSettings()
     await mkdir(dirname(SETTINGS_PATH), { recursive: true })
-    await writeFile(SETTINGS_PATH, JSON.stringify({ ...settings, env: { ...settings.env, LINEAR_API_KEY: key } }, null, 2) + '\n')
     if (process.platform !== 'win32') {
-        await chmod(SETTINGS_PATH, 0o600)
+        await chmod(SETTINGS_PATH, 0o600).catch(() => undefined)
     }
+    await writeFile(SETTINGS_PATH, JSON.stringify({ ...settings, env: { ...settings.env, LINEAR_API_KEY: key } }, null, 2) + '\n', { mode: 0o600 })
     console.log(`\nSaved for ${viewer.name}. Restart Claude Code and you're set.`)
 }
 
