@@ -99,7 +99,12 @@ export const bannerbearClient = {
     const pageSize =
       version === 'v5' ? V5_TEMPLATE_PAGE_SIZE : bannerbearClient.MAX_LIMIT;
     const templates: NormalizedTemplate[] = [];
-    for (let page = 1; page <= MAX_PAGES; page++) {
+    for (let page = 1; ; page++) {
+      if (page > MAX_TEMPLATE_PAGES) {
+        throw new Error(
+          `This Bannerbear account has more than ${MAX_TEMPLATE_PAGES * pageSize} templates, which is more than can be listed in one step. Use Get Template with a template UID instead.`
+        );
+      }
       const queryParams: QueryParams = { page: String(page) };
       if (version === 'v2') {
         queryParams['limit'] = String(bannerbearClient.MAX_LIMIT);
@@ -135,7 +140,7 @@ const V5_KEY_PREFIX = 'bb_ak_v5_';
 const POLL_INTERVAL_MS = 2000;
 const MAX_WAIT_MS = 120000;
 
-const MAX_PAGES = 40;
+const MAX_TEMPLATE_PAGES = 400;
 const V5_TEMPLATE_PAGE_SIZE = 25;
 
 function normalizeImage(raw: RawImage): NormalizedImage {

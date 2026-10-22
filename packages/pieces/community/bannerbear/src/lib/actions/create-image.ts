@@ -52,11 +52,10 @@ export const bannerbearCreateImageAction = createAction({
         const fields: InputPropertyMap = {};
         for (const layer of normalized.layers) {
           if (!layer.name) continue;
-          for (const field of LAYER_FIELDS[layer.type] ?? []) {
-            fields[`${layer.name}${SEPARATOR}${field.key}`] = Property.ShortText({
-              displayName: `${layer.name}: ${field.label}`,
-              description: field.description,
-              required: false,
+          for (const field of fieldsForLayer(layer.type)) {
+            fields[`${layer.name}${SEPARATOR}${field.key}`] = buildFieldProp({
+              layerName: layer.name,
+              field,
             });
           }
         }
@@ -112,7 +111,7 @@ function toModifications(values: Record<string, unknown>): V2Modification[] {
   const byLayer = new Map<string, V2Modification>();
   for (const [key, value] of Object.entries(values)) {
     const index = key.lastIndexOf(SEPARATOR);
-    if (index < 0 || value === undefined || value === null || value === '') {
+    if (index < 0 || isEmptyValue(value)) {
       continue;
     }
     const layer = key.slice(0, index);
@@ -126,7 +125,7 @@ function toModifications(values: Record<string, unknown>): V2Modification[] {
 function cleanLegacy(values: Record<string, unknown>): V2Modification {
   const result: V2Modification = {};
   for (const [key, value] of Object.entries(values)) {
-    if (value === undefined || value === null || value === '') continue;
+    if (isEmptyValue(value)) continue;
     result[key] = coerceField({ field: key, value });
   }
   return result;
@@ -170,19 +169,72 @@ function toOptionalInteger(value: unknown): number | undefined {
   return n;
 }
 
+function isEmptyValue(value: unknown): boolean {
+  return value === undefined || value === null || value === '' || value === false;
+}
+
+function fieldsForLayer(type: string): LayerField[] {
+  const result: LayerField[] = [];
+  const keys = new Set<string>();
+  for (const field of [...(LAYER_FIELDS[type] ?? []), ...COMMON_FIELDS]) {
+    if (keys.has(field.key)) continue;
+    keys.add(field.key);
+    result.push(field);
+  }
+  return result;
+}
+
+function buildFieldProp({
+  layerName,
+  field,
+}: {
+  layerName: string;
+  field: LayerField;
+}) {
+  const options = {
+    displayName: `${layerName}: ${field.label}`,
+    description: field.description,
+    required: false,
+  };
+  if (field.kind === 'checkbox') return Property.Checkbox(options);
+  if (field.kind === 'number') return Property.Number(options);
+  return Property.ShortText(options);
+}
+
 const SEPARATOR = '::';
 
 const NUMBER_FIELDS = ['rating', 'border_width', 'shift_x', 'shift_y'];
+
+const COMMON_FIELDS: LayerField[] = [
+  { key: 'color', label: 'Color', description: 'Hex color, e.g. #FF0000.' },
+  { key: 'gradient', label: 'Gradient', description: 'Fill with a gradient, e.g. ["#000","#FFF"] or #000,#FFF.' },
+  { key: 'border_width', label: 'Border Width', description: 'Width of the layer border.', kind: 'number' },
+  { key: 'border_color', label: 'Border Color', description: 'Hex color, e.g. #FF0000.' },
+  { key: 'shift_x', label: 'Shift X', description: 'Move the layer along the x axis (pixels).', kind: 'number' },
+  { key: 'shift_y', label: 'Shift Y', description: 'Move the layer along the y axis (pixels).', kind: 'number' },
+  { key: 'target', label: 'Link Target', description: 'Clickable link URL on this layer when rendering a PDF.' },
+  { key: 'hide', label: 'Hide', description: 'Hide this layer.', kind: 'checkbox' },
+];
 
 const TEXT_FIELDS: LayerField[] = [
   { key: 'text', label: 'Text', description: 'Replacement text.' },
   { key: 'color', label: 'Text Color', description: 'Hex color, e.g. #FF0000.' },
   { key: 'background', label: 'Background', description: 'Hex color, e.g. #000000.' },
   { key: 'font_family', label: 'Font', description: 'Font family name.' },
+  { key: 'text_align_h', label: 'Horizontal Align', description: 'left, center or right.' },
+  { key: 'text_align_v', label: 'Vertical Align', description: 'top, center or bottom.' },
+  { key: 'font_family_2', label: 'Secondary Font', description: 'Secondary font family name.' },
+  { key: 'color_2', label: 'Secondary Text Color', description: 'Hex color for the secondary font.' },
 ];
 
 const IMAGE_FIELDS: LayerField[] = [
   { key: 'image_url', label: 'Image URL', description: 'Public URL of the image.' },
+  { key: 'effect', label: 'Effect', description: 'Image effect name, e.g. Grayscale.' },
+  { key: 'anchor_x', label: 'Anchor X', description: 'left, center or right.' },
+  { key: 'anchor_y', label: 'Anchor Y', description: 'top, center or bottom.' },
+  { key: 'fill_type', label: 'Fill Type', description: 'fill or fit.' },
+  { key: 'disable_face_detect', label: 'Disable Face Detect', description: 'Turn off face detection for this render.', kind: 'checkbox' },
+  { key: 'disable_smart_crop', label: 'Disable Smart Crop', description: 'Turn off smart crop for this render.', kind: 'checkbox' },
 ];
 
 const LAYER_FIELDS: Record<string, LayerField[]> = {
@@ -191,7 +243,7 @@ const LAYER_FIELDS: Record<string, LayerField[]> = {
   rectangle_image_container: IMAGE_FIELDS,
   circle_image_container: IMAGE_FIELDS,
   rating: [
-    { key: 'rating', label: 'Rating', description: 'Number from 0 to 100.' },
+    { key: 'rating', label: 'Rating', description: 'Number from 0 to 100.', kind: 'number' },
   ],
   chart: [
     { key: 'chart_data', label: 'Chart Data', description: 'Comma-separated numbers, e.g. 10,20,30.' },
@@ -204,4 +256,9 @@ const LAYER_FIELDS: Record<string, LayerField[]> = {
   ],
 };
 
-type LayerField = { key: string; label: string; description: string };
+type LayerField = {
+  key: string;
+  label: string;
+  description: string;
+  kind?: 'text' | 'number' | 'checkbox';
+};
