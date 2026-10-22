@@ -3125,6 +3125,7 @@
   "This will permanently delete the table and all its data.": "This will permanently delete the table and all its data.",
   "table": "table",
   "{name} is editing": "{name} is editing",
+  "Open for editing in another tab or window": "Open for editing in another tab or window",
   "Delete Records": "Delete Records",
   "The selected records will be permanently deleted.": "The selected records will be permanently deleted.",
   "record": "record",

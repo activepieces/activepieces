@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useSocket } from '@/components/providers/socket-provider';
-import { authenticationSession } from '@/lib/authentication-session';
+import { editorSession } from '@/lib/editor-session';
 
 const latestAcquireByResource = new Map<string, symbol>();
 
@@ -20,7 +20,6 @@ function useResourceLock({
   beforeRelease,
 }: UseResourceLockParams) {
   const socket = useSocket();
-  const currentUserId = authenticationSession.getCurrentUserId();
   const isOwner = useRef(false);
   const currentAcquire = useRef<symbol | null>(null);
   // bumped after a successful take-over so the acquire effect re-runs and
@@ -37,14 +36,10 @@ function useResourceLock({
       if (event.resourceId !== resourceId) {
         return;
       }
-      if (event.userId !== currentUserId) {
-        setLockedBy({
-          userId: event.userId,
-          userDisplayName: event.userDisplayName,
-        });
-      } else if (!acquiresFreedLock) {
-        setLockedBy(null);
-      }
+      setLockedBy({
+        userId: event.userId,
+        userDisplayName: event.userDisplayName,
+      });
     };
     const handleUnlocked = (event: ResourceUnlockedEvent) => {
       if (event.resourceId === resourceId && !acquiresFreedLock) {
@@ -59,7 +54,7 @@ function useResourceLock({
       socket.off(WebsocketClientEvent.RESOURCE_LOCKED, handleLocked);
       socket.off(WebsocketClientEvent.RESOURCE_UNLOCKED, handleUnlocked);
     };
-  }, [resourceId, socket, currentUserId, acquiresFreedLock]);
+  }, [resourceId, socket, acquiresFreedLock]);
 
   useEffect(() => {
     if (isNil(onLockFreed) || isNil(lockedBy)) {
@@ -79,7 +74,7 @@ function useResourceLock({
       const acquire = currentAcquire.current;
       socket.emit(
         WebsocketServerEvent.LOCK_RESOURCE,
-        { resourceId },
+        { resourceId, editorSessionId: editorSession.getId() },
         (response: LockResourceResponse) => {
           if (isNil(acquire) || currentAcquire.current !== acquire) {
             releaseLateAcquire({
@@ -100,20 +95,11 @@ function useResourceLock({
         },
       );
     };
-    const shareLockOfSameUser = (event: ResourceLockedEvent) => {
-      if (event.resourceId !== resourceId || event.userId !== currentUserId) {
-        return;
-      }
-      isOwner.current = true;
-      stopWaitingAfterLockFreed();
-    };
     socket.on(WebsocketClientEvent.RESOURCE_UNLOCKED, acquireFreedLock);
-    socket.on(WebsocketClientEvent.RESOURCE_LOCKED, shareLockOfSameUser);
     return () => {
       socket.off(WebsocketClientEvent.RESOURCE_UNLOCKED, acquireFreedLock);
-      socket.off(WebsocketClientEvent.RESOURCE_LOCKED, shareLockOfSameUser);
     };
-  }, [resourceId, socket, lockedBy, onLockFreed, currentUserId]);
+  }, [resourceId, socket, lockedBy, onLockFreed]);
 
   useEffect(() => {
     const acquire = Symbol(resourceId);
@@ -121,7 +107,7 @@ function useResourceLock({
     currentAcquire.current = acquire;
     socket.emit(
       WebsocketServerEvent.LOCK_RESOURCE,
-      { resourceId },
+      { resourceId, editorSessionId: editorSession.getId() },
       (response: LockResourceResponse) => {
         if (currentAcquire.current !== acquire) {
           releaseLateAcquire({
@@ -147,7 +133,7 @@ function useResourceLock({
       }
       socket.emit(
         WebsocketServerEvent.LOCK_RESOURCE,
-        { resourceId },
+        { resourceId, editorSessionId: editorSession.getId() },
         (response: LockResourceResponse) => {
           if (!response.acquired && response.lock) {
             isOwner.current = false;
@@ -175,7 +161,7 @@ function useResourceLock({
     const acquire = currentAcquire.current;
     socket.emit(
       WebsocketServerEvent.LOCK_RESOURCE,
-      { resourceId, force: true },
+      { resourceId, force: true, editorSessionId: editorSession.getId() },
       (response: LockResourceResponse) => {
         if (isNil(acquire) || currentAcquire.current !== acquire) {
           releaseLateAcquire({
@@ -235,7 +221,10 @@ function releaseIfLatestAcquire({
     return;
   }
   latestAcquireByResource.delete(resourceId);
-  socket.emit(WebsocketServerEvent.UNLOCK_RESOURCE, { resourceId });
+  socket.emit(WebsocketServerEvent.UNLOCK_RESOURCE, {
+    resourceId,
+    editorSessionId: editorSession.getId(),
+  });
 }
 
 function releaseAfter({

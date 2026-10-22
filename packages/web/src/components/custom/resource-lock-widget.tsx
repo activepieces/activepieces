@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Lock } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 function ResourceLockWidget({
@@ -22,7 +23,9 @@ function ResourceLockWidget({
       >
         <Lock className="size-3.5 shrink-0" />
         <span className="min-w-0 truncate">
-          {t('{name} is editing', { name: lockedBy.userDisplayName })}
+          {lockedBy.userId === authenticationSession.getCurrentUserId()
+            ? t('Open for editing in another tab or window')
+            : t('{name} is editing', { name: lockedBy.userDisplayName })}
           {' · '}
           {t('View only')}
         </span>

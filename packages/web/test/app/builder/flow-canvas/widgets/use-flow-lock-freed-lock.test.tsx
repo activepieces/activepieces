@@ -27,6 +27,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import { useFlowLock } from '@/app/builder/flow-canvas/widgets/use-flow-lock';
+import { editorSession } from '@/lib/editor-session';
 
 const flowsApiMock = vi.hoisted(() => ({
   get: vi.fn<(flowId: string) => Promise<PopulatedFlow>>(),
@@ -329,7 +330,12 @@ describe('useFlowLock when this tab holds the Resource Lock and leaves', () => {
     lastSave.resolve(draftFlow({ displayName: 'Last edit of the holder' }));
     await settle();
     expect(unlockRequests()).toEqual([
-      expect.objectContaining({ payload: { resourceId: 'flow-1' } }),
+      expect.objectContaining({
+        payload: {
+          resourceId: 'flow-1',
+          editorSessionId: editorSession.getId(),
+        },
+      }),
     ]);
   });
 

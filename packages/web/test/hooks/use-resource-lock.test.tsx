@@ -23,6 +23,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useResourceLock } from '@/hooks/use-resource-lock';
+import { editorSession } from '@/lib/editor-session';
 
 declare global {
   // Tells React the test wraps updates in act(); see React's act() docs.
@@ -79,15 +80,14 @@ vi.mock('@/components/providers/socket-provider', () => ({
   useSocket: () => socketState.fakeSocket,
 }));
 
-vi.mock('@/lib/authentication-session', () => ({
-  authenticationSession: {
-    getCurrentUserId: () => 'current-user',
-  },
-}));
-
 const RESOURCE_ID = 'flow-1';
+const SESSION_ID = editorSession.getId();
 const OTHER_USER = { userId: 'other-user', userDisplayName: 'Other User' };
 const THIRD_USER = { userId: 'third-user', userDisplayName: 'Third User' };
+const SAME_USER_IN_ANOTHER_TAB = {
+  userId: 'current-user',
+  userDisplayName: 'Me',
+};
 
 let latestHookResult: ReturnType<typeof useResourceLock> | null = null;
 
@@ -155,7 +155,10 @@ describe('useResourceLock takeOver', () => {
 
     const initialAcquire = lockEmits()[0];
     expect(initialAcquire).toBeDefined();
-    expect(initialAcquire.payload).toEqual({ resourceId: RESOURCE_ID });
+    expect(initialAcquire.payload).toEqual({
+      resourceId: RESOURCE_ID,
+      editorSessionId: SESSION_ID,
+    });
 
     await act(async () => {
       initialAcquire.ack?.({ acquired: false, lock: OTHER_USER });
@@ -170,6 +173,7 @@ describe('useResourceLock takeOver', () => {
     expect(forceAcquire?.payload).toEqual({
       resourceId: RESOURCE_ID,
       force: true,
+      editorSessionId: SESSION_ID,
     });
 
     const emitCountBeforeAck = socketState.emitCalls.length;
@@ -197,7 +201,10 @@ describe('useResourceLock takeOver', () => {
     ).toBe(false);
 
     const reacquire = windowAfterForceAck[reacquireIndex];
-    expect(reacquire.payload).toEqual({ resourceId: RESOURCE_ID });
+    expect(reacquire.payload).toEqual({
+      resourceId: RESOURCE_ID,
+      editorSessionId: SESSION_ID,
+    });
 
     await act(async () => {
       reacquire.ack?.({ acquired: true, lock: null });
@@ -210,7 +217,10 @@ describe('useResourceLock takeOver', () => {
       (call) => call.event === WebsocketServerEvent.UNLOCK_RESOURCE,
     );
     expect(unlocks).toHaveLength(1);
-    expect(unlocks[0].payload).toEqual({ resourceId: RESOURCE_ID });
+    expect(unlocks[0].payload).toEqual({
+      resourceId: RESOURCE_ID,
+      editorSessionId: SESSION_ID,
+    });
     expect(reloadSpy).not.toHaveBeenCalled();
   });
 
@@ -235,7 +245,9 @@ describe('useResourceLock takeOver', () => {
     });
 
     expect(unlockEmits()).toEqual([
-      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+      expect.objectContaining({
+        payload: { resourceId: RESOURCE_ID, editorSessionId: SESSION_ID },
+      }),
     ]);
     expect(onTakeOver).not.toHaveBeenCalled();
   });
@@ -264,19 +276,10 @@ describe('useResourceLock takeOver', () => {
     expect(reloadSpy).not.toHaveBeenCalled();
   });
 
-  it('tracks the locker from broadcasts and ignores its own and unrelated locks', async () => {
+  it('tracks the locker from broadcasts, the same user in another tab too, and ignores unrelated locks', async () => {
     await act(async () => {
       root.render(<Probe onTakeOver={vi.fn()} />);
     });
-
-    await act(async () => {
-      socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
-        resourceId: RESOURCE_ID,
-        userId: 'current-user',
-        userDisplayName: 'Me',
-      });
-    });
-    expect(latestHookResult?.lockedBy).toBeNull();
 
     await act(async () => {
       socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
@@ -285,6 +288,9 @@ describe('useResourceLock takeOver', () => {
       });
     });
     expect(latestHookResult?.lockedBy).toBeNull();
+
+    await lockBySameUserInAnotherTab();
+    expect(latestHookResult?.lockedBy).toEqual(SAME_USER_IN_ANOTHER_TAB);
 
     await act(async () => {
       socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
@@ -303,17 +309,17 @@ describe('useResourceLock takeOver', () => {
     expect(lockEmits()).toHaveLength(1);
   });
 
-  it('clears the locker when the same user takes the lock in another tab', async () => {
+  it('names the same user as the holder when another tab of that user takes the lock from this tab', async () => {
     await act(async () => {
       root.render(<Probe onTakeOver={vi.fn()} />);
     });
     await act(async () => {
-      lockEmits()[0].ack?.({ acquired: false, lock: OTHER_USER });
+      lockEmits()[0].ack?.({ acquired: true, lock: null });
     });
 
     await lockBySameUserInAnotherTab();
 
-    expect(latestHookResult?.lockedBy).toBeNull();
+    expect(latestHookResult?.lockedBy).toEqual(SAME_USER_IN_ANOTHER_TAB);
     expect(lockEmits()).toHaveLength(1);
   });
 
@@ -397,7 +403,10 @@ describe('useResourceLock with onLockFreed', () => {
 
     await freeTheLock();
     const freedLockAcquire = lockEmits()[1];
-    expect(freedLockAcquire.payload).toEqual({ resourceId: RESOURCE_ID });
+    expect(freedLockAcquire.payload).toEqual({
+      resourceId: RESOURCE_ID,
+      editorSessionId: SESSION_ID,
+    });
     expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
 
     await act(async () => {
@@ -415,7 +424,9 @@ describe('useResourceLock with onLockFreed', () => {
       root.unmount();
     });
     expect(unlockEmits()).toEqual([
-      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+      expect.objectContaining({
+        payload: { resourceId: RESOURCE_ID, editorSessionId: SESSION_ID },
+      }),
     ]);
   });
 
@@ -433,7 +444,9 @@ describe('useResourceLock with onLockFreed', () => {
     });
 
     expect(unlockEmits()).toEqual([
-      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+      expect.objectContaining({
+        payload: { resourceId: RESOURCE_ID, editorSessionId: SESSION_ID },
+      }),
     ]);
     expect(onLockFreed).not.toHaveBeenCalled();
   });
@@ -506,30 +519,23 @@ describe('useResourceLock with onLockFreed', () => {
     expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
   });
 
-  it('stops waiting, after the callback ends, when the same user takes the lock in another tab', async () => {
-    const callbackRun = Promise.withResolvers<void>();
-    const onLockFreed = vi.fn(() => callbackRun.promise);
+  it('keeps waiting, and does not call the callback, when the same user takes the lock in another tab', async () => {
+    const onLockFreed = vi.fn(() => Promise.resolve());
     await mountWaitingFor({ onLockFreed, holder: OTHER_USER });
 
     await lockBySameUserInAnotherTab();
-    expect(onLockFreed).toHaveBeenCalledTimes(1);
-    expect(latestHookResult?.lockedBy).toEqual(OTHER_USER);
 
-    await act(async () => {
-      callbackRun.resolve();
-    });
-    expect(latestHookResult?.lockedBy).toBeNull();
+    expect(onLockFreed).not.toHaveBeenCalled();
+    expect(latestHookResult?.lockedBy).toEqual(SAME_USER_IN_ANOTHER_TAB);
     expect(lockEmits()).toHaveLength(1);
 
     await act(async () => {
       root.unmount();
     });
-    expect(unlockEmits()).toEqual([
-      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
-    ]);
+    expect(unlockEmits()).toHaveLength(0);
   });
 
-  it('stops waiting when the same user takes the lock back in another tab after a take over', async () => {
+  it('names the same user as the holder when another tab of that user takes the lock back after a take over', async () => {
     const onLockFreed = vi.fn(() => Promise.resolve());
     await act(async () => {
       root.render(<Probe onTakeOver={vi.fn()} onLockFreed={onLockFreed} />);
@@ -547,8 +553,8 @@ describe('useResourceLock with onLockFreed', () => {
 
     await lockBySameUserInAnotherTab();
 
-    expect(onLockFreed).toHaveBeenCalledTimes(1);
-    expect(latestHookResult?.lockedBy).toBeNull();
+    expect(onLockFreed).not.toHaveBeenCalled();
+    expect(latestHookResult?.lockedBy).toEqual(SAME_USER_IN_ANOTHER_TAB);
   });
 
   it('does not take a freed lock when the tab does not wait for it', async () => {
@@ -616,7 +622,9 @@ describe('useResourceLock with beforeRelease', () => {
       pendingSave.resolve();
     });
     expect(unlockEmits()).toEqual([
-      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+      expect.objectContaining({
+        payload: { resourceId: RESOURCE_ID, editorSessionId: SESSION_ID },
+      }),
     ]);
   });
 
@@ -665,7 +673,9 @@ describe('useResourceLock with beforeRelease', () => {
     });
 
     expect(unlockEmits()).toEqual([
-      expect.objectContaining({ payload: { resourceId: RESOURCE_ID } }),
+      expect.objectContaining({
+        payload: { resourceId: RESOURCE_ID, editorSessionId: SESSION_ID },
+      }),
     ]);
   });
 
@@ -723,8 +733,7 @@ async function lockBySameUserInAnotherTab() {
   await act(async () => {
     socketState.dispatch(WebsocketClientEvent.RESOURCE_LOCKED, {
       resourceId: RESOURCE_ID,
-      userId: 'current-user',
-      userDisplayName: 'Me',
+      ...SAME_USER_IN_ANOTHER_TAB,
     });
   });
 }
