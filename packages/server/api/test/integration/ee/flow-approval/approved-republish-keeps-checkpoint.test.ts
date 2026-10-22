@@ -40,9 +40,9 @@ vi.mock('../../../../src/app/trigger/trigger-source/trigger-source-service', asy
                 }
                 return null
             },
-            disable: async (params: { flowId: string, simulate: boolean }) => {
+            disable: async (params: { flowId: string, simulate: boolean, isRepublish?: boolean }) => {
                 if (!params.simulate) {
-                    triggerCalls.push({ call: 'disable', flowId: params.flowId })
+                    triggerCalls.push({ call: 'disable', flowId: params.flowId, isRepublish: params.isRepublish })
                 }
             },
         }),
@@ -66,14 +66,14 @@ describe('republishing a flow through an approval request', () => {
             flowStatus: FlowStatus.ENABLED,
             requestedStatus: FlowStatus.ENABLED,
             republishedInput: { projectId: 'AP' },
-            expected: [{ call: 'disable' }, { call: 'enable', isRepublish: true }],
+            expected: [{ call: 'disable', isRepublish: true }, { call: 'enable', isRepublish: true }],
         },
         {
             name: 'resets the checkpoint when the trigger input changed',
             flowStatus: FlowStatus.ENABLED,
             requestedStatus: FlowStatus.ENABLED,
             republishedInput: { projectId: 'OTHER' },
-            expected: [{ call: 'disable' }, { call: 'enable', isRepublish: false }],
+            expected: [{ call: 'disable', isRepublish: false }, { call: 'enable', isRepublish: false }],
         },
         {
             name: 'resets the checkpoint when the flow was disabled',
@@ -87,7 +87,7 @@ describe('republishing a flow through an approval request', () => {
             flowStatus: FlowStatus.ENABLED,
             requestedStatus: FlowStatus.DISABLED,
             republishedInput: { projectId: 'AP' },
-            expected: [{ call: 'disable' }],
+            expected: [{ call: 'disable', isRepublish: false }],
         },
     ])('$name', async ({ flowStatus, requestedStatus, republishedInput, expected }) => {
         const { statusCode, calls } = await approveRepublish({ flowStatus, requestedStatus, republishedInput })
@@ -98,39 +98,40 @@ describe('republishing a flow through an approval request', () => {
 })
 
 describe('republishing a flow directly', () => {
-    it('keeps the checkpoint of an enabled flow whose trigger is unchanged', async () => {
+    it.each([
+        {
+            name: 'keeps the checkpoint of an enabled flow whose trigger is unchanged',
+            draftInput: { projectId: 'AP' },
+            requestedStatus: FlowStatus.ENABLED,
+            expected: [{ call: 'disable', isRepublish: true }, { call: 'enable', isRepublish: true }],
+        },
+        {
+            name: 'resets the checkpoint when the trigger input changed',
+            draftInput: { projectId: 'OTHER' },
+            requestedStatus: FlowStatus.ENABLED,
+            expected: [{ call: 'disable', isRepublish: false }, { call: 'enable', isRepublish: false }],
+        },
+        {
+            name: 'clears the old trigger when the publish keeps the flow disabled',
+            draftInput: { projectId: 'AP' },
+            requestedStatus: FlowStatus.DISABLED,
+            expected: [{ call: 'disable', isRepublish: false }],
+        },
+    ])('$name', async ({ draftInput, requestedStatus, expected }) => {
         const ctx = await createTestContext(app!)
-        await db.save('piece_metadata', createMockPieceMetadata({
-            name: '@activepieces/piece-jira-cloud',
-            version: '0.4.1',
-            triggers: {
-                new_issue: {
-                    name: 'new_issue',
-                    displayName: 'New Issue',
-                    description: 'New Issue',
-                    requireAuth: false,
-                    props: {},
-                    type: TriggerStrategy.POLLING,
-                    sampleData: {},
-                    testStrategy: TriggerTestStrategy.TEST_FUNCTION,
-                },
-            },
-            pieceType: PieceType.OFFICIAL,
-            packageType: PackageType.REGISTRY,
-        }))
+        await db.save('piece_metadata', jiraPollingPiece())
         const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.ENABLED })
         await db.save('flow', flow)
         const published = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.LOCKED, valid: true, trigger: pollingTrigger({ input: { projectId: 'AP' } }) })
         await db.save('flow_version', published)
         await db.update('flow', flow.id, { publishedVersionId: published.id })
-        const draft = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.DRAFT, valid: true, created: dayjs().add(1, 'minute').toISOString(), trigger: pollingTrigger({ input: { projectId: 'AP' } }) })
+        const draft = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.DRAFT, valid: true, created: dayjs().add(1, 'minute').toISOString(), trigger: pollingTrigger({ input: draftInput }) })
         await db.save('flow_version', draft)
 
-        const response = await ctx.post(`/v1/flows/${flow.id}`, { type: FlowOperationType.LOCK_AND_PUBLISH, request: {} })
+        const response = await ctx.post(`/v1/flows/${flow.id}`, { type: FlowOperationType.LOCK_AND_PUBLISH, request: { status: requestedStatus } })
 
         expect(response?.statusCode).toBe(StatusCodes.OK)
-        expect(recordedCalls({ flowId: flow.id }))
-            .toEqual([{ call: 'disable' }, { call: 'enable', isRepublish: true }])
+        expect(recordedCalls({ flowId: flow.id })).toEqual(expected)
     })
 })
 
@@ -175,6 +176,27 @@ async function approveRepublish({ flowStatus, requestedStatus, republishedInput 
 
 function recordedCalls({ flowId }: { flowId: string }): Omit<TriggerCall, 'flowId'>[] {
     return triggerCalls.filter((call) => call.flowId === flowId).map(({ call, isRepublish }) => ({ call, isRepublish }))
+}
+
+function jiraPollingPiece(): ReturnType<typeof createMockPieceMetadata> {
+    return createMockPieceMetadata({
+        name: '@activepieces/piece-jira-cloud',
+        version: '0.4.1',
+        triggers: {
+            new_issue: {
+                name: 'new_issue',
+                displayName: 'New Issue',
+                description: 'New Issue',
+                requireAuth: false,
+                props: {},
+                type: TriggerStrategy.POLLING,
+                sampleData: {},
+                testStrategy: TriggerTestStrategy.TEST_FUNCTION,
+            },
+        },
+        pieceType: PieceType.OFFICIAL,
+        packageType: PackageType.REGISTRY,
+    })
 }
 
 function pollingTrigger({ input }: { input: Record<string, unknown> }): FlowVersion['trigger'] {

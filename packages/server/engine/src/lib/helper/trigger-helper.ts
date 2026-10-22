@@ -165,7 +165,10 @@ export const triggerHelper = {
         }
         switch (params.hookType) {
             case TriggerHookType.ON_DISABLE: {
-                await pieceTrigger.onDisable(context)
+                await pieceTrigger.onDisable({
+                    ...context,
+                    store: republishStore.forOnDisable({ store: context.store, isRepublish: params.isRepublish, triggerType: pieceTrigger.type }),
+                })
                 return {}
             }
             case TriggerHookType.ON_ENABLE: {

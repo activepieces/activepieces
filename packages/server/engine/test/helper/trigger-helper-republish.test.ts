@@ -105,16 +105,78 @@ describe('ON_ENABLE on a republish', () => {
     })
 })
 
-function mockTrigger({ type, onEnable }: { type: TriggerStrategy, onEnable: (context: EnableContext) => Promise<void> }): void {
+describe('ON_DISABLE of the old version on a republish', () => {
+    beforeEach(() => {
+        mockGetPieceAndTriggerOrThrow.mockReset()
+        storeEntries.clear()
+    })
+
+    it('keeps the checkpoint a polling trigger deletes on disable', async () => {
+        storeEntries.set('_seenVideoIds', ['video-1'])
+        mockTrigger({ type: TriggerStrategy.POLLING, onDisable: async ({ store }) => {
+            await store.delete('_seenVideoIds')
+        } })
+
+        await executeHook({ hookType: TriggerHookType.ON_DISABLE, isRepublish: true })
+
+        expect(storeEntries.get('_seenVideoIds')).toEqual(['video-1'])
+    })
+
+    it('clears the checkpoint when the flow is turned off', async () => {
+        storeEntries.set('_seenVideoIds', ['video-1'])
+        mockTrigger({ type: TriggerStrategy.POLLING, onDisable: async ({ store }) => {
+            await store.delete('_seenVideoIds')
+        } })
+
+        await executeHook({ hookType: TriggerHookType.ON_DISABLE, isRepublish: false })
+
+        expect(storeEntries.has('_seenVideoIds')).toBe(false)
+    })
+
+    it('lets a webhook trigger forget the webhook it removed', async () => {
+        storeEntries.set('webhookId', 'old-webhook')
+        mockTrigger({ type: TriggerStrategy.WEBHOOK, onDisable: async ({ store }) => {
+            await store.delete('webhookId')
+        } })
+
+        await executeHook({ hookType: TriggerHookType.ON_DISABLE, isRepublish: true })
+
+        expect(storeEntries.has('webhookId')).toBe(false)
+    })
+
+    it('keeps the checkpoint across disable then enable, like a real republish', async () => {
+        storeEntries.set('lastHistoryId', 'history-1')
+        mockTrigger({
+            type: TriggerStrategy.POLLING,
+            onDisable: async ({ store }) => {
+                await store.delete('lastHistoryId')
+            },
+            onEnable: async ({ store }) => {
+                await store.put('lastHistoryId', 'history-now')
+            },
+        })
+
+        await executeHook({ hookType: TriggerHookType.ON_DISABLE, isRepublish: true })
+        await executeHook({ hookType: TriggerHookType.ON_ENABLE, isRepublish: true })
+
+        expect(storeEntries.get('lastHistoryId')).toBe('history-1')
+    })
+})
+
+function mockTrigger({ type, onEnable, onDisable }: { type: TriggerStrategy, onEnable?: (context: HookContext) => Promise<void>, onDisable?: (context: HookContext) => Promise<void> }): void {
     mockGetPieceAndTriggerOrThrow.mockResolvedValue({
         piece: { auth: undefined },
-        pieceTrigger: { type, props: {}, requireAuth: false, onEnable },
+        pieceTrigger: { type, props: {}, requireAuth: false, onEnable, onDisable },
     })
 }
 
 async function executeOnEnable({ isRepublish }: { isRepublish: boolean }): Promise<ExecuteTriggerResponse<TriggerHookType>> {
+    return executeHook({ hookType: TriggerHookType.ON_ENABLE, isRepublish })
+}
+
+async function executeHook({ hookType, isRepublish }: { hookType: TriggerHookType.ON_ENABLE | TriggerHookType.ON_DISABLE, isRepublish: boolean }): Promise<ExecuteTriggerResponse<TriggerHookType>> {
     const params = {
-        hookType: TriggerHookType.ON_ENABLE,
+        hookType,
         test: false,
         isRepublish,
         webhookUrl: 'http://127.0.0.1:3000/api/v1/webhooks/flow-1',
@@ -142,14 +204,14 @@ async function executeOnEnable({ isRepublish }: { isRepublish: boolean }): Promi
         internalApiUrl: 'http://127.0.0.1:3000/api/',
         publicApiUrl: 'http://127.0.0.1:4200/api/',
         timeoutInSeconds: 30,
-    } as unknown as ResolvedExecuteTriggerOperation<TriggerHookType.ON_ENABLE>
+    } as unknown as ResolvedExecuteTriggerOperation<TriggerHookType>
     return triggerHelper.executeTrigger({ params, constants: EngineConstants.fromExecuteTriggerInput(params) })
 }
 
 const OLD_CHECKPOINT = 1000
 const NEW_CHECKPOINT = 2000
 
-type EnableContext = {
+type HookContext = {
     store: Store
     setSchedule: (request: { cronExpression: string }) => void
 }
