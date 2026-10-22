@@ -1,10 +1,11 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { agentService } from '../../ee/agent/agent-service'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { containsSecretManagerReference, secretManagersService } from '../../ee/secret-managers/secret-managers.service'
 import { flowService } from '../../flows/flow/flow.service'
@@ -264,7 +265,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async replace(params: ReplaceParams): Promise<void> {
-        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, deleteSourceConnection, applyToPublishedVersions } = params
+        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, deleteSourceConnection, applyToPublishedVersions, flowIds } = params
         if (sourceAppConnectionId === targetAppConnectionId) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -314,7 +315,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         // the newer draft, so the user has to publish or repoint them first.
         // Without it, a delete would orphan every published reference.
         const publishedFlowsUsingConnection = deleteSourceConnection || applyToPublishedVersions
-            ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions })
+            ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions, flowIds })
             : 0
         if (publishedFlowsUsingConnection > 0) {
             throw new ActivepiecesError({
@@ -325,6 +326,48 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
                         : 'Some published flows still use the old connection but have unpublished draft changes — publish those flows first',
                 },
             })
+        }
+
+        const publishedAgentsBlockingDelete = deleteSourceConnection && !applyToPublishedVersions
+            ? await agentService(log).countUsingConnection({ projectId, externalId: sourceAppConnection.externalId, publishedOnly: true })
+            : 0
+        if (publishedAgentsBlockingDelete > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Cannot delete the old connection because it is still used by published agents that were not updated',
+                },
+            })
+        }
+
+        if (!isNil(flowIds)) {
+            const flows = await flowService(log).list({
+                projectIds: [projectId],
+                cursorRequest: null,
+                limit: flowIds.length,
+                folderId: undefined,
+                name: undefined,
+                status: undefined,
+                flowIds,
+            })
+            const foundFlowIds = new Set(flows.data.map((flow) => flow.id))
+            const missingFlowIds = unique(flowIds).filter((flowId) => !foundFlowIds.has(flowId))
+            if (missingFlowIds.length > 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `Flows not found in this project: ${missingFlowIds.join(', ')}`,
+                    },
+                })
+            }
+            await appConnectionHandler(log).updateFlowsWithAppConnection(flows.data, {
+                appConnection: sourceAppConnection,
+                newAppConnection: targetAppConnection,
+                userId,
+                applyToPublishedVersions,
+            })
+            log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length, applyToPublishedVersions }, 'App connection replaced in selected flows')
+            return
         }
 
         // Repoint page by page: each repointed flow drops out of the connection
@@ -359,6 +402,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             flowsToRepoint.forEach((flow) => repointedFlowIds.add(flow.id))
         }
 
+        await agentService(log).replaceConnection({
+            projectId,
+            sourceExternalId: sourceAppConnection.externalId,
+            targetExternalId: targetAppConnection.externalId,
+            applyToPublishedVersions,
+        })
+
         log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: repointedFlowIds.size, deleteSourceConnection, applyToPublishedVersions }, 'App connection replaced')
 
         if (!deleteSourceConnection) {
@@ -382,11 +432,12 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const remainingPublishedFlows = remainingFlows.data.length > 0
             ? 0
             : await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions: false })
-        if (remainingFlows.data.length > 0 || remainingPublishedFlows > 0) {
+        const remainingAgents = await agentService(log).countUsingConnection({ projectId, externalId: sourceAppConnection.externalId, publishedOnly: false })
+        if (remainingFlows.data.length > 0 || remainingPublishedFlows > 0 || remainingAgents > 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'Cannot delete the old connection because some flows still use it',
+                    message: 'Cannot delete the old connection because some flows or agents still use it',
                 },
             })
         }
@@ -1061,5 +1112,6 @@ type ReplaceParams = {
     userId: UserId
     deleteSourceConnection: boolean
     applyToPublishedVersions: boolean
+    flowIds: FlowId[] | undefined
 }
 
