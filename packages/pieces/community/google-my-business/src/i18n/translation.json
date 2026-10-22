@@ -129,6 +129,13 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Business": "Business",
+  "Content": "Content",
+  "Event and Offer Details": "Event and Offer Details",
+  "Offer Details": "Offer Details",
+  "Button": "Button",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Review": "New Review",
   "Triggers when a customer posts a new review on the location.": "Triggers when a customer posts a new review on the location."
 }

@@ -61,6 +61,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New App Result": "New App Result",
   "Triggers when there is a new app result from PromptMate": "Triggers when there is a new app result from PromptMate",
   "Restrict to Apps": "Restrict to Apps",

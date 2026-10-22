@@ -237,6 +237,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Folder": "New Folder",
   "Triggers when a new folder is created inside a watched Dropbox folder.": "Triggers when a new folder is created inside a watched Dropbox folder.",
   "Watched Folder Path": "Watched Folder Path",

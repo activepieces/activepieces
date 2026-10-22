@@ -107,6 +107,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Campaign Completed": "Campaign Completed",
   "Email Bounced": "Email Bounced",
   "Email Opened": "Email Opened",
