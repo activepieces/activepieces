@@ -23,7 +23,7 @@ import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { useBuilderStateContext } from '../../builder-hooks';
+import { useBuilderStateContext, useBuilderStore } from '../../builder-hooks';
 
 import { runDiscard } from './discard-draft';
 import LargeWidgetWrapper from './large-widget-wrapper';
@@ -46,6 +46,7 @@ const PublishFlowReminderWidget = () => {
     flowVersion,
     run,
     savePendingEdits,
+    refreshDraftAfterFailedSave,
   ] = useBuilderStateContext((state) => [
     state.saving,
     state.isPublishing,
@@ -58,7 +59,9 @@ const PublishFlowReminderWidget = () => {
     state.flowVersion,
     state.run,
     state.savePendingEdits,
+    state.refreshDraftAfterFailedSave,
   ]);
+  const store = useBuilderStore();
   const showShouldPublishButton = useShouldShowPublishButton({
     flowVersion,
     isPublishing,
@@ -108,12 +111,17 @@ const PublishFlowReminderWidget = () => {
   });
   const handlePublish = async () => {
     setIsPublishing(true);
-    const { error: saveError } = await tryCatch(savePendingEdits);
+    const { error: saveError } = await tryCatch(async () => {
+      await savePendingEdits();
+      await refreshDraftAfterFailedSave();
+    });
     if (!isNil(saveError)) {
       setIsPublishing(false);
       return;
     }
-    const failedCheck = await checkRequiredActions(flowVersion);
+    const failedCheck = await checkRequiredActions(
+      store.getState().flowVersion,
+    );
     if (failedCheck) {
       setIsPublishing(false);
       setFailedRequiredActionsCheck(failedCheck);

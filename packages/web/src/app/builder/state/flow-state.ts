@@ -1,13 +1,17 @@
-import { isNil, tryCatch } from '@activepieces/core-utils';
+import { isNil, tryCatch, deepEquals, prune } from '@activepieces/core-utils';
 import {
+  FlowAction,
+  FlowActionType,
   FlowOperationRequest,
   FlowOperationType,
   FlowVersion,
   FlowVersionState,
   PopulatedFlow,
+  SampleDataFileType,
   flowOperations,
   flowStructureUtil,
   StepSettings,
+  FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
@@ -18,7 +22,7 @@ import { StoreApi } from 'zustand';
 
 import { RightSideBarType } from '@/app/builder/types';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { flowsApi, sampleDataHooks } from '@/features/flows';
+import { flowsApi, sampleDataApi, sampleDataHooks } from '@/features/flows';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
@@ -47,6 +51,12 @@ export type FlowState = {
   savePendingEdits: () => Promise<void>;
   flushPendingEdits: () => void;
   setFlow: (flow: PopulatedFlow) => void;
+  applyDraftRefresh: (flow: PopulatedFlow) => void;
+  refreshDraft: () => Promise<boolean>;
+  refreshDraftAfterFailedSave: () => Promise<void>;
+  showsNewestVersion: () => boolean;
+  draftRefreshCount: number;
+  noteRefreshCounts: Record<string, number>;
   setSampleDataLocally: (params: {
     stepName: string;
     type: 'input' | 'output';
@@ -113,6 +123,20 @@ export const createFlowState = (
     flowUpdatesDebounce.flush();
     addToFlowUpdatesQueue(task);
   };
+  let failedSaves = 0;
+  let failedSavesShownByRefresh = 0;
+  const refreshDraft = coalesceRuns(async () => {
+    const failedSavesAtStart = failedSaves;
+    const applied = await saveThenRefreshDraft({
+      get,
+      flowUpdatesQueue,
+      flowUpdatesDebounce,
+    });
+    if (applied) {
+      failedSavesShownByRefresh = failedSavesAtStart;
+    }
+    return applied;
+  });
   return {
     saving: false,
     outputSampleData: initialState.outputSampleData,
@@ -140,6 +164,58 @@ export const createFlowState = (
       });
     },
     setFlow: (flow: PopulatedFlow) => set({ flow, selectedStep: null }),
+    applyDraftRefresh: (flow: PopulatedFlow) =>
+      set((state) => {
+        if (
+          isSelectedStepGone({
+            selectedStep: state.selectedStep,
+            refreshedVersion: flow.version,
+          })
+        ) {
+          return {
+            flow,
+            flowVersion: flow.version,
+            readonly: state.readonly || isLockedAndUnpublished(flow),
+            noteRefreshCounts: countNoteRefreshes({
+              counts: state.noteRefreshCounts,
+              currentVersion: state.flowVersion,
+              refreshedVersion: flow.version,
+            }),
+            selectedStep: null,
+            selectedBranchIndex: null,
+            rightSidebar:
+              state.rightSidebar === RightSideBarType.PIECE_SETTINGS
+                ? RightSideBarType.NONE
+                : state.rightSidebar,
+          };
+        }
+        return {
+          flow,
+          flowVersion: flow.version,
+          readonly: state.readonly || isLockedAndUnpublished(flow),
+          selectedBranchIndex: haveSelectedStepBranchesChanged({
+            selectedStep: state.selectedStep,
+            currentVersion: state.flowVersion,
+            refreshedVersion: flow.version,
+          })
+            ? null
+            : state.selectedBranchIndex,
+          draftRefreshCount: hasSelectedStepChanged({
+            selectedStep: state.selectedStep,
+            currentVersion: state.flowVersion,
+            refreshedVersion: flow.version,
+          })
+            ? state.draftRefreshCount + 1
+            : state.draftRefreshCount,
+          noteRefreshCounts: countNoteRefreshes({
+            counts: state.noteRefreshCounts,
+            currentVersion: state.flowVersion,
+            refreshedVersion: flow.version,
+          }),
+        };
+      }),
+    draftRefreshCount: 0,
+    noteRefreshCounts: {},
     setSampleDataLocally: ({
       stepName,
       value,
@@ -221,6 +297,10 @@ export const createFlowState = (
                   updatedFlowVersion: serverFlowVersion,
                 });
               return {
+                flow: withNewestDraft({
+                  flow: state.flow,
+                  version: serverFlowVersion,
+                }),
                 flowVersion: {
                   ...updatedFlowVersionWithUpdatedSampleData,
                   id: serverFlowVersion.id,
@@ -232,7 +312,10 @@ export const createFlowState = (
           } catch (error) {
             console.error(error);
             showFailedSaveToast(error);
-            addToFlowUpdatesQueueAfterPendingEdits(() => refetchDraft(get));
+            failedSaves += 1;
+            get()
+              .refreshDraft()
+              .catch(() => undefined);
             throw error;
           }
         };
@@ -292,6 +375,24 @@ export const createFlowState = (
     flushPendingEdits: () => {
       flowUpdatesDebounce.flush();
     },
+    refreshDraft,
+    refreshDraftAfterFailedSave: async () => {
+      if (failedSaves === failedSavesShownByRefresh) {
+        return;
+      }
+      await refreshDraft();
+    },
+    showsNewestVersion: () => {
+      const { run, flow, flowVersion } = get();
+      const isPublishedVersionWithNoDraft =
+        flowVersion.id === flow.version.id &&
+        flowVersion.id === flow.publishedVersionId;
+      return (
+        isNil(run) &&
+        (flowVersion.state === FlowVersionState.DRAFT ||
+          isPublishedVersionWithNoDraft)
+      );
+    },
     setVersion: (
       flowVersion: FlowVersion,
       shouldReselectInitialStep: boolean = true,
@@ -302,6 +403,7 @@ export const createFlowState = (
         initiallySelectedStep === 'trigger' &&
         flowVersion.trigger.type === FlowTriggerType.EMPTY;
       set((state) => ({
+        flow: withNewestDraft({ flow: state.flow, version: flowVersion }),
         flowVersion,
         run: null,
         selectedStep: shouldReselectInitialStep
@@ -455,8 +557,63 @@ export const createFlowState = (
   };
 };
 
-async function refetchDraft(get: StoreApi<BuilderState>['getState']) {
-  const { flow, setFlow, setVersion } = get();
+function coalesceRuns<T>(run: () => Promise<T>): () => Promise<T> {
+  let running: Promise<T> | null = null;
+  let queued: Promise<T> | null = null;
+  const start = (): Promise<T> => {
+    const current = run().finally(() => {
+      running = null;
+    });
+    running = current;
+    return current;
+  };
+  const startAfter = async (previous: Promise<T>): Promise<T> => {
+    await tryCatch(() => previous);
+    queued = null;
+    return start();
+  };
+  return () => {
+    if (!isNil(queued)) {
+      return queued;
+    }
+    if (isNil(running)) {
+      return start();
+    }
+    queued = startAfter(running);
+    return queued;
+  };
+}
+
+async function saveThenRefreshDraft({
+  get,
+  flowUpdatesQueue,
+  flowUpdatesDebounce,
+}: {
+  get: StoreApi<BuilderState>['getState'];
+  flowUpdatesQueue: PromiseQueue;
+  flowUpdatesDebounce: KeyedDebounce;
+}): Promise<boolean> {
+  if (!get().showsNewestVersion()) {
+    return false;
+  }
+  await tryCatch(() => get().savePendingEdits());
+  return fetchDraftAndApplyWithNoPendingEdits({
+    get,
+    flowUpdatesQueue,
+    flowUpdatesDebounce,
+  });
+}
+
+async function fetchDraftAndApplyWithNoPendingEdits({
+  get,
+  flowUpdatesQueue,
+  flowUpdatesDebounce,
+}: {
+  get: StoreApi<BuilderState>['getState'];
+  flowUpdatesQueue: PromiseQueue;
+  flowUpdatesDebounce: KeyedDebounce;
+}): Promise<boolean> {
+  const { flow, flowVersion: versionAtRequest } = get();
   const { data: serverFlow, error } = await tryCatch(() =>
     failAfterTimeout(() => flowsApi.get(flow.id)),
   );
@@ -464,8 +621,137 @@ async function refetchDraft(get: StoreApi<BuilderState>['getState']) {
     internalErrorToast();
     throw error;
   }
-  setFlow(serverFlow);
-  setVersion(serverFlow.version);
+  const { flowVersion, applyDraftRefresh, showsNewestVersion } = get();
+  if (!showsNewestVersion()) {
+    return false;
+  }
+  if (
+    flowVersion !== versionAtRequest ||
+    hasPendingEdits({ flowUpdatesQueue, flowUpdatesDebounce })
+  ) {
+    await waitForPendingEditsToSave({ flowUpdatesQueue, flowUpdatesDebounce });
+    return fetchDraftAndApplyWithNoPendingEdits({
+      get,
+      flowUpdatesQueue,
+      flowUpdatesDebounce,
+    });
+  }
+  applyDraftRefresh(serverFlow);
+  refreshChangedSampleData({
+    get,
+    previousVersion: flowVersion,
+    refreshedFlow: serverFlow,
+  }).catch(() => undefined);
+  return true;
+}
+
+async function refreshChangedSampleData({
+  get,
+  previousVersion,
+  refreshedFlow,
+}: {
+  get: StoreApi<BuilderState>['getState'];
+  previousVersion: FlowVersion;
+  refreshedFlow: PopulatedFlow;
+}): Promise<void> {
+  const changedSteps = flowStructureUtil
+    .getAllSteps(refreshedFlow.version.trigger)
+    .filter((step) => hasSampleDataChanged({ step, previousVersion }));
+  await Promise.all(
+    changedSteps.map((step) =>
+      refreshStepSampleData({ get, flow: refreshedFlow, step }),
+    ),
+  );
+}
+
+function hasSampleDataChanged({
+  step,
+  previousVersion,
+}: {
+  step: FlowAction | FlowTrigger;
+  previousVersion: FlowVersion;
+}): boolean {
+  return !deepEquals({
+    a: flowStructureUtil.getStep(step.name, previousVersion.trigger)?.settings
+      .sampleData,
+    b: step.settings.sampleData,
+  });
+}
+
+async function refreshStepSampleData({
+  get,
+  flow,
+  step,
+}: {
+  get: StoreApi<BuilderState>['getState'];
+  flow: PopulatedFlow;
+  step: FlowAction | FlowTrigger;
+}): Promise<void> {
+  const request = {
+    flowId: flow.id,
+    flowVersionId: flow.version.id,
+    stepName: step.name,
+    projectId: flow.projectId,
+  };
+  const inputFileId = step.settings.sampleData?.sampleDataInputFileId;
+  const [output, input] = await Promise.all([
+    tryCatch(() =>
+      sampleDataApi.get({ ...request, type: SampleDataFileType.OUTPUT }),
+    ),
+    tryCatch(async () =>
+      isNil(inputFileId)
+        ? undefined
+        : sampleDataApi.get({ ...request, type: SampleDataFileType.INPUT }),
+    ),
+  ]);
+  const { flowVersion, setSampleDataLocally } = get();
+  const shownStep = flowStructureUtil.getStep(step.name, flowVersion.trigger);
+  if (
+    !deepEquals({
+      a: shownStep?.settings.sampleData,
+      b: step.settings.sampleData,
+    })
+  ) {
+    return;
+  }
+  if (output.error === null) {
+    setSampleDataLocally({
+      stepName: step.name,
+      type: 'output',
+      value: output.data,
+    });
+  }
+  if (input.error === null) {
+    setSampleDataLocally({
+      stepName: step.name,
+      type: 'input',
+      value: input.data,
+    });
+  }
+}
+
+async function waitForPendingEditsToSave({
+  flowUpdatesQueue,
+  flowUpdatesDebounce,
+}: {
+  flowUpdatesQueue: PromiseQueue;
+  flowUpdatesDebounce: KeyedDebounce;
+}): Promise<void> {
+  await flowUpdatesDebounce.whenEmpty();
+  await tryCatch(() => flowUpdatesQueue.drain());
+  if (hasPendingEdits({ flowUpdatesQueue, flowUpdatesDebounce })) {
+    return waitForPendingEditsToSave({ flowUpdatesQueue, flowUpdatesDebounce });
+  }
+}
+
+function hasPendingEdits({
+  flowUpdatesQueue,
+  flowUpdatesDebounce,
+}: {
+  flowUpdatesQueue: PromiseQueue;
+  flowUpdatesDebounce: KeyedDebounce;
+}): boolean {
+  return !flowUpdatesDebounce.isEmpty() || !flowUpdatesQueue.isIdle();
 }
 
 function saveOperation({
@@ -580,6 +866,133 @@ const handleUpdatingSampleDataForStepLocallyAfterServerUpdate = ({
     },
   });
 };
+
+function withNewestDraft({
+  flow,
+  version,
+}: {
+  flow: PopulatedFlow;
+  version: FlowVersion;
+}): PopulatedFlow {
+  if (
+    version.state !== FlowVersionState.DRAFT ||
+    version.id === flow.version.id
+  ) {
+    return flow;
+  }
+  return { ...flow, version };
+}
+
+function isSelectedStepGone({
+  selectedStep,
+  refreshedVersion,
+}: {
+  selectedStep: string | null;
+  refreshedVersion: FlowVersion;
+}): boolean {
+  return (
+    !isNil(selectedStep) &&
+    isNil(flowStructureUtil.getStep(selectedStep, refreshedVersion.trigger))
+  );
+}
+
+function countNoteRefreshes({
+  counts,
+  currentVersion,
+  refreshedVersion,
+}: {
+  counts: Record<string, number>;
+  currentVersion: FlowVersion;
+  refreshedVersion: FlowVersion;
+}): Record<string, number> {
+  const currentContent = new Map(
+    currentVersion.notes.map((note) => [note.id, note.content]),
+  );
+  return refreshedVersion.notes
+    .filter(
+      (note) =>
+        currentContent.has(note.id) &&
+        currentContent.get(note.id) !== note.content,
+    )
+    .reduce(
+      (next, note) => ({ ...next, [note.id]: (next[note.id] ?? 0) + 1 }),
+      counts,
+    );
+}
+
+function hasSelectedStepChanged({
+  selectedStep,
+  currentVersion,
+  refreshedVersion,
+}: {
+  selectedStep: string | null;
+  currentVersion: FlowVersion;
+  refreshedVersion: FlowVersion;
+}): boolean {
+  if (isNil(selectedStep)) {
+    return false;
+  }
+  return !deepEquals({
+    a: stepFormContent(
+      flowStructureUtil.getStep(selectedStep, currentVersion.trigger),
+    ),
+    b: stepFormContent(
+      flowStructureUtil.getStep(selectedStep, refreshedVersion.trigger),
+    ),
+  });
+}
+
+function haveSelectedStepBranchesChanged({
+  selectedStep,
+  currentVersion,
+  refreshedVersion,
+}: {
+  selectedStep: string | null;
+  currentVersion: FlowVersion;
+  refreshedVersion: FlowVersion;
+}): boolean {
+  if (isNil(selectedStep)) {
+    return false;
+  }
+  return !deepEquals({
+    a: routerBranches(
+      flowStructureUtil.getStep(selectedStep, currentVersion.trigger),
+    ),
+    b: routerBranches(
+      flowStructureUtil.getStep(selectedStep, refreshedVersion.trigger),
+    ),
+  });
+}
+
+function routerBranches(step: FlowAction | FlowTrigger | undefined) {
+  if (
+    step?.type !== FlowActionType.ROUTER &&
+    step?.type !== FlowActionType.AI_ROUTER
+  ) {
+    return undefined;
+  }
+  return step.settings.branches;
+}
+
+function isLockedAndUnpublished(flow: PopulatedFlow): boolean {
+  return (
+    flow.version.state === FlowVersionState.LOCKED &&
+    flow.version.id !== flow.publishedVersionId
+  );
+}
+
+function stepFormContent(step: FlowAction | FlowTrigger | undefined) {
+  if (isNil(step)) {
+    return undefined;
+  }
+  const { sampleData: _, ...settings } = step.settings;
+  return prune({
+    type: step.type,
+    displayName: step.displayName,
+    skip: 'skip' in step ? step.skip : undefined,
+    settings,
+  });
+}
 
 const SAVE_RETRY_DELAYS_MS = [1000, 2000, 4000];
 
