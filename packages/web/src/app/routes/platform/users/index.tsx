@@ -188,7 +188,7 @@ export default function UsersPage() {
             {...adminControl(AdminControl.USERS_INVITE_OPEN)}
             onClick={() => {
               if (usersGate.access === 'trial_available' && !canBuySeats) {
-                usersGate.run(() => setInviteOpen(true), {
+                usersGate.runOrShowLockedDialog(() => setInviteOpen(true), {
                   resumable: false,
                 });
                 return;

@@ -53,7 +53,9 @@ const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
               disabled={lockedOnCommunity}
               aria-hidden={lockedOnCommunity ? true : undefined}
               aria-label={label}
-              onClick={() => gate.run(() => togglePin(pieceName))}
+              onClick={() =>
+                gate.runOrShowLockedDialog(() => togglePin(pieceName))
+              }
             >
               {pinned ? (
                 <PinOff className="size-4" />

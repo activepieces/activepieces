@@ -114,9 +114,9 @@ function nameInSentence(featureKey: FeatureKey | undefined): string | null {
   if (featureName === null) {
     return null;
   }
-  const keepsCase =
+  const startsWithAcronym =
     featureName.charAt(1) === featureName.charAt(1).toUpperCase();
-  return keepsCase
+  return startsWithAcronym
     ? featureName
     : featureName.charAt(0).toLowerCase() + featureName.slice(1);
 }

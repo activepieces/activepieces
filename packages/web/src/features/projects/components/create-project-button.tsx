@@ -72,10 +72,12 @@ export function CreateProjectButton({
       }
       reportBlocked();
       if (gate.access === 'community') {
-        gate.explain();
+        gate.showLockedDialog();
         return;
       }
-      gate.run(() => setCreateOpen(true), { resumable: false });
+      gate.runOrShowLockedDialog(() => setCreateOpen(true), {
+        resumable: false,
+      });
     },
   });
 
@@ -105,7 +107,7 @@ export function CreateProjectButton({
         limitReached={gate.locked}
         onLimitReached={() => {
           reportBlocked();
-          gate.explain();
+          gate.showLockedDialog();
         }}
       />
     </>
