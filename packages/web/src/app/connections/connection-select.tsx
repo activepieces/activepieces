@@ -1,4 +1,8 @@
-import { Permission, isNil } from '@activepieces/core-utils';
+import {
+  Permission,
+  connectionTemplate,
+  isNil,
+} from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -86,7 +90,8 @@ export function ConnectionSelect({
     staleTime: 0,
   });
   const selectedConnection = connections?.data?.find(
-    (connection) => connection.externalId === removeBrackets(value ?? ''),
+    (connection) =>
+      connection.externalId === connectionTemplate.unwrapExternalId(value),
   );
   const isSelectedConnectionGlobal =
     selectedConnection?.scope === AppConnectionScope.PLATFORM;
@@ -134,9 +139,12 @@ export function ConnectionSelect({
         open={connectionDialogOpen}
         setOpen={(open, connection) => {
           setConnectionDialogOpen(open);
-          if (connection) {
+          const createdValue = connectionTemplate.wrapExternalId(
+            connection?.externalId,
+          );
+          if (!isNil(createdValue)) {
             refetch();
-            onChange(addBrackets(connection.externalId));
+            onChange(createdValue);
           }
         }}
       ></CreateOrEditConnectionDialog>
@@ -240,6 +248,12 @@ export function ConnectionSelect({
           {connections &&
             connections.data &&
             connections.data?.map((connection) => {
+              const connectionValue = connectionTemplate.wrapExternalId(
+                connection.externalId,
+              );
+              if (isNil(connectionValue)) {
+                return null;
+              }
               const accountIdentifier =
                 appConnectionUtils.getConnectionAccountIdentifier(connection);
               const rowStatus =
@@ -248,7 +262,7 @@ export function ConnectionSelect({
                   : null;
               return (
                 <SelectItem
-                  value={addBrackets(connection.externalId)}
+                  value={connectionValue}
                   key={connection.externalId}
                   className="*:[span]:last:w-full"
                 >
@@ -293,18 +307,6 @@ export function ConnectionSelect({
   );
 }
 
-function addBrackets(str: string) {
-  return `{{connections['${str}']}}`;
-}
-function removeBrackets(str: string | undefined) {
-  if (isNil(str)) {
-    return undefined;
-  }
-  return str.replace(
-    /\{\{connections\['(.*?)'\]\}\}/g,
-    (_, connectionName) => connectionName,
-  );
-}
 function SelectedConnectionLabel({
   value,
   connections,
@@ -316,7 +318,8 @@ function SelectedConnectionLabel({
     return null;
   }
   const connection = connections.find(
-    (connection) => connection.externalId === removeBrackets(value),
+    (connection) =>
+      connection.externalId === connectionTemplate.unwrapExternalId(value),
   );
   if (isNil(connection)) {
     return (
