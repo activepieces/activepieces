@@ -26,7 +26,7 @@ export const webflowAuth = PieceAuth.OAuth2({
 export const webflow = createPiece({
 	displayName: 'Webflow',
 	description: 'Design, build, and launch responsive websites visually',
-	minimumSupportedRelease: '0.5.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/webflow.png',
 	categories: [PieceCategory.MARKETING],
 	authors: [
@@ -58,6 +58,12 @@ export const webflow = createPiece({
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 			}),
+			props: {
+				url: {
+					description: 'Full URL, or a path relative to https://api.webflow.com',
+					placeholder: '/sites',
+				},
+			},
 		}),
 	],
 	triggers: [webflowNewSubmission],
