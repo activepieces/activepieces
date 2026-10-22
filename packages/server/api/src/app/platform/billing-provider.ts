@@ -75,10 +75,10 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     startSelfServeTrial: async () => {
         return UNAVAILABLE_SELF_SERVE_TRIAL
     },
-    getPlatformSelfServeTrial: async () => {
+    getCachedSelfServeTrial: async () => {
         return null
     },
-    planCarriesSelfServeTrial: async () => {
+    planStillHasSelfServeTrialFeatures: async () => {
         return false
     },
 }))
@@ -433,6 +433,6 @@ export type BillingProvider = {
     getCreditUsage(params: CreditUsageByProjectParams): Promise<CreditUsage>
     getSelfServeTrialInfo(platformId: string): Promise<SelfServeTrialStatus>
     startSelfServeTrial(platformId: string): Promise<SelfServeTrialStatus>
-    getPlatformSelfServeTrial(platformId: string): Promise<SelfServeTrialDates | null>
-    planCarriesSelfServeTrial(platformId: string): Promise<boolean>
+    getCachedSelfServeTrial(platformId: string): Promise<SelfServeTrialDates | null>
+    planStillHasSelfServeTrialFeatures(platformId: string): Promise<boolean>
 }

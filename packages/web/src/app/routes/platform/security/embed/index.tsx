@@ -59,7 +59,7 @@ const EmbedPage = () => {
 
   const allowedEmbedOrigins = platform.allowedEmbedOrigins ?? [];
   const trialEndsAt = platform.selfServeTrial?.endsAt;
-  const showTrialAiNote =
+  const showActivepiecesAiTrialNote =
     isCloud && !isNil(trialEndsAt) && dayjs(trialEndsAt).isAfter(dayjs());
 
   const allSteps: Record<StepKind, StepDef> = {
@@ -154,7 +154,7 @@ const EmbedPage = () => {
         resources={adminPageResources.embedding}
       />
 
-      {showTrialAiNote && (
+      {showActivepiecesAiTrialNote && (
         <Alert>
           <Sparkles className="size-4" />
           <AlertTitle>{t('Activepieces AI is on for your trial')}</AlertTitle>

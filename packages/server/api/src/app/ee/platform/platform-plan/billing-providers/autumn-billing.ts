@@ -154,7 +154,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                 await platformPlanService(log).setAutumnCredentials({ platformId, ...credentials })
             },
         })
-        await selfServeTrialUtils.forget(platformId)
+        await selfServeTrialUtils.deleteCachedTrial(platformId)
         await autumnUtils.refreshEntitlements(log, platformId)
     },
     isBillingEnforced: async (platformId: string) => {
@@ -198,9 +198,9 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                 platformId,
                 fallback: UNAVAILABLE_SELF_SERVE_TRIAL,
                 fn: async (creds): Promise<SelfServeTrialStatus> => {
-                    const current = await readSelfServeTrialStatus({ log, platformId })
-                    if (current.state !== 'eligible') {
-                        return current
+                    const currentStatus = await readSelfServeTrialStatus({ log, platformId })
+                    if (currentStatus.state !== 'eligible') {
+                        return currentStatus
                     }
                     const outcome = await autumnConsole.startSelfServeTrial(creds)
                     if (outcome.result === 'used') {
@@ -209,7 +209,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                     if (outcome.result === 'ineligible') {
                         return INELIGIBLE_SELF_SERVE_TRIAL
                     }
-                    await selfServeTrialUtils.save({ platformId, dates: { startedAt: outcome.startedAt, endsAt: outcome.endsAt } })
+                    await selfServeTrialUtils.cacheTrialDates({ platformId, dates: { startedAt: outcome.startedAt, endsAt: outcome.endsAt } })
                     rejectedPromiseHandler(platformPlanTelemetry(log).onSelfServeTrialStarted({ platformId, endsAt: outcome.endsAt }), log)
                     return { state: 'active', startedAt: outcome.startedAt, endsAt: outcome.endsAt, extended: false }
                 },
@@ -222,11 +222,11 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         rejectedPromiseHandler(distributedStore.delete(getEntitlementsRefreshKey(platformId)), log)
         return status
     },
-    getPlatformSelfServeTrial: async (platformId: string) => {
-        return (await selfServeTrialUtils.read(platformId))?.dates ?? null
+    getCachedSelfServeTrial: async (platformId: string) => {
+        return (await selfServeTrialUtils.readCachedTrial(platformId))?.dates ?? null
     },
-    planCarriesSelfServeTrial: async (platformId: string) => {
-        const { data: dates, error } = await tryCatch(() => readOrFetchSelfServeTrialDates({ log, platformId }))
+    planStillHasSelfServeTrialFeatures: async (platformId: string) => {
+        const { data: dates, error } = await tryCatch(() => getTrialDatesFromCacheOrAutumn({ log, platformId }))
         if (!isNil(error)) {
             log.warn({ error, platform: { id: platformId } }, 'Failed to read the self-serve trial dates; treating the plan as not carrying the trial')
             return false
@@ -244,12 +244,12 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
 
 async function readSelfServeTrialStatus({ log, platformId }: PlatformLogParams): Promise<SelfServeTrialStatus> {
     const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-    const dates = await readOrFetchSelfServeTrialDates({ log, platformId })
+    const dates = await getTrialDatesFromCacheOrAutumn({ log, platformId })
     return toSelfServeTrialStatus({ plan, dates })
 }
 
-async function readOrFetchSelfServeTrialDates({ log, platformId }: PlatformLogParams): Promise<SelfServeTrialDates | null> {
-    const cached = await selfServeTrialUtils.read(platformId)
+async function getTrialDatesFromCacheOrAutumn({ log, platformId }: PlatformLogParams): Promise<SelfServeTrialDates | null> {
+    const cached = await selfServeTrialUtils.readCachedTrial(platformId)
     if (!isNil(cached)) {
         return cached.dates
     }
@@ -257,15 +257,15 @@ async function readOrFetchSelfServeTrialDates({ log, platformId }: PlatformLogPa
         key: getSelfServeTrialFetchLockKey(platformId),
         timeoutInSeconds: CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS,
         fn: async () => {
-            const again = await selfServeTrialUtils.read(platformId)
-            if (!isNil(again)) {
-                return again.dates
+            const cachedAfterLock = await selfServeTrialUtils.readCachedTrial(platformId)
+            if (!isNil(cachedAfterLock)) {
+                return cachedAfterLock.dates
             }
             const client = await autumnUtils.resolveClientForPlatform(log, platformId)
             if (isNil(client)) {
-                return selfServeTrialUtils.rememberNoTrial(platformId)
+                return selfServeTrialUtils.cacheNoTrialUnlessAlreadyCached(platformId)
             }
-            return selfServeTrialUtils.saveFromCustomer({ platformId, customer: await client.getCustomer() })
+            return selfServeTrialUtils.cacheTrialDatesFromCustomer({ platformId, customer: await client.getCustomer() })
         },
     })
 }

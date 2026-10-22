@@ -59,7 +59,7 @@ export const autumnUtils = {
                     { customerId, expand: params?.expand },
                     { timeoutMs: AUTUMN_GET_CUSTOMER_TIMEOUT_MS },
                 )
-                return autumnUtils.withoutExpiredSelfServeTrial(customer)
+                return autumnUtils.withoutExpiredTrialAddOn(customer)
             },
             listPlans(params?: ListPlansParams) {
                 return client.plans.list(params)
@@ -172,8 +172,8 @@ export const autumnUtils = {
             platformId,
             ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements),
         })
-        const trialDates = await selfServeTrialUtils.saveFromCustomer({ platformId, customer })
-        if (!isNil(trialDates) && endedRecently(trialDates.endsAt)) {
+        const trialDates = await selfServeTrialUtils.cacheTrialDatesFromCustomer({ platformId, customer })
+        if (!isNil(trialDates) && endedWithinTrialEndedReportWindow(trialDates.endsAt)) {
             rejectedPromiseHandler(platformPlanTelemetry(log).onSelfServeTrialEnded({
                 platformId,
                 trialEndsAt: trialDates.endsAt,
@@ -225,7 +225,7 @@ export const autumnUtils = {
             plan: entitlements.planId,
             billedTeamProjectsLimit: toPlatformPlanLimit(teamProjects, 1),
             usersLimit: toPlatformPlanLimit(users, null),
-            scheduledUsersLimit: isNil(entitlements.selfServeTrial) ? entitlements.scheduledUsersLimit : null,
+            scheduledUsersLimit: isNil(entitlements.runningTrialAddOn) ? entitlements.scheduledUsersLimit : null,
             activeFlowsLimit: toPlatformPlanLimit(activeFlows, null),
             includedCredits: credits?.granted ?? 0,
         }
@@ -269,17 +269,17 @@ export const autumnUtils = {
             syncedAt: Date.now(),
         }
     },
-    withoutExpiredSelfServeTrial(customer: GetCustomerResponse): GetCustomerResponse {
+    withoutExpiredTrialAddOn(customer: GetCustomerResponse): GetCustomerResponse {
         const now = Date.now()
-        if (!customer.subscriptions.some((subscription) => isExpiredSelfServeTrial({ subscription, now }))) {
+        if (!customer.subscriptions.some((subscription) => isExpiredTrialAddOn({ subscription, now }))) {
             return customer
         }
         return {
             ...customer,
-            subscriptions: customer.subscriptions.filter((subscription) => !isExpiredSelfServeTrial({ subscription, now })),
+            subscriptions: customer.subscriptions.filter((subscription) => !isExpiredTrialAddOn({ subscription, now })),
             balances: Object.entries(customer.balances).reduce<GetCustomerResponse['balances']>((balances, [featureId, balance]) => {
-                const trimmed = withoutPlanGrants({ balance, planId: PlanName.ENTERPRISE_TRIAL })
-                return isNil(trimmed) ? balances : { ...balances, [featureId]: trimmed }
+                const balanceWithoutTrialGrants = removePlanGrantsFromBalance({ balance, planId: PlanName.ENTERPRISE_TRIAL })
+                return isNil(balanceWithoutTrialGrants) ? balances : { ...balances, [featureId]: balanceWithoutTrialGrants }
             }, {}),
         }
     },
@@ -373,7 +373,7 @@ export const autumnConsole = {
         })
     },
     async startSelfServeTrial({ autumnCustomerId, autumnApiKey }: ConsoleCustomerCall): Promise<SelfServeTrialStartOutcome> {
-        const { data, error } = await tryCatch(() => consoleRequest<StartedSelfServeTrial>({
+        const { data, error } = await tryCatch(() => consoleRequest<ConsoleTrialStartResponse>({
             path: '/api/v1/billing/self-serve-trial',
             token: edition === ApEdition.CLOUD ? consoleSecretOrThrow() : autumnApiKey,
             body: { autumnCustomerId },
@@ -521,11 +521,11 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
         grantedFeatureIds: autumnUtils.toGrantedFeatureIds(customer),
         balances,
         scheduledUsersLimit: toScheduledUsersLimit(baseSubscriptions),
-        selfServeTrial: toLiveSelfServeTrial(customer),
+        runningTrialAddOn: findRunningTrialAddOn(customer),
     }
 }
 
-function toLiveSelfServeTrial(customer: GetCustomerResponse): LiveSelfServeTrial | null {
+function findRunningTrialAddOn(customer: GetCustomerResponse): RunningTrialAddOn | null {
     const now = Date.now()
     const subscription = customer.subscriptions.find((candidate) =>
         candidate.planId === PlanName.ENTERPRISE_TRIAL
@@ -538,31 +538,31 @@ function toLiveSelfServeTrial(customer: GetCustomerResponse): LiveSelfServeTrial
     return { startedAt: subscription.startedAt, endsAt: subscription.trialEndsAt }
 }
 
-function endedRecently(endsAt: string): boolean {
-    const sinceEnd = Date.now() - Date.parse(endsAt)
-    return sinceEnd >= 0 && sinceEnd < SELF_SERVE_TRIAL_ENDED_REPORT_WINDOW_MS
+function endedWithinTrialEndedReportWindow(endsAt: string): boolean {
+    const msSinceTrialEnded = Date.now() - Date.parse(endsAt)
+    return msSinceTrialEnded >= 0 && msSinceTrialEnded < SELF_SERVE_TRIAL_ENDED_REPORT_WINDOW_MS
 }
 
-function isExpiredSelfServeTrial({ subscription, now }: ExpiredSelfServeTrialParams): boolean {
+function isExpiredTrialAddOn({ subscription, now }: IsExpiredTrialAddOnParams): boolean {
     return subscription.planId === PlanName.ENTERPRISE_TRIAL && !isNil(subscription.trialEndsAt) && subscription.trialEndsAt <= now
 }
 
-function withoutPlanGrants({ balance, planId }: WithoutPlanGrantsParams): Balance | null {
+function removePlanGrantsFromBalance({ balance, planId }: RemovePlanGrantsFromBalanceParams): Balance | null {
     const breakdown = balance.breakdown ?? []
-    const kept = breakdown.filter((entry) => entry.planId !== planId)
-    if (kept.length === breakdown.length) {
+    const grantsFromOtherPlans = breakdown.filter((entry) => entry.planId !== planId)
+    if (grantsFromOtherPlans.length === breakdown.length) {
         return balance
     }
-    if (kept.length === 0) {
+    if (grantsFromOtherPlans.length === 0) {
         return null
     }
     return {
         ...balance,
-        granted: kept.reduce((sum, entry) => sum + entry.includedGrant + entry.prepaidGrant, 0),
-        remaining: kept.reduce((sum, entry) => sum + entry.remaining, 0),
-        usage: kept.reduce((sum, entry) => sum + entry.usage, 0),
-        unlimited: kept.some((entry) => entry.unlimited),
-        breakdown: kept,
+        granted: grantsFromOtherPlans.reduce((sum, entry) => sum + entry.includedGrant + entry.prepaidGrant, 0),
+        remaining: grantsFromOtherPlans.reduce((sum, entry) => sum + entry.remaining, 0),
+        usage: grantsFromOtherPlans.reduce((sum, entry) => sum + entry.usage, 0),
+        unlimited: grantsFromOtherPlans.some((entry) => entry.unlimited),
+        breakdown: grantsFromOtherPlans,
     }
 }
 
@@ -655,20 +655,20 @@ type AutumnEntitlements = {
     grantedFeatureIds: ReadonlySet<string>
     balances: Record<string, AutumnFeatureBalance>
     scheduledUsersLimit: number | null
-    selfServeTrial: LiveSelfServeTrial | null
+    runningTrialAddOn: RunningTrialAddOn | null
 }
 
-type LiveSelfServeTrial = {
+type RunningTrialAddOn = {
     startedAt: number
     endsAt: number
 }
 
-type ExpiredSelfServeTrialParams = {
+type IsExpiredTrialAddOnParams = {
     subscription: GetCustomerResponse['subscriptions'][number]
     now: number
 }
 
-type WithoutPlanGrantsParams = {
+type RemovePlanGrantsFromBalanceParams = {
     balance: Balance
     planId: string
 }
@@ -719,7 +719,7 @@ type AutumnEnrollmentCredentials = {
     autumnApiKey: string
 }
 
-type StartedSelfServeTrial = {
+type ConsoleTrialStartResponse = {
     startedAt: string
     endsAt: string
 }
