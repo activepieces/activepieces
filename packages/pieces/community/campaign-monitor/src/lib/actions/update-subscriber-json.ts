@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
   buildCustomFieldsPayload,
+  fetchDateFieldKeys,
   jsonCustomFieldsToRecord,
   makeRequest,
 } from '../common/client';
@@ -87,6 +88,10 @@ export const updateSubscriberJsonAction = createAction({
   async run({ propsValue, auth }) {
     const listId = propsValue.listId.trim();
     const email = propsValue.email.trim();
+    const dateKeys = await fetchDateFieldKeys({
+      auth: { apiKey: auth.secret_text },
+      listId,
+    });
     const targetEmail = propsValue.newEmail?.trim() || email;
     await makeRequest({
       auth: { apiKey: auth.secret_text },
@@ -102,7 +107,8 @@ export const updateSubscriberJsonAction = createAction({
         ConsentToSendSms: propsValue.consentToSendSms ?? 'Unchanged',
         Resubscribe: propsValue.resubscribe ?? false,
         CustomFields: buildCustomFieldsPayload(
-          jsonCustomFieldsToRecord(propsValue.customFields)
+          jsonCustomFieldsToRecord(propsValue.customFields),
+          dateKeys
         ),
       },
     });

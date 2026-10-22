@@ -1,6 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { buildCustomFieldsPayload, makeRequest } from '../common/client';
+import {
+  buildCustomFieldsPayload,
+  fetchDateFieldKeys,
+  makeRequest,
+} from '../common/client';
 import { subscriptionResultOutputSchema } from '../output-schemas';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, customFields, listId } from '../common/props';
@@ -88,6 +92,11 @@ export const updateSubscriberDetailsAction = createAction({
       fields,
     } = propsValue;
 
+    const dateKeys = await fetchDateFieldKeys({
+      auth: { apiKey: auth.secret_text },
+      listId,
+    });
+
     const targetEmail = newEmail?.trim() || email;
     const payload = {
       EmailAddress: targetEmail,
@@ -96,7 +105,7 @@ export const updateSubscriberDetailsAction = createAction({
       ConsentToTrack: consentToTrack ?? 'Unchanged',
       ConsentToSendSms: consentToSendSms ?? 'Unchanged',
       Resubscribe: resubscribe ?? false,
-      CustomFields: buildCustomFieldsPayload(fields),
+      CustomFields: buildCustomFieldsPayload(fields, dateKeys),
     };
 
     await makeRequest({

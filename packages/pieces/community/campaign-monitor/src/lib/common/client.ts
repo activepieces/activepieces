@@ -52,8 +52,30 @@ export function transformCustomFields(
   return fields;
 }
 
+export async function fetchDateFieldKeys({
+  auth,
+  listId,
+}: {
+  auth: CampaignMonitorAuth;
+  listId: string;
+}) {
+  const response = await makeRequest<
+    Array<{ Key: string; DataType: string }>
+  >({
+    auth,
+    method: HttpMethod.GET,
+    path: `/lists/${encodeURIComponent(listId)}/customfields.json`,
+  });
+  return new Set(
+    (response.body ?? [])
+      .filter((field) => field.DataType === 'Date')
+      .map((field) => field.Key)
+  );
+}
+
 export function buildCustomFieldsPayload(
-  fields: Record<string, unknown> | undefined
+  fields: Record<string, unknown> | undefined,
+  dateKeys: Set<string>
 ) {
   return Object.entries(fields ?? {}).flatMap(([key, value]) => {
     if (Array.isArray(value)) {
@@ -64,7 +86,12 @@ export function buildCustomFieldsPayload(
     if (isBlank(value)) {
       return [];
     }
-    return [{ Key: key, Value: toCustomFieldValue(value) }];
+    return [
+      {
+        Key: key,
+        Value: dateKeys.has(key) ? toDateFieldValue(value) : value,
+      },
+    ];
   });
 }
 
@@ -188,7 +215,7 @@ export function jsonCustomFieldsToRecord(value: unknown) {
 
 const ISO_DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}/;
 
-function toCustomFieldValue(value: unknown) {
+function toDateFieldValue(value: unknown) {
   if (typeof value !== 'string') {
     return value;
   }

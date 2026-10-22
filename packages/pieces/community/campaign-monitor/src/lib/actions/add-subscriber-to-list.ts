@@ -1,6 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { buildCustomFieldsPayload, makeRequest } from '../common/client';
+import {
+  buildCustomFieldsPayload,
+  fetchDateFieldKeys,
+  makeRequest,
+} from '../common/client';
 import { subscriptionResultOutputSchema } from '../output-schemas';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, customFields, listId } from '../common/props';
@@ -80,6 +84,11 @@ export const addSubscriberToListAction = createAction({
       fields,
     } = propsValue;
 
+    const dateKeys = await fetchDateFieldKeys({
+      auth: { apiKey: auth.secret_text },
+      listId,
+    });
+
     const payload = {
       EmailAddress: email,
       Name: name || '',
@@ -87,7 +96,7 @@ export const addSubscriberToListAction = createAction({
       ConsentToSendSms: consentToSendSms ?? 'Unchanged',
       Resubscribe: resubscribe ?? false,
       MobileNumber: phone,
-      CustomFields: buildCustomFieldsPayload(fields),
+      CustomFields: buildCustomFieldsPayload(fields, dateKeys),
     };
 
     const response = await makeRequest({
