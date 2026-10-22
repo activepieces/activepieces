@@ -661,7 +661,8 @@ export type ApplicationEvent = z.infer<typeof ApplicationEvent>
 export function summarizeApplicationEvent(event: ApplicationEvent) {
     switch (event.action) {
         case ApplicationEventName.FLOW_UPDATED: {
-            return event.data.reason ?? convertUpdateActionToDetails(event)
+            const details = convertUpdateActionToDetails(event)
+            return `${details}${isNil(event.data.reason) ? '' : ` Reason: ${event.data.reason}`}`
         }
         case ApplicationEventName.FLOW_RUN_STARTED:
             return `Flow run ${event.data.flowRun.id} is started`

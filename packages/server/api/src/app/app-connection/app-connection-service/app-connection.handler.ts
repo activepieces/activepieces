@@ -404,7 +404,7 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
             type: FlowOperationType.IMPORT_FLOW,
             request: replaceConnectionInFlowVersion({ flowVersion: lastPublishedVersion, appConnection, newAppConnection }),
         },
-        auditReason: replaceConnectionAuditReason({ flowVersion: lastPublishedVersion, appConnection, newAppConnection }),
+        auditReason: replaceConnectionAuditReason({ appConnection, newAppConnection }),
     })
 
     const { status } = await flowService(log).getOneOrThrow({ id: flow.id, projectId })
@@ -437,7 +437,7 @@ async function handleDraftVersion({ flow, latestVersion, userId, platformId, app
             type: FlowOperationType.IMPORT_FLOW,
             request: replaceConnectionInFlowVersion({ flowVersion: latestVersion, appConnection, newAppConnection }),
         },
-        auditReason: replaceConnectionAuditReason({ flowVersion: latestVersion, appConnection, newAppConnection }),
+        auditReason: replaceConnectionAuditReason({ appConnection, newAppConnection }),
     })
 }
 
@@ -449,8 +449,8 @@ function replaceConnectionInFlowVersion({ flowVersion, appConnection, newAppConn
     })
 }
 
-function replaceConnectionAuditReason({ flowVersion, appConnection, newAppConnection }: ReplaceConnectionInFlowVersionParams): string {
-    return `Replaced connection "${appConnection.displayName}" with "${newAppConnection.displayName}" in "${flowVersion.displayName}" Flow.`
+function replaceConnectionAuditReason({ appConnection, newAppConnection }: Omit<ReplaceConnectionInFlowVersionParams, 'flowVersion'>): string {
+    return `replaced connection "${appConnection.displayName}" with "${newAppConnection.displayName}".`
 }
 
 type ReplaceConnectionInFlowVersionParams = {
