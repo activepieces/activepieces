@@ -1,6 +1,6 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformWithoutSensitiveData, PrincipalType, SelfServeTrialDates, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
+import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformSelfServeTrial, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -208,7 +208,7 @@ async function assertPlanCoversSettings({ request, reply, body }: AssertPlanCove
     }
 }
 
-async function withSelfServeTrial<T extends PlatformWithoutSensitiveData>({ platform, log, include }: WithSelfServeTrialParams<T>): Promise<T & { selfServeTrial?: SelfServeTrialDates }> {
+async function withSelfServeTrial<T extends PlatformWithoutSensitiveData>({ platform, log, include }: WithSelfServeTrialParams<T>): Promise<T & { selfServeTrial?: PlatformSelfServeTrial }> {
     if (!include) {
         return platform
     }

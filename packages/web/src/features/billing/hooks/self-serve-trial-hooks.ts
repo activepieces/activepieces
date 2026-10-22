@@ -24,6 +24,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { platformBillingApi } from '../api/billing-plans-api';
 import { billingUtils } from '../utils/billing-utils';
 import { selfServeTrialTime, TRIAL_DAYS } from '../utils/self-serve-trial-time';
+import { trialSeatEnforcement } from '../utils/trial-seat-enforcement';
 
 import { refreshBillingCaches } from './billing-hooks';
 
@@ -112,6 +113,50 @@ export const selfServeTrialHooks = {
       endsAt: isNil(status.endsAt) ? null : new Date(status.endsAt),
       isPlatformAdmin,
       basePlanName,
+    };
+  },
+  useRefreshPlanAfterTrialEnd: (): void => {
+    const queryClient = useQueryClient();
+    const { platform } = platformHooks.useCurrentPlatform();
+    const { data: status } = selfServeTrialHooks.useStatus();
+    useQuery({
+      queryKey: ['self-serve-trial-plan-refresh', platform.id],
+      queryFn: async () => {
+        await platformBillingApi.refreshSubscriptionInfo();
+        refreshBillingCaches(queryClient);
+        return true;
+      },
+      enabled: trialSeatEnforcement.needsPlanRefresh({
+        trialState: status?.state,
+        trialEndsAt: platform.selfServeTrial?.endsAt,
+        now: Date.now(),
+      }),
+      staleTime: Infinity,
+      retry: false,
+    });
+  },
+  useSeatGrace: (): SeatGrace | null => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    const { embedState } = useEmbedding();
+    const isPlatformAdmin = useIsPlatformAdmin();
+    const endsAt = platform.selfServeTrial?.seatGraceEndsAt;
+    const seats = platform.plan.usersLimit;
+    useTrialClock(endsAt);
+    if (embedState.isEmbedded || isNil(endsAt) || isNil(seats)) {
+      return null;
+    }
+    const timing = selfServeTrialTime.activeTrialTiming({
+      startedAt: null,
+      endsAt,
+      now: Date.now(),
+    });
+    return {
+      endsAt: timing.endsAt,
+      daysLeft: timing.daysLeft,
+      endsToday: timing.endsToday,
+      ending: timing.ending,
+      seats,
+      isPlatformAdmin,
     };
   },
 };
@@ -290,4 +335,13 @@ export type SelfServeTrial = {
   extended: boolean;
   isPlatformAdmin: boolean;
   basePlanName: string;
+};
+
+export type SeatGrace = {
+  endsAt: Date;
+  daysLeft: number;
+  endsToday: boolean;
+  ending: boolean;
+  seats: number;
+  isPlatformAdmin: boolean;
 };

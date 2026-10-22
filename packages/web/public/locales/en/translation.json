@@ -3718,5 +3718,13 @@
   "last day": "last day",
   "Dedicated workers are locked. Your automations run on shared workers.": "Dedicated workers are locked. Your automations run on shared workers.",
   "Contact sales to unlock pinning pieces": "Contact sales to unlock pinning pieces",
-  "Adding or changing AI keys is locked.": "Adding or changing AI keys is locked."
+  "Adding or changing AI keys is locked.": "Adding or changing AI keys is locked.",
+  "Enterprise trial ended": "Enterprise trial ended",
+  "Extra users lose access {date}": "Extra users lose access {date}",
+  "Users added during the trial beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} will be deactivated on {date}. Manage seats, or upgrade to keep them.": "Users added during the trial beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} will be deactivated on {date}. Manage seats, or upgrade to keep them.",
+  "Your Enterprise trial has ended. Users added during it beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} lose access on {date} unless an admin upgrades.": "Your Enterprise trial has ended. Users added during it beyond the plan's {seats, plural, =1 {1 seat} other {# seats}} lose access on {date} unless an admin upgrades.",
+  "{count, plural, =1 {1 user} other {# users}} added during the trial {count, plural, =1 {is} other {are}} over the {plan} plan's seats and will be deactivated on {date}.": "{count, plural, =1 {1 user} other {# users}} added during the trial {count, plural, =1 {is} other {are}} over the {plan} plan's seats and will be deactivated on {date}.",
+  "Your Enterprise trial has ended and the {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. The users ticked below will be deactivated on {date}. Change who goes, or upgrade to keep everyone.": "Your Enterprise trial has ended and the {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. The users ticked below will be deactivated on {date}. Change who goes, or upgrade to keep everyone.",
+  "Leaves {date}": "Leaves {date}",
+  "Users deactivated after the trial": "Users deactivated after the trial"
 }
