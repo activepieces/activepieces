@@ -6,9 +6,7 @@
 # lazy (dynamic import), so it never evaluates unless a chat job runs. Kept small on purpose.
 
 ### STAGE 1: Build (toolchain lives here only, never in the final image) ###
-FROM node:24.14.0-bullseye-slim AS build
-RUN printf 'deb http://snapshot.debian.org/archive/debian/20260825T000000Z bullseye main\ndeb http://snapshot.debian.org/archive/debian-security/20260825T000000Z bullseye-security main\n' > /etc/apt/sources.list && \
-    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99snapshot
+FROM node:24.22.1-bookworm-slim AS build
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -46,9 +44,7 @@ RUN npx turbo run build --filter=@activepieces/engine && \
 RUN --mount=type=cache,target=/root/.bun/install/cache cd /usr/src && bun install isolated-vm@6.0.2
 
 ### STAGE 2: Run (minimal) ###
-FROM node:24.14.0-bullseye-slim AS run
-RUN printf 'deb http://snapshot.debian.org/archive/debian/20260825T000000Z bullseye main\ndeb http://snapshot.debian.org/archive/debian-security/20260825T000000Z bullseye-security main\n' > /etc/apt/sources.list && \
-    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99snapshot
+FROM node:24.22.1-bookworm-slim AS run
 
 # ca-certificates: TLS for piece downloads. procps: `ps`, which tree-kill spawns to reap the engine.
 RUN apt-get update && \
