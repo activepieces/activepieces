@@ -10286,6 +10286,7 @@
       "devDependencies": {
         "@types/feedparser": "2.2.8",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/zagomail": {

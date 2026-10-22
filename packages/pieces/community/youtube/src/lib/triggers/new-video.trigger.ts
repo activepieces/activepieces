@@ -245,9 +245,7 @@ export const youtubeNewVideoTrigger = createTrigger({
       await store.put('channelId', channelId);
     }
     const items = await getRssItems(channelId);
-    if (items.length > 0) {
-      await store.put('_seenVideoIds', items.map((item) => getId(item)));
-    }
+    await store.put('_seenVideoIds', items.map((item) => getId(item)));
   },
   async onDisable({ store, isRepublish }): Promise<void> {
     if (isRepublish) {
