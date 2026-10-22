@@ -1,5 +1,6 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import { OAuth2GrantType } from '@activepieces/shared'
+import { AxiosError, AxiosHeaders } from 'axios'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 const mockGetOrThrow = vi.fn()
@@ -16,6 +17,17 @@ import { oauth2Util } from '../../../../src/app/app-connection/app-connection-se
 
 const util = oauth2Util({} as never)
 const nowSeconds = Math.round(Date.now() / 1000)
+
+function tokenEndpointError(data: unknown): AxiosError {
+    const config = { headers: new AxiosHeaders() }
+    return new AxiosError('stream has been aborted', AxiosError.ERR_BAD_RESPONSE, config, {}, {
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+        data,
+    })
+}
 
 function connectionWith({ claimedAt, expiresIn }: { claimedAt: number | string, expiresIn?: number | string }): never {
     return {
@@ -102,6 +114,25 @@ describe('oauth2Util.formatOAuth2Response', () => {
         expect(util.formatOAuth2Response({ access_token: 'token', expires_in: 0 } as never).expires_in).toBeUndefined()
         expect(util.formatOAuth2Response({ access_token: 'token', expires_in: '-5' } as never).expires_in).toBeUndefined()
         expect(util.formatOAuth2Response({ access_token: 'token', expires_in: '1e999' } as never).expires_in).toBeUndefined()
+    })
+})
+
+describe('oauth2Util.isUserError', () => {
+    it('treats a token-endpoint reply with no body as a non-user error instead of throwing', () => {
+        expect(util.isUserError(tokenEndpointError(undefined))).toBe(false)
+        expect(util.isUserError(tokenEndpointError(null))).toBe(false)
+    })
+
+    it('recognises invalid_grant as a user error', () => {
+        expect(util.isUserError(tokenEndpointError({ error: 'invalid_grant' }))).toBe(true)
+    })
+
+    it('treats other OAuth2 error codes as non-user errors', () => {
+        expect(util.isUserError(tokenEndpointError({ error: 'invalid_client' }))).toBe(false)
+    })
+
+    it('treats an axios error with no response as a non-user error', () => {
+        expect(util.isUserError(new AxiosError('socket hang up', AxiosError.ECONNABORTED))).toBe(false)
     })
 })
 
