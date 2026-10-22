@@ -59,6 +59,15 @@ describe('Resource Lock per editor session', () => {
         expect(next.acquired).toBe(true)
     })
 
+    it('answers a lock request that arrives while the connection is still being checked', async () => {
+        const { flowId, openTab } = await setup()
+        const tab = await openTab({ waitForConnection: false })
+
+        const answer = await tab.lock({ resourceId: flowId })
+
+        expect(answer.acquired).toBe(true)
+    })
+
 })
 
 async function setup(): Promise<Scenario> {
@@ -72,18 +81,22 @@ async function setup(): Promise<Scenario> {
     })
     return {
         flowId: flow.id,
-        openTab: () => openTab({ token, projectId: mockProject.id, userId: mockOwner.id }),
+        openTab: ({ waitForConnection = true } = {}) => openTab({ token, projectId: mockProject.id, userId: mockOwner.id, waitForConnection }),
     }
 }
 
-async function openTab({ token, projectId, userId }: OpenTabParams): Promise<Tab> {
+async function openTab({ token, projectId, userId, waitForConnection }: OpenTabParams): Promise<Tab> {
     const handlers: Record<string, SocketHandler> = {}
+    const middlewares: SocketMiddleware[] = []
     const disconnectHandlers: (() => Promise<void> | void)[] = []
     const fake = {
         id: apId(),
         data: {},
         handshake: { auth: { token, projectId } },
         join: async (): Promise<void> => undefined,
+        use: (middleware: SocketMiddleware): void => {
+            middlewares.push(middleware)
+        },
         on: (event: string, cb: SocketHandler): void => {
             handlers[event] = cb
         },
@@ -95,11 +108,14 @@ async function openTab({ token, projectId, userId }: OpenTabParams): Promise<Tab
         emit: (): boolean => true,
         to: (): { emit: () => boolean } => ({ emit: () => true }),
     }
-    await websocketService.init(fake as unknown as Socket, app.log)
+    const connection = websocketService.init(fake as unknown as Socket, app.log)
+    if (waitForConnection) {
+        await connection
+    }
     const editorSessionId = apId()
     return {
         userId,
-        lock: ({ resourceId, force }) => invoke({ handlers, event: WebsocketServerEvent.LOCK_RESOURCE, data: { resourceId, force, editorSessionId } }),
+        lock: ({ resourceId, force }) => invoke({ handlers, middlewares, event: WebsocketServerEvent.LOCK_RESOURCE, data: { resourceId, force, editorSessionId } }),
         close: async () => {
             for (const handler of disconnectHandlers) {
                 await handler()
@@ -108,22 +124,32 @@ async function openTab({ token, projectId, userId }: OpenTabParams): Promise<Tab
     }
 }
 
-function invoke({ handlers, event, data }: InvokeParams): Promise<LockResourceResponse> {
+function invoke({ handlers, middlewares, event, data }: InvokeParams): Promise<LockResourceResponse> {
     return new Promise((resolve, reject) => {
-        const handler = handlers[event]
-        if (!handler) {
-            reject(new Error(`no handler registered for ${event}`))
-            return
+        const runMiddleware = (index: number): void => {
+            const middleware = middlewares[index]
+            if (middleware) {
+                middleware([event, data], () => runMiddleware(index + 1))
+                return
+            }
+            const handler = handlers[event]
+            if (!handler) {
+                reject(new Error(`no handler registered for ${event}`))
+                return
+            }
+            const timeout = setTimeout(() => reject(new Error(`ack timeout for ${event}`)), 10000)
+            Promise.resolve(handler(data, (ack) => {
+                clearTimeout(timeout)
+                resolve(LockResourceResponse.parse(ack))
+            })).catch(reject)
         }
-        const timeout = setTimeout(() => reject(new Error(`ack timeout for ${event}`)), 10000)
-        Promise.resolve(handler(data, (ack) => {
-            clearTimeout(timeout)
-            resolve(LockResourceResponse.parse(ack))
-        })).catch(reject)
+        runMiddleware(0)
     })
 }
 
 type SocketHandler = (data: unknown, callback?: (d: unknown) => void) => unknown
+
+type SocketMiddleware = (packet: unknown[], next: () => void) => void
 
 type Tab = {
     userId: string
@@ -133,17 +159,19 @@ type Tab = {
 
 type Scenario = {
     flowId: string
-    openTab: () => Promise<Tab>
+    openTab: (params?: { waitForConnection?: boolean }) => Promise<Tab>
 }
 
 type OpenTabParams = {
     token: string
     projectId: string
     userId: string
+    waitForConnection: boolean
 }
 
 type InvokeParams = {
     handlers: Record<string, SocketHandler>
+    middlewares: SocketMiddleware[]
     event: WebsocketServerEvent
     data: unknown
 }
