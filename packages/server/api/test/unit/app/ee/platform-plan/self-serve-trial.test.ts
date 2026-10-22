@@ -1,10 +1,12 @@
 import { ApEdition, PlanName, SelfServeTrialStatus } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetEdition, mockOnTrialStarted, mockOnTrialEnded, mockStoreDelete, mockStorePut, mockPlanUpdate, mockFindPlan, mockGetPlan, mockLogError, store } = vi.hoisted(() => {
+const { mockGetEdition, mockOnTrialStarted, mockOnTrialEnded, mockStoreDelete, mockStorePut, mockPlanUpdate, mockFindPlan, mockGetPlan, mockLogError, store, storeHooks } = vi.hoisted(() => {
     const store = new Map<string, unknown>()
+    const storeHooks: { afterAccess: ((key: string) => void) | null } = { afterAccess: null }
     return {
         store,
+        storeHooks,
         mockGetEdition: vi.fn().mockReturnValue('cloud'),
         mockOnTrialStarted: vi.fn().mockResolvedValue(undefined),
         mockOnTrialEnded: vi.fn().mockResolvedValue(undefined),
@@ -49,8 +51,20 @@ vi.mock('../../../../../src/app/database/redis-connections', () => ({
         runExclusive: async ({ fn }: { fn: () => Promise<unknown> }) => fn(),
     }),
     distributedStore: {
-        get: async (key: string) => store.get(key) ?? null,
+        get: async (key: string) => {
+            const value = store.get(key) ?? null
+            storeHooks.afterAccess?.(key)
+            return value
+        },
         put: mockStorePut,
+        putIfAbsent: async (key: string, value: unknown) => {
+            const absent = !store.has(key)
+            if (absent) {
+                store.set(key, value)
+            }
+            storeHooks.afterAccess?.(key)
+            return absent
+        },
         delete: mockStoreDelete,
         runOnceWithin: async (_key: string, _ttl: number, fn: () => Promise<unknown>) => {
             await fn()
@@ -114,6 +128,7 @@ describe('self-serve trial', () => {
         vi.clearAllMocks()
         vi.resetModules()
         store.clear()
+        storeHooks.afterAccess = null
         mockGetEdition.mockReturnValue('cloud')
     })
 
@@ -349,6 +364,19 @@ describe('self-serve trial', () => {
 
         it('never replaces saved dates when Autumn shows no trial yet', async () => {
             store.set(TRIAL_KEY, { dates: STARTED })
+
+            await refreshWith({ customer: customerWith({}) })
+
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: STARTED })
+        })
+
+        it('keeps the dates of a start saved while a refresh that found no trial writes the cache', async () => {
+            storeHooks.afterAccess = (key) => {
+                if (key === TRIAL_KEY) {
+                    storeHooks.afterAccess = null
+                    store.set(TRIAL_KEY, { dates: STARTED })
+                }
+            }
 
             await refreshWith({ customer: customerWith({}) })
 
