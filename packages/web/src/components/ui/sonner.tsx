@@ -22,15 +22,6 @@ export function internalErrorToast() {
   });
 }
 
-export const UNSAVED_CHANGES_TOAST = {
-  id: 'unsaved-changes',
-  title: 'Unsaved Changes',
-  description:
-    'Something went wrong and there are unsaved changes, please refresh and contact support if the problem persists.',
-  variant: 'destructive',
-  duration: Infinity,
-};
-
 function Toaster({ ...props }: ToasterProps) {
   const { resolvedTheme } = useTheme();
 
