@@ -172,6 +172,9 @@ const useRefreshDraftOnReconnectAndReturn = () => {
     };
     socket.on('connect', refreshOnConnect);
     document.addEventListener('visibilitychange', refreshWhenVisible);
+    if (socket.connected) {
+      refreshDraft().catch(() => undefined);
+    }
     return () => {
       socket.off('connect', refreshOnConnect);
       document.removeEventListener('visibilitychange', refreshWhenVisible);

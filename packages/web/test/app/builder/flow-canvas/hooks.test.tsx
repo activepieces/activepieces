@@ -477,13 +477,20 @@ describe('useRefreshDraftOnReconnectAndReturn', () => {
     socketHarness.socket.connected = true;
     const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
     mount(store);
+    await vi.advanceTimersByTimeAsync(0);
+    flowsApiMock.get.mockResolvedValue(
+      flowWithDraftVersion({
+        versionId: 'draft-1',
+        displayName: 'Renamed during the outage',
+      }),
+    );
 
     connectSocket();
     await vi.advanceTimersByTimeAsync(0);
 
-    expect(flowsApiMock.get).toHaveBeenCalledWith('flow-1');
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(2);
     expect(store.getState().flowVersion.displayName).toBe(
-      'Renamed while the tab was away',
+      'Renamed during the outage',
     );
     expect(shownToasts()).toHaveLength(0);
   });
@@ -499,6 +506,47 @@ describe('useRefreshDraftOnReconnectAndReturn', () => {
     expect(store.getState().flowVersion.displayName).toBe(
       'Renamed while the tab was away',
     );
+  });
+
+  it('shows a draft saved while the builder loaded, when the socket was already connected', async () => {
+    socketHarness.socket.connected = true;
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+
+    mount(store);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(1);
+    expect(store.getState().flowVersion.displayName).toBe(
+      'Renamed while the tab was away',
+    );
+  });
+
+  it('keeps the open step form when the draft did not change while the builder loaded', async () => {
+    socketHarness.socket.connected = true;
+    const flow = flowWithDraftVersion({ versionId: 'draft-1' });
+    flowsApiMock.get.mockResolvedValue(flow);
+    const store = createStore(flow);
+    store.getState().selectStepByName('trigger');
+
+    mount(store);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).toHaveBeenCalledTimes(1);
+    expect(store.getState()).toMatchObject({
+      selectedStep: 'trigger',
+      draftRefreshCount: 0,
+    });
+  });
+
+  it('does not refresh a run view when the builder opens', async () => {
+    socketHarness.socket.connected = true;
+    const store = createStore(flowWithDraftVersion({ versionId: 'draft-1' }));
+    store.getState().setRun(testRun(), store.getState().flowVersion);
+
+    mount(store);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(flowsApiMock.get).not.toHaveBeenCalled();
   });
 
   it('shows the newest draft when the tab becomes visible again, with no toast', async () => {
