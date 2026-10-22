@@ -1,6 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest, transformCustomFields } from '../common/client';
+import {
+  isSubscriberNotFoundError,
+  makeRequest,
+  transformCustomFields,
+} from '../common/client';
+import { findSubscriberOutputSchema } from '../output-schemas';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, listId } from '../common/props';
 
@@ -10,6 +15,7 @@ export const findSubscriberAction = createAction({
   classification: 'READ',
   displayName: 'Find Subscriber',
   description: 'Find a subscriber by email in a specific list.',
+  outputSchema: findSubscriberOutputSchema,
   audience: 'both',
   aiMetadata: {
     description:
@@ -29,27 +35,33 @@ export const findSubscriberAction = createAction({
     const { listId, email } = propsValue;
 
     try {
-      const response = await makeRequest(
-          { apiKey: auth.secret_text },
-        HttpMethod.GET,
-        `/subscribers/${listId}.json?email=${encodeURIComponent(
+      const response = await makeRequest<
+        Record<string, unknown> & {
+          CustomFields?: Array<{ Key: string; Value: string }>;
+        }
+      >({
+        auth: { apiKey: auth.secret_text },
+        method: HttpMethod.GET,
+        path: `/subscribers/${listId}.json?email=${encodeURIComponent(
           email
-        )}&includetrackingpreference=true`
-      );
+        )}&includetrackingpreference=true`,
+      });
 
       return {
         found: true,
         result: {
-            ...response.body,
-            CustomFields:transformCustomFields(response.body['CustomFields'])
+          ...response.body,
+          CustomFields: transformCustomFields(response.body.CustomFields),
         },
       };
     } catch (error) {
-      // If subscriber is not found, API returns a 404
-      return {
-        found: false,
-        result: null,
-      };
+      if (isSubscriberNotFoundError(error)) {
+        return {
+          found: false,
+          result: null,
+        };
+      }
+      throw error;
     }
   },
 });

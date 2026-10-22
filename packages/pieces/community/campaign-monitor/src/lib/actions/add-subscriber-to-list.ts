@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import { buildCustomFieldsPayload, makeRequest } from '../common/client';
+import { subscriptionResultOutputSchema } from '../output-schemas';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, customFields, listId } from '../common/props';
 
@@ -10,6 +11,7 @@ export const addSubscriberToListAction = createAction({
   classification: 'WRITE',
   displayName: 'Add Subscriber',
   description: 'Adds a new subscriber to a list.',
+  outputSchema: subscriptionResultOutputSchema,
   audience: 'both',
   aiMetadata: {
     description:
@@ -64,7 +66,7 @@ export const addSubscriberToListAction = createAction({
       required: false,
       defaultValue: false,
     }),
-    fields:customFields,
+    fields: customFields,
   },
   async run({ propsValue, auth }) {
     const {
@@ -75,38 +77,30 @@ export const addSubscriberToListAction = createAction({
       consentToSendSms,
       consentToTrack,
       resubscribe,
-      fields
+      fields,
     } = propsValue;
 
     const payload = {
       EmailAddress: email,
       Name: name || '',
-      ConsentToTrack: consentToTrack,
-      ConsentToSendSms: consentToSendSms,
-      Resubscribe: resubscribe ?? true,
+      ConsentToTrack: consentToTrack ?? 'Unchanged',
+      ConsentToSendSms: consentToSendSms ?? 'Unchanged',
+      Resubscribe: resubscribe ?? false,
       MobileNumber: phone,
-      CustomFields: Object.entries(fields).flatMap(([key, value]) =>
-    Array.isArray(value)
-      ? value.map((v) => ({ Key: key, Value: v }))
-      : [{ Key: key, Value: value }]
-  ),
+      CustomFields: buildCustomFieldsPayload(fields),
     };
 
-    const response = await makeRequest(
-      { apiKey: auth.secret_text }, 
-      HttpMethod.POST,
-      `/subscribers/${listId}.json`,
-      payload
-    );
+    const response = await makeRequest({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.POST,
+      path: `/subscribers/${listId}.json`,
+      body: payload,
+    });
 
-    if (response.status === 201) {
-      return {
-        success: true,
-      };
-    }
     return {
-      success: false,
-      error: response.body,
+      success: true,
+      emailAddress: typeof response.body === 'string' ? response.body : email,
+      listId,
     };
   },
 });
