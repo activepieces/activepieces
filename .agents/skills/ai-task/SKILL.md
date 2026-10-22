@@ -1,6 +1,6 @@
 ---
 name: ai-task
-description: The AI team's one command for doing a task the team way, from ticket to merged PR. Use when an engineer on the AI team (chat, agents, MCP, AI providers) starts a task ("/ai-task AI-123", "start AI-123", "work on this bug"), turns a request or customer report into a ticket ("/ai-task customer says chat won't save"), triages or answers a bug or support question ("/ai-task triage ENG-456"), or is about to open or update a PR ("/ai-task ship"). Owns the merge queue: when a PR is approved it moves the ticket to Ready to merge and ranks it so the top merges first ("/ai-task queue", "what do I merge next", "my PR got approved"). Also lets support, admins and anyone outside the team report an AI bug or request ("/ai-task report ..."). Grills the user one question at a time ("/ai-task grill AI-123") until a ticket is solvable without asking anyone. Runs the team check-up ("/ai-task check", "check the AI roadmap", "how is activation", "weekly AI update"): activation and cost from production plus late, blocked or waiting work in Linear. It does the Linear, brain and PR paperwork so the user only answers what it can't work out.
+description: The AI team's one command for doing a task the team way, from ticket to merged PR. Use when an engineer on the AI team (chat, agents, MCP, AI providers) starts a task ("/ai-task AI-123", "start AI-123", "work on this bug"), turns a request or customer report into a ticket ("/ai-task customer says chat won't save"), triages or answers a bug or support question ("/ai-task triage ENG-456"), or is about to open or update a PR ("/ai-task ship"). Owns the merge queue: when a PR is approved it moves the ticket to Ready to merge and ranks it so the top merges first ("/ai-task queue", "what do I merge next", "my PR got approved"). Sets up new members ("set me up", "onboard me"): Linear MCP, personal Linear API key, repo. Also lets support, admins and anyone outside the team report an AI bug or request ("/ai-task report ..."). Grills the user one question at a time ("/ai-task grill AI-123") until a ticket is solvable without asking anyone. Runs the team check-up ("/ai-task check", "check the AI roadmap", "how is activation", "weekly AI update"): activation and cost from production plus late, blocked or waiting work in Linear. It does the Linear, brain and PR paperwork so the user only answers what it can't work out.
 ---
 
 # AI task
@@ -42,15 +42,24 @@ Run these checks before anything else, silently when they pass. If one fails, sh
    - **Queue or job failures** also need the DevOps box over SSH, which `/debug-failed-run` drives. Ask for the host once.
    - **Rules for real data:** read only. Keep ClickHouse windows to 3 days or less. Copy only counts and ids into tickets, never customer content, emails or credentials.
 
-5. **Linear API key** (queue only, and ship when it ranks). The Linear MCP can't set a card's position, so reordering goes through Linear's GraphQL API with the user's own key. Check `LINEAR_API_KEY` is set. If not, don't stop: rank anyway, tell them where to drop the card by hand, and show this once:
+5. **Linear API key** (members, part of setup). The Linear MCP can't set a card's position, so the merge queue is ordered through Linear's GraphQL API with the member's own personal key. Check it with `[ -n "$LINEAR_API_KEY" ]`, and never print, echo or paste the key anywhere.
+   - **Set:** carry on silently.
+   - **Missing:** don't stop the moment they asked for. Show the setup card once per session, before your answer:
 
-   > **Want me to keep the queue in order for you?** I need your Linear API key.
-   > Make one at linear.app/settings/account/security (Personal API keys), then add `export LINEAR_API_KEY=lin_api_...` to your shell profile and restart Claude Code.
-   > For now, drag AI-123 under AI-120 in **Merge queue**.
+   > **One setup step left: your Linear API key.** I use it to keep the merge queue in order.
+   > 1. Linear → Settings → Account → Security & access → Personal API keys → New key (name it `ai-task`).
+   > 2. Add `export LINEAR_API_KEY=lin_api_...` to `~/.zshrc` (or your shell's profile).
+   > 3. Restart Claude Code.
+   >
+   > Don't paste the key here.
+
+   - **In Queue without a key:** rank anyway, then say where to drag each card by hand: "Drag AI-123 under AI-120 in **Merge queue**."
 
 ## Help (no arguments, "help", or "?")
 
-Run the requirement checks first, then show the card that fits.
+Run the requirement checks first, then show the card that fits. For a member, add one setup line under the card: `Setup: ✓ Linear MCP · ✓ API key · ✓ repo` (✗ on anything missing, with the card for it).
+
+**First run** (a member with no AI ticket assigned yet, or who says "set me up" / "onboard me"): walk the setup in order (Linear MCP, then the API key, then the repo), one card at a time, and finish with the "Start here" doc link and "Want to try it on one of your tickets from **Who's on what**?"
 
 **Member card**
 
