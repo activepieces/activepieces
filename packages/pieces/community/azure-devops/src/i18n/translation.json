@@ -68,6 +68,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New or Updated Work Item (Instant)": "New or Updated Work Item (Instant)",
   "New or Updated Work Item (Polling)": "New or Updated Work Item (Polling)",
   "Fires instantly when a work item is created, updated, or commented on in Azure DevOps via a Service Hooks subscription. Requires a public webhook URL reachable from Azure DevOps.": "Fires instantly when a work item is created, updated, or commented on in Azure DevOps via a Service Hooks subscription. Requires a public webhook URL reachable from Azure DevOps.",
