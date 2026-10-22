@@ -170,7 +170,7 @@ function toOptionalInteger(value: unknown): number | undefined {
 }
 
 function isEmptyValue(value: unknown): boolean {
-  return value === undefined || value === null || value === '' || value === false;
+  return value === undefined || value === null || value === '';
 }
 
 function fieldsForLayer(type: string): LayerField[] {

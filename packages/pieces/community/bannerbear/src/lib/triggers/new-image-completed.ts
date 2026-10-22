@@ -44,7 +44,7 @@ export const newImageCompletedTrigger = createTrigger({
     });
     await context.store.put<PollState>(STORE_KEY, {
       seen: images.filter((i) => i.status === 'completed').map((i) => i.uid).slice(0, MAX_SEEN),
-      pending: images.filter((i) => i.status === 'pending').map((i) => i.uid).slice(0, MAX_PENDING),
+      pending: images.filter((i) => i.status === 'pending').map((i) => i.uid),
       head: newestCreatedAt(images) ?? new Date().toISOString(),
       backfill: null,
     });
@@ -112,7 +112,7 @@ export const newImageCompletedTrigger = createTrigger({
     ];
     await context.store.put<PollState>(STORE_KEY, {
       seen: [...emitted.map((i) => i.uid), ...state.seen].slice(0, MAX_SEEN),
-      pending: Array.from(new Set(stillPending)).slice(0, MAX_PENDING),
+      pending: Array.from(new Set(stillPending)),
       head: newestCreatedAt(fresh.images) ?? state.head,
       backfill,
     });
@@ -203,7 +203,6 @@ async function fetchImage({
 const STORE_KEY = 'bannerbear_new_image_completed_state';
 const MAX_PAGES_PER_SCAN = 10;
 const MAX_SEEN = 2000;
-const MAX_PENDING = 200;
 const MAX_PENDING_CHECKS = 25;
 
 type PollState = {
