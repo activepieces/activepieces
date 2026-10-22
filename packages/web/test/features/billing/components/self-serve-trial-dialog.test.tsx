@@ -18,6 +18,7 @@ let liveStatus:
   | { state: string; startedAt: string | null; endsAt: string | null }
   | undefined;
 let onStarted: ((status: { state: string }) => void) | undefined;
+let edition = 'cloud';
 const mutate = vi.fn();
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
@@ -37,7 +38,7 @@ vi.mock('@/features/billing/hooks/billing-dialog-hooks', () => ({
 }));
 
 vi.mock('@/hooks/flags-hooks', () => ({
-  flagsHooks: { useFlag: () => ({ data: 'cloud' }) },
+  flagsHooks: { useFlag: () => ({ data: edition }) },
 }));
 
 vi.mock('@/hooks/platform-hooks', () => ({
@@ -124,7 +125,27 @@ beforeEach(() => {
   payload = { featureKey: 'PROJECTS' };
   startFailed = false;
   liveStatus = undefined;
+  edition = 'cloud';
   mutate.mockClear();
+});
+
+describe('the start dialog', () => {
+  const embeddingAiNote =
+    "Plans that include Embedding don't usually come with Activepieces AI. You can use both together only during the trial.";
+
+  it('says on Cloud that Embedding with Activepieces AI is only for the trial', () => {
+    render(dialog());
+
+    expect(screen.getByText(embeddingAiNote)).toBeDefined();
+  });
+
+  it('leaves the note out on a self-hosted install, which has no Activepieces AI', () => {
+    edition = 'ee';
+
+    render(dialog());
+
+    expect(screen.queryByText(embeddingAiNote)).toBeNull();
+  });
 });
 
 describe('starting the trial from a blocked change', () => {
