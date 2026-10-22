@@ -25,7 +25,8 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/billing-providers/autu
     autumnConsole: {},
 }))
 
-vi.mock('../../../../../src/app/database/redis-connections', () => ({
+vi.mock('../../../../../src/app/database/redis-connections', async (importOriginal) => ({
+    ...await importOriginal<typeof import('../../../../../src/app/database/redis-connections')>(),
     distributedStore: {
         get: (...args: unknown[]) => mockBillingEnforced(...args),
         async putIfAbsent(key: string): Promise<boolean> {

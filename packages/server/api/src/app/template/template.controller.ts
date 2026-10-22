@@ -1,11 +1,11 @@
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { ALL_PRINCIPAL_TYPES, ApEdition, ApFlagId, CreateTemplateRequestBody, ListTemplatesRequestQuery, Principal, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, Template, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
+import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
@@ -66,6 +66,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
         switch (type) {
             case TemplateType.CUSTOM: {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                await assertCustomTemplatesOnPlan({ request, reply })
                 platformId = request.principal.platform.id
             }
                 break
@@ -101,6 +102,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
                 })
             case TemplateType.CUSTOM: {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                await assertCustomTemplatesOnPlan({ request, reply })
                 assertTemplateBelongsToPlatform({
                     templatePlatformId: template.platformId,
                     principalPlatformId: request.principal.platform.id,
@@ -125,6 +127,7 @@ export const templateController: FastifyPluginAsyncZod = async (app) => {
                 })
             case TemplateType.CUSTOM: {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                await assertCustomTemplatesOnPlan({ request, reply })
                 assertTemplateBelongsToPlatform({
                     templatePlatformId: template.platformId,
                     principalPlatformId: request.principal.platform.id,
@@ -266,4 +269,16 @@ async function loadCustomTemplatesOrReturnEmpty(
     }
     const customTemplates = await templateService(log).list({ platformId, type: TemplateType.CUSTOM, ...query })
     return customTemplates.data
+}
+
+async function assertCustomTemplatesOnPlan({ request, reply }: AssertCustomTemplatesOnPlanParams): Promise<void> {
+    if (edition === ApEdition.COMMUNITY) {
+        return
+    }
+    await platformMustHaveFeatureEnabled((platform) => platform.plan.manageTemplatesEnabled).call(request.server, request, reply)
+}
+
+type AssertCustomTemplatesOnPlanParams = {
+    request: FastifyRequest
+    reply: FastifyReply
 }

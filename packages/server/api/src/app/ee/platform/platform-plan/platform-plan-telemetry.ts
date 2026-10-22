@@ -17,6 +17,33 @@ export const platformPlanTelemetry = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async onSelfServeTrialStarted({ platformId, endsAt }: SelfServeTrialStartedParams): Promise<void> {
+        if (isNil(endsAt)) {
+            return
+        }
+        await telemetry(log).trackPlatform({
+            platformId,
+            event: {
+                name: TelemetryEventName.TRIAL_STARTED,
+                payload: { platformId, plan: PlanName.ENTERPRISE_TRIAL, trialEndsAt: endsAt },
+            },
+        })
+    },
+
+    async onSelfServeTrialEnded({ platformId, trialEndsAt, endedAt }: SelfServeTrialEndedParams): Promise<void> {
+        await distributedStore.runOnceWithin(
+            `self_serve_trial_ended_${platformId}_${trialEndsAt}`,
+            SELF_SERVE_TRIAL_ENDED_ONCE_SECONDS,
+            () => telemetry(log).trackPlatform({
+                platformId,
+                event: {
+                    name: TelemetryEventName.TRIAL_ENDED,
+                    payload: { platformId, plan: PlanName.ENTERPRISE_TRIAL, trialEndedAt: endedAt },
+                },
+            }),
+        )
+    },
+
     async onCancelled({ platformId }: PlanActionParams): Promise<void> {
         const plan = await currentPlanName({ platformId })
         await telemetry(log).trackPlatform({
@@ -93,6 +120,8 @@ const UNKNOWN_PLAN = 'unknown'
 
 const PLAN_CHANGE_ONCE_SECONDS = 24 * 60 * 60
 
+const SELF_SERVE_TRIAL_ENDED_ONCE_SECONDS = 31 * 24 * 60 * 60
+
 const FREE_PLANS: ReadonlySet<string> = new Set([PlanName.FREE, PlanName.FREE_LEGACY, PlanName.APPSUMO])
 
 type PlanActionParams = {
@@ -119,4 +148,15 @@ type PlanChangeKeyParams = {
 type TrackPlanChangeParams = PlanChangeKeyParams & {
     trialEndsAt: string | null
     log: FastifyBaseLogger
+}
+
+type SelfServeTrialStartedParams = {
+    platformId: string
+    endsAt: string | null
+}
+
+type SelfServeTrialEndedParams = {
+    platformId: string
+    trialEndsAt: string
+    endedAt: string
 }

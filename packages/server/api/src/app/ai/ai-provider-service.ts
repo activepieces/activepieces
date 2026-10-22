@@ -11,6 +11,7 @@ import { distributedLock, distributedStore } from '../database/redis-connections
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
+import { billingProvider } from '../platform/billing-provider'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
 import { aiKeyScope, ProviderScope } from './ai-key-scope'
@@ -418,7 +419,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
 async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
     const { plan } = await platformService(log).getOneWithPlanOrThrow(platformId)
-    return plan.embeddingEnabled
+    if (!plan.embeddingEnabled) {
+        return false
+    }
+    return !(await billingProvider.get(log).planCarriesSelfServeTrial(platformId))
 }
 
 
