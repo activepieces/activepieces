@@ -89,6 +89,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             flowId: flow.id,
             versionId: approval.flowVersionId,
         })
+        const isRepublish = await flowService(log).isRepublish({ previousFlow: flow, versionToPublish: lockedVersion, newStatus: approval.requestedStatus })
 
         const decidedAt = new Date().toISOString()
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
@@ -115,13 +116,15 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                 projectId: flow.projectId,
                 simulate: false,
                 ignoreError: true,
+                isRepublish,
             })
         }
         await flowExecutionCache(log).invalidate(flow.id)
         await flowService(log).applyStatusChangeForPublishedFlow({
-            previousFlow: flow,
-            publishedVersion: lockedVersion,
+            id: flow.id,
+            projectId: flow.projectId,
             newStatus: approval.requestedStatus,
+            isRepublish,
         })
         rejectedPromiseHandler(telemetry(log).trackProject({
             projectId: approval.projectId,
