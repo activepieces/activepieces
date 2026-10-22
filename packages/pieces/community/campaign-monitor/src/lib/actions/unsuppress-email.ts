@@ -5,8 +5,6 @@ import { campaignMonitorAuth } from '../auth';
 import { clientId } from '../common/props';
 import { unsuppressEmailOutputSchema } from '../output-schemas';
 
-const NOT_SUPPRESSED_CODE = 176;
-
 export const unsuppressEmailAction = createAction({
   auth: campaignMonitorAuth,
   name: 'unsuppress_email',
@@ -55,3 +53,5 @@ export const unsuppressEmailAction = createAction({
     };
   },
 });
+
+const NOT_SUPPRESSED_CODE = 176;

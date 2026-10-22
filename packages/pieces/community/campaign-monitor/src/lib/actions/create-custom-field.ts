@@ -5,8 +5,6 @@ import { campaignMonitorAuth } from '../auth';
 import { clientId, listId } from '../common/props';
 import { createCustomFieldOutputSchema } from '../output-schemas';
 
-const OPTION_TYPES = ['MultiSelectOne', 'MultiSelectMany'];
-
 export const createCustomFieldAction = createAction({
   auth: campaignMonitorAuth,
   name: 'create_custom_field',
@@ -82,3 +80,5 @@ export const createCustomFieldAction = createAction({
     };
   },
 });
+
+const OPTION_TYPES = ['MultiSelectOne', 'MultiSelectMany'];

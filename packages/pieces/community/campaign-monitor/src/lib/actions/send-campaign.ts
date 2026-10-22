@@ -5,8 +5,6 @@ import { campaignMonitorAuth } from '../auth';
 import { clientId, draftCampaignId } from '../common/props';
 import { sendCampaignOutputSchema } from '../output-schemas';
 
-const SEND_DATE_FORMAT = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
-
 export const sendCampaignAction = createAction({
   auth: campaignMonitorAuth,
   name: 'send_campaign',
@@ -67,3 +65,5 @@ export const sendCampaignAction = createAction({
     };
   },
 });
+
+const SEND_DATE_FORMAT = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;

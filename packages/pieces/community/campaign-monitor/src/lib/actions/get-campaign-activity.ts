@@ -5,14 +5,6 @@ import { campaignMonitorAuth } from '../auth';
 import { clientId, sentCampaignId } from '../common/props';
 import { campaignActivityOutputSchema } from '../output-schemas';
 
-const ACTIVITY_TYPES = [
-  'recipients',
-  'opens',
-  'clicks',
-  'bounces',
-  'unsubscribes',
-];
-
 export const getCampaignActivityAction = createAction({
   auth: campaignMonitorAuth,
   name: 'get_campaign_activity',
@@ -101,6 +93,14 @@ export const getCampaignActivityAction = createAction({
     return response.body;
   },
 });
+
+const ACTIVITY_TYPES = [
+  'recipients',
+  'opens',
+  'clicks',
+  'bounces',
+  'unsubscribes',
+];
 
 function toApiDate(value: string) {
   const date = new Date(value);

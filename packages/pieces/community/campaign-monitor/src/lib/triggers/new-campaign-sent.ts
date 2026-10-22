@@ -5,11 +5,6 @@ import { campaignMonitorAuth } from '../auth';
 import { clientId } from '../common/props';
 import { sentCampaignOutputSchema } from '../output-schemas';
 
-const STORE_KEY = 'seen_sent_campaigns';
-const PAGE_SIZE = 100;
-const MAX_PAGES = 5;
-const MAX_STORED_IDS = 1000;
-
 export const newCampaignSentTrigger = createTrigger({
   auth: campaignMonitorAuth,
   name: 'new_campaign_sent',
@@ -82,6 +77,11 @@ export const newCampaignSentTrigger = createTrigger({
     return newCampaigns.reverse();
   },
 });
+
+const STORE_KEY = 'seen_sent_campaigns';
+const PAGE_SIZE = 100;
+const MAX_PAGES = 5;
+const MAX_STORED_IDS = 1000;
 
 async function fetchRecentCampaigns({
   apiKey,
