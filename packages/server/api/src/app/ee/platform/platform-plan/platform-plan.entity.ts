@@ -61,10 +61,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         embeddingEnabled: {
             type: Boolean,
         },
-        activepiecesAiProviderHidden: {
-            type: Boolean,
-            default: false,
-        },
         aiProvidersEnabled: {
             type: Boolean,
             default: false,

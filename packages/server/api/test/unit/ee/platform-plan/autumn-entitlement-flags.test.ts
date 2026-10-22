@@ -185,6 +185,7 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
             grantedFeatureIds,
             balances: {},
             scheduledUsersLimit: null,
+            selfServeTrial: null,
         })
         expect(projection).toMatchObject({
             plan: 'appsumo',
@@ -218,6 +219,7 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
             grantedFeatureIds: new Set(FREE_FLAGS),
             balances: {},
             scheduledUsersLimit: null,
+            selfServeTrial: null,
         })
         expect(projection).not.toHaveProperty('billingEnforced')
         expect(projection.showPoweredBy).toBe(true)
@@ -233,26 +235,8 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
             balances: {},
             scheduledUsersLimit: 5,
             selfServeTrial,
-            embeddingOutsideSelfServeTrial: false,
         })
         expect(projection.scheduledUsersLimit).toBe(expected)
-    })
-})
-
-describe('grantsEmbeddingOutsideSelfServeTrial', () => {
-    const TRIAL = subscription({ planId: PlanName.ENTERPRISE_TRIAL, featureIds: ['embeddingEnabled', 'ssoEnabled'], addOn: true })
-    const EMBED_DEAL = subscription({ planId: 'custom_embed', featureIds: [...FREE_FLAGS, 'embeddingEnabled'] })
-
-    it('is false when only the self-serve trial grants Embedding', () => {
-        const free = subscription({ planId: PlanName.FREE, featureIds: FREE_FLAGS })
-
-        expect(autumnUtils.grantsEmbeddingOutsideSelfServeTrial({ subscriptions: [free, TRIAL], purchases: [] })).toBe(false)
-        expect(autumnUtils.grantsEmbeddingOutsideSelfServeTrial({ subscriptions: [free], purchases: [] })).toBe(false)
-    })
-
-    it('is true when the customer\'s own plan grants Embedding, with or without a trial', () => {
-        expect(autumnUtils.grantsEmbeddingOutsideSelfServeTrial({ subscriptions: [EMBED_DEAL], purchases: [] })).toBe(true)
-        expect(autumnUtils.grantsEmbeddingOutsideSelfServeTrial({ subscriptions: [EMBED_DEAL, TRIAL], purchases: [] })).toBe(true)
     })
 })
 

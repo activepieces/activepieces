@@ -82,7 +82,6 @@ export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
     activeFlowsLimit: undefined,
     projectsLimit: 1,
     embeddingEnabled: false,
-    activepiecesAiProviderHidden: false,
     aiProvidersEnabled: false,
     chatEnabled: true,
     agentsEnabled: true,
@@ -110,7 +109,6 @@ export const AUTUMN_FREE_PLAN: PlatformPlanWithOnlyLimits = {
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     tablesEnabled: true,
     embeddingEnabled: false,
-    activepiecesAiProviderHidden: false,
     aiProvidersEnabled: true,
     chatEnabled: false,
     agentsEnabled: false,
