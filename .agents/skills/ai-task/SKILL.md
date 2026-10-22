@@ -42,18 +42,12 @@ Run these checks before anything else, silently when they pass. If one fails, sh
    - **Queue or job failures** also need the DevOps box over SSH, which `/debug-failed-run` drives. Ask for the host once.
    - **Rules for real data:** read only. Keep ClickHouse windows to 3 days or less. Copy only counts and ids into tickets, never customer content, emails or credentials.
 
-5. **Linear API key** (members, part of setup). The Linear MCP can't set a card's position, so the merge queue is ordered through Linear's GraphQL API with the member's own personal key. Check it with `[ -n "$LINEAR_API_KEY" ]`, and never print, echo or paste the key anywhere.
-   - **Set:** carry on silently.
-   - **Missing:** don't stop the moment they asked for. Show the setup card once per session, before your answer:
+5. **Linear API key** (members). The Linear MCP can't set a card's position, so the queue order goes through `linear.mjs` with the member's personal key. Check it with `[ -n "$LINEAR_API_KEY" ]`, and never print the key. If it's missing, don't stop: show this once per session, before your answer:
 
    > **One setup step left: your Linear API key.** I use it to keep the merge queue in order.
-   > Open a terminal in the activepieces repo (any OS) and run:
-   > `node .agents/skills/ai-task/setup-linear-key.mjs`
-   > It walks you through it, then restart Claude Code. Don't paste the key here.
+   > In a terminal in the repo (any OS), run `node .agents/skills/ai-task/linear.mjs setup` and follow it. Then restart Claude Code. Don't paste the key here.
 
-   The script asks for the key with hidden input, checks it against Linear, and saves it as `env.LINEAR_API_KEY` in `~/.claude/settings.json`, which every Claude Code session and its shell pick up on Mac, Linux and Windows. It needs a real terminal, so it won't run through `!` inside Claude Code. If someone pastes a key into the chat anyway, don't use it: tell them to revoke it and run the script with a new one.
-
-   - **In Queue without a key:** rank anyway, then say where to drag each card by hand: "Drag AI-123 under AI-120 in **Merge queue**."
+   `setup` reads the key hidden, checks it with Linear, and saves it to `env` in `~/.claude/settings.json`, which Claude Code loads on every OS. It needs a real terminal, so not through `!`. A key pasted into the chat is leaked: don't use it, tell them to revoke it and run `setup` with a new one.
 
 ## Help (no arguments, "help", or "?")
 
@@ -357,7 +351,7 @@ Approved PRs wait in **Ready to merge** (between In Review and Done), and the **
 
 Runs on `/ai-task queue`, when Ship finds an approval, and inside Check.
 
-1. **Fill the column.** Linear moves a ticket to Ready to merge on its own when its PR is approved with green checks. Also look for AI tickets still in In Review whose PR is approved and green, and move them in. A new push or review that sends one back to In Review is fine: it re-enters when approved again.
+1. **Fill the column.** Linear moves a ticket here on its own when its PR is approved and green. Move in any AI ticket in In Review whose PR is approved and green but got missed. One that drops back to In Review on a new push re-enters when it's approved again.
 2. **Gather** for every ticket in Ready to merge:
    - Linear: priority, labels, customer requests (`list_customer_needs`), `blocks` relations, when it entered the column (`stateHistory`);
    - its PR: `gh pr view <n> --json number,author,files,additions,deletions,mergeable,reviewDecision,statusCheckRollup`.
@@ -371,14 +365,11 @@ Runs on `/ai-task queue`, when Ship finds an approval, and inside Check.
 5. **Find collisions.** Compare the queued PRs' `files`. Any overlap is a pair, and so is any two PRs touching the hot spots: `packages/server/api/src/assets/prompts/`, chat tool descriptions, the agent loop in `packages/server/worker/src/lib/execute/jobs/ee/agent/`. The higher one merges first and the lower one's owner rebases and re-runs CI right after. Put the pair on the card.
 6. **Show the queue card** and apply after one OK:
    - state changes and kick-back comments through the Linear MCP;
-   - the order through GraphQL with the issue's `uuid` (from `get_issue`). Lower `sortOrder` sits higher, so give rank 1 `1000`, rank 2 `2000`, and so on:
-
-     `curl -s https://api.linear.app/graphql -H "Authorization: $LINEAR_API_KEY" -H "Content-Type: application/json" -d '{"query":"mutation($id:String!,$o:Float!){issueUpdate(id:$id,input:{sortOrder:$o}){success}}","variables":{"id":"<uuid>","o":1000}}'`
-
-   - no key: print the order and say where to drag each card (requirement 5).
+   - the order with `node .agents/skills/ai-task/linear.mjs order AI-41 AI-57 AI-60` (top first);
+   - no key: say where to drag each card in **Merge queue** ("drag AI-57 under AI-41").
 7. **Merging.** Only the owner of the top card merges, and only their own PR. Not on top? Wait, or ask in the channel. The one exception is an urgent fix (rule 4.1), which jumps the line and says so in the channel. After a merge, Linear moves it to Done; re-rank and tell the next owner if they need to rebase.
 
-Ranking, kick-backs and the order are the skill's call; the user only says OK. If someone thinks the order is wrong, they say why in the ticket and re-run `/ai-task queue`, they don't drag cards around it.
+Think the order is wrong? Say why in the ticket and re-run `/ai-task queue`, don't drag cards around it.
 
 ## Check: the team check-up (Thursday, or before a PM review)
 
