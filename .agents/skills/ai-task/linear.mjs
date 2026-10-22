@@ -3,7 +3,8 @@ import { homedir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const SETTINGS_PATH = join(homedir(), '.claude', 'settings.json')
+const CLAUDE_DIR = join(homedir(), '.claude')
+const SETTINGS_PATH = join(CLAUDE_DIR, 'settings.json')
 const COMMANDS = { setup, order }
 
 const [command, ...args] = process.argv.slice(2)
@@ -92,18 +93,17 @@ function askHidden(prompt) {
 }
 
 async function moveOldSkillCopies() {
-    const claudeDir = join(homedir(), '.claude')
-    const skillsDir = join(claudeDir, 'skills')
+    const skillsDir = join(CLAUDE_DIR, 'skills')
+    const oldCommand = join(CLAUDE_DIR, 'commands', 'ai-task.md')
     const repoSkill = await realpath(dirname(fileURLToPath(import.meta.url)))
     const entries = await readdir(skillsDir).catch(() => [])
-    const oldCommand = join(claudeDir, 'commands', 'ai-task.md')
-    const candidates = [...entries.map((entry) => join(skillsDir, entry)), oldCommand]
-    const flags = await Promise.all(candidates.map((path) => isOldCopy({ path, oldCommand, repoSkill })))
-    const oldCopies = candidates.filter((_, i) => flags[i])
+    const oldSkills = await Promise.all(entries.map((entry) => oldSkillAt({ path: join(skillsDir, entry), repoSkill })))
+    const hasOldCommand = (await lstat(oldCommand).catch(() => null)) !== null
+    const oldCopies = [...oldSkills.filter(Boolean), ...(hasOldCommand ? [oldCommand] : [])]
     if (oldCopies.length === 0) {
         return
     }
-    const backupDir = join(claudeDir, 'ai-task-old', String(Date.now()))
+    const backupDir = join(CLAUDE_DIR, 'ai-task-old', String(Date.now()))
     await mkdir(backupDir, { recursive: true })
     for (const path of oldCopies) {
         await rename(path, join(backupDir, basename(path)))
@@ -112,16 +112,13 @@ async function moveOldSkillCopies() {
     console.log('')
 }
 
-async function isOldCopy({ path, oldCommand, repoSkill }) {
-    if (path === oldCommand) {
-        return (await lstat(path).catch(() => null)) !== null
-    }
+async function oldSkillAt({ path, repoSkill }) {
     const real = await realpath(path).catch(() => null)
     if (!real || real === repoSkill) {
-        return false
+        return null
     }
     const skill = await readFile(join(path, 'SKILL.md'), 'utf8').catch(() => '')
-    return /^name:\s*ai-task\s*$/m.test(skill)
+    return /^name:\s*ai-task\s*$/m.test(skill) ? path : null
 }
 
 async function readSettings() {
