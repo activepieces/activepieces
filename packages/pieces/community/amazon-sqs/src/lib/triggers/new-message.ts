@@ -19,13 +19,13 @@ export const newMessage = createTrigger({
   classification: 'READ',
   aiMetadata: {
     description:
-      'Fires once per message that arrives in an Amazon SQS queue. Each poll receives up to 100 messages, emits each one, then deletes them from the queue, so the queue should be dedicated to this flow. Delivery is at-least-once: if a delete fails, the message can be received again and fire twice (recent message IDs are remembered to suppress most repeats). A failed flow run does not put the message back.',
+      'Fires once per message that arrives in an Amazon SQS queue. Each poll receives up to 100 messages, emits each one, then deletes them from the queue, so the queue should be dedicated to this flow. Delivery is at-least-once: a message whose delete fails is still emitted, is not remembered as seen, and fires again when SQS makes it visible again. Recent message IDs that were deleted are remembered to suppress repeats. A failed flow run does not put the message back.',
   },
   outputSchema: newMessageOutputSchema,
   props: {
     info: Property.MarkDown({
       value:
-        'Messages are **deleted from the queue** after this trigger receives them. Use a queue dedicated to this flow. Testing only peeks at messages and does not delete them.',
+        'Messages are **deleted from the queue** after this trigger receives them. Use a queue dedicated to this flow. Testing does not delete messages, but it does receive them, which increases their receive count. Repeated tests can move messages to a dead-letter queue if the queue has a receive limit.',
     }),
     queueUrl: queueUrlDropdown,
     manualQueueUrl: manualQueueUrlProp,
@@ -53,23 +53,19 @@ export const newMessage = createTrigger({
     }
     const seen = (await context.store.get<string[]>(SEEN_IDS_KEY)) ?? [];
     const seenSet = new Set(seen);
-    const fresh: Message[] = [];
-    for (const message of received) {
+    const fresh = received.filter((m) => !m.MessageId || !seenSet.has(m.MessageId));
+    const { deletedIds, failedCount } = await deleteReceived({ client, queueUrl, messages: received });
+    for (const message of fresh) {
       const id = message.MessageId;
-      if (id && seenSet.has(id)) {
-        continue;
-      }
-      if (id) {
+      if (id && deletedIds.has(id) && !seenSet.has(id)) {
         seenSet.add(id);
         seen.push(id);
       }
-      fresh.push(message);
     }
     await context.store.put(SEEN_IDS_KEY, seen.slice(-MAX_SEEN_IDS));
-    const failedDeletes = await deleteReceived({ client, queueUrl, messages: received });
-    if (failedDeletes > 0) {
+    if (failedCount > 0) {
       console.warn(
-        `Amazon SQS: ${failedDeletes} received message(s) could not be deleted and may be received again.`
+        `Amazon SQS: ${failedCount} received message(s) could not be deleted and will be emitted again when they are received again.`
       );
     }
     return fresh.map(normalizeMessage);
@@ -132,21 +128,34 @@ async function deleteReceived({
   client: SQSClient;
   queueUrl: string;
   messages: Message[];
-}): Promise<number> {
+}): Promise<{ deletedIds: Set<string>; failedCount: number }> {
+  const deletedIds = new Set<string>();
   let failedCount = 0;
   const withHandles = messages.filter((m) => m.ReceiptHandle);
   for (let i = 0; i < withHandles.length; i += 10) {
     const chunk = withHandles.slice(i, i + 10);
-    const response = await client.send(
-      new DeleteMessageBatchCommand({
-        QueueUrl: queueUrl,
-        Entries: chunk.map((m, index) => ({
-          Id: `d${i + index}`,
-          ReceiptHandle: m.ReceiptHandle,
-        })),
-      })
-    );
-    failedCount += response.Failed?.length ?? 0;
+    try {
+      const response = await client.send(
+        new DeleteMessageBatchCommand({
+          QueueUrl: queueUrl,
+          Entries: chunk.map((m, index) => ({
+            Id: `d${index}`,
+            ReceiptHandle: m.ReceiptHandle,
+          })),
+        })
+      );
+      const failedEntryIds = new Set((response.Failed ?? []).map((f) => f.Id));
+      chunk.forEach((m, index) => {
+        if (failedEntryIds.has(`d${index}`)) {
+          failedCount++;
+        } else if (m.MessageId) {
+          deletedIds.add(m.MessageId);
+        }
+      });
+    } catch (error) {
+      console.warn('Amazon SQS: delete request failed', error);
+      failedCount += chunk.length;
+    }
   }
-  return failedCount;
+  return { deletedIds, failedCount };
 }
