@@ -12,10 +12,10 @@ export const updateSubscriberDetailsAction = createAction({
   displayName: 'Update Subscriber',
   description: 'Update an existing subscriber in a list.',
   outputSchema: subscriptionResultOutputSchema,
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Updates an existing subscriber, identified by their current email address, in a specific Campaign Monitor list under a client — changing email address (via New Email Address), name, phone, custom fields, and tracking/SMS consent. The output emailAddress is the address the subscriber has after the update. Choose this to modify a contact already on a list rather than to add one. Idempotent when the email is not changed: it keys on the email and overwrites the same record, so repeating with identical input leaves the subscriber in the same state. Custom fields left blank are not sent, so their stored values are kept.',
+      'Builder form with a custom field per list field; agents use the JSON fields variant. Updates an existing subscriber, identified by their current email address, in a specific Campaign Monitor list under a client — changing email address (via New Email Address), name, phone, custom fields, and tracking/SMS consent. The output emailAddress is the address the subscriber has after the update. Choose this to modify a contact already on a list rather than to add one. Idempotent when the email is not changed: it keys on the email and overwrites the same record, so repeating with identical input leaves the subscriber in the same state. Custom fields left blank are not sent, so their stored values are kept.',
     idempotent: true,
   },
   props: {

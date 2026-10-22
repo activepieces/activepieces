@@ -125,29 +125,31 @@ export const createListOutputSchema: OutputSchema = {
   ],
 };
 
+export const sentCampaignFields: OutputSchemaField[] = [
+  { key: 'CampaignID', label: 'Campaign ID' },
+  { key: 'Name', label: 'Name' },
+  { key: 'Subject', label: 'Subject' },
+  { key: 'FromName', label: 'From Name' },
+  { key: 'FromEmail', label: 'From Email', format: 'email' },
+  { key: 'ReplyTo', label: 'Reply To', format: 'email' },
+  { key: 'SentDate', label: 'Sent Date', format: 'datetime' },
+  { key: 'TotalRecipients', label: 'Total Recipients', format: 'number' },
+  { key: 'WebVersionURL', label: 'Web Version URL', format: 'url' },
+  { key: 'WebVersionTextURL', label: 'Web Version Text URL', format: 'url' },
+  { key: 'Tags', label: 'Tags' },
+];
+
+export const sentCampaignOutputSchema: OutputSchema = {
+  fields: sentCampaignFields,
+};
+
 export const listCampaignsOutputSchema: OutputSchema = {
   fields: [
     {
       key: 'Results',
       label: 'Campaigns',
       labelKey: 'Name',
-      listItems: [
-        { key: 'CampaignID', label: 'Campaign ID' },
-        { key: 'Name', label: 'Name' },
-        { key: 'Subject', label: 'Subject' },
-        { key: 'FromName', label: 'From Name' },
-        { key: 'FromEmail', label: 'From Email', format: 'email' },
-        { key: 'ReplyTo', label: 'Reply To', format: 'email' },
-        { key: 'SentDate', label: 'Sent Date', format: 'datetime' },
-        { key: 'TotalRecipients', label: 'Total Recipients', format: 'number' },
-        { key: 'WebVersionURL', label: 'Web Version URL', format: 'url' },
-        {
-          key: 'WebVersionTextURL',
-          label: 'Web Version Text URL',
-          format: 'url',
-        },
-        { key: 'Tags', label: 'Tags' },
-      ],
+      listItems: sentCampaignFields,
     },
     { key: 'ResultsOrderedBy', label: 'Results Ordered By' },
     { key: 'OrderDirection', label: 'Order Direction' },
@@ -188,5 +190,148 @@ export const sendSmartEmailOutputSchema: OutputSchema = {
         { key: 'Status', label: 'Status' },
       ],
     },
+  ],
+};
+
+export const createDraftCampaignOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'campaignId', label: 'Campaign ID' },
+    { key: 'name', label: 'Name' },
+  ],
+};
+
+export const sendCampaignOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'campaignId', label: 'Campaign ID' },
+    { key: 'sendDate', label: 'Send Date' },
+  ],
+};
+
+export const deleteDraftCampaignOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'campaignId', label: 'Campaign ID' },
+  ],
+};
+
+export const campaignActivityOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'Results',
+      label: 'Activity',
+      labelKey: 'EmailAddress',
+      listItems: [
+        { key: 'EmailAddress', label: 'Email Address', format: 'email' },
+        { key: 'ListID', label: 'List ID' },
+        { key: 'Date', label: 'Date', format: 'datetime' },
+        { key: 'IPAddress', label: 'IP Address' },
+        { key: 'URL', label: 'Clicked URL', format: 'url' },
+        { key: 'BounceType', label: 'Bounce Type' },
+        { key: 'Reason', label: 'Bounce Reason' },
+        { key: 'Latitude', label: 'Latitude', format: 'number' },
+        { key: 'Longitude', label: 'Longitude', format: 'number' },
+        { key: 'City', label: 'City' },
+        { key: 'Region', label: 'Region' },
+        { key: 'CountryCode', label: 'Country Code' },
+        { key: 'CountryName', label: 'Country Name' },
+      ],
+    },
+    { key: 'ResultsOrderedBy', label: 'Results Ordered By' },
+    { key: 'OrderDirection', label: 'Order Direction' },
+    ...paginationFields,
+  ],
+};
+
+export const listStatsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'TotalActiveSubscribers',
+      label: 'Total Active Subscribers',
+      format: 'number',
+    },
+    {
+      key: 'NewActiveSubscribersToday',
+      label: 'New Active Subscribers Today',
+      format: 'number',
+    },
+    {
+      key: 'NewActiveSubscribersYesterday',
+      label: 'New Active Subscribers Yesterday',
+      format: 'number',
+    },
+    {
+      key: 'NewActiveSubscribersThisWeek',
+      label: 'New Active Subscribers This Week',
+      format: 'number',
+    },
+    {
+      key: 'NewActiveSubscribersThisMonth',
+      label: 'New Active Subscribers This Month',
+      format: 'number',
+    },
+    {
+      key: 'NewActiveSubscribersThisYear',
+      label: 'New Active Subscribers This Year',
+      format: 'number',
+    },
+    { key: 'TotalUnsubscribes', label: 'Total Unsubscribes', format: 'number' },
+    { key: 'UnsubscribesToday', label: 'Unsubscribes Today', format: 'number' },
+    {
+      key: 'UnsubscribesYesterday',
+      label: 'Unsubscribes Yesterday',
+      format: 'number',
+    },
+    {
+      key: 'UnsubscribesThisWeek',
+      label: 'Unsubscribes This Week',
+      format: 'number',
+    },
+    {
+      key: 'UnsubscribesThisMonth',
+      label: 'Unsubscribes This Month',
+      format: 'number',
+    },
+    {
+      key: 'UnsubscribesThisYear',
+      label: 'Unsubscribes This Year',
+      format: 'number',
+    },
+    { key: 'TotalDeleted', label: 'Total Deleted', format: 'number' },
+    { key: 'DeletedToday', label: 'Deleted Today', format: 'number' },
+    { key: 'DeletedYesterday', label: 'Deleted Yesterday', format: 'number' },
+    { key: 'DeletedThisWeek', label: 'Deleted This Week', format: 'number' },
+    { key: 'DeletedThisMonth', label: 'Deleted This Month', format: 'number' },
+    { key: 'DeletedThisYear', label: 'Deleted This Year', format: 'number' },
+    { key: 'TotalBounces', label: 'Total Bounces', format: 'number' },
+    { key: 'BouncesToday', label: 'Bounces Today', format: 'number' },
+    { key: 'BouncesYesterday', label: 'Bounces Yesterday', format: 'number' },
+    { key: 'BouncesThisWeek', label: 'Bounces This Week', format: 'number' },
+    { key: 'BouncesThisMonth', label: 'Bounces This Month', format: 'number' },
+    { key: 'BouncesThisYear', label: 'Bounces This Year', format: 'number' },
+  ],
+};
+
+export const suppressEmailsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'emailAddresses', label: 'Email Addresses' },
+  ],
+};
+
+export const unsuppressEmailOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'emailAddress', label: 'Email Address', format: 'email' },
+    { key: 'wasSuppressed', label: 'Was Suppressed', format: 'boolean' },
+  ],
+};
+
+export const createCustomFieldOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'key', label: 'Field Key' },
+    { key: 'fieldName', label: 'Field Name' },
+    { key: 'dataType', label: 'Data Type' },
+    { key: 'listId', label: 'List ID' },
   ],
 };

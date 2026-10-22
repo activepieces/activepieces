@@ -90,6 +90,25 @@ export function isSubscriberNotFoundError(error: unknown): boolean {
   );
 }
 
+export function getApiErrorCode(error: unknown) {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return undefined;
+  }
+  const response = error.response;
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    !('body' in response)
+  ) {
+    return undefined;
+  }
+  const body = response.body;
+  if (typeof body !== 'object' || body === null || !('Code' in body)) {
+    return undefined;
+  }
+  return Number(body.Code);
+}
+
 export function clampPageSize(value: number | undefined) {
   const size = Number(value ?? 100);
   if (!Number.isFinite(size)) {
@@ -144,6 +163,27 @@ export async function fetchSubscriberOrEventData({
       CustomFields: transformCustomFields(event.CustomFields),
     };
   }
+}
+
+export function jsonCustomFieldsToRecord(value: unknown) {
+  if (value === undefined || value === null || value === '') {
+    return {};
+  }
+  const parsed: unknown = typeof value === 'string' ? JSON.parse(value) : value;
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error(
+      'Custom Fields must be a JSON object, e.g. {"Company":"Acme","Age":30}.'
+    );
+  }
+  const fields: Record<string, unknown> = {};
+  for (const [key, fieldValue] of Object.entries(parsed)) {
+    const name = key.replace(/^\s*\[(.*)\]\s*$/, '$1').replace(/\s+/g, '');
+    if (name.length === 0) {
+      continue;
+    }
+    fields[`[${name}]`] = fieldValue;
+  }
+  return fields;
 }
 
 const ISO_DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}/;

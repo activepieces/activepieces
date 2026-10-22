@@ -12,10 +12,10 @@ export const addSubscriberToListAction = createAction({
   displayName: 'Add Subscriber',
   description: 'Adds a new subscriber to a list.',
   outputSchema: subscriptionResultOutputSchema,
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Adds a subscriber (by email) to a specific Campaign Monitor list under a client, optionally setting name, phone, custom fields, and tracking/SMS consent. Choose this to enroll a new contact into an email list; enable Resubscribe to re-add someone who previously unsubscribed. Not idempotent: each call posts a new subscription and may overwrite or re-add the contact, so guard against duplicate runs.',
+      'Builder form with a custom field per list field; agents use the JSON fields variant. Adds a subscriber (by email) to a specific Campaign Monitor list under a client, optionally setting name, phone, custom fields, and tracking/SMS consent. Choose this to enroll a new contact into an email list; enable Resubscribe to re-add someone who previously unsubscribed. Not idempotent: each call posts a new subscription and may overwrite or re-add the contact, so guard against duplicate runs.',
     idempotent: false,
   },
   props: {

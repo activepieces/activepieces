@@ -13,6 +13,17 @@ import { createListAction } from './lib/actions/create-list';
 import { listSentCampaignsAction } from './lib/actions/list-sent-campaigns';
 import { getCampaignSummaryAction } from './lib/actions/get-campaign-summary';
 import { sendSmartEmailAction } from './lib/actions/send-smart-email';
+import { addSubscriberJsonAction } from './lib/actions/add-subscriber-json';
+import { updateSubscriberJsonAction } from './lib/actions/update-subscriber-json';
+import { createDraftCampaignAction } from './lib/actions/create-draft-campaign';
+import { sendCampaignAction } from './lib/actions/send-campaign';
+import { deleteDraftCampaignAction } from './lib/actions/delete-draft-campaign';
+import { getCampaignActivityAction } from './lib/actions/get-campaign-activity';
+import { getListStatsAction } from './lib/actions/get-list-stats';
+import { suppressEmailsAction } from './lib/actions/suppress-emails';
+import { unsuppressEmailAction } from './lib/actions/unsuppress-email';
+import { createCustomFieldAction } from './lib/actions/create-custom-field';
+import { newCampaignSentTrigger } from './lib/triggers/new-campaign-sent';
 import { newSubscriberAddedTrigger } from './lib/triggers/new-subscriber-added';
 import { subscriberUnsubscribedTrigger } from './lib/triggers/subscriber-unsubscribed';
 import { newClientTrigger } from './lib/triggers/new-client';
@@ -39,11 +50,22 @@ export const campaignMonitor = createPiece({
     listSentCampaignsAction,
     getCampaignSummaryAction,
     sendSmartEmailAction,
+    addSubscriberJsonAction,
+    updateSubscriberJsonAction,
+    createDraftCampaignAction,
+    sendCampaignAction,
+    deleteDraftCampaignAction,
+    getCampaignActivityAction,
+    getListStatsAction,
+    suppressEmailsAction,
+    unsuppressEmailAction,
+    createCustomFieldAction,
   ],
   triggers: [
     newSubscriberAddedTrigger,
     subscriberUnsubscribedTrigger,
     newClientTrigger,
+    newCampaignSentTrigger,
   ],
   categories: [PieceCategory.MARKETING],
 });

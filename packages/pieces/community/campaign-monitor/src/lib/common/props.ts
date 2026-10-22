@@ -224,3 +224,97 @@ export const smartEmailId = Property.Dropdown({
     };
   },
 });
+
+export const draftCampaignId = Property.Dropdown({
+  auth: campaignMonitorAuth,
+  displayName: 'Draft Campaign',
+  description: 'A draft campaign of the selected client.',
+  refreshers: ['clientId'],
+  required: true,
+  options: async ({ auth, clientId }) => {
+    if (!auth || !clientId) {
+      return {
+        disabled: true,
+        placeholder: 'Please connect your account and select a client.',
+        options: [],
+      };
+    }
+    const response = await makeRequest<
+      { CampaignID: string; Name: string; Subject: string }[]
+    >({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.GET,
+      path: `/clients/${clientId}/drafts.json`,
+    });
+    const drafts = response.body;
+    return {
+      disabled: false,
+      placeholder:
+        drafts.length === 0 ? 'No draft campaigns found.' : undefined,
+      options: drafts.map((draft) => ({
+        label: `${draft.Name} (${draft.Subject})`,
+        value: draft.CampaignID,
+      })),
+    };
+  },
+});
+
+export const listIds = Property.MultiSelectDropdown({
+  auth: campaignMonitorAuth,
+  displayName: 'Lists',
+  description: 'Lists the campaign is sent to.',
+  refreshers: ['clientId'],
+  required: false,
+  options: async ({ auth, clientId }) => {
+    if (!auth || !clientId) {
+      return {
+        disabled: true,
+        placeholder: 'Please connect your account and select a client.',
+        options: [],
+      };
+    }
+    const response = await makeRequest<{ ListID: string; Name: string }[]>({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.GET,
+      path: `/clients/${clientId}/lists.json`,
+    });
+    return {
+      disabled: false,
+      options: response.body.map((list) => ({
+        label: list.Name,
+        value: list.ListID,
+      })),
+    };
+  },
+});
+
+export const segmentIds = Property.MultiSelectDropdown({
+  auth: campaignMonitorAuth,
+  displayName: 'Segments',
+  description: 'Segments the campaign is sent to.',
+  refreshers: ['clientId'],
+  required: false,
+  options: async ({ auth, clientId }) => {
+    if (!auth || !clientId) {
+      return {
+        disabled: true,
+        placeholder: 'Please connect your account and select a client.',
+        options: [],
+      };
+    }
+    const response = await makeRequest<{ SegmentID: string; Title: string }[]>({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.GET,
+      path: `/clients/${clientId}/segments.json`,
+    });
+    return {
+      disabled: false,
+      placeholder:
+        response.body.length === 0 ? 'No segments found.' : undefined,
+      options: response.body.map((segment) => ({
+        label: segment.Title,
+        value: segment.SegmentID,
+      })),
+    };
+  },
+});
