@@ -422,7 +422,7 @@ async function shouldHideActivepiecesAiProvider({ platformId, log }: { platformI
     if (!plan.embeddingEnabled) {
         return false
     }
-    return !(await billingProvider.get(log).planCarriesSelfServeTrial(platformId))
+    return !(await billingProvider.get(log).planStillHasSelfServeTrialFeatures(platformId))
 }
 
 
