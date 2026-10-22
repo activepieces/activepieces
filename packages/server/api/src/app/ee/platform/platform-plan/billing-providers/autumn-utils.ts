@@ -26,7 +26,7 @@ import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanTelemetry } from '../platform-plan-telemetry'
 import { platformPlanRepo, platformPlanService } from '../platform-plan.service'
-import { selfServeTrialWindow } from '../self-serve-trial-window'
+import { selfServeTrialUtils } from '../self-serve-trial-utils'
 
 const AUTUMN_CONSOLE_URL = system.getOrThrow(AppSystemProp.AUTUMN_CONSOLE_URL).replace(/\/+$/, '')
 const edition = system.getEdition()
@@ -172,12 +172,12 @@ export const autumnUtils = {
             platformId,
             ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements),
         })
-        const trialWindow = await selfServeTrialWindow.saveFromCustomer({ platformId, customer })
-        if (!isNil(trialWindow) && endedRecently(trialWindow.endsAt)) {
+        const trialDates = await selfServeTrialUtils.saveFromCustomer({ platformId, customer })
+        if (!isNil(trialDates) && endedRecently(trialDates.endsAt)) {
             rejectedPromiseHandler(platformPlanTelemetry(log).onSelfServeTrialEnded({
                 platformId,
-                trialEndsAt: trialWindow.endsAt,
-                endedAt: trialWindow.endsAt,
+                trialEndsAt: trialDates.endsAt,
+                endedAt: trialDates.endsAt,
             }), log)
         }
         await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })

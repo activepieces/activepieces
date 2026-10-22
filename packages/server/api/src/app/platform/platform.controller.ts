@@ -1,13 +1,13 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformWithoutSensitiveData, PrincipalType, SelfServeTrialWindow, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
+import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformWithoutSensitiveData, PrincipalType, SelfServeTrialDates, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { chatVisibilityHelper } from '../ee/agent/chat-visibility-helper'
-import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled, platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { emailService } from '../ee/helper/email/email-service'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { beginPlatformTeardown } from '../ee/platform/platform-teardown-jobs'
@@ -20,7 +20,6 @@ import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { userIdentityHelper } from '../helper/user-identity-helper'
 import { userService } from '../user/user-service'
 import { billingProvider } from './billing-provider'
-import { planFeatures } from './plan-features'
 import { platformService } from './platform.service'
 
 const edition = system.getEdition()
@@ -49,7 +48,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         return response
     })
 
-    app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
+    app.post('/:id', UpdatePlatformRequest, async (req, reply) => {
         if (req.principal.platform.id !== req.params.id) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -59,7 +58,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const platformId = req.principal.platform.id
-        await assertPlanCoversSettings({ platformId, body: req.body, log: req.log })
+        await assertPlanCoversSettings({ request: req, reply, body: req.body })
 
         const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all([
             fileService(app.log).uploadPublicAsset({
@@ -196,29 +195,24 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
     }
 }
 
-async function assertPlanCoversSettings({ platformId, body, log }: AssertPlanCoversSettingsParams): Promise<void> {
+async function assertPlanCoversSettings({ request, reply, body }: AssertPlanCoversSettingsParams): Promise<void> {
+    if (edition === ApEdition.COMMUNITY) {
+        return
+    }
     const changesBranding = [body.logoIcon, body.fullLogo, body.favIcon, body.primaryColor, body.themeColors].some((value) => !isNil(value))
     if (changesBranding) {
-        await planFeatures(log).assertEnabled({
-            platformId,
-            feature: 'customAppearanceEnabled',
-            message: 'Custom branding is not on this platform\'s plan',
-        })
+        await platformMustHaveFeatureEnabled((platform) => platform.plan.customAppearanceEnabled).call(request.server, request, reply)
     }
     if (!isNil(body.allowedEmbedOrigins) && body.allowedEmbedOrigins.length > 0) {
-        await planFeatures(log).assertEnabled({
-            platformId,
-            feature: 'embeddingEnabled',
-            message: 'Embedding is not on this platform\'s plan',
-        })
+        await platformMustHaveFeatureEnabled((platform) => platform.plan.embeddingEnabled).call(request.server, request, reply)
     }
 }
 
-async function withSelfServeTrial<T extends PlatformWithoutSensitiveData>({ platform, log, include }: WithSelfServeTrialParams<T>): Promise<T & { selfServeTrial?: SelfServeTrialWindow }> {
+async function withSelfServeTrial<T extends PlatformWithoutSensitiveData>({ platform, log, include }: WithSelfServeTrialParams<T>): Promise<T & { selfServeTrial?: SelfServeTrialDates }> {
     if (!include) {
         return platform
     }
-    const selfServeTrial = await billingProvider.get(log).getSelfServeTrialWindow(platform.id)
+    const selfServeTrial = await billingProvider.get(log).getPlatformSelfServeTrial(platform.id)
     return isNil(selfServeTrial) ? platform : { ...platform, selfServeTrial }
 }
 
@@ -297,7 +291,7 @@ type WithSelfServeTrialParams<T> = {
 }
 
 type AssertPlanCoversSettingsParams = {
-    platformId: string
+    request: FastifyRequest
+    reply: FastifyReply
     body: UpdatePlatformRequestBody
-    log: FastifyBaseLogger
 }
