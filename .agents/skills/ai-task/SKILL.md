@@ -47,11 +47,11 @@ Run these checks before anything else, silently when they pass. If one fails, sh
    - **Missing:** don't stop the moment they asked for. Show the setup card once per session, before your answer:
 
    > **One setup step left: your Linear API key.** I use it to keep the merge queue in order.
-   > 1. Linear → Settings → Account → Security & access → Personal API keys → New key (name it `ai-task`).
-   > 2. Add `export LINEAR_API_KEY=lin_api_...` to `~/.zshrc` (or your shell's profile).
-   > 3. Restart Claude Code.
-   >
-   > Don't paste the key here.
+   > Open a terminal in the activepieces repo (any OS) and run:
+   > `node .agents/skills/ai-task/setup-linear-key.mjs`
+   > It walks you through it, then restart Claude Code. Don't paste the key here.
+
+   The script asks for the key with hidden input, checks it against Linear, and saves it as `env.LINEAR_API_KEY` in `~/.claude/settings.json`, which every Claude Code session and its shell pick up on Mac, Linux and Windows. It needs a real terminal, so it won't run through `!` inside Claude Code. If someone pastes a key into the chat anyway, don't use it: tell them to revoke it and run the script with a new one.
 
    - **In Queue without a key:** rank anyway, then say where to drag each card by hand: "Drag AI-123 under AI-120 in **Merge queue**."
 
