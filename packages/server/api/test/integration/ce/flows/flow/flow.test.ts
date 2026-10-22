@@ -52,7 +52,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(15)
+            expect(Object.keys(responseBody)).toHaveLength(16)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -64,6 +64,7 @@ describe('Flow API', () => {
             expect(responseBody?.operationStatus).toBeDefined()
             expect(responseBody?.templateId).toBeNull()
             expect(responseBody?.createdBy).toBeNull()
+            expect(responseBody?.workerGroupId).toBeNull()
 
             expect(Object.keys(responseBody?.version)).toHaveLength(14)
             expect(responseBody?.version?.id).toHaveLength(21)
