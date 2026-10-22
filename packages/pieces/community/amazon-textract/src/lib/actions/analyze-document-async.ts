@@ -1,5 +1,5 @@
 import { ApFile, Property, ServerContext, createAction } from '@activepieces/pieces-framework';
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import type { S3Client } from '@aws-sdk/client-s3';
 import {
   StartDocumentAnalysisCommand,
   GetDocumentAnalysisCommand,
@@ -29,17 +29,17 @@ export const analyzeDocumentAsync = createAction({
   props: {
     s3Bucket: Property.ShortText({
       displayName: 'S3 Bucket',
-      description: 'The S3 bucket that holds your document. If you upload a file below, it is stored here while it is analyzed, then deleted. The bucket must be in the same AWS region as your connection.',
+      description: 'The S3 bucket for your document, in the same AWS region as your connection.',
       required: true,
     }),
     file: Property.File({
       displayName: 'File to Upload (Optional)',
-      description: 'A PDF, TIFF, JPEG, or PNG to analyze, for example from an earlier step. Leave empty to analyze a file already in S3. Uploading needs s3:PutObject and s3:DeleteObject on the bucket.',
+      description: 'A file to analyze. It stays in the bucket only while it is analyzed.',
       required: false,
     }),
     s3Key: Property.ShortText({
       displayName: 'S3 File Path',
-      description: 'The path to a file already in your S3 bucket (e.g. "reports/contract.pdf"). Supports JPEG, PNG, PDF, and TIFF. Multi-page PDFs and TIFFs are fully supported. Not needed when you upload a file above.',
+      description: 'Path of a file already in the bucket. Not needed if you upload a file.',
       required: false,
     }),
     featureTypes: Property.StaticMultiSelectDropdown({
@@ -70,7 +70,7 @@ export const analyzeDocumentAsync = createAction({
   async run(context) {
     const { s3Bucket, s3Key, file, featureTypes, queries, clientRequestToken } = context.propsValue;
     const analysis: AnalysisOptions = {
-      featureTypes: [...(featureTypes as FeatureType[])],
+      featureTypes: [...featureTypes],
       queries: queries ?? [],
       clientRequestToken: clientRequestToken || undefined,
     };
@@ -150,6 +150,7 @@ async function uploadDocument({
 }): Promise<string> {
   const extension = file.extension?.replace(/[^a-zA-Z0-9]/g, '');
   const key = `${UPLOAD_KEY_PREFIX}/${clientRequestToken ?? randomUUID()}${extension ? `.${extension}` : ''}`;
+  const { PutObjectCommand } = await import('@aws-sdk/client-s3');
   try {
     await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: file.data }));
   } catch (e) {
@@ -169,6 +170,7 @@ async function deleteUploadedDocument({
   bucket: string;
   key: string;
 }): Promise<string | undefined> {
+  const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
   try {
     await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
     return undefined;
@@ -178,8 +180,10 @@ async function deleteUploadedDocument({
 }
 
 function describeAwsError(error: unknown): string {
-  const err = error as { name?: string; message?: string };
-  return [err.name, err.message].filter(Boolean).join(': ') || 'unknown error';
+  if (!(error instanceof Error)) {
+    return String(error);
+  }
+  return error.name && error.name !== 'Error' ? `${error.name}: ${error.message}` : error.message;
 }
 
 async function analyzeS3Document({

@@ -1,6 +1,6 @@
 import { ApFile, AuthValidationServerContext, ServerContext } from '@activepieces/pieces-framework';
 import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
-import { S3Client } from '@aws-sdk/client-s3';
+import type { S3Client } from '@aws-sdk/client-s3';
 import {
   TextractClient,
   Block,
@@ -128,7 +128,8 @@ export async function createS3Client({
   auth: TextractAuth;
   server: ServerContext;
 }): Promise<S3Client> {
-  return new S3Client({
+  const s3 = await import('@aws-sdk/client-s3');
+  return new s3.S3Client({
     credentials: await resolveAwsCredentials({ auth, server }),
     region: auth.region,
   });

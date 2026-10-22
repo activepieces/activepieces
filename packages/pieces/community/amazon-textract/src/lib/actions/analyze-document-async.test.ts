@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { s3Send, textractSend, s3ClientConstructor } = vi.hoisted(() => ({
-  s3Send: vi.fn(),
-  textractSend: vi.fn(),
+  s3Send: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
+  textractSend: vi.fn<(command: AwsCommand) => Promise<unknown>>(),
   s3ClientConstructor: vi.fn(),
 }));
 
@@ -32,14 +32,14 @@ vi.mock('@aws-sdk/client-textract', async (importOriginal) => ({
   }),
 }));
 
-import { ApFile, createMockActionContext } from '@activepieces/pieces-framework';
+import { ApFile, AppConnectionType, createMockActionContext } from '@activepieces/pieces-framework';
 import { analyzeDocumentAsync } from './analyze-document-async';
 
 const BUCKET = 'docs-bucket';
 
 describe('Analyze Document from S3 (Multi-Page)', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
     s3Send.mockReset();
     textractSend.mockReset();
     s3ClientConstructor.mockReset();
@@ -61,14 +61,18 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       s3Key: 'reports/an-older-file.pdf',
     });
 
-    const [put, remove] = s3Send.mock.calls.map(([command]) => command as AwsCommand);
+    const [put, remove] = s3Send.mock.calls.map(([command]) => command);
     expect(put.kind).toBe('put');
     expect(put.input).toMatchObject({ Bucket: BUCKET, Body: pdf });
     expect(put.input['Key']).toMatch(/^activepieces-textract-uploads\/[0-9a-f-]{36}\.pdf$/);
-    expect(startInput().DocumentLocation).toEqual({ S3Object: { Bucket: BUCKET, Name: put.input['Key'] } });
+    expect(startInput()).toMatchObject({ DocumentLocation: { S3Object: { Bucket: BUCKET, Name: put.input['Key'] } } });
     expect(remove).toEqual({ kind: 'delete', input: { Bucket: BUCKET, Key: put.input['Key'] } });
-    expect(result).toMatchObject({ pageCount: 3, status: 'SUCCEEDED', warnings: undefined });
-    expect(result.lines.map((line) => line.pageNumber)).toEqual([1, 2, 3]);
+    expect(result).toMatchObject({
+      pageCount: 3,
+      status: 'SUCCEEDED',
+      warnings: undefined,
+      lines: [{ pageNumber: 1 }, { pageNumber: 2 }, { pageNumber: 3 }],
+    });
   });
 
   it('analyzes a file already in S3 without uploading or deleting anything', async () => {
@@ -76,8 +80,8 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
     expect(s3Send).not.toHaveBeenCalled();
     expect(s3ClientConstructor).not.toHaveBeenCalled();
-    expect(startInput().DocumentLocation).toEqual({ S3Object: { Bucket: BUCKET, Name: 'reports/contract.pdf' } });
-    expect(result.pageCount).toBe(3);
+    expect(startInput()).toMatchObject({ DocumentLocation: { S3Object: { Bucket: BUCKET, Name: 'reports/contract.pdf' } } });
+    expect(result).toMatchObject({ pageCount: 3 });
   });
 
   it('fails with a clear message, before calling AWS, when there is no file and no S3 path', async () => {
@@ -105,7 +109,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
     await expect(runAction({ file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') })).rejects.toThrow(
       'Document analysis failed: Unsupported document'
     );
-    const kinds = s3Send.mock.calls.map(([command]) => (command as AwsCommand).kind);
+    const kinds = s3Send.mock.calls.map(([command]) => command.kind);
     expect(kinds).toEqual(['put', 'delete']);
   });
 
@@ -116,10 +120,12 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
 
     const result = await runAction({ file: new ApFile('contract.pdf', Buffer.from('%PDF'), 'pdf') });
 
-    expect(result.pageCount).toBe(3);
-    expect(result.warnings).toMatch(
-      /^The uploaded file could not be deleted from s3:\/\/docs-bucket\/activepieces-textract-uploads\/[0-9a-f-]{36}\.pdf \(AccessDenied: Access Denied\)\. Delete it yourself, or give the connection s3:DeleteObject on this bucket\.$/
-    );
+    expect(result).toMatchObject({
+      pageCount: 3,
+      warnings: expect.stringMatching(
+        /^The uploaded file could not be deleted from s3:\/\/docs-bucket\/activepieces-textract-uploads\/[0-9a-f-]{36}\.pdf \(AccessDenied: Access Denied\)\. Delete it yourself, or give the connection s3:DeleteObject on this bucket\.$/
+      ),
+    });
   });
 
   it('uploads to the same path for the same deduplication token, so a retried step matches the original job', async () => {
@@ -128,7 +134,7 @@ describe('Analyze Document from S3 (Multi-Page)', () => {
       clientRequestToken: 'invoice-001',
     });
 
-    const put = s3Send.mock.calls[0][0] as AwsCommand;
+    const put = s3Send.mock.calls[0][0];
     expect(put.input['Key']).toBe('activepieces-textract-uploads/invoice-001.pdf');
     expect(startInput()).toMatchObject({
       ClientRequestToken: 'invoice-001',
@@ -142,28 +148,45 @@ async function runAction(props: {
   s3Key?: string;
   clientRequestToken?: string;
 }) {
-  const context = {
-    ...createMockActionContext({
-      propsValue: { s3Bucket: BUCKET, featureTypes: ['TABLES', 'FORMS'], queries: [], ...props },
+  const run = analyzeDocumentAsync.run({
+    ...createMockActionContext<typeof analyzeDocumentAsync.props>({
+      propsValue: {
+        s3Bucket: BUCKET,
+        file: undefined,
+        s3Key: undefined,
+        featureTypes: ['TABLES', 'FORMS'],
+        queries: [],
+        clientRequestToken: undefined,
+        ...props,
+      },
     }),
-    auth: { props: { accessKeyId: 'AKIATEST', secretAccessKey: 'test-secret', region: 'us-east-1' } },
-  } as unknown as Parameters<typeof analyzeDocumentAsync.run>[0];
-  const run = analyzeDocumentAsync.run(context);
-  const settled = run.then(
-    (value) => ({ value }),
-    (error: unknown) => ({ error })
+    auth: {
+      type: AppConnectionType.CUSTOM_AUTH,
+      props: { accessKeyId: 'AKIATEST', secretAccessKey: 'test-secret', region: 'us-east-1' },
+    },
+  });
+  const state: { outcome?: { value: unknown } | { error: unknown } } = {};
+  run.then(
+    (value) => {
+      state.outcome = { value };
+    },
+    (error: unknown) => {
+      state.outcome = { error };
+    }
   );
-  await vi.runAllTimersAsync();
-  const outcome = await settled;
-  if ('error' in outcome) {
-    throw outcome.error;
+  while (!state.outcome) {
+    await new Promise((resolve) => setImmediate(resolve));
+    await vi.advanceTimersByTimeAsync(1000);
   }
-  return outcome.value;
+  if ('error' in state.outcome) {
+    throw state.outcome.error;
+  }
+  return state.outcome.value;
 }
 
 function startInput(): Record<string, unknown> {
   const start = textractSend.mock.calls
-    .map(([command]) => command as AwsCommand)
+    .map(([command]) => command)
     .find((command) => command.kind === 'start');
   if (!start) {
     throw new Error('StartDocumentAnalysis was never called');
