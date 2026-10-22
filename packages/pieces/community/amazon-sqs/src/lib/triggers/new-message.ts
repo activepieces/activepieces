@@ -62,7 +62,11 @@ export const newMessage = createTrigger({
         seen.push(id);
       }
     }
-    await context.store.put(SEEN_IDS_KEY, seen.slice(-MAX_SEEN_IDS));
+    try {
+      await context.store.put(SEEN_IDS_KEY, seen.slice(-MAX_SEEN_IDS));
+    } catch (error) {
+      console.warn('Amazon SQS: could not save seen message IDs; messages are still emitted', error);
+    }
     if (failedCount > 0) {
       console.warn(
         `Amazon SQS: ${failedCount} received message(s) could not be deleted and will be emitted again when they are received again.`
