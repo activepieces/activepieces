@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { PlanName, TelemetryEventName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../../database/redis-connections'
@@ -31,17 +31,20 @@ export const platformPlanTelemetry = (log: FastifyBaseLogger) => ({
     },
 
     async onSelfServeTrialEnded({ platformId, trialEndsAt, endedAt }: SelfServeTrialEndedParams): Promise<void> {
-        await distributedStore.runOnceWithin(
-            `self_serve_trial_ended_${platformId}_${trialEndsAt}`,
-            SELF_SERVE_TRIAL_ENDED_ONCE_SECONDS,
-            () => telemetry(log).trackPlatform({
+        const claimKey = `self_serve_trial_ended_${platformId}_${trialEndsAt}`
+        await distributedStore.runOnceWithin(claimKey, SELF_SERVE_TRIAL_ENDED_ONCE_SECONDS, async () => {
+            const { error } = await tryCatch(() => telemetry(log).trackPlatform({
                 platformId,
                 event: {
                     name: TelemetryEventName.TRIAL_ENDED,
                     payload: { platformId, plan: PlanName.ENTERPRISE_TRIAL, trialEndedAt: endedAt },
                 },
-            }),
-        )
+            }))
+            if (!isNil(error)) {
+                await distributedStore.delete(claimKey)
+                throw error
+            }
+        })
     },
 
     async onCancelled({ platformId }: PlanActionParams): Promise<void> {
