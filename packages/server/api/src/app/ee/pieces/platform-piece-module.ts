@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { attachMultipartFieldsToBody } from '../../helper/multipart-body'
 import { pieceInstallService } from '../../pieces/piece-install-service'
-import { planFeatures } from '../../platform/plan-features'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -22,11 +22,7 @@ const platformPieceController: FastifyPluginCallbackZod = (
         const platformId = req.principal.platform.id
         assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
         if (req.body.packageType === PackageType.ARCHIVE) {
-            await planFeatures(req.log).assertEnabled({
-                platformId,
-                feature: 'managePiecesEnabled',
-                message: 'Private pieces are not on this platform\'s plan',
-            })
+            await platformMustHaveFeatureEnabled((platform) => platform.plan.managePiecesEnabled).call(app, req, reply)
         }
         await pieceInstallService(req.log).installPiece(
             platformId,

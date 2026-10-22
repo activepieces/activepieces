@@ -68,7 +68,7 @@ vi.mock('../../../../../src/app/user/user-service', () => ({
 }))
 
 const PLATFORM_ID = 'platform-1'
-const WINDOW_KEY = `platform_plan:self-serve-trial:v1:${PLATFORM_ID}`
+const TRIAL_KEY = `platform_plan:self-serve-trial:v2:${PLATFORM_ID}`
 const CREDS = { autumnCustomerId: 'cus_123', autumnApiKey: 'am_sk_customer' }
 const STARTED = { startedAt: '2099-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
 const PAST = { startedAt: '2026-10-01T09:00:00.000Z', endsAt: '2026-10-08T09:00:00.000Z' }
@@ -117,30 +117,30 @@ describe('self-serve trial', () => {
         mockGetEdition.mockReturnValue('cloud')
     })
 
-    describe('getSelfServeTrial', () => {
+    describe('getSelfServeTrialInfo', () => {
         it.each([
-            { name: 'no trial on Free', window: null, plan: FREE_PLAN, expected: { state: 'eligible', startedAt: null, endsAt: null } },
-            { name: 'a running trial', window: STARTED, plan: FREE_PLAN, expected: { state: 'active', ...STARTED } },
-            { name: 'a trial past its end', window: PAST, plan: FREE_PLAN, expected: { state: 'ended', ...PAST } },
-            { name: 'an AppSumo platform', window: null, plan: { ...FREE_PLAN, plan: PlanName.APPSUMO }, expected: { state: 'ineligible', startedAt: null, endsAt: null } },
-            { name: 'an Enterprise platform', window: null, plan: { ...FREE_PLAN, plan: PlanName.ENTERPRISE }, expected: { state: 'ineligible', startedAt: null, endsAt: null } },
-            { name: 'a Plus chat platform', window: null, plan: { ...FREE_PLAN, plan: PlanName.PLUS_CHAT }, expected: { state: 'ineligible', startedAt: null, endsAt: null } },
-        ])('reads $name', async ({ window, plan, expected }) => {
+            { name: 'no trial on Free', dates: null, plan: FREE_PLAN, expected: { state: 'eligible', startedAt: null, endsAt: null } },
+            { name: 'a running trial', dates: STARTED, plan: FREE_PLAN, expected: { state: 'active', ...STARTED } },
+            { name: 'a trial past its end', dates: PAST, plan: FREE_PLAN, expected: { state: 'ended', ...PAST } },
+            { name: 'an AppSumo platform', dates: null, plan: { ...FREE_PLAN, plan: PlanName.APPSUMO }, expected: { state: 'ineligible', startedAt: null, endsAt: null } },
+            { name: 'an Enterprise platform', dates: null, plan: { ...FREE_PLAN, plan: PlanName.ENTERPRISE }, expected: { state: 'ineligible', startedAt: null, endsAt: null } },
+            { name: 'a Plus chat platform', dates: null, plan: { ...FREE_PLAN, plan: PlanName.PLUS_CHAT }, expected: { state: 'ineligible', startedAt: null, endsAt: null } },
+        ])('reads $name', async ({ dates, plan, expected }) => {
             const { autumnBillingProvider } = await enrolledProvider()
-            store.set(WINDOW_KEY, { window })
+            store.set(TRIAL_KEY, { dates })
             mockGetPlan.mockResolvedValue(plan)
 
-            const status = await autumnBillingProvider(log).getSelfServeTrial(PLATFORM_ID)
+            const status = await autumnBillingProvider(log).getSelfServeTrialInfo(PLATFORM_ID)
 
             expect(status).toEqual({ ...expected, extended: false })
         })
 
         it.each([PlanName.FREE_LEGACY, PlanName.PLUS, PlanName.PLUS_ANNUAL, PlanName.TEAM, PlanName.TEAM_ANNUAL])('offers the trial on %s', async (planName) => {
             const { autumnBillingProvider } = await enrolledProvider()
-            store.set(WINDOW_KEY, { window: null })
+            store.set(TRIAL_KEY, { dates: null })
             mockGetPlan.mockResolvedValue({ ...FREE_PLAN, plan: planName })
 
-            const status = await autumnBillingProvider(log).getSelfServeTrial(PLATFORM_ID)
+            const status = await autumnBillingProvider(log).getSelfServeTrialInfo(PLATFORM_ID)
 
             expect(status.state).toBe('eligible')
         })
@@ -151,8 +151,8 @@ describe('self-serve trial', () => {
             vi.spyOn(autumnUtils, 'resolveClientForPlatform').mockResolvedValue({ getCustomer } as never)
             mockGetPlan.mockResolvedValue(FREE_PLAN)
 
-            const first = await autumnBillingProvider(log).getSelfServeTrial(PLATFORM_ID)
-            const second = await autumnBillingProvider(log).getSelfServeTrial(PLATFORM_ID)
+            const first = await autumnBillingProvider(log).getSelfServeTrialInfo(PLATFORM_ID)
+            const second = await autumnBillingProvider(log).getSelfServeTrialInfo(PLATFORM_ID)
 
             expect(first).toEqual(ACTIVE)
             expect(second).toEqual(ACTIVE)
@@ -161,9 +161,9 @@ describe('self-serve trial', () => {
     })
 
     describe('startSelfServeTrial', () => {
-        async function startTrial({ plan, window, outcome, refreshError }: StartTrialParams) {
+        async function startTrial({ plan, dates, outcome, refreshError }: StartTrialParams) {
             const { autumnBillingProvider, autumnConsole, autumnUtils } = await enrolledProvider()
-            store.set(WINDOW_KEY, { window: window ?? null })
+            store.set(TRIAL_KEY, { dates: dates ?? null })
             mockGetPlan.mockResolvedValue(plan ?? FREE_PLAN)
             const consoleStart = vi.spyOn(autumnConsole, 'startSelfServeTrial').mockResolvedValue(outcome ?? { result: 'started', ...STARTED })
             vi.spyOn(autumnUtils, 'refreshEntitlements').mockImplementation(async () => {
@@ -180,14 +180,14 @@ describe('self-serve trial', () => {
 
             expect(status).toEqual(ACTIVE)
             expect(consoleStart).toHaveBeenCalledWith(CREDS)
-            expect(store.get(WINDOW_KEY)).toEqual({ window: STARTED })
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: STARTED })
             expect(mockPlanUpdate).not.toHaveBeenCalled()
             expect(mockOnTrialStarted).toHaveBeenCalledTimes(1)
             expect(mockOnTrialStarted).toHaveBeenCalledWith({ platformId: PLATFORM_ID, endsAt: ACTIVE.endsAt })
         })
 
         it('returns a running trial without starting or reporting it again', async () => {
-            const { status, consoleStart } = await startTrial({ window: STARTED })
+            const { status, consoleStart } = await startTrial({ dates: STARTED })
 
             expect(status).toEqual(ACTIVE)
             expect(consoleStart).not.toHaveBeenCalled()
@@ -195,7 +195,7 @@ describe('self-serve trial', () => {
         })
 
         it('never asks the console again once the trial ended', async () => {
-            const { status, consoleStart } = await startTrial({ window: PAST })
+            const { status, consoleStart } = await startTrial({ dates: PAST })
 
             expect(status.state).toBe('ended')
             expect(consoleStart).not.toHaveBeenCalled()
@@ -213,7 +213,7 @@ describe('self-serve trial', () => {
 
             expect(status).toEqual(USED)
             expect(mockPlanUpdate).not.toHaveBeenCalled()
-            expect(store.get(WINDOW_KEY)).toEqual({ window: null })
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: null })
             expect(mockOnTrialStarted).not.toHaveBeenCalled()
         })
 
@@ -222,14 +222,14 @@ describe('self-serve trial', () => {
 
             expect(status).toEqual(INELIGIBLE)
             expect(mockPlanUpdate).not.toHaveBeenCalled()
-            expect(store.get(WINDOW_KEY)).toEqual({ window: null })
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: null })
         })
 
         it('returns the started trial when the refresh after it fails', async () => {
             const { status } = await startTrial({ refreshError: new Error('autumn timeout') })
 
             expect(status).toEqual(ACTIVE)
-            expect(store.get(WINDOW_KEY)).toEqual({ window: STARTED })
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: STARTED })
         })
 
         it('lets the next plan read refresh again after a start', async () => {
@@ -282,33 +282,33 @@ describe('self-serve trial', () => {
         it('keeps the running add-on\'s dates', async () => {
             await refreshWith({ customer: customerWith({ addOn: STARTED }) })
 
-            expect(store.get(WINDOW_KEY)).toEqual({ window: STARTED })
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: STARTED })
         })
 
         it('keeps the dates saved on the customer once the add-on is gone', async () => {
             await refreshWith({ customer: customerWith({ metadata: { self_serve_trial_started_at: PAST.startedAt, self_serve_trial_ends_at: PAST.endsAt } }) })
 
-            expect(store.get(WINDOW_KEY)).toEqual({ window: PAST })
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: PAST })
         })
 
         it('never replaces saved dates when Autumn shows no trial yet', async () => {
-            store.set(WINDOW_KEY, { window: STARTED })
+            store.set(TRIAL_KEY, { dates: STARTED })
 
             await refreshWith({ customer: customerWith({}) })
 
-            expect(store.get(WINDOW_KEY)).toEqual({ window: STARTED })
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: STARTED })
         })
 
         it('marks a platform that never had a trial', async () => {
             await refreshWith({ customer: customerWith({}) })
 
-            expect(store.get(WINDOW_KEY)).toEqual({ window: null })
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: null })
         })
 
         it('ignores dates on the customer that do not make a trial', async () => {
             await refreshWith({ customer: customerWith({ metadata: { self_serve_trial_started_at: 'soon', self_serve_trial_ends_at: PAST.endsAt } }) })
 
-            expect(store.get(WINDOW_KEY)).toEqual({ window: null })
+            expect(store.get(TRIAL_KEY)).toEqual({ dates: null })
         })
 
         it('reports a trial that ended in the last 30 days', async () => {
@@ -332,7 +332,7 @@ describe('self-serve trial', () => {
 
 type StartTrialParams = {
     plan?: Record<string, string | null>
-    window?: { startedAt: string, endsAt: string }
+    dates?: { startedAt: string, endsAt: string }
     outcome?: { result: 'started', startedAt: string, endsAt: string } | { result: 'used' } | { result: 'ineligible' }
     refreshError?: Error
 }
