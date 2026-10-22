@@ -1,4 +1,8 @@
-import { SQSClient } from '@aws-sdk/client-sqs';
+import type { SQSClient } from '@aws-sdk/client-sqs';
+
+export async function loadSqs() {
+  return import('@aws-sdk/client-sqs');
+}
 
 export function regionFromQueueUrl(queueUrl: string): string | null {
   let host: string;
@@ -13,15 +17,16 @@ export function regionFromQueueUrl(queueUrl: string): string | null {
   return match ? match[1] : null;
 }
 
-export function createSqsClient({
+export async function createSqsClient({
   auth,
   queueUrl,
 }: {
   auth: SqsAuthProps;
   queueUrl?: string;
-}): SQSClient {
+}): Promise<SQSClient> {
+  const { SQSClient: Client } = await loadSqs();
   const urlRegion = queueUrl ? regionFromQueueUrl(queueUrl) : null;
-  return new SQSClient({
+  return new Client({
     credentials: {
       accessKeyId: auth.accessKeyId.trim(),
       secretAccessKey: auth.secretAccessKey.trim(),

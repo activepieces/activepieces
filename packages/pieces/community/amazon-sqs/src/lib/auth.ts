@@ -1,6 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { ListQueuesCommand } from '@aws-sdk/client-sqs';
-import { createSqsClient, isAccessDenied } from './common/client';
+import { createSqsClient, loadSqs, isAccessDenied } from './common/client';
 
 export const amazonSqsAuth = PieceAuth.CustomAuth({
   props: {
@@ -167,8 +166,9 @@ export const amazonSqsAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const client = createSqsClient({ auth: auth });
-      await client.send(new ListQueuesCommand({ MaxResults: 1 }));
+      const sqs = await loadSqs();
+      const client = await createSqsClient({ auth: auth });
+      await client.send(new sqs.ListQueuesCommand({ MaxResults: 1 }));
       return { valid: true };
     } catch (e) {
       if (isAccessDenied(e)) {

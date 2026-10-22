@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { TagQueueCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { toTagMap } from '../common/queue-settings';
 import { tagQueueOutputSchema } from '../output-schemas';
@@ -34,8 +33,9 @@ export const tagQueue = createAction({
     if (!tags) {
       throw new Error('Add at least one tag.');
     }
-    const client = createSqsClient({ auth: auth.props, queueUrl });
-    await client.send(new TagQueueCommand({ QueueUrl: queueUrl, Tags: tags }));
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
+    await client.send(new sqs.TagQueueCommand({ QueueUrl: queueUrl, Tags: tags }));
     return { success: true, queueUrl, tagKeys: Object.keys(tags) };
   },
 });

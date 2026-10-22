@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { SendMessageBatchCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, parseOptionalInt, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, parseOptionalInt, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { sendMessageBatchOutputSchema } from '../output-schemas';
 
@@ -66,9 +65,10 @@ export const sendMessageBatch = createAction({
         MessageDeduplicationId: entry.messageDeduplicationId?.trim() || undefined,
       };
     });
-    const client = createSqsClient({ auth: auth.props, queueUrl });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
     const response = await client.send(
-      new SendMessageBatchCommand({ QueueUrl: queueUrl, Entries: entries })
+      new sqs.SendMessageBatchCommand({ QueueUrl: queueUrl, Entries: entries })
     );
     const successful = (response.Successful ?? []).map((item) => ({
       id: item.Id ?? null,

@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { SendMessageCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
 import {
-  createSqsClient,
+  createSqsClient, loadSqs,
   parseOptionalInt,
   resolveQueueUrl,
   toStringMessageAttributes,
@@ -58,9 +57,10 @@ export const sendMessage = createAction({
   async run({ propsValue, auth }) {
     const queueUrl = resolveQueueUrl(propsValue);
     const delaySeconds = parseOptionalInt({ value: propsValue.delaySeconds, name: 'Delay (seconds)', min: 0, max: 900 });
-    const client = createSqsClient({ auth: auth.props, queueUrl });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
     const response = await client.send(
-      new SendMessageCommand({
+      new sqs.SendMessageCommand({
         QueueUrl: queueUrl,
         MessageBody: propsValue.messageBody,
         DelaySeconds: delaySeconds,

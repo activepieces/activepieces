@@ -1,12 +1,7 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import {
-  DeleteMessageBatchCommand,
-  Message,
-  ReceiveMessageCommand,
-  SQSClient,
-} from '@aws-sdk/client-sqs';
+import type { Message, SQSClient } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, normalizeMessage, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, normalizeMessage, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { newMessageOutputSchema } from '../output-schemas';
 
@@ -39,7 +34,7 @@ export const newMessage = createTrigger({
   },
   async run(context) {
     const queueUrl = resolveQueueUrl(context.propsValue);
-    const client = createSqsClient({ auth: context.auth.props, queueUrl });
+    const client = await createSqsClient({ auth: context.auth.props, queueUrl });
     const received: Message[] = [];
     for (let batch = 0; batch < MAX_BATCHES_PER_POLL; batch++) {
       const messages = await receiveBatch({ client, queueUrl, visibilityTimeout: undefined, waitTimeSeconds: 1 });
@@ -76,7 +71,7 @@ export const newMessage = createTrigger({
   },
   async test(context) {
     const queueUrl = resolveQueueUrl(context.propsValue);
-    const client = createSqsClient({ auth: context.auth.props, queueUrl });
+    const client = await createSqsClient({ auth: context.auth.props, queueUrl });
     const messages = await receiveBatch({ client, queueUrl, visibilityTimeout: 0, waitTimeSeconds: 0 });
     return messages.map(normalizeMessage);
   },
@@ -111,8 +106,9 @@ async function receiveBatch({
   visibilityTimeout: number | undefined;
   waitTimeSeconds: number;
 }): Promise<Message[]> {
+  const sqs = await loadSqs();
   const response = await client.send(
-    new ReceiveMessageCommand({
+    new sqs.ReceiveMessageCommand({
       QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: waitTimeSeconds,
@@ -133,6 +129,7 @@ async function deleteReceived({
   queueUrl: string;
   messages: Message[];
 }): Promise<{ deletedIds: Set<string>; failedCount: number }> {
+  const sqs = await loadSqs();
   const deletedIds = new Set<string>();
   let failedCount = 0;
   const withHandles = messages.filter((m) => m.ReceiptHandle);
@@ -140,7 +137,7 @@ async function deleteReceived({
     const chunk = withHandles.slice(i, i + 10);
     try {
       const response = await client.send(
-        new DeleteMessageBatchCommand({
+        new sqs.DeleteMessageBatchCommand({
           QueueUrl: queueUrl,
           Entries: chunk.map((m, index) => ({
             Id: `d${index}`,

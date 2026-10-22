@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { DeleteMessageCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { deleteMessageOutputSchema } from '../output-schemas';
 
@@ -33,9 +32,10 @@ export const deleteMessage = createAction({
     if (!receiptHandle) {
       throw new Error('Receipt Handle is required.');
     }
-    const client = createSqsClient({ auth: auth.props, queueUrl });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
     await client.send(
-      new DeleteMessageCommand({ QueueUrl: queueUrl, ReceiptHandle: receiptHandle })
+      new sqs.DeleteMessageCommand({ QueueUrl: queueUrl, ReceiptHandle: receiptHandle })
     );
     return { success: true, queueUrl };
   },

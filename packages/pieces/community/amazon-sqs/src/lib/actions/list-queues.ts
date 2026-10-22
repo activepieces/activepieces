@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { ListQueuesCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, parseOptionalInt } from '../common/client';
+import { createSqsClient, loadSqs, parseOptionalInt } from '../common/client';
 import { listQueuesOutputSchema } from '../output-schemas';
 
 export const listQueues = createAction({
@@ -33,13 +32,14 @@ export const listQueues = createAction({
   async run({ propsValue, auth }) {
     const cap = parseOptionalInt({ value: propsValue.maxResults, name: 'Max Results', min: 1, max: 5000 }) ?? 1000;
     const prefix = propsValue.queueNamePrefix?.trim() || undefined;
-    const client = createSqsClient({ auth: auth.props });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props });
     const urls: string[] = [];
     let nextToken: string | undefined;
     let truncated = false;
     do {
       const response = await client.send(
-        new ListQueuesCommand({
+        new sqs.ListQueuesCommand({
           QueueNamePrefix: prefix,
           MaxResults: Math.min(1000, cap - urls.length),
           NextToken: nextToken,

@@ -1,7 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { PurgeQueueCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { purgeQueueOutputSchema } from '../output-schemas';
 
@@ -25,8 +24,9 @@ export const purgeQueue = createAction({
   },
   async run({ propsValue, auth }) {
     const queueUrl = resolveQueueUrl(propsValue);
-    const client = createSqsClient({ auth: auth.props, queueUrl });
-    await client.send(new PurgeQueueCommand({ QueueUrl: queueUrl }));
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
+    await client.send(new sqs.PurgeQueueCommand({ QueueUrl: queueUrl }));
     return { success: true, queueUrl };
   },
 });

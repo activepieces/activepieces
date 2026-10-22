@@ -1,7 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { ListQueueTagsCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { listQueueTagsOutputSchema } from '../output-schemas';
 
@@ -24,8 +23,9 @@ export const listQueueTags = createAction({
   },
   async run({ propsValue, auth }) {
     const queueUrl = resolveQueueUrl(propsValue);
-    const client = createSqsClient({ auth: auth.props, queueUrl });
-    const response = await client.send(new ListQueueTagsCommand({ QueueUrl: queueUrl }));
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
+    const response = await client.send(new sqs.ListQueueTagsCommand({ QueueUrl: queueUrl }));
     const tags = response.Tags ?? {};
     return { queueUrl, tags, count: Object.keys(tags).length };
   },

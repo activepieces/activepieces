@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { CreateQueueCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient } from '../common/client';
+import { createSqsClient, loadSqs } from '../common/client';
 import { buildQueueAttributes, queueSettingsProps, toTagMap } from '../common/queue-settings';
 import { createQueueOutputSchema } from '../output-schemas';
 
@@ -71,9 +70,10 @@ export const createQueue = createAction({
         attributes['ContentBasedDeduplication'] = 'true';
       }
     }
-    const client = createSqsClient({ auth: auth.props });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props });
     const response = await client.send(
-      new CreateQueueCommand({
+      new sqs.CreateQueueCommand({
         QueueName: queueName,
         Attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
         tags: toTagMap(propsValue.tags),

@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { ChangeMessageVisibilityBatchCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { mapBatchResult, readReceiptHandleEntries } from '../common/queue-settings';
 import { batchResultOutputSchema } from '../output-schemas';
@@ -43,9 +42,10 @@ export const changeMessageVisibilityBatch = createAction({
   async run({ propsValue, auth }) {
     const queueUrl = resolveQueueUrl(propsValue);
     const entries = readReceiptHandleEntries({ entries: propsValue.entries, withTimeout: true });
-    const client = createSqsClient({ auth: auth.props, queueUrl });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
     const response = await client.send(
-      new ChangeMessageVisibilityBatchCommand({
+      new sqs.ChangeMessageVisibilityBatchCommand({
         QueueUrl: queueUrl,
         Entries: entries.map((entry) => ({
           Id: entry.id,

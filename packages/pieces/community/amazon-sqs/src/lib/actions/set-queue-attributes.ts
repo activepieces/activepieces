@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { SetQueueAttributesCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { buildQueueAttributes, queueSettingsProps } from '../common/queue-settings';
 import { setQueueAttributesOutputSchema } from '../output-schemas';
@@ -52,9 +51,10 @@ export const setQueueAttributes = createAction({
     if (updatedAttributes.length === 0) {
       throw new Error('Fill at least one setting to update.');
     }
-    const client = createSqsClient({ auth: auth.props, queueUrl });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
     await client.send(
-      new SetQueueAttributesCommand({ QueueUrl: queueUrl, Attributes: attributes })
+      new sqs.SetQueueAttributesCommand({ QueueUrl: queueUrl, Attributes: attributes })
     );
     return { success: true, queueUrl, updatedAttributes };
   },

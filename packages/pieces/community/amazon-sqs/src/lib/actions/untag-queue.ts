@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { UntagQueueCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { tagQueueOutputSchema } from '../output-schemas';
 
@@ -35,8 +34,9 @@ export const untagQueue = createAction({
     if (tagKeys.length === 0) {
       throw new Error('Add at least one tag key.');
     }
-    const client = createSqsClient({ auth: auth.props, queueUrl });
-    await client.send(new UntagQueueCommand({ QueueUrl: queueUrl, TagKeys: tagKeys }));
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
+    await client.send(new sqs.UntagQueueCommand({ QueueUrl: queueUrl, TagKeys: tagKeys }));
     return { success: true, queueUrl, tagKeys };
   },
 });

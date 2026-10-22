@@ -1,7 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
-import { ListQueuesCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, isAccessDenied } from './client';
+import { createSqsClient, loadSqs, isAccessDenied } from './client';
 
 export const queueUrlDropdown = Property.Dropdown({
   auth: amazonSqsAuth,
@@ -19,12 +18,13 @@ export const queueUrlDropdown = Property.Dropdown({
       };
     }
     try {
-      const client = createSqsClient({ auth: auth.props });
+      const sqs = await loadSqs();
+      const client = await createSqsClient({ auth: auth.props });
       const urls: string[] = [];
       let nextToken: string | undefined;
       do {
         const response = await client.send(
-          new ListQueuesCommand({ MaxResults: 1000, NextToken: nextToken })
+          new sqs.ListQueuesCommand({ MaxResults: 1000, NextToken: nextToken })
         );
         urls.push(...(response.QueueUrls ?? []));
         nextToken = response.NextToken;

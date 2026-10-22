@@ -1,7 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { GetQueueAttributesCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { getQueueAttributesOutputSchema } from '../output-schemas';
 
@@ -24,9 +23,10 @@ export const getQueueAttributes = createAction({
   },
   async run({ propsValue, auth }) {
     const queueUrl = resolveQueueUrl(propsValue);
-    const client = createSqsClient({ auth: auth.props, queueUrl });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
     const response = await client.send(
-      new GetQueueAttributesCommand({ QueueUrl: queueUrl, AttributeNames: ['All'] })
+      new sqs.GetQueueAttributesCommand({ QueueUrl: queueUrl, AttributeNames: ['All'] })
     );
     const a = response.Attributes ?? {};
     let redrivePolicy: unknown = null;

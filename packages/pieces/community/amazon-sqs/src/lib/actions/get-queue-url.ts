@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { GetQueueUrlCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient } from '../common/client';
+import { createSqsClient, loadSqs } from '../common/client';
 import { getQueueUrlOutputSchema } from '../output-schemas';
 
 export const getQueueUrl = createAction({
@@ -40,9 +39,10 @@ export const getQueueUrl = createAction({
     if (ownerId && !/^\d{12}$/.test(ownerId)) {
       throw new Error('Queue Owner Account ID must be a 12-digit AWS account ID.');
     }
-    const client = createSqsClient({ auth: auth.props });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props });
     const response = await client.send(
-      new GetQueueUrlCommand({ QueueName: queueName, QueueOwnerAWSAccountId: ownerId })
+      new sqs.GetQueueUrlCommand({ QueueName: queueName, QueueOwnerAWSAccountId: ownerId })
     );
     return { queueName, queueUrl: response.QueueUrl ?? null };
   },

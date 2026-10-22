@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { ChangeMessageVisibilityCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
-import { createSqsClient, parseOptionalInt, resolveQueueUrl } from '../common/client';
+import { createSqsClient, loadSqs, parseOptionalInt, resolveQueueUrl } from '../common/client';
 import { manualQueueUrlProp, queueUrlDropdown } from '../common/props';
 import { changeVisibilityOutputSchema } from '../output-schemas';
 
@@ -43,9 +42,10 @@ export const changeMessageVisibility = createAction({
     if (visibilityTimeout === undefined) {
       throw new Error('Visibility Timeout is required.');
     }
-    const client = createSqsClient({ auth: auth.props, queueUrl });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
     await client.send(
-      new ChangeMessageVisibilityCommand({
+      new sqs.ChangeMessageVisibilityCommand({
         QueueUrl: queueUrl,
         ReceiptHandle: receiptHandle,
         VisibilityTimeout: visibilityTimeout,

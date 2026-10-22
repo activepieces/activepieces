@@ -1,8 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { ReceiveMessageCommand } from '@aws-sdk/client-sqs';
 import { amazonSqsAuth } from '../auth';
 import {
-  createSqsClient,
+  createSqsClient, loadSqs,
   normalizeMessage,
   parseOptionalInt,
   resolveQueueUrl,
@@ -57,9 +56,10 @@ export const receiveMessages = createAction({
     const visibility = parseOptionalInt({ value: propsValue.visibilityTimeout, name: 'Visibility Timeout', min: 0, max: 43200 });
     const wait = parseOptionalInt({ value: propsValue.waitTimeSeconds, name: 'Wait Time', min: 0, max: 20 }) ?? 0;
     const includeAttributes = propsValue.includeAttributes !== false;
-    const client = createSqsClient({ auth: auth.props, queueUrl });
+    const sqs = await loadSqs();
+    const client = await createSqsClient({ auth: auth.props, queueUrl });
     const response = await client.send(
-      new ReceiveMessageCommand({
+      new sqs.ReceiveMessageCommand({
         QueueUrl: queueUrl,
         MaxNumberOfMessages: max,
         VisibilityTimeout: visibility,
