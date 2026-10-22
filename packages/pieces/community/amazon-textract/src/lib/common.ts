@@ -1,5 +1,6 @@
 import { ApFile, AuthValidationServerContext, ServerContext } from '@activepieces/pieces-framework';
 import { AssumeRoleWithWebIdentityCommand, STSClient } from '@aws-sdk/client-sts';
+import { S3Client } from '@aws-sdk/client-s3';
 import {
   TextractClient,
   Block,
@@ -114,20 +115,40 @@ export async function createTextractClient({
   auth: TextractAuth;
   server: ServerContext | AuthValidationServerContext;
 }): Promise<TextractClient> {
-  if ('roleArn' in auth) {
-    await getTemporaryCredentials({ auth, server });
-    return new TextractClient({
-      credentials: () => getTemporaryCredentials({ auth, server }),
-      region: auth.region,
-    });
-  }
   return new TextractClient({
-    credentials: {
-      accessKeyId: auth.accessKeyId,
-      secretAccessKey: auth.secretAccessKey,
-    },
+    credentials: await resolveAwsCredentials({ auth, server }),
     region: auth.region,
   });
+}
+
+export async function createS3Client({
+  auth,
+  server,
+}: {
+  auth: TextractAuth;
+  server: ServerContext;
+}): Promise<S3Client> {
+  return new S3Client({
+    credentials: await resolveAwsCredentials({ auth, server }),
+    region: auth.region,
+  });
+}
+
+async function resolveAwsCredentials({
+  auth,
+  server,
+}: {
+  auth: TextractAuth;
+  server: ServerContext | AuthValidationServerContext;
+}) {
+  if ('roleArn' in auth) {
+    await getTemporaryCredentials({ auth, server });
+    return () => getTemporaryCredentials({ auth, server });
+  }
+  return {
+    accessKeyId: auth.accessKeyId,
+    secretAccessKey: auth.secretAccessKey,
+  };
 }
 
 export async function getTemporaryCredentials({
