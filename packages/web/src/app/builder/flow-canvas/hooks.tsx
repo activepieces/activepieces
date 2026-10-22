@@ -96,6 +96,24 @@ const useShowBuilderIsSavingWarningBeforeLeaving = () => {
   }, [isSaving, isEmbedded]);
 };
 
+const useFlushPendingEditsOnLeave = () => {
+  const flushPendingEdits = useBuilderStateContext(
+    (state) => state.flushPendingEdits,
+  );
+  useEffect(() => {
+    const flushWhenHidden = () => {
+      if (document.visibilityState === 'hidden') {
+        flushPendingEdits();
+      }
+    };
+    document.addEventListener('visibilitychange', flushWhenHidden);
+    return () => {
+      document.removeEventListener('visibilitychange', flushWhenHidden);
+      flushPendingEdits();
+    };
+  }, [flushPendingEdits]);
+};
+
 export const useSwitchToDraft = () => {
   const [flowVersion, setVersion, clearRun, setFlow] = useBuilderStateContext(
     (state) => [
@@ -229,6 +247,7 @@ export const useResizeCanvas = (
 export const flowCanvasHooks = {
   useSetSocketListener,
   useShowBuilderIsSavingWarningBeforeLeaving,
+  useFlushPendingEditsOnLeave,
   useIsFocusInsideListMapperModeInput,
   useFocusOnStep,
   useResizeCanvas,

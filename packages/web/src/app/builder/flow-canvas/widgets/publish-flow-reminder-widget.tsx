@@ -1,4 +1,4 @@
-import { isNil, Permission } from '@activepieces/core-utils';
+import { isNil, Permission, tryCatch } from '@activepieces/core-utils';
 import {
   FlowRun,
   FlowVersion,
@@ -45,6 +45,7 @@ const PublishFlowReminderWidget = () => {
     setRightSidebar,
     flowVersion,
     run,
+    savePendingEdits,
   ] = useBuilderStateContext((state) => [
     state.saving,
     state.isPublishing,
@@ -56,6 +57,7 @@ const PublishFlowReminderWidget = () => {
     state.setRightSidebar,
     state.flowVersion,
     state.run,
+    state.savePendingEdits,
   ]);
   const showShouldPublishButton = useShouldShowPublishButton({
     flowVersion,
@@ -78,6 +80,7 @@ const PublishFlowReminderWidget = () => {
       mutationFn: () =>
         runDiscard({
           flow,
+          savePendingEdits,
           overWriteDraftWithVersion,
           fetchFlow: flowsApi.get,
           setFlow,
@@ -105,6 +108,11 @@ const PublishFlowReminderWidget = () => {
   });
   const handlePublish = async () => {
     setIsPublishing(true);
+    const { error: saveError } = await tryCatch(savePendingEdits);
+    if (!isNil(saveError)) {
+      setIsPublishing(false);
+      return;
+    }
     const failedCheck = await checkRequiredActions(flowVersion);
     if (failedCheck) {
       setIsPublishing(false);

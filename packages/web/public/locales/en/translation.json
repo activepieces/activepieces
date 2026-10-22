@@ -3525,5 +3525,7 @@
   "{apps}+ apps": "{apps}+ apps",
   "URL or config": "URL or config",
   "Give your AI secure access to {apps}": "Give your AI secure access to {apps}",
-  "plus your flows and tables, with granular access control.": "plus your flows and tables, with granular access control."
+  "plus your flows and tables, with granular access control.": "plus your flows and tables, with granular access control.",
+  "Your change was not saved": "Your change was not saved",
+  "The builder now shows the last saved version of the flow.": "The builder now shows the last saved version of the flow."
 }
