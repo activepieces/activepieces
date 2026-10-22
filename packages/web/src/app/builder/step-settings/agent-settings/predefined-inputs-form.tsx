@@ -7,6 +7,7 @@ import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { ConnectionSelect } from '@/app/connections/connection-select';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Form, FormField } from '@/components/ui/form';
@@ -18,10 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  ConnectionDropdown,
-  usePieceToolsDialogStore,
-} from '@/features/agents';
+import { usePieceToolsDialogStore } from '@/features/agents';
 import { piecesHooks } from '@/features/pieces';
 
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
@@ -114,13 +112,12 @@ export const PredefinedInputsForm = () => {
 
     return () => subscription.unsubscribe();
   }, [form, setPredefinedInputs]);
-  const handleAuthChange = (value: string | null) => {
-    const newAuth = !isNil(value) ? value : undefined;
+  const handleAuthChange = (value: string) => {
     setPredefinedInputs({
-      auth: newAuth,
+      auth: connectionTemplate.unwrapExternalId(value) ?? undefined,
       fields: predefinedInputs?.fields || {},
     });
-    form.setValue('auth', connectionTemplate.wrapExternalId(value) ?? '');
+    form.setValue('auth', value);
   };
   const getModeForProperty = (propertyName: string): FieldControlMode =>
     predefinedInputs?.fields?.[propertyName]?.mode ??
@@ -175,11 +172,13 @@ export const PredefinedInputsForm = () => {
         </div>
         <div className="space-y-6 p-4">
           {pieceHasAuth && !isNil(selectedPiece) && (
-            <ConnectionDropdown
+            <ConnectionSelect
               piece={selectedPiece}
-              value={form.watch('auth') as string | null}
+              value={
+                connectionTemplate.wrapExternalId(form.watch('auth')) ??
+                undefined
+              }
               onChange={handleAuthChange}
-              placeholder={t('Connect your account')}
             />
           )}
           {Object.keys(properties).length > 0 && (

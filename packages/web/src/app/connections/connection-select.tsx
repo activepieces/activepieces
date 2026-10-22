@@ -7,10 +7,7 @@ import {
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
-  PieceAction,
   PieceAudienceFilter,
-  PieceTrigger,
-  PropertyExecutionType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -24,14 +21,11 @@ import {
   LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 
-import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
-import { FormField, FormLabel } from '@/components/ui/form';
 import {
   Select,
   SelectAction,
@@ -57,7 +51,12 @@ import {
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-function ConnectionSelect(params: ConnectionSelectProps) {
+export function ConnectionSelect({
+  piece,
+  value,
+  onChange,
+  disabled,
+}: ConnectionSelectProps) {
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
   const [reconnectConnection, setReconnectConnection] =
@@ -65,11 +64,10 @@ function ConnectionSelect(params: ConnectionSelectProps) {
   //in case of reconnection we need to use the piece version from the connection
   const { pieceModel: pieceWithCorrectVersion, isLoading: isLoadingPiece } =
     piecesHooks.usePiece({
-      name: params.piece.name,
-      version: reconnectConnection?.pieceVersion ?? params.piece.version,
+      name: piece.name,
+      version: reconnectConnection?.pieceVersion ?? piece.version,
       audience: PieceAudienceFilter.ALL,
     });
-  const form = useFormContext<PieceAction | PieceTrigger>();
   const hasPermissionToCreateConnection = useAuthorization().checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
@@ -79,18 +77,16 @@ function ConnectionSelect(params: ConnectionSelectProps) {
     refetch,
   } = appConnectionsQueries.useAppConnections({
     request: {
-      pieceName: params.piece.name,
+      pieceName: piece.name,
       projectId: authenticationSession.getProjectId()!,
       limit: 1000,
     },
-    pieceAuth: params.piece.auth,
-    extraKeys: [params.piece.name, authenticationSession.getProjectId()!],
+    pieceAuth: piece.auth,
+    extraKeys: [piece.name, authenticationSession.getProjectId()!],
     staleTime: 0,
   });
   const selectedConnection = connections?.data?.find(
-    (connection) =>
-      connection.externalId ===
-      removeBrackets(form.getValues().settings.input.auth ?? ''),
+    (connection) => connection.externalId === removeBrackets(value ?? ''),
   );
   const isSelectedConnectionGlobal =
     selectedConnection?.scope === AppConnectionScope.PLATFORM;
@@ -101,9 +97,6 @@ function ConnectionSelect(params: ConnectionSelectProps) {
   // the platform-admin-only global-connections endpoint (GIT-1587).
   const isReconnectingGlobalConnection =
     reconnectConnection?.scope === AppConnectionScope.PLATFORM;
-  const dynamicInputModeToggled =
-    form.getValues().settings.propertySettings['auth']?.type ===
-    PropertyExecutionType.DYNAMIC;
   const isPlatformAdmin = useIsPlatformAdmin();
   const statusDisplay = selectedConnection
     ? getConnectionStatusDisplay(selectedConnection.status)
@@ -116,236 +109,190 @@ function ConnectionSelect(params: ConnectionSelectProps) {
     setConnectionDialogOpen(true);
   };
 
+  if (isLoadingConnections || !pieceWithCorrectVersion) {
+    return (
+      <SearchableSelect
+        options={[]}
+        disabled={true}
+        loading={isLoadingConnections}
+        placeholder={t('Select a connection')}
+        value={value}
+        onChange={() => {}}
+        showDeselect={false}
+        showRefresh={false}
+      />
+    );
+  }
+
   return (
-    <FormField
-      control={form.control}
-      key={
-        dynamicInputModeToggled
-          ? 'auth-dynamic'
-          : `auth-${form.getValues().settings.input.auth}`
-      }
-      name={'settings.input.auth'}
-      render={({ field }) => (
-        <>
-          {(isLoadingConnections || !pieceWithCorrectVersion) && (
-            <div className="flex flex-col gap-2">
-              <FormLabel showRequiredIndicator>{t('Connection')}</FormLabel>
-              <SearchableSelect
-                options={[]}
-                disabled={true}
-                loading={isLoadingConnections}
-                placeholder={t('Select a connection')}
-                value={field.value as React.Key}
-                onChange={(value) => field.onChange(value)}
-                showDeselect={false}
-                onRefresh={() => {}}
-                showRefresh={false}
-              />
+    <>
+      <CreateOrEditConnectionDialog
+        reconnectConnection={reconnectConnection}
+        isGlobalConnection={isReconnectingGlobalConnection}
+        piece={pieceWithCorrectVersion}
+        key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
+        open={connectionDialogOpen}
+        setOpen={(open, connection) => {
+          setConnectionDialogOpen(open);
+          if (connection) {
+            refetch();
+            onChange(addBrackets(connection.externalId));
+          }
+        }}
+      ></CreateOrEditConnectionDialog>
+      <Select
+        key={value ?? ''}
+        open={selectConnectionOpen}
+        onOpenChange={setSelectConnectionOpen}
+        defaultValue={value}
+        onValueChange={onChange}
+        disabled={disabled}
+      >
+        <div className="relative">
+          {value && !disabled && canShowConnectionStatus && statusDisplay && (
+            <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5 pointer-events-none">
+              <span className="flex items-center gap-1 text-xs text-gray-11 select-none pointer-events-none">
+                <statusDisplay.Icon
+                  className={cn(
+                    'size-3.5 shrink-0',
+                    statusDisplay.iconClassName,
+                  )}
+                />
+                {statusDisplay.label}
+              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex pointer-events-auto">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      loading={isLoadingPiece}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openReconnectDialog();
+                      }}
+                      disabled={!hasPermissionToCreateConnection}
+                    >
+                      <Cable className="size-3.5" />
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {!hasPermissionToCreateConnection
+                    ? t('Permission needed')
+                    : t('Reconnect')}
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
-          {!isLoadingConnections &&
-            pieceWithCorrectVersion &&
-            params.piece.auth && (
-              <AutoFormFieldWrapper
-                property={params.piece.auth}
-                propertyName="auth"
-                field={field}
-                disabled={params.disabled}
-                inputName="settings.input.auth"
-                allowDynamicValues={!params.isTrigger}
-                dynamicInputModeToggled={dynamicInputModeToggled}
-                isForConnectionSelect={true}
+
+          <SelectTrigger className="flex gap-2 items-center">
+            <SelectValue
+              className="truncate grow shrink"
+              placeholder={t('Select a connection')}
+              data-testid="select-connection-value"
+            >
+              <SelectedConnectionLabel
+                value={value}
+                connections={connections?.data ?? []}
+              />
+            </SelectValue>
+            <div className="grow"></div>
+            {value && !disabled && canShowConnectionStatus && statusDisplay && (
+              <span
+                aria-hidden
+                className="z-50 opacity-0 pointer-events-none flex items-center gap-1.5"
               >
-                <CreateOrEditConnectionDialog
-                  reconnectConnection={reconnectConnection}
-                  isGlobalConnection={isReconnectingGlobalConnection}
-                  piece={pieceWithCorrectVersion}
-                  key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
-                  open={connectionDialogOpen}
-                  setOpen={(open, connection) => {
-                    setConnectionDialogOpen(open);
-                    if (connection) {
-                      refetch();
-                      field.onChange(addBrackets(connection.externalId));
-                    }
-                  }}
-                ></CreateOrEditConnectionDialog>
-                <Select
-                  open={selectConnectionOpen}
-                  onOpenChange={setSelectConnectionOpen}
-                  defaultValue={field.value as string | undefined}
-                  onValueChange={field.onChange}
-                  disabled={params.disabled}
-                >
-                  <div className="relative">
-                    {field.value &&
-                      !field.disabled &&
-                      canShowConnectionStatus &&
-                      statusDisplay && (
-                        <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5 pointer-events-none">
-                          <span className="flex items-center gap-1 text-xs text-gray-11 select-none pointer-events-none">
-                            <statusDisplay.Icon
-                              className={cn(
-                                'size-3.5 shrink-0',
-                                statusDisplay.iconClassName,
-                              )}
-                            />
-                            {statusDisplay.label}
-                          </span>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="inline-flex pointer-events-auto">
-                                <Button
-                                  variant="ghost"
-                                  size="icon-xs"
-                                  loading={isLoadingPiece}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openReconnectDialog();
-                                  }}
-                                  disabled={!hasPermissionToCreateConnection}
-                                >
-                                  <Cable className="size-3.5" />
-                                </Button>
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {!hasPermissionToCreateConnection
-                                ? t('Permission needed')
-                                : t('Reconnect')}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      )}
-
-                    <SelectTrigger className="flex gap-2 items-center">
-                      <SelectValue
-                        className="truncate grow shrink"
-                        placeholder={t('Select a connection')}
-                        data-testid="select-connection-value"
-                      >
-                        <SelectedConnectionLabel
-                          value={field.value}
-                          connections={connections?.data ?? []}
-                        />
-                      </SelectValue>
-                      <div className="grow"></div>
-                      {field.value &&
-                        !field.disabled &&
-                        canShowConnectionStatus &&
-                        statusDisplay && (
-                          <span
-                            aria-hidden
-                            className="z-50 opacity-0 pointer-events-none flex items-center gap-1.5"
-                          >
-                            <span className="flex items-center gap-1 text-xs">
-                              <statusDisplay.Icon className="size-3.5 shrink-0" />
-                              {statusDisplay.label}
-                            </span>
-                            <span className="size-6 shrink-0" />
-                          </span>
-                        )}
-                    </SelectTrigger>
-                  </div>
-
-                  <SelectContent>
-                    <PermissionNeededTooltip
-                      hasPermission={hasPermissionToCreateConnection}
-                    >
-                      <SelectAction
-                        onClick={() => {
-                          setSelectConnectionOpen(false);
-                          setReconnectConnection(null);
-                          setConnectionDialogOpen(true);
-                        }}
-                        disabled={!hasPermissionToCreateConnection}
-                      >
-                        <span
-                          className={cn(
-                            'flex items-center gap-1 text-accent-11 w-full',
-                            {
-                              'text-gray-11 cursor-not-allowed':
-                                !hasPermissionToCreateConnection,
-                            },
-                          )}
-                        >
-                          <Plus size={16} />
-                          {t('Create Connection')}
-                        </span>
-                      </SelectAction>
-                    </PermissionNeededTooltip>
-
-                    {connections &&
-                      connections.data &&
-                      connections.data?.map((connection) => {
-                        const accountIdentifier =
-                          appConnectionUtils.getConnectionAccountIdentifier(
-                            connection,
-                          );
-                        const rowStatus =
-                          connection.status !== AppConnectionStatus.ACTIVE
-                            ? getConnectionStatusDisplay(connection.status)
-                            : null;
-                        return (
-                          <SelectItem
-                            value={addBrackets(connection.externalId)}
-                            key={connection.externalId}
-                            className="*:[span]:last:w-full"
-                          >
-                            <div className="flex items-center gap-2 w-full min-w-0">
-                              {connection.usingSecretManager && (
-                                <Key size={16} className="shrink-0" />
-                              )}
-                              {connection.scope ===
-                                AppConnectionScope.PLATFORM && (
-                                <Globe size={16} className="shrink-0" />
-                              )}
-                              <span className="truncate min-w-0">
-                                {connection.displayName}
-                              </span>
-                              {accountIdentifier && (
-                                <span className="ml-auto shrink-0 truncate max-w-[50%] text-xs text-gray-11">
-                                  {accountIdentifier}
-                                </span>
-                              )}
-                              {rowStatus && (
-                                <span
-                                  className={cn(
-                                    'flex items-center gap-1 text-xs text-gray-11 shrink-0',
-                                    { 'ml-auto': !accountIdentifier },
-                                  )}
-                                >
-                                  <rowStatus.Icon
-                                    className={cn(
-                                      'size-3.5 shrink-0',
-                                      rowStatus.iconClassName,
-                                    )}
-                                  />
-                                  {rowStatus.label}
-                                </span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                  </SelectContent>
-                </Select>
-              </AutoFormFieldWrapper>
+                <span className="flex items-center gap-1 text-xs">
+                  <statusDisplay.Icon className="size-3.5 shrink-0" />
+                  {statusDisplay.label}
+                </span>
+                <span className="size-6 shrink-0" />
+              </span>
             )}
-        </>
-      )}
-    ></FormField>
+          </SelectTrigger>
+        </div>
+
+        <SelectContent>
+          <PermissionNeededTooltip
+            hasPermission={hasPermissionToCreateConnection}
+          >
+            <SelectAction
+              onClick={() => {
+                setSelectConnectionOpen(false);
+                setReconnectConnection(null);
+                setConnectionDialogOpen(true);
+              }}
+              disabled={!hasPermissionToCreateConnection}
+            >
+              <span
+                className={cn('flex items-center gap-1 text-accent-11 w-full', {
+                  'text-gray-11 cursor-not-allowed':
+                    !hasPermissionToCreateConnection,
+                })}
+              >
+                <Plus size={16} />
+                {t('Create Connection')}
+              </span>
+            </SelectAction>
+          </PermissionNeededTooltip>
+
+          {connections &&
+            connections.data &&
+            connections.data?.map((connection) => {
+              const accountIdentifier =
+                appConnectionUtils.getConnectionAccountIdentifier(connection);
+              const rowStatus =
+                connection.status !== AppConnectionStatus.ACTIVE
+                  ? getConnectionStatusDisplay(connection.status)
+                  : null;
+              return (
+                <SelectItem
+                  value={addBrackets(connection.externalId)}
+                  key={connection.externalId}
+                  className="*:[span]:last:w-full"
+                >
+                  <div className="flex items-center gap-2 w-full min-w-0">
+                    {connection.usingSecretManager && (
+                      <Key size={16} className="shrink-0" />
+                    )}
+                    {connection.scope === AppConnectionScope.PLATFORM && (
+                      <Globe size={16} className="shrink-0" />
+                    )}
+                    <span className="truncate min-w-0">
+                      {connection.displayName}
+                    </span>
+                    {accountIdentifier && (
+                      <span className="ml-auto shrink-0 truncate max-w-[50%] text-xs text-gray-11">
+                        {accountIdentifier}
+                      </span>
+                    )}
+                    {rowStatus && (
+                      <span
+                        className={cn(
+                          'flex items-center gap-1 text-xs text-gray-11 shrink-0',
+                          { 'ml-auto': !accountIdentifier },
+                        )}
+                      >
+                        <rowStatus.Icon
+                          className={cn(
+                            'size-3.5 shrink-0',
+                            rowStatus.iconClassName,
+                          )}
+                        />
+                        {rowStatus.label}
+                      </span>
+                    )}
+                  </div>
+                </SelectItem>
+              );
+            })}
+        </SelectContent>
+      </Select>
+    </>
   );
 }
 
-ConnectionSelect.displayName = 'ConnectionSelect';
-export { ConnectionSelect };
-
-type ConnectionSelectProps = {
-  disabled: boolean;
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
-  isTrigger: boolean;
-};
 function addBrackets(str: string) {
   return `{{connections['${str}']}}`;
 }
@@ -414,3 +361,10 @@ function getConnectionStatusDisplay(status: AppConnectionStatus): {
       };
   }
 }
+
+type ConnectionSelectProps = {
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  value: string | undefined;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+};
