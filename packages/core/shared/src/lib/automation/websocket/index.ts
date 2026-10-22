@@ -1,4 +1,5 @@
 import { StepRunResponse, UpdateStepProgressRequest } from '@activepieces/core-execution'
+import { ApId } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export enum WebsocketClientEvent {
@@ -36,6 +37,7 @@ export enum WebsocketServerEvent {
 export const LockResourceRequest = z.object({
     resourceId: z.string(),
     force: z.boolean().optional(),
+    editorSessionId: z.optional(ApId),
 })
 
 export const LockResourceResponse = z.object({
