@@ -47,7 +47,7 @@ Run these checks before anything else, silently when they pass. If one fails, sh
    > **One setup step left: your Linear API key.** I use it to keep the merge queue in order.
    > In a terminal in the repo (any OS), run `node .agents/skills/ai-task/linear.mjs setup` and follow it. Then restart Claude Code. Don't paste the key here.
 
-   `setup` reads the key hidden, checks it with Linear, and saves it to `env` in `~/.claude/settings.json`, which Claude Code loads on every OS. It needs a real terminal, so not through `!`. A key pasted into the chat is leaked: don't use it, tell them to revoke it and run `setup` with a new one.
+   `setup` reads the key hidden, checks it with Linear, and saves it to `env` in `~/.claude/settings.json`, which Claude Code loads on every OS. It also moves an old personal copy of this skill out of `~/.claude/skills/ai-task`, which would otherwise load instead of the repo's version. It needs a real terminal, so not through `!`. A key pasted into the chat is leaked: don't use it, tell them to revoke it and run `setup` with a new one.
 
 ## Help (no arguments, "help", or "?")
 
