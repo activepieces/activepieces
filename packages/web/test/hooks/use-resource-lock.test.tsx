@@ -723,10 +723,14 @@ describe('useResourceLock with beforeRelease', () => {
     });
     expect(unlockEmits()).toHaveLength(1);
 
+    expect(latestHookResult?.acquiring).toBe(false);
+
     await act(async () => {
       window.dispatchEvent(new Event('pageshow'));
     });
     expect(lockEmits()).toHaveLength(2);
+    expect(latestHookResult?.acquiring).toBe(true);
+    expect(latestHookResult?.lockedBy).toBeNull();
 
     await act(async () => {
       lockEmits()[1].ack?.({
@@ -735,12 +739,38 @@ describe('useResourceLock with beforeRelease', () => {
       });
     });
     expect(latestHookResult?.lockedBy).toEqual(SAME_USER_IN_ANOTHER_TAB);
+    expect(latestHookResult?.acquiring).toBe(false);
 
     await act(async () => {
       root.unmount();
     });
     expect(unlockEmits()).toHaveLength(1);
   });
+
+  it.each([
+    { name: 'gets the lock', answer: { acquired: true, lock: null } },
+    {
+      name: 'is denied with no holder named',
+      answer: { acquired: false, lock: null },
+    },
+  ])(
+    'stops acquiring when a page that comes back $name',
+    async ({ answer }) => {
+      await mountOwning({ beforeRelease: () => Promise.resolve() });
+      await act(async () => {
+        window.dispatchEvent(new Event('pagehide'));
+        window.dispatchEvent(new Event('pageshow'));
+      });
+      expect(latestHookResult?.acquiring).toBe(true);
+
+      await act(async () => {
+        lockEmits()[1].ack?.(answer);
+      });
+
+      expect(latestHookResult?.acquiring).toBe(false);
+      expect(latestHookResult?.lockedBy).toBeNull();
+    },
+  );
 
   it('does not release or take the lock on page leave and return when the tab does not own it', async () => {
     await act(async () => {
@@ -757,6 +787,7 @@ describe('useResourceLock with beforeRelease', () => {
 
     expect(unlockEmits()).toHaveLength(0);
     expect(lockEmits()).toHaveLength(1);
+    expect(latestHookResult?.acquiring).toBe(false);
   });
 
   async function mountOwning({

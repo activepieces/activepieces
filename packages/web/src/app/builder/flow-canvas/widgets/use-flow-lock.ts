@@ -69,23 +69,24 @@ function useFlowLock() {
     }
   }, [refreshDraftAndMakeNewDraftEditable]);
 
-  const { lockedBy, takeOver } = useResourceLock({
+  const { lockedBy, acquiring, takeOver } = useResourceLock({
     resourceId: flowId,
     onTakeOver,
     onLockFreed,
     beforeRelease: savePendingEdits,
   });
 
+  const blockedByLock = !!lockedBy || acquiring;
   useEffect(() => {
-    if (lockedBy && !readonly) {
+    if (blockedByLock && !readonly) {
       readonlySetByLock.current = true;
       setReadOnly(true);
     }
-    if (!lockedBy && readonlySetByLock.current) {
+    if (!blockedByLock && readonlySetByLock.current) {
       readonlySetByLock.current = false;
       setReadOnly(!store.getState().showsNewestVersion());
     }
-  }, [lockedBy, readonly, setReadOnly, store]);
+  }, [blockedByLock, readonly, setReadOnly, store]);
 
   return { lockedBy, takeOver };
 }

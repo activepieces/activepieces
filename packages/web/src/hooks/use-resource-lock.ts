@@ -27,6 +27,7 @@ function useResourceLock({
   // reload (which broke the embed SDK handshake inside an iframe)
   const [lockSession, setLockSession] = useState(0);
   const [lockedBy, setLockedBy] = useState<LockHolder | null>(null);
+  const [acquiring, setAcquiring] = useState(false);
   const acquiresFreedLock = !isNil(onLockFreed);
   const beforeReleaseRef = useRef(beforeRelease);
   beforeReleaseRef.current = beforeRelease;
@@ -119,6 +120,7 @@ function useResourceLock({
           });
           return;
         }
+        setAcquiring(false);
         if (response.acquired) {
           isOwner.current = true;
         } else if (response.lock) {
@@ -157,6 +159,7 @@ function useResourceLock({
     };
     const acquireOnPageShow = () => {
       if (releasedOnPageHide) {
+        setAcquiring(true);
         setLockSession((session) => session + 1);
       }
     };
@@ -205,7 +208,7 @@ function useResourceLock({
     );
   }, [resourceId, socket, onTakeOver]);
 
-  return { lockedBy, takeOver };
+  return { lockedBy, acquiring, takeOver };
 }
 
 function releaseLateAcquire({

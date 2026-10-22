@@ -35,6 +35,7 @@ const harness = vi.hoisted(() => {
     getFlow: vi.fn(),
     canEditFlow: true,
     captured,
+    lock: { lockedBy: null, acquiring: false },
   };
 });
 
@@ -51,7 +52,7 @@ vi.mock('@/hooks/use-resource-lock', () => ({
     onTakeOver?: () => void | Promise<void>;
   }) => {
     harness.captured.onTakeOver = onTakeOver;
-    return { lockedBy: null, takeOver: vi.fn() };
+    return { ...harness.lock, takeOver: vi.fn() };
   },
 }));
 
@@ -241,7 +242,7 @@ describe('useFlowLock take-over', () => {
 });
 
 function renderFlowLock(store: BuilderStore) {
-  renderHook(() => useFlowLock(), {
+  return renderHook(() => useFlowLock(), {
     wrapper: ({ children }: { children: ReactNode }) => (
       <BuilderStateContext.Provider value={store}>
         {children}
@@ -249,6 +250,31 @@ function renderFlowLock(store: BuilderStore) {
     ),
   });
 }
+
+describe('useFlowLock while the lock answer is pending', () => {
+  beforeEach(() => {
+    harness.lock = { lockedBy: null, acquiring: false };
+  });
+
+  it('keeps the tab read-only until the lock answer arrives after the page comes back', () => {
+    const store = createStore({
+      flow: draftFlow({ customerEmail: '{{trigger.email}}' }),
+    });
+    act(() => store.getState().setReadOnly(false));
+    const { rerender } = renderFlowLock(store);
+
+    harness.lock = { lockedBy: null, acquiring: true };
+    rerender();
+    expect(store.getState().readonly).toBe(true);
+
+    act(() => store.getState().setReadOnly(false));
+    expect(store.getState().readonly).toBe(true);
+
+    harness.lock = { lockedBy: null, acquiring: false };
+    rerender();
+    expect(store.getState().readonly).toBe(false);
+  });
+});
 
 async function takeOver() {
   await act(async () => {
