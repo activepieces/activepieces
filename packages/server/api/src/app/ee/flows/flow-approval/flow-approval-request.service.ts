@@ -118,8 +118,8 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         }
         await flowExecutionCache(log).invalidate(flow.id)
         await flowService(log).applyStatusChangeForPublishedFlow({
-            id: flow.id,
-            projectId: approval.projectId,
+            previousFlow: flow,
+            publishedVersion: lockedVersion,
             newStatus: approval.requestedStatus,
         })
         rejectedPromiseHandler(telemetry(log).trackProject({

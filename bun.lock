@@ -2012,7 +2012,7 @@
     },
     "packages/pieces/community/clickup": {
       "name": "@activepieces/piece-clickup",
-      "version": "0.9.1",
+      "version": "0.10.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2025,6 +2025,7 @@
       "devDependencies": {
         "@types/qs": "6.14.0",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/clockify": {
@@ -8281,7 +8282,7 @@
     },
     "packages/pieces/community/sendinblue": {
       "name": "@activepieces/piece-sendinblue",
-      "version": "0.5.1",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
