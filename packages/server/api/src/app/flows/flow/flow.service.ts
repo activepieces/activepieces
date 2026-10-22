@@ -1091,7 +1091,7 @@ async function runDraftWriteExclusively<T>({
     fn: () => Promise<T>
 }): Promise<T> {
     return distributedLock(log).runExclusive({
-        key: `flow-draft-write:${flowId}`,
+        key: `flow-draft-update-${flowId}`,
         timeoutInSeconds: DRAFT_WRITE_LOCK_TIMEOUT_SECONDS,
         retryDelayMs: DRAFT_WRITE_LOCK_RETRY_DELAY_MS,
         retryJitterMs: DRAFT_WRITE_LOCK_RETRY_JITTER_MS,
