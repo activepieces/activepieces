@@ -1,6 +1,6 @@
 import type { SQSClient } from '@aws-sdk/client-sqs';
 
-export async function loadSqs() {
+export async function loadSqs(): Promise<typeof import('@aws-sdk/client-sqs')> {
   return import('@aws-sdk/client-sqs');
 }
 
