@@ -526,7 +526,7 @@ async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platfor
         key: `runs_metadata_${flowRun.id}`,
         timeoutInSeconds: 30,
         fn: async () => {
-            await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId })
+            await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId, flowId: flowRun.flowId })
             await waitpointService(log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: flowRun.projectId })
             await runsMetadataQueue(log).add({
                 id: flowRun.id,
