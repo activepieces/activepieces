@@ -1,11 +1,11 @@
 ---
 name: ai-task
-description: The AI team's one command for doing a task the team way, from ticket to merged PR. Use when an engineer on the AI team (chat, agents, MCP, AI providers) starts a task ("/ai-task AI-123", "start AI-123", "work on this bug"), turns a request or customer report into a ticket ("/ai-task customer says chat won't save"), triages or answers a bug or support question ("/ai-task triage ENG-456"), or is about to open or update a PR ("/ai-task ship"). Also lets support, admins and anyone outside the team report an AI bug or request ("/ai-task report ..."). Grills the user one question at a time ("/ai-task grill AI-123") until a ticket is solvable without asking anyone. Runs the team check-up ("/ai-task check", "check the AI roadmap", "how is activation", "weekly AI update"): activation and cost from production plus late, blocked or waiting work in Linear. It does the Linear, brain and PR paperwork so the user only answers what it can't work out.
+description: The AI team's one command for doing a task the team way, from ticket to merged PR. Use when an engineer on the AI team (chat, agents, MCP, AI providers) starts a task ("/ai-task AI-123", "start AI-123", "work on this bug"), turns a request or customer report into a ticket ("/ai-task customer says chat won't save"), triages or answers a bug or support question ("/ai-task triage ENG-456"), or is about to open or update a PR ("/ai-task ship"). Owns the merge queue: when a PR is approved it moves the ticket to Ready to merge and ranks it so the top merges first ("/ai-task queue", "what do I merge next", "my PR got approved"). Also lets support, admins and anyone outside the team report an AI bug or request ("/ai-task report ..."). Grills the user one question at a time ("/ai-task grill AI-123") until a ticket is solvable without asking anyone. Runs the team check-up ("/ai-task check", "check the AI roadmap", "how is activation", "weekly AI update"): activation and cost from production plus late, blocked or waiting work in Linear. It does the Linear, brain and PR paperwork so the user only answers what it can't work out.
 ---
 
 # AI task
 
-One command, six moments: **start**, **triage**, **ship**, **check**, **note** (AI team members) and **report** (anyone). Work out which one from what the user typed. If it's unclear, ask once.
+One command, seven moments: **start**, **triage**, **ship**, **queue**, **check**, **note** (AI team members) and **report** (anyone). Work out which one from what the user typed. If it's unclear, ask once.
 
 Whenever a ticket is being created or is too thin to solve, run a **grill** (below) inside that moment.
 
@@ -26,7 +26,7 @@ Run these checks before anything else, silently when they pass. If one fails, sh
    > You can still report anything you found: `/ai-task report <what happened>`.
    > Joining the team? Ping the AI team lead.
 
-3. **Repo** (start, triage, ship and check). The current directory must be the activepieces repo (`git rev-parse --show-toplevel` with `brain/knowledge/` inside). If not, stop:
+3. **Repo** (start, triage, ship, queue and check). The current directory must be the activepieces repo (`git rev-parse --show-toplevel` with `brain/knowledge/` inside). If not, stop:
 
    > **I need the activepieces repo for this one.**
    > Open Claude Code inside your checkout and run `/ai-task` again.
@@ -42,6 +42,12 @@ Run these checks before anything else, silently when they pass. If one fails, sh
    - **Queue or job failures** also need the DevOps box over SSH, which `/debug-failed-run` drives. Ask for the host once.
    - **Rules for real data:** read only. Keep ClickHouse windows to 3 days or less. Copy only counts and ids into tickets, never customer content, emails or credentials.
 
+5. **Linear API key** (queue only, and ship when it ranks). The Linear MCP can't set a card's position, so reordering goes through Linear's GraphQL API with the user's own key. Check `LINEAR_API_KEY` is set. If not, don't stop: rank anyway, tell them where to drop the card by hand, and show this once:
+
+   > **Want me to keep the queue in order for you?** I need your Linear API key.
+   > Make one at linear.app/settings/account/security (Personal API keys), then add `export LINEAR_API_KEY=lin_api_...` to your shell profile and restart Claude Code.
+   > For now, drag AI-123 under AI-120 in **Merge queue**.
+
 ## Help (no arguments, "help", or "?")
 
 Run the requirement checks first, then show the card that fits.
@@ -55,6 +61,7 @@ Run the requirement checks first, then show the card that fits.
 > - `/ai-task grill AI-123` when a ticket is too vague
 > - `/ai-task triage ENG-456` when a bug lands
 > - `/ai-task ship` before you open a PR
+> - `/ai-task queue` to see what merges next
 > - `/ai-task check` for the Thursday check-up
 > - `/ai-task note AI-123 <text>` to save a decision on a ticket
 > - `/ai-task report X` to file a bug for someone else
@@ -241,6 +248,18 @@ The cards below are examples of that voice, not forms to fill in word for word.
 >
 > **Want me to fix Greptile's comments?**
 
+**Queue**
+
+> **AI-41 merges next, then yours.**
+> 1. AI-41 · customer's flows broken · Ziyad
+> 2. AI-57 · yours · touches the chat prompt too
+> 3. AI-60 · Hazem
+>
+> Heads up: AI-41 also edits `chat-system-prompt.md`, so rebase after it lands.
+> AI-33 sat 6 days with conflicts, I'd send it back to In Review.
+>
+> **Save this order?**
+
 ## Team truth (read it, don't assume)
 
 - **Team rules:** the Linear doc "Start here: how the AI team works" (team AI). It covers the templates, the work-in-progress limit, review time and rituals. If a rule there disagrees with this skill, the doc wins.
@@ -319,8 +338,38 @@ Run these checks and fix what you can, then show one short summary of what chang
     - **When both pass:** mark it ready (`gh pr ready <n>`) and ask a reviewer from CODEOWNERS.
 
     Ship card line: `✓ Greptile 5/5 · ✓ CI green`, or the blocker, for example `✗ Greptile 3/5: 2 findings`.
+11. **Approved?** If `gh pr view <n> --json reviewDecision` says `APPROVED`, don't merge yet. Run **Queue** below: it puts the ticket in Ready to merge and tells the user their place. Ship card line: `✓ Approved · #2 in queue, after AI-41`.
 
 Ask before pushing, opening the PR, or posting to Linear or GitHub. Everything goes out under the user's name.
+
+## Queue: who merges next
+
+Approved PRs wait in **Ready to merge** (between In Review and Done), and the **Merge queue** view in team AI shows them as one list. **The top card merges first.** Nobody merges out of order, so two PRs that touch the same thing (the chat prompt, a tool description) never race each other.
+
+Runs on `/ai-task queue`, when Ship finds an approval, and inside Check.
+
+1. **Fill the column.** Linear moves a ticket to Ready to merge on its own when its PR is approved with green checks. Also look for AI tickets still in In Review whose PR is approved and green, and move them in. A new push or review that sends one back to In Review is fine: it re-enters when approved again.
+2. **Gather** for every ticket in Ready to merge:
+   - Linear: priority, labels, customer requests (`list_customer_needs`), `blocks` relations, when it entered the column (`stateHistory`);
+   - its PR: `gh pr view <n> --json number,author,files,additions,deletions,mergeable,reviewDecision,statusCheckRollup`.
+3. **Kick back first.** A card leaves the queue if its PR has conflicts, red CI, changes requested, or it's sat 5 working days without merging. Move it back to In Review with a one-line comment that says why and what unblocks it (mention the owner). A stale card at the bottom is worse than no card.
+4. **Rank the rest, top first.** Go down the list, and only use the next rule to break a tie:
+   1. **Something's on fire:** the "Start here" urgent list (live automations broken with no workaround, data loss or wrong data, security, billing, many customers at once).
+   2. **Customers waiting:** more customer requests first, then the one waiting longest.
+   3. **Unblocks others:** it blocks another ticket, or another queued PR needs it first.
+   4. **Linear priority.**
+   5. **Smaller PR,** then **longest in the column.**
+5. **Find collisions.** Compare the queued PRs' `files`. Any overlap is a pair, and so is any two PRs touching the hot spots: `packages/server/api/src/assets/prompts/`, chat tool descriptions, the agent loop in `packages/server/worker/src/lib/execute/jobs/ee/agent/`. The higher one merges first and the lower one's owner rebases and re-runs CI right after. Put the pair on the card.
+6. **Show the queue card** and apply after one OK:
+   - state changes and kick-back comments through the Linear MCP;
+   - the order through GraphQL with the issue's `uuid` (from `get_issue`). Lower `sortOrder` sits higher, so give rank 1 `1000`, rank 2 `2000`, and so on:
+
+     `curl -s https://api.linear.app/graphql -H "Authorization: $LINEAR_API_KEY" -H "Content-Type: application/json" -d '{"query":"mutation($id:String!,$o:Float!){issueUpdate(id:$id,input:{sortOrder:$o}){success}}","variables":{"id":"<uuid>","o":1000}}'`
+
+   - no key: print the order and say where to drag each card (requirement 5).
+7. **Merging.** Only the owner of the top card merges, and only their own PR. Not on top? Wait, or ask in the channel. The one exception is an urgent fix (rule 4.1), which jumps the line and says so in the channel. After a merge, Linear moves it to Done; re-rank and tell the next owner if they need to rebase.
+
+Ranking, kick-backs and the order are the skill's call; the user only says OK. If someone thinks the order is wrong, they say why in the ticket and re-run `/ai-task queue`, they don't drag cards around it.
 
 ## Check: the team check-up (Thursday, or before a PM review)
 
@@ -341,6 +390,7 @@ Ask before pushing, opening the PR, or posting to Linear or GitHub. Everything g
    - **Late:** open issues past their due date. **Blocked:** an unfinished `blockedBy`.
    - **Work in progress:** In Progress projects per lead, against the limit in "Start here". **Quiet:** In Progress projects with no update in 8 days.
    - **Waiting:** AI PRs with no review after 1 working day, decisions past their decide-by date, and triage items older than 2 days.
+   - **Merge queue:** run Queue. Report its size, what's on top, any collision pairs, and cards to kick back.
    - **Rituals:** repeating tickets skipped last time.
    - **Habits:** AI PRs from the last 7 days without `Fixes AI-` or `Part of AI-` (use `gh pr list --state all --search "updated:>=<date>" --json number,author,body,files`), and new tickets missing their template's required parts. A nudge, not blame.
 4. **Report** with the check card. Then offer the writes, and do only what the user picks:
@@ -368,5 +418,7 @@ Ask before pushing, opening the PR, or posting to Linear or GitHub. Everything g
 
 - Move or close tickets the user didn't point at. Fix only what this task touches.
 - Post security details publicly.
+- Merge a PR that isn't on top of the queue, unless it's urgent.
+- Reorder the queue or kick a card back without the user's OK.
 - Run `git reset --hard`, `git checkout -- .` or `git clean`. Local env files must survive.
 - Add process the "Start here" doc doesn't ask for.
