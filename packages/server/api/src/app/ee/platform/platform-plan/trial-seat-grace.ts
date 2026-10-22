@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { InvitationStatus, PlatformPlan, SELF_SERVE_TRIAL_PLANS, SelfServeTrialDates, TrialSeatGrace, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { InvitationStatus, PlatformPlan, SELF_SERVE_TRIAL_PLANS, SelfServeTrialDates, TrialSeatGrace, UserStatus } from '@activepieces/shared'
 import { JobsOptions } from 'bullmq'
 import dayjs, { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -11,7 +11,7 @@ import { distributedStore } from '../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { billingProvider } from '../../../platform/billing-provider'
 import { UserSchema } from '../../../user/user-entity'
-import { excludeEmbeddedUsers, userRepo } from '../../../user/user-service'
+import { userRepo } from '../../../user/user-service'
 import { getInvitationExpiryCutoff, userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { platformPlanTelemetry } from './platform-plan-telemetry'
 import { platformPlanRepo } from './platform-plan.service'
@@ -114,13 +114,12 @@ async function findPlatformsOverTheirSeats(): Promise<string[]> {
     const rows = await platformPlanRepo()
         .createQueryBuilder('platform_plan')
         .select('platform_plan.platformId', 'platformId')
-        .innerJoin(`(${ACTIVE_NON_EMBEDDED_USERS_PER_PLATFORM})`, 'active_users', 'active_users."platformId" = platform_plan."platformId"')
+        .innerJoin(`(${ACTIVE_USERS_PER_PLATFORM})`, 'active_users', 'active_users."platformId" = platform_plan."platformId"')
         .leftJoin(`(${SEAT_RESERVING_INVITES_PER_PLATFORM})`, 'invites', 'invites."platformId" = platform_plan."platformId"')
         .where('platform_plan.usersLimit IS NOT NULL')
         .andWhere('active_users.seats + COALESCE(invites.seats, 0) > platform_plan."usersLimit"')
         .setParameters({
             active: UserStatus.ACTIVE,
-            embedded: UserIdentityProvider.JWT,
             reserving: [InvitationStatus.PENDING, InvitationStatus.ACCEPTED],
             expiryCutoff: getInvitationExpiryCutoff(),
         })
@@ -133,7 +132,7 @@ async function findSeatsOverPlan({ platformId, seatLimit, dates, billingEnforced
         return null
     }
     const [activeUserCount, invitedSeats] = await Promise.all([
-        excludeEmbeddedUsers(activeUsers({ platformId, entityManager })).getCount(),
+        activeUsers({ platformId, entityManager }).getCount(),
         userInvitationsService(log).countReservedSeats({ platformId, entityManager }),
     ])
     const usedSeats = activeUserCount + invitedSeats
@@ -141,7 +140,7 @@ async function findSeatsOverPlan({ platformId, seatLimit, dates, billingEnforced
     if (seatsOver <= 0) {
         return null
     }
-    const newestAdded = await excludeEmbeddedUsers(activeUsers({ platformId, entityManager }))
+    const newestAdded = await activeUsers({ platformId, entityManager })
         .andWhere('user.created >= :addedSince', { addedSince: dayjs(dates.startedAt).toISOString() })
         .andWhere('user.created <= :addedBefore', { addedBefore: dayjs(dates.endsAt).toISOString() })
         .andWhere(USER_IS_NOT_THE_PLATFORM_OWNER)
@@ -191,15 +190,9 @@ const USER_IS_NOT_THE_PLATFORM_OWNER = `NOT EXISTS (
     AND platform."ownerId" = "user".id
 )`
 
-const ACTIVE_NON_EMBEDDED_USERS_PER_PLATFORM = `SELECT "user"."platformId", COUNT(*) AS seats
+const ACTIVE_USERS_PER_PLATFORM = `SELECT "user"."platformId", COUNT(*) AS seats
     FROM "user"
     WHERE "user".status = :active
-    AND NOT EXISTS (
-        SELECT 1
-        FROM user_identity identity
-        WHERE identity.id = "user"."identityId"
-        AND identity.provider = :embedded
-    )
     GROUP BY "user"."platformId"`
 
 const SEAT_RESERVING_INVITES_PER_PLATFORM = `SELECT invitation."platformId", COUNT(*) AS seats

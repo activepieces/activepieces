@@ -172,23 +172,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             .setLock('pessimistic_write')
             .getMany()
     },
-    async listInvitesReservingSeats({ platformId, cursor, limit }: ListInvitesReservingSeatsParams): Promise<SeekPage<UserInvitation>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursor)
-        const paginator = buildPaginator({
-            entity: UserInvitationEntity,
-            alias: 'invitation',
-            query: {
-                limit,
-                order: 'ASC',
-                afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor,
-            },
-        })
-        const query = withinReservationWindow(repo().createQueryBuilder('invitation'), platformId)
-            .andWhere(EMAIL_IS_NOT_ALREADY_A_PLATFORM_USER)
-        const { data, cursor: nextCursor } = await paginator.paginate(query)
-        return paginationHelper.createPage<UserInvitation>(data, nextCursor)
-    },
     async countAdditionalSeatsNeeded({
         email,
         platformId,
@@ -425,12 +408,6 @@ export type CountAdditionalSeatsNeededParams = {
 export type CountReservedSeatsParams = {
     platformId: string
     entityManager?: EntityManager
-}
-
-type ListInvitesReservingSeatsParams = {
-    platformId: string
-    cursor: string | null
-    limit: number
 }
 
 type GetOneByPlatformIdAndEmailParams = {

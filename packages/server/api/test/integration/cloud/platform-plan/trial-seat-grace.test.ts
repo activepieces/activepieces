@@ -82,15 +82,15 @@ describe('Seat grace after the self-serve trial', () => {
         expect(await trialSeatGrace(log).endsAt({ platformId, dates: running })).toBeNull()
     })
 
-    it('leaves embedded users out of the count and never picks them', async () => {
-        const { platformId, trialUsers } = await setupPlatform({ usersLimit: 2, trialUsers: 2, embeddedTrialUsers: 3 })
+    it('counts embedded users like any other user and can pick them', async () => {
+        const { platformId, trialUsers, embeddedUsers } = await setupPlatform({ usersLimit: 2, trialUsers: 2, embeddedTrialUsers: 3 })
 
         const plan = await platformPlanRepo().findOneByOrFail({ platformId })
 
         expect(await trialSeatGrace(log).get({ plan })).toEqual({
-            usedSeats: 3,
+            usedSeats: 6,
             seatLimit: 2,
-            userIds: [trialUsers[1].id],
+            userIds: [embeddedUsers[2].id, embeddedUsers[1].id, embeddedUsers[0].id, trialUsers[1].id],
         })
     })
 
@@ -110,9 +110,10 @@ describe('Seat grace after the self-serve trial', () => {
 
         await trialSeatGrace(log).sweep()
 
-        expect(await statusOf(trialUsers[2])).toBe(UserStatus.INACTIVE)
-        expect(await statusOf(trialUsers[1])).toBe(UserStatus.INACTIVE)
-        for (const kept of [owner, preTrialUsers[0], trialUsers[0], embeddedUsers[0]]) {
+        for (const removed of [embeddedUsers[0], trialUsers[2], trialUsers[1]]) {
+            expect(await statusOf(removed)).toBe(UserStatus.INACTIVE)
+        }
+        for (const kept of [owner, preTrialUsers[0], trialUsers[0]]) {
             expect(await statusOf(kept)).toBe(UserStatus.ACTIVE)
         }
     })

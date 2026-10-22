@@ -83,7 +83,6 @@ export function SelfServeTrialSeatDialog() {
       )}
       preselectedUserIds={seatGrace.userIds}
       preselectedLabel={t('Leaves {date}', { date })}
-      hideEmbeddedUsers
       actions={
         <Button
           {...adminControl(AdminControl.TRIAL_PLANS_OPEN)}

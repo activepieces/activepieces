@@ -16,7 +16,6 @@ export const ListUsersRequestBody = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().optional(),
     externalId: z.string().optional(),
-    excludeEmbedded: z.stringbool().optional(),
 })
 
 export type ListUsersRequestBody = z.infer<typeof ListUsersRequestBody>
