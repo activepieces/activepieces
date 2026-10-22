@@ -7,12 +7,12 @@ function focusDialogItself(event: Event): void {
   }
 }
 
-function readFlag(key: string): boolean {
+function readLocalStorageFlag(key: string): boolean {
   const { data } = tryCatchSync(() => window.localStorage.getItem(key));
   return data === 'true';
 }
 
-function writeFlag(key: string): void {
+function setLocalStorageFlag(key: string): void {
   tryCatchSync(() => window.localStorage.setItem(key, 'true'));
 }
 
@@ -28,8 +28,8 @@ function trialStorageId({
 
 export const selfServeTrialUi = {
   focusDialogItself,
-  readFlag,
-  writeFlag,
+  readLocalStorageFlag,
+  setLocalStorageFlag,
   trialStorageId,
 };
 

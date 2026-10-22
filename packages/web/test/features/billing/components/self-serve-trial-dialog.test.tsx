@@ -60,7 +60,7 @@ vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
   SELF_SERVE_TRIAL_DAYS: 7,
   selfServeTrialHooks: {
     useStatus: () => ({ data: liveStatus }),
-    useOffer: () => offer,
+    useShouldOfferTrial: () => offer,
     useStart: (callback?: (status: { state: string }) => void) => {
       onStarted = callback;
       return {

@@ -51,7 +51,7 @@ export function EnterpriseUsageMeter({
             'gap-2 tabular-nums text-gray-11',
             enterpriseMotion.appear,
           )}
-          onClick={gate.explain}
+          onClick={gate.showLockedDialog}
         >
           {meter}
           {usage}

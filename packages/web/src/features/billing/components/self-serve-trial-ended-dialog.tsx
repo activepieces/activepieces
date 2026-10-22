@@ -34,22 +34,26 @@ export function SelfServeTrialEndedDialog() {
     endsAt: trial.endsAt,
   })}`;
   const [seenKey, setSeenKey] = useState<string | null>(null);
-  const seen = seenKey === storageKey || selfServeTrialUi.readFlag(storageKey);
+  const alreadySeen =
+    seenKey === storageKey || selfServeTrialUi.readLocalStorageFlag(storageKey);
 
-  const recent =
+  const endedRecently =
     !isNil(trial.endsAt) &&
     selfServeTrialTime.calendarDaysBetween({
       from: trial.endsAt,
       to: Date.now(),
     }) <= SHOW_FOR_DAYS;
   const open =
-    trial.state === 'ended' && trial.isPlatformAdmin && recent && !seen;
+    trial.state === 'ended' &&
+    trial.isPlatformAdmin &&
+    endedRecently &&
+    !alreadySeen;
   const close = () => {
-    selfServeTrialUi.writeFlag(storageKey);
+    selfServeTrialUi.setLocalStorageFlag(storageKey);
     setSeenKey(storageKey);
   };
   const locked = selfServeTrialFeatures.lockedAfterTrial(platform.plan.plan);
-  const kept = [t('Flows, connections and data'), t('Your credits')];
+  const keptAfterTrial = [t('Flows, connections and data'), t('Your credits')];
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && close()}>
@@ -77,7 +81,7 @@ export function SelfServeTrialEndedDialog() {
             {t('Everything you built is still here')}
           </span>
           <ul className="flex flex-col gap-2.5">
-            {kept.map((item) => (
+            {keptAfterTrial.map((item) => (
               <li
                 key={item}
                 className="flex items-center gap-2.5 text-sm text-gray-12"

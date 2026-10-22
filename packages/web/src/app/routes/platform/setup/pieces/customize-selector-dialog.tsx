@@ -206,7 +206,7 @@ const SelectorTabsEditor = ({
       toast.error(t('Sections must have a name'));
       return;
     }
-    gate.run(() =>
+    gate.runOrShowLockedDialog(() =>
       saveMutation.mutateAsync({ tabs: normalizedTabs }).then(onClose),
     );
   };

@@ -61,7 +61,7 @@ export function SelfServeTrialDialog() {
     billingDialogHooks.useSelfServeTrialDialogStore();
   const queryClient = useQueryClient();
   const { data: liveStatus } = selfServeTrialHooks.useStatus();
-  const offer = selfServeTrialHooks.useOffer();
+  const shouldOfferTrial = selfServeTrialHooks.useShouldOfferTrial();
   const [resumeState, setResumeState] = useState<ResumeState>('idle');
   const resumeOnStart =
     useRef<SelfServeTrialDialogPayload['resume']>(undefined);
@@ -78,7 +78,10 @@ export function SelfServeTrialDialog() {
     start.isError && liveStatus?.state === 'active' ? liveStatus : undefined;
   const outcome = start.data ?? startedAnyway;
   const result = outcome?.state;
-  const view = viewFor({ result, offer: offer || start.isError });
+  const view = dialogViewForStartResult({
+    result,
+    shouldOfferTrial: shouldOfferTrial || start.isError,
+  });
   const busy = start.isPending || resumeState === 'saving';
   const close = () => {
     if (busy) {
@@ -752,12 +755,12 @@ function useMoreBelow(element: HTMLElement | null): boolean {
   return moreBelow;
 }
 
-function viewFor({
+function dialogViewForStartResult({
   result,
-  offer,
+  shouldOfferTrial,
 }: {
   result: string | undefined;
-  offer: boolean;
+  shouldOfferTrial: boolean;
 }): DialogView {
   if (result === 'active') {
     return 'started';
@@ -768,7 +771,7 @@ function viewFor({
   if (result === 'unavailable' || result === 'eligible') {
     return 'unavailable';
   }
-  return offer ? 'start' : 'locked';
+  return shouldOfferTrial ? 'start' : 'locked';
 }
 
 function wait(ms: number): Promise<void> {

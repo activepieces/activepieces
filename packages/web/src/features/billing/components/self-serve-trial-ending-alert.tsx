@@ -33,7 +33,8 @@ export function SelfServeTrialEndingAlert() {
     : `${STARTED_DISMISS_KEY_PREFIX}${trialId}`;
   const [dismissedKey, setDismissedKey] = useState<string | null>(null);
   const dismissed =
-    dismissedKey === dismissKey || selfServeTrialUi.readFlag(dismissKey);
+    dismissedKey === dismissKey ||
+    selfServeTrialUi.readLocalStorageFlag(dismissKey);
   const visible =
     trial.isPlatformAdmin &&
     trial.state === 'active' &&
@@ -109,7 +110,7 @@ export function SelfServeTrialEndingAlert() {
           aria-label={ending ? t('Dismiss for today') : t('Dismiss')}
           className={cn('shrink-0', tone.dismiss)}
           onClick={() => {
-            selfServeTrialUi.writeFlag(dismissKey);
+            selfServeTrialUi.setLocalStorageFlag(dismissKey);
             setDismissedKey(dismissKey);
           }}
         >

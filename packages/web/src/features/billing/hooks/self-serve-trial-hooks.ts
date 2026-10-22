@@ -39,7 +39,7 @@ export const selfServeTrialHooks = {
       enabled,
     });
   },
-  useOffer: (): boolean => {
+  useShouldOfferTrial: (): boolean => {
     const { data } = selfServeTrialHooks.useStatus();
     return data?.state === 'eligible';
   },

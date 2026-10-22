@@ -31,7 +31,7 @@ vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
       state: state.trialState,
       isPlatformAdmin: state.isPlatformAdmin,
     }),
-    useOffer: () => state.offer,
+    useShouldOfferTrial: () => state.offer,
   },
 }));
 
@@ -84,7 +84,7 @@ describe('clicking a locked feature', () => {
     const gate = renderHook(() =>
       useEnterpriseGate({ unlocked, featureKey: 'AUDIT_LOGS' }),
     ).result;
-    act(() => gate.current.run(action, { resumable }));
+    act(() => gate.current.runOrShowLockedDialog(action, { resumable }));
     const payload = trialDialogPayload();
     const outcomes = [
       action.mock.calls.length > 0 && 'ran',

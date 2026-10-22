@@ -237,7 +237,7 @@ export const AppearanceSection = ({
                 if (!brandingIsComplete()) {
                   return;
                 }
-                gate.run(() =>
+                gate.runOrShowLockedDialog(() =>
                   form.handleSubmit(
                     () => updatePlatformAsync({ includeBranding: true }),
                     rejectInvalidBranding,
@@ -343,7 +343,7 @@ export const AppearanceSection = ({
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={gate.explain}
+                  onClick={gate.showLockedDialog}
                 >
                   <LockedGem />
                   {t('Unlock branding')}
