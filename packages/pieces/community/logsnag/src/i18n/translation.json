@@ -29,6 +29,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New event created": "New event created",
   "triggers when a new event ic created and logged": "triggers when a new event ic created and logged"
 }

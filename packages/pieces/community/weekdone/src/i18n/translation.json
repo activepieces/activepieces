@@ -84,6 +84,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Item": "New Item",
   "New Objective": "New Objective",
   "Triggers when a new item is added to a Weekdone report.": "Triggers when a new item is added to a Weekdone report.",
