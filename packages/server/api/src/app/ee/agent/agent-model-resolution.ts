@@ -108,15 +108,8 @@ function resolvePinnedModelId({ provider, modelName, config, modelScope, modelId
     if (!isNil(catalog) && !catalog.includes(modelName)) {
         return null
     }
-    if (isNil(catalog) && isRetiredCuratedModel({ provider, modelId: modelName })) {
-        return null
-    }
     const { data } = tryCatchSync(() => resolveNamedModelId({ provider, modelName, surface: 'chat', modelScope, modelIds, log }))
     return data ?? null
-}
-
-function isRetiredCuratedModel({ provider, modelId }: { provider: AIProviderName, modelId: string }): boolean {
-    return !isNil(aiProviderUtils.getCuratedChatModels({ provider })) && !aiProviderUtils.runnableChatModelIds({ provider }).includes(modelId)
 }
 
 function resolveModelIdForProvider({ provider, selectedModel, surface, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, surface: ModelTierSurface, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
