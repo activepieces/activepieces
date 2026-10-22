@@ -1,9 +1,11 @@
 import { isNil } from '@activepieces/core-utils'
 import { Store, StoreScope, TriggerStrategy } from '@activepieces/pieces-framework'
 
-export function storeForOnEnable({ store, isRepublish, triggerType }: StoreForOnEnableParams): Store {
-    const keepsPollingCheckpoint = isRepublish === true && triggerType === TriggerStrategy.POLLING
-    return keepsPollingCheckpoint ? keepExistingEntries(store) : store
+export const republishStore = {
+    forOnEnable({ store, isRepublish, triggerType }: ForOnEnableParams): Store {
+        const keepsPollingCheckpoint = isRepublish === true && triggerType === TriggerStrategy.POLLING
+        return keepsPollingCheckpoint ? keepExistingEntries(store) : store
+    },
 }
 
 function keepExistingEntries(store: Store): Store {
@@ -21,7 +23,7 @@ function keepExistingEntries(store: Store): Store {
     }
 }
 
-type StoreForOnEnableParams = {
+type ForOnEnableParams = {
     store: Store
     isRepublish: boolean | undefined
     triggerType: TriggerStrategy

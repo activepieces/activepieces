@@ -6,7 +6,7 @@ import { EngineConstants, ResolvedExecuteTriggerOperation } from '../handler/con
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
-import { storeForOnEnable } from '../piece-context/republish-store'
+import { republishStore } from '../piece-context/republish-store'
 import { createContextStore } from '../piece-context/store'
 import { utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
@@ -171,7 +171,7 @@ export const triggerHelper = {
             case TriggerHookType.ON_ENABLE: {
                 await pieceTrigger.onEnable({
                     ...context,
-                    store: storeForOnEnable({ store: context.store, isRepublish: params.isRepublish, triggerType: pieceTrigger.type }),
+                    store: republishStore.forOnEnable({ store: context.store, isRepublish: params.isRepublish, triggerType: pieceTrigger.type }),
                 })
                 return {
                     listeners: appListeners,
