@@ -1,5 +1,9 @@
 import { isNil, tryCatch } from '@activepieces/core-utils';
-import { PlatformAdminSurface } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PlatformAdminSurface,
+} from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import confetti from 'canvas-confetti';
 import dayjs from 'dayjs';
@@ -11,6 +15,7 @@ import {
   Gem,
   ChevronDown,
   LoaderCircle,
+  Sparkles,
 } from 'lucide-react';
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -22,6 +27,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
@@ -209,6 +215,7 @@ function StartTrial({
 }) {
   const trial = selfServeTrialHooks.useTrial();
   const featureName = selfServeTrialFeatures.name(featureKey);
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   return (
     <DialogFrame
@@ -239,7 +246,19 @@ function StartTrial({
         )
       }
       mainTitle={t('What is included')}
-      main={<IncludedFeatures featureKey={featureKey} />}
+      main={
+        <>
+          <IncludedFeatures featureKey={featureKey} />
+          {edition === ApEdition.CLOUD && (
+            <p className="flex items-start gap-2.5 text-sm text-gray-11">
+              <Sparkles className="mt-0.5 size-4 shrink-0 text-gray-9" />
+              {t(
+                "Plans that include Embedding don't usually come with Activepieces AI. You can use both together only during the trial.",
+              )}
+            </p>
+          )}
+        </>
+      }
       asideTitle={t('How the trial works')}
       aside={
         <TrialTimeline basePlanName={trial.basePlanName} started={false} />
