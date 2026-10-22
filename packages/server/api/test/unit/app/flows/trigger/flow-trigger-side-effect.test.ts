@@ -379,4 +379,91 @@ describe('flowTriggerSideEffect', () => {
             })
         })
     })
+
+    describe('republish with an unchanged trigger', () => {
+        const previousSchedule = {
+            type: TriggerSourceScheduleType.CRON_EXPRESSION,
+            cronExpression: '*/15 * * * *',
+            timezone: 'UTC',
+        }
+
+        it('keeps a polling trigger running on the previous schedule without calling onEnable', async () => {
+            const result = await flowTriggerSideEffect(mockLog).enable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+                isRepublish: true,
+                isTriggerUnchanged: true,
+                previousSchedule,
+            })
+
+            expect(mockSubmitAndWaitForResponse).not.toHaveBeenCalled()
+            expect(result.scheduleOptions).toEqual(previousSchedule)
+            expect(mockAddJob).toHaveBeenCalledWith(expect.objectContaining({
+                id: BASE_PARAMS.flowVersionId,
+                scheduleOptions: previousSchedule,
+            }))
+        })
+
+        it('skips onDisable for a polling trigger but still removes the old poll job', async () => {
+            await flowTriggerSideEffect(mockLog).disable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+                ignoreError: true,
+                isRepublish: true,
+                isTriggerUnchanged: true,
+            })
+
+            expect(mockSubmitAndWaitForResponse).not.toHaveBeenCalled()
+            expect(mockRemoveRepeatingJob).toHaveBeenCalledWith({ flowVersionId: BASE_PARAMS.flowVersionId })
+        })
+
+        it('runs onEnable when there is no previous schedule to keep', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
+
+            await flowTriggerSideEffect(mockLog).enable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+                isRepublish: true,
+                isTriggerUnchanged: true,
+            })
+
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledOnce()
+        })
+
+        it('runs both hooks with isRepublish when only the inputs match, such as a piece upgrade', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
+
+            await flowTriggerSideEffect(mockLog).disable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+                ignoreError: true,
+                isRepublish: true,
+                isTriggerUnchanged: false,
+            })
+            await flowTriggerSideEffect(mockLog).enable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+                isRepublish: true,
+                isTriggerUnchanged: false,
+                previousSchedule,
+            })
+
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledTimes(2)
+            expect(mockSubmitAndWaitForResponse).toHaveBeenNthCalledWith(1, expect.objectContaining({ isRepublish: true }), mockLog)
+            expect(mockSubmitAndWaitForResponse).toHaveBeenNthCalledWith(2, expect.objectContaining({ isRepublish: true }), mockLog)
+        })
+
+        it('still runs the hooks for a trigger that is not polling', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
+
+            await flowTriggerSideEffect(mockLog).disable({
+                ...BASE_PARAMS,
+                pieceTrigger: makeManualTrigger(),
+                ignoreError: true,
+                isTriggerUnchanged: true,
+            })
+
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledOnce()
+        })
+    })
 })
