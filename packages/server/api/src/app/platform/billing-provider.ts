@@ -78,6 +78,9 @@ export const billingProvider = hooksFactory.create<BillingProvider>(() => ({
     getPlatformSelfServeTrial: async () => {
         return null
     },
+    planCarriesSelfServeTrial: async () => {
+        return false
+    },
 }))
 
 export async function assertCreditsAndAppSumoNotExceeded({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
@@ -431,4 +434,5 @@ export type BillingProvider = {
     getSelfServeTrialInfo(platformId: string): Promise<SelfServeTrialStatus>
     startSelfServeTrial(platformId: string): Promise<SelfServeTrialStatus>
     getPlatformSelfServeTrial(platformId: string): Promise<SelfServeTrialDates | null>
+    planCarriesSelfServeTrial(platformId: string): Promise<boolean>
 }
