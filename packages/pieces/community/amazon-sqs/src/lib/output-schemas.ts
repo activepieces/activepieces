@@ -105,6 +105,76 @@ export const newMessageOutputSchema: OutputSchema = {
   fields: messageFields(),
 };
 
+export const getQueueUrlOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'queueName', label: 'Queue Name' },
+    { key: 'queueUrl', label: 'Queue URL', format: 'url' },
+  ],
+};
+
+export const createQueueOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'queueName', label: 'Queue Name' },
+    { key: 'queueUrl', label: 'Queue URL', format: 'url' },
+    { key: 'fifo', label: 'FIFO Queue', format: 'boolean' },
+  ],
+};
+
+export const deleteQueueOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'queueUrl', label: 'Queue URL', format: 'url' },
+  ],
+};
+
+export const setQueueAttributesOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'queueUrl', label: 'Queue URL', format: 'url' },
+    { key: 'updatedAttributes', label: 'Updated Attributes' },
+  ],
+};
+
+export const batchResultOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'successful',
+      label: 'Successful',
+      labelKey: 'id',
+      listItems: [{ key: 'id', label: 'Entry ID' }],
+    },
+    {
+      key: 'failed',
+      label: 'Failed',
+      labelKey: 'id',
+      listItems: [
+        { key: 'id', label: 'Entry ID' },
+        { key: 'code', label: 'Error Code' },
+        { key: 'message', label: 'Error Message' },
+        { key: 'senderFault', label: 'Sender Fault', format: 'boolean' },
+      ],
+    },
+    { key: 'successCount', label: 'Success Count', format: 'number' },
+    { key: 'failureCount', label: 'Failure Count', format: 'number' },
+  ],
+};
+
+export const tagQueueOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'queueUrl', label: 'Queue URL', format: 'url' },
+    { key: 'tagKeys', label: 'Tag Keys' },
+  ],
+};
+
+export const listQueueTagsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'queueUrl', label: 'Queue URL', format: 'url' },
+    { key: 'tags', label: 'Tags', dynamicKey: true },
+    { key: 'count', label: 'Count', format: 'number' },
+  ],
+};
+
 function messageFields(): OutputSchemaField[] {
   return [
     { key: 'messageId', label: 'Message ID' },
