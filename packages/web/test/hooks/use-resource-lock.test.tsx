@@ -715,6 +715,50 @@ describe('useResourceLock with beforeRelease', () => {
     expect(unlockEmits()).toHaveLength(0);
   });
 
+  it('releases the lock when the page leaves, and takes it again when the page comes back from the back/forward cache', async () => {
+    await mountOwning({ beforeRelease: () => Promise.resolve() });
+
+    await act(async () => {
+      window.dispatchEvent(new Event('pagehide'));
+    });
+    expect(unlockEmits()).toHaveLength(1);
+
+    await act(async () => {
+      window.dispatchEvent(new Event('pageshow'));
+    });
+    expect(lockEmits()).toHaveLength(2);
+
+    await act(async () => {
+      lockEmits()[1].ack?.({
+        acquired: false,
+        lock: SAME_USER_IN_ANOTHER_TAB,
+      });
+    });
+    expect(latestHookResult?.lockedBy).toEqual(SAME_USER_IN_ANOTHER_TAB);
+
+    await act(async () => {
+      root.unmount();
+    });
+    expect(unlockEmits()).toHaveLength(1);
+  });
+
+  it('does not release or take the lock on page leave and return when the tab does not own it', async () => {
+    await act(async () => {
+      root.render(<Probe onTakeOver={vi.fn()} />);
+    });
+    await act(async () => {
+      lockEmits()[0].ack?.({ acquired: false, lock: OTHER_USER });
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event('pagehide'));
+      window.dispatchEvent(new Event('pageshow'));
+    });
+
+    expect(unlockEmits()).toHaveLength(0);
+    expect(lockEmits()).toHaveLength(1);
+  });
+
   async function mountOwning({
     beforeRelease,
   }: {

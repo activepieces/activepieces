@@ -143,9 +143,31 @@ function useResourceLock({
       );
     }, 30_000);
 
+    let releasedOnPageHide = false;
+    const releaseOnPageHide = () => {
+      if (!isOwner.current) {
+        return;
+      }
+      isOwner.current = false;
+      releasedOnPageHide = true;
+      releaseAfter({
+        beforeRelease: beforeReleaseRef.current,
+        release: () => releaseIfLatestAcquire({ acquire, resourceId, socket }),
+      });
+    };
+    const acquireOnPageShow = () => {
+      if (releasedOnPageHide) {
+        setLockSession((session) => session + 1);
+      }
+    };
+    window.addEventListener('pagehide', releaseOnPageHide);
+    window.addEventListener('pageshow', acquireOnPageShow);
+
     return () => {
       currentAcquire.current = null;
       clearInterval(heartbeat);
+      window.removeEventListener('pagehide', releaseOnPageHide);
+      window.removeEventListener('pageshow', acquireOnPageShow);
       if (isOwner.current) {
         isOwner.current = false;
         releaseAfter({
