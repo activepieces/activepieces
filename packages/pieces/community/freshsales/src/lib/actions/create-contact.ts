@@ -4,7 +4,7 @@ import { freshsalesAuth } from '../auth';
 import { freshsalesClient } from '../common/client';
 import { freshsalesProps } from '../common/props';
 import { freshsalesRecords } from '../common/records';
-import { contactOutputSchema } from '../output-schemas';
+import { createContactOutputSchema } from '../output-schemas';
 
 export const freshSalesCreateContact = createAction({
   auth: freshsalesAuth,
@@ -18,7 +18,7 @@ export const freshSalesCreateContact = createAction({
       'Creates a new contact in Freshsales and returns it with its ID. Email is required; owner, territory, status, lifecycle stage and lead source take IDs from the dropdowns or the List Field Options tool; Sales account id links the contact to an account as primary. Custom Fields is a JSON object keyed by cf_ API names. Not idempotent: each call creates a new contact; use Upsert Contact to avoid duplicates.',
     idempotent: false,
   },
-  outputSchema: contactOutputSchema,
+  outputSchema: createContactOutputSchema,
   props: {
     first_name: Property.ShortText({
       displayName: 'First name',
@@ -167,8 +167,9 @@ export const freshSalesCreateContact = createAction({
       query: { include: freshsalesRecords.RECORD_INCLUDES.contacts },
       body: { contact },
     });
-    return freshsalesRecords.shapeContact(
+    const created = freshsalesRecords.shapeContact(
       freshsalesClient.unwrap({ body: response, key: 'contact' })
     );
+    return { ...created, contact: created };
   },
 });

@@ -83,6 +83,13 @@ export const deletedFields: OutputSchema['fields'] = [
 
 export const contactOutputSchema: OutputSchema = { fields: contactFields };
 
+export const createContactOutputSchema: OutputSchema = {
+  fields: [
+    ...contactFields,
+    { key: 'contact', label: 'Contact (legacy)', children: contactFields },
+  ],
+};
+
 export const getContactOutputSchema: OutputSchema = {
   fields: [
     ...contactFields,
