@@ -248,6 +248,22 @@ describe('Seat grace after the self-serve trial', () => {
         }
     })
 
+    it('reads the cached trials of every platform over its seats in one go', async () => {
+        const first = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 8 })
+        const second = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 8 })
+        stubRefresh()
+        const getMany = vi.spyOn(distributedStore, 'getMany')
+        const get = vi.spyOn(distributedStore, 'get')
+
+        await trialSeatGrace(log).sweep()
+
+        expect(getMany).toHaveBeenCalledTimes(1)
+        expect(getMany.mock.calls[0][0]).toEqual(expect.arrayContaining([first.platformId, second.platformId].map((platformId) => `platform_plan:self-serve-trial:v2:${platformId}`)))
+        expect(get.mock.calls.some(([key]) => key.startsWith('platform_plan:self-serve-trial:'))).toBe(false)
+        expect(await statusOf(first.trialUsers[1])).toBe(UserStatus.INACTIVE)
+        expect(await statusOf(second.trialUsers[1])).toBe(UserStatus.INACTIVE)
+    })
+
     it('reads the trial from Autumn when the cache has nothing, then ends the grace', async () => {
         const { platformId, dates, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3, trialEndedDaysAgo: 8 })
         await selfServeTrialUtils.forget(platformId)
