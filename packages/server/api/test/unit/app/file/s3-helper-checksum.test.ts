@@ -43,6 +43,7 @@ type CapturedRequest = {
 
 const captured: CapturedRequest[] = []
 let server: Server
+let deleteResultBody = ''
 
 const log = {
     info: vi.fn(),
@@ -62,7 +63,7 @@ describe('s3Helper checksum behavior on S3-compatible providers', () => {
                     body: Buffer.concat(chunks).toString('utf8'),
                 })
                 res.writeHead(200, { 'content-type': 'application/xml' })
-                res.end('<?xml version="1.0"?><DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"></DeleteResult>')
+                res.end(`<?xml version="1.0"?><DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">${deleteResultBody}</DeleteResult>`)
             })
         })
         await new Promise<void>((resolve) => server.listen(0, resolve))
@@ -75,6 +76,7 @@ describe('s3Helper checksum behavior on S3-compatible providers', () => {
 
     beforeEach(() => {
         captured.length = 0
+        deleteResultBody = ''
     })
 
     it('uploads without aws-chunked encoding or checksum headers', async () => {
@@ -98,5 +100,13 @@ describe('s3Helper checksum behavior on S3-compatible providers', () => {
         expect(deleteRequest).toBeDefined()
         expect(deleteRequest?.headers['x-amz-checksum-crc32c']).toBeDefined()
         expect(deleteRequest?.headers['x-amz-checksum-crc32']).toBeUndefined()
+    })
+
+    it('returns the keys that S3 could not delete', async () => {
+        deleteResultBody = '<Error><Key>project/p1/FLOW_RUN_LOG/f2</Key><Code>AccessDenied</Code><Message>Access Denied</Message></Error>'
+
+        const failedKeys = await s3Helper(log).deleteFiles(['project/p1/FLOW_RUN_LOG/f1', 'project/p1/FLOW_RUN_LOG/f2'])
+
+        expect(failedKeys).toEqual(['project/p1/FLOW_RUN_LOG/f2'])
     })
 })
