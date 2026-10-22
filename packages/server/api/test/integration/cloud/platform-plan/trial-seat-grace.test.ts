@@ -38,12 +38,12 @@ describe('Seat grace after the self-serve trial', () => {
 
         const plan = await platformPlanRepo().findOneByOrFail({ platformId })
 
-        expect(await trialSeatGrace(log).get({ plan })).toEqual({
+        expect(await trialSeatGrace(log).getRunningGrace({ plan })).toEqual({
             usedSeats: 5,
             seatLimit: 3,
             userIds: [trialUsers[2].id, trialUsers[1].id],
         })
-        const endsAt = dayjs(await trialSeatGrace(log).endsAt({ platformId, dates }))
+        const endsAt = dayjs(await trialSeatGrace(log).getGraceDeadline({ platformId, dates }))
         expect(endsAt.toISOString().slice(11)).toBe('15:30:00.000Z')
         expect(endsAt.isBefore(dayjs(dates.endsAt).add(7, 'day'))).toBe(false)
         expect(endsAt.isBefore(dayjs(dates.endsAt).add(8, 'day'))).toBe(true)
@@ -55,7 +55,7 @@ describe('Seat grace after the self-serve trial', () => {
 
         const plan = await platformPlanRepo().findOneByOrFail({ platformId })
 
-        expect(await trialSeatGrace(log).get({ plan })).toEqual({
+        expect(await trialSeatGrace(log).getRunningGrace({ plan })).toEqual({
             usedSeats: 4,
             seatLimit: 3,
             userIds: [trialUsers[2].id],
@@ -67,19 +67,19 @@ describe('Seat grace after the self-serve trial', () => {
 
         const plan = await platformPlanRepo().findOneByOrFail({ platformId })
 
-        expect(await trialSeatGrace(log).get({ plan })).toBeNull()
-        expect(await trialSeatGrace(log).endsAt({ platformId, dates })).toBeNull()
+        expect(await trialSeatGrace(log).getRunningGrace({ plan })).toBeNull()
+        expect(await trialSeatGrace(log).getGraceDeadline({ platformId, dates })).toBeNull()
     })
 
     it('shows nothing while the trial still runs', async () => {
         const { platformId } = await setupPlatform({ usersLimit: 1, trialUsers: 2 })
         const running = { startedAt: dayjs().subtract(2, 'day').toISOString(), endsAt: dayjs().add(5, 'day').toISOString() }
-        await selfServeTrialUtils.save({ platformId, dates: running })
+        await selfServeTrialUtils.cacheTrialDates({ platformId, dates: running })
 
         const plan = await platformPlanRepo().findOneByOrFail({ platformId })
 
-        expect(await trialSeatGrace(log).get({ plan })).toBeNull()
-        expect(await trialSeatGrace(log).endsAt({ platformId, dates: running })).toBeNull()
+        expect(await trialSeatGrace(log).getRunningGrace({ plan })).toBeNull()
+        expect(await trialSeatGrace(log).getGraceDeadline({ platformId, dates: running })).toBeNull()
     })
 
     it('counts embedded users like any other user and can pick them', async () => {
@@ -87,7 +87,7 @@ describe('Seat grace after the self-serve trial', () => {
 
         const plan = await platformPlanRepo().findOneByOrFail({ platformId })
 
-        expect(await trialSeatGrace(log).get({ plan })).toEqual({
+        expect(await trialSeatGrace(log).getRunningGrace({ plan })).toEqual({
             usedSeats: 6,
             seatLimit: 2,
             userIds: [embeddedUsers[2].id, embeddedUsers[1].id, embeddedUsers[0].id, trialUsers[1].id],
@@ -100,8 +100,8 @@ describe('Seat grace after the self-serve trial', () => {
         await deactivate([trialUsers[0], trialUsers[1]])
 
         const plan = await platformPlanRepo().findOneByOrFail({ platformId })
-        expect(await trialSeatGrace(log).get({ plan })).toBeNull()
-        expect(await trialSeatGrace(log).endsAt({ platformId, dates })).toBeNull()
+        expect(await trialSeatGrace(log).getRunningGrace({ plan })).toBeNull()
+        expect(await trialSeatGrace(log).getGraceDeadline({ platformId, dates })).toBeNull()
     })
 
     it('deactivates the users added during the trial beyond the plan seats once the deadline passes', async () => {
@@ -237,7 +237,7 @@ describe('Seat grace after the self-serve trial', () => {
 
     it('skips a platform over its seats that never had a trial, without asking Autumn', async () => {
         const { platformId, trialUsers } = await setupPlatform({ usersLimit: 1, trialUsers: 2, trialEndedDaysAgo: 8 })
-        await selfServeTrialUtils.save({ platformId, dates: null })
+        await selfServeTrialUtils.cacheTrialDates({ platformId, dates: null })
         const refresh = stubRefresh()
 
         await trialSeatGrace(log).sweep()
@@ -266,10 +266,10 @@ describe('Seat grace after the self-serve trial', () => {
 
     it('reads the trial from Autumn when the cache has nothing, then ends the grace', async () => {
         const { platformId, dates, trialUsers } = await setupPlatform({ usersLimit: 3, preTrialUsers: 1, trialUsers: 3, trialEndedDaysAgo: 8 })
-        await selfServeTrialUtils.forget(platformId)
+        await selfServeTrialUtils.deleteCachedTrial(platformId)
         vi.spyOn(autumnUtils, 'refreshEntitlements').mockImplementation(async (_log, refreshed) => {
             if (refreshed === platformId) {
-                await selfServeTrialUtils.save({ platformId, dates })
+                await selfServeTrialUtils.cacheTrialDates({ platformId, dates })
             }
         })
 
@@ -330,8 +330,8 @@ describe('Seat grace after the self-serve trial', () => {
 
         const plan = await platformPlanRepo().findOneByOrFail({ platformId })
 
-        expect(await trialSeatGrace(log).get({ plan })).toBeNull()
-        expect(await trialSeatGrace(log).endsAt({ platformId, dates })).toBeNull()
+        expect(await trialSeatGrace(log).getRunningGrace({ plan })).toBeNull()
+        expect(await trialSeatGrace(log).getGraceDeadline({ platformId, dates })).toBeNull()
     })
 
     it('tells every member the deadline on the platform while the grace runs', async () => {
@@ -347,7 +347,7 @@ describe('Seat grace after the self-serve trial', () => {
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(response.json().selfServeTrial).toEqual({
             ...dates,
-            seatGraceEndsAt: await trialSeatGrace(log).endsAt({ platformId, dates }),
+            seatGraceEndsAt: await trialSeatGrace(log).getGraceDeadline({ platformId, dates }),
         })
         expect(response.json().selfServeTrial.seatGraceEndsAt).not.toBeNull()
     })
@@ -360,7 +360,7 @@ async function setupPlatform({ usersLimit, preTrialUsers = 0, trialUsers = 0, em
         endsAt: dayjs().subtract(trialEndedDaysAgo, 'day').toISOString(),
     }
     await distributedStore.put(getBillingEnforcedKey(mockPlatform.id), true, 300)
-    await selfServeTrialUtils.save({ platformId: mockPlatform.id, dates })
+    await selfServeTrialUtils.cacheTrialDates({ platformId: mockPlatform.id, dates })
     const duringTrial = dayjs(dates.startedAt).add(2, 'day').toISOString()
     return {
         platformId: mockPlatform.id,

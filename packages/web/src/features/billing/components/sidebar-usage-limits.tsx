@@ -42,7 +42,7 @@ export const SidebarUsageLimits = React.memo(() => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const trial = selfServeTrialHooks.useTrial();
   const grace = selfServeTrialHooks.useSeatGrace();
-  const noticeLine = resolveNoticeLine({ trial, grace });
+  const noticeLine = trialOrSeatGraceLine({ trial, grace });
 
   const inWarning = !isUnlimited && severity !== 'default';
   const canManage = isPlatformAdmin && inWarning;
@@ -133,17 +133,17 @@ export const SidebarUsageLimits = React.memo(() => {
 
 SidebarUsageLimits.displayName = 'SidebarUsageLimits';
 
-function resolveNoticeLine({
+function trialOrSeatGraceLine({
   trial,
   grace,
-}: ResolveNoticeLineParams): ReactNode {
+}: TrialOrSeatGraceLineParams): ReactNode {
   if (trial.state === 'active') {
     return <SelfServeTrialLine trial={trial} />;
   }
   return isNil(grace) ? null : <SeatGraceLine grace={grace} />;
 }
 
-type ResolveNoticeLineParams = {
+type TrialOrSeatGraceLineParams = {
   trial: SelfServeTrial;
   grace: SeatGrace | null;
 };
