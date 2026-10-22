@@ -44,7 +44,7 @@ export const newImageCompletedTrigger = createTrigger({
     });
     await context.store.put<PollState>(STORE_KEY, {
       seen: images.filter((i) => i.status === 'completed').map((i) => i.uid).slice(0, MAX_SEEN),
-      pending: images.filter((i) => i.status === 'pending').map((i) => i.uid),
+      pending: images.filter((i) => i.status === 'pending').map((i) => toPendingEntry(i)).slice(0, MAX_PENDING),
       head: newestCreatedAt(images) ?? new Date().toISOString(),
       backfill: null,
     });
@@ -63,10 +63,12 @@ export const newImageCompletedTrigger = createTrigger({
   },
   async run(context) {
     const apiKey = context.auth.secret_text;
-    const stored = await context.store.get<Partial<PollState>>(STORE_KEY);
+    const stored = await context.store.get<StoredPollState>(STORE_KEY);
     const state: PollState = {
       seen: stored?.seen ?? [],
-      pending: stored?.pending ?? [],
+      pending: (stored?.pending ?? []).map((entry) =>
+        typeof entry === 'string' ? { uid: entry, created_at: null } : entry
+      ),
       head: stored?.head ?? null,
       backfill: stored?.backfill ?? null,
     };
@@ -98,21 +100,28 @@ export const newImageCompletedTrigger = createTrigger({
     }
     const recent = dedupe([...fresh.images, ...backfillImages]);
     const recentByUid = new Map(recent.map((i) => [i.uid, i]));
-    const pendingToCheck = state.pending.filter((uid) => !recentByUid.has(uid));
+    const pendingToCheck = state.pending.filter((entry) => !recentByUid.has(entry.uid));
     const pendingChecks = await Promise.all(
       pendingToCheck
         .slice(0, MAX_PENDING_CHECKS)
-        .map((uid) => fetchImage({ apiKey, uid }))
+        .map((entry) => fetchImage({ apiKey, uid: entry.uid }))
     );
     const candidates = [...recent, ...pendingChecks.filter((i): i is NormalizedImage => i !== null)];
     const emitted = candidates.filter((i) => i.status === 'completed' && !seen.has(i.uid));
-    const stillPending = [
-      ...candidates.filter((i) => i.status === 'pending').map((i) => i.uid),
+    const stillPending = dedupePending([
+      ...candidates.filter((i) => i.status === 'pending').map((i) => toPendingEntry(i)),
       ...pendingToCheck.slice(MAX_PENDING_CHECKS),
-    ];
+    ]);
+    const overflowFloor = oldestCreatedAt(stillPending.slice(MAX_PENDING));
+    if (overflowFloor !== null) {
+      backfill = {
+        page: 1,
+        until: backfill ? olderOf(backfill.until, overflowFloor) : overflowFloor,
+      };
+    }
     await context.store.put<PollState>(STORE_KEY, {
       seen: [...emitted.map((i) => i.uid), ...state.seen].slice(0, MAX_SEEN),
-      pending: Array.from(new Set(stillPending)),
+      pending: stillPending.slice(0, MAX_PENDING),
       head: newestCreatedAt(fresh.images) ?? state.head,
       backfill,
     });
@@ -154,6 +163,32 @@ async function scanPages({
     reachedStop: stopAt === null && maxPages === 1,
     nextPage: startPage + maxPages,
   };
+}
+
+function toPendingEntry(image: NormalizedImage): PendingEntry {
+  return { uid: image.uid, created_at: image.created_at };
+}
+
+function dedupePending(entries: PendingEntry[]): PendingEntry[] {
+  const unique = new Map<string, PendingEntry>();
+  for (const entry of entries) {
+    if (!unique.has(entry.uid)) unique.set(entry.uid, entry);
+  }
+  return Array.from(unique.values());
+}
+
+function oldestCreatedAt(entries: PendingEntry[]): string | null {
+  let oldest: string | null = null;
+  for (const entry of entries) {
+    if (entry.created_at === null) continue;
+    oldest = oldest === null ? entry.created_at : olderOf(oldest, entry.created_at);
+  }
+  return oldest;
+}
+
+function olderOf(a: string | null, b: string): string | null {
+  if (a === null) return null;
+  return Date.parse(b) < Date.parse(a) ? b : a;
 }
 
 function dedupe(images: NormalizedImage[]): NormalizedImage[] {
@@ -202,12 +237,19 @@ async function fetchImage({
 
 const STORE_KEY = 'bannerbear_new_image_completed_state';
 const MAX_PAGES_PER_SCAN = 10;
-const MAX_SEEN = 2000;
+const MAX_SEEN = 5000;
+const MAX_PENDING = 2000;
 const MAX_PENDING_CHECKS = 25;
 
 type PollState = {
   seen: string[];
-  pending: string[];
+  pending: PendingEntry[];
   head: string | null;
   backfill: { page: number; until: string | null } | null;
+};
+
+type PendingEntry = { uid: string; created_at: string | null };
+
+type StoredPollState = Partial<Omit<PollState, 'pending'>> & {
+  pending?: (string | PendingEntry)[];
 };
