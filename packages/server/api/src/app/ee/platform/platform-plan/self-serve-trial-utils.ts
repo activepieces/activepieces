@@ -1,37 +1,37 @@
 import { isNil } from '@activepieces/core-utils'
 import { PlanName, SelfServeTrialDates } from '@activepieces/shared'
 import { type GetCustomerResponse } from 'autumn-js'
-import { getSelfServeTrialKey, SELF_SERVE_TRIAL_TTL_SECONDS } from '../../../database/redis/keys'
+import { getSelfServeTrialCacheKey, SELF_SERVE_TRIAL_CACHE_TTL_SECONDS } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 
 export const selfServeTrialUtils = {
-    async read(platformId: string): Promise<CachedSelfServeTrial | null> {
-        return distributedStore.get<CachedSelfServeTrial>(getSelfServeTrialKey(platformId))
+    async readCachedTrial(platformId: string): Promise<CachedSelfServeTrial | null> {
+        return distributedStore.get<CachedSelfServeTrial>(getSelfServeTrialCacheKey(platformId))
     },
-    async save({ platformId, dates }: SaveSelfServeTrialParams): Promise<void> {
-        await distributedStore.put(getSelfServeTrialKey(platformId), { dates }, SELF_SERVE_TRIAL_TTL_SECONDS)
+    async cacheTrialDates({ platformId, dates }: CacheTrialDatesParams): Promise<void> {
+        await distributedStore.put(getSelfServeTrialCacheKey(platformId), { dates }, SELF_SERVE_TRIAL_CACHE_TTL_SECONDS)
     },
-    async saveFromCustomer({ platformId, customer }: SaveFromCustomerParams): Promise<SelfServeTrialDates | null> {
-        const dates = trialDatesOf(customer)
+    async cacheTrialDatesFromCustomer({ platformId, customer }: CacheTrialDatesFromCustomerParams): Promise<SelfServeTrialDates | null> {
+        const dates = trialDatesFromCustomer(customer)
         if (!isNil(dates)) {
-            await selfServeTrialUtils.save({ platformId, dates })
+            await selfServeTrialUtils.cacheTrialDates({ platformId, dates })
             return dates
         }
-        return selfServeTrialUtils.rememberNoTrial(platformId)
+        return selfServeTrialUtils.cacheNoTrialUnlessAlreadyCached(platformId)
     },
-    async rememberNoTrial(platformId: string): Promise<SelfServeTrialDates | null> {
-        const remembered = await distributedStore.putIfAbsent(getSelfServeTrialKey(platformId), { dates: null }, SELF_SERVE_TRIAL_TTL_SECONDS)
-        if (remembered) {
+    async cacheNoTrialUnlessAlreadyCached(platformId: string): Promise<SelfServeTrialDates | null> {
+        const wroteNoTrial = await distributedStore.putIfAbsent(getSelfServeTrialCacheKey(platformId), { dates: null }, SELF_SERVE_TRIAL_CACHE_TTL_SECONDS)
+        if (wroteNoTrial) {
             return null
         }
-        return (await selfServeTrialUtils.read(platformId))?.dates ?? null
+        return (await selfServeTrialUtils.readCachedTrial(platformId))?.dates ?? null
     },
-    async forget(platformId: string): Promise<void> {
-        await distributedStore.delete(getSelfServeTrialKey(platformId))
+    async deleteCachedTrial(platformId: string): Promise<void> {
+        await distributedStore.delete(getSelfServeTrialCacheKey(platformId))
     },
 }
 
-function trialDatesOf(customer: GetCustomerResponse): SelfServeTrialDates | null {
+function trialDatesFromCustomer(customer: GetCustomerResponse): SelfServeTrialDates | null {
     const addOn = customer.subscriptions.find((subscription) =>
         subscription.planId === PlanName.ENTERPRISE_TRIAL
         && subscription.status === 'active'
@@ -40,24 +40,24 @@ function trialDatesOf(customer: GetCustomerResponse): SelfServeTrialDates | null
         return { startedAt: new Date(addOn.startedAt).toISOString(), endsAt: new Date(addOn.trialEndsAt).toISOString() }
     }
     const metadata: Record<string, unknown> = customer.metadata ?? {}
-    const startedAt = Date.parse(String(metadata[METADATA_STARTED_AT] ?? ''))
-    const endsAt = Date.parse(String(metadata[METADATA_ENDS_AT] ?? ''))
+    const startedAt = Date.parse(String(metadata[TRIAL_STARTED_AT_METADATA_KEY] ?? ''))
+    const endsAt = Date.parse(String(metadata[TRIAL_ENDS_AT_METADATA_KEY] ?? ''))
     if (Number.isNaN(startedAt) || Number.isNaN(endsAt) || endsAt <= startedAt) {
         return null
     }
     return { startedAt: new Date(startedAt).toISOString(), endsAt: new Date(endsAt).toISOString() }
 }
 
-const METADATA_STARTED_AT = 'self_serve_trial_started_at'
+const TRIAL_STARTED_AT_METADATA_KEY = 'self_serve_trial_started_at'
 
-const METADATA_ENDS_AT = 'self_serve_trial_ends_at'
+const TRIAL_ENDS_AT_METADATA_KEY = 'self_serve_trial_ends_at'
 
-type SaveSelfServeTrialParams = {
+type CacheTrialDatesParams = {
     platformId: string
     dates: SelfServeTrialDates | null
 }
 
-type SaveFromCustomerParams = {
+type CacheTrialDatesFromCustomerParams = {
     platformId: string
     customer: GetCustomerResponse
 }
