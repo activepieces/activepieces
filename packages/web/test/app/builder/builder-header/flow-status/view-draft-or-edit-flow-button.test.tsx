@@ -190,7 +190,7 @@ describe('EditFlowOrViewDraftButton', () => {
     expect(harness.getFlow).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the tab read-only after leaving a test run until the newest draft arrives', async () => {
+  it('keeps the test run and the tab read-only until the newest draft arrives', async () => {
     const { flow, store } = await storeWithTestRun();
     const response = Promise.withResolvers<PopulatedFlow>();
     harness.getFlow.mockReturnValue(response.promise);
@@ -200,13 +200,71 @@ describe('EditFlowOrViewDraftButton', () => {
     await waitFor(() => {
       expect(harness.getFlow).toHaveBeenCalledTimes(1);
     });
-    expect(store.getState()).toMatchObject({ run: null, readonly: true });
+    expect(store.getState()).toMatchObject({
+      run: { id: 'run-1' },
+      readonly: true,
+    });
 
     await act(async () => {
       response.resolve(flow);
     });
     await waitFor(() => {
       expect(store.getState().readonly).toBe(false);
+    });
+    expect(store.getState().run).toBeNull();
+  });
+
+  it('opens the draft when a run update arrives while the request runs', async () => {
+    const { flow, store } = await storeWithTestRun();
+    const response = Promise.withResolvers<PopulatedFlow>();
+    harness.getFlow.mockReturnValue(response.promise);
+    renderOnFlowPage(store);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit flow' }));
+    await waitFor(() => {
+      expect(harness.getFlow).toHaveBeenCalledTimes(1);
+    });
+    await act(async () => {
+      await store.getState().setRun(
+        {
+          ...flowRun(),
+          environment: RunEnvironment.TESTING,
+          status: FlowRunStatus.RUNNING,
+        },
+        store.getState().flowVersion,
+      );
+    });
+    await act(async () => {
+      response.resolve(flow);
+    });
+
+    await waitFor(() => {
+      expect(store.getState().readonly).toBe(false);
+    });
+    expect(store.getState().run).toBeNull();
+  });
+
+  it('keeps the version the person opens while the request over a test run runs', async () => {
+    const { flow, store } = await storeWithTestRun();
+    const response = Promise.withResolvers<PopulatedFlow>();
+    harness.getFlow.mockReturnValue(response.promise);
+    renderOnFlowPage(store);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit flow' }));
+    await waitFor(() => {
+      expect(harness.getFlow).toHaveBeenCalledTimes(1);
+    });
+    act(() => {
+      store.getState().setVersion(olderVersion());
+    });
+    await act(async () => {
+      response.resolve(flow);
+    });
+
+    expect(store.getState()).toMatchObject({
+      run: null,
+      readonly: true,
+      flowVersion: { id: 'version-0' },
     });
   });
 

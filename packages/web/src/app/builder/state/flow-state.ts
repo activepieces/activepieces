@@ -53,8 +53,10 @@ export type FlowState = {
   setFlow: (flow: PopulatedFlow) => void;
   applyDraftRefresh: (flow: PopulatedFlow) => void;
   refreshDraft: () => Promise<boolean>;
+  refreshDraftOverRun: (runId: string) => Promise<boolean>;
   refreshDraftAfterFailedSave: () => Promise<void>;
   showsNewestVersion: () => boolean;
+  showsNewestDraft: () => boolean;
   draftRefreshCount: number;
   noteRefreshCounts: Record<string, number>;
   setSampleDataLocally: (params: {
@@ -125,10 +127,11 @@ export const createFlowState = (
   };
   let failedSaves = 0;
   let failedSavesShownByRefresh = 0;
-  const refreshDraft = coalesceRuns(async () => {
+  const refreshDraftShownOver = async ({ runId }: { runId: string | null }) => {
     const failedSavesAtStart = failedSaves;
     const applied = await saveThenRefreshDraft({
       get,
+      runId,
       flowUpdatesQueue,
       flowUpdatesDebounce,
     });
@@ -136,7 +139,10 @@ export const createFlowState = (
       failedSavesShownByRefresh = failedSavesAtStart;
     }
     return applied;
-  });
+  };
+  const refreshDraft = coalesceRuns(() =>
+    refreshDraftShownOver({ runId: null }),
+  );
   return {
     saving: false,
     outputSampleData: initialState.outputSampleData,
@@ -376,23 +382,15 @@ export const createFlowState = (
       flowUpdatesDebounce.flush();
     },
     refreshDraft,
+    refreshDraftOverRun: (runId: string) => refreshDraftShownOver({ runId }),
     refreshDraftAfterFailedSave: async () => {
       if (failedSaves === failedSavesShownByRefresh) {
         return;
       }
       await refreshDraft();
     },
-    showsNewestVersion: () => {
-      const { run, flow, flowVersion } = get();
-      const isPublishedVersionWithNoDraft =
-        flowVersion.id === flow.version.id &&
-        flowVersion.id === flow.publishedVersionId;
-      return (
-        isNil(run) &&
-        (flowVersion.state === FlowVersionState.DRAFT ||
-          isPublishedVersionWithNoDraft)
-      );
-    },
+    showsNewestVersion: () => isNil(get().run) && showsNewestDraft(get()),
+    showsNewestDraft: () => showsNewestDraft(get()),
     setVersion: (
       flowVersion: FlowVersion,
       shouldReselectInitialStep: boolean = true,
@@ -557,6 +555,29 @@ export const createFlowState = (
   };
 };
 
+function showsNewestDraft({
+  flow,
+  flowVersion,
+}: Pick<BuilderState, 'flow' | 'flowVersion'>): boolean {
+  const isPublishedVersionWithNoDraft =
+    flowVersion.id === flow.version.id &&
+    flowVersion.id === flow.publishedVersionId;
+  return (
+    flowVersion.state === FlowVersionState.DRAFT ||
+    isPublishedVersionWithNoDraft
+  );
+}
+
+function showsNewestDraftOver({
+  state,
+  runId,
+}: {
+  state: BuilderState;
+  runId: string | null;
+}): boolean {
+  return (state.run?.id ?? null) === runId && showsNewestDraft(state);
+}
+
 function coalesceRuns<T>(run: () => Promise<T>): () => Promise<T> {
   let running: Promise<T> | null = null;
   let queued: Promise<T> | null = null;
@@ -586,19 +607,22 @@ function coalesceRuns<T>(run: () => Promise<T>): () => Promise<T> {
 
 async function saveThenRefreshDraft({
   get,
+  runId,
   flowUpdatesQueue,
   flowUpdatesDebounce,
 }: {
   get: StoreApi<BuilderState>['getState'];
+  runId: string | null;
   flowUpdatesQueue: PromiseQueue;
   flowUpdatesDebounce: KeyedDebounce;
 }): Promise<boolean> {
-  if (!get().showsNewestVersion()) {
+  if (!showsNewestDraftOver({ state: get(), runId })) {
     return false;
   }
   await tryCatch(() => get().savePendingEdits());
   return fetchDraftAndApplyWithNoPendingEdits({
     get,
+    runId,
     flowUpdatesQueue,
     flowUpdatesDebounce,
   });
@@ -606,10 +630,12 @@ async function saveThenRefreshDraft({
 
 async function fetchDraftAndApplyWithNoPendingEdits({
   get,
+  runId,
   flowUpdatesQueue,
   flowUpdatesDebounce,
 }: {
   get: StoreApi<BuilderState>['getState'];
+  runId: string | null;
   flowUpdatesQueue: PromiseQueue;
   flowUpdatesDebounce: KeyedDebounce;
 }): Promise<boolean> {
@@ -621,8 +647,8 @@ async function fetchDraftAndApplyWithNoPendingEdits({
     internalErrorToast();
     throw error;
   }
-  const { flowVersion, applyDraftRefresh, showsNewestVersion } = get();
-  if (!showsNewestVersion()) {
+  const { flowVersion, applyDraftRefresh, clearRun } = get();
+  if (!showsNewestDraftOver({ state: get(), runId })) {
     return false;
   }
   if (
@@ -632,9 +658,13 @@ async function fetchDraftAndApplyWithNoPendingEdits({
     await waitForPendingEditsToSave({ flowUpdatesQueue, flowUpdatesDebounce });
     return fetchDraftAndApplyWithNoPendingEdits({
       get,
+      runId,
       flowUpdatesQueue,
       flowUpdatesDebounce,
     });
+  }
+  if (!isNil(runId)) {
+    clearRun(false);
   }
   applyDraftRefresh(serverFlow);
   refreshChangedSampleData({

@@ -336,24 +336,19 @@ async function openNewestVersionForEdit({
   socket: Socket;
   canEditFlow: boolean;
 }): Promise<void> {
-  const { run, flow, flowVersion } = store.getState();
-  if (!isNil(run)) {
-    if (onRunPage) {
-      navigate(`/flows/${flow.id}`);
-      return;
-    }
-    store.getState().clearRun(false);
+  const { run, flow, showsNewestDraft, refreshDraft, refreshDraftOverRun } =
+    store.getState();
+  if (!isNil(run) && onRunPage) {
+    navigate(`/flows/${flow.id}`);
+    return;
   }
-  const { showsNewestVersion, refreshDraft } = store.getState();
-  if (showsNewestVersion()) {
-    const { data: applied } = await tryCatch(() => refreshDraft());
+  if (showsNewestDraft()) {
+    const { data: applied } = await tryCatch(() =>
+      isNil(run) ? refreshDraft() : refreshDraftOverRun(run.id),
+    );
     if (applied && store.getState().showsNewestVersion()) {
       store.getState().setReadOnly(!canEditFlow);
       socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
-      return;
-    }
-    if (!applied && !isNil(run) && isNil(store.getState().run)) {
-      await store.getState().setRun(run, flowVersion);
     }
     return;
   }
