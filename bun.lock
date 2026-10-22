@@ -718,7 +718,7 @@
     },
     "packages/pieces/community/apache-kafka": {
       "name": "@activepieces/piece-apache-kafka",
-      "version": "0.0.1",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/pieces-framework": "workspace:*",
         "kafkajs": "2.2.4",
