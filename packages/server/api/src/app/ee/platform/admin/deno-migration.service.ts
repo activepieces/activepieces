@@ -6,6 +6,7 @@ import { websocketService } from '../../../core/websockets.service'
 import { fileService } from '../../../file/file.service'
 import { flowSideEffects } from '../../../flows/flow/flow-service-side-effects'
 import { flowRepo } from '../../../flows/flow/flow.repo'
+import { flowVersionTriggerUtil } from '../../../flows/flow-version/flow-version-trigger-util'
 import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { projectService } from '../../../project/project-service'
 
@@ -19,6 +20,7 @@ export const denoMigrationService = (log: FastifyBaseLogger) => ({
 })
 
 const PAGE_SIZE = 100
+const MAX_WRITE_ATTEMPTS = 3
 
 async function applyUseDeno({ log, platformId, projectId, flowIds, useDeno }: { log: FastifyBaseLogger, useDeno: boolean } & MigrateToDenoParams): Promise<MigrateToDenoResult> {
     const where = await buildFlowsFilter({ log, platformId, projectId, flowIds })
@@ -65,7 +67,7 @@ async function migrateFlow({ log, flow, useDeno }: { log: FastifyBaseLogger, flo
     let versionsMigrated = 0
     let publishedVersionMigrated = false
     for (const versionId of targetVersionIds) {
-        const migrated = await setUseDenoOnVersion({ versionId, useDeno })
+        const migrated = await setUseDenoOnVersion({ log, versionId, useDeno })
         versionsMigrated += migrated
         publishedVersionMigrated = publishedVersionMigrated || (migrated > 0 && versionId === flow.publishedVersionId)
         if (migrated > 0 && versionId === latestVersion.id) {
@@ -87,17 +89,20 @@ async function refreshWorkersForPublishedVersion({ log, flow, publishedVersionId
     websocketService.notifyWorkers().flowPublished({ flowId: flow.id, flowVersionId: publishedVersionId, projectId: flow.projectId })
 }
 
-async function setUseDenoOnVersion({ versionId, useDeno }: { versionId: FlowVersionId, useDeno: boolean }): Promise<number> {
-    const flowVersion = await flowVersionRepo().findOneBy({ id: versionId })
-    if (isNil(flowVersion)) {
-        return 0
+async function setUseDenoOnVersion({ log, versionId, useDeno }: { log: FastifyBaseLogger, versionId: FlowVersionId, useDeno: boolean }): Promise<number> {
+    for (let attempt = 0; attempt < MAX_WRITE_ATTEMPTS; attempt++) {
+        const flowVersion = await flowVersionRepo().findOneBy({ id: versionId })
+        if (isNil(flowVersion) || !hasCodeStepToChange({ flowVersion, useDeno })) {
+            return 0
+        }
+        const migratedVersion = setUseDenoOnCodeSteps({ flowVersion, useDeno })
+        const written = await flowVersionTriggerUtil.updateTriggerIfUnchanged({ flowVersion, newTrigger: sanitizeObjectForPostgresql(migratedVersion.trigger) })
+        if (written) {
+            return 1
+        }
     }
-    if (!hasCodeStepToChange({ flowVersion, useDeno })) {
-        return 0
-    }
-    const migratedVersion = setUseDenoOnCodeSteps({ flowVersion, useDeno })
-    await flowVersionRepo().update(versionId, { trigger: sanitizeObjectForPostgresql(migratedVersion.trigger) })
-    return 1
+    log.warn({ flowVersion: { id: versionId } }, '[denoMigrationService] flow version kept changing during the migration, skipping it')
+    return 0
 }
 
 function setUseDenoOnCodeSteps({ flowVersion, useDeno }: { flowVersion: FlowVersion, useDeno: boolean }): FlowVersion {

@@ -8,6 +8,7 @@ import { projectService } from '../../project/project-service'
 import { flowSideEffects } from '../flow/flow-service-side-effects'
 import { flowRepo } from '../flow/flow.repo'
 import { FlowVersionEntity } from './flow-version-entity'
+import { flowVersionTriggerUtil } from './flow-version-trigger-util'
 import { pieceUpgradeRegister } from './piece-upgrade-register'
 
 export const pieceUpgradeService = (log: FastifyBaseLogger) => ({
@@ -142,7 +143,7 @@ async function revertFlowVersion({ flow, platformId, flowVersion, versionReverts
             },
         }
     })
-    const updated = await updateTriggerIfUnchanged({ flowVersion, newTrigger: newFlowVersion.trigger })
+    const updated = await flowVersionTriggerUtil.updateTriggerIfUnchanged({ flowVersion, newTrigger: newFlowVersion.trigger })
     if (!updated) {
         log.warn({ flowVersion: { id: flowVersion.id } }, '[pieceUpgradeService] flow version changed concurrently, skipping revert')
         return []
@@ -204,7 +205,7 @@ async function upgradeFlowVersion({ flow, platformId, flowVersion, isLatestVersi
     }
 
     if (upgraded.length > 0) {
-        const updated = await updateTriggerIfUnchanged({ flowVersion, newTrigger: newFlowVersion.trigger })
+        const updated = await flowVersionTriggerUtil.updateTriggerIfUnchanged({ flowVersion, newTrigger: newFlowVersion.trigger })
         if (!updated) {
             log.warn({ flowVersion: { id: flowVersion.id } }, '[pieceUpgradeService] flow version changed concurrently, skipping upgrade')
             return []
@@ -326,17 +327,6 @@ async function resolveStepDecision({ step, flowVersion, log }: ResolveStepDecisi
     }
 }
 
-async function updateTriggerIfUnchanged({ flowVersion, newTrigger }: UpdateTriggerIfUnchangedParams): Promise<boolean> {
-    const updateResult = await flowVersionRepo().createQueryBuilder()
-        .update()
-        .set({ trigger: newTrigger })
-        .where('id = :id', { id: flowVersion.id })
-        .andWhere('trigger = CAST(:snapshot AS jsonb)', { snapshot: JSON.stringify(flowVersion.trigger) })
-        .returning(['id'])
-        .execute()
-    return updateResult.raw?.length === 1
-}
-
 function getUsedStepName(step: FlowAction | FlowTrigger): string | undefined {
     if (step.type === FlowTriggerType.PIECE) {
         return step.settings.triggerName ?? undefined
@@ -441,11 +431,6 @@ type SendUpgradeAuditEventParams = {
 type SendDraftPushParams = {
     flow: Flow
     log: FastifyBaseLogger
-}
-
-type UpdateTriggerIfUnchangedParams = {
-    flowVersion: FlowVersion
-    newTrigger: FlowVersion['trigger']
 }
 
 type RevertFlowVersionParams = {

@@ -3,6 +3,7 @@ import { CodeAction, Flow, FlowAction, FlowActionType, FlowStatus, flowStructure
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowVersionTriggerUtil } from '../../../../src/app/flows/flow-version/flow-version-trigger-util'
 import { flowVersionRepo } from '../../../../src/app/flows/flow-version/flow-version.service'
 import { db } from '../../../helpers/db'
 import { draftPushes } from '../../../helpers/draft-push'
@@ -243,6 +244,27 @@ describe('POST /v1/admin/flows/migrate-to-deno', () => {
 
         expect(secondResponse.statusCode).toBe(StatusCodes.OK)
         expect(secondResponse.json()).toEqual({ flowsProcessed: 1, flowVersionsMigrated: 0, notifiedFlows: 0 })
+    })
+
+    it('keeps a save that lands between the migration read and its write', async () => {
+        const ctx = await createTestContext(app!)
+        const { flow, draftVersion } = await setupFlowWithDraftAndPublishedVersions(ctx)
+        const realWrite = flowVersionTriggerUtil.updateTriggerIfUnchanged
+        let savedMeanwhile = false
+        vi.spyOn(flowVersionTriggerUtil, 'updateTriggerIfUnchanged').mockImplementation(async (params) => {
+            if (!savedMeanwhile && params.flowVersion.id === draftVersion.id) {
+                savedMeanwhile = true
+                const renamed = flowStructureUtil.transferFlow(params.flowVersion, (step) => step.type === FlowActionType.CODE ? { ...step, displayName: 'Renamed meanwhile' } : step)
+                await db.update('flow_version', draftVersion.id, { trigger: renamed.trigger })
+            }
+            return realWrite(params)
+        })
+
+        const response = await postMigrateToDeno({ flowIds: [flow.id] })
+
+        const savedDraft = await db.findOneByOrFail<FlowVersion>('flow_version', { id: draftVersion.id })
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(getCodeStep(savedDraft)).toMatchObject({ displayName: 'Renamed meanwhile', settings: { useDeno: true } })
     })
 
     it('rejects a body without exactly one selector', async () => {
