@@ -21,10 +21,18 @@ const toErrorPayload = (value) => {
                 ? message.match(/Requires (read|write) access/)
                 : null
             if (accessMatch) {
-                const tmpGranted = Deno.permissions.querySync({ name: accessMatch[1], path: __AP_TMP_DIR__ }).state === 'granted'
-                message += tmpGranted
-                    ? '. Only os.tmpdir() is accessible from a code step.'
-                    : '. No filesystem access is available to a code step in this execution mode.'
+                const operation = accessMatch[1]
+                const tmpGranted = Deno.permissions.querySync({ name: operation, path: __AP_TMP_DIR__ }).state === 'granted'
+                if (operation === 'write') {
+                    message += tmpGranted
+                        ? '. Only os.tmpdir() is writable from a code step.'
+                        : '. Writes are not available to a code step in this execution mode.'
+                }
+                else {
+                    message += tmpGranted
+                        ? ". Only os.tmpdir() and the step's own directory are readable from a code step."
+                        : ". Only the step's own directory is readable by a code step in this execution mode."
+                }
             }
             return { message, name: value.name, stack: value.stack }
         }
