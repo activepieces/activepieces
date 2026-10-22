@@ -6,7 +6,7 @@ import dayjs, { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, SelectQueryBuilder } from 'typeorm'
 import { transaction } from '../../../core/db/transaction'
-import { getBillingEnforcedKey } from '../../../database/redis/keys'
+import { getBillingEnforcedKey, getSelfServeTrialKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { billingProvider } from '../../../platform/billing-provider'
@@ -15,7 +15,7 @@ import { userRepo } from '../../../user/user-service'
 import { getInvitationExpiryCutoff, userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { platformPlanTelemetry } from './platform-plan-telemetry'
 import { platformPlanRepo } from './platform-plan.service'
-import { selfServeTrialUtils } from './self-serve-trial-utils'
+import { CachedSelfServeTrial, selfServeTrialUtils } from './self-serve-trial-utils'
 
 const SEAT_GRACE_DAYS = 7
 const SWEEP_HOUR_UTC = 15
@@ -48,8 +48,10 @@ export const trialSeatGrace = (log: FastifyBaseLogger) => ({
                 failedPlatformIds.add(platformId)
             }
         }
-        for (const platformId of await findPlatformsOverTheirSeats()) {
-            const { error } = await tryCatch(() => endGraceIfDue({ platformId, now, log }))
+        const candidates = await findPlatformsOverTheirSeats()
+        const cachedTrials = await readCachedTrials(candidates)
+        for (const platformId of candidates) {
+            const { error } = await tryCatch(() => endGraceIfDue({ platformId, cached: cachedTrials.get(platformId), now, log }))
             if (!isNil(error)) {
                 log.error({ error, platform: { id: platformId } }, 'Failed to end the seat grace')
                 failedPlatformIds.add(platformId)
@@ -61,19 +63,23 @@ export const trialSeatGrace = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function endGraceIfDue({ platformId, now, log }: EndGraceIfDueParams): Promise<void> {
-    const dates = await trialDatesFor({ platformId, log })
+async function endGraceIfDue({ platformId, cached, now, log }: EndGraceIfDueParams): Promise<void> {
+    const dates = isNil(cached) ? await fetchTrialDates({ platformId, log }) : cached.dates
     if (isNil(dates) || !graceDue({ dates, now })) {
         return
     }
     await deactivateUsersOverPlan({ platformId, dates, log })
 }
 
-async function trialDatesFor({ platformId, log }: PlatformLogParams): Promise<SelfServeTrialDates | null> {
-    const cached = await selfServeTrialUtils.read(platformId)
-    if (!isNil(cached)) {
-        return cached.dates
-    }
+async function readCachedTrials(platformIds: string[]): Promise<Map<string, CachedSelfServeTrial>> {
+    const cached = await distributedStore.getMany<CachedSelfServeTrial>(platformIds.map((platformId) => getSelfServeTrialKey(platformId)))
+    return new Map(platformIds.flatMap((platformId, index): [string, CachedSelfServeTrial][] => {
+        const entry = cached[index]
+        return isNil(entry) ? [] : [[platformId, entry]]
+    }))
+}
+
+async function fetchTrialDates({ platformId, log }: PlatformLogParams): Promise<SelfServeTrialDates | null> {
     await billingProvider.get(log).refreshEntitlements(platformId)
     return (await selfServeTrialUtils.read(platformId))?.dates ?? null
 }
@@ -216,6 +222,7 @@ type PlatformLogParams = {
 }
 
 type EndGraceIfDueParams = PlatformLogParams & {
+    cached: CachedSelfServeTrial | undefined
     now: Dayjs
 }
 
