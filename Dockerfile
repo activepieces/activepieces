@@ -1,4 +1,4 @@
-FROM node:24.14.0-bullseye-slim AS base
+FROM node:24.22.1-bookworm-slim AS base
 
 # C.UTF-8 ships with Debian, so no locale generation is needed.
 # REDISMS_VERSION pins the Redis that redis-memory-server (AP_REDIS_TYPE=MEMORY)
