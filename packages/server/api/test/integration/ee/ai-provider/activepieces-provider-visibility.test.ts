@@ -24,7 +24,7 @@ afterAll(async () => {
 async function visibleProviders({ embeddingEnabled, trial, planWrittenAt }: VisibleProvidersParams) {
     const ctx = await createTestContext(app!, { plan: { embeddingEnabled } })
     if (trial !== undefined) {
-        await selfServeTrialUtils.save({ platformId: ctx.platform.id, dates: trial })
+        await selfServeTrialUtils.cacheTrialDates({ platformId: ctx.platform.id, dates: trial })
     }
     if (planWrittenAt !== undefined) {
         await databaseConnection().query('UPDATE "platform_plan" SET "updated" = $1 WHERE "platformId" = $2', [planWrittenAt, ctx.platform.id])

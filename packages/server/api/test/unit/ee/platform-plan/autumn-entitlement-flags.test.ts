@@ -185,7 +185,7 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
             grantedFeatureIds,
             balances: {},
             scheduledUsersLimit: null,
-            selfServeTrial: null,
+            runningTrialAddOn: null,
         })
         expect(projection).toMatchObject({
             plan: 'appsumo',
@@ -219,28 +219,28 @@ describe('mapAutumnFeaturesToPlatformPlan', () => {
             grantedFeatureIds: new Set(FREE_FLAGS),
             balances: {},
             scheduledUsersLimit: null,
-            selfServeTrial: null,
+            runningTrialAddOn: null,
         })
         expect(projection).not.toHaveProperty('billingEnforced')
         expect(projection.showPoweredBy).toBe(true)
     })
 
     it.each([
-        { name: 'drops', selfServeTrial: { startedAt: 1, endsAt: 2 }, expected: null },
-        { name: 'keeps', selfServeTrial: null, expected: 5 },
-    ])('$name a scheduled seat reduction depending on whether a self-serve trial runs', ({ selfServeTrial, expected }) => {
+        { name: 'drops', runningTrialAddOn: { startedAt: 1, endsAt: 2 }, expected: null },
+        { name: 'keeps', runningTrialAddOn: null, expected: 5 },
+    ])('$name a scheduled seat reduction depending on whether a self-serve trial runs', ({ runningTrialAddOn, expected }) => {
         const projection = autumnUtils.mapAutumnFeaturesToPlatformPlan({
             planId: 'team',
             grantedFeatureIds: new Set(FREE_FLAGS),
             balances: {},
             scheduledUsersLimit: 5,
-            selfServeTrial,
+            runningTrialAddOn,
         })
         expect(projection.scheduledUsersLimit).toBe(expected)
     })
 })
 
-describe('withoutExpiredSelfServeTrial', () => {
+describe('withoutExpiredTrialAddOn', () => {
     const TRIAL_FLAGS = ['auditLogEnabled', 'ssoEnabled']
     const HOUR_MS = 60 * 60 * 1000
 
@@ -266,7 +266,7 @@ describe('withoutExpiredSelfServeTrial', () => {
     it('drops a trial that Autumn still shows as active after its end date', () => {
         const customer = customerOnFreeWithTrial({ trialEndsAt: Date.now() - HOUR_MS })
 
-        const trimmed = autumnUtils.withoutExpiredSelfServeTrial(customer as never)
+        const trimmed = autumnUtils.withoutExpiredTrialAddOn(customer as never)
 
         expect([...autumnUtils.toGrantedFeatureIds(trimmed)].sort()).toEqual([...FREE_FLAGS].sort())
         expect(trimmed.balances[UnconsumableFeatureId.USERS_LIMIT]).toMatchObject({ granted: 1, unlimited: false })
@@ -276,7 +276,7 @@ describe('withoutExpiredSelfServeTrial', () => {
     it('keeps a trial that is still running', () => {
         const customer = customerOnFreeWithTrial({ trialEndsAt: Date.now() + HOUR_MS })
 
-        expect(autumnUtils.withoutExpiredSelfServeTrial(customer as never)).toBe(customer)
+        expect(autumnUtils.withoutExpiredTrialAddOn(customer as never)).toBe(customer)
     })
 })
 

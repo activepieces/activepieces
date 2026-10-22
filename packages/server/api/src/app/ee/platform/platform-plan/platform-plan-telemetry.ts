@@ -32,7 +32,7 @@ export const platformPlanTelemetry = (log: FastifyBaseLogger) => ({
 
     async onSelfServeTrialEnded({ platformId, trialEndsAt, endedAt }: SelfServeTrialEndedParams): Promise<void> {
         const claimKey = `self_serve_trial_ended_${platformId}_${trialEndsAt}`
-        await distributedStore.runOnceWithin(claimKey, SELF_SERVE_TRIAL_ENDED_ONCE_SECONDS, async () => {
+        await distributedStore.runOnceWithin(claimKey, TRIAL_ENDED_EVENT_SEND_ONCE_SECONDS, async () => {
             const { error } = await tryCatch(() => telemetry(log).trackPlatform({
                 platformId,
                 event: {
@@ -123,7 +123,7 @@ const UNKNOWN_PLAN = 'unknown'
 
 const PLAN_CHANGE_ONCE_SECONDS = 24 * 60 * 60
 
-const SELF_SERVE_TRIAL_ENDED_ONCE_SECONDS = 31 * 24 * 60 * 60
+const TRIAL_ENDED_EVENT_SEND_ONCE_SECONDS = 31 * 24 * 60 * 60
 
 const FREE_PLANS: ReadonlySet<string> = new Set([PlanName.FREE, PlanName.FREE_LEGACY, PlanName.APPSUMO])
 
