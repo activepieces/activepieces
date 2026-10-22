@@ -1,6 +1,7 @@
-import { chmod, lstat, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { chmod, lstat, mkdir, readdir, readFile, realpath, rename, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const SETTINGS_PATH = join(homedir(), '.claude', 'settings.json')
 const COMMANDS = { setup, order }
@@ -12,7 +13,7 @@ if (!COMMANDS[command]) {
 await COMMANDS[command](args)
 
 async function setup() {
-    await moveOldSkillCopy()
+    await moveOldSkillCopies()
     if (!process.stdin.isTTY) {
         fail('Run this in your own terminal (not inside Claude Code), so the key stays hidden.')
     }
@@ -90,15 +91,36 @@ function askHidden(prompt) {
     })
 }
 
-async function moveOldSkillCopy() {
-    const oldCopy = join(homedir(), '.claude', 'skills', 'ai-task')
-    const stats = await lstat(oldCopy).catch(() => null)
-    if (!stats || stats.isSymbolicLink()) {
+async function moveOldSkillCopies() {
+    const claudeDir = join(homedir(), '.claude')
+    const skillsDir = join(claudeDir, 'skills')
+    const repoSkill = await realpath(dirname(fileURLToPath(import.meta.url)))
+    const entries = await readdir(skillsDir).catch(() => [])
+    const candidates = [...entries.map((entry) => join(skillsDir, entry)), join(claudeDir, 'commands', 'ai-task.md')]
+    const flags = await Promise.all(candidates.map((path) => isOldCopy({ path, repoSkill })))
+    const oldCopies = candidates.filter((_, i) => flags[i])
+    if (oldCopies.length === 0) {
         return
     }
-    const backup = join(homedir(), '.claude', `ai-task-skill-old-${Date.now()}`)
-    await rename(oldCopy, backup)
-    console.log(`Moved an old copy of /ai-task to ${backup}, so the repo's version loads.\n`)
+    const backupDir = join(claudeDir, 'ai-task-old', String(Date.now()))
+    await mkdir(backupDir, { recursive: true })
+    for (const path of oldCopies) {
+        await rename(path, join(backupDir, basename(path)))
+        console.log(`Moved an old copy of /ai-task (${path}) to ${backupDir}, so the repo's version loads.`)
+    }
+    console.log('')
+}
+
+async function isOldCopy({ path, repoSkill }) {
+    if (path.endsWith('.md')) {
+        return (await lstat(path).catch(() => null)) !== null
+    }
+    const real = await realpath(path).catch(() => null)
+    if (!real || real === repoSkill) {
+        return false
+    }
+    const skill = await readFile(join(path, 'SKILL.md'), 'utf8').catch(() => '')
+    return /^name:\s*ai-task\s*$/m.test(skill)
 }
 
 async function readSettings() {
