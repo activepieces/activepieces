@@ -116,7 +116,7 @@ export const newImageCompletedTrigger = createTrigger({
     if (overflowFloor !== null) {
       backfill = {
         page: 1,
-        until: backfill ? olderOf(backfill.until, overflowFloor) : overflowFloor,
+        until: backfill ? olderOf({ current: backfill.until, other: overflowFloor }) : overflowFloor,
       };
     }
     await context.store.put<PollState>(STORE_KEY, {
@@ -181,14 +181,14 @@ function oldestCreatedAt(entries: PendingEntry[]): string | null {
   let oldest: string | null = null;
   for (const entry of entries) {
     if (entry.created_at === null) continue;
-    oldest = oldest === null ? entry.created_at : olderOf(oldest, entry.created_at);
+    oldest = oldest === null ? entry.created_at : olderOf({ current: oldest, other: entry.created_at });
   }
   return oldest;
 }
 
-function olderOf(a: string | null, b: string): string | null {
-  if (a === null) return null;
-  return Date.parse(b) < Date.parse(a) ? b : a;
+function olderOf({ current, other }: { current: string | null; other: string }): string | null {
+  if (current === null) return null;
+  return Date.parse(other) < Date.parse(current) ? other : current;
 }
 
 function dedupe(images: NormalizedImage[]): NormalizedImage[] {
