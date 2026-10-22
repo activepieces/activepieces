@@ -40,7 +40,7 @@ export function SelfServeTrialSeatDialog() {
   const { isOpen, closeDialog } = billingDialogHooks.useTrialSeatDialogStore();
   const upgradeClick = useUpgradeClick();
 
-  const settleGrace = async () => {
+  const refreshBillingAfterDeactivation = async () => {
     await tryCatch(() => platformBillingApi.refreshSubscriptionInfo());
     refreshBillingCaches(queryClient);
   };
@@ -97,7 +97,7 @@ export function SelfServeTrialSeatDialog() {
           {t('Explore plans')}
         </Button>
       }
-      onConfirmed={() => void settleGrace()}
+      onConfirmed={() => void refreshBillingAfterDeactivation()}
     />
   );
 }

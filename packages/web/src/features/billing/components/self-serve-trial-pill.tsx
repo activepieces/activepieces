@@ -24,7 +24,7 @@ import { selfServeTrialCopy } from '../utils/self-serve-trial-copy';
 
 export function SelfServeTrialLine({ trial }: { trial: SelfServeTrial }) {
   const line = (
-    <LineBody
+    <SidebarLineContent
       icon={
         <Gem
           className={cn(
@@ -64,7 +64,7 @@ export function SelfServeTrialLine({ trial }: { trial: SelfServeTrial }) {
 export function SeatGraceLine({ grace }: { grace: SeatGrace }) {
   const { openDialog } = billingDialogHooks.useTrialSeatDialogStore();
   const line = (
-    <LineBody
+    <SidebarLineContent
       title={t('Enterprise trial ended')}
       status={selfServeTrialCopy.cardStatus(grace)}
       warn
@@ -154,7 +154,12 @@ function SeatGraceIndicator({ grace }: { grace: SeatGrace }) {
   );
 }
 
-function LineBody({ icon, title, status, warn }: LineBodyProps) {
+function SidebarLineContent({
+  icon,
+  title,
+  status,
+  warn,
+}: SidebarLineContentProps) {
   return (
     <span
       className={cn(
@@ -190,7 +195,7 @@ function IndicatorLabel({ title, detail, warn }: IndicatorLabelProps) {
 const INDICATOR_ROW_CLASS =
   'flex min-w-0 items-start gap-2.5 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-gray-4';
 
-type LineBodyProps = {
+type SidebarLineContentProps = {
   icon?: ReactNode;
   title: string;
   status: string;

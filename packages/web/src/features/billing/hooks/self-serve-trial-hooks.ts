@@ -24,7 +24,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { platformBillingApi } from '../api/billing-plans-api';
 import { billingUtils } from '../utils/billing-utils';
 import { selfServeTrialTime, TRIAL_DAYS } from '../utils/self-serve-trial-time';
-import { trialSeatEnforcement } from '../utils/trial-seat-enforcement';
+import { trialEndPlanRefresh } from '../utils/trial-end-plan-refresh';
 
 import { refreshBillingCaches } from './billing-hooks';
 
@@ -126,7 +126,7 @@ export const selfServeTrialHooks = {
         refreshBillingCaches(queryClient);
         return true;
       },
-      enabled: trialSeatEnforcement.needsPlanRefresh({
+      enabled: trialEndPlanRefresh.shouldRefreshPlan({
         trialState: status?.state,
         trialEndsAt: platform.selfServeTrial?.endsAt,
         now: Date.now(),

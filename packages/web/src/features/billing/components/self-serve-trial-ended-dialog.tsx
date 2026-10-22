@@ -52,7 +52,10 @@ export function SelfServeTrialEndedDialog() {
       to: Date.now(),
     }) <= SHOW_FOR_DAYS;
   const open =
-    trial.state === 'ended' && trial.isPlatformAdmin && endedRecently && !alreadySeen;
+    trial.state === 'ended' &&
+    trial.isPlatformAdmin &&
+    endedRecently &&
+    !alreadySeen;
   const { data: info } = billingQueries.usePlatformSubscription(
     platform.id,
     open && !isNil(grace),

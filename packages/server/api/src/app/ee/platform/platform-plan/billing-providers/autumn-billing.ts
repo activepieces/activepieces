@@ -228,7 +228,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         if (isNil(dates)) {
             return null
         }
-        return { ...dates, seatGraceEndsAt: await trialSeatGrace(log).endsAt({ platformId, dates }) }
+        return { ...dates, seatGraceEndsAt: await trialSeatGrace(log).getGraceDeadline({ platformId, dates }) }
     },
     planStillHasSelfServeTrialFeatures: async (platformId: string) => {
         const { data: dates, error } = await tryCatch(() => getTrialDatesFromCacheOrAutumn({ log, platformId }))
