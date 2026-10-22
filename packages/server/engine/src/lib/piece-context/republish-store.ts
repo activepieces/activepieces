@@ -18,8 +18,7 @@ function keepExistingEntries(store: Store): Store {
             return store.put(key, value, scope)
         },
         get: (key, scope) => store.get(key, scope),
-        async delete(): Promise<void> {
-        },
+        delete: (key, scope) => store.delete(key, scope),
     }
 }
 

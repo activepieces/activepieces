@@ -56,15 +56,18 @@ describe('ON_ENABLE on a republish', () => {
         expect(storeEntries.get('lastPoll')).toBe(NEW_CHECKPOINT)
     })
 
-    it('keeps the checkpoint a polling trigger deletes on enable', async () => {
-        storeEntries.set('lastItem', 'item-1')
+    it('still clears a cache a polling trigger deletes on enable', async () => {
+        storeEntries.set('lastPoll', OLD_CHECKPOINT)
+        storeEntries.set('fieldsCache', ['old-field'])
         mockTrigger({ type: TriggerStrategy.POLLING, onEnable: async ({ store }) => {
-            await store.delete('lastItem')
+            await store.delete('fieldsCache')
+            await store.put('lastPoll', NEW_CHECKPOINT)
         } })
 
         await executeOnEnable({ isRepublish: true })
 
-        expect(storeEntries.get('lastItem')).toBe('item-1')
+        expect(storeEntries.has('fieldsCache')).toBe(false)
+        expect(storeEntries.get('lastPoll')).toBe(OLD_CHECKPOINT)
     })
 
     it('resets the checkpoint when it is not a republish', async () => {
