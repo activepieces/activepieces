@@ -14,8 +14,8 @@ GIT-1745 showed lost edits on one draft flow, caused by writes built on a stale 
 
 ## Why
 
-The cause is a stale copy, so a refresh fixes it: one person cannot type in two tabs at once, two people are already kept apart by the per-user Resource Lock, and an agent reads the server before each write. The Edit Lease was rejected for its size and because it made agents wait on a person; the price is a same-step race while a person types and about 1 s after.
+The cause is a stale copy, so a refresh fixes it: two tabs, or two people, are kept apart by the Resource Lock, which one Editor Session holds, and an agent reads the server before each write. A per-user lock was not enough: GIT-1745 named a second tab of the same user as the first hole, and people who share an account are one user. The Edit Lease was rejected for its size and because it made agents wait on a person; the price is a same-step race while a person types and about 1 s after.
 
 ## Consequences
 
-Agents, API Writers and System Writers never get a write refused for staleness, so adding a version check or a lease later is a breaking change for them. The Resource Lock gained two changes: a viewer acquires a freed lock and refreshes before it becomes editable, and a leaving builder releases its lock only after its pending edits are saved. Terms and gotchas: [Draft Refresh](../flows-execution/draft-refresh.md).
+Agents, API Writers and System Writers never get a write refused for staleness, so adding a version check or a lease later is a breaking change for them. The Resource Lock gained three changes: it belongs to one Editor Session instead of one user, a viewer acquires a freed lock and refreshes before it becomes editable, and a leaving builder releases its lock only after its pending edits are saved. The price of the first is one Take Over when one person opens a second tab. Terms and gotchas: [Draft Refresh](../flows-execution/draft-refresh.md).
