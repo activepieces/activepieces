@@ -171,6 +171,51 @@ describe('EditFlowOrViewDraftButton', () => {
     expect(await screen.findByText('Flow builder')).toBeTruthy();
     expect(harness.getFlow).not.toHaveBeenCalled();
   });
+
+  it('leaves a test run on the flow page in place and keeps the open step', async () => {
+    const draft: FlowVersion = {
+      ...publishedVersion(),
+      state: FlowVersionState.DRAFT,
+    };
+    const flow: PopulatedFlow = {
+      ...publishedFlowWithNoDraft(),
+      publishedVersionId: null,
+      version: draft,
+    };
+    const store = createStore({ flow });
+    store.getState().selectStepByName('step_1');
+    await act(async () => {
+      await store
+        .getState()
+        .setRun({ ...flowRun(), environment: RunEnvironment.TESTING }, draft);
+    });
+    harness.getFlow.mockResolvedValue(flow);
+    render(
+      <MemoryRouter initialEntries={['/flows/flow-1']}>
+        <QueryClientProvider client={new QueryClient()}>
+          <BuilderStateContext.Provider value={store}>
+            <Routes>
+              <Route
+                path="/flows/:flowId"
+                element={<EditFlowOrViewDraftButton onCanvas={false} />}
+              />
+            </Routes>
+          </BuilderStateContext.Provider>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit flow' }));
+
+    await waitFor(() => {
+      expect(store.getState().readonly).toBe(false);
+    });
+    expect(store.getState()).toMatchObject({
+      run: null,
+      selectedStep: 'step_1',
+    });
+    expect(harness.getFlow).toHaveBeenCalledTimes(1);
+  });
 });
 
 function renderBuilder(store: BuilderStore) {

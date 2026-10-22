@@ -103,6 +103,13 @@ vi.mock('@/hooks/use-resource-lock', () => ({
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => () => undefined,
+  useLocation: () => ({
+    pathname: '/flows/flow-1',
+    search: '',
+    hash: '',
+    state: null,
+    key: 'default',
+  }),
 }));
 
 vi.mock('@/hooks/authorization-hooks', () => ({

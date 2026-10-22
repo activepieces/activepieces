@@ -122,6 +122,13 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => () => undefined,
+  useLocation: () => ({
+    pathname: '/flows/flow-1',
+    search: '',
+    hash: '',
+    state: null,
+    key: 'default',
+  }),
 }));
 
 const HOLDER = { userId: 'holder', userDisplayName: 'Sam Lee' };

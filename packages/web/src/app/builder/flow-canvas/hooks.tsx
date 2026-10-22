@@ -11,7 +11,11 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useEffect, useRef } from 'react';
-import { NavigateFunction, useNavigate } from 'react-router-dom';
+import {
+  NavigateFunction,
+  useLocation as useRouterLocation,
+  useNavigate,
+} from 'react-router-dom';
 import { useLocation, usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -190,12 +194,19 @@ const useRefreshDraftOnReconnectAndReturn = () => {
 const useOpenDraft = () => {
   const store = useBuilderStore();
   const navigate = useNavigate();
+  const onRunPage = useRouterLocation().pathname.includes('/runs');
   const socket = useSocket();
   const { checkAccess } = useAuthorization();
   const canEditFlow = checkAccess(Permission.WRITE_FLOW);
   const { mutateAsync, isPending } = useMutation({
     mutationFn: () =>
-      openNewestVersionForEdit({ store, navigate, socket, canEditFlow }),
+      openNewestVersionForEdit({
+        store,
+        navigate,
+        onRunPage,
+        socket,
+        canEditFlow,
+      }),
   });
   const openDraft = useCallback(
     () => mutateAsync().catch(() => undefined),
@@ -315,19 +326,26 @@ export const flowCanvasHooks = {
 async function openNewestVersionForEdit({
   store,
   navigate,
+  onRunPage,
   socket,
   canEditFlow,
 }: {
   store: BuilderStore;
   navigate: NavigateFunction;
+  onRunPage: boolean;
   socket: Socket;
   canEditFlow: boolean;
 }): Promise<void> {
-  const { run, flow, showsNewestVersion, refreshDraft } = store.getState();
+  const { run, flow } = store.getState();
   if (!isNil(run)) {
-    navigate(`/flows/${flow.id}`);
-    return;
+    if (onRunPage) {
+      navigate(`/flows/${flow.id}`);
+      return;
+    }
+    store.getState().clearRun(canEditFlow);
+    socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
   }
+  const { showsNewestVersion, refreshDraft } = store.getState();
   if (showsNewestVersion()) {
     const applied = await refreshDraft();
     if (applied && store.getState().showsNewestVersion()) {

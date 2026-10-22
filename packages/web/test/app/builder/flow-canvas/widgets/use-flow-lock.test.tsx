@@ -31,6 +31,7 @@ const harness = vi.hoisted(() => {
   const captured: { onTakeOver?: () => void | Promise<void> } = {};
   return {
     navigate: vi.fn(),
+    pathname: '/flows/flow-1',
     getFlow: vi.fn(),
     canEditFlow: true,
     captured,
@@ -62,6 +63,13 @@ vi.mock('@/hooks/authorization-hooks', () => ({
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
   useNavigate: () => harness.navigate,
+  useLocation: () => ({
+    pathname: harness.pathname,
+    search: '',
+    hash: '',
+    state: null,
+    key: 'default',
+  }),
 }));
 
 describe('useFlowLock take-over', () => {
@@ -70,6 +78,7 @@ describe('useFlowLock take-over', () => {
 
   beforeEach(() => {
     harness.navigate.mockReset();
+    harness.pathname = '/flows/flow-1';
     harness.getFlow.mockReset();
     harness.captured.onTakeOver = undefined;
     harness.canEditFlow = true;
@@ -87,6 +96,7 @@ describe('useFlowLock take-over', () => {
   });
 
   it('navigates to the flow client-side when a run is being viewed', async () => {
+    harness.pathname = '/runs/run-1';
     const flow = draftFlow({ customerEmail: '{{trigger.email}}' });
     renderFlowLock(createStore({ flow, run: flowRun() }));
 
