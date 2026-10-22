@@ -23,7 +23,7 @@ export function useEnterpriseAccess({
   unlocked: boolean;
 }): EnterpriseAccess {
   const trial = selfServeTrialHooks.useTrial();
-  const offer = selfServeTrialHooks.useOffer();
+  const shouldOfferTrial = selfServeTrialHooks.useShouldOfferTrial();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   if (unlocked) {
     return trial.state === 'active' ? 'trialing' : 'entitled';
@@ -34,7 +34,7 @@ export function useEnterpriseAccess({
   if (!trial.isPlatformAdmin) {
     return 'ask_admin';
   }
-  if (offer) {
+  if (shouldOfferTrial) {
     return 'trial_available';
   }
   if (trial.state === 'ended') {
@@ -54,7 +54,10 @@ export function useEnterpriseGate({
   const openDialog = useOpenLockedFeature();
   const locked = access !== 'entitled' && access !== 'trialing';
 
-  const run: EnterpriseGate['run'] = (action, options) => {
+  const runOrShowLockedDialog: EnterpriseGate['runOrShowLockedDialog'] = (
+    action,
+    options,
+  ) => {
     if (!locked) {
       Promise.resolve(action()).catch(() => undefined);
       return;
@@ -69,9 +72,9 @@ export function useEnterpriseGate({
     });
   };
 
-  const explain = () => openDialog({ featureKey });
+  const showLockedDialog = () => openDialog({ featureKey });
 
-  return { access, locked, run, explain };
+  return { access, locked, runOrShowLockedDialog, showLockedDialog };
 }
 
 function useOpenLockedFeature() {
@@ -105,9 +108,9 @@ export type EnterpriseAccess =
 export type EnterpriseGate = {
   access: EnterpriseAccess;
   locked: boolean;
-  run: (
+  runOrShowLockedDialog: (
     action: () => Promise<unknown> | void,
     options?: { resumable?: boolean },
   ) => void;
-  explain: () => void;
+  showLockedDialog: () => void;
 };

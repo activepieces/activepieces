@@ -162,7 +162,7 @@ function RoleDialogBody({
 
   const submit = () => {
     setSaveError(null);
-    gate.run(
+    gate.runOrShowLockedDialog(
       () =>
         upsertRole({
           mode,

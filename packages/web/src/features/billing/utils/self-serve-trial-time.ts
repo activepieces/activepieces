@@ -42,13 +42,13 @@ function nextBoundary({
   now: number;
 }): number | null {
   const candidates = [end, dayjs(now).add(1, 'day').startOf('day').valueOf()];
-  const upcoming = candidates.filter(
+  const upcomingBoundaries = candidates.filter(
     (moment) => moment > now && moment <= end + HOUR_MS,
   );
-  if (upcoming.length === 0) {
+  if (upcomingBoundaries.length === 0) {
     return null;
   }
-  return Math.min(...upcoming);
+  return Math.min(...upcomingBoundaries);
 }
 
 export const selfServeTrialTime = {

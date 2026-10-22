@@ -15,7 +15,9 @@ function reservedSeats({
   now?: Date;
 }): number {
   const active = users.filter((user) => user.status === UserStatus.ACTIVE);
-  const known = new Set(users.map((user) => user.email.toLowerCase()));
+  const existingUserEmails = new Set(
+    users.map((user) => user.email.toLowerCase()),
+  );
   const cutoff = dayjs(now).subtract(INVITATION_RESERVATION_DAYS, 'day');
   const pending = new Set(
     invitations
@@ -25,7 +27,7 @@ function reservedSeats({
           dayjs(invitation.updated).isAfter(cutoff),
       )
       .map((invitation) => invitation.email.toLowerCase())
-      .filter((email) => !known.has(email)),
+      .filter((email) => !existingUserEmails.has(email)),
   );
   return active.length + pending.size;
 }

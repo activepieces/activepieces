@@ -129,8 +129,8 @@ vi.mock('@/features/billing', () => ({
   useEnterpriseGate: ({ unlocked }: { unlocked: boolean }) => ({
     access: unlocked ? 'entitled' : 'trial_available',
     locked: !unlocked,
-    run: state.gateRun,
-    explain: vi.fn(),
+    runOrShowLockedDialog: state.gateRun,
+    showLockedDialog: vi.fn(),
   }),
 }));
 

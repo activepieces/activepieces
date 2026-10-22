@@ -11,10 +11,14 @@ function tierOfFeature(featureKey: FeatureKey | undefined): FeatureTier {
   if (featureKey === undefined) {
     return 'enterprise';
   }
-  const listed = Object.values(PLATFORM_FEATURES).find(
+  const platformFeature = Object.values(PLATFORM_FEATURES).find(
     (feature) => feature.featureKey === featureKey,
   );
-  return listed?.tier ?? EXTRA_TIERS[featureKey] ?? 'enterprise';
+  return (
+    platformFeature?.tier ??
+    FEATURE_TIERS_NOT_IN_PLATFORM_FEATURES[featureKey] ??
+    'enterprise'
+  );
 }
 
 function tierOfPlan(plan: string | null | undefined): FeatureTier | null {
@@ -105,6 +109,8 @@ export const planTiers = {
 
 const PLAN_TIER_ORDER: FeatureTier[] = ['plus', 'team', 'enterprise'];
 
-const EXTRA_TIERS: Partial<Record<FeatureKey, FeatureTier>> = {
+const FEATURE_TIERS_NOT_IN_PLATFORM_FEATURES: Partial<
+  Record<FeatureKey, FeatureTier>
+> = {
   TEAM: 'team',
 };
