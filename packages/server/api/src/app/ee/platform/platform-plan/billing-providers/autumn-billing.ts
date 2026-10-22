@@ -263,8 +263,7 @@ async function readOrFetchSelfServeTrialDates({ log, platformId }: PlatformLogPa
             }
             const client = await autumnUtils.resolveClientForPlatform(log, platformId)
             if (isNil(client)) {
-                await selfServeTrialUtils.save({ platformId, dates: null })
-                return null
+                return selfServeTrialUtils.rememberNoTrial(platformId)
             }
             return selfServeTrialUtils.saveFromCustomer({ platformId, customer: await client.getCustomer() })
         },

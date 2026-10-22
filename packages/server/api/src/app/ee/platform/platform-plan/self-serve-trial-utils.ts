@@ -17,12 +17,14 @@ export const selfServeTrialUtils = {
             await selfServeTrialUtils.save({ platformId, dates })
             return dates
         }
-        const cached = await selfServeTrialUtils.read(platformId)
-        if (!isNil(cached?.dates)) {
-            return cached.dates
+        return selfServeTrialUtils.rememberNoTrial(platformId)
+    },
+    async rememberNoTrial(platformId: string): Promise<SelfServeTrialDates | null> {
+        const remembered = await distributedStore.putIfAbsent(getSelfServeTrialKey(platformId), { dates: null }, SELF_SERVE_TRIAL_TTL_SECONDS)
+        if (remembered) {
+            return null
         }
-        await selfServeTrialUtils.save({ platformId, dates: null })
-        return null
+        return (await selfServeTrialUtils.read(platformId))?.dates ?? null
     },
     async forget(platformId: string): Promise<void> {
         await distributedStore.delete(getSelfServeTrialKey(platformId))
