@@ -91,6 +91,32 @@ describe('POST /v1/admin/flows/upgrade-pieces', () => {
         expect(response.json()[0].upgradedSteps).toEqual([expect.objectContaining({ flowVersionId: publishedVersion.id })])
         expect(pushes).toEqual([])
     })
+
+    it('sends the Draft Push when the published version fails after the draft was upgraded', async () => {
+        const ctx = await createTestContext(app!)
+        const { flow } = await seedPublishedFlowWithDraft({
+            ctx,
+            publishedPieceVersion: OLD_WEBHOOK_VERSION,
+            draftPieceVersion: OLD_WEBHOOK_VERSION,
+        })
+        let lookups = 0
+        vi.spyOn(pieceUpgradeRegister, 'lookup').mockImplementation(async () => {
+            lookups += 1
+            if (lookups > 1) {
+                throw new Error('the upgrade register is unavailable')
+            }
+            return { target: NEW_WEBHOOK_VERSION }
+        })
+        const pushes = draftPushes.capture()
+
+        const response = await postAdminFlowsEndpoint({ route: 'upgrade-pieces', body: { flowIds: [flow.id] } })
+
+        expect(response.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+        expect(pushes).toEqual([{
+            room: ctx.project.id,
+            payload: { flowId: flow.id, editorSessionId: null },
+        }])
+    })
 })
 
 describe('POST /v1/admin/flows/revert-upgrade', () => {

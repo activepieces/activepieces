@@ -64,19 +64,17 @@ async function migrateFlow({ log, flow, useDeno }: { log: FastifyBaseLogger, flo
     const targetVersionIds = unique([latestVersion.id, ...isNil(flow.publishedVersionId) ? [] : [flow.publishedVersionId]])
     let versionsMigrated = 0
     let publishedVersionMigrated = false
-    let latestVersionMigrated = false
     for (const versionId of targetVersionIds) {
         const migrated = await setUseDenoOnVersion({ versionId, useDeno })
         versionsMigrated += migrated
         publishedVersionMigrated = publishedVersionMigrated || (migrated > 0 && versionId === flow.publishedVersionId)
-        latestVersionMigrated = latestVersionMigrated || (migrated > 0 && versionId === latestVersion.id)
+        if (migrated > 0 && versionId === latestVersion.id) {
+            await flowSideEffects(log).onDraftWritten({ flowId: flow.id, projectId: flow.projectId, editorSessionId: null })
+        }
     }
 
     if (publishedVersionMigrated && !isNil(flow.publishedVersionId)) {
         await refreshWorkersForPublishedVersion({ log, flow, publishedVersionId: flow.publishedVersionId })
-    }
-    if (latestVersionMigrated) {
-        await flowSideEffects(log).onDraftWritten({ flowId: flow.id, projectId: flow.projectId, editorSessionId: null })
     }
     return { versionsMigrated, notified: publishedVersionMigrated }
 }

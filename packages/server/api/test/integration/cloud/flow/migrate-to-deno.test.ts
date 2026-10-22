@@ -3,6 +3,7 @@ import { CodeAction, Flow, FlowAction, FlowActionType, FlowStatus, flowStructure
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowVersionRepo } from '../../../../src/app/flows/flow-version/flow-version.service'
 import { db } from '../../../helpers/db'
 import { draftPushes } from '../../../helpers/draft-push'
 import { createMockFlow, createMockFlowVersion } from '../../../helpers/mocks'
@@ -307,6 +308,25 @@ describe('Draft Push after the Deno migration', () => {
         const response = await postRevertFromDeno({ flowIds: [flow.id] })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null } }])
+    })
+
+    it('sends a Draft Push when the published version fails after the draft was migrated', async () => {
+        const ctx = await createTestContext(app!)
+        const { flow, publishedVersion } = await setupFlowWithDraftAndPublishedVersions(ctx)
+        const repo = flowVersionRepo()
+        const realFindOneBy = repo.findOneBy.bind(repo)
+        vi.spyOn(repo, 'findOneBy').mockImplementation(async (where) => {
+            if (!Array.isArray(where) && where.id === publishedVersion.id) {
+                throw new Error('the published version cannot be read')
+            }
+            return realFindOneBy(where)
+        })
+        const pushes = draftPushes.capture()
+
+        const response = await postMigrateToDeno({ flowIds: [flow.id] })
+
+        expect(response.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
         expect(pushes).toEqual([{ room: ctx.project.id, payload: { flowId: flow.id, editorSessionId: null } }])
     })
 
