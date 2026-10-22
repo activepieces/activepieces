@@ -96,7 +96,7 @@ export const addSubscriberToListAction = createAction({
       ConsentToSendSms: consentToSendSms ?? 'Unchanged',
       Resubscribe: resubscribe ?? false,
       MobileNumber: phone,
-      CustomFields: buildCustomFieldsPayload(fields, dateKeys),
+      CustomFields: buildCustomFieldsPayload({ fields, dateKeys }),
     };
 
     const response = await makeRequest({

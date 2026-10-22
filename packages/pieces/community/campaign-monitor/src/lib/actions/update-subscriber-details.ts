@@ -105,7 +105,7 @@ export const updateSubscriberDetailsAction = createAction({
       ConsentToTrack: consentToTrack ?? 'Unchanged',
       ConsentToSendSms: consentToSendSms ?? 'Unchanged',
       Resubscribe: resubscribe ?? false,
-      CustomFields: buildCustomFieldsPayload(fields, dateKeys),
+      CustomFields: buildCustomFieldsPayload({ fields, dateKeys }),
     };
 
     await makeRequest({

@@ -73,10 +73,13 @@ export async function fetchDateFieldKeys({
   );
 }
 
-export function buildCustomFieldsPayload(
-  fields: Record<string, unknown> | undefined,
-  dateKeys: Set<string>
-) {
+export function buildCustomFieldsPayload({
+  fields,
+  dateKeys,
+}: {
+  fields: Record<string, unknown> | undefined;
+  dateKeys: Set<string>;
+}) {
   return Object.entries(fields ?? {}).flatMap(([key, value]) => {
     if (Array.isArray(value)) {
       return value

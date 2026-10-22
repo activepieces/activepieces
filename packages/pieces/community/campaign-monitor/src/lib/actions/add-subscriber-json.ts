@@ -97,10 +97,10 @@ export const addSubscriberJsonAction = createAction({
         ConsentToTrack: propsValue.consentToTrack ?? 'Unchanged',
         ConsentToSendSms: propsValue.consentToSendSms ?? 'Unchanged',
         Resubscribe: propsValue.resubscribe ?? false,
-        CustomFields: buildCustomFieldsPayload(
-          jsonCustomFieldsToRecord(propsValue.customFields),
-          dateKeys
-        ),
+        CustomFields: buildCustomFieldsPayload({
+          fields: jsonCustomFieldsToRecord(propsValue.customFields),
+          dateKeys,
+        }),
       },
     });
     return {
