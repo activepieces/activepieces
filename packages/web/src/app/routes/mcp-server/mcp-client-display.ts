@@ -1,7 +1,7 @@
 import { McpOAuthClientKey } from '@activepieces/shared';
 import { t } from 'i18next';
 
-const CDN_ICONS_URL = 'https://cdn.activepieces.com/icons';
+const LOGOS_URL = '/client-logos';
 
 function icon(key: McpOAuthClientKey | null): string {
   return MCP_CLIENT_BRANDING[key ?? 'unknown'].icon;
@@ -19,20 +19,44 @@ export const MCP_CLIENT_BRANDING: Record<
   McpOAuthClientKey,
   { icon: string; name: string }
 > = {
-  claude: { icon: `${CDN_ICONS_URL}/claude.svg`, name: 'Claude' },
+  claude: {
+    icon: `${LOGOS_URL}/claude.svg`,
+    name: 'Claude',
+  },
   'claude-code': {
-    icon: `${CDN_ICONS_URL}/claude-code.svg`,
+    icon: `${LOGOS_URL}/claude-code.svg`,
     name: 'Claude Code',
   },
-  chatgpt: { icon: `${CDN_ICONS_URL}/openai.svg`, name: 'ChatGPT' },
-  codex: { icon: `${CDN_ICONS_URL}/codex.svg`, name: 'Codex' },
-  'gemini-cli': { icon: `${CDN_ICONS_URL}/gemini.svg`, name: 'Gemini CLI' },
-  opencode: { icon: `${CDN_ICONS_URL}/opencode.svg`, name: 'OpenCode' },
-  cursor: { icon: `${CDN_ICONS_URL}/cursor.svg`, name: 'Cursor' },
-  vscode: { icon: `${CDN_ICONS_URL}/vscode.svg`, name: 'VS Code' },
-  windsurf: { icon: `${CDN_ICONS_URL}/windsurf.svg`, name: 'Windsurf' },
+  chatgpt: {
+    icon: `${LOGOS_URL}/chatgpt.svg`,
+    name: 'ChatGPT',
+  },
+  codex: {
+    icon: `${LOGOS_URL}/codex.svg`,
+    name: 'Codex',
+  },
+  'gemini-cli': {
+    icon: `${LOGOS_URL}/gemini-cli.svg`,
+    name: 'Gemini CLI',
+  },
+  opencode: {
+    icon: `${LOGOS_URL}/opencode.svg`,
+    name: 'OpenCode',
+  },
+  cursor: {
+    icon: `${LOGOS_URL}/cursor.svg`,
+    name: 'Cursor',
+  },
+  vscode: {
+    icon: `${LOGOS_URL}/vscode.svg`,
+    name: 'VS Code',
+  },
+  windsurf: {
+    icon: `${LOGOS_URL}/windsurf.svg`,
+    name: 'Windsurf',
+  },
   unknown: {
-    icon: `${CDN_ICONS_URL}/mcp-with-background.svg`,
+    icon: `${LOGOS_URL}/mcp.svg`,
     name: 'MCP client',
   },
 };

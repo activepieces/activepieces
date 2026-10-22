@@ -44,8 +44,8 @@ import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
 
 import { SandboxesPopover } from './sandboxes-popover';
-import { WorkerAssignmentsTab } from './worker-assignments-tab';
 import { WorkerConfigsPopover } from './worker-configs-popover';
+import { WorkerGroupsPage } from './worker-groups/worker-groups-page';
 
 export default function WorkersPage({ section }: WorkersPageProps) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -54,6 +54,22 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
 
   const fleetType = workersData?.[0]?.type;
+
+  if (section === 'worker-groups') {
+    return (
+      <LockedFeatureGuard
+        featureKey="DEDICATED_WORKERS"
+        locked={!platform.plan.workerGroupsEnabled}
+        lockTitle={t('Unlock worker groups')}
+        lockDescription={t(
+          'Set aside servers for specific projects or flows, so a busy project never slows down the rest.',
+        )}
+        lockDocumentationUrl="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
+      >
+        <WorkerGroupsPage />
+      </LockedFeatureGuard>
+    );
+  }
 
   return (
     <AdminPage>
@@ -138,20 +154,6 @@ export default function WorkersPage({ section }: WorkersPageProps) {
             <WorkerCard key={worker.id} worker={worker} index={index} />
           ))}
         </div>
-      )}
-
-      {section === 'worker-groups' && (
-        <LockedFeatureGuard
-          featureKey="DEDICATED_WORKERS"
-          locked={!platform.plan.workerGroupsEnabled}
-          lockTitle={t('Unlock Worker Groups')}
-          lockDescription={t(
-            'Reserve dedicated worker capacity for specific projects so a busy project never slows down the rest',
-          )}
-          lockDocumentationUrl="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
-        >
-          <WorkerAssignmentsTab />
-        </LockedFeatureGuard>
       )}
     </AdminPage>
   );
