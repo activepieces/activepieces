@@ -206,7 +206,7 @@ export type McpCredentials = {
 
 type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.16.0";
+  readonly _sdkVersion = "0.16.1";
   //used for  Automatically Sync URL feature i.e /org/1234
   _prefix = '/';
   _instanceUrl = '';
@@ -315,7 +315,7 @@ class ActivepiecesEmbedded {
           }
         },
         errorMessage: 'container not found',
-      });
+      }).catch(reject);
     });
 
 
@@ -754,7 +754,12 @@ class ActivepiecesEmbedded {
         checkCounter++;
         if (condition()) {
           clearInterval(checker);
-          resolve(method());
+          try {
+            resolve(method());
+          }
+          catch (error) {
+            reject(error);
+          }
         }
       }, this._HUNDRED_MILLISECONDS);
     },);

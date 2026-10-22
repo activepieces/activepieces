@@ -64,6 +64,7 @@ The Embed Onboarding stepper at `/platform/embedding`. Four steps exist as files
 
 ## Gotchas
 
+- **`configure()` rejects with `'container not found'` after a 10 s container poll** (`_addGracePeriodBeforeMethod`: 100 checks × 100 ms). Every caller must return or chain that helper's promise; `configure()` once dropped it inside its own `new Promise`, so the call hung forever and the error surfaced only as an unhandled rejection. A throw from `method` on the polling path rejects the helper's promise too, instead of escaping the timer (ENG-873, SDK 0.16.1).
 - **The iframe's `<head>` is static.** `/embed` serves the same built `index.html` as the main app; `vite-plugins/html-plugin.js` substitutes only `apTitle`/`apFavicon` at build time. Anything a vendor wants inside the iframe (fonts, tracking tags) has to be appended to `document.head` at runtime from `VENDOR_INIT` data — `embedding-font-loader.tsx` is the precedent.
 - **No `script-src` in the CSP.** `embed-security.ts` emits only `frame-ancestors`, so third-party scripts loaded inside the embed (GTM, Clarity) are not blocked by policy. See GIT-1746 / GitHub #14796.
 - **PostHog is off in the embed** (`telemetry-provider.tsx` bails when `isEmbedded` or the path starts with `/embed`), so embed customers have no in-iframe analytics unless they bring their own.

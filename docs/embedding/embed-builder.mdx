@@ -52,7 +52,7 @@ activepieces.configure({
 </script>
 ```
 <Tip>
-`configure` returns a promise which is resolved after authentication is done.
+`configure` returns a promise which is resolved after authentication is done. It rejects with `'container not found'` if the element with `embedding.containerId` does not appear within 10 seconds (since [0.16.1](./sdk-changelog#10%2F14%2F2026-0-16-1)).
 
  </Tip>
 
