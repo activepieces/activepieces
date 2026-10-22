@@ -64,7 +64,6 @@ export const newCampaignSentTrigger = createTrigger({
       apiKey: context.auth.secret_text,
       clientId: context.propsValue.clientId,
       seen,
-      maxPages: MAX_PAGES,
     });
     const newCampaigns = campaigns.filter(
       (campaign) => !seen.has(campaign.CampaignID)
@@ -80,7 +79,6 @@ export const newCampaignSentTrigger = createTrigger({
 
 const STORE_KEY = 'seen_sent_campaigns';
 const PAGE_SIZE = 100;
-const MAX_PAGES = 5;
 const MAX_STORED_IDS = 1000;
 
 async function fetchRecentCampaigns({
@@ -92,10 +90,10 @@ async function fetchRecentCampaigns({
   apiKey: string;
   clientId: string;
   seen: Set<string>;
-  maxPages: number;
+  maxPages?: number;
 }) {
   const campaigns: SentCampaign[] = [];
-  for (let page = 1; page <= maxPages; page++) {
+  for (let page = 1; maxPages === undefined || page <= maxPages; page++) {
     const response = await makeRequest<{
       Results?: SentCampaign[];
       NumberOfPages?: number;
