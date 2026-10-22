@@ -1,4 +1,4 @@
-import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { chmod, lstat, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 
@@ -12,6 +12,7 @@ if (!COMMANDS[command]) {
 await COMMANDS[command](args)
 
 async function setup() {
+    await moveOldSkillCopy()
     if (!process.stdin.isTTY) {
         fail('Run this in your own terminal (not inside Claude Code), so the key stays hidden.')
     }
@@ -87,6 +88,17 @@ function askHidden(prompt) {
         }
         process.stdin.on('data', onData)
     })
+}
+
+async function moveOldSkillCopy() {
+    const oldCopy = join(homedir(), '.claude', 'skills', 'ai-task')
+    const stats = await lstat(oldCopy).catch(() => null)
+    if (!stats || stats.isSymbolicLink()) {
+        return
+    }
+    const backup = join(homedir(), '.claude', `ai-task-skill-old-${Date.now()}`)
+    await rename(oldCopy, backup)
+    console.log(`Moved an old copy of /ai-task to ${backup}, so the repo's version loads.\n`)
 }
 
 async function readSettings() {
