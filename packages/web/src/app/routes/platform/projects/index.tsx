@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
@@ -16,6 +17,7 @@ import {
   SettingsRow,
   adminPageResources,
 } from '@/app/components/admin';
+import { EnterpriseGate } from '@/app/components/enterprise-gate';
 import { RowDataWithActions, BulkAction } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -106,6 +108,10 @@ export default function ProjectsPage() {
       request: { limit: 9999 },
       extraKeys: [],
     });
+  const teamProjectsCount = allProjects.filter(
+    (project) => project.type === ProjectType.TEAM,
+  ).length;
+
   const allProjectsWithGlobalConnectionsCount = useMemo(() => {
     return allProjects.map((project) => ({
       ...project,
@@ -351,7 +357,18 @@ export default function ProjectsPage() {
         description={t('Manage your automation projects')}
         resources={adminPageResources.projects}
       >
-        <CreateProjectButton variant="full" projects={allProjects} />
+        <EnterpriseGate
+          featureKey="PROJECTS"
+          unlocked={
+            isNil(platform.plan.billedTeamProjectsLimit) ||
+            teamProjectsCount < platform.plan.billedTeamProjectsLimit
+          }
+          used={teamProjectsCount}
+          limit={platform.plan.billedTeamProjectsLimit}
+          label={t('team projects')}
+        >
+          <CreateProjectButton variant="full" projects={allProjects} />
+        </EnterpriseGate>
       </AdminPageHeader>
       <SettingsPanel flush>
         <SettingsRow

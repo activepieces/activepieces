@@ -23,12 +23,10 @@ import {
   AdminEmpty,
   AdminPage,
   AdminPageHeader,
-  LockedCallout,
   StatusDot,
   adminPageResources,
   adminSurface,
 } from '@/app/components/admin';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -36,7 +34,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { RequestTrial } from '@/features/billing';
+import { EnterpriseLockedRow } from '@/features/billing';
 import { workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -56,19 +54,7 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   const fleetType = workersData?.[0]?.type;
 
   if (section === 'worker-groups') {
-    return (
-      <LockedFeatureGuard
-        featureKey="DEDICATED_WORKERS"
-        locked={!platform.plan.workerGroupsEnabled}
-        lockTitle={t('Unlock worker groups')}
-        lockDescription={t(
-          'Set aside servers for specific projects or flows, so a busy project never slows down the rest.',
-        )}
-        lockDocumentationUrl="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
-      >
-        <WorkerGroupsPage />
-      </LockedFeatureGuard>
-    );
+    return <WorkerGroupsPage />;
   }
 
   return (
@@ -82,20 +68,13 @@ export default function WorkersPage({ section }: WorkersPageProps) {
       {section === 'health' &&
         isCloud &&
         fleetType === WorkerMachineType.SHARED && (
-          <LockedCallout
-            variant="inline"
-            icon={<Zap />}
-            title={t('Upgrade to Dedicated Workers')}
-            description={t(
-              'Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.',
+          <EnterpriseLockedRow
+            unlocked={platform.plan.workerGroupsEnabled}
+            featureKey="DEDICATED_WORKERS"
+            line={t(
+              'Dedicated workers are locked. Your automations run on shared workers.',
             )}
-          >
-            <RequestTrial
-              featureKey="DEDICATED_WORKERS"
-              buttonVariant="default"
-              buttonSize="sm"
-            />
-          </LockedCallout>
+          />
         )}
       {section === 'health' &&
         isCloud &&

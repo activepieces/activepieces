@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import type { BillingCycle } from '../components/plan-selector-utils';
+import type { FeatureKey } from '../components/request-trial';
 
 const useManagePlanDialogStore = create<ManagePlanDialogStore>((set) => ({
   isOpen: false,
@@ -24,10 +25,32 @@ const usePlanSwitchSuccessDialogStore = create<PlanSwitchSuccessDialogStore>(
   }),
 );
 
+const useSelfServeTrialDialogStore = create<SelfServeTrialDialogStore>(
+  (set) => ({
+    payload: null,
+    returnFocus: null,
+    openDialog: (payload) =>
+      set({
+        payload,
+        returnFocus:
+          document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null,
+      }),
+    closeDialog: () => set({ payload: null }),
+  }),
+);
+
 export const billingDialogHooks = {
   useManagePlanDialogStore,
   useConfirmPurchaseDialogStore,
   usePlanSwitchSuccessDialogStore,
+  useSelfServeTrialDialogStore,
+};
+
+export type SelfServeTrialDialogPayload = {
+  featureKey?: FeatureKey;
+  resume?: () => Promise<unknown>;
 };
 
 type PlanPurchase = {
@@ -54,5 +77,12 @@ type ConfirmPurchaseDialogStore = {
 type PlanSwitchSuccessDialogStore = {
   planId: string | null;
   openDialog: (planId: string) => void;
+  closeDialog: () => void;
+};
+
+type SelfServeTrialDialogStore = {
+  payload: SelfServeTrialDialogPayload | null;
+  returnFocus: HTMLElement | null;
+  openDialog: (payload: SelfServeTrialDialogPayload) => void;
   closeDialog: () => void;
 };

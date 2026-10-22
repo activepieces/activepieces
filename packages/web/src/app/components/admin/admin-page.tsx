@@ -1,11 +1,17 @@
 import { ArrowLeft } from 'lucide-react';
-import { ReactNode } from 'react';
+import { ReactNode, useContext, useLayoutEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { cn } from '@/lib/utils';
 
 import { adminLayout } from './admin-layout';
+import {
+  AdminPageHeaderSlotContext,
+  AdminPageLockContext,
+  useAdminPageLock,
+} from './admin-page-lock';
 import { AdminResource, AdminResources } from './admin-resources';
 import { adminSurface } from './admin-surface';
 
@@ -16,6 +22,10 @@ export function AdminPage({
   className,
   children,
 }: AdminPageProps) {
+  const lock = useAdminPageLock();
+  const claim = lock?.claim;
+  const [headerTarget, setHeaderTarget] = useState<HTMLDivElement | null>(null);
+  useLayoutEffect(() => claim?.(), [claim]);
   return (
     <div
       data-slot="admin-page"
@@ -33,9 +43,34 @@ export function AdminPage({
           className,
         )}
       >
-        {children}
+        <AdminPageHeaderSlotContext.Provider
+          value={lock ? { target: headerTarget } : null}
+        >
+          {lock ? (
+            <>
+              <div
+                ref={setHeaderTarget}
+                data-slot="admin-page-lock-header"
+                className="contents"
+              />
+              {lock.callout}
+              <AdminPageLockContext.Provider value={null}>
+                <div
+                  inert
+                  aria-hidden
+                  data-slot="admin-page-lock-preview"
+                  className="pointer-events-none flex min-h-0 flex-1 select-none flex-col gap-6 opacity-50 grayscale mask-b-from-40%"
+                >
+                  {children}
+                </div>
+              </AdminPageLockContext.Provider>
+            </>
+          ) : (
+            children
+          )}
+        </AdminPageHeaderSlotContext.Provider>
       </div>
-      {footer}
+      {!lock && footer}
     </div>
   );
 }
@@ -49,8 +84,42 @@ export function AdminPageHeader({
   children,
 }: AdminPageHeaderProps) {
   const { embedState } = useEmbedding();
-  if (embedState.hidePageHeader) {
-    if (!back && !children) {
+  const headerSlot = useContext(AdminPageHeaderSlotContext);
+  const lock = useAdminPageLock();
+  const locked = headerSlot !== null || lock !== null;
+  const actions = locked ? null : children;
+  const content = headerContent({
+    title,
+    description,
+    back,
+    badge,
+    resources,
+    actions,
+    hidden: embedState.hidePageHeader,
+    embedded: embedState.isEmbedded,
+  });
+  if (headerSlot === null) {
+    return content;
+  }
+  return headerSlot.target ? createPortal(content, headerSlot.target) : null;
+}
+
+function headerContent({
+  title,
+  description,
+  back,
+  badge,
+  resources,
+  actions,
+  hidden,
+  embedded,
+}: Omit<AdminPageHeaderProps, 'children'> & {
+  actions: ReactNode;
+  hidden: boolean;
+  embedded: boolean;
+}): ReactNode {
+  if (hidden) {
+    if (!back && !actions) {
       return null;
     }
     return (
@@ -59,16 +128,16 @@ export function AdminPageHeader({
         className="flex shrink-0 flex-wrap items-center justify-between gap-2"
       >
         {back && <AdminBackLink back={back} />}
-        {children && (
+        {actions && (
           <div className="ml-auto flex flex-wrap items-center gap-2">
-            {children}
+            {actions}
           </div>
         )}
       </div>
     );
   }
   const hasResources =
-    !embedState.isEmbedded && resources !== undefined && resources.length > 0;
+    !embedded && resources !== undefined && resources.length > 0;
 
   return (
     <header
@@ -87,10 +156,10 @@ export function AdminPageHeader({
           )}
           {badge}
         </div>
-        {(hasResources || children) && (
+        {(hasResources || actions) && (
           <div className="flex flex-wrap items-center gap-2">
             {hasResources && <AdminResources resources={resources} />}
-            {children}
+            {actions}
           </div>
         )}
       </div>
