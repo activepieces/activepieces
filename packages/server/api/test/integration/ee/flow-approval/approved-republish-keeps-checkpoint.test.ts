@@ -117,15 +117,23 @@ describe('republishing a flow directly', () => {
             requestedStatus: FlowStatus.DISABLED,
             expected: [{ call: 'disable', isRepublish: false }],
         },
-    ])('$name', async ({ draftInput, requestedStatus, expected }) => {
+        {
+            name: 'resets the checkpoint when the piece version changed',
+            draftInput: { projectId: 'AP' },
+            draftPieceVersion: '0.4.2',
+            requestedStatus: FlowStatus.ENABLED,
+            expected: [{ call: 'disable', isRepublish: false }, { call: 'enable', isRepublish: false }],
+        },
+    ])('$name', async ({ draftInput, draftPieceVersion, requestedStatus, expected }) => {
         const ctx = await createTestContext(app!)
-        await db.save('piece_metadata', jiraPollingPiece())
+        await db.save('piece_metadata', jiraPollingPiece({ version: '0.4.1' }))
+        await db.save('piece_metadata', jiraPollingPiece({ version: '0.4.2' }))
         const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.ENABLED })
         await db.save('flow', flow)
         const published = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.LOCKED, valid: true, trigger: pollingTrigger({ input: { projectId: 'AP' } }) })
         await db.save('flow_version', published)
         await db.update('flow', flow.id, { publishedVersionId: published.id })
-        const draft = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.DRAFT, valid: true, created: dayjs().add(1, 'minute').toISOString(), trigger: pollingTrigger({ input: draftInput }) })
+        const draft = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.DRAFT, valid: true, created: dayjs().add(1, 'minute').toISOString(), trigger: pollingTrigger({ input: draftInput, pieceVersion: draftPieceVersion }) })
         await db.save('flow_version', draft)
 
         const response = await ctx.post(`/v1/flows/${flow.id}`, { type: FlowOperationType.LOCK_AND_PUBLISH, request: { status: requestedStatus } })
@@ -178,10 +186,10 @@ function recordedCalls({ flowId }: { flowId: string }): Omit<TriggerCall, 'flowI
     return triggerCalls.filter((call) => call.flowId === flowId).map(({ call, isRepublish }) => ({ call, isRepublish }))
 }
 
-function jiraPollingPiece(): ReturnType<typeof createMockPieceMetadata> {
+function jiraPollingPiece({ version }: { version: string }): ReturnType<typeof createMockPieceMetadata> {
     return createMockPieceMetadata({
         name: '@activepieces/piece-jira-cloud',
-        version: '0.4.1',
+        version,
         triggers: {
             new_issue: {
                 name: 'new_issue',
@@ -199,12 +207,12 @@ function jiraPollingPiece(): ReturnType<typeof createMockPieceMetadata> {
     })
 }
 
-function pollingTrigger({ input }: { input: Record<string, unknown> }): FlowVersion['trigger'] {
+function pollingTrigger({ input, pieceVersion = '0.4.1' }: { input: Record<string, unknown>, pieceVersion?: string }): FlowVersion['trigger'] {
     return {
         type: FlowTriggerType.PIECE,
         settings: {
             pieceName: '@activepieces/piece-jira-cloud',
-            pieceVersion: '0.4.1',
+            pieceVersion,
             triggerName: 'new_issue',
             input,
             propertySettings: {

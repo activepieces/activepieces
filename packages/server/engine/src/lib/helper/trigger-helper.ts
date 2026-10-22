@@ -167,14 +167,14 @@ export const triggerHelper = {
             case TriggerHookType.ON_DISABLE: {
                 await pieceTrigger.onDisable({
                     ...context,
-                    store: republishStore.forOnDisable({ store: context.store, isRepublish: params.isRepublish, triggerType: pieceTrigger.type }),
+                    store: republishStore.forLifecycleHook({ store: context.store, isRepublish: params.isRepublish, triggerType: pieceTrigger.type }),
                 })
                 return {}
             }
             case TriggerHookType.ON_ENABLE: {
                 await pieceTrigger.onEnable({
                     ...context,
-                    store: republishStore.forOnEnable({ store: context.store, isRepublish: params.isRepublish, triggerType: pieceTrigger.type }),
+                    store: republishStore.forLifecycleHook({ store: context.store, isRepublish: params.isRepublish, triggerType: pieceTrigger.type }),
                 })
                 return {
                     listeners: appListeners,

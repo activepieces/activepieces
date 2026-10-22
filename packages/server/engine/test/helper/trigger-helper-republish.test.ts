@@ -29,89 +29,24 @@ vi.mock('../../src/lib/piece-context/store', () => ({
 import { EngineConstants, ResolvedExecuteTriggerOperation } from '../../src/lib/handler/context/engine-constants'
 import { triggerHelper } from '../../src/lib/helper/trigger-helper'
 
-describe('ON_ENABLE on a republish', () => {
+describe('a republish leaves a polling trigger\'s stored state untouched', () => {
     beforeEach(() => {
         mockGetPieceAndTriggerOrThrow.mockReset()
         storeEntries.clear()
     })
 
-    it('keeps the checkpoint a polling trigger overwrites on enable', async () => {
+    it('keeps the checkpoint onEnable overwrites', async () => {
         storeEntries.set('lastPoll', OLD_CHECKPOINT)
         mockTrigger({ type: TriggerStrategy.POLLING, onEnable: async ({ store }) => {
             await store.put('lastPoll', NEW_CHECKPOINT)
         } })
 
-        await executeOnEnable({ isRepublish: true })
+        await executeHook({ hookType: TriggerHookType.ON_ENABLE, isRepublish: true })
 
         expect(storeEntries.get('lastPoll')).toBe(OLD_CHECKPOINT)
     })
 
-    it('writes the checkpoint when a polling trigger has none yet', async () => {
-        mockTrigger({ type: TriggerStrategy.POLLING, onEnable: async ({ store }) => {
-            await store.put('lastPoll', NEW_CHECKPOINT)
-        } })
-
-        await executeOnEnable({ isRepublish: true })
-
-        expect(storeEntries.get('lastPoll')).toBe(NEW_CHECKPOINT)
-    })
-
-    it('still clears a cache a polling trigger deletes on enable', async () => {
-        storeEntries.set('lastPoll', OLD_CHECKPOINT)
-        storeEntries.set('fieldsCache', ['old-field'])
-        mockTrigger({ type: TriggerStrategy.POLLING, onEnable: async ({ store }) => {
-            await store.delete('fieldsCache')
-            await store.put('lastPoll', NEW_CHECKPOINT)
-        } })
-
-        await executeOnEnable({ isRepublish: true })
-
-        expect(storeEntries.has('fieldsCache')).toBe(false)
-        expect(storeEntries.get('lastPoll')).toBe(OLD_CHECKPOINT)
-    })
-
-    it('resets the checkpoint when it is not a republish', async () => {
-        storeEntries.set('lastPoll', OLD_CHECKPOINT)
-        mockTrigger({ type: TriggerStrategy.POLLING, onEnable: async ({ store }) => {
-            await store.put('lastPoll', NEW_CHECKPOINT)
-        } })
-
-        await executeOnEnable({ isRepublish: false })
-
-        expect(storeEntries.get('lastPoll')).toBe(NEW_CHECKPOINT)
-    })
-
-    it('lets a webhook trigger replace its stored webhook id', async () => {
-        storeEntries.set('webhookId', 'deleted-webhook')
-        mockTrigger({ type: TriggerStrategy.WEBHOOK, onEnable: async ({ store }) => {
-            await store.put('webhookId', 'new-webhook')
-        } })
-
-        await executeOnEnable({ isRepublish: true })
-
-        expect(storeEntries.get('webhookId')).toBe('new-webhook')
-    })
-
-    it('still registers the polling schedule', async () => {
-        storeEntries.set('lastPoll', OLD_CHECKPOINT)
-        mockTrigger({ type: TriggerStrategy.POLLING, onEnable: async ({ store, setSchedule }) => {
-            await store.put('lastPoll', NEW_CHECKPOINT)
-            setSchedule({ cronExpression: '*/5 * * * *' })
-        } })
-
-        const response = await executeOnEnable({ isRepublish: true })
-
-        expect(response).toMatchObject({ scheduleOptions: { cronExpression: '*/5 * * * *' } })
-    })
-})
-
-describe('ON_DISABLE of the old version on a republish', () => {
-    beforeEach(() => {
-        mockGetPieceAndTriggerOrThrow.mockReset()
-        storeEntries.clear()
-    })
-
-    it('keeps the checkpoint a polling trigger deletes on disable', async () => {
+    it('keeps the checkpoint onDisable deletes', async () => {
         storeEntries.set('_seenVideoIds', ['video-1'])
         mockTrigger({ type: TriggerStrategy.POLLING, onDisable: async ({ store }) => {
             await store.delete('_seenVideoIds')
@@ -122,7 +57,70 @@ describe('ON_DISABLE of the old version on a republish', () => {
         expect(storeEntries.get('_seenVideoIds')).toEqual(['video-1'])
     })
 
-    it('clears the checkpoint when the flow is turned off', async () => {
+    it('keeps the checkpoint onDisable clears by writing null', async () => {
+        storeEntries.set('_new_incoming_sms_trigger', { sid: 'message-1' })
+        mockTrigger({
+            type: TriggerStrategy.POLLING,
+            onDisable: async ({ store }) => {
+                await store.put('_new_incoming_sms_trigger', null)
+            },
+            onEnable: async ({ store }) => {
+                const last = await store.get('_new_incoming_sms_trigger')
+                if (last === null) {
+                    await store.put('_new_incoming_sms_trigger', { sid: 'message-now' })
+                }
+            },
+        })
+
+        await executeHook({ hookType: TriggerHookType.ON_DISABLE, isRepublish: true })
+        await executeHook({ hookType: TriggerHookType.ON_ENABLE, isRepublish: true })
+
+        expect(storeEntries.get('_new_incoming_sms_trigger')).toEqual({ sid: 'message-1' })
+    })
+
+    it('does not let onEnable replace the checkpoint with new scan state', async () => {
+        storeEntries.set('lastItem', 'checkout-1')
+        mockTrigger({ type: TriggerStrategy.POLLING, onEnable: async ({ store }) => {
+            await store.put('newestCheckoutScanCursor', 'checkout-99')
+            await store.put('newestCheckoutScanEnabledAt', NEW_CHECKPOINT)
+            await store.delete('lastItem')
+        } })
+
+        await executeHook({ hookType: TriggerHookType.ON_ENABLE, isRepublish: true })
+
+        expect(Object.fromEntries(storeEntries)).toEqual({ lastItem: 'checkout-1' })
+    })
+
+    it('still registers the polling schedule', async () => {
+        mockTrigger({ type: TriggerStrategy.POLLING, onEnable: async ({ store, setSchedule }) => {
+            await store.put('lastPoll', NEW_CHECKPOINT)
+            setSchedule({ cronExpression: '*/5 * * * *' })
+        } })
+
+        const response = await executeHook({ hookType: TriggerHookType.ON_ENABLE, isRepublish: true })
+
+        expect(response).toMatchObject({ scheduleOptions: { cronExpression: '*/5 * * * *' } })
+    })
+})
+
+describe('outside a republish the store behaves normally', () => {
+    beforeEach(() => {
+        mockGetPieceAndTriggerOrThrow.mockReset()
+        storeEntries.clear()
+    })
+
+    it('lets onEnable reset the checkpoint on a fresh enable', async () => {
+        storeEntries.set('lastPoll', OLD_CHECKPOINT)
+        mockTrigger({ type: TriggerStrategy.POLLING, onEnable: async ({ store }) => {
+            await store.put('lastPoll', NEW_CHECKPOINT)
+        } })
+
+        await executeHook({ hookType: TriggerHookType.ON_ENABLE, isRepublish: false })
+
+        expect(storeEntries.get('lastPoll')).toBe(NEW_CHECKPOINT)
+    })
+
+    it('lets onDisable clean up when the flow is turned off', async () => {
         storeEntries.set('_seenVideoIds', ['video-1'])
         mockTrigger({ type: TriggerStrategy.POLLING, onDisable: async ({ store }) => {
             await store.delete('_seenVideoIds')
@@ -133,33 +131,22 @@ describe('ON_DISABLE of the old version on a republish', () => {
         expect(storeEntries.has('_seenVideoIds')).toBe(false)
     })
 
-    it('lets a webhook trigger forget the webhook it removed', async () => {
+    it('lets a webhook trigger replace its webhook on a republish', async () => {
         storeEntries.set('webhookId', 'old-webhook')
-        mockTrigger({ type: TriggerStrategy.WEBHOOK, onDisable: async ({ store }) => {
-            await store.delete('webhookId')
-        } })
-
-        await executeHook({ hookType: TriggerHookType.ON_DISABLE, isRepublish: true })
-
-        expect(storeEntries.has('webhookId')).toBe(false)
-    })
-
-    it('keeps the checkpoint across disable then enable, like a real republish', async () => {
-        storeEntries.set('lastHistoryId', 'history-1')
         mockTrigger({
-            type: TriggerStrategy.POLLING,
+            type: TriggerStrategy.WEBHOOK,
             onDisable: async ({ store }) => {
-                await store.delete('lastHistoryId')
+                await store.delete('webhookId')
             },
             onEnable: async ({ store }) => {
-                await store.put('lastHistoryId', 'history-now')
+                await store.put('webhookId', 'new-webhook')
             },
         })
 
         await executeHook({ hookType: TriggerHookType.ON_DISABLE, isRepublish: true })
         await executeHook({ hookType: TriggerHookType.ON_ENABLE, isRepublish: true })
 
-        expect(storeEntries.get('lastHistoryId')).toBe('history-1')
+        expect(storeEntries.get('webhookId')).toBe('new-webhook')
     })
 })
 
@@ -168,10 +155,6 @@ function mockTrigger({ type, onEnable, onDisable }: { type: TriggerStrategy, onE
         piece: { auth: undefined },
         pieceTrigger: { type, props: {}, requireAuth: false, onEnable, onDisable },
     })
-}
-
-async function executeOnEnable({ isRepublish }: { isRepublish: boolean }): Promise<ExecuteTriggerResponse<TriggerHookType>> {
-    return executeHook({ hookType: TriggerHookType.ON_ENABLE, isRepublish })
 }
 
 async function executeHook({ hookType, isRepublish }: { hookType: TriggerHookType.ON_ENABLE | TriggerHookType.ON_DISABLE, isRepublish: boolean }): Promise<ExecuteTriggerResponse<TriggerHookType>> {
