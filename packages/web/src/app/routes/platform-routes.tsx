@@ -13,7 +13,6 @@ import {
   PlanFeatureGuard,
   PlanFeatureSample,
 } from './platform/plan-feature-sample';
-import { useAdminControlClicks } from './platform/use-admin-control-clicks';
 import { useAdminPageViewed } from './platform/use-admin-page-viewed';
 
 const SettingsBilling = React.lazy(() =>
@@ -613,7 +612,6 @@ export const platformRoutes = [
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   const page = useAdminPage();
   useAdminPageViewed(page);
-  useAdminControlClicks(page);
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
 
