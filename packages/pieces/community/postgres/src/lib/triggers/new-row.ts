@@ -23,8 +23,8 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof postgresAuth>, {
             const result = await client.query(query);
             const items = result.rows.map(function (row) {
                 const rowHash = crypto.createHash('md5').update(JSON.stringify(row)).digest('hex');
-                const isTimestamp = dayjs(row[propsValue.order_by]).isValid();
-                const orderValue = isTimestamp ? dayjs(row[propsValue.order_by]).toISOString() : row[propsValue.order_by];
+                const value = row[propsValue.order_by];
+                const orderValue = value instanceof Date && dayjs(value).isValid() ? dayjs(value).toISOString() : value;
                 return {
                     id: orderValue + '|' + rowHash,
                     data: row,
