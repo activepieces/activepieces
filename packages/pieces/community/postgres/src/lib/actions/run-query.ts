@@ -1,5 +1,4 @@
 import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
-import pg from 'pg';
 import { postgresAuth } from '../..';
 import { pgClient } from '../common';
 
@@ -69,15 +68,11 @@ export const runQuery = createAction({
     ${query}
     `
     const args = context.propsValue.args || [];
-    return new Promise((resolve, reject) => {
-      client.query(queryWithMetadata, args, function (error: any, results: { rows: unknown }) {
-        if (error) {
-          client.end();
-          return reject(error);
-        }
-        resolve(results.rows);
-        client.end();
-      });
-    });
+    try {
+      const result = await client.query(queryWithMetadata, args);
+      return result.rows;
+    } finally {
+      await client.end();
+    }
   },
 });
