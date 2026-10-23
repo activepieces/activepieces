@@ -36,8 +36,9 @@ export const stripeCapturePaymentIntent = createAction({
     final_capture: Property.Checkbox({
       displayName: 'Final Capture',
       description:
-        'If true, the remaining uncaptured amount is released back to the customer.',
+        'If true, the rest of the hold is released. Turn off only with multicapture.',
       required: false,
+      defaultValue: true,
     }),
     metadata: Property.Json({
       displayName: 'Metadata',
@@ -54,7 +55,7 @@ export const stripeCapturePaymentIntent = createAction({
     if (amount_to_capture !== undefined && amount_to_capture !== null) {
       body.amount_to_capture = amount_to_capture;
     }
-    if (final_capture !== undefined) body.final_capture = final_capture;
+    if (final_capture === false) body.final_capture = false;
     if (metadata && typeof metadata === 'object') {
       Object.keys(metadata).forEach((key) => {
         body[`metadata[${key}]`] = (metadata as Record<string, string>)[key];

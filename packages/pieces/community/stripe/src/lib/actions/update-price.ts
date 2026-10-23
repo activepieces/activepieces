@@ -17,7 +17,7 @@ export const stripeUpdatePrice = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates a Stripe price (set active=false to archive it, or edit its nickname/metadata). The unit amount is immutable — create a new price to change it. Only the fields you supply change. Idempotent: re-applying the same update converges.',
+      'Updates a Stripe price (set active=no to archive it, or edit its nickname/metadata). The unit amount is immutable — create a new price to change it. active takes yes, no or unchanged; leave it out or pass unchanged to keep the price active or archived as it is. Only the fields you supply change. Idempotent: re-applying the same update converges.',
     idempotent: true,
   },
   props: {
@@ -27,10 +27,9 @@ export const stripeUpdatePrice = createAction({
         'The price ID (e.g., price_...). Obtain it from List/Search Prices.',
       required: true,
     }),
-    active: Property.Checkbox({
+    active: stripeCommon.triStateProp({
       displayName: 'Active',
-      description: 'Set to false to archive the price.',
-      required: false,
+      description: 'No archives the price, Yes makes it available again.',
     }),
     nickname: Property.ShortText({
       displayName: 'Nickname',
@@ -43,7 +42,8 @@ export const stripeUpdatePrice = createAction({
   },
   outputSchema: priceOutputSchema,
   async run(context) {
-    const { price_id, active, nickname, metadata } = context.propsValue;
+    const { price_id, nickname, metadata } = context.propsValue;
+    const active = stripeCommon.triStateValue(context.propsValue.active);
 
     const body: { [key: string]: unknown } = {};
     if (active !== undefined) body.active = active;

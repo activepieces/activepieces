@@ -500,6 +500,33 @@ export const stripeCommon = {
       }
     },
   }),
+
+  triStateProp: ({
+    displayName,
+    description,
+  }: {
+    displayName: string;
+    description: string;
+  }) =>
+    Property.StaticDropdown<string, false>({
+      displayName,
+      description: `${description} Leave empty or pick Leave unchanged to keep the current setting.`,
+      required: false,
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Yes', value: 'yes' },
+          { label: 'No', value: 'no' },
+          { label: 'Leave unchanged', value: 'unchanged' },
+        ],
+      },
+    }),
+
+  triStateValue: (value: unknown): boolean | undefined => {
+    if (value === true || value === 'yes') return true;
+    if (value === false || value === 'no') return false;
+    return undefined;
+  },
 };
 
 function flattenFormField({

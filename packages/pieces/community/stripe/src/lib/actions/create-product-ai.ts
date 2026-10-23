@@ -36,6 +36,7 @@ export const stripeCreateProductAi = createAction({
       description:
         'Whether the product is currently available for purchase. Defaults to true.',
       required: false,
+      defaultValue: true,
     }),
     images: Property.Array({
       displayName: 'Image URLs',

@@ -50,7 +50,10 @@ export const stripeCreatePromotionCode = createAction({
     }),
     active: Property.Checkbox({
       displayName: 'Active',
+      description:
+        'Whether customers can redeem the promotion code. Defaults to true.',
       required: false,
+      defaultValue: true,
     }),
   },
   outputSchema: promotionCodeOutputSchema,
