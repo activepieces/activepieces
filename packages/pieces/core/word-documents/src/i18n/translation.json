@@ -1,0 +1,11 @@
+{
+  "Read Word documents (.docx) in your flow, no Microsoft account needed.": "Read Word documents (.docx) in your flow, no Microsoft account needed.",
+  "Extract Text": "Extract Text",
+  "Get the text, headers and footers of a Word document (.docx).": "Get the text, headers and footers of a Word document (.docx).",
+  "Word Document": "Word Document",
+  "Password": "Password",
+  "Pick a .docx file from an earlier step, such as an email attachment, or paste a URL to download.": "Pick a .docx file from an earlier step, such as an email attachment, or paste a URL to download.",
+  "Only needed when the document is password-protected.": "Only needed when the document is password-protected.",
+  "Document": "Document",
+  "Word Documents": "Word Documents"
+}
