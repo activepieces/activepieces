@@ -8,8 +8,8 @@ export const convertImageFormat = createAction({
   audience: 'both',
   name: 'convert_image_format',
   classification: 'READ',
-  displayName: 'Image Conversion Helper',
-  description: 'Converts a image to supported formats',
+  displayName: 'Convert Image',
+  description: 'Save an image as JPEG, PNG, TIFF, BMP or AVIF, HEIC input included.',
   aiMetadata: { description: 'Converts an uploaded image file to JPEG, PNG, TIFF, BMP, or AVIF, transparently decoding HEIC/HEIF sources first. Use it when a downstream step needs one specific format - use compress_image to only shrink a file in place, or image_to_base64 to inline an image as a data URL. Requires an image file and one target format, and HEIC/HEIF sources are detected only from the file extension or name, so an extensionless HEIC may fail to decode; deterministic and idempotent for the same input.', idempotent: true },
   props: {
     image: Property.File({
@@ -18,7 +18,6 @@ export const convertImageFormat = createAction({
     }),
     outputFormat: Property.StaticDropdown({
       displayName: 'Output Format',
-      description: 'The format to convert the image to.',
       required: true,
       options: {
         options: [
@@ -32,10 +31,15 @@ export const convertImageFormat = createAction({
     }),
     resultFileName: Property.ShortText({
       displayName: 'Result File Name',
-      description: 'Specifies the output file name for the result image (without extension).',
+      description: 'File name for the result, without the extension.',
       required: false,
+      advanced: true,
     }),
   },
+  propertyGroups: [
+    { key: 'source', display: 'section', label: 'Source', icon: 'file', props: ['image'] },
+    { key: 'output', display: 'section', label: 'Output', icon: 'sliders', props: ['outputFormat'] },
+  ],
   async run(context) {
     const { image, outputFormat, resultFileName } = context.propsValue;
 
