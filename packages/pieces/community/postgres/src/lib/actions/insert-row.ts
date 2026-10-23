@@ -15,6 +15,15 @@ export const insertRow = createAction({
     description: 'Inserts a single row into a PostgreSQL table from a map of column names to values, and by default returns the inserted row as stored by the database (including defaults and generated ids). Use to add a record. Turn off Return Inserted Row when the connection only has INSERT permission, since returning the row also needs SELECT. Not idempotent: each call performs a fresh INSERT, so repeating it adds duplicate rows or errors on a unique-key collision.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'row',
+      display: 'section',
+      label: 'Row to insert',
+      icon: 'inbox',
+      props: ['table', 'values'],
+    },
+  ],
   props: {
     table: postgresCommon.table,
     values: Property.Object({
@@ -24,8 +33,9 @@ export const insertRow = createAction({
     }),
     return_row: Property.Checkbox({
       displayName: 'Return Inserted Row',
-      description: 'Return the stored row, including generated ids and column defaults. Requires SELECT permission on the table as well as INSERT — turn this off for an append-only role.',
+      description: 'Return the stored row with generated ids. Needs SELECT permission too.',
       required: false,
+      advanced: true,
       defaultValue: true,
     }),
   },
