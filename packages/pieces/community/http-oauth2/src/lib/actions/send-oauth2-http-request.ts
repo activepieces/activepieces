@@ -300,6 +300,9 @@ export const httpOauth2RequestAction = createAction({
           headers: proxyHeaders,
           body: proxyBody,
           dispatcher: proxyAgent,
+          ...(request.timeout && request.timeout > 0
+            ? { signal: AbortSignal.timeout(request.timeout) }
+            : {}),
         } as RequestInit & { dispatcher: ProxyAgent });
 
         const proxyContentType = proxiedResponse.headers.get('content-type') ?? '';
