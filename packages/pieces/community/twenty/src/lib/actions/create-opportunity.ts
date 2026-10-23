@@ -1,14 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { twentyAuth } from '../auth';
 import { twentyApi } from '../common/api';
+import { createOpportunityOutputSchema } from '../output-schemas';
 
 export const createOpportunityAction = createAction({
   auth: twentyAuth,
   name: 'create_opportunity',
+  outputSchema: createOpportunityOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Opportunity',
   description: 'Creates a new opportunity (deal) in Twenty CRM.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new opportunity (sales deal) in Twenty CRM. Use when registering a deal to track; only the opportunity name is required, with optional stage, amount, currency, close date, and a company ID to link it to an existing company. Not idempotent: each call inserts a new deal, so repeated calls create duplicates.', idempotent: false },
   props: {
     name: Property.ShortText({

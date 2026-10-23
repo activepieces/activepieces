@@ -4,9 +4,17 @@ import { twentyClient } from './client';
 
 import type {
 	TwentyAuthValue,
+	TwentyDuplicateConnection,
+	TwentyEnvelope,
 	TwentyListResponse,
+	TwentyMetadataItem,
+	TwentyMetadataPage,
+	TwentyMetadataSingle,
+	TwentyPageInfo,
 	TwentyPersonResponse,
 	TwentyRecord,
+	TwentyRecordList,
+	TwentyRecordPage,
 	TwentyResponse,
 } from './types';
 
@@ -94,14 +102,18 @@ async function findCompanies({
 	name?: string;
 	domainName?: string;
 }): Promise<TwentyRecord[]> {
-	const query: QueryParams = {};
-	if (name) {
-		query['filter[name][eq]'] = name;
-	}
-	if (domainName) {
-		query['filter[domainName][primaryLinkUrl][eq]'] = domainName;
-	}
-	return await listRecords({ auth, path: '/rest/companies', query });
+	return await listRecordItems({
+		auth,
+		path: '/rest/companies',
+		query: filterQuery({
+			conditions: {
+				name,
+				'domainName.primaryLinkUrl': domainName
+					? [...new Set([domainName, domainName.replace(/^https?:\/\//i, '')])]
+					: undefined,
+			},
+		}),
+	});
 }
 
 async function findPeople({
@@ -115,25 +127,25 @@ async function findPeople({
 	firstName?: string;
 	lastName?: string;
 }): Promise<TwentyRecord[]> {
-	const query: QueryParams = {};
-	if (email) {
-		query['filter[emails][primaryEmail][eq]'] = email;
-	}
-	if (firstName) {
-		query['filter[name][firstName][eq]'] = firstName;
-	}
-	if (lastName) {
-		query['filter[name][lastName][eq]'] = lastName;
-	}
-	return await listRecords({ auth, path: '/rest/people', query });
+	return await listRecordItems({
+		auth,
+		path: '/rest/people',
+		query: filterQuery({
+			conditions: {
+				'emails.primaryEmail': email,
+				'name.firstName': firstName,
+				'name.lastName': lastName,
+			},
+		}),
+	});
 }
 
 async function listRecentCompanies({ auth }: { auth: TwentyAuthValue }): Promise<TwentyRecord[]> {
-	return await listRecords({ auth, path: '/rest/companies', query: RECENT_QUERY });
+	return await listRecordItems({ auth, path: '/rest/companies', query: RECENT_QUERY });
 }
 
 async function listRecentPeople({ auth }: { auth: TwentyAuthValue }): Promise<TwentyRecord[]> {
-	return await listRecords({ auth, path: '/rest/people', query: RECENT_QUERY });
+	return await listRecordItems({ auth, path: '/rest/people', query: RECENT_QUERY });
 }
 
 async function updateCompany({
@@ -183,8 +195,7 @@ async function updatePerson({
 	const body: Record<string, unknown> = {};
 	if (firstName || lastName) {
 		const existing = await getPerson({ auth, personId });
-		const personData = existing.data ?? existing;
-		const existingName = personData.name ?? {};
+		const existingName = existing.data?.person?.name ?? {};
 		body['name'] = {
 			firstName: firstName ?? existingName.firstName,
 			lastName: lastName ?? existingName.lastName,
@@ -206,6 +217,265 @@ async function updatePerson({
 	});
 }
 
+async function listRecords({
+	auth,
+	objectNamePlural,
+	filter,
+	orderBy,
+	limit,
+	depth,
+	fields,
+	startingAfter,
+}: ListRecordsParams & { auth: TwentyAuthValue }): Promise<TwentyRecordList> {
+	const response = await twentyClient.request<TwentyRecordPage>({
+		auth,
+		method: HttpMethod.GET,
+		path: recordsPath({ objectNamePlural }),
+		query: compactQuery({
+			values: { filter, order_by: orderBy, limit, depth, fields, starting_after: startingAfter },
+		}),
+	});
+	return {
+		records: firstValue({ envelope: response }) ?? [],
+		pageInfo: response.pageInfo,
+		totalCount: response.totalCount,
+	};
+}
+
+async function getRecord({
+	auth,
+	objectNamePlural,
+	recordId,
+	depth,
+	fields,
+}: RecordParams & { auth: TwentyAuthValue; depth?: number; fields?: string }): Promise<
+	TwentyRecord | undefined
+> {
+	const response = await twentyClient.request<TwentyEnvelope<TwentyRecord>>({
+		auth,
+		method: HttpMethod.GET,
+		path: recordsPath({ objectNamePlural, recordId }),
+		query: compactQuery({ values: { depth, fields } }),
+	});
+	return firstValue({ envelope: response });
+}
+
+async function createRecord({
+	auth,
+	objectNamePlural,
+	record,
+	upsert,
+}: {
+	auth: TwentyAuthValue;
+	objectNamePlural: string;
+	record: Record<string, unknown>;
+	upsert?: boolean;
+}): Promise<TwentyRecord | undefined> {
+	const response = await twentyClient.request<TwentyEnvelope<TwentyRecord>>({
+		auth,
+		method: HttpMethod.POST,
+		path: recordsPath({ objectNamePlural }),
+		query: compactQuery({ values: { upsert: upsert ? true : undefined } }),
+		body: record,
+	});
+	return firstValue({ envelope: response });
+}
+
+async function createRecords({
+	auth,
+	objectNamePlural,
+	records,
+	upsert,
+}: {
+	auth: TwentyAuthValue;
+	objectNamePlural: string;
+	records: Record<string, unknown>[];
+	upsert?: boolean;
+}): Promise<{ records: TwentyRecord[]; count: number }> {
+	const response = await twentyClient.request<TwentyEnvelope<TwentyRecord[]>>({
+		auth,
+		method: HttpMethod.POST,
+		path: `/rest/batch/${encodeURIComponent(objectNamePlural)}`,
+		query: compactQuery({ values: { upsert: upsert ? true : undefined } }),
+		body: records,
+	});
+	const created = firstValue({ envelope: response }) ?? [];
+	return { records: created, count: created.length };
+}
+
+async function updateRecord({
+	auth,
+	objectNamePlural,
+	recordId,
+	record,
+}: RecordParams & { auth: TwentyAuthValue; record: Record<string, unknown> }): Promise<
+	TwentyRecord | undefined
+> {
+	const response = await twentyClient.request<TwentyEnvelope<TwentyRecord>>({
+		auth,
+		method: HttpMethod.PATCH,
+		path: recordsPath({ objectNamePlural, recordId }),
+		body: record,
+	});
+	return firstValue({ envelope: response });
+}
+
+async function deleteRecord({
+	auth,
+	objectNamePlural,
+	recordId,
+	permanent,
+}: RecordParams & { auth: TwentyAuthValue; permanent?: boolean }): Promise<
+	TwentyRecord | undefined
+> {
+	const response = await twentyClient.request<TwentyEnvelope<TwentyRecord>>({
+		auth,
+		method: HttpMethod.DELETE,
+		path: recordsPath({ objectNamePlural, recordId }),
+		query: compactQuery({ values: { soft_delete: permanent ? undefined : true } }),
+	});
+	return firstValue({ envelope: response });
+}
+
+async function restoreRecord({
+	auth,
+	objectNamePlural,
+	recordId,
+}: RecordParams & { auth: TwentyAuthValue }): Promise<TwentyRecord | undefined> {
+	const response = await twentyClient.request<TwentyEnvelope<TwentyRecord>>({
+		auth,
+		method: HttpMethod.PATCH,
+		path: `${recordsPath({ objectNamePlural, recordId })}/restore`,
+	});
+	return firstValue({ envelope: response });
+}
+
+async function findDuplicateRecords({
+	auth,
+	objectNamePlural,
+	recordIds,
+	records,
+}: {
+	auth: TwentyAuthValue;
+	objectNamePlural: string;
+	recordIds?: string[];
+	records?: Record<string, unknown>[];
+}): Promise<{
+	results: { duplicates: TwentyRecord[]; totalCount?: number; pageInfo?: TwentyPageInfo }[];
+}> {
+	const response = await twentyClient.request<{ data: TwentyDuplicateConnection[] }>({
+		auth,
+		method: HttpMethod.POST,
+		path: `${recordsPath({ objectNamePlural })}/duplicates`,
+		body: { ids: recordIds, data: records },
+	});
+	return {
+		results: response.data.map((connection) => {
+			const duplicates = Object.entries(connection).find(([key]) =>
+				key.endsWith('Duplicates'),
+			)?.[1];
+			return {
+				duplicates: Array.isArray(duplicates) ? duplicates : [],
+				totalCount: connection.totalCount,
+				pageInfo: connection.pageInfo,
+			};
+		}),
+	};
+}
+
+async function mergeRecords({
+	auth,
+	objectNamePlural,
+	recordIds,
+	conflictPriorityIndex,
+	dryRun,
+}: {
+	auth: TwentyAuthValue;
+	objectNamePlural: string;
+	recordIds: string[];
+	conflictPriorityIndex: number;
+	dryRun?: boolean;
+}): Promise<TwentyRecord | undefined> {
+	const response = await twentyClient.request<TwentyEnvelope<TwentyRecord>>({
+		auth,
+		method: HttpMethod.PATCH,
+		path: `${recordsPath({ objectNamePlural })}/merge`,
+		body: { ids: recordIds, conflictPriorityIndex, dryRun: dryRun ?? false },
+	});
+	return firstValue({ envelope: response });
+}
+
+async function groupRecords({
+	auth,
+	objectNamePlural,
+	groupBy,
+	aggregate,
+	filter,
+	orderBy,
+	limit,
+}: {
+	auth: TwentyAuthValue;
+	objectNamePlural: string;
+	groupBy: Record<string, unknown>[];
+	aggregate?: string[];
+	filter?: string;
+	orderBy?: string;
+	limit?: number;
+}): Promise<{ groups: Record<string, unknown>[]; count: number }> {
+	const groups = await twentyClient.request<Record<string, unknown>[]>({
+		auth,
+		method: HttpMethod.GET,
+		path: `${recordsPath({ objectNamePlural })}/groupBy`,
+		query: compactQuery({
+			values: {
+				group_by: JSON.stringify(groupBy),
+				aggregate: aggregate ? JSON.stringify(aggregate) : undefined,
+				filter,
+				order_by: orderBy,
+				limit,
+			},
+		}),
+	});
+	return { groups, count: groups.length };
+}
+
+async function listObjects({
+	auth,
+	limit,
+	startingAfter,
+}: MetadataListParams & { auth: TwentyAuthValue }): Promise<
+	MetadataList & { objects: TwentyMetadataItem[] }
+> {
+	const page = await listMetadata({ auth, resource: 'objects', limit, startingAfter });
+	return { objects: page.items, pageInfo: page.pageInfo, totalCount: page.totalCount };
+}
+
+async function getObject({
+	auth,
+	objectId,
+}: {
+	auth: TwentyAuthValue;
+	objectId: string;
+}): Promise<TwentyMetadataItem> {
+	const response = await twentyClient.request<TwentyMetadataSingle>({
+		auth,
+		method: HttpMethod.GET,
+		path: `/rest/metadata/objects/${encodeURIComponent(objectId)}`,
+	});
+	return response.data?.object ?? response;
+}
+
+async function listFields({
+	auth,
+	limit,
+	startingAfter,
+}: MetadataListParams & { auth: TwentyAuthValue }): Promise<
+	MetadataList & { fields: TwentyMetadataItem[] }
+> {
+	const page = await listMetadata({ auth, resource: 'fields', limit, startingAfter });
+	return { fields: page.items, pageInfo: page.pageInfo, totalCount: page.totalCount };
+}
+
 async function getPerson({
 	auth,
 	personId,
@@ -220,7 +490,7 @@ async function getPerson({
 	});
 }
 
-async function listRecords({
+async function listRecordItems({
 	auth,
 	path,
 	query,
@@ -240,6 +510,68 @@ async function listRecords({
 	return Object.values(items).find(Array.isArray) ?? [];
 }
 
+async function listMetadata({
+	auth,
+	resource,
+	limit,
+	startingAfter,
+}: MetadataListParams & { auth: TwentyAuthValue; resource: string }): Promise<
+	MetadataList & { items: TwentyMetadataItem[] }
+> {
+	const response = await twentyClient.request<TwentyMetadataPage>({
+		auth,
+		method: HttpMethod.GET,
+		path: `/rest/metadata/${resource}`,
+		query: compactQuery({ values: { limit, starting_after: startingAfter } }),
+	});
+	const items = Array.isArray(response.data)
+		? response.data
+		: firstValue({ envelope: { data: response.data } }) ?? [];
+	return { items, pageInfo: response.pageInfo, totalCount: response.totalCount };
+}
+
+function recordsPath({
+	objectNamePlural,
+	recordId,
+}: {
+	objectNamePlural: string;
+	recordId?: string;
+}): string {
+	const base = `/rest/${encodeURIComponent(objectNamePlural)}`;
+	return recordId ? `${base}/${encodeURIComponent(recordId)}` : base;
+}
+
+function filterQuery({
+	conditions,
+}: {
+	conditions: Record<string, string | string[] | undefined>;
+}): QueryParams {
+	const filter = Object.entries(conditions)
+		.filter(([, value]) => value)
+		.map(
+			([field, value]) =>
+				`${field}[${Array.isArray(value) ? 'in' : 'eq'}]:${JSON.stringify(value)}`,
+		)
+		.join(',');
+	return filter ? { filter } : {};
+}
+
+function firstValue<T>({ envelope }: { envelope: TwentyEnvelope<T> }): T | undefined {
+	return Object.values(envelope.data)[0];
+}
+
+function compactQuery({
+	values,
+}: {
+	values: Record<string, string | number | boolean | null | undefined>;
+}): QueryParams {
+	return Object.fromEntries(
+		Object.entries(values)
+			.filter(([, value]) => value !== undefined && value !== null && value !== '')
+			.map(([key, value]) => [key, String(value)]),
+	);
+}
+
 export const twentyApi = {
 	checkConnection,
 	createPerson,
@@ -251,9 +583,22 @@ export const twentyApi = {
 	listRecentPeople,
 	updateCompany,
 	updatePerson,
+	listRecords,
+	getRecord,
+	createRecord,
+	createRecords,
+	updateRecord,
+	deleteRecord,
+	restoreRecord,
+	findDuplicateRecords,
+	mergeRecords,
+	groupRecords,
+	listObjects,
+	getObject,
+	listFields,
 };
 
-const RECENT_QUERY: QueryParams = { 'sort[createdAt]': 'desc', limit: '100' };
+const RECENT_QUERY: QueryParams = { order_by: 'createdAt[DescNullsLast]', limit: '100' };
 
 type CreatePersonParams = { firstName: string; lastName?: string; email?: string };
 
@@ -267,3 +612,19 @@ type CreateOpportunityParams = {
 	closeDate?: string;
 	companyId?: string;
 };
+
+type RecordParams = { objectNamePlural: string; recordId: string };
+
+type ListRecordsParams = {
+	objectNamePlural: string;
+	filter?: string;
+	orderBy?: string;
+	limit?: number;
+	depth?: number;
+	fields?: string;
+	startingAfter?: string;
+};
+
+type MetadataListParams = { limit?: number; startingAfter?: string };
+
+type MetadataList = { pageInfo?: TwentyPageInfo; totalCount?: number };

@@ -11,6 +11,7 @@ import {
 import dayjs from 'dayjs';
 import { twentyAuth } from '../auth';
 import { twentyApi } from '../common/api';
+import { newCompanyOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof twentyAuth>,
@@ -30,6 +31,7 @@ const polling: Polling<
 export const newCompanyTrigger = createTrigger({
   auth: twentyAuth,
   name: 'new_company',
+  outputSchema: newCompanyOutputSchema,
   classification: 'READ',
   displayName: 'New Company',
   description: 'Triggers when a new company is created in Twenty CRM.',

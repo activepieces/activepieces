@@ -9,6 +9,7 @@ import { findPersonAction } from './lib/actions/find-person';
 import { findCompanyAction } from './lib/actions/find-company';
 import { updatePersonAction } from './lib/actions/update-person';
 import { updateCompanyAction } from './lib/actions/update-company';
+import { twentyAiActions } from './lib/actions/ai';
 import { newPersonTrigger } from './lib/triggers/new-person';
 import { newCompanyTrigger } from './lib/triggers/new-company';
 
@@ -18,7 +19,7 @@ export const twenty = createPiece({
   displayName: 'Twenty',
   description: 'Open-source CRM platform.',
   auth: twentyAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/twenty.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ['Akash5908'],
@@ -30,6 +31,7 @@ export const twenty = createPiece({
     findCompanyAction,
     updatePersonAction,
     updateCompanyAction,
+    ...twentyAiActions,
     createCustomApiCallAction({
       baseUrl: (auth) => (auth ? twentyClient.baseUrl({ auth }) : ''),
       auth: twentyAuth,

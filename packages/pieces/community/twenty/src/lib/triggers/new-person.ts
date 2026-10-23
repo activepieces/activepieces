@@ -11,6 +11,7 @@ import {
 import dayjs from 'dayjs';
 import { twentyAuth } from '../auth';
 import { twentyApi } from '../common/api';
+import { newPersonOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof twentyAuth>,
@@ -30,6 +31,7 @@ const polling: Polling<
 export const newPersonTrigger = createTrigger({
   auth: twentyAuth,
   name: 'new_person',
+  outputSchema: newPersonOutputSchema,
   classification: 'READ',
   displayName: 'New Person',
   description: 'Triggers when a new person is created in Twenty CRM.',
