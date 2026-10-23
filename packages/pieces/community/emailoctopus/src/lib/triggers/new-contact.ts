@@ -3,24 +3,15 @@ import {
   createTrigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { emailOctopusAuth } from '../common/auth';
+import { emailOctopusAuth } from '../auth';
 import { emailOctopusProps } from '../common/props';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
+import { contactEventTriggerOutputSchema } from '../output-schemas';
 
-interface EmailOctopusEvent {
-  type: string;
-  id: string;
-  contact_email_address: string;
-  contact_fields?: Record<string, string>;
-  contact_tags?: string[];
-  contact_status?: string;
-  list_id?: string;
-  occurred_at?: string;
-}
-
-export const newContact = createTrigger({
+export const newContactTrigger = createTrigger({
   auth: emailOctopusAuth,
   name: 'newContact',
+  outputSchema: contactEventTriggerOutputSchema,
   classification: 'READ',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is added to a particular list.',
@@ -28,7 +19,7 @@ export const newContact = createTrigger({
     description: 'Fires when a new contact is created in EmailOctopus (a contact.created webhook event), representing a new subscriber. Can be scoped to a single list id, or left unfiltered to catch new contacts across all lists.',
   },
   props: {
-    list_id: emailOctopusProps.listId(true),
+    list_id: emailOctopusProps.listId({ required: true }),
     liveMarkdown: Property.MarkDown({
       value: `
       **Live URL:**
@@ -74,24 +65,15 @@ export const newContact = createTrigger({
     return;
   },
   async run(context) {
-    const events = context.payload.body;
+    const body = context.payload.body as
+      | { type?: string; list_id?: string }
+      | { type?: string; list_id?: string }[];
+    const events = Array.isArray(body) ? body : [body];
     const listIdFilter = context.propsValue.list_id;
-
-    if (Array.isArray(events)) {
-      return events.filter(
-        (event: EmailOctopusEvent) =>
-          event.type === 'contact.created' &&
-          (!listIdFilter || event.list_id === listIdFilter)
-      );
-    }
-
-    if (
-      (events as EmailOctopusEvent)?.type === 'contact.created' &&
-      (!listIdFilter || (events as EmailOctopusEvent).list_id === listIdFilter)
-    ) {
-      return [events];
-    }
-
-    return [];
+    return events.filter(
+      (event) =>
+        event?.type === 'contact.created' &&
+        (!listIdFilter || event.list_id === listIdFilter)
+    );
   },
 });
