@@ -14,6 +14,7 @@ import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-s
 import { networkUtils } from '../../helper/network-utils'
 import { userService } from '../../user/user-service'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
+import { editorSession } from './editor-session'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
 
@@ -95,6 +96,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
             operation: cleanOperation(request.body),
             previousFlow: flow,
             ip: networkUtils.clientIp(request),
+            editorSessionId: editorSession.idFromRequest(request),
         })
     })
 
@@ -299,7 +301,7 @@ const GetFlowRequestOptions = {
 const DeleteFlowRequestOptions = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.TABLE,
                 tableName: FlowEntity,
@@ -317,3 +319,4 @@ const DeleteFlowRequestOptions = {
         },
     },
 }
+

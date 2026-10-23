@@ -23,7 +23,7 @@
   "The full URL to call, including https:// or http://": "The full URL to call, including https:// or http://",
   "Sent with the request as key-value pairs.": "Sent with the request as key-value pairs.",
   "Appended to the URL as a query string.": "Appended to the URL as a query string.",
-  "How to encode the request body. Leave as None for GET requests.": "How to encode the request body. Leave as None for GET requests.",
+  "How to encode the request body.": "How to encode the request body.",
   "Return the response as base64, for files like PDFs.": "Return the response as base64, for files like PDFs.",
   "Route this request through an HTTP proxy.": "Route this request through an HTTP proxy.",
   "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Seconds to wait for a response. Empty: up to the flow limit (10 min).",
@@ -39,13 +39,14 @@
   "None": "None",
   "Basic Auth": "Basic Auth",
   "Bearer Token": "Bearer Token",
-  "JSON": "JSON",
-  "Form Data": "Form Data",
-  "Raw": "Raw",
   "Retry on all errors (4xx, 5xx)": "Retry on all errors (4xx, 5xx)",
   "Retry on internal errors (5xx)": "Retry on internal errors (5xx)",
   "Do not retry": "Do not retry",
   "Continue flow on all errors": "Continue flow on all errors",
   "Continue flow on 4xx errors": "Continue flow on 4xx errors",
-  "Do not continue (stop the flow)": "Do not continue (stop the flow)"
+  "Do not continue (stop the flow)": "Do not continue (stop the flow)",
+  "Request": "Request",
+  "Credentials": "Credentials",
+  "Data to send": "Data to send",
+  "HTTP": "HTTP"
 }

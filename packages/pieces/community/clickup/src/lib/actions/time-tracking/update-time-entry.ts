@@ -41,15 +41,18 @@ export const clickupUpdateTimeEntry = createAction({
       description: 'New length of the entry in milliseconds.',
       required: false,
     }),
-    billable: Property.Checkbox({
+    billable: clickupCommon.optionalBoolean({
       displayName: 'Billable',
-      description: 'Whether the time entry is billable.',
-      required: false,
+      description:
+        'Whether the time entry is billable. Leave empty or pick Leave unchanged to keep the current setting.',
     }),
   },
   async run(context) {
-    const { workspace_id, timer_id, description, start, duration, billable } =
+    const { workspace_id, timer_id, description, start, duration } =
       context.propsValue;
+    const billable = clickupCommon.optionalBooleanValue(
+      context.propsValue.billable
+    );
     const auth = getAccessTokenOrThrow(context.auth);
 
     const body: Record<string, unknown> = {};
