@@ -23,9 +23,8 @@ export const imageToBase64 = createAction({
   },
   async run(context) {
     const image = context.propsValue.image;
-    const mimeType = mime.lookup(
-      image.extension ? image.extension : 'image/png'
-    );
+    const mimeType =
+      mime.lookup(image.extension || image.filename || '') || 'image/png';
 
     const actualMimeType = context.propsValue.override_mime_type
       ? context.propsValue.override_mime_type
