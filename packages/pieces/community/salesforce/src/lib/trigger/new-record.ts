@@ -21,7 +21,7 @@ export const newRecord = createTrigger({
   name: 'new_record',
   classification: 'READ',
   displayName: 'New Record',
-  description: 'Triggers when there is new record',
+  description: 'Fires when a record of the chosen object is created.',
   aiMetadata: {
     description: 'Fires once for each new record created for the selected Salesforce object, detected by polling for records whose CreatedDate is later than the last poll. Each event emits all fields of the created record. An optional SOQL where-clause condition can further filter which records trigger the event. Does not fire on updates to existing records.',
   },
@@ -29,8 +29,9 @@ export const newRecord = createTrigger({
   props: {
     object: salesforcesCommon.object,
     conditions: Property.LongText({
-      displayName: 'Conditions (Advanced)',
-      description: 'Enter a SOQL query where clause i. e. IsDeleted = TRUE',
+      displayName: 'Conditions',
+      description: 'SOQL conditions to filter by, without the WHERE keyword.',
+      placeholder: "Industry = 'Technology'",
       required: false,
     }),
   },
@@ -116,7 +117,7 @@ function constructQuery(
     FROM
       ${object}
     WHERE CreatedDate > ${startDate} ${
-    conditions != undefined ? `AND ${conditions}` : ''
+    conditions ? `AND (${conditions})` : ''
   }
     ORDER BY CreatedDate ASC
     LIMIT ${limit}

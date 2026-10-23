@@ -26,7 +26,10 @@ export const newFieldHistoryEvent = createTrigger({
     },
     outputSchema: newFieldHistoryEventTriggerOutputSchema,
     props: {
-        object: salesforcesCommon.object,
+        object: {
+            ...salesforcesCommon.object,
+            description: 'Only objects with field history tracking turned on.',
+        },
     },
     sampleData: {
         "Id": "0177Q00000s912jQAA",
@@ -66,9 +69,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>,
 
         const isoDate = dayjs(lastFetchEpochMS).toISOString();
 
-        const historyObject = object.endsWith('__c')
-            ? object.replace('__c', '__History')
-            : `${object}History`;
+        const historyObject = getHistoryObjectName(object);
 
         const query = `
             SELECT FIELDS(ALL)
@@ -97,3 +98,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>,
         }
     },
 };
+
+function getHistoryObjectName(object: string): string {
+    if (object.endsWith('__c')) {
+        return object.replace('__c', '__History');
+    }
+    if (object === 'Opportunity') {
+        return 'OpportunityFieldHistory';
+    }
+    return `${object}History`;
+}

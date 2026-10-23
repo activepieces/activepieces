@@ -21,7 +21,7 @@ export const newOrUpdatedRecord = createTrigger({
   name: 'new_or_updated_record',
   classification: 'READ',
   displayName: 'New or Updated Record',
-  description: 'Triggers when there is new or updated record',
+  description: 'Fires when a record of the chosen object is created or changed.',
   aiMetadata: {
     description: 'Fires whenever a record of the selected Salesforce object is created or updated, detected by polling for records whose LastModifiedDate is later than the last poll. Each event emits all fields of the changed record. An optional SOQL where-clause condition can further filter which records trigger the event.',
   },
@@ -29,8 +29,9 @@ export const newOrUpdatedRecord = createTrigger({
   props: {
     object: salesforcesCommon.object,
     conditions: Property.LongText({
-      displayName: 'Conditions (Advanced)',
-      description: 'Enter a SOQL query where clause i. e. IsDeleted = TRUE',
+      displayName: 'Conditions',
+      description: 'SOQL conditions to filter by, without the WHERE keyword.',
+      placeholder: "Industry = 'Technology'",
       required: false,
     }),
   },
@@ -111,7 +112,7 @@ function constructQuery(
     FROM
       ${object}
     WHERE LastModifiedDate > ${startDate} ${
-    conditions != undefined ? `AND ${conditions}` : ''
+    conditions ? `AND (${conditions})` : ''
   }
     ORDER BY LastModifiedDate ASC
     LIMIT ${limit}
