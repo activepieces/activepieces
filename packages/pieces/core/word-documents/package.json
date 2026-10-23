@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-word-documents",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -8,7 +8,9 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
-    "officeparser": "8.1.1"
+    "officeparser": "8.1.1",
+    "docxtemplater": "3.71.1",
+    "pizzip": "3.3.0"
   },
   "devDependencies": {
     "vitest": "3.2.6",
