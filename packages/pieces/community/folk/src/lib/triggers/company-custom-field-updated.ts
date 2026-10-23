@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { folkAuth } from '../common/auth';
-import { folkClient } from '../common/client';
+import { folkWebhook } from '../common/webhook';
+import { folkOutputSchemas } from '../output-schemas';
 
 export const companyCustomFieldUpdated = createTrigger({
   auth: folkAuth,
@@ -10,7 +11,7 @@ export const companyCustomFieldUpdated = createTrigger({
   description:
     "Fires when a company's group assignments are updated in your Folk workspace.",
   aiMetadata: {
-    description: "Fires when a company's group memberships change in the connected Folk workspace (added to or removed from groups). The event payload carries the company ID and the list of group additions and removals.",
+    description: "Fires when a company's group memberships change in the connected Folk workspace (added to or removed from groups). The event payload carries the company ID and the list of group additions and removals. Deliveries are signature-checked and retried deliveries are de-duplicated.",
   },
   props: {},
   sampleData: {
@@ -36,45 +37,8 @@ export const companyCustomFieldUpdated = createTrigger({
       ],
     },
   },
+  outputSchema: folkOutputSchemas.webhookEvent,
   type: TriggerStrategy.WEBHOOK,
 
-  async onEnable(context) {
-    const subscribedEvents = [
-      {
-        eventType: 'company.groups_updated',
-      },
-    ];
-
-    const webhook = await folkClient.createWebhook({
-      apiKey: context.auth,
-      name: `Activepieces Company Groups Updated - ${Date.now()}`,
-      targetUrl: context.webhookUrl,
-      subscribedEvents,
-    });
-
-    await context.store?.put('_webhookId', webhook.data.id);
-    // await context.store?.put('_signingSecret', webhook.data.signingSecret);
-  },
-
-  async onDisable(context) {
-    const webhookId = (await context.store?.get('_webhookId')) as string;
-    if (webhookId) {
-      try {
-        await folkClient.deleteWebhook({
-          apiKey: context.auth,
-          webhookId,
-        });
-      } catch (error) {
-        console.warn('Failed to delete webhook:', error);
-      }
-    }
-  },
-
-  async run(context) {
-    const payloadBody = context.payload.body as any;
-    if (payloadBody.type !== 'company.groups_updated') {
-      return [];
-    }
-    return [payloadBody];
-  },
+  ...folkWebhook.handlers({ eventType: 'company.groups_updated', label: 'Company Groups Updated' }),
 });
