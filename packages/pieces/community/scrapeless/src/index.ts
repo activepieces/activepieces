@@ -1,5 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { scrapelessAiActions } from './lib/actions/ai';
 import { crawlWebsiteAction } from './lib/actions/crawl-website';
 import { getGoogleTrendsAction } from './lib/actions/get-google-trends';
 import { scrapeWebpageAction } from './lib/actions/scrape-webpage';
@@ -13,7 +14,7 @@ export const scrapeless = createPiece({
   description:
     'Scrapeless is an all-in-one and highly scalable web scraping toolkit for enterprises and developers.',
   auth: scrapelessApiAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/scrapeless.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ['sunorains'],
@@ -23,6 +24,7 @@ export const scrapeless = createPiece({
     crawlWebsiteAction,
     getGoogleTrendsAction,
     universalScrapeAction,
+    ...scrapelessAiActions,
     createCustomApiCallAction({
       auth: scrapelessApiAuth,
       baseUrl: () => scrapelessClient.baseUrl(),

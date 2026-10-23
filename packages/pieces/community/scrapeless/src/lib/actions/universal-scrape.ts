@@ -651,7 +651,7 @@ export const universalScrapeAction = createAction({
   classification: 'READ',
   displayName: 'Universal Scraping',
   description: 'Seamlessly accesses protected or dynamic pages by handling anti-scraping systems automatically.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Scrapes a target URL through Scrapeless\'s web unlocker, which automatically bypasses anti-bot/anti-scraping protections and can render JavaScript-heavy pages headlessly via a chosen proxy country. Choose this over the basic scrape action when the page is protected, dynamic, or blocks ordinary scrapers; optional JS instructions and resource-blocking rules tune the render. Requires a target URL; read-only and idempotent with no side effects.', idempotent: true },
   props: {
     url: Property.ShortText({

@@ -8,7 +8,7 @@ export const scrapeWebpageAction = createAction({
   classification: 'READ',
   displayName: 'Scrape Webpage Data',
   description: 'Extracts data from a single webpage.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Scrapes a single webpage at the given URL via Scrapeless and returns its extracted content. Choose this when you need the data from one specific page; for following links across a whole site use the crawl action instead. Requires a target URL; read-only and idempotent (no side effects, though live page content may change between calls).', idempotent: true },
 
 
