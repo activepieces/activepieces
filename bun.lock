@@ -5658,6 +5658,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/marky": {
+      "name": "@activepieces/piece-marky",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "form-data": "4.0.6",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/mastodon": {
       "name": "@activepieces/piece-mastodon",
       "version": "0.8.2",
@@ -12236,6 +12248,8 @@
     "@activepieces/piece-manus": ["@activepieces/piece-manus@workspace:packages/pieces/community/manus"],
 
     "@activepieces/piece-manychat": ["@activepieces/piece-manychat@workspace:packages/pieces/community/manychat"],
+
+    "@activepieces/piece-marky": ["@activepieces/piece-marky@workspace:packages/pieces/community/marky"],
 
     "@activepieces/piece-mastodon": ["@activepieces/piece-mastodon@workspace:packages/pieces/community/mastodon"],
 

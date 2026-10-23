@@ -820,6 +820,9 @@
       "@activepieces/piece-manychat": [
         "packages/pieces/community/manychat/src/index.ts"
       ],
+      "@activepieces/piece-marky": [
+        "packages/pieces/community/marky/src/index.ts"
+      ],
       "@activepieces/piece-mastodon": [
         "packages/pieces/community/mastodon/src/index.ts"
       ],
