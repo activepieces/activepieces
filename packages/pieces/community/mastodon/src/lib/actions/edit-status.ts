@@ -9,8 +9,9 @@ import {
   mastodonUtils,
 } from '../common/client';
 
-const POLL_MIN_REMAINING_MS = (5 * 60 + 60) * 1000;
 import { statusOutputSchema } from '../output-schemas';
+
+const POLL_MIN_REMAINING_MS = (5 * 60 + 60) * 1000;
 
 export const editStatus = createAction({
   auth: mastodonAuth,
@@ -177,7 +178,7 @@ function remainingPollSeconds({ poll }: { poll: CurrentPoll }): number {
   const remainingMs = expiresAt - Date.now();
   if (poll.expired || Number.isNaN(expiresAt) || remainingMs < POLL_MIN_REMAINING_MS) {
     throw new Error(
-      'This status has a poll that has ended or closes in under 5 minutes. Mastodon re-validates the poll on every edit (5 minutes to 1 month), so the edit would fail or delete the poll. Nothing was changed.'
+      'This status has a poll that has ended or closes within 6 minutes. Mastodon re-checks the poll on every edit (5 minutes to 1 month), so the edit would fail or remove the poll. Nothing was changed.'
     );
   }
   return Math.floor(remainingMs / 1000);
