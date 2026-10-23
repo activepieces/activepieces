@@ -5,7 +5,7 @@ function baseUrl(): string {
   return BASE_URL;
 }
 
-async function request<T>({ auth, method, path, body }: RequestParams & { auth: AgentxAuthValue }): Promise<T> {
+async function request<T>({ auth, method, path, body, headers }: RequestParams & { auth: AgentxAuthValue }): Promise<T> {
   try {
     const response = await httpClient.sendRequest<T>({
       method,
@@ -14,6 +14,7 @@ async function request<T>({ auth, method, path, body }: RequestParams & { auth: 
         'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        ...headers,
       },
       body,
     });
@@ -26,6 +27,11 @@ async function request<T>({ auth, method, path, body }: RequestParams & { auth: 
 
 export const agentxClient = { baseUrl, request };
 
-const BASE_URL = 'https://api.agentx.so/api/v1/access';
+const BASE_URL = 'https://api.agentx.so/api/v1';
 
-type RequestParams = { method: HttpMethod; path: string; body?: unknown };
+type RequestParams = {
+  method: HttpMethod;
+  path: string;
+  body?: unknown;
+  headers?: Record<string, string>;
+};

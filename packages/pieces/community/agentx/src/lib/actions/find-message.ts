@@ -9,7 +9,7 @@ export const findMessageAction = createAction({
   classification: 'SEARCH',
   displayName: 'Find Message',
   description: 'Searches for a specific message by ID (or searches text within messages) inside a conversation.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieves messages from a specific AgentX conversation (by agent ID and conversation ID): leave the search term blank to return all messages in the conversation, or provide a search term to return only messages whose text contains it (case-insensitive). Use this to inspect or find content within a conversation. Read-only and idempotent.', idempotent: true },
   props: {
     agentId: agentxProps.agentId({ required: true }),

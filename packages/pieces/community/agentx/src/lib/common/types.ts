@@ -28,3 +28,5 @@ export type AgentxConversation = {
 };
 
 export type AgentxMessageReply = Record<string, unknown>;
+
+export type AgentxObject = Record<string, unknown>;
