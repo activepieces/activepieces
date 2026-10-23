@@ -126,7 +126,7 @@
   "Follow redirects": "Follow redirects",
   "Words to find in file and folder names or contents.": "Words to find in file and folder names or contents.",
   "Folder to search in. Empty: the whole Dropbox.": "Folder to search in. Empty: the whole Dropbox.",
-  "Maximum matches to return. Empty: 100.": "Maximum matches to return. Empty: 100.",
+  "Maximum matches to return, up to 1,000. Empty: 100.": "Maximum matches to return, up to 1,000. Empty: 100.",
   "How to sort the matches. Empty: by relevance.": "How to sort the matches. Empty: by relevance.",
   "Current or deleted files. Empty: current files.": "Current or deleted files. Empty: current files.",
   "Match names only, not file contents.": "Match names only, not file contents.",

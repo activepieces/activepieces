@@ -315,7 +315,7 @@
   "Include Subfolders": "Unterordner einbeziehen",
   "Words to find in file and folder names or contents.": "Wörter, die in Datei- und Ordnernamen oder -inhalten gesucht werden.",
   "Folder to search in. Empty: the whole Dropbox.": "Ordner, in dem gesucht wird. Leer: die gesamte Dropbox.",
-  "Maximum matches to return. Empty: 100.": "Maximale Anzahl zurückgegebener Treffer. Leer: 100.",
+  "Maximum matches to return, up to 1,000. Empty: 100.": "Maximale Anzahl zurückgegebener Treffer, bis zu 1.000. Leer: 100.",
   "How to sort the matches. Empty: by relevance.": "Sortierung der Treffer. Leer: nach Relevanz.",
   "Current or deleted files. Empty: current files.": "Aktuelle oder gelöschte Dateien. Leer: aktuelle Dateien.",
   "Match names only, not file contents.": "Nur Namen abgleichen, keine Dateiinhalte.",

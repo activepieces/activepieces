@@ -315,7 +315,7 @@
   "Include Subfolders": "サブフォルダを含める",
   "Words to find in file and folder names or contents.": "ファイル名・フォルダ名または内容から探す語句。",
   "Folder to search in. Empty: the whole Dropbox.": "検索するフォルダ。空欄: Dropbox 全体。",
-  "Maximum matches to return. Empty: 100.": "返す一致件数の上限。空欄: 100。",
+  "Maximum matches to return, up to 1,000. Empty: 100.": "返す一致件数の上限（最大 1,000）。空欄: 100。",
   "How to sort the matches. Empty: by relevance.": "一致結果の並び順。空欄: 関連度順。",
   "Current or deleted files. Empty: current files.": "現在のファイルか削除済みファイルか。空欄: 現在のファイル。",
   "Match names only, not file contents.": "ファイルの内容ではなく名前のみで照合します。",

@@ -42,10 +42,6 @@ export const dropboxListAFolder = createAction({
     limit: Property.Number({
       displayName: 'Limit',
       description: 'About how many entries to return. Empty: 2,000.',
-      display: 'stepper',
-      min: 1,
-      max: 2000,
-      step: 1,
       required: false,
       advanced: true,
     }),

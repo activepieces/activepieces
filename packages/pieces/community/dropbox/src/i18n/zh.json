@@ -315,7 +315,7 @@
   "Include Subfolders": "包含子文件夹",
   "Words to find in file and folder names or contents.": "要在文件和文件夹名称或内容中查找的词。",
   "Folder to search in. Empty: the whole Dropbox.": "要搜索的文件夹。留空：整个 Dropbox。",
-  "Maximum matches to return. Empty: 100.": "返回的最大匹配数。留空：100。",
+  "Maximum matches to return, up to 1,000. Empty: 100.": "返回的最大匹配数，最多 1,000。留空：100。",
   "How to sort the matches. Empty: by relevance.": "匹配结果的排序方式。留空：按相关性。",
   "Current or deleted files. Empty: current files.": "当前文件或已删除文件。留空：当前文件。",
   "Match names only, not file contents.": "仅匹配名称，不匹配文件内容。",

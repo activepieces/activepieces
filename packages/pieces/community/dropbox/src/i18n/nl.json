@@ -315,7 +315,7 @@
   "Include Subfolders": "Submappen opnemen",
   "Words to find in file and folder names or contents.": "Woorden om te zoeken in bestands- en mapnamen of de inhoud.",
   "Folder to search in. Empty: the whole Dropbox.": "Map om in te zoeken. Leeg: de hele Dropbox.",
-  "Maximum matches to return. Empty: 100.": "Maximaal aantal resultaten. Leeg: 100.",
+  "Maximum matches to return, up to 1,000. Empty: 100.": "Maximaal aantal resultaten, tot 1.000. Leeg: 100.",
   "How to sort the matches. Empty: by relevance.": "Sortering van de resultaten. Leeg: op relevantie.",
   "Current or deleted files. Empty: current files.": "Huidige of verwijderde bestanden. Leeg: huidige bestanden.",
   "Match names only, not file contents.": "Alleen op namen zoeken, niet in de bestandsinhoud.",

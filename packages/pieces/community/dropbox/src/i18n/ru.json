@@ -131,7 +131,7 @@
   "Follow redirects": "Следовать перенаправлениям",
   "Words to find in file and folder names or contents.": "Слова для поиска в именах или содержимом файлов и папок.",
   "Folder to search in. Empty: the whole Dropbox.": "Папка для поиска. Пусто: весь Dropbox.",
-  "Maximum matches to return. Empty: 100.": "Максимум совпадений в ответе. Пусто: 100.",
+  "Maximum matches to return, up to 1,000. Empty: 100.": "Максимум совпадений в ответе, до 1 000. Пусто: 100.",
   "How to sort the matches. Empty: by relevance.": "Как сортировать совпадения. Пусто: по релевантности.",
   "Current or deleted files. Empty: current files.": "Текущие или удалённые файлы. Пусто: текущие файлы.",
   "Match names only, not file contents.": "Искать только по именам, не по содержимому файлов.",

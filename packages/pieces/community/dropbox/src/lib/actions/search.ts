@@ -55,11 +55,7 @@ export const dropboxSearch = createAction({
     }),
     max_results: Property.Number({
       displayName: 'Max Results',
-      description: 'Maximum matches to return. Empty: 100.',
-      display: 'stepper',
-      min: 1,
-      max: 1000,
-      step: 1,
+      description: 'Maximum matches to return, up to 1,000. Empty: 100.',
       required: false,
     }),
     order_by: Property.StaticDropdown({
