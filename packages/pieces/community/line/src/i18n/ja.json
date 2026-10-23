@@ -31,5 +31,5 @@
   "New Message": "新しいメッセージ",
   "Triggers when a new message is received": "新しいメッセージを受信したときにトリガーする",
   "Markdown": "Markdown",
-  "\n- Create Line bot account from Developer Console\n- Go to the \"Messaging API\" section.\n- In the webhook settings, paste this URL: \n  `{{webhookUrl}}`\n- Publish Activepieces flow first then click \"Verify\" button\n": "\n- Create Line bot account from Developer Console\n- Go to the \"Messaging API\" section.\n- In the webhook settings, paste this URL: \n  `{{webhookUrl}}`\n- Publish Activepieces flow first then click \"Verify\" button\n"
+  "\n- Create Line bot account from Developer Console\n- Go to the \"Messaging API\" section.\n- In the webhook settings, paste this URL: \n  `{{webhookUrl}}`\n- Publish Activepieces flow first then click \"Verify\" button\n": "\n- LINE Developers コンソールで、LINE ボットのアカウントを作成します。\n- \"Messaging API\" の設定を開きます。\n- Webhook の設定に、次の URL を貼り付けます：\n  `{{webhookUrl}}`\n- 先にフローを公開してから、「検証」（\"Verify\"）ボタンを押します。\n"
 }
