@@ -2,7 +2,7 @@ import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework
 import { httpOauth2RequestAction } from "./lib/actions/send-oauth2-http-request";
 
 export const httpOauth2Auth = PieceAuth.OAuth2({
-  description: 'OAuth2',
+  description: "Copy the authorize URL, token URL and scopes from the provider's API docs. When you sign in through the provider, add the Redirect URL to its app settings.",
   authUrl: '{authUrl}',
   tokenUrl: '{tokenUrl}',
   required: true,
@@ -12,17 +12,17 @@ export const httpOauth2Auth = PieceAuth.OAuth2({
     authUrl: Property.ShortText({
       displayName: 'Authorize URL',
       required: true,
-      description: 'OAuth2 Authorize URL',
+      description: 'Where you sign in to approve access.',
     }),
     tokenUrl: Property.ShortText({
       displayName: 'Token URL',
       required: true,
-      description: 'OAuth2 Token URL',
+      description: 'Where the access token is requested.',
     }),
     scopes: Property.ShortText({
-      displayName: 'Scopes (whitespace separated)',
+      displayName: 'Scopes',
       required: true,
-      description: 'OAuth2 Scopes',
+      description: 'Separate scopes with spaces.',
     }),
   },
 });
