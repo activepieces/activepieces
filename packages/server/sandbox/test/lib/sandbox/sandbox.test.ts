@@ -53,6 +53,7 @@ function createMockLogger(): ApLogger {
 function createTestProcessMaker() {
     let client: ClientSocket | null = null
     let child: (ChildProcess & EventEmitter) | null = null
+    let handshake: { pingTimeout: number } | null = null
 
     const maker: SandboxProcessMaker = {
         create: vi.fn(async (params) => {
@@ -71,6 +72,9 @@ function createTestProcessMaker() {
                 reconnection: false,
                 auth: { sandboxId: params.sandboxId, connectionToken: token },
             })
+            client.io.engine.once('handshake', (data) => {
+                handshake = data
+            })
 
             return child as ChildProcess
         }),
@@ -80,6 +84,7 @@ function createTestProcessMaker() {
         maker,
         getClient: () => client!,
         getChild: () => child!,
+        getHandshake: () => handshake,
     }
 }
 
@@ -413,6 +418,17 @@ describe('createSandbox', () => {
             finally {
                 listenSpy.mockRestore()
             }
+        })
+
+        it('keeps the heartbeat alive while the engine event loop is busy for the whole time limit', async () => {
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(createMockLogger(), 'sb-heartbeat', defaultOptions, testPM.maker)
+
+            await sandbox.start(startOptions)
+
+            const handshake = testPM.getHandshake()
+            expect(handshake).not.toBeNull()
+            expect(handshake!.pingTimeout).toBeGreaterThanOrEqual(defaultOptions.timeLimitSeconds * 1000)
         })
 
         it('is idempotent when already connected', async () => {

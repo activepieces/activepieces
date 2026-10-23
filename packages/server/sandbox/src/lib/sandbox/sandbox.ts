@@ -86,6 +86,7 @@ export function createSandbox(
         const ioServer = new SocketIOServer(server, {
             path: '/worker/ws',
             maxHttpBufferSize: options.maxHttpBufferSizeBytes,
+            pingTimeout: options.timeLimitSeconds * 1000,
             cors: { origin: '*' },
         })
         wireConnectionHandler(ioServer)
