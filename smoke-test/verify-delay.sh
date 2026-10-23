@@ -27,16 +27,18 @@ echo "Signed in. Project: $PROJECT_ID"
 
 AUTH="Authorization: Bearer $TOKEN"
 
-# Wait for delay piece to be synced
-echo "--- Waiting for delay piece ---"
+# Wait for delay and webhook pieces to be synced, and pin the exact versions listed
+echo "--- Waiting for delay and webhook pieces ---"
 for i in $(seq 1 300); do
-  HAS_DELAY=$(curl -sf "$API_URL/pieces" 2>/dev/null | jq '[.[].name] | any(. == "@activepieces/piece-delay")' 2>/dev/null || echo "false")
-  if [ "$HAS_DELAY" = "true" ]; then
-    echo "Delay piece is available (took ${i}s)"
+  PIECES=$(curl -sf "$API_URL/pieces" 2>/dev/null || echo "[]")
+  DELAY_VERSION=$(echo "$PIECES" | jq -r '[.[] | select(.name == "@activepieces/piece-delay") | .version][0] // empty' 2>/dev/null || true)
+  WEBHOOK_VERSION=$(echo "$PIECES" | jq -r '[.[] | select(.name == "@activepieces/piece-webhook") | .version][0] // empty' 2>/dev/null || true)
+  if [ -n "$DELAY_VERSION" ] && [ -n "$WEBHOOK_VERSION" ]; then
+    echo "Pieces are available (took ${i}s): delay@$DELAY_VERSION, webhook@$WEBHOOK_VERSION"
     break
   fi
   if [ "$i" -eq 300 ]; then
-    echo "FAIL: Delay piece not available after 300s"
+    echo "FAIL: Delay or webhook piece not available after 300s"
     exit 1
   fi
   sleep 1
@@ -70,7 +72,7 @@ curl -s --fail-with-body "$API_URL/flows/$FLOW_ID" \
         "type": "PIECE_TRIGGER",
         "settings": {
           "pieceName": "@activepieces/piece-webhook",
-          "pieceVersion": "~0.1.29",
+          "pieceVersion": "'"$WEBHOOK_VERSION"'",
           "triggerName": "catch_webhook",
           "input": { "authType": "none", "authFields": {} },
           "propertySettings": {
@@ -87,7 +89,7 @@ curl -s --fail-with-body "$API_URL/flows/$FLOW_ID" \
           "displayName": "Delay For",
           "settings": {
             "pieceName": "@activepieces/piece-delay",
-            "pieceVersion": "~0.3.26",
+            "pieceVersion": "'"$DELAY_VERSION"'",
             "actionName": "delayFor",
             "input": {
               "unit": "seconds",
