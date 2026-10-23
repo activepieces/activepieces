@@ -7,13 +7,13 @@ export const airtableListBasesAction = createAction({
   auth: airtableAuth,
   name: 'list_bases',
   classification: 'SEARCH',
-  displayName: 'List Bases (Agent)',
+  displayName: 'List Bases',
   description: 'List all Airtable bases the token can access.',
   audience: 'ai',
   outputSchema: listBasesActionOutputSchema,
   aiMetadata: {
     description:
-      'Returns every base the connected token can access, each with its id, name and permission level — the top resolver for turning a base name into a base ID. Call this first, then Get Base Schema (Agent) to discover tables and fields. Read-only and idempotent.',
+      'Returns every base the connected token can access, each with its id, name and permission level — the top resolver for turning a base name into a base ID. Call this first, then Get Base Schema to discover tables and fields. Read-only and idempotent.',
     idempotent: true,
   },
   props: {},

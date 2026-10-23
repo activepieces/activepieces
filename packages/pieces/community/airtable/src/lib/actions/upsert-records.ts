@@ -13,7 +13,7 @@ export const airtableUpsertRecordsAction = createAction({
   auth: airtableAuth,
   name: 'upsert_records',
   classification: 'WRITE',
-  displayName: 'Upsert Records (Agent)',
+  displayName: 'Upsert Records',
   description: 'Create or update up to 10 records in one batch call.',
   audience: 'ai',
   outputSchema: upsertRecordsActionOutputSchema,
@@ -26,19 +26,19 @@ export const airtableUpsertRecordsAction = createAction({
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     table_id_or_name: Property.ShortText({
       displayName: 'Table ID or Name',
       description:
-        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema (Agent).',
+        'The table ID (e.g. "tblXXXXXXXXXXXXXX") or its exact name. Resolve it with Get Base Schema.',
       required: true,
     }),
     records: Property.Json({
       displayName: 'Records',
       description:
-        'A JSON array of up to 10 records, each shaped {"fields": {"Name": "Acme", "Status": "Active"}}. To update an existing record without merge keys, include its id: {"id": "recXXXX", "fields": {...}}. Use Get Base Schema (Agent) for field names.',
+        'A JSON array of up to 10 records, each shaped {"fields": {"Name": "Acme", "Status": "Active"}}. To update an existing record without merge keys, include its id: {"id": "recXXXX", "fields": {...}}. Use Get Base Schema for field names.',
       required: true,
     }),
     fields_to_merge_on: Property.Array({
@@ -121,7 +121,7 @@ export const airtableUpsertRecordsAction = createAction({
       }
       if (status === 404) {
         throw new Error(
-          `Base "${base_id}" or table "${table_id_or_name}" was not found. Verify the IDs with List Bases (Agent) and Get Base Schema (Agent).`
+          `Base "${base_id}" or table "${table_id_or_name}" was not found. Verify the IDs with List Bases and Get Base Schema.`
         );
       }
       if (status === 422) {

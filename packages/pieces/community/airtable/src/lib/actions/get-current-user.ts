@@ -12,7 +12,7 @@ export const airtableGetCurrentUserAction = createAction({
   auth: airtableAuth,
   name: 'get_current_user',
   classification: 'READ',
-  displayName: 'Get Current User (Agent)',
+  displayName: 'Get Current User',
   description: 'Get the connected token identity and its scopes.',
   audience: 'ai',
   outputSchema: getCurrentUserActionOutputSchema,
