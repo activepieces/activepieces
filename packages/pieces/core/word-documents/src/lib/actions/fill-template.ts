@@ -79,7 +79,7 @@ export const fillTemplate = createAction({
         'Data must be a JSON object, for example {"name": "Ada Lovelace"}.'
       );
     }
-    const values = { ...withoutEmptyValues(fields ?? {}), ...(data ?? {}) };
+    const values = mergeValues({ fields: fields ?? {}, data: data ?? {} });
     const { data: rendered, error } = await tryCatch(async () =>
       renderTemplate({ template: template.data, data: values })
     );
@@ -197,15 +197,10 @@ function findTemplateProblem(template: Buffer): string | undefined {
 function listTemplateTags(template: Buffer): TemplateTag[] {
   const inspector = new InspectModule();
   createTemplater({ zip: new PizZip(template), modules: [inspector] });
-  const parts = inspector.getAllStructuredTags().filter(isPlaceholder);
-  const conditionNames = new Set(
-    parts
-      .filter((part) => part.module === 'loop' && part.inverted)
-      .map((part) => part.value.trim())
-  );
-  const tags = parts.flatMap((part) =>
-    toTemplateTags({ part, conditionNames })
-  );
+  const tags = inspector
+    .getAllStructuredTags()
+    .filter(isPlaceholder)
+    .flatMap(toTemplateTags);
   const byName = new Map<string, TemplateTag>();
   tags.forEach((tag) => {
     const current = byName.get(tag.name);
@@ -224,13 +219,7 @@ function listTemplateTags(template: Buffer): TemplateTag[] {
   return [...byName.values()];
 }
 
-function toTemplateTags({
-  part,
-  conditionNames,
-}: {
-  part: DXT.Part;
-  conditionNames: Set<string>;
-}): TemplateTag[] {
+function toTemplateTags(part: DXT.Part): TemplateTag[] {
   const name = part.value.trim();
   if (UNFILLABLE_NAMES.has(name)) {
     return [];
@@ -246,7 +235,7 @@ function toTemplateTags({
       inner.filter((field) => !UNFILLABLE_NAMES.has(field) && field !== name)
     ),
   ];
-  if (conditionNames.has(name)) {
+  if (part.inverted) {
     return [
       { name, kind: 'condition', fields: [] },
       ...fields.map(
@@ -319,14 +308,22 @@ async function loadTemplate(value: unknown): Promise<Buffer> {
   return Buffer.from(response.body);
 }
 
-function withoutEmptyValues(
-  fields: Record<string, unknown>
-): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(fields).filter(
+function mergeValues({
+  fields,
+  data,
+}: {
+  fields: Record<string, unknown>;
+  data: Record<string, unknown>;
+}): Record<string, unknown> {
+  return Object.entries(fields)
+    .filter(
       ([, value]) => value !== undefined && value !== null && value !== ''
     )
-  );
+    .filter(([key]) => resolvePath({ scope: data, path: key }) === undefined)
+    .reduce<Record<string, unknown>>(
+      (merged, [key, value]) => ({ ...merged, [key]: value }),
+      data
+    );
 }
 
 function createTemplater({

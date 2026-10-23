@@ -240,18 +240,18 @@ describe('fillTemplate', () => {
     });
   });
 
-  test('reads a section that has an opposite as a checkbox and merges list columns', async () => {
+  test('keeps list rows when a list has an empty-list fallback, and merges list columns', async () => {
     const fields = await listFields(
       addParagraphs([
-        '{{#items}}{{sku}}{{/items}}',
-        '{{#vip}}Gold {{tier}}{{/vip}}{{^vip}}Standard{{/vip}}',
+        '{{#items}}{{sku}}{{/items}}{{^items}}No items{{/items}}',
+        '{{#paid}}PAID{{/paid}}{{^paid}}Due by {{due_date}}{{/paid}}',
         '{{__proto__}}',
       ])
     );
     expect(fields).toMatchObject({
       items: 'ARRAY[sku,name,qty]',
-      vip: 'CHECKBOX',
-      tier: 'SHORT_TEXT',
+      paid: 'CHECKBOX',
+      due_date: 'SHORT_TEXT',
     });
     expect(Object.hasOwn(fields, '__proto__')).toBe(false);
   });
@@ -286,7 +286,7 @@ describe('fillTemplate', () => {
       data: { first_name: 'FromJson', customer: { city: 'Rome' } },
       fields: {
         first_name: 'FromField',
-        'customer.city': '',
+        'customer.city': 'FromField',
         company: 'FieldCo',
         items: [{ name: 'FieldRow', qty: '7' }],
       },
