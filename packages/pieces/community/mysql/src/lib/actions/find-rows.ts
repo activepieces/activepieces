@@ -49,10 +49,10 @@ export default createAction({
     }),
   },
   async run(context) {
-    const columns = (context.propsValue.columns as string[]) || ['*'];
-    const qsColumns = columns
-      .map((c) => sanitizeColumnName(c))
-      .join(',');
+    const columns = context.propsValue.columns ?? [];
+    const qsColumns = columns.length === 0
+      ? '*'
+      : columns.map((column) => sanitizeColumnName(String(column))).join(',');
 
     const qs = `SELECT ${qsColumns} FROM ${sanitizeColumnName(context.propsValue.table)} WHERE ${context.propsValue.condition};`;
 
