@@ -7390,6 +7390,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/printfriendly": {
+      "name": "@activepieces/piece-printfriendly",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/productboard": {
       "name": "@activepieces/piece-productboard",
       "version": "0.1.8",
@@ -12488,6 +12501,8 @@
     "@activepieces/piece-predis-ai": ["@activepieces/piece-predis-ai@workspace:packages/pieces/community/predis-ai"],
 
     "@activepieces/piece-presentation": ["@activepieces/piece-presentation@workspace:packages/pieces/community/presentation"],
+
+    "@activepieces/piece-printfriendly": ["@activepieces/piece-printfriendly@workspace:packages/pieces/community/printfriendly"],
 
     "@activepieces/piece-productboard": ["@activepieces/piece-productboard@workspace:packages/pieces/community/productboard"],
 
