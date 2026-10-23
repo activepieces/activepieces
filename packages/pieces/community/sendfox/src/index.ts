@@ -11,7 +11,7 @@ export const sendfox = createPiece({
   description: 'Email marketing made simple',
 
   auth: sendfoxAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendfox.png',
   categories: [PieceCategory.MARKETING],
   authors: ["Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
