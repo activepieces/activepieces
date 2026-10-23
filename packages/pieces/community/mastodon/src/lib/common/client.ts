@@ -12,7 +12,7 @@ const RATE_LIMIT_GUIDANCE =
   'Mastodon allows about 300 requests per 5 minutes per account by default (media uploads 30 per 30 minutes; status deletes and unboosts 30 per 30 minutes combined), and instances can tune these limits. Wait a few minutes before retrying.';
 
 const SCOPE_GUIDANCE =
-  'In Mastodon, open Preferences > Development, select the application, tick the top-level read and write scopes and save. Saving regenerates the access token, so paste the new token into this Activepieces connection.';
+  'In Mastodon, open Preferences > Development, select the application, tick the top-level read and write scopes and save. Saving regenerates the access token, so paste the new token into this connection.';
 
 const MIN_SCHEDULE_AHEAD_MS = 5 * 60 * 1000;
 const SCHEDULE_SAFETY_MARGIN_MS = 60 * 1000;
