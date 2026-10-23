@@ -1,94 +1,19 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { closeOutputSchemas } from '../common/output-schemas';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { closeAuth } from '../auth';
-import { CloseCRMOpportunityWebhookPayload } from '../common/types';
-import { closeApiCall } from '../common/client';
-import { verifySignature } from './helpers';
-
-const TRIGGER_KEY = 'new-opportunity-trigger';
+import { closeCreatedTriggerHooks } from './helpers';
 
 export const newOpportunityAdded = createTrigger({
 	auth: closeAuth,
 	name: 'new_opportunity_added',
-	classification: 'READ',
 	displayName: 'New Opportunity Added',
 	description: 'Triggers when a new opportunity is created.',
-	aiMetadata: {
-		description: 'Fires when a new opportunity (sales deal) is created in Close CRM, via a registered webhook on the opportunity-created event. Emits the full opportunity record, including its lead ID, value, and status. Use to react whenever a deal is opened.',
-	},
+	aiMetadata: { description: 'Fires when a new opportunity (sales deal) is created in Close CRM, via a registered webhook on the opportunity-created event. Emits the full opportunity record, including its lead ID, value, and status. Use to react whenever a deal is opened. Close retries failed deliveries for up to 72 hours; repeated deliveries of the same event are ignored.' },
+	classification: 'READ',
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
-	async onEnable(context) {
-		const response = await closeApiCall<{ id: string; signature_key: string }>({
-			accessToken: context.auth.secret_text,
-			method: HttpMethod.POST,
-			resourceUri: '/webhook/',
-			body: {
-				url: context.webhookUrl,
-				events: [
-					{
-						object_type: 'opportunity',
-						action: 'created',
-					},
-				],
-			},
-		});
-
-		const { id, signature_key: signatureKey } = response;
-		await context.store.put<{ id: string; signatureKey: string }>(TRIGGER_KEY, {
-			id,
-			signatureKey,
-		});
-	},
-
-	async onDisable(context) {
-		const triggerData = await context.store.get<{
-			id: string;
-			signatureKey: string;
-		}>(TRIGGER_KEY);
-
-		if (triggerData?.id) {
-			await closeApiCall({
-				method: HttpMethod.DELETE,
-				accessToken: context.auth.secret_text,
-				resourceUri: `/webhook/${triggerData.id}`,
-			});
-		}
-
-		await context.store.delete(TRIGGER_KEY);
-	},
-
-	async run(context) {
-		const triggerData = await context.store.get<{
-			id: string;
-			signatureKey: string;
-		}>(TRIGGER_KEY);
-
-		const signatureKey = triggerData?.signatureKey;
-		const signatureHash = context.payload.headers['close-sig-hash'];
-		const timestamp = context.payload.headers['close-sig-timestamp'];
-		const rawBody = context.payload.rawBody;
-
-		if (!verifySignature(signatureKey, timestamp, rawBody, signatureHash)) {
-			return [];
-		}
-
-		const payload = context.payload.body as CloseCRMOpportunityWebhookPayload;
-
-		// Verify this is a lead creation event
-		if (payload.event.object_type !== 'opportunity' || payload.event.action !== 'created') {
-			return [];
-		}
-
-		const opportunity = await closeApiCall({
-			accessToken: context.auth.secret_text	,
-			method: HttpMethod.GET,
-			resourceUri: `/opportunity/${payload.event.data.id}/`,
-		});
-
-		return [opportunity];
-	},
-
+	outputSchema: closeOutputSchemas.raw.opportunity,
+	...closeCreatedTriggerHooks({ storeKey: 'new-opportunity-trigger', objectType: 'opportunity' }),
 	sampleData: {
 		annualized_expected_value: 500,
 		annualized_value: 1000,

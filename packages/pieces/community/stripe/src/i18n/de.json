@@ -632,5 +632,7 @@
   "Only disputes for this charge. Empty: all.": "Nur Anfechtungen für diese Belastung. Leer: alle.",
   "Only disputes for this payment. Empty: all.": "Nur Anfechtungen für diese Zahlung. Leer: alle.",
   "Only updates where the subscription's status is this.": "Nur Updates, bei denen das Abonnement diesen Status hat.",
-  "Only sessions for this customer. Empty: all.": "Nur Sitzungen dieses Kunden. Leer: alle."
+  "Only sessions for this customer. Empty: all.": "Nur Sitzungen dieses Kunden. Leer: alle.",
+  "Markdown": "Markdown",
+  "Empty fields keep their current value.": "Leere Felder behalten ihren aktuellen Wert."
 }

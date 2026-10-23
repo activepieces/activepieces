@@ -234,18 +234,23 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
 }
 
 const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
-const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
+const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5'] as const
+const DEPRECATED_ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
 const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
 const GOOGLE_CHAT_MODELS = ['gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
 const DEPRECATED_GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash'] as const
 const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20'] as const
 
 const DEPRECATED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
+    [AIProviderName.ANTHROPIC]: DEPRECATED_ANTHROPIC_CHAT_MODELS,
     [AIProviderName.GOOGLE]: DEPRECATED_GOOGLE_CHAT_MODELS,
     [AIProviderName.VERTEX]: DEPRECATED_GOOGLE_CHAT_MODELS,
 }
 
-const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`)
+const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = [
+    ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`),
+    'deepseek/deepseek-v4.1-flash',
+]
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
@@ -269,6 +274,9 @@ const CHAT_MODEL_LABELS: Record<string, string> = {
     'gpt-5.4-nano': 'GPT-5.4 nano',
     'gpt-4.1': 'GPT-4.1',
     'gpt-4.1-mini': 'GPT-4.1 mini',
+    'claude-sonnet-5-5': 'Claude Sonnet 5.5',
+    'claude-opus-5-5': 'Claude Opus 5.5',
+    'claude-haiku-5-5': 'Claude Haiku 5.5',
     'claude-sonnet-4-6': 'Claude Sonnet 4.6',
     'claude-opus-4-7': 'Claude Opus 4.7',
     'claude-haiku-4-5': 'Claude Haiku 4.5',
@@ -399,12 +407,12 @@ function getMaxContextTokens({ provider }: { provider: AIProviderName | undefine
     return PROVIDER_MAX_CONTEXT_TOKENS[provider] ?? DEFAULT_MAX_CONTEXT_TOKENS
 }
 
-const DEFAULT_EMBEDDING_MODELS: Partial<Record<AIProviderName, string>> = {
-    [AIProviderName.OPENAI]: 'text-embedding-3-small',
-    [AIProviderName.GOOGLE]: 'text-embedding-004',
-    [AIProviderName.AZURE]: 'text-embedding-3-small',
-    [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
-    [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
+const EMBEDDING_MODELS: Partial<Record<AIProviderName, readonly string[]>> = {
+    [AIProviderName.OPENAI]: ['text-embedding-3-small', 'text-embedding-3-large'],
+    [AIProviderName.GOOGLE]: ['text-embedding-004', 'gemini-embedding-001'],
+    [AIProviderName.AZURE]: ['text-embedding-3-small', 'text-embedding-3-large'],
+    [AIProviderName.ACTIVEPIECES]: ['text-embedding-3-small'],
+    [AIProviderName.OPENROUTER]: ['openai/text-embedding-3-small', 'openai/text-embedding-3-large'],
 }
 
 const WEB_SEARCH_MODE_BY_PROVIDER: Partial<Record<AIProviderName, AIWebSearchMode>> = {
@@ -438,8 +446,9 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
     return {
         chatModels: ALLOWED_CHAT_MODELS_BY_PROVIDER[provider],
         maxContextTokens: getMaxContextTokens({ provider }),
-        defaultEmbeddingModel: DEFAULT_EMBEDDING_MODELS[provider],
-        supportsEmbedding: DEFAULT_EMBEDDING_MODELS[provider] !== undefined,
+        embeddingModels: EMBEDDING_MODELS[provider] ?? [],
+        defaultEmbeddingModel: EMBEDDING_MODELS[provider]?.[0],
+        supportsEmbedding: (EMBEDDING_MODELS[provider] ?? []).length > 0,
         supportsImageGeneration: !NO_IMAGE_GENERATION_PROVIDERS.has(provider),
         defaultImageModel: DEFAULT_IMAGE_MODELS[provider],
         webSearch: WEB_SEARCH_MODE_BY_PROVIDER[provider],
@@ -520,6 +529,7 @@ export type OpenAiCompatibleVendor =
 export type AIProviderCapabilities = {
     chatModels?: readonly string[] | undefined
     maxContextTokens: number
+    embeddingModels: readonly string[]
     defaultEmbeddingModel: string | undefined
     supportsEmbedding: boolean
     supportsImageGeneration: boolean

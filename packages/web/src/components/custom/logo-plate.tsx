@@ -52,6 +52,7 @@ export const LogoPlate = React.memo(
     border,
     className,
     innerClassName,
+    imageClassName,
     fallback,
     tint,
   }: LogoPlateProps) => {
@@ -68,6 +69,7 @@ export const LogoPlate = React.memo(
             src={src}
             alt={alt}
             className={cn(logoPlatePadding({ size }), innerClassName)}
+            imageClassName={imageClassName}
             fallback={fallback}
           />
         ) : (
@@ -86,5 +88,6 @@ export type LogoPlateProps = VariantProps<typeof logoPlateVariants> & {
   title?: string;
   className?: string;
   innerClassName?: string;
+  imageClassName?: string;
   fallback?: React.ReactNode;
 };

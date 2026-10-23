@@ -930,7 +930,7 @@ describe('moving an agent to another project', () => {
 
         const published = await ctx.post(`/v1/flows/${flow.id}`, {
             type: 'LOCK_AND_PUBLISH',
-            request: {},
+            request: { status: FlowStatus.DISABLED },
         })
 
         expect(published.statusCode).toBe(StatusCodes.CONFLICT)

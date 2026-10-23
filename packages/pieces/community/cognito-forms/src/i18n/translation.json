@@ -37,6 +37,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Entry": "New Entry",
   "Entry Updated": "Entry Updated",
   "Triggers when a new form entry is submitted.": "Triggers when a new form entry is submitted.",

@@ -104,6 +104,15 @@ export const dealStageUpdatedTrigger = createTrigger({
 		description:
 			'Fires when a deal moves into the configured pipeline stage in HubSpot. Each event represents one deal that entered the selected stage since the last poll, returning the deal record with properties such as name, amount, close date, and stage entry date. Tracked by the date the deal entered the current stage.',
 	},
+	propertyGroups: [
+		{
+			key: 'pipeline',
+			display: 'section',
+			label: 'Pipeline',
+			icon: 'sliders',
+			props: ['pipelineId', 'stageId'],
+		},
+	],
 	props: {
 		pipelineId: pipelineDropdown({
 			objectType: OBJECT_TYPE.DEAL,

@@ -129,6 +129,15 @@ export const eventEnds = createTrigger({
   aiMetadata: {
     description: 'Fires once an event in the selected calendar reaches its end time, detected by polling. Each fired item is the event that just ended. Can watch all events in the calendar or be scoped to a single specific event.',
   },
+  propertyGroups: [
+    {
+      key: 'event',
+      display: 'section',
+      label: 'Event',
+      icon: 'calendar',
+      props: ['calendar_id', 'specific_event', 'event_id'],
+    },
+  ],
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({

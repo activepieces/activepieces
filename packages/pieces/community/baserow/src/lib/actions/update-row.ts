@@ -1,4 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  MarkdownVariant,
+  Property,
+} from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import {
   baserowCommon,
@@ -13,8 +17,7 @@ export const updateRowAction = createAction({
   classification: 'WRITE',
   outputSchema: rowOutputSchema,
   displayName: 'Update Row',
-  description:
-    'Updates fields in an existing row. Empty values are skipped. To clear a field, use Clean Row.',
+  description: 'Changes fields in an existing row.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -22,14 +25,41 @@ export const updateRowAction = createAction({
     idempotent: true,
   },
   auth: baserowAuth,
+  propertyGroups: [
+    {
+      key: 'row',
+      display: 'section',
+      label: 'Row to Update',
+      icon: 'file',
+      props: ['table_id', 'row_id'],
+    },
+    {
+      key: 'changes',
+      display: 'section',
+      label: 'Changes',
+      icon: 'text',
+      props: ['info', 'table_fields'],
+    },
+    {
+      key: 'options',
+      display: 'section',
+      label: 'Options',
+      icon: 'sliders',
+      props: ['create_missing_select_options'],
+    },
+  ],
   props: {
     table_id: baserowCommon.tableId(),
     row_id: baserowCommon.rowId(),
+    info: Property.MarkDown({
+      value:
+        'Empty fields keep their current value. Checkboxes are always saved as shown.',
+      variant: MarkdownVariant.INFO,
+    }),
     table_fields: baserowCommon.tableFields(true),
     create_missing_select_options: Property.Checkbox({
-      displayName: 'Create missing select options',
-      description:
-        'When enabled, single/multi-select values that do not yet exist in the field will be added before updating the row. Existing options are preserved.',
+      displayName: 'Create Missing Select Options',
+      description: 'Adds any select option the column does not have yet.',
       required: false,
       defaultValue: false,
     }),
