@@ -7,7 +7,7 @@ import { createMockActionContext, ApFile } from '@activepieces/pieces-framework'
 
 function runWithFile({ data, password }: { data: Buffer; password?: string }) {
   const file = new ApFile('document.docx', data, 'docx');
-  return extractText.run(createMockActionContext({ propsValue: { file, password } }));
+  return extractText.run(createMockActionContext<typeof extractText.props>({ propsValue: { file, password } }));
 }
 
 function fixture(name: string): Buffer {
@@ -17,19 +17,22 @@ function fixture(name: string): Buffer {
 describe('extractText', () => {
   test('returns body, tables, footnotes, headers and footers', async () => {
     const result = await runWithFile({ data: fixture('sample.docx') });
-    expect(result.text).toContain('Body with footnote');
-    expect(result.text).toContain('LINK_TEXT');
-    expect(result.text).toContain('Unicode: héllo — 日本語 — مرحبا — 😀');
-    expect(result.text).toMatch(/A1\s*\|\s*B1/);
-    expect(result.text).toMatch(/Line one\nLine two/);
-    expect(result.text).toContain('FOOTNOTE_TEXT');
-    expect(result.headers).toBe('HEADER_TEXT');
-    expect(result.footers).toBe('FOOTER_TEXT');
+    expect(result).toMatchObject({ headers: 'HEADER_TEXT', footers: 'FOOTER_TEXT' });
+    for (const expected of [
+      'Body with footnote',
+      'LINK_TEXT',
+      'Unicode: héllo — 日本語 — مرحبا — 😀',
+      /A1\s*\|\s*B1/,
+      /Line one\nLine two/,
+      'FOOTNOTE_TEXT',
+    ]) {
+      expect(result).toMatchObject({ text: expect.stringMatching(expected) });
+    }
   });
 
   test('opens a password-protected document with its password', async () => {
     const result = await runWithFile({ data: fixture('password-protected.docx'), password: 'secret' });
-    expect(result.text).toContain('Body with footnote');
+    expect(result).toMatchObject({ text: expect.stringContaining('Body with footnote'), headers: 'HEADER_TEXT' });
   });
 
   test('asks for the password when it is missing', async () => {

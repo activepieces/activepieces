@@ -1,8 +1,9 @@
-import { Property, createAction, tryCatch } from '@activepieces/pieces-framework';
+import { PieceAuth, Property, createAction, tryCatch } from '@activepieces/pieces-framework';
 import { OfficeContentNode, OfficeErrorType, OfficeParser } from 'officeparser';
 import { extractTextActionOutputSchema } from '../output-schemas';
 
 export const extractText = createAction({
+  auth: PieceAuth.None(),
   audience: 'both',
   name: 'extract_text',
   classification: 'READ',
