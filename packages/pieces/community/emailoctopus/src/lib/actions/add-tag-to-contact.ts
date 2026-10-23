@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { emailOctopusAuth } from '../auth';
 import { emailOctopusApi } from '../common/api';
 import { emailOctopusProps } from '../common/props';
+import { contactOutputSchema } from '../output-schemas';
 
 export const addTagToContactAction = createAction({
   auth: emailOctopusAuth,
   name: 'add_tag_to_contact',
+  outputSchema: contactOutputSchema,
   classification: 'WRITE',
   displayName: 'Add Tag to Contact',
   description: 'Add one or more tags to a contact in a specified list.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Applies one or more tags to a contact in an EmailOctopus list, located by email address. Use to label or segment a known subscriber. Requires the list id, the contact email, and the tags to add. Idempotent — re-adding tags that are already present leaves the contact unchanged.',
@@ -33,7 +35,7 @@ export const addTagToContactAction = createAction({
     return await emailOctopusApi.updateContact({
       auth: context.auth,
       listId: list_id,
-      emailAddress: email_address,
+      contact: email_address,
       update: {
         tags: Object.fromEntries(tags.map((tag) => [String(tag), true])),
       },

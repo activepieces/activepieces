@@ -6,10 +6,12 @@ import {
 import { emailOctopusAuth } from '../auth';
 import { emailOctopusProps } from '../common/props';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
+import { contactEventTriggerOutputSchema } from '../output-schemas';
 
 export const newContactTrigger = createTrigger({
   auth: emailOctopusAuth,
   name: 'newContact',
+  outputSchema: contactEventTriggerOutputSchema,
   classification: 'READ',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is added to a particular list.',

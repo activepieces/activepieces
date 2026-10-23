@@ -1,6 +1,7 @@
 import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { emailOctopusAuth } from '../auth';
 import { emailOctopusProps } from '../common/props';
+import { contactEventTriggerOutputSchema } from '../output-schemas';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const contactUnsubscribesTrigger = createTrigger({
@@ -50,6 +51,7 @@ export const contactUnsubscribesTrigger = createTrigger({
     contact_email_address: 'claire@example.com',
     contact_tags: ['vip'],
   },
+  outputSchema: contactEventTriggerOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable() {
     return;

@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { emailOctopusAuth } from '../auth';
 import { emailOctopusApi } from '../common/api';
 import { emailOctopusProps } from '../common/props';
+import { contactOutputSchema } from '../output-schemas';
 
 export const removeTagFromContactAction = createAction({
   auth: emailOctopusAuth,
   name: 'remove_tag_from_contact',
+  outputSchema: contactOutputSchema,
   classification: 'WRITE',
   displayName: 'Remove Tag from Contact',
   description: 'Remove one or more tags from a contact in a specified list.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Removes one or more tags from a contact in an EmailOctopus list, located by email address. Use to unlabel or re-segment a known subscriber. Requires the list id, the contact email, and the tags to remove. Idempotent — removing tags the contact no longer has leaves it unchanged.',
@@ -33,7 +35,7 @@ export const removeTagFromContactAction = createAction({
     return await emailOctopusApi.updateContact({
       auth: context.auth,
       listId: list_id,
-      emailAddress: email_address,
+      contact: email_address,
       update: {
         tags: Object.fromEntries(tags.map((tag) => [String(tag), false])),
       },

@@ -1,5 +1,6 @@
 import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { emailOctopusProps } from '../common/props';
+import { emailEventTriggerOutputSchema } from '../output-schemas';
 import { emailOctopusAuth } from '../auth';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 
@@ -45,6 +46,7 @@ export const emailClickedTrigger = createTrigger({
     contact_email_address: 'user@example.com',
     campaign_id: '12345678-1234-1234-1234-123456789abc',
   },
+  outputSchema: emailEventTriggerOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable() {
     return;

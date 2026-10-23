@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { emailOctopusAuth } from '../auth';
 import { emailOctopusProps } from '../common/props';
+import { emailEventTriggerOutputSchema } from '../output-schemas';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const emailOpenedTrigger = createTrigger({
@@ -42,6 +43,7 @@ export const emailOpenedTrigger = createTrigger({
             `,
     }),
   },
+  outputSchema: emailEventTriggerOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
     id: '42636763-73f9-463e-af8b-3f720bb3d889',

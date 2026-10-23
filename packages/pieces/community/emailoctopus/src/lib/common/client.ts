@@ -1,4 +1,4 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import type { EmailOctopusAuthValue } from './types';
 
 function baseUrl(): string {
@@ -9,11 +9,13 @@ async function request<T>({
   auth,
   method,
   path,
+  query,
   body,
 }: RequestParams & { auth: EmailOctopusAuthValue }): Promise<T> {
   const response = await httpClient.sendRequest<T>({
     method,
     url: `${baseUrl()}${path}`,
+    queryParams: query,
     body,
     headers: {
       Accept: 'application/json',
@@ -29,5 +31,6 @@ export const emailOctopusClient = { baseUrl, request };
 type RequestParams = {
   method: HttpMethod;
   path: string;
+  query?: QueryParams;
   body?: object;
 };

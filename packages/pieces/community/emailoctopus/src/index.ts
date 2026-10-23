@@ -7,6 +7,7 @@ import { findContactAction } from './lib/actions/find-contact';
 import { removeTagFromContactAction } from './lib/actions/remove-tag-from-contact';
 import { unsubscribeContactAction } from './lib/actions/unsubscribe-contact';
 import { updateContactEmailAction } from './lib/actions/update-contact-email';
+import { emailOctopusAiActions } from './lib/actions/ai';
 import { emailOctopusAuth } from './lib/auth';
 import { emailOctopusClient } from './lib/common/client';
 import { contactUnsubscribesTrigger } from './lib/triggers/contact-unsubscribes';
@@ -20,7 +21,7 @@ export const emailoctopus = createPiece({
   description:
     'Email marketing platform for list management, campaign sending, tagging & unsubscribes. Automate contact management and campaign engagement tracking.',
   auth: emailOctopusAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/emailoctopus.png',
   categories: [PieceCategory.MARKETING],
   authors: ['Pranith124'],
@@ -32,6 +33,7 @@ export const emailoctopus = createPiece({
     removeTagFromContactAction,
     createListAction,
     findContactAction,
+    ...emailOctopusAiActions,
     createCustomApiCallAction({
       auth: emailOctopusAuth,
       baseUrl: () => emailOctopusClient.baseUrl(),

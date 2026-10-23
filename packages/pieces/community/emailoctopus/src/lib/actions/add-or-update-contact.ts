@@ -2,15 +2,17 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { emailOctopusAuth } from '../auth';
 import { emailOctopusApi } from '../common/api';
 import { emailOctopusProps } from '../common/props';
+import { contactOutputSchema } from '../output-schemas';
 
 export const addOrUpdateContactAction = createAction({
   auth: emailOctopusAuth,
   name: 'add_or_update_contact',
+  outputSchema: contactOutputSchema,
   classification: 'WRITE',
   displayName: 'Add / Update Contact',
   description:
     'Adds a new contact to a list or updates an existing contact if one exists.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Upserts a contact into an EmailOctopus list by email address: creates it if absent, otherwise updates its fields, status, and tags. Use to ensure a subscriber exists or to set/refresh their details in one call. Requires the target list id and email; supplied tags are merged in (existing tags are not removed). Idempotent — repeating with the same input converges to the same contact state.',
