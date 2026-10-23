@@ -1,9 +1,9 @@
 import { Property, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
-import { emailOctopusAuth } from "../common/auth";
+import { emailOctopusAuth } from '../auth';
 import { emailOctopusProps } from "../common/props";
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 
-export const emailBounced = createTrigger({
+export const emailBouncedTrigger = createTrigger({
     auth: emailOctopusAuth,
     name: 'email_bounced',
     classification: 'READ',
@@ -13,7 +13,7 @@ export const emailBounced = createTrigger({
       description: 'Fires when an EmailOctopus campaign email bounces for a recipient (a contact.bounced webhook event), representing a delivery failure. Can be scoped to a single campaign id, or left unfiltered to catch bounces across all campaigns.',
     },
     props: {
-        campaign_id: emailOctopusProps.campaignId(),
+        campaign_id: emailOctopusProps.campaignId({ required: false }),
             liveMarkdown: Property.MarkDown({
               value: `
               **Live URL:**
@@ -47,8 +47,8 @@ export const emailBounced = createTrigger({
         "campaign_id": "12345678-1234-1234-1234-123456789abc"
     },
 
-    async onEnable(context) { return },
-    async onDisable(context) { return },
+    async onEnable() { return },
+    async onDisable() { return },
 
     async run(context) {
         const payloadBody = context.payload.body as { type: string; campaign_id: string };

@@ -1,20 +1,9 @@
 import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { emailOctopusAuth } from '../common/auth';
+import { emailOctopusAuth } from '../auth';
 import { emailOctopusProps } from '../common/props';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 
-interface EmailOctopusEvent {
-  type: string;
-  id: string;
-  contact_email_address: string;
-  contact_fields?: Record<string, string>;
-  contact_tags?: string[];
-  contact_status?: string;
-  list_id?: string;
-  occurred_at?: string;
-}
-
-export const contactUnsubscribes = createTrigger({
+export const contactUnsubscribesTrigger = createTrigger({
   auth: emailOctopusAuth,
   name: 'contactUnsubscribes',
   classification: 'READ',
@@ -24,7 +13,7 @@ export const contactUnsubscribes = createTrigger({
     description: 'Fires when a contact unsubscribes from an EmailOctopus list (a contact.unsubscribed webhook event), representing an opt-out. Can be scoped to a single list id, or left unfiltered to catch unsubscribes across all lists.',
   },
   props: {
-    list_id: emailOctopusProps.listId(true),
+    list_id: emailOctopusProps.listId({ required: true }),
         liveMarkdown: Property.MarkDown({
           value: `
           **Live URL:**
@@ -69,24 +58,15 @@ export const contactUnsubscribes = createTrigger({
     return;
   },
   async run(context) {
-    const events = context.payload.body;
+    const body = context.payload.body as
+      | { type?: string; list_id?: string }
+      | { type?: string; list_id?: string }[];
+    const events = Array.isArray(body) ? body : [body];
     const listIdFilter = context.propsValue.list_id;
-
-    if (Array.isArray(events)) {
-      return events.filter(
-        (event: EmailOctopusEvent) =>
-          event.type === 'contact.unsubscribed' &&
-          (!listIdFilter || event.list_id === listIdFilter)
-      );
-    }
-
-    if (
-      (events as EmailOctopusEvent)?.type === 'contact.unsubscribed' &&
-      (!listIdFilter || (events as EmailOctopusEvent).list_id === listIdFilter)
-    ) {
-      return [events];
-    }
-
-    return [];
+    return events.filter(
+      (event) =>
+        event?.type === 'contact.unsubscribed' &&
+        (!listIdFilter || event.list_id === listIdFilter)
+    );
   },
 });
