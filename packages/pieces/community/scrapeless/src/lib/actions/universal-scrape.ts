@@ -1,31 +1,8 @@
-export const googleTrendsDataTypeOptions = [
-  {
-    label: 'Auto complete',
-    value: 'autocomplete',
-  },
-  {
-    label: 'Interest over time',
-    value: 'interest_over_time',
-  },
-  {
-    label: 'Compared breakdown by region',
-    value: 'compared_breakdown_by_region',
-  },
-  {
-    label: 'Interest by region',
-    value: 'interest_by_subregion',
-  },
-  {
-    label: 'Related queries',
-    value: 'related_queries',
-  },
-  {
-    label: 'Related topics',
-    value: 'related_topics',
-  },
-];
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { scrapelessApiAuth } from '../auth';
+import { scrapelessClient } from '../common/client';
 
-export const proxyCountryOptions = [
+const proxyCountryOptions = [
   {
     label: 'World Wide',
     value: 'ANY',
@@ -667,3 +644,83 @@ export const proxyCountryOptions = [
     value: 'SG',
   },
 ];
+
+export const universalScrapeAction = createAction({
+  auth: scrapelessApiAuth,
+  name: 'universal_scraping_api',
+  classification: 'READ',
+  displayName: 'Universal Scraping',
+  description: 'Seamlessly accesses protected or dynamic pages by handling anti-scraping systems automatically.',
+  audience: 'both',
+  aiMetadata: { description: 'Scrapes a target URL through Scrapeless\'s web unlocker, which automatically bypasses anti-bot/anti-scraping protections and can render JavaScript-heavy pages headlessly via a chosen proxy country. Choose this over the basic scrape action when the page is protected, dynamic, or blocks ordinary scrapers; optional JS instructions and resource-blocking rules tune the render. Requires a target URL; read-only and idempotent with no side effects.', idempotent: true },
+  props: {
+    url: Property.ShortText({
+      displayName: 'Target URL',
+      required: true,
+    }),
+    js_render: Property.Checkbox({
+      displayName: 'Js Render',
+      required: false,
+      defaultValue: true,
+    }),
+    headless: Property.Checkbox({
+      displayName: 'Headless',
+      required: false,
+      defaultValue: true,
+    }),
+    country: Property.StaticDropdown({
+      displayName: 'Country',
+      required: false,
+      defaultValue: 'ANY',
+      options: {
+        options: proxyCountryOptions,
+      },
+    }),
+    js_instructions: Property.Json({
+      displayName: 'Js Instructions',
+      required: false,
+      defaultValue: [{ "wait": 1000 }],
+    }),
+    block: Property.Json({
+      displayName: 'Block',
+      required: false,
+      defaultValue: { "resources": ["image", "font", "script"], "urls": ["https://example.com"] },
+    }),
+  },
+
+  async run({ propsValue, auth }) {
+    try {
+      const client = scrapelessClient.create({ auth });
+
+      const input = {
+        url: propsValue.url,
+        js_render: propsValue.js_render,
+        headless: propsValue.headless,
+        js_instructions: propsValue.js_instructions,
+        block: propsValue.block,
+      }
+
+      const proxy = {
+        country: propsValue.country,
+      }
+
+      const response = await client.universal.scrape({
+        actor: 'unlocker.webunlocker',
+        input,
+        proxy,
+      })
+
+      return {
+        success: true,
+        data: response || null,
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+      return {
+        success: false,
+        error: errorMessage,
+      }
+    }
+  },
+});

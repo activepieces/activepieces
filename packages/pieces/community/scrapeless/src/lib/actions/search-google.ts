@@ -1,8 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { scrapelessApiAuth } from '../auth';
-import { createScrapelessClient } from '../services/scrapeless-api-client';
+import { scrapelessClient } from '../common/client';
 
-export const googleSearchApi = createAction({
+export const searchGoogleAction = createAction({
   auth: scrapelessApiAuth,
   name: 'google_search_api',
   classification: 'SEARCH',
@@ -34,7 +34,7 @@ export const googleSearchApi = createAction({
 
   async run({ propsValue, auth }) {
     try {
-      const client = createScrapelessClient(auth.secret_text);
+      const client = scrapelessClient.create({ auth });
 
       const input = {
         q: propsValue.q,

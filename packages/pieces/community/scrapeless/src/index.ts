@@ -1,13 +1,12 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { ScrapelessValidator } from './lib/utils/validator';
-import { googleSearchApi } from './lib/actions/google-search-api';
-import { crawlScrapeApi } from './lib/actions/crawl-scrape';
-import { crawlCrawlApi } from './lib/actions/crawl-crawl';
-import { googleTrendsApi } from './lib/actions/google-trends-api';
-import { universalScrapingApi } from './lib/actions/universal-scraping-api';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { crawlWebsiteAction } from './lib/actions/crawl-website';
+import { getGoogleTrendsAction } from './lib/actions/get-google-trends';
+import { scrapeWebpageAction } from './lib/actions/scrape-webpage';
+import { searchGoogleAction } from './lib/actions/search-google';
+import { universalScrapeAction } from './lib/actions/universal-scrape';
 import { scrapelessApiAuth } from './lib/auth';
+import { scrapelessClient } from './lib/common/client';
 
 export const scrapeless = createPiece({
   displayName: 'Scrapeless',
@@ -16,23 +15,23 @@ export const scrapeless = createPiece({
   auth: scrapelessApiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/scrapeless.png',
-  categories:[PieceCategory.PRODUCTIVITY],
+  categories: [PieceCategory.PRODUCTIVITY],
   authors: ['sunorains'],
   actions: [
-    googleSearchApi,
-    crawlScrapeApi,
-    crawlCrawlApi,
-    googleTrendsApi,
-    universalScrapingApi,
+    searchGoogleAction,
+    scrapeWebpageAction,
+    crawlWebsiteAction,
+    getGoogleTrendsAction,
+    universalScrapeAction,
     createCustomApiCallAction({
-      auth:scrapelessApiAuth,
-      baseUrl:()=>'https://api.scrapeless.com/api/v1',
-      authMapping:async(auth)=>{
-        return{
-          'x-api-token':auth.secret_text
-        }
-      }
-    })
+      auth: scrapelessApiAuth,
+      baseUrl: () => scrapelessClient.baseUrl(),
+      authMapping: async (auth) => {
+        return {
+          'x-api-token': auth.secret_text,
+        };
+      },
+    }),
   ],
   triggers: [],
 });

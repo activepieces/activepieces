@@ -1,9 +1,35 @@
 import { scrapelessApiAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleTrendsDataTypeOptions } from '../constants';
-import { createScrapelessClient } from '../services/scrapeless-api-client';
+import { scrapelessClient } from '../common/client';
 
-export const googleTrendsApi = createAction({
+const googleTrendsDataTypeOptions = [
+  {
+    label: 'Auto complete',
+    value: 'autocomplete',
+  },
+  {
+    label: 'Interest over time',
+    value: 'interest_over_time',
+  },
+  {
+    label: 'Compared breakdown by region',
+    value: 'compared_breakdown_by_region',
+  },
+  {
+    label: 'Interest by region',
+    value: 'interest_by_subregion',
+  },
+  {
+    label: 'Related queries',
+    value: 'related_queries',
+  },
+  {
+    label: 'Related topics',
+    value: 'related_topics',
+  },
+];
+
+export const getGoogleTrendsAction = createAction({
   auth: scrapelessApiAuth,
   name: 'google_trends_api',
   classification: 'SEARCH',
@@ -52,7 +78,7 @@ export const googleTrendsApi = createAction({
   },
   async run({ propsValue, auth }) {
     try {
-      const client = createScrapelessClient(auth.secret_text);
+      const client = scrapelessClient.create({ auth });
 
       const input = {
         q: propsValue.q,
