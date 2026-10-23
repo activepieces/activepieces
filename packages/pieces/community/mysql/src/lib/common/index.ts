@@ -1,5 +1,6 @@
 import {
   AppConnectionValueForAuthProperty,
+  MarkdownVariant,
   PiecePropValueSchema,
   Property,
   StaticPropsValue,
@@ -9,10 +10,8 @@ import { mysqlAuth } from '../..';
 import sqlstring from 'sqlstring';
 
 export const warningMarkdown = Property.MarkDown({
-  value: `
-  **DO NOT** use dynamic input directly in the query string or column names.
-  \n
-  Use **?** in the query and dynamic values in args/values for parameterized queries to prevent **SQL injection**.`
+  value: 'Never type dynamic values into the SQL. Write ? instead and put the values in Arguments to prevent SQL injection.',
+  variant: MarkdownVariant.WARNING,
 });
 
 export async function mysqlConnect(
@@ -52,8 +51,10 @@ export async function mysqlGetColumns({ conn, table }: { conn: Connection; table
 export const mysqlCommon = {
   timezone: Property.ShortText({
     displayName: 'Timezone',
-    description: 'Timezone for the MySQL server to use',
+    description: 'Timezone of dates on the server: Z for UTC, or an offset like +02:00.',
+    placeholder: '+02:00',
     required: false,
+    advanced: true,
   }),
   table: (required = true) =>
     Property.Dropdown({
