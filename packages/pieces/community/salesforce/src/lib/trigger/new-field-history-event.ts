@@ -10,6 +10,7 @@ import {
     createTrigger,
 } from '@activepieces/pieces-framework';
 import { querySalesforceApi, salesforcesCommon } from '../common';
+import { salesforceUtils } from '../common/utils';
 
 import dayjs from 'dayjs';
 import { salesforceAuth } from '../..';
@@ -69,7 +70,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>,
 
         const isoDate = dayjs(lastFetchEpochMS).toISOString();
 
-        const historyObject = getHistoryObjectName(object);
+        const historyObject = salesforceUtils.getHistoryObjectName(object);
 
         const query = `
             SELECT FIELDS(ALL)
@@ -98,13 +99,3 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>,
         }
     },
 };
-
-function getHistoryObjectName(object: string): string {
-    if (object.endsWith('__c')) {
-        return object.replace('__c', '__History');
-    }
-    if (object === 'Opportunity') {
-        return 'OpportunityFieldHistory';
-    }
-    return `${object}History`;
-}

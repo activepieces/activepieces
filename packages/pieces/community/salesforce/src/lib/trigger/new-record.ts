@@ -11,6 +11,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { querySalesforceApi, salesforcesCommon } from '../common';
+import { salesforceUtils } from '../common/utils';
 
 import dayjs from 'dayjs';
 import { salesforceAuth } from '../..';
@@ -99,28 +100,7 @@ const getRecords = async (
   }>(
     HttpMethod.GET,
     authentication,
-    constructQuery(object, 200, 0, startDate, conditions)
+    salesforceUtils.buildPollingQuery({ object, dateField: 'CreatedDate', startDate, conditions })
   );
   return response.body['records'];
 };
-
-function constructQuery(
-  object: string,
-  limit: number,
-  offset: number,
-  startDate: string,
-  conditions: string | undefined
-) {
-  return `
-    SELECT
-      FIELDS(ALL)
-    FROM
-      ${object}
-    WHERE CreatedDate > ${startDate} ${
-    conditions ? `AND (${conditions})` : ''
-  }
-    ORDER BY CreatedDate ASC
-    LIMIT ${limit}
-    OFFSET ${offset}
-  `;
-}
