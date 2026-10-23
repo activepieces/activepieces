@@ -1435,6 +1435,9 @@
       "@activepieces/piece-truelayer": [
         "packages/pieces/community/truelayer/src/index.ts"
       ],
+      "@activepieces/piece-trulata": [
+        "packages/pieces/community/trulata/src/index.ts"
+      ],
       "@activepieces/piece-trust": [
         "packages/pieces/community/trust/src/index.ts"
       ],

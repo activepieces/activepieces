@@ -9419,6 +9419,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/trulata": {
+      "name": "@activepieces/piece-trulata",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/trust": {
       "name": "@activepieces/piece-trust",
       "version": "0.1.0",
@@ -12804,6 +12817,8 @@
     "@activepieces/piece-trello": ["@activepieces/piece-trello@workspace:packages/pieces/community/trello"],
 
     "@activepieces/piece-truelayer": ["@activepieces/piece-truelayer@workspace:packages/pieces/community/truelayer"],
+
+    "@activepieces/piece-trulata": ["@activepieces/piece-trulata@workspace:packages/pieces/community/trulata"],
 
     "@activepieces/piece-trust": ["@activepieces/piece-trust@workspace:packages/pieces/community/trust"],
 
