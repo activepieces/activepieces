@@ -8718,6 +8718,17 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/snapdub": {
+      "name": "@activepieces/piece-snapdub",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/snowflake": {
       "name": "@activepieces/piece-snowflake",
       "version": "0.4.0",
@@ -12675,6 +12686,8 @@
     "@activepieces/piece-smsmode": ["@activepieces/piece-smsmode@workspace:packages/pieces/community/smsmode"],
 
     "@activepieces/piece-smtp": ["@activepieces/piece-smtp@workspace:packages/pieces/core/smtp"],
+
+    "@activepieces/piece-snapdub": ["@activepieces/piece-snapdub@workspace:packages/pieces/community/snapdub"],
 
     "@activepieces/piece-snowflake": ["@activepieces/piece-snowflake@workspace:packages/pieces/community/snowflake"],
 

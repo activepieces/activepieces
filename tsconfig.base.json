@@ -1304,6 +1304,9 @@
         "packages/pieces/community/smoove/src/index.ts"
       ],
       "@activepieces/piece-smtp": ["packages/pieces/core/smtp/src/index.ts"],
+      "@activepieces/piece-snapdub": [
+        "packages/pieces/community/snapdub/src/index.ts"
+      ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
       ],
