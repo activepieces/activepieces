@@ -1,6 +1,11 @@
 {
-  "QR Code": "QR Code",
+  "QR Code": "QR-код",
   "Text to QR Code": "Текст в QR-код",
   "Convert text to QR code": "Преобразовать текст в QR-код",
-  "Content": "Содержание"
+  "Content": "Содержание",
+  "Make QR code images from text or links.": "Создавайте изображения QR-кодов из текста или ссылок.",
+  "Generate QR Code": "Создать QR-код",
+  "Turn text or a link into a PNG QR code image.": "Преобразует текст или ссылку в изображение QR-кода в формате PNG.",
+  "Text or Link": "Текст или ссылка",
+  "Encoded into a PNG image file. About 2,300 characters at most.": "Кодируется в файл изображения PNG. Примерно не более 2300 символов."
 }
