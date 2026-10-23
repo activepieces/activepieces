@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { telnyxAuth } from '../auth';
-import { telnyxRequest } from '../common/client';
+import { telnyxApi } from '../common/api';
 
 export const sendSmsAction = createAction({
   auth: telnyxAuth,
@@ -40,16 +39,12 @@ export const sendSmsAction = createAction({
   async run(context) {
     const { from, to, text, messaging_profile_id } = context.propsValue;
 
-    return await telnyxRequest({
-      apiKey: context.auth.secret_text,
-      method: HttpMethod.POST,
-      path: '/messages',
-      body: {
-        from,
-        to,
-        text,
-        ...(messaging_profile_id ? { messaging_profile_id } : {}),
-      },
+    return await telnyxApi.sendMessage({
+      auth: context.auth,
+      from,
+      to,
+      text,
+      messagingProfileId: messaging_profile_id,
     });
   },
 });

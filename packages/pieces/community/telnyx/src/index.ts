@@ -2,6 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { telnyxAuth } from './lib/auth';
+import { telnyxClient } from './lib/common/client';
 import { sendSmsAction } from './lib/actions/send-sms';
 import { makeCallAction } from './lib/actions/make-call';
 import { messageReceivedTrigger } from './lib/triggers/message-received';
@@ -19,7 +20,7 @@ export const telnyx = createPiece({
     sendSmsAction,
     makeCallAction,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.telnyx.com/v2',
+      baseUrl: () => telnyxClient.baseUrl(),
       auth: telnyxAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.secret_text}`,
