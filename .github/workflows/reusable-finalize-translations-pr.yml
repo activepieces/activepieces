@@ -104,6 +104,12 @@ jobs:
             echo "changes=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Delete unchanged branch
+        if: steps.ahead.outputs.changes == 'false'
+        env:
+          BRANCH_NAME: ${{ inputs.branch_name }}
+        run: git push origin --delete $BRANCH_NAME
+
       - name: Create Pull Request
         if: steps.ahead.outputs.changes == 'true'
         uses: actions/github-script@v8
