@@ -1,9 +1,8 @@
 import {
   AppConnectionValueForAuthProperty,
   MarkdownVariant,
-  PiecePropValueSchema,
   Property,
-  StaticPropsValue,
+  tryCatch,
 } from '@activepieces/pieces-framework';
 import { Connection, createConnection } from 'promise-mysql';
 import { mysqlAuth } from '../..';
@@ -16,7 +15,7 @@ export const warningMarkdown = Property.MarkDown({
 
 export async function mysqlConnect(
   auth: AppConnectionValueForAuthProperty<typeof mysqlAuth>,
-  propsValue: StaticPropsValue<any>
+  propsValue: MysqlConnectOptions
 ): Promise<Connection> {
   const conn = await createConnection({
     host: auth.props.host,
@@ -70,12 +69,21 @@ export const mysqlCommon = {
             options: [],
           };
         }
-        const conn = await mysqlConnect(
-          auth,
-          { auth }
-        );
-        const tables = await mysqlGetTableNames(conn);
-        await conn.end();
+        const { data: tables, error } = await tryCatch(() => listTableNames({ auth }));
+        if (error) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Could not load tables. Check the connection and its Database.',
+          };
+        }
+        if (tables.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No tables found in this database.',
+          };
+        }
         return {
           disabled: false,
           options: tables.map((table) => {
@@ -96,6 +104,19 @@ export function sanitizeColumnName(name: string | undefined): string {
   }
   return sqlstring.escapeId(name);
 }
+
+async function listTableNames({ auth }: { auth: AppConnectionValueForAuthProperty<typeof mysqlAuth> }): Promise<string[]> {
+  const conn = await mysqlConnect(auth, {});
+  try {
+    return await mysqlGetTableNames(conn);
+  } finally {
+    await conn.end();
+  }
+}
+
+export type MysqlConnectOptions = {
+  timezone?: string;
+};
 
 export type MysqlColumn = {
   column_name: string;
