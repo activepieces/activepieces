@@ -1,23 +1,35 @@
-
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { createConversationWithSingleAgent } from "./lib/actions/create-conversation-with-single-agent";
-import { sendMessageToExistingConversation } from "./lib/actions/send-message-to-existing-conversation";
-import { findMessage } from "./lib/actions/find-message";
-import { searchAgents } from "./lib/actions/search-agents";
-import { findConversation } from "./lib/actions/find-conversation";
-import { newAgent } from "./lib/triggers/new-agent";
-import { newConversation } from "./lib/triggers/new-conversation";
-import { AgentXAuth } from "./lib/common/auth";
-import { PieceCategory } from '@activepieces/pieces-framework';
-
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { agentxAuth } from './lib/auth';
+import { agentxAiActions } from './lib/actions/ai';
+import { agentxClient } from './lib/common/client';
+import { createConversationWithSingleAgentAction } from './lib/actions/create-conversation-with-single-agent';
+import { sendMessageToExistingConversationAction } from './lib/actions/send-message-to-existing-conversation';
+import { findMessageAction } from './lib/actions/find-message';
+import { searchAgentsAction } from './lib/actions/search-agents';
+import { findConversationAction } from './lib/actions/find-conversation';
+import { newAgentTrigger } from './lib/triggers/new-agent';
+import { newConversationTrigger } from './lib/triggers/new-conversation';
 
 export const agentx = createPiece({
-  displayName: "AgentX",
-  auth: AgentXAuth,
-  minimumSupportedRelease: '0.36.1',
-  categories:[PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  logoUrl: "https://cdn.activepieces.com/pieces/agentx.png",
-  authors: ['Niket2035','sanket-a11y'],
-  actions: [createConversationWithSingleAgent, sendMessageToExistingConversation, findMessage, searchAgents,findConversation],
-  triggers: [newAgent,newConversation],
+  displayName: 'AgentX',
+  auth: agentxAuth,
+  minimumSupportedRelease: '0.88.2',
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  logoUrl: 'https://cdn.activepieces.com/pieces/agentx.png',
+  authors: ['Niket2035', 'sanket-a11y'],
+  actions: [
+    createConversationWithSingleAgentAction,
+    sendMessageToExistingConversationAction,
+    findMessageAction,
+    searchAgentsAction,
+    findConversationAction,
+    ...agentxAiActions,
+    createCustomApiCallAction({
+      auth: agentxAuth,
+      baseUrl: () => agentxClient.baseUrl(),
+      authMapping: async (auth) => ({ 'x-api-key': auth.secret_text }),
+    }),
+  ],
+  triggers: [newAgentTrigger, newConversationTrigger],
 });

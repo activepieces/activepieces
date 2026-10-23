@@ -1,39 +1,37 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { makeRequest } from "../common/client";
-import { AgentXAuth } from "../common/auth";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { agentxAuth } from '../auth';
+import { agentxApi } from '../common/api';
 
-export const searchAgents = createAction({
-  auth: AgentXAuth,
-  name: "search_agents",
+export const searchAgentsAction = createAction({
+  auth: agentxAuth,
+  name: 'search_agents',
   classification: 'SEARCH',
-  displayName: "Search Agents",
-  description: "Find agents by name or ID using search filters.",
-  audience: 'both',
+  displayName: 'Search Agents',
+  description: 'Find agents by name or ID using search filters.',
+  audience: 'human',
   aiMetadata: { description: 'Lists AgentX agents on the account, optionally narrowing the results by partial name match and/or exact agent ID; leave both filters blank to return all agents. Use this to discover available agents or resolve an agent ID before starting a conversation. Read-only and idempotent.', idempotent: true },
   props: {
     name: Property.ShortText({
-      displayName: "Agent Name",
-      description: "Search by agent name (partial matches allowed).",
+      displayName: 'Agent Name',
+      description: 'Search by agent name (partial matches allowed).',
       required: false,
     }),
     id: Property.ShortText({
-      displayName: "Agent ID",
-      description: "Search by exact Agent ID.",
+      displayName: 'Agent ID',
+      description: 'Search by exact Agent ID.',
       required: false,
     }),
   },
-
   async run({ auth, propsValue }) {
     const { name, id } = propsValue;
 
-    const agents = await makeRequest(auth.secret_text, HttpMethod.GET, "/agents");
+    const agents = await agentxApi.listAgents({ auth });
 
     if (!Array.isArray(agents)) {
-      throw new Error("Unexpected response from AgentX API: expected an array of agents.");
+      throw new Error('Unexpected response from AgentX API: expected an array of agents.');
     }
 
-    const filtered = agents.filter((agent: any) => {
+    return agents.filter((agent) => {
       let matches = true;
 
       if (id) {
@@ -46,7 +44,5 @@ export const searchAgents = createAction({
 
       return matches;
     });
-
-    return filtered;
   },
 });

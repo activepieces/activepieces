@@ -1,8 +1,8 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
-import { makeRequest } from "./client";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { AppConnectionType, PieceAuth } from '@activepieces/pieces-framework';
 
-export const AgentXAuth = PieceAuth.SecretText({
+import { agentxApi } from './common/api';
+
+export const agentxAuth = PieceAuth.SecretText({
   displayName: 'AgentX API Key',
   description: `**Enter your AgentX API Key**
 ---
@@ -17,20 +17,22 @@ export const AgentXAuth = PieceAuth.SecretText({
   validate: async ({ auth }) => {
     if (auth) {
       try {
-        await makeRequest(auth as string, HttpMethod.GET, "/agents");
+        await agentxApi.listAgents({
+          auth: { type: AppConnectionType.SECRET_TEXT, secret_text: auth },
+        });
         return {
           valid: true,
         };
       } catch (error) {
         return {
           valid: false,
-          error: "Invalid API Key or authentication failed.",
+          error: 'Invalid API Key or authentication failed.',
         };
       }
     }
     return {
       valid: false,
-      error: "API Key is required.",
+      error: 'API Key is required.',
     };
   },
 });

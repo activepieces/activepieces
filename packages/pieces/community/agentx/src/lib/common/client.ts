@@ -1,26 +1,37 @@
-import { HttpMethod, httpClient } from "@activepieces/pieces-common";
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import type { AgentxAuthValue } from './types';
 
-export const BASE_URL = `https://api.agentx.so/api/v1/access`;
+function baseUrl(): string {
+  return BASE_URL;
+}
 
-export async function makeRequest(
-  apiKey: string,
-  method: HttpMethod,
-  path: string,
-  body?: unknown
-) {
+async function request<T>({ auth, method, path, body, headers }: RequestParams & { auth: AgentxAuthValue }): Promise<T> {
   try {
-    const response = await httpClient.sendRequest({
+    const response = await httpClient.sendRequest<T>({
       method,
-      url: `${BASE_URL}${path}`,
+      url: `${baseUrl()}${path}`,
       headers: {
-        "x-api-key": apiKey,            
-        "Content-Type": "application/json",
-        Accept: "application/json",     
+        'x-api-key': auth.secret_text,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        ...headers,
       },
       body,
     });
     return response.body;
-  } catch (error: any) {
-    throw new Error(`AgentX API error: ${error.message || String(error)}`);
+  } catch (error) {
+    const message = error instanceof Error && error.message ? error.message : String(error);
+    throw new Error(`AgentX API error: ${message}`);
   }
 }
+
+export const agentxClient = { baseUrl, request };
+
+const BASE_URL = 'https://api.agentx.so/api/v1';
+
+type RequestParams = {
+  method: HttpMethod;
+  path: string;
+  body?: unknown;
+  headers?: Record<string, string>;
+};
