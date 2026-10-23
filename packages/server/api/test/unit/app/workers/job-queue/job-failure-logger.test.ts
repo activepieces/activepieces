@@ -49,6 +49,12 @@ describe('jobFailureLogger.signatureFromMessage', () => {
             .toBe('EngineError@Sandbox process exited with code 137')
     })
 
+    it('groups a JSON-shaped message by its code instead of the opening brace', () => {
+        const providerOutage = '{"code":502,"message":"Upstream error from Sail Research: no capacity available for this model right now","metadata":{"error_type":"provider_unavailable"}}'
+        expect(jobFailureLogger.signatureFromMessage(providerOutage, 'EngineError')).toBe('EngineError@502')
+        expect(jobFailureLogger.signatureFromMessage('{"code":"ENTITY_NOT_FOUND","message":"x"}', 'EngineError')).toBe('EngineError@ENTITY_NOT_FOUND')
+    })
+
     it('handles empty message with unknown fallback', () => {
         expect(jobFailureLogger.signatureFromMessage('', 'EngineError')).toBe('EngineError@unknown')
     })
