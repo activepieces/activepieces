@@ -77,7 +77,7 @@ export const postgresAuth = PieceAuth.CustomAuth({
     catch (e) {
       return {
         valid: false,
-        error: JSON.stringify(e)
+        error: e instanceof Error && e.message ? e.message : JSON.stringify(e)
       };
     }
     return {
