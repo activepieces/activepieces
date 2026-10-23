@@ -232,13 +232,8 @@ export const youtubeNewVideoTrigger = createTrigger({
       },
     },
   },
-  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
-    return pollingHelper.test(polling, {
-      auth,
-      store,
-      propsValue,
-      files,
-    });
+  async test(context): Promise<unknown[]> {
+    return pollingHelper.test(polling, context);
   },
   async onEnable({ propsValue, store }): Promise<void> {
     let channelId = await store.get<string>('channelId');
