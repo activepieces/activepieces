@@ -49,6 +49,15 @@ export const pieceTranslation = {
     "auth.props.*.description",
     "auth.props.*.options.options.*.label",
     "auth.description",
+    "auth.*.username.displayName",
+    "auth.*.username.description",
+    "auth.*.password.displayName",
+    "auth.*.password.description",
+    "auth.*.props.*.displayName",
+    "auth.*.props.*.description",
+    "auth.*.props.*.options.options.*.label",
+    "auth.*.description",
+    "auth.*.displayName",
     "actions.*.displayName",
     "actions.*.description",
     "actions.*.props.*.displayName",
@@ -87,7 +96,7 @@ function translateNode<N>({ node, tree, translations }: TranslateNodeParams<N>):
   let changed = false
   for (const [key, subtree] of Object.entries(tree)) {
     for (const childKey of key === '*' ? Object.keys(node) : [key]) {
-      const child = node[childKey]
+      const child = childKey in changes ? changes[childKey] : node[childKey]
       const translated = subtree === null ? translateValue({ value: child, translations }) : translateNode({ node: child, tree: subtree, translations })
       if (translated !== child) {
         changes[childKey] = translated
