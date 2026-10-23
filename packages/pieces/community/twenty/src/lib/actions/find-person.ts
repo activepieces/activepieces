@@ -1,9 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest, parseRecords } from '../common';
+import { twentyApi } from '../common/api';
 
-export const findPerson = createAction({
+export const findPersonAction = createAction({
   auth: twentyAuth,
   name: 'find_person',
   classification: 'SEARCH',
@@ -30,26 +29,12 @@ export const findPerson = createAction({
   },
   async run(context) {
     const { email, firstName, lastName } = context.propsValue;
-    const queryParams: Record<string, string> = {};
 
-    if (email) {
-      queryParams['filter[emails][primaryEmail][eq]'] = email;
-    }
-    if (firstName) {
-      queryParams['filter[name][firstName][eq]'] = firstName;
-    }
-    if (lastName) {
-      queryParams['filter[name][lastName][eq]'] = lastName;
-    }
-
-    const body = await twentyRequest(
-      context.auth,
-      HttpMethod.GET,
-      '/rest/people',
-      undefined,
-      queryParams,
-    );
-
-    return parseRecords(body);
+    return await twentyApi.findPeople({
+      auth: context.auth,
+      email,
+      firstName,
+      lastName,
+    });
   },
 });

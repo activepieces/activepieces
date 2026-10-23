@@ -1,9 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest, parseRecords } from '../common';
+import { twentyApi } from '../common/api';
 
-export const findCompany = createAction({
+export const findCompanyAction = createAction({
   auth: twentyAuth,
   name: 'find_company',
   classification: 'SEARCH',
@@ -25,23 +24,11 @@ export const findCompany = createAction({
   },
   async run(context) {
     const { name, domainName } = context.propsValue;
-    const queryParams: Record<string, string> = {};
 
-    if (name) {
-      queryParams['filter[name][eq]'] = name;
-    }
-    if (domainName) {
-      queryParams['filter[domainName][primaryLinkUrl][eq]'] = domainName;
-    }
-
-    const body = await twentyRequest(
-      context.auth,
-      HttpMethod.GET,
-      '/rest/companies',
-      undefined,
-      queryParams,
-    );
-
-    return parseRecords(body);
+    return await twentyApi.findCompanies({
+      auth: context.auth,
+      name,
+      domainName,
+    });
   },
 });

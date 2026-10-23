@@ -1,9 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest } from '../common';
+import { twentyApi } from '../common/api';
 
-export const updateCompany = createAction({
+export const updateCompanyAction = createAction({
   auth: twentyAuth,
   name: 'update_company',
   classification: 'WRITE',
@@ -39,25 +38,13 @@ export const updateCompany = createAction({
     const { companyId, name, domainName, address, employees } =
       context.propsValue;
 
-    const body: Record<string, unknown> = {};
-    if (name) body['name'] = name;
-    if (domainName) body['domainName'] = { primaryLinkUrl: domainName, primaryLinkLabel: '' };
-    if (address) body['address'] = { addressStreet1: address };
-    if (employees != null) body['employees'] = employees;
-
-    if (Object.keys(body).length === 0) {
-      return await twentyRequest(
-        context.auth,
-        HttpMethod.GET,
-        `/rest/companies/${companyId}`,
-      );
-    }
-
-    return await twentyRequest(
-      context.auth,
-      HttpMethod.PATCH,
-      `/rest/companies/${companyId}`,
-      body,
-    );
+    return await twentyApi.updateCompany({
+      auth: context.auth,
+      companyId,
+      name,
+      domainName,
+      address,
+      employees,
+    });
   },
 });

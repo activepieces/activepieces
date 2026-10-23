@@ -1,9 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest, parseSingleRecord } from '../common';
+import { twentyApi } from '../common/api';
 
-export const updatePerson = createAction({
+export const updatePersonAction = createAction({
   auth: twentyAuth,
   name: 'update_person',
   classification: 'WRITE',
@@ -33,37 +32,12 @@ export const updatePerson = createAction({
   async run(context) {
     const { personId, firstName, lastName, email } = context.propsValue;
 
-    const body: Record<string, unknown> = {};
-    if (firstName || lastName) {
-      const existing = await twentyRequest<Record<string, unknown>>(
-        context.auth,
-        HttpMethod.GET,
-        `/rest/people/${personId}`,
-      );
-      const personData = parseSingleRecord(existing);
-      const existingName = (personData['name'] as Record<string, string>) ?? {};
-      body['name'] = {
-        firstName: firstName ?? existingName['firstName'],
-        lastName: lastName ?? existingName['lastName'],
-      };
-    }
-    if (email) {
-      body['emails'] = { primaryEmail: email };
-    }
-
-    if (Object.keys(body).length === 0) {
-      return await twentyRequest(
-        context.auth,
-        HttpMethod.GET,
-        `/rest/people/${personId}`,
-      );
-    }
-
-    return await twentyRequest(
-      context.auth,
-      HttpMethod.PATCH,
-      `/rest/people/${personId}`,
-      body,
-    );
+    return await twentyApi.updatePerson({
+      auth: context.auth,
+      personId,
+      firstName,
+      lastName,
+      email,
+    });
   },
 });

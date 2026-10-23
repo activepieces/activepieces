@@ -1,9 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest } from '../common';
+import { twentyApi } from '../common/api';
 
-export const createContact = createAction({
+export const createContactAction = createAction({
   auth: twentyAuth,
   name: 'create_contact',
   classification: 'WRITE',
@@ -28,17 +27,11 @@ export const createContact = createAction({
   async run(context) {
     const { firstName, lastName, email } = context.propsValue;
 
-    return await twentyRequest(
-      context.auth,
-      HttpMethod.POST,
-      '/rest/people',
-      {
-        name: {
-          firstName,
-          lastName,
-        },
-        emails: email ? { primaryEmail: email } : undefined,
-      },
-    );
+    return await twentyApi.createPerson({
+      auth: context.auth,
+      firstName,
+      lastName,
+      email,
+    });
   },
 });

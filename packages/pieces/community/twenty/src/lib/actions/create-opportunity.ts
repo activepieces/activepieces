@@ -1,9 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest } from '../common';
+import { twentyApi } from '../common/api';
 
-export const createOpportunity = createAction({
+export const createOpportunityAction = createAction({
   auth: twentyAuth,
   name: 'create_opportunity',
   classification: 'WRITE',
@@ -56,17 +55,14 @@ export const createOpportunity = createAction({
   async run(context) {
     const { name, stage, amount, currency, closeDate, companyId } = context.propsValue;
 
-    return await twentyRequest(
-      context.auth,
-      HttpMethod.POST,
-      '/rest/opportunities',
-      {
-        name,
-        stage: stage ?? undefined,
-        amount: amount != null ? { amountMicros: Math.round(amount * 1_000_000), currencyCode: currency ?? 'USD' } : undefined,
-        closeDate: closeDate ?? undefined,
-        companyId: companyId ?? undefined,
-      },
-    );
+    return await twentyApi.createOpportunity({
+      auth: context.auth,
+      name,
+      stage,
+      amount,
+      currency,
+      closeDate,
+      companyId,
+    });
   },
 });

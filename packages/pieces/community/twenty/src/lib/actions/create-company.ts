@@ -1,9 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { twentyAuth } from '../auth';
-import { twentyRequest } from '../common';
+import { twentyApi } from '../common/api';
 
-export const createCompany = createAction({
+export const createCompanyAction = createAction({
   auth: twentyAuth,
   name: 'create_company',
   classification: 'WRITE',
@@ -33,16 +32,12 @@ export const createCompany = createAction({
   async run(context) {
     const { name, domainName, address, employees } = context.propsValue;
 
-    return await twentyRequest(
-      context.auth,
-      HttpMethod.POST,
-      '/rest/companies',
-      {
-        name,
-        domainName: domainName ? { primaryLinkUrl: domainName, primaryLinkLabel: '' } : undefined,
-        address: address ? { addressStreet1: address } : undefined,
-        employees: employees ?? undefined,
-      },
-    );
+    return await twentyApi.createCompany({
+      auth: context.auth,
+      name,
+      domainName,
+      address,
+      employees,
+    });
   },
 });
