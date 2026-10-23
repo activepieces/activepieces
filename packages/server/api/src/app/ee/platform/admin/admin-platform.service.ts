@@ -1,7 +1,6 @@
 import { isNil, ProjectId } from '@activepieces/core-utils'
 import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, FlowRetryStrategy, FlowRun, IncreaseAICreditsForPlatformRequestBody, PlatformRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
 import { aiProviderService } from '../../../ai/ai-provider-service'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { flowRunRepo, flowRunService } from '../../../flows/flow-run/flow-run-service'
@@ -19,15 +18,22 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
     }: AdminRetryRunsRequestBody): Promise<void> => {
         const strategy = FlowRetryStrategy.FROM_FAILED_STEP
 
-        let query = flowRunRepo().createQueryBuilder('flow_run').where({
-            id: In(runIds ?? []),
-        })
-        if (!createdBefore) {
+        let query = flowRunRepo().createQueryBuilder('flow_run')
+
+        if (!isNil(runIds)) {
+            if (runIds.length === 0) {
+                return
+            }
+            query = query.andWhere('flow_run.id IN (:...runIds)', {
+                runIds,
+            })
+        }
+        if (!isNil(createdBefore)) {
             query = query.andWhere('flow_run.created <= :createdBefore', {
                 createdBefore,
             })
         }
-        if (!createdAfter) {
+        if (!isNil(createdAfter)) {
             query = query.andWhere('flow_run.created >= :createdAfter', {
                 createdAfter,
             })
