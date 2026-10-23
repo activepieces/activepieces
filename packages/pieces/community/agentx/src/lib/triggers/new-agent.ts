@@ -1,27 +1,16 @@
-import {createTrigger,TriggerStrategy, AppConnectionValueForAuthProperty,} from "@activepieces/pieces-framework";
-import {DedupeStrategy,Polling,pollingHelper,} from "@activepieces/pieces-common";
-import dayjs from "dayjs";
-import { makeRequest } from "../common/client";
-import { HttpMethod } from "@activepieces/pieces-common";
-import { AgentXAuth } from "../common/auth";
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import dayjs from 'dayjs';
+import { agentxAuth } from '../auth';
+import { agentxApi } from '../common/api';
+import type { AgentxAuthValue } from '../common/types';
 
-type Agent = {
-  id: string;
-  name?: string;
-  createdAt: string;
-};
-
-const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof AgentXAuth>,
-  Record<string, never>
-> = {
+const polling: Polling<AgentxAuthValue, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const agents = (await makeRequest(auth.secret_text, HttpMethod.GET, "/agents")) as Agent[];
-    
-    const sortedAgents = agents.sort((a, b) => 
-      dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
-    );
+    const agents = await agentxApi.listAgents({ auth });
+
+    const sortedAgents = agents.sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf());
 
     return sortedAgents.map((agent) => ({
       epochMilliSeconds: dayjs(agent.createdAt).valueOf(),
@@ -30,37 +19,31 @@ const polling: Polling<
   },
 };
 
-export const newAgent = createTrigger({
-  auth: AgentXAuth,
-  name: "new_agent",
+export const newAgentTrigger = createTrigger({
+  auth: agentxAuth,
+  name: 'new_agent',
   classification: 'READ',
-  displayName: "New Agent",
-  description: "Triggers when a new AgentX agent is created.",
+  displayName: 'New Agent',
+  description: 'Triggers when a new AgentX agent is created.',
   aiMetadata: {
     description: 'Fires when a new agent is created on the AgentX account, emitting the newly created agent. Polls periodically and only surfaces agents created after the trigger was enabled.',
   },
   props: {},
   sampleData: {
-    _id: "agt_1234567890abcdef",
-    name: "Customer Support Bot",
-    created_at: "2025-09-08T10:00:00Z",
+    _id: 'agt_1234567890abcdef',
+    name: 'Customer Support Bot',
+    created_at: '2025-09-08T10:00:00Z',
   },
   type: TriggerStrategy.POLLING,
-
   async test(context) {
     return await pollingHelper.test(polling, context);
   },
-
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
-
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
-
   async run(context) {
     return await pollingHelper.poll(polling, context);
   },
