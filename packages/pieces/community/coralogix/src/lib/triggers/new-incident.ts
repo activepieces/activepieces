@@ -1,5 +1,6 @@
 import {
   createTrigger,
+  isNil,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -46,6 +47,9 @@ export const newIncident = createTrigger({
     subsystemName: ['payments'],
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get(STORE_KEY))) {
+      return;
+    }
     const response = (await makeRequest(
       context.auth,
       'management',

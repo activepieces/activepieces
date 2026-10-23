@@ -1,5 +1,6 @@
 import {
   createTrigger,
+  isNil,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -141,10 +142,16 @@ export const dropboxNewFolder = createTrigger({
       context.propsValue.path || '',
       context.propsValue.recursive ?? false,
     );
+    if (context.isRepublish && !isNil(await context.store.get('cursor'))) {
+      return;
+    }
     await context.store.put('cursor', cursor);
   },
 
   onDisable: async (context) => {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('cursor');
   },
 
