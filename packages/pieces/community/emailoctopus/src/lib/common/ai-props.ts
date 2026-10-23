@@ -37,9 +37,17 @@ function tag<R extends boolean>({
 function fields<R extends boolean>({
 	required,
 	displayName = 'Fields',
-	description = 'Custom field values keyed by field tag, e.g. {"FirstName": "Ada", "Age": 36}. Use Get List to see the list\'s field tags and types. Pass null for a tag to clear it.',
+	description = 'Custom field values keyed by field tag, e.g. {"FirstName": "Ada", "Age": 36}. Use Get List to see the list\'s field tags and types.',
 }: PropParams<R>) {
 	return Property.Json({ displayName, description, required });
+}
+
+function fieldsToClear<R extends boolean>({
+	required,
+	displayName = 'Fields to Clear',
+	description = 'Field tags whose value to remove from the contact, e.g. ["FirstName"]. A tag listed here must not also be in Fields.',
+}: PropParams<R>) {
+	return Property.Array({ displayName, description, required });
 }
 
 function status<R extends boolean>({
@@ -100,6 +108,7 @@ export const emailOctopusAiProps = {
 	campaignId,
 	tag,
 	fields,
+	fieldsToClear,
 	status,
 	tagsToAdd,
 	tagsToRemove,

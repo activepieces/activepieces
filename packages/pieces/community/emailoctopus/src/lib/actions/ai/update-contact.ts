@@ -16,7 +16,7 @@ export const updateContactAction = createAction({
 	classification: 'WRITE',
 	aiMetadata: {
 		description:
-			'Updates an existing contact in an EmailOctopus list, found by contact ID or email address. Only what you pass changes: new email, field values, tags to add or remove, and status (set unsubscribed to opt the contact out, subscribed to opt back in). Not idempotent when the email changes, because the old email no longer finds the contact; pass the contact ID to repeat safely.',
+			'Updates an existing contact in an EmailOctopus list, found by contact ID or email address. Only what you pass changes: new email, field values, fields to clear, tags to add or remove, and status (set unsubscribed to opt the contact out, subscribed to opt back in). Not idempotent when the email changes, because the old email no longer finds the contact; pass the contact ID to repeat safely.',
 		idempotent: false,
 	},
 	props: {
@@ -28,13 +28,29 @@ export const updateContactAction = createAction({
 			required: false,
 		}),
 		fields: emailOctopusAiProps.fields({ required: false }),
+		fieldsToClear: emailOctopusAiProps.fieldsToClear({ required: false }),
 		tagsToAdd: emailOctopusAiProps.tagsToAdd({ required: false }),
 		tagsToRemove: emailOctopusAiProps.tagsToRemove({ required: false }),
 		status: emailOctopusAiProps.status({ required: false }),
 	},
 	async run(context) {
-		const { listId, contact, newEmailAddress, fields, tagsToAdd, tagsToRemove, status } =
-			context.propsValue;
+		const {
+			listId,
+			contact,
+			newEmailAddress,
+			fields,
+			fieldsToClear,
+			tagsToAdd,
+			tagsToRemove,
+			status,
+		} = context.propsValue;
+		const fieldChanges = emailOctopusUtils.toFieldChanges({
+			fields,
+			fieldsToClear: emailOctopusUtils.toStringArray({
+				value: fieldsToClear,
+				propName: 'Fields to Clear',
+			}),
+		});
 		const tags = emailOctopusUtils.toTagChanges({
 			tagsToAdd: emailOctopusUtils.toStringArray({ value: tagsToAdd, propName: 'Tags to Add' }),
 			tagsToRemove: emailOctopusUtils.toStringArray({
@@ -48,7 +64,7 @@ export const updateContactAction = createAction({
 			contact,
 			update: {
 				...(newEmailAddress ? { email_address: newEmailAddress } : {}),
-				...(fields ? { fields } : {}),
+				...(fieldChanges ? { fields: fieldChanges } : {}),
 				...(tags ? { tags } : {}),
 				...(status ? { status } : {}),
 			},

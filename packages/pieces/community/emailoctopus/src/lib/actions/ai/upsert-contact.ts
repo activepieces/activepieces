@@ -16,7 +16,7 @@ export const upsertContactAction = createAction({
 	classification: 'WRITE',
 	aiMetadata: {
 		description:
-			'Creates a contact in an EmailOctopus list, or updates the existing contact with the same email address. Only the fields, tags and status you pass change. Use Create Contact when a duplicate should fail instead.',
+			'Creates a contact in an EmailOctopus list, or updates the existing contact with the same email address. Only the fields, fields to clear, tags and status you pass change. Use Create Contact when a duplicate should fail instead.',
 		idempotent: true,
 	},
 	props: {
@@ -27,12 +27,21 @@ export const upsertContactAction = createAction({
 			required: true,
 		}),
 		fields: emailOctopusAiProps.fields({ required: false }),
+		fieldsToClear: emailOctopusAiProps.fieldsToClear({ required: false }),
 		tagsToAdd: emailOctopusAiProps.tagsToAdd({ required: false }),
 		tagsToRemove: emailOctopusAiProps.tagsToRemove({ required: false }),
 		status: emailOctopusAiProps.status({ required: false }),
 	},
 	async run(context) {
-		const { listId, emailAddress, fields, tagsToAdd, tagsToRemove, status } = context.propsValue;
+		const { listId, emailAddress, fields, fieldsToClear, tagsToAdd, tagsToRemove, status } =
+			context.propsValue;
+		const fieldChanges = emailOctopusUtils.toFieldChanges({
+			fields,
+			fieldsToClear: emailOctopusUtils.toStringArray({
+				value: fieldsToClear,
+				propName: 'Fields to Clear',
+			}),
+		});
 		const tags = emailOctopusUtils.toTagChanges({
 			tagsToAdd: emailOctopusUtils.toStringArray({ value: tagsToAdd, propName: 'Tags to Add' }),
 			tagsToRemove: emailOctopusUtils.toStringArray({
@@ -45,7 +54,7 @@ export const upsertContactAction = createAction({
 			listId,
 			body: {
 				email_address: emailAddress,
-				...(fields ? { fields } : {}),
+				...(fieldChanges ? { fields: fieldChanges } : {}),
 				...(tags ? { tags } : {}),
 				...(status ? { status } : {}),
 			},

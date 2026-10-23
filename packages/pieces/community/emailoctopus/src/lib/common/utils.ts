@@ -1,3 +1,5 @@
+const builtInTextFields = ['FirstName', 'LastName'];
+
 function toStringArray({
 	value,
 	propName,
@@ -34,4 +36,26 @@ function toTagChanges({
 	};
 }
 
-export const emailOctopusUtils = { toStringArray, toTagChanges };
+function toFieldChanges({
+	fields,
+	fieldsToClear,
+}: {
+	fields: Record<string, unknown> | undefined;
+	fieldsToClear: string[];
+}): Record<string, unknown> | undefined {
+	if (fields === undefined && fieldsToClear.length === 0) {
+		return undefined;
+	}
+	const overlap = fieldsToClear.filter((tag) => fields !== undefined && tag in fields);
+	if (overlap.length > 0) {
+		throw new Error(`Fields and Fields to Clear both contain: ${overlap.join(', ')}.`);
+	}
+	return {
+		...fields,
+		...Object.fromEntries(
+			fieldsToClear.map((tag) => [tag, builtInTextFields.includes(tag) ? '' : null]),
+		),
+	};
+}
+
+export const emailOctopusUtils = { toStringArray, toTagChanges, toFieldChanges };
