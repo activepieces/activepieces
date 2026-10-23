@@ -1,73 +1,32 @@
-import {
-  createCustomApiCallAction,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { formBricksAuth } from './lib/common/auth';
+import { normalizeAppUrl } from './lib/common/client';
+import { createContactAttributeKeyAction } from './lib/actions/create-contact-attribute-key';
+import { createResponseAction } from './lib/actions/create-response';
+import { deleteContactAction } from './lib/actions/delete-contact';
+import { deleteResponseAction } from './lib/actions/delete-response';
+import { findContactAction } from './lib/actions/find-contact';
+import { getContactSurveyLinkAction } from './lib/actions/get-contact-survey-link';
+import { getResponseAction } from './lib/actions/get-response';
+import { getSurveyAction } from './lib/actions/get-survey';
+import { listActionClassesAction } from './lib/actions/list-action-classes';
+import { listContactAttributeKeysAction } from './lib/actions/list-contact-attribute-keys';
+import { listResponsesAction } from './lib/actions/list-responses';
+import { listSurveysAction } from './lib/actions/list-surveys';
+import { updateResponseAction } from './lib/actions/update-response';
+import { updateSurveyStatusAction } from './lib/actions/update-survey-status';
+import { upsertContactAction } from './lib/actions/upsert-contact';
+import { createContactAttributeKeyAiAction } from './lib/actions/ai/create-contact-attribute-key';
+import { createResponseAiAction } from './lib/actions/ai/create-response';
+import { findContactAiAction } from './lib/actions/ai/find-contact';
+import { getContactSurveyLinkAiAction } from './lib/actions/ai/get-contact-survey-link';
+import { getSurveyAiAction } from './lib/actions/ai/get-survey';
+import { listResponsesAiAction } from './lib/actions/ai/list-responses';
+import { listSurveysAiAction } from './lib/actions/ai/list-surveys';
+import { updateSurveyStatusAiAction } from './lib/actions/ai/update-survey-status';
+import { upsertContactAiAction } from './lib/actions/ai/upsert-contact';
 import { triggers } from './lib/triggers';
-
-const markdownPropertyDescription = `
-  **Enable Basic Authentication:**
-  1. Login to your Formbricks account
-  2. On the bottom-left, click on your account dropdown
-  3. Select 'Account Settings' -> 'Setting'
-  4. select 'API Keys'
-  5. Click on 'Add API Key'
-  6. On the popup form, enter the 'API Key Label' to name the Key
-  7. Copy the API key and paste it below.
-
-  **APP URL:**
-  - The API URL for Formbricks example the cloud is at https://app.formbricks.com
-  - **Note: make sure there is no trailing slash and no /api**
-`;
-
-export type FormBricksAuthType = {
-  appUrl: string;
-  apiKey: string;
-};
-
-export const formBricksAuth = PieceAuth.CustomAuth({
-  required: true,
-  description: markdownPropertyDescription,
-  props: {
-    appUrl: Property.ShortText({
-      displayName: 'APP URL',
-      required: true,
-      defaultValue: 'https://app.formbricks.com',
-    }),
-    apiKey: Property.ShortText({
-      displayName: 'API Key',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      const authValue = auth as PiecePropValueSchema<typeof formBricksAuth>;
-
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${authValue.appUrl}/api/v1/management/me`,
-        headers: {
-          'x-api-key': authValue.apiKey,
-        },
-      });
-      return {
-        valid: true,
-      };
-    } catch (error) {
-      return {
-        valid: false,
-        error: 'Please provide correct APP URL and API key.',
-      };
-    }
-  },
-});
 
 export const formbricks = createPiece({
   displayName: 'Formbricks',
@@ -78,14 +37,36 @@ export const formbricks = createPiece({
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
+    listSurveysAction,
+    getSurveyAction,
+    updateSurveyStatusAction,
+    listResponsesAction,
+    getResponseAction,
+    createResponseAction,
+    updateResponseAction,
+    deleteResponseAction,
+    upsertContactAction,
+    findContactAction,
+    deleteContactAction,
+    listContactAttributeKeysAction,
+    createContactAttributeKeyAction,
+    listActionClassesAction,
+    getContactSurveyLinkAction,
+    listSurveysAiAction,
+    getSurveyAiAction,
+    updateSurveyStatusAiAction,
+    listResponsesAiAction,
+    createResponseAiAction,
+    upsertContactAiAction,
+    findContactAiAction,
+    createContactAttributeKeyAiAction,
+    getContactSurveyLinkAiAction,
     createCustomApiCallAction({
       auth: formBricksAuth,
-      authMapping: async (auth) => {
-        return {
-          'x-api-key': (auth.props).apiKey,
-        };
-      },
-      baseUrl: (auth) => `${(auth?.props?.appUrl ?? '')}/api/v1`,
+      authMapping: async (auth) => ({
+        'x-api-key': auth.props.apiKey,
+      }),
+      baseUrl: (auth) => (auth ? `${normalizeAppUrl(auth.props.appUrl)}/api/v1` : ''),
     }),
   ],
   triggers,
