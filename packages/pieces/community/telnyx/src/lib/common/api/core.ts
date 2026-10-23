@@ -1,6 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 
-import { telnyxClient } from './client';
+import { telnyxClient } from '../client';
 
 import type {
 	TelnyxAuthValue,
@@ -8,7 +8,7 @@ import type {
 	TelnyxMessage,
 	TelnyxMessagingProfile,
 	TelnyxResponse,
-} from './types';
+} from '../types';
 
 async function listMessagingProfiles({
 	auth,
@@ -66,7 +66,7 @@ async function dialCall({
 	});
 }
 
-export const telnyxApi = { listMessagingProfiles, sendMessage, dialCall };
+export const telnyxCoreApi = { listMessagingProfiles, sendMessage, dialCall };
 
 type SendMessageParams = {
 	from: string;

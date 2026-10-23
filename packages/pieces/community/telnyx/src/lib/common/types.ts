@@ -25,3 +25,17 @@ export type TelnyxCall = {
 };
 
 export type TelnyxMessagingProfile = { id?: string; name?: string };
+
+export type TelnyxRecord = Record<string, unknown>;
+
+export type TelnyxPage<T = TelnyxRecord> = {
+	data?: T[];
+	meta?: TelnyxPageMeta;
+};
+
+export type TelnyxPageMeta = {
+	page_number?: number;
+	page_size?: number;
+	total_pages?: number;
+	total_results?: number;
+};

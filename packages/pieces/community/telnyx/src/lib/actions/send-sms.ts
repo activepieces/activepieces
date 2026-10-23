@@ -8,7 +8,7 @@ export const sendSmsAction = createAction({
   classification: 'WRITE',
   displayName: 'Send SMS',
   description: 'Send an SMS message using the Telnyx Messages API.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Sends an outbound SMS via Telnyx from a sender number/ID to a destination phone number (E.164) with the given message body; optionally scope it to a specific messaging profile. Use to deliver a text message to a recipient. Not idempotent: each call sends a new message, so repeating it sends duplicates.',

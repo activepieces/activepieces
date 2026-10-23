@@ -1,4 +1,8 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  httpClient,
+  HttpMethod,
+  QueryParams,
+} from '@activepieces/pieces-common';
 import type { TelnyxAuthValue } from './types';
 
 function baseUrl(): string {
@@ -9,6 +13,7 @@ async function request<T>({
   auth,
   method,
   path,
+  query,
   body,
 }: RequestParams & { auth: TelnyxAuthValue }): Promise<T> {
   const response = await httpClient.sendRequest<T>({
@@ -19,6 +24,7 @@ async function request<T>({
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
+    queryParams: query,
     body,
   });
 
@@ -30,5 +36,6 @@ export const telnyxClient = { baseUrl, request };
 type RequestParams = {
   method: HttpMethod;
   path: string;
+  query?: QueryParams;
   body?: Record<string, unknown>;
 };
