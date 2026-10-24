@@ -9,7 +9,8 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
+import { zohoCampaignsAuth } from '../auth';
+import { zohoCampaignsApi } from '../common/api';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
@@ -17,12 +18,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const location = auth.props?.['location'] as string || 'zoho.com';
-    const accessToken = auth.access_token;
-    const items = await zohoCampaignsCommon.listCampaigns({
-      accessToken,
-      location,
-    });
+    const items = await zohoCampaignsApi.listCampaigns({ auth });
     return items.map((item) => ({
       epochMilliSeconds: dayjs(item.created_date_string).valueOf(),
       data: item,
@@ -30,7 +26,7 @@ const polling: Polling<
   },
 };
 
-export const newCampaign = createTrigger({
+export const newCampaignTrigger = createTrigger({
   auth: zohoCampaignsAuth,
   name: 'newCampaign',
   classification: 'READ',

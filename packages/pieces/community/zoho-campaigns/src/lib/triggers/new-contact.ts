@@ -6,32 +6,29 @@ import {
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
-  StaticPropsValue,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
+import { zohoCampaignsAuth } from '../auth';
+import { zohoCampaignsApi } from '../common/api';
+import { zohoCampaignsProps } from '../common/props';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
-  StaticPropsValue<any>
+  { listkey: string | undefined }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const location = auth.props?.['location'] as string || 'zoho.com';
-    const accessToken = auth.access_token;
     const { listkey } = propsValue;
 
     if (!listkey) {
       throw new Error('Mailing list is required');
     }
 
-    const items = await zohoCampaignsCommon.listContacts({
-      accessToken,
-      location,
+    const items = await zohoCampaignsApi.listContacts({
+      auth,
       listkey,
-      sort:'desc',
+      sort: 'desc',
     });
 
     return items.map((item) => ({
@@ -41,7 +38,7 @@ const polling: Polling<
   },
 };
 
-export const newContact = createTrigger({
+export const newContactTrigger = createTrigger({
   auth: zohoCampaignsAuth,
   name: 'newContact',
   classification: 'READ',
@@ -51,7 +48,9 @@ export const newContact = createTrigger({
     description:
       'Fires when a new contact appears in the selected Zoho Campaigns mailing list, representing a newly added subscriber. Polls the list and emits each new contact record.',
   },
-  props: zohoCampaignsCommon.newContactProperties(),
+  props: {
+    listkey: zohoCampaignsProps.listKey({ required: true }),
+  },
   sampleData: {
     contact_email: 'john.doe@example.com',
     firstname: 'John',
