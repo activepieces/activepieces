@@ -50,7 +50,6 @@ const trialEnding = (ending: boolean): SelfServeTrial => ({
   endsToday: false,
   ending,
   justStarted: !ending,
-  extended: false,
   isPlatformAdmin: true,
   basePlanName: 'Free',
 });

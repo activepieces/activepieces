@@ -89,7 +89,6 @@ export const selfServeTrialHooks = {
       return toActiveTrial({
         startedAt: status.startedAt ?? platform.selfServeTrial?.startedAt,
         endsAt: status.endsAt,
-        extended: status.extended,
         isPlatformAdmin,
         basePlanName,
       });
@@ -98,7 +97,6 @@ export const selfServeTrialHooks = {
       return toActiveTrial({
         startedAt: platform.selfServeTrial?.startedAt,
         endsAt: planEndsAt,
-        extended: false,
         isPlatformAdmin,
         basePlanName,
       });
@@ -220,13 +218,11 @@ function toBasePlanName(plan: string | null | undefined): string {
 function toActiveTrial({
   startedAt,
   endsAt,
-  extended,
   isPlatformAdmin,
   basePlanName,
 }: {
   startedAt: string | Date | null | undefined;
   endsAt: string | Date;
-  extended: boolean;
   isPlatformAdmin: boolean;
   basePlanName: string;
 }): SelfServeTrial {
@@ -237,7 +233,6 @@ function toActiveTrial({
       endsAt,
       now: Date.now(),
     }),
-    extended,
     isPlatformAdmin,
     basePlanName,
   };
@@ -251,7 +246,6 @@ const NO_TRIAL: SelfServeTrial = {
   endsToday: false,
   ending: false,
   justStarted: false,
-  extended: false,
   isPlatformAdmin: false,
   basePlanName: 'Free',
 };
@@ -287,7 +281,6 @@ export type SelfServeTrial = {
   endsToday: boolean;
   ending: boolean;
   justStarted: boolean;
-  extended: boolean;
   isPlatformAdmin: boolean;
   basePlanName: string;
 };

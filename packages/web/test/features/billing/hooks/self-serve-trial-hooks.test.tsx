@@ -63,7 +63,6 @@ const activeStatus = (endsAt: Date): SelfServeTrialStatus => ({
   state: 'active',
   startedAt: dayjs(endsAt).subtract(7, 'day').toISOString(),
   endsAt: endsAt.toISOString(),
-  extended: false,
 });
 
 function queryWrapper(
