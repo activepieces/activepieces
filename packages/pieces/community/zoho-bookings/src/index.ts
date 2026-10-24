@@ -1,11 +1,10 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { cancelAppointment } from './lib/actions/cancel-appointment';
-import { fetchAvailability } from './lib/actions/fetch-availability';
-import { rescheduleAppointment } from './lib/actions/reschedule-appointment';
-import { bookAppointment } from './lib/actions/book-appointment';
-import { getAppointmentDetails } from './lib/actions/get-appointment-details';
-import { zohoBookingsAuth } from './lib/common';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
+import { zohoBookingsAuth } from './lib/auth';
+import { bookAppointmentAction } from './lib/actions/book-appointment';
+import { cancelAppointmentAction } from './lib/actions/cancel-appointment';
+import { fetchAvailabilityAction } from './lib/actions/fetch-availability';
+import { getAppointmentDetailsAction } from './lib/actions/get-appointment-details';
+import { rescheduleAppointmentAction } from './lib/actions/reschedule-appointment';
 
 export const zohoBookings = createPiece({
   displayName: 'Zoho Bookings',
@@ -16,11 +15,11 @@ export const zohoBookings = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-bookings.png',
   authors: ['fortunamide', 'sanket-a11y'],
   actions: [
-    bookAppointment,
-    rescheduleAppointment,
-    fetchAvailability,
-    getAppointmentDetails,
-    cancelAppointment,
+    bookAppointmentAction,
+    rescheduleAppointmentAction,
+    fetchAvailabilityAction,
+    getAppointmentDetailsAction,
+    cancelAppointmentAction,
   ],
   triggers: [],
 });
