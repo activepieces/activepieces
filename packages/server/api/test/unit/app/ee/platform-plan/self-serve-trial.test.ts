@@ -86,9 +86,9 @@ const TRIAL_KEY = `platform_plan:self-serve-trial:v2:${PLATFORM_ID}`
 const CREDS = { autumnCustomerId: 'cus_123', autumnApiKey: 'am_sk_customer' }
 const STARTED = { startedAt: '2099-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
 const PAST = { startedAt: '2026-10-01T09:00:00.000Z', endsAt: '2026-10-08T09:00:00.000Z' }
-const ACTIVE: SelfServeTrialStatus = { state: 'active', ...STARTED, extended: false }
-const USED: SelfServeTrialStatus = { state: 'used', startedAt: null, endsAt: null, extended: false }
-const INELIGIBLE: SelfServeTrialStatus = { state: 'ineligible', startedAt: null, endsAt: null, extended: false }
+const ACTIVE: SelfServeTrialStatus = { state: 'active', ...STARTED }
+const USED: SelfServeTrialStatus = { state: 'used', startedAt: null, endsAt: null }
+const INELIGIBLE: SelfServeTrialStatus = { state: 'ineligible', startedAt: null, endsAt: null }
 const FREE_PLAN = { plan: PlanName.FREE }
 const log = { warn: vi.fn(), error: vi.fn(), info: vi.fn() } as never
 
@@ -147,7 +147,7 @@ describe('self-serve trial', () => {
 
             const status = await autumnBillingProvider(log).getSelfServeTrialInfo(PLATFORM_ID)
 
-            expect(status).toEqual({ ...expected, extended: false })
+            expect(status).toEqual(expected)
         })
 
         it.each([PlanName.FREE_LEGACY, PlanName.PLUS, PlanName.PLUS_ANNUAL, PlanName.TEAM, PlanName.TEAM_ANNUAL])('offers the trial on %s', async (planName) => {

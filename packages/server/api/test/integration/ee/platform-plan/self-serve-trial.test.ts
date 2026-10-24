@@ -6,7 +6,7 @@ import { platformPlanRepo } from '../../../../src/app/ee/platform/platform-plan/
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
-const ELIGIBLE: SelfServeTrialStatus = { state: 'eligible', startedAt: null, endsAt: null, extended: false }
+const ELIGIBLE: SelfServeTrialStatus = { state: 'eligible', startedAt: null, endsAt: null }
 const STARTED = { startedAt: '2026-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
 
 let app: FastifyInstance | null = null
@@ -37,7 +37,7 @@ describe('Self-serve trial API', () => {
 
         expect(status.statusCode).toBe(StatusCodes.OK)
         expect(status.json()).toEqual(ELIGIBLE)
-        expect(start.json()).toEqual({ state: 'active', ...STARTED, extended: false })
+        expect(start.json()).toEqual({ state: 'active', ...STARTED })
         expect(startTrial).toHaveBeenCalledWith({ autumnCustomerId: 'cus_trial', autumnApiKey: 'am_sk_trial' })
     })
 })

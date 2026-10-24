@@ -178,7 +178,6 @@ export const SelfServeTrialStatus = z.object({
     state: SelfServeTrialState,
     startedAt: z.string().nullable(),
     endsAt: z.string().nullable(),
-    extended: z.boolean(),
 })
 export type SelfServeTrialStatus = z.infer<typeof SelfServeTrialStatus>
 
@@ -197,5 +196,4 @@ export const UNAVAILABLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = {
     state: 'unavailable',
     startedAt: null,
     endsAt: null,
-    extended: false,
 }
