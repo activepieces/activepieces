@@ -26,12 +26,15 @@ async function request<T>({
 		body,
 		responseType: 'text',
 	});
-	return JSON.parse(response.body.replace(LONG_INTEGER, '$1"$2"'));
+	return JSON.parse(
+		response.body.replace(JSON_TOKEN, (token) => (LONG_INTEGER.test(token) ? `"${token}"` : token)),
+	);
 }
 
 export const zohoBookingsClient = { baseUrl, request };
 
-const LONG_INTEGER = /([:[,]\s*)(-?\d{16,})(?=\s*[,\]}])/g;
+const JSON_TOKEN = /"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g;
+const LONG_INTEGER = /^-?\d{16,}$/;
 
 type RequestParams = {
 	method: HttpMethod;

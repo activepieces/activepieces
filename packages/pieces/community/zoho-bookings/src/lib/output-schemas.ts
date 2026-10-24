@@ -102,6 +102,15 @@ const dateOverrideFields: OutputSchema['fields'] = [
 	{ key: 'from_date', label: 'From Date' },
 	{ key: 'to_date', label: 'To Date' },
 	{ key: 'all_day', label: 'All Day' },
+	{
+		key: 'available_times',
+		label: 'Hours',
+		labelKey: 'from_time',
+		listItems: [
+			{ key: 'from_time', label: 'From' },
+			{ key: 'to_time', label: 'To' },
+		],
+	},
 	{ key: 'reason', label: 'Reason' },
 ];
 

@@ -625,12 +625,14 @@ async function getAvailableSlots({
 		query['resource_id'] = resourceId;
 	}
 
-	return await zohoBookingsClient.request<ZohoBookingsResponse>({
+	const response = await zohoBookingsClient.request<ZohoBookingsResponse>({
 		auth,
 		method: HttpMethod.GET,
 		path: '/availableslots',
 		query,
 	});
+	assertSuccess({ response });
+	return response;
 }
 
 async function getAppointment({
