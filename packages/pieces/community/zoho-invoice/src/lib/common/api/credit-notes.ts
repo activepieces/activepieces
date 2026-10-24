@@ -484,6 +484,7 @@ export type ZohoInvoiceCreditNoteLineItem = {
 	description?: string;
 	rate?: number;
 	quantity?: number;
+	discount?: number | string;
 	tax_id?: string;
 };
 

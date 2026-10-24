@@ -107,17 +107,17 @@ export const updateCustomerPaymentAction = createAction({
 					payment_mode: propsValue.paymentMode,
 					amount: propsValue.amount,
 					date: propsValue.date,
-					invoices:
-						propsValue.invoices &&
-						zohoInvoiceUtils
-							.toRecords({ rows: propsValue.invoices, propName: 'Invoices' })
-							.map((invoice) =>
-								zohoInvoiceUtils.compact({
-									invoice_id: invoice['invoiceId'],
-									invoice_payment_id: invoice['invoicePaymentId'],
-									amount_applied: invoice['amountApplied'],
-								}),
-							),
+					invoices: propsValue.invoices?.length
+						? zohoInvoiceUtils
+								.toRecords({ rows: propsValue.invoices, propName: 'Invoices' })
+								.map((invoice) =>
+									zohoInvoiceUtils.compact({
+										invoice_id: invoice['invoiceId'],
+										invoice_payment_id: invoice['invoicePaymentId'],
+										amount_applied: invoice['amountApplied'],
+									}),
+								)
+						: undefined,
 					reference_number: propsValue.referenceNumber,
 					description: propsValue.description,
 					bank_charges: propsValue.bankCharges,

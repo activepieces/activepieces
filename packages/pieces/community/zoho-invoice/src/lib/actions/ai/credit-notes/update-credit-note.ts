@@ -110,6 +110,7 @@ export const updateCreditNoteAction = createAction({
 							description: line.description,
 							rate: line.rate,
 							quantity: line.quantity,
+							discount: line.discount,
 							tax_id: line.tax_id,
 						}),
 					),
