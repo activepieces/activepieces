@@ -11,6 +11,8 @@ export type ZohoCampaignsAuthValue = {
 
 export type ZohoCampaignsSort = 'asc' | 'desc';
 
+export type ZohoCampaignsSignupForm = 'public' | 'private';
+
 export type ZohoCampaignsContactStatus =
   | 'active'
   | 'recent'
@@ -31,6 +33,28 @@ export type ZohoCampaignsCampaignStatus =
   | 'reviewed'
   | 'paused'
   | 'intesting';
+
+export type ZohoCampaignsRecipientAction =
+  | 'sentcontacts'
+  | 'openedcontacts'
+  | 'optoutcontacts'
+  | 'spamcontacts'
+  | 'unopenedcontacts'
+  | 'clickedcontacts'
+  | 'senthardbounce'
+  | 'sentsoftbounce'
+  | 'unsentcontacts';
+
+export type ZohoCampaignsResponse = {
+  status?: string;
+  code?: string | number;
+  message?: string;
+  response?: {
+    status?: string;
+    code?: string | number;
+    message?: string;
+  };
+};
 
 export type ZohoCampaignsCampaign = {
   campaign_key: string;
@@ -103,20 +127,18 @@ export type ZohoCampaignsTag = {
   };
 };
 
-export type ZohoCampaignsListCampaignsResponse = {
-  fromindex: string;
-  total_record_count: string;
-  code: string;
+export type ZohoCampaignsListCampaignsResponse = ZohoCampaignsResponse & {
+  fromindex?: string;
+  total_record_count?: string;
   recent_campaigns?: ZohoCampaignsCampaign[];
-  range: string;
-  campaign_count: string;
-  uri: string;
-  version: string;
-  requestdetails: string;
-  status: string;
+  range?: string;
+  campaign_count?: string;
+  uri?: string;
+  version?: string;
+  requestdetails?: string;
 };
 
-export type ZohoCampaignsListContactsResponse = {
+export type ZohoCampaignsListContactsResponse = ZohoCampaignsResponse & {
   code: string;
   uri: string;
   version: string;
@@ -130,7 +152,7 @@ export type ZohoCampaignsListContactsResponse = {
   status: string;
 };
 
-export type ZohoCampaignsListMailingListsResponse = {
+export type ZohoCampaignsListMailingListsResponse = ZohoCampaignsResponse & {
   code: string;
   uri: string;
   version: string;
@@ -144,23 +166,25 @@ export type ZohoCampaignsListMailingListsResponse = {
   status: string;
 };
 
-export type ZohoCampaignsListTopicsResponse = {
+export type ZohoCampaignsListTopicsResponse = ZohoCampaignsResponse & {
   topicDetails: ZohoCampaignsTopic[];
   message: string;
   code: string;
   uri: string;
 };
 
-export type ZohoCampaignsCreateCampaignResponse = {
-  message: string;
-  campaignKey: string;
-  code: string;
-  uri: string;
+export type ZohoCampaignsCreateCampaignResponse = ZohoCampaignsResponse & {
+  campaignKey?: string;
+  uri?: string;
 };
 
-export type ZohoCampaignsListTagsResponse = {
+export type ZohoCampaignsListTagsResponse = ZohoCampaignsResponse & {
   uri: string;
   version: string;
   requestdetails: string;
   tags?: ZohoCampaignsTag[];
+};
+
+export type ZohoCampaignsListSentCampaignsResponse = ZohoCampaignsResponse & {
+  recent_sent_campaigns?: string;
 };

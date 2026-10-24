@@ -12,9 +12,13 @@ import type {
 	ZohoCampaignsListCampaignsResponse,
 	ZohoCampaignsListContactsResponse,
 	ZohoCampaignsListMailingListsResponse,
+	ZohoCampaignsListSentCampaignsResponse,
 	ZohoCampaignsListTagsResponse,
 	ZohoCampaignsListTopicsResponse,
 	ZohoCampaignsMailingList,
+	ZohoCampaignsRecipientAction,
+	ZohoCampaignsResponse,
+	ZohoCampaignsSignupForm,
 	ZohoCampaignsSort,
 	ZohoCampaignsTag,
 	ZohoCampaignsTopic,
@@ -24,21 +28,25 @@ async function createCampaign({
 	auth,
 	list_details: listKeys,
 	topicId,
+	segments,
 	...restParams
 }: CreateCampaignParams & {
 	auth: ZohoCampaignsAuthValue;
 }): Promise<ZohoCampaignsCreateCampaignResponse> {
-	const list_details = JSON.stringify(
-		listKeys.reduce<Record<string, never[]>>((acc, curr) => {
-			acc[curr] = [];
-			return acc;
-		}, {}),
-	);
+	const list_details = listKeys
+		? JSON.stringify(
+				listKeys.reduce<Record<string, never[]>>((acc, curr) => {
+					acc[curr] = [];
+					return acc;
+				}, {}),
+		  )
+		: undefined;
 	const body = new URLSearchParams({
 		resfmt: 'json',
-		list_details,
+		...(list_details && { list_details }),
 		...restParams,
 		...(topicId && { topicId }),
+		...(segments && { segments: `[${segments.join(',')}]` }),
 	}).toString();
 	return await zohoCampaignsClient.request<ZohoCampaignsCreateCampaignResponse>({
 		auth,
@@ -52,14 +60,50 @@ async function createCampaign({
 async function createTag({
 	auth,
 	tagName,
+	tagDesc,
+	color,
 }: {
 	auth: ZohoCampaignsAuthValue;
 	tagName: string;
-}): Promise<unknown> {
-	return await zohoCampaignsClient.request<unknown>({
+	tagDesc?: string;
+	color?: string;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
 		auth,
 		method: HttpMethod.GET,
 		path: '/tag/add',
+		query: { ...BASE_PARAMS, tagName, ...(tagDesc && { tagDesc }), ...(color && { color }) },
+	});
+}
+
+async function ensureTag({
+	auth,
+	tagName,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	tagName: string;
+}): Promise<{ created: boolean }> {
+	const tags = await listTags({ auth });
+	const tagExists =
+		tags !== undefined &&
+		tags.some((tagMap) => Object.values(tagMap).some((t) => t.tag_name === tagName));
+	if (!tagExists) {
+		await createTag({ auth, tagName });
+	}
+	return { created: !tagExists };
+}
+
+async function deleteTag({
+	auth,
+	tagName,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	tagName: string;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.GET,
+		path: '/tag/delete',
 		query: { ...BASE_PARAMS, tagName },
 	});
 }
@@ -73,7 +117,7 @@ async function cloneCampaign({
 	from_add,
 	reply_to,
 	encode_type,
-}: CloneCampaignParams & { auth: ZohoCampaignsAuthValue }): Promise<unknown> {
+}: CloneCampaignParams & { auth: ZohoCampaignsAuthValue }): Promise<ZohoCampaignsResponse> {
 	const campaigninfo = {
 		oldcampaignkey: campaignkey,
 		...(campaignname && { campaignname }),
@@ -83,7 +127,7 @@ async function cloneCampaign({
 		...(reply_to && { reply_to }),
 		...(encode_type && { encode_type }),
 	};
-	return await zohoCampaignsClient.request<unknown>({
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
 		auth,
 		method: HttpMethod.POST,
 		path: '/json/clonecampaign',
@@ -97,8 +141,8 @@ async function sendCampaign({
 }: {
 	auth: ZohoCampaignsAuthValue;
 	campaignkey: string;
-}): Promise<unknown> {
-	return await zohoCampaignsClient.request<unknown>({
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
 		auth,
 		method: HttpMethod.POST,
 		path: '/sendcampaign',
@@ -113,7 +157,7 @@ async function addUpdateContact({
 	contactinfo,
 	source,
 	topic_id,
-}: AddUpdateContactParams & { auth: ZohoCampaignsAuthValue }): Promise<unknown> {
+}: AddUpdateContactParams & { auth: ZohoCampaignsAuthValue }): Promise<ZohoCampaignsResponse> {
 	const body = new URLSearchParams({
 		...BASE_PARAMS,
 		listkey,
@@ -121,7 +165,7 @@ async function addUpdateContact({
 		...(topic_id && { topic_id }),
 		contactinfo: JSON.stringify(contactinfo),
 	}).toString();
-	return await zohoCampaignsClient.request<unknown>({
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
 		auth,
 		method: HttpMethod.POST,
 		path: '/json/listsubscribe',
@@ -134,8 +178,8 @@ async function addTagToContact({
 	auth,
 	tagName,
 	lead_email,
-}: TagContactParams & { auth: ZohoCampaignsAuthValue }): Promise<unknown> {
-	return await zohoCampaignsClient.request<unknown>({
+}: TagContactParams & { auth: ZohoCampaignsAuthValue }): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
 		auth,
 		method: HttpMethod.GET,
 		path: '/tag/associate',
@@ -147,8 +191,8 @@ async function removeTag({
 	auth,
 	tagName,
 	lead_email,
-}: TagContactParams & { auth: ZohoCampaignsAuthValue }): Promise<unknown> {
-	return await zohoCampaignsClient.request<unknown>({
+}: TagContactParams & { auth: ZohoCampaignsAuthValue }): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
 		auth,
 		method: HttpMethod.GET,
 		path: '/tag/deassociate',
@@ -163,14 +207,14 @@ async function unsubscribeContact({
 	topic_id,
 }: UnsubscribeContactParams & {
 	auth: ZohoCampaignsAuthValue;
-}): Promise<unknown> {
+}): Promise<ZohoCampaignsResponse> {
 	const body = new URLSearchParams({
 		...BASE_PARAMS,
 		listkey,
 		...(topic_id && { topic_id }),
 		contactinfo: JSON.stringify(contactinfo),
 	}).toString();
-	return await zohoCampaignsClient.request<unknown>({
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
 		auth,
 		method: HttpMethod.POST,
 		path: '/json/listunsubscribe',
@@ -187,8 +231,8 @@ async function addContactsToMailingList({
 	auth: ZohoCampaignsAuthValue;
 	listkey: string;
 	emailids: string;
-}): Promise<unknown> {
-	return await zohoCampaignsClient.request<unknown>({
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
 		auth,
 		method: HttpMethod.POST,
 		path: '/addlistsubscribersinbulk',
@@ -196,7 +240,14 @@ async function addContactsToMailingList({
 	});
 }
 
-async function listContacts({
+async function listContacts(
+	params: ListContactsParams & { auth: ZohoCampaignsAuthValue },
+): Promise<ZohoCampaignsContact[]> {
+	const response = await getListSubscribers(params);
+	return response.list_of_details || [];
+}
+
+async function getListSubscribers({
 	auth,
 	listkey,
 	sort,
@@ -205,8 +256,8 @@ async function listContacts({
 	range,
 }: ListContactsParams & {
 	auth: ZohoCampaignsAuthValue;
-}): Promise<ZohoCampaignsContact[]> {
-	const response = await zohoCampaignsClient.request<ZohoCampaignsListContactsResponse>({
+}): Promise<ZohoCampaignsListContactsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsListContactsResponse>({
 		auth,
 		method: HttpMethod.GET,
 		path: '/getlistsubscribers',
@@ -218,10 +269,16 @@ async function listContacts({
 			...(status && { status }),
 		},
 	});
-	return response.list_of_details || [];
 }
 
-async function listCampaigns({
+async function listCampaigns(
+	params: ListCampaignsParams & { auth: ZohoCampaignsAuthValue },
+): Promise<ZohoCampaignsCampaign[]> {
+	const response = await getRecentCampaigns(params);
+	return response.recent_campaigns || [];
+}
+
+async function getRecentCampaigns({
 	auth,
 	sort,
 	status,
@@ -229,8 +286,8 @@ async function listCampaigns({
 	range,
 }: ListCampaignsParams & {
 	auth: ZohoCampaignsAuthValue;
-}): Promise<ZohoCampaignsCampaign[]> {
-	const response = await zohoCampaignsClient.request<ZohoCampaignsListCampaignsResponse>({
+}): Promise<ZohoCampaignsListCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsListCampaignsResponse>({
 		auth,
 		method: HttpMethod.GET,
 		path: '/recentcampaigns',
@@ -241,18 +298,24 @@ async function listCampaigns({
 			...(status && { status }),
 		},
 	});
-	return response.recent_campaigns || [];
 }
 
-async function listMailingLists({
+async function listMailingLists(
+	params: ListMailingListsParams & { auth: ZohoCampaignsAuthValue },
+): Promise<ZohoCampaignsMailingList[]> {
+	const response = await getMailingLists(params);
+	return response.list_of_details || [];
+}
+
+async function getMailingLists({
 	auth,
 	sort,
 	fromindex,
 	range,
 }: ListMailingListsParams & {
 	auth: ZohoCampaignsAuthValue;
-}): Promise<ZohoCampaignsMailingList[]> {
-	const response = await zohoCampaignsClient.request<ZohoCampaignsListMailingListsResponse>({
+}): Promise<ZohoCampaignsListMailingListsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsListMailingListsResponse>({
 		auth,
 		method: HttpMethod.GET,
 		path: '/getmailinglists',
@@ -262,7 +325,172 @@ async function listMailingLists({
 			...(sort && { sort }),
 		},
 	});
-	return response.list_of_details || [];
+}
+
+async function getMailingListDetails({
+	auth,
+	listkey,
+	filtertype,
+	fromindex,
+	range,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	listkey: string;
+	filtertype?: 'sentcampaigns' | 'scheduledcampaigns' | 'recentcampaigns';
+	fromindex?: number;
+	range?: number;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.GET,
+		path: '/getlistadvanceddetails',
+		query: {
+			...BASE_PARAMS,
+			listkey,
+			...(filtertype && { filtertype }),
+			...pagingQuery({ fromindex, range }),
+		},
+	});
+}
+
+async function listContactFields({
+	auth,
+}: {
+	auth: ZohoCampaignsAuthValue;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.GET,
+		path: '/contact/allfields',
+		query: { type: 'json' },
+	});
+}
+
+async function updateMailingList({
+	auth,
+	listkey,
+	newlistname,
+	signupform,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	listkey: string;
+	newlistname: string;
+	signupform: ZohoCampaignsSignupForm;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.GET,
+		path: '/updatelistdetails',
+		query: { ...BASE_PARAMS, listkey, newlistname, signupform },
+	});
+}
+
+async function deleteMailingList({
+	auth,
+	listkey,
+	deletecontacts,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	listkey: string;
+	deletecontacts?: 'on' | 'off';
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.GET,
+		path: '/deletemailinglist',
+		query: { ...BASE_PARAMS, listkey, ...(deletecontacts && { deletecontacts }) },
+	});
+}
+
+async function countContacts({
+	auth,
+	listkey,
+	status,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	listkey: string;
+	status?: 'active' | 'unsub' | 'bounce' | 'spam';
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.GET,
+		path: '/listsubscriberscount',
+		query: { ...BASE_PARAMS, listkey, ...(status && { status }) },
+	});
+}
+
+async function addContactToDoNotMail({
+	auth,
+	contactinfo,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	contactinfo: Record<string, unknown>;
+}): Promise<ZohoCampaignsResponse> {
+	const body = new URLSearchParams({
+		...BASE_PARAMS,
+		contactinfo: JSON.stringify(contactinfo),
+	}).toString();
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.POST,
+		path: '/json/contactdonotmail',
+		headers: FORM_HEADERS,
+		body,
+	});
+}
+
+async function createMailingList({
+	auth,
+	listname,
+	signupform,
+	listdescription,
+	emailids,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	listname: string;
+	signupform: ZohoCampaignsSignupForm;
+	listdescription?: string;
+	emailids: string;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.POST,
+		path: '/addlistandcontacts',
+		headers: FORM_HEADERS,
+		query: {
+			...BASE_PARAMS,
+			listname,
+			signupform,
+			mode: 'newlist',
+			emailids,
+			...(listdescription && { listdescription }),
+		},
+	});
+}
+
+async function createCustomField({
+	auth,
+	fieldname,
+	fieldtype,
+	fieldlength,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	fieldname: string;
+	fieldtype: string;
+	fieldlength?: number;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.POST,
+		path: '/custom/add',
+		headers: FORM_HEADERS,
+		query: {
+			type: 'json',
+			fieldname,
+			fieldtype,
+			...(fieldlength !== undefined && { fieldlength: String(fieldlength) }),
+		},
+	});
 }
 
 async function listTopics({
@@ -270,13 +498,44 @@ async function listTopics({
 }: {
 	auth: ZohoCampaignsAuthValue;
 }): Promise<ZohoCampaignsTopic[]> {
-	const response = await zohoCampaignsClient.request<ZohoCampaignsListTopicsResponse>({
+	const response = await getTopics({ auth });
+	return response.topicDetails;
+}
+
+async function getTopics({
+	auth,
+	fromIndex,
+	range,
+}: TopicPagingParams & { auth: ZohoCampaignsAuthValue }): Promise<ZohoCampaignsListTopicsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsListTopicsResponse>({
 		auth,
 		method: HttpMethod.GET,
 		path: '/topics',
-		query: { ...BASE_PARAMS },
+		query: { ...BASE_PARAMS, ...topicPagingQuery({ fromIndex, range }) },
 	});
-	return response.topicDetails;
+}
+
+async function createTopic({
+	auth,
+	topicName,
+	topicDesc,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	topicName: string;
+	topicDesc: string;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.POST,
+		path: '/topics',
+		query: {
+			...BASE_PARAMS,
+			details: JSON.stringify({
+				topic_name: topicName,
+				topic_desc: topicDesc,
+			}),
+		},
+	});
 }
 
 async function listTags({
@@ -284,13 +543,156 @@ async function listTags({
 }: {
 	auth: ZohoCampaignsAuthValue;
 }): Promise<ZohoCampaignsTag[] | undefined> {
-	const response = await zohoCampaignsClient.request<ZohoCampaignsListTagsResponse>({
+	const response = await getAllTags({ auth });
+	return response.tags;
+}
+
+async function getAllTags({
+	auth,
+}: {
+	auth: ZohoCampaignsAuthValue;
+}): Promise<ZohoCampaignsListTagsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsListTagsResponse>({
 		auth,
 		method: HttpMethod.GET,
 		path: '/tag/getalltags',
 		query: { ...BASE_PARAMS },
 	});
-	return response.tags;
+}
+
+function topicPagingQuery({ fromIndex, range }: TopicPagingParams): Record<string, string> {
+	if (fromIndex === undefined && range === undefined) {
+		return {};
+	}
+	return {
+		details: JSON.stringify({
+			...(fromIndex !== undefined && { from_index: fromIndex }),
+			...(range !== undefined && { range }),
+		}),
+	};
+}
+
+async function getCampaignDetails({
+	auth,
+	campaignkey,
+	campaigntype,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	campaignkey: string;
+	campaigntype?: 'normal' | 'abtesting';
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.GET,
+		path: '/getcampaigndetails',
+		query: { ...BASE_PARAMS, campaignkey, ...(campaigntype && { campaigntype }) },
+	});
+}
+
+async function scheduleCampaign({
+	auth,
+	campaignkey,
+	scheduleDate,
+	scheduleHour,
+	scheduleMinute,
+	amPm,
+	isTimeWarp,
+	sendingTZ,
+}: ScheduleCampaignParams & { auth: ZohoCampaignsAuthValue }): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.POST,
+		path: '/sendcampaign',
+		headers: FORM_HEADERS,
+		query: {
+			...BASE_PARAMS,
+			isschedule: 'true',
+			campaignkey,
+			scheduleDate,
+			scheduleHour,
+			scheduleMinute,
+			am_pm: amPm,
+			...(isTimeWarp !== undefined && { istimewarp: String(isTimeWarp) }),
+			...(sendingTZ && { sendingTZ }),
+		},
+	});
+}
+
+async function getCampaignReport({
+	auth,
+	campaignkey,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	campaignkey: string;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.GET,
+		path: '/campaignreports',
+		query: { ...BASE_PARAMS, campaignkey },
+	});
+}
+
+async function listSentCampaigns({
+	auth,
+	limit,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	limit: number;
+}): Promise<ZohoCampaignsListSentCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsListSentCampaignsResponse>({
+		auth,
+		method: HttpMethod.GET,
+		path: '/recentsentcampaigns',
+		query: { ...BASE_PARAMS, limit: String(limit) },
+	});
+}
+
+async function getLastCampaignReport({
+	auth,
+}: {
+	auth: ZohoCampaignsAuthValue;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.POST,
+		path: '/getlastcampaignreport',
+		headers: FORM_HEADERS,
+		query: { ...BASE_PARAMS },
+	});
+}
+
+async function listCampaignRecipients({
+	auth,
+	campaignkey,
+	action,
+	fromindex,
+	range,
+}: ListCampaignRecipientsParams & {
+	auth: ZohoCampaignsAuthValue;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.POST,
+		path: '/getcampaignrecipientsdata',
+		headers: FORM_HEADERS,
+		query: { ...BASE_PARAMS, campaignkey, action, ...pagingQuery({ fromindex, range }) },
+	});
+}
+
+async function deleteCampaign({
+	auth,
+	campaignkey,
+}: {
+	auth: ZohoCampaignsAuthValue;
+	campaignkey: string;
+}): Promise<ZohoCampaignsResponse> {
+	return await zohoCampaignsClient.request<ZohoCampaignsResponse>({
+		auth,
+		method: HttpMethod.GET,
+		path: '/deletecampaign',
+		query: { ...BASE_PARAMS, campaignkey },
+	});
 }
 
 function pagingQuery({
@@ -318,9 +720,32 @@ export const zohoCampaignsApi = {
 	addContactsToMailingList,
 	listContacts,
 	listCampaigns,
+	getRecentCampaigns,
+	getCampaignDetails,
+	scheduleCampaign,
+	getCampaignReport,
+	listSentCampaigns,
+	getLastCampaignReport,
+	listCampaignRecipients,
+	deleteCampaign,
 	listMailingLists,
+	getListSubscribers,
+	getMailingLists,
+	getMailingListDetails,
+	listContactFields,
+	updateMailingList,
+	deleteMailingList,
+	countContacts,
+	addContactToDoNotMail,
+	createMailingList,
+	createCustomField,
 	listTopics,
+	getTopics,
+	createTopic,
 	listTags,
+	getAllTags,
+	ensureTag,
+	deleteTag,
 };
 
 const BASE_PARAMS = { resfmt: 'JSON' };
@@ -331,9 +756,28 @@ type CreateCampaignParams = {
 	campaignname: string;
 	from_email: string;
 	subject: string;
+	from_name?: string;
 	content_url?: string;
-	list_details: string[];
+	list_details?: string[];
+	segments?: string[];
 	topicId?: string;
+};
+
+type ScheduleCampaignParams = {
+	campaignkey: string;
+	scheduleDate: string;
+	scheduleHour: string;
+	scheduleMinute: string;
+	amPm: 'AM' | 'PM';
+	isTimeWarp?: boolean;
+	sendingTZ?: string;
+};
+
+type ListCampaignRecipientsParams = {
+	campaignkey: string;
+	action: ZohoCampaignsRecipientAction;
+	fromindex?: number;
+	range?: number;
 };
 
 type CloneCampaignParams = {
@@ -376,6 +820,11 @@ type ListCampaignsParams = {
 	sort?: ZohoCampaignsSort;
 	status?: ZohoCampaignsCampaignStatus;
 	fromindex?: number;
+	range?: number;
+};
+
+type TopicPagingParams = {
+	fromIndex?: number;
 	range?: number;
 };
 

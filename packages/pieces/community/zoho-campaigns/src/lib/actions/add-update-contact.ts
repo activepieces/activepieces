@@ -4,15 +4,17 @@ import * as z from 'zod/mini';
 import { zohoCampaignsAuth } from '../auth';
 import { zohoCampaignsApi } from '../common/api';
 import { zohoCampaignsProps } from '../common/props';
+import { zohoCampaignsStatusOutputSchema } from '../output-schemas';
 
 export const addUpdateContactAction = createAction({
   auth: zohoCampaignsAuth,
   name: 'addUpdateContact',
+  outputSchema: zohoCampaignsStatusOutputSchema,
   classification: 'WRITE',
   displayName: 'Add/Update Contact',
   description:
     'Add a new contact or update an existing one. Confirmation email sent based on mailing list settings.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Adds a contact to a mailing list or updates the existing contact matched by email, setting standard and custom fields. Use to create or keep a subscriber record current. Effectively an upsert keyed on email, so repeating with the same input converges to the same state and is idempotent; note a confirmation email may be sent depending on the list settings.',

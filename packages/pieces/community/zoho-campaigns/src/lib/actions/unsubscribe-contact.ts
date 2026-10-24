@@ -4,14 +4,16 @@ import * as z from 'zod/mini';
 import { zohoCampaignsAuth } from '../auth';
 import { zohoCampaignsApi } from '../common/api';
 import { zohoCampaignsProps } from '../common/props';
+import { zohoCampaignsStatusOutputSchema } from '../output-schemas';
 
 export const unsubscribeContactAction = createAction({
   auth: zohoCampaignsAuth,
   name: 'unsubscribeContact',
+  outputSchema: zohoCampaignsStatusOutputSchema,
   classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Contact',
   description: 'Remove a contact from a mailing list.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Unsubscribes a contact (matched by email) from a specified mailing list, optionally scoped to a particular topic. Use to opt a subscriber out of a list or topic. Idempotent: an already-unsubscribed contact stays unsubscribed on repeat calls.',

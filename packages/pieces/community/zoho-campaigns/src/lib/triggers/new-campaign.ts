@@ -11,6 +11,7 @@ import {
 import dayjs from 'dayjs';
 import { zohoCampaignsAuth } from '../auth';
 import { zohoCampaignsApi } from '../common/api';
+import { zohoCampaignsNewCampaignOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
@@ -29,6 +30,7 @@ const polling: Polling<
 export const newCampaignTrigger = createTrigger({
   auth: zohoCampaignsAuth,
   name: 'newCampaign',
+  outputSchema: zohoCampaignsNewCampaignOutputSchema,
   classification: 'READ',
   displayName: 'New Campaign',
   description: 'Fires when a new campaign is created.',
@@ -51,13 +53,11 @@ export const newCampaignTrigger = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

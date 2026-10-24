@@ -1,5 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
+import { zohoCampaignsAiActions } from './lib/actions/ai';
 import { addContactToMailingListAction } from './lib/actions/add-contact-to-mailing-list';
 import { addTagToContactAction } from './lib/actions/add-tag-to-contact';
 import { addUpdateContactAction } from './lib/actions/add-update-contact';
@@ -21,7 +22,7 @@ export const zohoCampaigns = createPiece({
   description:
     'Zoho Campaigns is an email marketing platform for managing mailing lists, sending campaigns, tracking engagement, and automating subscriber workflows.',
   auth: zohoCampaignsAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-campaigns.png',
   authors: ['LuizDMM', 'onyedikachi-david'],
   actions: [
@@ -35,6 +36,7 @@ export const zohoCampaigns = createPiece({
     addContactToMailingListAction,
     findContactAction,
     findCampaignAction,
+    ...zohoCampaignsAiActions,
     createCustomApiCallAction({
       auth: zohoCampaignsAuth,
       baseUrl: (auth) =>

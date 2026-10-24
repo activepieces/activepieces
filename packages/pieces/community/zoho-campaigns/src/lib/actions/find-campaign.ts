@@ -7,14 +7,16 @@ import type {
   ZohoCampaignsCampaignStatus,
   ZohoCampaignsSort,
 } from '../common/types';
+import { zohoCampaignsFindCampaignOutputSchema } from '../output-schemas';
 
 export const findCampaignAction = createAction({
   auth: zohoCampaignsAuth,
   name: 'findCampaign',
+  outputSchema: zohoCampaignsFindCampaignOutputSchema,
   classification: 'SEARCH',
   displayName: 'Find Campaign',
   description: 'Locate an existing campaign by campaign name.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Searches recent campaigns in the account and returns those whose name contains the supplied value (case-insensitive partial match); an empty name effectively returns all campaigns, optionally filtered by status and paginated. Use to resolve a campaign key or browse campaigns. Read-only and idempotent; throws if no campaign matches.',

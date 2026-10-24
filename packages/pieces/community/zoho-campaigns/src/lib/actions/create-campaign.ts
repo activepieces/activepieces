@@ -4,15 +4,17 @@ import * as z from 'zod/mini';
 import { zohoCampaignsAuth } from '../auth';
 import { zohoCampaignsApi } from '../common/api';
 import { zohoCampaignsProps } from '../common/props';
+import { zohoCampaignsCreateCampaignOutputSchema } from '../output-schemas';
 
 export const createCampaignAction = createAction({
   auth: zohoCampaignsAuth,
   name: 'createCampaign',
+  outputSchema: zohoCampaignsCreateCampaignOutputSchema,
   classification: 'WRITE',
   displayName: 'Create Campaign',
   description:
     'Create a new campaign with campaign name, subject, topic, sender name/address, and mailing list.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new draft email campaign in Zoho Campaigns with the given name, subject, sender name/address, topic, and target mailing list(s). Use to set up a campaign before sending or cloning it. Not idempotent: each call creates a separate campaign even with identical inputs.',

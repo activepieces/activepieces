@@ -4,14 +4,16 @@ import * as z from 'zod/mini';
 import { zohoCampaignsAuth } from '../auth';
 import { zohoCampaignsApi } from '../common/api';
 import { zohoCampaignsProps } from '../common/props';
+import { zohoCampaignsAddContactsToMailingListOutputSchema } from '../output-schemas';
 
 export const addContactToMailingListAction = createAction({
   auth: zohoCampaignsAuth,
   name: 'addContactToMailingList',
+  outputSchema: zohoCampaignsAddContactsToMailingListOutputSchema,
   classification: 'WRITE',
   displayName: 'Add Contact to Mailing List',
   description: 'Add contacts to your mailing lists.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Adds one or more contacts (by email address) to a specified mailing list. Use to subscribe known emails in bulk to a list. Idempotent: re-adding emails already on the list leaves the membership unchanged.',

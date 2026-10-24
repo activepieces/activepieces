@@ -14,6 +14,7 @@ import { zohoCampaignsAuth } from '../auth';
 import { zohoCampaignsApi } from '../common/api';
 import { zohoCampaignsProps } from '../common/props';
 import type { ZohoCampaignsContactStatus } from '../common/types';
+import { zohoCampaignsContactOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
@@ -46,6 +47,7 @@ const polling: Polling<
 export const unsubscribeTrigger = createTrigger({
   auth: zohoCampaignsAuth,
   name: 'unsubscribe',
+  outputSchema: zohoCampaignsContactOutputSchema,
   classification: 'READ',
   displayName: 'Unsubscribe',
   description:
@@ -83,13 +85,11 @@ export const unsubscribeTrigger = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

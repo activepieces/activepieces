@@ -4,14 +4,16 @@ import * as z from 'zod/mini';
 import { zohoCampaignsAuth } from '../auth';
 import { zohoCampaignsApi } from '../common/api';
 import { zohoCampaignsProps } from '../common/props';
+import { zohoCampaignsStatusOutputSchema } from '../output-schemas';
 
 export const removeTagAction = createAction({
   auth: zohoCampaignsAuth,
   name: 'removeTag',
+  outputSchema: zohoCampaignsStatusOutputSchema,
   classification: 'WRITE',
   displayName: 'Remove Tag',
   description: 'Remove a tag from a contact.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Removes a tag from a contact. Use to unlabel or de-segment a subscriber. Idempotent: once the tag is gone, repeating the call leaves the contact in the same untagged state.',

@@ -4,14 +4,16 @@ import * as z from 'zod/mini';
 import { zohoCampaignsAuth } from '../auth';
 import { zohoCampaignsApi } from '../common/api';
 import { zohoCampaignsProps } from '../common/props';
+import { zohoCampaignsSendCampaignOutputSchema } from '../output-schemas';
 
 export const sendCampaignAction = createAction({
   auth: zohoCampaignsAuth,
   name: 'sendCampaign',
+  outputSchema: zohoCampaignsSendCampaignOutputSchema,
   classification: 'WRITE',
   displayName: 'Send Campaign',
   description: 'Send a campaign that has been created or cloned.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Sends an existing draft campaign (identified by its campaign key) to its configured mailing list recipients. Use after a campaign has been created or cloned and is ready to go out. Not idempotent and has an irreversible side effect: it dispatches email to subscribers.',

@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 import { zohoCampaignsAuth } from '../auth';
 import { zohoCampaignsApi } from '../common/api';
 import { zohoCampaignsProps } from '../common/props';
+import { zohoCampaignsContactOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
@@ -41,6 +42,7 @@ const polling: Polling<
 export const newContactTrigger = createTrigger({
   auth: zohoCampaignsAuth,
   name: 'newContact',
+  outputSchema: zohoCampaignsContactOutputSchema,
   classification: 'READ',
   displayName: 'New Contact',
   description: 'Fires when a new contact is added to a selected mailing list.',
@@ -65,13 +67,11 @@ export const newContactTrigger = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {
