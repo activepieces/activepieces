@@ -320,7 +320,7 @@ The cards below are examples of that voice, not forms to fill in word for word.
 
 Run these checks and fix what you can, then show one short summary of what changed:
 
-1. **Linked ticket.** The PR description starts with `Fixes AI-<n>` when merging finishes the ticket, or `Part of AI-<n>` when it doesn't. No ticket? Make one with Start first.
+1. **Linked ticket.** The PR description starts with `Fixes AI-<n>` when merging finishes the ticket, or `Refs AI-<n>` when it doesn't. No ticket? Make one with Start first.
 2. **Title:** written for users, not engineers, because it feeds the changelog. Keep the repo's prefix style, e.g. `fix(chat): long chats no longer fail`.
 3. **Description:**
    - what changed;
@@ -392,7 +392,7 @@ Think the order is wrong? Say why in the ticket and re-run `/ai-task queue`, don
    - **Waiting:** AI PRs with no review after 1 working day, decisions past their decide-by date, and triage items older than 2 days.
    - **Merge queue:** run Queue. Report its size, what's on top, any collision pairs, and cards to kick back.
    - **Rituals:** repeating tickets skipped last time.
-   - **Habits:** AI PRs from the last 7 days without `Fixes AI-` or `Part of AI-` (use `gh pr list --state all --search "updated:>=<date>" --json number,author,body,files`), and new tickets missing their template's required parts. A nudge, not blame.
+   - **Habits:** AI PRs from the last 7 days without `Fixes AI-` or `Refs AI-` (use `gh pr list --state all --search "updated:>=<date>" --json number,author,body,files`), and new tickets missing their template's required parts. A nudge, not blame.
 4. **Report** with the check card. Then offer the writes, and do only what the user picks:
    - a row at the top of "Weekly checks" in "How we measure" (monthly runs also update the main table);
    - a funnel comment on the open activation ticket;
