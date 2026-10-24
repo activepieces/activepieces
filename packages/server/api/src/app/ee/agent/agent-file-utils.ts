@@ -1,5 +1,5 @@
-import { CHAT_ALLOWED_MIME_TYPES, FileCompression, FileType } from '@activepieces/shared'
-import { UserContent } from 'ai'
+import { AIProviderModelMetadata, CHAT_ALLOWED_MIME_TYPES, FileCompression, FileType } from '@activepieces/shared'
+import { ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../../file/file.service'
 
@@ -94,4 +94,21 @@ async function buildUserContentWithFiles({ text, files, attachmentNote }: {
     ]
 }
 
-export { buildUserContentWithFiles, persistAgentAttachments, buildAttachmentNote }
+function dropImagesForTextOnlyModels({ messages, models }: {
+    messages: ModelMessage[]
+    models: Array<AIProviderModelMetadata | undefined>
+}): ModelMessage[] {
+    const someModelIsTextOnly = models.some((model) => model?.supportsVision === false)
+    if (!someModelIsTextOnly) {
+        return messages
+    }
+    return messages.map((message) => message.role === 'user' && Array.isArray(message.content)
+        ? { ...message, content: message.content.filter((part) => !isImagePart(part)) }
+        : message)
+}
+
+function isImagePart(part: Exclude<UserContent, string>[number]): boolean {
+    return part.type === 'image' || (part.type === 'file' && part.mediaType.startsWith('image/'))
+}
+
+export { buildUserContentWithFiles, persistAgentAttachments, buildAttachmentNote, dropImagesForTextOnlyModels }

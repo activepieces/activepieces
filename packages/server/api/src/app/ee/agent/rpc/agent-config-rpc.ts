@@ -1,11 +1,11 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
+import { agentAiUtils, aiUtils, modelCatalog } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentCompaction } from '.././agent-compaction'
-import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from '.././agent-file-utils'
+import { buildAttachmentNote, buildUserContentWithFiles, dropImagesForTextOnlyModels, persistAgentAttachments } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
 import { agentMcp } from '.././mcp/agent-mcp'
 import { chatPersonalizationService } from '.././personalization/chat-personalization-service'
@@ -182,7 +182,11 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const previousMessages = conversation.messages as ModelMessage[]
         const newUserMessage: ModelMessage = { role: 'user' as const, content: userContent }
         const allMessages = [...previousMessages, newUserMessage]
-        const llmHistory = agentAiUtils.collapseStaleToolOutputs({ messages: allMessages })
+        const catalog = await modelCatalog.load()
+        const llmHistory = dropImagesForTextOnlyModels({
+            messages: agentAiUtils.collapseStaleToolOutputs({ messages: allMessages }),
+            models: [resolvedModelId, fastModelId].map((modelId) => catalog.lookup({ provider: providerConfig.provider, modelId })),
+        })
 
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedAgentMessage[]
         const uiMessagesWithUser: PersistedAgentMessage[] = [
