@@ -80,13 +80,18 @@ function toPointId(id: unknown): QdrantPointId {
 }
 
 function parsePointId({ id }: { id: unknown }): QdrantPointId {
-	if (typeof id === 'number') {
-		return id;
+	const value = typeof id === 'string' && /^\d+$/.test(id) ? Number(id) : id;
+	if (typeof value === 'string') {
+		return value;
 	}
-	if (typeof id === 'string') {
-		return /^\d+$/.test(id) ? Number(id) : id;
+	if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) {
+		return value;
 	}
-	throw new Error('Point IDs must be unsigned integers or UUID strings.');
+	throw new Error(
+		`Point ID ${String(id)} is invalid: use a UUID string or an unsigned integer up to ${
+			Number.MAX_SAFE_INTEGER
+		}.`,
+	);
 }
 
 function pointsSelector({

@@ -65,6 +65,32 @@ export const qdrantGetCollectionOutputSchema: OutputSchema = {
 		{ key: 'points_count', label: 'Points Count', format: 'number' },
 		{ key: 'indexed_vectors_count', label: 'Indexed Vectors Count', format: 'number' },
 		{ key: 'segments_count', label: 'Segments Count', format: 'number' },
+		{
+			key: 'config',
+			label: 'Configuration',
+			children: [
+				{
+					key: 'params',
+					label: 'Parameters',
+					children: [
+						{ key: 'vectors', label: 'Vectors', dynamicKey: true },
+						{ key: 'sparse_vectors', label: 'Sparse Vectors', dynamicKey: true },
+						{ key: 'shard_number', label: 'Shard Number', format: 'number' },
+						{ key: 'replication_factor', label: 'Replication Factor', format: 'number' },
+						{
+							key: 'write_consistency_factor',
+							label: 'Write Consistency Factor',
+							format: 'number',
+						},
+						{ key: 'on_disk_payload', label: 'On-Disk Payload', format: 'boolean' },
+					],
+				},
+				{ key: 'hnsw_config', label: 'HNSW Config', dynamicKey: true },
+				{ key: 'optimizer_config', label: 'Optimizer Config', dynamicKey: true },
+				{ key: 'wal_config', label: 'WAL Config', dynamicKey: true },
+				{ key: 'quantization_config', label: 'Quantization Config' },
+			],
+		},
 		{ key: 'payload_schema', label: 'Payload Indexes', dynamicKey: true },
 	],
 };
