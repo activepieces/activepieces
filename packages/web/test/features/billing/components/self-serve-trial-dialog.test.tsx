@@ -131,7 +131,7 @@ beforeEach(() => {
 
 describe('the start dialog', () => {
   const embeddingAiNote =
-    "Plans that include Embedding don't usually come with Activepieces AI. You can use both together only during the trial.";
+    "Plans that include Embedding don't usually come with the Activepieces AI provider. You can use both together only during the trial.";
 
   it('says on Cloud that Embedding with Activepieces AI is only for the trial', () => {
     render(dialog());
