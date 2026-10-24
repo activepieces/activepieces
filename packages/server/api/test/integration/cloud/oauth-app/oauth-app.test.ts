@@ -30,7 +30,7 @@ afterAll(async () => {
 describe('OAuth App API', () => {
     describe('Upsert OAuth APP API', () => {
         it('new OAuth App', async () => {
-            const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
+            const ctx = await createTestContext(app!)
 
             const response = await ctx.post('/v1/oauth-apps', upsertRequest)
 
@@ -44,14 +44,6 @@ describe('OAuth App API', () => {
             expect(responseBody.clientSecret).toBeUndefined()
         })
 
-
-        it('Fails if the plan does not include managing pieces', async () => {
-            const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: false } })
-
-            const response = await ctx.post('/v1/oauth-apps', upsertRequest)
-
-            expect(response.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
-        })
 
         it('Fails if user is not platform owner', async () => {
             // arrange
@@ -119,7 +111,7 @@ describe('OAuth App API', () => {
 
         it('By Id', async () => {
             // arrange
-            const ctx = await createTestContext(app!, { plan: { managePiecesEnabled: true } })
+            const ctx = await createTestContext(app!)
 
             const mockOAuthApp = await createMockOAuthApp({
                 platformId: ctx.platform.id,
