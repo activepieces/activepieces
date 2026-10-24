@@ -20,7 +20,7 @@ How a ticket in the Engineering (ENG) Linear team is written, so people and agen
 ## Gotchas
 
 - The AI team keeps its own form templates (Goal / Done when / How) and the `ai-task` skill. The two vocabularies differ on purpose for now.
-- The template text lives in Linear, not in the repo. Renaming a heading means changing the template, this page and the agent rule together.
+- The template text lives in Linear, not in the repo. Renaming a heading means changing the template, this page and the agent rule `.claude/rules/linear-tickets.md` together.
 - Placeholder text in a template disappears when the writer types, so no rule may live only in a placeholder. Rules live here and in the agent rule.
 - A ticket created through the MCP, the API, Slack or a support integration gets no template, so it can miss headings. The team default applies only in the Linear UI: an agent creating a ticket passes `template: "Feature"` or `"Bug"` to `save_issue`, and adds a missing heading rather than assume the section is empty.
 - A template applied through the MCP keeps the headings and presets but strips the placeholder text, so the sections arrive empty.
