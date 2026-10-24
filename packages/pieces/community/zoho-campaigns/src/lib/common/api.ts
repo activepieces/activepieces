@@ -87,10 +87,11 @@ async function ensureTag({
 	const tagExists =
 		tags !== undefined &&
 		tags.some((tagMap) => Object.values(tagMap).some((t) => t.tag_name === tagName));
-	if (!tagExists) {
-		await createTag({ auth, tagName });
+	if (tagExists) {
+		return { created: false };
 	}
-	return { created: !tagExists };
+	const response = await createTag({ auth, tagName });
+	return { created: response.status === 'success' };
 }
 
 async function deleteTag({
