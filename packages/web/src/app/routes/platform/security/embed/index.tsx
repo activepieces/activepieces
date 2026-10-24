@@ -160,7 +160,7 @@ const EmbedPage = () => {
           <AlertTitle>{t('Activepieces AI is on for your trial')}</AlertTitle>
           <AlertDescription>
             {t(
-              "Plans that include Embedding don't usually come with Activepieces AI. You can use both together only during the trial.",
+              "Plans that include Embedding don't usually come with the Activepieces AI provider. You can use both together only during the trial.",
             )}
           </AlertDescription>
         </Alert>

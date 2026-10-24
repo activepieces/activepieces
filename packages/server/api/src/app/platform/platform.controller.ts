@@ -1,13 +1,13 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformWithoutSensitiveData, PrincipalType, SelfServeTrialDates, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
-import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { chatVisibilityHelper } from '../ee/agent/chat-visibility-helper'
-import { platformMustHaveFeatureEnabled, platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { emailService } from '../ee/helper/email/email-service'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { beginPlatformTeardown } from '../ee/platform/platform-teardown-jobs'
@@ -48,7 +48,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         return response
     })
 
-    app.post('/:id', UpdatePlatformRequest, async (req, reply) => {
+    app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
         if (req.principal.platform.id !== req.params.id) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -58,7 +58,6 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const platformId = req.principal.platform.id
-        await assertPlanAllowsBrandingAndEmbedOriginChanges({ request: req, reply, body: req.body })
 
         const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all([
             fileService(app.log).uploadPublicAsset({
@@ -195,24 +194,11 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
     }
 }
 
-async function assertPlanAllowsBrandingAndEmbedOriginChanges({ request, reply, body }: AssertPlanAllowsBrandingAndEmbedOriginChangesParams): Promise<void> {
-    if (edition === ApEdition.COMMUNITY) {
-        return
-    }
-    const isChangingBranding = [body.logoIcon, body.fullLogo, body.favIcon, body.primaryColor, body.themeColors].some((value) => !isNil(value))
-    if (isChangingBranding) {
-        await platformMustHaveFeatureEnabled((platform) => platform.plan.customAppearanceEnabled).call(request.server, request, reply)
-    }
-    if (!isNil(body.allowedEmbedOrigins) && body.allowedEmbedOrigins.length > 0) {
-        await platformMustHaveFeatureEnabled((platform) => platform.plan.embeddingEnabled).call(request.server, request, reply)
-    }
-}
-
 async function addSelfServeTrialToPlatform<T extends PlatformWithoutSensitiveData>({ platform, log, includeSelfServeTrial }: AddSelfServeTrialToPlatformParams<T>): Promise<T & { selfServeTrial?: SelfServeTrialDates }> {
     if (!includeSelfServeTrial) {
         return platform
     }
-    const selfServeTrial = await billingProvider.get(log).getCachedSelfServeTrial(platform.id)
+    const selfServeTrial = await billingProvider.get(log).getCachedSelfServeTrialInfo(platform.id)
     return isNil(selfServeTrial) ? platform : { ...platform, selfServeTrial }
 }
 
@@ -288,10 +274,4 @@ type AddSelfServeTrialToPlatformParams<T> = {
     platform: T
     log: FastifyBaseLogger
     includeSelfServeTrial: boolean
-}
-
-type AssertPlanAllowsBrandingAndEmbedOriginChangesParams = {
-    request: FastifyRequest
-    reply: FastifyReply
-    body: UpdatePlatformRequestBody
 }
