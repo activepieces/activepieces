@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { zohoDeskAuth } from '../auth';
 import { zohoDeskApi } from '../common/api';
 import { zohoDeskProps } from '../common/props';
+import { createTicketOutputSchema } from '../output-schemas';
 
 export const createTicketAction = createAction({
 	auth: zohoDeskAuth,
 	name: 'create_ticket',
+	outputSchema: createTicketOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Ticket',
 	description: 'Creates a new ticket.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new support ticket in a Zoho Desk organization. Use when an agent needs to log a new issue or request; requires the organization ID, a department ID, a subject, and a description, with optional contact, status, priority, channel, assignee, and custom fields. Not idempotent — each call creates a separate ticket.', idempotent: false },
 	props: {
 		orgId: zohoDeskProps.orgId({ required: true }),

@@ -2,13 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { zohoDeskAuth } from '../auth';
 import { zohoDeskApi } from '../common/api';
 import { zohoDeskProps } from '../common/props';
+import { listTicketsOutputSchema } from '../output-schemas';
 
 export const listTicketsAction = createAction({
 	auth: zohoDeskAuth,
 	name: 'list_tickets',
+	outputSchema: listTicketsOutputSchema,
 	classification: 'SEARCH',
 	description: 'List tickets',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Retrieves tickets from a Zoho Desk organization, optionally expanding related data (contacts, products, departments, team, isRead, assignee) via the include option. Use to browse or page through existing tickets when you do not have a specific ticket ID; requires the organization ID. Read-only and idempotent.', idempotent: true },
 	displayName: 'List tickets.',
 	props: {

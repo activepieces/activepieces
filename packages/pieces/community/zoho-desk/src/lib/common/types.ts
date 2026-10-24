@@ -14,3 +14,36 @@ export type ZohoDeskTicket = {
 	subject?: string;
 	status?: string;
 };
+
+export type ZohoDeskRecord = Record<string, unknown>;
+
+export type ZohoDeskFile = { filename: string; data: Buffer };
+
+export type ZohoDeskDownload = { data: Buffer; fileName: string | undefined };
+export type ZohoDeskThread = {
+	id: string;
+	isContentTruncated?: boolean;
+	content?: string;
+	[key: string]: unknown;
+};
+
+export type ZohoDeskActivity = {
+	contactId?: string;
+	subject?: string;
+	departmentId?: string;
+	startTime?: string;
+	status?: string;
+};
+
+export type ZohoDeskTimeEntry = {
+	executedTime?: string;
+	hoursSpent?: number;
+	minutesSpent?: number;
+	secondsSpent?: number;
+	description?: string;
+	ownerId?: string;
+	isBillable?: boolean;
+	requestChargeType?: string;
+	additionalCost?: number;
+	cf?: Record<string, unknown>;
+};
