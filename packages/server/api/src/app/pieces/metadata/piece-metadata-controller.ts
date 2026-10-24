@@ -7,7 +7,6 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { platformMustHaveFeatureEnabled } from '../../ee/authentication/ee-authorization'
 import { rbacService } from '../../ee/authentication/project-role/rbac-service'
 import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowService } from '../../flows/flow/flow.service'
@@ -121,9 +120,6 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
     app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync({ publishCacheRefresh: true }))
 
     app.delete('/:id', DeletePieceRequest, async (req, reply) => {
-        if (system.getEdition() !== ApEdition.COMMUNITY) {
-            await platformMustHaveFeatureEnabled((platform) => platform.plan.managePiecesEnabled).call(app, req, reply)
-        }
         await pieceMetadataService(req.log).delete({
             id: req.params.id,
             platformId: req.principal.platform.id,

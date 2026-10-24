@@ -1,12 +1,11 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { AddPieceRequestBody, PackageType, PieceScope, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { AddPieceRequestBody, PieceScope, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod, FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { attachMultipartFieldsToBody } from '../../helper/multipart-body'
 import { pieceInstallService } from '../../pieces/piece-install-service'
-import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -21,9 +20,6 @@ const platformPieceController: FastifyPluginCallbackZod = (
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
         assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
-        if (req.body.packageType === PackageType.ARCHIVE) {
-            await platformMustHaveFeatureEnabled((platform) => platform.plan.managePiecesEnabled).call(app, req, reply)
-        }
         await pieceInstallService(req.log).installPiece(
             platformId,
             req.body,
