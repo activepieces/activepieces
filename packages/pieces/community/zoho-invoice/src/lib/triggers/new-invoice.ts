@@ -1,6 +1,5 @@
 import {
   AppConnectionValueForAuthProperty,
-  PiecePropValueSchema,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -10,33 +9,29 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 
-import { common } from '../common';
-
 import dayjs from 'dayjs';
-import { zohoAuth } from '../..';
+import { zohoInvoiceAuth } from '../auth';
+import { zohoInvoiceApi } from '../common/api';
 
 const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof zohoAuth>,
+  AppConnectionValueForAuthProperty<typeof zohoInvoiceAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const currentValues =
-      (await common.getInvoices(auth, {
-        createdSince: dayjs(lastFetchEpochMS).format('YYYY-MM-DD'),
-      })) ?? [];
-    const items = (currentValues as any[]).map(
-      (item: { created_time: string }) => ({
-        epochMilliSeconds: dayjs(item.created_time).valueOf(),
-        data: item,
-      })
-    );
-    return items;
+    const invoices = await zohoInvoiceApi.listInvoices({
+      auth,
+      lastModifiedAt: dayjs(lastFetchEpochMS).format('YYYY-MM-DD'),
+    });
+    return invoices.map((item) => ({
+      epochMilliSeconds: dayjs(item.created_time).valueOf(),
+      data: item,
+    }));
   },
 };
 
-export const newInvoice = createTrigger({
-  auth: zohoAuth,
+export const newInvoiceTrigger = createTrigger({
+  auth: zohoInvoiceAuth,
   name: 'new_invoice',
   classification: 'READ',
   displayName: 'New Invoice',
