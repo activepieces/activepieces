@@ -1,15 +1,11 @@
-import {
-	OAuth2PropertyValue,
-	createPiece,
-	PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { zohoDeskAuth } from './lib/auth';
+import { zohoDeskClient } from './lib/common/client';
+import { zohoDeskProps } from './lib/common/props';
 import { listTicketsAction } from './lib/actions/list-tickets';
 import { createTicketAction } from './lib/actions/create-ticket';
-import { organizationId } from './lib/common/props';
 import { findContactAction } from './lib/actions/find-contact';
-import { zohoDeskAuth } from './lib/common/auth';
 
 export const piecesZohoDesk = createPiece({
 	displayName: 'Zoho Desk',
@@ -24,17 +20,13 @@ export const piecesZohoDesk = createPiece({
 		createTicketAction,
 		findContactAction,
 		createCustomApiCallAction({
-			baseUrl: (auth) => {
-				const authValue = auth as PiecePropValueSchema<typeof zohoDeskAuth>;
-				const location = authValue.props?.['location'] ?? 'zoho.com';
-				return `https://desk.${location}/api/v1`;
-			},
+			baseUrl: (auth) => (auth ? zohoDeskClient.baseUrl({ auth }) : ''),
 			auth: zohoDeskAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Zoho-oauthtoken ${(auth as OAuth2PropertyValue).access_token}`,
+				Authorization: `Zoho-oauthtoken ${auth.access_token}`,
 			}),
 			extraProps: {
-				orgId: organizationId({
+				orgId: zohoDeskProps.orgId({
 					displayName: 'Organization ID',
 					description: 'Select organization ID to include in auth headers.',
 					required: false,
