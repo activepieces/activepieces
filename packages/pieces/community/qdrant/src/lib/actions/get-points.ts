@@ -11,7 +11,7 @@ export const getPoints = createAction({
   classification: 'SEARCH',
   displayName: 'Get Points',
   description: 'Get the points of a specific collection',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetch points from a Qdrant collection, selecting them either by an explicit list of ids or by a payload filter (must / must_not conditions). Use to look up known points or scroll through points matching metadata, as opposed to vector-similarity search. Read-only and idempotent.',

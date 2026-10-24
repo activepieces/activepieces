@@ -4,6 +4,7 @@ import type {
 	QdrantEmbeddingsInput,
 	QdrantFilter,
 	QdrantPointId,
+	QdrantPointsSelector,
 } from './types';
 
 function decodeEmbeddings({ data }: { data: Buffer }): Float32Array[] {
@@ -78,6 +79,42 @@ function toPointId(id: unknown): QdrantPointId {
 	return typeof id === 'number' ? id : String(id);
 }
 
+function parsePointId({ id }: { id: unknown }): QdrantPointId {
+	if (typeof id === 'number') {
+		return id;
+	}
+	if (typeof id === 'string') {
+		return /^\d+$/.test(id) ? Number(id) : id;
+	}
+	throw new Error('Point IDs must be unsigned integers or UUID strings.');
+}
+
+function pointsSelector({
+	pointIds,
+	filter,
+}: {
+	pointIds?: unknown[];
+	filter?: Record<string, unknown>;
+}): QdrantPointsSelector {
+	if (pointIds !== undefined && pointIds.length > 0) {
+		if (filter !== undefined) {
+			throw new Error(EXACTLY_ONE_SELECTOR);
+		}
+		return { points: pointIds.map((id) => parsePointId({ id })) };
+	}
+	if (filter === undefined) {
+		throw new Error(EXACTLY_ONE_SELECTOR);
+	}
+	return { filter };
+}
+
+function requireItems<T>({ items, propName }: { items: T[]; propName: string }): T[] {
+	if (items.length === 0) {
+		throw new Error(`${propName} must contain at least one item.`);
+	}
+	return items;
+}
+
 function parseFilterValue({ value }: { value: unknown }): unknown {
 	if (typeof value === 'string' && ['{', '['].includes(value[0])) {
 		try {
@@ -89,4 +126,13 @@ function parseFilterValue({ value }: { value: unknown }): unknown {
 	return value;
 }
 
-export const qdrantUtils = { decodeEmbeddings, convertToFilter, toPointId };
+export const qdrantUtils = {
+	decodeEmbeddings,
+	convertToFilter,
+	toPointId,
+	parsePointId,
+	pointsSelector,
+	requireItems,
+};
+
+const EXACTLY_ONE_SELECTOR = 'Provide exactly one of Point IDs or Filter.';

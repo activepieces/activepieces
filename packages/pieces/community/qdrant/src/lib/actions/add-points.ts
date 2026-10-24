@@ -6,16 +6,18 @@ import { qdrantClient } from '../common/client';
 import { qdrantProps } from '../common/props';
 import type { QdrantDistance } from '../common/types';
 import { qdrantUtils } from '../common/utils';
+import { qdrantUpdateResultOutputSchema } from '../output-schemas';
 
 export const addPointsToCollection = createAction({
   auth: qdrantAuth,
   requireAuth: true,
   name: 'add_points_to_collection',
+  outputSchema: qdrantUpdateResultOutputSchema,
   classification: 'WRITE',
   displayName: 'Add points to collection',
   description:
     'Insert a point (= embedding or vector + other infos) to a specific collection, if the collection does not exist it will be created',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Upsert one or more points (vectors plus optional payload) into a Qdrant collection, auto-creating the collection with the chosen distance metric if it does not yet exist. Use to load embeddings into a vector store. Embeddings are passed as a file and must all share the same dimensionality. Not idempotent: when point ids are omitted they are randomly generated, so each call appends new points; supply stable ids to overwrite the same points instead.',
