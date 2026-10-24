@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import { LockedAlert } from '@/components/custom/locked-alert';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +17,7 @@ import {
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
-import { RequestTrial } from '@/features/billing';
+import { EnterpriseLockedRow } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
@@ -195,14 +194,10 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
 
   if (!platform.plan.managePiecesEnabled) {
     return (
-      <LockedAlert
-        title={t('Control Pieces')}
-        description={t(
-          'Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.',
-        )}
-        button={
-          <RequestTrial featureKey="ENTERPRISE_PIECES" buttonVariant="basic" />
-        }
+      <EnterpriseLockedRow
+        unlocked={false}
+        featureKey="PIECES"
+        line={t('Choosing which pieces connected clients can reach is locked.')}
       />
     );
   }

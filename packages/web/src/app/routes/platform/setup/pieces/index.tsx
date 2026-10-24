@@ -27,13 +27,13 @@ import {
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
-import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
 import { RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
+import { EnterpriseLockedRow } from '@/features/billing';
 import { oauthAppsQueries } from '@/features/connections';
 import {
   InstallPieceDialog,
@@ -195,10 +195,10 @@ export const PiecesListTab = () => {
           scope={PieceScope.PLATFORM}
         />
       </AdminPageHeader>
-      <PiecesLockedBanner
-        message={t(
-          "Showing and hiding pieces needs a higher plan. You can browse the catalog, but changes won't stick.",
-        )}
+      <EnterpriseLockedRow
+        unlocked={isEnabled}
+        featureKey="PIECES"
+        line={t('Hiding pieces from your users is locked.')}
       />
       <AdminDataTable
         emptyStateTextTitle={t('No pieces found')}
