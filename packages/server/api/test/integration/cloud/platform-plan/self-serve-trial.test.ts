@@ -8,10 +8,10 @@ import { createMemberContext, createTestContext } from '../../../helpers/test-co
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const STARTED = { startedAt: '2026-10-14T09:00:00.000Z', endsAt: '2099-10-21T09:00:00.000Z' }
-const ELIGIBLE: SelfServeTrialStatus = { state: 'eligible', startedAt: null, endsAt: null, extended: false }
-const INELIGIBLE: SelfServeTrialStatus = { state: 'ineligible', startedAt: null, endsAt: null, extended: false }
-const ACTIVE: SelfServeTrialStatus = { state: 'active', ...STARTED, extended: false }
-const USED: SelfServeTrialStatus = { state: 'used', startedAt: null, endsAt: null, extended: false }
+const ELIGIBLE: SelfServeTrialStatus = { state: 'eligible', startedAt: null, endsAt: null }
+const INELIGIBLE: SelfServeTrialStatus = { state: 'ineligible', startedAt: null, endsAt: null }
+const ACTIVE: SelfServeTrialStatus = { state: 'active', ...STARTED }
+const USED: SelfServeTrialStatus = { state: 'used', startedAt: null, endsAt: null }
 
 let app: FastifyInstance | null = null
 

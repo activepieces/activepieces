@@ -25,9 +25,9 @@ const SLOW_CREDITS_CACHE_READ_LOG_MS = 25
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
 const USAGE_EVENTS_PAGE_SIZE = 5000
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
-const ELIGIBLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: 'eligible', startedAt: null, endsAt: null, extended: false }
-const INELIGIBLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: 'ineligible', startedAt: null, endsAt: null, extended: false }
-const USED_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: 'used', startedAt: null, endsAt: null, extended: false }
+const ELIGIBLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: 'eligible', startedAt: null, endsAt: null }
+const INELIGIBLE_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: 'ineligible', startedAt: null, endsAt: null }
+const USED_SELF_SERVE_TRIAL: SelfServeTrialStatus = { state: 'used', startedAt: null, endsAt: null }
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
@@ -233,7 +233,7 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
                     }
                     await selfServeTrialUtils.cacheTrialDates({ platformId, dates: { startedAt: outcome.startedAt, endsAt: outcome.endsAt } })
                     rejectedPromiseHandler(platformPlanTelemetry(log).onSelfServeTrialStarted({ platformId, endsAt: outcome.endsAt }), log)
-                    return { state: 'active', startedAt: outcome.startedAt, endsAt: outcome.endsAt, extended: false }
+                    return { state: 'active', startedAt: outcome.startedAt, endsAt: outcome.endsAt }
                 },
             }),
         })
@@ -298,7 +298,6 @@ function toSelfServeTrialStatus({ plan, dates }: ToSelfServeTrialStatusParams): 
             state: isTrialRunning(dates) ? 'active' : 'ended',
             startedAt: dates.startedAt,
             endsAt: dates.endsAt,
-            extended: false,
         }
     }
     return isSelfServeTrialPlan(plan.plan) ? ELIGIBLE_SELF_SERVE_TRIAL : INELIGIBLE_SELF_SERVE_TRIAL
