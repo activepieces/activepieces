@@ -12,6 +12,7 @@ import {
 import dayjs from 'dayjs';
 import { zohoInvoiceAuth } from '../auth';
 import { zohoInvoiceApi } from '../common/api';
+import { newInvoiceOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof zohoInvoiceAuth>,
@@ -33,6 +34,7 @@ const polling: Polling<
 export const newInvoiceTrigger = createTrigger({
   auth: zohoInvoiceAuth,
   name: 'new_invoice',
+  outputSchema: newInvoiceOutputSchema,
   classification: 'READ',
   displayName: 'New Invoice',
   description: 'Trigger when a new invoice is received.',

@@ -1,4 +1,4 @@
-import { HttpMethod, httpClient, QueryParams } from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient, QueryParams } from '@activepieces/pieces-common';
 
 import type { ZohoInvoiceAuthValue } from './types';
 
@@ -18,17 +18,35 @@ async function request<T>({
 	path,
 	query,
 	body,
+	organizationId,
+	headers,
+	responseType,
 }: RequestParams & { auth: ZohoInvoiceAuthValue }): Promise<T> {
 	const response = await httpClient.sendRequest<T>({
 		method,
 		url: `${baseUrl({ auth })}${path}`,
-		headers: authHeaders({ auth }),
+		headers: {
+			...authHeaders({ auth }),
+			...(organizationId ? { [ORGANIZATION_HEADER]: organizationId } : {}),
+			...headers,
+		},
 		queryParams: query,
 		body,
+		responseType,
 	});
 	return response.body;
 }
 
 export const zohoInvoiceClient = { baseUrl, authHeaders, request };
 
-type RequestParams = { method: HttpMethod; path: string; query?: QueryParams; body?: unknown };
+const ORGANIZATION_HEADER = 'X-com-zoho-invoice-organizationid';
+
+type RequestParams = {
+	method: HttpMethod;
+	path: string;
+	query?: QueryParams;
+	body?: unknown;
+	organizationId?: string;
+	headers?: Record<string, string>;
+	responseType?: HttpRequest['responseType'];
+};
