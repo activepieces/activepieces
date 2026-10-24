@@ -4,13 +4,16 @@ import * as z from 'zod/mini';
 import { zohoBookingsAuth } from '../auth';
 import { zohoBookingsApi } from '../common/api';
 import { zohoBookingsProps } from '../common/props';
+import { fetchAvailabilityOutputSchema } from '../output-schemas';
 
 export const fetchAvailabilityAction = createAction({
   auth: zohoBookingsAuth,
   name: 'fetchAvailability',
+  outputSchema: fetchAvailabilityOutputSchema,
+  classification: 'SEARCH',
   displayName: 'Fetch Availability',
   description: 'Fetch availability of appointments across services',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Look up open appointment slots for a service in a Zoho Bookings workspace on a given date. Scope the lookup to exactly one of staff, group, or resource (the call fails if none is supplied). Use this before booking to find valid times. Read-only and idempotent.',

@@ -4,14 +4,17 @@ import * as z from 'zod/mini';
 import { zohoBookingsAuth } from '../auth';
 import { zohoBookingsApi } from '../common/api';
 import { zohoBookingsProps } from '../common/props';
+import { rescheduleAppointmentOutputSchema } from '../output-schemas';
 
 export const rescheduleAppointmentAction = createAction({
   auth: zohoBookingsAuth,
   name: 'rescheduleAppointment',
+  outputSchema: rescheduleAppointmentOutputSchema,
+  classification: 'WRITE',
   displayName: 'Reschedule Appointment',
   description:
     'Reschedule an appointment to a different time or to a different staff',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Move an existing Zoho Bookings appointment, identified by its booking ID, to a new start time and/or reassign it to a different staff member or group. Supply at least one of new start time, staff, or group. Use the from/to time range only to look up the booking ID to act on. Not idempotent: it mutates the booking each time, though repeating with the same target is effectively a no-op once applied.',

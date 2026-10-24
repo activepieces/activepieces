@@ -15,7 +15,7 @@ async function request<T>({
 	body,
 	headers,
 }: RequestParams & { auth: ZohoBookingsAuthValue }): Promise<T> {
-	const response = await httpClient.sendRequest<T>({
+	const response = await httpClient.sendRequest<string>({
 		method,
 		url: `${baseUrl({ auth })}${path}`,
 		headers: {
@@ -24,11 +24,14 @@ async function request<T>({
 		},
 		queryParams: query,
 		body,
+		responseType: 'text',
 	});
-	return response.body;
+	return JSON.parse(response.body.replace(LONG_INTEGER, '$1"$2"'));
 }
 
 export const zohoBookingsClient = { baseUrl, request };
+
+const LONG_INTEGER = /([:[,]\s*)(-?\d{16,})(?=\s*[,\]}])/g;
 
 type RequestParams = {
 	method: HttpMethod;

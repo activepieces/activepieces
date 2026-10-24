@@ -4,14 +4,17 @@ import * as z from 'zod/mini';
 import { zohoBookingsAuth } from '../auth';
 import { zohoBookingsApi } from '../common/api';
 import { zohoBookingsProps } from '../common/props';
+import { getAppointmentDetailsOutputSchema } from '../output-schemas';
 
 export const cancelAppointmentAction = createAction({
   auth: zohoBookingsAuth,
   name: 'cancelAppointment',
+  outputSchema: getAppointmentDetailsOutputSchema,
+  classification: 'DESTRUCTIVE',
   displayName: 'Cancel Appointment',
   description:
     'Update the status of a booking (cancel, complete, or mark as no-show)',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Cancel an existing Zoho Bookings appointment identified by its booking ID. Use the from/to time range to locate the booking ID first. Not idempotent: it submits a status-change request each call, though re-cancelling an already-cancelled booking has no further effect.',

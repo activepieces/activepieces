@@ -18,17 +18,15 @@ export type ZohoBookingsAppointment = {
 	status?: string;
 };
 
-export type ZohoBookingsListResponse<T> = {
-	response?: { returnvalue?: { data?: T[] } };
+export type ZohoBookingsAppointmentsPage = {
+	response?: ZohoBookingsAppointment[] | Record<string, unknown>;
+	next_page_available?: boolean;
+	page?: number;
 };
 
-export type ZohoBookingsAppointmentsResponse = {
-	response?: {
-		returnvalue?: { response?: ZohoBookingsAppointment[] | Record<string, unknown> };
-	};
-};
-
-export type ZohoBookingsResponse<T = Record<string, unknown>> = {
+export type ZohoBookingsResponse<T = ZohoBookingsResult> = {
+	status?: string;
+	message?: string;
 	response: {
 		status: string;
 		message?: string;
@@ -40,4 +38,28 @@ export type ZohoBookingsResponse<T = Record<string, unknown>> = {
 export type ZohoBookingsRescheduleResult = {
 	Status?: string;
 	message?: string;
+};
+
+export type ZohoBookingsResult = Record<string, unknown>;
+
+export type ZohoBookingsStatusResult = {
+	status?: unknown;
+	message?: unknown;
+	mesage?: unknown;
+	errorMessage?: unknown;
+};
+
+export type ZohoBookingsBatchResult = {
+	response?: {
+		status?: string;
+		message?: Record<string, unknown> | string;
+		[key: string]: unknown;
+	}[];
+};
+
+export type ZohoBookingsDateOverridesPage = {
+	availability_for?: string;
+	availability_for_id?: string;
+	overrides?: Record<string, unknown>[] | string;
+	next_page_available?: boolean;
 };

@@ -4,13 +4,16 @@ import * as z from 'zod/mini';
 import { zohoBookingsAuth } from '../auth';
 import { zohoBookingsApi } from '../common/api';
 import { zohoBookingsProps } from '../common/props';
+import { bookAppointmentOutputSchema } from '../output-schemas';
 
 export const bookAppointmentAction = createAction({
   auth: zohoBookingsAuth,
   name: 'bookAppointment',
+  outputSchema: bookAppointmentOutputSchema,
+  classification: 'WRITE',
   displayName: 'Book Appointment',
   description: 'Book an appointment for a customer for a desired service',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Create a new appointment in a Zoho Bookings workspace for a given service, customer (name/email/phone), and start time. Assign the booking to exactly one of staff, resource, or group (the call fails if none is supplied). Not idempotent: each call books a separate appointment.',

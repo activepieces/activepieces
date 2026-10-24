@@ -4,13 +4,16 @@ import * as z from 'zod/mini';
 import { zohoBookingsAuth } from '../auth';
 import { zohoBookingsApi } from '../common/api';
 import { zohoBookingsProps } from '../common/props';
+import { getAppointmentDetailsOutputSchema } from '../output-schemas';
 
 export const getAppointmentDetailsAction = createAction({
   auth: zohoBookingsAuth,
   name: 'getAppointmentDetails',
+  outputSchema: getAppointmentDetailsOutputSchema,
+  classification: 'READ',
   displayName: 'Get Appointment Details',
   description: 'Get details of an appointment using its booking ID',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieve the full details of a single Zoho Bookings appointment by its booking ID. Use the from/to time range to locate the booking ID first. Read-only and idempotent.',
