@@ -22,7 +22,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePieceToolsDialogStore } from '@/features/agents';
 import { appConnectionsQueries } from '@/features/connections';
-import { piecesHooks } from '@/features/pieces';
+import { formUtils, piecesHooks } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
@@ -106,16 +106,17 @@ export const PredefinedInputsForm = () => {
     const subscription = form.watch((values, { name }) => {
       if (!name || name === 'auth') return;
 
+      const rootName = name.split('.')[0];
       const currentPredefined =
         usePieceToolsDialogStore.getState().predefinedInputs;
 
       const currentFields = currentPredefined?.fields ?? {};
       const newFields = { ...currentFields };
 
-      if (newFields[name]?.mode === FieldControlMode.CHOOSE_YOURSELF) {
-        newFields[name] = {
-          ...newFields[name],
-          value: values[name],
+      if (newFields[rootName]?.mode === FieldControlMode.CHOOSE_YOURSELF) {
+        newFields[rootName] = {
+          ...newFields[rootName],
+          value: values[rootName],
         };
       }
 
@@ -143,12 +144,20 @@ export const PredefinedInputsForm = () => {
   ) => {
     const currentFields = predefinedInputs?.fields ?? {};
     const prevField = currentFields[propertyName];
+    const property = properties[propertyName];
+    const defaultValue = property
+      ? formUtils.getDefaultPropertyValue({
+          property,
+          dynamicInputModeToggled: false,
+        })
+      : '';
+    const nextValue =
+      newMode === FieldControlMode.CHOOSE_YOURSELF
+        ? prevField?.value ?? form.getValues(propertyName) ?? defaultValue
+        : undefined;
     const updatedField: PredefinedInputField = {
       mode: newMode,
-      value:
-        newMode === FieldControlMode.CHOOSE_YOURSELF
-          ? prevField?.value ?? form.getValues(propertyName)
-          : undefined,
+      value: nextValue,
     };
     setPredefinedInputs({
       ...predefinedInputs,
@@ -158,7 +167,7 @@ export const PredefinedInputsForm = () => {
       },
     });
     if (newMode === FieldControlMode.CHOOSE_YOURSELF) {
-      form.setValue(propertyName, updatedField.value ?? '');
+      form.setValue(propertyName, nextValue);
     } else {
       form.setValue(propertyName, undefined, { shouldDirty: false });
     }
