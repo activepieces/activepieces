@@ -1,4 +1,5 @@
 import { PassThrough, Readable } from 'node:stream';
+import { Agent } from 'undici';
 import { tryCatchSync } from '@activepieces/core-utils';
 import { BaseHttpClient } from './base-http-client';
 import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
@@ -48,49 +49,56 @@ export class FetchHttpClient extends BaseHttpClient {
       : { body: undefined, extraHeaders: {}, isStream: false };
     const finalHeaders = normalizeHeaders({ ...headers, ...extraHeaders });
 
-    const response = await sendWithRetries(async () => {
-      const controller = new AbortController();
-      const timeoutId = request.timeout && request.timeout > 0
-        ? setTimeout(() => controller.abort(), request.timeout)
-        : undefined;
-      try {
-        const init: FetchInit = {
-          method: request.method.toString(),
-          headers: finalHeaders,
-          body,
-          redirect: followRedirects ? 'follow' : 'manual',
-          signal: controller.signal,
-        };
-        if (isStream) {
-          init.duplex = 'half';
+    const ownedDispatcher = options?.dispatcher === undefined && request.timeout !== undefined && Number.isFinite(request.timeout) && request.timeout > 0
+      ? new Agent({ connect: { timeout: request.timeout } })
+      : undefined;
+    const dispatcher = options?.dispatcher !== undefined ? options.dispatcher : ownedDispatcher;
+    try {
+      const response = await sendWithRetries(async () => {
+        const controller = new AbortController();
+        const timeoutId = request.timeout && request.timeout > 0
+          ? setTimeout(() => controller.abort(), request.timeout)
+          : undefined;
+        try {
+          const init: FetchInit = {
+            method: request.method.toString(),
+            headers: finalHeaders,
+            body,
+            redirect: followRedirects ? 'follow' : 'manual',
+            signal: controller.signal,
+          };
+          if (isStream) {
+            init.duplex = 'half';
+          }
+          if (dispatcher !== undefined) {
+            init.dispatcher = dispatcher;
+          }
+          return await fetch(finalUrl, init);
+        } finally {
+          if (timeoutId !== undefined) {
+            clearTimeout(timeoutId);
+          }
         }
-        // A caller-supplied undici Dispatcher (e.g. a ProxyAgent) for per-request proxying.
-        if (options?.dispatcher !== undefined) {
-          init.dispatcher = options.dispatcher;
-        }
-        return await fetch(finalUrl, init);
-      } finally {
-        if (timeoutId !== undefined) {
-          clearTimeout(timeoutId);
-        }
+      }, isStream ? 0 : retries);
+
+      const successCeiling = followRedirects ? 300 : 400;
+      if (response.status < 200 || response.status >= successCeiling) {
+        // A stream response can't carry an error message usefully; read the error body as text.
+        const errorBody = await parseResponseBody(response, responseType === 'stream' ? 'text' : responseType);
+        const httpError = new HttpError(request.redactBodyInErrors === true ? REDACTED_BODY : request.body, { status: response.status, responseBody: errorBody });
+        console.error('[HttpClient#(sanitized error message)] Request failed:', httpError);
+        throw httpError;
       }
-    }, isStream ? 0 : retries);
 
-    const successCeiling = followRedirects ? 300 : 400;
-    if (response.status < 200 || response.status >= successCeiling) {
-      // A stream response can't carry an error message usefully; read the error body as text.
-      const errorBody = await parseResponseBody(response, responseType === 'stream' ? 'text' : responseType);
-      const httpError = new HttpError(request.redactBodyInErrors === true ? REDACTED_BODY : request.body, { status: response.status, responseBody: errorBody });
-      console.error('[HttpClient#(sanitized error message)] Request failed:', httpError);
-      throw httpError;
+      const responseBody = await parseResponseBody(response, responseType);
+      return {
+        status: response.status,
+        headers: toHttpHeaders(response.headers),
+        body: responseBody as ResponseBody,
+      };
+    } finally {
+      void ownedDispatcher?.close().catch(() => undefined);
     }
-
-    const responseBody = await parseResponseBody(response, responseType);
-    return {
-      status: response.status,
-      headers: toHttpHeaders(response.headers),
-      body: responseBody as ResponseBody,
-    };
   }
 }
 

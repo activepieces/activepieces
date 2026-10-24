@@ -367,9 +367,19 @@ export const httpSendRequestAction = createAction({
           proxyUrl = `http://${proxySettings.proxy_host}:${proxySettings.proxy_port}`;
         }
 
-        return await httpClient.sendRequest(request, {
-          dispatcher: new ProxyAgent(proxyUrl),
+        const connectTimeout = request.timeout !== undefined && Number.isFinite(request.timeout) && request.timeout > 0
+          ? { timeout: request.timeout }
+          : undefined;
+        const dispatcher = new ProxyAgent({
+          uri: proxyUrl,
+          proxyTls: connectTimeout,
+          requestTls: connectTimeout,
         });
+        try {
+          return await httpClient.sendRequest(request, { dispatcher });
+        } finally {
+          await dispatcher.close();
+        }
       }
       return await httpClient.sendRequest(request);
     };
