@@ -1,7 +1,8 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { qdrantAuth } from '../..';
-import { QdrantClient } from '@qdrant/js-client-rest';
-import { collectionName } from '../common';
+
+import { qdrantAuth } from '../auth';
+import { qdrantClient } from '../common/client';
+import { qdrantProps } from '../common/props';
 
 export const deleteCollection = createAction({
   auth: qdrantAuth,
@@ -16,14 +17,11 @@ export const deleteCollection = createAction({
     idempotent: true,
   },
   props: {
-    collectionName,
+    collectionName: qdrantProps.collectionName({ required: true }),
   },
   run: async ({ auth, propsValue }) => {
-    const client = new QdrantClient({
-      apiKey: auth.props.key,
-      url: auth.props.serverAddress,
-    });
-    const collectionName = propsValue.collectionName as string;
+    const client = qdrantClient.create({ auth });
+    const collectionName = propsValue.collectionName;
     const response = await client.deleteCollection(collectionName);
     return response;
   },

@@ -1,7 +1,9 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { seclectPointsProps, convertToFilter, collectionName } from '../common';
-import { qdrantAuth } from '../..';
-import { QdrantClient } from '@qdrant/js-client-rest';
+
+import { qdrantAuth } from '../auth';
+import { qdrantClient } from '../common/client';
+import { qdrantProps } from '../common/props';
+import { qdrantUtils } from '../common/utils';
 
 export const getPoints = createAction({
   auth: qdrantAuth,
@@ -16,15 +18,13 @@ export const getPoints = createAction({
     idempotent: true,
   },
   props: {
-    collectionName,
-    ...seclectPointsProps,
+    collectionName: qdrantProps.collectionName({ required: true }),
+    getPointsBy: qdrantProps.getPointsBy({ required: true }),
+    infosToGetPoint: qdrantProps.infosToGetPoint({ required: true }),
   },
   run: async ({ auth, propsValue }) => {
-    const client = new QdrantClient({
-      apiKey: auth.props.key,
-      url: auth.props.serverAddress,
-    });
-    const collectionName = propsValue.collectionName as string;
+    const client = qdrantClient.create({ auth });
+    const collectionName = propsValue.collectionName;
 
     if (propsValue.getPointsBy === 'Ids') {
       let ids = JSON.parse(propsValue.infosToGetPoint['ids']);
@@ -37,12 +37,11 @@ export const getPoints = createAction({
         ids: ids instanceof Array ? ids : [ids],
       });
     } else {
-      const filtering = propsValue.infosToGetPoint as {
-        must: any;
-        must_not: any;
-      };
       return await client.scroll(collectionName, {
-        filter: convertToFilter(filtering),
+        filter: qdrantUtils.convertToFilter({
+          must: propsValue.infosToGetPoint['must'],
+          must_not: propsValue.infosToGetPoint['must_not'],
+        }),
       });
     }
   },

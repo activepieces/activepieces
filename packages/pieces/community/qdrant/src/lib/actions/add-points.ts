@@ -1,8 +1,11 @@
-import { QdrantClient } from '@qdrant/js-client-rest';
-import { qdrantAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { randomUUID } from 'crypto';
-import { collectionName, decodeEmbeddings } from '../common';
+
+import { qdrantAuth } from '../auth';
+import { qdrantClient } from '../common/client';
+import { qdrantProps } from '../common/props';
+import type { QdrantDistance } from '../common/types';
+import { qdrantUtils } from '../common/utils';
 
 export const addPointsToCollection = createAction({
   auth: qdrantAuth,
@@ -19,7 +22,7 @@ export const addPointsToCollection = createAction({
     idempotent: false,
   },
   props: {
-    collectionName,
+    collectionName: qdrantProps.collectionName({ required: true }),
     embeddings: Property.File({
       displayName: 'Embeddings',
       description: 'Embeddings (= vectors) for the points',
@@ -31,7 +34,7 @@ export const addPointsToCollection = createAction({
         'The ids of the embeddings for the points. If not provided, the ids will be generated automatically',
       required: false,
     }),
-    distance: Property.StaticDropdown({
+    distance: Property.StaticDropdown<QdrantDistance, true>({
       displayName: 'Calculation Method of distance',
       description:
         "The calculation method helps to rank vectors when you want to find the closest points, the method to use depends on the model who's created the embeddings, see the documentation of your model",
@@ -64,11 +67,10 @@ export const addPointsToCollection = createAction({
     }),
   },
   run: async ({ auth, propsValue }) => {
-    const client = new QdrantClient({
-      apiKey: auth.props.key,
-      url: auth.props.serverAddress,
+    const client = qdrantClient.create({ auth });
+    const embeddings = qdrantUtils.decodeEmbeddings({
+      data: propsValue.embeddings.data,
     });
-    const embeddings = decodeEmbeddings(propsValue.embeddings.data);
 
     const numberOfEmbeddings = embeddings.length;
     const embeddingsLen = embeddings[0].length;
@@ -80,7 +82,9 @@ export const addPointsToCollection = createAction({
         );
     }
 
-    const embeddingsIds = (propsValue.embeddingsIds as string[]) ?? [];
+    const embeddingsIds = (propsValue.embeddingsIds ?? []).map(
+      qdrantUtils.toPointId
+    );
 
     const autoEmbeddingsIds = embeddingsIds.length === 0;
 
@@ -101,14 +105,13 @@ export const addPointsToCollection = createAction({
       });
     }
 
-
     const collections = (await client.getCollections()).collections;
-    const collectionName = propsValue.collectionName as string;
+    const collectionName = propsValue.collectionName;
     if (!collections.find((collection) => collection.name === collectionName)) {
       await client.createCollection(collectionName, {
         vectors: {
           size: embeddingsLen,
-          distance: propsValue.distance as 'Dot' | 'Cosine' | 'Euclid',
+          distance: propsValue.distance,
           on_disk: propsValue.storage === 'Disk',
         },
         on_disk_payload: propsValue.storage === 'Disk',
