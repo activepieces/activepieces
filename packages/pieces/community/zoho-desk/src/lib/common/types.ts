@@ -27,23 +27,3 @@ export type ZohoDeskThread = {
 	[key: string]: unknown;
 };
 
-export type ZohoDeskActivity = {
-	contactId?: string;
-	subject?: string;
-	departmentId?: string;
-	startTime?: string;
-	status?: string;
-};
-
-export type ZohoDeskTimeEntry = {
-	executedTime?: string;
-	hoursSpent?: number;
-	minutesSpent?: number;
-	secondsSpent?: number;
-	description?: string;
-	ownerId?: string;
-	isBillable?: boolean;
-	requestChargeType?: string;
-	additionalCost?: number;
-	cf?: Record<string, unknown>;
-};

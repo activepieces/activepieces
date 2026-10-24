@@ -1,7 +1,7 @@
 import FormData from 'form-data';
 
 import { HttpHeaders, HttpMethod, httpClient, QueryParams } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/pieces-framework';
+import { isNil, tryCatch } from '@activepieces/pieces-framework';
 
 import type { ZohoDeskAuthValue, ZohoDeskDownload, ZohoDeskFile, ZohoDeskPage } from './types';
 
@@ -72,11 +72,24 @@ async function download({
 		responseType: 'arraybuffer',
 	});
 	const disposition = response.headers?.['content-disposition'];
-	const match = typeof disposition === 'string' ? FILE_NAME_PATTERN.exec(disposition) : null;
 	return {
 		data: Buffer.from(response.body),
-		fileName: match ? decodeURIComponent(match[1]) : undefined,
+		fileName: await parseFileName({ disposition }),
 	};
+}
+
+async function parseFileName({ disposition }: { disposition: unknown }): Promise<string | undefined> {
+	if (typeof disposition !== 'string') {
+		return undefined;
+	}
+	const encoded = ENCODED_FILE_NAME_PATTERN.exec(disposition);
+	if (encoded) {
+		const { data: decoded } = await tryCatch(async () => decodeURIComponent(encoded[1]));
+		if (decoded) {
+			return decoded;
+		}
+	}
+	return PLAIN_FILE_NAME_PATTERN.exec(disposition)?.[1] ?? encoded?.[1];
 }
 
 function authHeaders({ auth, orgId }: { auth: ZohoDeskAuthValue; orgId?: string }): HttpHeaders {
@@ -103,7 +116,8 @@ function toQueryParams({ query }: { query?: RequestParams['query'] }): QueryPara
 
 export const zohoDeskClient = { baseUrl, request, list, upload, download };
 
-const FILE_NAME_PATTERN = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i;
+const ENCODED_FILE_NAME_PATTERN = /filename\*=(?:UTF-8'')?"?([^";]+)"?/i;
+const PLAIN_FILE_NAME_PATTERN = /filename="?([^";]+)"?/i;
 
 type RequestParams = {
 	orgId?: string;

@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 import { zohoDeskClient } from '../client';
 
-import type { ZohoDeskAuthValue, ZohoDeskRecord, ZohoDeskTimeEntry } from '../types';
+import type { ZohoDeskAuthValue, ZohoDeskRecord } from '../types';
 
 async function listTicketTimeEntries({
 	auth,
@@ -115,33 +115,12 @@ async function updateTicketTimeEntry({
 	ticketId: string;
 	timeEntryId: string;
 }): Promise<ZohoDeskRecord> {
-	const path = `/tickets/${encodeURIComponent(ticketId)}/timeEntry/${encodeURIComponent(
-		timeEntryId,
-	)}`;
-	const current = await zohoDeskClient.request<ZohoDeskTimeEntry>({
-		auth,
-		orgId,
-		method: HttpMethod.GET,
-		path,
-	});
 	return await zohoDeskClient.request<ZohoDeskRecord>({
 		auth,
 		orgId,
 		method: HttpMethod.PUT,
-		path,
-		body: {
-			executedTime: current.executedTime,
-			hoursSpent: current.hoursSpent,
-			minutesSpent: current.minutesSpent,
-			secondsSpent: current.secondsSpent,
-			description: current.description,
-			ownerId: current.ownerId,
-			isBillable: current.isBillable,
-			requestChargeType: current.requestChargeType,
-			additionalCost: current.additionalCost,
-			cf: customFields ?? current.cf,
-			...Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined)),
-		},
+		path: `/tickets/${encodeURIComponent(ticketId)}/timeEntry/${encodeURIComponent(timeEntryId)}`,
+		body: { ...fields, cf: customFields },
 	});
 }
 

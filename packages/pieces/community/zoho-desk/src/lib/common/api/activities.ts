@@ -4,7 +4,6 @@ import { zohoDeskClient } from '../client';
 
 import type {
 	ZohoDeskAuthValue,
-	ZohoDeskActivity,
 	ZohoDeskDownload,
 	ZohoDeskFile,
 	ZohoDeskRecord,
@@ -23,28 +22,13 @@ async function updateActivity({
 	id: string;
 	fields: ActivityFields;
 }): Promise<ZohoDeskRecord> {
-	const path = `/${module}/${encodeURIComponent(id)}`;
-	const current = await zohoDeskClient.request<ZohoDeskActivity>({
-		auth,
-		orgId,
-		method: HttpMethod.GET,
-		path,
-	});
 	const { customFields, ...rest } = fields;
 	return await zohoDeskClient.request<ZohoDeskRecord>({
 		auth,
 		orgId,
 		method: HttpMethod.PATCH,
-		path,
-		body: {
-			contactId: current.contactId,
-			subject: current.subject,
-			departmentId: current.departmentId,
-			startTime: current.startTime,
-			status: current.status,
-			...Object.fromEntries(Object.entries(rest).filter(([, value]) => value !== undefined)),
-			cf: customFields,
-		},
+		path: `/${module}/${encodeURIComponent(id)}`,
+		body: { ...rest, cf: customFields },
 	});
 }
 

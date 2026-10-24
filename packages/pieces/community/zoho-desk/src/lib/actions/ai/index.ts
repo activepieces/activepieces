@@ -6,19 +6,9 @@ import { zohoDeskCreateAccountCommentAction } from './accounts/create-account-co
 import { zohoDeskDeleteAccountAttachmentAction } from './accounts/delete-account-attachment';
 import { zohoDeskDeleteAccountCommentAction } from './accounts/delete-account-comment';
 import { zohoDeskDeleteAccountsAction } from './accounts/delete-accounts';
-import { zohoDeskDissociateContactAccountsAction } from './contacts/dissociate-contact-accounts';
-import { zohoDeskDownloadContractCommentAttachmentAction } from './contracts/download-contract-comment-attachment';
-import { zohoDeskDownloadEventAttachmentAction } from './activities/download-event-attachment';
-import { zohoDeskDownloadTaskAttachmentAction } from './tasks/download-task-attachment';
-import { zohoDeskDownloadThreadAttachmentAction } from './threads/download-thread-attachment';
-import { zohoDeskFindAgentByEmailAction } from './organization/find-agent-by-email';
-import { zohoDeskFindDuplicateProductsAction } from './products/find-duplicate-products';
 import { zohoDeskGetAccountAction } from './accounts/get-account';
 import { zohoDeskGetAccountCommentAction } from './accounts/get-account-comment';
 import { zohoDeskGetAccountStatisticsAction } from './accounts/get-account-statistics';
-import { zohoDeskGetAccountTimeSummaryAction } from './time-tracking/get-account-time-summary';
-import { zohoDeskGetAgentAction } from './organization/get-agent';
-import { zohoDeskGetAgentTimeEntryAction } from './time-tracking/get-agent-time-entry';
 import { zohoDeskGetAgentTimeSummaryAction } from './time-tracking/get-agent-time-summary';
 import { zohoDeskGetArticleAction } from './knowledge-base/get-article';
 import { zohoDeskGetCallAction } from './activities/get-call';
@@ -203,6 +193,7 @@ import { zohoDeskDeleteCallCommentAction } from './activities/delete-call-commen
 import { zohoDeskDeleteCallsAction } from './activities/delete-calls';
 import { zohoDeskDeleteEventAttachmentAction } from './activities/delete-event-attachment';
 import { zohoDeskDeleteEventsAction } from './activities/delete-events';
+import { zohoDeskDownloadEventAttachmentAction } from './activities/download-event-attachment';
 import { zohoDeskUploadCallAttachmentAction } from './activities/upload-call-attachment';
 import { zohoDeskUploadEventAttachmentAction } from './activities/upload-event-attachment';
 import { zohoDeskAddContactFollowersAction } from './contacts/add-contact-followers';
@@ -216,11 +207,13 @@ import { zohoDeskDeleteContactAttachmentAction } from './contacts/delete-contact
 import { zohoDeskDeleteContactCommentAction } from './contacts/delete-contact-comment';
 import { zohoDeskDeleteContactsAction } from './contacts/delete-contacts';
 import { zohoDeskDeleteSpamContactsAction } from './contacts/delete-spam-contacts';
+import { zohoDeskDissociateContactAccountsAction } from './contacts/dissociate-contact-accounts';
 import { zohoDeskUploadContactAttachmentAction } from './contacts/upload-contact-attachment';
 import { zohoDeskCountContractsAction } from './contracts/count-contracts';
 import { zohoDeskCreateContractAction } from './contracts/create-contract';
 import { zohoDeskCreateContractCommentAction } from './contracts/create-contract-comment';
 import { zohoDeskDeleteContractCommentAction } from './contracts/delete-contract-comment';
+import { zohoDeskDownloadContractCommentAttachmentAction } from './contracts/download-contract-comment-attachment';
 import { zohoDeskAddUserBadgesAction } from './help-center/add-user-badges';
 import { zohoDeskAddUserGroupsAction } from './help-center/add-user-groups';
 import { zohoDeskAssignUserLabelsAction } from './help-center/assign-user-labels';
@@ -228,19 +221,24 @@ import { zohoDeskCountAgentsAction } from './organization/count-agents';
 import { zohoDeskCountAgentsByTypeAction } from './organization/count-agents-by-type';
 import { zohoDeskCountDepartmentsAction } from './organization/count-departments';
 import { zohoDeskCountRolesAction } from './organization/count-roles';
+import { zohoDeskFindAgentByEmailAction } from './organization/find-agent-by-email';
+import { zohoDeskGetAgentAction } from './organization/get-agent';
 import { zohoDeskAssociateProductAccountsAction } from './products/associate-product-accounts';
 import { zohoDeskAssociateProductContactsAction } from './products/associate-product-contacts';
 import { zohoDeskCreateProductAction } from './products/create-product';
 import { zohoDeskDeleteProductAttachmentAction } from './products/delete-product-attachment';
 import { zohoDeskDeleteProductsAction } from './products/delete-products';
+import { zohoDeskFindDuplicateProductsAction } from './products/find-duplicate-products';
 import { zohoDeskUploadProductAttachmentAction } from './products/upload-product-attachment';
 import { zohoDeskCountTasksAction } from './tasks/count-tasks';
 import { zohoDeskCreateTaskAction } from './tasks/create-task';
 import { zohoDeskCreateTaskCommentAction } from './tasks/create-task-comment';
 import { zohoDeskDeleteTaskAttachmentAction } from './tasks/delete-task-attachment';
 import { zohoDeskDeleteTasksAction } from './tasks/delete-tasks';
+import { zohoDeskDownloadTaskAttachmentAction } from './tasks/download-task-attachment';
 import { zohoDeskUploadTaskAttachmentAction } from './tasks/upload-task-attachment';
 import { zohoDeskCreateDraftReplyAction } from './threads/create-draft-reply';
+import { zohoDeskDownloadThreadAttachmentAction } from './threads/download-thread-attachment';
 import { zohoDeskCreateTicketCommentAction } from './ticket-comments/create-ticket-comment';
 import { zohoDeskDeleteTicketAttachmentAction } from './ticket-comments/delete-ticket-attachment';
 import { zohoDeskDeleteTicketCommentAction } from './ticket-comments/delete-ticket-comment';
@@ -260,6 +258,8 @@ import { zohoDeskAddTicketTimeEntryAction } from './time-tracking/add-ticket-tim
 import { zohoDeskControlTaskTimerAction } from './time-tracking/control-task-timer';
 import { zohoDeskControlTicketTimerAction } from './time-tracking/control-ticket-timer';
 import { zohoDeskDeleteTicketTimeEntryAction } from './time-tracking/delete-ticket-time-entry';
+import { zohoDeskGetAccountTimeSummaryAction } from './time-tracking/get-account-time-summary';
+import { zohoDeskGetAgentTimeEntryAction } from './time-tracking/get-agent-time-entry';
 
 export const zohoDeskAiActions = [
 	zohoDeskListTicketsAction,

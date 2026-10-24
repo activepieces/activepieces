@@ -142,7 +142,7 @@ async function findAgentByEmail({
 		auth,
 		orgId,
 		method: HttpMethod.GET,
-		path: `/agents/email/${email}`,
+		path: `/agents/email/${encodeURIComponent(email).replace(/%40/g, '@')}`,
 	});
 }
 
