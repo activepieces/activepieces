@@ -222,10 +222,10 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
         rejectedPromiseHandler(distributedStore.delete(getEntitlementsRefreshKey(platformId)), log)
         return status
     },
-    getCachedSelfServeTrial: async (platformId: string) => {
-        return (await selfServeTrialUtils.readCachedTrial(platformId))?.dates ?? null
+    getCachedSelfServeTrialInfo: async (platformId: string) => {
+        return (await selfServeTrialUtils.readCachedTrialDates(platformId))?.dates ?? null
     },
-    planStillHasSelfServeTrialFeatures: async (platformId: string) => {
+    isOnSelfServeTrial: async (platformId: string) => {
         const { data: dates, error } = await tryCatch(() => getTrialDatesFromCacheOrAutumn({ log, platformId }))
         if (!isNil(error)) {
             log.warn({ error, platform: { id: platformId } }, 'Failed to read the self-serve trial dates; treating the plan as not carrying the trial')
@@ -249,7 +249,7 @@ async function readSelfServeTrialStatus({ log, platformId }: PlatformLogParams):
 }
 
 async function getTrialDatesFromCacheOrAutumn({ log, platformId }: PlatformLogParams): Promise<SelfServeTrialDates | null> {
-    const cached = await selfServeTrialUtils.readCachedTrial(platformId)
+    const cached = await selfServeTrialUtils.readCachedTrialDates(platformId)
     if (!isNil(cached)) {
         return cached.dates
     }
@@ -257,7 +257,7 @@ async function getTrialDatesFromCacheOrAutumn({ log, platformId }: PlatformLogPa
         key: getSelfServeTrialFetchLockKey(platformId),
         timeoutInSeconds: CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS,
         fn: async () => {
-            const cachedAfterLock = await selfServeTrialUtils.readCachedTrial(platformId)
+            const cachedAfterLock = await selfServeTrialUtils.readCachedTrialDates(platformId)
             if (!isNil(cachedAfterLock)) {
                 return cachedAfterLock.dates
             }
@@ -265,7 +265,7 @@ async function getTrialDatesFromCacheOrAutumn({ log, platformId }: PlatformLogPa
             if (isNil(client)) {
                 return selfServeTrialUtils.cacheNoTrialUnlessAlreadyCached(platformId)
             }
-            return selfServeTrialUtils.cacheTrialDatesFromCustomer({ platformId, customer: await client.getCustomer() })
+            return selfServeTrialUtils.syncTrialDatesFromAutumn({ platformId, customer: await client.getCustomer() })
         },
     })
 }
