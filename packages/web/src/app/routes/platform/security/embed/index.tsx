@@ -1,11 +1,13 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
   EmbedSubdomainStatus,
   SigningKey,
 } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Globe, Key, ListChecks, ShieldCheck } from 'lucide-react';
+import { Globe, Key, ListChecks, ShieldCheck, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -14,6 +16,7 @@ import {
   adminPageResources,
 } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SkeletonList } from '@/components/ui/skeleton';
 import {
   embedSubdomainQueries,
@@ -55,6 +58,9 @@ const EmbedPage = () => {
   const isLoading = (isCloud && isSubdomainLoading) || isKeysLoading;
 
   const allowedEmbedOrigins = platform.allowedEmbedOrigins ?? [];
+  const trialEndsAt = platform.selfServeTrial?.endsAt;
+  const showActivepiecesAiTrialNote =
+    isCloud && !isNil(trialEndsAt) && dayjs(trialEndsAt).isAfter(dayjs());
 
   const allSteps: Record<StepKind, StepDef> = {
     hostname: {
@@ -147,6 +153,18 @@ const EmbedPage = () => {
         }
         resources={adminPageResources.embedding}
       />
+
+      {showActivepiecesAiTrialNote && (
+        <Alert>
+          <Sparkles className="size-4" />
+          <AlertTitle>{t('Activepieces AI is on for your trial')}</AlertTitle>
+          <AlertDescription>
+            {t(
+              "Plans that include Embedding don't usually come with the Activepieces AI provider. You can use both together only during the trial.",
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[14rem_1fr]">
         <Stepper

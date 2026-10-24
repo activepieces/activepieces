@@ -1,6 +1,7 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
+import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformWithoutSensitiveData, PrincipalType, SelfServeTrialDates, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -18,6 +19,7 @@ import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { userIdentityHelper } from '../helper/user-identity-helper'
 import { userService } from '../user/user-service'
+import { billingProvider } from './billing-provider'
 import { platformService } from './platform.service'
 
 const edition = system.getEdition()
@@ -87,7 +89,8 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
             userId: req.principal.id,
             ip: networkUtils.clientIp(req),
         })
-        return platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
+        const updated = await platformService(req.log).getOneWithPlanAndUsageOrThrow(platformId)
+        return addSelfServeTrialToPlatform({ platform: updated, log: req.log, includeSelfServeTrial: req.principal.type === PrincipalType.USER })
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
@@ -103,14 +106,18 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         if (req.principal.type === PrincipalType.USER) {
             const isEmbedded = await userIdentityHelper(req.log).isUserEmbedded(req.principal.id)
             const chatEnabled = chatVisibilityHelper.resolveChatEnabledForUser({ platform, isEmbedded })
-            return {
-                ...platform,
-                plan: {
-                    ...platform.plan,
-                    chatEnabled,
-                    ...(isEmbedded ? { licenseKey: null } : {}),
+            return addSelfServeTrialToPlatform({
+                log: req.log,
+                includeSelfServeTrial: !isEmbedded,
+                platform: {
+                    ...platform,
+                    plan: {
+                        ...platform.plan,
+                        chatEnabled,
+                        ...(isEmbedded ? { licenseKey: null } : {}),
+                    },
                 },
-            }
+            })
         }
         return platform
     })
@@ -187,6 +194,14 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
     }
 }
 
+async function addSelfServeTrialToPlatform<T extends PlatformWithoutSensitiveData>({ platform, log, includeSelfServeTrial }: AddSelfServeTrialToPlatformParams<T>): Promise<T & { selfServeTrial?: SelfServeTrialDates }> {
+    if (!includeSelfServeTrial) {
+        return platform
+    }
+    const selfServeTrial = await billingProvider.get(log).getCachedSelfServeTrialInfo(platform.id)
+    return isNil(selfServeTrial) ? platform : { ...platform, selfServeTrial }
+}
+
 const CreatePlatformEndpoint = {
     config: {
         security: securityAccess.unscoped([PrincipalType.ONBOARDING, PrincipalType.USER]),
@@ -255,3 +270,8 @@ const GetAssetRequest = {
     },
 }
 
+type AddSelfServeTrialToPlatformParams<T> = {
+    platform: T
+    log: FastifyBaseLogger
+    includeSelfServeTrial: boolean
+}
