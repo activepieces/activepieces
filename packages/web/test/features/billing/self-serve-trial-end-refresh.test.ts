@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { trialEndPlanRefresh } from '@/features/billing/utils/trial-end-plan-refresh';
+import { selfServeTrialEndRefresh } from '@/features/billing/utils/self-serve-trial-end-refresh';
 
 const NOW = Date.parse('2026-10-21T12:00:00.000Z');
 
-describe('trialEndPlanRefresh.shouldRefreshPlan', () => {
+describe('selfServeTrialEndRefresh.shouldRefreshPlan', () => {
   it('refreshes on the first day after the trial ended', () => {
     expect(
-      trialEndPlanRefresh.shouldRefreshPlan({
+      selfServeTrialEndRefresh.shouldRefreshPlan({
         trialState: 'ended',
         trialEndsAt: '2026-10-21T09:00:00.000Z',
         now: NOW,
@@ -17,7 +17,7 @@ describe('trialEndPlanRefresh.shouldRefreshPlan', () => {
 
   it('does not refresh once the trial ended more than a day ago', () => {
     expect(
-      trialEndPlanRefresh.shouldRefreshPlan({
+      selfServeTrialEndRefresh.shouldRefreshPlan({
         trialState: 'ended',
         trialEndsAt: '2026-10-19T09:00:00.000Z',
         now: NOW,
@@ -27,14 +27,14 @@ describe('trialEndPlanRefresh.shouldRefreshPlan', () => {
 
   it('does not refresh during the trial or without its dates', () => {
     expect(
-      trialEndPlanRefresh.shouldRefreshPlan({
+      selfServeTrialEndRefresh.shouldRefreshPlan({
         trialState: 'active',
         trialEndsAt: '2026-10-21T09:00:00.000Z',
         now: NOW,
       }),
     ).toBe(false);
     expect(
-      trialEndPlanRefresh.shouldRefreshPlan({
+      selfServeTrialEndRefresh.shouldRefreshPlan({
         trialState: 'ended',
         trialEndsAt: null,
         now: NOW,

@@ -13,7 +13,7 @@ function shouldRefreshPlan({
   return msSinceTrialEnded >= 0 && msSinceTrialEnded < PLAN_REFRESH_WINDOW_MS;
 }
 
-export const trialEndPlanRefresh = {
+export const selfServeTrialEndRefresh = {
   shouldRefreshPlan,
 };
 
