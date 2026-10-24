@@ -256,7 +256,7 @@ function StartTrial({
             <p className="flex items-start gap-2.5 text-sm text-gray-11">
               <Sparkles className="mt-0.5 size-4 shrink-0 text-gray-9" />
               {t(
-                "Plans that include Embedding don't usually come with Activepieces AI. You can use both together only during the trial.",
+                "Plans that include Embedding don't usually come with the Activepieces AI provider. You can use both together only during the trial.",
               )}
             </p>
           )}
