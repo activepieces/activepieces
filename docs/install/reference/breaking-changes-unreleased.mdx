@@ -23,6 +23,16 @@ When an AI agent used **Update Repository (Agent)** to change something else, su
 
 Nothing to configure. Agents read the new options themselves, and a Run Agent tool that already sets one of these fields to true or false keeps sending that value. If an agent ran this action on an earlier GitHub version, check that your private repositories are still private, that Issues are on where you expect them, and that archived repositories are still archived. Run Agent steps keep running on the version they were built with until you upgrade them.
 
+#### Famulor 1.0.0 connects to the current workspace API
+
+The Famulor piece moves from the legacy platform API to `https://app.famulor.io/api/v1`. Connections now need a current workspace API key from **Settings → API & MCP**. Resource IDs are UUIDs, action inputs follow the current OpenAPI contract, and responses retain the public `data`/`meta` structure. The piece requires Activepieces 0.92.0 or later.
+
+The new piece provides a separate native action for each of the 425 public API operations, an optional guided **Run Workspace API Operation** action and 32 native polling triggers. Legacy campaign control becomes **Start Campaign** / **Stop Campaign**; legacy chat, WhatsApp-send and call-deletion actions must be rebuilt with the documented current messaging/history operations. Call, inbound-call and conversation-completion triggers now poll read-only endpoints instead of replacing assistant webhooks. New Campaign Lead and Conversation Completed skip records already present on enable and emit once per resource ID; re-adding a lead or reopening the same conversation does not emit again. Snapshot triggers for campaign statuses, campaign leads, bookings, callbacks and other resources emit the first observed occurrence per resource ID, skip matching records present on enable and scan the full result set. Scans reaching the 50,000-record limit fail without advancing state. Payloads are acknowledged when their flow run starts; native dedupe keys suppress overlapping submissions within the platform dedupe window. Use idempotent downstream writes when duplicate deliveries would matter.
+
+#### What you need to do
+
+Flows remain on the piece version they were built with until you upgrade. Before upgrading, reconnect with a workspace key carrying the required scopes, replace numeric IDs with workspace UUIDs, reconfigure step inputs and remap downstream fields from the current response. Check polling intervals and use test data before testing billable actions. Existing assistant/channel webhook destinations remain unchanged.
+
 #### Shopify 0.11.0: Update Customer toggles that are off no longer unverify or unsubscribe the customer
 
 Update Customer sent **Verified Email**, **Send Email Invite** and **Accepts Marketing** on every run. A fresh step saves an untouched toggle as `false`, so every update marked the customer's email as unverified and unsubscribed them from email marketing, whatever the rest of the step changed. From Shopify 0.11.0 a toggle that is off sends nothing and the customer's current setting is kept; a toggle that is on still verifies the email, sends the invite or subscribes the customer. New Update Customer steps no longer start with Verified Email switched on.
