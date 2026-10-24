@@ -1478,7 +1478,7 @@ export const metabaseGetDashboardOutputSchema: OutputSchema = {
     {
       key: 'last_used_param_values',
       label: 'Last Used Param Values',
-      children: [{ key: 'p3cat', label: 'P3cat' }],
+      dynamicKey: true,
     },
     { key: 'id', label: 'ID', format: 'number' },
     { key: 'last_viewed_at', label: 'Last Viewed At', format: 'datetime' },
@@ -2839,7 +2839,22 @@ export const metabaseListSchemaTablesOutputSchema: OutputSchema = {
 };
 
 export const metabaseListSegmentsOutputSchema: OutputSchema = {
-  fields: [{ key: 'count', label: 'Count', format: 'number' }],
+  fields: [
+    {
+      key: 'segments',
+      label: 'Segments',
+      labelKey: 'name',
+      listItems: [
+        { key: 'id', label: 'ID', format: 'number' },
+        { key: 'name', label: 'Name' },
+        { key: 'table_id', label: 'Table ID', format: 'number' },
+        { key: 'description', label: 'Description' },
+        { key: 'definition', label: 'Definition' },
+        { key: 'archived', label: 'Archived', format: 'boolean' },
+      ],
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+  ],
 };
 
 export const metabaseListSnippetsOutputSchema: OutputSchema = {
@@ -3642,7 +3657,7 @@ export const metabaseUpdateDashboardOutputSchema: OutputSchema = {
     {
       key: 'last_used_param_values',
       label: 'Last Used Param Values',
-      children: [{ key: 'p3cat', label: 'P3cat' }],
+      dynamicKey: true,
     },
     { key: 'id', label: 'ID', format: 'number' },
     { key: 'last_viewed_at', label: 'Last Viewed At', format: 'datetime' },
