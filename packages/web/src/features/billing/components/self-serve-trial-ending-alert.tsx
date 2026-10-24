@@ -39,7 +39,7 @@ export function SelfServeTrialEndingAlert() {
     trial.isPlatformAdmin &&
     trial.state === 'active' &&
     !isNil(trial.endsAt) &&
-    (trial.ending || trial.justStarted || trial.extended) &&
+    (trial.ending || trial.justStarted) &&
     !dismissed;
 
   if (!visible) {
@@ -52,8 +52,6 @@ export function SelfServeTrialEndingAlert() {
 
   const title = ending
     ? selfServeTrialCopy.endsSentence(trial)
-    : trial.extended
-    ? t('Your Enterprise plan trial was extended until {date}.', { date })
     : t('You are on a free trial of the Enterprise plan until {date}.', {
         date,
       });
