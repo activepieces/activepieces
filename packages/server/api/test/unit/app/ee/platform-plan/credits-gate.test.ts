@@ -272,6 +272,16 @@ describe('credits gate decides from the cache and refreshes in the background', 
         expect(second.blocked).toBe(true)
     })
 
+    it('refreshes a blocked balance from a read that answers after the timeout, so a reset can unblock it', async () => {
+        storedCredits = balance({ remaining: 0 })
+        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 40)))
+
+        await gateState({ platformId: 'late-and-exhausted' })
+        await new Promise((resolve) => setTimeout(resolve, 50))
+
+        expect(mockResolveClientForPlatform).toHaveBeenCalled()
+    })
+
     it('fails open when the last good answer is older than the refetch period', async () => {
         storedCredits = fresh({ remaining: 0 })
         await gateState({ platformId: 'blocked-long-ago' })

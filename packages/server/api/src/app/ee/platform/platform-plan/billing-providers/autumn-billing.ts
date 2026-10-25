@@ -309,7 +309,7 @@ async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId:
     const read = readCreditsCaches(platformId)
     const { data: snapshot, error } = await tryCatch(() => withTimeout(read, CREDITS_CACHE_READ_TIMEOUT_MS))
     if (isNil(snapshot)) {
-        read.then((lateSnapshot) => rememberGateState({ platformId, state: toGateState(lateSnapshot) })).catch(() => undefined)
+        read.then((lateSnapshot) => applyCreditsSnapshot({ log, platformId, snapshot: lateSnapshot })).catch(() => undefined)
         const lastGood = lastGoodGateStates.get(platformId)
         const lastGoodIsRecent = !isNil(lastGood) && Date.now() - lastGood.savedAt < CREDITS_REFETCH_PERIOD_MS
         if (lastGoodIsRecent) {
@@ -322,21 +322,17 @@ async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId:
             appSumo: computeCreditState({ balance: null, enforced: true }),
         }
     }
-    const state = toGateState(snapshot)
-    rememberGateState({ platformId, state })
-    scheduleCreditsCacheMaintenance({ log, platformId, snapshot, state })
-    return state
+    return applyCreditsSnapshot({ log, platformId, snapshot })
 }
 
-function toGateState(snapshot: CreditsCacheSnapshot): CreditsAndAppSumoState {
-    return {
+function applyCreditsSnapshot({ log, platformId, snapshot }: Omit<CreditsCacheMaintenanceParams, 'state'>): CreditsAndAppSumoState {
+    const state = {
         credits: computeCreditState({ balance: snapshot.credits, enforced: snapshot.billingEnforced }),
         appSumo: computeCreditState({ balance: snapshot.appSumo, enforced: true }),
     }
-}
-
-function rememberGateState({ platformId, state }: { platformId: string, state: CreditsAndAppSumoState }): void {
     lastGoodGateStates.set({ key: platformId, value: { state, savedAt: Date.now() }, sizeBytes: LAST_GOOD_GATE_STATE_BYTES })
+    scheduleCreditsCacheMaintenance({ log, platformId, snapshot, state })
+    return state
 }
 
 function scheduleCreditsCacheMaintenance({ log, platformId, snapshot, state }: CreditsCacheMaintenanceParams): void {

@@ -35,8 +35,9 @@ mistake closes the gate:
   slow read failed open: about 12k a day across ~1,100 platforms, steady on every host, so ordinary
   latency against the 25ms cap was waving over-limit platforms through. The cause is event-loop lag rather
   than Redis: the API's event-loop delay p99 runs 145-200ms, so the 25ms timer often fires before an answer
-  that is already in the socket gets read. A read that answers after the timeout still refreshes the
-  remembered answer, and a reuse logs at info with its age.
+  that is already in the socket gets read. A read that answers after the timeout goes through the same path
+  as a fast one (remember it, schedule maintenance), so an exhausted balance can still be refreshed when every
+  read is slow. A reuse logs at info with its age.
 
 Credit *tracking* is likewise non-fatal — `trackCredits` rethrows non-duplicate errors, but no caller
 lets that surface: `flow-run-hooks#onFinish` wraps both the per-run credit and the AI-usage tracker in
