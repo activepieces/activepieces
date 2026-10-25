@@ -38,7 +38,7 @@
     "tree-kill": "1.2.2",
     "tslib": "2.6.2",
     "write-file-atomic": "5.0.1",
-    "zod": "4.3.6",
+    "zod": "4.6.6",
     "@activepieces/core-utils": "workspace:*",
     "@activepieces/core-formula": "workspace:*"
   },
