@@ -17,6 +17,8 @@ import { aiToolConfigModule } from './ai/ai-tool-config.module'
 import { aiUsageHooks } from './ai/ai-usage-hooks'
 import { aiUsageService } from './ai/ai-usage-service'
 import { platformModelTierModule } from './ai/platform-model-tier.module'
+import { aiUsageFlush } from './ai/usage/ai-usage-flush'
+import { aiUsageRetention } from './ai/usage/ai-usage-retention'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -303,6 +305,19 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             type: 'repeated',
             cron: '* * * * *',
         },
+    })
+
+    systemJobHandlers.registerJobHandler(SystemJobName.AI_USAGE_FLUSH, () => aiUsageFlush(app.log).run())
+    await systemJobsSchedule(app.log).upsertJob({
+        job: { name: SystemJobName.AI_USAGE_FLUSH, data: {}, jobId: SystemJobName.AI_USAGE_FLUSH },
+        schedule: { type: 'repeated', cron: '* * * * *' },
+        customConfig: { attempts: 1, removeOnComplete: true, removeOnFail: true },
+    })
+    systemJobHandlers.registerJobHandler(SystemJobName.AI_USAGE_RETENTION, () => aiUsageRetention.run())
+    await systemJobsSchedule(app.log).upsertJob({
+        job: { name: SystemJobName.AI_USAGE_RETENTION, data: {}, jobId: SystemJobName.AI_USAGE_RETENTION },
+        schedule: { type: 'repeated', cron: '20 * * * *' },
+        customConfig: { attempts: 1, removeOnComplete: true, removeOnFail: true },
     })
 
     systemJobHandlers.registerJobHandler(SystemJobName.WAITPOINT_DEADLINE_SWEEP, async () => {
