@@ -21,9 +21,7 @@ describe('imageToBase64', () => {
       propsValue: { image: file, override_mime_type: undefined },
     });
     const result = await imageToBase64.run(ctx);
-    expect(typeof result).toBe('string');
-    expect((result as string).startsWith('data:')).toBe(true);
-    expect((result as string)).toContain('base64,');
+    expect(result).toBe(`data:image/png;base64,${file.base64}`);
   });
 
   test('uses override MIME type', async () => {
@@ -33,15 +31,6 @@ describe('imageToBase64', () => {
     });
     const result = await imageToBase64.run(ctx);
     expect((result as string).startsWith('data:image/jpeg;base64,')).toBe(true);
-  });
-
-  test('uses the MIME type of a known extension', async () => {
-    const file = await createTestImage();
-    const ctx = createMockActionContext({
-      propsValue: { image: file, override_mime_type: undefined },
-    });
-    const result = await imageToBase64.run(ctx);
-    expect(result).toMatch(/^data:image\/png;base64,/);
   });
 
   test('falls back to image/png for an unknown extension', async () => {
@@ -69,6 +58,24 @@ describe('imageToBase64', () => {
     });
     const result = await imageToBase64.run(ctx);
     expect(result).toMatch(/^data:image\/webp;base64,/);
+  });
+
+  test('falls back to image/png when neither the extension nor the file name gives a type', async () => {
+    const file = await createNamedImageFile({ fileName: 'photo', extension: undefined });
+    const ctx = createMockActionContext({
+      propsValue: { image: file, override_mime_type: undefined },
+    });
+    const result = await imageToBase64.run(ctx);
+    expect(result).toBe(`data:image/png;base64,${file.base64}`);
+  });
+
+  test('override MIME type wins over a missing extension', async () => {
+    const file = await createNamedImageFile({ fileName: 'photo', extension: undefined });
+    const ctx = createMockActionContext({
+      propsValue: { image: file, override_mime_type: 'image/gif' },
+    });
+    const result = await imageToBase64.run(ctx);
+    expect(result).toBe(`data:image/gif;base64,${file.base64}`);
   });
 });
 
