@@ -18,9 +18,12 @@ When users connect to services like Google Sheets or Slack, they see "Activepiec
 
 ## How to Configure
 
-1. Go to **Platform Admin → Catalogue → Pieces**
-2. Find the piece you want to configure (e.g., Google Sheets)
-3. Click the lock icon to open the OAuth2 settings
-4. Enter your own Client ID and Client Secret
+1. In your OAuth provider's developer console, register your instance redirect URI:
+   - Standard instances: `https://<your-instance-domain>/redirect`
+   - If you use an **Embed Subdomain**, register `https://<your-embed-subdomain>/redirect` alongside `https://<your-instance-domain>/redirect` before enabling the subdomain so existing platform OAuth apps do not fail with `redirect_uri_mismatch`.
+2. Go to **Platform Admin → Catalogue → Pieces**
+3. Find the piece you want to configure (e.g., Google Sheets)
+4. Click the lock icon to open the OAuth2 settings
+5. Enter your own Client ID and Client Secret
 
 ![Manage Oauth2 apps](/resources/screenshots/manage-oauth2.png)

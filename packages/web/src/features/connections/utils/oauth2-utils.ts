@@ -22,9 +22,13 @@ let currentPopup: Window | null = null;
 function resolveRedirectUrl({
   oauth2Type,
   platformRedirectUrl,
+  embedSubdomainUrl,
 }: ResolveRedirectUrlParams): string {
   if (oauth2Type === AppConnectionType.CLOUD_OAUTH2) {
     return CLOUD_OAUTH2_REDIRECT_URL;
+  }
+  if (embedSubdomainUrl) {
+    return `${embedSubdomainUrl}redirect`;
   }
   return platformRedirectUrl;
 }
@@ -175,6 +179,7 @@ export type PiecesOAuth2AppsMap = Record<
 type ResolveRedirectUrlParams = {
   oauth2Type: OAuth2App['oauth2Type'];
   platformRedirectUrl: string;
+  embedSubdomainUrl?: string;
 };
 
 type GetCodeParams = {

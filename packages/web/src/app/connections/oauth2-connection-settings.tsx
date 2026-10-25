@@ -92,9 +92,13 @@ function OAuth2ConnectionSettings({
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
+  const { data: embedSubdomainUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.EMBED_SUBDOMAIN_URL,
+  );
   const redirectUrl = oauth2Utils.resolveRedirectUrl({
     oauth2Type: oauth2App.oauth2Type,
     platformRedirectUrl: thirdPartyUrl ?? 'no_redirect_url_found',
+    embedSubdomainUrl,
   });
 
   const showRedirectUrlInput =

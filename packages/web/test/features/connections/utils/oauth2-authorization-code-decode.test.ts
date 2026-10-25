@@ -105,6 +105,29 @@ describe('resolveRedirectUrl', () => {
       ).toBe(platformRedirectUrl);
     },
   );
+
+  it.each(selfHostedTypes)(
+    'sends %s through the embed subdomain redirect page when EMBED_SUBDOMAIN_URL is set',
+    (oauth2Type) => {
+      expect(
+        oauth2Utils.resolveRedirectUrl({
+          oauth2Type,
+          platformRedirectUrl,
+          embedSubdomainUrl: 'https://embed.customer.example/',
+        }),
+      ).toBe('https://embed.customer.example/redirect');
+    },
+  );
+
+  it('keeps CLOUD_OAUTH2 on secrets.activepieces.com even when EMBED_SUBDOMAIN_URL is set', () => {
+    expect(
+      oauth2Utils.resolveRedirectUrl({
+        oauth2Type: AppConnectionType.CLOUD_OAUTH2,
+        platformRedirectUrl,
+        embedSubdomainUrl: 'https://embed.customer.example/',
+      }),
+    ).toBe('https://secrets.activepieces.com/redirect');
+  });
 });
 
 describe('authorization code edge cases', () => {
