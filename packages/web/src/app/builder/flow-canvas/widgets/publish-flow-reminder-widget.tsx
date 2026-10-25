@@ -1,4 +1,4 @@
-import { isNil, Permission } from '@activepieces/core-utils';
+import { isNil, Permission, tryCatch } from '@activepieces/core-utils';
 import {
   FlowRun,
   FlowVersion,
@@ -23,7 +23,7 @@ import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { useBuilderStateContext } from '../../builder-hooks';
+import { useBuilderStateContext, useBuilderStore } from '../../builder-hooks';
 
 import { runDiscard } from './discard-draft';
 import LargeWidgetWrapper from './large-widget-wrapper';
@@ -45,6 +45,8 @@ const PublishFlowReminderWidget = () => {
     setRightSidebar,
     flowVersion,
     run,
+    savePendingEdits,
+    refreshDraftAfterFailedSave,
   ] = useBuilderStateContext((state) => [
     state.saving,
     state.isPublishing,
@@ -56,7 +58,10 @@ const PublishFlowReminderWidget = () => {
     state.setRightSidebar,
     state.flowVersion,
     state.run,
+    state.savePendingEdits,
+    state.refreshDraftAfterFailedSave,
   ]);
+  const store = useBuilderStore();
   const showShouldPublishButton = useShouldShowPublishButton({
     flowVersion,
     isPublishing,
@@ -78,6 +83,7 @@ const PublishFlowReminderWidget = () => {
       mutationFn: () =>
         runDiscard({
           flow,
+          savePendingEdits,
           overWriteDraftWithVersion,
           fetchFlow: flowsApi.get,
           setFlow,
@@ -105,7 +111,17 @@ const PublishFlowReminderWidget = () => {
   });
   const handlePublish = async () => {
     setIsPublishing(true);
-    const failedCheck = await checkRequiredActions(flowVersion);
+    const { error: saveError } = await tryCatch(async () => {
+      await savePendingEdits();
+      await refreshDraftAfterFailedSave();
+    });
+    if (!isNil(saveError)) {
+      setIsPublishing(false);
+      return;
+    }
+    const failedCheck = await checkRequiredActions(
+      store.getState().flowVersion,
+    );
     if (failedCheck) {
       setIsPublishing(false);
       setFailedRequiredActionsCheck(failedCheck);
