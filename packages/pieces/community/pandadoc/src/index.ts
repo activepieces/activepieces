@@ -42,10 +42,10 @@ export const pandadoc = createPiece({
   displayName: 'PandaDoc',
   description: 'Create, send and track documents, proposals and e-signatures.',
   auth: pandadocAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/pandadoc.png',
   categories: [PieceCategory.CONTENT_AND_FILES, PieceCategory.PRODUCTIVITY],
-  authors: ['onyedikachi-david'],
+  authors: ['onyedikachi-david', 'OdaiAhmed99'],
   actions: [
     createDocumentFromTemplate,
     createAttachment,

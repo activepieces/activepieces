@@ -177,7 +177,17 @@ export const templateFields = Property.DynamicProperties({
         const displayName = field.name && field.name !== field.merge_field ? `${field.name} (${field.merge_field})` : field.merge_field;
         fields[field.merge_field] =
           field.type === 'checkbox'
-            ? Property.Checkbox({ displayName, required: false })
+            ? Property.StaticDropdown({
+                displayName,
+                description: 'Leave empty to keep the template default.',
+                required: false,
+                options: {
+                  options: [
+                    { label: 'Checked', value: true },
+                    { label: 'Unchecked', value: false },
+                  ],
+                },
+              })
             : Property.ShortText({
                 displayName,
                 description: field.type === 'date' ? 'Date in ISO 8601 format, for example 2026-12-31T00:00:00.000Z.' : undefined,

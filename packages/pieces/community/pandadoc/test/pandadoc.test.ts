@@ -187,6 +187,13 @@ describe('inputs', () => {
     });
   });
 
+  it('sends a checkbox field only when it was set to Checked or Unchecked', () => {
+    expect(pandadocInputs.fieldValues({ agree: undefined, optIn: false, terms: true })).toEqual({
+      optIn: { value: false },
+      terms: { value: true },
+    });
+  });
+
   it('prefixes metadata filters', () => {
     expect(metadataQuery({ source: 'crm', metadata_id: '7' })).toEqual({ metadata_source: 'crm', metadata_id: '7' });
   });
