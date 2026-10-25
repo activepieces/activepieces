@@ -70,22 +70,12 @@ export const newFile = createTrigger({
     await pollingHelper.onDisable(polling, context);
   },
   run: async (context) => {
-    const newFiles = await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    const newFiles = await pollingHelper.poll(polling, context);
 
     return await handleFileContent(newFiles, context)
   },
   test: async (context) => {
-    const newFiles = await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    const newFiles = await pollingHelper.test(polling, context);
 
     return await handleFileContent(newFiles, context)
   },

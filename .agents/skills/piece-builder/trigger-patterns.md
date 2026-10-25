@@ -18,7 +18,7 @@ Two deduplication strategies:
 
 **Republishing doesn't touch an unchanged polling trigger.** If the piece, its version, the trigger and its inputs are all the same, `onDisable` and `onEnable` are skipped and the store is left as is, so you don't need anything for the common republish. On a piece-version upgrade with the same inputs, both hooks run with `context.isRepublish` set: handle it if your stored state can be kept. See [Polling Trigger → Republishing a running flow](https://www.activepieces.com/docs/build-pieces/piece-reference/triggers/polling-trigger#republishing-a-running-flow).
 
-**Editing an existing polling trigger? Fix every `pollingHelper` call in the piece while you're there.** Most pieces in the repo still pass the subset — the SKILL.md carve-out explains why fix-on-touch beats a repo-wide codemod. Mention the fix in your PR description so it doesn't read as an unrelated change.
+**Lint enforces this.** A `no-restricted-syntax` rule in the root `.eslintrc.json` rejects an object literal as the second argument to `pollingHelper.*`. To override a field, spread the context: `{ ...context, propsValue: … }`.
 
 ### TIMEBASED Polling (most common)
 
