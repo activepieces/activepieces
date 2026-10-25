@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { createByteLruCache, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AiCreditsAutoTopUpState, AppSumoCreditsBillableFeature, AutoTopUpConfig, ConsumableFeatureId, CreditsBillableFeature, FeatureId, isConsumableFeatureId, PlanName, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
 import { AutumnError, type GetCustomerResponse } from 'autumn-js'
@@ -15,8 +15,11 @@ const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 15
 const CUSTOMER_STATE_MISS_DEBOUNCE_SECONDS = 60
 const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
 const CREDITS_CACHE_READ_TIMEOUT_MS = 25
+const LAST_GOOD_GATE_STATES_BUDGET_BYTES = 1024 * 1024
+const LAST_GOOD_GATE_STATE_BYTES = 512
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
+const lastGoodGateStates = createByteLruCache<LastGoodGateState>({ budgetBytes: LAST_GOOD_GATE_STATES_BUDGET_BYTES })
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
@@ -305,6 +308,11 @@ function msToIso(ms: number | null | undefined): string | null {
 async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId: string): Promise<CreditsAndAppSumoState> {
     const { data: snapshot, error } = await tryCatch(() => withTimeout(readCreditsCaches(platformId), CREDITS_CACHE_READ_TIMEOUT_MS))
     if (isNil(snapshot)) {
+        const lastGood = lastGoodGateStates.get(platformId)
+        const lastGoodIsRecent = !isNil(lastGood) && Date.now() - lastGood.savedAt < CREDITS_REFETCH_PERIOD_MS
+        if (lastGoodIsRecent) {
+            return lastGood.state
+        }
         log.warn({ error, platform: { id: platformId } }, 'Credits gate cache read timed out or failed; failing open without gating this request')
         return {
             credits: computeCreditState({ balance: null, enforced: false }),
@@ -315,6 +323,7 @@ async function computeCreditsAndAppSumoState(log: FastifyBaseLogger, platformId:
         credits: computeCreditState({ balance: snapshot.credits, enforced: snapshot.billingEnforced }),
         appSumo: computeCreditState({ balance: snapshot.appSumo, enforced: true }),
     }
+    lastGoodGateStates.set({ key: platformId, value: { state, savedAt: Date.now() }, sizeBytes: LAST_GOOD_GATE_STATE_BYTES })
     scheduleCreditsCacheMaintenance({ log, platformId, snapshot, state })
     return state
 }
@@ -541,4 +550,9 @@ type CreditsCacheMaintenanceParams = {
     platformId: string
     snapshot: CreditsCacheSnapshot
     state: CreditsAndAppSumoState
+}
+
+type LastGoodGateState = {
+    state: CreditsAndAppSumoState
+    savedAt: number
 }

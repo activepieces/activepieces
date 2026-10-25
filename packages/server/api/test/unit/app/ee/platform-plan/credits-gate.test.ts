@@ -68,8 +68,8 @@ function fresh(overrides: Partial<CreditsBalanceCache>): CreditsBalanceCache {
 
 const log = { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() } as unknown as FastifyBaseLogger
 
-function gateState() {
-    return autumnBillingProvider(log).getCreditsAndAppSumoState('platform-1')
+function gateState({ platformId = 'platform-1' }: { platformId?: string } = {}) {
+    return autumnBillingProvider(log).getCreditsAndAppSumoState(platformId)
 }
 
 function settleBackgroundWork(): Promise<void> {
@@ -237,11 +237,34 @@ describe('credits gate decides from the cache and refreshes in the background', 
         storedCredits = fresh({ remaining: 0 })
         mockBillingEnforced.mockRejectedValue(new Error('redis unreachable'))
 
-        const { credits } = await gateState()
+        const { credits } = await gateState({ platformId: 'never-gated' })
         await settleBackgroundWork()
 
         expect(credits.blocked).toBe(false)
         expect(mockResolveClientForPlatform).not.toHaveBeenCalled()
         expect(log.warn).toHaveBeenCalled()
+    })
+
+    it('keeps blocking on the last good answer when a later cache read fails', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        await gateState({ platformId: 'recently-blocked' })
+        mockBillingEnforced.mockRejectedValue(new Error('redis slow'))
+
+        const { credits } = await gateState({ platformId: 'recently-blocked' })
+
+        expect(credits.blocked).toBe(true)
+    })
+
+    it('fails open when the last good answer is older than the refetch period', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        await gateState({ platformId: 'blocked-long-ago' })
+        mockBillingEnforced.mockRejectedValue(new Error('redis slow'))
+        const now = Date.now()
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(now + 181_000)
+
+        const { credits } = await gateState({ platformId: 'blocked-long-ago' })
+        clock.mockRestore()
+
+        expect(credits.blocked).toBe(false)
     })
 })

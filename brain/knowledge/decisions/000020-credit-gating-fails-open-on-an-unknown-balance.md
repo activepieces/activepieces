@@ -28,8 +28,12 @@ mistake closes the gate:
   (`!isNil(balance) && !balance.unlimited && remaining <= 0`), so `null` → `blocked: false`.
 - A failed fetch returns `null` rather than throwing: the inline fetch is wrapped in `tryCatch` and
   logs `'Failed to fetch credits gate snapshot; failing open'`.
-- A cache **read** that times out or throws also fails open, with `enforced: false` on both features —
-  so a degraded Redis cannot block, only under-enforce.
+- A cache **read** that times out or throws first reuses this API process's last good answer for the
+  platform (`lastGoodGateStates`, an in-memory LRU), if it is younger than `CREDITS_REFETCH_PERIOD_MS`
+  (180s). Only with no recent answer does it fail open, with `enforced: false` on both features, so a
+  degraded Redis still cannot block a platform the process never saw blocked. Before this (ENG-1054) every
+  slow read failed open: about 12k a day across ~1,100 platforms, steady on every host, so ordinary
+  latency against the 25ms cap was waving over-limit platforms through.
 
 Credit *tracking* is likewise non-fatal — `trackCredits` rethrows non-duplicate errors, but no caller
 lets that surface: `flow-run-hooks#onFinish` wraps both the per-run credit and the AI-usage tracker in
