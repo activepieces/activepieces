@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { iloveapiAuth } from '../common/auth';
 import { iLoveApi } from '../common/client';
+import { iloveSchemas } from '../common/schemas';
 
 export const voidSignatureAction = createAction({
   auth: iloveapiAuth,
@@ -10,6 +11,7 @@ export const voidSignatureAction = createAction({
   description:
     'Cancel an in-progress signature request. The document becomes inaccessible to all signers.',
   audience: 'both',
+  outputSchema: iloveSchemas.signatureAck,
   aiMetadata: {
     description:
       'Permanently cancel an in-progress signature request by its requester token, after which the document can no longer be signed and becomes inaccessible to every signer. This is a destructive, irreversible state change; calling it again on an already-voided request has no further effect.',
@@ -23,17 +25,19 @@ export const voidSignatureAction = createAction({
     }),
   },
   async run(context) {
-    const { token_requester } = context.propsValue;
-    if (!token_requester) {
+    const tokenRequester = (context.propsValue.token_requester ?? '').trim();
+    if (!tokenRequester) {
       throw new Error('Requester Token is required.');
     }
 
     const token = await iLoveApi.authenticate({
       publicKey: context.auth.secret_text,
     });
-    return await iLoveApi.voidSignature({
-      token,
-      tokenRequester: token_requester,
-    });
+    const response = await iLoveApi.voidSignature({ token, tokenRequester });
+    return {
+      ...response,
+      success: true,
+      token_requester: tokenRequester,
+    };
   },
 });
