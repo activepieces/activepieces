@@ -169,6 +169,14 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Event": "Event",
+  "Guests": "Guests",
+  "Details": "Details",
+  "Filters": "Filters",
+  "Changes": "Changes",
+  "Time range": "Time range",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New or Updated Event": "New or Updated Event",
   "New Event": "New Event",
   "Event Ends": "Event Ends",
@@ -186,7 +194,6 @@
   "Search Filter": "Search Filter",
   "Exclude All-Day Events": "Exclude All-Day Events",
   "Target Specific Event": "Target Specific Event",
-  "Event": "Event",
   "Time Before": "Time Before",
   "Time Unit": "Time Unit",
   "Search In": "Search In",
@@ -224,5 +231,7 @@
   "Owner": "Owner",
   "Writer": "Writer",
   "Reader": "Reader",
-  "Free/Busy Reader": "Free/Busy Reader"
+  "Free/Busy Reader": "Free/Busy Reader",
+  "Timing": "Timing",
+  "Search": "Search"
 }

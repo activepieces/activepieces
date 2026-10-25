@@ -124,6 +124,16 @@ export const adminPageResources = {
       path: 'admin-guide/guides/workers',
     }),
   ],
+  workerGroups: [
+    docs({
+      label: () => t('Worker groups guide'),
+      path: 'install/configure-operate/worker-groups',
+    }),
+    docs({
+      label: () => t('Start a worker'),
+      path: 'install/configure-operate/separate-workers',
+    }),
+  ],
   health: [
     docs({ label: () => t('Health guide'), path: 'admin-guide/guides/health' }),
   ],

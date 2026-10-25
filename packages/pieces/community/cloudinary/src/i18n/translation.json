@@ -577,6 +577,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Resource": "New Resource",
   "New Tag Added to Asset": "New Tag Added to Asset",
   "Triggers when a new image, video, or file is uploaded to a specific folder or account in Cloudinary.": "Triggers when a new image, video, or file is uploaded to a specific folder or account in Cloudinary.",

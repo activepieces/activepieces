@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isEmpty, isNil, LocalesEnum } from '@activepieces/core-utils'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ALL_PRINCIPAL_TYPES, ApEdition, EngineResponse, EngineResponseStatus, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApEdition, EngineResponse, EngineResponseStatus, FlowVersion, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -133,14 +133,10 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
         async (req) => {
             const projectId = req.projectId
             const platform = req.principal.platform
-            const flow = await flowService(req.log).getOnePopulatedOrThrow({
+            const flowVersion = await getFlowVersionForOptions({ projectId, flowId: req.body.flowId, flowVersionId: req.body.flowVersionId, log: req.log })
+            const sampleData = isNil(flowVersion) ? {} : await sampleDataService(req.log).getSampleDataForFlow({
                 projectId,
-                id: req.body.flowId,
-                versionId: req.body.flowVersionId,
-            })
-            const sampleData = await sampleDataService(req.log).getSampleDataForFlow({
-                projectId,
-                flowVersion: flow.version,
+                flowVersion,
                 type: SampleDataFileType.OUTPUT,
                 referencedBy: req.body.input,
             })
@@ -148,7 +144,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 jobType: WorkerJobType.EXECUTE_PROPERTY,
                 platformId: platform.id,
                 projectId,
-                flowVersion: flow.version,
+                flowVersion,
                 propertyName: req.body.propertyName,
                 actionOrTriggerName: req.body.actionOrTriggerName,
                 input: req.body.input,
@@ -171,6 +167,18 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
         },
     )
 
+}
+
+async function getFlowVersionForOptions({ projectId, flowId, flowVersionId, log }: GetFlowVersionForOptionsParams): Promise<FlowVersion | undefined> {
+    if (isNil(flowId)) {
+        return undefined
+    }
+    const flow = await flowService(log).getOnePopulatedOrThrow({
+        projectId,
+        id: flowId,
+        versionId: flowVersionId,
+    })
+    return flow.version
 }
 
 async function assertProjectAccess({ principal, projectId, log }: AssertProjectAccessParams): Promise<void> {
@@ -286,6 +294,13 @@ const DeletePieceRequest = {
             id: z.string(),
         }),
     },
+}
+
+type GetFlowVersionForOptionsParams = {
+    projectId: string
+    flowId: string | undefined
+    flowVersionId: string | undefined
+    log: FastifyBaseLogger
 }
 
 type AssertProjectAccessParams = {
