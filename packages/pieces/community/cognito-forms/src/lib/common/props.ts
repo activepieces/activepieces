@@ -53,25 +53,31 @@ export const entryFieldsJson = (description: string) =>
     required: true,
   });
 
-export const formFields = Property.DynamicProperties({
-  displayName: 'Fields',
-  auth: cognitoFormsAuth,
-  refreshers: ['formId'],
-  required: true,
-  props: async ({ auth, formId }) => {
-    if (!auth || typeof formId !== 'string' || formId.length === 0) {
-      return {};
-    }
-    const schema = await cognitoRequest<unknown>({
-      apiKey: auth.secret_text,
-      method: HttpMethod.GET,
-      path: `${formPath(formId)}/schema`,
-    });
-    return buildFieldProps(schema);
-  },
-});
+export const formFields = fieldsProp({ forUpdate: false });
 
-export function buildFieldProps(schema: unknown): DynamicPropsValue {
+export const updateFormFields = fieldsProp({ forUpdate: true });
+
+function fieldsProp({ forUpdate }: { forUpdate: boolean }) {
+  return Property.DynamicProperties({
+    displayName: 'Fields',
+    auth: cognitoFormsAuth,
+    refreshers: ['formId'],
+    required: true,
+    props: async ({ auth, formId }) => {
+      if (!auth || typeof formId !== 'string' || formId.length === 0) {
+        return {};
+      }
+      const schema = await cognitoRequest<unknown>({
+        apiKey: auth.secret_text,
+        method: HttpMethod.GET,
+        path: `${formPath(formId)}/schema`,
+      });
+      return buildFieldProps({ schema, forUpdate });
+    },
+  });
+}
+
+export function buildFieldProps({ schema, forUpdate = false }: { schema: unknown; forUpdate?: boolean }): DynamicPropsValue {
   const props: DynamicPropsValue = {};
   for (const field of readSchemaFields(schema)) {
     if (field.readOnly) {
@@ -93,7 +99,20 @@ export function buildFieldProps(schema: unknown): DynamicPropsValue {
         props[field.name] = Property.ShortText({ displayName, description, required: false });
         break;
       case 'boolean':
-        props[field.name] = Property.Checkbox({ displayName, description, required: false });
+        props[field.name] = forUpdate
+          ? Property.StaticDropdown({
+              displayName,
+              description: description || 'Leave empty to keep the current value.',
+              required: false,
+              options: {
+                disabled: false,
+                options: [
+                  { label: 'Yes', value: true },
+                  { label: 'No', value: false },
+                ],
+              },
+            })
+          : Property.Checkbox({ displayName, description, required: false });
         break;
       case 'number':
       case 'integer':

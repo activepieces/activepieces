@@ -3,7 +3,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { cognitoFormsAuth } from '../auth';
 import { cognitoRequest } from '../common/client';
 import { entryPath, stripEmptyValues } from '../common/entries';
-import { entryIdText, formFields, formIdDropdown } from '../common/props';
+import { entryIdText, formIdDropdown, updateFormFields } from '../common/props';
 
 export const updateEntryAction = createAction({
   auth: cognitoFormsAuth,
@@ -19,7 +19,7 @@ export const updateEntryAction = createAction({
   props: {
     formId: formIdDropdown,
     entryId: entryIdText('The entry number (for example 12) or the full entry ID (for example 5-12). You can map it from a trigger or a "Create Entry" step.'),
-    entryData: formFields,
+    entryData: updateFormFields,
   },
   async run(context) {
     const { formId, entryId, entryData } = context.propsValue;

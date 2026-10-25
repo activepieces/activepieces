@@ -176,6 +176,11 @@ describe('human entry actions', () => {
     expect((await run({ action: deleteEntryAction, props: { formId: '5', entryId: '12' } })).output).toEqual({ deleted: true, already_deleted: true, form_id: '5', entry_id: '12' });
     await expect(run({ action: deleteEntryAction, props: { formId: '9', entryId: '12' } })).rejects.toThrow('Form not found');
   });
+
+  it('delete fails on a 404 that is not EntryNotFound', async () => {
+    stubFetch([{ status: 404, body: { Message: 'Not found.' } }]);
+    await expect(run({ action: deleteEntryAction, props: { formId: '9', entryId: '12' } })).rejects.toThrow();
+  });
 });
 
 describe('ai entry actions', () => {
@@ -354,7 +359,7 @@ describe('helpers', () => {
 
   it('buildFieldProps maps integer, enum and complex types', () => {
     const props = buildFieldProps({
-      properties: {
+      schema: { properties: {
         Count: { type: 'integer' },
         Size: { type: 'string', enum: ['S'] },
         Address: { type: 'object' },
@@ -362,13 +367,22 @@ describe('helpers', () => {
         Maybe: { type: ['null', 'number'] },
         Locked: { type: 'string', readOnly: true },
         Id: { type: 'string' },
-      },
+      } },
     });
     expect(Object.keys(props)).toEqual(['Count', 'Size', 'Address', 'Rows', 'Maybe']);
     expect(props['Count'].type).toBe('NUMBER');
     expect(props['Size'].type).toBe('STATIC_DROPDOWN');
     expect(props['Address'].type).toBe('JSON');
     expect(props['Maybe'].type).toBe('NUMBER');
+  });
+
+  it('buildFieldProps shows Yes/No fields as a dropdown on update, so unset ones are not sent', () => {
+    const schema = { properties: { Agree: { type: 'boolean' }, OptIn: { type: ['boolean', 'null'] } } };
+    expect(buildFieldProps({ schema })['Agree'].type).toBe('CHECKBOX');
+    const props = buildFieldProps({ schema, forUpdate: true });
+    expect(props['Agree'].type).toBe('STATIC_DROPDOWN');
+    expect(props['OptIn'].type).toBe('STATIC_DROPDOWN');
+    expect(stripEmptyValues({ Agree: undefined, OptIn: false, Status: 'Open' })).toEqual({ OptIn: false, Status: 'Open' });
   });
 
   it('normalizeEntry moves form fields under fields', () => {

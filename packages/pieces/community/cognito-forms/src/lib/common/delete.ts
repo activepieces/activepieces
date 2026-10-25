@@ -16,7 +16,7 @@ export async function deleteEntry({
     await cognitoRequest<unknown>({ apiKey, method: HttpMethod.DELETE, path });
     return { deleted: true, already_deleted: false, form_id: formId, entry_id: entryId };
   } catch (error) {
-    if (error instanceof CognitoFormsApiError && error.status === 404 && error.errorType !== 'FormNotFound') {
+    if (error instanceof CognitoFormsApiError && error.status === 404 && error.errorType === 'EntryNotFound') {
       return { deleted: true, already_deleted: true, form_id: formId, entry_id: entryId };
     }
     throw error;

@@ -23,7 +23,7 @@ export const cognitoForms = createPiece({
   auth: cognitoFormsAuth,
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/cognito-forms.png',
-  authors: ['krushnarout'],
+  authors: ['krushnarout', 'OdaiAhmed99'],
   categories: [PieceCategory.PRODUCTIVITY, PieceCategory.FORMS_AND_SURVEYS],
   actions: [
     createEntryAction,
