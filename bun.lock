@@ -206,7 +206,7 @@
     },
     "packages/ee/embed-sdk": {
       "name": "ee-embed-sdk",
-      "version": "0.16.0",
+      "version": "0.16.1",
       "dependencies": {
         "tslib": "2.6.2",
       },
