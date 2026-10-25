@@ -61,6 +61,7 @@ export const createNewIssue = createTrigger({
 | Republishes a running flow with a different trigger or changed inputs | old `onDisable`, then new `onEnable` | old `onDisable`, then new `onEnable` |
 
 - A failing `onDisable` is logged and ignored, so the flow still turns off. A failing `onEnable` fails the publish or the turn-on.
+- A newer piece version keeps the same inputs only on a patch upgrade (e.g. 0.5.1 → 0.5.3). A minor or major upgrade in the builder resets the trigger's inputs to the new version's defaults, so it falls in the last row and the trigger starts fresh.
 - `context.isRepublish` is `true` only in the rows that say so. Use it to keep stored state that is still valid, rather than starting fresh. See [Polling Trigger → Republishing a running flow](/build-pieces/piece-reference/triggers/polling-trigger#republishing-a-running-flow).
 - Don't count on a polling trigger's `onDisable` to clean up anything outside the store: on an upgrade it doesn't run.
 - `test` runs when the user loads sample data in the builder, and `run` runs on every poll or incoming event. Neither is part of turning the flow on or off.
