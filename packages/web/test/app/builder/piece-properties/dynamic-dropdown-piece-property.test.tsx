@@ -24,7 +24,7 @@ vi.mock('@/lib/authentication-session', () => ({
 }));
 
 vi.mock('@/app/builder/builder-hooks', () => ({
-  useBuilderStateContext: (
+  useOptionalBuilderStateContext: (
     selector: (state: Record<string, unknown>) => unknown,
   ) =>
     selector({

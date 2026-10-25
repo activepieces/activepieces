@@ -149,5 +149,16 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "DELETE",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Message": "Message",
+  "Settings": "Settings",
+  "Search in": "Search in",
+  "History": "History",
+  "Script": "Script",
+  "Speaker": "Speaker",
+  "Video": "Video",
+  "Output": "Output",
+  "Content": "Content",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

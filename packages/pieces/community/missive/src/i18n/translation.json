@@ -127,6 +127,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Message": "New Message",
   "New Comment": "New Comment",
   "New Contact": "New Contact",
