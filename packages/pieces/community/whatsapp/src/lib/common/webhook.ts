@@ -10,7 +10,9 @@ const setupInstructions = Property.MarkDown({
 2. Open [developers.facebook.com](https://developers.facebook.com/apps), pick your app and go to **WhatsApp → Configuration**.
 3. Under **Webhook**, click **Edit** and paste this URL as the Callback URL:
 
-   \`{{webhookUrl}}\`
+   \`\`\`text
+   {{webhookUrl}}
+   \`\`\`
 
 4. Enter the same value you put in **Verify Token** below (any secret string), then click **Verify and save**.
 5. Click **Manage** next to Webhook fields and subscribe to **messages** (and **message_template_status_update** for template triggers).
