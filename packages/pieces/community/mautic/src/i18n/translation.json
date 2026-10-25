@@ -854,6 +854,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Contact Updated": "Contact Updated",
   "Contact Company Subscription Change": "Contact Company Subscription Change",
   "Contact Channel Subscription Change": "Contact Channel Subscription Change",

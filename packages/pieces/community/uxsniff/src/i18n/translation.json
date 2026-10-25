@@ -24,6 +24,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Feedback": "New Feedback",
   "New Survey Response": "New Survey Response",
   "Triggers when a visitor submits new feedback on your website.": "Triggers when a visitor submits new feedback on your website.",

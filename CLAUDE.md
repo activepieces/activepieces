@@ -93,6 +93,7 @@ When running in `--mode=cloud`, do not use OAuth2 connections — the OAuth prov
 
 ## Pull Requests
 
+- When creating a PR with `gh pr create`, always pass `--assignee @me` so the PR is assigned to its author.
 - When creating a PR with `gh pr create`, always apply exactly one of these labels based on the nature of the change:
   - **`🌟 feature`** — new functionality
   - **`🐛 bug`** — bug fix
