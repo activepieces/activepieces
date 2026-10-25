@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { Admin, EachMessagePayload, Kafka, KafkaConfig } from 'kafkajs'
+import type { Admin, EachBatchPayload, Kafka, KafkaConfig } from 'kafkajs'
 import { kafkaConfig, type KafkaAuthInput } from './config'
 import { kafkaRecords, type KafkaRecord, type OutboundMessage, type PublishResult, type ReadTarget } from './records'
 
@@ -174,7 +174,7 @@ async function readTargets({ kafka, topic, groupId, targets, limit, timeoutMs, f
   commit: boolean
 }): Promise<KafkaRecord[]> {
   const ends = new Map(targets.map((target) => [target.partition, BigInt(target.end)]))
-  const done = new Set<number>()
+  const positions = new Map<number, bigint>()
   let assigned: Set<number> | undefined
   const consumer = kafka.consumer({
     groupId,
@@ -193,25 +193,41 @@ async function readTargets({ kafka, topic, groupId, targets, limit, timeoutMs, f
     let collecting = true
     await consumer.run({
       autoCommit: false,
-      eachMessage: async ({ topic: messageTopic, partition, message }: EachMessagePayload) => {
-        const end = ends.get(partition)
-        if (!collecting || records.length >= limit || end === undefined || BigInt(message.offset) >= end) {
+      eachBatchAutoResolve: false,
+      eachBatch: async ({ batch }: EachBatchPayload) => {
+        const end = ends.get(batch.partition)
+        if (!collecting || end === undefined) {
           return
         }
-        records.push(kafkaRecords.toRecord({ topic: messageTopic, partition, message }))
-        if (BigInt(message.offset) + BigInt(1) >= end) {
-          done.add(partition)
+        let position = positions.get(batch.partition)
+        for (const message of batch.messages) {
+          const offset = BigInt(message.offset)
+          if (offset >= end) {
+            break
+          }
+          if (records.length >= limit) {
+            if (position !== undefined) {
+              positions.set(batch.partition, position)
+            }
+            return
+          }
+          records.push(kafkaRecords.toRecord({ topic: batch.topic, partition: batch.partition, message }))
+          position = offset + BigInt(1)
         }
+        const fetchedUpTo = BigInt(batch.lastOffset()) + BigInt(1)
+        const reached = fetchedUpTo < end ? fetchedUpTo : end
+        positions.set(batch.partition, position !== undefined && position > reached ? position : reached)
       },
     })
     const deadline = Date.now() + timeoutMs
-    while (records.length < limit && !ownTargetsDone({ ends, done, assigned }) && Date.now() < deadline) {
+    while (records.length < limit && !ownTargetsDone({ ends, positions, assigned }) && Date.now() < deadline) {
       await delay(50)
     }
     collecting = false
     const batch = [...records]
-    if (commit && batch.length > 0) {
-      await consumer.commitOffsets(kafkaRecords.commitPlan({ topic, records: batch }))
+    const committed = [...positions.entries()].map(([partition, offset]) => ({ topic, partition, offset: offset.toString() }))
+    if (commit && committed.length > 0) {
+      await consumer.commitOffsets(committed)
     }
     return batch
   } finally {
@@ -248,16 +264,18 @@ async function createKafka(config: KafkaConfig): Promise<Kafka> {
   return new KafkaClient(config)
 }
 
-function ownTargetsDone({ ends, done, assigned }: {
+function ownTargetsDone({ ends, positions, assigned }: {
   ends: Map<number, bigint>
-  done: Set<number>
+  positions: Map<number, bigint>
   assigned: Set<number> | undefined
 }): boolean {
   if (assigned === undefined) {
     return false
   }
   const own = assigned
-  return [...ends.keys()].filter((partition) => own.has(partition)).every((partition) => done.has(partition))
+  return [...ends.entries()]
+    .filter(([partition]) => own.has(partition))
+    .every(([partition, end]) => (positions.get(partition) ?? BigInt(0)) >= end)
 }
 
 function delay(ms: number): Promise<void> {
