@@ -3221,4 +3221,43 @@ describe('MCP Tools integration', () => {
         expect(text(onCode)).toContain('PIECE')
         expect(flowStructureUtil.getStep('step_1', flow.version.trigger)?.settings.pieceVersion).toBe('0.1.0')
     })
+
+    it('ap_update_step drops inputs the new piece version lacks and refreshes its dynamic schemas, and leaves them alone when the version is unchanged', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const oldSchema = { count: { type: 'SHORT_TEXT', displayName: 'Count', required: false } }
+        const newSchema = { count: { type: 'NUMBER', displayName: 'Count', required: false } }
+        const versionedPiece = (version: string, props: Record<string, unknown>): ReturnType<typeof createMockPieceMetadata> => createMockPieceMetadata({
+            name: '@activepieces/piece-test-versioned',
+            displayName: 'Test Versioned',
+            version,
+            pieceType: PieceType.CUSTOM,
+            packageType: PackageType.REGISTRY,
+            platformId: ctx.platform.id,
+            actions: { send: { name: 'send', displayName: 'Send', description: 'Send', requireAuth: false, props } },
+            triggers: {},
+        })
+        const keep = { type: 'SHORT_TEXT', displayName: 'Keep', required: true }
+        const fields = { type: 'DYNAMIC', displayName: 'Fields', required: false, refreshers: ['keep'] }
+        await db.save('piece_metadata', versionedPiece('1.0.0', { keep, legacy: { type: 'SHORT_TEXT', displayName: 'Legacy', required: false }, fields }))
+        const flowId = await createFlowAndGetId(mcp, 'Step version cleanup')
+        const resolve = vi.spyOn(userInteractionWatcher, 'submitAndWaitForResponse').mockResolvedValue({ status: EngineResponseStatus.OK, response: { options: oldSchema } })
+        await apAddStepTool({ mcp }, mockLog).execute({ flowId, parentStepName: 'trigger', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, stepType: FlowActionType.PIECE, displayName: 'Send', pieceName: '@activepieces/piece-test-versioned', actionName: 'send', input: { keep: 'a', legacy: 'old', fields: { count: '3' } } })
+        await db.save('piece_metadata', versionedPiece('1.1.0', { keep, fields }))
+        resolve.mockResolvedValue({ status: EngineResponseStatus.OK, response: { options: newSchema } })
+        const readStep = async (): Promise<ReturnType<typeof flowStructureUtil.getStep>> => flowStructureUtil.getStep('step_1', (await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })).version.trigger)
+
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', pieceVersion: 'latest' })
+        const upgraded = await readStep()
+        resolve.mockClear()
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', pieceVersion: 'latest' })
+        const refreshesOnSameVersion = resolve.mock.calls.length
+        resolve.mockRestore()
+
+        expect(upgraded?.settings.pieceVersion).toBe('1.1.0')
+        expect(upgraded?.settings.input).toEqual(expect.not.objectContaining({ legacy: expect.anything() }))
+        expect(upgraded?.settings.input).toMatchObject({ keep: 'a', fields: { count: '3' } })
+        expect(upgraded?.settings.propertySettings).toMatchObject({ fields: { schema: newSchema } })
+        expect(refreshesOnSameVersion).toBe(0)
+    })
 })

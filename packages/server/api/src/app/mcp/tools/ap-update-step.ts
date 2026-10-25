@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { ExactVersionType, FlowActionType, FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolContext, McpToolDefinition, PieceActionSettings, UpdateActionRequest } from '@activepieces/shared'
+import { ExactVersionType, FlowActionType, FlowOperationRequest, FlowOperationType, flowPieceUtil, flowStructureUtil, McpToolContext, McpToolDefinition, PieceActionSettings, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -104,7 +104,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                     if (versionResult.error) {
                         return versionResult.error
                     }
-                    updatedSettings.pieceVersion = versionResult.pieceVersion
+                    updatedSettings.pieceVersion = flowPieceUtil.getExactVersion(versionResult.pieceVersion)
                 }
                 else {
                     const piece = await pieceMetadataService(log).get({ name: step.settings.pieceName, version: requestedPieceVersion, projectId: mcp.projectId, platformId: project.platformId })
