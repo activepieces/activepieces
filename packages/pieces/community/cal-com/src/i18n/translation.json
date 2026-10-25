@@ -162,6 +162,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Booking Cancelled": "Booking Cancelled",
   "Booking Created": "Booking Created",
   "Booking Rescheduled": "Booking Rescheduled",

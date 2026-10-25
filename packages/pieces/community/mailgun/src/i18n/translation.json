@@ -119,6 +119,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Bounce Event": "New Bounce Event",
   "New Complaint Event": "New Complaint Event",
   "New Delivery Event": "New Delivery Event",
