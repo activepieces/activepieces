@@ -2,6 +2,7 @@ import querystring from 'querystring';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { chunk } from '@activepieces/pieces-framework';
 import { GoogleDriveAuthValue, getAccessToken } from '../auth';
+import { common } from './index';
 
 export async function listDriveFiles<T = any>({
   auth,
@@ -55,7 +56,7 @@ export async function listDriveFilesRecursive({
     const nextLevelParentIds: string[] = [];
 
     for (const parentIdsChunk of chunk(currentLevelParentIds, PARENT_IDS_PER_QUERY)) {
-      const parentsClause = parentIdsChunk.map(id => `'${id}' in parents`).join(' or ');
+      const parentsClause = parentIdsChunk.map(id => `'${common.escapeDriveQueryLiteral(id)}' in parents`).join(' or ');
       const q = parentIdsChunk.length > 1 ? `(${parentsClause})` : parentsClause;
 
       const pageFiles = await listDriveFiles({

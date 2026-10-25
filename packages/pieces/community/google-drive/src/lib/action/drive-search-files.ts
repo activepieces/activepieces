@@ -1,6 +1,7 @@
 import { googleDriveAuth, createGoogleClient } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { drive as googleDrive } from '@googleapis/drive';
+import { buildDriveSearchQuery } from '../common/search-query';
 import { driveSearchFilesOutputSchema } from '../output-schemas';
 
 export const driveSearchFiles = createAction({
@@ -78,24 +79,13 @@ export const driveSearchFiles = createAction({
     const authClient = await createGoogleClient(context.auth);
 
     const drive = googleDrive({ version: 'v3', auth: authClient });
-    const operator = context.propsValue.operator ?? 'contains';
-    const queryTerm = context.propsValue.query_term ?? 'name';
-    let finalQuery = `${queryTerm} ${operator} '${context.propsValue.value}'`;
-    if (context.propsValue.parent_folder_id) {
-      finalQuery = `${finalQuery} and '${context.propsValue.parent_folder_id}' in parents`;
-    }
-
-    const type = context.propsValue.type ?? 'all';
-    switch (type) {
-      case 'file':
-        finalQuery = `${finalQuery} and mimeType!='application/vnd.google-apps.folder'`;
-        break;
-      case 'folder':
-        finalQuery = `${finalQuery} and mimeType='application/vnd.google-apps.folder'`;
-        break;
-      default:
-        break;
-    }
+    const finalQuery = buildDriveSearchQuery({
+      queryTerm: context.propsValue.query_term ?? 'name',
+      operator: context.propsValue.operator ?? 'contains',
+      query: context.propsValue.value,
+      parentFolder: context.propsValue.parent_folder_id,
+      type: context.propsValue.type ?? 'all',
+    });
 
     const allFiles: any[] = [];
     let pageToken: string | undefined = undefined;

@@ -100,7 +100,7 @@ async function listFolderChildren({
   return listDriveFiles<DriveListItem>({
     auth,
     params: {
-      q: `'${folderId}' in parents and trashed=false`,
+      q: `'${common.escapeDriveQueryLiteral(folderId)}' in parents and trashed=false`,
       fields: 'nextPageToken,files(id,name,mimeType,size)',
       supportsAllDrives: 'true',
       includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',

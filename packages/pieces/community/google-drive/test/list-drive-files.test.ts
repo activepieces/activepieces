@@ -102,6 +102,22 @@ describe('listDriveFilesRecursive query construction', () => {
 
     expect(decodedQuery(lastRequest())).toBe("'root' in parents");
   });
+
+  test('escapes single quotes and backslashes in parent folder ids', async () => {
+    sendRequest.mockResolvedValueOnce(page([]));
+
+    await listDriveFilesRecursive({
+      auth,
+      rootFolderId: "folder'with'quote\\and\\backslash",
+      maxLevel: 1,
+      includeTrashed: false,
+      includeTeamDrives: false,
+    });
+
+    expect(decodedQuery(lastRequest())).toBe(
+      "'folder\\'with\\'quote\\\\and\\\\backslash' in parents and trashed=false"
+    );
+  });
 });
 
 describe('listDriveFilesRecursive batching across >50 sibling folders', () => {
