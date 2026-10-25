@@ -183,7 +183,6 @@ describe('tool actions', () => {
     ['split bad ranges', splitPdfAction, { file: pdf, split_mode: 'ranges', ranges: '1-a' }, /must look like/],
     ['split fixed range zero', splitPdfAction, { file: pdf, split_mode: 'fixed_range', fixed_range: 0 }, /whole number/],
     ['ocr bad language', ocrPdfAction, { file: pdf, ocr_languages: ['english'] }, /ISO 639-2/],
-    ['watermark both text and image', watermarkPdfAction, { file: pdf, mode: 'text', text: 'x', image: png }, /text mode ignores/],
     ['resize without size', resizeImageAction, { file: png, resize_mode: 'pixels' }, /width, a height/],
     ['upscale 3x', upscaleImageAction, { file: png, multiplier: 3 }, /2 or 4/],
     ['empty file', compressPdfAction, { file: { base64: '', filename: 'x.pdf' } }, /empty/],
@@ -195,6 +194,14 @@ describe('tool actions', () => {
     const calls = mockHttp(defaultRoutes());
     await expect(run(loose(action))(fakeContext(props).context)).rejects.toThrow(message);
     expect(calls).toHaveLength(0);
+  });
+
+  it('watermark text mode ignores a leftover image', async () => {
+    const calls = mockHttp(defaultRoutes());
+    await run(loose(watermarkPdfAction))(fakeContext({ file: pdf, mode: 'text', text: 'x', image: png }).context);
+    expect(processBody(calls)['text']).toBe('x');
+    expect(processBody(calls)['image']).toBeUndefined();
+    expect(calls.filter((x) => x.url.includes('/upload'))).toHaveLength(1);
   });
 
   it('split by file size sends bytes', async () => {
@@ -225,6 +232,43 @@ describe('step time budget', () => {
       const assertion = expect(pending).rejects.toThrow(/step time limit/);
       await vi.advanceTimersByTimeAsync(520_000);
       await assertion;
+    } finally {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('sends no further request after the step limit is hit', async () => {
+    mockHttp(defaultRoutes());
+    await run(mergePdfAction)(fakeContext({ files: [{ file: pdf }, { file: pdf }] }).context);
+    vi.restoreAllMocks();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    try {
+      const urls: string[] = [];
+      const reply = (body: unknown) => ({ status: 200, headers: {}, body });
+      vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+        urls.push(request.url);
+        if (request.url.endsWith('/v1/auth')) return reply({ token: 'jwt-1' });
+        if (request.url.includes('/v1/start/')) return reply({ server: SERVER, task: 'TASK1' });
+        if (request.url.endsWith('/v1/upload')) {
+          await new Promise((resolve) => setTimeout(resolve, 530_000));
+          return reply({ server_filename: 'sf-1' });
+        }
+        return reply({});
+      });
+      const pending = run(mergePdfAction)(fakeContext({ files: [{ file: pdf }, { file: pdf }] }).context);
+      const assertion = expect(pending).rejects.toThrow(/step time limit/);
+      for (let i = 0; i < 1000 && !urls.some((url) => url.endsWith('/v1/upload')); i++) {
+        await new Promise((resolve) => setImmediate(resolve));
+      }
+      await vi.advanceTimersByTimeAsync(600_000);
+      await assertion;
+      for (let i = 0; i < 200; i++) {
+        await new Promise((resolve) => setImmediate(resolve));
+        await vi.advanceTimersByTimeAsync(1_000);
+      }
+      expect(urls.filter((url) => url.endsWith('/v1/upload'))).toHaveLength(1);
+      expect(urls.some((url) => url.endsWith('/v1/process') || url.includes('/v1/download/'))).toBe(false);
     } finally {
       vi.useRealTimers();
       vi.restoreAllMocks();

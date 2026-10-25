@@ -25,6 +25,7 @@ const DOWNLOAD_TIMEOUT_MS = 120_000;
 const MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024;
 const MAX_ATTEMPTS = 4;
 const TASK_BUDGET_MS = 520_000;
+const TASK_TIMEOUT_MESSAGE = 'iLoveAPI did not finish within the step time limit. Try a smaller file or fewer files.';
 const MAX_SIGNATURE_FILES = 5;
 const BASE_BACKOFF_MS = 2_000;
 const MAX_BACKOFF_MS = 20_000;
@@ -124,6 +125,7 @@ async function request<T>({
   body,
   query,
   timeout,
+  deadline,
 }: {
   method: HttpMethod;
   url: string;
@@ -131,12 +133,14 @@ async function request<T>({
   body?: () => RequestBody;
   query?: Record<string, string>;
   timeout?: number;
+  deadline?: number;
 }): Promise<T> {
   if (!iloveHost.isAllowedUrl(url)) {
     throw new Error('Refusing to send iLoveAPI credentials to a URL outside the iLoveAPI hosts.');
   }
   const dispatcher = await verifiedTls();
   for (let attempt = 0; ; attempt++) {
+    const requestTimeout = boundedTimeout({ timeout: timeout ?? REQUEST_TIMEOUT_MS, deadline });
     const payload = body?.();
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -153,7 +157,7 @@ async function request<T>({
           headers,
           queryParams: query,
           body: payload,
-          timeout: timeout ?? REQUEST_TIMEOUT_MS,
+          timeout: requestTimeout,
           followRedirects: false,
           redactBodyInErrors: true,
         },
@@ -170,11 +174,18 @@ async function request<T>({
     } catch (error) {
       const failure = failureOf(error);
       if (failure?.status === 429 && attempt + 1 < MAX_ATTEMPTS) {
-        await sleep(backoffFor(attempt));
+        const wait = backoffFor(attempt);
+        if (deadline !== undefined && Date.now() + wait >= deadline) {
+          throw new Error(TASK_TIMEOUT_MESSAGE);
+        }
+        await sleep(wait);
         continue;
       }
       if (failure) throw toApiError(failure);
       if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
+        if (deadline !== undefined && Date.now() >= deadline) {
+          throw new Error(TASK_TIMEOUT_MESSAGE);
+        }
         throw new Error(
           `iLoveAPI did not answer within ${Math.round((timeout ?? REQUEST_TIMEOUT_MS) / 1000)} seconds.`
         );
@@ -184,7 +195,16 @@ async function request<T>({
   }
 }
 
-async function authenticate({ publicKey }: { publicKey: string }): Promise<string> {
+function boundedTimeout({ timeout, deadline }: { timeout: number; deadline: number | undefined }): number {
+  if (deadline === undefined) return timeout;
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) {
+    throw new Error(TASK_TIMEOUT_MESSAGE);
+  }
+  return Math.min(timeout, remaining);
+}
+
+async function authenticate({ publicKey, deadline }: { publicKey: string; deadline?: number }): Promise<string> {
   const key = typeof publicKey === 'string' ? publicKey.trim() : '';
   if (!key) {
     throw new Error('The iLoveAPI connection has no project public key. Reconnect your account.');
@@ -193,6 +213,7 @@ async function authenticate({ publicKey }: { publicKey: string }): Promise<strin
     method: HttpMethod.POST,
     url: `${PDF_API}/v1/auth`,
     body: () => ({ public_key: key }),
+    deadline,
   });
   if (!isRecord(response) || typeof response.token !== 'string' || response.token === '') {
     throw new Error('iLoveAPI did not return an access token.');
@@ -208,14 +229,16 @@ async function startTask({
   token,
   tool,
   region,
+  deadline,
 }: {
   token: string;
   tool: ILoveApiTool;
   region?: ILoveApiRegion;
+  deadline?: number;
 }): Promise<StartTaskResponse> {
   const base = isImageTool(tool) ? IMG_API : PDF_API;
   const url = region ? `${base}/v1/start/${tool}/${region}` : `${base}/v1/start/${tool}`;
-  const response = await request<StartTaskResponse>({ method: HttpMethod.GET, url, token });
+  const response = await request<StartTaskResponse>({ method: HttpMethod.GET, url, token, deadline });
   if (!isRecord(response) || typeof response.task !== 'string' || response.task === '') {
     throw new Error('iLoveAPI did not return a task ID when starting the task.');
   }
@@ -228,12 +251,14 @@ async function uploadBuffer({
   task,
   buffer,
   filename,
+  deadline,
 }: {
   token: string;
   server: string;
   task: string;
   buffer: Buffer;
   filename: string;
+  deadline?: number;
 }): Promise<string> {
   const host = iloveHost.assertServerHost(server);
   const { default: FormDataCtor } = await import('form-data');
@@ -242,6 +267,7 @@ async function uploadBuffer({
     url: `https://${host}/v1/upload`,
     token,
     timeout: UPLOAD_TIMEOUT_MS,
+    deadline,
     body: () => {
       const form = new FormDataCtor();
       form.append('task', task);
@@ -257,11 +283,13 @@ async function uploadCloudUrl({
   server,
   task,
   url,
+  deadline,
 }: {
   token: string;
   server: string;
   task: string;
   url: string;
+  deadline?: number;
 }): Promise<string> {
   const host = iloveHost.assertServerHost(server);
   const response = await request<UploadResponse>({
@@ -269,6 +297,7 @@ async function uploadCloudUrl({
     url: `https://${host}/v1/upload`,
     token,
     timeout: UPLOAD_TIMEOUT_MS,
+    deadline,
     body: () => ({ task, cloud_file: url }),
   });
   return serverFilenameOf(response);
@@ -285,10 +314,12 @@ async function processTask({
   token,
   server,
   body,
+  deadline,
 }: {
   token: string;
   server: string;
   body: ProcessRequest;
+  deadline?: number;
 }): Promise<ProcessResponse> {
   const host = iloveHost.assertServerHost(server);
   return request<ProcessResponse>({
@@ -296,6 +327,7 @@ async function processTask({
     url: `https://${host}/v1/process`,
     token,
     timeout: PROCESS_TIMEOUT_MS,
+    deadline,
     body: () => body,
   });
 }
@@ -303,15 +335,18 @@ async function processTask({
 async function download({
   token,
   url,
+  deadline: taskDeadline,
 }: {
   token: string;
   url: string;
+  deadline?: number;
 }): Promise<{ data: Buffer; contentType: string | undefined }> {
   if (!iloveHost.isAllowedUrl(url)) {
     throw new Error('Refusing to send iLoveAPI credentials to a URL outside the iLoveAPI hosts.');
   }
   const dispatcher = await verifiedTls();
-  const deadline = Date.now() + DOWNLOAD_TIMEOUT_MS;
+  const downloadTimeout = boundedTimeout({ timeout: DOWNLOAD_TIMEOUT_MS, deadline: taskDeadline });
+  const deadline = Date.now() + downloadTimeout;
   let response;
   try {
     response = await httpClient.sendRequest<unknown>(
@@ -323,7 +358,7 @@ async function download({
           Accept: 'application/pdf, application/zip, image/*, text/plain, */*',
         },
         responseType: 'stream',
-        timeout: DOWNLOAD_TIMEOUT_MS,
+        timeout: downloadTimeout,
         followRedirects: false,
       },
       { dispatcher }
@@ -379,15 +414,18 @@ async function downloadResult({
   token,
   server,
   task,
+  deadline,
 }: {
   token: string;
   server: string;
   task: string;
+  deadline?: number;
 }): Promise<Buffer> {
   const host = iloveHost.assertServerHost(server);
   const { data } = await download({
     token,
     url: `https://${host}/v1/download/${encodeURIComponent(task)}`,
+    deadline,
   });
   return data;
 }
@@ -553,11 +591,13 @@ async function uploadOne({
   server,
   task,
   upload,
+  deadline,
 }: {
   token: string;
   server: string;
   task: string;
   upload: UploadInput;
+  deadline?: number;
 }): Promise<{ serverFilename: string; filename: string }> {
   if (upload.kind === 'file') {
     const serverFilename = await uploadBuffer({
@@ -566,10 +606,11 @@ async function uploadOne({
       task,
       buffer: Buffer.from(upload.file.base64, 'base64'),
       filename: upload.file.filename,
+      deadline,
     });
     return { serverFilename, filename: upload.file.filename };
   }
-  const serverFilename = await uploadCloudUrl({ token, server, task, url: upload.url });
+  const serverFilename = await uploadCloudUrl({ token, server, task, url: upload.url, deadline });
   return { serverFilename, filename: upload.filename ?? deriveFilenameFromUrl(upload.url) };
 }
 
@@ -586,20 +627,27 @@ async function runTask({
   skipDownload,
   webhook,
 }: RunTaskInput): Promise<RunTaskResult> {
+  const deadline = Date.now() + TASK_BUDGET_MS;
   let timer: NodeJS.Timeout | undefined;
   const budget = new Promise<never>((_, reject) => {
     timer = setTimeout(
-      () => reject(new Error('iLoveAPI did not finish within the step time limit. Try a smaller file or fewer files.')),
+      () => reject(new Error(TASK_TIMEOUT_MESSAGE)),
       TASK_BUDGET_MS
     );
   });
   try {
     return await Promise.race([
-      runTaskSteps({ publicKey, tool, region, uploads, options, output_filename, packaged_filename, perFileOverrides, extraUploads, skipDownload, webhook }),
+      runTaskSteps({ publicKey, tool, region, uploads, options, output_filename, packaged_filename, perFileOverrides, extraUploads, skipDownload, webhook, deadline }),
       budget,
     ]);
   } finally {
     clearTimeout(timer);
+  }
+}
+
+function assertWithinBudget(deadline: number): void {
+  if (Date.now() >= deadline) {
+    throw new Error(TASK_TIMEOUT_MESSAGE);
   }
 }
 
@@ -615,18 +663,20 @@ async function runTaskSteps({
   extraUploads,
   skipDownload,
   webhook,
-}: RunTaskInput): Promise<RunTaskResult> {
+  deadline,
+}: RunTaskInput & { deadline: number }): Promise<RunTaskResult> {
   if (!uploads || uploads.length === 0) {
     throw new Error('At least one input file or URL is required');
   }
 
-  const token = await authenticate({ publicKey });
-  const started = await startTask({ token, tool, region });
+  const token = await authenticate({ publicKey, deadline });
+  const started = await startTask({ token, tool, region, deadline });
   const { server, task } = started;
 
   const files: ProcessFile[] = [];
   for (let i = 0; i < uploads.length; i++) {
-    const uploaded = await uploadOne({ token, server, task, upload: uploads[i] });
+    assertWithinBudget(deadline);
+    const uploaded = await uploadOne({ token, server, task, upload: uploads[i], deadline });
     files.push({
       server_filename: uploaded.serverFilename,
       filename: uploaded.filename,
@@ -636,7 +686,8 @@ async function runTaskSteps({
 
   const uploadedExtraFilenames: string[] = [];
   for (const extra of extraUploads ?? []) {
-    const uploaded = await uploadOne({ token, server, task, upload: extra });
+    assertWithinBudget(deadline);
+    const uploaded = await uploadOne({ token, server, task, upload: extra, deadline });
     uploadedExtraFilenames.push(uploaded.serverFilename);
   }
 
@@ -653,12 +704,14 @@ async function runTaskSteps({
     ...(webhook ? { webhook } : {}),
   };
 
-  const processResponse = await processTask({ token, server, body: processBody });
+  assertWithinBudget(deadline);
+  const processResponse = await processTask({ token, server, body: processBody, deadline });
   if (!isRecord(processResponse)) {
     throw new Error('iLoveAPI returned an empty process response.');
   }
 
-  const buffer = skipDownload ? undefined : await downloadResult({ token, server, task });
+  assertWithinBudget(deadline);
+  const buffer = skipDownload ? undefined : await downloadResult({ token, server, task, deadline });
 
   return {
     buffer,

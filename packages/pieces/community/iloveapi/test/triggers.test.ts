@@ -4,6 +4,7 @@ import { taskFailedTrigger } from '../src/lib/triggers/task-failed';
 import * as signatureTriggers from '../src/lib/triggers/signature-events';
 import * as samples from '../src/lib/triggers/sample-payloads';
 import { fakeContext, loose, record } from './helpers';
+import { claimDelivery } from '../src/lib/triggers/common';
 
 const SECRET = 'abcdefghijklmnop1234';
 
@@ -61,5 +62,31 @@ describe('task triggers', () => {
     expect(store.size).toBe(1);
     await taskCompletedTrigger.onDisable(loose(context));
     expect(store.size).toBe(0);
+  });
+});
+
+describe('claimDelivery', () => {
+  it('lets only the write that survived claim a delivery when two arrive together', async () => {
+    const data = new Map<string, unknown>();
+    let pending: Array<() => void> = [];
+    const store = {
+      get: async (key: string) => data.get(key) ?? null,
+      put: async (key: string, value: unknown) => {
+        await new Promise<void>((resolve) => pending.push(resolve));
+        data.set(key, value);
+        return value;
+      },
+      delete: async (key: string) => {
+        data.delete(key);
+      },
+    };
+    const first = claimDelivery({ store: loose(store), key: 'a' });
+    const second = claimDelivery({ store: loose(store), key: 'b' });
+    await new Promise((resolve) => setImmediate(resolve));
+    const release = pending;
+    pending = [];
+    release.forEach((resolve) => resolve());
+    const results = await Promise.all([first, second]);
+    expect(results.filter(Boolean)).toHaveLength(1);
   });
 });

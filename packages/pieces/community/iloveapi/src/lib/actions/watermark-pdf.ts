@@ -183,12 +183,6 @@ export const watermarkPdfAction = createAction({
         'A watermark image is required when watermark mode is "Image".'
       );
     }
-    if (mode === 'text' && image) {
-      throw new Error('Remove the watermark image or switch the mode to "Image"; text mode ignores it.');
-    }
-    if (mode === 'image' && text) {
-      throw new Error('Remove the watermark text or switch the mode to "Text"; image mode ignores it.');
-    }
     if (rotation !== undefined && rotation !== null && (rotation < 0 || rotation > 360)) {
       throw new Error('Rotation must be between 0 and 360 degrees.');
     }

@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { DEDUPE_KEY_PROPERTY, Property, Store } from '@activepieces/pieces-framework';
 
 export const webhookInstructions = (eventLabel: string): string => `
@@ -99,8 +99,10 @@ export async function claimDelivery({ store, key }: { store: Store; key: string 
     (entry) => now - entry.at < SEEN_TTL_MS
   );
   if (seen.some((entry) => entry.key === key)) return false;
-  await store.put<SeenDelivery[]>(SEEN_STORE_KEY, [...seen, { key, at: now }].slice(-MAX_SEEN));
-  return true;
+  const claim = randomUUID();
+  await store.put<SeenDelivery[]>(SEEN_STORE_KEY, [...seen, { key, at: now, claim }].slice(-MAX_SEEN));
+  const stored = (await store.get<SeenDelivery[]>(SEEN_STORE_KEY)) ?? [];
+  return stored.some((entry) => entry.key === key && entry.claim === claim);
 }
 
 export async function forgetDeliveries(store: Store): Promise<void> {
@@ -134,7 +136,7 @@ const SEEN_STORE_KEY = 'iloveapi_seen_deliveries';
 const SEEN_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_SEEN = 500;
 
-type SeenDelivery = { key: string; at: number };
+type SeenDelivery = { key: string; at: number; claim?: string };
 
 type WebhookEnvelope = {
   event?: string;
