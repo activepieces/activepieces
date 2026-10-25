@@ -136,6 +136,16 @@ export const microsoftOutlook = createPiece({
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 			}),
+			props: {
+				url: {
+					description:
+						'Full URL, or a path relative to https://graph.microsoft.com/v1.0/ (graph.microsoft.us on GCC High). App-only connections use /users/{mailbox}, not /me.',
+					placeholder: '/me/messages',
+				},
+				response_is_binary: {
+					description: 'Turn on for /$value downloads, like attachment files or raw emails.',
+				},
+			},
 		}),
 	],
 	triggers: [
