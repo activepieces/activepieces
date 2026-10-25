@@ -92,6 +92,15 @@ export const newEmailTrigger = createTrigger({
 		description: 'Fires when a new message arrives in the mailbox Inbox, optionally narrowed to a specific sender and/or recipient address. Each fire represents one newly received email.',
 	},
 	outputSchema: newEmailTriggerOutputSchema,
+	propertyGroups: [
+		{
+			key: 'filters',
+			display: 'section',
+			label: 'Filters',
+			icon: 'filter',
+			props: ['sender', 'recipient'],
+		},
+	],
 	props: {
 		sender: Property.ShortText({
 			displayName: 'From',
@@ -104,7 +113,6 @@ export const newEmailTrigger = createTrigger({
 			description: 'Only emails sent to this address.',
 			placeholder: 'you@example.com',
 			required: false,
-			advanced: true,
 		}),
 	},
 	sampleData: {},
