@@ -6,6 +6,7 @@ import {
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
 import { PlatformModelTierEntity } from '../ai/platform-model-tier-entity'
+import { AiUsage5mEntity, AiUsageDailyEntity, AiUsageIngestCursorEntity } from '../ai/usage/ai-usage-entities'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { OtpEntity } from '../authentication/otp/otp-entity'
@@ -100,6 +101,9 @@ function getEntities(): EntitySchema<unknown>[] {
         AIProviderEntity,
         AiToolConfigEntity,
         PlatformModelTierEntity,
+        AiUsage5mEntity,
+        AiUsageDailyEntity,
+        AiUsageIngestCursorEntity,
         ProjectRoleEntity,
         TableEntity,
         FieldEntity,
