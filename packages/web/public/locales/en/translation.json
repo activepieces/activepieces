@@ -1380,7 +1380,7 @@
   "Opened the upgrade options from a locked feature": "Opened the upgrade options from a locked feature",
   "Started a sales enquiry from a locked feature": "Started a sales enquiry from a locked feature",
   "Reached a plan limit": "Reached a plan limit",
-  "Clicked a button on a platform administration page": "Clicked a button on a platform administration page",
+  "Clicked an administration or billing button": "Clicked an administration or billing button",
   "Accounts and sign-in": "Accounts and sign-in",
   "Emailed sign-in codes": "Emailed sign-in codes",
   "Flows and the builder": "Flows and the builder",

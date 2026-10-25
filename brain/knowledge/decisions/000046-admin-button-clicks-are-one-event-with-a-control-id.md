@@ -6,7 +6,7 @@ status: accepted
 
 ## Decision
 
-Every clickable control in the platform admin reports through one event,
+Every clickable admin control, on whatever page it renders, reports through one event,
 `platform.admin.control.clicked`, with `{ control, page }`. `control` is a member of one
 `AdminControl` enum and `page` is the route pattern. It records clicks only, copy buttons and external
 links included, not whether the action then succeeded.
@@ -15,8 +15,10 @@ Ids are named `area.thing.action` (`pieces.install.open`, `projects.delete.confi
 `api-keys.value.copy`), so they survive a reworded or translated label. The action is one of
 `open`, `submit`, `confirm`, `toggle`, `select`, `copy`, `link` or `run` (a button that acts
 at once, such as Sync or Refresh). Cancel, Close and Back carry no id. A control opts in by
-carrying `adminControl(AdminControl.AREA_THING_ACTION)`, and one click listener on the admin layout
-reports it. Keeping new buttons covered is a convention for reviewers, not a failing test.
+carrying `adminControl(AdminControl.AREA_THING_ACTION)`, and one click listener at the router root
+reports it, so it covers every signed-in page and not only `/platform` (plan banners, billing
+dialogs and connection dialogs render outside it), but not an embedded app.
+Keeping new buttons covered is a convention for reviewers, not a failing test.
 A control the plan has locked carries no id, because its click already reports
 `platform.admin.gate.blocked`, and that event names the control with the same enum member, so
 clicks and blocks join on one key.
@@ -46,6 +48,10 @@ rather than moving the old one. A submit click fires even when validation or the
 so `*.submit` means attempted, not done. Billing, invites and plan changes already emit
 server-side events, so web clicks there would double count outcomes. The paywall events from
 `000045` stay as they are; never add them to this one when counting.
+
+The listener first ran only under `/platform`, so a control that also renders elsewhere (plan
+banners, billing dialogs, connection dialogs) steps up in PostHog from the release that
+moved it to the router root. Split such a series by `page` before comparing across that date.
 
 A Radix Select value choice carries no id. Radix selects on pointer-up and unmounts the item,
 and sets `pointer-events: none` on the body while open, so a document click listener cannot
