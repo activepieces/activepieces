@@ -16,6 +16,8 @@ How a ticket in the Engineering (ENG) Linear team is written, so people and agen
 **Decisions** — one decision per bullet with a one-line why. Out of scope is a decision: "Not X, because Y."
 **no-e2e** — the ticket label for one or more criteria with no E2E test. The bullet markers are the source; the label follows them.
 **Done** — the PR is merged.
+**PR link** — the ticket line in a PR description: `Fixes <KEY>-123` on the last PR of a ticket, `Refs <KEY>-123` on an earlier one. Any team key works. The `Linear ticket check` workflow fails a PR that names no ticket, or one that does not exist or is canceled; it does not read the ticket's content.
+**Customer report** — a ticket that comes from a Pylon issue. It links that issue as the attachment "Pylon NNNN (customer report)".
 
 ## Gotchas
 
@@ -25,3 +27,4 @@ How a ticket in the Engineering (ENG) Linear team is written, so people and agen
 - A ticket created through the MCP, the API, Slack or a support integration gets no template, so it can miss headings. The team default applies only in the Linear UI: an agent creating a ticket passes `template: "Feature"` or `"Bug"` to `save_issue`, and adds a missing heading rather than assume the section is empty.
 - A template applied through the MCP keeps the headings and presets but strips the placeholder text, so the sections arrive empty.
 - Both templates are standard templates. A form template may not write the `##` headings that agents parse.
+- A GIT ticket syncs to a public GitHub issue, so a customer report there holds no customer name or data. The Pylon link may stay: it opens only with a Pylon login.
