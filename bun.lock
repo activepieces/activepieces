@@ -3208,16 +3208,17 @@
     },
     "packages/pieces/community/figma": {
       "name": "@activepieces/piece-figma",
-      "version": "0.6.3",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-        "nanoid": "3.3.18",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/filetopdf": {

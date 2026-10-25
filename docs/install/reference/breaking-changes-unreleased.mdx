@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Figma 0.7.0: agents use Get File Outline instead of Get File, and the connection needs new scopes
+
+**Get File** is no longer offered as a tool to AI agents, because it returns the whole document tree, which can be many megabytes. Agents now get **Get File Outline (Agent)**, which returns the pages and top-level frames with a depth limit. Get File still works as a normal flow step.
+
+The Figma connection now asks for the `webhooks:write`, `file_versions:read` and `library_content:read` scopes, and the trigger webhooks now check Figma's passcode.
+
+#### What you need to do
+
+Reconnect existing Figma connections so they get the new scopes; a step that needs a missing scope stops with a message that says to reconnect. Re-enable flows that use a Figma trigger so their webhook gets a passcode. Run Agent tools that used Get File switch to Get File Outline. Steps keep running on the version they were built with until you upgrade them.
+
 #### Worker group ids can no longer contain a colon
 
 Worker group ids with `:` in them are no longer routable. The assignment endpoints reject them, and a project or flow already assigned to such a group is treated as unassigned: its runs fall back to the project, platform or shared queue instead of the group's dedicated queue, and the group disappears from the worker groups page.
