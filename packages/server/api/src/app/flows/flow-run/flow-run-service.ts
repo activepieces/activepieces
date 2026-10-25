@@ -654,7 +654,7 @@ async function filterFlowRunsAndApplyFilters(
     }
 
     if (params.failedStepName) {
-        query = query.andWhere('flow_run.failedStepName = :failedStepName', {
+        query = query.andWhere('flow_run."failedStep"->>\'name\' = :failedStepName', {
             failedStepName: params.failedStepName,
         })
     }
