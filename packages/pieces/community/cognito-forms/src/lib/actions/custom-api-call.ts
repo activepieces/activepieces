@@ -24,6 +24,11 @@ export const customApiCallAction = createAction({
   propertyGroups: base.propertyGroups,
   classification: 'WRITE',
   audience: 'human',
+  aiMetadata: {
+    description:
+      'Send any request to the Cognito Forms API (https://www.cognitoforms.com/api) with the connection key, for endpoints the other actions do not cover. Returns status, headers and body. Can change or delete data depending on the method and path.',
+    idempotent: false,
+  },
   async run({ auth, propsValue, files }) {
     const method = methodOf(propsValue['method']);
     const url = urlOf(propsValue['url']);
