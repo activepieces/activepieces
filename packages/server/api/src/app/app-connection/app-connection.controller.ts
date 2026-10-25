@@ -228,7 +228,7 @@ const ReplaceAppConnectionsRequest = {
     config: {
         security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_APP_CONNECTION,
+            Permission.REPLACE_APP_CONNECTION,
             {
                 type: ProjectResourceType.BODY,
             },
