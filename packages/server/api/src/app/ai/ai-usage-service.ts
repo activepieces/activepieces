@@ -1,6 +1,7 @@
 import { ActivepiecesAiConsumerSource, AiCallTokens, AiChargeBasis, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { isAppSumoCreditedPlan, ReportAiUsageRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { distributedStore } from '../database/redis-connections'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
 import { AiCreditConsumptionProperties, ChatAppSumoConsumptionProperties, ChatCreditConsumptionProperties, CreditUsageSource } from '../platform/billing-provider'
@@ -45,7 +46,11 @@ async function addConversationCredits({ input, credits, log }: { input: ReportAi
         return
     }
     const { conversationId } = input.billing
-    const { error } = await tryCatch(() => aiUsageHooks.get(log).addConversationCredits({ conversationId, credits }))
+    const { error } = await tryCatch(() => distributedStore.runOnceWithin(
+        `ai-usage:conversation-credits:${input.idempotencyKey}`,
+        RETRY_WINDOW_SECONDS,
+        () => aiUsageHooks.get(log).addConversationCredits({ conversationId, credits }),
+    ))
     if (!isNil(error)) {
         log.warn({ conversation: { id: conversationId }, error }, '[aiUsageService] Could not add this call to the conversation credit total')
     }
@@ -118,3 +123,4 @@ const MESSAGES_PER_MODEL_CALL = 1
 const PROJECTLESS_CHAT = 'chat'
 const OUTSIDE_A_FLOW = 'none'
 const UNKNOWN_ENVIRONMENT = 'unknown'
+const RETRY_WINDOW_SECONDS = 600

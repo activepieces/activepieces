@@ -192,7 +192,7 @@ describe('what a model call reports back for billing', () => {
 
         await generateWith(model)
 
-        expect(reported).toHaveLength(0)
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
@@ -290,6 +290,29 @@ describe('what a model call reports back for billing', () => {
             outputTokens: 2,
             observedCostUsd: 0.0009,
         })
+    })
+
+    it('keeps the cost a LiteLLM gateway puts in its response header, only for custom providers', async () => {
+        const response = { id: 'resp-litellm', headers: { 'x-litellm-response-cost': '0.0031' } }
+        const custom = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 7 }, outputTokens: { total: 1 } }, response }),
+            provider: AIProviderName.CUSTOM,
+            modelId: 'gpt-5',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.CUSTOM }),
+        })
+        const openAi = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response }),
+            provider: AIProviderName.OPENAI,
+            modelId: 'gpt-5',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.OPENAI }),
+        })
+
+        await generateWith(custom)
+        await generateWith(openAi)
+
+        expect(reported.map((event) => event.call.observedCostUsd)).toEqual([0.0031, undefined])
     })
 
     it('still bills a managed call on cost when the turn carries the own-key credit, since we pay per call either way', async () => {
@@ -409,7 +432,7 @@ describe('an embedding call on the managed provider', () => {
 
         await embedWith(model)
 
-        expect(reported).toHaveLength(0)
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
@@ -473,7 +496,7 @@ describe('a stream that never reaches its finish chunk', () => {
         await streamThen(model, ({ reader }) => reader.cancel(new Error('client went away')))
         await settled()
 
-        expect(reported).toHaveLength(0)
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
@@ -485,7 +508,7 @@ describe('a stream that never reaches its finish chunk', () => {
         await streamThen(model, ({ reader }) => reader.cancel(new Error('client went away')))
         await settled()
 
-        expect(reported).toHaveLength(0)
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
@@ -497,7 +520,7 @@ describe('a stream that never reaches its finish chunk', () => {
         await streamThen(model, ({ reader }) => reader.cancel(new Error('client went away')))
         await settled()
 
-        expect(reported).toHaveLength(0)
+        expect(reported.map((event) => event.call.charge)).toEqual([AiChargeBasis.USAGE_ONLY])
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 

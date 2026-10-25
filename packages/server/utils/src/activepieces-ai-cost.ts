@@ -65,13 +65,13 @@ function billingContextOf({ provider, providerConfigId, modelId, billing, charge
 async function billGenerate({ doGenerate, context }: BillGenerateParams): Promise<LanguageModelV4GenerateResult> {
     const result = await doGenerate()
     const generationId = result.response?.id
-    report({ context, generationId, call: createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage }) })
+    report({ context, generationId, call: createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers }) })
     return result
 }
 
 async function billStream({ doStream, context }: BillStreamParams): Promise<LanguageModelV4StreamResult> {
     const { stream, ...rest } = await doStream()
-    return { ...rest, stream: stream.pipeThrough(billedStream(context)) }
+    return { ...rest, stream: stream.pipeThrough(billedStream({ context, headers: rest.response?.headers })) }
 }
 
 async function billEmbed({ doEmbed, context }: BillEmbedParams): Promise<EmbeddingModelV4Result> {
@@ -81,8 +81,8 @@ async function billEmbed({ doEmbed, context }: BillEmbedParams): Promise<Embeddi
     return result
 }
 
-function billedStream(context: BillingContext): TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart> {
-    const state: StreamState = { reported: false }
+function billedStream({ context, headers }: { context: BillingContext, headers: ResponseHeaders }): TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart> {
+    const state: StreamState = { reported: false, headers }
     return new TransformStream({
         transform: (chunk, controller) => trackChunk({ chunk, controller, state, context }),
         flush: () => settleStream({ state, context }),
@@ -95,7 +95,7 @@ function trackChunk({ chunk, controller, state, context }: TrackChunkParams): vo
         state.generationId = chunk.id ?? state.generationId
     }
     if (chunk.type === 'finish' && !state.reported) {
-        const call = createBillingInfo({ context, generationId: state.generationId, providerMetadata: chunk.providerMetadata, usage: chunk.usage })
+        const call = createBillingInfo({ context, generationId: state.generationId, providerMetadata: chunk.providerMetadata, usage: chunk.usage, headers: state.headers })
         if (!isNil(call)) {
             state.reported = true
             report({ context, generationId: state.generationId, call })
@@ -146,8 +146,8 @@ async function recoverCostAndReport({ state, context }: SettleStreamParams): Pro
     })
 }
 
-function createBillingInfo({ context, generationId, providerMetadata, usage }: CreateBillingInfoParams): ActivepiecesAiCall | undefined {
-    const costUsd = openRouterCostOf(providerMetadata)
+function createBillingInfo({ context, generationId, providerMetadata, usage, headers }: CreateBillingInfoParams): ActivepiecesAiCall | undefined {
+    const costUsd = openRouterCostOf(providerMetadata) ?? gatewayHeaderCostOf({ provider: context.provider, headers })
     const tokens = { ...tokensOf(usage), observedCostUsd: costUsd }
     if (context.basis === AiChargeBasis.FIXED_CREDITS) {
         return { ...createFixedCreditChargeInfo({ generationId }), ...tokens }
@@ -199,6 +199,14 @@ function openRouterCostOf(providerMetadata: SharedV4ProviderMetadata | undefined
     return parseOrUndefined(OpenRouterUsage, usage)?.cost
 }
 
+function gatewayHeaderCostOf({ provider, headers }: { provider: AIProviderName, headers: ResponseHeaders }): number | undefined {
+    if (provider !== AIProviderName.CUSTOM || isNil(headers)) {
+        return undefined
+    }
+    const cost = Number(headers[LITELLM_COST_HEADER])
+    return Number.isFinite(cost) && cost >= 0 ? cost : undefined
+}
+
 function parseOrUndefined<T extends z.ZodType>(schema: T, value: unknown): z.infer<T> | undefined {
     const parsed = schema.safeParse(value)
     return parsed.success ? parsed.data : undefined
@@ -207,6 +215,7 @@ function parseOrUndefined<T extends z.ZodType>(schema: T, value: unknown): z.inf
 function report({ context, call, generationId }: ReportParams): void {
     if (isNil(call)) {
         recordUnbilledCall({ context, generationId, reason: isNil(generationId) ? UnbilledCallReason.NO_GENERATION_ID : UnbilledCallReason.PROVIDER_REPORTED_NO_COST })
+        reporter?.({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId } })
         return
     }
     if (isNil(reporter)) {
@@ -253,6 +262,7 @@ const OpenRouterUsage = z.object({
 })
 
 let reporter: ActivepiecesAiCostReporter | undefined
+const LITELLM_COST_HEADER = 'x-litellm-response-cost'
 let unbilledCalls: UnbilledCall[] = []
 
 const FIXED_CREDITS_PER_MODEL_CALL = 1
@@ -318,6 +328,7 @@ type ReportProviderCostParams = ReportFixedCreditsParams & AiCallTokens & {
 type StreamState = {
     reported: boolean
     generationId?: string
+    headers: ResponseHeaders
 }
 
 type BillGenerateParams = {
@@ -352,7 +363,10 @@ type CreateBillingInfoParams = {
     generationId: string | undefined
     providerMetadata: SharedV4ProviderMetadata | undefined
     usage: LanguageModelV4Usage | undefined
+    headers?: ResponseHeaders
 }
+
+type ResponseHeaders = Record<string, string | undefined> | undefined
 
 type ReportParams = {
     context: BillingContext
