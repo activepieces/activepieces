@@ -24,6 +24,11 @@ Lets platform admins configure one or more LLM backends for AI pieces in flows. 
 - There is no monthly credit-reset job and no direct Stripe invoicing; the only "monthly" mechanism is the key's `limit_reset`.
 - Model lists are cached in memory, cleared daily at midnight via cron.
 
+### AI usage (analytics)
+- Every reported model call is recorded by `aiUsageIngest` (`app/ai/usage/`) on the Redis stream `ai-usage:events:v1`. `AI_USAGE_FLUSH` folds it into `ai_usage_5m` + `ai_usage_daily` every minute, in all editions. Decisions 000052 and 000053.
+- `AiChargeBasis.USAGE_ONLY` = recorded, never billed. Own-key agent/chat calls and internal calls (memory, compaction, piece-tool filler, personalization) report with it.
+- `AiCallContext` (`origin`, `environment`, `flowId`, `agentId`, `flowRunId`) rides on the billing object. AI steps get it from `aiCallContext.forFlowRun`; agent runs from `AGENT_RUN_USAGE_ORIGIN` plus the run's ids.
+
 ### Provider visibility
 - `isActivepiecesAiProviderHidden` hides the managed provider when the `aiCreditsEnabled` flag is off (`OPENROUTER_PROVISION_KEY` unset — typical self-hosted) or when `shouldHideActivepiecesAiProvider` returns true, which is gated only on `plan.embeddingEnabled`.
 - Hidden means treated as absent everywhere: `listProviders()` omits the row and `getChatProvider()`/`getChatProviderName()` return null (`findAvailableChatProviderRow`). This keeps a stale `enabledForChat` (e.g. from the 0.82.1 migration) from pinning chat to a provider that 402s with no top-up path (GIT-1620).
@@ -75,6 +80,10 @@ after a file without chat keys it seeds the chat list from the live flow list.
 **Specific model** — a model a builder picks directly from one key (`{provider, configId, model}`), as opposed to a tier. The admin switch `platform_configuration.aiSpecificModelsVisible` (Tiers tab, "Visible to builders") hides them from builders. _Avoid_: "Advanced" (an early mockup word for the same section)
 
 ### Gotchas
+- **AI usage cost order: what we bill (managed) → provider-reported (own key) → catalog estimate → unpriced.** Own OpenRouter keys ask for `usage: { include: true }`, and a `CUSTOM` LiteLLM gateway's `x-litellm-response-cost` header counts as reported. Azure deployment names and custom models have no catalog price, so only their tokens are counted.
+- **`billing` is a required argument of `createModel`, `createEmbeddingModel` and `searchWeb`.** A call that is really unbilled passes `null`, so a new call site can't silently drop out of usage.
+- **The SDK's input token total already includes cache reads and writes.** The estimate subtracts both before pricing uncached input.
+- **Production runs are queued, so their `flow_run` row may not exist yet.** `aiCallContext.runOf` reads the queued-run metadata hash in Redis first, then the saved row, and caches the result in-process. MCP, trigger and property executions use placeholder run ids (`DEFAULT_MCP_DATA.flowRunId`, `execute-trigger`, `execute-property`). They become `ACTION_RUN` and never count as runs.
 - **`enabledForChat` now means "the Default AI key", not "the key every chat runs on".** Chats pin their own key (see `ai-agents.md`); the flag only seeds the legacy and default paths, knowledge-base embeddings (when no Embeddings capability is set), and platform-wide work. Memory and personalization run on it, else on the Default tier's main model when that key serves every project, else on Credits (`agentHelpers.resolvePlatformWorkModel`). `listForProject` still reports the flag so a web client from before the 7b deploy keeps working; no current web code reads it.
 - **Embedding models are a short curated list per provider (`EMBEDDING_MODELS` in core-piece-types), first entry = default.** The KB column is `vector(768)`, and embeddings are truncated to 768 dims, which is only safe for Matryoshka-trained models, so a live provider listing is not used. Embedding ids are never in a key's chat model scope, so the Embeddings capability skips `keyOffersModel` / `losesModel`. **Changing the Embeddings key or model leaves old files on their old vectors:** search mixes two embedding spaces until those files are re-uploaded. There is no per-file pin and no re-embed.
 - **The replay eval can't judge a model swap where the new model takes a different tool path.** Two separate things cause it:
