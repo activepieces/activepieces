@@ -19,6 +19,28 @@ The PandaDoc triggers did not fire before this version; after you upgrade and re
 Agents that used these actions switch to their twins: Create Document from Template (AI), Add Document Attachment (AI), Create Contact (AI) or Update Contact (AI), Search Documents (AI), List Document Attachments (AI), Get Document (AI) and Download Document (AI). Flow steps keep running on the version they were built with until you upgrade them.
 
 After upgrading a PandaDoc trigger, turn the flow off and on again so PandaDoc signs its deliveries. If a flow used the Document Updated filter, add a Router or Branch step after the trigger to keep only the updates you need.
+#### Worker group ids can no longer contain a colon
+
+Worker group ids with `:` in them are no longer routable. The assignment endpoints reject them, and a project or flow already assigned to such a group is treated as unassigned: its runs fall back to the project, platform or shared queue instead of the group's dedicated queue, and the group disappears from the worker groups page.
+
+#### What you need to do
+
+Rename any worker group whose id contains `:`: update `AP_WORKER_GROUP_ID` on its workers, then re-assign its projects and flows to the new name from the worker groups page.
+#### GitHub 0.11.0: Update Repository (Agent) no longer makes private repositories public
+
+When an AI agent used **Update Repository (Agent)** to change something else, such as the description, the agent path filled the three toggles it left out (**Private**, **Has Issues** and **Archived**) with `false` and sent them. Each such update could make a private repository public, turn off Issues and unarchive an archived repository. From GitHub 0.11.0 these three fields are dropdowns with **Yes**, **No** and **Leave unchanged**. A field the agent leaves out, or sets to Leave unchanged, is not sent, so the repository keeps its current setting.
+
+#### What you need to do
+
+Nothing to configure. Agents read the new options themselves, and a Run Agent tool that already sets one of these fields to true or false keeps sending that value. If an agent ran this action on an earlier GitHub version, check that your private repositories are still private, that Issues are on where you expect them, and that archived repositories are still archived. Run Agent steps keep running on the version they were built with until you upgrade them.
+
+#### Shopify 0.11.0: Update Customer toggles that are off no longer unverify or unsubscribe the customer
+
+Update Customer sent **Verified Email**, **Send Email Invite** and **Accepts Marketing** on every run. A fresh step saves an untouched toggle as `false`, so every update marked the customer's email as unverified and unsubscribed them from email marketing, whatever the rest of the step changed. From Shopify 0.11.0 a toggle that is off sends nothing and the customer's current setting is kept; a toggle that is on still verifies the email, sends the invite or subscribes the customer. New Update Customer steps no longer start with Verified Email switched on.
+
+#### What you need to do
+
+Nothing for flows that only ever verify or subscribe customers. A flow that relied on Update Customer to unsubscribe a customer or mark their email as unverified can no longer do it from this action; use **Custom API Call** with `PUT /customers/{id}.json` and a body of `{"customer": {"email_marketing_consent": {"state": "unsubscribed", "opt_in_level": "unknown"}}}` (or `"verified_email": false`). Steps keep running on the version they were built with until you upgrade them.
 
 #### PostHog requires https hosts, and agents can no longer create projects
 

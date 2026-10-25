@@ -133,6 +133,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Page Render": "New Page Render",
   "Page Render Updated": "Page Render Updated",
   "New Contact Page Engagement": "New Contact Page Engagement",
