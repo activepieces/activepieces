@@ -30,6 +30,22 @@ export const moveEmail = createAction({
   audience: 'human',
   aiMetadata: { description: 'Moves an email (by message UID) from a source IMAP folder to a target folder, removing it from the source. Use to file, archive, or send a message to a Trash folder. Requires the source folder, target folder, and the UID; not idempotent since after the move the message no longer exists at the source UID and a repeat call cannot find it.', idempotent: false },
   props,
+  propertyGroups: [
+    {
+      key: 'email',
+      display: 'section',
+      label: 'Email to Move',
+      icon: 'inbox',
+      props: ['sourceMailbox', 'uid'],
+    },
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Move to',
+      icon: 'send',
+      props: ['targetMailbox'],
+    },
+  ],
   async run({ auth, propsValue }) {
     const { uid, sourceMailbox, targetMailbox } = propsValue;
     return await moveImapEmail({ auth, uid, sourceMailbox: sourceMailbox!, targetMailbox: targetMailbox! });

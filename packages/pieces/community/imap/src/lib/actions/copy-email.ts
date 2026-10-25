@@ -34,6 +34,22 @@ export const copyEmail = createAction({
   audience: 'human',
   aiMetadata: { description: 'Copies an email (by message UID) from a source IMAP folder into a target folder, leaving the original in place. Use to duplicate a message into another mailbox without removing it from the source. Requires the source folder, target folder, and the UID; not idempotent since each call appends another copy with a new UID.', idempotent: false },
   props,
+  propertyGroups: [
+    {
+      key: 'email',
+      display: 'section',
+      label: 'Email to Copy',
+      icon: 'inbox',
+      props: ['sourceMailbox', 'uid'],
+    },
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Copy to',
+      icon: 'send',
+      props: ['targetMailbox'],
+    },
+  ],
   async run({ auth, propsValue }) {
     const { uid, sourceMailbox, targetMailbox } = propsValue;
     return await copyImapEmail({ auth, uid, sourceMailbox: sourceMailbox!, targetMailbox: targetMailbox! });
