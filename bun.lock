@@ -650,12 +650,13 @@
     },
     "packages/pieces/community/amazon-textract": {
       "name": "@activepieces/piece-amazon-textract",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "@aws-sdk/client-s3": "3.974.0",
         "@aws-sdk/client-sts": "3.974.0",
         "@aws-sdk/client-textract": "^3.0.0",
       },
