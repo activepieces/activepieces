@@ -119,6 +119,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
         assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
         surfaceOf: () => 'flow',
         resolveFastModel: mockResolveFastModel,
+        usageContextOf: async () => ({ origin: 'CHAT', environment: 'PRODUCTION' }),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
             findOneByOrFail: mockFindOneBy,
