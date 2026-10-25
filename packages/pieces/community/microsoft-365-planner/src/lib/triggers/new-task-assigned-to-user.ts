@@ -6,16 +6,17 @@ import {
 import {
   AppConnectionValueForAuthProperty,
     createTrigger,
-    PiecePropValueSchema,
     StaticPropsValue,
     TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { microsoft365PlannerAuth, microsoft365PlannerCommon } from '../common';
-import { PlanDropdown } from '../common/properties';
+import { microsoft365PlannerAuth } from '../auth';
+import { microsoft365PlannerApi } from '../common/api';
+import { microsoft365PlannerProps } from '../common/props';
+import { microsoft365PlannerTaskOutputSchema } from '../output-schemas';
 
 const props = {
-  planId: PlanDropdown({ required: true }),
+  planId: microsoft365PlannerProps.planId({ required: true }),
 };
 
 const polling: Polling<
@@ -27,11 +28,11 @@ const polling: Polling<
     if (!planId) {
       return [];
     }
-    const user = await microsoft365PlannerCommon.getUser({ auth });
+    const user = await microsoft365PlannerApi.getUser({ auth });
     if (!user || !user.id) {
       throw new Error('Unable to fetch authenticated user details.');
     }
-    const items = await microsoft365PlannerCommon.listTasks({ auth, planId });
+    const items = await microsoft365PlannerApi.listTasks({ auth, planId });
     return items
       .filter((item) => {
         const userId = String(user.id);
@@ -47,9 +48,10 @@ const polling: Polling<
   },
 };
 
-export const newTaskAssignedToUser = createTrigger({
+export const newTaskAssignedToUserTrigger = createTrigger({
   auth: microsoft365PlannerAuth,
   name: 'newTaskAssignedToUser',
+  outputSchema: microsoft365PlannerTaskOutputSchema,
   classification: 'READ',
   displayName: 'New Task Assigned to User',
   description:
@@ -64,13 +66,11 @@ export const newTaskAssignedToUser = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

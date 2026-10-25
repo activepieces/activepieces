@@ -3,6 +3,7 @@ import {
   FlowVersionState,
   isNil,
   Permission,
+  tryCatch,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ShieldAlert } from 'lucide-react';
@@ -36,14 +37,21 @@ import { useBuilderStateContext } from '../../builder-hooks';
 import LargeWidgetWrapper from './large-widget-wrapper';
 
 const FlowApprovalBanner = () => {
-  const [flow, flowVersion, setFlow, setVersion, setRightSidebar] =
-    useBuilderStateContext((state) => [
-      state.flow,
-      state.flowVersion,
-      state.setFlow,
-      state.setVersion,
-      state.setRightSidebar,
-    ]);
+  const [
+    flow,
+    flowVersion,
+    setFlow,
+    setVersion,
+    setRightSidebar,
+    savePendingEdits,
+  ] = useBuilderStateContext((state) => [
+    state.flow,
+    state.flowVersion,
+    state.setFlow,
+    state.setVersion,
+    state.setRightSidebar,
+    state.savePendingEdits,
+  ]);
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const featureEnabled = platform.plan.environmentsEnabled;
@@ -58,6 +66,10 @@ const FlowApprovalBanner = () => {
   const { mutateAsync: withdraw, isPending: isWithdrawing } =
     flowApprovalsHooks.useWithdraw();
   const handleWithdraw = async (requestId: string) => {
+    const { error: saveError } = await tryCatch(savePendingEdits);
+    if (!isNil(saveError)) {
+      return;
+    }
     const previousVersion = flowVersion;
     setVersion({ ...flowVersion, state: FlowVersionState.DRAFT });
     setRightSidebar(RightSideBarType.NONE);
