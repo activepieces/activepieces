@@ -1,6 +1,6 @@
-import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isEmpty, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
-import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FAILED_STATES, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
@@ -26,6 +26,7 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
+const RETRYABLE_FROM_FAILED_STEP_STATUSES: FlowRunStatus[] = [...FAILED_STATES, FlowRunStatus.QUEUED, FlowRunStatus.RUNNING]
 const PARENT_BOUND_RETRY_BACKOFF_MS = apDayjsDuration(30, 'second').asMilliseconds()
 
 
@@ -169,14 +170,29 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                     : undefined
 
-                await flowRunRepo().update({
-                    id: oldFlowRun.id,
-                    projectId: oldFlowRun.projectId,
-                }, {
-                    status: FlowRunStatus.QUEUED,
-                    startTime: apDayjs().toISOString(),
-                    finishTime: null,
-                })
+                const { raw: requeuedRuns } = await flowRunRepo().createQueryBuilder()
+                    .update()
+                    .set({
+                        status: FlowRunStatus.QUEUED,
+                        startTime: apDayjs().toISOString(),
+                        finishTime: null,
+                    })
+                    .where({
+                        id: oldFlowRun.id,
+                        projectId: oldFlowRun.projectId,
+                        status: In(RETRYABLE_FROM_FAILED_STEP_STATUSES),
+                    })
+                    .returning('id')
+                    .execute()
+                if (requeuedRuns.length === 0) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.FLOW_RUN_NOT_RETRYABLE,
+                        params: {
+                            flowRunId: oldFlowRun.id,
+                            status: oldFlowRun.status,
+                        },
+                    })
+                }
                 const updatedFlowRun = await findFlowRunOrThrow(oldFlowRun.id)
                 const platformId = await projectService(log).getPlatformId(updatedFlowRun.projectId)
                 await flowRunSideEffects(log).onRetry({ flowRun: updatedFlowRun, platformId })
@@ -266,7 +282,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
     },
     async bulkRetry(params: BulkRetryParams): Promise<FlowRunWithRetryError[]> {
-        const filteredFlowRuns = await filterFlowRunsAndApplyFilters(params)
+        const isFromFailedStepByFilter = params.strategy === FlowRetryStrategy.FROM_FAILED_STEP && isEmpty(params.flowRunIds)
+        const statusFilter = isFromFailedStepByFilter ? restrictToFailedStatuses(params.status) : params.status
+        if (isFromFailedStepByFilter && isEmpty(statusFilter)) {
+            return []
+        }
+        const filteredFlowRuns = await filterFlowRunsAndApplyFilters({ ...params, status: statusFilter })
         const limit = pLimit(10)
         const results = await Promise.allSettled(
             filteredFlowRuns.map(flowRun =>
@@ -572,6 +593,13 @@ async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
     return results as FlowRun[]
 }
 
+
+function restrictToFailedStatuses(statusFilter: FlowRunStatus[] | undefined): FlowRunStatus[] {
+    if (isNil(statusFilter) || statusFilter.length === 0) {
+        return FAILED_STATES
+    }
+    return statusFilter.filter((status) => FAILED_STATES.includes(status))
+}
 
 async function filterFlowRunsAndApplyFilters(
     params: FilterFlowRunsAndApplyFiltersParams,
