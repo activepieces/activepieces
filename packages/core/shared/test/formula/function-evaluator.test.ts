@@ -729,6 +729,18 @@ describe('implicit string quoting', () => {
     it('replace without quotes on search and replacement', () =>
         expect(result('replace(hello world;world;there)')).toBe('hello there'))
 
+    it('replace with a bare backslash as the search text', () =>
+        expect(ok('replace({{path}};\\;/)', { path: 'C:\\Users\\ana' })).toEqual({ result: 'C:/Users/ana', error: null }))
+
+    it('suffix with a bare backslash', () =>
+        expect(ok('suffix({{drive}};\\)', { drive: 'C:' })).toEqual({ result: 'C:\\', error: null }))
+
+    it('prefix with bare text ending in a backslash', () =>
+        expect(result('prefix({{name}};DOMAIN\\)', { name: 'ana' })).toBe('DOMAIN\\ana'))
+
+    it('quoted string keeps its escaped quote', () =>
+        expect(result('suffix("say \\"hi";!)')).toBe('say "hi!'))
+
     it('contains without quotes', () =>
         expect(result('contains(hello world;world)')).toBe(true))
 
