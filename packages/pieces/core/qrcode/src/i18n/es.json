@@ -1,5 +1,11 @@
 {
   "Text to QR Code": "Texto al código QR",
   "Convert text to QR code": "Convertir texto a código QR",
-  "Content": "Contenido"
+  "Content": "Contenido",
+  "Make QR code images from text or links.": "Crea imágenes de códigos QR a partir de texto o enlaces.",
+  "Generate QR Code": "Generar código QR",
+  "Turn text or a link into a PNG QR code image.": "Convierte texto o un enlace en una imagen PNG de código QR.",
+  "Text or Link": "Texto o enlace",
+  "Encoded into a PNG image file. About 2,300 characters at most.": "Se codifica en un archivo de imagen PNG. Unos 2300 caracteres como máximo.",
+  "QR Code": "Código QR"
 }

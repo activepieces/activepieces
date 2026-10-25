@@ -6,6 +6,7 @@ export const triggers = [
   {
     type: EventTrigger.BOOKING_CANCELLED,
     displayName: 'Booking Cancelled',
+    description: 'Triggers when a Cal.com booking is cancelled.',
     sampleData: {
       triggerEvent: 'BOOKING_CANCELLED',
       createdAt: '2023-02-18T12:11:37.975Z',
@@ -50,7 +51,8 @@ export const triggers = [
   },
   {
     type: EventTrigger.BOOKING_CREATED,
-    displayName: 'Booking Created',
+    displayName: 'New Booking',
+    description: 'Triggers when someone books a meeting with you on Cal.com.',
     sampleData: {
       triggerEvent: 'BOOKING_CREATED',
       createdAt: '2023-02-18T11:54:18.440Z',
@@ -126,6 +128,7 @@ export const triggers = [
   {
     type: EventTrigger.BOOKING_RESCHEDULED,
     displayName: 'Booking Rescheduled',
+    description: 'Triggers when a Cal.com booking is moved to a new time.',
     sampleData: {
       triggerEvent: 'BOOKING_RESCHEDULED',
       createdAt: '2023-02-18T12:11:26.909Z',
@@ -194,7 +197,7 @@ export const triggers = [
     name: eventTrigger.type,
     displayName: eventTrigger.displayName,
     sampleData: eventTrigger.sampleData,
-    description: `Create a webhook to monitor when ${eventTrigger.displayName}`,
+    description: eventTrigger.description,
     outputSchema: bookingEventTriggerOutputSchema,
   })
 );
