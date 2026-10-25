@@ -10755,7 +10755,7 @@
     },
     "packages/pieces/core/qrcode": {
       "name": "@activepieces/piece-qrcode",
-      "version": "0.0.18",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
