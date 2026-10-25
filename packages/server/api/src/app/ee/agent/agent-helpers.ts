@@ -257,9 +257,9 @@ async function resolveFastModelId({ platformId, providerConfig, surface, scope, 
     return resolveModelId({ platformId, providerConfig, selectedModel: modelTierCatalog.current(surface).fastTierId, surface, scope, log, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
 }
 
-async function usageContextOf({ source, projectId, agentId, flowRunId }: UsageContextParams): Promise<AiCallContext> {
+async function usageContextOf({ source, projectId, agentId, flowRunId, userId }: UsageContextParams): Promise<AiCallContext> {
     const origin = AGENT_RUN_USAGE_ORIGIN[source]
-    const ids = { ...spreadIfDefined('agentId', agentId ?? undefined) }
+    const ids = { ...spreadIfDefined('agentId', agentId ?? undefined), ...spreadIfDefined('userId', userId ?? undefined) }
     if (source === AgentRunSource.AGENT_BUILDER) {
         return { origin, environment: AiUsageEnvironment.TESTING, ...ids }
     }
@@ -537,4 +537,5 @@ type UsageContextParams = {
     projectId: string | null | undefined
     agentId?: string | null
     flowRunId?: string | null
+    userId?: string | null
 }

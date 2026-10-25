@@ -93,7 +93,16 @@ function bill({ data, resolved, billing, decisions }: BillParams): void {
         })
         return
     }
-    activepiecesAiCost.reportFixedCredits({ billing, provider: resolved.provider, providerConfigId: resolved.providerConfigId, modelId: data.modelId, generationId: decisions.id })
+    activepiecesAiCost.reportFixedCredits({
+        billing,
+        provider: resolved.provider,
+        providerConfigId: resolved.providerConfigId,
+        modelId: data.modelId,
+        generationId: decisions.id,
+        inputTokens: decisions.usage?.input_tokens,
+        outputTokens: decisions.usage?.output_tokens,
+        observedCostUsd: decisions.usage?.cost,
+    })
 }
 
 function describeFailure(error: unknown): string {

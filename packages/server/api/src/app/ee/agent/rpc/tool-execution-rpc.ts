@@ -327,7 +327,7 @@ async function pieceToolModel({ configuredRun, input, log }: { configuredRun: Co
         platformId,
         projectId,
         conversationId: input.conversationId,
-        context: await agentHelpers.usageContextOf({ source: configuredRun.source, projectId, agentId: configuredRun.agent?.id, flowRunId: input.flowRunId }),
+        context: await agentHelpers.usageContextOf({ source: configuredRun.source, projectId, agentId: configuredRun.agent?.id, flowRunId: input.flowRunId, userId: configuredRun.userId }),
     }
     const granted = isNil(modelTierId) || isNil(input.providerConfigId)
         ? null

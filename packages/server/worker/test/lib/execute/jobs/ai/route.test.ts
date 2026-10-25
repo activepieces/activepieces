@@ -125,7 +125,7 @@ describe('routeStep asks OpenRouter\'s decisions endpoint', () => {
 
         await routeStep({ data: routeJob({ provider: AIProviderName.OPENROUTER }), resolved: OWN_KEY, billing: BILLING })
 
-        expect(reportFixedCredits).toHaveBeenCalledWith({ billing: BILLING, provider: AIProviderName.OPENROUTER, providerConfigId: 'config-2', modelId: 'typesafe/jev-1.13', generationId: 'gen-3' })
+        expect(reportFixedCredits).toHaveBeenCalledWith({ billing: BILLING, provider: AIProviderName.OPENROUTER, providerConfigId: 'config-2', modelId: 'typesafe/jev-1.13', generationId: 'gen-3', inputTokens: undefined, outputTokens: undefined, observedCostUsd: 0.00002 })
         expect(reportProviderCost).not.toHaveBeenCalled()
     })
 

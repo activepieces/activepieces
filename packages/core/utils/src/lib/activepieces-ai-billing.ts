@@ -46,6 +46,7 @@ export const AiCallContext = z.object({
     agentId: z.string().optional(),
     flowId: z.string().optional(),
     flowRunId: z.string().optional(),
+    userId: z.string().optional(),
 })
 export type AiCallContext = z.infer<typeof AiCallContext>
 

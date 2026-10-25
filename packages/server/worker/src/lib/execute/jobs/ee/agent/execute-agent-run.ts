@@ -116,7 +116,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const { credentials } = config
             const { provider } = credentials
             const searchCredentials = config.searchCredentials ?? credentials
+            const searchProviderConfigId = isNil(config.searchCredentials) ? config.providerConfigId : config.searchProviderConfigId
             const imageCredentials = config.imageCredentials ?? credentials
+            const imageProviderConfigId = isNil(config.imageCredentials) ? config.providerConfigId : config.imageProviderConfigId
             runProvider = provider
             runModelId = config.modelId
             source = config.source
@@ -131,7 +133,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 projectId: projectId ?? null,
                 conversationId,
                 chat: { userId, turnIndex: config.previousUiMessages.length, tier: config.tier.id },
-                context: usageContextOf({ source, data }),
+                context: usageContextOf({ source, data, agentId: data.agentId ?? config.agentId }),
             }
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,
@@ -214,12 +216,12 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const readImage = async (fileId: string) => toResolvedAiFile({
                 stored: await ctx.apiClient.readAgentFile({ platformId, conversationId, fileId, ...spreadIfDefined('projectId', projectId ?? undefined) }),
             })
-            const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials: imageCredentials, billing, readImage })
+            const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials: imageCredentials, providerConfigId: imageProviderConfigId, billing, readImage })
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
                 ...(providerSearchActive ? agentWorkerTools.createProviderSearchTools({
-                    search: (request) => aiUtils.searchWeb({ ...request, credentials: searchCredentials, modelId: config.searchModelId ?? config.fastModelId, billing, turnAlreadyCharged: true }),
+                    search: (request) => aiUtils.searchWeb({ ...request, credentials: searchCredentials, modelId: config.searchModelId ?? config.fastModelId, billing, turnAlreadyCharged: true, ...spreadIfDefined('providerConfigId', searchProviderConfigId) }),
                     billedAtCost: searchCredentials.provider === AIProviderName.ACTIVEPIECES,
                     taintState,
                 }) : {}),
@@ -514,10 +516,10 @@ function answeredByOf({ answeredBy }: { answeredBy: TurnModel }): Pick<SaveAgent
     return { answeredBy: { provider: answeredBy.provider, modelId: answeredBy.modelId } }
 }
 
-function usageContextOf({ source, data }: { source: AgentRunSource, data: ExecuteAgentRunJobData }): AiCallContext {
+function usageContextOf({ source, data, agentId }: { source: AgentRunSource, data: ExecuteAgentRunJobData, agentId: string | undefined }): AiCallContext {
     const origin = AGENT_RUN_USAGE_ORIGIN[source]
     const environment = source === AgentRunSource.AGENT_BUILDER ? AiUsageEnvironment.TESTING : data.environment ?? AiUsageEnvironment.PRODUCTION
-    return { origin, environment, ...spreadIfDefined('agentId', data.agentId), ...spreadIfDefined('flowId', data.flowId), ...spreadIfDefined('flowRunId', data.flowRunId) }
+    return { origin, environment, ...spreadIfDefined('agentId', agentId), ...spreadIfDefined('flowId', data.flowId), ...spreadIfDefined('flowRunId', data.flowRunId) }
 }
 
 function turnModelsFor({ config, model, billing, metadata }: { config: AgentConfigResponse, model: LanguageModel, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): [TurnModel, ...TurnModel[]] {
@@ -603,10 +605,11 @@ function imagesInConversation(uiMessages: unknown[]): { fileId: string, descript
         .flatMap((part) => part.type === PersistedAgentPartType.IMAGE ? [{ fileId: part.fileId, description: part.prompt ?? part.title ?? 'image' }] : [])
 }
 
-function pickImageGenerator({ falApiKey, imageModelId, credentials, billing, readImage }: {
+function pickImageGenerator({ falApiKey, imageModelId, credentials, providerConfigId, billing, readImage }: {
     falApiKey: string | undefined
     imageModelId: string | undefined
     credentials: AiProviderCredentials
+    providerConfigId: string | undefined
     billing: ActivepiecesAiBilling
     readImage: ImageToolParams['readImage']
 }): Pick<ImageToolParams, 'generate' | 'billedAtCost' | 'readImage'> | undefined {
@@ -617,7 +620,7 @@ function pickImageGenerator({ falApiKey, imageModelId, credentials, billing, rea
         return undefined
     }
     return {
-        generate: agentWorkerTools.providerImageGenerator({ credentials, modelId: imageModelId, billing }),
+        generate: agentWorkerTools.providerImageGenerator({ credentials, providerConfigId, modelId: imageModelId, billing }),
         billedAtCost: credentials.provider === AIProviderName.ACTIVEPIECES,
         readImage,
     }

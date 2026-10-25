@@ -80,6 +80,14 @@ describe('aiUsageEvent.build', () => {
         expect(step.event.userId).toBeNull()
     })
 
+    it('takes the user from the call context for internal agent calls that carry no chat info', async () => {
+        const { event } = await aiUsageEvent.build(report({
+            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId: 'platform-1', projectId: 'project-1', conversationId: 'c-2', context: { origin: AiUsageOrigin.AGENT, environment: AiUsageEnvironment.PRODUCTION, agentId: 'agent-1', userId: 'user-9' } },
+            usage: { type: AiChargeBasis.USAGE_ONLY },
+        }))
+        expect(event).toMatchObject({ userId: 'user-9', agentId: 'agent-1' })
+    })
+
     it('drops the placeholder flow of an action run and never counts it as a run', async () => {
         const { event, runKey } = await aiUsageEvent.build(report({
             billing: { ...STEP_BILLING, flowRun: { flowId: DEFAULT_MCP_DATA.flowId, flowRunId: DEFAULT_MCP_DATA.flowRunId }, context: { origin: AiUsageOrigin.ACTION_RUN, environment: AiUsageEnvironment.PRODUCTION } },

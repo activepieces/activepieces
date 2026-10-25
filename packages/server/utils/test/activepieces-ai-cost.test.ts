@@ -196,6 +196,28 @@ describe('what a model call reports back for billing', () => {
         expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
+    it('keeps the tokens of a managed call whose cost never arrived, so usage can still estimate it', async () => {
+        activepiecesAiCost.drainUnbilledCalls()
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: { inputTokens: { total: 50 }, outputTokens: { total: 9 } }, response: { id: 'gen-tokens' } }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'anthropic/claude-sonnet-5',
+            billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
+        })
+
+        await generateWith(model)
+
+        expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.USAGE_ONLY, inputTokens: 50, outputTokens: 9 })
+        activepiecesAiCost.drainUnbilledCalls()
+    })
+
+    it('keeps tokens and reported cost on a fixed-credit report, without changing its credit', () => {
+        activepiecesAiCost.reportFixedCredits({ billing: BILLING, provider: AIProviderName.OPENAI, modelId: 'gpt-5', inputTokens: 12, outputTokens: 3, observedCostUsd: 0.0004 })
+
+        expect(reported[0].call).toMatchObject({ charge: AiChargeBasis.FIXED_CREDITS, credits: 1, inputTokens: 12, outputTokens: 3, observedCostUsd: 0.0004 })
+    })
+
     it('says which project and model lost the charge, so the page names something to chase', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({

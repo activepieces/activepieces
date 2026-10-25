@@ -51,7 +51,7 @@ function dimensionsOf(input: ReportAiUsageRequest): AiUsageDimensions {
         }
         case ActivepiecesAiConsumerSource.CHAT: {
             const origin = context?.origin ?? AiUsageOrigin.CHAT
-            const userId = PER_USER_ORIGINS.includes(origin) ? input.chat?.userId ?? billing.chat?.userId ?? null : null
+            const userId = PER_USER_ORIGINS.includes(origin) ? input.chat?.userId ?? billing.chat?.userId ?? context?.userId ?? null : null
             return { ...shared, origin, flowId: context?.flowId ?? null, agentId: context?.agentId ?? null, userId }
         }
     }

@@ -32,17 +32,24 @@ export function billedEmbeddingModel({ model, provider, providerConfigId, modelI
     })
 }
 
-export function reportFixedCredits({ billing, provider, providerConfigId, modelId, generationId }: ReportFixedCreditsParams): void {
+export function reportFixedCredits({ billing, provider, providerConfigId, modelId, generationId, ...tokens }: ReportFixedCreditsParams): void {
     report({
         context: { basis: AiChargeBasis.FIXED_CREDITS, billing, provider, providerConfigId, modelId },
-        call: createFixedCreditChargeInfo({ generationId }),
+        call: { ...createFixedCreditChargeInfo({ generationId }), ...tokens },
+    })
+}
+
+export function reportUsageOnly({ billing, provider, providerConfigId, modelId, generationId, ...tokens }: ReportFixedCreditsParams): void {
+    report({
+        context: { basis: AiChargeBasis.USAGE_ONLY, billing, provider, providerConfigId, modelId },
+        call: { charge: AiChargeBasis.USAGE_ONLY, generationId, ...tokens },
     })
 }
 
 export function reportProviderCost({ billing, provider, providerConfigId, modelId, costUsd, inputTokens, outputTokens, generationId }: ReportProviderCostParams): void {
     const context: BillingContext = { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, providerConfigId, modelId }
     if (isNil(costUsd)) {
-        report({ context, generationId, call: undefined })
+        report({ context, generationId, call: undefined, tokens: { inputTokens, outputTokens } })
         return
     }
     report({
@@ -65,7 +72,7 @@ function billingContextOf({ provider, providerConfigId, modelId, billing, charge
 async function billGenerate({ doGenerate, context }: BillGenerateParams): Promise<LanguageModelV4GenerateResult> {
     const result = await doGenerate()
     const generationId = result.response?.id
-    report({ context, generationId, call: createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers }) })
+    report({ context, generationId, call: createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers }), tokens: tokensOf(result.usage) })
     return result
 }
 
@@ -77,7 +84,7 @@ async function billStream({ doStream, context }: BillStreamParams): Promise<Lang
 async function billEmbed({ doEmbed, context }: BillEmbedParams): Promise<EmbeddingModelV4Result> {
     const result = await doEmbed()
     const generationId = parseOrUndefined(EmbeddingResponseBody, result.response?.body)?.id
-    report({ context, generationId, call: createEmbeddingBillingInfo({ context, result, generationId }) })
+    report({ context, generationId, call: createEmbeddingBillingInfo({ context, result, generationId }), tokens: { inputTokens: result.usage?.tokens } })
     return result
 }
 
@@ -95,6 +102,7 @@ function trackChunk({ chunk, controller, state, context }: TrackChunkParams): vo
         state.generationId = chunk.id ?? state.generationId
     }
     if (chunk.type === 'finish' && !state.reported) {
+        state.tokens = tokensOf(chunk.usage)
         const call = createBillingInfo({ context, generationId: state.generationId, providerMetadata: chunk.providerMetadata, usage: chunk.usage, headers: state.headers })
         if (!isNil(call)) {
             state.reported = true
@@ -117,19 +125,19 @@ function settleStream({ state, context }: SettleStreamParams): void {
         report({ context, generationId: state.generationId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId: state.generationId } })
         return
     }
-    recoverCostAndReport({ state, context }).catch(() => report({ context, generationId: state.generationId, call: undefined }))
+    recoverCostAndReport({ state, context }).catch(() => report({ context, generationId: state.generationId, call: undefined, tokens: state.tokens }))
 }
 
 async function recoverCostAndReport({ state, context }: SettleStreamParams): Promise<void> {
     const { generationId } = state
     const { apiKey } = context
     if (isNil(generationId) || isNil(apiKey)) {
-        report({ context, generationId, call: undefined })
+        report({ context, generationId, call: undefined, tokens: state.tokens })
         return
     }
     const generation = await lookupGeneration({ apiKey, generationId })
     if (isNil(generation)) {
-        report({ context, generationId, call: undefined })
+        report({ context, generationId, call: undefined, tokens: state.tokens })
         return
     }
     report({
@@ -212,10 +220,10 @@ function parseOrUndefined<T extends z.ZodType>(schema: T, value: unknown): z.inf
     return parsed.success ? parsed.data : undefined
 }
 
-function report({ context, call, generationId }: ReportParams): void {
+function report({ context, call, generationId, tokens }: ReportParams): void {
     if (isNil(call)) {
         recordUnbilledCall({ context, generationId, reason: isNil(generationId) ? UnbilledCallReason.NO_GENERATION_ID : UnbilledCallReason.PROVIDER_REPORTED_NO_COST })
-        reporter?.({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId } })
+        reporter?.({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId, ...tokens } })
         return
     }
     if (isNil(reporter)) {
@@ -275,6 +283,7 @@ export const activepiecesAiCost = {
     billedLanguageModel,
     billedEmbeddingModel,
     reportFixedCredits,
+    reportUsageOnly,
     reportProviderCost,
     openRouterCostOf,
 }
@@ -313,7 +322,7 @@ type BilledEmbeddingModelParams = {
     billing: ActivepiecesAiBilling | null | undefined
 }
 
-type ReportFixedCreditsParams = {
+type ReportFixedCreditsParams = AiCallTokens & {
     billing: ActivepiecesAiBilling
     provider: AIProviderName
     providerConfigId?: string
@@ -329,6 +338,7 @@ type StreamState = {
     reported: boolean
     generationId?: string
     headers: ResponseHeaders
+    tokens?: AiCallTokens
 }
 
 type BillGenerateParams = {
@@ -372,6 +382,7 @@ type ReportParams = {
     context: BillingContext
     call: ActivepiecesAiCall | undefined
     generationId?: string
+    tokens?: AiCallTokens
 }
 
 type CreateEmbeddingBillingInfoParams = {

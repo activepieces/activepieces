@@ -62,9 +62,8 @@ export async function getGeneratedImage({ credentials, providerConfigId, modelId
                 : prompt,
             providerOptions: { [resolvedProvider]: { ...stripLegacyImageField(advancedOptions) } } as Parameters<typeof generateImage>[0]['providerOptions'],
         })
-        if (!turnAlreadyCharged) {
-            activepiecesAiCost.reportFixedCredits({ billing, provider: credentials.provider, modelId, ...spreadIfDefined('providerConfigId', providerConfigId) })
-        }
+        const report = turnAlreadyCharged ? activepiecesAiCost.reportUsageOnly : activepiecesAiCost.reportFixedCredits
+        report({ billing, provider: credentials.provider, modelId, ...spreadIfDefined('providerConfigId', providerConfigId) })
         return image
     })
 }
