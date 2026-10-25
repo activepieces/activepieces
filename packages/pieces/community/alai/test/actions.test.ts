@@ -114,6 +114,15 @@ describe('generatePresentation', () => {
     expect(spy.mock.calls.length).toBeLessThanOrEqual(2 + 480 / 5);
   });
 
+  it('treats empty Image Style, Language and Slide Type as unset', async () => {
+    const spy = mockResponses({ bodies: [{ generation_id: 'g5' }, { generation_id: 'a7' }] });
+    await run({ action: generatePresentation, propsValue: { inputText: 'x', imageStyle: '', language: '' } });
+    expect(spy.mock.calls[0][0].body).not.toHaveProperty('image_options.style');
+    expect(spy.mock.calls[0][0].body).not.toHaveProperty('text_options');
+    await run({ action: addSlide, propsValue: { presentationId: 'p1', slide_context: 'S', slideType: '' } });
+    expect(spy.mock.calls[1][0].body).not.toHaveProperty('options.slide_type');
+  });
+
   it('treats an empty Slide Range and Max Wait Time 0 as unset', async () => {
     vi.useFakeTimers();
     const spy = vi.spyOn(httpClient, 'sendRequest');

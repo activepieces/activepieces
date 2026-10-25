@@ -185,7 +185,7 @@ export function buildGenerationBody({ input }: { input: GenerationInput }): { bo
     throw new Error('Input Text is required.');
   }
   const formats = alaiClient.exportFormats(input.exportFormats);
-  const style = input.imageStyle;
+  const style = input.imageStyle === '' ? undefined : input.imageStyle;
   if (style !== undefined && style !== null && !IMAGE_STYLES.includes(style)) {
     throw new Error(`Image Style must be one of ${IMAGE_STYLES.join(', ')}.`);
   }
@@ -197,7 +197,7 @@ export function buildGenerationBody({ input }: { input: GenerationInput }): { bo
   if (slideRange !== undefined && slideRange !== null && !SLIDE_RANGES.includes(String(slideRange))) {
     throw new Error(`Slide Range must be one of ${SLIDE_RANGES.join(', ')}.`);
   }
-  const language = input.language;
+  const language = input.language === '' ? undefined : input.language;
   if (language !== undefined && language !== null && !LANGUAGES.includes(language)) {
     throw new Error(`Language "${language}" is not supported by Alai.`);
   }

@@ -107,7 +107,7 @@ export function buildSlideRequest({ input }: { input: SlideInput }): { presentat
   const rawOrder = typeof input.slide_order === 'string' ? input.slide_order.trim() : input.slide_order;
   const slideOrder = rawOrder === 'end' ? undefined : optionalInt({ value: rawOrder, label: 'Slide Position', min: 0 });
   const variants = optionalInt({ value: input.variantsPerSlide, label: 'Variants', min: 1, max: 4 });
-  const slideType = input.slideType;
+  const slideType = input.slideType === '' ? undefined : input.slideType;
   if (slideType !== undefined && slideType !== null && slideType !== 'classic' && slideType !== 'creative') {
     throw new Error('Slide Type must be classic or creative.');
   }
