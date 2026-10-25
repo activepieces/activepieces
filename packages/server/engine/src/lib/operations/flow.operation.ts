@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
+import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, InvalidSeededStepsError, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
@@ -175,7 +175,7 @@ async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, consta
     if (input.executionType === ExecutionType.BEGIN) {
         if (!isNil(input.entryStepName)) {
             if (!isSeededSteps(input.triggerPayload)) {
-                throw new EngineGenericError('InvalidSeededStepsError', `A run entered at step ${input.entryStepName} needs the steps it starts after as its payload`)
+                throw new InvalidSeededStepsError(input.entryStepName)
             }
             return restoreSteps({ steps: input.triggerPayload, flowContext, keepFailedSteps: true })
         }

@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { RespondResponse } from '../execution/flow-execution'
+import { StepOutputStatus } from '../execution/step-output'
 
 export function shouldReleaseBarrier({ policy, sealed, counts }: ShouldReleaseBarrierParams): boolean {
     if (policy?.releaseOnFirstFailure === true && UNFAVOURABLE_SIGNAL_STATUSES.some((status) => countOf({ counts, status }) > 0)) {
@@ -47,7 +48,7 @@ export const BarrierFanOutSource = z.object({
     batchStepName: z.string(),
     batchSize: z.number().int().positive(),
     items: z.array(z.unknown()),
-    seedSteps: z.record(z.string(), z.unknown()),
+    seedSteps: z.record(z.string(), z.looseObject({ type: z.string(), status: z.enum(StepOutputStatus) })),
 })
 export type BarrierFanOutSource = z.infer<typeof BarrierFanOutSource>
 

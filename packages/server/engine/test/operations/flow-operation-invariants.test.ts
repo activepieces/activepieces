@@ -512,6 +512,21 @@ describe('flow operation invariants', () => {
             expect(dayjs(started[0][0].startTime).isValid()).toBe(true)
         })
 
+        it('fails a run entered at a step with malformed seeded steps instead of throwing for a retry', async () => {
+            mockSendUpdate.mockClear()
+
+            const response = await flowOperation.execute(makeBeginOperation({
+                flowVersion: makeFlowVersionWithContainerBody(),
+                entryStepName: 'step_2',
+                triggerPayload: { type: 'inline', value: { step_1: 'not a step output' } },
+            }))
+
+            expect(response.status).toBe(EngineResponseStatus.OK)
+            const finalCtx = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0].flowExecutorContext
+            expect(finalCtx.verdict.status).toBe(FlowRunStatus.FAILED)
+            expect(finalCtx.verdict.failedStep.message).toEqual(expect.stringContaining('needs the steps it starts after'))
+        })
+
         it('does not re-report a start time when a run entered at a step resumes', async () => {
             mockSendUpdate.mockClear()
             mockDownload.mockReset()
