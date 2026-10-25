@@ -444,3 +444,44 @@ describe('custom API call', () => {
     expect(JSON.stringify(error instanceof Error ? error.message : error)).not.toContain('doc-bytes');
   });
 });
+
+describe('Predict Document (Legacy v1)', () => {
+  async function runLegacy(props: Record<string, unknown>) {
+    const { mindeePredictDocumentAction } = await import('../src/lib/actions/predict-document');
+    return Reflect.apply(mindeePredictDocumentAction.run, mindeePredictDocumentAction, [{ auth: { secret_text: 'v1_key' }, propsValue: { account_name: 'mindee', api_name: 'invoices/v4', ...props } }]);
+  }
+
+  it('posts an uploaded file as multipart to the v1 predict endpoint with a Token header', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => json({ status: 201, body: { document: { id: 'd1' } } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const output = await runLegacy({ upload: { filename: 'a.pdf', extension: 'pdf', data: Buffer.from('%PDF-1.4') } });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe('https://api.mindee.net/v1/products/mindee/invoices/v4/predict');
+    expect(new Headers(init.headers).get('authorization')).toBe('Token v1_key');
+    expect(init.body).toBeInstanceOf(FormData);
+    expect(init.redirect).toBe('manual');
+    expect(output).toEqual({ document: { id: 'd1' } });
+  });
+
+  it('sends a URL and a Base64 string as JSON documents', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => json({ status: 201, body: {} }));
+    vi.stubGlobal('fetch', fetchMock);
+    await runLegacy({ file: 'https://example.com/a.pdf' });
+    await runLegacy({ file: 'data:application/pdf;base64,JVBERi0xLjQKJcfsj6IKNSAwIG9iago=' });
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1].body))).toEqual({ document: 'https://example.com/a.pdf' });
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1].body))).toEqual({ document: 'JVBERi0xLjQKJcfsj6IKNSAwIG9iago=' });
+  });
+
+  it('rejects a local file path and an empty input before any request', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(runLegacy({ file: '/etc/passwd' })).rejects.toThrow('Local file paths are not supported');
+    await expect(runLegacy({})).rejects.toThrow('Provide a File');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('explains a v2 key used against the legacy API', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json({ status: 401, body: { api_request: { error: { code: 'Unauthorized', details: 'The token provided is for the v2 API.', message: 'Authorization required' } } } })));
+    await expect(runLegacy({ file: 'https://example.com/a.pdf' })).rejects.toThrow(/legacy v1 API/);
+  });
+});
