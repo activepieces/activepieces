@@ -542,7 +542,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 })
 
 
-async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string): Promise<void> {
+export async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platformId: string): Promise<void> {
     await distributedLock(log).runExclusive({
         key: `runs_metadata_${flowRun.id}`,
         timeoutInSeconds: 30,
@@ -673,7 +673,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
     const logsFileId = params.flowRun.logsFileId ?? apId()
 
     let jobPayload: JobPayload = { type: 'inline', value: null }
-    if (!isNil(params.payload) && isNil(params.workerHandlerId)) {
+    if (!isNil(params.payload) && isNil(params.workerHandlerId) && !(params.preferInlinePayload ?? false)) {
         jobPayload = await payloadOffloader.offloadPayload(log, params.payload, params.flowRun.projectId, params.platformId)
     }
     else if (!isNil(params.payload)) {
@@ -708,6 +708,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             ...commonJobData,
             executionType: ExecutionType.BEGIN,
             executeTrigger: params.executeTrigger,
+            entryStepName: params.entryStepName,
         }
     const aParentIsBlockedOnThisRun = params.flowRun.failParentOnFailure && !isNil(params.flowRun.parentRunId)
     await jobQueue(log).add({
@@ -900,10 +901,11 @@ type AddToQueueParamsCommon = {
     streamStepProgress: StreamStepProgress
     sampleData?: Record<string, unknown>
     jobId?: string
+    preferInlinePayload?: boolean
 }
 
 export type AddToQueueParams = AddToQueueParamsCommon & (
-    | { executionType: ExecutionType.BEGIN, executeTrigger: boolean }
+    | { executionType: ExecutionType.BEGIN, executeTrigger: boolean, entryStepName?: string }
     | { executionType: ExecutionType.RESUME, resumeReason: ResumeReason }
 )
 
