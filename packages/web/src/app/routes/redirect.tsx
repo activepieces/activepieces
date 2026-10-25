@@ -74,7 +74,7 @@ const RedirectPage: React.FC = React.memo(() => {
         {
           code: code,
         },
-        '*',
+        window.location.origin,
       );
     }
     if (!window.opener && !code) {
