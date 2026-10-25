@@ -825,7 +825,9 @@ const engineValidateAuth = async (
         throw new ActivepiecesError({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             params: {
-                message: 'Failed to run engine validate auth',
+                message: engineResponse.status === EngineResponseStatus.TIMEOUT
+                    ? 'Validation timed out: the credentials check did not finish in time. The service may be slow or unreachable, try again later.'
+                    : 'Failed to run engine validate auth',
                 context: engineResponse,
             },
         })
