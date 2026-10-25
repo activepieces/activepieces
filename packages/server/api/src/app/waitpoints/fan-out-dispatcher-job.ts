@@ -1,11 +1,12 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
+import { FlowRun } from '@activepieces/shared'
 import { UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { transaction } from '../core/db/transaction'
 import { distributedStore } from '../database/redis-connections'
-import { FlowRunWithDispatchIndex } from '../flows/flow-run/flow-run-entity'
-import { ChildDispatchTarget, flowRunService } from '../flows/flow-run/flow-run-service'
+import { ChildDispatchTarget, childRunDispatchService } from '../flows/flow-run/child-run-dispatch-service'
+
 import { shouldBlockRunOnCredits } from '../platform/billing-provider'
 import { barrierQueue } from './barrier-queue'
 import { BarrierFanOutPayload, BarrierJobData, barrierSourceKey } from './barrier-queue-factory'
@@ -31,7 +32,7 @@ export async function handleFanOutDispatch({ data, log }: JobParams): Promise<vo
         return
     }
 
-    const target = await flowRunService(log).prepareChildDispatch({
+    const target = await childRunDispatchService(log).prepareChildDispatch({
         projectId: data.projectId,
         parentRunId: barrier.flowRunId,
         entryStepName: source.entryStepName,
@@ -88,7 +89,7 @@ async function dispatchChunks({ data, source, target, log }: DispatchChunksParam
             if (!claimResult.barrierOpen) {
                 return null
             }
-            const childRuns = await flowRunService(log).createChildRuns({
+            const childRuns = await childRunDispatchService(log).createChildRuns({
                 target,
                 parentWaitpointId: data.barrierId,
                 children: claimResult.claims.map((claim) => ({ id: claim.childRunId, dispatchIndex: claim.sequence })),
@@ -131,20 +132,20 @@ async function enqueueChild({ data, claim, childRun, seedSteps, target, log }: E
         if (!barrierOpen) {
             return { outcome: 'barrier-closed' }
         }
-        const { error } = await tryCatch(() => flowRunService(log).enqueueChildRun({ target, childRun, seedSteps }))
+        const { error } = await tryCatch(() => childRunDispatchService(log).enqueueChildRun({ target, childRun, seedSteps }))
         if (isNil(error)) {
             return { outcome: 'enqueued' }
         }
-        await flowRunService(log).deleteChildRun({ id: childRun.id, projectId: data.projectId, entityManager })
+        await childRunDispatchService(log).deleteChildRun({ id: childRun.id, projectId: data.projectId, entityManager })
         await barrierService(log).releaseClaim({ signalId: claim.signalId, refId: childRun.id, projectId: data.projectId, entityManager })
         return { outcome: 'failed', error }
     })
     switch (attempt.outcome) {
         case 'enqueued':
-            await flowRunService(log).reportChildRunStarted({ target, childRun })
+            await childRunDispatchService(log).reportChildRunStarted({ target, childRun })
             return 'enqueued'
         case 'barrier-closed':
-            await flowRunService(log).cancelUnstartedChildRun({ target, childRun })
+            await childRunDispatchService(log).cancelUnstartedChildRun({ target, childRun })
             return 'barrier-closed'
         case 'failed':
             await settleIfDispatchGaveUp({ data, log })
@@ -210,13 +211,13 @@ type DispatchChunksParams = {
 
 type EnqueueChunkParams = DispatchChunksParams & {
     claims: SignalClaim[]
-    childRuns: FlowRunWithDispatchIndex[]
+    childRuns: FlowRun[]
 }
 
 type EnqueueChildParams = {
     data: BarrierJobData
     claim: SignalClaim
-    childRun: FlowRunWithDispatchIndex
+    childRun: FlowRun
     seedSteps: Record<string, unknown>
     target: ChildDispatchTarget
     log: FastifyBaseLogger

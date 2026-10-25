@@ -8,7 +8,7 @@ import { StatusCodes } from 'http-status-codes'
 import { transaction } from '../../../../../src/app/core/db/transaction'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { distributedStore, redisConnections } from '../../../../../src/app/database/redis-connections'
-import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
+import { childRunDispatchService } from '../../../../../src/app/flows/flow-run/child-run-dispatch-service'
 import { systemJobIds } from '../../../../../src/app/helper/system-jobs/common'
 import { systemJobsSchedule } from '../../../../../src/app/helper/system-jobs/system-job'
 import * as billingProviderModule from '../../../../../src/app/platform/billing-provider'
@@ -245,13 +245,13 @@ async function dispatch(barrierId: string) {
 }
 
 async function claimChunk({ barrierId, flowRunId, limit }: { barrierId: string, flowRunId: string, limit: number }) {
-    const target = await flowRunService(app.log).prepareChildDispatch({ projectId: ctx.project.id, parentRunId: flowRunId, entryStepName: FAN_OUT_ENTRY_STEP })
+    const target = await childRunDispatchService(app.log).prepareChildDispatch({ projectId: ctx.project.id, parentRunId: flowRunId, entryStepName: FAN_OUT_ENTRY_STEP })
     return transaction(async (entityManager) => {
         const claimResult = await barrierService(app.log).claimNextSignals({ barrierId, projectId: ctx.project.id, afterSequence: -1, limit, entityManager })
         if (!claimResult.barrierOpen) {
             return null
         }
-        const childRuns = await flowRunService(app.log).createChildRuns({
+        const childRuns = await childRunDispatchService(app.log).createChildRuns({
             target,
             parentWaitpointId: barrierId,
             children: claimResult.claims.map((claim) => ({ id: claim.childRunId, dispatchIndex: claim.sequence })),
@@ -1410,6 +1410,21 @@ describe('fan-out dispatch', () => {
         expect(await listChildren(barrier.id)).toHaveLength(beforeCancel)
     })
 
+    it('deletes the stored source when a failed run discards its barrier, so a dispatch after it stops', async () => {
+        const { flowRun } = await createFanOutParentRun()
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
+        expect(await distributedStore.exists(barrierSourceKey(barrier.id))).toBe(true)
+
+        await waitpointService(app.log).deleteForFinishedRun({
+            flowRun: { ...flowRun, status: FlowRunStatus.FAILED, failedStep: { name: 'other_step', displayName: 'Other step', message: 'boom' } },
+        })
+
+        expect(await distributedStore.exists(barrierSourceKey(barrier.id))).toBe(false)
+        const beforeDispatch = (await listChildren(barrier.id)).length
+        await expect(dispatch(barrier.id)).resolves.toBeUndefined()
+        expect(await listChildren(barrier.id)).toHaveLength(beforeDispatch)
+    })
+
     it('claims nothing once the barrier has released, so a timeout mid-dispatch adds no children', async () => {
         const { flowRun } = await createFanOutParentRun(FlowRunStatus.RUNNING)
         await withBarrierQueuePaused(async () => {
@@ -1473,7 +1488,7 @@ describe('fan-out dispatch', () => {
     })
 
     it('refuses to resolve a dispatch target for a parent run outside the project', async () => {
-        await expect(flowRunService(app.log).prepareChildDispatch({
+        await expect(childRunDispatchService(app.log).prepareChildDispatch({
             projectId: ctx.project.id,
             parentRunId: apId(),
             entryStepName: FAN_OUT_ENTRY_STEP,
@@ -1483,7 +1498,7 @@ describe('fan-out dispatch', () => {
     it('refuses to resolve a dispatch target for a step the flow version does not have', async () => {
         const { flowRun } = await createFanOutParentRun()
 
-        await expect(flowRunService(app.log).prepareChildDispatch({
+        await expect(childRunDispatchService(app.log).prepareChildDispatch({
             projectId: ctx.project.id,
             parentRunId: flowRun.id,
             entryStepName: 'step_does_not_exist',
@@ -1493,7 +1508,7 @@ describe('fan-out dispatch', () => {
     it('refuses to start a child run at the trigger, because the engine enters a run only at an action', async () => {
         const { flowRun } = await createFanOutParentRun()
 
-        await expect(flowRunService(app.log).prepareChildDispatch({
+        await expect(childRunDispatchService(app.log).prepareChildDispatch({
             projectId: ctx.project.id,
             parentRunId: flowRun.id,
             entryStepName: 'trigger',
