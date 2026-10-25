@@ -84,6 +84,7 @@ const PublishFlowReminderWidget = () => {
         runDiscard({
           flow,
           savePendingEdits,
+          refreshDraftAfterFailedSave,
           overWriteDraftWithVersion,
           fetchFlow: flowsApi.get,
           setFlow,

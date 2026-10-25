@@ -8,6 +8,7 @@ import {
 export type RunDiscardDeps = {
   flow: { id: string; publishedVersionId?: string | null };
   savePendingEdits: () => Promise<void>;
+  refreshDraftAfterFailedSave: () => Promise<void>;
   overWriteDraftWithVersion: (params: {
     flowId: string;
     versionId: string;
@@ -25,7 +26,10 @@ export async function runDiscard(deps: RunDiscardDeps): Promise<void> {
   if (!flow.publishedVersionId) {
     return;
   }
-  const { error: saveError } = await tryCatch(deps.savePendingEdits);
+  const { error: saveError } = await tryCatch(async () => {
+    await deps.savePendingEdits();
+    await deps.refreshDraftAfterFailedSave();
+  });
   if (!isNil(saveError)) {
     return;
   }

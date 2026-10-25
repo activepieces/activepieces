@@ -44,6 +44,7 @@ const FlowApprovalBanner = () => {
     setVersion,
     setRightSidebar,
     savePendingEdits,
+    refreshDraftAfterFailedSave,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
@@ -51,6 +52,7 @@ const FlowApprovalBanner = () => {
     state.setVersion,
     state.setRightSidebar,
     state.savePendingEdits,
+    state.refreshDraftAfterFailedSave,
   ]);
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
@@ -66,7 +68,10 @@ const FlowApprovalBanner = () => {
   const { mutateAsync: withdraw, isPending: isWithdrawing } =
     flowApprovalsHooks.useWithdraw();
   const handleWithdraw = async (requestId: string) => {
-    const { error: saveError } = await tryCatch(savePendingEdits);
+    const { error: saveError } = await tryCatch(async () => {
+      await savePendingEdits();
+      await refreshDraftAfterFailedSave();
+    });
     if (!isNil(saveError)) {
       return;
     }

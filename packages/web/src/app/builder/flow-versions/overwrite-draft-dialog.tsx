@@ -27,12 +27,13 @@ const OverwriteDraftDialog = ({
   versionNumber,
 }: OverwriteDraftDialogProps) => {
   const { checkAccess } = useAuthorization();
-  const [setVersion, setRightSidebar, flow, savePendingEdits] =
+  const [setVersion, setRightSidebar, flow, savePendingEdits, refreshDraftAfterFailedSave] =
     useBuilderStateContext((state) => [
       state.setVersion,
       state.setRightSidebar,
       state.flow,
       state.savePendingEdits,
+      state.refreshDraftAfterFailedSave,
     ]);
   const [open, setOpen] = useState(false);
   const [isSavingPendingEdits, setIsSavingPendingEdits] = useState(false);
@@ -76,7 +77,10 @@ const OverwriteDraftDialog = ({
             loading={isSavingPendingEdits || isOverwritingDraft}
             onClick={async () => {
               setIsSavingPendingEdits(true);
-              const { error: saveError } = await tryCatch(savePendingEdits);
+              const { error: saveError } = await tryCatch(async () => {
+                await savePendingEdits();
+                await refreshDraftAfterFailedSave();
+              });
               setIsSavingPendingEdits(false);
               if (!isNil(saveError)) {
                 return;
