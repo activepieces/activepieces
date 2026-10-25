@@ -88,10 +88,15 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         paidToolsAffordable = isNil(left) || left >= CHAT_CREDITS_PER_TOOL_CALL
         return creditsExhausted
     }
+    const maxTurnTokens = runawayTokenCeiling(models[0].provider)
+    let totalInputTokens = 0
+    let totalOutputTokens = 0
+    const tokenBudgetSpent = (): boolean => totalInputTokens + totalOutputTokens >= maxTurnTokens
     const loopStopCondition = [
         ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
         ...(isNil(stepCeiling) ? [] : [isStepCount(stepCeiling)]),
         creditsRanOut,
+        tokenBudgetSpent,
     ]
     const reroutedCallIds = new Set<string>()
     const skillSurface = isNil(skills) ? null : buildSkillSurface({
@@ -108,7 +113,6 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     })
     const turnSystemPrompt = systemPrompt + (skillSurface?.catalogNote ?? '')
     const guardedTools = wrapToolsWithFailureGuard({ tools: skillSurface?.tools ?? tools, log })
-    const maxTurnTokens = runawayTokenCeiling(models[0].provider)
     const runsATier = models.some((candidate) => !isNil(candidate.key))
     const peers = [...models, ...(isNil(fastModel) ? [] : [fastModel])]
     const ranked = await Promise.all(models.map((turnModel) => withOutputBudget({ turnModel, peers })))
@@ -132,8 +136,6 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     let streamRetries = 0
     let truncatedAfterRetries = false
     let usage: LanguageModelUsage | undefined
-    let totalInputTokens = 0
-    let totalOutputTokens = 0
     let lastFinishReason = ''
     let budgetExceeded = false
 
@@ -330,7 +332,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             break
         }
 
-        if (totalInputTokens + totalOutputTokens >= maxTurnTokens) {
+        if (tokenBudgetSpent()) {
             accumulatedResponseMessages.push(...stepMessages)
             budgetExceeded = true
             log.error({ totalInputTokens, totalOutputTokens, maxTurnTokens }, 'Chat turn hit per-turn token budget — stopping to prevent runaway cost')

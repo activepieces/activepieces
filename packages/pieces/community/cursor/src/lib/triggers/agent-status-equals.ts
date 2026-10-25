@@ -125,23 +125,21 @@ export const agentStatusEqualsTrigger = createTrigger({
       await store.put(storeKey, null);
     }
 
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
+    const { store, propsValue } = context;
     const { agentId } = propsValue;
     const storeKey = `agent_status_${agentId}`;
 
     await store.delete(storeKey);
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
-    const { store, auth, propsValue, files } = context;
-    return await pollingHelper.test(polling, { store, auth, propsValue, files });
+    return await pollingHelper.test(polling, context);
   },
   async run(context) {
-    const { store, auth, propsValue, files } = context;
-    return await pollingHelper.poll(polling, { store, auth, propsValue, files });
+    return await pollingHelper.poll(polling, context);
   },
 });
 

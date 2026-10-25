@@ -88,6 +88,10 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Settings": "Settings",
+  "Message": "Message",
+  "Extract from": "Extract from",
+  "Data to extract": "Data to extract",
   "Request": "Request",
   "Data to send": "Data to send"
 }

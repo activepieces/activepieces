@@ -56,6 +56,23 @@ describe('swatches in styles.css', () => {
   });
 });
 
+describe('dark text greys in styles.css', () => {
+  it('read at 4.5:1 on the page and panels, stepping 9 < 10 < 11', () => {
+    const [ground1, ground2, ...text] = [1, 2, 9, 10, 11].map((step) =>
+      Number(THEMES.dark.match(new RegExp(`--gray-${step}: oklch\\(([\\d.]+)% 0 0\\)`))?.[1]),
+    );
+    const luminance = (lightness: number) => (lightness / 100) ** 3 + 0.05;
+    const failures = text.flatMap((lightness) =>
+      [ground1, ground2]
+        .filter((ground) => luminance(lightness) / luminance(ground) < 4.5)
+        .map((ground) => `${lightness}% on ${ground}%`),
+    );
+    expect([ground1, ground2, ...text].every(Number.isFinite)).toBe(true);
+    expect(failures).toEqual([]);
+    expect(text[0] < text[1] && text[1] < text[2]).toBe(true);
+  });
+});
+
 function stepValue({
   block,
   scale,
