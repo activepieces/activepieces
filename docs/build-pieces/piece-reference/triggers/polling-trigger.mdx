@@ -107,6 +107,6 @@ When an enabled flow is published again and its polling trigger is unchanged (sa
 
 Everything else runs the hooks as normal:
 
-- **Upgrading the piece version** with the same inputs runs the old version's `onDisable` and the new version's `onEnable`, with `context.isRepublish` set to `true` in both. Use it to keep your checkpoint when your stored state is still valid.
+- **Upgrading the piece version** with the same inputs skips the old version's `onDisable` and runs the new version's `onEnable` with `context.isRepublish` set to `true`. Use it to keep your checkpoint when your stored state is still valid. Don't rely on `onDisable` to clean up anything outside the store, since it doesn't run on an upgrade.
 - **Changing the trigger or its inputs** runs both hooks without `isRepublish`, so the trigger starts fresh.
 - **Turning the flow off and on** also starts fresh. This is how to reset a polling trigger whose stored state has gone bad, such as an expired sync token.
