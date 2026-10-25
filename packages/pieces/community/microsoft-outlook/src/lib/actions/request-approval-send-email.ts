@@ -16,6 +16,22 @@ export const requestApprovalInMail = createAction({
   audience: 'both',
   aiMetadata: { description: 'Sends an email with a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with the decision. Use this as a human-in-the-loop approval gate before proceeding. Not idempotent: each call sends a new email and creates a new pending waitpoint.', idempotent: false },
   outputSchema: requestApprovalActionOutputSchema,
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Send to',
+      icon: 'send',
+      props: ['recipients'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['subject', 'body'],
+    },
+  ],
   props: {
     recipients: Property.ShortText({
       displayName: 'To',

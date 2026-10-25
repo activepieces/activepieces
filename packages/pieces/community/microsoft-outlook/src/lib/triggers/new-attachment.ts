@@ -34,6 +34,22 @@ export const newAttachmentTrigger = createTrigger({
 			'Fires once per attachment when a new email carrying one or more file attachments arrives, optionally scoped to a folder, sender, attachment-name, or file-extension filter. Each fire represents a single attachment from a newly received message.',
 	},
 	outputSchema: newAttachmentTriggerOutputSchema,
+	propertyGroups: [
+		{
+			key: 'folder',
+			display: 'section',
+			label: 'Folder to Watch',
+			icon: 'inbox',
+			props: ['folderId'],
+		},
+		{
+			key: 'filters',
+			display: 'section',
+			label: 'Filters',
+			icon: 'filter',
+			props: ['sender', 'attachmentNameFilter', 'fileExtension'],
+		},
+	],
 	props: {
 		folderId: mailFolderIdDropdown({
 			displayName: 'Folder',
@@ -51,6 +67,7 @@ export const newAttachmentTrigger = createTrigger({
 			description: 'Only attachments whose file name contains this text.',
 			placeholder: 'invoice',
 			required: false,
+			width: 'half',
 		}),
 		fileExtension: Property.ShortText({
 			displayName: 'File Extension',
@@ -58,6 +75,7 @@ export const newAttachmentTrigger = createTrigger({
 				'Only attachments with this extension. Separate several with commas, e.g. pdf, docx.',
 			placeholder: 'pdf',
 			required: false,
+			width: 'half',
 		}),
 	},
 	sampleData: {},

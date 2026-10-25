@@ -294,5 +294,18 @@
   "Leave empty to watch the whole mailbox, including sent mail.": "Leave empty to watch the whole mailbox, including sent mail.",
   "Only emails whose sender address contains this text.": "Only emails whose sender address contains this text.",
   "Only attachments whose file name contains this text.": "Only attachments whose file name contains this text.",
-  "Only attachments with this extension. Separate several with commas, e.g. pdf, docx.": "Only attachments with this extension. Separate several with commas, e.g. pdf, docx."
+  "Only attachments with this extension. Separate several with commas, e.g. pdf, docx.": "Only attachments with this extension. Separate several with commas, e.g. pdf, docx.",
+  "Turn on for /$value downloads, like attachment files or raw emails.": "Turn on for /$value downloads, like attachment files or raw emails.",
+  "Email to Tag": "Email to Tag",
+  "Email to Untag": "Email to Untag",
+  "Send to": "Send to",
+  "Message": "Message",
+  "Email to Move": "Email to Move",
+  "Move to": "Move to",
+  "Email to Forward": "Email to Forward",
+  "Forward to": "Forward to",
+  "Search": "Search",
+  "Limits": "Limits",
+  "Filters": "Filters",
+  "Folder to Watch": "Folder to Watch"
 }
