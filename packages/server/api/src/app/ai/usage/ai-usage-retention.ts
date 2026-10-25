@@ -1,18 +1,6 @@
 import { wideEvent } from '@activepieces/server-utils'
 import { databaseConnection } from '../../database/database-connection'
 
-export const aiUsageRetention = {
-    async run(): Promise<void> {
-        const startedAt = Date.now()
-        const now = Date.now()
-        const fiveMinuteDeleted = await deleteOlderThan({ table: 'ai_usage_5m', timeColumn: 'bucket', cutoff: new Date(now - FIVE_MINUTE_RETENTION_MS).toISOString(), startedAt, deleted: 0 })
-        const dailyCutoff = new Date(now)
-        dailyCutoff.setUTCMonth(dailyCutoff.getUTCMonth() - DAILY_RETENTION_MONTHS)
-        const dailyDeleted = await deleteOlderThan({ table: 'ai_usage_daily', timeColumn: 'day', cutoff: dailyCutoff.toISOString().slice(0, 10), startedAt, deleted: 0 })
-        wideEvent.set({ aiUsageRetention: { fiveMinuteDeleted, dailyDeleted, durationMs: Date.now() - startedAt } })
-    },
-}
-
 async function deleteOlderThan({ table, timeColumn, cutoff, startedAt, deleted }: DeleteParams): Promise<number> {
     if (Date.now() - startedAt > RUN_BUDGET_MS) {
         return deleted
@@ -34,6 +22,18 @@ const FIVE_MINUTE_RETENTION_MS = 3 * 24 * 60 * 60 * 1000
 const DAILY_RETENTION_MONTHS = 13
 const DELETE_BATCH_SIZE = 10_000
 const RUN_BUDGET_MS = 60_000
+
+export const aiUsageRetention = {
+    async run(): Promise<void> {
+        const startedAt = Date.now()
+        const now = Date.now()
+        const fiveMinuteDeleted = await deleteOlderThan({ table: 'ai_usage_5m', timeColumn: 'bucket', cutoff: new Date(now - FIVE_MINUTE_RETENTION_MS).toISOString(), startedAt, deleted: 0 })
+        const dailyCutoff = new Date(now)
+        dailyCutoff.setUTCMonth(dailyCutoff.getUTCMonth() - DAILY_RETENTION_MONTHS)
+        const dailyDeleted = await deleteOlderThan({ table: 'ai_usage_daily', timeColumn: 'day', cutoff: dailyCutoff.toISOString().slice(0, 10), startedAt, deleted: 0 })
+        wideEvent.set({ aiUsageRetention: { fiveMinuteDeleted, dailyDeleted, durationMs: Date.now() - startedAt } })
+    },
+}
 
 type DeleteParams = {
     table: 'ai_usage_5m' | 'ai_usage_daily'

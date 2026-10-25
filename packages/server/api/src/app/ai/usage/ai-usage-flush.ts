@@ -11,23 +11,6 @@ import { AiUsageEvent } from './ai-usage-event'
 import { AI_USAGE_STREAM_KEY } from './ai-usage-ingest'
 import { streamId, StreamId } from './stream-id'
 
-export const aiUsageFlush = (log: FastifyBaseLogger) => ({
-    async run(): Promise<void> {
-        const { error } = await tryCatch(() => flushUntilDeadline(log))
-        const redis = await redisConnections.useExisting()
-        if (isNil(error)) {
-            await redis.del(FAILURE_COUNT_KEY)
-            return
-        }
-        const failures = await redis.incr(FAILURE_COUNT_KEY)
-        await redis.expire(FAILURE_COUNT_KEY, FAILURE_COUNT_TTL_SECONDS)
-        if (failures >= FAILURES_BEFORE_PAGE) {
-            await page({ log, code: 'AI_USAGE_FLUSH_FAILING', message: `AI_USAGE_FLUSH failed ${failures} times in a row, so AI usage is not reaching Postgres.`, params: { failures } })
-        }
-        throw error
-    },
-})
-
 async function flushUntilDeadline(log: FastifyBaseLogger): Promise<void> {
     const startedAt = Date.now()
     await ensureCursor()
@@ -276,6 +259,23 @@ const COUNTER_COLUMNS: { name: CounterColumn, type: string }[] = [
 const CURSOR_CAS_SQL = `WITH moved AS (
     UPDATE "ai_usage_ingest_cursor" SET "lastId" = $1, "lastFlushedAt" = now() WHERE "shard" = 0 AND "lastId" = $2 RETURNING 1
 ) SELECT count(*)::int AS "updated" FROM moved`
+
+export const aiUsageFlush = (log: FastifyBaseLogger) => ({
+    async run(): Promise<void> {
+        const { error } = await tryCatch(() => flushUntilDeadline(log))
+        const redis = await redisConnections.useExisting()
+        if (isNil(error)) {
+            await redis.del(FAILURE_COUNT_KEY)
+            return
+        }
+        const failures = await redis.incr(FAILURE_COUNT_KEY)
+        await redis.expire(FAILURE_COUNT_KEY, FAILURE_COUNT_TTL_SECONDS)
+        if (failures >= FAILURES_BEFORE_PAGE) {
+            await page({ log, code: 'AI_USAGE_FLUSH_FAILING', message: `AI_USAGE_FLUSH failed ${failures} times in a row, so AI usage is not reaching Postgres.`, params: { failures } })
+        }
+        throw error
+    },
+})
 
 type CounterColumn = 'calls' | 'runs' | typeof SUMMED_FIELDS[number]
 

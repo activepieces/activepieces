@@ -7,19 +7,6 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { aiUsageEvent } from './ai-usage-event'
 
-export const aiUsageIngest = (log: FastifyBaseLogger) => ({
-    async ingest(input: ReportAiUsageRequest): Promise<void> {
-        const { error } = await tryCatch(async () => {
-            const { event, runKey } = await aiUsageEvent.build(input)
-            const streamLength = await withTimeout(appendOnce({ idempotencyKey: input.idempotencyKey, runKey, payload: JSON.stringify(event) }))
-            await pageIfBacklogged({ streamLength, log })
-        })
-        if (!isNil(error)) {
-            log.warn({ event: 'ai-usage.ingest-failed', error, provider: input.provider, model: { id: input.modelId } }, '[aiUsageIngest] Could not record this AI call for usage analytics')
-        }
-    },
-})
-
 async function appendOnce({ idempotencyKey, runKey, payload }: AppendParams): Promise<number> {
     const redis = await redisConnections.useExisting()
     const result = await redis.eval(
@@ -90,6 +77,19 @@ const STREAM_TRIMMED_AT = 1_800_000
 const BACKLOG_AT = 300_000
 const INGEST_TIMEOUT_MS = 500
 const PAGE_EVERY_SECONDS = 30 * 60
+
+export const aiUsageIngest = (log: FastifyBaseLogger) => ({
+    async ingest(input: ReportAiUsageRequest): Promise<void> {
+        const { error } = await tryCatch(async () => {
+            const { event, runKey } = await aiUsageEvent.build(input)
+            const streamLength = await withTimeout(appendOnce({ idempotencyKey: input.idempotencyKey, runKey, payload: JSON.stringify(event) }))
+            await pageIfBacklogged({ streamLength, log })
+        })
+        if (!isNil(error)) {
+            log.warn({ event: 'ai-usage.ingest-failed', error, provider: input.provider, model: { id: input.modelId } }, '[aiUsageIngest] Could not record this AI call for usage analytics')
+        }
+    },
+})
 
 export const AI_USAGE_STREAM_KEY = 'ai-usage:events:v1'
 

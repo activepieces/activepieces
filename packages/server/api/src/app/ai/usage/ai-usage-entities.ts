@@ -3,6 +3,37 @@ import { Platform } from '@activepieces/shared'
 import { EntitySchema, EntitySchemaColumnOptions } from 'typeorm'
 import { ApIdSchema } from '../../database/database-common'
 
+function usageColumns(): Record<keyof AiUsageColumns, EntitySchemaColumnOptions> {
+    return {
+        platformId: { ...ApIdSchema, nullable: false },
+        projectId: { ...ApIdSchema, nullable: true },
+        flowId: { ...ApIdSchema, nullable: true },
+        agentId: { ...ApIdSchema, nullable: true },
+        userId: { ...ApIdSchema, nullable: true },
+        provider: { type: String, nullable: false },
+        providerConfigId: { ...ApIdSchema, nullable: true },
+        modelId: { type: String, nullable: false },
+        origin: { type: String, nullable: false },
+        environment: { type: String, nullable: false },
+        calls: counter({ type: 'integer' }),
+        unpricedCalls: counter({ type: 'integer' }),
+        runs: counter({ type: 'integer' }),
+        inputTokens: counter({ type: 'bigint' }),
+        outputTokens: counter({ type: 'bigint' }),
+        cacheReadTokens: counter({ type: 'bigint' }),
+        cacheWriteTokens: counter({ type: 'bigint' }),
+        reasoningTokens: counter({ type: 'bigint' }),
+        reportedCostUsd: counter({ type: 'double precision' }),
+        estimatedCostUsd: counter({ type: 'double precision' }),
+        spendUsd: counter({ type: 'double precision' }),
+        managedCredits: counter({ type: 'double precision' }),
+    }
+}
+
+function counter({ type }: { type: 'integer' | 'bigint' | 'double precision' }): EntitySchemaColumnOptions {
+    return { type, nullable: false, default: 0 }
+}
+
 export const AiUsage5mEntity = new EntitySchema<AiUsage5mSchema>({
     name: 'ai_usage_5m',
     columns: {
@@ -81,37 +112,6 @@ export const AiUsageIngestCursorEntity = new EntitySchema<AiUsageIngestCursorSch
         },
     },
 })
-
-function usageColumns(): Record<keyof AiUsageColumns, EntitySchemaColumnOptions> {
-    return {
-        platformId: { ...ApIdSchema, nullable: false },
-        projectId: { ...ApIdSchema, nullable: true },
-        flowId: { ...ApIdSchema, nullable: true },
-        agentId: { ...ApIdSchema, nullable: true },
-        userId: { ...ApIdSchema, nullable: true },
-        provider: { type: String, nullable: false },
-        providerConfigId: { ...ApIdSchema, nullable: true },
-        modelId: { type: String, nullable: false },
-        origin: { type: String, nullable: false },
-        environment: { type: String, nullable: false },
-        calls: counter({ type: 'integer' }),
-        unpricedCalls: counter({ type: 'integer' }),
-        runs: counter({ type: 'integer' }),
-        inputTokens: counter({ type: 'bigint' }),
-        outputTokens: counter({ type: 'bigint' }),
-        cacheReadTokens: counter({ type: 'bigint' }),
-        cacheWriteTokens: counter({ type: 'bigint' }),
-        reasoningTokens: counter({ type: 'bigint' }),
-        reportedCostUsd: counter({ type: 'double precision' }),
-        estimatedCostUsd: counter({ type: 'double precision' }),
-        spendUsd: counter({ type: 'double precision' }),
-        managedCredits: counter({ type: 'double precision' }),
-    }
-}
-
-function counter({ type }: { type: 'integer' | 'bigint' | 'double precision' }): EntitySchemaColumnOptions {
-    return { type, nullable: false, default: 0 }
-}
 
 type AiUsageColumns = {
     platformId: string

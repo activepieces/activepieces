@@ -6,32 +6,6 @@ import { chargeFor, dollarsPerCredit } from '../ai-credits'
 import { aiCallContext } from './ai-call-context'
 import { aiUsagePrice } from './ai-usage-price'
 
-export const aiUsageEvent = {
-    async build(input: ReportAiUsageRequest): Promise<BuiltAiUsageEvent> {
-        const dimensions = dimensionsOf(input)
-        const costs = await costsOf(input)
-        const event: AiUsageEvent = {
-            ...dimensions,
-            seriesId: aiUsageEvent.seriesIdOf(dimensions),
-            unpricedCalls: costs.unpriced ? 1 : 0,
-            inputTokens: input.inputTokens ?? 0,
-            outputTokens: input.outputTokens ?? 0,
-            cacheReadTokens: input.cacheReadTokens ?? 0,
-            cacheWriteTokens: input.cacheWriteTokens ?? 0,
-            reasoningTokens: input.reasoningTokens ?? 0,
-            reportedCostUsd: costs.reportedCostUsd,
-            estimatedCostUsd: costs.estimatedCostUsd,
-            spendUsd: costs.reportedCostUsd + costs.estimatedCostUsd,
-            managedCredits: costs.managedCredits,
-        }
-        return { event, runKey: runKeyOf({ input, origin: dimensions.origin }) }
-    },
-    seriesIdOf(dimensions: AiUsageDimensions): string {
-        const tuple = SERIES_DIMENSIONS.map((key) => dimensions[key] ?? null)
-        return createHash('sha256').update(JSON.stringify(tuple)).digest('hex').slice(0, SERIES_ID_LENGTH)
-    },
-}
-
 function dimensionsOf(input: ReportAiUsageRequest): AiUsageDimensions {
     const { billing } = input
     const context = billing.context
@@ -96,6 +70,32 @@ const MODEL_ID_MAX = 255
 
 const nullableId = z.string().max(ID_MAX).nullable()
 const counter = z.number().finite().nonnegative()
+
+export const aiUsageEvent = {
+    async build(input: ReportAiUsageRequest): Promise<BuiltAiUsageEvent> {
+        const dimensions = dimensionsOf(input)
+        const costs = await costsOf(input)
+        const event: AiUsageEvent = {
+            ...dimensions,
+            seriesId: aiUsageEvent.seriesIdOf(dimensions),
+            unpricedCalls: costs.unpriced ? 1 : 0,
+            inputTokens: input.inputTokens ?? 0,
+            outputTokens: input.outputTokens ?? 0,
+            cacheReadTokens: input.cacheReadTokens ?? 0,
+            cacheWriteTokens: input.cacheWriteTokens ?? 0,
+            reasoningTokens: input.reasoningTokens ?? 0,
+            reportedCostUsd: costs.reportedCostUsd,
+            estimatedCostUsd: costs.estimatedCostUsd,
+            spendUsd: costs.reportedCostUsd + costs.estimatedCostUsd,
+            managedCredits: costs.managedCredits,
+        }
+        return { event, runKey: runKeyOf({ input, origin: dimensions.origin }) }
+    },
+    seriesIdOf(dimensions: AiUsageDimensions): string {
+        const tuple = SERIES_DIMENSIONS.map((key) => dimensions[key] ?? null)
+        return createHash('sha256').update(JSON.stringify(tuple)).digest('hex').slice(0, SERIES_ID_LENGTH)
+    },
+}
 
 export const AiUsageEvent = z.object({
     seriesId: z.string().length(SERIES_ID_LENGTH),
