@@ -31,14 +31,18 @@ function aiProps(product: MindeeProduct) {
   };
 }
 
-function runWithFile({ apiKey, product, props }: { apiKey: string; product: MindeeProduct; props: Record<string, unknown> }) {
-  return mindeeInference.runInference({
+async function runWithFile({ apiKey, product, props }: { apiKey: string; product: MindeeProduct; props: Record<string, unknown> }) {
+  const output = await mindeeInference.runInference({
     apiKey,
     product,
     modelId: typeof props['model_id'] === 'string' ? props['model_id'] : undefined,
     source: { type: 'upload', upload: mindeeFiles.readFileProp({ value: props['file'], label: 'File' }) },
     options: readOptions(props),
   });
+  if (!output.completed) {
+    throw new Error(output.message ?? `Mindee is still processing job ${output.job_id}. Use Get Job Status, then Get Result, to collect it later.`);
+  }
+  return output;
 }
 
 function runWithUrl({ apiKey, product, props }: { apiKey: string; product: MindeeProduct; props: Record<string, unknown> }) {

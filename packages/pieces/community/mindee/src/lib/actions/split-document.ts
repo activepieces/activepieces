@@ -12,7 +12,7 @@ export const splitDocumentAction = createAction({
   audience: 'human',
   aiMetadata: {
     description:
-      'Find the separate documents inside one multi-page file with a Mindee split model. Returns each document type with its 0-based start and end page. Waits up to 4 minutes; if Mindee is still processing it returns completed=false and a job_id for Get Job Status and Get Result. Each run spends Mindee page credits.',
+      'Find the separate documents inside one multi-page file with a Mindee split model. Returns each document type with its 0-based start and end page. Waits up to 4 minutes; if Mindee is still processing, the step fails with the job ID so you can collect it later with Get Job Status and Get Result. Each run spends Mindee page credits.',
     idempotent: true,
   },
   props: {

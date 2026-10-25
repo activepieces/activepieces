@@ -12,7 +12,7 @@ export const ocrDocumentAction = createAction({
   audience: 'human',
   aiMetadata: {
     description:
-      'Read the full text of a document page by page with a Mindee OCR model. Returns the text and per-page content. Waits up to 4 minutes; if Mindee is still processing it returns completed=false and a job_id for Get Job Status and Get Result. Each run spends Mindee page credits.',
+      'Read the full text of a document page by page with a Mindee OCR model. Returns the text and per-page content. Waits up to 4 minutes; if Mindee is still processing, the step fails with the job ID so you can collect it later with Get Job Status and Get Result. Each run spends Mindee page credits.',
     idempotent: true,
   },
   props: {

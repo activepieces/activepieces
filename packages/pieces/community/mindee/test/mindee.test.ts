@@ -3,6 +3,7 @@ import { buildMindeeError, detectKeyType, normalizeApiKey, v2PathFromUrl, vendor
 import { mindeeFiles } from '../src/lib/common/file';
 import { mindeeInference } from '../src/lib/common/inference';
 import { mindeeApi } from '../src/lib/common/api';
+import { productActionHelpers } from '../src/lib/actions/product-action-helpers';
 
 const dnsAnswers = vi.hoisted(() => new Map<string, { address: string; family: number }[]>([['example.com', [{ address: '93.184.215.14', family: 4 }]]]));
 
@@ -171,6 +172,19 @@ describe('runInference', () => {
       raw_text: 'line 1\n\nline 2',
       rag_document_id: null,
     });
+  });
+
+  it('fails a builder action with the job id when the wait limit is hit', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json({ status: 202, body: job({ status: 'Processing' }) })));
+    vi.useFakeTimers();
+    const promise = productActionHelpers.runWithFile({
+      apiKey: 'k',
+      product: 'ocr',
+      props: { model_id: MODEL, file: { filename: 'a.pdf', extension: 'pdf', data: Buffer.from('%PDF-1.4') } },
+    });
+    const assertion = expect(promise).rejects.toThrow(JOB);
+    await vi.runAllTimersAsync();
+    await assertion;
   });
 
   it('returns the job id instead of failing when the wait limit is hit', async () => {

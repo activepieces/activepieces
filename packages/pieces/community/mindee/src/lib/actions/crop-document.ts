@@ -12,7 +12,7 @@ export const cropDocumentAction = createAction({
   audience: 'human',
   aiMetadata: {
     description:
-      'Detect the separate objects in one image or page (for example several receipts or cards scanned together) with a Mindee crop model. Returns each object type, page and polygon. Waits up to 4 minutes; if Mindee is still processing it returns completed=false and a job_id for Get Job Status and Get Result. Each run spends Mindee page credits.',
+      'Detect the separate objects in one image or page (for example several receipts or cards scanned together) with a Mindee crop model. Returns each object type, page and polygon. Waits up to 4 minutes; if Mindee is still processing, the step fails with the job ID so you can collect it later with Get Job Status and Get Result. Each run spends Mindee page credits.',
     idempotent: true,
   },
   props: {

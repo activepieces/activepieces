@@ -13,7 +13,7 @@ export const extractDocumentAction = createAction({
   audience: 'human',
   aiMetadata: {
     description:
-      'Extract structured data (for example invoice totals, receipt line items, ID details) from a document with a Mindee extraction model. Returns the fields defined in the model data schema as name to value pairs. Waits up to 4 minutes; if Mindee is still processing it returns completed=false and a job_id for Get Job Status and Get Result. Each run spends Mindee page credits.',
+      'Extract structured data (for example invoice totals, receipt line items, ID details) from a document with a Mindee extraction model. Returns the fields defined in the model data schema as name to value pairs. Waits up to 4 minutes; if Mindee is still processing, the step fails with the job ID so you can collect it later with Get Job Status and Get Result. Each run spends Mindee page credits.',
     idempotent: true,
   },
   props: {
