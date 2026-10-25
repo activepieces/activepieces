@@ -50,7 +50,7 @@ describe('audience split', () => {
 describe('ai tools', () => {
   it('Create or Update Contact (AI) only ever adds groups and tags', async () => {
     sendRequest.mockResolvedValueOnce(ok({ data: { createContact: { id: 'c1' } } }));
-    await runAction({ action: upsertContactAi, propsValue: { audienceId: 'a1', email: 'x@example.com', firstName: ' Ann ', lastName: '', tags: ['VIP'], groupIds: ['g1'], customFields: { f1: '1' } } });
+    await runAction({ action: upsertContactAi, propsValue: { audienceId: 'a1', email: 'x@example.com', firstName: ' Ann ', lastName: '', tags: 'VIP, ', groupIds: 'g1', customFields: { f1: '1' } } });
     expect(call().body.variables.input).toEqual({
       firstName: 'Ann',
       email: 'x@example.com',
@@ -63,6 +63,17 @@ describe('ai tools', () => {
       groupIds: ['g1'],
       sendFormat: 'MULTIPART',
     });
+  });
+
+  it('Create or Update Contact (AI) updates by default and fails only when asked', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ data: { createContact: { id: 'c1' } } }));
+    await runAction({ action: upsertContactAi, propsValue: { audienceId: 'a1', email: 'x@example.com', groupIds: '', tags: '' } });
+    expect(call().body.variables.input).toMatchObject({ updateExisting: true });
+    expect(call().body.variables.input).not.toHaveProperty('tags');
+    expect(call().body.variables.input).not.toHaveProperty('groupIds');
+    sendRequest.mockResolvedValueOnce(ok({ data: { createContact: { id: 'c1' } } }));
+    await runAction({ action: upsertContactAi, propsValue: { audienceId: 'a1', email: 'x@example.com', ifExists: 'FAIL' } });
+    expect(call(1).body.variables.input).toMatchObject({ updateExisting: false });
   });
 
   it('Update Contact (AI) sends only the given fields and refuses an empty update', async () => {

@@ -24,14 +24,24 @@ export const upsertContactAi = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a Tarvent contact in an audience by email, or updates the contact that already has that email (set updateIfExists=false to fail instead). Optional name and address fields, group IDs and tag names are added; existing groups and tags are never removed. customFields maps data field IDs to values (GDPR fields take 1 or 0). Empty fields are not sent. Returns the contact with its ID. To change a known contact by ID, for example its email, use Update Contact. Repeating the same call leaves the same contact, but groups and tags only ever grow.',
+      'Creates a Tarvent contact in an audience by email, or updates the contact that already has that email (set ifExists=FAIL to fail instead). Optional name and address fields are set, and comma-separated group IDs and tag names are added; existing groups and tags are never removed. customFields maps data field IDs to values (GDPR fields take 1 or 0). Empty fields are not sent. Returns the contact with its ID. To change a known contact by ID, for example its email, use Update Contact. Repeating the same call leaves the same contact, but groups and tags only ever grow.',
     idempotent: true,
   },
   outputSchema: tarventOutputSchemas.contact,
   props: {
     audienceId: Property.ShortText({ displayName: 'Audience ID', description: 'The Tarvent audience ID (from Find Audience).', required: true }),
     email: Property.ShortText({ displayName: 'Email', description: 'The contact email.', required: true }),
-    updateIfExists: Property.Checkbox({ displayName: 'Update if exists', description: 'Update the contact when the email already exists (default true).', required: false, defaultValue: true }),
+    ifExists: Property.StaticDropdown({
+      displayName: 'If the email exists',
+      description: 'What to do when a contact with this email already exists (default: update it).',
+      required: false,
+      options: {
+        options: [
+          { label: 'Update the contact', value: 'UPDATE' },
+          { label: 'Fail', value: 'FAIL' },
+        ],
+      },
+    }),
     firstName: Property.ShortText({ displayName: 'First name', required: false }),
     lastName: Property.ShortText({ displayName: 'Last name', required: false }),
     streetAddress: Property.ShortText({ displayName: 'Street address', required: false }),
@@ -40,8 +50,8 @@ export const upsertContactAi = createAction({
     addressRegion: Property.ShortText({ displayName: 'State / Region', required: false }),
     postalCode: Property.ShortText({ displayName: 'Postal code', required: false }),
     addressCountry: Property.ShortText({ displayName: 'Country', required: false }),
-    groupIds: Property.Array({ displayName: 'Group IDs', description: 'Audience group IDs to add the contact to.', required: false }),
-    tags: Property.Array({ displayName: 'Tags', description: 'Tag names to add.', required: false }),
+    groupIds: Property.ShortText({ displayName: 'Group IDs', description: 'Audience group IDs to add the contact to. Separate multiple IDs with a comma.', required: false }),
+    tags: Property.ShortText({ displayName: 'Tags', description: 'Tag names to add. Separate multiple tags with a comma.', required: false }),
     customFields: Property.Object({ displayName: 'Custom fields', description: 'Data field ID to value.', required: false }),
   },
   async run(context) {
@@ -67,7 +77,7 @@ export const upsertContactAi = createAction({
         ...text,
         email,
         audienceId,
-        updateExisting: p.updateIfExists !== false,
+        updateExisting: p.ifExists !== 'FAIL',
         audienceGroupManagementType: 'ADD_NEW_GROUPS_ONLY',
         tagManagementType: 'ADD_NEW_TAGS_ONLY',
         ...(profile.length > 0 ? { profile } : {}),
@@ -80,5 +90,6 @@ export const upsertContactAi = createAction({
 });
 
 function stringList(value: unknown): string[] {
-  return (Array.isArray(value) ? value : []).map((v) => tarventCommon.trimmed(v)).filter((v): v is string => v !== undefined);
+  const items = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [];
+  return items.map((v) => tarventCommon.trimmed(v)).filter((v): v is string => v !== undefined);
 }
