@@ -14,6 +14,10 @@ export const splitCsvAction = createAction({
       'Splits CSV text into chunks of a fixed number of rows (1 to 10,000), each chunk a complete CSV that repeats the header row by default, so a Loop can send or upload them one batch at a time. Pick this for data that fits in memory (up to 20 MB); for larger files use Stream CSV to Subflows, which streams the file and runs a subflow per batch. The CSV must have a header row; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'CSV Input', icon: 'text', props: ['csv_text', 'delimiter'] },
+    { key: 'chunks', display: 'section', label: 'Chunks', icon: 'sliders', props: ['rows_per_chunk', 'repeat_header'] },
+  ],
   props: {
     csv_text: csvProps.csvText(),
     delimiter: csvProps.inputDelimiter(),
@@ -22,6 +26,9 @@ export const splitCsvAction = createAction({
       description: 'Data rows per chunk (1 to 10,000), not counting the header.',
       required: true,
       defaultValue: 100,
+      display: 'stepper',
+      min: 1,
+      max: 10000,
     }),
     repeat_header: Property.Checkbox({
       displayName: 'Repeat Header Row',
