@@ -141,7 +141,7 @@ export function buildWorkableError({ status, responseBody }: { status: number; r
   return new WorkableApiError({ message, status, responseBody });
 }
 
-function readHttpErrorResponse(error: unknown): { status: number; body: unknown; headers: unknown } | undefined {
+function readHttpErrorResponse(error: unknown): { status: number; body: unknown } | undefined {
   if (!isRecord(error) && !(error instanceof Error)) {
     return undefined;
   }
@@ -153,19 +153,7 @@ function readHttpErrorResponse(error: unknown): { status: number; body: unknown;
   if (typeof status !== 'number') {
     return undefined;
   }
-  return { status, body: response['body'], headers: response['headers'] };
-}
-
-export function retryWaitMs({ headers, nowMs }: { headers: unknown; nowMs: number }): number {
-  const raw = isRecord(headers)
-    ? Object.entries(headers).find(([key]) => key.toLowerCase() === 'x-rate-limit-reset')?.[1]
-    : undefined;
-  const value = Number(Array.isArray(raw) ? raw[0] : raw);
-  let waitMs = DEFAULT_RETRY_WAIT_MS;
-  if (Number.isFinite(value) && value > 0) {
-    waitMs = value > 1e9 ? value * 1000 - nowMs : value * 1000;
-  }
-  return Math.min(Math.max(waitMs, MIN_RETRY_WAIT_MS), MAX_RETRY_WAIT_MS);
+  return { status, body: response['body'] };
 }
 
 function sleep(ms: number): Promise<void> {
@@ -230,7 +218,7 @@ async function send<T extends HttpMessageBody>({
         throw error;
       }
       if (httpError.status === 429 && attempt < MAX_RATE_LIMIT_RETRIES) {
-        await sleep(retryWaitMs({ headers: httpError.headers, nowMs: Date.now() }));
+        await sleep(RATE_LIMIT_WINDOW_MS);
         continue;
       }
       throw buildWorkableError({ status: httpError.status, responseBody: httpError.body });
@@ -308,6 +296,4 @@ export const ROOT_URL = 'https://workable.com/spi/v3';
 const SUBDOMAIN_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 const REQUEST_TIMEOUT_MS = 30000;
 const MAX_RATE_LIMIT_RETRIES = 2;
-const DEFAULT_RETRY_WAIT_MS = 5000;
-const MIN_RETRY_WAIT_MS = 1000;
-const MAX_RETRY_WAIT_MS = 10000;
+const RATE_LIMIT_WINDOW_MS = 10000;

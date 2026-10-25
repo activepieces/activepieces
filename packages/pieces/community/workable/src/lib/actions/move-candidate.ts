@@ -24,7 +24,7 @@ export const moveCandidate = createAction({
       description: 'The Workable candidate ID, for example "ce4da98".',
       required: true,
     }),
-    job: jobDropdown({ displayName: 'Job', description: "The candidate's job, used to list its stages.", required: true }),
+    job: jobDropdown({ displayName: 'Job', description: "The candidate's job, used only to list its stages.", required: false }),
     target_stage: stageDropdown({ required: true, description: 'Stage to move the candidate to.' }),
     member_id: memberDropdown({ description: 'The hiring-team member the move is recorded for.' }),
   },

@@ -5,7 +5,6 @@ import {
   encodeId,
   isSameApiUrl,
   normalizeSubdomain,
-  retryWaitMs,
   WorkableApiError,
 } from '../src/lib/common/client';
 import { workableAuth } from '../src/lib/auth';
@@ -67,26 +66,24 @@ describe('client', () => {
     expect(error).not.toHaveProperty('body');
   });
 
-  it('retries 429 at most twice with a clamped wait', async () => {
+  it('retries 429 at most twice, waiting one 10 s rate-limit window each time', async () => {
     vi.useFakeTimers();
     try {
       const requests = mockHttp([
-        { error: { status: 429, body: '', headers: { 'X-Rate-Limit-Reset': '3' } } },
+        { error: { status: 429, body: '' } },
         { error: { status: 429, body: '' } },
         { error: { status: 429, body: '' } },
       ]);
       const promise = createWorkableClient({ auth: AUTH, subdomain: SUB }).request({ method: HttpMethod.GET, path: '/jobs' }).catch((e: unknown) => e);
-      await vi.advanceTimersByTimeAsync(20000);
+      await vi.advanceTimersByTimeAsync(9999);
+      expect(requests).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(10001);
       const error = await promise;
       expect(requests).toHaveLength(3);
       expect(error).toMatchObject({ status: 429 });
     } finally {
       vi.useRealTimers();
     }
-    expect(retryWaitMs({ headers: { 'x-rate-limit-reset': '3' }, nowMs: 0 })).toBe(3000);
-    expect(retryWaitMs({ headers: { 'x-rate-limit-reset': '999' }, nowMs: 0 })).toBe(10000);
-    expect(retryWaitMs({ headers: { 'x-rate-limit-reset': String(2_000_000_002) }, nowMs: 2_000_000_000_000 })).toBe(2000);
-    expect(retryWaitMs({ headers: {}, nowMs: 0 })).toBe(5000);
   });
 
   it('validate() reports invalid credentials only on 401/403', async () => {

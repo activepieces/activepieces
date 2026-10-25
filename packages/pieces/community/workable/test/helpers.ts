@@ -8,7 +8,7 @@ export const SUB = 'acme';
 export const BASE = 'https://acme.workable.com/spi/v3';
 export const AUTH = { type: AppConnectionType.SECRET_TEXT, secret_text: TOKEN };
 
-export type Reply = { status?: number; body: unknown } | { error: { status: number; body: unknown; headers?: Record<string, string> } };
+export type Reply = { status?: number; body: unknown } | { error: { status: number; body: unknown } };
 
 export function mockHttp(replies: Reply[]): HttpRequest[] {
   const requests: HttpRequest[] = [];
@@ -21,7 +21,7 @@ export function mockHttp(replies: Reply[]): HttpRequest[] {
     }
     if ('error' in reply) {
       throw Object.assign(new Error(`Request failed with status ${reply.error.status}`), {
-        response: { status: reply.error.status, body: reply.error.body, headers: reply.error.headers ?? {} },
+        response: { status: reply.error.status, body: reply.error.body },
       });
     }
     return { status: reply.status ?? 200, headers: {}, body: reply.body };
