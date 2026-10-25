@@ -142,14 +142,42 @@ describe('buildMessageBlocks — one accordion per segment', () => {
     expect(blocks).toHaveLength(1);
     expect(blocks[0].kind).toBe('thinking');
     if (blocks[0].kind !== 'thinking') throw new Error('expected thinking');
-    expect(blocks[0].reasoningText).toBe('firstsecond');
-    // both rounds' tools live in one accordion; each carries the status that
-    // immediately preceded it as its description.
-    expect(blocks[0].steps).toHaveLength(2);
-    expect(blocks[0].steps.every((s) => s.kind === 'tool')).toBe(true);
+    expect(blocks[0].trailingReasoningText).toBe('');
+    // both rounds live in one accordion, in the order they streamed; each tool
+    // carries the status that immediately preceded it as its description.
+    expect(blocks[0].steps.map((s) => s.kind)).toEqual([
+      'reasoning',
+      'tool',
+      'reasoning',
+      'tool',
+    ]);
     expect(
-      blocks[0].steps.map((s) => (s.kind === 'tool' ? s.description : null)),
+      blocks[0].steps.flatMap((s) =>
+        s.kind === 'tool' ? [s.description] : [],
+      ),
     ).toEqual(['Looking things up', 'Checking connections']);
+  });
+
+  it('keeps only the reasoning after the last tool as the live reasoning', () => {
+    const blocks = buildMessageBlocks({
+      parts: [
+        reasoning('first'),
+        tool({ name: 'ap_research_pieces', id: 'a' }),
+        reasoning('second '),
+        reasoning('round'),
+      ],
+      isStreaming: true,
+      toolCallMeta: {},
+      claimedBuildIds: new Set(),
+    }).blocks;
+
+    if (blocks[0].kind !== 'thinking') throw new Error('expected thinking');
+    expect(blocks[0].trailingReasoningText).toBe('second round');
+    expect(blocks[0].steps.map((s) => s.kind)).toEqual([
+      'reasoning',
+      'tool',
+      'reasoning',
+    ]);
   });
 
   it('starts a new accordion only after a real text part', () => {
@@ -440,7 +468,7 @@ describe('buildMessageBlocks — one accordion per segment', () => {
     expect(children.some((c) => c.kind === 'thinking')).toBe(true);
     const thinking = children.find((c) => c.kind === 'thinking');
     if (thinking?.kind !== 'thinking') throw new Error('expected thinking');
-    expect(thinking.reasoningText).toBe('all good');
+    expect(thinking.trailingReasoningText).toBe('all good');
     expect(thinking.steps.filter((s) => s.kind === 'tool')).toHaveLength(1);
   });
 

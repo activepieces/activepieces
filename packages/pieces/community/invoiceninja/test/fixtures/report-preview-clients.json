@@ -1,0 +1,54 @@
+{
+  "columns": [
+    {
+      "identifier": "client.name",
+      "display_value": "Name"
+    },
+    {
+      "identifier": "client.number",
+      "display_value": "Number"
+    },
+    {
+      "identifier": "client.user",
+      "display_value": "Client User"
+    },
+    {
+      "identifier": "client.assigned_user",
+      "display_value": "Client Assigned User"
+    }
+  ],
+  "0": [
+    {
+      "entity": "client",
+      "id": "name",
+      "hashed_id": null,
+      "value": "Report Fixture Co",
+      "identifier": "client.name",
+      "display_value": "Report Fixture Co"
+    },
+    {
+      "entity": "client",
+      "id": "number",
+      "hashed_id": null,
+      "value": "0004",
+      "identifier": "client.number",
+      "display_value": "0004"
+    },
+    {
+      "entity": "client",
+      "id": "user",
+      "hashed_id": null,
+      "value": "New User",
+      "identifier": "client.user",
+      "display_value": "New User"
+    },
+    {
+      "entity": "client",
+      "id": "assigned_user",
+      "hashed_id": null,
+      "value": "",
+      "identifier": "client.assigned_user",
+      "display_value": ""
+    }
+  ]
+}

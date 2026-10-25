@@ -15,6 +15,15 @@ export const getCustomObjectAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single custom-object record by its ID for a chosen custom object type, returning the requested properties. Use when you already have the record ID and the custom object type; for standard CRM objects use the dedicated Get Contact / Deal / Company / Ticket actions instead. Read-only and idempotent.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
+	propertyGroups: [
+		{
+			key: 'target',
+			display: 'section',
+			label: 'Custom Object',
+			icon: 'tag',
+			props: ['customObjectType', 'customObjectId'],
+		},
+	],
 	props: {
 		customObjectType: customObjectDropdown,
 		customObjectId: Property.ShortText({

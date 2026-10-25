@@ -26,6 +26,12 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             configId: request.params.id,
         })
     })
+    app.get('/configs/:id/suggested-models', ListSuggestedModelsForConfig, async (request) => {
+        return aiProviderService(app.log).suggestModelsForConfig({
+            platformId: request.principal.platform.id,
+            configId: request.params.id,
+        })
+    })
     app.get('/tiers', ListModelTiers, async () => ({
         flow: modelTierCatalog.current('flow'),
         chat: modelTierCatalog.current('chat'),
@@ -36,6 +42,13 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.projectId,
             surface: request.query.surface,
             tierId: request.query.tierId,
+        })
+    })
+    app.get('/model-options/platform', ListPlatformModelOptions, async (request) => {
+        return aiModelOptionsService(app.log).listForPlatform({
+            platformId: request.principal.platform.id,
+            surface: request.query.surface,
+            platformDefault: null,
         })
     })
     app.get('/:provider/models', ListModels, async (request) => {
@@ -99,6 +112,20 @@ const ListModelsForConfig = {
     },
 }
 
+const ListSuggestedModelsForConfig = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        params: z.object({
+            id: z.string(),
+        }),
+        response: {
+            [StatusCodes.OK]: z.array(z.string()),
+        },
+    },
+}
+
 const ModelTierList = z.object({
     tiers: z.array(z.object({
         id: z.string(),
@@ -131,6 +158,20 @@ const ListModelOptions = {
             projectId: z.string().optional(),
             surface: ModelOptionsSurface,
             tierId: z.string().optional(),
+        }),
+        response: {
+            [StatusCodes.OK]: ModelOptions,
+        },
+    },
+}
+
+const ListPlatformModelOptions = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        querystring: z.object({
+            surface: ModelOptionsSurface,
         }),
         response: {
             [StatusCodes.OK]: ModelOptions,

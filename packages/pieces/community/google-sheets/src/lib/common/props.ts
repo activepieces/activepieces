@@ -276,3 +276,25 @@ export const isFirstRowHeaderProp = () =>
 		required: false,
 		defaultValue: false,
 	});
+
+export const hiddenStateProp = (description: string) =>
+	Property.StaticDropdown<string, false>({
+		displayName: 'Hidden',
+		description: `${description} Leave empty or pick Leave unchanged to keep the current setting.`,
+		required: false,
+		options: {
+			disabled: false,
+			options: [
+				{ label: 'Yes', value: 'yes' },
+				{ label: 'No', value: 'no' },
+				{ label: 'Leave unchanged', value: 'unchanged' },
+			],
+		},
+	});
+
+export const hiddenStateValue = (value: unknown): boolean | undefined => {
+	const normalized = typeof value === 'string' ? value.trim().toLowerCase() : value;
+	if (normalized === true || normalized === 'yes' || normalized === 'true') return true;
+	if (normalized === false || normalized === 'no' || normalized === 'false') return false;
+	return undefined;
+};

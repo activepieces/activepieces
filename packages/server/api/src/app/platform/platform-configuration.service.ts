@@ -1,7 +1,10 @@
-import { apId, chunk, isEmpty, isNil, spreadIfNotUndefined } from '@activepieces/core-utils'
-import { ApEdition, maxBarrierSignalsBounds, PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, chunk, ErrorCode, isEmpty, isNil, spreadIfNotUndefined, tryCatch } from '@activepieces/core-utils'
+import { ApEdition, maxBarrierSignalsBounds, ModelChoice, PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
+import { aiModelOptionsService, aiModelOptionsUtils } from '../ai/ai-model-options-service'
+import { AIProviderEntity } from '../ai/ai-provider-entity'
+import { aiProviderService } from '../ai/ai-provider-service'
 import { platformModelTierService } from '../ai/platform-model-tier-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -14,6 +17,7 @@ const platformConfigurationRepo = repoFactory(PlatformConfigurationEntity)
 
 const CREATE_LOCK_TIMEOUT_SECONDS = 60
 const CONFIGURATION_FILTER_BATCH_SIZE = 1_000
+const DEFAULT_CHAT_MODEL_UNAVAILABLE = 'This model is not available for chat on this platform'
 
 export const platformConfigurationService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform({ platformId }: GetOrCreateParams): Promise<PlatformConfiguration> {
@@ -93,18 +97,28 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
         return platformIds.filter((platformId) => !optedOutIds.has(platformId))
     },
 
-    async update({ platformId, isProductTelemetryEnabled, isInfraSetupTelemetryEnabled, maxBarrierSignals, aiSpecificModelsVisible }: UpdateParams): Promise<PlatformConfiguration> {
+    async update({ platformId, isProductTelemetryEnabled, isInfraSetupTelemetryEnabled, maxBarrierSignals, aiSpecificModelsVisible, defaultChatModel }: UpdateParams): Promise<PlatformConfiguration> {
         await this.getOrCreateForPlatform({ platformId })
+        const chatModel = isNil(defaultChatModel) ? defaultChatModel : await offeredChatModelOrThrow({ platformId, choice: defaultChatModel, log })
         const patch = {
             ...spreadIfNotUndefined('isProductTelemetryEnabled', isProductTelemetryEnabled),
             ...spreadIfNotUndefined('isInfraSetupTelemetryEnabled', isInfraSetupTelemetryEnabled),
             ...spreadIfNotUndefined('maxBarrierSignals', maxBarrierSignals),
             ...spreadIfNotUndefined('aiSpecificModelsVisible', aiSpecificModelsVisible),
+            ...spreadIfNotUndefined('defaultChatModel', chatModel),
         }
         if (!isEmpty(patch)) {
             await transaction(async (manager) => {
                 if (!isNil(aiSpecificModelsVisible)) {
                     await platformModelTierService.assertSpecificModelsVisibilityAllowed({ manager, platformId, visible: aiSpecificModelsVisible })
+                }
+                if (!isNil(chatModel)) {
+                    await platformModelTierService.lockPlatform({ manager, platformId })
+                    const defaultKeyId = await defaultKeyIdOf({ manager, platformId, choice: chatModel })
+                    if (isNil(defaultKeyId)) {
+                        throw chatModelUnavailableError()
+                    }
+                    await aiProviderService(log).markDefaultKey({ manager, platformId, configId: defaultKeyId })
                 }
                 await platformConfigurationRepo(manager).update({ platformId }, patch)
             })
@@ -112,6 +126,30 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
         return platformConfigurationRepo().findOneByOrFail({ platformId })
     },
 })
+
+async function offeredChatModelOrThrow({ platformId, choice, log }: { platformId: string, choice: ModelChoice, log: FastifyBaseLogger }): Promise<ModelChoice> {
+    const { data: options } = await tryCatch(() => aiModelOptionsService(log).listForPlatform({ platformId, surface: 'chat', platformDefault: choice }))
+    const usable = isNil(options) ? null : aiModelOptionsUtils.usableChoice({ choice, tiers: options.tiers, credits: options.credits ?? null, keys: options.keys, movedTiers: options.movedTiers })
+    if (isNil(usable)) {
+        throw chatModelUnavailableError()
+    }
+    return usable
+}
+
+async function defaultKeyIdOf({ manager, platformId, choice }: { manager: EntityManager, platformId: string, choice: ModelChoice }): Promise<string | null> {
+    if (choice.type === 'tier') {
+        return platformModelTierService.mainKeyIdOf({ manager, platformId, tierId: choice.tierId })
+    }
+    const where = choice.provider === AIProviderName.ACTIVEPIECES
+        ? { platformId, provider: AIProviderName.ACTIVEPIECES }
+        : { platformId, id: choice.providerConfigId }
+    const key = await manager.getRepository(AIProviderEntity).findOneBy(where)
+    return key?.id ?? null
+}
+
+function chatModelUnavailableError(): ActivepiecesError {
+    return new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: DEFAULT_CHAT_MODEL_UNAVAILABLE } })
+}
 
 async function createInitialConfiguration({ platformId }: GetOrCreateParams): Promise<PlatformConfiguration> {
     const isProductTelemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)

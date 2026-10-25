@@ -1,5 +1,6 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
+  aiProviderUtils,
   ModelChoice,
   ModelOptions,
   ModelOptionsSurface,
@@ -35,6 +36,9 @@ export function ModelPicker({
   value,
   onChange,
   disabled = false,
+  withTiers = true,
+  variant = 'field',
+  placeholder,
   className,
 }: ModelPickerProps) {
   const [open, setOpen] = useState(false);
@@ -45,17 +49,29 @@ export function ModelPicker({
   });
   const view = useMemo(
     () =>
-      isNil(data) ? null : modelPickerView({ options: data, shown: value }),
-    [data, value],
+      isNil(data)
+        ? null
+        : modelPickerView({
+            options: withTiers ? data : { ...data, tiers: [] },
+            shown: value,
+          }),
+    [data, value, withTiers],
   );
 
   if (isLoading) {
-    return <Skeleton className={cn('h-9 w-full', className)} />;
+    return (
+      <Skeleton
+        className={cn(
+          variant === 'pill' ? 'h-8 w-24 rounded-full' : 'h-9 w-full',
+          className,
+        )}
+      />
+    );
   }
 
   return (
     <ModelPickerPopover
-      matchTriggerWidth
+      matchTriggerWidth={variant === 'field'}
       groups={view?.groups ?? []}
       notices={
         isError ? (
@@ -78,7 +94,8 @@ export function ModelPicker({
       onPick={(choice) => onChange(choice)}
       open={open}
       onOpenChange={setOpen}
-      align="start"
+      align={variant === 'pill' ? 'end' : 'start'}
+      side={variant === 'pill' ? 'top' : undefined}
       detail={(item) => {
         const detail = view?.detailById.get(item.id);
         return isNil(detail) ? null : <ModelDetailCard detail={detail} />;
@@ -89,12 +106,26 @@ export function ModelPicker({
         disabled={disabled}
         data-testid="model-picker-trigger"
         className={cn(
-          'flex h-9 w-full min-w-0 items-center gap-2 rounded-md border bg-panel px-2.5 text-left text-sm transition-colors hover:bg-gray-2 disabled:pointer-events-none disabled:opacity-50',
+          variant === 'pill'
+            ? 'flex h-8 min-w-0 max-w-64 items-center gap-1.5 rounded-full px-2.5 text-left text-xs transition-colors hover:bg-gray-3 disabled:pointer-events-none disabled:opacity-50'
+            : 'flex h-9 w-full min-w-0 items-center gap-2 rounded-md border bg-panel px-2.5 text-left text-sm transition-colors hover:bg-gray-2 disabled:pointer-events-none disabled:opacity-50',
           className,
         )}
       >
-        <TriggerContent current={view?.current ?? emptyPick()} />
-        <ChevronDown className="ml-auto size-4 shrink-0 text-gray-10" />
+        <TriggerContent
+          current={
+            (view?.current.kind ?? 'empty') === 'empty' && !isNil(placeholder)
+              ? { ...emptyPick(), label: placeholder }
+              : view?.current ?? emptyPick()
+          }
+          compact={variant === 'pill'}
+        />
+        <ChevronDown
+          className={cn(
+            'ml-auto shrink-0 text-gray-10',
+            variant === 'pill' ? 'size-3.5' : 'size-4',
+          )}
+        />
       </button>
     </ModelPickerPopover>
   );
@@ -220,9 +251,9 @@ export function modelPickerView({
             id: 'tiers',
             section: 'tiers',
             sectionHeading: (
-              <SectionHeading dot="bg-swatch-12-mark" label={t('Your tiers')} />
+              <SectionHeading dot="bg-swatch-12-mark" label={t('Tiers')} />
             ),
-            heading: t('Your tiers'),
+            heading: t('Tiers'),
             items: tierItems.map(({ item }) => item),
           },
         ]),
@@ -242,9 +273,7 @@ export function modelPickerView({
     ...keyGroups.map(({ key, info, models }) => ({
       id: `key:${key.providerConfigId}`,
       section: 'keys',
-      sectionHeading: (
-        <SectionHeading dot="bg-gray-10" label={t('Your keys')} />
-      ),
+      sectionHeading: <SectionHeading dot="bg-gray-10" label={t('Models')} />,
       heading: (
         <>
           <KeyLogo logoUrl={info.logoUrl} name={info.name} />
@@ -302,6 +331,15 @@ function resolveCurrent({
     const tier = options.credits?.tiers.find(
       (candidate) => candidate.id === shown.modelId,
     );
+    if (isNil(tier) && runsOnCredits({ options, modelId: shown.modelId })) {
+      return {
+        kind: 'credits',
+        id: shown.modelId,
+        label: shown.modelId,
+        leading: <CreditTile tierId={shown.modelId} size="sm" />,
+        source: t('Credits'),
+      };
+    }
     return isNil(tier)
       ? unavailablePick({ label: shown.modelId })
       : {
@@ -350,6 +388,22 @@ function resolveCurrent({
   };
 }
 
+function runsOnCredits({
+  options,
+  modelId,
+}: {
+  options: ModelOptions;
+  modelId: string;
+}): boolean {
+  if (isNil(options.credits)) {
+    return false;
+  }
+  return (
+    aiProviderUtils.managedChatModelIds().includes(modelId) ||
+    options.credits.tiers.some((tier) => tier.model.modelId === modelId)
+  );
+}
+
 function emptyPick(): CurrentPick {
   return {
     kind: 'empty',
@@ -370,19 +424,26 @@ function unavailablePick({ label }: { label: string }): CurrentPick {
   };
 }
 
-function TriggerContent({ current }: { current: CurrentPick }) {
+function TriggerContent({
+  current,
+  compact,
+}: {
+  current: CurrentPick;
+  compact: boolean;
+}) {
   const warn = current.kind === 'unavailable' || current.kind === 'hidden';
   return (
     <>
       {current.leading}
       <span className="truncate font-medium text-gray-12">{current.label}</span>
       {current.source !== '' &&
+        (warn || !compact) &&
         (warn ? (
-          <span className="shrink-0 rounded-full bg-warning-3 px-1.5 py-0.5 text-xss leading-none text-warning-11">
+          <span className="shrink-0 rounded-full bg-warning-3 px-1.5 py-0.5 text-xs leading-none text-warning-11">
             {current.source}
           </span>
         ) : (
-          <span className="min-w-0 shrink truncate rounded-full bg-gray-3 px-1.5 py-0.5 text-xss leading-none text-gray-11">
+          <span className="min-w-0 shrink truncate rounded-full bg-gray-3 px-1.5 py-0.5 text-xs leading-none text-gray-11">
             {current.source}
           </span>
         ))}
@@ -445,13 +506,13 @@ function TierBadges({
   return (
     <>
       {isDefault && (
-        <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent-3 px-1.5 py-0.5 text-xss leading-none text-accent-11">
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent-3 px-1.5 py-0.5 text-xs leading-none text-accent-11">
           <Star className="size-3 text-accent-11" />
           {t('Default')}
         </span>
       )}
       {isFast && (
-        <span className="flex shrink-0 items-center gap-1 rounded-full bg-warning-3 px-1.5 py-0.5 text-xss leading-none text-warning-11">
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-warning-3 px-1.5 py-0.5 text-xs leading-none text-warning-11">
           <Zap className="size-3 text-warning-11" />
           {t('Fast')}
         </span>
@@ -505,10 +566,24 @@ type PickerView = {
 };
 
 type ModelPickerProps = {
-  projectId: string;
+  projectId?: string;
   surface: ModelOptionsSurface;
   value: ModelChoice | null;
   onChange: (choice: ModelChoice) => void;
   disabled?: boolean;
+  withTiers?: boolean;
+  variant?: 'field' | 'pill';
+  placeholder?: string;
   className?: string;
+};
+
+export const modelPickerUtils = {
+  isUnavailable: ({
+    options,
+    value,
+  }: {
+    options: ModelOptions;
+    value: ModelChoice | null;
+  }): boolean =>
+    resolveCurrent({ options, shown: value }).kind === 'unavailable',
 };

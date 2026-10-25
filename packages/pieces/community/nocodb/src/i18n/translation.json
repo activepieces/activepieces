@@ -71,10 +71,14 @@
   "Comma separated field names without space.Example: **field1,-field2** will sort the records first by 'field1' in ascending order and then by 'field2' in descending order.": "Comma separated field names without space.Example: **field1,-field2** will sort the records first by 'field1' in ascending order and then by 'field2' in descending order.",
   "Leave unset on self-hosted instances.": "Leave unset on self-hosted instances.",
   "The view-scoped column ID from List View Columns, not the table column ID.": "The view-scoped column ID from List View Columns, not the table column ID.",
+  "Whether the column is visible in the view. Leave empty or pick Leave unchanged to keep the current setting.": "Whether the column is visible in the view. Leave empty or pick Leave unchanged to keep the current setting.",
   "When checked, returns only already-read notifications. Leave unchecked to return all notifications (read and unread) — there is no unread-only filter.": "When checked, returns only already-read notifications. Leave unchecked to return all notifications (read and unread) — there is no unread-only filter.",
   "The UUID from the view's public share link.": "The UUID from the view's public share link.",
   "The table column ID to group records by.": "The table column ID to group records by.",
   "Only required if the shared view link is password-protected.": "Only required if the shared view link is password-protected.",
   "The storage path to upload to, e.g. download/noco/<base>/<table>/attachment.": "The storage path to upload to, e.g. download/noco/<base>/<table>/attachment.",
-  "Display name for the attachment.": "Display name for the attachment."
+  "Display name for the attachment.": "Display name for the attachment.",
+  "Yes": "Yes",
+  "No": "No",
+  "Leave unchanged": "Leave unchanged"
 }

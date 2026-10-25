@@ -90,6 +90,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Note in Section": "New Note in Section",
   "Fires when a new note is created in a specified section.": "Fires when a new note is created in a specified section.",
   "The notebook to monitor for new notes.": "The notebook to monitor for new notes.",

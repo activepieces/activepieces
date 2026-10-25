@@ -64,7 +64,7 @@ export const MultiSelectFilter = ({
         <Button
           variant="outline"
           size="sm"
-          className="text-sm gap-2 whitespace-nowrap border-dashed"
+          className="gap-2 whitespace-nowrap border-dashed"
         >
           {icon}
           <span>{label}</span>
@@ -76,16 +76,13 @@ export const MultiSelectFilter = ({
                   <Badge
                     key={selectedValues[idx]}
                     variant="outline"
-                    className="px-1.5 py-0 text-xs font-normal rounded-sm bg-gray-3 max-w-[15vw] min-w-0"
+                    className="font-normal bg-gray-3 max-w-[15vw] min-w-0"
                   >
                     <span className="truncate">{labelText}</span>
                   </Badge>
                 ))
               ) : (
-                <Badge
-                  variant="outline"
-                  className="px-1.5 py-0 text-xs font-normal rounded-sm bg-gray-3"
-                >
+                <Badge variant="outline" className="font-normal bg-gray-3">
                   {selectedValues.length} selected
                 </Badge>
               )}
@@ -117,7 +114,7 @@ export const MultiSelectFilter = ({
               filteredOptions.map((option) => (
                 <div
                   key={option.value}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-gray-4 cursor-pointer"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-gray-4 cursor-pointer"
                   onClick={() => toggleValue(option.value)}
                 >
                   <Checkbox

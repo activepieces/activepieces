@@ -22,7 +22,11 @@ import { ClosePanelButton } from '../step-data/close-panel-button';
 import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 
-import { AgentTestStep, isRunAgent } from './agent-test-step';
+import {
+  AgentTestStep,
+  defaultAgentOutput,
+  isRunAgent,
+} from './agent-test-step';
 import { JsonTreeSkeleton } from './json-tree-skeleton';
 import { TestButtonTooltip } from './test-step-tooltip';
 
@@ -145,7 +149,7 @@ export const TestSampleDataViewer = React.memo(
               <TestingPreviewContent data={activeData} />
             ) : showAgentView ? (
               <AgentTestStep
-                agentResult={getAgentResult(sampleData)}
+                agentResult={getAgentResult({ sampleData, isTesting })}
                 errorMessage={errorMessage}
               />
             ) : friendlyError ? (
@@ -235,7 +239,7 @@ const SegmentedTabs = ({
 }: SegmentedTabsProps) => (
   <div
     className={cn(
-      'inline-flex items-center rounded-md bg-gray-3 p-0.5 gap-0.5',
+      'inline-flex items-center rounded-lg bg-gray-3 p-0.5 gap-0.5',
       disabled && 'opacity-50',
     )}
   >
@@ -282,7 +286,7 @@ const SegmentedTabsButton = ({
     onClick={onClick}
     disabled={disabled}
     className={cn(
-      'px-3 py-1 text-xs font-medium rounded-sm transition-colors disabled:cursor-not-allowed',
+      'px-3 py-1 text-xs font-medium rounded-md transition-colors disabled:cursor-not-allowed',
       active
         ? 'bg-gray-1 text-gray-12 shadow-sm'
         : 'text-gray-11 hover:text-gray-12',
@@ -374,7 +378,21 @@ const TestingPreviewContent = ({ data }: TestingPreviewContentProps) => {
 TestSampleDataViewer.displayName = 'TestSampleDataViewer';
 
 //In case the user has mangled sample data
-function getAgentResult(sampleData: unknown) {
+function getAgentResult({
+  sampleData,
+  isTesting,
+}: {
+  sampleData: unknown;
+  isTesting: boolean;
+}): AgentResult | undefined {
+  const agentResult = parseAgentResult(sampleData);
+  if (isTesting && agentResult?.status !== AgentTaskStatus.IN_PROGRESS) {
+    return defaultAgentOutput;
+  }
+  return agentResult;
+}
+
+function parseAgentResult(sampleData: unknown) {
   if (isNil(sampleData)) return undefined;
   if (typeof sampleData !== 'object' || sampleData === null) return undefined;
   if (!('status' in sampleData)) return undefined;

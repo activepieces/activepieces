@@ -20,6 +20,8 @@ export const findUserAction = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Email',
+      description: 'Must be a member of your Calendly organization.',
+      placeholder: 'teammate@example.com',
       required: true,
     }),
   },
