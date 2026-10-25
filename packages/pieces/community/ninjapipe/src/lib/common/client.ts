@@ -6,6 +6,7 @@ const MAX_RATE_LIMIT_RETRIES = 2;
 const MAX_RETRY_WAIT_SECONDS = 60;
 const DEFAULT_RETRY_WAIT_SECONDS = 10;
 const MAX_ERROR_BODY_CHARS = 2000;
+const KEEP_EMPTY_QUERY_KEYS = ['parent_id'];
 
 
 export class NinjaPipeApiError extends Error {
@@ -121,7 +122,7 @@ function cleanQuery(query: Record<string, unknown> | undefined): Record<string, 
   if (!query) return undefined;
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(query)) {
-    if (value === undefined || value === null || value === '') continue;
+    if (value === undefined || value === null || (value === '' && !KEEP_EMPTY_QUERY_KEYS.includes(key))) continue;
     result[key] = String(value);
   }
   return result;

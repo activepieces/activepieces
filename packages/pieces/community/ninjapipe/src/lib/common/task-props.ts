@@ -19,6 +19,13 @@ function taskProps({ titleRequired }: { titleRequired: boolean }) {
   };
 }
 
+function parentFilter({ parentId, rootOnly }: { parentId: string | undefined; rootOnly: boolean | undefined }): string | undefined {
+  const id = parentId?.trim();
+  if (id) return id;
+  if (rootOnly === true || parentId !== undefined) return '';
+  return undefined;
+}
+
 function taskBody(p: TaskInput): NinjaPipeRecord {
   return ninjapipeFields.compact({
     title: p.title,
@@ -43,7 +50,7 @@ const TASK_CLEARABLE: Record<string, string> = {
   estimated_hours: 'Estimated Hours',
 };
 
-export const ninjapipeTasks = { taskProps, taskBody, TASK_STATUSES, TASK_PRIORITIES, TASK_CLEARABLE };
+export const ninjapipeTasks = { taskProps, taskBody, parentFilter, TASK_STATUSES, TASK_PRIORITIES, TASK_CLEARABLE };
 
 export type TaskInput = {
   title?: unknown;

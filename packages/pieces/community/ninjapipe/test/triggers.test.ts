@@ -41,6 +41,22 @@ describe('record polling triggers', () => {
     expect(await store.get('lastPoll')).toBe(T0 + 30 * 60000);
   });
 
+  it('a burst larger than ten pages is read back to the checkpoint', async () => {
+    const trigger = 'new_or_updated_deal';
+    const pages = 12;
+    const responses = Array.from({ length: pages }, (_, index) => ({
+      status: 200,
+      body: page({ data: [rec({ id: `p${index}`, minutes: 1000 - index })], page: index + 1, pages: pages + 1 }),
+    }));
+    responses.push({ status: 200, body: page({ data: [rec({ id: 'old', minutes: 5 })], page: pages + 1, pages: pages + 1 }) });
+    const fetchMock = stubFetch({ responses });
+    const { store } = memoryStore({ initial: { lastPoll: T0 + 10 * 60000 } });
+    const result = ids(await runHook({ name: trigger, hook: 'run', context: { store, propsValue: {} } }));
+    expect(result).toHaveLength(pages);
+    expect(result.at(-1)).toBe(`p${pages - 1}`);
+    expect(fetchMock).toHaveBeenCalledTimes(pages + 1);
+  });
+
   it('a second poll with no changes emits nothing', async () => {
     const trigger = 'new_or_updated_deal';
     stubFetch({ responses: [{ status: 200, body: page({ data: [rec({ id: 'c', minutes: 30 })] }) }] });

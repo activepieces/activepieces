@@ -49,9 +49,8 @@ async function fetchSince({
 }): Promise<NinjaPipeRecord[]> {
   const client = ninjapipeClient.readAuth(auth);
   const isTest = lastFetchEpochMS === 0;
-  const maxPages = isTest ? 1 : POLL_MAX_PAGES;
   const records: NinjaPipeRecord[] = [];
-  for (let page = 1; page <= maxPages; page++) {
+  for (let page = 1; ; page++) {
     const result = await ninjapipeClient.listPage({
       auth: client,
       path,
@@ -63,7 +62,7 @@ async function fetchSince({
     records.push(...result.items);
     const timestamps = result.items.map((record) => readTimestamp({ record, field })).filter((ms): ms is number => ms !== undefined);
     const reachedCheckpoint = timestamps.length > 0 && timestamps.reduce((min, ms) => (ms < min ? ms : min)) <= lastFetchEpochMS;
-    if (!result.hasMore || reachedCheckpoint || result.items.length === 0) break;
+    if (isTest || !result.hasMore || reachedCheckpoint || result.items.length === 0) break;
   }
   return records;
 }
@@ -97,11 +96,10 @@ function buildProjectTasksPolling({ field }: { field: TimestampField }): Polling
   };
 }
 
-const POLL_MAX_PAGES = 10;
 const TEST_PAGE_SIZE = 5;
 const UNTIMED_STORE_KEY = 'ninjapipe_untimed_seen_ids';
 const UNTIMED_MAX_IDS = 500;
 
-export const ninjapipePolling = { buildPolling, buildProjectTasksPolling, toPollItems, POLL_MAX_PAGES };
+export const ninjapipePolling = { buildPolling, buildProjectTasksPolling, toPollItems };
 
 type TimestampField = 'created_at' | 'updated_at';
