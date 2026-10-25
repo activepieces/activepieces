@@ -1,5 +1,5 @@
 import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentPhase, aiProviderUtils, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
+import { AgentPhase, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { tool } from 'ai'
 import { convertArrayToReadableStream, MockLanguageModelV3 } from 'ai/test'
 import { describe, expect, it, vi } from 'vitest'
@@ -90,12 +90,11 @@ describe('a turn with many steps', () => {
 describe('a turn that hits its token budget', () => {
     it('stops at the step that crossed the budget, instead of running every step', async () => {
         const search = vi.fn(async () => SEARCH_RESULT)
-        const halfTheBudget = aiProviderUtils.getMaxContextTokens({ provider: AIProviderName.ANTHROPIC }) * 45
-        const model = alwaysSearchingModel({ inputTokensPerStep: halfTheBudget + 1 })
+        const model = alwaysSearchingModel({ usage: OVER_BUDGET_USAGE })
 
         const turn = await runTurn({ search, creditsLeft: async () => 1_000, model })
 
-        expect(search).toHaveBeenCalledTimes(2)
+        expect(search).toHaveBeenCalledTimes(1)
         expect(turn.budgetExceeded).toBe(true)
     })
 })
@@ -136,7 +135,7 @@ async function failingCreditCheck(): Promise<number | null> {
     throw new Error('rpc down')
 }
 
-function alwaysSearchingModel({ inputTokensPerStep = 1 }: { inputTokensPerStep?: number } = {}): MockLanguageModelV3 {
+function alwaysSearchingModel({ usage = USAGE }: { usage?: typeof USAGE } = {}): MockLanguageModelV3 {
     let calls = 0
     return new MockLanguageModelV3({
         doStream: async () => {
@@ -145,7 +144,7 @@ function alwaysSearchingModel({ inputTokensPerStep = 1 }: { inputTokensPerStep?:
                 stream: convertArrayToReadableStream([
                     { type: 'stream-start' as const, warnings: [] },
                     { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
-                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: { total: inputTokensPerStep, noCache: inputTokensPerStep, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } } },
+                    { type: 'finish' as const, finishReason: 'tool-calls' as const, usage },
                 ]),
             }
         },
@@ -163,7 +162,7 @@ function searchUntilToldToAnswer({ searches }: { searches: number }): MockLangua
                     stream: convertArrayToReadableStream([
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: toolChoice.toolName, input: '{"output":{"summary":"partial"}}' },
-                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
                     ]),
                 }
             }
@@ -174,12 +173,12 @@ function searchUntilToldToAnswer({ searches }: { searches: number }): MockLangua
                         { type: 'text-start' as const, id: 'answer' },
                         { type: 'text-delta' as const, id: 'answer', delta: 'Here is what I found so far.' },
                         { type: 'text-end' as const, id: 'answer' },
-                        { type: 'finish' as const, finishReason: 'stop' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: 'stop' as const, usage: USAGE },
                     ]
                     : [
                         { type: 'stream-start' as const, warnings: [] },
                         { type: 'tool-call' as const, toolCallId: `call-${calls}`, toolName: 'ap_web_search', input: '{"query":"more"}' },
-                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 } },
+                        { type: 'finish' as const, finishReason: 'tool-calls' as const, usage: USAGE },
                     ]),
             }
         },
@@ -191,3 +190,7 @@ const SEARCH_RESULT = { content: [{ type: 'text', text: 'ok' }] }
 const TIER = { id: 'fast', thinkingBudget: 5_000, modelId: 'anthropic/claude-haiku-4.5' }
 
 const SILENT_LOG = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined }
+
+const USAGE = { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } }
+
+const OVER_BUDGET_USAGE = { ...USAGE, inputTokens: { total: Number.MAX_SAFE_INTEGER, noCache: Number.MAX_SAFE_INTEGER, cacheRead: 0, cacheWrite: 0 } }
