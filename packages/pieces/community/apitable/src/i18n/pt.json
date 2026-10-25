@@ -85,5 +85,8 @@
   "DELETE": "EXCLUIR",
   "HEAD": "CABEÇA",
   "New Record": "Novo Registro",
-  "Triggers when a new record is added to a datasheet.": "Aciona quando um novo registro é adicionado a uma ficha técnica."
+  "Triggers when a new record is added to a datasheet.": "Aciona quando um novo registro é adicionado a uma ficha técnica.",
+  "Markdown": "Markdown",
+  "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.": "Campos em branco ficam vazios. Alguns tipos de coluna, como anexos e fórmulas, não são listados.",
+  "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.": "Campos em branco mantêm o valor atual; caixas de seleção desmarcadas são limpas. Alguns tipos de coluna, como anexos e fórmulas, não são listados."
 }

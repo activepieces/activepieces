@@ -137,5 +137,12 @@
   "Request": "Request",
   "Data to send": "Data to send",
   "New Review": "New Review",
-  "Triggers when a customer posts a new review on the location.": "Triggers when a customer posts a new review on the location."
+  "Triggers when a customer posts a new review on the location.": "Triggers when a customer posts a new review on the location.",
+  "Post to Update": "Post to Update",
+  "Review": "Review",
+  "Reply": "Reply",
+  "Results": "Results",
+  "Business": "Business",
+  "Markdown": "Markdown",
+  "Fields left empty keep their current value.": "Fields left empty keep their current value."
 }

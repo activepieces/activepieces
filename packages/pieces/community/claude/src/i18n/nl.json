@@ -85,5 +85,9 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "Simple": "Eenvoudig",
+  "Advanced": "Geavanceerd",
+  "Fill in Text, Image or PDF, or both.": "Vul Tekst, Afbeelding of PDF in, of beide.",
+  "Add anthropic-version: 2023-06-01. Your API key is added for you.": "Voeg anthropic-version: 2023-06-01 toe. Je API-sleutel wordt automatisch toegevoegd."
 }

@@ -60,6 +60,15 @@ export const newRecordTrigger = createTrigger({
     description:
       'Fires when a new record is created in the selected AITable datasheet. Polls by creation time, so each newly added row in the chosen space and datasheet surfaces as one event.',
   },
+  propertyGroups: [
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location',
+      icon: 'location',
+      props: ['space_id', 'datasheet_id'],
+    },
+  ],
   props: {
     space_id: APITableCommon.space_id,
     datasheet_id: APITableCommon.datasheet_id,
