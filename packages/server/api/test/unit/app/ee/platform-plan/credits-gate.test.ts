@@ -245,24 +245,31 @@ describe('credits gate decides from the cache and refreshes in the background', 
         expect(log.warn).toHaveBeenCalled()
     })
 
-    it('keeps blocking on the last good answer when a later cache read fails', async () => {
+    it.each([
+        { failure: 'fails', read: (): Promise<never> => Promise.reject(new Error('redis slow')) },
+        { failure: 'hangs past the timeout', read: (): Promise<never> => new Promise(() => undefined) },
+    ])('keeps blocking on the last good answer when a later cache read $failure', async ({ failure, read }) => {
+        const platformId = `blocked-then-${failure}`
         storedCredits = fresh({ remaining: 0 })
-        await gateState({ platformId: 'recently-blocked' })
-        mockBillingEnforced.mockRejectedValue(new Error('redis slow'))
+        await gateState({ platformId })
+        mockBillingEnforced.mockImplementation(read)
 
-        const { credits } = await gateState({ platformId: 'recently-blocked' })
+        const { credits } = await gateState({ platformId })
 
         expect(credits.blocked).toBe(true)
     })
 
-    it('keeps blocking on the last good answer when a later cache read hangs past the timeout', async () => {
+    it('remembers a read that answers after the timeout, so the next slow read still blocks', async () => {
         storedCredits = fresh({ remaining: 0 })
-        await gateState({ platformId: 'blocked-then-slow' })
-        mockBillingEnforced.mockReturnValue(new Promise(() => undefined))
+        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 40)))
+        const { credits: first } = await gateState({ platformId: 'late-answer' })
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        mockBillingEnforced.mockRejectedValue(new Error('redis slow'))
 
-        const { credits } = await gateState({ platformId: 'blocked-then-slow' })
+        const { credits: second } = await gateState({ platformId: 'late-answer' })
 
-        expect(credits.blocked).toBe(true)
+        expect(first.blocked).toBe(false)
+        expect(second.blocked).toBe(true)
     })
 
     it('fails open when the last good answer is older than the refetch period', async () => {
