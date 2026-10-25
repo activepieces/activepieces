@@ -8,6 +8,18 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### NinjaPipe 0.2.0 list and record steps return a new output shape, and fields the API rejects are removed
+
+NinjaPipe 0.2.0 changes what existing steps return once they are upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+- The List steps (Contacts, Companies, Deals, Products, Orders, Budgets, Projects, Tasks, Pipelines) return `{ items, count, total, hasMore, nextPage }` instead of a plain array.
+- Get, Create and Update steps return the record's own fields (`id`, `name`, …) instead of `data_id`, `data_name`, ….
+- Create Contact no longer has Address, City, ZIP, Country, State, Notes or Company text fields, because the API rejected them; it has a Company dropdown instead. Fields that the API silently ignored on companies, deals and projects are removed too.
+
+#### What you need to do
+
+After upgrading a NinjaPipe step, remap later steps that used the List output (map `items` instead of the array) or a `data_*` field (map the plain field name). Re-select the company in Create Contact steps that used the old Company text field.
+
 #### Asana 0.8.0 Create Task sends a plain date as an all-day due date and fails on unknown tags
 
 Asana 0.8.0 changes what an existing **Create Task** step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
