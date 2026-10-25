@@ -118,5 +118,16 @@
   "Last occurrence": "Last occurrence",
   "Keep only these columns": "Keep only these columns",
   "Remove these columns": "Remove these columns",
-  "CSV": "CSV"
+  "CSV": "CSV",
+  "CSV Input": "CSV Input",
+  "JSON Output": "JSON Output",
+  "JSON Input": "JSON Input",
+  "CSV Output": "CSV Output",
+  "Reading Options": "Reading Options",
+  "Spreadsheet Options": "Spreadsheet Options",
+  "Keep Rows Where": "Keep Rows Where",
+  "Sort": "Sort",
+  "Duplicates": "Duplicates",
+  "CSVs to Merge": "CSVs to Merge",
+  "Chunks": "Chunks"
 }
