@@ -167,7 +167,7 @@ function eventIdOf({ body, eventType }: { body: Record<string, unknown>; eventTy
   const file = text(body['file_key']);
   if (eventType === 'FILE_COMMENT') return `${webhook}:${eventType}:${text(body['comment_id'])}`;
   if (eventType === 'FILE_VERSION_UPDATE') return `${webhook}:${eventType}:${file}:${text(body['version_id'])}`;
-  if (eventType === 'FILE_DELETE') return `${webhook}:${eventType}:${file}`;
+  if (eventType === 'FILE_DELETE') return `${webhook}:${eventType}:${file}:${text(body['timestamp'])}`;
   return `${webhook}:${eventType}:${file}:${text(body['timestamp'])}`;
 }
 

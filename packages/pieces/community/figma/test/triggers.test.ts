@@ -21,7 +21,7 @@ const triggers = [
   { trigger: newFileVersionTrigger, event: 'FILE_VERSION_UPDATE', key: 'context_id', extra: { version_id: '9' } },
   { trigger: fileUpdatedTrigger, event: 'FILE_UPDATE', key: 'context_id', extra: { timestamp: 't1' } },
   { trigger: libraryPublishedTrigger, event: 'LIBRARY_PUBLISH', key: 'context_id', extra: { timestamp: 't1' } },
-  { trigger: fileDeletedTrigger, event: 'FILE_DELETE', key: 'context_id', extra: {} },
+  { trigger: fileDeletedTrigger, event: 'FILE_DELETE', key: 'context_id', extra: { timestamp: 't1' } },
 ];
 
 describe.each(triggers)('$event trigger', ({ trigger, event, key, extra }) => {
@@ -48,6 +48,14 @@ describe.each(triggers)('$event trigger', ({ trigger, event, key, extra }) => {
 });
 
 describe('webhook helper', () => {
+  it('runs again for a second deletion of the same file but not for its retry', async () => {
+    const { store, passcode } = await enableWith({ trigger: fileDeletedTrigger, props: { context: 'file', context_id: 'https://www.figma.com/design/HMvFQs5gIn9vdRYGCwgF9O/x' } });
+    const run = (b: unknown) => invoke({ fn: fileDeletedTrigger.run, ctx: hookContext({ store, body: b }) });
+    const body = { event_type: 'FILE_DELETE', webhook_id: '555', file_key: 'K', passcode, timestamp: 't1' };
+    expect(await run(body)).toHaveLength(1);
+    expect(await run(body)).toEqual([]);
+    expect(await run({ ...body, timestamp: 't2' })).toHaveLength(1);
+  });
   it('file context uses the main file key', () => {
     expect(figmaWebhook.resolveContext({ context: 'file', contextId: 'https://www.figma.com/design/HMvFQs5gIn9vdRYGCwgF9O/x?node-id=3-2' })).toEqual({ context: 'file', contextId: 'HMvFQs5gIn9vdRYGCwgF9O' });
     expect(() => figmaWebhook.resolveContext({ context: 'project', contextId: 'abc' })).toThrow('Project ID');
