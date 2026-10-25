@@ -16,6 +16,22 @@ export const findEmailAction = createAction({
 	audience: 'human',
 	aiMetadata: { description: 'Searches the Outlook mailbox for messages matching a full-text query (supports field syntax like from:, subject:, hasAttachments:), optionally scoped to one folder and capped by a max-results count. Use this to locate emails and obtain their message IDs for follow-up actions. Idempotent read-only lookup.', idempotent: true },
 	outputSchema: findEmailActionOutputSchema,
+	propertyGroups: [
+		{
+			key: 'search',
+			display: 'section',
+			label: 'Search',
+			icon: 'filter',
+			props: ['searchQuery', 'folderId'],
+		},
+		{
+			key: 'limits',
+			display: 'section',
+			label: 'Limits',
+			icon: 'sliders',
+			props: ['top'],
+		},
+	],
 	props: {
 		searchQuery: Property.ShortText({
 			displayName: 'Search Query',

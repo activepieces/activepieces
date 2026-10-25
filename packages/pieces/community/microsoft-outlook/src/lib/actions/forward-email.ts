@@ -14,6 +14,22 @@ export const forwardEmailAction = createAction({
 	audience: 'human',
 	aiMetadata: { description: 'Forwards an existing Outlook message (by message ID) to new recipients, preserving the original body and attachments and prepending an optional comment. Use this to pass an existing email along rather than composing a new one. Not idempotent: each call sends a new forwarded email.', idempotent: false },
 	outputSchema: forwardEmailActionOutputSchema,
+	propertyGroups: [
+		{
+			key: 'email',
+			display: 'section',
+			label: 'Email to Forward',
+			icon: 'inbox',
+			props: ['messageId'],
+		},
+		{
+			key: 'destination',
+			display: 'section',
+			label: 'Forward to',
+			icon: 'send',
+			props: ['recipients', 'comment'],
+		},
+	],
 	props: {
 		messageId: messageIdDropdown({
 			displayName: 'Email',
