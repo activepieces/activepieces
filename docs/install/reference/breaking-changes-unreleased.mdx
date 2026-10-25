@@ -8,14 +8,6 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
-#### Workable 0.3.0: Move Candidate is no longer an agent tool
-
-**Move Candidate** is now shown only in the flow builder. Agents get **Move Candidate (Agent)** instead, which takes the candidate ID and the target stage as text, so a Run Agent step no longer has to fill the builder's dropdowns.
-
-#### What you need to do
-
-If a Run Agent step lists Move Candidate as a tool, swap it for Move Candidate (Agent). Flow steps that use Move Candidate keep working unchanged.
-
 #### Worker group ids can no longer contain a colon
 
 Worker group ids with `:` in them are no longer routable. The assignment endpoints reject them, and a project or flow already assigned to such a group is treated as unassigned: its runs fall back to the project, platform or shared queue instead of the group's dedicated queue, and the group disappears from the worker groups page.

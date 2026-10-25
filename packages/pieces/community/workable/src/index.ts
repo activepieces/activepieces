@@ -59,11 +59,11 @@ const runCustomApiCall: typeof baseCustomApiCall.run = async (context) => {
 export const workableCustomApiCall = createAction({
   ...baseCustomApiCall,
   auth: workableAuth,
-  audience: 'both',
+  audience: 'human',
   classification: 'DESTRUCTIVE',
   aiMetadata: {
     description:
-      'Send a raw request to any Workable SPI v3 endpoint (relative path such as "jobs" or "candidates/{id}") on the selected account. Use only when no dedicated Workable tool fits; the method can be DELETE. Returns the raw response.',
+      'Send a raw request to any Workable SPI v3 endpoint (relative path such as "jobs" or "candidates/{id}") on the selected account. The method can be DELETE. Returns the raw response.',
     idempotent: false,
   },
   run: runCustomApiCall,
