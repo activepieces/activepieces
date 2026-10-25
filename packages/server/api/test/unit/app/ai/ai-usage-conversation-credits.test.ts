@@ -19,6 +19,12 @@ vi.mock('../../../../src/app/platform/billing-and-telemetry', () => ({
     trackBillingAndSendTelemetry: (...args: unknown[]) => trackBillingAndSendTelemetry(...args as []),
 }))
 
+const ingest = vi.fn<(input: ReportAiUsageRequest) => Promise<void>>()
+
+vi.mock('../../../../src/app/ai/usage/ai-usage-ingest', () => ({
+    aiUsageIngest: () => ({ ingest: (input: ReportAiUsageRequest) => ingest(input) }),
+}))
+
 const claimedKeys = new Set<string>()
 
 vi.mock('../../../../src/app/database/redis-connections', () => ({
@@ -70,6 +76,20 @@ describe('aiUsageService.report — the conversation credit total', () => {
         }))
 
         expect(addConversationCredits).toHaveBeenCalledWith({ conversationId: 'conversation-1', credits: 10 })
+    })
+
+    it('records a usage-only call for analytics and never bills it', async () => {
+        const usageOnly: ReportAiUsageRequest = {
+            ...reportOf({ source: ActivepiecesAiConsumerSource.CHAT, platformId: 'platform-1', projectId: 'project-1', conversationId: 'conversation-1' }),
+            provider: AIProviderName.OPENAI,
+            usage: { type: AiChargeBasis.USAGE_ONLY },
+        }
+
+        await aiUsageService(noopLogger as never).report(usageOnly)
+
+        expect(ingest).toHaveBeenCalledWith(usageOnly)
+        expect(trackBillingAndSendTelemetry).not.toHaveBeenCalled()
+        expect(addConversationCredits).not.toHaveBeenCalled()
     })
 
     it('adds a retried report to the conversation once, since the retry carries the same key', async () => {

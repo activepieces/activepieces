@@ -25,7 +25,7 @@ export function costBasisOf(usage: AiUsageCharge): CostBasis | undefined {
     return { costUsd: usage.costUsd, creditUsdValue: dollarsPerCredit() }
 }
 
-function dollarsPerCredit(): number {
+export function dollarsPerCredit(): number {
     const value = system.getDecimalOrThrow(AppSystemProp.AI_CREDIT_USD_VALUE)
     if (value <= 0) {
         throw new Error(`AP_${AppSystemProp.AI_CREDIT_USD_VALUE} must be greater than zero, so a call cannot bill an unbounded number of credits`)

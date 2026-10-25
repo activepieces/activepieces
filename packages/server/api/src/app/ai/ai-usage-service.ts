@@ -7,9 +7,11 @@ import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
 import { AiCreditConsumptionProperties, ChatAppSumoConsumptionProperties, ChatCreditConsumptionProperties, CreditUsageSource } from '../platform/billing-provider'
 import { chargeFor, CostBasis, costBasisOf } from './ai-credits'
 import { aiUsageHooks } from './ai-usage-hooks'
+import { aiUsageIngest } from './usage/ai-usage-ingest'
 
 export const aiUsageService = (log: FastifyBaseLogger) => ({
     async report(input: ReportAiUsageRequest): Promise<void> {
+        await aiUsageIngest(log).ingest(input)
         if (input.usage.type === AiChargeBasis.USAGE_ONLY) {
             return
         }
