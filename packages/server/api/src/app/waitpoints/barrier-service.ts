@@ -36,8 +36,8 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         const creation = await transaction(async (entityManager) => {
             const repo = waitpointRepo(entityManager)
             const existing = await repo.findOneBy({ flowRunId: params.flowRunId, projectId: params.projectId, stepName: params.stepName })
-            if (!isNil(existing) && existing.status === WaitpointStatus.PENDING) {
-                log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id } }, '[barrierService#create] Barrier already open for this step, reusing it')
+            if (!isNil(existing) && existing.status !== WaitpointStatus.CONSUMED) {
+                log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id, status: existing.status } }, '[barrierService#create] Barrier already exists for this step and its resume is not delivered, reusing it')
                 return { inserted: false, barrier: existing, signals: await signalRepo(entityManager).findBy({ waitpointId: existing.id, projectId: params.projectId }) }
             }
             if (!isNil(existing)) {
@@ -71,7 +71,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
             return { inserted: true, barrier, signals }
         })
 
-        if (!isNil(params.fanOut)) {
+        if (!isNil(params.fanOut) && creation.barrier.status === WaitpointStatus.PENDING) {
             await startFanOut({
                 barrierId: creation.barrier.id,
                 projectId: params.projectId,

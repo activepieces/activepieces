@@ -1694,6 +1694,67 @@ describe('fan-out dispatch', () => {
         })
     })
 
+    it('keeps a released fan-out barrier when the engine retries its create, so no batch runs twice', async () => {
+        const { flowRun } = await createFanOutParentRun(FlowRunStatus.RUNNING)
+        await withBarrierQueuePaused(async () => {
+            const queue = barrierQueue(app.log).get()
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3], batchSize: 1 })
+            await queue.remove(`dispatch-${barrier.id}`)
+            await dispatch(barrier.id)
+            const children = await listChildren(barrier.id)
+            for (const child of children) {
+                await barrierService(app.log).receiveSignal({ refId: child.id, projectId: ctx.project.id, status: BarrierSignalStatus.SUCCEEDED })
+            }
+            await releaseIfReady(barrier.id)
+            expect(await readStatus(barrier.id)).toBe(WaitpointStatus.COMPLETED)
+
+            const retried = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3], batchSize: 1 })
+            await dispatch(retried.barrier.id)
+
+            expect(retried.barrier.id).toBe(barrier.id)
+            expect(await databaseConnection().getRepository('flow_run').findBy({ parentRunId: flowRun.id })).toHaveLength(3)
+            expect(await queue.getJob(`dispatch-${barrier.id}`)).toBeUndefined()
+            expect(await distributedStore.exists(barrierSourceKey(barrier.id))).toBe(false)
+
+            await db.update('flow_run', flowRun.id, { status: FlowRunStatus.PAUSED })
+            await dropResumeJobs(flowRun.id)
+            await recoverUndeliveredResume(flowRun.id)
+
+            expect(await listResumeJobs(flowRun.id)).toHaveLength(1)
+            expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
+        })
+    })
+
+    it('keeps an open fan-out barrier when the engine retries its create, so its children are not dispatched again', async () => {
+        const { flowRun } = await createFanOutParentRun()
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3], batchSize: 1 })
+            await dispatch(barrier.id)
+
+            const retried = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3], batchSize: 1 })
+            await dispatch(retried.barrier.id)
+
+            expect(retried.barrier.id).toBe(barrier.id)
+            expect(await listChildren(barrier.id)).toHaveLength(3)
+        })
+    })
+
+    it('replaces a consumed barrier when its step creates one again', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await closeWithoutConsuming(barrier.id)
+        const closed = await barrierService(app.log).findById({ barrierId: barrier.id, projectId: ctx.project.id })
+        assertNotNullOrUndefined(closed, 'closed barrier')
+        await waitpointService(app.log).consume({ waitpoint: closed })
+
+        const recreated = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+
+        expect(recreated.barrier.id).not.toBe(barrier.id)
+        expect(await readStatus(recreated.barrier.id)).toBe(WaitpointStatus.PENDING)
+        expect(await listSignals(recreated.barrier.id)).toEqual([expect.objectContaining({ status: BarrierSignalStatus.PENDING })])
+        expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
+    })
+
     it('gives up on an unrecoverable failure and on the last attempt, but not mid-ladder', async () => {
         expect(fanOutDispatchGaveUp({ attemptsMade: 1, attempts: 5, error: new Error('boom') })).toBeNull()
         expect(fanOutDispatchGaveUp({ attemptsMade: 4, attempts: 5, error: new Error('boom') })).toBeNull()

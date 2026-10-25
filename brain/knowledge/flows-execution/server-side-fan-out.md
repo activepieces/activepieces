@@ -53,9 +53,12 @@ and it retries like any barrier job.
 - **A child claimed just before a release never starts.** Its enqueue needs the barrier `PENDING`, so the
   dispatcher cancels it instead (`cancelUnstartedChildRun`). The release summary still counts it as `stillRunning`
   with its run id, because its claim came first.
-- **The engine retries `POST /v1/waitpoints` on a 500.** The retry reuses the open barrier, so `create` stores the
-  source and adds the dispatch job on that path too. The fixed job id `dispatch-<barrierId>` and the claims make
-  the repeat safe.
+- **The engine retries `POST /v1/waitpoints` on a 5xx, also after the API committed.** `create` keys the retry on
+  the existing row's status. `PENDING` is reused, and `create` stores the source and adds the dispatch job again;
+  the fixed job id `dispatch-<barrierId>` and the claims make that repeat safe. `COMPLETED` is reused with no
+  dispatch, because fast children can release the barrier before the retry lands, and its summary waits for the
+  deferred resume. Only `CONSUMED` is replaced. Deleting a `COMPLETED` barrier gave it fresh signals and ran every
+  batch twice.
 - **Run credits are checked once per chunk.** With none left, the dispatcher marks the unclaimed signals
   `NOT_DISPATCHED`; children already claimed keep running.
 - **Each child carries its own copy of `seedSteps`**, inline below `WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` and as a
