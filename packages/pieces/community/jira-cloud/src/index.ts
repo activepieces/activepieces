@@ -94,7 +94,7 @@ export const jiraCloud = createPiece({
 	description: 'Issue tracking and project management',
 
 	auth: jiraCloudAuth,
-	minimumSupportedRelease: '0.87.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/jira.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['kishanprmr', 'MoShizzle', 'abuaboud', 'prasanna2000-max', 'sanket-a11y'],
@@ -187,6 +187,12 @@ export const jiraCloud = createPiece({
 						'base64',
 					)}`,
 				};
+			},
+			props: {
+				url: {
+					description: "Full URL, or a path relative to your Jira site's /rest/api/3.",
+					placeholder: '/issue/PROJ-123',
+				},
 			},
 		}),
 	],

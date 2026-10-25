@@ -1,8 +1,8 @@
 import { ActivepiecesError, apId, ErrorCode, isNil } from '@activepieces/core-utils'
-import { FlowRunStatus, PauseType } from '@activepieces/shared'
+import { FlowRun, FlowRunStatus, isFailedState, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Not } from 'typeorm'
+import { EntityManager, FindOptionsWhere, In, Not } from 'typeorm'
 import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -214,17 +214,44 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 
     async deleteByFlowRunId({ flowRunId, projectId }: DeleteByFlowRunIdParams): Promise<void> {
-        const result = await waitpointRepo()
-            .createQueryBuilder()
-            .delete()
-            .where({ flowRunId, projectId })
-            .returning(['id', 'resumeDateTime'])
-            .execute()
-        const timed = DeletedWaitpointRows.parse(result.raw ?? []).filter((waitpoint) => !isNil(waitpoint.resumeDateTime))
-        await Promise.all(timed.map((waitpoint) => waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })))
+        await deleteWaitpointsWithTimers({ where: { flowRunId, projectId }, flowRunId, log })
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
+
+    async deleteForFinishedRun({ flowRun }: DeleteForFinishedRunParams): Promise<void> {
+        const failedStepName = flowRun.failedStep?.name
+        if (!isFailedState(flowRun.status) || isNil(failedStepName)) {
+            await this.deleteByFlowRunId({ flowRunId: flowRun.id, projectId: flowRun.projectId })
+            return
+        }
+        const waitpoints = await waitpointRepo().find({
+            select: { id: true, stepName: true, type: true },
+            where: { flowRunId: flowRun.id, projectId: flowRun.projectId },
+        })
+        const discardedIds = waitpoints
+            .filter((waitpoint) => waitpoint.type === PauseType.BARRIER || stepNameOfWaitpointKey({ waitpointKey: waitpoint.stepName }) === failedStepName)
+            .map((waitpoint) => waitpoint.id)
+        if (discardedIds.length > 0) {
+            await deleteWaitpointsWithTimers({ where: { id: In(discardedIds), flowRunId: flowRun.id, projectId: flowRun.projectId }, flowRunId: flowRun.id, log })
+        }
+        log.info({ flowRun: { id: flowRun.id } }, '[waitpointService#deleteForFinishedRun] Deleted the failed step\'s waitpoints and any barrier, kept the waitpoints of the steps that finished')
+    },
 })
+
+async function deleteWaitpointsWithTimers({ where, flowRunId, log }: DeleteWaitpointsWithTimersParams): Promise<void> {
+    const result = await waitpointRepo()
+        .createQueryBuilder()
+        .delete()
+        .where(where)
+        .returning(['id', 'resumeDateTime'])
+        .execute()
+    const timed = DeletedWaitpointRows.parse(result.raw ?? []).filter((waitpoint) => !isNil(waitpoint.resumeDateTime))
+    await Promise.all(timed.map((waitpoint) => waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })))
+}
+
+function stepNameOfWaitpointKey({ waitpointKey }: { waitpointKey: string }): string {
+    return waitpointKey.split('/').at(-1) ?? waitpointKey
+}
 
 function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRunId }: ClampWaitpointResumeDeadlineParams): string | undefined {
     const pauseTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
@@ -258,6 +285,16 @@ type ClampWaitpointResumeDeadlineParams = {
 type DeleteByFlowRunIdParams = {
     flowRunId: string
     projectId: string
+}
+
+type DeleteForFinishedRunParams = {
+    flowRun: FlowRun
+}
+
+type DeleteWaitpointsWithTimersParams = {
+    where: FindOptionsWhere<Waitpoint>
+    flowRunId: string
+    log: FastifyBaseLogger
 }
 
 type HasPendingBarrierParams = {

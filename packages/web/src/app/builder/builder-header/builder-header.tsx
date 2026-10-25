@@ -66,12 +66,14 @@ export const BuilderHeader = () => {
     moveToFolderClientSide,
     applyOperation,
     setRightSidebar,
+    savePendingEdits,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.moveToFolderClientSide,
     state.applyOperation,
     state.setRightSidebar,
+    state.savePendingEdits,
   ]);
 
   const { embedState } = useEmbedding();
@@ -149,6 +151,7 @@ export const BuilderHeader = () => {
                       setRightSidebar(RightSideBarType.VERSIONS);
                     }}
                     insideBuilder={true}
+                    savePendingEdits={savePendingEdits}
                     flow={flow}
                     flowVersion={flowVersion}
                     readonly={!isLatestVersion}

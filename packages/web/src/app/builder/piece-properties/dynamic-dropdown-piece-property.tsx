@@ -6,7 +6,7 @@ import { t } from 'i18next';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { UseFormReturn, useWatch } from 'react-hook-form';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { useOptionalBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesHooks } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -18,10 +18,11 @@ import { DynamicPropertiesContext } from './dynamic-properties-context';
 
 const DynamicDropdownPiecePropertyImplementation = React.memo(
   (props: DynamicDropdownProps) => {
-    const [flowVersion, readonly] = useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.readonly,
-    ]);
+    const flowVersion = useOptionalBuilderStateContext(
+      (state) => state.flowVersion,
+    );
+    const readonly =
+      useOptionalBuilderStateContext((state) => state.readonly) ?? false;
 
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);
@@ -122,8 +123,8 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
             propertyName: props.propertyName,
             actionOrTriggerName: props.actionOrTriggerName,
             input,
-            flowVersionId: flowVersion.id,
-            flowId: flowVersion.flowId,
+            flowVersionId: flowVersion?.id,
+            flowId: flowVersion?.flowId,
             searchValue: term,
           },
           propertyType: PropertyType.DROPDOWN,

@@ -218,6 +218,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Task": "New Task",
   "New or Updated Task": "New or Updated Task",
   "New List": "New List",

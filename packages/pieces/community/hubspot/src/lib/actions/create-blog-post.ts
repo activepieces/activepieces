@@ -13,6 +13,29 @@ export const createBlogPostAction = createAction({
 	audience: 'both',
 	aiMetadata: { description: 'Create a post in a HubSpot CMS (COS) blog with title, slug, body, and featured image, then optionally publish it immediately when Status is set to publish rather than draft. Each call creates a new post, so it is not idempotent.', idempotent: false },
 	outputSchema: createBlogPostOutputSchema,
+	propertyGroups: [
+		{
+			key: 'blog',
+			display: 'section',
+			label: 'Blog',
+			icon: 'file',
+			props: ['contentGroupId', 'authorId'],
+		},
+		{
+			key: 'post',
+			display: 'section',
+			label: 'Post',
+			icon: 'text',
+			props: ['title', 'slug', 'body', 'meta', 'imageUrl'],
+		},
+		{
+			key: 'publishing',
+			display: 'section',
+			label: 'Publishing',
+			icon: 'send',
+			props: ['status'],
+		},
+	],
 	props: {
 		contentGroupId: blogUrlDropdown,
 		authorId: blogAuthorDropdown,
@@ -26,13 +49,13 @@ export const createBlogPostAction = createAction({
 					{
 						label: 'Draft',
 						value: 'DRAFT',
-						description: 'Kept unpublished',
+						description: 'Not published',
 						icon: 'file',
 					},
 					{
 						label: 'Publish',
 						value: 'PUBLISHED',
-						description: 'Live once created',
+						description: 'Goes live now',
 						icon: 'send',
 					},
 				],
