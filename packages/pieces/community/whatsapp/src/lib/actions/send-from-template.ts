@@ -24,6 +24,10 @@ export const sendTemplateMessageAction = createAction({
 		message_template_id: commonProps.message_template_id,
 		message_template_fields: commonProps.message_template_fields,
 	},
+	propertyGroups: [
+		{ key: 'route', display: 'section', label: 'From & To', icon: 'send', props: ['phone_number_id', 'to'] },
+		{ key: 'template', display: 'section', label: 'Template', icon: 'file', props: ['message_template_id', 'message_template_fields'] },
+	],
 	async run(context) {
 		const phoneNumberId = context.propsValue.phone_number_id as string;
 		const recipientPhoneNumber = context.propsValue.to as string;

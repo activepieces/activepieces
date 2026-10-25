@@ -46,6 +46,12 @@ export const sendInteractiveButtons = createAction({
 		footer: whatsappProps.footerText,
 		reply_to_message_id: whatsappProps.replyToMessageId,
 	},
+	propertyGroups: [
+		{ key: 'route', display: 'section', label: 'From & To', icon: 'send', props: ['phone_number_id', 'to'] },
+		{ key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['body', 'buttons'] },
+		{ key: 'header', display: 'section', label: 'Header & Footer', icon: 'type', props: ['header_type', 'header_text', 'header_media_url', 'footer'] },
+		{ key: 'reply', display: 'section', label: 'Reply To', icon: 'reply', props: ['reply_to_message_id'] },
+	],
 	async run(context) {
 		const { phone_number_id, to, body, buttons, header_type, header_text, header_media_url, footer, reply_to_message_id } =
 			context.propsValue;
