@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 
-import { httpClient, HttpError, HttpMethod } from '../src';
+import { httpClient, HttpError, HttpMethod, toFailsafeOutput } from '../src';
 
 function stubFailingFetch(): void {
   vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'bad request' }), { status: 400, headers: { 'content-type': 'application/json' } })));
@@ -49,5 +49,42 @@ describe('HttpError request body redaction', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ id: 1 }), { status: 200, headers: { 'content-type': 'application/json' } })));
     const response = await httpClient.sendRequest({ method: HttpMethod.POST, url: 'https://api.example.com/v1/users', body: { password: 'x' }, redactBodyInErrors: true });
     expect(response.body).toEqual({ id: 1 });
+  });
+});
+
+describe('FetchHttpClient connect timeout and toFailsafeOutput error cause', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('passes an undici dispatcher when timeout is set and no custom dispatcher is provided', async () => {
+    const fetchSpy = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: 'https://api.example.com/slow-connect',
+      timeout: 30000,
+    });
+
+    const init = fetchSpy.mock.calls[0]?.[1] as { dispatcher?: unknown } | undefined;
+    expect(init?.dispatcher).toBeDefined();
+  });
+
+  it('includes error.cause code and message in toFailsafeOutput', () => {
+    const cause = Object.assign(
+      new Error('Connect Timeout Error (attempted address: 10.255.255.1:80, timeout: 30000ms)'),
+      { code: 'UND_ERR_CONNECT_TIMEOUT' }
+    );
+    const err = new TypeError('fetch failed', { cause });
+
+    const output = toFailsafeOutput({ error: err, requestBody: { ping: 1 } });
+    expect(output).toEqual({
+      response: {
+        status: 0,
+        body: 'fetch failed (UND_ERR_CONNECT_TIMEOUT: Connect Timeout Error (attempted address: 10.255.255.1:80, timeout: 30000ms))',
+      },
+      request: {
+        body: { ping: 1 },
+      },
+    });
   });
 });

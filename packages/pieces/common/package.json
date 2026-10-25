@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/pieces-common",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
@@ -14,6 +14,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
     "form-data": "4.0.6",
+    "undici": "7.29.1",
     "zod": "4.3.6"
   },
   "devDependencies": {

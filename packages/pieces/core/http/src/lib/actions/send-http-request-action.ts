@@ -368,7 +368,16 @@ export const httpSendRequestAction = createAction({
         }
 
         return await httpClient.sendRequest(request, {
-          dispatcher: new ProxyAgent(proxyUrl),
+          dispatcher: new ProxyAgent({
+            uri: proxyUrl,
+            ...(request.timeout && request.timeout > 0
+              ? {
+                  connect: { timeout: request.timeout },
+                  requestTls: { timeout: request.timeout },
+                  proxyTls: { timeout: request.timeout },
+                }
+              : {}),
+          }),
         });
       }
       return await httpClient.sendRequest(request);

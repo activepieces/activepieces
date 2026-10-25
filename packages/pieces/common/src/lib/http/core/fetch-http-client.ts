@@ -1,4 +1,5 @@
 import { PassThrough, Readable } from 'node:stream';
+import { Agent } from 'undici';
 import { tryCatchSync } from '@activepieces/core-utils';
 import { BaseHttpClient } from './base-http-client';
 import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
@@ -64,11 +65,24 @@ export class FetchHttpClient extends BaseHttpClient {
         if (isStream) {
           init.duplex = 'half';
         }
-        // A caller-supplied undici Dispatcher (e.g. a ProxyAgent) for per-request proxying.
-        if (options?.dispatcher !== undefined) {
-          init.dispatcher = options.dispatcher;
+        // A caller-supplied undici Dispatcher (e.g. a ProxyAgent) for per-request proxying,
+        // or an Agent whose connect timeout matches request.timeout so slow TCP handshakes
+        // are not cut short by undici's 10s default connect timeout.
+        const ownedAgent =
+          options?.dispatcher === undefined && request.timeout && request.timeout > 0
+            ? new Agent({ connect: { timeout: request.timeout } })
+            : undefined;
+        const dispatcher = options?.dispatcher ?? ownedAgent;
+        if (dispatcher !== undefined) {
+          init.dispatcher = dispatcher;
         }
-        return await fetch(finalUrl, init);
+        try {
+          return await fetch(finalUrl, init);
+        } finally {
+          if (ownedAgent !== undefined && responseType !== 'stream') {
+            void ownedAgent.close();
+          }
+        }
       } finally {
         if (timeoutId !== undefined) {
           clearTimeout(timeoutId);
