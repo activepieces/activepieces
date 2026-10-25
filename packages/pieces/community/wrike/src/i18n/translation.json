@@ -146,6 +146,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Task": "New Task",
   "New Folder": "New Folder",
   "New Subtask Created": "New Subtask Created",

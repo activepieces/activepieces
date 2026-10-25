@@ -850,5 +850,7 @@
   "DELETE": "DELETE",
   "HEAD": "HEAD",
   "Where": "Where",
-  "Details": "Details"
+  "Details": "Details",
+  "Request": "Request",
+  "Data to send": "Data to send"
 }

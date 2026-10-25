@@ -355,6 +355,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Person": "New Person",
   "New Deal": "New Deal",
   "New Activity": "New Activity",

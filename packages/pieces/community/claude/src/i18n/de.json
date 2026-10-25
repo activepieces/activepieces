@@ -85,5 +85,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "Simple": "Einfach",
+  "Advanced": "Erweitert",
+  "Fill in Text, Image or PDF, or both.": "Text, Bild oder PDF ausfüllen, oder beides.",
+  "Add anthropic-version: 2023-06-01. Your API key is added for you.": "anthropic-version: 2023-06-01 hinzufügen. Ihr API-Schlüssel wird automatisch hinzugefügt."
 }
