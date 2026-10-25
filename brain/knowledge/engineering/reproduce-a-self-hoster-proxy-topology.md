@@ -35,8 +35,8 @@ the URL AP hands it. Everything below runs on one machine with no `/etc/hosts` e
    host; paste its metadata XML into `idpMetadata` inline, because a URL there goes through `safeHttp` and the
    SSRF filter rejects loopback.
 6. **Unblock the EE gates by hand** — they are orthogonal to what you are testing, and each one is a dead end
-   otherwise: `platform_plan.ssoEnabled = true`, `platform_plan.usersLimit` above 1 (free plan is 1 seat, and
-   the invite 402s), `platform.ssoDomainVerification` set to `{"status":"VERIFIED",…}` (SAML config is refused
+   otherwise: `platform_plan.ssoEnabled = true`, `platform_plan.usersLimit` above the users you have (free plan is 5
+   seats as of 2026-10-19, and the invite 402s), `platform.ssoDomainVerification` set to `{"status":"VERIFIED",…}` (SAML config is refused
    until the domain is verified, and you cannot create the TXT record), and the SSO user's invitation must be
    **accepted**, not pending — `assertUserIsInvitedToPlatformOrProject` calls `hasAnyAcceptedInvitations`.
    Re-apply these after every restart: the plan row is recomputed at boot and silently reverts to 1 seat with

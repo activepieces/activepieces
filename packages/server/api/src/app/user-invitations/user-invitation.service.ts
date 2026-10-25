@@ -167,6 +167,11 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             .getRawOne<{ count: string }>()
         return Number(result?.count ?? 0)
     },
+    async lockSeatReservingInvitations({ platformId, entityManager }: CountReservedSeatsParams): Promise<void> {
+        await withinReservationWindow(repo(entityManager).createQueryBuilder('invitation').select('invitation.id'), platformId)
+            .setLock('pessimistic_write')
+            .getMany()
+    },
     async countAdditionalSeatsNeeded({
         email,
         platformId,

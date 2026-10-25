@@ -196,6 +196,7 @@ export enum AdminControl {
   TEMPLATES_NEW_SUBMIT = 'templates.new.submit',
   TRIAL_PLANS_OPEN = 'trial.plans.open',
   TRIAL_SALES_LINK = 'trial.sales.link',
+  TRIAL_SEATS_OPEN = 'trial.seats.open',
   TRIAL_START_OPEN = 'trial.start.open',
   TRIAL_START_SUBMIT = 'trial.start.submit',
   USERS_ACTIVATE_RUN = 'users.activate.run',

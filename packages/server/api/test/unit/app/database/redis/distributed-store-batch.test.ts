@@ -46,3 +46,25 @@ describe('distributedStore.putBatch', () => {
         expect(setex).not.toHaveBeenCalled()
     })
 })
+
+describe('distributedStore.getMany', () => {
+    it('reads every key in one round trip and keeps their order, with null for a missing one', async () => {
+        const mget = vi.fn().mockResolvedValue(['{"dates":null}', null, '{"dates":{"endsAt":"2026-10-08"}}'])
+        const store = distributedStoreFactory(() => Promise.resolve({ mget } as unknown as Redis))
+
+        const values = await store.getMany(['one', 'two', 'three'])
+
+        expect(mget).toHaveBeenCalledTimes(1)
+        expect(mget).toHaveBeenCalledWith('one', 'two', 'three')
+        expect(values).toEqual([{ dates: null }, null, { dates: { endsAt: '2026-10-08' } }])
+    })
+
+    it('never calls Redis for no keys', async () => {
+        const mget = vi.fn()
+        const store = distributedStoreFactory(() => Promise.resolve({ mget } as unknown as Redis))
+
+        expect(await store.getMany([])).toEqual([])
+        expect(mget).not.toHaveBeenCalled()
+    })
+})
+
