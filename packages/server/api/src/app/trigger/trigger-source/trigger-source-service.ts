@@ -195,6 +195,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                     pieceTrigger,
                     simulate,
                     ignoreError: params.ignoreError,
+                    isRepublish: params.isRepublish,
                 })
                 log.info('[triggerSourceService#disable] Disabled flow trigger side effect')
             }
@@ -250,6 +251,7 @@ type DisableTriggerParams = {
     simulate: boolean
     ignoreError: boolean
     templateId?: string
+    isRepublish?: boolean
 }
 
 type EnableTriggerParams = {

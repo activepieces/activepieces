@@ -67,6 +67,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Post Created": "New Post Created",
   "New Member Added": "New Member Added",
   "Triggers when a new post is created in a specific space.": "Triggers when a new post is created in a specific space.",

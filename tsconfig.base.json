@@ -99,6 +99,9 @@
       "@activepieces/piece-anyhook-websocket": [
         "packages/pieces/community/anyhook-websocket/src/index.ts"
       ],
+      "@activepieces/piece-apache-kafka": [
+        "packages/pieces/community/apache-kafka/src/index.ts"
+      ],
       "@activepieces/piece-apify": [
         "packages/pieces/community/apify/src/index.ts"
       ],
@@ -1542,6 +1545,9 @@
       ],
       "@activepieces/piece-wootric": [
         "packages/pieces/community/wootric/src/index.ts"
+      ],
+      "@activepieces/piece-word-documents": [
+        "packages/pieces/core/word-documents/src/index.ts"
       ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"

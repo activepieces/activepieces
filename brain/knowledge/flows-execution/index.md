@@ -77,6 +77,7 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 ## Pages
 
 - **Flows** — the versioned trigger + action graph, DRAFT/LOCKED, publishing
+- **Draft Refresh** — how an open builder tab takes a different writer's save: Draft Write, Draft Push, Editor Session, Resource Lock
 - **Flow Runs** — the status state machine and RunTimeline phases
 - **Action Runs** — a single step executed outside any flow, synchronously
 - **Triggers** — POLLING / WEBHOOK / APP_WEBHOOK / MANUAL

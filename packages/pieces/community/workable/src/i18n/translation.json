@@ -61,6 +61,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Candidate": "New Candidate",
   "Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.": "Triggers when new candidate submits application. Can be filtered by specific job and/or hiring pipeline stage.",
   "Stage Slug": "Stage Slug",
