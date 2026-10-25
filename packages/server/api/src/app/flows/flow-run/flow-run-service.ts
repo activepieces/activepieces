@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isEmpty, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
 import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FAILED_STATES, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -282,7 +282,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
     },
     async bulkRetry(params: BulkRetryParams): Promise<FlowRunWithRetryError[]> {
-        const filteredFlowRuns = await filterFlowRunsAndApplyFilters(params)
+        const isFromFailedStepByFilter = params.strategy === FlowRetryStrategy.FROM_FAILED_STEP && isEmpty(params.flowRunIds)
+        const statusFilter = isFromFailedStepByFilter ? restrictToFailedStatuses(params.status) : params.status
+        if (isFromFailedStepByFilter && isEmpty(statusFilter)) {
+            return []
+        }
+        const filteredFlowRuns = await filterFlowRunsAndApplyFilters({ ...params, status: statusFilter })
         const limit = pLimit(10)
         const results = await Promise.allSettled(
             filteredFlowRuns.map(flowRun =>
@@ -588,6 +593,13 @@ async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
     return results as FlowRun[]
 }
 
+
+function restrictToFailedStatuses(statusFilter: FlowRunStatus[] | undefined): FlowRunStatus[] {
+    if (isNil(statusFilter) || statusFilter.length === 0) {
+        return FAILED_STATES
+    }
+    return statusFilter.filter((status) => FAILED_STATES.includes(status))
+}
 
 async function filterFlowRunsAndApplyFilters(
     params: FilterFlowRunsAndApplyFiltersParams,

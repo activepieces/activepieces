@@ -60,9 +60,15 @@ describe('Retry from failed step (POST /v1/flow-runs/:id/retry)', () => {
         expect(after.status).toBe(FlowRunStatus.QUEUED)
     })
 
-    it('bulk retry without run ids retries the failed run and reports the paused one', async () => {
+    it('retry from failed step by filter retries only failed runs', async () => {
         const failedRun = await createRunWithStatus(FlowRunStatus.FAILED)
-        const pausedRun = await createRunWithStatus(FlowRunStatus.PAUSED)
+        const otherRuns = await Promise.all([
+            FlowRunStatus.QUEUED,
+            FlowRunStatus.RUNNING,
+            FlowRunStatus.PAUSED,
+            FlowRunStatus.SUCCEEDED,
+        ].map((status) => createRunWithStatus(status)))
+        const otherRunsBefore = await Promise.all(otherRuns.map((run) => readRun(run.id)))
 
         const response = await ctx.post('/v1/flow-runs/retry', {
             projectId: ctx.project.id,
@@ -71,12 +77,57 @@ describe('Retry from failed step (POST /v1/flow-runs/:id/retry)', () => {
 
         expect(response.statusCode).toBe(200)
         const results: FlowRunWithRetryError[] = response.json()
-        const pausedResult = results.find((run) => run.id === pausedRun.id)
-        const failedResult = results.find((run) => run.id === failedRun.id)
-        expect(pausedResult?.error?.errorCode).toBe(ErrorCode.FLOW_RUN_NOT_RETRYABLE)
-        expect(failedResult?.error).toBeUndefined()
-        expect((await readRun(pausedRun.id)).status).toBe(FlowRunStatus.PAUSED)
+        expect(results.map((run) => run.id)).toEqual([failedRun.id])
         expect((await readRun(failedRun.id)).status).toBe(FlowRunStatus.QUEUED)
+        const otherRunsAfter = await Promise.all(otherRuns.map((run) => readRun(run.id)))
+        expect(otherRunsAfter).toEqual(otherRunsBefore)
+    })
+
+    it('retry from failed step by filter keeps only the failed statuses of the status filter', async () => {
+        const failedRun = await createRunWithStatus(FlowRunStatus.FAILED)
+        const runningRun = await createRunWithStatus(FlowRunStatus.RUNNING)
+        const runningBefore = await readRun(runningRun.id)
+
+        const response = await ctx.post('/v1/flow-runs/retry', {
+            projectId: ctx.project.id,
+            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+            status: [FlowRunStatus.FAILED, FlowRunStatus.RUNNING],
+        })
+
+        expect(response.statusCode).toBe(200)
+        const results: FlowRunWithRetryError[] = response.json()
+        expect(results.map((run) => run.id)).toEqual([failedRun.id])
+        expect(await readRun(runningRun.id)).toEqual(runningBefore)
+    })
+
+    it('retry from failed step by filter retries nothing when the status filter has no failed status', async () => {
+        const runningRun = await createRunWithStatus(FlowRunStatus.RUNNING)
+        const runningBefore = await readRun(runningRun.id)
+
+        const response = await ctx.post('/v1/flow-runs/retry', {
+            projectId: ctx.project.id,
+            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+            status: [FlowRunStatus.RUNNING],
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json()).toEqual([])
+        expect(await readRun(runningRun.id)).toEqual(runningBefore)
+    })
+
+    it('retry from failed step by run ids still accepts a RUNNING run', async () => {
+        const runningRun = await createRunWithStatus(FlowRunStatus.RUNNING)
+
+        const response = await ctx.post('/v1/flow-runs/retry', {
+            projectId: ctx.project.id,
+            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+            flowRunIds: [runningRun.id],
+        })
+
+        expect(response.statusCode).toBe(200)
+        const results: FlowRunWithRetryError[] = response.json()
+        expect(results.map((run) => ({ id: run.id, error: run.error }))).toEqual([{ id: runningRun.id, error: undefined }])
+        expect((await readRun(runningRun.id)).status).toBe(FlowRunStatus.QUEUED)
     })
 })
 
