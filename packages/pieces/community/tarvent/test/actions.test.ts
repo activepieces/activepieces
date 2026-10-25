@@ -85,6 +85,12 @@ describe('auth.validate', () => {
     expect(result).toEqual({ valid: true });
   });
 
+  it('accepts a key that lacks permission to read audiences (code 1070)', async () => {
+    sendRequest.mockResolvedValueOnce(ok({ errors: [{ message: 'BadRequest: Unauthorized. User does not have appropriate rights to grant access.', extensions: { code: '1070' } }] }));
+    const result = await validate();
+    expect(result).toEqual({ valid: true });
+  });
+
   it('stores the API key as a secret', () => {
     expect(tarventAuth.props.apiKey.type).toBe('SECRET_TEXT');
   });

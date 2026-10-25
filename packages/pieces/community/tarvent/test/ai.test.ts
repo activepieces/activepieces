@@ -25,10 +25,10 @@ beforeEach(() => {
 });
 
 describe('audience split', () => {
-  it('has 13 ai, 15 human and 12 both actions', () => {
+  it('has 13 ai, 16 human and 11 both actions', () => {
     const actions = Object.values(tarvent.actions());
     const count = (audience: string) => actions.filter((a) => a.audience === audience).length;
-    expect({ ai: count('ai'), human: count('human'), both: count('both') }).toEqual({ ai: 13, human: 15, both: 12 });
+    expect({ ai: count('ai'), human: count('human'), both: count('both') }).toEqual({ ai: 13, human: 16, both: 11 });
   });
 
   it('agent tools take plain text IDs, never dropdowns', () => {
@@ -43,6 +43,7 @@ describe('audience split', () => {
     const agentNames = Object.values(tarvent.actions()).filter((a) => a.audience !== 'human').map((a) => a.name);
     expect(agentNames).not.toContain('tarvent_send_campaign');
     expect(agentNames).not.toContain('tarvent_create_transaction');
+    expect(agentNames).not.toContain('tarvent_remove_suppression_filter');
   });
 });
 

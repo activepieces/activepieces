@@ -162,6 +162,7 @@ export const tarventTransport = {
   baseUrl: BASE_URL,
   graphqlUrl: GRAPHQL_URL,
   invalidCredentialsMessage: INVALID_CREDENTIALS,
+  permissionCode: PERMISSION_CODE,
 };
 
 type GraphqlBody<T> = { data?: T | null; errors?: unknown };

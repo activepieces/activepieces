@@ -11,7 +11,7 @@ export const removeSuppressionFilter = createAction({
   classification: 'WRITE',
   displayName: 'Remove From Suppression List',
   description: 'Removes an email address from your account suppression list.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Removes an email address from the Tarvent account-level suppression list so it can receive email again. Give the email address (every filter that exactly matches it is removed) or a suppression filter ID. Returns the removed filter IDs; removed=0 means nothing matched. Idempotent: a second call finds nothing left to remove.',

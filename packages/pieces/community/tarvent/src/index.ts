@@ -66,10 +66,10 @@ export const tarvent = createPiece({
   displayName: 'Tarvent',
   description: 'Tarvent is an email marketing, automation, and email API platform that allows you to send campaigns, manage contacts, automate your marketing, and more.',
   auth: tarventAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/tarvent.png',
   categories: [PieceCategory.MARKETING, PieceCategory.FORMS_AND_SURVEYS],
-  authors: ['derekjdev', '206mph'],
+  authors: ['derekjdev', '206mph', 'OdaiAhmed99'],
   actions: [
     createContact,
     updateContact,
