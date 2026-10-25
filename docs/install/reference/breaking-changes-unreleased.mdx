@@ -8,6 +8,13 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Worker group ids can no longer contain a colon
+
+Worker group ids with `:` in them are no longer routable. The assignment endpoints reject them, and a project or flow already assigned to such a group is treated as unassigned: its runs fall back to the project, platform or shared queue instead of the group's dedicated queue, and the group disappears from the worker groups page.
+
+#### What you need to do
+
+Rename any worker group whose id contains `:`: update `AP_WORKER_GROUP_ID` on its workers, then re-assign its projects and flows to the new name from the worker groups page.
 #### GitHub 0.11.0: Update Repository (Agent) no longer makes private repositories public
 
 When an AI agent used **Update Repository (Agent)** to change something else, such as the description, the agent path filled the three toggles it left out (**Private**, **Has Issues** and **Archived**) with `false` and sent them. Each such update could make a private repository public, turn off Issues and unarchive an archived repository. From GitHub 0.11.0 these three fields are dropdowns with **Yes**, **No** and **Leave unchanged**. A field the agent leaves out, or sets to Leave unchanged, is not sent, so the repository keeps its current setting.

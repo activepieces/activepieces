@@ -139,6 +139,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Subscription Created": "Subscription Created",
   "Subscription Cancelled": "Subscription Cancelled",
   "Subscription Renewed": "Subscription Renewed",
