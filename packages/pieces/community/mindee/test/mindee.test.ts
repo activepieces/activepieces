@@ -7,8 +7,8 @@ import { productActionHelpers } from '../src/lib/actions/product-action-helpers'
 
 const dnsAnswers = vi.hoisted(() => new Map<string, { address: string; family: number }[]>([['example.com', [{ address: '93.184.215.14', family: 4 }]]]));
 
-vi.mock('dns', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('dns')>();
+vi.mock('node:dns', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:dns')>();
   const lookup = (hostname: string, _options: unknown, callback: (error: NodeJS.ErrnoException | null, addresses: { address: string; family: number }[]) => void) => {
     const answer = dnsAnswers.get(hostname);
     if (answer === undefined) {
@@ -408,7 +408,7 @@ describe('download SSRF guard', () => {
 describe('custom API call', () => {
   async function runCustom(props: Record<string, unknown>) {
     const { mindeeCustomApiCall } = await import('../src/lib/actions/custom-api-call');
-    return mindeeCustomApiCall.run({ auth: { secret_text: 'md_key' }, propsValue: props, files: { write: vi.fn() } } as never);
+    return Reflect.apply(mindeeCustomApiCall.run, mindeeCustomApiCall, [{ auth: { secret_text: 'md_key' }, propsValue: props, files: { write: vi.fn() } }]);
   }
 
   it('sends the bare key to v2 and Token to v1, with redirects off', async () => {

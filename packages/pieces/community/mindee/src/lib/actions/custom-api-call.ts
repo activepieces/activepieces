@@ -18,6 +18,11 @@ export const mindeeCustomApiCall = createAction({
   propertyGroups: base.propertyGroups,
   classification: 'WRITE',
   audience: 'human',
+  aiMetadata: {
+    description:
+      'Send any request to the Mindee API with the connection key, for endpoints the other actions do not cover. Only https://api-v2.mindee.net (v2, relative paths) and https://api.mindee.net (v1) are allowed. Returns status, headers and body. Can spend credits or change data depending on the endpoint.',
+    idempotent: false,
+  },
   async run({ auth, propsValue, files }) {
     const method = methodOf(propsValue['method']);
     let target = resolveMindeeUrl(urlOf(propsValue['url']));

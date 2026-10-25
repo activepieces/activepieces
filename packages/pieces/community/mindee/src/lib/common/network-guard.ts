@@ -1,5 +1,5 @@
-import { isIP } from 'net';
-import { lookup as dnsLookup, LookupAddress, LookupOptions } from 'dns';
+import { isIP } from 'node:net';
+import { lookup as dnsLookup, LookupAddress, LookupOptions } from 'node:dns';
 
 function parseIpv4(ip: string): number[] | undefined {
   const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip);
