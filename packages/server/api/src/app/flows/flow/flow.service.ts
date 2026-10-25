@@ -376,16 +376,14 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     })
                     break
                 }
-                const isRepublish = await this.isRepublish({ previousFlow: flow, versionToPublish: flowVersionToPublish, newStatus: requestedStatus })
-                await this.updatedPublishedVersionId({
+                const publishedFlow = await this.updatedPublishedVersionId({
                     id,
                     userId,
                     projectId,
                     platformId,
                     flowVersionToPublish,
-                    isRepublish,
                 })
-                await this.applyStatusChangeForPublishedFlow({ id, projectId, newStatus: requestedStatus, isRepublish })
+                await this.applyStatusChangeForPublishedFlow({ previousFlow: flow, publishedVersion: publishedFlow.version, newStatus: requestedStatus })
                 break
             }
 
@@ -502,7 +500,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
         projectId,
         platformId,
         flowVersionToPublish,
-        isRepublish,
     }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
@@ -512,7 +509,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 projectId: flowToUpdate.projectId,
                 simulate: false,
                 ignoreError: true,
-                isRepublish,
             })
         }
 
@@ -567,21 +563,16 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async isRepublish({ previousFlow, versionToPublish, newStatus }: IsRepublishParams): Promise<boolean> {
-        const previousVersionId = previousFlow.publishedVersionId
-        const keepsRunning = previousFlow.status === FlowStatus.ENABLED && newStatus === FlowStatus.ENABLED
-        if (!keepsRunning || isNil(previousVersionId)) {
-            return false
-        }
-        const previousVersion = await flowVersionService(log).getFlowVersionOrThrow({ flowId: previousFlow.id, versionId: previousVersionId })
-        return flowPublishUtils.isSameTrigger({
+    async applyStatusChangeForPublishedFlow({ previousFlow, publishedVersion, newStatus }: ApplyStatusChangeForPublishedFlowParams): Promise<void> {
+        const previousVersionId = previousFlow.status === FlowStatus.ENABLED ? previousFlow.publishedVersionId : null
+        const previousVersion = isNil(previousVersionId)
+            ? null
+            : await flowVersionService(log).getFlowVersionOrThrow({ flowId: previousFlow.id, versionId: previousVersionId })
+        const isRepublish = !isNil(previousVersion) && flowPublishUtils.isSameTrigger({
             published: previousVersion.trigger,
-            toPublish: versionToPublish.trigger,
+            toPublish: publishedVersion.trigger,
         })
-    },
-
-    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus, isRepublish }: ApplyStatusChangeForPublishedFlowParams): Promise<void> {
-        await applyStatusChange({ id, projectId, newStatus, isRepublish }, log)
+        await applyStatusChange({ id: previousFlow.id, projectId: previousFlow.projectId, newStatus, isRepublish }, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
@@ -1017,7 +1008,6 @@ type UpdatePublishedVersionIdParams = {
     platformId: PlatformId
     projectId: ProjectId
     flowVersionToPublish: FlowVersion
-    isRepublish: boolean
 }
 
 type SetPublishedVersionParams = {
@@ -1026,17 +1016,10 @@ type SetPublishedVersionParams = {
     entityManager: EntityManager
 }
 
-type IsRepublishParams = {
-    previousFlow: Flow
-    versionToPublish: FlowVersion
-    newStatus: FlowStatus
-}
-
 type ApplyStatusChangeForPublishedFlowParams = {
-    id: FlowId
-    projectId: ProjectId
+    previousFlow: Flow
+    publishedVersion: FlowVersion
     newStatus: FlowStatus
-    isRepublish: boolean
 }
 
 type DeleteParams = EventEmissionParams & {
