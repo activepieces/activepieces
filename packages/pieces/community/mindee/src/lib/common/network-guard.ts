@@ -107,8 +107,10 @@ export class BlockedAddressError extends Error {
 }
 
 type LookupCallback = (error: NodeJS.ErrnoException | null, address: string | LookupAddress[], family?: number) => void;
+type LookupArgs = [hostname: string, options: LookupOptions, callback: LookupCallback];
 
-function guardedLookup(hostname: string, options: LookupOptions, callback: LookupCallback): void {
+function guardedLookup(...args: LookupArgs): void {
+  const [hostname, options, callback] = args;
   dnsLookup(hostname, { ...options, all: true }, (error, addresses) => {
     if (error) {
       callback(error, []);

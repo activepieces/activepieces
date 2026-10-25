@@ -9,7 +9,8 @@ const dnsAnswers = vi.hoisted(() => new Map<string, { address: string; family: n
 
 vi.mock('node:dns', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:dns')>();
-  const lookup = (hostname: string, _options: unknown, callback: (error: NodeJS.ErrnoException | null, addresses: { address: string; family: number }[]) => void) => {
+  const lookup = (...args: [hostname: string, options: unknown, callback: (error: NodeJS.ErrnoException | null, addresses: { address: string; family: number }[]) => void]) => {
+    const [hostname, , callback] = args;
     const answer = dnsAnswers.get(hostname);
     if (answer === undefined) {
       throw new Error(`Unexpected DNS lookup in tests: ${hostname}`);
