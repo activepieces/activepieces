@@ -453,6 +453,7 @@ import { AddPieceSetRequiredActions1860000000000 } from './migration/postgres/18
 import { AddEventDestinationEnabledAndFormat1862000000000 } from './migration/postgres/1862000000000-AddEventDestinationEnabledAndFormat'
 import { AddEventDestinationHeaders1863000000000 } from './migration/postgres/1863000000000-AddEventDestinationHeaders'
 import { AddPlatformTierFastAndConversationTier1864000000000 } from './migration/postgres/1864000000000-AddPlatformTierFastAndConversationTier'
+import { AddWorkerGroupIdToFlow1864000000000 } from './migration/postgres/1864000000000-AddWorkerGroupIdToFlow'
 import { AddAuditLogRetentionDaysToPlatform1865000000000 } from './migration/postgres/1865000000000-AddAuditLogRetentionDaysToPlatform'
 import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from './migration/postgres/1866000000000-AddAiSpecificModelsVisibleToPlatformConfiguration'
 import { AddAgentTask1867000000000 } from './migration/postgres/1867000000000-AddAgentTask'
@@ -938,6 +939,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddPieceSetRequiredActions1860000000000,
         AddEventDestinationEnabledAndFormat1862000000000,
         AddEventDestinationHeaders1863000000000,
+        AddWorkerGroupIdToFlow1864000000000,
         AddPlatformTierFastAndConversationTier1864000000000,
         AddAuditLogRetentionDaysToPlatform1865000000000,
         AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000,

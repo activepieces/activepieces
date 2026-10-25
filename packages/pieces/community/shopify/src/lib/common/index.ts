@@ -512,7 +512,9 @@ export async function getAbandonedCheckouts(
     sinceId: string;
   }
 ): Promise<ShopifyCheckout[]> {
-  const queryParams: QueryParams = {};
+  const queryParams: QueryParams = {
+    limit: String(ABANDONED_CHECKOUTS_PAGE_LIMIT),
+  };
   const { sinceId } = search;
   if (sinceId) {
     queryParams.since_id = sinceId;
@@ -552,3 +554,5 @@ function withMerchantApprovalHint(error: unknown): unknown {
     },
   });
 }
+
+export const ABANDONED_CHECKOUTS_PAGE_LIMIT = 250;
