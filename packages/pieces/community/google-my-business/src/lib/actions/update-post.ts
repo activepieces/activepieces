@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import * as z from 'zod/mini';
 import { googleAuth } from '../..';
 import { updatePostActionOutputSchema } from '../output-schemas';
@@ -20,11 +20,18 @@ export const updatePost = createAction({
   auth: googleAuth,
   propertyGroups: [
     {
+      key: 'post',
+      display: 'section',
+      label: 'Post to Update',
+      icon: 'inbox',
+      props: ['postName'],
+    },
+    {
       key: 'content',
       display: 'section',
       label: 'Content',
       icon: 'text',
-      props: ['postName', 'summary', 'mediaSourceUrl', 'languageCode'],
+      props: ['changesInfo', 'summary', 'mediaSourceUrl', 'languageCode'],
     },
     {
       key: 'event',
@@ -54,6 +61,10 @@ export const updatePost = createAction({
       description: 'Paste the whole name field from Create Post or List Posts.',
       placeholder: 'accounts/123/locations/456/localPosts/789',
       required: true,
+    }),
+    changesInfo: Property.MarkDown({
+      value: 'Fields left empty keep their current value.',
+      variant: MarkdownVariant.INFO,
     }),
     summary: Property.LongText({
       displayName: 'Post Text',

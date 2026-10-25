@@ -2891,6 +2891,8 @@
   "2 years": "2 years",
   "3 years": "3 years",
   "5 years": "5 years",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New notification": "New notification",
   "Triggers when a webhook notification event is received from Ampeco": "Triggers when a webhook notification event is received from Ampeco",
   "Markdown": "Markdown",

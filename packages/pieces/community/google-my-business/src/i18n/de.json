@@ -130,5 +130,12 @@
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
   "New Review": "Neue Bewertung",
-  "Triggers when a customer posts a new review on the location.": "Wird ausgelöst, wenn ein Kunde eine neue Rezension für den Standort schreibt."
+  "Triggers when a customer posts a new review on the location.": "Wird ausgelöst, wenn ein Kunde eine neue Rezension für den Standort schreibt.",
+  "Post to Update": "Zu aktualisierender Beitrag",
+  "Review": "Bewertung",
+  "Reply": "Antwort",
+  "Results": "Ergebnisse",
+  "Business": "Unternehmen",
+  "Markdown": "Markdown",
+  "Fields left empty keep their current value.": "Leer gelassene Felder behalten ihren aktuellen Wert."
 }

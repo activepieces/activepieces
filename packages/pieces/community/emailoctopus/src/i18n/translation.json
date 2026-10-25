@@ -62,6 +62,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Email Bounced": "Email Bounced",
   "Email Opened": "Email Opened",
   "Email Clicked": "Email Clicked",

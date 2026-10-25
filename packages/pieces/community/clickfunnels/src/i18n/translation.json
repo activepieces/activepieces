@@ -72,6 +72,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Scheduled Appointment Event Created": "Scheduled Appointment Event Created",
   "Course Enrollment Created for contact": "Course Enrollment Created for contact",
   "Contact Submitted Form": "Contact Submitted Form",

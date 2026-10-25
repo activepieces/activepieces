@@ -1,15 +1,19 @@
 import { isNil } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { WorkerGroupScope } from '@activepieces/shared'
+import { ApEdition, WorkerGroupScope } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../../database/redis-connections'
 import { platformPlanRepo } from '../../ee/platform/platform-plan/platform-plan.service'
+import { system } from '../../helper/system/system'
 import { QueueName } from '../job'
 import { platformQueueMigrationService } from './queue-migration.service'
 import { workerGroupQueues } from './worker-group-queues'
 
 export const platformWorkerGroupService = (log: FastifyBaseLogger) => ({
     async isWorkerGroupsEnabled({ platformId }: { platformId: string }): Promise<boolean> {
+        if (system.getEdition() === ApEdition.CLOUD) {
+            return false
+        }
         const cached = await distributedStore.get<string>(getWorkerGroupsEnabledCacheKey(platformId))
         if (!isNil(cached)) {
             return cached === 'true'
