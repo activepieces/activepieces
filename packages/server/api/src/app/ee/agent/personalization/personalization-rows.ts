@@ -131,8 +131,8 @@ export async function writeUserRow({ platformId, userId, patch }: {
 }
 
 
-export function hasOptedOut(row: ChatPersonalization | null): boolean {
-    return row?.status === ChatPersonalizationStatus.SKIPPED && isNil(row.domain) && isNil(row.companyText)
+export function hasOptedOut(row: ChatPersonalization): boolean {
+    return row.status === ChatPersonalizationStatus.SKIPPED && isNil(row.domain) && isNil(row.companyText)
 }
 
 export type UpsertParams = {
