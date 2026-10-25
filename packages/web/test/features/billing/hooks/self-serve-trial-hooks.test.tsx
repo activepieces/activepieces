@@ -234,7 +234,6 @@ describe('plan refresh after the trial', () => {
     state: 'ended',
     startedAt: null,
     endsAt: dayjs().subtract(1, 'hour').toISOString(),
-    extended: false,
   });
 
   it('runs once on the first day after the trial ended', async () => {

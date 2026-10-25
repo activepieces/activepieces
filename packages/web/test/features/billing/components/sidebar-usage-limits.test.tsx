@@ -108,7 +108,6 @@ function trialOf(overrides: Partial<SelfServeTrial> = {}): SelfServeTrial {
     endsToday: false,
     ending: false,
     justStarted: false,
-    extended: false,
     isPlatformAdmin: false,
     basePlanName: 'Free',
     ...overrides,
