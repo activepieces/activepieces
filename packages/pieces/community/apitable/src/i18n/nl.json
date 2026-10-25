@@ -85,5 +85,8 @@
   "DELETE": "VERWIJDEREN",
   "HEAD": "HOOFD",
   "New Record": "Nieuwe Record",
-  "Triggers when a new record is added to a datasheet.": "Triggert wanneer een nieuw record wordt toegevoegd aan een datasheet."
+  "Triggers when a new record is added to a datasheet.": "Triggert wanneer een nieuw record wordt toegevoegd aan een datasheet.",
+  "Markdown": "Markdown",
+  "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.": "Lege velden blijven leeg. Sommige kolomtypen, zoals bijlagen en formules, worden niet getoond.",
+  "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.": "Lege velden houden hun huidige waarde; niet-aangevinkte selectievakjes worden gewist. Sommige kolomtypen, zoals bijlagen en formules, worden niet getoond."
 }

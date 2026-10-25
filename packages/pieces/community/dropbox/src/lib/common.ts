@@ -15,6 +15,8 @@ export const dropboxCommon = {
   previewExtensionFor,
   parseStringArray,
   parseRelocationEntries,
+  encodeApiArg,
+  toApiPath,
 };
 
 function encodeApiArg(arg: unknown): string {
@@ -22,6 +24,11 @@ function encodeApiArg(arg: unknown): string {
     /[\u007f-￿]/g,
     (c) => '\\u' + ('000' + c.charCodeAt(0).toString(16)).slice(-4)
   );
+}
+
+function toApiPath(path: string): string {
+  const trimmed = path.trim();
+  return trimmed === '/' || trimmed === '' ? '' : path;
 }
 
 function describeError(error: unknown): string | undefined {
