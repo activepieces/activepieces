@@ -16,7 +16,7 @@ import { splitCsvAction } from './lib/actions/split-csv';
 export const csv = createPiece({
   displayName: 'CSV',
   description: 'Manipulate CSV text',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/csv.svg',
   auth: PieceAuth.None(),
   categories: [PieceCategory.CORE],
