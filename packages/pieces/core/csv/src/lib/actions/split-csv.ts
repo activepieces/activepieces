@@ -26,9 +26,6 @@ export const splitCsvAction = createAction({
       description: 'Data rows per chunk (1 to 10,000), not counting the header.',
       required: true,
       defaultValue: 100,
-      display: 'stepper',
-      min: 1,
-      max: 10000,
     }),
     repeat_header: Property.Checkbox({
       displayName: 'Repeat Header Row',
