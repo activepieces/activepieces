@@ -347,6 +347,17 @@ export const flowService = (log: FastifyBaseLogger) => ({
             ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
             : undefined
 
+        let previouslyPublishedVersion: FlowVersion | undefined
+        if (operation.type === FlowOperationType.LOCK_AND_PUBLISH || operation.type === FlowOperationType.CHANGE_STATUS) {
+            const flow = await this.getOneOrThrow({
+                id,
+                projectId,
+            })
+            if (operation.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
+                previouslyPublishedVersion = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: flow.publishedVersionId })
+            }
+        }
+
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
                 const flow = await this.getOneOrThrow({ id, projectId })
@@ -383,7 +394,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     platformId,
                     flowVersionToPublish,
                 })
-                await this.applyStatusChangeForPublishedFlow({ previousFlow: flow, publishedVersion: publishedFlow.version, newStatus: requestedStatus })
+                const isRepublish = !isNil(previouslyPublishedVersion) && flowPublishUtils.isSameTrigger({
+                    published: previouslyPublishedVersion.trigger,
+                    toPublish: publishedFlow.version.trigger,
+                })
+                await applyStatusChange({ id, projectId, newStatus: requestedStatus, isRepublish }, log)
                 break
             }
 
@@ -563,16 +578,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async applyStatusChangeForPublishedFlow({ previousFlow, publishedVersion, newStatus }: ApplyStatusChangeForPublishedFlowParams): Promise<void> {
-        const previousVersionId = previousFlow.status === FlowStatus.ENABLED ? previousFlow.publishedVersionId : null
-        const previousVersion = isNil(previousVersionId)
-            ? null
-            : await flowVersionService(log).getFlowVersionOrThrow({ flowId: previousFlow.id, versionId: previousVersionId })
-        const isRepublish = !isNil(previousVersion) && flowPublishUtils.isSameTrigger({
-            published: previousVersion.trigger,
-            toPublish: publishedVersion.trigger,
-        })
-        await applyStatusChange({ id: previousFlow.id, projectId: previousFlow.projectId, newStatus, isRepublish }, log)
+    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus }): Promise<void> {
+        await applyStatusChange({ id, projectId, newStatus }, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
@@ -1014,12 +1021,6 @@ type SetPublishedVersionParams = {
     flow: Flow
     lockedVersion: FlowVersion
     entityManager: EntityManager
-}
-
-type ApplyStatusChangeForPublishedFlowParams = {
-    previousFlow: Flow
-    publishedVersion: FlowVersion
-    newStatus: FlowStatus
 }
 
 type DeleteParams = EventEmissionParams & {
