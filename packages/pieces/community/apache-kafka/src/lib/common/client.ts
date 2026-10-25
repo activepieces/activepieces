@@ -194,7 +194,7 @@ async function readTargets({ kafka, topic, groupId, targets, limit, timeoutMs, f
     await consumer.run({
       autoCommit: false,
       eachBatchAutoResolve: false,
-      eachBatch: async ({ batch }: EachBatchPayload) => {
+      eachBatch: async ({ batch, resolveOffset }: EachBatchPayload) => {
         const end = ends.get(batch.partition)
         if (!collecting || end === undefined) {
           return
@@ -212,8 +212,10 @@ async function readTargets({ kafka, topic, groupId, targets, limit, timeoutMs, f
             return
           }
           records.push(kafkaRecords.toRecord({ topic: batch.topic, partition: batch.partition, message }))
+          resolveOffset(message.offset)
           position = offset + BigInt(1)
         }
+        resolveOffset(batch.lastOffset())
         const fetchedUpTo = BigInt(batch.lastOffset()) + BigInt(1)
         const reached = fetchedUpTo < end ? fetchedUpTo : end
         positions.set(batch.partition, position !== undefined && position > reached ? position : reached)

@@ -49,11 +49,13 @@ const kafkaMock = vi.hoisted(() => {
   const on = vi.fn((_event: string, listener: (event: { payload: { memberAssignment: Record<string, number[]> } }) => void) => {
     joinListeners.push(listener)
   })
+  const resolveOffset = vi.fn()
   const asBatch = ({ topic, partition, message, lastOffset }: { topic: string, partition: number, message: MockMessage, lastOffset?: string }) => ({
     batch: { topic, partition, messages: [message], lastOffset: () => lastOffset ?? message.offset },
+    resolveOffset,
   })
   const run = vi.fn(async (config: {
-    eachBatch: (payload: { batch: MockBatch }) => Promise<void>
+    eachBatch: (payload: { batch: MockBatch, resolveOffset: (offset: string) => void }) => Promise<void>
   }) => {
     joinListeners.forEach((listener) => listener({ payload: { memberAssignment: assignment } }))
     await config.eachBatch(asBatch({
@@ -70,6 +72,7 @@ const kafkaMock = vi.hoisted(() => {
   })
   return {
     asBatch,
+    resolveOffset,
     adminConnect,
     adminDisconnect,
     describeCluster,
@@ -354,7 +357,7 @@ describe('kafkaClient', () => {
       partition: 1,
       message: { key: null, value: Buffer.from('late'), offset: '9', timestamp: '1710000000001' },
     }
-    let deliver: ((payload: { batch: MockBatch }) => Promise<void>) | undefined
+    let deliver: ((payload: { batch: MockBatch, resolveOffset: (offset: string) => void }) => Promise<void>) | undefined
     kafkaMock.run.mockImplementationOnce(async (config) => {
       deliver = config.eachBatch
       await config.eachBatch(kafkaMock.asBatch({
@@ -437,7 +440,26 @@ describe('kafkaClient', () => {
 
     expect(records.map((record) => record.offset)).toEqual(['8'])
     expect(kafkaMock.commitOffsets).toHaveBeenCalledWith([{ topic: 'orders', partition: 1, offset: '10' }])
+    expect(kafkaMock.resolveOffset.mock.calls.map(([offset]) => offset)).toEqual(['8', '9'])
     expect(Date.now() - startedAt).toBeLessThan(2_000)
+  })
+
+  it('reads a partition across two fetched batches and resolves each offset', async () => {
+    kafkaMock.fetchTopicOffsets.mockResolvedValueOnce([
+      { partition: 0, offset: '20', low: '3', high: '20' },
+      { partition: 1, offset: '10', low: '0', high: '10' },
+    ])
+    kafkaMock.run.mockImplementationOnce(async (config) => {
+      kafkaMock.joinListeners.forEach((listener) => listener({ payload: { memberAssignment: kafkaMock.assignment } }))
+      await config.eachBatch(kafkaMock.asBatch({ topic: 'orders', partition: 1, message: { key: null, value: Buffer.from('a'), offset: '8', timestamp: '1710000000000' } }))
+      await config.eachBatch(kafkaMock.asBatch({ topic: 'orders', partition: 1, message: { key: null, value: Buffer.from('b'), offset: '9', timestamp: '1710000000001' } }))
+    })
+
+    const records = await kafkaClient.poll({ ...pollInput, pollTimeoutSeconds: 5 })
+
+    expect(records.map((record) => record.payload)).toEqual(['a', 'b'])
+    expect(kafkaMock.resolveOffset.mock.calls.map(([offset]) => offset)).toEqual(['8', '8', '9', '9'])
+    expect(kafkaMock.commitOffsets).toHaveBeenCalledWith([{ topic: 'orders', partition: 1, offset: '10' }])
   })
 
   it('reports a consumer that fails to start', async () => {
