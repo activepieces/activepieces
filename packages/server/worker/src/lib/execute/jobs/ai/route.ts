@@ -80,10 +80,11 @@ function readNouls({ decisions, keyToRoute }: { decisions: DecisionsResponse, ke
 
 function bill({ data, resolved, billing, decisions }: BillParams): void {
     const charge = aiChargeFor({ credentials: resolved })
-    if (charge?.basis === AiChargeBasis.PROVIDER_REPORTED_COST) {
+    if (charge.basis === AiChargeBasis.PROVIDER_REPORTED_COST) {
         activepiecesAiCost.reportProviderCost({
             billing,
             provider: resolved.provider,
+            providerConfigId: resolved.providerConfigId,
             modelId: data.modelId,
             costUsd: decisions.usage?.cost,
             inputTokens: decisions.usage?.input_tokens,
@@ -92,7 +93,7 @@ function bill({ data, resolved, billing, decisions }: BillParams): void {
         })
         return
     }
-    activepiecesAiCost.reportFixedCredits({ billing, provider: resolved.provider, modelId: data.modelId, generationId: decisions.id })
+    activepiecesAiCost.reportFixedCredits({ billing, provider: resolved.provider, providerConfigId: resolved.providerConfigId, modelId: data.modelId, generationId: decisions.id })
 }
 
 function describeFailure(error: unknown): string {

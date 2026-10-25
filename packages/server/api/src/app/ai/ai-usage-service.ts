@@ -1,4 +1,4 @@
-import { ActivepiecesAiConsumerSource, AiCallTokens, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiConsumerSource, AiCallTokens, AiChargeBasis, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { isAppSumoCreditedPlan, ReportAiUsageRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -9,6 +9,9 @@ import { aiUsageHooks } from './ai-usage-hooks'
 
 export const aiUsageService = (log: FastifyBaseLogger) => ({
     async report(input: ReportAiUsageRequest): Promise<void> {
+        if (input.usage.type === AiChargeBasis.USAGE_ONLY) {
+            return
+        }
         const toolCalls = input.toolCalls ?? 0
         const credits = chargeFor({ usage: input.usage, toolCalls })
         const costBasis = costBasisOf(input.usage)

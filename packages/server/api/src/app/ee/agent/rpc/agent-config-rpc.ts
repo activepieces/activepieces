@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiProviderSignal, aiUtils } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { LanguageModel, ModelMessage, UserContent } from 'ai'
@@ -274,6 +274,13 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             const previous = compactionState
             compactionState = await onFirstModelThatAnswers({
                 models: compactionModels,
+                billing: {
+                    source: ActivepiecesAiConsumerSource.CHAT,
+                    platformId: conversation.platformId,
+                    projectId: conversation.projectId ?? null,
+                    conversationId: conversation.id,
+                    context: await agentHelpers.usageContextOf({ source: conversation.source, projectId: conversation.projectId, agentId: conversation.agentId, flowRunId: conversation.flowRunId }),
+                },
                 log,
                 run: (model) => agentCompaction.compactMessages({
                     messages: llmHistory,
@@ -359,9 +366,9 @@ function smallestContextProvider({ configs }: { configs: GetProviderConfigRespon
     return configs.reduce((smallest, config) => aiProviderUtils.getMaxContextTokens({ provider: config.provider }) < aiProviderUtils.getMaxContextTokens({ provider: smallest.provider }) ? config : smallest).provider
 }
 
-async function onFirstModelThatAnswers<T>({ models, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
+async function onFirstModelThatAnswers<T>({ models, billing, run, log }: { models: { config: GetProviderConfigResponse, modelId: string }[], billing: ActivepiecesAiBilling, run: (model: LanguageModel) => Promise<T>, log: FastifyBaseLogger }): Promise<T> {
     for (const [index, candidate] of models.entries()) {
-        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId })))
+        const attempt = await tryCatch(() => run(aiUtils.createModel({ credentials: candidate.config, modelId: candidate.modelId, providerConfigId: candidate.config.configId, billing, usageOnly: true })))
         if (attempt.error === null) {
             return attempt.data
         }
