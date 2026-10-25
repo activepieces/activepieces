@@ -194,8 +194,8 @@ describe('inputs', () => {
     });
   });
 
-  it('prefixes metadata filters', () => {
-    expect(metadataQuery({ source: 'crm', metadata_id: '7' })).toEqual({ metadata_source: 'crm', metadata_id: '7' });
+  it('prefixes every metadata filter key, including ones that start with metadata_', () => {
+    expect(metadataQuery({ source: 'crm', metadata_id: '7' })).toEqual({ metadata_source: 'crm', metadata_metadata_id: '7' });
   });
 
   it('maps recipients and requires an email or phone', () => {

@@ -153,7 +153,7 @@ function recipients(value: unknown): Record<string, unknown>[] {
 
 export function metadataQuery(value: unknown): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(stringRecord(value)).map(([key, item]) => [key.startsWith('metadata_') ? key : `metadata_${key}`, item]),
+    Object.entries(stringRecord(value)).map(([key, item]) => [`metadata_${key}`, item]),
   );
 }
 
