@@ -15,9 +15,9 @@ import { alaiAuth } from './lib/common/auth';
 export const alai = createPiece({
   displayName: 'Alai',
   auth: alaiAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/alai.png',
-  authors: ['getalai', 'sanket-a11y'],
+  authors: ['getalai', 'sanket-a11y', 'OdaiAhmed99'],
   description: 'AI-powered presentation generation API. Create, export, and manage professional presentations from text.',
   categories: [PieceCategory.CONTENT_AND_FILES, PieceCategory.ARTIFICIAL_INTELLIGENCE],
   actions: [

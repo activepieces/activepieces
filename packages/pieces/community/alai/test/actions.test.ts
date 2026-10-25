@@ -114,6 +114,19 @@ describe('generatePresentation', () => {
     expect(spy.mock.calls.length).toBeLessThanOrEqual(2 + 480 / 5);
   });
 
+  it('treats an empty Slide Range and Max Wait Time 0 as unset', async () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(httpClient, 'sendRequest');
+    spy.mockResolvedValueOnce({ status: 200, headers: {}, body: { generation_id: 'g4' } });
+    spy.mockResolvedValue({ status: 200, headers: {}, body: { generation_id: 'g4', status: 'in_progress' } });
+    const promise = run({ action: generatePresentation, propsValue: { inputText: 'x', slideRange: '', waitForCompletion: true, maxWaitTime: 0 } });
+    const assertion = expect(promise).rejects.toThrow(/g4 is still running/);
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(spy.mock.calls[0][0].body).not.toHaveProperty('presentation_options.slide_range');
+    expect(spy.mock.calls.length).toBeGreaterThan(2 + 240 / 5);
+  });
+
   it('maps 402 and 422 errors to readable messages', async () => {
     mockResponses({ bodies: [httpError({ status: 402, body: { detail: 'Insufficient credits' } })] });
     await expect(run({ action: generatePresentation, propsValue: { inputText: 'x' } })).rejects.toThrow(/AI credits.*Insufficient credits/);
@@ -278,6 +291,15 @@ describe('agent tools', () => {
     await run({ action: addSlideAi, propsValue: { presentationId: 'p1', slideContext: 'S', slideOrder: 0, slideType: 'classic' } });
     expect(spy.mock.calls[0][0].url).toBe('https://slides-api.getalai.com/api/v1/presentations/p1/slides');
     expect(spy.mock.calls[0][0].body).toEqual({ slide_context: 'S', options: { slide_type: 'classic', slide_order: 0 }, export_formats: ['link'] });
+  });
+
+  it('add_slide_ai keeps images when the agent leaves Include Images out', async () => {
+    expect(addSlideAi.props.includeAiImages.defaultValue).toBe(true);
+    const spy = mockResponses({ bodies: [{ generation_id: 'a5' }, { generation_id: 'a6' }] });
+    await run({ action: addSlideAi, propsValue: { presentationId: 'p1', slideContext: 'S', includeAiImages: addSlideAi.props.includeAiImages.defaultValue } });
+    expect(JSON.stringify(spy.mock.calls[0][0].body)).not.toContain('Do not use images');
+    await run({ action: addSlideAi, propsValue: { presentationId: 'p1', slideContext: 'S', includeAiImages: false } });
+    expect(JSON.stringify(spy.mock.calls[1][0].body)).toContain('Do not use images');
   });
 
   it('export_presentation_ai posts formats and requires one', async () => {

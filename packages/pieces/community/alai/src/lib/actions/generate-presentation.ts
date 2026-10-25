@@ -193,7 +193,7 @@ export function buildGenerationBody({ input }: { input: GenerationInput }): { bo
   if (style === 'custom' && !styleInstructions) {
     throw new Error('Image Style Instructions are required when Image Style is "custom".');
   }
-  const slideRange = input.slideRange;
+  const slideRange = input.slideRange === '' ? undefined : input.slideRange;
   if (slideRange !== undefined && slideRange !== null && !SLIDE_RANGES.includes(String(slideRange))) {
     throw new Error(`Slide Range must be one of ${SLIDE_RANGES.join(', ')}.`);
   }

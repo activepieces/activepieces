@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Alai 0.3.0: three actions are no longer AI agent tools, and Custom API Call only calls the Alai API
+
+**Generate Presentation**, **Add Slide** and **Export Presentation** are no longer offered to AI agents as tools; flow steps that use them keep working unchanged. Agents get **Generate Presentation (Agent)**, **Add Slide (Agent)** and **Export Presentation (Agent)** instead: they take plain IDs and return a `generation_id` at once, which the agent polls with **Get Generation**. **Custom API Call** now sends the API key only to `https://slides-api.getalai.com/api` and refuses any other host or a path that escapes it.
+
+#### What you need to do
+
+If a Run Agent step or MCP server used one of the three actions as a tool, switch it to the matching (Agent) tool. Custom API Call steps that point at another host have to use the HTTP piece instead.
+
 #### Worker group ids can no longer contain a colon
 
 Worker group ids with `:` in them are no longer routable. The assignment endpoints reject them, and a project or flow already assigned to such a group is treated as unassigned: its runs fall back to the project, platform or shared queue instead of the group's dedicated queue, and the group disappears from the worker groups page.

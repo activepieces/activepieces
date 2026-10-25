@@ -64,7 +64,7 @@ export const addSlideAi = createAction({
     slideContext: Property.LongText({ displayName: 'Slide Content', description: 'What the slide should contain.', required: true }),
     slideOrder: Property.Number({ displayName: 'Slide Position', description: '0-based position; omit to append at the end.', required: false }),
     slideType: Property.StaticDropdown({ displayName: 'Slide Type', description: 'classic (editable text) or creative (image-led).', required: false, options: enumOptions(['classic', 'creative']) }),
-    includeAiImages: Property.Checkbox({ displayName: 'Include Images', description: 'false asks Alai for a slide without images.', required: false }),
+    includeAiImages: Property.Checkbox({ displayName: 'Include Images', description: 'false asks Alai for a slide without images.', required: false, defaultValue: true }),
     additionalInstructions: Property.LongText({ displayName: 'Additional Instructions', description: 'Extra guidance for this slide.', required: false }),
   },
   async run({ auth, propsValue }) {

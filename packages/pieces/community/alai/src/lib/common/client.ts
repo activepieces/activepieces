@@ -218,7 +218,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 function waitSeconds(value: unknown): number {
-  if (value === undefined || value === null || value === '') {
+  if (value === undefined || value === null || value === '' || Number(value) === 0) {
     return DEFAULT_WAIT_SECONDS;
   }
   const seconds = Number(value);
