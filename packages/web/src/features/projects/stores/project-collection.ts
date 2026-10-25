@@ -71,6 +71,24 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
 let authoritativeProjectsGeneration = 0;
 
 export const projectCollectionUtils = {
+  syncFromServer: (project: ProjectWithLimits) => {
+    if (projectCollection.isReady()) {
+      projectCollection.utils.writeUpdate(project);
+    }
+  },
+  setWorkerGroup: ({
+    projectIds,
+    workerGroupId,
+  }: {
+    projectIds: string[];
+    workerGroupId: string | null;
+  }) => {
+    if (!projectCollection.isReady()) return;
+    const rows = projectIds
+      .filter((id) => projectCollection.has(id))
+      .map((id) => ({ id, workerGroupId }));
+    if (rows.length > 0) projectCollection.utils.writeUpdate(rows);
+  },
   useCreateProject: (
     onSuccess: (project: ProjectWithLimits) => void,
     onError: (error: Error) => void,

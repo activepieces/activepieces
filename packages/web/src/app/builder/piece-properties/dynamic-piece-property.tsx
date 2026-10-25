@@ -9,7 +9,7 @@ import React, { useState, useRef, useContext } from 'react';
 import { useFormContext, UseFormReturn, useWatch } from 'react-hook-form';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { useOptionalBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { piecesHooks, formUtils } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -36,10 +36,11 @@ const removeOptionsFromDropdownPropertiesSchema = (
 
 const DynamicPropertiesImplementation = React.memo(
   (props: DynamicPropertiesProps) => {
-    const [flowVersion, readonly] = useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.readonly,
-    ]);
+    const flowVersion = useOptionalBuilderStateContext(
+      (state) => state.flowVersion,
+    );
+    const readonly =
+      useOptionalBuilderStateContext((state) => state.readonly) ?? false;
     const form = useFormContext();
     const watchConfig: Record<string, unknown> = {
       name:
@@ -142,8 +143,8 @@ const DynamicPropertiesImplementation = React.memo(
             propertyName: props.propertyName,
             actionOrTriggerName: props.actionOrTriggerName,
             input: refresherValues,
-            flowVersionId: flowVersion.id,
-            flowId: flowVersion.flowId,
+            flowVersionId: flowVersion?.id,
+            flowId: flowVersion?.flowId,
           },
           propertyType: PropertyType.DYNAMIC,
         },

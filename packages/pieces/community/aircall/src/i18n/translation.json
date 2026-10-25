@@ -63,6 +63,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Call Ended": "Call Ended",
   "New Contact": "New Contact",
   "New Note": "New Note",
