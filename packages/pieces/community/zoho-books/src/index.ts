@@ -1,54 +1,7 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
-
-export const zohoBooksAuth = PieceAuth.OAuth2({
-  props: {
-    location: Property.StaticDropdown({
-      displayName: 'Location',
-      description: 'The location of your Zoho Books account',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'zoho.eu (Europe)',
-            value: 'zoho.eu',
-          },
-          {
-            label: 'zoho.com (United States)',
-            value: 'zoho.com',
-          },
-          {
-            label: 'zoho.com.au (Australia)',
-            value: 'zoho.com.au',
-          },
-          {
-            label: 'zoho.jp (Japan)',
-            value: 'zoho.jp',
-          },
-          {
-            label: 'zoho.in (India)',
-            value: 'zoho.in',
-          },
-          {
-            label: 'zohocloud.ca (Canada)',
-            value: 'zohocloud.ca',
-          },
-        ],
-      },
-    }),
-  },
-  description: 'Authentication for Zoho Books',
-  scope: ['ZohoBooks.fullaccess.all'],
-  authUrl: 'https://accounts.{location}/oauth/v2/auth',
-  tokenUrl: 'https://accounts.{location}/oauth/v2/token',
-  required: true,
-});
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
+import { zohoBooksAuth } from './lib/auth';
+import { zohoBooksClient } from './lib/common/client';
 
 export const zohoBooks = createPiece({
   displayName: "Zoho Books",
@@ -60,17 +13,10 @@ export const zohoBooks = createPiece({
   auth: zohoBooksAuth,
   actions: [
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-      {
-        const data = (auth as OAuth2PropertyValue).data;
-        return data && data['api_domain']? `${data['api_domain']}/books/v3` : ''
-      },        
+      baseUrl: (auth) => (auth ? zohoBooksClient.baseUrl({ auth }) : ''),
       auth: zohoBooksAuth,
-      authMapping: async (auth) => ({
-        Authorization: `Zoho-oauthtoken ${(auth as OAuth2PropertyValue).access_token}`,
-      }),
+      authMapping: async (auth) => zohoBooksClient.authHeaders({ auth }),
     }),
   ],
   triggers: [],
 });
-    
