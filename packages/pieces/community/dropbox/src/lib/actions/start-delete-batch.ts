@@ -12,7 +12,7 @@ export const dropboxStartDeleteBatch = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Starts a job deleting up to 1000 Dropbox files or folders in one call. Deleted entries go to trash and remain restorable, they are not erased. Small batches complete immediately; larger ones return an async job id that Get Delete Batch Status polls. Not idempotent: a second call fails on paths already deleted.',
+      'Starts a job deleting up to 1000 Dropbox files or folders in one call. Deleted entries go to deleted files, where Dropbox keeps them for a limited time (30 to 180 days, depending on the Dropbox plan), rather than being erased at once. Small batches complete immediately; larger ones return an async job id that Get Delete Batch Status polls. Not idempotent: a second call fails on paths already deleted.',
     idempotent: false,
   },
   outputSchema: deleteBatchLaunchOutputSchema,

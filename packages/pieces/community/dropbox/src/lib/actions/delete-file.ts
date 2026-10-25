@@ -11,16 +11,16 @@ export const dropboxDeleteFile = createAction({
   auth: dropboxAuth,
   name: 'delete_dropbox_file',
   classification: 'DESTRUCTIVE',
-  description: 'Delete a file; it can be restored from Dropbox',
+  description: 'Delete a file. Dropbox keeps it in deleted files for a limited time.',
   audience: 'human',
-  aiMetadata: { description: 'Deletes the file at the given Dropbox path, moving it to deleted files where it can still be restored. Use to remove a specific file an agent has resolved the path for. Effectively idempotent on the end state once the path is gone, but a repeat call fails because the path no longer exists; treat as a destructive mutation.', idempotent: false },
+  aiMetadata: { description: 'Deletes the file at the given Dropbox path, moving it to deleted files, where Dropbox keeps it for a limited time (30 to 180 days, depending on the Dropbox plan). Use to remove a specific file an agent has resolved the path for. Effectively idempotent on the end state once the path is gone, but a repeat call fails because the path no longer exists; treat as a destructive mutation.', idempotent: false },
   displayName: 'Delete File',
   outputSchema: fileMetadataOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: 'Path',
       description:
-        'File to delete. Dropbox keeps it in deleted files for restore.',
+        'File to delete. Dropbox keeps it in deleted files for a limited time.',
       placeholder: '/Reports/q1.pdf',
       required: true,
     }),

@@ -13,14 +13,14 @@ export const dropboxDeleteFolder = createAction({
   classification: 'DESTRUCTIVE',
   description: 'Delete a folder and everything in it',
   audience: 'human',
-  aiMetadata: { description: 'Deletes the folder at the given Dropbox path along with all of its contents, moving them to deleted files where they can still be restored. Use to remove an entire directory. Effectively idempotent on the end state once the path is gone, but a repeat call fails because the path no longer exists; treat as a destructive mutation.', idempotent: false },
+  aiMetadata: { description: 'Deletes the folder at the given Dropbox path along with all of its contents, moving them to deleted files, where Dropbox keeps them for a limited time (30 to 180 days, depending on the Dropbox plan). Use to remove an entire directory. Effectively idempotent on the end state once the path is gone, but a repeat call fails because the path no longer exists; treat as a destructive mutation.', idempotent: false },
   displayName: 'Delete Folder',
   outputSchema: folderMetadataOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: 'Path',
       description:
-        'Folder to delete. Dropbox keeps it in deleted files for restore.',
+        'Folder to delete. Dropbox keeps it in deleted files for a limited time.',
       placeholder: '/Reports/old',
       required: true,
     }),

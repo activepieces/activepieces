@@ -12,7 +12,7 @@ export const dropboxDeleteEntry = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Deletes a Dropbox file or folder, sending it to trash where it stays restorable rather than erasing it. Deleting a folder also deletes everything inside it. Handles both files and folders, so no separate action is needed for each. Not idempotent: a second call fails because the path is already gone.',
+      'Deletes a Dropbox file or folder, sending it to deleted files, where Dropbox keeps it for a limited time (30 to 180 days, depending on the Dropbox plan), rather than erasing it at once. Deleting a folder also deletes everything inside it. Handles both files and folders, so no separate action is needed for each. Not idempotent: a second call fails because the path is already gone.',
     idempotent: false,
   },
   outputSchema: entryOperationOutputSchema,
