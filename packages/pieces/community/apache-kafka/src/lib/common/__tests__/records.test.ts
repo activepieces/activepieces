@@ -150,4 +150,18 @@ describe('kafkaRecords', () => {
       { topic: 'orders', key: 'k', partition: 1, offset: '42' },
     ])
   })
+  it('re-applies the start policy when the committed offset is past the end of a truncated log', () => {
+    const plan = kafkaRecords.startOffsetPlan({
+      topicOffsets: [{ partition: 0, low: '0', high: '100' }, { partition: 1, low: '0', high: '50' }],
+      committed: [{ partition: 0, offset: '1000' }, { partition: 1, offset: '40' }],
+      fromBeginning: false,
+    })
+    expect(plan).toEqual([{ partition: 0, offset: '100' }])
+  })
+
+  it('knows when a sample window already starts at the beginning of every partition', () => {
+    const topicOffsets = [{ partition: 0, low: '0', high: '3' }, { partition: 1, low: '5', high: '100' }]
+    expect(kafkaRecords.reachesLogStart({ topicOffsets, targets: kafkaRecords.recentTargets({ topicOffsets, count: 5 }) })).toBe(false)
+    expect(kafkaRecords.reachesLogStart({ topicOffsets, targets: kafkaRecords.recentTargets({ topicOffsets, count: 500 }) })).toBe(true)
+  })
 })

@@ -46,7 +46,14 @@ function startOffsetPlan({ topicOffsets, committed, fromBeginning }: {
   committed: { partition: number, offset: string }[]
   fromBeginning: boolean
 }): { partition: number, offset: string }[] {
-  const pinned = new Set(committed.filter((entry) => BigInt(entry.offset) >= BigInt(0)).map((entry) => entry.partition))
+  const highByPartition = new Map(topicOffsets.map((entry) => [entry.partition, BigInt(entry.high)]))
+  const pinned = new Set(committed
+    .filter((entry) => {
+      const offset = BigInt(entry.offset)
+      const high = highByPartition.get(entry.partition)
+      return offset >= BigInt(0) && (high === undefined || offset <= high)
+    })
+    .map((entry) => entry.partition))
   return topicOffsets
     .filter((entry) => !pinned.has(entry.partition))
     .map((entry) => ({ partition: entry.partition, offset: fromBeginning ? entry.low : entry.high }))
@@ -117,6 +124,14 @@ function pendingTargets({ topicOffsets, committed }: {
     }
     return [{ partition: entry.partition, offset: start.toString(), end: entry.high }]
   })
+}
+
+function reachesLogStart({ topicOffsets, targets }: {
+  topicOffsets: { partition: number, low: string }[]
+  targets: ReadTarget[]
+}): boolean {
+  const lowByPartition = new Map(topicOffsets.map((entry) => [entry.partition, entry.low]))
+  return targets.every((target) => lowByPartition.get(target.partition) === target.offset)
 }
 
 function recentTargets({ topicOffsets, count }: {
@@ -253,6 +268,7 @@ export const kafkaRecords = {
   toTriggerOutput,
   pendingTargets,
   recentTargets,
+  reachesLogStart,
   newestFirst,
   publishResults,
 }

@@ -34,6 +34,11 @@ const kafkaMock = vi.hoisted(() => {
   const subscribe = vi.fn(async () => undefined)
   const commitOffsets = vi.fn(async () => undefined)
   const stop = vi.fn(async () => undefined)
+  const assignment: { orders: number[] } = { orders: [0, 1] }
+  const joinListeners: ((event: { payload: { memberAssignment: Record<string, number[]> } }) => void)[] = []
+  const on = vi.fn((_event: string, listener: (event: { payload: { memberAssignment: Record<string, number[]> } }) => void) => {
+    joinListeners.push(listener)
+  })
   const run = vi.fn(async (config: {
     eachMessage: (payload: {
       topic: string
@@ -47,6 +52,7 @@ const kafkaMock = vi.hoisted(() => {
       }
     }) => Promise<void>
   }) => {
+    joinListeners.forEach((listener) => listener({ payload: { memberAssignment: assignment } }))
     await config.eachMessage({
       topic: 'orders',
       partition: 1,
@@ -77,6 +83,9 @@ const kafkaMock = vi.hoisted(() => {
     subscribe,
     commitOffsets,
     stop,
+    on,
+    assignment,
+    joinListeners,
     run,
   }
 })
@@ -119,6 +128,8 @@ vi.mock('kafkajs', () => ({
         subscribe: kafkaMock.subscribe,
         commitOffsets: kafkaMock.commitOffsets,
         stop: kafkaMock.stop,
+        on: kafkaMock.on,
+        events: { GROUP_JOIN: 'consumer.group_join' },
         run: kafkaMock.run,
       }
     }
@@ -144,6 +155,8 @@ const pollInput = {
 describe('kafkaClient', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    kafkaMock.joinListeners.length = 0
+    kafkaMock.assignment.orders = [0, 1]
     kafkaMock.kafkaConfigs.length = 0
   })
 
@@ -361,6 +374,7 @@ describe('kafkaClient', () => {
   it('waits for the consumer to join the group before timing the poll', async () => {
     kafkaMock.run.mockImplementationOnce(async (config) => {
       await new Promise((resolve) => setTimeout(resolve, 1_500))
+      kafkaMock.joinListeners.forEach((listener) => listener({ payload: { memberAssignment: kafkaMock.assignment } }))
       setTimeout(() => {
         config.eachMessage({
           topic: 'orders',
@@ -373,6 +387,30 @@ describe('kafkaClient', () => {
     const records = await kafkaClient.poll({ ...pollInput, pollTimeoutSeconds: 1 })
 
     expect(records.map((record) => record.payload)).toEqual(['after join'])
+  })
+
+  it('does not wait for partitions another group member owns', async () => {
+    kafkaMock.fetchOffsets.mockResolvedValueOnce([{
+      topic: 'orders',
+      partitions: [
+        { partition: 0, offset: '10', metadata: null },
+        { partition: 1, offset: '8', metadata: null },
+      ],
+    }])
+    kafkaMock.assignment.orders = [1]
+    const startedAt = Date.now()
+
+    const records = await kafkaClient.poll({ ...pollInput, pollTimeoutSeconds: 5 })
+
+    expect(records.map((record) => record.offset)).toEqual(['8'])
+    expect(Date.now() - startedAt).toBeLessThan(2_000)
+  })
+
+  it('explains the prefixed ACL when the broker refuses the test group', async () => {
+    kafkaMock.setOffsets.mockRejectedValueOnce(Object.assign(new Error('Not authorized to access group'), { type: 'GROUP_AUTHORIZATION_FAILED' }))
+
+    await expect(kafkaClient.sample({ auth, topic: 'orders', consumerGroup: 'activepieces-orders', count: 5, pollTimeoutSeconds: 1 }))
+      .rejects.toThrow(/PREFIXED group ACL on "activepieces-orders"/)
   })
 
   it('reports a consumer that fails to start', async () => {

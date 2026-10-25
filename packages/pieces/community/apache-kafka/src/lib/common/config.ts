@@ -189,6 +189,13 @@ function errorText(error: unknown): string {
   return error.message
 }
 
+function isGroupAuthorizationError(error: unknown): boolean {
+  if (typeof error === 'object' && error !== null && Reflect.get(error, 'type') === 'GROUP_AUTHORIZATION_FAILED') {
+    return true
+  }
+  return /not authorized to access group/i.test(errorText(error))
+}
+
 function isPassthrough(message: string): boolean {
   const prefixes = [
     'Enter at least one broker',
@@ -221,6 +228,7 @@ function isSaslMechanism(value: string): value is SaslMechanism {
 }
 
 export const kafkaConfig = {
+  isGroupAuthorizationError,
   parseBrokers,
   requirementError,
   build,

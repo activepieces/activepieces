@@ -115,18 +115,28 @@ async function sample({ auth, topic, consumerGroup, count, pollTimeoutSeconds }:
   const admin = kafka.admin()
   try {
     await admin.connect()
-    const targets = kafkaRecords.recentTargets({ topicOffsets: await admin.fetchTopicOffsets(topicName), count: limit })
-    if (targets.length === 0) {
-      return []
+    const topicOffsets = await admin.fetchTopicOffsets(topicName)
+    let records: KafkaRecord[] = []
+    for (const factor of SAMPLE_WINDOW_FACTORS) {
+      const targets = kafkaRecords.recentTargets({ topicOffsets, count: limit * factor })
+      if (targets.length === 0) {
+        return []
+      }
+      await admin.setOffsets({
+        groupId,
+        topic: topicName,
+        partitions: targets.map((target) => ({ partition: target.partition, offset: target.offset })),
+      })
+      records = await readTargets({ kafka, topic: topicName, groupId, targets, limit: limit * factor * targets.length, timeoutMs, fromBeginning: true, commit: false })
+      if (records.length >= limit || kafkaRecords.reachesLogStart({ topicOffsets, targets })) {
+        break
+      }
     }
-    await admin.setOffsets({
-      groupId,
-      topic: topicName,
-      partitions: targets.map((target) => ({ partition: target.partition, offset: target.offset })),
-    })
-    const records = await readTargets({ kafka, topic: topicName, groupId, targets, limit: limit * targets.length, timeoutMs, fromBeginning: true, commit: false })
     return kafkaRecords.newestFirst({ records, count: limit })
   } catch (error) {
+    if (kafkaConfig.isGroupAuthorizationError(error)) {
+      throw new Error(`Kafka refused the test consumer group "${groupId}". Testing reads with a temporary group whose name starts with "${liveGroup}-activepieces-test-". Grant this user a PREFIXED group ACL on "${liveGroup}" (Read), or test by publishing a message and letting the flow run.`)
+    }
     throw new Error(kafkaConfig.describeError({ error, brokers: auth.brokers, topic: topicName }))
   } finally {
     await admin.deleteGroups([groupId]).catch(() => undefined)
@@ -165,12 +175,16 @@ async function readTargets({ kafka, topic, groupId, targets, limit, timeoutMs, f
 }): Promise<KafkaRecord[]> {
   const ends = new Map(targets.map((target) => [target.partition, BigInt(target.end)]))
   const done = new Set<number>()
+  let assigned: Set<number> | undefined
   const consumer = kafka.consumer({
     groupId,
     maxWaitTimeInMs: 250,
     sessionTimeout: 15_000,
     rebalanceTimeout: 15_000,
     heartbeatInterval: 3_000,
+  })
+  consumer.on(consumer.events.GROUP_JOIN, ({ payload }) => {
+    assigned = new Set(payload.memberAssignment[topic] ?? [])
   })
   try {
     await consumer.connect()
@@ -191,7 +205,7 @@ async function readTargets({ kafka, topic, groupId, targets, limit, timeoutMs, f
       },
     })
     const deadline = Date.now() + timeoutMs
-    while (records.length < limit && done.size < ends.size && Date.now() < deadline) {
+    while (records.length < limit && !ownTargetsDone({ ends, done, assigned }) && Date.now() < deadline) {
       await delay(50)
     }
     collecting = false
@@ -234,11 +248,25 @@ async function createKafka(config: KafkaConfig): Promise<Kafka> {
   return new KafkaClient(config)
 }
 
+function ownTargetsDone({ ends, done, assigned }: {
+  ends: Map<number, bigint>
+  done: Set<number>
+  assigned: Set<number> | undefined
+}): boolean {
+  if (assigned === undefined) {
+    return false
+  }
+  const own = assigned
+  return [...ends.keys()].filter((partition) => own.has(partition)).every((partition) => done.has(partition))
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
 }
+
+const SAMPLE_WINDOW_FACTORS = [1, 10, 100]
 
 export const kafkaClient = {
   validate,
