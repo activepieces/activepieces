@@ -10,7 +10,6 @@ export { useKnowledgeBaseEmbeddingSource } from './agent-tools/knowledge-base-di
 export { AgentPieceToolComponent } from './agent-tools/components/piece-tool';
 export { AgentFlowToolDialog } from './agent-tools/flow-tool-dialog';
 export { AgentMcpDialog } from './agent-tools/mcp-tool-dialog';
-export { ConnectionDropdown } from './agent-tools/piece-tool-dialog/connection-select';
 export { PieceActionsList } from './agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';
 export { PiecesList } from './agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
 export { usePieceToolsDialogStore } from './agent-tools/stores/pieces-tools';

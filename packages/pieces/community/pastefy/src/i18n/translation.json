@@ -58,6 +58,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Paste Changed": "Paste Changed",
   "Triggers when the content (or title) of the paste changes": "Triggers when the content (or title) of the paste changes",
   "Include Title": "Include Title"

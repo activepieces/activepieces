@@ -12,9 +12,7 @@ import {
   SharedTemplate,
   CountFlowsRequest,
 } from '@activepieces/shared';
-import { toast } from 'sonner';
 
-import { UNSAVED_CHANGES_TOAST } from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { api } from '@/lib/api';
 
@@ -31,23 +29,9 @@ export const flowsApi = {
       return flow;
     });
   },
-  update(
-    flowId: string,
-    request: FlowOperationRequest,
-    showErrorToast = false,
-  ) {
+  update(flowId: string, request: FlowOperationRequest) {
     return api
       .post<PopulatedFlow>(`/v1/flows/${flowId}`, request)
-      .catch((error) => {
-        if (showErrorToast) {
-          toast.error(UNSAVED_CHANGES_TOAST.title, {
-            description: UNSAVED_CHANGES_TOAST.description,
-            duration: UNSAVED_CHANGES_TOAST.duration,
-            id: UNSAVED_CHANGES_TOAST.id,
-          });
-        }
-        throw error;
-      })
       .then((flow) => {
         projectCollectionUtils.markFlowActivity({
           projectId: flow.projectId,

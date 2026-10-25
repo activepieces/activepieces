@@ -105,6 +105,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Form Entry": "New Form Entry",
   "New Form Created": "New Form Created",
   "Triggers when someone submits a new entry to your Wufoo form.": "Triggers when someone submits a new entry to your Wufoo form.",

@@ -22,6 +22,10 @@ export const askClaude = createAction({
   displayName: 'Ask Claude',
   description: 'Send a question or instruction to Claude and get a text reply.',
   aiMetadata: { description: 'Sends a free-form question or instruction to a chosen Anthropic Claude model and returns the reply as plain text, optionally with an image attached for vision and earlier user/assistant turns supplied as Roles for multi-turn context; enabling Extended Thinking Mode routes the call to Claude 3.7 Sonnet with a separate reasoning token budget. Prefer the sibling Extract Structured Data action when the answer must be constrained to defined fields rather than prose. Requires a model and a question, with temperature between 0 and 1; not idempotent, since each call is a fresh generation that can return different text.', idempotent: false },
+  propertyGroups: [
+    { key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model', 'maxTokens'] },
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['prompt', 'systemPrompt', 'image'] },
+  ],
   props: {
     model: modelDropdown,
     prompt: Property.LongText({
