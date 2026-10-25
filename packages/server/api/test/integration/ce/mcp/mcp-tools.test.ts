@@ -3181,4 +3181,44 @@ describe('MCP Tools integration', () => {
         expect(updated.version.trigger.settings.pieceVersion).toBe('0.1.0')
         expect(updated.version.trigger.settings.propertySettings).toMatchObject({ fields: { type: 'MANUAL', schema: newSchema } })
     })
+
+    it('ap_update_step moves a piece step to an exact piece version, or back to latest', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Step version change')
+        await apAddStepTool({ mcp }, mockLog).execute({ flowId, parentStepName: 'trigger', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, stepType: FlowActionType.PIECE, displayName: 'Send', pieceName: '@activepieces/piece-test-email', actionName: 'send_template' })
+        const readVersion = async (): Promise<unknown> => {
+            const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+            return flowStructureUtil.getStep('step_1', flow.version.trigger)?.settings.pieceVersion
+        }
+
+        const pinned = await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', pieceVersion: '0.0.9' })
+        const pinnedVersion = await readVersion()
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', displayName: 'Renamed' })
+        const untouchedVersion = await readVersion()
+        await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', pieceVersion: 'latest' })
+
+        expect(text(pinned)).not.toContain('❌')
+        expect(pinnedVersion).toBe('0.0.9')
+        expect(untouchedVersion).toBe('0.0.9')
+        expect(await readVersion()).toBe('0.1.0')
+    })
+
+    it('ap_update_step rejects a piece version that does not exist, or one set on a non-piece step', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Step version reject')
+        await apAddStepTool({ mcp }, mockLog).execute({ flowId, parentStepName: 'trigger', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, stepType: FlowActionType.PIECE, displayName: 'Send', pieceName: '@activepieces/piece-test-email', actionName: 'send_template' })
+        await apAddStepTool({ mcp }, mockLog).execute({ flowId, parentStepName: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER, stepType: FlowActionType.CODE, displayName: 'Code' })
+
+        const missing = await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_1', pieceVersion: '9.9.9' })
+        const onCode = await apUpdateStepTool({ mcp }, mockLog).execute({ flowId, stepName: 'step_2', pieceVersion: 'latest' })
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+
+        expect(missing.isError).toBe(true)
+        expect(text(missing)).toContain('9.9.9')
+        expect(onCode.isError).toBe(true)
+        expect(text(onCode)).toContain('PIECE')
+        expect(flowStructureUtil.getStep('step_1', flow.version.trigger)?.settings.pieceVersion).toBe('0.1.0')
+    })
 })
