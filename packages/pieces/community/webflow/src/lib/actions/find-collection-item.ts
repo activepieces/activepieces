@@ -65,6 +65,9 @@ async function collectMatchingItems({
 	fieldValue,
 	maxResults,
 }: CollectMatchingItemsParams): Promise<WebflowCollectionItem[]> {
+	if (maxResults === 0) {
+		return [];
+	}
 	const limit = typeof maxResults === 'number' && maxResults > 0 ? maxResults : undefined;
 	let matches: WebflowCollectionItem[] = [];
 	let offset = 0;

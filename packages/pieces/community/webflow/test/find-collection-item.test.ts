@@ -106,13 +106,14 @@ describe('Find Collection Item by Field', () => {
 		expect(webflow.listCollectionItems).toHaveBeenCalledTimes(2);
 	});
 
-	test('returns no matches when Max Results is 0', async () => {
-		webflow.listCollectionItems.mockResolvedValueOnce({ items: matchingItems(3) });
+	test('returns no matches without reading any page when Max Results is 0', async () => {
+		webflow.listCollectionItems.mockResolvedValue({ items: matchingItems(100) });
 
 		await expect(runFind({ fieldName: 'category', fieldValue: 'news', maxResults: 0 })).resolves.toEqual({
 			success: true,
 			result: [],
 		});
+		expect(webflow.listCollectionItems).not.toHaveBeenCalled();
 	});
 
 	test('reports a failed later page instead of throwing', async () => {
