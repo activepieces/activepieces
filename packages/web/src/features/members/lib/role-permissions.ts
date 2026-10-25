@@ -87,6 +87,11 @@ function groups(): PermissionGroup[] {
           edit: Permission.WRITE_APP_CONNECTION,
         },
         {
+          key: 'replace-app-connections',
+          label: t('Replace connections'),
+          edit: Permission.REPLACE_APP_CONNECTION,
+        },
+        {
           key: 'project-releases',
           label: t('Project releases'),
           view: Permission.READ_PROJECT_RELEASE,

@@ -1,3 +1,4 @@
+import { apId, Permission, RoleType } from '@activepieces/core-utils'
 import {
     AppConnectionType,
     DefaultProjectRole,
@@ -9,9 +10,10 @@ import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-
 import { db } from '../../../helpers/db'
 import {
     createMockPieceMetadata,
+    createMockProjectRole,
 } from '../../../helpers/mocks'
 import { describeRolePermissions } from '../../../helpers/permission-test'
-import { createTestContext } from '../../../helpers/test-context'
+import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -105,6 +107,41 @@ describe('AppConnection API', () => {
             },
             allowedRoles: [DefaultProjectRole.ADMIN, DefaultProjectRole.EDITOR, DefaultProjectRole.VIEWER],
             forbiddenRoles: [],
+        })
+    })
+
+    describe('Replace AppConnections endpoint', () => {
+        describeRolePermissions({
+            app: () => app!,
+            request: (memberCtx, ownerCtx) => {
+                return memberCtx.post('/v1/app-connections/replace', {
+                    sourceAppConnectionId: apId(),
+                    targetAppConnectionId: apId(),
+                    projectId: ownerCtx.project.id,
+                })
+            },
+            allowedRoles: [DefaultProjectRole.ADMIN, DefaultProjectRole.EDITOR],
+            forbiddenRoles: [DefaultProjectRole.VIEWER],
+        })
+
+        it('Fails for a custom role that can write connections but not replace them', async () => {
+            const ctx = await createTestContext(app!)
+            const role = createMockProjectRole({
+                platformId: ctx.platform.id,
+                name: `custom-${apId()}`,
+                permissions: [Permission.READ_APP_CONNECTION, Permission.WRITE_APP_CONNECTION],
+                type: RoleType.CUSTOM,
+            })
+            await db.save('project_role', role)
+            const memberCtx = await createMemberContext(app!, ctx, { projectRole: role.name })
+
+            const response = await memberCtx.post('/v1/app-connections/replace', {
+                sourceAppConnectionId: apId(),
+                targetAppConnectionId: apId(),
+                projectId: ctx.project.id,
+            })
+
+            expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 })
