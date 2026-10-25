@@ -3,6 +3,7 @@ import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { flowExecutionCache } from '../../../flows/flow/flow-execution-cache'
+import { flowSideEffects } from '../../../flows/flow/flow-service-side-effects'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../../flows/flow-version/flow-version.service'
 import { applicationEvents } from '../../../helper/application-events'
@@ -88,6 +89,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             flowId: flow.id,
             versionId: approval.flowVersionId,
         })
+        const isRepublish = await flowService(log).isRepublish({ previousFlow: flow, versionToPublish: lockedVersion, newStatus: approval.requestedStatus })
 
         const decidedAt = new Date().toISOString()
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
@@ -114,13 +116,15 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                 projectId: flow.projectId,
                 simulate: false,
                 ignoreError: true,
+                isRepublish,
             })
         }
         await flowExecutionCache(log).invalidate(flow.id)
         await flowService(log).applyStatusChangeForPublishedFlow({
-            previousFlow: flow,
-            publishedVersion: lockedVersion,
+            id: flow.id,
+            projectId: flow.projectId,
             newStatus: approval.requestedStatus,
+            isRepublish,
         })
         rejectedPromiseHandler(telemetry(log).trackProject({
             projectId: approval.projectId,
@@ -195,7 +199,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async withdraw({ requestId, projectId, request }: WithdrawParams): Promise<void> {
+    async withdraw({ requestId, projectId, request, editorSessionId }: WithdrawParams): Promise<void> {
         const approval = await this.getOneOrThrow({ requestId, projectId })
         assertStateIsPending(approval.state)
 
@@ -214,6 +218,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             assertRowsAffected(deleteResult.raw?.length)
             await flowVersionRepo(entityManager).update({ id: lockedVersion.id }, { state: FlowVersionState.DRAFT })
         })
+        await flowSideEffects(log).onDraftWritten({ flowId: approval.flowId, projectId: approval.projectId, editorSessionId })
 
         applicationEvents(log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_APPROVAL_WITHDRAWN,
@@ -326,6 +331,7 @@ type WithdrawParams = {
     requestId: ApId
     projectId: ProjectId
     request: FastifyRequest
+    editorSessionId: string | null
 }
 
 type ListParams = {

@@ -205,7 +205,19 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "New form": "New form",
+  "Form content": "Form content",
+  "Original": "Original",
+  "The copy": "The copy",
+  "Target": "Target",
+  "Changes": "Changes",
+  "Search in": "Search in",
+  "Filters": "Filters",
+  "Results": "Results",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New Submission": "New Submission",
   "Triggers when someone submits the form.": "Triggers when someone submits the form.",
-  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off."
+  "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.": "A webhook is added to this form in Typeform when you publish the flow, and removed when you turn it off.",
+  "Watch": "Watch"
 }

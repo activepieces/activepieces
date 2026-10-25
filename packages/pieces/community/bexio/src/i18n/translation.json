@@ -399,6 +399,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "New/Updated Company": "New/Updated Company",
   "New/Updated Person": "New/Updated Person",
   "New Product": "New Product",

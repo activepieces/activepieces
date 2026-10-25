@@ -32,6 +32,14 @@ import { flowRepo } from './flow.repo'
 
 const notDeleting = { operationStatus: Not(FlowOperationStatus.DELETING) }
 
+const nonDraftOperationTypes: FlowOperationType[] = [
+    FlowOperationType.CHANGE_STATUS,
+    FlowOperationType.CHANGE_FOLDER,
+    FlowOperationType.UPDATE_METADATA,
+    FlowOperationType.UPDATE_MINUTES_SAVED,
+    FlowOperationType.UPDATE_OWNER,
+]
+
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
         await assertExternalIdIsUnique({ projectId, externalId })
@@ -333,6 +341,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         ip,
         emitEvents = true,
         skipRequiredActionsCheck = false,
+        editorSessionId = null,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowBeforeOperation = emitEvents
             ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
@@ -367,14 +376,16 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     })
                     break
                 }
-                const publishedFlow = await this.updatedPublishedVersionId({
+                const isRepublish = await this.isRepublish({ previousFlow: flow, versionToPublish: flowVersionToPublish, newStatus: requestedStatus })
+                await this.updatedPublishedVersionId({
                     id,
                     userId,
                     projectId,
                     platformId,
                     flowVersionToPublish,
+                    isRepublish,
                 })
-                await this.applyStatusChangeForPublishedFlow({ previousFlow: flow, publishedVersion: publishedFlow.version, newStatus: requestedStatus })
+                await this.applyStatusChangeForPublishedFlow({ id, projectId, newStatus: requestedStatus, isRepublish })
                 break
             }
 
@@ -463,6 +474,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
             }
         }
 
+        if (isDraftWrite(operation.type)) {
+            await flowSideEffects(log).onDraftWritten({ flowId: id, projectId, editorSessionId })
+        }
+
         const updatedFlow = await this.getOnePopulatedOrThrow({
             id,
             projectId,
@@ -487,6 +502,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         projectId,
         platformId,
         flowVersionToPublish,
+        isRepublish,
     }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
@@ -496,6 +512,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 projectId: flowToUpdate.projectId,
                 simulate: false,
                 ignoreError: true,
+                isRepublish,
             })
         }
 
@@ -550,16 +567,21 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async applyStatusChangeForPublishedFlow({ previousFlow, publishedVersion, newStatus }: ApplyStatusChangeForPublishedFlowParams): Promise<void> {
-        const previousVersionId = previousFlow.status === FlowStatus.ENABLED ? previousFlow.publishedVersionId : null
-        const previousVersion = isNil(previousVersionId)
-            ? null
-            : await flowVersionService(log).getFlowVersionOrThrow({ flowId: previousFlow.id, versionId: previousVersionId })
-        const isRepublish = !isNil(previousVersion) && flowPublishUtils.isSameTrigger({
+    async isRepublish({ previousFlow, versionToPublish, newStatus }: IsRepublishParams): Promise<boolean> {
+        const previousVersionId = previousFlow.publishedVersionId
+        const keepsRunning = previousFlow.status === FlowStatus.ENABLED && newStatus === FlowStatus.ENABLED
+        if (!keepsRunning || isNil(previousVersionId)) {
+            return false
+        }
+        const previousVersion = await flowVersionService(log).getFlowVersionOrThrow({ flowId: previousFlow.id, versionId: previousVersionId })
+        return flowPublishUtils.isSameTrigger({
             published: previousVersion.trigger,
-            toPublish: publishedVersion.trigger,
+            toPublish: versionToPublish.trigger,
         })
-        await applyStatusChange({ id: previousFlow.id, projectId: previousFlow.projectId, newStatus, isRepublish }, log)
+    },
+
+    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus, isRepublish }: ApplyStatusChangeForPublishedFlowParams): Promise<void> {
+        await applyStatusChange({ id, projectId, newStatus, isRepublish }, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
@@ -749,6 +771,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
     },
 })
 
+
+function isDraftWrite(type: FlowOperationType): boolean {
+    return !nonDraftOperationTypes.includes(type)
+}
 
 async function assertRequiredActionsPresent({ projectId, platformId, flowVersion, log }: AssertRequiredActionsParams): Promise<void> {
     const result = await flowPublishHooks.get(log).findMissingRequiredActions({ projectId, platformId, flowVersion })
@@ -982,6 +1008,7 @@ type UpdateParams = EventEmissionParams & {
     platformId: PlatformId
     previousFlow?: PopulatedFlow
     skipRequiredActionsCheck?: boolean
+    editorSessionId?: string | null
 }
 
 type UpdatePublishedVersionIdParams = {
@@ -990,6 +1017,7 @@ type UpdatePublishedVersionIdParams = {
     platformId: PlatformId
     projectId: ProjectId
     flowVersionToPublish: FlowVersion
+    isRepublish: boolean
 }
 
 type SetPublishedVersionParams = {
@@ -998,10 +1026,17 @@ type SetPublishedVersionParams = {
     entityManager: EntityManager
 }
 
-type ApplyStatusChangeForPublishedFlowParams = {
+type IsRepublishParams = {
     previousFlow: Flow
-    publishedVersion: FlowVersion
+    versionToPublish: FlowVersion
     newStatus: FlowStatus
+}
+
+type ApplyStatusChangeForPublishedFlowParams = {
+    id: FlowId
+    projectId: ProjectId
+    newStatus: FlowStatus
+    isRepublish: boolean
 }
 
 type DeleteParams = EventEmissionParams & {

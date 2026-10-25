@@ -1546,6 +1546,9 @@
       "@activepieces/piece-wootric": [
         "packages/pieces/community/wootric/src/index.ts"
       ],
+      "@activepieces/piece-word-documents": [
+        "packages/pieces/core/word-documents/src/index.ts"
+      ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/community/wordpress/src/index.ts"
       ],

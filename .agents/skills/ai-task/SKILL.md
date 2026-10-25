@@ -320,7 +320,7 @@ The cards below are examples of that voice, not forms to fill in word for word.
 
 Run these checks and fix what you can, then show one short summary of what changed:
 
-1. **Linked ticket.** The PR description starts with `Fixes AI-<n>` when merging finishes the ticket, or `Part of AI-<n>` when it doesn't. No ticket? Make one with Start first.
+1. **Linked ticket.** The PR description starts with `Fixes AI-<n>` when merging finishes the ticket, or `Refs AI-<n>` when it doesn't. No ticket? Make one with Start first.
 2. **Title:** written for users, not engineers, because it feeds the changelog. Keep the repo's prefix style, e.g. `fix(chat): long chats no longer fail`.
 3. **Description:**
    - what changed;
@@ -341,7 +341,7 @@ Run these checks and fix what you can, then show one short summary of what chang
     - **When both pass:** mark it ready (`gh pr ready <n>`) and ask a reviewer from CODEOWNERS.
 
     Ship card line: `✓ Greptile 5/5 · ✓ CI green`, or the blocker, for example `✗ Greptile 3/5: 2 findings`.
-11. **Approved?** If `gh pr view <n> --json reviewDecision` says `APPROVED`, don't merge yet. Run **Queue** below: it puts the ticket in Ready to merge and tells the user their place. Ship card line: `✓ Approved · #2 in queue, after AI-41`.
+11. **Approved?** If at least one person approved the PR and nobody requested changes (see **Approved** under Queue), don't merge yet. Run **Queue** below: it puts the ticket in Ready to merge and tells the user their place. Ship card line: `✓ Approved · #2 in queue, after AI-41`.
 
 Ask before pushing, opening the PR, or posting to Linear or GitHub. Everything goes out under the user's name.
 
@@ -351,10 +351,12 @@ Approved PRs wait in **Ready to merge** (between In Review and Done), and the **
 
 Runs on `/ai-task queue`, when Ship finds an approval, and inside Check.
 
-1. **Fill the column.** Linear moves a ticket here on its own when its PR is approved and green. Move in any AI ticket in In Review whose PR is approved and green but got missed. One that drops back to In Review on a new push re-enters when it's approved again.
+**Approved** means at least one person approved the PR and nobody has requested changes since. Read `gh pr view <n> --json latestReviews` and ignore bots like Greptile. Don't use `reviewDecision`: it stays `REVIEW_REQUIRED` until a CODEOWNERS team approves, so a PR an AI teammate approved would never count.
+
+1. **Fill the column.** Move every AI ticket in In Review whose PR is approved and green into Ready to merge. Linear only does this on its own when GitHub's `reviewDecision` is `APPROVED`, so don't wait for it. One that drops back to In Review on a new push re-enters when it's approved again.
 2. **Gather** for every ticket in Ready to merge:
    - Linear: priority, labels, customer requests (`list_customer_needs`), `blocks` relations, when it entered the column (`stateHistory`);
-   - its PR: `gh pr view <n> --json number,author,files,additions,deletions,mergeable,reviewDecision,statusCheckRollup`.
+   - its PR: `gh pr view <n> --json number,author,files,additions,deletions,mergeable,mergeStateStatus,latestReviews,reviewRequests,statusCheckRollup`.
 3. **Kick back first.** A card leaves the queue if its PR has conflicts, red CI, changes requested, or it's sat 5 working days without merging. Move it back to In Review with a one-line comment that says why and what unblocks it (mention the owner). A stale card at the bottom is worse than no card.
 4. **Rank the rest, top first.** One hard rule first: a PR always sits above every queued PR that needs it (`blocks`, or "merge after #n" in the PR), so the top card can always land. Then go down the list, and only use the next rule to break a tie:
    1. **Something's on fire:** the "Start here" urgent list (live automations broken with no workaround, data loss or wrong data, security, billing, many customers at once).
@@ -367,7 +369,7 @@ Runs on `/ai-task queue`, when Ship finds an approval, and inside Check.
    - state changes and kick-back comments through the Linear MCP;
    - the order with `node .agents/skills/ai-task/linear.mjs order AI-41 AI-57 AI-60` (top first);
    - no key: say where to drag each card in **Merge queue** ("drag AI-57 under AI-41").
-7. **Merging.** Only the owner of the top card merges, and only their own PR. Not on top? Wait, or ask in the channel. The one exception is an urgent fix (rule 4.1), which jumps the line and says so in the channel. After a merge, Linear moves it to Done; re-rank and tell the next owner if they need to rebase.
+7. **Merging.** Only the owner of the top card merges, and only their own PR. If GitHub still blocks it (`mergeStateStatus` is `BLOCKED`) on a code-owner review, put the team still requested on the card ("needs @activepieces/platform"); the owner asks them, and the card keeps its place. Not on top? Wait, or ask in the channel. The one exception is an urgent fix (rule 4.1), which jumps the line and says so in the channel. After a merge, Linear moves it to Done; re-rank and tell the next owner if they need to rebase.
 
 Think the order is wrong? Say why in the ticket and re-run `/ai-task queue`, don't drag cards around it.
 
@@ -392,7 +394,7 @@ Think the order is wrong? Say why in the ticket and re-run `/ai-task queue`, don
    - **Waiting:** AI PRs with no review after 1 working day, decisions past their decide-by date, and triage items older than 2 days.
    - **Merge queue:** run Queue. Report its size, what's on top, any collision pairs, and cards to kick back.
    - **Rituals:** repeating tickets skipped last time.
-   - **Habits:** AI PRs from the last 7 days without `Fixes AI-` or `Part of AI-` (use `gh pr list --state all --search "updated:>=<date>" --json number,author,body,files`), and new tickets missing their template's required parts. A nudge, not blame.
+   - **Habits:** AI PRs from the last 7 days without `Fixes AI-` or `Refs AI-` (use `gh pr list --state all --search "updated:>=<date>" --json number,author,body,files`), and new tickets missing their template's required parts. A nudge, not blame.
 4. **Report** with the check card. Then offer the writes, and do only what the user picks:
    - a row at the top of "Weekly checks" in "How we measure" (monthly runs also update the main table);
    - a funnel comment on the open activation ticket;

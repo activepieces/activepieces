@@ -130,5 +130,12 @@
   "DELETE": "删除",
   "HEAD": "黑色",
   "New Review": "New Review",
-  "Triggers when a customer posts a new review on the location.": "当客户在营业地点发布新评价时触发。"
+  "Triggers when a customer posts a new review on the location.": "当客户在营业地点发布新评价时触发。",
+  "Post to Update": "要更新的帖子",
+  "Review": "评价",
+  "Reply": "回复",
+  "Results": "结果",
+  "Business": "商家",
+  "Markdown": "Markdown",
+  "Fields left empty keep their current value.": "留空的字段将保留当前值。"
 }

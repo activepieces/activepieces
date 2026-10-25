@@ -56,6 +56,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         const embedSubdomainUrl = await embedSubdomainService(request.log).getActiveSubdomainUrl({ platformId })
         if (embedSubdomainUrl) {
             modifiedFlags[ApFlagId.WEBHOOK_URL_PREFIX] = `${embedSubdomainUrl}/api/v1/webhooks`
+            modifiedFlags[ApFlagId.EMBED_SUBDOMAIN_URL] = `${embedSubdomainUrl}/`
         }
         else {
             modifiedFlags[
