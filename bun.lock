@@ -4465,7 +4465,7 @@
     },
     "packages/pieces/community/http-oauth2": {
       "name": "@activepieces/piece-http-oauth2",
-      "version": "0.3.1",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
