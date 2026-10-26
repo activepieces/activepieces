@@ -159,6 +159,23 @@ describe('seen ID storage under failure', () => {
   });
 });
 
+describe('seen ID cleanup', () => {
+  test('a failed delete of the old chunks does not fail the save', async () => {
+    const { store } = memoryStore();
+    await saveSeenIds({ store, ids: ['t1'] });
+    const failingDelete: Store = {
+      ...store,
+      async delete(): Promise<void> {
+        throw new Error('store down');
+      },
+    };
+    await saveSeenIds({ store: failingDelete, ids: ['t1', 't2'] });
+    expect(await loadSeenIds({ store })).toEqual(['t1', 't2']);
+    await saveSeenIds({ store, ids: ['t3'] });
+    expect(await loadSeenIds({ store })).toEqual(['t3']);
+  });
+});
+
 function memoryStore(): { store: Store; data: Record<string, unknown> } {
   const data: Record<string, unknown> = {};
   const store: Store = {
