@@ -181,7 +181,12 @@ export async function saveSeenIds({
   const checkpoint: SeenCheckpoint = { slot, chunks };
   await store.put(SEEN_KEY, checkpoint);
   if (previous !== null) {
-    await deleteChunks({ store, slot: previous.slot, from: 0, to: previous.chunks });
+    await deleteChunks({
+      store,
+      slot: previous.slot,
+      from: 0,
+      to: previous.chunks,
+    }).catch(() => undefined);
   }
 }
 
