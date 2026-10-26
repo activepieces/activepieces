@@ -1,6 +1,6 @@
 import {
-  AppConnectionReplaceScope,
   AppConnectionScope,
+  AppConnectionWithoutSensitiveData,
   FlowVersionState,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
@@ -28,15 +28,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormField } from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   appConnectionsMutations,
   appConnectionsQueries,
@@ -44,8 +37,8 @@ import {
 import { flowsApi } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
 
+import { DeleteReplacedConnectionDialog } from './delete-replaced-connection-dialog';
 import {
-  LabelWithTooltip,
   ReplaceConnectionSelection,
   ReplaceConnectionSelectionFields,
   replaceConnectionSelectionHooks,
@@ -59,24 +52,40 @@ const ReplaceConnectionForProjectDialog = ({
   projectId,
 }: ReplaceConnectionForProjectDialogProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [connectionToDelete, setConnectionToDelete] =
+    useState<AppConnectionWithoutSensitiveData | null>(null);
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="flex flex-col">
-        <ReplaceConnectionForProjectForm
-          key={dialogOpen ? 'open' : 'closed'}
+    <>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent className="flex flex-col">
+          <ReplaceConnectionForProjectForm
+            key={dialogOpen ? 'open' : 'closed'}
+            projectId={projectId}
+            onConnectionMerged={onConnectionMerged}
+            onOfferToDeleteSource={setConnectionToDelete}
+            setDialogOpen={setDialogOpen}
+          />
+        </DialogContent>
+      </Dialog>
+      {connectionToDelete && (
+        <DeleteReplacedConnectionDialog
+          connection={connectionToDelete}
           projectId={projectId}
-          onConnectionMerged={onConnectionMerged}
-          setDialogOpen={setDialogOpen}
+          onClose={() => {
+            setConnectionToDelete(null);
+            onConnectionMerged();
+          }}
         />
-      </DialogContent>
-    </Dialog>
+      )}
+    </>
   );
 };
 
 function ReplaceConnectionForProjectForm({
   projectId,
   onConnectionMerged,
+  onOfferToDeleteSource,
   setDialogOpen,
 }: ReplaceConnectionForProjectFormProps) {
   const navigate = useNavigate();
@@ -97,7 +106,12 @@ function ReplaceConnectionForProjectForm({
     appConnectionsMutations.useReplaceConnections({
       setDialogOpen,
       connections: connections?.data ?? [],
-      refetch: onConnectionMerged,
+      refetch: () => {
+        onConnectionMerged();
+        if (sourceConnection && canDeleteSource) {
+          onOfferToDeleteSource(sourceConnection);
+        }
+      },
     });
 
   const {
@@ -119,7 +133,6 @@ function ReplaceConnectionForProjectForm({
       const draftFlowIds = new Set(draftFlowsPage.data.map((flow) => flow.id));
       return {
         draftFlows: draftFlowsPage.data,
-        publishedVersionsUseConnection: publishedFlowsPage.data.length > 0,
         publishedOnlyFlows: publishedFlowsPage.data.filter(
           (flow) => !draftFlowIds.has(flow.id),
         ),
@@ -137,7 +150,6 @@ function ReplaceConnectionForProjectForm({
     defaultValues: {
       ...replaceConnectionSelectionUtils.emptySelection(),
       applyToPublishedVersions: false,
-      deleteSourceConnection: false,
     },
     mode: 'onSubmit',
   });
@@ -169,12 +181,9 @@ function ReplaceConnectionForProjectForm({
   const affectedFlows = applyToPublishedVersions
     ? [...draftFlows, ...publishedOnlyFlows]
     : draftFlows;
-  const publishedVersionsUseConnection =
-    flowsUsingConnection?.publishedVersionsUseConnection ?? false;
-  const sourceIsGlobalConnection =
-    sourceConnection?.scope === AppConnectionScope.PLATFORM;
-  const deleteBlockedByApproval =
-    publishNeedsApproval && publishedVersionsUseConnection;
+  const canDeleteSource =
+    !publishNeedsApproval &&
+    sourceConnection?.scope === AppConnectionScope.PROJECT;
 
   const handleSubmit = (values: ProjectReplaceFormValues) => {
     if (step === ProjectReplaceStep.CHOOSE_CONNECTIONS) {
@@ -183,19 +192,12 @@ function ReplaceConnectionForProjectForm({
       }
       return;
     }
-    const deleteBlockedByPublishedFlows =
-      !values.applyToPublishedVersions && publishedVersionsUseConnection;
     replaceConnections({
-      scope: AppConnectionReplaceScope.PROJECT,
       sourceAppConnectionId: values.sourceConnectionId,
       targetAppConnectionId: values.targetConnectionId,
       projectId,
-      deleteSourceConnection:
-        values.deleteSourceConnection &&
-        !deleteBlockedByPublishedFlows &&
-        !sourceIsGlobalConnection &&
-        !deleteBlockedByApproval,
       applyToPublishedVersions: values.applyToPublishedVersions,
+      flowIds: affectedFlows.map((flow) => flow.id),
     });
   };
 
@@ -283,71 +285,24 @@ function ReplaceConnectionForProjectForm({
                 </Collapsible>
               )}
 
-              <ReplaceConnectionVersionsField
-                onValueChange={(applyToPublishedVersions) => {
-                  if (
-                    !applyToPublishedVersions &&
-                    publishedVersionsUseConnection
-                  ) {
-                    form.setValue('deleteSourceConnection', false);
-                  }
-                }}
-              />
-
-              <FormField
-                control={form.control}
-                name="deleteSourceConnection"
-                render={({ field }) => (
-                  <div className="flex flex-col gap-1.5">
-                    <LabelWithTooltip
-                      label={t('After replacing')}
-                      tooltip={t(
-                        'Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first. In a project that needs approval to publish, delete it after the flows are approved. Global connections can only be deleted from the platform admin page.',
-                      )}
-                    />
-                    <Select
-                      value={String(field.value)}
-                      onValueChange={(value) =>
-                        field.onChange(value === 'true')
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="false">
-                          {t('Keep the old connection')}
-                        </SelectItem>
-                        <SelectItem
-                          value="true"
-                          disabled={
-                            (!applyToPublishedVersions &&
-                              publishedVersionsUseConnection) ||
-                            sourceIsGlobalConnection ||
-                            deleteBlockedByApproval
-                          }
-                        >
-                          {t('Delete the old connection')}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              />
+              <ReplaceConnectionVersionsField />
 
               <DialogFooter>
                 <Button
                   type="button"
                   variant="secondary"
                   onClick={() => {
-                    form.setValue('deleteSourceConnection', false);
                     form.setValue('applyToPublishedVersions', false);
                     setStep(ProjectReplaceStep.CHOOSE_CONNECTIONS);
                   }}
                 >
                   {t('Back')}
                 </Button>
-                <Button type="submit" loading={isReplacing}>
+                <Button
+                  type="submit"
+                  loading={isReplacing}
+                  disabled={affectedFlows.length === 0}
+                >
                   {t('Replace')}
                 </Button>
               </DialogFooter>
@@ -377,12 +332,14 @@ type ReplaceConnectionForProjectDialogProps = {
 type ReplaceConnectionForProjectFormProps = {
   projectId: string;
   onConnectionMerged: () => void;
+  onOfferToDeleteSource: (
+    connection: AppConnectionWithoutSensitiveData,
+  ) => void;
   setDialogOpen: (open: boolean) => void;
 };
 
 type ProjectReplaceFormValues = ReplaceConnectionSelection & {
   applyToPublishedVersions: boolean;
-  deleteSourceConnection: boolean;
 };
 
 enum ProjectReplaceStep {
