@@ -159,6 +159,8 @@ const EmbedPage = React.memo(() => {
                   hidePageHeader: event.data.data.hidePageHeader ?? false,
                   hideActiveUsers: event.data.data.hideActiveUsers ?? false,
                   hideGlobalSearch: event.data.data.hideGlobalSearch ?? false,
+                  hideReplaceConnection:
+                    event.data.data.hideReplaceConnection ?? true,
                   formulasDocsUrl: event.data.data.formulasDocsUrl,
                   gtmContainerId: event.data.data.gtmContainerId,
                   clarityProjectId: event.data.data.clarityProjectId,

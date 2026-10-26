@@ -23,6 +23,7 @@ type EmbeddingState = {
   hidePageHeader: boolean;
   hideActiveUsers: boolean;
   hideGlobalSearch: boolean;
+  hideReplaceConnection: boolean;
   formulasDocsUrl?: string;
   gtmContainerId?: string;
   clarityProjectId?: string;
@@ -45,6 +46,7 @@ const defaultState: EmbeddingState = {
   hidePageHeader: false,
   hideActiveUsers: false,
   hideGlobalSearch: false,
+  hideReplaceConnection: false,
 };
 
 const EmbeddingContext = createContext<{
