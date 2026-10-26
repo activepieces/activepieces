@@ -1,4 +1,3 @@
-import { isNil } from '@activepieces/core-utils';
 import {
   AppConnectionReplaceScope,
   AppConnectionScope,
@@ -120,6 +119,7 @@ function ReplaceConnectionForProjectForm({
       const draftFlowIds = new Set(draftFlowsPage.data.map((flow) => flow.id));
       return {
         draftFlows: draftFlowsPage.data,
+        publishedVersionsUseConnection: publishedFlowsPage.data.length > 0,
         publishedOnlyFlows: publishedFlowsPage.data.filter(
           (flow) => !draftFlowIds.has(flow.id),
         ),
@@ -169,13 +169,12 @@ function ReplaceConnectionForProjectForm({
   const affectedFlows = applyToPublishedVersions
     ? [...draftFlows, ...publishedOnlyFlows]
     : draftFlows;
-  const hasPublishedAffectedFlows =
-    publishedOnlyFlows.length > 0 ||
-    draftFlows.some((flow) => !isNil(flow.publishedVersionId));
+  const publishedVersionsUseConnection =
+    flowsUsingConnection?.publishedVersionsUseConnection ?? false;
   const sourceIsGlobalConnection =
     sourceConnection?.scope === AppConnectionScope.PLATFORM;
   const deleteBlockedByApproval =
-    publishNeedsApproval && hasPublishedAffectedFlows;
+    publishNeedsApproval && publishedVersionsUseConnection;
 
   const handleSubmit = (values: ProjectReplaceFormValues) => {
     if (step === ProjectReplaceStep.CHOOSE_CONNECTIONS) {
@@ -185,7 +184,7 @@ function ReplaceConnectionForProjectForm({
       return;
     }
     const deleteBlockedByPublishedFlows =
-      !values.applyToPublishedVersions && hasPublishedAffectedFlows;
+      !values.applyToPublishedVersions && publishedVersionsUseConnection;
     replaceConnections({
       scope: AppConnectionReplaceScope.PROJECT,
       sourceAppConnectionId: values.sourceConnectionId,
@@ -286,7 +285,10 @@ function ReplaceConnectionForProjectForm({
 
               <ReplaceConnectionVersionsField
                 onValueChange={(applyToPublishedVersions) => {
-                  if (!applyToPublishedVersions && hasPublishedAffectedFlows) {
+                  if (
+                    !applyToPublishedVersions &&
+                    publishedVersionsUseConnection
+                  ) {
                     form.setValue('deleteSourceConnection', false);
                   }
                 }}
@@ -320,7 +322,7 @@ function ReplaceConnectionForProjectForm({
                           value="true"
                           disabled={
                             (!applyToPublishedVersions &&
-                              hasPublishedAffectedFlows) ||
+                              publishedVersionsUseConnection) ||
                             sourceIsGlobalConnection ||
                             deleteBlockedByApproval
                           }
