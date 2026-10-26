@@ -1,6 +1,6 @@
 import { setTimeout as delay } from 'node:timers/promises'
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
-import { AgentResult, AgentTaskStatus } from '@activepieces/core-piece-types'
+import { AGENT_STEP_TIMEOUT_MS, AgentResult, AgentTaskStatus } from '@activepieces/core-piece-types'
 import { ActivepiecesError, AIProviderName, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiUtils, modelTierCatalog, ModelTierSurface } from '@activepieces/server-utils'
 import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
@@ -308,8 +308,14 @@ async function failAbandonedFlowStep({ conversation, log }: { conversation: Swep
     }
     const { error } = await tryCatch(() => flowStepRpc(log).resumeFlowStep({ conversationId: id, flowRunId, waitpointId, output: ABANDONED_FLOW_STEP_RESULT }))
     if (!isNil(error)) {
-        log.error({ error, conversation: { id }, flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[agentHelpers] Could not release the flow step of an abandoned agent run, the next sweep retries it')
-        await conversationRepo().update(id, { status: AgentConversationStatus.STREAMING })
+        log.error({ error, conversation: { id }, flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[agentHelpers] Could not release the flow step of an abandoned agent run, the next sweep retries it until the step times out')
+        await conversationRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ status: AgentConversationStatus.STREAMING })
+            .where('id = :id', { id })
+            .andWhere('created > NOW() - make_interval(secs => :stepTimeoutSecs)', { stepTimeoutSecs: AGENT_STEP_TIMEOUT_MS / 1_000 })
+            .execute()
     }
 }
 

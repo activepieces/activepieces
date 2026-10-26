@@ -214,6 +214,16 @@ describe('CHAT_STALE_SWEEP proactive recovery', () => {
         expect(row.status).toBe(AgentConversationStatus.STREAMING)
         expect(await db.findOneBy('waitpoint', { id: unreleasable.waitpointId })).not.toBeNull()
     })
+
+    it('stops retrying a release that keeps failing once the step has timed out, since the waitpoint timeout already ended the wait', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const pastTimeout = await pausedFlowStepRun({ ctx, lastHeartbeat: new Date(Date.now() - 4 * 60 * 60 * 1_000), conversationProjectId: null })
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: pastTimeout.conversationId })
+        expect(row.status).toBe(AgentConversationStatus.IDLE)
+    })
 })
 
 async function pausedFlowStepRun({ ctx, lastHeartbeat, conversationProjectId = ctx.project.id }: { ctx: TestContext, lastHeartbeat: Date, conversationProjectId?: string | null }): Promise<{ conversationId: string, waitpointId: string }> {
@@ -238,6 +248,6 @@ async function pausedFlowStepRun({ ctx, lastHeartbeat, conversationProjectId = c
         status: AgentConversationStatus.STREAMING,
         messages: [],
     })
-    await db.update('agent_conversation', conversationId, { updated: lastHeartbeat.toISOString() })
+    await db.update('agent_conversation', conversationId, { created: lastHeartbeat.toISOString(), updated: lastHeartbeat.toISOString() })
     return { conversationId, waitpointId }
 }
