@@ -17,7 +17,7 @@ const editionConfigs = {
     testDir: './scenarios/ce',
   },
   ee: {
-    testDir: './scenarios/ee',
+    testDir: './scenarios',
   },
 };
 
