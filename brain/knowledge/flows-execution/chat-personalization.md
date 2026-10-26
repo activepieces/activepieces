@@ -9,6 +9,7 @@ The first-run onboarding inside chat. A user with no row is asked "Who am I team
 **UNSET** the synthesized status meaning no row exists, so this person has never been asked. Never persisted.
 **DISMISSED_LEGACY** written by the shipping backfill to every user who existed before the feature. Terminal, and deliberately distinct from SKIPPED.
 **SKIPPED** the user saw the question and declined, or research was not allowed to run.
+**Opt-out** a user row that is SKIPPED with no domain and no company text, written by Clear. It hides the company row's cards and profile from that user, and turning personalization back on replaces it (`hasOptedOut`).
 **Company row** the `userId IS NULL` row holding the company answer and its research; one per platform.
 **User row** a per-person row; a teammate's own role-targeted result wins over the company row once READY.
 

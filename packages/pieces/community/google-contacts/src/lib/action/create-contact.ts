@@ -13,7 +13,7 @@ export const googleContactsAddContactAction = createAction({
   auth: googleContactsAuth,
   name: 'add_contact',
   classification: 'WRITE',
-  description: 'Add a contact to a Google Contacts account',
+  description: 'Add a new contact to your Google Contacts.',
   audience: 'human',
   aiMetadata: { description: 'Creates a new person in the authenticated Google Contacts account from name, email, phone, company, and job title fields. Use when an agent needs to add someone to address book contacts; first and last name are required. Not idempotent — each call creates a separate contact even with identical input, so guard against duplicates.', idempotent: false },
   displayName: 'Add Contact',
@@ -21,40 +21,50 @@ export const googleContactsAddContactAction = createAction({
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',
-      description: 'The first name of the contact',
+      placeholder: 'Jane',
+      width: 'half',
+      required: true,
+    }),
+    lastName: Property.ShortText({
+      displayName: 'Last Name',
+      placeholder: 'Doe',
+      width: 'half',
       required: true,
     }),
     middleName: Property.ShortText({
       displayName: 'Middle Name',
-      description: 'The middle name of the contact',
-      required: false,
-    }),
-    lastName: Property.ShortText({
-      displayName: 'Last Name',
-      description: 'The last name of the contact',
-      required: true,
-    }),
-    jobTitle: Property.ShortText({
-      displayName: 'Job Title',
-      description: 'The job title of the contact',
       required: false,
     }),
     company: Property.ShortText({
       displayName: 'Company',
-      description: 'The company of the contact',
+      placeholder: 'Acme Inc.',
+      width: 'half',
+      required: false,
+    }),
+    jobTitle: Property.ShortText({
+      displayName: 'Job Title',
+      placeholder: 'Sales Manager',
+      width: 'half',
       required: false,
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'The email address of the contact',
+      placeholder: 'jane@example.com',
+      width: 'half',
       required: false,
     }),
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
-      description: 'The phone number of the contact',
+      placeholder: '+1 650 555 0100',
+      width: 'half',
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'name', display: 'section', label: 'Name', icon: 'user', props: ['firstName', 'lastName', 'middleName'] },
+    { key: 'work', display: 'section', label: 'Work', icon: 'tag', props: ['company', 'jobTitle'] },
+    { key: 'contactInfo', display: 'section', label: 'Contact Info', icon: 'inbox', props: ['email', 'phoneNumber'] },
+  ],
   async run(context) {
     let requestBody = {
       names: [

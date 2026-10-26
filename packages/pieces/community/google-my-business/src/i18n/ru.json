@@ -66,5 +66,12 @@
   "Event": "Мероприятие",
   "Offer": "Предложение",
   "Alert": "Оповещение",
-  "Triggers when a customer posts a new review on the location.": "Срабатывает, когда клиент оставляет новый отзыв о точке."
+  "Triggers when a customer posts a new review on the location.": "Срабатывает, когда клиент оставляет новый отзыв о точке.",
+  "Post to Update": "Запись для обновления",
+  "Review": "Отзыв",
+  "Reply": "Ответ",
+  "Results": "Результаты",
+  "Business": "Компания",
+  "Markdown": "Markdown",
+  "Fields left empty keep their current value.": "Пустые поля сохраняют текущее значение."
 }

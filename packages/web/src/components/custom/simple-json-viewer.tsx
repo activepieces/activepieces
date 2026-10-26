@@ -89,6 +89,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
               style={{
                 overflowX: 'auto',
                 padding: '0.5rem',
+                backgroundColor: 'transparent',
                 fontSize,
                 width: '100%',
                 minWidth: 0,
