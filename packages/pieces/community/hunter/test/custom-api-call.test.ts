@@ -42,6 +42,21 @@ describe('custom api call', () => {
     expect(output).toMatchObject({ status: 200 });
   });
 
+  test('keeps array query values and names binary downloads by content type', async () => {
+    const seen = stubFetch(() => ({ body: { ok: true }, headers: { 'content-type': 'application/json' } }));
+    const written: string[] = [];
+    const files = { write: async ({ fileName }: { fileName: string }) => { written.push(fileName); return `file://${fileName}`; } };
+    await hunterCustomApiCallAction.run(
+      Object.assign(Object.create(null), {
+        auth: { type: 'SECRET_TEXT', secret_text: API_KEY },
+        propsValue: { method: HttpMethod.GET, url: { url: '/leads' }, headers: {}, queryParams: { fields: ['a', 'b'] }, response_is_binary: true },
+        files,
+      }),
+    );
+    expect(seen[0].query.get('fields')).toBe('a,b');
+    expect(written).toEqual(['output.json']);
+  });
+
   test('refuses an outside URL without making a request', async () => {
     const seen = stubFetch(() => ({ body: {} }));
     await expect(
