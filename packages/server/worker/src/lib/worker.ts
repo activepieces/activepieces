@@ -431,7 +431,7 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
                 response.EXECUTION_MODE = localExecutionMode
             }
             const localSandboxMemoryLimit = system.get(WorkerSystemProp.SANDBOX_MEMORY_LIMIT)
-            if (!isNil(localSandboxMemoryLimit)) {
+            if (!isNil(localSandboxMemoryLimit) && localSandboxMemoryLimit !== '') {
                 if (!/^[1-9]\d*$/.test(localSandboxMemoryLimit)) {
                     throw new Error(`AP_SANDBOX_MEMORY_LIMIT must be a positive integer in KB. Got: ${localSandboxMemoryLimit}`)
                 }

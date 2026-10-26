@@ -1,5 +1,6 @@
 import {
   createTrigger,
+  isNil,
   Property,
   StoreScope,
   TriggerStrategy,
@@ -30,6 +31,12 @@ export default createTrigger({
   },
   sampleData: {},
   onEnable: async (context) => {
+    if (
+      context.isRepublish &&
+      !isNil(await context.store.get('paste_changed_trigger_hash', StoreScope.FLOW))
+    ) {
+      return;
+    }
     const client = makeClient(context.auth, context.propsValue);
     const paste = await client.getPaste(context.propsValue.paste_id);
     const hash = createHash('md5')
@@ -44,6 +51,9 @@ export default createTrigger({
     );
   },
   onDisable: async (context) => {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('paste_changed_trigger_hash', StoreScope.FLOW);
   },
   run: async (context) => {

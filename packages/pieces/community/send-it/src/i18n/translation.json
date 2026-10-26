@@ -89,6 +89,8 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "Request": "Request",
+  "Data to send": "Data to send",
   "Post Published": "Post Published",
   "Post Scheduled": "Post Scheduled",
   "Post Failed": "Post Failed",
