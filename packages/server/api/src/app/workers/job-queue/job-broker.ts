@@ -2,6 +2,7 @@ import { isNil, tryCatch } from '@activepieces/core-utils'
 import { ConsumeJobRequest, ConsumeJobResponse, EngineResponseStatus, JobData } from '@activepieces/shared'
 import { Worker as BullMQWorker, Job, UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
+import { Socket } from 'socket.io'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { redisConnections } from '../../database/redis-connections'
 import { engineResponseWatcher } from '../engine-response-watcher'
@@ -222,12 +223,12 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         log.info('[jobBroker] Job broker initialized')
     },
 
-    async poll(queueName: string = QueueName.WORKER_JOBS, connectionId?: string): Promise<ConsumeJobRequest | null> {
+    async poll(queueName: string = QueueName.WORKER_JOBS, socket?: Pick<Socket, 'id' | 'connected'>): Promise<ConsumeJobRequest | null> {
         const worker = await ensureBullMQWorker(queueName, log)
         const dispatcher = ensureDispatcher(queueName, worker, log)
-        const job = await dispatcher.poll()
-        if (!isNil(job) && !isNil(connectionId)) {
-            jobAssignmentTracker.record({ connectionId, jobId: job.jobId, token: job.token, queueName: job.queueName })
+        const job = await dispatcher.poll(socket)
+        if (!isNil(job) && !isNil(socket)) {
+            jobAssignmentTracker.record({ connectionId: socket.id, jobId: job.jobId, token: job.token, queueName: job.queueName })
         }
         return job
     },
