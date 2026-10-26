@@ -1,10 +1,11 @@
 import { createHash, randomBytes } from 'crypto'
-import { DefaultProjectRole, McpOAuthToken } from '@activepieces/shared'
+import { DefaultProjectRole, McpOAuthToken, User, UserStatus } from '@activepieces/shared'
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mcpOAuthClientService } from '../../../../src/app/mcp/oauth/client/mcp-oauth-client.service'
 import { mcpOAuthRevocationList } from '../../../../src/app/mcp/oauth/token/mcp-oauth-revocation-list'
-import { mcpOAuthTokenService } from '../../../../src/app/mcp/oauth/token/mcp-oauth-token.service'
+import { mcpOAuthTokenService, OAuthTokenError } from '../../../../src/app/mcp/oauth/token/mcp-oauth-token.service'
+import { userService } from '../../../../src/app/user/user-service'
 import { db } from '../../../helpers/db'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
@@ -136,6 +137,49 @@ describe('MCP OAuth revocation list', () => {
 
         expect(response.statusCode).not.toBe(204)
         expect(response.statusCode).toBeGreaterThanOrEqual(500)
+    })
+
+    it.each([
+        { change: 'deactivated', apply: (user: User): Promise<unknown> => db.update('user', user.id, { status: UserStatus.INACTIVE }) },
+        { change: 'removed from the platform', apply: (user: User): Promise<unknown> => db.update('user', user.id, { platformId: null }) },
+        { change: 'left with an unverified email', apply: (user: User): Promise<unknown> => db.update('user_identity', user.identityId, { verified: false }) },
+    ])('rejects the access and refresh tokens once the user is $change', async ({ apply }) => {
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.ADMIN })
+        const connection = await connectClient({ userId: member.user.id, projectId: ctx.project.id, platformId: ctx.platform.id })
+
+        await apply(member.user)
+
+        expect((await callMcp(connection.accessToken)).statusCode).toBe(401)
+        await expect(mcpOAuthTokenService.refreshAccessToken({
+            redirectUris: [CLAUDE_REDIRECT],
+            refreshToken: connection.refreshToken,
+            clientId: connection.clientId,
+            log: app.log,
+        })).rejects.toBeInstanceOf(OAuthTokenError)
+    })
+
+    it.each([
+        { change: 'deactivated', apply: (userId: string): Promise<unknown> => userService(app.log).update({ id: userId, platformId: ctx.platform.id, status: UserStatus.INACTIVE }) },
+        { change: 'deleted', apply: (userId: string): Promise<unknown> => userService(app.log).delete({ id: userId, platformId: ctx.platform.id }) },
+        { change: 'removed from the platform', apply: (userId: string): Promise<unknown> => userService(app.log).removeFromPlatform({ id: userId, platformId: ctx.platform.id }) },
+    ])('revokes the grants of a user who is $change', async ({ apply }) => {
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.ADMIN })
+        const connection = await connectClient({ userId: member.user.id, projectId: ctx.project.id, platformId: ctx.platform.id })
+
+        await apply(member.user.id)
+
+        expect((await db.findOneBy<McpOAuthToken>('mcp_oauth_token', { id: connection.grantId }))?.revoked).toBe(true)
+        expect(await mcpOAuthRevocationList.isRevoked({ grantId: connection.grantId })).toBe(true)
+    })
+
+    it('keeps an OAuth token rejected after a deactivated user is reactivated', async () => {
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.ADMIN })
+        const { accessToken } = await connectClient({ userId: member.user.id, projectId: ctx.project.id, platformId: ctx.platform.id })
+
+        await userService(app.log).update({ id: member.user.id, platformId: ctx.platform.id, status: UserStatus.INACTIVE })
+        await userService(app.log).update({ id: member.user.id, platformId: ctx.platform.id, status: UserStatus.ACTIVE })
+
+        expect((await callMcp(accessToken)).statusCode).toBe(401)
     })
 
     it('answers 503 rather than 401 when the revocation list cannot be read', async () => {

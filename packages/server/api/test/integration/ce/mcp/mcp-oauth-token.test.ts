@@ -4,9 +4,11 @@ import { FastifyInstance } from 'fastify'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { mcpOAuthClientService } from '../../../../src/app/mcp/oauth/client/mcp-oauth-client.service'
 import { mcpOAuthTokenService } from '../../../../src/app/mcp/oauth/token/mcp-oauth-token.service'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
+let ctx: TestContext
 
 function requireRefreshToken(response: { refresh_token?: string }): string {
     if (response.refresh_token === undefined) {
@@ -24,9 +26,9 @@ async function exchangeFreshCode(clientId: string): Promise<string> {
         codeChallenge,
         codeChallengeMethod: 'S256',
         clientId,
-        userId: apId(),
-        projectId: apId(),
-        platformId: apId(),
+        userId: ctx.user.id,
+        projectId: ctx.project.id,
+        platformId: ctx.platform.id,
         scopes: ['mcp'],
     })
     return requireRefreshToken(tokens)
@@ -35,13 +37,14 @@ async function exchangeFreshCode(clientId: string): Promise<string> {
 describe('MCP OAuth token refresh', () => {
     beforeAll(async () => {
         app = await setupTestEnvironment({ fresh: true })
+        ctx = await createTestContext(app)
     })
 
     it('echoes the presented refresh token back so clients cannot lose it', async () => {
         const clientId = apId()
         const refreshToken = await exchangeFreshCode(clientId)
 
-        const refreshed = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken, clientId })
+        const refreshed = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken, clientId, log: app.log })
 
         expect(refreshed.access_token).toBeTypeOf('string')
         expect(refreshed.refresh_token).toBe(refreshToken)
@@ -51,8 +54,8 @@ describe('MCP OAuth token refresh', () => {
         const clientId = apId()
         const first = await exchangeFreshCode(clientId)
 
-        const second = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: first, clientId })
-        const third = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: requireRefreshToken(second), clientId })
+        const second = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: first, clientId, log: app.log })
+        const third = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: requireRefreshToken(second), clientId, log: app.log })
 
         expect(third.refresh_token).toBe(first)
     })

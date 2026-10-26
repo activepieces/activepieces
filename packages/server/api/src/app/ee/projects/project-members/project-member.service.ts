@@ -7,6 +7,7 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { system } from '../../../helper/system/system'
+import { mcpGrantRevocation } from '../../../mcp/oauth/token/mcp-grant-revocation'
 import { projectService } from '../../../project/project-service'
 import { UserSchema } from '../../../user/user-entity'
 import { userService } from '../../../user/user-service'
@@ -189,7 +190,11 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         projectId: ProjectId,
         invitationId: ProjectMemberId,
     ): Promise<void> {
+        const member = await repo().findOneBy({ projectId, id: invitationId })
         await repo().delete({ projectId, id: invitationId })
+        if (!isNil(member) && isNil(await this.getRole({ userId: member.userId, projectId }))) {
+            await mcpGrantRevocation.revokeActiveGrants({ scope: { userId: member.userId, projectId, platformId: member.platformId }, log })
+        }
     },
     async countTotalUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
         if (projectIds.length === 0) return new Map()

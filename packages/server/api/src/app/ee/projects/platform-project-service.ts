@@ -12,6 +12,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { mcpGrantRevocation } from '../../mcp/oauth/token/mcp-grant-revocation'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
@@ -219,6 +220,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             await projectRepo(entityManager).softDelete({ id: personalProject.id, platformId })
         })
         await scheduleHardDeleteProjectJob({ id: personalProject.id, platformId, log })
+        await mcpGrantRevocation.revokeActiveGrants({ scope: { projectId: personalProject.id, platformId }, log })
     },
 
     async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
@@ -239,6 +241,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             })
         }
         await scheduleHardDeleteProjectJob({ id, platformId, log })
+        await mcpGrantRevocation.revokeActiveGrants({ scope: { projectId: id, platformId }, log })
     },
 })
 

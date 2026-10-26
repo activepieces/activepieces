@@ -1,6 +1,6 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { McpOAuthClient } from '@activepieces/shared'
-import { FastifyReply } from 'fastify'
+import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
@@ -24,7 +24,7 @@ export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
                 return await handleAuthorizationCode({ authorizationHeader, body: req.body, reply, issuer: domainHelper.getPublicUrlFromRequest({ req }) })
             }
             if (grant_type === 'refresh_token') {
-                return await handleRefreshToken({ authorizationHeader, body: req.body, reply })
+                return await handleRefreshToken({ authorizationHeader, body: req.body, reply, log: req.log })
             }
             return await reply.status(400).send({ error: 'unsupported_grant_type' })
         }
@@ -98,7 +98,7 @@ async function handleAuthorizationCode({ authorizationHeader, body, reply, issue
     await reply.status(200).send({ ...tokens, ...spreadIfDefined('id_token', idToken) })
 }
 
-async function handleRefreshToken({ authorizationHeader, body, reply }: HandlerParams): Promise<void> {
+async function handleRefreshToken({ authorizationHeader, body, reply, log }: RefreshTokenParams): Promise<void> {
     const { refresh_token } = body
     if (!refresh_token) {
         await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing refresh_token' })
@@ -112,6 +112,7 @@ async function handleRefreshToken({ authorizationHeader, body, reply }: HandlerP
         redirectUris: client.redirectUris,
         refreshToken: refresh_token,
         clientId: client.clientId,
+        log,
     })
 
     await reply.status(200).send(tokens)
@@ -121,6 +122,10 @@ type HandlerParams = {
     authorizationHeader: string | undefined
     body: TokenRequestBody
     reply: FastifyReply
+}
+
+type RefreshTokenParams = HandlerParams & {
+    log: FastifyBaseLogger
 }
 
 type AuthorizationCodeParams = HandlerParams & {

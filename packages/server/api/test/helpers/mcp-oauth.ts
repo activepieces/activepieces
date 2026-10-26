@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto'
-import { apId } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { mcpOAuthCodeService } from '../../src/app/mcp/oauth/code/mcp-oauth-code.service'
+import { mockAndSaveBasicSetup } from './mocks'
 
 function generatePkce(): PkcePair {
     const verifier = randomBytes(32).toString('base64url')
@@ -18,11 +18,12 @@ async function registerClient({ app, tokenEndpointAuthMethod, redirectUris = [MC
 }
 
 async function issueCode({ clientId, codeChallenge, redirectUri = MCP_OAUTH_REDIRECT_URI }: IssueCodeParams): Promise<string> {
+    const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
     return mcpOAuthCodeService.create({
         clientId,
-        userId: apId(),
-        projectId: apId(),
-        platformId: apId(),
+        userId: mockOwner.id,
+        projectId: mockProject.id,
+        platformId: mockPlatform.id,
         redirectUri,
         codeChallenge,
         codeChallengeMethod: 'S256',
