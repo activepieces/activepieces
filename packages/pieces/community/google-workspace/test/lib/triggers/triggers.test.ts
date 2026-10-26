@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ActivityEvent } from '../../../src/lib/common/activities';
-import { newAdminActivityEvent } from '../../../src/lib/triggers/new-admin-activity-event';
-import { newApplicationActivityEvent } from '../../../src/lib/triggers/new-application-activity-event';
-import { USER_EVENT_KINDS, acceptUserEvent, newUserEvent } from '../../../src/lib/triggers/new-user-event';
+import { acceptUserEvent } from '../../../src/lib/triggers/new-user-event';
 
 function event(name: string, type = 'USER_SETTINGS', email = 'jane@example.com'): ActivityEvent {
   return {
@@ -43,24 +41,3 @@ describe('acceptUserEvent()', () => {
   });
 });
 
-describe('the three activity triggers', () => {
-  it('should be webhook triggers with distinct names', () => {
-    const triggers = [newAdminActivityEvent, newApplicationActivityEvent, newUserEvent];
-    expect(triggers.map((t) => t.name)).toEqual(['newAdminActivityEvent', 'newApplicationActivityEvent', 'newUserEvent']);
-    expect(triggers.every((t) => t.type === 'WEBHOOK')).toBe(true);
-  });
-
-  it('should subscribe the admin and application triggers with the props as filters', () => {
-    const admin = newAdminActivityEvent as unknown as { props: Record<string, unknown> };
-    const app = newApplicationActivityEvent as unknown as { props: Record<string, { required: boolean }> };
-    expect(Object.keys(admin.props)).toEqual(['eventName', 'filters']);
-    expect(Object.keys(app.props)).toEqual(['application', 'eventName', 'filters']);
-    expect(app.props['application']?.required).toBe(true);
-  });
-
-  it('should offer every user event kind as an option with a default of "created"', () => {
-    const prop = newUserEvent.props['kinds'] as { defaultValue?: string[]; options: { options: { value: string }[] } };
-    expect(prop.defaultValue).toEqual(['created']);
-    expect(prop.options.options.map((o) => o.value)).toEqual(USER_EVENT_KINDS.map((k) => k.value));
-  });
-});

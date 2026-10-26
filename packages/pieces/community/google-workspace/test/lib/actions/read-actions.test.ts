@@ -137,6 +137,16 @@ describe('searchRecords', () => {
     expect(result).toEqual({ resourceType: 'group', items: [], count: 0, nextPageToken: null, truncated: false });
   });
 
+  it('should list the groups of a user without customer, which Google rejects alongside userKey', async () => {
+    api.listPage.mockResolvedValue({ items: [] });
+
+    await searchRecords.run(ctx({ resourceType: 'group', maxRows: 50, params: { userKey: 'jane@example.com' } }));
+
+    expect(api.listPage).toHaveBeenCalledWith(
+      expect.objectContaining({ query: { userKey: 'jane@example.com', maxResults: 50, pageToken: undefined } })
+    );
+  });
+
   it('should fetch every page up to Max Rows when asked', async () => {
     api.listAll.mockResolvedValue({ items: [{ id: '1' }, { id: '2' }], truncated: true });
 

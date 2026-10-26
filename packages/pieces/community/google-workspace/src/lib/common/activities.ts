@@ -99,7 +99,7 @@ export const ReportsApi = {
   },
 };
 
-export const CHANNEL_MAX_LIFETIME_MS = 6 * 60 * 60 * 1000;
+export const CHANNEL_MAX_LIFETIME_MS = (6 * 60 - 5) * 60 * 1000;
 export const CHANNEL_RENEW_CRON = '0 */4 * * *';
 
 export const ACTIVITY_APPLICATIONS: { label: string; value: string }[] = [

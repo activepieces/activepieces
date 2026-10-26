@@ -103,7 +103,7 @@ describe('ReportsApi', () => {
 });
 
 describe('newChannelRequest()', () => {
-  it('should mint distinct uuids for the id and the token, expiring in six hours', () => {
+  it('should mint distinct uuids for the id and the token, expiring just under the six-hour maximum Google accepts', () => {
     const request = newChannelRequest({ address: 'https://hook', now: 1_000 });
 
     expect(request.address).toBe('https://hook');
@@ -111,6 +111,7 @@ describe('newChannelRequest()', () => {
     expect(request.token).toMatch(/^[0-9a-f-]{36}$/);
     expect(request.id).not.toBe(request.token);
     expect(request.expiration).toBe(1_000 + CHANNEL_MAX_LIFETIME_MS);
+    expect(CHANNEL_MAX_LIFETIME_MS).toBeLessThan(6 * 60 * 60 * 1000);
   });
 });
 

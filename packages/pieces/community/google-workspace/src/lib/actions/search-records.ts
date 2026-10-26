@@ -87,11 +87,12 @@ export const searchRecords = createAction({
     const auth = await resolveAuth(context.auth);
     const path = def.collectionPath(parent);
     const cap = Math.floor(Math.min(Math.max(Number(maxRows) || DEFAULT_MAX_ROWS, 1), HARD_MAX_ROWS));
+    const extraParams = stringValues(params);
     const baseQuery: QueryValues = {
-      ...(def.supportsDomain && !domain ? { customer: MY_CUSTOMER } : {}),
+      ...(def.supportsDomain && !domain && !extraParams['userKey'] ? { customer: MY_CUSTOMER } : {}),
       ...(domain ? { domain } : {}),
       ...(query ? { query } : {}),
-      ...stringValues(params),
+      ...extraParams,
     };
     const pageSize = def.maxPageSize ? { maxResults: Math.min(cap, def.maxPageSize) } : {};
 
