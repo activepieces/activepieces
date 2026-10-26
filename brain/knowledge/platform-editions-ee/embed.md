@@ -64,7 +64,7 @@ The Embed Onboarding stepper at `/platform/embedding`. Four steps exist as files
 
 ## Gotchas
 
-- **The iframe's `<head>` is static.** `/embed` serves the same built `index.html` as the main app; `vite-plugins/html-plugin.js` substitutes only `apTitle`/`apFavicon` at build time. Anything a vendor wants inside the iframe (fonts, tracking tags) has to be appended to `document.head` at runtime from `VENDOR_INIT` data — `embedding-font-loader.tsx` is the precedent.
+- **The iframe's `<head>` is static.** `/embed` serves the same built `index.html` as the main app; `vite-plugins/html-plugin.mjs` substitutes only `apTitle`/`apFavicon` at build time. Anything a vendor wants inside the iframe (fonts, tracking tags) has to be appended to `document.head` at runtime from `VENDOR_INIT` data — `embedding-font-loader.tsx` is the precedent.
 - **No `script-src` in the CSP.** `embed-security.ts` emits only `frame-ancestors`, so third-party scripts loaded inside the embed (GTM, Clarity) are not blocked by policy. See GIT-1746 / GitHub #14796.
 - **PostHog is off in the embed** (`telemetry-provider.tsx` bails when `isEmbedded` or the path starts with `/embed`), so embed customers have no in-iframe analytics unless they bring their own.
 - **An SDK version bump must also land in `bun.lock`.** The workspace entry for `packages/ee/embed-sdk` records `"version"`, so bumping `package.json` alone makes `bun install --frozen-lockfile` (the Docker image build) fail with `lockfile had changes, but lockfile is frozen`. Edit the one `version` line in `bun.lock` (or run `bun install`) in the same commit.

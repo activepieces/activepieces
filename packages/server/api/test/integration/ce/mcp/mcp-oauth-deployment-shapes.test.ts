@@ -78,6 +78,10 @@ describe('MCP OAuth deployment shapes', () => {
             vi.spyOn(system, 'getOrThrow').mockImplementation((prop) => prop === AppSystemProp.FRONTEND_URL ? PREFIXED_FRONTEND_URL : realGetOrThrow(prop))
         })
 
+        afterAll(() => {
+            vi.restoreAllMocks()
+        })
+
         it('advertises every endpoint under the configured prefix', async () => {
             const metadata = await discovery({ 'x-forwarded-proto': 'https', 'x-forwarded-host': 'apps.customer.example.com' })
 
@@ -120,6 +124,10 @@ describe('MCP OAuth deployment shapes', () => {
                 return realGet(prop)
             })
             vi.spyOn(system, 'getOrThrow').mockImplementation((prop) => prop === AppSystemProp.FRONTEND_URL ? DUAL_FRONTEND_URL : realGetOrThrow(prop))
+        })
+
+        afterAll(() => {
+            vi.restoreAllMocks()
         })
 
         it('advertises the MCP host without the frontend path prefix', async () => {

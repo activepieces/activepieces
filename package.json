@@ -34,7 +34,7 @@
     "lint-pieces": "turbo run lint --filter='@activepieces/piece-*'",
     "lint-affected": "turbo run lint --affected",
     "lint-dev": "turbo run lint --filter='!@activepieces/piece-*' --force -- --fix",
-    "test-unit": "turbo run test $(npx tsx tools/scripts/test-filters.ts) && turbo run test-unit --filter=api",
+    "test-unit": "turbo run test $(npx tsx tools/scripts/test-filters.ts) --concurrency=50% && turbo run test-unit --filter=api",
     "test-api": "turbo run check-migrations test-ce test-ee test-cloud --filter=api --concurrency=1",
     "agent-evals": "set -a && . ./.env.dev && set +a && tsx --tsconfig packages/server/worker/test/lib/agent-eval/cli/tsconfig.json packages/server/worker/test/lib/agent-eval/cli/index.ts",
     "agent-evals:ci": "if [ -f ./.env.dev ]; then set -a && . ./.env.dev && set +a; fi && vitest run --config packages/server/worker/vitest.config.ts packages/server/worker/test/lib/agent-eval",
@@ -71,7 +71,6 @@
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
     "@typescript-eslint/utils": "7.18.0",
-    "@vitejs/plugin-react": "4.7.0",
     "axios": "1.20.0",
     "chalk": "4.1.2",
     "concurrently": "8.2.1",
@@ -108,19 +107,10 @@
     "tsx": "4.21.0",
     "turbo": "2.9.14",
     "typescript": "5.5.4",
-    "vite": "6.4.3",
-    "vite-plugin-checker": "0.7.2",
-    "vite-plugin-html": "3.2.2",
-    "vite-tsconfig-paths": "5.1.4",
-    "vitest": "3.2.6",
+    "vitest": "5.0.5",
     "wait-on": "7.2.0",
     "webpack": "5.104.1",
     "webpack-cli": "5.1.4"
-  },
-  "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "4.20.0",
-    "@rollup/rollup-linux-arm-gnueabihf": "4.20.0",
-    "@rollup/rollup-linux-arm64-gnu": "4.20.0"
   },
   "workspaces": [
     "packages/cli",
@@ -140,7 +130,6 @@
     "packages/pieces/custom/*"
   ],
   "resolutions": {
-    "rollup": "npm:@rollup/wasm-node",
     "axios": "1.20.0",
     "nanoid": "3.3.18"
   }
