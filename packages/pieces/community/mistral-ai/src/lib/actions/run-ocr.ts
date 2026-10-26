@@ -5,8 +5,8 @@ import { parseMistralError } from '../common/props';
 import { mistralRequest, MistralRequestConfig } from '../common/request';
 
 const OCR_MODEL_OPTIONS = [
-	{ label: 'mistral-ocr-latest (Recommended)', value: 'mistral-ocr-latest' },
-	{ label: 'mistral-ocr-2505', value: 'mistral-ocr-2505' },
+	{ label: 'Latest', value: 'mistral-ocr-latest', icon: 'sliders' },
+	{ label: 'Version 2505', value: 'mistral-ocr-2505', icon: 'sliders' },
 ];
 
 export const runOcr = createAction({
@@ -15,24 +15,31 @@ export const runOcr = createAction({
 	name: 'run_ocr',
 	classification: 'READ',
 	displayName: 'Run OCR',
-	description: 'Extract text from PDFs and images using mistral-ocr-latest. To OCR a file from a previous step, run Upload File first (with purpose=ocr) and pass the returned id here.',
+	description: 'Extract the text of a PDF or image as Markdown.',
+	propertyGroups: [
+		{ key: 'settings', display: 'section', label: 'Settings', icon: 'sliders', props: ['model'] },
+		{ key: 'document', display: 'section', label: 'Document', icon: 'file', props: ['documentSource', 'sourceFields', 'pages'] },
+	],
 	aiMetadata: { description: 'Extracts the text of a PDF or image as Markdown with a Mistral OCR model, taking the document either from a public URL or from a Mistral file id (that mode first resolves a short-lived signed URL); optional zero-based page indices narrow the run and embedded images can come back as base64. Pick this to read text out of a document that already exists, and Ask Mistral when the answer has to be generated or reasoned about rather than transcribed. The file-id mode only works for a file that Upload File stored with purpose=ocr, and the document type must be set to PDF or image to match the source. Read-only extraction that stores nothing, so repeat calls are idempotent.', idempotent: true },
 	props: {
 		model: Property.StaticDropdown({
 			displayName: 'Model',
+			description: 'Latest is recommended. Version 2505 never changes.',
 			required: true,
 			defaultValue: 'mistral-ocr-latest',
+			display: 'cards',
 			options: { options: OCR_MODEL_OPTIONS },
 		}),
 		documentSource: Property.StaticDropdown<DocumentSource>({
 			displayName: 'Document Source',
-			description: 'Where the document or image to OCR comes from.',
+			description: 'Where the PDF or image to read comes from.',
 			required: true,
 			defaultValue: 'url',
+			display: 'cards',
 			options: {
 				options: [
-					{ label: 'URL', value: 'url' },
-					{ label: 'Mistral file ID (uploaded earlier with purpose=ocr)', value: 'fileId' },
+					{ label: 'Public URL', value: 'url', icon: 'file' },
+					{ label: 'Mistral File ID', value: 'fileId', icon: 'paperclip' },
 				],
 			},
 		}),
@@ -47,7 +54,8 @@ export const runOcr = createAction({
 					const fields: InputPropertyMap = {
 						fileId: Property.ShortText({
 							displayName: 'File ID',
-							description: 'A Mistral file ID returned from a prior Upload File step (purpose=ocr).',
+							description: 'The ID from an Upload File step with purpose OCR.',
+							placeholder: 'e.g. 00edaf84-95b0-45db-8f83-f71138491f23',
 							required: true,
 						}),
 						documentType: documentTypeDropdown(),
@@ -57,7 +65,8 @@ export const runOcr = createAction({
 				const fields: InputPropertyMap = {
 					documentUrl: Property.ShortText({
 						displayName: 'URL',
-						description: 'Public URL of the PDF or image to OCR.',
+						description: 'A public link to the PDF or image.',
+						placeholder: 'https://example.com/invoice.pdf',
 						required: true,
 					}),
 					documentType: documentTypeDropdown(),
@@ -67,19 +76,22 @@ export const runOcr = createAction({
 		}),
 		pages: Property.Array({
 			displayName: 'Pages',
-			description: 'Optional zero-based page indices to process. Leave empty for all pages.',
+			description: 'Page numbers to read, starting at 0. Empty: every page.',
 			required: false,
 		}),
 		includeImageBase64: Property.Checkbox({
-			displayName: 'Include Image Base64',
-			description: 'Return embedded images encoded as base64 alongside the Markdown.',
+			displayName: 'Include Images',
+			description: 'Also return the images found in the document, as base64.',
 			required: false,
 			defaultValue: false,
+			advanced: true,
 		}),
 		timeout: Property.Number({
-			displayName: 'Timeout (ms)',
+			displayName: 'Timeout',
+			description: 'Milliseconds to wait for a response. Empty: 2 minutes.',
 			required: false,
 			defaultValue: 120000,
+			advanced: true,
 		}),
 	},
 	async run(context) {
@@ -132,23 +144,24 @@ export const runOcr = createAction({
 						continue;
 					}
 				}
-				throw new Error(parseMistralError(e));
+				throw new Error(parseMistralError({ error: e, baseUrl: config.baseUrl }));
 			}
 		}
-		throw new Error(parseMistralError(lastErr));
+		throw new Error(parseMistralError({ error: lastErr, baseUrl: config.baseUrl }));
 	},
 });
 
 function documentTypeDropdown() {
 	return Property.StaticDropdown<DocumentType>({
 		displayName: 'Document Type',
-		description: 'Pick "Image" for PNG/JPG/WEBP, "Document" for PDFs.',
+		description: 'Pick Image for PNG, JPG or WEBP, Document for PDFs.',
 		required: true,
 		defaultValue: 'document_url',
+		display: 'cards',
 		options: {
 			options: [
-				{ label: 'Document (PDF)', value: 'document_url' },
-				{ label: 'Image', value: 'image_url' },
+				{ label: 'Document', value: 'document_url', icon: 'file' },
+				{ label: 'Image', value: 'image_url', icon: 'file' },
 			],
 		},
 	});

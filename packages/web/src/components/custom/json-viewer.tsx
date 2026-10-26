@@ -140,6 +140,7 @@ const JsonViewer = React.memo(
                       style={{
                         overflowX: 'auto',
                         padding: '0.5rem',
+                        backgroundColor: 'transparent',
                         wordBreak: 'break-word',
                       }}
                       theme={viewerTheme}
