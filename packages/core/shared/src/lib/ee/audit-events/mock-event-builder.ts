@@ -312,6 +312,8 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
         case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
         case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
         case ApplicationEventName.SAML_CONNECTED:
         case ApplicationEventName.SAML_CONNECTION_REPLACED:
         case ApplicationEventName.SSO_DISABLED: {

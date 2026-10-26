@@ -58,6 +58,8 @@ export enum ApplicationEventName {
     GOOGLE_SIGN_IN_DISABLED = 'authentication.google.disabled',
     ALLOWED_DOMAIN_ADDED = 'authentication.allowed.domain.added',
     ALLOWED_DOMAIN_REMOVED = 'authentication.allowed.domain.removed',
+    ALLOWED_DOMAIN_ENFORCEMENT_ENABLED = 'authentication.allowed.domain.enforcement.enabled',
+    ALLOWED_DOMAIN_ENFORCEMENT_DISABLED = 'authentication.allowed.domain.enforcement.disabled',
     SSO_DOMAIN_ADDED = 'sso.domain.added',
     SSO_DOMAIN_VERIFIED = 'sso.domain.verified',
     SSO_DOMAIN_VERIFICATION_CANCELLED = 'sso.domain.verification.cancelled',
@@ -553,6 +555,8 @@ export const AuthenticationSettingEvent = z.object({
         z.literal(ApplicationEventName.EMAIL_SIGN_IN_DISABLED),
         z.literal(ApplicationEventName.GOOGLE_SIGN_IN_ENABLED),
         z.literal(ApplicationEventName.GOOGLE_SIGN_IN_DISABLED),
+        z.literal(ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED),
+        z.literal(ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED),
         z.literal(ApplicationEventName.SAML_CONNECTED),
         z.literal(ApplicationEventName.SAML_CONNECTION_REPLACED),
         z.literal(ApplicationEventName.SSO_DISABLED),
@@ -798,6 +802,10 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return 'Google sign-in turned on'
         case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
             return 'Google sign-in turned off'
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+            return 'Only allowed email domains can join or sign in with email and password'
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+            return 'Any email domain can join or sign in with email and password'
         case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
             return `${event.data.domain} added to allowed email domains`
         case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:

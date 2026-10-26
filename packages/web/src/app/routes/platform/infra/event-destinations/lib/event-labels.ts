@@ -48,6 +48,12 @@ export const buildEventLabels = (): EventLabelsMap => {
     ),
     [ApplicationEventName.ALLOWED_DOMAIN_ADDED]: t('Allowed domain added'),
     [ApplicationEventName.ALLOWED_DOMAIN_REMOVED]: t('Allowed domain removed'),
+    [ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED]: t(
+      'Allowed domain enforcement turned on',
+    ),
+    [ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED]: t(
+      'Allowed domain enforcement turned off',
+    ),
     [ApplicationEventName.SSO_DOMAIN_ADDED]: t('SSO domain added'),
     [ApplicationEventName.SSO_DOMAIN_VERIFIED]: t('SSO domain verified'),
     [ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED]: t(

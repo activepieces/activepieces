@@ -425,6 +425,8 @@ function convertToIcon(event: ApplicationEvent) {
     case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
     case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
     case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
     case ApplicationEventName.SSO_DOMAIN_ADDED:
     case ApplicationEventName.SSO_DOMAIN_VERIFIED:
     case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
@@ -654,6 +656,8 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
     case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
     case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
     case ApplicationEventName.SAML_CONNECTED:
     case ApplicationEventName.SAML_CONNECTION_REPLACED:
     case ApplicationEventName.SSO_DISABLED:

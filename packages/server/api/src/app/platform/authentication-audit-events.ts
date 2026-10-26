@@ -17,6 +17,12 @@ function buildAuthenticationEvents({ before, after }: AuthenticationEventsParams
             disabledAction: ApplicationEventName.GOOGLE_SIGN_IN_DISABLED,
         }),
         ...allowedDomainEvents({ before, after }),
+        ...toggleEvents({
+            previous: before.enforceAllowedAuthDomains,
+            next: after.enforceAllowedAuthDomains,
+            enabledAction: ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED,
+            disabledAction: ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED,
+        }),
         ...ssoDomainEvents({ before, after }),
         ...samlEvents({ before, after }),
     ]
@@ -30,8 +36,10 @@ function toggleEvents({ previous, next, enabledAction, disabledAction }: ToggleE
 }
 
 function allowedDomainEvents({ before, after }: AuthenticationEventsParams): AuthenticationAuditEventParams[] {
-    const added = after.allowedAuthDomains.filter((domain) => !before.allowedAuthDomains.includes(domain))
-    const removed = before.allowedAuthDomains.filter((domain) => !after.allowedAuthDomains.includes(domain))
+    const previous = before.allowedAuthDomains.map((domain) => domain.toLowerCase())
+    const next = after.allowedAuthDomains.map((domain) => domain.toLowerCase())
+    const added = after.allowedAuthDomains.filter((domain) => !previous.includes(domain.toLowerCase()))
+    const removed = before.allowedAuthDomains.filter((domain) => !next.includes(domain.toLowerCase()))
     return [
         ...added.map((domain): AuthenticationAuditEventParams => ({ action: ApplicationEventName.ALLOWED_DOMAIN_ADDED, data: { domain } })),
         ...removed.map((domain): AuthenticationAuditEventParams => ({ action: ApplicationEventName.ALLOWED_DOMAIN_REMOVED, data: { domain } })),

@@ -321,6 +321,7 @@ async function lockPlatformForUpdate({ entityManager, platformId, includeFederat
             emailAuthEnabled: true,
             googleAuthEnabled: true,
             allowedAuthDomains: true,
+            enforceAllowedAuthDomains: true,
             ssoDomain: true,
             ssoDomainVerification: true,
             federatedAuthProviders: includeFederatedAuth,

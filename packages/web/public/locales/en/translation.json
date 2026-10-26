@@ -1523,6 +1523,8 @@
   "Google sign-in turned on": "Google sign-in turned on",
   "Google sign-in turned off": "Google sign-in turned off",
   "Allowed domain removed": "Allowed domain removed",
+  "Allowed domain enforcement turned on": "Allowed domain enforcement turned on",
+  "Allowed domain enforcement turned off": "Allowed domain enforcement turned off",
   "SSO domain added": "SSO domain added",
   "SSO domain verified": "SSO domain verified",
   "SSO domain verification cancelled": "SSO domain verification cancelled",

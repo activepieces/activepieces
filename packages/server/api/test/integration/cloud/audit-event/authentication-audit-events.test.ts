@@ -53,12 +53,79 @@ describe('Authentication audit events', () => {
         const ctx = await createTestContext(app!, { platform: { allowedAuthDomains: ['a.com', 'b.com'] }, plan: { auditLogEnabled: true } })
 
         await ctx.post(`/v1/platforms/${ctx.platform.id}`, { allowedAuthDomains: ['b.com', 'c.com'], enforceAllowedAuthDomains: true })
-        const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 2 })
+        const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 3 })
 
         expect(events).toEqual(expect.arrayContaining([
             domainEvent({ action: ApplicationEventName.ALLOWED_DOMAIN_ADDED, domain: 'c.com' }),
             domainEvent({ action: ApplicationEventName.ALLOWED_DOMAIN_REMOVED, domain: 'a.com' }),
+            expect.objectContaining({ action: ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED }),
         ]))
+    })
+
+    it('records allowed-domain enforcement being turned off', async () => {
+        const ctx = await createTestContext(app!, { platform: { allowedAuthDomains: ['acme.com'], enforceAllowedAuthDomains: true }, plan: { auditLogEnabled: true } })
+
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { enforceAllowedAuthDomains: false })
+        const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 1 })
+
+        expect(events.map((event) => event.action)).toEqual([ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED])
+    })
+
+    it('records allowed-domain enforcement being turned on without a domain change', async () => {
+        const ctx = await createTestContext(app!, { platform: { allowedAuthDomains: ['acme.com'], enforceAllowedAuthDomains: false }, plan: { auditLogEnabled: true } })
+
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { enforceAllowedAuthDomains: true })
+        const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 1 })
+
+        expect(events.map((event) => event.action)).toEqual([ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED])
+    })
+
+    it('records only the new domain when another is added while enforcement is already on', async () => {
+        const ctx = await createTestContext(app!, {
+            platform: { emailAuthEnabled: true, allowedAuthDomains: ['acme.com'], enforceAllowedAuthDomains: true },
+            plan: { auditLogEnabled: true },
+        })
+
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { allowedAuthDomains: ['acme.com', 'acme.io'], enforceAllowedAuthDomains: true })
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { emailAuthEnabled: false })
+        const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 2 })
+
+        expect(sortedActions(events)).toEqual([ApplicationEventName.ALLOWED_DOMAIN_ADDED, ApplicationEventName.EMAIL_SIGN_IN_DISABLED].sort())
+        expect(events).toEqual(expect.arrayContaining([domainEvent({ action: ApplicationEventName.ALLOWED_DOMAIN_ADDED, domain: 'acme.io' })]))
+    })
+
+    it('records the last domain removal and enforcement turning off', async () => {
+        const ctx = await createTestContext(app!, { platform: { allowedAuthDomains: ['acme.com'], enforceAllowedAuthDomains: true }, plan: { auditLogEnabled: true } })
+
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { allowedAuthDomains: [], enforceAllowedAuthDomains: false })
+        const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 2 })
+
+        expect(sortedActions(events)).toEqual([ApplicationEventName.ALLOWED_DOMAIN_REMOVED, ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED].sort())
+        expect(events).toEqual(expect.arrayContaining([domainEvent({ action: ApplicationEventName.ALLOWED_DOMAIN_REMOVED, domain: 'acme.com' })]))
+    })
+
+    it('treats a case-only change to an allowed domain as no change', async () => {
+        const ctx = await createTestContext(app!, { platform: { emailAuthEnabled: true, allowedAuthDomains: ['acme.com'] }, plan: { auditLogEnabled: true } })
+
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { allowedAuthDomains: ['ACME.com'] })
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { emailAuthEnabled: false })
+        const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 1 })
+
+        expect(events.map((event) => event.action)).toEqual([ApplicationEventName.EMAIL_SIGN_IN_DISABLED])
+    })
+
+    it('records a newly added domain as saved, ignoring a case-only change to another', async () => {
+        const ctx = await createTestContext(app!, {
+            platform: { emailAuthEnabled: true, allowedAuthDomains: ['acme.com'] },
+            plan: { auditLogEnabled: true },
+        })
+
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { allowedAuthDomains: ['ACME.com', 'New.io'] })
+        await ctx.post(`/v1/platforms/${ctx.platform.id}`, { emailAuthEnabled: false })
+        const events = await savedEvents({ platformId: ctx.platform.id, expectedCount: 2 })
+
+        expect(sortedActions(events)).toEqual([ApplicationEventName.ALLOWED_DOMAIN_ADDED, ApplicationEventName.EMAIL_SIGN_IN_DISABLED].sort())
+        expect(events).toEqual(expect.arrayContaining([domainEvent({ action: ApplicationEventName.ALLOWED_DOMAIN_ADDED, domain: 'New.io' })]))
     })
 
     it('records the SSO domain being added and its verification being cancelled', async () => {
@@ -133,6 +200,10 @@ async function savedEvents({ platformId, expectedCount }: { platformId: string, 
     const find = async (): Promise<ApplicationEvent[]> => auditLogRepo().find({ where: { platformId }, order: { created: 'ASC' } })
     await vi.waitUntil(async () => (await find()).length >= expectedCount, { timeout: 5000, interval: 50 })
     return find()
+}
+
+function sortedActions(events: ApplicationEvent[]): ApplicationEventName[] {
+    return events.map((event) => event.action).sort()
 }
 
 function domainEvent({ action, domain, userId }: { action: ApplicationEventName, domain: string, userId?: string | null }): unknown {

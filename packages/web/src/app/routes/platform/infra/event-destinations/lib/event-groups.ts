@@ -97,6 +97,8 @@ function buildEventGroups(): EventGroup[] {
         ApplicationEventName.GOOGLE_SIGN_IN_DISABLED,
         ApplicationEventName.ALLOWED_DOMAIN_ADDED,
         ApplicationEventName.ALLOWED_DOMAIN_REMOVED,
+        ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED,
+        ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED,
         ApplicationEventName.SSO_DOMAIN_ADDED,
         ApplicationEventName.SSO_DOMAIN_VERIFIED,
         ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED,
