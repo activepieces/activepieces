@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import path from 'node:path'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Resolve the deno binary shipped by the `deno` npm devDependency so the test
 // does not depend on a system-wide install / PATH.
@@ -95,6 +95,129 @@ describe('denoCodeSandbox permission boundary', () => {
                     process.env.AP_EXECUTION_MODE = originalMode
                 }
             }
+        })
+
+        describe('persistent AP_DENO_CACHE_DIR', () => {
+            let cacheDir: string
+            let originalCacheDir: string | undefined
+
+            beforeAll(async () => {
+                // Deliberately OUTSIDE os.tmpdir() — that's the whole point of the security
+                // property under test: the sandboxed code's WRITE_TMP/READ_TMP grant only ever
+                // covers os.tmpdir(), so a cache dir placed anywhere else must stay unreadable to it.
+                cacheDir = await mkdtemp(path.join(homedir(), '.ap-deno-persistent-cache-'))
+                if (cacheDir.startsWith(tmpdir())) {
+                    throw new Error(`test fixture error: homedir() (${homedir()}) resolved under tmpdir() (${tmpdir()}) in this environment — pick a different fixture root`)
+                }
+            })
+
+            afterAll(async () => {
+                await rm(cacheDir, { recursive: true, force: true })
+            })
+
+            beforeEach(() => {
+                originalCacheDir = process.env.AP_DENO_CACHE_DIR
+                process.env.AP_DENO_CACHE_DIR = cacheDir
+            })
+
+            afterEach(() => {
+                if (originalCacheDir === undefined) {
+                    delete process.env.AP_DENO_CACHE_DIR
+                }
+                else {
+                    process.env.AP_DENO_CACHE_DIR = originalCacheDir
+                }
+            })
+
+            it('reuses the same DENO_DIR across runs and never removes it', async () => {
+                const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
+                const codeFilePath = path.join(stepDir, 'index.ts')
+                await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
+
+                const firstDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+                const secondDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+
+                expect(firstDir).toBe(cacheDir)
+                expect(secondDir).toBe(cacheDir)
+                expect(existsSync(cacheDir)).toBe(true)
+            })
+
+            it('still scopes DENO_DIR to the step dir in SANDBOX_CODE_ONLY mode, ignoring AP_DENO_CACHE_DIR', async () => {
+                const originalMode = process.env.AP_EXECUTION_MODE
+                try {
+                    process.env.AP_EXECUTION_MODE = 'SANDBOX_CODE_ONLY'
+                    const envSandbox = denoModule.denoCodeSandbox({ permissions: [denoModule.DenoPermission.ENV], codeStepMemoryLimitMb: 128 })
+                    const codeFilePath = path.join(stepDir, 'index.ts')
+                    await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
+
+                    const denoDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+
+                    expect(denoDir).not.toBe(cacheDir)
+                    expect(path.dirname(denoDir)).toBe(await realpath(stepDir))
+                    await expect.poll(() => existsSync(denoDir), { timeout: 5000 }).toBe(false)
+                }
+                finally {
+                    if (originalMode === undefined) {
+                        delete process.env.AP_EXECUTION_MODE
+                    }
+                    else {
+                        process.env.AP_EXECUTION_MODE = originalMode
+                    }
+                }
+            })
+
+            it('never grants the running step read or write access to the persistent cache dir', async () => {
+                // SANDBOX_PROCESS profile: WRITE_TMP + READ_TMP + ENV, same as production.
+                const sandbox = denoModule.denoCodeSandbox({
+                    permissions: [denoModule.DenoPermission.WRITE_TMP, denoModule.DenoPermission.READ_TMP, denoModule.DenoPermission.ENV],
+                    codeStepMemoryLimitMb: 128,
+                })
+                const codeFilePath = path.join(stepDir, 'index.ts')
+                await writeFile(codeFilePath, `export const code = async () => {
+                    const denoDir = Deno.env.get('DENO_DIR');
+                    const out = { readBlocked: null, writeBlocked: null, canStillReadTmp: null };
+                    try {
+                        for await (const _ of Deno.readDir(denoDir)) { /* noop */ }
+                        out.readBlocked = false;
+                    } catch (e) {
+                        out.readBlocked = e.constructor.name === 'NotCapable' || e.constructor.name === 'PermissionDenied';
+                    }
+                    try {
+                        await Deno.writeTextFile(denoDir + '/pwned.txt', 'x');
+                        out.writeBlocked = false;
+                    } catch (e) {
+                        out.writeBlocked = e.constructor.name === 'NotCapable' || e.constructor.name === 'PermissionDenied';
+                    }
+                    try {
+                        for await (const _ of Deno.readDir(${JSON.stringify(tmpdir())})) { /* noop */ }
+                        out.canStillReadTmp = true;
+                    } catch {
+                        out.canStillReadTmp = false;
+                    }
+                    return out;
+                }`)
+
+                const result = await sandbox.runCodeModule({ codeFilePath, inputs: {} })
+
+                expect(result).toEqual({ readBlocked: true, writeBlocked: true, canStillReadTmp: true })
+            })
+
+            it('rejects the symlink escape from an allowed tmp path into the persistent cache dir', async () => {
+                const sandbox = denoModule.denoCodeSandbox({
+                    permissions: [denoModule.DenoPermission.WRITE_TMP, denoModule.DenoPermission.READ_TMP, denoModule.DenoPermission.ENV],
+                    codeStepMemoryLimitMb: 128,
+                })
+                const codeFilePath = path.join(stepDir, 'index.ts')
+                const linkPath = path.join(tmpdir(), 'escape-to-deno-cache')
+                await writeFile(codeFilePath, `export const code = async () => {
+                    const denoDir = Deno.env.get('DENO_DIR');
+                    await Deno.symlink(denoDir, ${JSON.stringify(linkPath)});
+                    for await (const _ of Deno.readDir(${JSON.stringify(linkPath)})) { /* noop */ }
+                    return 'escaped';
+                }`)
+
+                await expectRejection(sandbox.runCodeModule({ codeFilePath, inputs: {} }), PERMISSION_DENIED)
+            })
         })
 
         it('with the ENV permission exposes only PATH, never the engine env', async () => {

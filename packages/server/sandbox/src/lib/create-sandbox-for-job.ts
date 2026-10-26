@@ -32,7 +32,7 @@ export function createSandboxForJob(params: {
         log,
         sandboxId,
         {
-            env: buildSandboxEnv({ settings }),
+            env: buildSandboxEnv({ settings, paths }),
             memoryLimitMb,
             cpuMsPerSec: 1000,
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
@@ -63,24 +63,28 @@ function parseMemoryLimit(memoryLimitKb: string): number {
     return Math.floor(kb / 1024)
 }
 
-function buildSandboxEnv({ settings }: {
+function buildSandboxEnv({ settings, paths }: {
     settings: SandboxSettings
+    paths: ReturnType<typeof cacheUtils>
 }): Record<string, string> {
     // STRICT enables the engine's in-process ssrfGuard (best-effort dns + socket
     // guards only — there is no longer an egress proxy or kernel firewall). The hard
     // egress boundary now lives in infrastructure (e.g. the Cloud VPC firewall).
     const networkMode = settings.NETWORK_MODE
     return {
-        ...baseEnv({ settings, networkMode }),
+        ...baseEnv({ settings, networkMode, paths }),
         ...ssrfEnv(settings),
         ...propagatedEnv(settings),
     }
 }
 
-function baseEnv({ settings, networkMode }: { settings: SandboxSettings, networkMode: NetworkMode }): Record<string, string> {
+function baseEnv({ settings, networkMode, paths }: { settings: SandboxSettings, networkMode: NetworkMode, paths: ReturnType<typeof cacheUtils> }): Record<string, string> {
     return {
         HOME: '/tmp/',
         ...spreadIfDefined('AP_DENO_PATH', process.env['AP_DENO_PATH']),
+        // Outside os.tmpdir(), so it's never inside the sandboxed code's own
+        // --allow-read/--allow-write grant (deno-code-sandbox.ts decides per-mode whether to use it).
+        AP_DENO_CACHE_DIR: paths.getGlobalDenoCachePath(),
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
         AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
         ...spreadIfDefined('AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB', settings.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB?.toString()),

@@ -66,6 +66,7 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
                 resolveNodeModules: true,
                 env: buildPropagatedEnv(permissions),
                 denoDirBase: resolveDenoDirBase(stepDir),
+                persistentCacheDir: resolvePersistentCacheDir(),
             })
         },
 
@@ -162,6 +163,15 @@ export function denoCodeSandbox({ permissions, codeStepMemoryLimitMb }: DenoCode
 
 function resolveDenoDirBase(stepDir: string): string | undefined {
     return process.env['AP_EXECUTION_MODE'] === ExecutionMode.SANDBOX_CODE_ONLY ? stepDir : undefined
+}
+
+// Set by the worker (create-sandbox-for-job.ts) to a path outside os.tmpdir() — i.e. outside the
+// WRITE_TMP/READ_TMP grant below — so a running step can never read another flow's cached output
+// through it. Unset in self-hosted deployments that haven't wired it, or in tests: deno.ts then
+// falls back to a fresh per-run DENO_DIR exactly as before. Ignored entirely in SANDBOX_CODE_ONLY
+// mode (resolveDenoDirBase wins there — see the precedence note in deno.ts's spawnDeno).
+function resolvePersistentCacheDir(): string | undefined {
+    return process.env['AP_DENO_CACHE_DIR']
 }
 
 function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, string> {

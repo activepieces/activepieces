@@ -31,6 +31,7 @@ vi.mock('../../../src/lib/cache/cache-paths', () => ({
         getGlobalCacheCommonPath: vi.fn(() => '/tmp/test-cache/common'),
         getEnginePath: vi.fn(() => '/tmp/test-cache/common/main.js'),
         getGlobalCodeCachePath: vi.fn(() => '/tmp/test-cache/codes'),
+        getGlobalDenoCachePath: vi.fn(() => '/tmp/test-cache/deno-cache'),
         getCustomPiecesPath: vi.fn((platformId: string) => `/tmp/test-cache/custom_pieces/${platformId}`),
     })),
 }))

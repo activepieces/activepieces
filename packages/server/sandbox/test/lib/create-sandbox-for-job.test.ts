@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ApEnvironment, ExecutionMode, NetworkMode } from '@activepieces/shared'
 
-const { createSandboxMock, isolateProcessMock, simpleProcessMock, getGlobalCacheCommonPathMock, getGlobalCodeCachePathMock, getEnginePathMock } = vi.hoisted(() => ({
+const { createSandboxMock, isolateProcessMock, simpleProcessMock, getGlobalCacheCommonPathMock, getGlobalCodeCachePathMock, getGlobalDenoCachePathMock, getEnginePathMock } = vi.hoisted(() => ({
     createSandboxMock: vi.fn(),
     isolateProcessMock: vi.fn(() => ({ create: vi.fn() })),
     simpleProcessMock: vi.fn(() => ({ create: vi.fn() })),
     getGlobalCacheCommonPathMock: vi.fn(() => '/tmp/cache/common'),
     getGlobalCodeCachePathMock: vi.fn(() => '/tmp/cache/codes'),
+    getGlobalDenoCachePathMock: vi.fn(() => '/tmp/cache/deno-cache'),
     getEnginePathMock: vi.fn(() => '/tmp/cache/common/main.js'),
 }))
 
@@ -26,6 +27,7 @@ vi.mock('../../src/lib/cache/cache-paths', () => ({
     cacheUtils: () => ({
         getGlobalCacheCommonPath: getGlobalCacheCommonPathMock,
         getGlobalCodeCachePath: getGlobalCodeCachePathMock,
+        getGlobalDenoCachePath: getGlobalDenoCachePathMock,
         getEnginePath: getEnginePathMock,
     }),
 }))
@@ -162,6 +164,7 @@ describe('createSandboxForJob', () => {
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env).toMatchObject({
                 HOME: '/tmp/',
+                AP_DENO_CACHE_DIR: '/tmp/cache/deno-cache',
                 AP_EXECUTION_MODE: ExecutionMode.SANDBOX_PROCESS,
                 AP_MAX_FLOW_RUN_LOG_SIZE_MB: '25',
                 AP_MAX_FILE_SIZE_MB: '50',

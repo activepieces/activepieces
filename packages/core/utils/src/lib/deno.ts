@@ -8,10 +8,10 @@ export const deno = {
      * output to a `result` variable. Resolves with the result, or rejects with
      * an Error carrying the process stdout/stderr.
      */
-    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase, timeoutMs }: DenoProgramParams): Promise<unknown> {
+    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase, persistentCacheDir, timeoutMs }: DenoProgramParams): Promise<unknown> {
         const marker = newResultMarker()
         const { os } = await getNodeApis()
-        const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase })
+        const { child, denoPath, denoDir, isPersistentDenoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase, persistentCacheDir })
         child.stdin.end(buildRunProgram({ body, marker, tmpDir: os.tmpdir() }))
         const killTimer = timeoutMs === undefined ? undefined : setTimeout(() => child.kill('SIGKILL'), timeoutMs)
 
@@ -32,7 +32,9 @@ export const deno = {
 
             child.on('close', (code, signal) => {
                 clearTimeout(killTimer)
-                void removeDenoDir(denoDir)
+                if (!isPersistentDenoDir) {
+                    void removeDenoDir(denoDir)
+                }
                 if (settled) {
                     return
                 }
@@ -74,7 +76,9 @@ export const deno = {
 
             child.on('error', (error) => {
                 clearTimeout(killTimer)
-                void removeDenoDir(denoDir)
+                if (!isPersistentDenoDir) {
+                    void removeDenoDir(denoDir)
+                }
                 if (settled) {
                     return
                 }
@@ -261,10 +265,22 @@ function newResultMarker(): string {
     return `__AP_DENO_RESULT_${nanoid()}__` // Random so it's not guessable and potentially printed by user code
 }
 
-async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string }> {
+async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase, persistentCacheDir }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string, isPersistentDenoDir: boolean }> {
     const { childProcess, os, fs } = await getNodeApis()
     const denoPath = resolveDenoPath()
-    const denoDir = await fs.mkdtemp(`${denoDirBase ?? os.tmpdir()}/ap-deno-`)
+    // denoDirBase (set only for SANDBOX_CODE_ONLY, scoped to the step's own cache dir) always wins:
+    // that mode has a different isolation model and this cache must stay per-step there.
+    // Otherwise, if a persistent cache dir was configured, reuse it as-is instead of minting a
+    // fresh one — it must live outside the paths granted to the sandboxed code (never add it to
+    // allowReadPaths or the WRITE_TMP/READ_TMP tmpdir grant), so the running step can never list
+    // or read another flow's cached compiled output through it.
+    const isPersistentDenoDir = denoDirBase === undefined && persistentCacheDir !== undefined
+    const denoDir = isPersistentDenoDir
+        ? persistentCacheDir
+        : await fs.mkdtemp(`${denoDirBase ?? os.tmpdir()}/ap-deno-`)
+    if (isPersistentDenoDir) {
+        await fs.mkdir(denoDir, { recursive: true })
+    }
     let entryArg: string
     if (typeof entry === 'string') {
         entryArg = entry
@@ -275,7 +291,9 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
             await fs.writeFile(entryArg, entry.body)
         }
         catch (error) {
-            await removeDenoDir(denoDir)
+            if (!isPersistentDenoDir) {
+                await removeDenoDir(denoDir)
+            }
             throw error
         }
     }
@@ -300,7 +318,7 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
         },
         stdio: ['pipe', 'pipe', 'pipe'],
     })
-    return { child, denoPath, denoDir }
+    return { child, denoPath, denoDir, isPersistentDenoDir }
 }
 
 function resolveDenoPath(): string {
@@ -505,6 +523,10 @@ type DenoProgramParams = {
     resolveNodeModules?: boolean
     env?: Record<string, string>
     denoDirBase?: string
+    // A fixed, reused DENO_DIR (module-compile cache) instead of a fresh mkdtemp'd one per run.
+    // Caller MUST keep this path out of allowReadPaths and outside the WRITE_TMP/READ_TMP tmpdir
+    // grant — it is not cleaned up after the run. Ignored when denoDirBase is set.
+    persistentCacheDir?: string
     timeoutMs?: number
 }
 
@@ -555,6 +577,7 @@ type SpawnDenoParams = {
     resolveNodeModules: boolean
     env: Record<string, string>
     denoDirBase?: string
+    persistentCacheDir?: string
 }
 
 type NodeApis = {
