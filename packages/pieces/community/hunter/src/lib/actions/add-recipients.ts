@@ -1,92 +1,34 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { hunterApiCall } from '../common';
 import { hunterAuth } from '../auth';
-import {
-    campaignIdProp,
-    emailsProp,
-    leadIdsDropdownProp,
-} from '../common/props';
-
-const MAX_EMAILS = 50;
-const MAX_LEAD_IDS = 50;
+import { apiKeyOf } from '../common/client';
+import { hunterOutputSchemas } from '../common/output-schemas';
+import { campaignIdProp, emailsProp, leadIdsDropdownProp } from '../common/props';
+import { hunterRequests } from '../common/requests';
 
 export const addRecipientsAction = createAction({
-    auth: hunterAuth,
-    name: 'add-recipients',
-    classification: 'WRITE',
-    displayName: 'Add Recipients',
-    description: 'Add one or multiple recipients to a campaign.',
-    audience: 'both',
-    aiMetadata: { description: 'Adds one or more recipients to a Hunter campaign, identified either by raw email addresses, by existing lead IDs, or both. Use to enroll contacts into an outreach campaign once you have the campaign ID. Requires at least one valid email or lead ID (max 50 of each per call); not idempotent — each call appends recipients, though Hunter skips duplicates already in the campaign.', idempotent: false },
-    props: {
-        campaign_id: campaignIdProp,
-        emails: emailsProp,
-        lead_ids: leadIdsDropdownProp,
-    },
-    async run(context) {
-        const {
-            campaign_id,
-            emails: rawEmails = [],
-            lead_ids: rawLeadIds = [],
-        } = context.propsValue as {
-            campaign_id: number;
-            emails?: unknown[];
-            lead_ids?: unknown[];
-        };
-
-        const stringEmails = rawEmails.filter(
-            (e): e is string => typeof e === 'string'
-        );
-        const numberLeadIds = rawLeadIds.filter(
-            (id): id is number => typeof id === 'number'
-        );
-
-        const filteredEmails = stringEmails
-            .map((e) => e.trim())
-            .filter((e) => e.length > 0);
-
-        if (filteredEmails.length === 0 && numberLeadIds.length === 0) {
-            throw new Error(
-                'You must provide at least one valid email or one lead ID.'
-            );
-        }
-
-        if (filteredEmails.length > MAX_EMAILS) {
-            throw new Error(`You can add at most ${MAX_EMAILS} emails at once.`);
-        }
-        if (numberLeadIds.length > MAX_LEAD_IDS) {
-            throw new Error(`You can add at most ${MAX_LEAD_IDS} lead IDs at once.`);
-        }
-
-        const body: { emails?: string[]; lead_ids?: number[] } = {};
-        if (filteredEmails.length) body.emails = filteredEmails;
-        if (numberLeadIds.length) body.lead_ids = numberLeadIds;
-
-        const resp = await hunterApiCall({
-            apiKey: context.auth,
-            endpoint: `/campaigns/${campaign_id}/recipients`,
-            method: HttpMethod.POST,
-            body,
-        }) as {
-            data: {
-                recipients_added: number;
-                skipped_recipients: Array<{
-                    email: string;
-                    reason:
-                    | 'duplicate'
-                    | 'invalid'
-                    | 'removed'
-                    | 'bounced'
-                    | 'unsubscribed'
-                    | 'claimed';
-                }>;
-            };
-        };
-
-        return {
-            recipients_added: resp.data.recipients_added,
-            skipped_recipients: resp.data.skipped_recipients,
-        };
-    },
+  auth: hunterAuth,
+  name: 'add-recipients',
+  classification: 'WRITE',
+  displayName: 'Add Recipients',
+  description: 'Add one or more recipients to a campaign (sequence).',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Adds up to 50 emails and/or 50 existing leads as recipients of a Hunter campaign (sequence) picked from a dropdown. Hunter skips recipients already in the campaign and reports them in skipped_recipients, so a repeat call adds nothing new.',
+    idempotent: false,
+  },
+  props: {
+    campaign_id: campaignIdProp,
+    emails: emailsProp,
+    lead_ids: leadIdsDropdownProp,
+  },
+  outputSchema: hunterOutputSchemas.recipientsAdded,
+  async run(context) {
+    return hunterRequests.addRecipients({
+      apiKey: apiKeyOf(context.auth),
+      campaignId: context.propsValue.campaign_id,
+      emails: context.propsValue.emails,
+      leadIds: context.propsValue.lead_ids,
+    });
+  },
 });
