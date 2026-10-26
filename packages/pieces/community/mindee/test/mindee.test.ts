@@ -321,6 +321,12 @@ describe('files', () => {
     await expect(mindeeFiles.downloadFile({ url: new URL('https://example.com/a.pdf'), label: 'File URL' })).rejects.toThrow('HTTP 404');
   });
 
+  it('stops at the deadline when an error body never finishes', async () => {
+    const neverEnding = new ReadableStream<Uint8Array>({ start: (controller) => controller.enqueue(new TextEncoder().encode('partial')) });
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(neverEnding, { status: 500 })));
+    await expect(mindeeFiles.downloadFile({ url: new URL('https://example.com/a.pdf'), label: 'File URL', timeoutMs: 50 })).rejects.toThrow('took longer than');
+  });
+
   it('refuses downloads larger than the cap', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('x', { status: 200, headers: { 'content-length': String(60 * 1024 * 1024) } })));
     await expect(mindeeFiles.downloadFile({ url: new URL('https://example.com/a.pdf'), label: 'File URL' })).rejects.toThrow('50 MB');

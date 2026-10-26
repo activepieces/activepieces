@@ -99,19 +99,21 @@ function toBlob(upload: MindeeUpload): Blob {
 }
 
 async function requestDownload({ url, label, timeoutMs }: { url: URL; label: string; timeoutMs: number }) {
+  const dispatcher = await mindeeNetwork.getGuardedDispatcher({ maxResponseBytes: MAX_FILE_BYTES + 1, bodyTimeoutMs: timeoutMs });
+  const request = httpClient.sendRequest<Readable>(
+    {
+      method: HttpMethod.GET,
+      url: url.toString(),
+      headers: { Accept: '*/*' },
+      responseType: 'stream',
+      redactBodyInErrors: true,
+      followRedirects: false,
+      timeout: timeoutMs,
+    },
+    { dispatcher },
+  );
   try {
-    return await httpClient.sendRequest<Readable>(
-      {
-        method: HttpMethod.GET,
-        url: url.toString(),
-        headers: { Accept: '*/*' },
-        responseType: 'stream',
-        redactBodyInErrors: true,
-        followRedirects: false,
-        timeout: timeoutMs,
-      },
-      { dispatcher: await mindeeNetwork.getGuardedDispatcher() },
-    );
+    return await withDeadline({ promise: request, label, timeoutMs });
   } catch (error) {
     const response: unknown = isRecord(error) || error instanceof Error ? Reflect.get(error, 'response') : undefined;
     if (isRecord(response) && typeof response['status'] === 'number') {
@@ -119,6 +121,24 @@ async function requestDownload({ url, label, timeoutMs }: { url: URL; label: str
     }
     throw new Error(`Could not download ${label}: ${error instanceof Error ? error.message : String(error)}`);
   }
+}
+
+function withDeadline<T>({ promise, label, timeoutMs }: { promise: Promise<T>; label: string; timeoutMs: number }): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Downloading ${label} took longer than ${Math.round(timeoutMs / 1000)} seconds.`));
+    }, timeoutMs);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }
 
 function readCapped({ stream, label, timeoutMs }: { stream: Readable; label: string; timeoutMs: number }): Promise<Buffer> {

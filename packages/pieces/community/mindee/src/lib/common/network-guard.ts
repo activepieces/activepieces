@@ -159,8 +159,13 @@ async function assertPublicHost(hostname: string): Promise<void> {
 
 let guardedDispatcher: Promise<unknown> | undefined;
 
-function getGuardedDispatcher(): Promise<unknown> {
-  guardedDispatcher ??= import('undici').then(({ Agent }) => new Agent({ connect: { rejectUnauthorized: true, lookup: guardedLookup } }));
+function getGuardedDispatcher({ maxResponseBytes, bodyTimeoutMs }: { maxResponseBytes: number; bodyTimeoutMs: number }): Promise<unknown> {
+  guardedDispatcher ??= import('undici').then(({ Agent }) => new Agent({
+    connect: { rejectUnauthorized: true, lookup: guardedLookup },
+    maxResponseSize: maxResponseBytes,
+    bodyTimeout: bodyTimeoutMs,
+    headersTimeout: bodyTimeoutMs,
+  }));
   return guardedDispatcher;
 }
 
