@@ -1,8 +1,4 @@
-import {
-  AppConnectionReplaceScope,
-  flowStructureUtil,
-  unique,
-} from '@activepieces/shared';
+import { flowStructureUtil, unique } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Info } from 'lucide-react';
@@ -106,7 +102,6 @@ function ReplaceConnectionForFlowForm({
     mutationFn: (_values: FlowReplaceFormValues) => savePendingEdits(),
     onSuccess: (_, values) =>
       replaceConnections({
-        scope: AppConnectionReplaceScope.FLOW,
         flowIds: [flow.id],
         projectId,
         sourceAppConnectionId: values.sourceConnectionId,
