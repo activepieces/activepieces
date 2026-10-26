@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, RpcTimeoutError, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { toResolvedAiFile } from '../../ai/ai-files'
@@ -450,6 +450,10 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         catch (err) {
             if (apErrorOf(err)?.code === ErrorCode.AGENT_RUN_SUPERSEDED) {
                 log.info({ conversation: { id: conversationId }, run: { id: runId } }, '[executeAgentRun] Run superseded by a newer message, exiting quietly')
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
+            if (source === AgentRunSource.FLOW_STEP && !configLoaded && err instanceof RpcTimeoutError) {
+                log.warn({ error: err, conversation: { id: conversationId }, run: { id: runId } }, '[executeAgentRun] Config response lost in transit, leaving the step to the redelivered copy or the stale sweep')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
             const errorClass = classifyAgentRunError({ error: err, provider: runProvider })
