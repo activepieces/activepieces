@@ -346,7 +346,12 @@ describe('writes are flushed before the result is built', () => {
     });
     const updateOrder = fake.updateTransaction.mock.invocationCallOrder[0];
     const syncOrder = fake.sync.mock.invocationCallOrder[0];
+    const readsAfterUpdate = fake.aqlQuery.mock.invocationCallOrder.filter(
+      (order) => order > updateOrder
+    );
     expect(syncOrder).toBeGreaterThan(updateOrder);
+    expect(readsAfterUpdate.length).toBeGreaterThan(0);
+    expect(readsAfterUpdate.every((order) => order > syncOrder)).toBe(true);
   });
   test('delete calls sync()', async () => {
     await runAction({
