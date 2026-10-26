@@ -23,7 +23,9 @@ services:
       redis:
         condition: service_started
     environment:
-      AP_CONTAINER_TYPE: APP
+      AP_CONTAINER_TYPE: ${AP_CONTAINER_TYPE:-APP}
+      AP_EDITION: ${AP_EDITION:-ce}
+      AP_LICENSE_KEY: ${AP_LICENSE_KEY:-}
       AP_POSTGRES_DATABASE: activepieces
       AP_POSTGRES_PASSWORD: password
       AP_POSTGRES_USERNAME: postgres

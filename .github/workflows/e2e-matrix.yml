@@ -1,0 +1,160 @@
+name: E2E Matrix
+
+# Runs the Playwright suite against a fresh stack in each supported configuration.
+# The Cloud gate passes the candidate's image; without one, the checked-out commit is built.
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: 'Image to test, e.g. ghcr.io/activepieces/activepieces-cloud:<tag>. Empty builds the checked-out commit.'
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Image to test, e.g. ghcr.io/activepieces/activepieces-cloud:<tag>. Empty builds the checked-out commit.'
+        type: string
+        default: ''
+  pull_request:
+    paths:
+      - .github/workflows/e2e-matrix.yml
+      - benchmark/docker-compose.yml
+      - benchmark/docker-compose.minio.yml
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  e2e:
+    name: e2e (${{ matrix.name }})
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # EE refuses to boot without a sandbox, so the unsandboxed runs are CE.
+          - name: ee, shared, db, code sandbox
+            edition: ee
+            containerType: WORKER_AND_APP
+            workerReplicas: 0
+            fileStorage: DB
+            executionMode: SANDBOX_CODE_ONLY
+          - name: ee, split, s3 signed urls, process sandbox
+            edition: ee
+            containerType: APP
+            workerReplicas: 1
+            fileStorage: S3
+            executionMode: SANDBOX_PROCESS
+          - name: ce, shared, s3 signed urls, unsandboxed
+            edition: ce
+            containerType: WORKER_AND_APP
+            workerReplicas: 0
+            fileStorage: S3
+            executionMode: UNSANDBOXED
+          - name: ce, split, db, unsandboxed
+            edition: ce
+            containerType: APP
+            workerReplicas: 1
+            fileStorage: DB
+            executionMode: UNSANDBOXED
+    env:
+      COMPOSE_FILE: ${{ matrix.fileStorage == 'S3' && 'benchmark/docker-compose.yml:benchmark/docker-compose.minio.yml' || 'benchmark/docker-compose.yml' }}
+      AP_EDITION: ${{ matrix.edition }}
+      AP_LICENSE_KEY: ${{ matrix.edition == 'ee' && secrets.EE_LICENSE_KEY || '' }}
+      AP_CONTAINER_TYPE: ${{ matrix.containerType }}
+      APP_REPLICAS: 1
+      WORKER_REPLICAS: ${{ matrix.workerReplicas }}
+      AP_EXECUTION_MODE: ${{ matrix.executionMode }}
+      AP_FILE_STORAGE_LOCATION: ${{ matrix.fileStorage }}
+      AP_S3_BUCKET: ${{ matrix.fileStorage == 'S3' && 'activepieces' || '' }}
+      AP_S3_ACCESS_KEY_ID: ${{ matrix.fileStorage == 'S3' && 'minioadmin' || '' }}
+      AP_S3_SECRET_ACCESS_KEY: ${{ matrix.fileStorage == 'S3' && 'minioadmin' || '' }}
+      AP_S3_ENDPOINT: ${{ matrix.fileStorage == 'S3' && 'http://minio:9000' || '' }}
+      AP_S3_REGION: ${{ matrix.fileStorage == 'S3' && 'us-east-1' || '' }}
+      AP_S3_USE_SIGNED_URLS: ${{ matrix.fileStorage == 'S3' }}
+      CI: true
+      # The stack's nginx static IP, which is also AP_FRONTEND_URL, so webhook URLs shown in the UI work from the runner.
+      E2E_INSTANCE_URL: http://172.30.0.10
+      PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/packages/tests-e2e/test-results/results.json
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/login-action@v4
+        if: inputs.image
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull the image under test
+        if: inputs.image
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          docker pull "$IMAGE"
+          docker tag "$IMAGE" activepieces-benchmark:local
+
+      - name: Build the image from this commit
+        if: ${{ !inputs.image }}
+        run: docker build -t activepieces-benchmark:local .
+
+      - name: Start stack
+        run: docker compose up -d
+
+      - name: Wait for the app
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf "$E2E_INSTANCE_URL/api/v1/flags" > /dev/null; then
+              echo "App is up after $((i * 5)) s"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::App did not answer on $E2E_INSTANCE_URL within 5 minutes"
+          exit 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --filter tests-e2e --frozen-lockfile --ignore-scripts
+
+      - name: Install Playwright browsers
+        working-directory: packages/tests-e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        working-directory: packages/tests-e2e
+        run: npx playwright test --config=playwright.config.ts --reporter=github,json
+
+      - name: Summarize results
+        if: always()
+        run: |
+          if [ -f "$PLAYWRIGHT_JSON_OUTPUT_FILE" ]; then
+            echo "### ${{ matrix.name }}" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.stats | "| passed | failed | flaky | skipped |\n|---|---|---|---|\n| \(.expected) | \(.unexpected) | \(.flaky) | \(.skipped) |"' "$PLAYWRIGHT_JSON_OUTPUT_FILE" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Show app and worker logs on failure
+        if: failure()
+        run: docker compose logs --tail=200 app worker
+
+      # The stack lives only for this job, so traces hold no real credentials.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: e2e-matrix-${{ strategy.job-index }}
+          path: packages/tests-e2e/test-results/
+          retention-days: 14
+
+      - name: Teardown
+        if: always()
+        run: docker compose down -v
