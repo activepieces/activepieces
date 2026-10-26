@@ -12,7 +12,7 @@ import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { platformModelTierService, TierForRun } from '../../ai/platform-model-tier-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { redisConnections } from '../../database/redis-connections'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
 import { extractMcpTriggerInput } from '../../mcp/mcp-server-builder'
 import { mcpToolInput } from '../../mcp/mcp-tool-input'
@@ -26,6 +26,7 @@ import { flowStepRpc } from './rpc/flow-step-rpc'
 import { UserMemoryEntity } from './user-memory-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
+const STARTED_RUN_MARKER_TTL_SECONDS = 24 * 60 * 60
 
 // Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
 // eval endpoints and the regular chat path can tell them apart from real user conversations.
@@ -417,6 +418,12 @@ async function claimConversationForRun({ conversationId, runId }: { conversation
 }
 
 async function acquireStreamingLock({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<StreamingLockResult> {
+    if (!isNil(runId)) {
+        const firstDelivery = await distributedStore.putIfAbsent(`agent-run-started:${conversationId}:${runId}`, true, STARTED_RUN_MARKER_TTL_SECONDS)
+        if (!firstDelivery) {
+            return 'duplicate'
+        }
+    }
     const builder = conversationRepo()
         .createQueryBuilder()
         .update()
