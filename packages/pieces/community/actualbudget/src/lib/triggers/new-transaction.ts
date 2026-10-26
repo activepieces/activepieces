@@ -136,12 +136,21 @@ export async function loadSeenIds({
 }: {
   store: Store;
 }): Promise<string[] | null> {
-  const chunkCount = await store.get<number>(SEEN_KEY);
-  if (typeof chunkCount !== 'number') return null;
+  const checkpoint = readCheckpoint({
+    value: await store.get<unknown>(SEEN_KEY),
+  });
+  if (checkpoint === null) return null;
   const ids: string[] = [];
-  for (let index = 0; index < chunkCount; index++) {
-    const chunk = await store.get<string[]>(chunkKey({ index }));
-    if (Array.isArray(chunk)) ids.push(...chunk);
+  for (let index = 0; index < checkpoint.chunks; index++) {
+    const chunk = await store.get<string[]>(
+      chunkKey({ slot: checkpoint.slot, index })
+    );
+    if (!Array.isArray(chunk)) {
+      throw new Error(
+        'The saved list of seen transactions is incomplete. Disable and re-enable the trigger to reset it.'
+      );
+    }
+    ids.push(...chunk);
   }
   return ids;
 }
@@ -153,40 +162,55 @@ export async function saveSeenIds({
   store: Store;
   ids: string[] | null;
 }): Promise<void> {
-  const previous = await store.get<number>(SEEN_KEY);
-  const previousCount = typeof previous === 'number' ? previous : 0;
+  const previous = readCheckpoint({ value: await store.get<unknown>(SEEN_KEY) });
   if (ids === null) {
     await store.delete(SEEN_KEY);
-    await deleteChunks({ store, from: 0, to: previousCount });
+    if (previous !== null) {
+      await deleteChunks({ store, slot: previous.slot, from: 0, to: previous.chunks });
+    }
     return;
   }
-  const chunkCount = Math.ceil(ids.length / SEEN_CHUNK_SIZE);
-  for (let index = 0; index < chunkCount; index++) {
+  const slot = previous?.slot === 0 ? 1 : 0;
+  const chunks = Math.ceil(ids.length / SEEN_CHUNK_SIZE);
+  for (let index = 0; index < chunks; index++) {
     await store.put(
-      chunkKey({ index }),
+      chunkKey({ slot, index }),
       ids.slice(index * SEEN_CHUNK_SIZE, (index + 1) * SEEN_CHUNK_SIZE)
     );
   }
-  await store.put(SEEN_KEY, chunkCount);
-  await deleteChunks({ store, from: chunkCount, to: previousCount });
+  const checkpoint: SeenCheckpoint = { slot, chunks };
+  await store.put(SEEN_KEY, checkpoint);
+  if (previous !== null) {
+    await deleteChunks({ store, slot: previous.slot, from: 0, to: previous.chunks });
+  }
 }
 
 async function deleteChunks({
   store,
+  slot,
   from,
   to,
 }: {
   store: Store;
+  slot: number;
   from: number;
   to: number;
 }): Promise<void> {
   for (let index = from; index < to; index++) {
-    await store.delete(chunkKey({ index }));
+    await store.delete(chunkKey({ slot, index }));
   }
 }
 
-function chunkKey({ index }: { index: number }): string {
-  return `${SEEN_KEY}_${index}`;
+function readCheckpoint({ value }: { value: unknown }): SeenCheckpoint | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const slot = Reflect.get(value, 'slot');
+  const chunks = Reflect.get(value, 'chunks');
+  if ((slot !== 0 && slot !== 1) || typeof chunks !== 'number') return null;
+  return { slot, chunks };
+}
+
+function chunkKey({ slot, index }: { slot: number; index: number }): string {
+  return `${SEEN_KEY}_${slot}_${index}`;
 }
 
 async function fetchWindow({
@@ -212,3 +236,5 @@ async function fetchWindow({
       .orderBy([{ date: 'asc' }, { sort_order: 'asc' }]),
   });
 }
+
+type SeenCheckpoint = { slot: 0 | 1; chunks: number };
