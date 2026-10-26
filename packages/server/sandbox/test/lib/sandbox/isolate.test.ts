@@ -188,6 +188,28 @@ describe('isolateProcess', () => {
             expect(args).toContain('--dir=/root/custom_pieces=/host/custom:maybe')
         })
 
+        it('appends :rw suffix on writable mounts, and omits it (read-only) by default', async () => {
+            const mounts: SandboxMount[] = [
+                { hostPath: '/host/deno-cache', sandboxPath: '/root/deno-cache', writable: true },
+                { hostPath: '/host/common', sandboxPath: '/root/common' },
+            ]
+            await callCreate({ mounts })
+
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args).toContain('--dir=/root/deno-cache=/host/deno-cache:rw')
+            expect(args).toContain('--dir=/root/common=/host/common')
+        })
+
+        it('combines :rw and :maybe when a mount is both writable and optional', async () => {
+            const mounts: SandboxMount[] = [
+                { hostPath: '/host/deno-cache', sandboxPath: '/root/deno-cache', writable: true, optional: true },
+            ]
+            await callCreate({ mounts })
+
+            const args: string[] = spawnMock.mock.calls[0][1]
+            expect(args).toContain('--dir=/root/deno-cache=/host/deno-cache:rw,maybe')
+        })
+
         it('emits exactly one --dir per mount, no duplicates', async () => {
             const mounts: SandboxMount[] = [
                 { hostPath: '/host/a', sandboxPath: '/root/a' },

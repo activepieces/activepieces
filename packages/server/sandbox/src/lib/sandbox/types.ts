@@ -5,6 +5,10 @@ export type SandboxMount = {
     hostPath: string
     sandboxPath: string
     optional?: boolean
+    // Every existing mount is read-only (the box only ever consumes pre-installed code/pieces
+    // written from outside it). Set this only for a mount the engine itself must write into from
+    // inside the box — isolate.ts defaults a bare --dir= to read-only.
+    writable?: boolean
 }
 
 export type SandboxResourceLimits = {

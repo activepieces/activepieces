@@ -1,3 +1,4 @@
+import { tmpdir } from 'node:os'
 import { spreadIfDefined } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode } from '@activepieces/shared'
@@ -26,6 +27,12 @@ export function createSandboxForJob(params: {
 
     const baseMounts: SandboxMount[] = [
         { hostPath: paths.getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
+        // Isolated modes (`isolateProcess`) run with `--no-default-dirs`, so a bare host path is
+        // invisible to the engine unless explicitly mounted here — without this the engine's own
+        // `fs.mkdir`/Deno's cache writes would fail outright. Mounted read-write (Deno writes its
+        // compiled cache here), and deliberately NOT under /box (where WRITE_TMP/READ_TMP's
+        // TMPDIR=/box grant lives), so the sandboxed step can never reach it however it's configured.
+        { hostPath: paths.getGlobalDenoCachePath(), sandboxPath: DENO_CACHE_SANDBOX_PATH, writable: true },
     ]
 
     return createSandbox(
@@ -57,6 +64,26 @@ function getProcessMaker(executionMode: string, log: ApLogger, boxId: number, pa
     }
 }
 
+// SANDBOX_PROCESS / SANDBOX_CODE_AND_PROCESS route through isolateProcess, which chroots the
+// engine into a rootfs built from explicit --dir= mounts only — the raw host path is never
+// visible there, only the sandbox-side mount path set up in baseMounts above.
+function isIsolatedExecutionMode(executionMode: string): boolean {
+    return executionMode === ExecutionMode.SANDBOX_PROCESS || executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
+}
+
+// UNSANDBOXED / SANDBOX_CODE_ONLY run via simpleProcess (plain child_process.fork, no chroot), so
+// the engine sees the real host path as-is with no remapping — it must not collide with the Deno
+// child's own WRITE_TMP/READ_TMP grant, which covers that same process's os.tmpdir(). An operator
+// can point AP_CACHE_BASE_PATH under the OS tmpdir (one shipped image does exactly that), so this
+// is checked at the resolved path rather than assumed from config. On collision, fail safe: omit
+// the var entirely so deno.ts falls back to its default per-run mkdtemp — slower, never vulnerable.
+function resolveDenoCacheDirForEngine({ executionMode, hostPath }: { executionMode: string, hostPath: string }): string | undefined {
+    if (isIsolatedExecutionMode(executionMode)) {
+        return DENO_CACHE_SANDBOX_PATH
+    }
+    return hostPath.startsWith(tmpdir()) ? undefined : hostPath
+}
+
 function parseMemoryLimit(memoryLimitKb: string): number {
     const parsed = parseInt(memoryLimitKb, 10)
     const kb = isNaN(parsed) ? 1048576 : parsed
@@ -82,9 +109,7 @@ function baseEnv({ settings, networkMode, paths }: { settings: SandboxSettings, 
     return {
         HOME: '/tmp/',
         ...spreadIfDefined('AP_DENO_PATH', process.env['AP_DENO_PATH']),
-        // Outside os.tmpdir(), so it's never inside the sandboxed code's own
-        // --allow-read/--allow-write grant (deno-code-sandbox.ts decides per-mode whether to use it).
-        AP_DENO_CACHE_DIR: paths.getGlobalDenoCachePath(),
+        ...spreadIfDefined('AP_DENO_CACHE_DIR', resolveDenoCacheDirForEngine({ executionMode: settings.EXECUTION_MODE, hostPath: paths.getGlobalDenoCachePath() })),
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
         AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
         ...spreadIfDefined('AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB', settings.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB?.toString()),
@@ -119,3 +144,5 @@ function propagatedEnv(settings: SandboxSettings): Record<string, string> {
     }
     return env
 }
+
+const DENO_CACHE_SANDBOX_PATH = '/root/deno-cache'

@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ApEnvironment, ExecutionMode, NetworkMode } from '@activepieces/shared'
 
@@ -102,13 +104,14 @@ describe('createSandboxForJob', () => {
     })
 
     describe('baseMounts', () => {
-        it('contains exactly /root/common → getGlobalCacheCommonPath()', () => {
+        it('contains /root/common → getGlobalCacheCommonPath() and a writable deno-cache mount', () => {
             const settings = buildSettings()
             createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
 
             const options = createSandboxMock.mock.calls[0][2]
             expect(options.baseMounts).toEqual([
                 { hostPath: '/tmp/cache/common', sandboxPath: '/root/common' },
+                { hostPath: '/tmp/cache/deno-cache', sandboxPath: '/root/deno-cache', writable: true },
             ])
         })
 
@@ -164,7 +167,9 @@ describe('createSandboxForJob', () => {
             const env = createSandboxMock.mock.calls[0][2].env
             expect(env).toMatchObject({
                 HOME: '/tmp/',
-                AP_DENO_CACHE_DIR: '/tmp/cache/deno-cache',
+                // Isolated mode: the engine only ever sees the sandbox-side mount path, never the
+                // raw host path — see the "AP_DENO_CACHE_DIR resolution" tests below for both modes.
+                AP_DENO_CACHE_DIR: '/root/deno-cache',
                 AP_EXECUTION_MODE: ExecutionMode.SANDBOX_PROCESS,
                 AP_MAX_FLOW_RUN_LOG_SIZE_MB: '25',
                 AP_MAX_FILE_SIZE_MB: '50',
@@ -248,6 +253,42 @@ describe('createSandboxForJob', () => {
             finally {
                 process.env = originalProcessEnv
             }
+        })
+    })
+
+    // isolateProcess chroots the engine into a rootfs built from explicit mounts only, so the raw
+    // host path is never reachable there — only simpleProcess (no chroot) sees it as-is, which is
+    // exactly the combination a naive fix would get wrong (Greptile review on #16891).
+    describe('AP_DENO_CACHE_DIR resolution', () => {
+        it.each([ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS])('isolated mode %s always gets the sandbox-side mount path, never the host path', (executionMode) => {
+            const settings = buildSettings({ EXECUTION_MODE: executionMode })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+
+            const env = createSandboxMock.mock.calls[0][2].env
+            expect(env.AP_DENO_CACHE_DIR).toBe('/root/deno-cache')
+        })
+
+        it.each([ExecutionMode.UNSANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY])('non-isolated mode %s gets the real host path when it is outside os.tmpdir()', (executionMode) => {
+            // getGlobalDenoCachePath() is called twice per createSandboxForJob (baseMounts, then env) —
+            // queue the same override for both so the test isn't coupled to that call order.
+            getGlobalDenoCachePathMock.mockReturnValueOnce('/var/ap-cache/v15/deno-cache')
+            getGlobalDenoCachePathMock.mockReturnValueOnce('/var/ap-cache/v15/deno-cache')
+            const settings = buildSettings({ EXECUTION_MODE: executionMode })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+
+            const env = createSandboxMock.mock.calls[0][2].env
+            expect(env.AP_DENO_CACHE_DIR).toBe('/var/ap-cache/v15/deno-cache')
+        })
+
+        it('non-isolated mode omits AP_DENO_CACHE_DIR entirely when the resolved cache path falls under os.tmpdir() (fails safe, never silently vulnerable)', () => {
+            const underTmpdir = path.join(tmpdir(), 'cache', 'v15', 'deno-cache')
+            getGlobalDenoCachePathMock.mockReturnValueOnce(underTmpdir)
+            getGlobalDenoCachePathMock.mockReturnValueOnce(underTmpdir)
+            const settings = buildSettings({ EXECUTION_MODE: ExecutionMode.UNSANDBOXED })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => settings })
+
+            const env = createSandboxMock.mock.calls[0][2].env
+            expect('AP_DENO_CACHE_DIR' in env).toBe(false)
         })
     })
 

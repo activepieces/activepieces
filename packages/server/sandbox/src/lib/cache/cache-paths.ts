@@ -16,10 +16,11 @@ export const cacheUtils = (basePath: string) => ({
         return path.resolve(this.getGlobalCachePathLatestVersion(), 'codes')
     },
 
-    // Persistent Deno module-compile cache, reused across runs instead of a fresh mkdtemp'd
-    // DENO_DIR per spawn. Lives outside the sandboxed code's --allow-read/--allow-write grant
-    // (those only ever cover os.tmpdir() and the step's own cache dir), so a running code step
-    // can never list or read another flow's cached compiled output through it.
+    // Host-side persistent Deno module-compile cache, reused across runs instead of a fresh
+    // mkdtemp'd DENO_DIR per spawn. This path alone does NOT guarantee the sandboxed step can't
+    // reach it — isolated execution modes never see a raw host path at all (create-sandbox-for-job.ts
+    // mounts it at a fixed sandbox path outside the box's own tmp grant instead), and non-isolated
+    // modes fall back to the legacy per-run DENO_DIR if this path happens to land under os.tmpdir().
     getGlobalDenoCachePath(): string {
         return path.resolve(this.getGlobalCachePathLatestVersion(), 'deno-cache')
     },

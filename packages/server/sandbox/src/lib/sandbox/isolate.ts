@@ -91,7 +91,8 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 .map(([key, value]) => `--env=${key}=${value}`)
 
             const dirArgs = mounts.map((m) => {
-                const suffix = m.optional ? ':maybe' : ''
+                const options = [m.writable ? 'rw' : null, m.optional ? 'maybe' : null].filter((o): o is string => o !== null)
+                const suffix = options.length > 0 ? `:${options.join(',')}` : ''
                 return `--dir=${m.sandboxPath}=${m.hostPath}${suffix}`
             })
 
