@@ -12,16 +12,16 @@ async function namesOf({ platformId, dimension, ids }: { platformId: string, dim
 
 const NAME_QUERIES: Partial<Record<AiUsageDimension, string>> = {
     project: `SELECT p."id", p."displayName" AS "name", NULL AS "parent", NULL AS "provider"
-        FROM "project" p WHERE p."platformId" = $1 AND p."id" = ANY($2)`,
+        FROM "project" p WHERE p."platformId" = $1 AND p."deleted" IS NULL AND p."id" = ANY($2)`,
     flow: `SELECT DISTINCT ON (fv."flowId") fv."flowId" AS "id", fv."displayName" AS "name", p."displayName" AS "parent", NULL AS "provider"
         FROM "flow_version" fv
         JOIN "flow" f ON f."id" = fv."flowId"
         JOIN "project" p ON p."id" = f."projectId"
-        WHERE p."platformId" = $1 AND fv."flowId" = ANY($2)
+        WHERE p."platformId" = $1 AND p."deleted" IS NULL AND fv."flowId" = ANY($2)
         ORDER BY fv."flowId", fv."created" DESC`,
     agent: `SELECT a."id", a."displayName" AS "name", p."displayName" AS "parent", NULL AS "provider"
         FROM "agent" a JOIN "project" p ON p."id" = a."projectId"
-        WHERE p."platformId" = $1 AND a."id" = ANY($2)`,
+        WHERE p."platformId" = $1 AND p."deleted" IS NULL AND a."id" = ANY($2)`,
     user: `SELECT u."id", nullif(trim(concat_ws(' ', ui."firstName", ui."lastName")), '') AS "name", ui."email" AS "parent", NULL AS "provider"
         FROM "user" u JOIN "user_identity" ui ON ui."id" = u."identityId"
         WHERE u."platformId" = $1 AND u."id" = ANY($2)`,

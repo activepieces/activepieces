@@ -10,7 +10,7 @@ import { aiUsagePeriod } from '../../../../src/app/ai/usage/ai-usage-period'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { redisConnections } from '../../../../src/app/database/redis-connections'
 import { db } from '../../../helpers/db'
-import { createMockFlow, createMockFlowVersion } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, createMockProject } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -179,6 +179,14 @@ describe('AI usage read API', () => {
         expect(garbage.item).toMatchObject({ spendUsd: 0, calls: 0 })
         const overview = await getJson<AiUsageOverview>({ url: '/v1/ai-usage/overview', query: { period: '30d', scope: 'all' } })
         expect(overview.totals.spendUsd).toBe(0)
+    })
+
+    it('keeps a deleted project\'s spend but not its name', async () => {
+        const gone = createMockProject({ platformId: ctx.platform.id, ownerId: ctx.user.id, displayName: 'Closed team', deleted: new Date().toISOString() })
+        await db.save('project', gone)
+        await seed({ day: daysOf('30d').current, projectId: gone.id, spendUsd: 2 })
+        const overview = await getJson<AiUsageOverview>({ url: '/v1/ai-usage/overview', query: { period: '30d', scope: 'production' } })
+        expect(overview.top.project.map((item) => [item.id, item.name, item.spendUsd])).toEqual([[gone.id, null, 2]])
     })
 
     it('scales the partial previous day the same way for totals and items', async () => {

@@ -260,7 +260,7 @@ async function cachedView<T>({ key, ttlSeconds, compute }: { key: string, ttlSec
 }
 
 function cacheKeyOf({ platformId, endpoint, dimension, id, period, scope, resolved }: CacheKeyParams): string {
-    return `${CACHE_PREFIX}:${platformId}:${endpoint}:${dimension ?? '*'}:${id ?? '*'}:${period}:${scope}:${resolved.current.start.toISOString()}`
+    return `${CACHE_PREFIX}:${platformId}:${endpoint}:${dimension ?? '*'}:${id ?? '*'}:${period}:${scope}:${resolved.current.start.toISOString()}:${resolved.current.end.toISOString()}`
 }
 
 function setsWithHelpers(sets: SetName[]): SetName[] {
