@@ -74,7 +74,7 @@ export async function configuredToolConversationOrThrow({ conversationId }: { co
     }
 }
 
-export async function loadOrStartConversation({ conversationId, runId, platformId, userId, source, projectId, modelName, agentId, flowRunId }: {
+export async function loadOrStartConversation({ conversationId, runId, platformId, userId, source, projectId, modelName, agentId, flowRunId, waitpointId }: {
     conversationId: string
     runId?: string
     platformId: string
@@ -84,12 +84,13 @@ export async function loadOrStartConversation({ conversationId, runId, platformI
     modelName?: string | null
     agentId?: string
     flowRunId?: string
+    waitpointId?: string
 }): Promise<AgentConversation> {
     if (source !== AgentRunSource.FLOW_STEP) {
         return agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
     }
     const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
-        ?? await insertFlowStepConversation({ conversationId, runId, platformId, userId, projectId, modelName, agentId, flowRunId })
+        ?? await insertFlowStepConversation({ conversationId, runId, platformId, userId, projectId, modelName, agentId, flowRunId, waitpointId })
     const ownedByThisRun = conversation.platformId === platformId && conversation.userId === userId && conversation.source === AgentRunSource.FLOW_STEP
     if (!ownedByThisRun) {
         throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That conversation belongs to someone else' } })
@@ -284,7 +285,7 @@ export function recordAgentFlowToolUse({ run, conversationId, flow, tool, outcom
     })
 }
 
-async function insertFlowStepConversation({ conversationId, runId, platformId, userId, projectId, modelName, agentId, flowRunId }: {
+async function insertFlowStepConversation({ conversationId, runId, platformId, userId, projectId, modelName, agentId, flowRunId, waitpointId }: {
     conversationId: string
     runId?: string
     platformId: string
@@ -293,6 +294,7 @@ async function insertFlowStepConversation({ conversationId, runId, platformId, u
     modelName?: string | null
     agentId?: string
     flowRunId?: string
+    waitpointId?: string
 }): Promise<AgentConversation> {
     await agentHelpers.conversationRepo().createQueryBuilder().insert().values({
         id: conversationId,
@@ -302,6 +304,7 @@ async function insertFlowStepConversation({ conversationId, runId, platformId, u
         source: AgentRunSource.FLOW_STEP,
         agentId: agentId ?? null,
         flowRunId: flowRunId ?? null,
+        waitpointId: waitpointId ?? null,
         title: null,
         modelName: modelName ?? null,
         messages: [],

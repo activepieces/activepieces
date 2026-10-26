@@ -1,10 +1,12 @@
-import { apId, AgentConversationStatus } from '@activepieces/shared'
+import { apId, AgentConversationStatus, AgentRunSource, FlowRunStatus, FlowVersionState } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
+import { WaitpointStatus } from '../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../helpers/db'
-import { createTestContext } from '../../../helpers/test-context'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../helpers/mocks'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -189,4 +191,42 @@ describe('CHAT_STALE_SWEEP proactive recovery', () => {
         const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: evalId })
         expect(row.status).toBe(AgentConversationStatus.STREAMING)
     })
+
+    it('releases the paused flow of a flow-step run whose worker died, so the flow does not wait out the step timeout', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const abandoned = await pausedFlowStepRun({ ctx, lastHeartbeat: new Date(Date.now() - 5 * 60 * 1_000) })
+        const running = await pausedFlowStepRun({ ctx, lastHeartbeat: new Date(Date.now() - 30 * 1_000) })
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        expect(await db.findOneBy('waitpoint', { id: abandoned.waitpointId })).toBeNull()
+        expect(await db.findOneBy('waitpoint', { id: running.waitpointId })).not.toBeNull()
+    })
 })
+
+async function pausedFlowStepRun({ ctx, lastHeartbeat }: { ctx: TestContext, lastHeartbeat: Date }): Promise<{ waitpointId: string }> {
+    const flow = createMockFlow({ projectId: ctx.project.id })
+    await db.save('flow', flow)
+    const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.LOCKED })
+    await db.save('flow_version', flowVersion)
+    const flowRun = createMockFlowRun({ projectId: ctx.project.id, flowId: flow.id, flowVersionId: flowVersion.id, status: FlowRunStatus.PAUSED })
+    await db.save('flow_run', flowRun)
+    const waitpointId = apId()
+    await db.save('waitpoint', { id: waitpointId, flowRunId: flowRun.id, projectId: ctx.project.id, stepName: 'agent', type: 'WEBHOOK', status: WaitpointStatus.PENDING, httpRequestId: null, workerHandlerId: null })
+    const conversationId = apId()
+    await db.save('agent_conversation', {
+        id: conversationId,
+        platformId: ctx.platform.id,
+        projectId: ctx.project.id,
+        userId: ctx.user.id,
+        source: AgentRunSource.FLOW_STEP,
+        flowRunId: flowRun.id,
+        waitpointId,
+        activeRunId: apId(),
+        status: AgentConversationStatus.STREAMING,
+        messages: [],
+    })
+    await db.update('agent_conversation', conversationId, { updated: lastHeartbeat.toISOString() })
+    return { waitpointId }
+}
