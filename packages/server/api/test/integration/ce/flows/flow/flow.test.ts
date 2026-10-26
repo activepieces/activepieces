@@ -18,6 +18,7 @@ import {
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowService } from '../../../../../src/app/flows/flow/flow.service'
 import { generateMockToken } from '../../../../helpers/auth'
 import { db } from '../../../../helpers/db'
 import {
@@ -420,6 +421,28 @@ describe('Flow API', () => {
     })
 
     describe('List Flows endpoint', () => {
+        it('Leaves out excludedFlowIds before applying the limit', async () => {
+            const ctx = await createTestContext(app!)
+
+            const excludedFlow = createMockFlow({ projectId: ctx.project.id })
+            const keptFlow = createMockFlow({ projectId: ctx.project.id })
+            await db.save('flow', [excludedFlow, keptFlow])
+            await db.save('flow_version', [
+                createMockFlowVersion({ flowId: excludedFlow.id, connectionIds: ['shared-connection'] }),
+                createMockFlowVersion({ flowId: keptFlow.id, connectionIds: ['shared-connection'] }),
+            ])
+
+            const page = await flowService(app!.log).list({
+                projectIds: [ctx.project.id],
+                cursorRequest: null,
+                limit: 1,
+                connectionExternalIds: ['shared-connection'],
+                excludedFlowIds: [excludedFlow.id],
+            })
+
+            expect(page.data.map((flow) => flow.id)).toEqual([keptFlow.id])
+        })
+
         it('Filters connections on the published version when versionState is LOCKED', async () => {
             const ctx = await createTestContext(app!)
 

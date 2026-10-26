@@ -7,6 +7,7 @@ export type PublishRoute = 'PUBLISH_NOW' | 'NEEDS_APPROVAL'
 export type PublishHooks = {
     routePublish(params: RoutePublishParams): Promise<PublishRoute>
     submitForApproval(params: SubmitForApprovalParams): Promise<void>
+    countPendingApprovalsUsingConnection(params: CountPendingApprovalsUsingConnectionParams): Promise<number>
 }
 
 export const publishHooksFactory = hooksFactory.create<PublishHooks>(_log => ({
@@ -15,6 +16,9 @@ export const publishHooksFactory = hooksFactory.create<PublishHooks>(_log => ({
     },
     async submitForApproval(_params: SubmitForApprovalParams): Promise<void> {
         return
+    },
+    async countPendingApprovalsUsingConnection(_params: CountPendingApprovalsUsingConnectionParams): Promise<number> {
+        return 0
     },
 }))
 
@@ -41,6 +45,11 @@ export type SubmitForApprovalParams = {
     projectId: ProjectId
     platformId: PlatformId
     requestedStatus: FlowStatus
+}
+
+export type CountPendingApprovalsUsingConnectionParams = {
+    projectId: ProjectId
+    externalId: string
 }
 
 export type FlowPublishHooks = {
