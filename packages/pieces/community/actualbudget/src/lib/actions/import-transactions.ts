@@ -1,37 +1,124 @@
-import { actualBudgetAuth } from '../..';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import * as api from '@actual-app/api';
-import { initializeAndDownloadBudget } from '../common/common';
+import { actualBudgetAuth } from '../common/auth';
+import { ActualBudgetError, withBudget } from '../common/client';
+import {
+  ImportResult,
+  isRecord,
+  failIfNothingImported,
+  flushWrites,
+  requireAccount,
+  requireDate,
+  requireId,
+} from '../common/helpers';
+import { actualOutputSchemas } from '../common/output-schemas';
+
+const MAX_ROWS = 5000;
+
+export function validateTransactionRows(
+  rows: unknown
+): Record<string, unknown>[] {
+  if (!Array.isArray(rows)) {
+    throw new ActualBudgetError(
+      'Transactions must be a JSON array of transaction objects.',
+      'invalid-input'
+    );
+  }
+  if (rows.length === 0) {
+    throw new ActualBudgetError(
+      'Transactions is empty: pass at least one transaction.',
+      'invalid-input'
+    );
+  }
+  if (rows.length > MAX_ROWS) {
+    throw new ActualBudgetError(
+      `Transactions has ${rows.length} rows; import at most ${MAX_ROWS} per step.`,
+      'invalid-input'
+    );
+  }
+  return rows.map((row, index) => {
+    if (!isRecord(row)) {
+      throw new ActualBudgetError(
+        `Transaction #${index + 1} must be an object.`,
+        'invalid-input'
+      );
+    }
+    requireDate({
+      value: row['date'],
+      field: `Transaction #${index + 1} date`,
+    });
+    const amount = row['amount'];
+    if (
+      amount !== undefined &&
+      amount !== null &&
+      !Number.isSafeInteger(amount)
+    ) {
+      throw new ActualBudgetError(
+        `Transaction #${
+          index + 1
+        } amount must be an integer in cents (e.g. -1250 for -12.50), got ${JSON.stringify(
+          amount
+        )}.`,
+        'invalid-input'
+      );
+    }
+    return row;
+  });
+}
 
 export const importTransactions = createAction({
   auth: actualBudgetAuth,
   name: 'import_transactions',
   classification: 'WRITE',
   displayName: 'Import Transactions',
-  description: 'Import Transactions',
+  description:
+    'Imports many transactions into one account. Amounts are integer cents (-1250 = -12.50). Rows whose imported_id was already imported are skipped.',
   audience: 'both',
-  aiMetadata: { description: 'Bulk-imports an array of transaction objects into a specified account in Actual Budget. Use it to add many transactions at once rather than one at a time; requires the target account ID and a JSON array of transactions (errors if not an array). Not idempotent — each call appends the transactions unless individual entries carry an Imported ID, which Actual uses to deduplicate against prior imports.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Bulk-imports a JSON array of transactions into one account (account ID from List Accounts). Each row: date (YYYY-MM-DD, required), amount (INTEGER cents, negative = expense, e.g. -1250 for -12.50), optional payee_name, category (ID), notes, imported_id, cleared. Actual runs rules and skips rows whose imported_id was imported before, so set imported_id to make retries safe. Fails when no row is imported; partial row errors are returned in errors. Use Add Transaction for a single transaction.',
+    idempotent: false,
+  },
   props: {
     account_id: Property.ShortText({
       displayName: 'Account ID',
-      description: 'ID of the account you want to import a transaction to',
+      description:
+        'ID of the account to import into (from Get Accounts / List Accounts)',
       required: true,
     }),
     transactions: Property.Json({
-        displayName: 'Transactions',
-        description: 'A json array of the transaction object',
-        required: true,
-        defaultValue: [{"payee_name": "Kroger", "date": "2026-12-25", "amount": 1200 }]
-    })    
+      displayName: 'Transactions',
+      description:
+        'JSON array of transactions. date = YYYY-MM-DD, amount = integer cents (negative = expense, -1250 = -12.50). Optional: payee_name, category (ID), notes, imported_id, cleared.',
+      required: true,
+      defaultValue: [
+        {
+          payee_name: 'Kroger',
+          date: '2026-12-25',
+          amount: -1200,
+          imported_id: 'kroger-2026-12-25',
+        },
+      ],
+    }),
   },
-
-  async run({ auth, propsValue: { account_id, transactions } }) {
-    if (!Array.isArray(transactions)) {
-      throw new Error('Transactions must be a JSON array');
-    }
-    await initializeAndDownloadBudget(api, auth.props)
-    const res = await api.importTransactions(account_id, transactions);
-    await api.shutdown();
-    return res;
+  outputSchema: actualOutputSchemas.importResult,
+  async run({ auth, propsValue }) {
+    const accountId = requireId({
+      value: propsValue.account_id,
+      field: 'Account ID',
+    });
+    const rows = validateTransactionRows(propsValue.transactions);
+    return withBudget({
+      auth: auth.props,
+      fn: async (api) => {
+        await requireAccount({ api, id: accountId });
+        const result: ImportResult = await api.importTransactions(
+          accountId,
+          rows
+        );
+        failIfNothingImported(result);
+        await flushWrites(api);
+        return result;
+      },
+    });
   },
 });

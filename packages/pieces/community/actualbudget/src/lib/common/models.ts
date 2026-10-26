@@ -11,5 +11,9 @@ export interface Transaction {
   imported_id?: string;
   transfer_id?: string;
   cleared?: boolean;
+  subtransactions?: Array<{
+    amount: number;
+    category?: string;
+    notes?: string;
+  }>;
 }
-

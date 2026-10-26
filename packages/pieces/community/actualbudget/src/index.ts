@@ -1,58 +1,49 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
+import { PieceCategory, createPiece } from '@activepieces/pieces-framework';
+import { actualBudgetAuth } from './lib/common/auth';
 import { getBudget } from './lib/actions/get-budget';
 import { importTransaction } from './lib/actions/import-transaction';
 import { getCategories } from './lib/actions/get-categories';
 import { importTransactions } from './lib/actions/import-transactions';
 import { getAccounts } from './lib/actions/get-accounts';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { findPayees } from './lib/actions/find-payees';
+import { findTransactions } from './lib/actions/find-transactions';
+import { updateTransaction } from './lib/actions/update-transaction';
+import { deleteTransaction } from './lib/actions/delete-transaction';
+import { setBudgetAmount } from './lib/actions/set-budget-amount';
+import { runBankSync } from './lib/actions/run-bank-sync';
+import { getBudgetMonth } from './lib/actions/ai/get-budget-month';
+import { addTransaction } from './lib/actions/ai/add-transaction';
+import { listAccounts } from './lib/actions/ai/list-accounts';
+import { listCategories } from './lib/actions/ai/list-categories';
+import { newTransaction } from './lib/triggers/new-transaction';
 
-export const actualBudgetAuth = PieceAuth.CustomAuth({
-  description: 'Enter authentication details',
-  props: {
-    server_url: Property.ShortText({
-      displayName: 'Server URL',
-      description: 'This is the URL of your running server',
-      required: true,
-    }),
-    password: PieceAuth.SecretText({
-      displayName: 'Password',
-      description: 'This is the password you use to log into the server',
-      required: true,
-    }),
-    sync_id: PieceAuth.SecretText({
-      displayName: 'Sync ID',
-      description:
-        'This is the ID from Settings → Show advanced settings → Sync ID',
-      required: true,
-    }),
-    encryption_password: PieceAuth.SecretText({
-      displayName: 'End-to-end encryption password',
-      description: 'if you have end-to-end encryption enabled',
-      required: false,
-    }),
-  },
-  required: true,
-});
+export { actualBudgetAuth };
 
 export const actualbudget = createPiece({
   displayName: 'Actual Budget',
-  description: 'Personal finance app',
+  description:
+    'Open-source personal finance app with envelope budgeting (self-hosted)',
   auth: actualBudgetAuth,
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/actualbudget.png',
   categories: [PieceCategory.ACCOUNTING],
-  authors: ['hugh-codes'],
-
+  authors: ['hugh-codes', 'OdaiAhmed99'],
   actions: [
     getBudget,
     importTransaction,
     importTransactions,
     getCategories,
     getAccounts,
+    getBudgetMonth,
+    addTransaction,
+    listAccounts,
+    listCategories,
+    findPayees,
+    findTransactions,
+    updateTransaction,
+    deleteTransaction,
+    setBudgetAmount,
+    runBankSync,
   ],
-  triggers: [],
+  triggers: [newTransaction],
 });
