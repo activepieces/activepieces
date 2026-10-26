@@ -154,16 +154,16 @@ async function validate({ apiKey, input }: { apiKey: string; input: PostInput })
   return sendItApi.request({ apiKey, method: HttpMethod.POST, path: '/validate', operation: 'validate content', body });
 }
 
-async function listAccounts({ apiKey, limit }: { apiKey: string; limit?: number }): Promise<{ accounts: SendItRecord[]; count: number }> {
+async function listAccounts({ apiKey, limit }: { apiKey: string; limit?: number }): Promise<SendItRecord & { accounts: SendItRecord[]; count: number }> {
   const response = await sendItApi.request({ apiKey, method: HttpMethod.GET, path: '/accounts', operation: 'list accounts', query: { limit } });
   const accounts = readList({ body: response, key: 'accounts' });
-  return { accounts, count: accounts.length };
+  return { ...(isRecord(response) ? response : {}), accounts, count: accounts.length };
 }
 
-async function listScheduled({ apiKey, platform }: { apiKey: string; platform?: string }): Promise<{ posts: SendItRecord[]; count: number }> {
+async function listScheduled({ apiKey, platform }: { apiKey: string; platform?: string }): Promise<SendItRecord & { posts: SendItRecord[]; count: number }> {
   const response = await sendItApi.request({ apiKey, method: HttpMethod.GET, path: '/scheduled', operation: 'list scheduled posts', query: { platform: optionalText(platform) } });
   const posts = readList({ body: response, key: 'posts' });
-  return { posts, count: posts.length };
+  return { ...(isRecord(response) ? response : {}), posts, count: posts.length };
 }
 
 async function getScheduled({ apiKey, scheduleId }: { apiKey: string; scheduleId: unknown }): Promise<SendItRecord> {
@@ -206,10 +206,10 @@ async function analytics({ apiKey, platform, startDate, endDate, limit }: { apiK
   return { ...(isRecord(response) ? response : {}), platform: value, posts, count: posts.length };
 }
 
-async function listDeadLetter({ apiKey, status, limit }: { apiKey: string; status?: string; limit?: number }): Promise<{ posts: SendItRecord[]; count: number }> {
+async function listDeadLetter({ apiKey, status, limit }: { apiKey: string; status?: string; limit?: number }): Promise<SendItRecord & { posts: SendItRecord[]; count: number }> {
   const response = await sendItApi.request({ apiKey, method: HttpMethod.GET, path: '/dead-letter', operation: 'list failed posts', query: { status: optionalText(status), limit } });
   const posts = readList({ body: response, key: 'posts' });
-  return { posts, count: posts.length };
+  return { ...(isRecord(response) ? response : {}), posts, count: posts.length };
 }
 
 function dateOnly({ value, label }: { value: unknown; label: string }): string | undefined {

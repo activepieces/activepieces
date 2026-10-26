@@ -84,8 +84,14 @@ describe('requests', () => {
 
   test('list accounts passes limit and counts', async () => {
     const seen = stubFetch(replies([{ body: { success: true, accounts: [{ id: 'acc_1' }] } }]));
-    expect(await sendItRequests.listAccounts({ apiKey: API_KEY, limit: 5 })).toEqual({ accounts: [{ id: 'acc_1' }], count: 1 });
+    expect(await sendItRequests.listAccounts({ apiKey: API_KEY, limit: 5 })).toEqual({ success: true, accounts: [{ id: 'acc_1' }], count: 1 });
     expect(seen[0].query.get('limit')).toBe('5');
+  });
+
+  test('list scheduled keeps the SendIt response fields and adds count', async () => {
+    const seen = stubFetch(replies([{ body: { success: true, total: 1, posts: [{ id: 'sched_1' }] } }]));
+    expect(await sendItRequests.listScheduled({ apiKey: API_KEY, platform: 'x' })).toEqual({ success: true, total: 1, posts: [{ id: 'sched_1' }], count: 1 });
+    expect(seen[0].query.get('platform')).toBe('x');
   });
 
   test('analytics requires a platform and lowercases it', async () => {
@@ -98,7 +104,7 @@ describe('requests', () => {
   test('requirements and dead letter', async () => {
     const seen = stubFetch(replies([{ body: { success: true, platform: 'x', textLimit: 280 } }, { body: { success: true, posts: [] } }]));
     expect(await sendItRequests.requirements({ apiKey: API_KEY, platform: 'X' })).toMatchObject({ textLimit: 280 });
-    expect(await sendItRequests.listDeadLetter({ apiKey: API_KEY, limit: 10 })).toEqual({ posts: [], count: 0 });
+    expect(await sendItRequests.listDeadLetter({ apiKey: API_KEY, limit: 10 })).toEqual({ success: true, posts: [], count: 0 });
     expect(seen[0].query.get('platform')).toBe('x');
     expect(seen[1].query.get('limit')).toBe('10');
   });

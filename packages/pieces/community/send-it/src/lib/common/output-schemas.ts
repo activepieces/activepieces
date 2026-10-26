@@ -126,6 +126,7 @@ function validationResult(): OutputSchema {
 function accountList(): OutputSchema {
   return {
     fields: [
+      { key: 'success', label: 'Success', format: 'boolean' },
       { key: 'accounts', label: 'Accounts', listItems: accountFields(), labelKey: 'username' },
       { key: 'count', label: 'Count (this response)', format: 'number' },
     ],
@@ -135,6 +136,7 @@ function accountList(): OutputSchema {
 function scheduledList(): OutputSchema {
   return {
     fields: [
+      { key: 'success', label: 'Success', format: 'boolean' },
       { key: 'posts', label: 'Scheduled Posts', listItems: scheduledPostFields(), labelKey: 'id' },
       { key: 'count', label: 'Count (this response)', format: 'number' },
     ],
@@ -179,6 +181,7 @@ function analytics(): OutputSchema {
 function deadLetterList(): OutputSchema {
   return {
     fields: [
+      { key: 'success', label: 'Success', format: 'boolean' },
       {
         key: 'posts',
         label: 'Failed Posts',
