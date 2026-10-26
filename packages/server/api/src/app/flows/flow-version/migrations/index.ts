@@ -22,6 +22,7 @@ import { migrateV24OpenaiPieceVersion } from './migrate-v24-openai-piece-version
 import { migrateV25HttpPieceVersion } from './migrate-v25-http-piece-version'
 import { migrateV26AiPieceCostBilling } from './migrate-v26-ai-piece-cost-billing'
 import { migrateV27OracleDatabasePieceVersion } from './migrate-v27-oracle-database-piece-version'
+import { migrateV28AiPieceModelPicker } from './migrate-v28-ai-piece-model-picker'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
 import { migrateHttpToWebhookV5 } from './migrate-v5-http-to-webhook'
@@ -70,6 +71,7 @@ const migrations: Migration[] = [
     migrateV25HttpPieceVersion,
     migrateV26AiPieceCostBilling,
     migrateV27OracleDatabasePieceVersion,
+    migrateV28AiPieceModelPicker,
 ] as const
 
 export const flowMigrations = {
