@@ -59,7 +59,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async list({ platformId, userId, projectId, search, sort, cursor, limit }: ListParams): Promise<SeekPage<AgentSummary>> {
+    async list({ platformId, userId, projectId, search, sort, cursor, limit, connectionExternalIds }: ListParams): Promise<SeekPage<AgentSummary>> {
         const readableProjects = await resolveReadableProjects({ platformId, userId, projectId, log })
         const readableProjectIds = readableProjects.map((project) => project.id)
         if (readableProjectIds.length === 0) {
@@ -85,6 +85,13 @@ export const agentService = (log: FastifyBaseLogger) => ({
                 qb.where('LOWER(agent."displayName") LIKE :needle', { needle: `%${needle}%` })
                     .orWhere('LOWER(COALESCE(agent."description", \'\')) LIKE :needle', { needle: `%${needle}%` })
             }))
+        }
+        if (!isNil(connectionExternalIds) && connectionExternalIds.length > 0) {
+            const connectionAuths = connectionExternalIds.flatMap((externalId) => [externalId, connectionTemplate.wrapExternalId(externalId) ?? externalId])
+            query.andWhere(`EXISTS (
+                SELECT 1 FROM jsonb_array_elements((agent."draft"->'tools') || COALESCE(agent."published"->'tools', '[]'::jsonb)) AS tool
+                WHERE tool->'pieceMetadata'->'predefinedInput'->>'auth' = ANY(:connectionAuths)
+            )`, { connectionAuths })
         }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
@@ -756,6 +763,7 @@ type ListParams = {
     sort?: AgentListSort
     cursor?: Cursor
     limit?: number
+    connectionExternalIds?: string[]
 }
 
 type MoveParams = {

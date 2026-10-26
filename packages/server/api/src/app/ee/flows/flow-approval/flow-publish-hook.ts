@@ -1,6 +1,6 @@
 import { Permission, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { CountPendingApprovalsUsingConnectionParams, PublishHooks, RoutePublishParams, SubmitForApprovalParams } from '../../../flows/flow/flow-publish-hooks'
+import { PublishHooks, RoutePublishParams, SubmitForApprovalParams } from '../../../flows/flow/flow-publish-hooks'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { getPrincipalRoleOrThrow } from '../../authentication/project-role/rbac-middleware'
@@ -24,9 +24,6 @@ export const eeFlowPublishHook = (log: FastifyBaseLogger): PublishHooks => ({
     },
     async submitForApproval({ flow, flowVersionToPublish, userId, projectId, platformId, requestedStatus }: SubmitForApprovalParams) {
         await flowApprovalRequestService(log).submitForApproval({ flow, flowVersionToPublish, userId, projectId, platformId, requestedStatus })
-    },
-    async countPendingApprovalsUsingConnection({ projectId, externalId }: CountPendingApprovalsUsingConnectionParams) {
-        return flowApprovalRequestService(log).countPendingUsingConnection({ projectId, externalId })
     },
 })
 

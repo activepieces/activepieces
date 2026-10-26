@@ -40,16 +40,6 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
         }))
     },
 
-    async countPublishedFlowsReferencingConnection({ projectId, externalId }: CountPublishedFlowsParams): Promise<number> {
-        return flowVersionRepo()
-            .createQueryBuilder('flow_version')
-            .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
-            .where('flow."projectId" = :projectId', { projectId })
-            .andWhere('flow_version.id = flow."publishedVersionId"')
-            .andWhere('flow_version."connectionIds" && :externalIds', { externalIds: [externalId] })
-            .getCount()
-    },
-
     async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
         switch (connection.value.type) {
             case AppConnectionType.PLATFORM_OAUTH2:
@@ -459,9 +449,4 @@ type ReplaceConnectionInDraftParams = {
 
 type ReplaceConnectionInPublishedVersionParams = ReplaceConnectionInDraftParams & {
     flow: PopulatedFlow
-}
-
-type CountPublishedFlowsParams = {
-    projectId: ProjectId
-    externalId: string
 }
