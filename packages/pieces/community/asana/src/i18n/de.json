@@ -10,7 +10,7 @@
   "Task Description": "Aufgabenbeschreibung",
   "Due Date": "Fälligkeitsdatum",
   "Tags": "Tags",
-  "Assignee": "Assignee",
+  "Assignee": "Zuständige Person",
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
@@ -849,5 +849,13 @@
   "Gid of the task, project or project brief to attach to. Obtain a task gid from List Project Tasks or Get Task, a project gid from List Projects.": "Gid of the task, project or project brief to attach to. Obtain a task gid from List Project Tasks or Get Task, a project gid from List Projects.",
   "The file to upload (up to 100 MB). Leave empty when attaching an External URL.": "The file to upload (up to 100 MB). Leave empty when attaching an External URL.",
   "An http(s) link to attach instead of a file. Requires Name. Leave empty when uploading a File.": "An http(s) link to attach instead of a file. Requires Name. Leave empty when uploading a File.",
-  "Display name of the attachment. Required with External URL; for a File it replaces the file name.": "Display name of the attachment. Required with External URL; for a File it replaces the file name."
+  "Display name of the attachment. Required with External URL; for a File it replaces the file name.": "Display name of the attachment. Required with External URL; for a File it replaces the file name.",
+  "Where": "Wo",
+  "Details": "Details",
+  "Workspace the task is created in.": "Arbeitsbereich, in dem die Aufgabe erstellt wird.",
+  "Project the task is added to. Archived projects are not listed.": "Projekt, dem die Aufgabe hinzugefügt wird. Archivierte Projekte werden nicht angezeigt.",
+  "Plain text shown in the task's description.": "Klartext, der in der Beschreibung der Aufgabe angezeigt wird.",
+  "Day the task is due. For a due time too, use 2026-12-31T14:00:00Z.": "Tag, an dem die Aufgabe fällig ist. Für eine Uhrzeit z. B. 2026-12-31T14:00:00Z angeben.",
+  "Pick tags, or type the names of existing tags.": "Tags auswählen oder die Namen vorhandener Tags eingeben.",
+  "Leave empty to keep the task unassigned.": "Leer lassen, damit die Aufgabe niemandem zugewiesen wird."
 }
