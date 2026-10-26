@@ -21,7 +21,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
-import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
+import { ReplaceConnectionForProjectDialog } from '@/app/connections/replace-connection-for-project-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import {
@@ -397,7 +397,7 @@ function AppConnectionsPage() {
         key="replace"
         hasPermission={userHasPermissionToWriteAppConnection}
       >
-        <ReplaceConnectionsDialog
+        <ReplaceConnectionForProjectDialog
           projectId={projectId}
           onConnectionMerged={() => {
             setRefresh(refresh + 1);
@@ -412,7 +412,7 @@ function AppConnectionsPage() {
           >
             {t('Replace')}
           </AnimatedIconButton>
-        </ReplaceConnectionsDialog>
+        </ReplaceConnectionForProjectDialog>
       </PermissionNeededTooltip>,
       <PermissionNeededTooltip
         key="new"
