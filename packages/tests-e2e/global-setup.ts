@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { chromium, FullConfig, Page } from '@playwright/test';
 import { AuthenticationPage } from './pages/authentication.page';
 import { AutomationsPage } from './pages/automations.page';
@@ -34,6 +36,10 @@ async function globalSetup(config: FullConfig) {
     }
 
     await new AutomationsPage(page).open();
+
+    if (process.env.E2E_PIECES_MANIFEST) {
+      await installPieceArchives(page, process.env.E2E_PIECES_MANIFEST);
+    }
 
     if (process.env.E2E_INSTANCE_URL) {
       await deleteAllFlows(page);
@@ -77,5 +83,30 @@ async function deleteAllFlows(page: Page) {
         throw new Error(`Deleting flow ${flow.id} failed with ${deleteResponse.status()}`);
       }
     }
+  }
+}
+
+async function installPieceArchives(page: Page, manifestPath: string) {
+  const token = await page.evaluate(() => localStorage.getItem('token'));
+  const pieces: { name: string; version: string; filename: string }[] = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+  for (const piece of pieces) {
+    const response = await page.request.post('/api/v1/pieces', {
+      headers: { Authorization: `Bearer ${token}` },
+      multipart: {
+        packageType: 'ARCHIVE',
+        scope: 'PLATFORM',
+        pieceName: piece.name,
+        pieceVersion: piece.version,
+        pieceArchive: {
+          name: piece.filename,
+          mimeType: 'application/gzip',
+          buffer: readFileSync(path.join(path.dirname(manifestPath), piece.filename)),
+        },
+      },
+    });
+    if (!response.ok()) {
+      throw new Error(`Installing ${piece.name}@${piece.version} failed with ${response.status()}: ${await response.text()}`);
+    }
+    console.log(`✓ Installed ${piece.name}@${piece.version} from its archive`);
   }
 }

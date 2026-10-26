@@ -26,10 +26,58 @@ permissions:
   packages: read
 
 jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the image from this commit
+        if: ${{ !inputs.image }}
+        run: |
+          docker build -t activepieces-benchmark:local .
+          docker save activepieces-benchmark:local | gzip -1 > image.tar.gz
+
+      - uses: actions/upload-artifact@v6
+        if: ${{ !inputs.image }}
+        with:
+          name: e2e-image
+          path: image.tar.gz
+          compression-level: 0
+          retention-days: 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      # The stack runs with the piece sync off, so the suite installs the pieces it uses
+      # from archives of this commit's source instead of from the Cloud registry.
+      - name: Pack the pieces the suite uses
+        run: |
+          npx turbo run build --filter=@activepieces/piece-webhook
+          CHANGED_PIECES=packages/pieces/core/webhook npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/prepare-pieces-for-publish.ts
+          mkdir e2e-pieces
+          cd packages/pieces/core/webhook/dist
+          npm pack --json --pack-destination "$GITHUB_WORKSPACE/e2e-pieces" > "$GITHUB_WORKSPACE/e2e-pieces/pieces.json"
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: e2e-pieces
+          path: e2e-pieces/
+          retention-days: 1
+
   e2e:
     name: e2e (${{ matrix.name }})
-    runs-on: depot-ubuntu-24.04
-    timeout-minutes: 45
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -67,19 +115,28 @@ jobs:
       APP_REPLICAS: 1
       WORKER_REPLICAS: ${{ matrix.workerReplicas }}
       AP_EXECUTION_MODE: ${{ matrix.executionMode }}
+      AP_PIECES_SYNC_MODE: NONE
+      AP_LOG_LEVEL: info
       AP_FILE_STORAGE_LOCATION: ${{ matrix.fileStorage }}
       AP_S3_BUCKET: ${{ matrix.fileStorage == 'S3' && 'activepieces' || '' }}
       AP_S3_ACCESS_KEY_ID: ${{ matrix.fileStorage == 'S3' && 'minioadmin' || '' }}
       AP_S3_SECRET_ACCESS_KEY: ${{ matrix.fileStorage == 'S3' && 'minioadmin' || '' }}
-      AP_S3_ENDPOINT: ${{ matrix.fileStorage == 'S3' && 'http://minio:9000' || '' }}
+      # MinIO's static IP: signed URLs carry this host, and the process sandbox cannot resolve docker names.
+      AP_S3_ENDPOINT: ${{ matrix.fileStorage == 'S3' && 'http://172.30.0.11:9000' || '' }}
       AP_S3_REGION: ${{ matrix.fileStorage == 'S3' && 'us-east-1' || '' }}
       AP_S3_USE_SIGNED_URLS: ${{ matrix.fileStorage == 'S3' }}
       CI: true
       # The stack's nginx static IP, which is also AP_FRONTEND_URL, so webhook URLs shown in the UI work from the runner.
       E2E_INSTANCE_URL: http://172.30.0.10
+      E2E_PIECES_MANIFEST: ${{ github.workspace }}/e2e-pieces/pieces.json
       PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/packages/tests-e2e/test-results/results.json
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: e2e-pieces
+          path: e2e-pieces
 
       - uses: docker/login-action@v4
         if: inputs.image
@@ -96,9 +153,14 @@ jobs:
           docker pull "$IMAGE"
           docker tag "$IMAGE" activepieces-benchmark:local
 
-      - name: Build the image from this commit
+      - uses: actions/download-artifact@v7
         if: ${{ !inputs.image }}
-        run: docker build -t activepieces-benchmark:local .
+        with:
+          name: e2e-image
+
+      - name: Load the image built from this commit
+        if: ${{ !inputs.image }}
+        run: gunzip -c image.tar.gz | docker load
 
       - name: Start stack
         run: docker compose up -d
@@ -130,9 +192,10 @@ jobs:
         working-directory: packages/tests-e2e
         run: npx playwright install --with-deps chromium
 
+      # Piece isolation exercises the Cloud piece sync, which this stack turns off.
       - name: Run E2E tests
         working-directory: packages/tests-e2e
-        run: npx playwright test --config=playwright.config.ts --reporter=github,json
+        run: npx playwright test --config=playwright.config.ts --reporter=github,json --grep-invert "Piece isolation"
 
       - name: Summarize results
         if: always()
