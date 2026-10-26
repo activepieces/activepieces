@@ -20,6 +20,7 @@ on:
       - .github/workflows/e2e-matrix.yml
       - benchmark/docker-compose.yml
       - benchmark/docker-compose.minio.yml
+      - packages/tests-e2e/**
 
 permissions:
   contents: read
