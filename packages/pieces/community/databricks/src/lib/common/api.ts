@@ -379,7 +379,7 @@ async function fetchRemainingChunks({
   statementId: string;
   first?: DatabricksResultChunk;
 }): Promise<(string | null)[][]> {
-  const rows = [...(first?.data_array ?? [])];
+  const chunks = [first?.data_array ?? []];
   let nextChunk = first?.next_chunk_index;
   while (nextChunk !== undefined) {
     const chunk = await databricksClient.request<DatabricksResultChunk>({
@@ -387,10 +387,10 @@ async function fetchRemainingChunks({
       method: HttpMethod.GET,
       path: `/api/2.0/sql/statements/${statementId}/result/chunks/${nextChunk}`,
     });
-    rows.push(...(chunk.data_array ?? []));
+    chunks.push(chunk.data_array ?? []);
     nextChunk = chunk.next_chunk_index;
   }
-  return rows;
+  return chunks.flat();
 }
 
 async function waitForGenieMessage({

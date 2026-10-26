@@ -94,7 +94,8 @@ async function paginate<K extends string, T>({
   itemsKey,
   maxItems = MAX_ITEMS,
 }: PaginateParams<K> & { auth: DatabricksAuthValue }): Promise<T[]> {
-  const items: T[] = [];
+  const pages: T[][] = [];
+  let itemCount = 0;
   let pageToken: string | undefined;
   do {
     const page = await request<DatabricksPage<K, T>>({
@@ -103,10 +104,12 @@ async function paginate<K extends string, T>({
       path,
       query: { ...query, ...(pageToken ? { page_token: pageToken } : {}) },
     });
-    items.push(...(page[itemsKey] ?? []));
+    const pageItems = page[itemsKey] ?? [];
+    pages.push(pageItems);
+    itemCount += pageItems.length;
     pageToken = page.next_page_token;
-  } while (pageToken && items.length < maxItems);
-  return items.slice(0, maxItems);
+  } while (pageToken && itemCount < maxItems);
+  return pages.flat().slice(0, maxItems);
 }
 
 export const databricksClient = {
