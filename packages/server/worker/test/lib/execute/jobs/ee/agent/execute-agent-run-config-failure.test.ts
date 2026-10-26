@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { AgentEvent, AgentEventType, AgentRunSource, AI_PROVIDER_ENTITY_TYPES, EngineResponseStatus, ExecuteAgentRunJobData, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentRunSource, AI_PROVIDER_ENTITY_TYPES, EngineResponseStatus, ExecuteAgentRunJobData, LATEST_JOB_DATA_SCHEMA_VERSION, RpcTimeoutError, WorkerJobType } from '@activepieces/shared'
 import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { executeAgentRunJob } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
@@ -90,6 +90,24 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
         expect(result.status).toBe(EngineResponseStatus.OK)
         expect(resumed).toHaveLength(0)
         expect(events).toHaveLength(0)
+    })
+
+    it('leaves a flow step to its redelivered copy when the config response is lost to a socket drop, so the step is not failed as a provider outage', async () => {
+        const { ctx, resumed, events } = buildContext(new RpcTimeoutError({ method: 'getAgentConfig', timeoutMs: 60_000, cause: new Error('socket has been disconnected') }))
+
+        const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' }))
+
+        expect(result.status).toBe(EngineResponseStatus.OK)
+        expect(resumed).toHaveLength(0)
+        expect(events).toHaveLength(0)
+    })
+
+    it('still tells the chat client the turn failed when its config response is lost, so it is not left streaming', async () => {
+        const { ctx, events } = buildContext(new RpcTimeoutError({ method: 'getAgentConfig', timeoutMs: 60_000, cause: new Error('socket has been disconnected') }))
+
+        await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT })).catch(() => undefined)
+
+        expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
     })
 
     it('fails a flow step on a model our credits do not serve with the reason alone, as a user failure', async () => {
