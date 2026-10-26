@@ -1,10 +1,9 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 import { sendItAuth } from './auth';
+import { apiKeyOf } from './client';
+import { sendItRequests } from './requests';
 
-const API_BASE = 'https://sendit.infiniteappsai.com/api/v1';
-
-const options = [
+export const platformOptions = [
   { label: 'X (Twitter)', value: 'x' },
   { label: 'LinkedIn', value: 'linkedin' },
   { label: 'LinkedIn Page', value: 'linkedin-page' },
@@ -38,27 +37,6 @@ const options = [
   { label: 'Twitch', value: 'twitch' },
   { label: 'Product Hunt', value: 'producthunt' },
 ];
-export async function sendItRequest(
-  apiKey: string,
-  method: HttpMethod,
-  path: string,
-  body?: unknown,
-  params?: Record<string, string>
-) {
-  const response = await httpClient.sendRequest({
-    method,
-    url: `${API_BASE}${path}`,
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body,
-    queryParams: params,
-  });
-  return response.body;
-}
-
-export const BASE_URL = API_BASE;
 
 export const platformProperty = Property.StaticMultiSelectDropdown({
   displayName: 'Platforms',
@@ -66,35 +44,35 @@ export const platformProperty = Property.StaticMultiSelectDropdown({
     'Select one or more social media platforms to publish to. Make sure your accounts are connected in the SendIt dashboard under **Settings > Connected Accounts**.',
   required: true,
   options: {
-    options,
+    options: platformOptions,
   },
 });
 
 export const textProperty = Property.LongText({
   displayName: 'Post Text',
   description:
-    'The text content of your post. Character limits vary by platform (e.g. X/Twitter: 280, LinkedIn: 3000, Instagram: 2200).',
+    'The text content of your post. Character limits vary by platform (e.g. X: 280, or more with X Premium; LinkedIn: 3000; Instagram: 2200).',
   required: true,
 });
 
 export const mediaUrlProperty = Property.ShortText({
   displayName: 'Media URL',
   description:
-    'A publicly accessible URL to an image (JPG, PNG, GIF) or video (MP4). **Required for Instagram and TikTok.** Images must be under 10 MB and videos under 100 MB.',
+    'A public https:// URL to an image (JPG, PNG, GIF, WebP) or video (MP4, MOV). **Required for Instagram, Pinterest, TikTok and YouTube.** Images must be under 10 MB and videos under 100 MB.',
   required: false,
 });
 
 export const mediaUrlsProperty = Property.Array({
   displayName: 'Media URLs (Carousel)',
   description:
-    'Add multiple publicly accessible image URLs to create a carousel post. Supported on Instagram and Threads. Add one URL per item.',
+    'Add multiple public https:// image URLs to create a carousel post. Supported on Instagram and Threads. Add one URL per item.',
   required: false,
 });
 
 export const mediaTypeProperty = Property.StaticDropdown({
   displayName: 'Media Type',
   description:
-    'Leave as **Auto-detect** unless SendIt misidentifies your media. Choose **Image** or **Video** to force a specific type.',
+    'Leave as **Auto-detect** unless SendIt misidentifies your media. Choose **Image** or **Video** to force a specific type. Only sent when media is attached.',
   required: false,
   defaultValue: 'auto',
   options: {
@@ -104,6 +82,31 @@ export const mediaTypeProperty = Property.StaticDropdown({
       { label: 'Video', value: 'video' },
     ],
   },
+});
+
+export const titleProperty = Property.ShortText({
+  displayName: 'Title',
+  description: 'Optional title, used by platforms that support one (e.g. YouTube, Pinterest, Reddit-style communities).',
+  required: false,
+});
+
+export const firstCommentProperty = Property.LongText({
+  displayName: 'First Comment',
+  description: 'Optional comment SendIt posts right after the post on platforms that support it (e.g. Instagram, LinkedIn).',
+  required: false,
+});
+
+export const platformSettingsProperty = Property.Json({
+  displayName: 'Platform Settings',
+  description: 'Optional advanced settings keyed by platform, e.g. `{"pinterest": {"boardId": "123"}}`. Leave empty for defaults.',
+  required: false,
+});
+
+export const idempotencyKeyProperty = Property.ShortText({
+  displayName: 'Idempotency Key',
+  description:
+    'Optional value for the Idempotency-Key header. Leave empty to use one generated from this flow run and step. Note: in testing SendIt did not reject repeated schedule requests with the same key.',
+  required: false,
 });
 
 export const scheduleIdProperty = Property.Dropdown({
@@ -122,57 +125,25 @@ export const scheduleIdProperty = Property.Dropdown({
       };
     }
     try {
-      const response = (await sendItRequest(
-        auth.secret_text,
-        HttpMethod.GET,
-        '/scheduled'
-      )) as Record<string, unknown>;
-
-      const posts = (response['posts'] ??
-        response['data'] ??
-        response) as Record<string, unknown>[];
-
-      if (!Array.isArray(posts) || posts.length === 0) {
+      const { posts } = await sendItRequests.listScheduled({ apiKey: apiKeyOf(auth) });
+      if (posts.length === 0) {
         return {
           disabled: false,
           options: [],
           placeholder: 'No scheduled posts found. Create one first.',
         };
       }
-
       return {
         disabled: false,
         options: posts
-          .map((post) => {
-            const platforms = Array.isArray(post['platforms'])
-              ? (post['platforms'] as string[]).join(', ')
-              : String(post['platform'] ?? 'Unknown');
-            const content = post['content'] as
-              | Record<string, unknown>
-              | undefined;
-            const rawText = String(content?.['text'] ?? '');
-            const snippet =
-              rawText.length > 40
-                ? rawText.substring(0, 40) + '…'
-                : rawText || 'No text';
-            const scheduledTime = post['scheduledTime']
-              ? new Date(String(post['scheduledTime'])).toLocaleString()
-              : '';
-            const id = String(post['id'] ?? post['scheduleId'] ?? '');
-            return {
-              label: `${platforms} — ${snippet}${
-                scheduledTime ? ` (${scheduledTime})` : ''
-              }`,
-              value: id,
-            };
-          })
-          .filter((opt) => opt.value !== ''),
+          .map((post) => ({ label: scheduleLabel(post), value: sendItRequests.scheduleIdOf(post) ?? '' }))
+          .filter((option) => option.value !== ''),
       };
-    } catch {
+    } catch (error) {
       return {
         disabled: true,
         options: [],
-        placeholder: 'Failed to load scheduled posts. Check your API key.',
+        placeholder: `Failed to load scheduled posts: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300),
       };
     }
   },
@@ -191,6 +162,25 @@ export const platformFilterProperty = Property.StaticDropdown({
     'Only return scheduled posts for a specific platform. Leave empty to see all platforms.',
   required: false,
   options: {
-    options,
+    options: platformOptions,
   },
 });
+
+export const singlePlatformProperty = Property.StaticDropdown({
+  displayName: 'Platform',
+  required: true,
+  options: {
+    options: platformOptions,
+  },
+});
+
+export const sendItPlatformValues = platformOptions.map((option) => option.value);
+
+function scheduleLabel(post: Record<string, unknown>): string {
+  const platforms = Array.isArray(post['platforms']) ? post['platforms'].map(String).join(', ') : String(post['platform'] ?? 'Unknown');
+  const content = post['content'];
+  const rawText = content !== null && typeof content === 'object' && 'text' in content ? String(content.text ?? '') : '';
+  const snippet = rawText.length > 40 ? `${rawText.substring(0, 40)}…` : rawText || 'No text';
+  const time = typeof post['scheduledTime'] === 'string' && !Number.isNaN(Date.parse(post['scheduledTime'])) ? ` (${new Date(post['scheduledTime']).toISOString().replace('.000Z', 'Z')} UTC)` : '';
+  return `${platforms} — ${snippet}${time}`;
+}
