@@ -1,12 +1,12 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, isFallbackWorthy, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils, aiProviderSignal, aiUtils } from '@activepieces/server-utils'
+import { agentAiUtils, aiProviderSignal, aiUtils, modelCatalog } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentRunSource, aiProviderUtils, GetAgentConfigRequest, GetEnabledAiToolsResponse, GetProviderConfigResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { LanguageModel, ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentChatModel } from '.././agent-chat-model'
 import { agentCompaction } from '.././agent-compaction'
-import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from '.././agent-file-utils'
+import { buildAttachmentNote, buildUserContentWithFiles, dropImagesForTextOnlyModels, persistAgentAttachments } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
 import { agentModelTier, agentTierCandidates, AgentTierRun } from '.././agent-model-tier'
 import { agentMcp } from '.././mcp/agent-mcp'
@@ -242,7 +242,15 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
         const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
         const allMessages = [...previousMessages, newUserMessage]
-        const llmHistory = agentAiUtils.collapseStaleToolOutputs({ messages: allMessages })
+        const fastModelSeesMessages = conversation.source !== AgentRunSource.CHAT
+        const modelsSeeingMessages = isNil(tierRun)
+            ? [resolvedModelId, ...(fastModelSeesMessages ? [fastModelId] : [])].map((modelId) => ({ provider: providerConfig.provider, modelId }))
+            : [...tierRun.candidates, ...(fastModelSeesMessages && !isNil(tierRun.fast) ? [tierRun.fast] : [])].map((candidate) => ({ provider: candidate.config.provider, modelId: candidate.modelId }))
+        const catalog = await modelCatalog.load()
+        const llmHistory = dropImagesForTextOnlyModels({
+            messages: agentAiUtils.collapseStaleToolOutputs({ messages: allMessages }),
+            models: modelsSeeingMessages.map((model) => catalog.lookup(model)),
+        })
 
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedAgentMessage[]
         const uiMessagesWithUser: PersistedAgentMessage[] = [
