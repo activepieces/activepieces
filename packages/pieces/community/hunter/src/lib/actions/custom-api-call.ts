@@ -18,6 +18,11 @@ export const hunterCustomApiCallAction = createAction({
   propertyGroups: base.propertyGroups,
   classification: 'WRITE',
   audience: 'human',
+  aiMetadata: {
+    description:
+      'Sends a raw authenticated request to the Hunter API v2 (https://api.hunter.io/v2). Needs a method and a path relative to that base; absolute URLs on other hosts are refused. Returns the HTTP status, response headers and body.',
+    idempotent: false,
+  },
   async run({ auth, propsValue, files }) {
     const method = methodOf(propsValue['method']);
     const url = hunterUrlOf(urlOf(propsValue['url']));
