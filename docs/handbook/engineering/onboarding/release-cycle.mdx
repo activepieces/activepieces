@@ -12,9 +12,7 @@ Merge to main (Mon–Thu) ──→ Deploy to staging
                                     │
                           5 PM UTC Thu: staging freezes + RC tagged
                                     │
-                          Fri–Sat: canary runs daily from main
-                                    │
-                          Sun 9 AM UTC: canary rebuilt from main
+                          Sun 9 AM UTC: breaking-migration check
                                     │                → release-candidate promoted to production
                                     │                + deploy/cloud/YYYY-MM-DD branch created
                           Mon 9 AM UTC: self-hosted release published
@@ -30,9 +28,9 @@ Merges to `main` after 5 PM UTC on Thursday are **not deployed to staging**. At 
 
 ### Promotion — Sunday 9 AM UTC
 
-At 9 AM UTC on Sunday, the cloud workflow first refreshes the canary environment by invoking `continuous-delivery-canary.yml` as a reusable workflow, then promotes Thursday's `release-candidate` to production.
+At 9 AM UTC on Sunday, the cloud workflow checks that no pending migration is marked `breaking = true`, then promotes Thursday's `release-candidate` to the whole production fleet.
 
-**Why**: By Sunday, the release candidate has soaked in the canary environment (Fri–Sat). Refreshing canary again right before promotion ensures it is running the latest `main` when production is updated. If something is broken, we catch it before it reaches all customers.
+**Why**: A breaking migration makes a rollback to the previous image unsafe, so it ships only when someone asks for it on purpose.
 
 After promotion, a `deploy/cloud/YYYY-MM-DD` branch is created.
 
@@ -49,8 +47,8 @@ On Monday at 9 AM UTC, the self-hosted release is published: git tag, GitHub rel
 | Mon–Thu, 9 AM–5 PM UTC | Merge to `main` → auto-deployed to staging |
 | Mon–Thu, 5 PM–9 AM UTC | Merge to `main` → code in `main` only, staging frozen |
 | **Thu 5 PM UTC** | Staging image + commit tagged as `release-candidate` |
-| Fri–Sat | Canary deploys daily from `main`; cloud is quiet |
-| **Sun 9 AM UTC** | Canary rebuilt from latest `main`; `release-candidate` promoted to cloud production; `deploy/cloud/YYYY-MM-DD` branch created |
+| Fri–Sat | Cloud is quiet |
+| **Sun 9 AM UTC** | Breaking-migration check; `release-candidate` promoted to cloud production; `deploy/cloud/YYYY-MM-DD` branch created |
 | **Mon 9 AM UTC** | Self-hosted release published (re-tags cloud RC image) |
 
 ## Overrides

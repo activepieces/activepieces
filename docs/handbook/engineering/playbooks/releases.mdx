@@ -11,10 +11,9 @@ Five separate workflows cover the full delivery lifecycle:
 
 1. **Merge to `main`** (Mon–Thu, 9 AM–5 PM UTC) — `continuous-delivery-stg.yml` automatically builds a Docker image and deploys to **staging** (`stg.activepieces.com`).
 2. **Staging freeze (5 PM UTC)** — merges to `main` after 5 PM UTC are accepted but **not deployed** to staging. The content team uses the frozen staging environment overnight.
-3. **Daily 9 AM UTC** — `continuous-delivery-canary.yml` builds a `version.sha.canary` image from the latest `main` and deploys it to the **canary** environment. Breaking migrations block the deployment. See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for details.
-4. **Thursday 5 PM UTC** — `tag-release-candidate` job tags the current staging image and commit as `release-candidate`.
-5. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` runs a fresh canary build from `main` (by calling `continuous-delivery-canary.yml` as a reusable workflow), then promotes `release-candidate` to production and creates a `deploy/cloud/YYYY-MM-DD` branch.
-6. **Monday 9 AM UTC** — `continuous-delivery-release.yml` re-tags the `release-candidate` image and publishes the self-hosted release.
+3. **Thursday 5 PM UTC** — `tag-release-candidate` job tags the current staging image and commit as `release-candidate`.
+4. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` checks for breaking migrations, then promotes `release-candidate` to the whole production fleet and creates a `deploy/cloud/YYYY-MM-DD` branch.
+5. **Monday 9 AM UTC** — `continuous-delivery-release.yml` re-tags the `release-candidate` image and publishes the self-hosted release.
 
 ## Environments
 
@@ -22,7 +21,6 @@ Five separate workflows cover the full delivery lifecycle:
 |---|---|---|
 | Preview | `branch-name.activepieces.com` | Per-PR ephemeral environment for review. *Requires the `preview` label on the PR.* |
 | Staging | `stg.activepieces.com` | Internal testing, content team daily use |
-| Canary | `canary.activepieces.com` | Daily cut from `main`; catches issues before they reach production |
 | Production | `cloud.activepieces.com` | Live customers |
 
 ## Hotfix Workflow
@@ -58,9 +56,9 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Scheduled (Sunday 9 AM UTC)** | Triggers `continuous-delivery-canary.yml` as a reusable workflow to refresh the canary environment from the latest `main`, then promotes `release-candidate` to production (requires approval via the `production` GitHub Environment). After promotion, creates a `deploy/cloud/YYYY-MM-DD` branch and runs a smoke test. |
+| **Scheduled (Sunday 9 AM UTC)** | Fails if a pending migration is marked `breaking = true`, then promotes `release-candidate` to the whole production fleet (requires approval via the `production` GitHub Environment). After promotion, creates a `deploy/cloud/YYYY-MM-DD` branch and runs a smoke test. |
 | **`workflow_call`** | Same as above, triggered by another workflow. |
-| **Manual dispatch — `cloud-hotfix`** | Builds the image from the current branch and deploys directly to production, bypassing staging. Trigger this **on the hotfix branch** (`deploy/cloud/YYYY-MM-DD`), not `main`. After promotion, merge the hotfix branch into `main` to automatically retag `release-candidate`. Blocked automatically if the next scheduled Sunday promotion is within 1 hour. |
+| **Manual dispatch — `cloud-hotfix`** | Builds the image from the current branch and deploys directly to production, bypassing staging. Trigger this **on the hotfix branch** (`deploy/cloud/YYYY-MM-DD`), not `main`. After promotion, merge the hotfix branch into `main` to automatically retag `release-candidate`. Blocked automatically if the next scheduled Sunday promotion is within 1 hour. The breaking-migration check also runs here; set `skip_migration_check` to ship a breaking migration on purpose. |
 
 ### `continuous-delivery-release.yml` — Weekly Release
 
@@ -69,30 +67,11 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 | **Scheduled (Mondays 9 AM UTC)** | Publishes a GitHub release with changelog, creates a git tag, and re-tags `ghcr.io/activepieces/activepieces-cloud:release-candidate` as `activepieces/activepieces:X.Y.Z` + `latest` on Docker Hub and GHCR. |
 | **Manual dispatch** | Same as above, on demand. Use this if a Monday run was skipped or you need an off-cycle release. |
 
-### `continuous-delivery-canary.yml` — Canary
-
-| Trigger | What happens |
-|---|---|
-| **Scheduled (daily 9 AM UTC)** | Builds a `version.sha.canary` image from the latest `main`, checks migrations, deploys the canary app and workers. Breaking migrations always block the deployment. |
-| **`workflow_call`** | Same as scheduled, triggered by `continuous-delivery-cloud.yml` on the Sunday promotion so the canary always receives a fresh build just before production is updated. |
-| **Manual dispatch** | Same as scheduled, on demand. |
-
-See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for full details.
-
-### `continuous-delivery-rollback-canary.yml` — Canary Rollback
-
-Manual dispatch only. Rolls back the canary environment to a previous image tag. Reverses DB migrations not present in the target image's manifest, then redeploys the canary app and workers to that tag.
-
-| Input | Description |
-|---|---|
-| `rollback_to_image_tag` | Target image tag to roll back to (e.g. `0.51.0.abc1234.canary`). Leave blank to roll back to the current cloud production image. |
-| `force` | Force rollback even if breaking migrations exist. Default: `false`. |
-
 ### `release-self-hosted.yml`
 
 Manual dispatch only. Prompts for a **release tag** (e.g., `0.79.2` or `0.79.2-hotfix.1`). Builds multi-platform images (amd64 + arm64), pushes to Docker Hub and GHCR, and creates a git tag. Can be run from any branch — useful for patching older versions.
 
-This is the **only** release path that takes a free-text version — the scheduled `continuous-delivery-release.yml` and `continuous-delivery-canary.yml` both derive the version from `package.json` (`node --print "require('./package.json').version"`) and never ask a human. The free-text input exists precisely because off-cycle patches carry deploy-only suffixes (`-hotfix.N`, `-rc.N`) that don't live in `package.json`. Because `package.json` is the single runtime source of truth (`apVersionUtil.getCurrentRelease` reads it, and it's baked into the image from source), a mistyped tag would publish an image whose real version disagrees with its tag — invisible until it's mixed with a correctly-built peer and the worker↔app version gate silently withholds jobs. The **`Verify tag matches package.json`** step fails the release when the tag's base `X.Y.Z` (suffix stripped) doesn't equal `package.json`, so bump `package.json` (or fix the tag) before releasing.
+This is the **only** release path that takes a free-text version — the scheduled `continuous-delivery-release.yml` and `continuous-delivery-cloud.yml` both derive the version from `package.json` (`node --print "require('./package.json').version"`) and never ask a human. The free-text input exists precisely because off-cycle patches carry deploy-only suffixes (`-hotfix.N`, `-rc.N`) that don't live in `package.json`. Because `package.json` is the single runtime source of truth (`apVersionUtil.getCurrentRelease` reads it, and it's baked into the image from source), a mistyped tag would publish an image whose real version disagrees with its tag — invisible until it's mixed with a correctly-built peer and the worker↔app version gate silently withholds jobs. The **`Verify tag matches package.json`** step fails the release when the tag's base `X.Y.Z` (suffix stripped) doesn't equal `package.json`, so bump `package.json` (or fix the tag) before releasing.
 
 Because the bump commit for an off-cycle release lives on its release branch, `main`'s `package.json` would otherwise stay stale, and the next weekly release then reads the old version at the `release-candidate` ref and refuses to overwrite the already-existing tag (this is how 0.85.4/0.85.5 came to report 0.85.2). To close that loop, a **`sync-version-to-main`** job runs after every successful release: if `main`'s version is behind the released base version, it opens an automated PR (branch `automated/sync-main-<tag>`, one per tag so a hotfix never overwrites a pending base-release PR, pushed and created with the automated-PR token so CI runs on it) setting `package.json` to the base version and the `docker-compose.yml` image pins to the full released tag. **Merge that PR before the next release-candidate cut (Thursday 5 PM UTC).** The weekly release reads the version at the `release-candidate` ref, so merging after the cut is too late. The same job runs `tools/scripts/breaking-changes-rollover.ts`: every entry on the hidden `docs/install/reference/breaking-changes-unreleased.mdx` page that already existed at the released tag is moved under `## <tag>` on the public Breaking Changes page, so the PR opens whenever the version or the breaking-changes pages need syncing, not only when the version is behind. If neither needs a change, the job no-ops. The weekly `continuous-delivery-release.yml` runs the same rollover in its `sync-main` job, so both release paths file entries under the tag that shipped them. The job lives in the workflow definition at the dispatched ref, so releases run from branches cut before it existed won't open a sync PR. Check `main`'s version manually in that case.
 

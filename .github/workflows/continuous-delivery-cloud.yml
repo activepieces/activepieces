@@ -12,6 +12,11 @@ on:
         type: choice
         options:
           - cloud-hotfix # Build from current branch and deploy directly to production, bypassing staging
+      skip_migration_check:
+        description: 'Deploy even when a pending migration is marked breaking'
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   guard:
@@ -72,24 +77,70 @@ jobs:
           no-cache: true
           tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
 
-  deploy-canary:
-    needs: [guard, build-image]
+  check-migrations:
+    if: inputs.skip_migration_check != true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build shared and server-utils packages
+        run: bunx turbo run build --filter=@activepieces/shared --filter=@activepieces/server-utils
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Get current production manifest
+        id: current-manifest
+        run: |
+          MANIFEST=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app exec \
+            --reuse --primary \
+            --config-file=config/app.yml -- \
+            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json; exit"' \
+            2>/dev/null | grep '^\[' || echo '[]')
+          echo "json=$MANIFEST" >> $GITHUB_OUTPUT
+
+      - name: Check for breaking migrations
+        id: check
+        run: bunx tsx tools/scripts/check-manifest-migrations.ts '${{ steps.current-manifest.outputs.json }}'
+
+      - name: Fail on breaking migrations
+        if: steps.check.outputs.has_breaking == 'true'
+        run: |
+          echo "Breaking migrations detected: ${{ steps.check.outputs.breaking_names }}"
+          exit 1
+
+  promote-to-production:
+    needs: [guard, build-image, check-migrations]
     if: |
       always() &&
       needs.guard.result != 'failure' &&
-      (needs.build-image.result == 'success' || needs.build-image.result == 'skipped')
-    uses: ./.github/workflows/continuous-delivery-canary.yml
-    with:
-      image_tag: ${{ needs.build-image.outputs.image_tag }}
-      skip_migration_check: ${{ github.event_name == 'workflow_dispatch' }}
-    secrets: inherit
-
-  promote-to-production:
-    needs: [build-image, deploy-canary]
-    if: |
-      always() &&
-      needs.deploy-canary.result == 'success' &&
-      (needs.build-image.result == 'success' || needs.build-image.result == 'skipped')
+      (needs.build-image.result == 'success' || needs.build-image.result == 'skipped') &&
+      (needs.check-migrations.result == 'success' || needs.check-migrations.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
