@@ -19,6 +19,7 @@ import { aiUsageService } from './ai/ai-usage-service'
 import { platformModelTierModule } from './ai/platform-model-tier.module'
 import { aiUsageFlush } from './ai/usage/ai-usage-flush'
 import { aiUsageRetention } from './ai/usage/ai-usage-retention'
+import { aiUsageModule } from './ai/usage/ai-usage.module'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -275,6 +276,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await aiProviderService(app.log).setup()
     await app.register(aiProviderModule)
     await app.register(platformModelTierModule)
+    await app.register(aiUsageModule)
     await app.register(licenseKeyUsageReportModule)
     await app.register(tablesModule)
     await app.register(knowledgeBaseModule)
