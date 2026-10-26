@@ -59,7 +59,7 @@ function compactRow({
 }): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(row).filter(
-      ([, value]) => value !== undefined && value !== ''
+      ([, value]) => value !== undefined && value !== null && value !== ''
     )
   );
 }

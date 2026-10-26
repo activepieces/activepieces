@@ -64,9 +64,13 @@ export const upsertRowAction = createAction({
       databricksUtils.quoteIdentifier({ name })
     );
     const key = databricksUtils.quoteIdentifier({ name: columnName });
-    const updates = quoted
-      .filter((name) => name !== key)
-      .map((name) => `target.${name} = source.${name}`);
+    const rowKeySet = new Set(Object.keys(row));
+    const updates = source.columnNames
+      .filter((name) => name !== columnName && rowKeySet.has(name))
+      .map((name) => {
+        const quotedName = databricksUtils.quoteIdentifier({ name });
+        return `target.${quotedName} = source.${quotedName}`;
+      });
     const statement = [
       `MERGE INTO ${databricksUtils.tableRef({
         catalogName,
