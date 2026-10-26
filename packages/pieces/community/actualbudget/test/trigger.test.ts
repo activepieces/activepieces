@@ -3,8 +3,12 @@ import { AUTH, fake } from './fake-api';
 
 vi.mock('@actual-app/api', async () => (await import('./fake-api')).fake);
 
+import { Store } from '@activepieces/pieces-framework';
 import {
+  SEEN_CHUNK_SIZE,
+  loadSeenIds,
   pollNewTransactions,
+  saveSeenIds,
 } from '../src/lib/triggers/new-transaction';
 
 const NOW = new Date('2026-10-26T12:00:00Z');
@@ -107,3 +111,49 @@ describe('new transaction polling', () => {
     expect(out.emit).toEqual([]);
   });
 });
+
+describe('seen ID storage', () => {
+  test('large ID lists are split into entries under the 512 KiB store limit and read back whole', async () => {
+    const { store, data } = memoryStore();
+    const ids = Array.from({ length: 13444 }, (_, i) =>
+      `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`
+    );
+    await saveSeenIds({ store, ids });
+    const sizes = Object.values(data).map((value) => JSON.stringify(value).length);
+    expect(Math.max(...sizes)).toBeLessThan(512 * 1024);
+    expect(Object.keys(data)).toHaveLength(Math.ceil(13444 / SEEN_CHUNK_SIZE) + 1);
+    expect(await loadSeenIds({ store })).toEqual(ids);
+  });
+
+  test('shrinking removes stale entries and disable clears everything', async () => {
+    const { store, data } = memoryStore();
+    await saveSeenIds({ store, ids: Array.from({ length: 12000 }, (_, i) => `t${i}`) });
+    await saveSeenIds({ store, ids: ['t1'] });
+    expect(Object.keys(data)).toHaveLength(2);
+    expect(await loadSeenIds({ store })).toEqual(['t1']);
+    await saveSeenIds({ store, ids: null });
+    expect(data).toEqual({});
+    expect(await loadSeenIds({ store })).toBeNull();
+  });
+});
+
+function memoryStore(): { store: Store; data: Record<string, unknown> } {
+  const data: Record<string, unknown> = {};
+  const store: Store = {
+    async put<T>(key: string, value: T): Promise<T> {
+      data[key] = value;
+      return value;
+    },
+    async get<T>(key: string): Promise<T | null> {
+      return key in data ? readValue<T>({ value: data[key] }) : null;
+    },
+    async delete(key: string): Promise<void> {
+      delete data[key];
+    },
+  };
+  return { store, data };
+}
+
+function readValue<T>({ value }: { value: unknown }): T {
+  return JSON.parse(JSON.stringify(value));
+}
