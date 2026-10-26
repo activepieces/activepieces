@@ -171,6 +171,35 @@ describe('toggling a box', () => {
     expect(permissions).toEqual([]);
   });
 
+  it('turns on connection read access when replace goes on', () => {
+    const permissions = rolePermissionModel.toggleBox({
+      permissions: [],
+      row: row('replace-app-connections'),
+      column: 'edit',
+      checked: true,
+    });
+    expect(new Set(permissions)).toEqual(
+      new Set([
+        Permission.REPLACE_APP_CONNECTION,
+        Permission.READ_APP_CONNECTION,
+      ]),
+    );
+  });
+
+  it('clears replace when connection read access goes off', () => {
+    const permissions = rolePermissionModel.toggleBox({
+      permissions: [
+        Permission.READ_APP_CONNECTION,
+        Permission.WRITE_APP_CONNECTION,
+        Permission.REPLACE_APP_CONNECTION,
+      ],
+      row: row('app-connections'),
+      column: 'view',
+      checked: false,
+    });
+    expect(permissions).toEqual([]);
+  });
+
   it('reaches exactly the three states the old None/Read/Write control offered', () => {
     const tables = row('tables');
     const none = rolePermissionModel.toggleBox({
