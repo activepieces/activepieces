@@ -111,6 +111,9 @@
       "@activepieces/piece-apitemplate-io": [
         "packages/pieces/community/apitemplate-io/src/index.ts"
       ],
+      "@activepieces/piece-apiverve": [
+        "packages/pieces/community/apiverve/src/index.ts"
+      ],
       "@activepieces/piece-apollo": [
         "packages/pieces/community/apollo/src/index.ts"
       ],

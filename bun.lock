@@ -771,6 +771,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/apiverve": {
+      "name": "@activepieces/piece-apiverve",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/apollo": {
       "name": "@activepieces/piece-apollo",
       "version": "0.2.1",
@@ -11527,6 +11540,8 @@
     "@activepieces/piece-apitable": ["@activepieces/piece-apitable@workspace:packages/pieces/community/apitable"],
 
     "@activepieces/piece-apitemplate-io": ["@activepieces/piece-apitemplate-io@workspace:packages/pieces/community/apitemplate-io"],
+
+    "@activepieces/piece-apiverve": ["@activepieces/piece-apiverve@workspace:packages/pieces/community/apiverve"],
 
     "@activepieces/piece-apollo": ["@activepieces/piece-apollo@workspace:packages/pieces/community/apollo"],
 
