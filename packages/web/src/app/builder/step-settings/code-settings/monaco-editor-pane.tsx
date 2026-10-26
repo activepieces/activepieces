@@ -103,7 +103,28 @@ function MonacoEditorPane({
   const minHeight = minHeightPx ?? COMPACT_MIN_HEIGHT_PX;
 
   const handleMount: OnMount = (codeEditor) => {
-    codeEditor.addCommand(monaco.KeyCode.F11, onToggleFullscreen);
+    const actions = [
+      codeEditor.addAction({
+        id: 'toggle-fullscreen',
+        label: 'Toggle Full Screen',
+        keybindings: [monaco.KeyCode.F11],
+        run: onToggleFullscreen,
+      }),
+      ...(isCompact
+        ? []
+        : [
+            codeEditor.addAction({
+              id: 'exit-fullscreen',
+              label: 'Exit Full Screen',
+              keybindings: [monaco.KeyCode.Escape],
+              precondition: ESCAPE_CONTEXT,
+              run: onToggleFullscreen,
+            }),
+          ]),
+    ];
+    codeEditor.onDidDispose(() =>
+      actions.forEach((action) => action.dispose()),
+    );
     if (isCompact) {
       const resize = () => {
         const container = containerRef.current;
@@ -121,11 +142,6 @@ function MonacoEditorPane({
       resize();
     } else {
       codeEditor.focus();
-      codeEditor.addCommand(
-        monaco.KeyCode.Escape,
-        onToggleFullscreen,
-        ESCAPE_CONTEXT,
-      );
     }
     onReady(codeEditor);
   };
