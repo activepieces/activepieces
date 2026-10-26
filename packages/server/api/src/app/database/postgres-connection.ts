@@ -466,6 +466,7 @@ import { AddAgentConversationWaitpointId1876000000000 } from './migration/postgr
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
 import { ReshapeFlowRunListIndexesForBarrierChildren1871000000000 } from './migration/postgres/background/1871000000000-ReshapeFlowRunListIndexesForBarrierChildren'
 import { BackfillPieceTranslation1874000000000 } from './migration/postgres/background/1874000000000-BackfillPieceTranslation'
+import { DropFlowRunLegacyListIndexes1876000000000 } from './migration/postgres/background/1876000000000-DropFlowRunLegacyListIndexes'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -482,6 +483,7 @@ export const getBackgroundMigrations = (): (new () => BackgroundMigration)[] => 
         AddAgentConversationProviderConfigIdIndex1869000000000,
         ReshapeFlowRunListIndexesForBarrierChildren1871000000000,
         BackfillPieceTranslation1874000000000,
+        DropFlowRunLegacyListIndexes1876000000000,
     ]
 }
 
