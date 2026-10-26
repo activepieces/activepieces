@@ -8,10 +8,13 @@ describe('dropImagesForTextOnlyModels', () => {
         { role: 'assistant', content: 'A login page.' },
     ]
 
-    it('keeps the text but drops the image when the model cannot read images, so the provider does not 404 the turn', async () => {
+    it('replaces the image with a note when the model cannot read images, so the provider does not 404 the turn', async () => {
         const messages = dropImagesForTextOnlyModels({ messages: await imageTurn(), models: [{ supportsVision: false }, { supportsVision: true }] })
 
-        expect(messages[0].content).toEqual([{ type: 'text', text: 'what is in this screenshot?' }])
+        expect(messages[0].content).toEqual([
+            { type: 'text', text: 'what is in this screenshot?' },
+            { type: 'text', text: expect.stringContaining('cannot read images') },
+        ])
         expect(messages[1]).toEqual({ role: 'assistant', content: 'A login page.' })
     })
 

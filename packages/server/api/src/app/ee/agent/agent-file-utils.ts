@@ -9,6 +9,8 @@ const TEXT_MIME_TYPES = new Set<string>(
 
 const MAX_EXTRACTED_TEXT_LENGTH = 50_000
 
+const UNREADABLE_IMAGE_NOTE = '[The user attached an image here, but the current model cannot read images, so it was not sent. Do not guess its contents. Tell the user to switch to a model that supports images if they need it read.]'
+
 async function extractPdfText(base64Data: string): Promise<string> {
     const { extractText, getDocumentProxy } = await import('unpdf')
     const buffer = Buffer.from(base64Data, 'base64')
@@ -103,7 +105,7 @@ function dropImagesForTextOnlyModels({ messages, models }: {
         return messages
     }
     return messages.map((message) => message.role === 'user' && Array.isArray(message.content)
-        ? { ...message, content: message.content.filter((part) => !isImagePart(part)) }
+        ? { ...message, content: message.content.map((part) => isImagePart(part) ? { type: 'text' as const, text: UNREADABLE_IMAGE_NOTE } : part) }
         : message)
 }
 
