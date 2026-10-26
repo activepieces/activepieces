@@ -36,6 +36,17 @@ describe('custom api call', () => {
     expect(output).toMatchObject({ status: 200 });
   });
 
+  test('keeps array query values and names binary downloads by content type', async () => {
+    const seen = stubFetch(() => ({ body: { ok: true } }));
+    const written: string[] = [];
+    const files = { write: async ({ fileName }: { fileName: string }) => { written.push(fileName); return `file://${fileName}`; } };
+    await Reflect.apply(pastefyCustomApiCallAction.run, pastefyCustomApiCallAction, [
+      { auth: AUTH, propsValue: { method: HttpMethod.GET, url: { url: '/user/pastes' }, headers: {}, queryParams: { filter_tags: ['a', 'b'] }, response_is_binary: true }, files },
+    ]);
+    expect(seen[0].query.get('filter_tags')).toBe('a,b');
+    expect(written).toEqual(['output.json']);
+  });
+
   test('refuses an outside URL without a request', async () => {
     const seen = stubFetch(() => ({ body: {} }));
     await expect(
