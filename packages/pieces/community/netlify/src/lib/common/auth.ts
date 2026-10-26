@@ -1,4 +1,6 @@
 import { PieceAuth } from "@activepieces/pieces-framework";
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { NETLIFY_API_BASE } from "./client";
 
 export const netlifyAuth = PieceAuth.OAuth2({
   description: `
@@ -17,4 +19,19 @@ To authenticate with Netlify:
   tokenUrl: "https://api.netlify.com/oauth/token",
   required: true,
   scope: [],
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<NetlifyUser>({
+        method: HttpMethod.GET,
+        url: `${NETLIFY_API_BASE}/user`,
+        headers: { Authorization: `Bearer ${auth.access_token}` },
+        timeout: 5000,
+      });
+      return response.body?.email || response.body?.full_name || undefined;
+    } catch {
+      return undefined;
+    }
+  },
 });
+
+type NetlifyUser = { email?: string; full_name?: string };

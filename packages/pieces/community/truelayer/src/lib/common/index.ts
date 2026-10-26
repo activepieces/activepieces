@@ -1,4 +1,5 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const trueLayerCommon = {
   baseUrl: 'https://api.truelayer.com',
@@ -19,5 +20,20 @@ export const trueLayerCommon = {
       'signupplus',
       'verification'
     ],
+    getConnectionIdentifier: async ({ auth }) => {
+      try {
+        const response = await httpClient.sendRequest<TrueLayerInfo>({
+          method: HttpMethod.GET,
+          url: 'https://api.truelayer.com/data/v1/info',
+          headers: { Authorization: `Bearer ${auth.access_token}` },
+          timeout: 5000,
+        });
+        return response.body?.results?.[0]?.full_name || undefined;
+      } catch {
+        return undefined;
+      }
+    },
   })
 };
+
+type TrueLayerInfo = { results?: { full_name?: string }[] };
