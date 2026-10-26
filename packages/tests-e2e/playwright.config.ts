@@ -9,13 +9,15 @@ if (!process.env.CI) {
 }
 
 const AP_EDITION = process.env.AP_EDITION || 'ce';
+const LOCAL_URL = 'http://localhost:4200';
+const E2E_INSTANCE_URL = process.env.E2E_INSTANCE_URL || undefined;
 
 const editionConfigs = {
   ce: {
     testDir: './scenarios/ce',
   },
   ee: {
-    testDir: './scenarios/ee',
+    testDir: './scenarios',
   },
 };
 
@@ -39,7 +41,7 @@ const config: PlaywrightTestConfig = {
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:4200',
+    baseURL: E2E_INSTANCE_URL ?? LOCAL_URL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -60,13 +62,13 @@ const config: PlaywrightTestConfig = {
     },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
+  /* Run your local dev server before starting the tests, unless they target a deployed instance */
+  webServer: E2E_INSTANCE_URL ? undefined : {
     command: process.env.CI
       ? 'npm run dev'
       : 'export $(cat packages/tests-e2e/.env.e2e | xargs) && npm run dev',
     cwd: path.resolve(__dirname, '../..'),
-    url: 'http://localhost:4200/api/v1/flags',
+    url: `${LOCAL_URL}/api/v1/flags`,
     reuseExistingServer: !process.env.CI,
     timeout: 300000,
     stdout: 'pipe',

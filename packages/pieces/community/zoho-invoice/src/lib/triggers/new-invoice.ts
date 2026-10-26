@@ -1,6 +1,5 @@
 import {
   AppConnectionValueForAuthProperty,
-  PiecePropValueSchema,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -10,34 +9,32 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 
-import { common } from '../common';
-
 import dayjs from 'dayjs';
-import { zohoAuth } from '../..';
+import { zohoInvoiceAuth } from '../auth';
+import { zohoInvoiceApi } from '../common/api';
+import { newInvoiceOutputSchema } from '../output-schemas';
 
 const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof zohoAuth>,
+  AppConnectionValueForAuthProperty<typeof zohoInvoiceAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const currentValues =
-      (await common.getInvoices(auth, {
-        createdSince: dayjs(lastFetchEpochMS).format('YYYY-MM-DD'),
-      })) ?? [];
-    const items = (currentValues as any[]).map(
-      (item: { created_time: string }) => ({
-        epochMilliSeconds: dayjs(item.created_time).valueOf(),
-        data: item,
-      })
-    );
-    return items;
+    const invoices = await zohoInvoiceApi.listInvoices({
+      auth,
+      lastModifiedAt: dayjs(lastFetchEpochMS).format('YYYY-MM-DD'),
+    });
+    return invoices.map((item) => ({
+      epochMilliSeconds: dayjs(item.created_time).valueOf(),
+      data: item,
+    }));
   },
 };
 
-export const newInvoice = createTrigger({
-  auth: zohoAuth,
+export const newInvoiceTrigger = createTrigger({
+  auth: zohoInvoiceAuth,
   name: 'new_invoice',
+  outputSchema: newInvoiceOutputSchema,
   classification: 'READ',
   displayName: 'New Invoice',
   description: 'Trigger when a new invoice is received.',
@@ -48,34 +45,16 @@ export const newInvoice = createTrigger({
   props: {},
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
 
   sampleData: {},

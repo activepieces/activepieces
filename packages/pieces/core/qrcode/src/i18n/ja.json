@@ -1,5 +1,11 @@
 {
   "Text to QR Code": "QRコードにテキスト",
   "Convert text to QR code": "テキストをQRコードに変換する",
-  "Content": "コンテンツ"
+  "Content": "コンテンツ",
+  "Make QR code images from text or links.": "テキストやリンクからQRコード画像を作成します。",
+  "Generate QR Code": "QRコードを生成",
+  "Turn text or a link into a PNG QR code image.": "テキストまたはリンクをPNG形式のQRコード画像に変換します。",
+  "Text or Link": "テキストまたはリンク",
+  "Encoded into a PNG image file. About 2,300 characters at most.": "PNG画像ファイルにエンコードされます。最大で約2,300文字です。",
+  "QR Code": "QRコード"
 }
