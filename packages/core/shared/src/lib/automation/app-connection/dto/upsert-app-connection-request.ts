@@ -200,13 +200,30 @@ export const GetOAuth2AuthorizationUrlResponse = z.object({
 })
 export type GetOAuth2AuthorizationUrlResponse = z.infer<typeof GetOAuth2AuthorizationUrlResponse>
 
-export const ReplaceAppConnectionsRequestBody = z.object({
+export enum AppConnectionReplaceScope {
+    PROJECT = 'PROJECT',
+    FLOW = 'FLOW',
+}
+
+const replaceAppConnectionsCommonProps = {
     sourceAppConnectionId: z.string(),
     targetAppConnectionId: z.string(),
     projectId: z.string(),
-    deleteSourceConnection: z.boolean().optional().default(false),
     applyToPublishedVersions: z.boolean().optional().default(false),
-})
+}
+
+export const ReplaceAppConnectionsRequestBody = z.union([
+    z.object({
+        ...replaceAppConnectionsCommonProps,
+        scope: z.literal(AppConnectionReplaceScope.PROJECT).optional().default(AppConnectionReplaceScope.PROJECT),
+        deleteSourceConnection: z.boolean().optional().default(false),
+    }),
+    z.object({
+        ...replaceAppConnectionsCommonProps,
+        scope: z.literal(AppConnectionReplaceScope.FLOW),
+        flowIds: z.array(z.string()).min(1),
+    }),
+])
 export type ReplaceAppConnectionsRequestBody = z.infer<typeof ReplaceAppConnectionsRequestBody>
 
 export const ListFlowsFromAppConnectionRequestQuery = z.object({

@@ -111,6 +111,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
         connectionExternalIds,
         agentExternalIds,
         externalIds,
+        flowIds,
+        excludedFlowIds,
         versionState = FlowVersionState.DRAFT,
         includeTriggerSource = true,
         sortBy,
@@ -199,6 +201,14 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         if (externalIds !== undefined) {
             queryBuilder.andWhere('ff."externalId" IN (:...externalIds)', { externalIds })
+        }
+
+        if (flowIds !== undefined) {
+            queryBuilder.andWhere('ff.id IN (:...flowIds)', { flowIds })
+        }
+
+        if (excludedFlowIds !== undefined && excludedFlowIds.length > 0) {
+            queryBuilder.andWhere('ff.id NOT IN (:...excludedFlowIds)', { excludedFlowIds })
         }
 
         if (connectionExternalIds !== undefined) {
@@ -343,6 +353,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         emitEvents = true,
         skipRequiredActionsCheck = false,
         editorSessionId = null,
+        auditExplanation,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowBeforeOperation = emitEvents
             ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
@@ -498,6 +509,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 previousVersion: flowBeforeOperation.version,
                 previousStatus: flowBeforeOperation.status,
                 operation,
+                auditExplanation,
             })
         }
         return updatedFlow
@@ -968,6 +980,8 @@ type ListParamsBase = {
     name?: string
     versionState?: FlowVersionState
     externalIds?: string[]
+    flowIds?: FlowId[]
+    excludedFlowIds?: FlowId[]
     connectionExternalIds?: string[]
     agentExternalIds?: string[]
     includeTriggerSource?: boolean
@@ -1015,6 +1029,7 @@ type UpdateParams = EventEmissionParams & {
     previousFlow?: PopulatedFlow
     skipRequiredActionsCheck?: boolean
     editorSessionId?: string | null
+    auditExplanation?: string
 }
 
 type UpdatePublishedVersionIdParams = {
