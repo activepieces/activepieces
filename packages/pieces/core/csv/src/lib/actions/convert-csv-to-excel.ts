@@ -15,6 +15,10 @@ export const convertCsvToExcelAction = createAction({
       'Converts CSV text into a one-sheet .xlsx workbook file, keeping values such as zip codes with leading zeros and long ids as text and optionally storing numbers as number cells only when they fit in 15 significant digits, so the value never changes. The header row, when present, always stays text. Pick this when the recipient needs a spreadsheet file; use Convert Excel to CSV for the reverse and Create CSV File when a .csv file is enough. Up to 20 MB and 100,000 rows; the same input gives the same workbook content, so it is idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'CSV Input', icon: 'text', props: ['csv_text', 'delimiter'] },
+    { key: 'output', display: 'section', label: 'Excel File', icon: 'file', props: ['file_name', 'sheet_name', 'has_header_row', 'detect_numbers'] },
+  ],
   props: {
     csv_text: Property.LongText({
       displayName: 'CSV Text',
@@ -35,6 +39,7 @@ export const convertCsvToExcelAction = createAction({
       placeholder: 'Sheet1',
       required: false,
       defaultValue: 'Sheet1',
+      width: 'half',
     }),
     file_name: Property.ShortText({
       displayName: 'File Name',
@@ -42,6 +47,7 @@ export const convertCsvToExcelAction = createAction({
       placeholder: 'data.xlsx',
       required: false,
       defaultValue: 'data.xlsx',
+      width: 'half',
     }),
     detect_numbers: Property.Checkbox({
       displayName: 'Store Numbers as Numbers',

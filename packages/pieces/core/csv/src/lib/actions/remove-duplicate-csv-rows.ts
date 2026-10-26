@@ -14,6 +14,10 @@ export const removeDuplicateCsvRowsAction = createAction({
       'Removes duplicate rows from CSV text, treating rows as duplicates when every value matches or, if key columns are given, when just those columns match (for example the same email), keeping the first or the last occurrence and reporting how many were removed. Pick this to clean a list before importing or emailing it; comparison ignores surrounding spaces and is case-sensitive unless turned off. The CSV must have a header row and key columns must exist; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'CSV Input', icon: 'text', props: ['csv_text', 'delimiter'] },
+    { key: 'duplicates', display: 'section', label: 'Duplicates', icon: 'filter', props: ['key_columns', 'keep', 'case_sensitive', 'trim_whitespace'] },
+  ],
   props: {
     csv_text: csvProps.csvText(),
     delimiter: csvProps.inputDelimiter(),

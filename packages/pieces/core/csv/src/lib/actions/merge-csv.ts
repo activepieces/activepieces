@@ -14,6 +14,9 @@ export const mergeCsvAction = createAction({
       'Appends the rows of two or more CSV texts into one, matching columns by header name: the result has every column seen in any input (first-seen order) and cells a source did not have stay blank. Pick this to combine exports with the same or overlapping columns; it stacks rows and does not join or look up rows by a key. Each input needs a header row; up to 100,000 rows in total; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'CSVs to Merge', icon: 'text', props: ['csv_texts', 'delimiter'] },
+  ],
   props: {
     csv_texts: Property.Array({
       displayName: 'CSV Texts',

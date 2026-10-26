@@ -10,6 +10,10 @@ export const csvToJsonAction = createAction({
   description:
     'Turns CSV text into a list of rows you can loop over or filter.',
   aiMetadata: { description: 'Parses a CSV or tab-separated text string into a JSON array, treating the first row either as column headers or as plain data depending on the header option. Use this to make CSV text queryable before looping or filtering rows; use Convert JSON to CSV for the reverse direction, and run Convert Excel to CSV first when the source is an .xlsx/.xls file. The chosen delimiter (comma or tab) must match the actual data or columns will not split; read-only and idempotent.', idempotent: true },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'CSV Input', icon: 'text', props: ['csv_text', 'delimiter_type'] },
+    { key: 'output', display: 'section', label: 'JSON Output', icon: 'code', props: ['has_headers'] },
+  ],
   props: {
     csv_text: Property.LongText({
       displayName: 'CSV Text',
@@ -29,10 +33,11 @@ export const csvToJsonAction = createAction({
       description: 'The character that separates columns in your CSV.',
       defaultValue: '',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Comma', value: ',' },
-          { label: 'Tab', value: '\t' },
+          { label: 'Comma', value: ',', icon: 'text', description: 'Most CSV files' },
+          { label: 'Tab', value: '\t', icon: 'blank', description: 'Tab-separated' },
         ],
       },
     }),

@@ -14,6 +14,10 @@ export const filterCsvRowsAction = createAction({
       'Filters CSV text to the rows whose value in one named column matches a condition (equals, contains, starts/ends with, is empty, greater/less than — compared as numbers when both sides are numbers, otherwise as text, case-insensitive by default). Pick this instead of a Loop plus Branch to narrow rows before sending or saving them. The CSV must have a header row and the column must exist; read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    { key: 'input', display: 'section', label: 'CSV Input', icon: 'text', props: ['csv_text', 'delimiter'] },
+    { key: 'condition', display: 'section', label: 'Keep Rows Where', icon: 'filter', props: ['column', 'condition', 'value', 'case_sensitive'] },
+  ],
   props: {
     csv_text: csvProps.csvText(),
     delimiter: csvProps.inputDelimiter(),
