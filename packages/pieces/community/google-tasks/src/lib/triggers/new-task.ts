@@ -88,27 +88,15 @@ export const newTaskTrigger = createTrigger({
     webViewLink: 'https://tasks.google.com/task/MTIzNDU2Nzg5MDEyMzQ1Njc4OTA',
   },
   async test(context) {
-    const store = context.store;
-    const auth = context.auth;
-    const propsValue = context.propsValue;
-    return await pollingHelper.test(polling, { store, auth, propsValue, files: context.files });
+    return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const store = context.store;
-    const auth = context.auth;
-    const propsValue = context.propsValue;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    const store = context.store;
-    const auth = context.auth;
-    const propsValue = context.propsValue;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    const store = context.store;
-    const auth = context.auth;
-    const propsValue = context.propsValue;
-    return await pollingHelper.poll(polling, { store, auth, propsValue, files: context.files });
+    return await pollingHelper.poll(polling, context);
   },
 });

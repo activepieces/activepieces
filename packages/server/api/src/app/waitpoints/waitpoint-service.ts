@@ -6,9 +6,11 @@ import { EntityManager, FindOptionsWhere, In, Not } from 'typeorm'
 import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
+import { distributedStore } from '../database/redis-connections'
 import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { barrierSourceKey } from './barrier-queue-factory'
 import { WaitpointEntity } from './waitpoint-entity'
 import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
@@ -243,10 +245,13 @@ async function deleteWaitpointsWithTimers({ where, flowRunId, log }: DeleteWaitp
         .createQueryBuilder()
         .delete()
         .where(where)
-        .returning(['id', 'resumeDateTime'])
+        .returning(['id', 'resumeDateTime', 'type'])
         .execute()
-    const timed = DeletedWaitpointRows.parse(result.raw ?? []).filter((waitpoint) => !isNil(waitpoint.resumeDateTime))
+    const deleted = DeletedWaitpointRows.parse(result.raw ?? [])
+    const timed = deleted.filter((waitpoint) => !isNil(waitpoint.resumeDateTime))
     await Promise.all(timed.map((waitpoint) => waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })))
+    const barrierSourceKeys = deleted.filter((waitpoint) => waitpoint.type === PauseType.BARRIER).map((waitpoint) => barrierSourceKey(waitpoint.id))
+    await distributedStore.delete(barrierSourceKeys)
 }
 
 function stepNameOfWaitpointKey({ waitpointKey }: { waitpointKey: string }): string {
@@ -271,6 +276,7 @@ function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRun
 const DeletedWaitpointRows = z.array(z.object({
     id: z.string(),
     resumeDateTime: z.coerce.date().nullable(),
+    type: z.enum(PauseType),
 }))
 
 type PausedDelivery = 'dispatched' | 'already-delivered' | 'unknown-waitpoint'

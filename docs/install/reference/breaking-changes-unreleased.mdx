@@ -22,6 +22,34 @@ New connections must use a v2 API key. A legacy v1 key from platform.mindee.com 
 
 Agents that used Predict Document switch to Extract Document (AI) with a v2 API key and a model ID from app.mindee.com. If a legacy step passed a local file path, or a URL Mindee cannot reach from the internet, pass the file itself in the **File** field. If a Custom API Call step used a v1 path, enter the full `https://api.mindee.net/v1/...` URL or move it to the matching v2 endpoint.
 
+#### Alai 0.3.0: three actions are no longer AI agent tools, and Custom API Call only calls the Alai API
+
+**Generate Presentation**, **Add Slide** and **Export Presentation** are no longer offered to AI agents as tools; flow steps that use them keep working unchanged. Agents get **Generate Presentation (Agent)**, **Add Slide (Agent)** and **Export Presentation (Agent)** instead: they take plain IDs and return a `generation_id` at once, which the agent polls with **Get Generation**. **Custom API Call** now sends the API key only to `https://slides-api.getalai.com/api` and refuses any other host or a path that escapes it.
+
+#### What you need to do
+
+If a Run Agent step or MCP server used one of the three actions as a tool, switch it to the matching (Agent) tool. Custom API Call steps that point at another host have to use the HTTP piece instead.
+
+#### Tarvent 0.2.0: actions return the record itself, and Tarvent errors now fail the step
+
+Tarvent actions used to return the raw GraphQL envelope, so later steps read values like `data.createContact.id` or `data.audiences.nodes`. From Tarvent 0.2.0 actions return the record itself (for example `id`), and searches return `items`, `hasMore` and `nextCursor`. Tarvent reports errors with HTTP 200, and earlier versions treated those as success; upgraded steps now fail with Tarvent's message, and a connection with a wrong API key or account ID no longer saves. These 11 actions are no longer offered to AI agents as tools: **Create/Update Contact**, **Find Contact**, **Add/Remove Contact Tag**, **Add/Remove Contact From Audience Group**, **Add/Remove A Contact From A Journey**, **Start/Stop Journey**, **Create An Audience Group**, **Find Audience Group**, **Generate A Custom Event**, **Send A Transactional Email** and **Send Campaign**. Agents get new **(AI)** tools that take plain IDs instead; **Send A Transactional Email (AI)** always respects suppression filters, and **Create or Update Contact (AI)** never replaces existing groups or tags. Searches now return up to 50 results per call with paging: **Find Audience**, **Find Campaign** and **Find Audience Group** used to return up to 100, and **Find Journey** returned only 1. Step settings are unchanged. Existing connections keep working: the API key is now a masked secret under the same field.
+
+#### What you need to do
+
+When you upgrade a Tarvent step, re-map the fields later steps use from its output (drop the `data.<operation>` prefix; searches use `items`). If a Run Agent step or MCP server used one of the demoted actions as a tool, switch it to the matching (AI) tool. Steps keep running on the version they were built with until you upgrade them.
+
+#### Asana 0.8.0 Create Task sends a plain date as an all-day due date and fails on unknown tags
+
+Asana 0.8.0 changes what an existing **Create Task** step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+A Due Date written as a plain date (`2026-12-31`) is now sent as an all-day due date. Before, it was sent as midnight on the server's clock, so the task got a due time and, for anyone west of that time zone, showed the previous day. A Due Date that includes a time (`2026-12-31T14:00:00Z`) is still sent as a due time, and a value that is not a date now stops the step with a clear message instead of "Invalid time value".
+
+Tags typed by name that match no tag in the workspace now stop the step with a "No tag named …" error. Before, they were skipped and the task was created without them.
+
+#### What you need to do
+
+Before you upgrade a Create Task step to 0.8.0, check that every tag name it types exists in the workspace. If a later step reads the created task's `due_at`, read `due_on` instead when the Due Date is a plain date.
+
 #### Worker group ids can no longer contain a colon
 
 Worker group ids with `:` in them are no longer routable. The assignment endpoints reject them, and a project or flow already assigned to such a group is treated as unassigned: its runs fall back to the project, platform or shared queue instead of the group's dedicated queue, and the group disappears from the worker groups page.

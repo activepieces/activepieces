@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger, isNil } from '@activepieces/pieces-framework';
 import { ticktickAuth } from '../auth';
 import { tickTickApiCall } from '../common/client';
 import { TICKTICK_TASK_STATUS_INCOMPLETE } from '../common/constants';
@@ -43,11 +43,18 @@ export const newTaskCreatedTrigger = createTrigger({
 			resourceUri: `/project/${propsValue.projectId}/data`,
 		});
 
+		if (context.isRepublish && !isNil(await store.get(TRIGGER_KEY))) {
+			return;
+		}
+
 		const taskIds = response.tasks.map((task) => task.id);
 
 		await store.put(TRIGGER_KEY, JSON.stringify(taskIds));
 	},
 	async onDisable(context) {
+		if (context.isRepublish) {
+			return;
+		}
 		await context.store.delete(TRIGGER_KEY);
 	},
 	async test(context) {
