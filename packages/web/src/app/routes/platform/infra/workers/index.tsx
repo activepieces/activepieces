@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import prettyBytes from 'pretty-bytes';
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 
 import {
   AdminEmpty,
@@ -56,6 +57,9 @@ export default function WorkersPage({ section }: WorkersPageProps) {
   const fleetType = workersData?.[0]?.type;
 
   if (section === 'worker-groups') {
+    if (isCloud) {
+      return <Navigate to="/platform/workers" replace />;
+    }
     return (
       <LockedFeatureGuard
         featureKey="DEDICATED_WORKERS"

@@ -191,18 +191,21 @@ export function PlatformNav() {
           to: '/platform/workers',
           label: t('Workers'),
           icon: ServerIcon,
-          subItems: [
-            {
-              to: '/platform/workers',
-              label: t('Health'),
-              end: true,
-            },
-            {
-              to: '/platform/workers/groups',
-              label: t('Worker groups'),
-              locked: !platform.plan.workerGroupsEnabled,
-            },
-          ],
+          subItems:
+            edition === ApEdition.CLOUD
+              ? undefined
+              : [
+                  {
+                    to: '/platform/workers',
+                    label: t('Health'),
+                    end: true,
+                  },
+                  {
+                    to: '/platform/workers/groups',
+                    label: t('Worker groups'),
+                    locked: !platform.plan.workerGroupsEnabled,
+                  },
+                ],
         },
         {
           to: '/platform/health',

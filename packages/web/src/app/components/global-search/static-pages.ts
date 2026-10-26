@@ -29,6 +29,7 @@ export type StaticPage = {
   href: string;
   icon: ComponentType<{ className?: string; size?: number }>;
   requiresPlatformAdmin?: boolean;
+  hiddenOnCloud?: boolean;
 };
 
 export const STATIC_PAGES: StaticPage[] = [
@@ -196,6 +197,7 @@ export const STATIC_PAGES: StaticPage[] = [
     href: '/platform/workers/groups',
     icon: ServerIcon,
     requiresPlatformAdmin: true,
+    hiddenOnCloud: true,
   },
   {
     id: 'page-platform-health',

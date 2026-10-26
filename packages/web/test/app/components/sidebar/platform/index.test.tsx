@@ -1,14 +1,18 @@
 /**
  * @vitest-environment jsdom
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import * as React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PlatformNav } from '@/app/components/sidebar/platform';
 
-const plan = vi.hoisted(() => ({ aiProvidersEnabled: false }));
+const plan = vi.hoisted(() => ({
+  aiProvidersEnabled: false,
+  workerGroupsEnabled: false,
+}));
+const flags = vi.hoisted(() => ({ edition: 'cloud' }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -20,7 +24,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
 
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
-    useFlag: () => ({ data: 'cloud' }),
+    useFlag: () => ({ data: flags.edition }),
   },
 }));
 
@@ -97,5 +101,42 @@ describe('platform sidebar AI Center', () => {
     expect(
       screen.queryAllByRole('listitem', { name: 'Providers locked' }),
     ).toEqual([]);
+  });
+});
+
+describe('platform sidebar Workers', () => {
+  it('has no sub-items on cloud, even when workerGroupsEnabled is on', () => {
+    flags.edition = 'cloud';
+    plan.workerGroupsEnabled = true;
+
+    renderSidebar();
+
+    expect(
+      within(screen.getByRole('list', { name: 'Workers' })).queryAllByRole(
+        'listitem',
+      ),
+    ).toEqual([]);
+  });
+
+  it('locks Worker groups on self-hosted when workerGroupsEnabled is off', () => {
+    flags.edition = 'ee';
+    plan.workerGroupsEnabled = false;
+
+    renderSidebar();
+
+    expect(
+      screen.queryAllByRole('listitem', { name: 'Worker groups locked' }),
+    ).toEqual([expect.any(HTMLLIElement)]);
+  });
+
+  it('unlocks Worker groups on self-hosted when workerGroupsEnabled is on', () => {
+    flags.edition = 'ee';
+    plan.workerGroupsEnabled = true;
+
+    renderSidebar();
+
+    expect(
+      screen.queryAllByRole('listitem', { name: 'Worker groups' }),
+    ).toEqual([expect.any(HTMLLIElement)]);
   });
 });

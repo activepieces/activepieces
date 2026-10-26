@@ -1,4 +1,8 @@
-import { PROJECT_COLOR_PALETTE } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  PROJECT_COLOR_PALETTE,
+} from '@activepieces/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
@@ -8,6 +12,7 @@ import { foldersApi } from '@/features/folders';
 import { projectCollectionUtils, getProjectName } from '@/features/projects';
 import { tablesApi } from '@/features/tables';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { getAccessHistory } from './access-history';
@@ -39,6 +44,8 @@ function getTimePeriod(
 export function useGlobalSearchResults(query: string, open: boolean) {
   const projectId = authenticationSession.getProjectId() ?? '';
   const isPlatformAdmin = useIsPlatformAdmin();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
   const { embedState } = useEmbedding();
   const hideTables = embedState.hideTables;
   const { data: allProjects = [] } = projectCollectionUtils.useAll();
@@ -48,9 +55,12 @@ export function useGlobalSearchResults(query: string, open: boolean) {
     : null;
   const hasQuery = query.length > 0;
 
-  const accessHistory = hideTables
-    ? getAccessHistory().filter((h) => h.type !== 'table')
-    : getAccessHistory();
+  const hiddenPageIds = new Set(
+    STATIC_PAGES.filter((p) => isCloud && p.hiddenOnCloud).map((p) => p.id),
+  );
+  const accessHistory = getAccessHistory().filter(
+    (h) => !(hideTables && h.type === 'table') && !hiddenPageIds.has(h.id),
+  );
   const hasHistory = accessHistory.length > 0;
   const needsSupplement =
     !hasQuery && accessHistory.length < SUPPLEMENT_THRESHOLD;
@@ -101,6 +111,7 @@ export function useGlobalSearchResults(query: string, open: boolean) {
   const matchedPages = STATIC_PAGES.filter(
     (p) =>
       (!p.requiresPlatformAdmin || isPlatformAdmin) &&
+      !hiddenPageIds.has(p.id) &&
       (!hasQuery || p.label.toLowerCase().includes(query.toLowerCase())),
   ).slice(0, SEARCH_LIMIT);
 
