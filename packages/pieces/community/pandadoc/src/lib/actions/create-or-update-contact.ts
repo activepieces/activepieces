@@ -48,18 +48,18 @@ export const createOrUpdateContact = createAction({
   outputSchema: pandadocSchemas['rawContact'],
   async run({ auth, propsValue }) {
     const values: Record<string, string | undefined> = {
-      email: pandadocInputs.optionalString(propsValue.email),
-      first_name: pandadocInputs.optionalString(propsValue.first_name),
-      last_name: pandadocInputs.optionalString(propsValue.last_name),
-      company: pandadocInputs.optionalString(propsValue.company),
+      email: clearableText(propsValue.email),
+      first_name: clearableText(propsValue.first_name),
+      last_name: clearableText(propsValue.last_name),
+      company: clearableText(propsValue.company),
       job_title: pandadocInputs.pickCustom({ value: propsValue.job_title, custom: propsValue.custom_job_title }),
       industry: pandadocInputs.pickCustom({ value: propsValue.industry, custom: propsValue.custom_industry }),
-      phone: pandadocInputs.optionalString(propsValue.phone),
+      phone: clearableText(propsValue.phone),
       country: pandadocInputs.pickCustom({ value: propsValue.country, custom: propsValue.custom_country }),
       state: pandadocInputs.pickCustom({ value: propsValue.state, custom: propsValue.custom_state }),
-      street_address: pandadocInputs.optionalString(propsValue.street_address),
-      city: pandadocInputs.optionalString(propsValue.city),
-      postal_code: pandadocInputs.optionalString(propsValue.postal_code),
+      street_address: clearableText(propsValue.street_address),
+      city: clearableText(propsValue.city),
+      postal_code: clearableText(propsValue.postal_code),
     };
     const body = Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined));
     const contactId = pandadocInputs.optionalString(propsValue.contact_id);
@@ -69,3 +69,7 @@ export const createOrUpdateContact = createAction({
     return pandadocApi.createContactRaw({ apiKey: auth.secret_text, body });
   },
 });
+
+function clearableText(value: unknown): string | undefined {
+  return typeof value === 'string' ? value.trim() : pandadocInputs.optionalString(value);
+}

@@ -1,5 +1,6 @@
 import { createHmac } from 'crypto';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createOrUpdateContact } from '../src/lib/actions/create-or-update-contact';
 import { buildPandaDocError, buildPandaDocUrl, fileNameFromDisposition, PandaDocApiError } from '../src/lib/common/client';
 import { pandadocInputs, metadataQuery } from '../src/lib/common/inputs';
 import { pandadocNormalize } from '../src/lib/common/normalize';
@@ -215,5 +216,24 @@ describe('normalize', () => {
   it('reads field assignees from webhook payloads', () => {
     const field = pandadocNormalize.field({ name: 'like', merge_field: 'like', assignee: 'a@example.com', assignee_details: { email: 'a@example.com' } });
     expect(field.assigned_to_email).toBe('a@example.com');
+  });
+});
+
+describe('create or update contact', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('sends cleared text fields as empty strings so PandaDoc clears them', async () => {
+    const bodies: unknown[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init: { body?: string }) => {
+      bodies.push(JSON.parse(init.body ?? '{}'));
+      return new Response(JSON.stringify({ id: 'c1', email: 'a@b.co' }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }));
+    await Reflect.apply(createOrUpdateContact.run, undefined, [{
+      auth: { secret_text: 'key' },
+      propsValue: { contact_id: 'c1', company: '', phone: '  ', city: 'Amman' },
+    }]);
+    expect(bodies[0]).toEqual({ company: '', phone: '', city: 'Amman' });
   });
 });
