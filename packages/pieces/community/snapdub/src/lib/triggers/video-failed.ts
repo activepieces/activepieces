@@ -59,6 +59,7 @@ export const videoFailedTrigger = createTrigger({
       payload: context.payload,
       event: 'video.failed',
       secret: webhook?.secret,
+      store: context.store,
     });
   },
   async test(context) {

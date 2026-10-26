@@ -85,6 +85,7 @@ export const clipsReadyTrigger = createTrigger({
       payload: context.payload,
       event: 'video.completed',
       secret: webhook?.secret,
+      store: context.store,
     });
   },
   async test(context) {
