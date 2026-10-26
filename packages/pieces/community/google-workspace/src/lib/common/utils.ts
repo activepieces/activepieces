@@ -1,4 +1,5 @@
 import type {
+  GoogleWorkspaceRecordField,
   GoogleWorkspaceResourceDefinition,
   GoogleWorkspaceResourceType,
   GoogleWorkspaceVerb,
@@ -82,6 +83,94 @@ function assertCustomApiCallUrl(url: unknown): void {
   }
 }
 
+function buildRecordBody({
+  def,
+  values,
+}: {
+  def: GoogleWorkspaceResourceDefinition;
+  values: Record<string, unknown> | undefined;
+}): Record<string, unknown> {
+  const entries = Object.entries(values ?? {}).filter(
+    ([, value]) => value !== undefined && value !== null && value !== '',
+  );
+  return entries.reduce<Record<string, unknown>>((body, [key, value]) => {
+    const field = (def.fields ?? []).find((f) => f.key === key);
+    if (field) {
+      return setPath({ target: body, path: field.path, value });
+    }
+    const custom = parseCustomFieldKey(key);
+    if (custom) {
+      const customValue = Array.isArray(value) ? value.map((v) => ({ value: v })) : value;
+      return setPath({
+        target: body,
+        path: ['customSchemas', custom.schemaName, custom.fieldName],
+        value: customValue,
+      });
+    }
+    return body;
+  }, {});
+}
+
+function recordBody({
+  def,
+  fields,
+  extra,
+}: {
+  def: GoogleWorkspaceResourceDefinition;
+  fields: Record<string, unknown> | undefined;
+  extra: unknown;
+}): Record<string, unknown> {
+  const extraFields =
+    extra === undefined || extra === null || extra === '' ? {} : parseRecord(extra);
+  return { ...extraFields, ...buildRecordBody({ def, values: fields }) };
+}
+
+function customFieldKey({
+  schemaName,
+  fieldName,
+}: {
+  schemaName: string;
+  fieldName: string;
+}): string {
+  return `${CUSTOM_FIELD_PREFIX}${schemaName.length}_${schemaName}_${fieldName}`;
+}
+
+function parseCustomFieldKey(key: string): { schemaName: string; fieldName: string } | null {
+  const match = /^custom_(\d+)_(.*)$/.exec(key);
+  if (!match?.[1] || match[2] === undefined) {
+    return null;
+  }
+  const length = Number(match[1]);
+  const rest = match[2];
+  if (rest.length < length + 2 || rest[length] !== '_') {
+    return null;
+  }
+  return { schemaName: rest.slice(0, length), fieldName: rest.slice(length + 1) };
+}
+
+function setPath({
+  target,
+  path,
+  value,
+}: {
+  target: Record<string, unknown>;
+  path: string[];
+  value: unknown;
+}): Record<string, unknown> {
+  const [head, ...rest] = path;
+  if (head === undefined) {
+    return target;
+  }
+  if (rest.length === 0) {
+    return { ...target, [head]: value };
+  }
+  const child = target[head];
+  return {
+    ...target,
+    [head]: setPath({ target: isPlainObject(child) ? child : {}, path: rest, value }),
+  };
+}
+
 function isResourceType(value: string): value is GoogleWorkspaceResourceType {
   return Object.prototype.hasOwnProperty.call(RESOURCES, value);
 }
@@ -134,6 +223,157 @@ const REPORTS_PATH = 'admin/reports/v1';
 const DATA_TRANSFER_PATH = 'admin/datatransfer/v1';
 const MY_CUSTOMER = 'my_customer';
 
+const CUSTOM_FIELD_PREFIX = 'custom_';
+
+const USER_FIELDS: GoogleWorkspaceRecordField[] = [
+  {
+    key: 'primaryEmail',
+    path: ['primaryEmail'],
+    displayName: 'Primary Email',
+    kind: 'text',
+    requiredOnCreate: true,
+  },
+  {
+    key: 'givenName',
+    path: ['name', 'givenName'],
+    displayName: 'First Name',
+    kind: 'text',
+    requiredOnCreate: true,
+  },
+  {
+    key: 'familyName',
+    path: ['name', 'familyName'],
+    displayName: 'Last Name',
+    kind: 'text',
+    requiredOnCreate: true,
+  },
+  {
+    key: 'password',
+    path: ['password'],
+    displayName: 'Password',
+    description: 'At least 8 characters. Never returned by Google.',
+    kind: 'text',
+    requiredOnCreate: true,
+  },
+  {
+    key: 'changePasswordAtNextLogin',
+    path: ['changePasswordAtNextLogin'],
+    displayName: 'Change Password at Next Login',
+    kind: 'checkbox',
+  },
+  {
+    key: 'orgUnitPath',
+    path: ['orgUnitPath'],
+    displayName: 'Organizational Unit Path',
+    description: 'e.g. `/` or `/Sales/West`.',
+    kind: 'text',
+  },
+  { key: 'recoveryEmail', path: ['recoveryEmail'], displayName: 'Recovery Email', kind: 'text' },
+  {
+    key: 'recoveryPhone',
+    path: ['recoveryPhone'],
+    displayName: 'Recovery Phone',
+    description: 'E.164 format, e.g. `+15551234567`.',
+    kind: 'text',
+  },
+];
+
+const GROUP_FIELDS: GoogleWorkspaceRecordField[] = [
+  {
+    key: 'email',
+    path: ['email'],
+    displayName: 'Group Email',
+    kind: 'text',
+    requiredOnCreate: true,
+  },
+  { key: 'name', path: ['name'], displayName: 'Name', kind: 'text' },
+  { key: 'description', path: ['description'], displayName: 'Description', kind: 'text' },
+];
+
+const GROUP_MEMBER_FIELDS: GoogleWorkspaceRecordField[] = [
+  {
+    key: 'email',
+    path: ['email'],
+    displayName: 'Member Email',
+    description: 'E-mail of the user or group to add.',
+    kind: 'text',
+    requiredOnCreate: true,
+  },
+  {
+    key: 'role',
+    path: ['role'],
+    displayName: 'Role',
+    kind: 'dropdown',
+    options: ['MEMBER', 'MANAGER', 'OWNER'],
+  },
+];
+
+const ORG_UNIT_FIELDS: GoogleWorkspaceRecordField[] = [
+  { key: 'name', path: ['name'], displayName: 'Name', kind: 'text', requiredOnCreate: true },
+  {
+    key: 'parentOrgUnitPath',
+    path: ['parentOrgUnitPath'],
+    displayName: 'Parent Path',
+    description: 'e.g. `/` for the top level or `/Sales`.',
+    kind: 'text',
+    requiredOnCreate: true,
+  },
+  { key: 'description', path: ['description'], displayName: 'Description', kind: 'text' },
+];
+
+const CHROMEOS_DEVICE_FIELDS: GoogleWorkspaceRecordField[] = [
+  { key: 'annotatedUser', path: ['annotatedUser'], displayName: 'Annotated User', kind: 'text' },
+  {
+    key: 'annotatedLocation',
+    path: ['annotatedLocation'],
+    displayName: 'Annotated Location',
+    kind: 'text',
+  },
+  { key: 'annotatedAssetId', path: ['annotatedAssetId'], displayName: 'Asset ID', kind: 'text' },
+  { key: 'notes', path: ['notes'], displayName: 'Notes', kind: 'text' },
+  {
+    key: 'orgUnitPath',
+    path: ['orgUnitPath'],
+    displayName: 'Organizational Unit Path',
+    kind: 'text',
+  },
+];
+
+const ROLE_ASSIGNMENT_FIELDS: GoogleWorkspaceRecordField[] = [
+  {
+    key: 'roleId',
+    path: ['roleId'],
+    displayName: 'Role ID',
+    description:
+      'Find it with Custom API Call: GET /admin/directory/v1/customer/my_customer/roles.',
+    kind: 'text',
+    requiredOnCreate: true,
+  },
+  {
+    key: 'assignedTo',
+    path: ['assignedTo'],
+    displayName: 'Assigned To (User ID)',
+    description: 'The numeric id of the user, from Get Record.',
+    kind: 'text',
+    requiredOnCreate: true,
+  },
+  {
+    key: 'scopeType',
+    path: ['scopeType'],
+    displayName: 'Scope',
+    kind: 'dropdown',
+    options: ['CUSTOMER', 'ORG_UNIT'],
+    requiredOnCreate: true,
+  },
+  {
+    key: 'orgUnitId',
+    path: ['orgUnitId'],
+    displayName: 'Org Unit ID',
+    description: 'Only with scope ORG_UNIT.',
+    kind: 'text',
+  },
+];
+
 const RESOURCES: Record<GoogleWorkspaceResourceType, GoogleWorkspaceResourceDefinition> = {
   user: {
     type: 'user',
@@ -162,6 +402,7 @@ const RESOURCES: Record<GoogleWorkspaceResourceType, GoogleWorkspaceResourceDefi
       'showDeleted',
       'viewType',
     ],
+    fields: USER_FIELDS,
   },
   group: {
     type: 'group',
@@ -177,6 +418,7 @@ const RESOURCES: Record<GoogleWorkspaceResourceType, GoogleWorkspaceResourceDefi
     maxPageSize: 200,
     createExample: { email: 'sales@example.com', name: 'Sales', description: 'Sales team' },
     extraListParams: ['orderBy', 'sortOrder', 'userKey'],
+    fields: GROUP_FIELDS,
   },
   group_member: {
     type: 'group_member',
@@ -197,6 +439,7 @@ const RESOURCES: Record<GoogleWorkspaceResourceType, GoogleWorkspaceResourceDefi
     maxPageSize: 200,
     createExample: { email: 'jane.doe@example.com', role: 'MEMBER' },
     extraListParams: ['roles', 'includeDerivedMembership'],
+    fields: GROUP_MEMBER_FIELDS,
   },
   org_unit: {
     type: 'org_unit',
@@ -211,6 +454,7 @@ const RESOURCES: Record<GoogleWorkspaceResourceType, GoogleWorkspaceResourceDefi
     supportsDomain: false,
     createExample: { name: 'West', parentOrgUnitPath: '/Sales', description: 'West coast sales' },
     extraListParams: ['orgUnitPath', 'type'],
+    fields: ORG_UNIT_FIELDS,
   },
   mobile_device: {
     type: 'mobile_device',
@@ -239,6 +483,7 @@ const RESOURCES: Record<GoogleWorkspaceResourceType, GoogleWorkspaceResourceDefi
     supportsDomain: false,
     maxPageSize: 200,
     extraListParams: ['orgUnitPath', 'orderBy', 'sortOrder', 'projection', 'includeChildOrgunits'],
+    fields: CHROMEOS_DEVICE_FIELDS,
   },
   role_assignment: {
     type: 'role_assignment',
@@ -258,6 +503,7 @@ const RESOURCES: Record<GoogleWorkspaceResourceType, GoogleWorkspaceResourceDefi
       scopeType: 'CUSTOMER',
     },
     extraListParams: ['roleId', 'userKey', 'includeIndirectRoleAssignments'],
+    fields: ROLE_ASSIGNMENT_FIELDS,
   },
 };
 
@@ -274,9 +520,13 @@ export const googleWorkspaceUtils = {
   assertVerb,
   idOf,
   isRootOrgUnitPath,
+  isResourceType,
   parseRecord,
   stringValues,
   assertCustomApiCallUrl,
+  buildRecordBody,
+  recordBody,
+  customFieldKey,
   adminApiRoot: GOOGLE_ADMIN_API_ROOT,
   directoryPath: DIRECTORY_PATH,
   reportsPath: REPORTS_PATH,

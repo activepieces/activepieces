@@ -52,6 +52,32 @@ export type GoogleWorkspaceResourceDefinition = {
   maxPageSize?: number;
   createExample?: Record<string, unknown>;
   extraListParams?: string[];
+  fields?: GoogleWorkspaceRecordField[];
+};
+
+export type GoogleWorkspaceRecordField = {
+  key: string;
+  path: string[];
+  displayName: string;
+  description?: string;
+  kind: 'text' | 'checkbox' | 'dropdown';
+  options?: string[];
+  requiredOnCreate?: boolean;
+};
+
+export type GoogleWorkspaceRecordMode = 'create' | 'update';
+
+export type GoogleWorkspaceCustomSchemaField = {
+  fieldName: string;
+  displayName?: string;
+  fieldType?: string;
+  multiValued?: boolean;
+};
+
+export type GoogleWorkspaceCustomSchema = {
+  schemaName: string;
+  displayName?: string;
+  fields?: GoogleWorkspaceCustomSchemaField[];
 };
 
 export type GoogleWorkspaceActivityQuery = {

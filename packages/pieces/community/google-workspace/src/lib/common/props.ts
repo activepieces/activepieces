@@ -1,5 +1,6 @@
-import { Property } from '@activepieces/pieces-framework';
-import type { DropdownState } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { Property, tryCatch } from '@activepieces/pieces-framework';
+import type { DropdownState, DynamicPropsValue } from '@activepieces/pieces-framework';
 
 import { googleWorkspaceAuth } from '../auth';
 import { googleWorkspaceClient } from './client';
@@ -7,6 +8,9 @@ import { googleWorkspaceUtils } from './utils';
 
 import type {
   GoogleWorkspaceAuthValue,
+  GoogleWorkspaceCustomSchema,
+  GoogleWorkspaceRecordField,
+  GoogleWorkspaceRecordMode,
   GoogleWorkspaceTransferApplication,
   GoogleWorkspaceVerb,
 } from './types';
@@ -47,10 +51,108 @@ function parent<R extends boolean>({
 
 function record<R extends boolean>({
   required,
-  displayName = 'Record (JSON)',
-  description = `Fields in the Directory API shape of the resource type (camelCase). Examples: ${createExamples()}`,
+  displayName = 'Extra Fields (JSON)',
+  description = `Optional. Any other field in the Directory API shape of the resource type (camelCase); the Fields above win on conflicts. Examples: ${createExamples()}`,
 }: PropParams<R>) {
   return Property.Json({ displayName, description, required });
+}
+
+function recordFields<R extends boolean>({
+  required,
+  mode,
+  displayName = 'Fields',
+  description = mode === 'create'
+    ? 'The fields of the new record. They change with the Resource Type.'
+    : 'Only the fields you fill in are changed; empty fields keep their current value.',
+}: PropParams<R> & { mode: GoogleWorkspaceRecordMode }) {
+  return Property.DynamicProperties({
+    auth: googleWorkspaceAuth,
+    displayName,
+    description,
+    required,
+    refreshers: ['resourceType'],
+    props: async ({ auth, resourceType }): Promise<DynamicPropsValue> => {
+      if (typeof resourceType !== 'string' || !googleWorkspaceUtils.isResourceType(resourceType)) {
+        return {};
+      }
+      const def = googleWorkspaceUtils.resources[resourceType];
+      const standard = (def.fields ?? []).map((field) => [field.key, fieldInput({ field, mode })]);
+      const custom = resourceType === 'user' && auth ? await customUserFieldInputs(auth) : [];
+      return Object.fromEntries([...standard, ...custom]);
+    },
+  });
+}
+
+function fieldInput({
+  field,
+  mode,
+}: {
+  field: GoogleWorkspaceRecordField;
+  mode: GoogleWorkspaceRecordMode;
+}) {
+  const base = {
+    displayName: field.displayName,
+    description: field.description,
+    required: mode === 'create' && field.requiredOnCreate === true,
+  };
+  if (field.kind === 'checkbox') {
+    return Property.Checkbox(base);
+  }
+  if (field.kind === 'dropdown') {
+    return Property.StaticDropdown({
+      ...base,
+      options: {
+        options: (field.options ?? []).map((option) => ({ label: option, value: option })),
+      },
+    });
+  }
+  return Property.ShortText(base);
+}
+
+async function customUserFieldInputs(
+  auth: GoogleWorkspaceAuthValue,
+): Promise<[string, DynamicPropsValue[string]][]> {
+  const { data: response } = await tryCatch(async () =>
+    googleWorkspaceClient.request<{ schemas?: GoogleWorkspaceCustomSchema[] }>({
+      auth: await googleWorkspaceClient.resolveAuth(auth),
+      method: HttpMethod.GET,
+      path: `${googleWorkspaceUtils.directoryPath}/customer/${googleWorkspaceUtils.myCustomer}/schemas`,
+    }),
+  );
+  return (response?.schemas ?? []).flatMap((schema) =>
+    (schema.fields ?? []).map((field): [string, DynamicPropsValue[string]] => [
+      googleWorkspaceUtils.customFieldKey({
+        schemaName: schema.schemaName,
+        fieldName: field.fieldName,
+      }),
+      customFieldInput({ schema, field }),
+    ]),
+  );
+}
+
+function customFieldInput({
+  schema,
+  field,
+}: {
+  schema: GoogleWorkspaceCustomSchema;
+  field: NonNullable<GoogleWorkspaceCustomSchema['fields']>[number];
+}) {
+  const displayName = `${schema.displayName ?? schema.schemaName}: ${
+    field.displayName ?? field.fieldName
+  }`;
+  const description = `Custom field (${field.fieldType ?? 'STRING'}).${
+    field.multiValued ? ' Several values: add one item each.' : ''
+  }`;
+  if (field.multiValued) {
+    return Property.Array({ displayName, description, required: false });
+  }
+  if (field.fieldType === 'BOOL') {
+    return Property.Checkbox({ displayName, description, required: false });
+  }
+  if (field.fieldType === 'INT64' || field.fieldType === 'DOUBLE') {
+    return Property.Number({ displayName, description, required: false });
+  }
+  return Property.ShortText({ displayName, description, required: false });
 }
 
 function applicationId<R extends boolean>({
@@ -121,7 +223,14 @@ function disabledOptions({ placeholder }: { placeholder: string }): DropdownStat
   return { disabled: true, options: [], placeholder };
 }
 
-export const googleWorkspaceProps = { resourceType, identifier, parent, record, applicationId };
+export const googleWorkspaceProps = {
+  resourceType,
+  identifier,
+  parent,
+  record,
+  recordFields,
+  applicationId,
+};
 
 export type PropParams<R extends boolean> = {
   required: R;

@@ -25,14 +25,15 @@ export const updateRecord = createAction({
     resourceType: googleWorkspaceProps.resourceType({ verb: 'update' }),
     identifier: googleWorkspaceProps.identifier({ required: true }),
     parent: googleWorkspaceProps.parent({ required: false }),
-    record: googleWorkspaceProps.record({ required: true }),
+    recordFields: googleWorkspaceProps.recordFields({ required: false, mode: 'update' }),
+    record: googleWorkspaceProps.record({ required: false }),
   },
   outputSchema: recordOutputSchema,
   async run(context) {
-    const { resourceType, identifier, parent, record } = context.propsValue;
+    const { resourceType, identifier, parent, recordFields, record } = context.propsValue;
     const def = googleWorkspaceUtils.resourceDefinition(resourceType);
     googleWorkspaceUtils.assertVerb({ def, verb: 'update' });
-    const body = googleWorkspaceUtils.parseRecord(record);
+    const body = googleWorkspaceUtils.recordBody({ def, fields: recordFields, extra: record });
     if (Object.keys(body).length === 0) {
       throw new Error('The record has no fields to update.');
     }
