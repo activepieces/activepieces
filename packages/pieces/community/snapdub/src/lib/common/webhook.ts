@@ -4,6 +4,7 @@ import {
   HttpError,
   HttpMethod,
 } from '@activepieces/pieces-common';
+import { DEDUPE_KEY_PROPERTY, Store } from '@activepieces/pieces-framework';
 import { SNAPDUB_BASE_URL, snapdubClient } from './client';
 
 async function subscribe({
@@ -24,6 +25,11 @@ async function subscribe({
     path: '/webhooks',
     body: { url: webhookUrl, events: [event] },
   });
+  if (!response.secret) {
+    throw new Error(
+      'SnapDub did not return a signing secret for the webhook, so deliveries could not be verified.'
+    );
+  }
   return { webhookId: response.webhook_id, secret: response.secret };
 }
 
@@ -54,17 +60,23 @@ async function unsubscribe({
   }
 }
 
-function parseDelivery({
+// Only signed deliveries start a flow: with no stored secret (the trigger was never enabled, e.g.
+// someone calling the draft webhook URL) there is nothing to check against, so nothing passes.
+// SnapDub resends a delivery with the same id when a reply is lost, so ids already accepted are
+// remembered and skipped; the id is also the run's dedupe key.
+async function parseDelivery({
   payload,
   event,
   secret,
+  store,
 }: {
   payload: DeliveryPayload;
   event: SnapDubEvent;
   secret: string | undefined;
-}): Record<string, unknown>[] {
+  store: Store;
+}): Promise<Record<string, unknown>[]> {
   if (
-    secret &&
+    !secret ||
     !snapdubClient.verifySignature({
       secret,
       header: headerValue({ headers: payload.headers, name: SIGNATURE_HEADER }),
@@ -77,13 +89,25 @@ function parseDelivery({
   if (!snapdubClient.isRecord(body) || body['event'] !== event) {
     return [];
   }
+  const deliveryId = typeof body['id'] === 'string' ? body['id'] : undefined;
+  if (deliveryId) {
+    const seen = (await store.get<string[]>(SEEN_DELIVERIES_KEY)) ?? [];
+    if (seen.includes(deliveryId)) {
+      return [];
+    }
+    await store.put<string[]>(
+      SEEN_DELIVERIES_KEY,
+      [...seen, deliveryId].slice(-SEEN_DELIVERIES_LIMIT)
+    );
+  }
   const data = snapdubClient.isRecord(body['data']) ? body['data'] : {};
   return [
     {
       event,
-      delivery_id: body['id'],
+      delivery_id: deliveryId,
       delivered_at: body['created_at'],
       ...data,
+      ...(deliveryId ? { [DEDUPE_KEY_PROPERTY]: deliveryId } : {}),
     },
   ];
 }
@@ -106,6 +130,10 @@ const SIGNATURE_HEADER = 'x-snapdub-signature';
 const GONE_STATUSES = [401, 402, 404, 422];
 
 export const WEBHOOK_STORE_KEY = 'snapdub_webhook';
+
+const SEEN_DELIVERIES_KEY = 'snapdub_seen_deliveries';
+
+const SEEN_DELIVERIES_LIMIT = 200;
 
 export const snapdubWebhook = {
   subscribe,

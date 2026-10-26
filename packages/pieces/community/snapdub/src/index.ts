@@ -14,7 +14,7 @@ export const snapdub = createPiece({
   description:
     'AI video clipper: turn long videos into short vertical clips with captions and post them to TikTok, YouTube and Instagram.',
   auth: snapdubAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.82.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/snapdub.png',
   authors: ['aheront'],
   categories: [
