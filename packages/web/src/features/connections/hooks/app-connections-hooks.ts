@@ -45,6 +45,7 @@ import {
 type UseReplaceConnectionsProps = {
   setDialogOpen: (isOpen: boolean) => void;
   refetch: () => void;
+  connections: AppConnectionWithoutSensitiveData[];
 };
 
 type UseRenameAppConnectionProps = {
@@ -301,14 +302,24 @@ export const appConnectionsMutations = {
   useReplaceConnections: ({
     setDialogOpen,
     refetch,
+    connections,
   }: UseReplaceConnectionsProps) => {
     return useMutation({
       mutationFn: async (request: ReplaceAppConnectionsRequestBody) => {
         await appConnectionsApi.replace(request);
       },
-      onSuccess: () => {
+      onSuccess: (_, request) => {
+        const displayNameOf = (id: string) =>
+          connections.find((connection) => connection.id === id)?.displayName ??
+          id;
         toast.success(t('Success'), {
-          description: t('Connections replaced successfully'),
+          description: t(
+            'Replaced connection {sourceName} with connection {targetName}',
+            {
+              sourceName: displayNameOf(request.sourceAppConnectionId),
+              targetName: displayNameOf(request.targetAppConnectionId),
+            },
+          ),
         });
         setDialogOpen(false);
         refetch();
