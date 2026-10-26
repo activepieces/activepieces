@@ -20,6 +20,23 @@ Agents that used these actions switch to their twins: Create Document from Templ
 
 After upgrading a PandaDoc trigger, turn the flow off and on again so PandaDoc signs its deliveries. If a flow mapped fields from the old trigger sample data, re-map them from the new output (for example `template_id` instead of `template.id`). If a flow used the Document Updated filter, add a Router or Branch step after the trigger to keep only the updates you need.
 
+#### Cognito Forms 0.3.0: Update Entry skips empty fields, and the entry actions move to new AI versions
+
+From Cognito Forms 0.3.0 the **Update Entry** action only sends the fields you fill in. Before, empty values (blank text, null, empty lists) were sent too, which cleared the value stored on the entry. Now an empty field keeps its current value, and the step fails with "Fill in at least one field to update." when every field is empty. Yes/No fields in Update Entry are now a **Yes** / **No** dropdown; left empty, the field keeps its current value. Before, an untouched Yes/No checkbox was sent as No and overwrote the entry. **Create Entry** also leaves out empty fields, so the form's own default values apply.
+
+The builder's **Delete Entry** now succeeds when the entry is already gone and returns `deleted` and `already_deleted` instead of Cognito's raw response. A wrong form ID or any other not-found error still fails the step.
+
+**Create Entry**, **Update Entry**, **Get Entry** and **Delete Entry** are no longer offered to AI agents. Agents get **Create Entry (by Form ID)**, **Update Entry (by IDs)**, **Get Entry (by IDs)** and **Delete Entry (by IDs)** instead, which take the form ID, entry ID and field values directly.
+
+#### What you need to do
+
+- Update Entry: to clear a field, use **Custom API Call** with a `PATCH` to `/forms/{formId}/entries/{entryId}` and set the field to `null`.
+- Update Entry steps with Yes/No fields: open the step after upgrading and set each Yes/No field you want to change; the rest are left unchanged.
+- Delete Entry: if a later step read Cognito's raw delete response, map `deleted` / `already_deleted` instead.
+- Agents that used the old entry actions as tools: add the new "(by IDs)" versions to the agent.
+
+Steps keep running on the version they were built with until you upgrade them.
+
 #### Mindee 0.4.0: the piece moves to the Mindee v2 API, and Predict Document is builder-only
 
 Mindee 0.4.0 adds actions for the Mindee v2 API (app.mindee.com). The old action is renamed **Predict Document (Legacy v1)** and keeps calling the v1 API, but it is no longer offered as a tool to AI agents. Steps keep running on the version they were built with until you upgrade them.
