@@ -7,11 +7,15 @@ const githubDark = githubDarkInit({
 const codeMirror = (resolvedTheme: string) =>
   resolvedTheme === 'dark' ? githubDark : githubLight;
 
+const monaco = (resolvedTheme: string) =>
+  resolvedTheme === 'dark' ? 'vs-dark' : 'vs';
+
 const jsonView = (resolvedTheme: string) =>
   resolvedTheme === 'dark' ? 'bright' : 'rjv-default';
 
 export const syntaxTheme = {
   codeMirror,
+  monaco,
   jsonView,
   shiki: { light: 'github-light', dark: 'github-dark' },
 };

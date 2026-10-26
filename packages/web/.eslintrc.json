@@ -16,6 +16,9 @@
         "react": {
           "version": "detect"
         },
+        "import/ignore": [
+          "@monaco-editor/react"
+        ],
         "import/resolver": {
           "typescript": {},
           "alias": {
