@@ -30,7 +30,7 @@ export const verifyEmail = createAction({
       email: email,
       timeout: timeout.toString(),
     });
-    const url = `https://millionverifier.com/api/v3/?${params.toString()}`;
+    const url = `https://api.millionverifier.com/api/v3/?${params.toString()}`;
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: url,

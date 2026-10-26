@@ -5947,7 +5947,7 @@
     },
     "packages/pieces/community/millionverifier": {
       "name": "@activepieces/piece-millionverifier",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5956,6 +5956,7 @@
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/mind-studio": {
