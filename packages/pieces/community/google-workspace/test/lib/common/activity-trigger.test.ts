@@ -8,15 +8,17 @@ const api = vi.hoisted(() => ({
 }));
 const resolveAuth = vi.hoisted(() => vi.fn<() => Promise<{ access_token: string }>>());
 
-vi.mock('../../../src/lib/common/activities', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../src/lib/common/activities')>();
-  return { ...actual, ReportsApi: api };
+vi.mock('../../../src/lib/common/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/lib/common/client')>();
+  return { ...actual, googleWorkspaceClient: { ...actual.googleWorkspaceClient, resolveAuth } };
 });
-vi.mock('../../../src/lib/common/token', () => ({ resolveAuth }));
 
-const { createActivityTrigger } = await import('../../../src/lib/common/activity-trigger');
-const { SAMPLE_EVENT } = await import('../../../src/lib/common/activities');
-const { GoogleWorkspaceApiError } = await import('../../../src/lib/common/client');
+const { googleWorkspaceActivityTrigger } = await import('../../../src/lib/common/activity-trigger');
+const { googleWorkspaceClient } = await import('../../../src/lib/common/client');
+
+const createActivityTrigger = googleWorkspaceActivityTrigger.create;
+const SAMPLE_EVENT = googleWorkspaceActivityTrigger.sampleEvent;
+const GoogleWorkspaceApiError = googleWorkspaceClient.ApiError;
 
 const AUTH = { type: 'OAUTH2', access_token: 'tok' };
 const RESOLVED = { access_token: 'resolved' };
@@ -141,6 +143,9 @@ async function renewed() {
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  vi.spyOn(googleWorkspaceActivityTrigger.reports, 'watch').mockImplementation((params) => api.watch(params));
+  vi.spyOn(googleWorkspaceActivityTrigger.reports, 'stop').mockImplementation((params) => api.stop(params));
+  vi.spyOn(googleWorkspaceActivityTrigger.reports, 'listActivities').mockImplementation((params) => api.listActivities(params));
   resourceCounter = 0;
   api.watch.mockReset().mockImplementation(async ({ channel }) => {
     resourceCounter += 1;

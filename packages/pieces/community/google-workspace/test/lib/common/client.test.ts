@@ -10,7 +10,13 @@ const fetchMock = vi.hoisted(() =>
 vi.stubGlobal('fetch', fetchMock);
 
 const { HttpMethod } = await import('@activepieces/pieces-common');
-const { GOOGLE_ADMIN_API_ROOT, GoogleWorkspaceApi, GoogleWorkspaceApiError, assertCustomApiCallUrl } = await import('../../../src/lib/common/client');
+const { googleWorkspaceClient } = await import('../../../src/lib/common/client');
+const { googleWorkspaceUtils } = await import('../../../src/lib/common/utils');
+
+const GOOGLE_ADMIN_API_ROOT = googleWorkspaceClient.baseUrl();
+const GoogleWorkspaceApi = googleWorkspaceClient;
+const GoogleWorkspaceApiError = googleWorkspaceClient.ApiError;
+const assertCustomApiCallUrl = (propsValue: { url?: { url?: string } }) => googleWorkspaceUtils.assertCustomApiCallUrl(propsValue.url?.url);
 
 const TOKEN = 'ya29.test-token';
 const AUTH = { access_token: TOKEN };

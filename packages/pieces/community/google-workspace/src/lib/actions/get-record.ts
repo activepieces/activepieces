@@ -2,17 +2,18 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { googleWorkspaceAuth } from '../auth';
-import { GoogleWorkspaceApi } from '../common/client';
-import { parentProp, recordIdentifierProp, resourceTypeProp, stringValues } from '../common/records';
-import { assertVerb, idOf, resourceDefinition, resolveIdentifier } from '../common/resources';
-import { resolveAuth } from '../common/token';
+import { googleWorkspaceApi } from '../common/api';
+import { googleWorkspaceClient } from '../common/client';
+import { googleWorkspaceProps } from '../common/props';
+import { googleWorkspaceUtils } from '../common/utils';
 import { recordOutputSchema } from '../output-schemas';
 
 export const getRecord = createAction({
   name: 'getRecord',
   classification: 'READ',
   displayName: 'Get Record',
-  description: 'Return the full record of a user, group, group member, org unit, device or role assignment',
+  description:
+    'Return the full record of a user, group, group member, org unit, device or role assignment',
   audience: 'both',
   aiMetadata: {
     description:
@@ -21,9 +22,9 @@ export const getRecord = createAction({
   },
   auth: googleWorkspaceAuth,
   props: {
-    resourceType: resourceTypeProp({ verb: 'get' }),
-    identifier: recordIdentifierProp,
-    parent: parentProp,
+    resourceType: googleWorkspaceProps.resourceType({ verb: 'get' }),
+    identifier: googleWorkspaceProps.identifier({ required: true }),
+    parent: googleWorkspaceProps.parent({ required: false }),
     params: Property.Object({
       displayName: 'Extra Query Parameters',
       description:
@@ -34,17 +35,20 @@ export const getRecord = createAction({
   outputSchema: recordOutputSchema,
   async run(context) {
     const { resourceType, identifier, parent, params } = context.propsValue;
-    const def = resourceDefinition(resourceType);
-    assertVerb({ def, verb: 'get' });
-    const auth = await resolveAuth(context.auth);
+    const def = googleWorkspaceUtils.resourceDefinition(resourceType);
+    googleWorkspaceUtils.assertVerb({ def, verb: 'get' });
+    const auth = await googleWorkspaceClient.resolveAuth(context.auth);
 
-    const record = await GoogleWorkspaceApi.request<Record<string, unknown>>({
+    const record = await googleWorkspaceClient.request<Record<string, unknown>>({
       auth,
       method: HttpMethod.GET,
-      path: def.itemPath({ id: await resolveIdentifier({ def, auth, id: identifier }), parent }),
-      query: stringValues(params),
+      path: def.itemPath({
+        id: await googleWorkspaceApi.resolveIdentifier({ def, auth, id: identifier }),
+        parent,
+      }),
+      query: googleWorkspaceUtils.stringValues(params),
     });
 
-    return { resourceType: def.type, id: idOf({ def, item: record }), record };
+    return { resourceType: def.type, id: googleWorkspaceUtils.idOf({ def, item: record }), record };
   },
 });

@@ -1,20 +1,39 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const api = vi.hoisted(() => ({
-  listApplications: vi.fn<() => Promise<unknown>>(),
-  createTransfer: vi.fn<() => Promise<unknown>>(),
+  listApplications: vi.fn<(auth: unknown) => Promise<unknown>>(),
+  createTransfer: vi.fn<(params: { auth: unknown; transfer: unknown }) => Promise<unknown>>(),
   getTransfer: vi.fn<(params: { auth: unknown; transferId: string; timeoutMs?: number }) => Promise<unknown>>(),
 }));
 const userProfileId = vi.hoisted(() => vi.fn<(params: { auth: unknown; userKey: string }) => Promise<string>>());
 const resolveAuth = vi.hoisted(() => vi.fn<() => Promise<{ access_token: string }>>());
+const client = vi.hoisted(() => ({
+  request: async ({ auth, method, path, body, timeoutMs }: { auth: unknown; method: string; path: string; body?: unknown; timeoutMs?: number }) => {
+    const user = /^admin\/directory\/v1\/users\/(.+)$/.exec(path);
+    if (user?.[1]) {
+      return { id: await userProfileId({ auth, userKey: decodeURIComponent(user[1]) }) };
+    }
+    if (method === 'POST' && path === 'admin/datatransfer/v1/transfers') {
+      return api.createTransfer({ auth, transfer: body });
+    }
+    const transfer = /^admin\/datatransfer\/v1\/transfers\/(.+)$/.exec(path);
+    if (transfer?.[1]) {
+      return api.getTransfer({ auth, transferId: decodeURIComponent(transfer[1]), ...(timeoutMs === undefined ? {} : { timeoutMs }) });
+    }
+    throw new Error(`Unexpected request ${method} ${path}`);
+  },
+  listAll: async ({ auth }: { auth: unknown }) => ({ items: await api.listApplications(auth), truncated: false }),
+}));
 
-vi.mock('../../../src/lib/common/data-transfer', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../src/lib/common/data-transfer')>();
-  return { ...actual, DataTransferApi: api, userProfileId };
+vi.mock('../../../src/lib/common/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/lib/common/client')>();
+  return { ...actual, googleWorkspaceClient: { ...actual.googleWorkspaceClient, ...client, resolveAuth } };
 });
-vi.mock('../../../src/lib/common/token', () => ({ resolveAuth }));
 
-const { applicationOptions, toTransferParams, transferData } = await import('../../../src/lib/actions/transfer-data');
+const { transferData } = await import('../../../src/lib/actions/transfer-data');
+const { googleWorkspaceProps } = await import('../../../src/lib/common/props');
+
+const applicationOptions = (auth: unknown) => googleWorkspaceProps.applicationId({ required: true }).options({ auth } as never, {} as never);
 
 const AUTH = { type: 'OAUTH2', access_token: 'tok' };
 const RESOLVED = { access_token: 'resolved' };
@@ -28,13 +47,32 @@ beforeEach(() => {
   vi.useRealTimers();
 });
 
-describe('toTransferParams()', () => {
-  it('should turn comma-separated strings and arrays into the API key/value shape', () => {
-    expect(toTransferParams({ PRIVACY_LEVEL: 'SHARED, PRIVATE', RELEASE_RESOURCES: ['TRUE'], EMPTY: '' })).toEqual([
-      { key: 'PRIVACY_LEVEL', value: ['SHARED', 'PRIVATE'] },
-      { key: 'RELEASE_RESOURCES', value: ['TRUE'] },
-    ]);
-    expect(toTransferParams(undefined)).toEqual([]);
+describe('transfer parameters', () => {
+  it('should turn comma-separated strings and arrays into the API key/value shape and drop empty ones', async () => {
+    api.createTransfer.mockResolvedValue({ id: 't0', oldOwnerUserId: '111', newOwnerUserId: '222', overallTransferStatusCode: 'inProgress' });
+
+    await run({
+      oldOwner: 'old@example.com',
+      newOwner: 'new@example.com',
+      applicationId: '55656082996',
+      transferParams: { PRIVACY_LEVEL: 'SHARED, PRIVATE', RELEASE_RESOURCES: ['TRUE'], EMPTY: '' },
+    });
+
+    expect(api.createTransfer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transfer: expect.objectContaining({
+          applicationDataTransfers: [
+            {
+              applicationId: '55656082996',
+              applicationTransferParams: [
+                { key: 'PRIVACY_LEVEL', value: ['SHARED', 'PRIVATE'] },
+                { key: 'RELEASE_RESOURCES', value: ['TRUE'] },
+              ],
+            },
+          ],
+        }),
+      })
+    );
   });
 });
 

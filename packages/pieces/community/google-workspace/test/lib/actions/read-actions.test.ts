@@ -9,9 +9,8 @@ const resolveAuth = vi.hoisted(() => vi.fn<() => Promise<{ access_token: string 
 
 vi.mock('../../../src/lib/common/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../src/lib/common/client')>();
-  return { ...actual, GoogleWorkspaceApi: { ...actual.GoogleWorkspaceApi, ...api } };
+  return { ...actual, googleWorkspaceClient: { ...actual.googleWorkspaceClient, ...api, resolveAuth } };
 });
-vi.mock('../../../src/lib/common/token', () => ({ resolveAuth }));
 
 const { getRecord } = await import('../../../src/lib/actions/get-record');
 const { searchRecords } = await import('../../../src/lib/actions/search-records');

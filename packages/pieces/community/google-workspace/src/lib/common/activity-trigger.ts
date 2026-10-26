@@ -1,18 +1,44 @@
-import { createTrigger, DEDUPE_KEY_PROPERTY, TriggerStrategy, WebhookRenewStrategy } from '@activepieces/pieces-framework';
-import type { ActionClassification, AiMetadata, InputPropertyMap, StaticPropsValue, Store } from '@activepieces/pieces-framework';
+import { randomUUID } from 'node:crypto';
+
+import { HttpMethod } from '@activepieces/pieces-common';
+import {
+  createTrigger,
+  DEDUPE_KEY_PROPERTY,
+  TriggerStrategy,
+  WebhookRenewStrategy,
+} from '@activepieces/pieces-framework';
+import type {
+  ActionClassification,
+  AiMetadata,
+  InputPropertyMap,
+  StaticPropsValue,
+  Store,
+} from '@activepieces/pieces-framework';
 
 import { googleWorkspaceAuth } from '../auth';
 import { activityEventOutputSchema } from '../output-schemas';
-import { CHANNEL_RENEW_CRON, ReportsApi, SAMPLE_EVENT, flattenActivity, isActivity, newChannelRequest } from './activities';
-import type { ActivityEvent, ActivityQuery, Channel } from './activities';
-import { GoogleWorkspaceApiError } from './client';
-import type { ResolvedAuth } from './client';
-import { resolveAuth } from './token';
-import type { GoogleWorkspaceAuthValue } from './token';
+import { googleWorkspaceClient } from './client';
+import { googleWorkspaceUtils } from './utils';
 
-export function createActivityTrigger<Props extends InputPropertyMap>(spec: ActivityTriggerSpec<Props>) {
-  const accepts = ({ event, props }: { event: ActivityEvent; props: StaticPropsValue<Props> }) =>
-    spec.accept ? spec.accept({ event, props }) : true;
+import type {
+  GoogleWorkspaceActivity,
+  GoogleWorkspaceActivityEvent,
+  GoogleWorkspaceActivityParameter,
+  GoogleWorkspaceActivityQuery,
+  GoogleWorkspaceAuthValue,
+  GoogleWorkspaceChannel,
+  GoogleWorkspaceChannelRequest,
+  GoogleWorkspaceResolvedAuth,
+} from './types';
+
+function createActivityTrigger<Props extends InputPropertyMap>(spec: ActivityTriggerSpec<Props>) {
+  const accepts = ({
+    event,
+    props,
+  }: {
+    event: GoogleWorkspaceActivityEvent;
+    props: StaticPropsValue<Props>;
+  }) => (spec.accept ? spec.accept({ event, props }) : true);
 
   return createTrigger({
     name: spec.name,
@@ -31,7 +57,12 @@ export function createActivityTrigger<Props extends InputPropertyMap>(spec: Acti
       const keys = channelKeys(context.flows.current.version.id);
       await context.store.delete(keys.disabled);
       const stale = await context.store.get<StoredChannel>(keys.channel);
-      const failures = await stopChannels({ auth: context.auth, store: context.store, keys, channels: [stale] });
+      const failures = await stopChannels({
+        auth: context.auth,
+        store: context.store,
+        keys,
+        channels: [stale],
+      });
       await clearStore({ store: context.store, keys });
       warnOnUnstopped(failures);
       await openChannel({
@@ -55,7 +86,14 @@ export function createActivityTrigger<Props extends InputPropertyMap>(spec: Acti
         replacing: current,
       });
       if (saved) {
-        failOnUnstopped(await stopChannels({ auth: context.auth, store: context.store, keys, channels: [current] }));
+        failOnUnstopped(
+          await stopChannels({
+            auth: context.auth,
+            store: context.store,
+            keys,
+            channels: [current],
+          }),
+        );
       }
     },
 
@@ -63,14 +101,20 @@ export function createActivityTrigger<Props extends InputPropertyMap>(spec: Acti
       const keys = channelKeys(context.flows.current.version.id);
       await context.store.put(keys.disabled, true);
       const current = await context.store.get<StoredChannel>(keys.channel);
-      failOnUnstopped(await stopChannels({ auth: context.auth, store: context.store, keys, channels: [current] }));
+      failOnUnstopped(
+        await stopChannels({ auth: context.auth, store: context.store, keys, channels: [current] }),
+      );
       await clearStore({ store: context.store, keys });
     },
 
     async run(context) {
       const { headers, body } = context.payload;
       const token = headerOf({ headers, name: 'x-goog-channel-token' });
-      if (!token || headerOf({ headers, name: 'x-goog-resource-state' }) === 'sync' || !isActivity(body)) {
+      if (
+        !token ||
+        headerOf({ headers, name: 'x-goog-resource-state' }) === 'sync' ||
+        !isActivity(body)
+      ) {
         return [];
       }
       const keys = channelKeys(context.flows.current.version.id);
@@ -84,11 +128,13 @@ export function createActivityTrigger<Props extends InputPropertyMap>(spec: Acti
 
     async test(context) {
       const query = spec.query(context.propsValue);
-      const activities = await ReportsApi.listActivities({
-        auth: await resolveAuth(context.auth),
+      const activities = await reports.listActivities({
+        auth: await googleWorkspaceClient.resolveAuth(context.auth),
         query: { ...query, maxResults: 50 },
       });
-      const events = activities.flatMap(flattenActivity).filter((event) => accepts({ event, props: context.propsValue }));
+      const events = activities
+        .flatMap(flattenActivity)
+        .filter((event) => accepts({ event, props: context.propsValue }));
       return events.slice(0, TEST_SAMPLE_SIZE);
     },
   });
@@ -104,7 +150,17 @@ function channelKeys(flowVersionId: string): ChannelKeys {
   };
 }
 
-async function isKnownToken({ store, keys, token, now }: { store: Store; keys: ChannelKeys; token: string; now: number }): Promise<boolean> {
+async function isKnownToken({
+  store,
+  keys,
+  token,
+  now,
+}: {
+  store: Store;
+  keys: ChannelKeys;
+  token: string;
+  now: number;
+}): Promise<boolean> {
   const current = await store.get<StoredChannel>(keys.channel);
   if (current?.token === token) {
     return true;
@@ -114,10 +170,18 @@ async function isKnownToken({ store, keys, token, now }: { store: Store; keys: C
     return true;
   }
   const previous = await store.get<PreviousChannel>(keys.previousChannel);
-  return previous?.previousToken === token && now - previous.previousStoppedAt < IN_FLIGHT_WINDOW_MS;
+  return (
+    previous?.previousToken === token && now - previous.previousStoppedAt < IN_FLIGHT_WINDOW_MS
+  );
 }
 
-function headerOf({ headers, name }: { headers: Record<string, string> | undefined; name: string }): string | undefined {
+function headerOf({
+  headers,
+  name,
+}: {
+  headers: Record<string, string> | undefined;
+  name: string;
+}): string | undefined {
   if (!headers) return undefined;
   const wanted = name.toLowerCase();
   const entry = Object.entries(headers).find(([key]) => key.toLowerCase() === wanted);
@@ -133,22 +197,27 @@ async function openChannel({
   replacing = null,
 }: {
   auth: GoogleWorkspaceAuthValue | undefined;
-  query: ActivityQuery;
+  query: GoogleWorkspaceActivityQuery;
   webhookUrl: string;
   store: Store;
   keys: ChannelKeys;
   replacing?: StoredChannel | null;
 }): Promise<boolean> {
-  const resolved = await resolveAuth(auth);
+  const resolved = await googleWorkspaceClient.resolveAuth(auth);
   const request = newChannelRequest({ address: webhookUrl });
   await store.put(keys.pendingToken, request.token);
   const channel = await watchOrRollback({
     store,
     keys,
     token: request.token,
-    watch: () => ReportsApi.watch({ auth: resolved, query, channel: request }),
+    watch: () => reports.watch({ auth: resolved, query, channel: request }),
   });
-  const opened: StoredChannel = { ...channel, id: channel.id ?? request.id, token: request.token, query };
+  const opened: StoredChannel = {
+    ...channel,
+    id: channel.id ?? request.id,
+    token: request.token,
+    query,
+  };
   const latest = await store.get<StoredChannel>(keys.channel);
   if (!isSameChannel({ a: latest, b: replacing })) {
     await deletePendingToken({ store, keys, token: request.token });
@@ -156,7 +225,10 @@ async function openChannel({
     return false;
   }
   if (replacing) {
-    const previous: PreviousChannel = { previousToken: replacing.token, previousStoppedAt: Date.now() };
+    const previous: PreviousChannel = {
+      previousToken: replacing.token,
+      previousStoppedAt: Date.now(),
+    };
     await store.put(keys.previousChannel, previous);
   }
   await store.put(keys.channel, opened);
@@ -174,7 +246,15 @@ function isSameChannel({ a, b }: { a: StoredChannel | null; b: StoredChannel | n
   return a?.id === b?.id && a?.token === b?.token;
 }
 
-async function deletePendingToken({ store, keys, token }: { store: Store; keys: ChannelKeys; token: string }): Promise<void> {
+async function deletePendingToken({
+  store,
+  keys,
+  token,
+}: {
+  store: Store;
+  keys: ChannelKeys;
+  token: string;
+}): Promise<void> {
   if ((await store.get<string>(keys.pendingToken)) === token) {
     await store.delete(keys.pendingToken);
   }
@@ -189,8 +269,8 @@ async function watchOrRollback({
   store: Store;
   keys: ChannelKeys;
   token: string;
-  watch: () => Promise<Channel>;
-}): Promise<Channel> {
+  watch: () => Promise<GoogleWorkspaceChannel>;
+}): Promise<GoogleWorkspaceChannel> {
   try {
     return await watch();
   } catch (error) {
@@ -219,7 +299,10 @@ async function stopChannels({
     }
     return [];
   }
-  await store.put(keys.unstoppedChannels, failures.map(({ channel }) => channel));
+  await store.put(
+    keys.unstoppedChannels,
+    failures.map(({ channel }) => channel),
+  );
   return failures;
 }
 
@@ -237,21 +320,29 @@ function warnOnUnstopped(failures: StopFailure[]): void {
 
 function unstoppedMessage(failures: StopFailure[]): string {
   const ids = failures.map(({ channel }) => channel.id).join(', ');
-  return `Could not stop the Google Workspace notification channel(s) ${ids}: ${failures[0]?.reason ?? 'unknown error'}. They are kept for another stop attempt the next time this trigger is enabled, renewed or disabled; either way Google expires them within 6 hours.`;
+  return `Could not stop the Google Workspace notification channel(s) ${ids}: ${
+    failures[0]?.reason ?? 'unknown error'
+  }. They are kept for another stop attempt the next time this trigger is enabled, renewed or disabled; either way Google expires them within 6 hours.`;
 }
 
-async function stopEach({ auth, targets }: { auth: GoogleWorkspaceAuthValue | undefined; targets: ChannelRef[] }): Promise<StopFailure[]> {
+async function stopEach({
+  auth,
+  targets,
+}: {
+  auth: GoogleWorkspaceAuthValue | undefined;
+  targets: ChannelRef[];
+}): Promise<StopFailure[]> {
   if (targets.length === 0) return [];
-  let resolved: ResolvedAuth;
+  let resolved: GoogleWorkspaceResolvedAuth;
   try {
-    resolved = await resolveAuth(auth);
+    resolved = await googleWorkspaceClient.resolveAuth(auth);
   } catch (error) {
     return targets.map((channel) => ({ channel, reason: describe(error) }));
   }
   const failures: StopFailure[] = [];
   for (const channel of targets) {
     try {
-      await ReportsApi.stop({ auth: resolved, channel });
+      await reports.stop({ auth: resolved, channel });
     } catch (error) {
       if (!isGone(error)) {
         failures.push({ channel, reason: describe(error) });
@@ -266,11 +357,15 @@ function toRef(channel: StoredChannel | null): ChannelRef[] {
 }
 
 function uniqueRefs(refs: ChannelRef[]): ChannelRef[] {
-  return refs.filter((ref, index) => refs.findIndex((other) => other.id === ref.id && other.resourceId === ref.resourceId) === index);
+  return refs.filter(
+    (ref, index) =>
+      refs.findIndex((other) => other.id === ref.id && other.resourceId === ref.resourceId) ===
+      index,
+  );
 }
 
 function isGone(error: unknown): boolean {
-  return error instanceof GoogleWorkspaceApiError && GONE_STATUSES.includes(error.status);
+  return error instanceof googleWorkspaceClient.ApiError && GONE_STATUSES.includes(error.status);
 }
 
 function describe(error: unknown): string {
@@ -283,25 +378,221 @@ async function clearStore({ store, keys }: { store: Store; keys: ChannelKeys }):
   await store.delete(keys.previousChannel);
 }
 
+function newChannelRequest({
+  address,
+  now = Date.now(),
+}: {
+  address: string;
+  now?: number;
+}): GoogleWorkspaceChannelRequest {
+  return {
+    id: randomUUID(),
+    address,
+    token: randomUUID(),
+    expiration: now + CHANNEL_MAX_LIFETIME_MS,
+  };
+}
+
+function flattenActivity(activity: GoogleWorkspaceActivity): GoogleWorkspaceActivityEvent[] {
+  const events = activity.events ?? [];
+  const base = `${activity.id?.time ?? ''}:${activity.id?.uniqueQualifier ?? ''}`;
+  return events.map((event, index) => ({
+    id: events.length > 1 ? `${base}:${index}` : base,
+    time: activity.id?.time ?? null,
+    application: activity.id?.applicationName ?? null,
+    eventType: event.type ?? null,
+    eventName: event.name ?? null,
+    actor: {
+      email: activity.actor?.email ?? null,
+      profileId: activity.actor?.profileId ?? null,
+      callerType: activity.actor?.callerType ?? null,
+    },
+    ipAddress: activity.ipAddress ?? null,
+    ownerDomain: activity.ownerDomain ?? null,
+    parameters: Object.fromEntries(
+      (event.parameters ?? []).flatMap((p): [string, unknown][] =>
+        p.name ? [[p.name, parameterValue(p)]] : [],
+      ),
+    ),
+    activity,
+  }));
+}
+
+function isActivity(body: unknown): body is GoogleWorkspaceActivity {
+  return (
+    typeof body === 'object' && body !== null && 'events' in body && Array.isArray(body.events)
+  );
+}
+
+function activityPath({
+  query,
+  suffix = '',
+}: {
+  query: GoogleWorkspaceActivityQuery;
+  suffix?: string;
+}): string {
+  const userKey = encodeURIComponent((query.userKey ?? 'all').trim() || 'all');
+  return `${
+    googleWorkspaceUtils.reportsPath
+  }/activity/users/${userKey}/applications/${encodeURIComponent(query.application)}${suffix}`;
+}
+
+function queryParams(
+  query: GoogleWorkspaceActivityQuery,
+): Record<string, string | number | undefined> {
+  return {
+    eventName: query.eventName?.trim() || undefined,
+    filters: query.filters?.trim() || undefined,
+    startTime: query.startTime,
+    maxResults: query.maxResults,
+  };
+}
+
+function parameterValue(p: GoogleWorkspaceActivityParameter): unknown {
+  if (p.value !== undefined) return p.value;
+  if (p.intValue !== undefined) return p.intValue;
+  if (p.boolValue !== undefined) return p.boolValue;
+  if (p.multiValue !== undefined) return p.multiValue;
+  if (p.multiIntValue !== undefined) return p.multiIntValue;
+  if (p.messageValue !== undefined) return p.messageValue;
+  if (p.multiMessageValue !== undefined) return p.multiMessageValue;
+  return null;
+}
+
+async function listActivities({
+  auth,
+  query,
+}: {
+  auth: GoogleWorkspaceResolvedAuth;
+  query: GoogleWorkspaceActivityQuery;
+}): Promise<GoogleWorkspaceActivity[]> {
+  const { items } = await googleWorkspaceClient.listPage<GoogleWorkspaceActivity>({
+    auth,
+    path: activityPath({ query }),
+    itemsKey: 'items',
+    query: queryParams(query),
+  });
+  return items;
+}
+
+async function watch({
+  auth,
+  query,
+  channel,
+}: {
+  auth: GoogleWorkspaceResolvedAuth;
+  query: GoogleWorkspaceActivityQuery;
+  channel: GoogleWorkspaceChannelRequest;
+}): Promise<GoogleWorkspaceChannel> {
+  return await googleWorkspaceClient.request<GoogleWorkspaceChannel>({
+    auth,
+    method: HttpMethod.POST,
+    path: activityPath({ query, suffix: '/watch' }),
+    query: queryParams(query),
+    body: {
+      id: channel.id,
+      type: 'web_hook',
+      address: channel.address,
+      token: channel.token,
+      expiration: String(channel.expiration),
+      payload: true,
+    },
+  });
+}
+
+async function stop({
+  auth,
+  channel,
+}: {
+  auth: GoogleWorkspaceResolvedAuth;
+  channel: Pick<GoogleWorkspaceChannel, 'id' | 'resourceId'>;
+}): Promise<void> {
+  await googleWorkspaceClient.request<unknown>({
+    auth,
+    method: HttpMethod.POST,
+    path: 'admin/reports_v1/channels/stop',
+    body: { id: channel.id, resourceId: channel.resourceId },
+  });
+}
+
+const reports = { listActivities, watch, stop };
+
+const CHANNEL_MAX_LIFETIME_MS = (6 * 60 - 5) * 60 * 1000;
+const CHANNEL_RENEW_CRON = '0 */4 * * *';
+
+const SAMPLE_EVENT: GoogleWorkspaceActivityEvent = {
+  id: '2026-10-05T12:34:56.789Z:8721456339812',
+  time: '2026-10-05T12:34:56.789Z',
+  application: 'admin',
+  eventType: 'USER_SETTINGS',
+  eventName: 'CREATE_USER',
+  actor: { email: 'admin@example.com', profileId: '104938271650192837465', callerType: 'USER' },
+  ipAddress: '203.0.113.10',
+  ownerDomain: 'example.com',
+  parameters: { USER_EMAIL: 'jane.doe@example.com' },
+  activity: {
+    kind: 'admin#reports#activity',
+    id: {
+      time: '2026-10-05T12:34:56.789Z',
+      uniqueQualifier: '8721456339812',
+      applicationName: 'admin',
+      customerId: 'C01abcd2e',
+    },
+    actor: { email: 'admin@example.com', profileId: '104938271650192837465', callerType: 'USER' },
+    ownerDomain: 'example.com',
+    ipAddress: '203.0.113.10',
+    events: [
+      {
+        type: 'USER_SETTINGS',
+        name: 'CREATE_USER',
+        parameters: [{ name: 'USER_EMAIL', value: 'jane.doe@example.com' }],
+      },
+    ],
+  },
+};
+
 const KEY_PREFIX = 'google-workspace';
 const GONE_STATUSES = [404, 410];
 const MAX_REASON_LENGTH = 300;
 const TEST_SAMPLE_SIZE = 10;
 const IN_FLIGHT_WINDOW_MS = 2 * 60 * 1000;
 
-type StoredChannel = Channel & { token: string; query: ActivityQuery };
+export const googleWorkspaceActivityTrigger = {
+  create: createActivityTrigger,
+  reports,
+  newChannelRequest,
+  flattenActivity,
+  isActivity,
+  sampleEvent: SAMPLE_EVENT,
+  channelMaxLifetimeMs: CHANNEL_MAX_LIFETIME_MS,
+  renewCron: CHANNEL_RENEW_CRON,
+};
+
+type StoredChannel = GoogleWorkspaceChannel & {
+  token: string;
+  query: GoogleWorkspaceActivityQuery;
+};
 type PreviousChannel = { previousToken: string; previousStoppedAt: number };
-type ChannelKeys = { channel: string; pendingToken: string; previousChannel: string; unstoppedChannels: string; disabled: string };
-type ChannelRef = Pick<Channel, 'id' | 'resourceId'>;
+type ChannelKeys = {
+  channel: string;
+  pendingToken: string;
+  previousChannel: string;
+  unstoppedChannels: string;
+  disabled: string;
+};
+type ChannelRef = Pick<GoogleWorkspaceChannel, 'id' | 'resourceId'>;
 type StopFailure = { channel: ChannelRef; reason: string };
 
-export type ActivityTriggerSpec<Props extends InputPropertyMap> = {
+type ActivityTriggerSpec<Props extends InputPropertyMap> = {
   name: string;
   classification: ActionClassification;
   displayName: string;
   description: string;
   aiMetadata: AiMetadata;
   props: Props;
-  query: (props: StaticPropsValue<Props>) => ActivityQuery;
-  accept?: (params: { event: ActivityEvent; props: StaticPropsValue<Props> }) => boolean;
+  query: (props: StaticPropsValue<Props>) => GoogleWorkspaceActivityQuery;
+  accept?: (params: {
+    event: GoogleWorkspaceActivityEvent;
+    props: StaticPropsValue<Props>;
+  }) => boolean;
 };

@@ -11,8 +11,13 @@ const fetchMock = vi.hoisted(() =>
 );
 vi.stubGlobal('fetch', fetchMock);
 
-const { cachedTokenCount, GOOGLE_TOKEN_URL, buildAssertion, clearTokenCache, mintServiceAccountToken, normalizePrivateKey, validateServiceAccount } =
-  await import('../../../src/lib/common/service-account');
+const { googleWorkspaceClient } = await import('../../../src/lib/common/client');
+const { googleWorkspaceServiceAccount } = await import('../../../src/lib/auth');
+
+const { cachedTokenCount, buildAssertion, clearTokenCache, mintServiceAccountToken, normalizePrivateKey } = googleWorkspaceClient;
+const GOOGLE_TOKEN_URL = googleWorkspaceClient.tokenUrl;
+const validateServiceAccount = (creds: { clientEmail: string; privateKey: string; adminEmail: string }) =>
+  googleWorkspaceServiceAccount.validate?.({ auth: creds } as never);
 
 const { privateKey, publicKey } = generateKeyPairSync('rsa', {
   modulusLength: 2048,

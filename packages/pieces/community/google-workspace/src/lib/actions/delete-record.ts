@@ -2,10 +2,10 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 
 import { googleWorkspaceAuth } from '../auth';
-import { GoogleWorkspaceApi } from '../common/client';
-import { parentProp, recordIdentifierProp, resourceTypeProp } from '../common/records';
-import { assertVerb, resourceDefinition, resolveIdentifier } from '../common/resources';
-import { resolveAuth } from '../common/token';
+import { googleWorkspaceApi } from '../common/api';
+import { googleWorkspaceClient } from '../common/client';
+import { googleWorkspaceProps } from '../common/props';
+import { googleWorkspaceUtils } from '../common/utils';
 import { deleteRecordOutputSchema } from '../output-schemas';
 
 export const deleteRecord = createAction({
@@ -22,21 +22,24 @@ export const deleteRecord = createAction({
   },
   auth: googleWorkspaceAuth,
   props: {
-    resourceType: resourceTypeProp({ verb: 'delete' }),
-    identifier: recordIdentifierProp,
-    parent: parentProp,
+    resourceType: googleWorkspaceProps.resourceType({ verb: 'delete' }),
+    identifier: googleWorkspaceProps.identifier({ required: true }),
+    parent: googleWorkspaceProps.parent({ required: false }),
   },
   outputSchema: deleteRecordOutputSchema,
   async run(context) {
     const { resourceType, identifier, parent } = context.propsValue;
-    const def = resourceDefinition(resourceType);
-    assertVerb({ def, verb: 'delete' });
-    const auth = await resolveAuth(context.auth);
+    const def = googleWorkspaceUtils.resourceDefinition(resourceType);
+    googleWorkspaceUtils.assertVerb({ def, verb: 'delete' });
+    const auth = await googleWorkspaceClient.resolveAuth(context.auth);
 
-    await GoogleWorkspaceApi.request<unknown>({
+    await googleWorkspaceClient.request<unknown>({
       auth,
       method: HttpMethod.DELETE,
-      path: def.itemPath({ id: await resolveIdentifier({ def, auth, id: identifier }), parent }),
+      path: def.itemPath({
+        id: await googleWorkspaceApi.resolveIdentifier({ def, auth, id: identifier }),
+        parent,
+      }),
     });
 
     return { resourceType: def.type, id: String(identifier).trim(), removed: true };

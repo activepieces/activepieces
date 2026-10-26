@@ -2,10 +2,10 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 
 import { googleWorkspaceAuth } from '../auth';
-import { GoogleWorkspaceApi } from '../common/client';
-import { parentProp, parseRecord, recordIdentifierProp, recordJsonProp, resourceTypeProp } from '../common/records';
-import { assertVerb, idOf, resourceDefinition, resolveIdentifier } from '../common/resources';
-import { resolveAuth } from '../common/token';
+import { googleWorkspaceApi } from '../common/api';
+import { googleWorkspaceClient } from '../common/client';
+import { googleWorkspaceProps } from '../common/props';
+import { googleWorkspaceUtils } from '../common/utils';
 import { recordOutputSchema } from '../output-schemas';
 
 export const updateRecord = createAction({
@@ -22,29 +22,36 @@ export const updateRecord = createAction({
   },
   auth: googleWorkspaceAuth,
   props: {
-    resourceType: resourceTypeProp({ verb: 'update' }),
-    identifier: recordIdentifierProp,
-    parent: parentProp,
-    record: recordJsonProp,
+    resourceType: googleWorkspaceProps.resourceType({ verb: 'update' }),
+    identifier: googleWorkspaceProps.identifier({ required: true }),
+    parent: googleWorkspaceProps.parent({ required: false }),
+    record: googleWorkspaceProps.record({ required: true }),
   },
   outputSchema: recordOutputSchema,
   async run(context) {
     const { resourceType, identifier, parent, record } = context.propsValue;
-    const def = resourceDefinition(resourceType);
-    assertVerb({ def, verb: 'update' });
-    const body = parseRecord(record);
+    const def = googleWorkspaceUtils.resourceDefinition(resourceType);
+    googleWorkspaceUtils.assertVerb({ def, verb: 'update' });
+    const body = googleWorkspaceUtils.parseRecord(record);
     if (Object.keys(body).length === 0) {
       throw new Error('The record has no fields to update.');
     }
-    const auth = await resolveAuth(context.auth);
+    const auth = await googleWorkspaceClient.resolveAuth(context.auth);
 
-    const updated = await GoogleWorkspaceApi.request<Record<string, unknown>>({
+    const updated = await googleWorkspaceClient.request<Record<string, unknown>>({
       auth,
       method: HttpMethod.PATCH,
-      path: def.itemPath({ id: await resolveIdentifier({ def, auth, id: identifier }), parent }),
+      path: def.itemPath({
+        id: await googleWorkspaceApi.resolveIdentifier({ def, auth, id: identifier }),
+        parent,
+      }),
       body,
     });
 
-    return { resourceType: def.type, id: idOf({ def, item: updated }), record: updated };
+    return {
+      resourceType: def.type,
+      id: googleWorkspaceUtils.idOf({ def, item: updated }),
+      record: updated,
+    };
   },
 });

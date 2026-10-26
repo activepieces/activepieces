@@ -10,15 +10,16 @@ import { suspendUser } from './lib/actions/suspend-user';
 import { transferData } from './lib/actions/transfer-data';
 import { updateRecord } from './lib/actions/update-record';
 import { googleWorkspaceAuth } from './lib/auth';
-import { DATA_TRANSFER_PATH, DIRECTORY_PATH, GOOGLE_ADMIN_API_ROOT, REPORTS_PATH, assertCustomApiCallUrl } from './lib/common/client';
-import { resolveAuth } from './lib/common/token';
+import { googleWorkspaceClient } from './lib/common/client';
+import { googleWorkspaceUtils } from './lib/common/utils';
 import { newAdminActivityEvent } from './lib/triggers/new-admin-activity-event';
 import { newApplicationActivityEvent } from './lib/triggers/new-application-activity-event';
 import { newUserEvent } from './lib/triggers/new-user-event';
 
 export const googleWorkspace = createPiece({
   displayName: 'Google Workspace',
-  description: 'Manage Google Workspace users, groups, organizational units and devices, and react to Admin audit events.',
+  description:
+    'Manage Google Workspace users, groups, organizational units and devices, and react to Admin audit events.',
   auth: googleWorkspaceAuth,
   minimumSupportedRelease: '0.88.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-workspace.png',
@@ -35,11 +36,16 @@ export const googleWorkspace = createPiece({
     transferData,
     createCustomApiCallAction({
       auth: googleWorkspaceAuth,
-      baseUrl: () => GOOGLE_ADMIN_API_ROOT,
-      description: `Call any Admin SDK endpoint. Paths are relative to ${GOOGLE_ADMIN_API_ROOT}, e.g. /${DIRECTORY_PATH}/users?customer=my_customer, /${REPORTS_PATH}/activity/users/all/applications/login, /${DATA_TRANSFER_PATH}/applications.`,
+      baseUrl: () => googleWorkspaceClient.baseUrl(),
+      description: `Call any Admin SDK endpoint. Paths are relative to ${googleWorkspaceUtils.adminApiRoot}, e.g. /${googleWorkspaceUtils.directoryPath}/users?customer=my_customer, /${googleWorkspaceUtils.reportsPath}/activity/users/all/applications/login, /${googleWorkspaceUtils.dataTransferPath}/applications.`,
       authMapping: async (auth, propsValue) => {
-        assertCustomApiCallUrl(propsValue);
-        const { access_token } = await resolveAuth(auth);
+        const urlProp: unknown = propsValue['url'];
+        googleWorkspaceUtils.assertCustomApiCallUrl(
+          typeof urlProp === 'object' && urlProp !== null
+            ? Object.fromEntries(Object.entries(urlProp))['url']
+            : undefined,
+        );
+        const { access_token } = await googleWorkspaceClient.resolveAuth(auth);
         return { Authorization: `Bearer ${access_token}` };
       },
     }),

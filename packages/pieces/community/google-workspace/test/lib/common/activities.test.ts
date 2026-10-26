@@ -9,8 +9,13 @@ const fetchMock = vi.hoisted(() =>
 );
 vi.stubGlobal('fetch', fetchMock);
 
-const { ACTIVITY_APPLICATIONS, CHANNEL_MAX_LIFETIME_MS, ReportsApi, SAMPLE_EVENT, flattenActivity, isActivity, newChannelRequest } =
-  await import('../../../src/lib/common/activities');
+const { googleWorkspaceActivityTrigger } = await import('../../../src/lib/common/activity-trigger');
+const { ACTIVITY_APPLICATIONS } = await import('../../../src/lib/triggers/new-application-activity-event');
+
+const { flattenActivity, isActivity, newChannelRequest } = googleWorkspaceActivityTrigger;
+const ReportsApi = googleWorkspaceActivityTrigger.reports;
+const SAMPLE_EVENT = googleWorkspaceActivityTrigger.sampleEvent;
+const CHANNEL_MAX_LIFETIME_MS = googleWorkspaceActivityTrigger.channelMaxLifetimeMs;
 
 const AUTH = { access_token: 'tok' };
 const ROOT = 'https://admin.googleapis.com';

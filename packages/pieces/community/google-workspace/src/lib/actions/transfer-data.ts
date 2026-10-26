@@ -1,37 +1,21 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import type { DropdownState } from '@activepieces/pieces-framework';
 
 import { googleWorkspaceAuth } from '../auth';
-import { DATA_TRANSFER_PATH } from '../common/client';
-import type { ResolvedAuth } from '../common/client';
-import { DataTransferApi, userProfileId } from '../common/data-transfer';
-import type { ApplicationDataTransfer, DataTransfer, TransferApplication, TransferParam } from '../common/data-transfer';
-import { resolveAuth } from '../common/token';
-import type { GoogleWorkspaceAuthValue } from '../common/token';
+import { googleWorkspaceClient } from '../common/client';
+import { googleWorkspaceProps } from '../common/props';
+import { googleWorkspaceUtils } from '../common/utils';
 import { transferDataOutputSchema } from '../output-schemas';
 
-export async function applicationOptions(auth: GoogleWorkspaceAuthValue | undefined): Promise<DropdownState<string>> {
-  if (!auth) {
-    return { disabled: true, options: [], placeholder: 'Please select an existing or create a new connection.' };
-  }
-  try {
-    const applications = await DataTransferApi.listApplications(await resolveAuth(auth));
-    if (applications.length === 0) {
-      return { disabled: true, options: [], placeholder: 'No application supports data transfer in this account.' };
-    }
-    return { disabled: false, options: applications.map((app) => ({ label: labelFor(app), value: String(app.id) })) };
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    return {
-      disabled: true,
-      options: [],
-      placeholder: `An error occurred while listing the transferable applications: ${detail.slice(0, 300)}`,
-    };
-  }
-}
+import type {
+  GoogleWorkspaceApplicationDataTransfer,
+  GoogleWorkspaceDataTransfer,
+  GoogleWorkspaceResolvedAuth,
+  GoogleWorkspaceTransferParam,
+} from '../common/types';
 
-export function toTransferParams(value: unknown): TransferParam[] {
-  const entries = isRecord(value) ? Object.entries(value) : [];
+function toTransferParams(value: unknown): GoogleWorkspaceTransferParam[] {
+  const entries = typeof value === 'object' && value !== null ? Object.entries(value) : [];
   return entries
     .map(([key, raw]) => ({
       key: key.trim(),
@@ -40,15 +24,6 @@ export function toTransferParams(value: unknown): TransferParam[] {
         .filter(Boolean),
     }))
     .filter((p) => p.key && p.value.length > 0);
-}
-
-function labelFor(app: TransferApplication): string {
-  const params = (app.transferParams ?? []).map((p) => `${p.key}: ${p.value.join('|')}`).join(', ');
-  return params ? `${app.name} (${params})` : app.name;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -61,11 +36,11 @@ async function pollUntilDone({
   transferId,
   deadline,
 }: {
-  auth: ResolvedAuth;
-  transfer: DataTransfer;
+  auth: GoogleWorkspaceResolvedAuth;
+  transfer: GoogleWorkspaceDataTransfer;
   transferId: string;
   deadline: number;
-}): Promise<DataTransfer> {
+}): Promise<GoogleWorkspaceDataTransfer> {
   let latest = transfer;
   while (isRunning(latest) && Date.now() < deadline) {
     await sleep(Math.min(POLL_INTERVAL_MS, deadline - Date.now()));
@@ -74,12 +49,16 @@ async function pollUntilDone({
       return latest;
     }
     try {
-      latest = await DataTransferApi.getTransfer({ auth, transferId, timeoutMs: remaining });
+      latest = await getTransfer({ auth, transferId, timeoutMs: remaining });
     } catch (error) {
       if (Date.now() < deadline) {
         throw new Error(
-          `Transfer ${transferId} was started in Google and was not cancelled, but checking its status failed: ${error instanceof Error ? error.message : String(error)}. Check it with Custom API Call (GET /${DATA_TRANSFER_PATH}/transfers/${transferId}) before running this step again.`,
-          { cause: error }
+          `Transfer ${transferId} was started in Google and was not cancelled, but checking its status failed: ${
+            error instanceof Error ? error.message : String(error)
+          }. Check it with Custom API Call (GET /${
+            googleWorkspaceUtils.dataTransferPath
+          }/transfers/${transferId}) before running this step again.`,
+          { cause: error },
         );
       }
       return latest;
@@ -88,25 +67,39 @@ async function pollUntilDone({
   return latest;
 }
 
-function isRunning(transfer: DataTransfer): boolean {
+function isRunning(transfer: GoogleWorkspaceDataTransfer): boolean {
   return RUNNING_STATUSES.includes(transfer.overallTransferStatusCode ?? '');
 }
 
-function assertNotFailed({ transfer, requireCompleted }: { transfer: DataTransfer; requireCompleted: boolean }): void {
+function assertNotFailed({
+  transfer,
+  requireCompleted,
+}: {
+  transfer: GoogleWorkspaceDataTransfer;
+  requireCompleted: boolean;
+}): void {
   const status = transfer.overallTransferStatusCode ?? 'unknown';
-  const failed = (transfer.applicationDataTransfers ?? []).filter((a) => a.applicationTransferStatus === FAILED_STATUS);
+  const failed = (transfer.applicationDataTransfers ?? []).filter(
+    (a) => a.applicationTransferStatus === FAILED_STATUS,
+  );
   const overallFailed = requireCompleted ? status !== COMPLETED_STATUS : status === FAILED_STATUS;
   if (!overallFailed && failed.length === 0) {
     return;
   }
-  const applications = failed.map((a) => `application ${a.applicationId}: ${FAILED_STATUS}`).join(', ');
+  const applications = failed
+    .map((a) => `application ${a.applicationId}: ${FAILED_STATUS}`)
+    .join(', ');
   const transferId = transfer.id ?? 'without id';
   throw new Error(
-    `Transfer ${transferId} did not complete in Google (status: ${status}${applications ? `; ${applications}` : ''}). The data of From User may not have moved, so do not delete that user yet. Check the details with Custom API Call (GET /${DATA_TRANSFER_PATH}/transfers/${transferId}) and start a new transfer once the cause is fixed.`
+    `Transfer ${transferId} did not complete in Google (status: ${status}${
+      applications ? `; ${applications}` : ''
+    }). The data of From User may not have moved, so do not delete that user yet. Check the details with Custom API Call (GET /${
+      googleWorkspaceUtils.dataTransferPath
+    }/transfers/${transferId}) and start a new transfer once the cause is fixed.`,
   );
 }
 
-function shape(transfer: DataTransfer) {
+function shape(transfer: GoogleWorkspaceDataTransfer) {
   return {
     transferId: transfer.id ?? null,
     status: transfer.overallTransferStatusCode ?? null,
@@ -121,6 +114,64 @@ function shape(transfer: DataTransfer) {
   };
 }
 
+async function userProfileId({
+  auth,
+  userKey,
+}: {
+  auth: GoogleWorkspaceResolvedAuth;
+  userKey: string;
+}): Promise<string> {
+  const key = String(userKey ?? '').trim();
+  if (!key) {
+    throw new Error('A user e-mail or id is required.');
+  }
+  if (/^\d+$/.test(key)) {
+    return key;
+  }
+  const user = await googleWorkspaceClient.request<{ id?: string }>({
+    auth,
+    method: HttpMethod.GET,
+    path: `${googleWorkspaceUtils.directoryPath}/users/${encodeURIComponent(key)}`,
+    query: { projection: 'basic' },
+  });
+  if (!user.id) {
+    throw new Error(`Google returned no id for user "${key}".`);
+  }
+  return user.id;
+}
+
+async function createTransfer({
+  auth,
+  transfer,
+}: {
+  auth: GoogleWorkspaceResolvedAuth;
+  transfer: GoogleWorkspaceDataTransfer;
+}): Promise<GoogleWorkspaceDataTransfer> {
+  return await googleWorkspaceClient.request<GoogleWorkspaceDataTransfer>({
+    auth,
+    method: HttpMethod.POST,
+    path: `${googleWorkspaceUtils.dataTransferPath}/transfers`,
+    body: transfer,
+  });
+}
+
+async function getTransfer({
+  auth,
+  transferId,
+  timeoutMs,
+}: {
+  auth: GoogleWorkspaceResolvedAuth;
+  transferId: string;
+  timeoutMs?: number;
+}): Promise<GoogleWorkspaceDataTransfer> {
+  return await googleWorkspaceClient.request<GoogleWorkspaceDataTransfer>({
+    auth,
+    method: HttpMethod.GET,
+    path: `${googleWorkspaceUtils.dataTransferPath}/transfers/${encodeURIComponent(transferId)}`,
+    ...(timeoutMs === undefined ? {} : { timeoutMs }),
+  });
+}
+
 const COMPLETED_STATUS = 'completed';
 const FAILED_STATUS = 'failed';
 const RUNNING_STATUSES = ['inProgress', 'pending'];
@@ -132,7 +183,8 @@ export const transferData = createAction({
   name: 'transferData',
   classification: 'WRITE',
   displayName: 'Transfer Data',
-  description: "Transfer a user's application data (Drive files, Calendar events, ...) to another user, e.g. when offboarding",
+  description:
+    "Transfer a user's application data (Drive files, Calendar events, ...) to another user, e.g. when offboarding",
   audience: 'both',
   aiMetadata: {
     description:
@@ -147,7 +199,8 @@ export const transferData = createAction({
   props: {
     oldOwner: Property.ShortText({
       displayName: 'From User',
-      description: 'E-mail or id of the user whose data moves. The user must still exist (suspended is fine).',
+      description:
+        'E-mail or id of the user whose data moves. The user must still exist (suspended is fine).',
       required: true,
     }),
     newOwner: Property.ShortText({
@@ -155,14 +208,7 @@ export const transferData = createAction({
       description: 'E-mail or id of the user receiving the data.',
       required: true,
     }),
-    applicationId: Property.Dropdown<string, true, typeof googleWorkspaceAuth>({
-      displayName: 'Application',
-      description: "Which application's data to transfer. The label lists the parameters the application accepts.",
-      required: true,
-      auth: googleWorkspaceAuth,
-      refreshers: [],
-      options: async ({ auth }) => applicationOptions(auth),
-    }),
+    applicationId: googleWorkspaceProps.applicationId({ required: true }),
     transferParams: Property.Object({
       displayName: 'Transfer Parameters',
       description:
@@ -178,8 +224,9 @@ export const transferData = createAction({
   },
   outputSchema: transferDataOutputSchema,
   async run(context) {
-    const { oldOwner, newOwner, applicationId, transferParams, waitForCompletion } = context.propsValue;
-    const auth = await resolveAuth(context.auth);
+    const { oldOwner, newOwner, applicationId, transferParams, waitForCompletion } =
+      context.propsValue;
+    const auth = await googleWorkspaceClient.resolveAuth(context.auth);
 
     const [oldOwnerUserId, newOwnerUserId] = await Promise.all([
       userProfileId({ auth, userKey: oldOwner }),
@@ -190,12 +237,12 @@ export const transferData = createAction({
     }
 
     const params = toTransferParams(transferParams);
-    const application: ApplicationDataTransfer = {
+    const application: GoogleWorkspaceApplicationDataTransfer = {
       applicationId: String(applicationId),
       ...(params.length > 0 ? { applicationTransferParams: params } : {}),
     };
 
-    let transfer = await DataTransferApi.createTransfer({
+    let transfer = await createTransfer({
       auth,
       transfer: {
         oldOwnerUserId,
@@ -206,10 +253,15 @@ export const transferData = createAction({
 
     const transferId = transfer.id;
     if (waitForCompletion && transferId) {
-      transfer = await pollUntilDone({ auth, transfer, transferId, deadline: Date.now() + POLL_WAIT_MS });
+      transfer = await pollUntilDone({
+        auth,
+        transfer,
+        transferId,
+        deadline: Date.now() + POLL_WAIT_MS,
+      });
       if (isRunning(transfer)) {
         throw new Error(
-          `Transfer ${transferId} is still running in Google after waiting ${POLL_WAIT_SECONDS} seconds. It was not cancelled and will finish on its own. Check its status with Custom API Call (GET /${DATA_TRANSFER_PATH}/transfers/${transferId}), or turn Wait for Completion off to continue as soon as Google accepts the transfer.`
+          `Transfer ${transferId} is still running in Google after waiting ${POLL_WAIT_SECONDS} seconds. It was not cancelled and will finish on its own. Check its status with Custom API Call (GET /${googleWorkspaceUtils.dataTransferPath}/transfers/${transferId}), or turn Wait for Completion off to continue as soon as Google accepts the transfer.`,
         );
       }
     }

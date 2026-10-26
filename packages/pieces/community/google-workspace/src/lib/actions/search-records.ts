@@ -1,15 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { googleWorkspaceAuth } from '../auth';
-import { GoogleWorkspaceApi, MY_CUSTOMER } from '../common/client';
-import type { QueryValues } from '../common/client';
-import { parentProp, resourceTypeProp, stringValues } from '../common/records';
-import { RESOURCES, assertVerb, resourceDefinition } from '../common/resources';
-import { resolveAuth } from '../common/token';
+import { googleWorkspaceClient } from '../common/client';
+import { googleWorkspaceProps } from '../common/props';
+import { googleWorkspaceUtils } from '../common/utils';
 import { searchRecordsOutputSchema } from '../output-schemas';
 
+import type { GoogleWorkspaceQuery } from '../common/types';
+
 function queryableLabels(): string {
-  return Object.values(RESOURCES)
+  return Object.values(googleWorkspaceUtils.resources)
     .filter((def) => def.supportsQuery)
     .map((def) => def.label)
     .join(', ');
@@ -31,8 +31,8 @@ export const searchRecords = createAction({
   },
   auth: googleWorkspaceAuth,
   props: {
-    resourceType: resourceTypeProp({ verb: 'list' }),
-    parent: parentProp,
+    resourceType: googleWorkspaceProps.resourceType({ verb: 'list' }),
+    parent: googleWorkspaceProps.parent({ required: false }),
     query: Property.ShortText({
       displayName: 'Query',
       description: `Directory search syntax (only for ${queryableLabels()}). Examples: \`email:sales*\` · \`orgUnitPath=/Sales isSuspended=false\` · \`name:'Jane Doe'\` · \`manager='boss@example.com'\`. Leave empty to list everything.`,
@@ -40,12 +40,13 @@ export const searchRecords = createAction({
     }),
     domain: Property.ShortText({
       displayName: 'Domain',
-      description: 'Only users and groups: restrict to one domain of the account (default: every domain of the customer).',
+      description:
+        'Only users and groups: restrict to one domain of the account (default: every domain of the customer).',
       required: false,
     }),
     params: Property.Object({
       displayName: 'Extra Query Parameters',
-      description: Object.values(RESOURCES)
+      description: Object.values(googleWorkspaceUtils.resources)
         .filter((def) => def.extraListParams?.length)
         .map((def) => `**${def.label}**: ${def.extraListParams?.join(', ')}`)
         .join(' · '),
@@ -53,7 +54,8 @@ export const searchRecords = createAction({
     }),
     fetchAllPages: Property.Checkbox({
       displayName: 'Fetch All Pages',
-      description: 'Follow the pagination until the list is exhausted (up to Max Rows). Off: return one page and its next page token.',
+      description:
+        'Follow the pagination until the list is exhausted (up to Max Rows). Off: return one page and its next page token.',
       required: false,
       defaultValue: false,
     }),
@@ -65,31 +67,39 @@ export const searchRecords = createAction({
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
-      description: 'Only without "Fetch All Pages": the `nextPageToken` of a previous run to continue from.',
+      description:
+        'Only without "Fetch All Pages": the `nextPageToken` of a previous run to continue from.',
       required: false,
     }),
   },
   outputSchema: searchRecordsOutputSchema,
   async run(context) {
-    const { resourceType, parent, query, domain, params, fetchAllPages, maxRows, pageToken } = context.propsValue;
-    const def = resourceDefinition(resourceType);
-    assertVerb({ def, verb: 'list' });
+    const { resourceType, parent, query, domain, params, fetchAllPages, maxRows, pageToken } =
+      context.propsValue;
+    const def = googleWorkspaceUtils.resourceDefinition(resourceType);
+    googleWorkspaceUtils.assertVerb({ def, verb: 'list' });
 
     if (query && !def.supportsQuery) {
       throw new Error(
-        `${def.label} records cannot be filtered with a query; use the extra parameters (${def.extraListParams?.join(', ') ?? 'none'}) instead.`
+        `${def.label} records cannot be filtered with a query; use the extra parameters (${
+          def.extraListParams?.join(', ') ?? 'none'
+        }) instead.`,
       );
     }
     if (domain && !def.supportsDomain) {
       throw new Error('The domain filter only applies to users and groups.');
     }
 
-    const auth = await resolveAuth(context.auth);
+    const auth = await googleWorkspaceClient.resolveAuth(context.auth);
     const path = def.collectionPath(parent);
-    const cap = Math.floor(Math.min(Math.max(Number(maxRows) || DEFAULT_MAX_ROWS, 1), HARD_MAX_ROWS));
-    const extraParams = stringValues(params);
-    const baseQuery: QueryValues = {
-      ...(def.supportsDomain && !domain && !extraParams['userKey'] ? { customer: MY_CUSTOMER } : {}),
+    const cap = Math.floor(
+      Math.min(Math.max(Number(maxRows) || DEFAULT_MAX_ROWS, 1), HARD_MAX_ROWS),
+    );
+    const extraParams = googleWorkspaceUtils.stringValues(params);
+    const baseQuery: GoogleWorkspaceQuery = {
+      ...(def.supportsDomain && !domain && !extraParams['userKey']
+        ? { customer: googleWorkspaceUtils.myCustomer }
+        : {}),
       ...(domain ? { domain } : {}),
       ...(query ? { query } : {}),
       ...extraParams,
@@ -97,7 +107,7 @@ export const searchRecords = createAction({
     const pageSize = def.maxPageSize ? { maxResults: Math.min(cap, def.maxPageSize) } : {};
 
     if (fetchAllPages) {
-      const { items, truncated } = await GoogleWorkspaceApi.listAll<Record<string, unknown>>({
+      const { items, truncated } = await googleWorkspaceClient.listAll<Record<string, unknown>>({
         auth,
         path,
         itemsKey: def.itemsKey,
@@ -107,7 +117,7 @@ export const searchRecords = createAction({
       return { resourceType: def.type, items, count: items.length, truncated };
     }
 
-    const page = await GoogleWorkspaceApi.listPage<Record<string, unknown>>({
+    const page = await googleWorkspaceClient.listPage<Record<string, unknown>>({
       auth,
       path,
       itemsKey: def.itemsKey,

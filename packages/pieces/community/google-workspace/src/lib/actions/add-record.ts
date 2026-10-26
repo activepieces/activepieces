@@ -2,10 +2,9 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 
 import { googleWorkspaceAuth } from '../auth';
-import { GoogleWorkspaceApi } from '../common/client';
-import { parentProp, parseRecord, recordJsonProp, resourceTypeProp } from '../common/records';
-import { assertVerb, idOf, resourceDefinition } from '../common/resources';
-import { resolveAuth } from '../common/token';
+import { googleWorkspaceClient } from '../common/client';
+import { googleWorkspaceProps } from '../common/props';
+import { googleWorkspaceUtils } from '../common/utils';
 import { recordOutputSchema } from '../output-schemas';
 
 export const addRecord = createAction({
@@ -21,25 +20,29 @@ export const addRecord = createAction({
   },
   auth: googleWorkspaceAuth,
   props: {
-    resourceType: resourceTypeProp({ verb: 'create' }),
-    parent: parentProp,
-    record: recordJsonProp,
+    resourceType: googleWorkspaceProps.resourceType({ verb: 'create' }),
+    parent: googleWorkspaceProps.parent({ required: false }),
+    record: googleWorkspaceProps.record({ required: true }),
   },
   outputSchema: recordOutputSchema,
   async run(context) {
     const { resourceType, parent, record } = context.propsValue;
-    const def = resourceDefinition(resourceType);
-    assertVerb({ def, verb: 'create' });
-    const body = parseRecord(record);
-    const auth = await resolveAuth(context.auth);
+    const def = googleWorkspaceUtils.resourceDefinition(resourceType);
+    googleWorkspaceUtils.assertVerb({ def, verb: 'create' });
+    const body = googleWorkspaceUtils.parseRecord(record);
+    const auth = await googleWorkspaceClient.resolveAuth(context.auth);
 
-    const created = await GoogleWorkspaceApi.request<Record<string, unknown>>({
+    const created = await googleWorkspaceClient.request<Record<string, unknown>>({
       auth,
       method: HttpMethod.POST,
       path: def.collectionPath(parent),
       body,
     });
 
-    return { resourceType: def.type, id: idOf({ def, item: created }), record: created };
+    return {
+      resourceType: def.type,
+      id: googleWorkspaceUtils.idOf({ def, item: created }),
+      record: created,
+    };
   },
 });

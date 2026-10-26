@@ -1,8 +1,8 @@
 import { Property } from '@activepieces/pieces-framework';
 
-import { createActivityTrigger } from '../common/activity-trigger';
+import { googleWorkspaceActivityTrigger } from '../common/activity-trigger';
 
-export const newAdminActivityEvent = createActivityTrigger({
+export const newAdminActivityEvent = googleWorkspaceActivityTrigger.create({
   name: 'newAdminActivityEvent',
   classification: 'READ',
   displayName: 'New Admin Activity Event',

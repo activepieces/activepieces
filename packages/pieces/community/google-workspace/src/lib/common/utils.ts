@@ -1,34 +1,93 @@
-import { HttpMethod } from '@activepieces/pieces-common';
+import type {
+  GoogleWorkspaceResourceDefinition,
+  GoogleWorkspaceResourceType,
+  GoogleWorkspaceVerb,
+} from './types';
 
-import { DIRECTORY_PATH, GoogleWorkspaceApi, MY_CUSTOMER } from './client';
-import type { ResolvedAuth } from './client';
-
-export function resourceDefinition(type: string): ResourceDefinition {
+function resourceDefinition(type: string): GoogleWorkspaceResourceDefinition {
   if (!isResourceType(type)) {
-    throw new Error(`Unknown resource type "${type}". Expected one of: ${Object.keys(RESOURCES).join(', ')}.`);
+    throw new Error(
+      `Unknown resource type "${type}". Expected one of: ${Object.keys(RESOURCES).join(', ')}.`,
+    );
   }
   return RESOURCES[type];
 }
 
-export function assertVerb({ def, verb }: { def: ResourceDefinition; verb: Verb }): void {
+function assertVerb({
+  def,
+  verb,
+}: {
+  def: GoogleWorkspaceResourceDefinition;
+  verb: GoogleWorkspaceVerb;
+}): void {
   if (!def.verbs.includes(verb)) {
     throw new Error(
-      `${def.label} records do not support "${verb}" through the Directory API (allowed: ${def.verbs.join(', ')}).`
+      `${
+        def.label
+      } records do not support "${verb}" through the Directory API (allowed: ${def.verbs.join(
+        ', ',
+      )}).`,
     );
   }
 }
 
-export function idOf({ def, item }: { def: ResourceDefinition; item: Record<string, unknown> }): string | null {
+function idOf({
+  def,
+  item,
+}: {
+  def: GoogleWorkspaceResourceDefinition;
+  item: Record<string, unknown>;
+}): string | null {
   const value = item[def.idField];
   return value === undefined || value === null ? null : String(value);
 }
 
-export async function resolveIdentifier({ def, auth, id }: { def: ResourceDefinition; auth: ResolvedAuth; id: string }): Promise<string> {
-  return def.resolveIdentifier ? def.resolveIdentifier({ auth, id }) : id;
+function isRootOrgUnitPath(id: string): boolean {
+  return String(id ?? '').trim() === '/';
 }
 
-function isResourceType(value: string): value is ResourceType {
+function parseRecord(value: unknown): Record<string, unknown> {
+  const parsed: unknown = typeof value === 'string' ? JSON.parse(value) : value;
+  if (!isPlainObject(parsed)) {
+    throw new Error('The record must be a JSON object.');
+  }
+  return parsed;
+}
+
+function stringValues(value: Record<string, unknown> | undefined): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(value ?? {})
+      .filter(([, v]) => v !== undefined && v !== null && v !== '')
+      .map(([k, v]) => [k, String(v)]),
+  );
+}
+
+function assertCustomApiCallUrl(url: unknown): void {
+  if (typeof url !== 'string' || !(url.startsWith('http://') || url.startsWith('https://'))) {
+    return;
+  }
+  const allowed = new URL(GOOGLE_ADMIN_API_ROOT).origin;
+  let origin: string;
+  try {
+    origin = new URL(url).origin;
+  } catch {
+    throw new Error(
+      `The URL "${url}" is not valid. Use a path relative to ${GOOGLE_ADMIN_API_ROOT}, e.g. /${DIRECTORY_PATH}/users.`,
+    );
+  }
+  if (origin !== allowed) {
+    throw new Error(
+      `Custom API Call only sends the Google Workspace credentials to ${allowed}, not to ${origin}. Use a path relative to ${GOOGLE_ADMIN_API_ROOT} (e.g. /${DIRECTORY_PATH}/users) or a full URL on that host.`,
+    );
+  }
+}
+
+function isResourceType(value: string): value is GoogleWorkspaceResourceType {
   return Object.prototype.hasOwnProperty.call(RESOURCES, value);
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function customer(segment: string): string {
@@ -38,7 +97,9 @@ function customer(segment: string): string {
 function enc(value: string): string {
   const trimmed = String(value ?? '').trim();
   if (trimmed === '') {
-    throw new Error('The record identifier is empty. Fill it in (or check the step it comes from produced a value).');
+    throw new Error(
+      'The record identifier is empty. Fill it in (or check the step it comes from produced a value).',
+    );
   }
   return encodeURIComponent(trimmed);
 }
@@ -47,41 +108,33 @@ function encOrgUnit(path: string): string {
   return enc(
     String(path ?? '')
       .trim()
-      .replace(/^\//, '')
+      .replace(/^\//, ''),
   );
 }
 
-function isRootOrgUnitPath(id: string): boolean {
-  return String(id ?? '').trim() === '/';
-}
-
-async function rootOrgUnitId(auth: ResolvedAuth): Promise<string> {
-  const response = await GoogleWorkspaceApi.request<Record<string, unknown>>({
-    auth,
-    method: HttpMethod.GET,
-    path: customer('orgunits'),
-    query: { type: 'allIncludingParent' },
-  });
-  const units: unknown = response['organizationUnits'];
-  const root: unknown = (Array.isArray(units) ? units : []).find(
-    (unit: unknown) => typeof unit === 'object' && unit !== null && Reflect.get(unit, 'orgUnitPath') === '/'
-  );
-  const rootId: unknown = typeof root === 'object' && root !== null ? Reflect.get(root, 'orgUnitId') : undefined;
-  if (typeof rootId !== 'string' || rootId === '') {
-    throw new Error('Could not read the ID of the root organizational unit (/) from Google. Use its ID (id:...) instead of /.');
-  }
-  return rootId;
-}
-
-function requireParent({ parent, type }: { parent: string | undefined; type: ResourceType }): string {
+function requireParent({
+  parent,
+  type,
+}: {
+  parent: string | undefined;
+  type: GoogleWorkspaceResourceType;
+}): string {
   const value = String(parent ?? '').trim();
   if (!value) {
-    throw new Error(`"${RESOURCES[type].label}" needs the parent record: fill in the ${RESOURCES[type].parentLabel}.`);
+    throw new Error(
+      `"${RESOURCES[type].label}" needs the parent record: fill in the ${RESOURCES[type].parentLabel}.`,
+    );
   }
   return value;
 }
 
-export const RESOURCES: Record<ResourceType, ResourceDefinition> = {
+const GOOGLE_ADMIN_API_ROOT = 'https://admin.googleapis.com';
+const DIRECTORY_PATH = 'admin/directory/v1';
+const REPORTS_PATH = 'admin/reports/v1';
+const DATA_TRANSFER_PATH = 'admin/datatransfer/v1';
+const MY_CUSTOMER = 'my_customer';
+
+const RESOURCES: Record<GoogleWorkspaceResourceType, GoogleWorkspaceResourceDefinition> = {
   user: {
     type: 'user',
     label: 'User',
@@ -101,7 +154,14 @@ export const RESOURCES: Record<ResourceType, ResourceDefinition> = {
       changePasswordAtNextLogin: true,
       orgUnitPath: '/',
     },
-    extraListParams: ['orderBy', 'sortOrder', 'projection', 'customFieldMask', 'showDeleted', 'viewType'],
+    extraListParams: [
+      'orderBy',
+      'sortOrder',
+      'projection',
+      'customFieldMask',
+      'showDeleted',
+      'viewType',
+    ],
   },
   group: {
     type: 'group',
@@ -121,9 +181,12 @@ export const RESOURCES: Record<ResourceType, ResourceDefinition> = {
   group_member: {
     type: 'group_member',
     label: 'Group member',
-    collectionPath: (parent) => `${DIRECTORY_PATH}/groups/${enc(requireParent({ parent, type: 'group_member' }))}/members`,
+    collectionPath: (parent) =>
+      `${DIRECTORY_PATH}/groups/${enc(requireParent({ parent, type: 'group_member' }))}/members`,
     itemPath: ({ id, parent }) =>
-      `${DIRECTORY_PATH}/groups/${enc(requireParent({ parent, type: 'group_member' }))}/members/${enc(id)}`,
+      `${DIRECTORY_PATH}/groups/${enc(
+        requireParent({ parent, type: 'group_member' }),
+      )}/members/${enc(id)}`,
     itemsKey: 'members',
     idField: 'id',
     idHint: 'member e-mail or id',
@@ -140,7 +203,6 @@ export const RESOURCES: Record<ResourceType, ResourceDefinition> = {
     label: 'Organizational unit',
     collectionPath: () => customer('orgunits'),
     itemPath: ({ id }) => customer(`orgunits/${encOrgUnit(id)}`),
-    resolveIdentifier: ({ auth, id }) => (isRootOrgUnitPath(id) ? rootOrgUnitId(auth) : Promise.resolve(id)),
     itemsKey: 'organizationUnits',
     idField: 'orgUnitId',
     idHint: 'org unit path (e.g. /Sales/West) or `id:<orgUnitId>`',
@@ -190,41 +252,34 @@ export const RESOURCES: Record<ResourceType, ResourceDefinition> = {
     supportsQuery: false,
     supportsDomain: false,
     maxPageSize: 200,
-    createExample: { roleId: '12345678901234567', assignedTo: '1122334455667788990', scopeType: 'CUSTOMER' },
+    createExample: {
+      roleId: '12345678901234567',
+      assignedTo: '1122334455667788990',
+      scopeType: 'CUSTOMER',
+    },
     extraListParams: ['roleId', 'userKey', 'includeIndirectRoleAssignments'],
   },
 };
 
-export const resourceTypeOptions: { label: string; value: ResourceType }[] = Object.values(RESOURCES).map((def) => ({
-  label: def.label,
-  value: def.type,
-}));
+const RESOURCE_TYPE_OPTIONS: { label: string; value: GoogleWorkspaceResourceType }[] =
+  Object.values(RESOURCES).map((def) => ({
+    label: def.label,
+    value: def.type,
+  }));
 
-export type ResourceType =
-  | 'user'
-  | 'group'
-  | 'group_member'
-  | 'org_unit'
-  | 'mobile_device'
-  | 'chromeos_device'
-  | 'role_assignment';
-
-export type Verb = 'get' | 'list' | 'create' | 'update' | 'delete';
-
-export type ResourceDefinition = {
-  type: ResourceType;
-  label: string;
-  collectionPath: (parent?: string) => string;
-  itemPath: (params: { id: string; parent?: string }) => string;
-  resolveIdentifier?: (params: { auth: ResolvedAuth; id: string }) => Promise<string>;
-  itemsKey: string;
-  idField: string;
-  idHint: string;
-  parentLabel?: string;
-  verbs: Verb[];
-  supportsQuery: boolean;
-  supportsDomain: boolean;
-  maxPageSize?: number;
-  createExample?: Record<string, unknown>;
-  extraListParams?: string[];
+export const googleWorkspaceUtils = {
+  resources: RESOURCES,
+  resourceTypeOptions: RESOURCE_TYPE_OPTIONS,
+  resourceDefinition,
+  assertVerb,
+  idOf,
+  isRootOrgUnitPath,
+  parseRecord,
+  stringValues,
+  assertCustomApiCallUrl,
+  adminApiRoot: GOOGLE_ADMIN_API_ROOT,
+  directoryPath: DIRECTORY_PATH,
+  reportsPath: REPORTS_PATH,
+  dataTransferPath: DATA_TRANSFER_PATH,
+  myCustomer: MY_CUSTOMER,
 };

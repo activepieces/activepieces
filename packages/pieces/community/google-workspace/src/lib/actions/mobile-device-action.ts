@@ -2,15 +2,17 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { googleWorkspaceAuth } from '../auth';
-import { GoogleWorkspaceApi } from '../common/client';
-import { RESOURCES } from '../common/resources';
-import { resolveAuth } from '../common/token';
+import { googleWorkspaceClient } from '../common/client';
+import { googleWorkspaceUtils } from '../common/utils';
 import { mobileDeviceActionOutputSchema } from '../output-schemas';
 
 export const MOBILE_DEVICE_ACTIONS: { label: string; value: string }[] = [
   { label: 'Approve', value: 'approve' },
   { label: 'Block', value: 'block' },
-  { label: 'Wipe account (remove the Workspace account from the device)', value: 'admin_account_wipe' },
+  {
+    label: 'Wipe account (remove the Workspace account from the device)',
+    value: 'admin_account_wipe',
+  },
   { label: 'Wipe device (factory reset, irreversible)', value: 'admin_remote_wipe' },
   { label: 'Cancel remote wipe, then activate', value: 'cancel_remote_wipe_then_activate' },
   { label: 'Cancel remote wipe, then block', value: 'cancel_remote_wipe_then_block' },
@@ -31,7 +33,8 @@ export const mobileDeviceAction = createAction({
   props: {
     resourceId: Property.ShortText({
       displayName: 'Device Resource ID',
-      description: 'The `resourceId` of the mobile device (from Search Records with type Mobile device).',
+      description:
+        'The `resourceId` of the mobile device (from Search Records with type Mobile device).',
       required: true,
     }),
     action: Property.StaticDropdown<string, true>({
@@ -44,12 +47,12 @@ export const mobileDeviceAction = createAction({
   outputSchema: mobileDeviceActionOutputSchema,
   async run(context) {
     const { resourceId, action } = context.propsValue;
-    const auth = await resolveAuth(context.auth);
+    const auth = await googleWorkspaceClient.resolveAuth(context.auth);
 
-    await GoogleWorkspaceApi.request<unknown>({
+    await googleWorkspaceClient.request<unknown>({
       auth,
       method: HttpMethod.POST,
-      path: `${RESOURCES.mobile_device.itemPath({ id: resourceId })}/action`,
+      path: `${googleWorkspaceUtils.resources.mobile_device.itemPath({ id: resourceId })}/action`,
       body: { action },
     });
 

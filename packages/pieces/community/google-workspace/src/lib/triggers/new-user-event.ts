@@ -1,15 +1,24 @@
 import { Property } from '@activepieces/pieces-framework';
 
-import type { ActivityEvent } from '../common/activities';
-import { createActivityTrigger } from '../common/activity-trigger';
+import { googleWorkspaceActivityTrigger } from '../common/activity-trigger';
 
-export function acceptUserEvent({ event, props }: { event: ActivityEvent; props: UserEventFilter }): boolean {
+import type { GoogleWorkspaceActivityEvent } from '../common/types';
+
+export function acceptUserEvent({
+  event,
+  props,
+}: {
+  event: GoogleWorkspaceActivityEvent;
+  props: UserEventFilter;
+}): boolean {
   const eventName = event.eventName;
   if (event.eventType !== 'USER_SETTINGS' || !eventName) return false;
 
   const wanted = new Set(props.kinds ?? []);
   const kind = USER_EVENT_KINDS.find((k) => k.events.includes(eventName));
-  const matchesKind = kind ? wanted.has(kind.value) : wanted.has('updated') && !LIFECYCLE_EVENTS.has(eventName);
+  const matchesKind = kind
+    ? wanted.has(kind.value)
+    : wanted.has('updated') && !LIFECYCLE_EVENTS.has(eventName);
   if (!matchesKind) return false;
 
   const domain = props.domain?.trim().toLowerCase();
@@ -27,14 +36,19 @@ export const USER_EVENT_KINDS: { label: string; value: string; events: string[] 
   {
     label: 'Admin status changed',
     value: 'admin_changed',
-    events: ['GRANT_ADMIN_PRIVILEGE', 'REVOKE_ADMIN_PRIVILEGE', 'GRANT_DELEGATED_ADMIN_PRIVILEGES', 'REVOKE_DELEGATED_ADMIN_PRIVILEGES'],
+    events: [
+      'GRANT_ADMIN_PRIVILEGE',
+      'REVOKE_ADMIN_PRIVILEGE',
+      'GRANT_DELEGATED_ADMIN_PRIVILEGES',
+      'REVOKE_DELEGATED_ADMIN_PRIVILEGES',
+    ],
   },
   { label: 'User updated (any other change)', value: 'updated', events: [] },
 ];
 
 const LIFECYCLE_EVENTS = new Set(USER_EVENT_KINDS.flatMap((k) => k.events));
 
-export const newUserEvent = createActivityTrigger({
+export const newUserEvent = googleWorkspaceActivityTrigger.create({
   name: 'newUserEvent',
   classification: 'READ',
   displayName: 'New User Event',
@@ -54,12 +68,14 @@ export const newUserEvent = createActivityTrigger({
     }),
     domain: Property.ShortText({
       displayName: 'Domain',
-      description: 'Only users of this domain (e.g. `example.com`). Leave empty for every domain of the account.',
+      description:
+        'Only users of this domain (e.g. `example.com`). Leave empty for every domain of the account.',
       required: false,
     }),
   },
   query: () => ({ application: 'admin' }),
-  accept: ({ event, props }) => acceptUserEvent({ event, props: { kinds: props.kinds, domain: props.domain } }),
+  accept: ({ event, props }) =>
+    acceptUserEvent({ event, props: { kinds: props.kinds, domain: props.domain } }),
 });
 
 type UserEventFilter = { kinds: string[]; domain?: string | undefined };

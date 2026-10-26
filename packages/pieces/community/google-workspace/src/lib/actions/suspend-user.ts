@@ -2,9 +2,8 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { googleWorkspaceAuth } from '../auth';
-import { GoogleWorkspaceApi } from '../common/client';
-import { RESOURCES } from '../common/resources';
-import { resolveAuth } from '../common/token';
+import { googleWorkspaceClient } from '../common/client';
+import { googleWorkspaceUtils } from '../common/utils';
 import { suspendUserOutputSchema } from '../output-schemas';
 
 export const suspendUser = createAction({
@@ -35,13 +34,13 @@ export const suspendUser = createAction({
   outputSchema: suspendUserOutputSchema,
   async run(context) {
     const { userKey, suspended } = context.propsValue;
-    const auth = await resolveAuth(context.auth);
+    const auth = await googleWorkspaceClient.resolveAuth(context.auth);
     const value = suspended !== false;
 
-    const user = await GoogleWorkspaceApi.request<Record<string, unknown>>({
+    const user = await googleWorkspaceClient.request<Record<string, unknown>>({
       auth,
       method: HttpMethod.PATCH,
-      path: RESOURCES.user.itemPath({ id: userKey }),
+      path: googleWorkspaceUtils.resources.user.itemPath({ id: userKey }),
       body: { suspended: value },
     });
 

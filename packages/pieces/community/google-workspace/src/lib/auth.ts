@@ -1,21 +1,44 @@
+import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
-import { validateServiceAccount } from './common/service-account';
+import { googleWorkspaceClient } from './common/client';
 
-export const googleWorkspaceScopes = [
-  'https://www.googleapis.com/auth/admin.directory.user',
-  'https://www.googleapis.com/auth/admin.directory.group',
-  'https://www.googleapis.com/auth/admin.directory.group.member',
-  'https://www.googleapis.com/auth/admin.directory.orgunit',
-  'https://www.googleapis.com/auth/admin.directory.device.mobile',
-  'https://www.googleapis.com/auth/admin.directory.device.chromeos',
-  'https://www.googleapis.com/auth/admin.directory.rolemanagement',
-  'https://www.googleapis.com/auth/admin.directory.userschema.readonly',
-  'https://www.googleapis.com/auth/admin.datatransfer',
-  'https://www.googleapis.com/auth/admin.reports.audit.readonly',
-];
+import type { GoogleWorkspaceServiceAccount } from './common/types';
 
-const delegationScopeList = googleWorkspaceScopes.map((scope) => `   - \`${scope}\``).join('\n');
+async function validateServiceAccount(
+  creds: GoogleWorkspaceServiceAccount,
+): Promise<{ valid: true } | { valid: false; error: string }> {
+  try {
+    const token = await googleWorkspaceClient.mintServiceAccountToken({
+      creds,
+      scopes: googleWorkspaceClient.scopes,
+    });
+    const user = await googleWorkspaceClient.request<{
+      isAdmin?: boolean;
+      isDelegatedAdmin?: boolean;
+      primaryEmail?: string;
+    }>({
+      auth: { access_token: token },
+      method: HttpMethod.GET,
+      path: `admin/directory/v1/users/${encodeURIComponent(creds.adminEmail.trim())}`,
+    });
+    if (!user.isAdmin && !user.isDelegatedAdmin) {
+      return {
+        valid: false,
+        error: `${
+          user.primaryEmail ?? creds.adminEmail
+        } is not a Workspace administrator; pick a user with an admin role.`,
+      };
+    }
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+const delegationScopeList = googleWorkspaceClient.scopes
+  .map((scope) => `   - \`${scope}\``)
+  .join('\n');
 
 const oauthInstructions = `
 Sign in as a **Google Workspace administrator** with an OAuth client from **your own** Google Cloud project:
@@ -41,7 +64,7 @@ export const googleWorkspaceOAuth2 = PieceAuth.OAuth2({
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
   tokenUrl: 'https://oauth2.googleapis.com/token',
   required: true,
-  scope: [...googleWorkspaceScopes, 'email'],
+  scope: [...googleWorkspaceClient.scopes, 'email'],
 });
 
 export const googleWorkspaceServiceAccount = PieceAuth.CustomAuth({
@@ -51,7 +74,8 @@ export const googleWorkspaceServiceAccount = PieceAuth.CustomAuth({
   props: {
     clientEmail: Property.ShortText({
       displayName: 'Service Account E-mail',
-      description: 'The `client_email` of the key file, e.g. `automation@my-project.iam.gserviceaccount.com`.',
+      description:
+        'The `client_email` of the key file, e.g. `automation@my-project.iam.gserviceaccount.com`.',
       required: true,
     }),
     privateKey: PieceAuth.SecretText({
@@ -62,7 +86,8 @@ export const googleWorkspaceServiceAccount = PieceAuth.CustomAuth({
     }),
     adminEmail: Property.ShortText({
       displayName: 'Administrator to Impersonate',
-      description: "E-mail of a Workspace administrator in your domain. The service account acts with this user's admin role.",
+      description:
+        "E-mail of a Workspace administrator in your domain. The service account acts with this user's admin role.",
       required: true,
     }),
   },
