@@ -1,4 +1,4 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { Store, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { actualBudgetAuth } from '../common/auth';
 import { ActualApi, ActualAuthProps, withBudget } from '../common/client';
 import {
@@ -13,6 +13,7 @@ import {
 import { actualOutputSchemas } from '../common/output-schemas';
 import { accountDropdown } from '../common/props';
 export const LOOKBACK_DAYS = 7;
+export const SEEN_CHUNK_SIZE = 5000;
 const SEEN_KEY = 'actual_seen_transaction_ids';
 
 export async function pollNewTransactions(params: {
@@ -90,19 +91,19 @@ export const newTransaction = createTrigger({
       accountId: optionalId(context.propsValue.account_id),
       seen: null,
     });
-    await context.store.put(SEEN_KEY, seen);
+    await saveSeenIds({ store: context.store, ids: seen });
   },
   async onDisable(context) {
-    await context.store.delete(SEEN_KEY);
+    await saveSeenIds({ store: context.store, ids: null });
   },
   async run(context) {
-    const stored = await context.store.get<string[]>(SEEN_KEY);
+    const stored = await loadSeenIds({ store: context.store });
     const { emit, seen } = await pollNewTransactions({
       auth: context.auth.props,
       accountId: optionalId(context.propsValue.account_id),
-      seen: stored ?? null,
+      seen: stored,
     });
-    await context.store.put(SEEN_KEY, seen);
+    await saveSeenIds({ store: context.store, ids: seen });
     return emit;
   },
   async test(context) {
@@ -129,6 +130,64 @@ export const newTransaction = createTrigger({
     });
   },
 });
+
+export async function loadSeenIds({
+  store,
+}: {
+  store: Store;
+}): Promise<string[] | null> {
+  const chunkCount = await store.get<number>(SEEN_KEY);
+  if (typeof chunkCount !== 'number') return null;
+  const ids: string[] = [];
+  for (let index = 0; index < chunkCount; index++) {
+    const chunk = await store.get<string[]>(chunkKey({ index }));
+    if (Array.isArray(chunk)) ids.push(...chunk);
+  }
+  return ids;
+}
+
+export async function saveSeenIds({
+  store,
+  ids,
+}: {
+  store: Store;
+  ids: string[] | null;
+}): Promise<void> {
+  const previous = await store.get<number>(SEEN_KEY);
+  const previousCount = typeof previous === 'number' ? previous : 0;
+  if (ids === null) {
+    await store.delete(SEEN_KEY);
+    await deleteChunks({ store, from: 0, to: previousCount });
+    return;
+  }
+  const chunkCount = Math.ceil(ids.length / SEEN_CHUNK_SIZE);
+  for (let index = 0; index < chunkCount; index++) {
+    await store.put(
+      chunkKey({ index }),
+      ids.slice(index * SEEN_CHUNK_SIZE, (index + 1) * SEEN_CHUNK_SIZE)
+    );
+  }
+  await store.put(SEEN_KEY, chunkCount);
+  await deleteChunks({ store, from: chunkCount, to: previousCount });
+}
+
+async function deleteChunks({
+  store,
+  from,
+  to,
+}: {
+  store: Store;
+  from: number;
+  to: number;
+}): Promise<void> {
+  for (let index = from; index < to; index++) {
+    await store.delete(chunkKey({ index }));
+  }
+}
+
+function chunkKey({ index }: { index: number }): string {
+  return `${SEEN_KEY}_${index}`;
+}
 
 async function fetchWindow({
   api,
