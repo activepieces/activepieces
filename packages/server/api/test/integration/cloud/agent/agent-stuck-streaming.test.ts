@@ -1,8 +1,9 @@
 import { AgentConversationStatus, AgentRunSource, apId, FlowRunStatus, FlowVersionState } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
+import { payloadOffloader } from '../../../../src/app/workers/payload-offloader'
 import { WaitpointStatus } from '../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../helpers/mocks'
@@ -202,6 +203,41 @@ describe('CHAT_STALE_SWEEP proactive recovery', () => {
 
         expect(await db.findOneBy('waitpoint', { id: abandoned.waitpointId })).toBeNull()
         expect(await db.findOneBy('waitpoint', { id: running.waitpointId })).not.toBeNull()
+    })
+
+    it('resumes the flow with a failure that says the agent stopped, so the step fails with a reason', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        await pausedFlowStepRun({ ctx, lastHeartbeat: new Date(Date.now() - 5 * 60 * 1_000) })
+        const offload = vi.spyOn(payloadOffloader, 'offloadPayload')
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        const resumedWith = offload.mock.calls.map(([, payload]) => payload)
+        offload.mockRestore()
+        expect(resumedWith).toContainEqual(expect.objectContaining({ body: expect.objectContaining({ failure: expect.stringContaining('The agent stopped responding before it finished') }) }))
+    })
+
+    it('never resumes a flow outside the conversation\'s own project, even if the row points at one', async () => {
+        const victim = await createTestContext(app, { plan: { chatEnabled: true } })
+        const attacker = await createTestContext(app, { plan: { chatEnabled: true } })
+        const foreign = await pausedFlowStepRun({ ctx: victim, lastHeartbeat: new Date(Date.now() - 5 * 60 * 1_000), conversationProjectId: attacker.project.id })
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        expect(await db.findOneBy('waitpoint', { id: foreign.waitpointId })).not.toBeNull()
+    })
+
+    it('frees a flow-step row written by an older worker without a waitpoint, and leaves the step to its own timeout', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1_000)
+        const legacy = await pausedFlowStepRun({ ctx, lastHeartbeat: fiveMinutesAgo })
+        await db.update('agent_conversation', legacy.conversationId, { waitpointId: null, updated: fiveMinutesAgo.toISOString() })
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: legacy.conversationId })
+        expect(row.status).toBe(AgentConversationStatus.IDLE)
+        expect(await db.findOneBy('waitpoint', { id: legacy.waitpointId })).not.toBeNull()
     })
 
     it('keeps a flow step whose release failed eligible for the next sweep, so one failed attempt does not strand the flow', async () => {
