@@ -16,7 +16,7 @@ Steps whose provider or model comes from an expression, steps with an unknown pr
 
 #### What you need to do
 
-Nothing on a normal upgrade. If you serve pieces from your own registry, make sure it carries the AI piece at `0.15.0` or later before you upgrade, or the rewritten steps cannot load. Rolling back to an earlier release after the upgrade leaves those steps on a piece version the older release does not show.
+Nothing on a normal upgrade. If you serve pieces from your own registry, make sure it carries the AI piece at exactly `0.15.0` before you upgrade, and keep that version even after newer ones are added: the rewritten steps are pinned to it and cannot load without it. Rolling back to an earlier release after the upgrade leaves those steps on a piece version the older release does not show.
 
 #### Asana 0.8.0 Create Task sends a plain date as an all-day due date and fails on unknown tags
 
