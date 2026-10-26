@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### AI text steps move to the shared model picker, and old Credits steps follow their tier
+
+Every flow is rewritten once, the first time its version is read. AI piece **Ask AI**, **Summarize Text**, **Classify Text** and **Extract Structured Data** steps that still use the separate Provider and Model dropdowns move to the single AI Model picker (AI piece `0.15.0`), keeping the same provider, key and model. Steps on the managed Activepieces provider that store a fixed model id (`anthropic/claude-haiku-4.5`, `anthropic/claude-sonnet-4.6`, `anthropic/claude-opus-4.8`) now store the tier they were picked as (`fast`, `smart`, `premium`), so they follow that tier when it moves to a newer model instead of staying on the old one.
+
+Steps whose provider or model comes from an expression, steps with an unknown provider or an empty model, and Generate Image steps are left as they are.
+
+#### What you need to do
+
+Nothing on a normal upgrade. If you serve pieces from your own registry, make sure it carries the AI piece at exactly `0.15.0` before you upgrade, and keep that version even after newer ones are added: the rewritten steps are pinned to it and cannot load without it. Rolling back to an earlier release after the upgrade leaves those steps on a piece version the older release does not show.
+
 #### Asana 0.8.0 Create Task sends a plain date as an all-day due date and fails on unknown tags
 
 Asana 0.8.0 changes what an existing **Create Task** step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.

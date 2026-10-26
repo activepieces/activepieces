@@ -14,4 +14,5 @@ ENG-753 (from the configurable-tiers stack) was postponed on 2026-09-26: old ste
 One migration means one schema bump and one flow-cache refill instead of two, and the two rewrites touch the same field on the same steps. It lands disarmed because the migration moves steps onto a piece version only the new release can render. Rolling a server back past a schema bump fails silently, so the code ships one release before the migration runs. Rejected: two migrations (v29 + v30), which double the deploy cost for no gain.
 
 ## Consequences
+Armed by ENG-753 once cloud ran piece-ai 0.15.0; self-hosted needs a manual release holding PR 8 before one holding the armed migration.
 The id map is frozen in the migration and must never import `ACTIVEPIECES_CHAT_TIERS`. Agent rows with old Credits ids still need their own rewrite before the built-in tier list changes, because `resolveNamedModelId` throws on them.
