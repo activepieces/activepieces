@@ -40,6 +40,7 @@ import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { PlusIcon } from '@/components/icons/plus';
 import { ReplaceIcon } from '@/components/icons/replace';
+import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -69,6 +70,7 @@ function AppConnectionsPage() {
   >([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { checkAccess } = useAuthorization();
+  const { embedState } = useEmbedding();
   const userPlatformRole = userHooks.getCurrentUserPlatformRole();
   const location = useLocation();
   const { pieces } = piecesHooks.usePieces({});
@@ -392,27 +394,31 @@ function AppConnectionsPage() {
 
   const toolbarButtons = useMemo(
     () => [
-      <PermissionNeededTooltip
-        key="replace"
-        hasPermission={userHasPermissionToReplaceAppConnection}
-      >
-        <ReplaceConnectionForProjectDialog
-          projectId={projectId}
-          onConnectionMerged={() => {
-            setRefresh(refresh + 1);
-            refetch();
-          }}
-        >
-          <AnimatedIconButton
-            icon={ReplaceIcon}
-            iconSize={16}
-            variant="outline"
-            disabled={!userHasPermissionToReplaceAppConnection}
-          >
-            {t('Replace')}
-          </AnimatedIconButton>
-        </ReplaceConnectionForProjectDialog>
-      </PermissionNeededTooltip>,
+      ...(embedState.hideReplaceConnection
+        ? []
+        : [
+            <PermissionNeededTooltip
+              key="replace"
+              hasPermission={userHasPermissionToReplaceAppConnection}
+            >
+              <ReplaceConnectionForProjectDialog
+                projectId={projectId}
+                onConnectionMerged={() => {
+                  setRefresh(refresh + 1);
+                  refetch();
+                }}
+              >
+                <AnimatedIconButton
+                  icon={ReplaceIcon}
+                  iconSize={16}
+                  variant="outline"
+                  disabled={!userHasPermissionToReplaceAppConnection}
+                >
+                  {t('Replace')}
+                </AnimatedIconButton>
+              </ReplaceConnectionForProjectDialog>
+            </PermissionNeededTooltip>,
+          ]),
       <PermissionNeededTooltip
         key="new"
         hasPermission={userHasPermissionToWriteAppConnection}
@@ -438,6 +444,7 @@ function AppConnectionsPage() {
     [
       userHasPermissionToWriteAppConnection,
       userHasPermissionToReplaceAppConnection,
+      embedState.hideReplaceConnection,
       refresh,
     ],
   );

@@ -137,6 +137,7 @@ export interface ActivepiecesVendorInit {
     hidePageHeader?: boolean;
     hideActiveUsers?: boolean;
     hideGlobalSearch?: boolean;
+    hideReplaceConnection?: boolean;
     formulasDocsUrl?: string;
     gtmContainerId?: string;
     clarityProjectId?: string;
@@ -179,6 +180,7 @@ type EmbeddingParam = {
   hideTables?: boolean;
   hideActiveUsers?: boolean;
   hideGlobalSearch?: boolean;
+  hideReplaceConnection?: boolean;
   formulasDocsUrl?: string;
   analytics?: {
     gtmContainerId?: string;
@@ -354,6 +356,7 @@ class ActivepiecesEmbedded {
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
                 hideActiveUsers: this._embeddingState?.hideActiveUsers ?? false,
                 hideGlobalSearch: this._embeddingState?.hideGlobalSearch ?? false,
+                hideReplaceConnection: this._embeddingState?.hideReplaceConnection ?? true,
                 formulasDocsUrl: this._embeddingState?.formulasDocsUrl,
                 gtmContainerId: this._embeddingState?.analytics?.gtmContainerId,
                 clarityProjectId: this._embeddingState?.analytics?.clarityProjectId,
