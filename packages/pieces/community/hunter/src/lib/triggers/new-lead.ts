@@ -12,7 +12,7 @@ export const newLeadTrigger = createTrigger({
   description: 'Fires when a new lead is created.',
   aiMetadata: {
     description:
-      'Fires once for each lead created in the connected Hunter account, emitting the lead record (oldest first). Polls the leads list and pages back to the last lead it saw (up to 1000 new leads per poll), so bulk imports are not lost.',
+      'Fires once for each lead created in the connected Hunter account, emitting the lead record (oldest first). Polls the leads list and pages back to the last lead it saw, emitting the oldest 1000 new leads per poll and the rest on the next polls, so bulk imports are not lost.',
   },
   type: TriggerStrategy.POLLING,
   props: {},
@@ -63,32 +63,36 @@ const PAGE_SIZE = 100;
 
 const MAX_LEADS_PER_POLL = 1000;
 
+const MAX_PAGED_LEADS = 20000;
+
 async function pollNewLeads({ apiKey, store }: { apiKey: string; store: Store }): Promise<HunterRecord[]> {
   const lastSeen = await store.get<number>(LAST_LEAD_ID_KEY);
-  const fresh = await collectNewer({ apiKey, lastSeen: lastSeen ?? 0 });
-  if (lastSeen === null) {
-    await store.put(LAST_LEAD_ID_KEY, fresh.reduce((max, lead) => Math.max(max, leadIdOf(lead) ?? 0), 0));
+  if (typeof lastSeen !== 'number') {
+    const newest = await hunterRequests.listLeadsPage({ apiKey, limit: 1, offset: 0 });
+    await store.put(LAST_LEAD_ID_KEY, leadIdOf(newest[0]) ?? 0);
     return [];
   }
+  const fresh = await collectNewer({ apiKey, lastSeen });
   if (fresh.length === 0) {
     return [];
   }
-  const newestId = fresh.reduce((max, lead) => Math.max(max, leadIdOf(lead) ?? 0), lastSeen);
+  const emitted = [...fresh].sort((a, b) => (leadIdOf(a) ?? 0) - (leadIdOf(b) ?? 0)).slice(0, MAX_LEADS_PER_POLL);
+  const newestId = emitted.reduce((max, lead) => Math.max(max, leadIdOf(lead) ?? 0), lastSeen);
   await store.put(LAST_LEAD_ID_KEY, newestId);
-  return [...fresh].sort((a, b) => (leadIdOf(a) ?? 0) - (leadIdOf(b) ?? 0));
+  return emitted;
 }
 
 async function collectNewer({ apiKey, lastSeen }: { apiKey: string; lastSeen: number }): Promise<HunterRecord[]> {
   const collected: HunterRecord[] = [];
-  for (let offset = 0; offset < MAX_LEADS_PER_POLL; offset += PAGE_SIZE) {
+  for (let offset = 0; offset < MAX_PAGED_LEADS; offset += PAGE_SIZE) {
     const page = await hunterRequests.listLeadsPage({ apiKey, limit: PAGE_SIZE, offset });
     const newer = page.filter((lead) => (leadIdOf(lead) ?? 0) > lastSeen);
     collected.push(...newer);
-    if (page.length < PAGE_SIZE || newer.length < page.length || lastSeen === 0) {
-      break;
+    if (page.length < PAGE_SIZE || newer.length < page.length) {
+      return collected;
     }
   }
-  return collected.slice(0, MAX_LEADS_PER_POLL);
+  throw new Error(`More than ${MAX_PAGED_LEADS} new Hunter leads since the last check; the trigger stopped so none are skipped. Disable and re-enable it to start from the newest lead.`);
 }
 
 function leadIdOf(lead: HunterRecord | undefined): number | undefined {

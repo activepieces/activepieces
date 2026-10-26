@@ -1,7 +1,6 @@
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { hunterAuth } from './lib/auth';
-import { BASE_URL, apiKeyOf, authHeaders } from './lib/common/client';
+import { hunterCustomApiCallAction } from './lib/actions/custom-api-call';
 import { addRecipientsAction } from './lib/actions/add-recipients';
 import { countEmailsAction } from './lib/actions/count-emails';
 import { createLeadAction } from './lib/actions/create-lead';
@@ -60,11 +59,7 @@ export const hunter = createPiece({
     updateLeadByIdAction,
     deleteLeadByIdAction,
     addCampaignRecipientsByIdAction,
-    createCustomApiCallAction({
-      baseUrl: () => BASE_URL,
-      auth: hunterAuth,
-      authMapping: async (auth) => authHeaders(apiKeyOf(auth)),
-    }),
+    hunterCustomApiCallAction,
   ],
   triggers: [newLeadTrigger],
 });
