@@ -163,7 +163,7 @@ const SuggestedTemplateCard = ({
       <div
         className="h-14 flex items-center px-4 rounded-b-xl transition-all duration-300"
         style={{
-          background: gradient || 'rgba(0,0,0,0.02)',
+          background: gradient || 'var(--gray-2)',
         }}
       >
         {hasFlows && template.flows![0]?.trigger && (

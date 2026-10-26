@@ -15,7 +15,7 @@ description: Build and edit Activepieces pieces (integrations) — creating new 
 
 **Golden rule for existing-piece modes:** the piece you're editing is the source of truth, not these templates. If the piece already has a helper, a particular auth access pattern, or a way of shaping output, follow *that*. Reach into the reference files only for a pattern the piece doesn't already demonstrate.
 
-**The one carve-out — framework calls that drop data.** Matching the piece is right for style, wrong for a call that silently loses information. If the piece calls `pollingHelper` with a hand-picked subset (`{ store, auth, propsValue }`) instead of the whole `context`, fix every trigger in that piece to pass `context` while you're in there — see `trigger-patterns.md`. The version bump and rebuild are already happening; fix-on-touch reaches the pieces people actually use without a ~300-piece codemod PR that touches dead ones too.
+**The one carve-out — framework calls that drop data.** Matching the piece is right for style, wrong for a call that silently loses information. Always pass the whole `context` to `pollingHelper`, never a hand-picked subset like `{ store, auth, propsValue }` — see `trigger-patterns.md`. Lint enforces this (`no-restricted-syntax` in the root `.eslintrc.json`).
 
 ## Workflow (new piece)
 

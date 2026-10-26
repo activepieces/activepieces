@@ -1,5 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import pg from 'pg';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { postgresAuth } from '../..';
 import { pgClient } from '../common';
 
@@ -8,47 +7,57 @@ export const runQuery = createAction({
   name: 'run-query',
   classification: 'WRITE',
   displayName: 'Run Query',
-  description: 'Run Query',
+  description: 'Runs a SQL statement on the database',
   audience: 'both',
   aiMetadata: {
     description: 'Executes an arbitrary SQL statement against the connected PostgreSQL database and returns the resulting rows. Use this to read, write, or otherwise operate on a Postgres database when no more specific tool fits. Always pass dynamic values via the args array with $1/$2 placeholders (never string-interpolate them) to avoid SQL injection. Not idempotent: the statement can be a mutation (INSERT/UPDATE/DELETE/DDL), so repeating the same call may change data or have side effects each time.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'sql',
+      display: 'section',
+      label: 'SQL statement',
+      icon: 'code',
+      props: ['markdown', 'query', 'args'],
+    },
+  ],
   props: {
     markdown: Property.MarkDown({
-      value: `
-      **DO NOT** insert dynamic input directly into the query string. Instead, use $1, $2, $3 and add them in args for parameterized queries to prevent **SQL injection.**`
+      value: 'Never type dynamic values into the query. Write $1, $2 and put the values in Arguments to prevent SQL injection.',
+      variant: MarkdownVariant.WARNING,
     }),
 
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'Please use $1, $2, etc. for parameterized queries to avoid SQL injection.',
+      description: 'The SQL to run. Write $1, $2 where each value goes.',
+      placeholder: 'SELECT * FROM orders WHERE id = $1',
       required: true,
     }),
     args: Property.Array({
       displayName: 'Arguments',
-      description: 'Arguments to be used in the query',
+      description: 'Values for $1, $2 and so on in the query, in order.',
       required: false,
     }),
     query_timeout: Property.Number({
       displayName: 'Query Timeout',
-      description:
-        'An integer indicating the maximum number of milliseconds to wait for a query to complete before timing out.',
+      description: 'Milliseconds to wait for the query before it fails.',
       required: false,
       defaultValue: 30000,
+      advanced: true,
     }),
     connection_timeout_ms: Property.Number({
-      displayName: 'Connection Timeout (ms)',
-      description:
-        'An integer indicating the maximum number of milliseconds to wait for a connection to be established before timing out.',
+      displayName: 'Connection Timeout',
+      description: 'Milliseconds to wait for the connection before it fails.',
       required: false,
       defaultValue: 30000,
+      advanced: true,
     }),
     application_name: Property.ShortText({
       displayName: 'Application Name',
-      description:
-        'A string indicating the name of the client application connecting to the server.',
+      description: "A name that identifies this step in the server's activity list.",
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
@@ -59,15 +68,11 @@ export const runQuery = createAction({
     ${query}
     `
     const args = context.propsValue.args || [];
-    return new Promise((resolve, reject) => {
-      client.query(queryWithMetadata, args, function (error: any, results: { rows: unknown }) {
-        if (error) {
-          client.end();
-          return reject(error);
-        }
-        resolve(results.rows);
-        client.end();
-      });
-    });
+    try {
+      const result = await client.query(queryWithMetadata, args);
+      return result.rows;
+    } finally {
+      await client.end();
+    }
   },
 });

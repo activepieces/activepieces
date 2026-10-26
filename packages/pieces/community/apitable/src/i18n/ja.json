@@ -85,5 +85,8 @@
   "DELETE": "削除",
   "HEAD": "頭",
   "New Record": "新しいレコード",
-  "Triggers when a new record is added to a datasheet.": "新しいレコードがデータシートに追加されたときにトリガーされます。"
+  "Triggers when a new record is added to a datasheet.": "新しいレコードがデータシートに追加されたときにトリガーされます。",
+  "Markdown": "Markdown",
+  "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.": "空欄のフィールドは空のままです。添付ファイルや数式など、一部の列の種類は表示されません。",
+  "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.": "空欄のフィールドは現在の値を保持し、チェックのないチェックボックスはクリアされます。添付ファイルや数式など、一部の列の種類は表示されません。"
 }

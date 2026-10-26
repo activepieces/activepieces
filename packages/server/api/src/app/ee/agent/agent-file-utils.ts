@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
-import { CHAT_ALLOWED_MIME_TYPES, FileCompression, FileType } from '@activepieces/shared'
-import { UserContent } from 'ai'
+import { AIProviderModelMetadata, CHAT_ALLOWED_MIME_TYPES, FileCompression, FileType } from '@activepieces/shared'
+import { ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService, GetDataResponse } from '../../file/file.service'
 
@@ -9,6 +9,8 @@ const TEXT_MIME_TYPES = new Set<string>(
 )
 
 const MAX_EXTRACTED_TEXT_LENGTH = 50_000
+
+const UNREADABLE_IMAGE_NOTE = '[The user attached an image here, but the current model cannot read images, so it was not sent. Do not guess its contents. Tell the user to switch to a model that supports images if they need it read.]'
 
 async function extractPdfText(base64Data: string): Promise<string> {
     const { extractText, getDocumentProxy } = await import('unpdf')
@@ -108,4 +110,21 @@ async function readConversationFile({ platformId, conversationId, accessibleProj
     return fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE })
 }
 
-export { buildUserContentWithFiles, persistAgentAttachments, buildAttachmentNote, readConversationFile }
+function dropImagesForTextOnlyModels({ messages, models }: {
+    messages: ModelMessage[]
+    models: Array<AIProviderModelMetadata | undefined>
+}): ModelMessage[] {
+    const someModelIsTextOnly = models.some((model) => model?.supportsVision === false)
+    if (!someModelIsTextOnly) {
+        return messages
+    }
+    return messages.map((message) => message.role === 'user' && Array.isArray(message.content)
+        ? { ...message, content: message.content.map((part) => isImagePart(part) ? { type: 'text' as const, text: UNREADABLE_IMAGE_NOTE } : part) }
+        : message)
+}
+
+function isImagePart(part: Exclude<UserContent, string>[number]): boolean {
+    return part.type === 'image' || (part.type === 'file' && part.mediaType.startsWith('image/'))
+}
+
+export { buildUserContentWithFiles, persistAgentAttachments, buildAttachmentNote, readConversationFile, dropImagesForTextOnlyModels }
