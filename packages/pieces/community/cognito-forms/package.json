@@ -14,7 +14,7 @@
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
-    "undici": "7.29.1"
+    "undici": "7.30.1"
   },
   "devDependencies": {
     "tslib": "2.6.2",
