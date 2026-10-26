@@ -92,8 +92,8 @@ export const createContact = createAction({
         audienceGroupManagementType: p.groupAction === 'Replace' ? 'REPLACE_EXISTING' : 'ADD_NEW_GROUPS_ONLY',
         tagManagementType: p.tagAction === 'Replace' ? 'REPLACE_EXISTING' : 'ADD_NEW_TAGS_ONLY',
         ...(profile.length > 0 ? { profile } : {}),
-        ...(tags && tags.length > 0 ? { tags } : {}),
-        ...(groupIds && groupIds.length > 0 ? { groupIds } : {}),
+        ...(tags && (tags.length > 0 || p.tagAction === 'Replace') ? { tags } : {}),
+        ...(groupIds && (groupIds.length > 0 || p.groupAction === 'Replace') ? { groupIds } : {}),
         sendFormat: 'MULTIPART',
       },
     });
