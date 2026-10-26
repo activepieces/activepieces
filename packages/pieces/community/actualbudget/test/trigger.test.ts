@@ -4,7 +4,6 @@ import { AUTH, fake } from './fake-api';
 vi.mock('@actual-app/api', async () => (await import('./fake-api')).fake);
 
 import {
-  MAX_SEEN,
   pollNewTransactions,
 } from '../src/lib/triggers/new-transaction';
 
@@ -71,19 +70,40 @@ describe('new transaction polling', () => {
     });
   });
 
-  test('seen IDs stay bounded', async () => {
-    fake.state.transactions = Array.from({ length: MAX_SEEN + 10 }, (_, i) => ({
+  test('large windows keep every ID so nothing fires twice', async () => {
+    fake.state.transactions = Array.from({ length: 5010 }, (_, i) => ({
       id: `t${i}`,
       account: 'a1',
       date: '2026-10-25',
       amount: 1,
     }));
-    const out = await pollNewTransactions({
+    const baseline = await pollNewTransactions({
       auth: AUTH,
       accountId: undefined,
       seen: null,
       now: NOW,
     });
-    expect(out.seen).toHaveLength(MAX_SEEN);
+    expect(baseline.seen).toHaveLength(5010);
+    const next = await pollNewTransactions({
+      auth: AUTH,
+      accountId: undefined,
+      seen: baseline.seen,
+      now: NOW,
+    });
+    expect(next.emit).toEqual([]);
+  });
+
+  test('IDs that leave the window are dropped from the store', async () => {
+    fake.state.transactions = [
+      { id: 'recent', account: 'a1', date: '2026-10-25', amount: 1 },
+    ];
+    const out = await pollNewTransactions({
+      auth: AUTH,
+      accountId: undefined,
+      seen: ['old', 'recent'],
+      now: NOW,
+    });
+    expect(out.seen).toEqual(['recent']);
+    expect(out.emit).toEqual([]);
   });
 });

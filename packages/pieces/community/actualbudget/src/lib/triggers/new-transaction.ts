@@ -13,7 +13,6 @@ import {
 import { actualOutputSchemas } from '../common/output-schemas';
 import { accountDropdown } from '../common/props';
 export const LOOKBACK_DAYS = 7;
-export const MAX_SEEN = 5000;
 const SEEN_KEY = 'actual_seen_transaction_ids';
 
 export async function pollNewTransactions(params: {
@@ -32,14 +31,14 @@ export async function pollNewTransactions(params: {
       });
       const windowIds = rows.map((tx) => tx.id);
       if (params.seen === null) {
-        return { emit: [], seen: windowIds.slice(-MAX_SEEN) };
+        return { emit: [], seen: windowIds };
       }
       const seen = new Set(params.seen);
       const fresh = rows.filter((tx) => !seen.has(tx.id));
       const lookups = fresh.length > 0 ? await loadLookups(api) : null;
       return {
         emit: lookups ? fresh.map((tx) => mapTransaction({ tx, lookups })) : [],
-        seen: windowIds.slice(-MAX_SEEN),
+        seen: windowIds,
       };
     },
   });
