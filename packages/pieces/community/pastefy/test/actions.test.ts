@@ -1,5 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import CryptoJS from 'crypto-js';
+import { createHash } from 'crypto';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import createPaste from '../src/lib/actions/create-paste';
 import getPaste from '../src/lib/actions/get-paste';
@@ -216,7 +217,34 @@ describe('folders', () => {
   });
 });
 
+describe('passwords are used exactly as typed', () => {
+  test('a password with surrounding spaces decrypts and is not trimmed', async () => {
+    const enc = { ...PASTE, encrypted: true, content: CryptoJS.AES.encrypt('hi', ' secret ').toString(), title: '' };
+    stubFetch(replies([{ body: enc }]));
+    expect(await run(getPaste)({ paste_id: 'p', password: ' secret ' })).toMatchObject({ content: 'hi', decrypted: true });
+    await expect(run(getPaste)({ paste_id: 'p', password: 'secret' })).rejects.toThrow(/Wrong Encryption Password/);
+  });
+
+  test('create encrypts with the untrimmed password', async () => {
+    const seen = stubFetch(replies([{ body: { success: true, paste: { ...PASTE, encrypted: true, content: CryptoJS.AES.encrypt('x', ' pw ').toString(), title: '' } } }]));
+    await run(createPaste)({ content: 'x', password: ' pw ' });
+    const content = String(seen[0].body['content']);
+    expect(CryptoJS.AES.decrypt(content, ' pw ').toString(CryptoJS.enc.Utf8)).toBe('x');
+  });
+});
+
 describe('trigger', () => {
+  test('a hash stored by the previous version does not fire for an unchanged paste', async () => {
+    const data = new Map<string, unknown>();
+    const store = { put: async (k: string, v: unknown) => data.set(k, v), get: async (k: string) => data.get(k) ?? null, delete: async (k: string) => data.delete(k) };
+    const ctx = { auth: { props: { token: 'k' } }, propsValue: { paste_id: 'p', include_title: true }, store };
+    data.set('paste_changed_trigger_hash', createHash('md5').update('c' + 'ab').digest('hex'));
+    stubFetch(replies([{ body: { ...PASTE, title: 'ab', content: 'c' } }, { body: { ...PASTE, title: 'ab', content: 'c' } }, { body: { ...PASTE, title: 'ab', content: 'd' } }]));
+    expect(await Reflect.apply(pasteChanged.run, pasteChanged, [ctx])).toEqual([]);
+    expect(await Reflect.apply(pasteChanged.run, pasteChanged, [ctx])).toEqual([]);
+    expect(await Reflect.apply(pasteChanged.run, pasteChanged, [ctx])).toHaveLength(1);
+  });
+
   test('fires once per change and hashes content and title separately', async () => {
     const data = new Map<string, unknown>();
     const store = { put: async (k: string, v: unknown) => data.set(k, v), get: async (k: string) => data.get(k) ?? null, delete: async (k: string) => data.delete(k) };

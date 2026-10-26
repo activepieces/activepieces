@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod, HttpResponse, QueryParams } from '@activepieces/pieces-common';
 
-export const pastefyClient = { request, send, seg, isRecord, statusOf, instanceUrl, apiBase, tokenOf, requireToken, wholeNumber, toApiError };
+export const pastefyClient = { request, send, seg, isRecord, statusOf, instanceUrl, apiBase, tokenOf, requireToken, wholeNumber, toApiError, verifiedTls };
 
 const DEFAULT_INSTANCE = 'https://pastefy.app';
 const REQUEST_TIMEOUT_MS = 30_000;

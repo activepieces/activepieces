@@ -1,8 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import actions from './lib/actions';
 import { pastefyAuth } from './lib/common/auth';
-import { pastefyClient } from './lib/common/client';
+import { pastefyCustomApiCallAction } from './lib/actions/custom-api-call';
 import triggers from './lib/triggers';
 
 export const pastefy = createPiece({
@@ -15,14 +14,7 @@ export const pastefy = createPiece({
   auth: pastefyAuth,
   actions: [
     ...actions,
-    createCustomApiCallAction({
-      auth: pastefyAuth,
-      baseUrl: (auth) => (auth ? pastefyClient.apiBase({ auth }) : ''),
-      authMapping: async (auth) => {
-        const token = pastefyClient.tokenOf({ auth });
-        return token ? { Authorization: `Bearer ${token}` } : {};
-      },
-    }),
+    pastefyCustomApiCallAction,
   ],
   triggers,
 });

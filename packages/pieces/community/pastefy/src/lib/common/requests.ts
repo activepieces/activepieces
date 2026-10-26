@@ -18,7 +18,7 @@ async function createPaste({ auth, input }: { auth: PastefyAuthValue; input: Pas
   if (!input.content) {
     throw new Error('Content is required.');
   }
-  const password = cleanText(input.password);
+  const password = passwordOf(input.password);
   const title = cleanText(input.title);
   const requestedFolder = cleanText(input.folderId);
   if (requestedFolder) {
@@ -48,7 +48,7 @@ async function createPaste({ auth, input }: { auth: PastefyAuthValue; input: Pas
 
 async function editPaste({ auth, pasteId, input }: { auth: PastefyAuthValue; pasteId: string; input: PasteEditInput }): Promise<PasteOutput> {
   pastefyClient.requireToken({ auth });
-  const password = cleanText(input.password);
+  const password = passwordOf(input.password);
   const current = await getPaste({ auth, pasteId, password: undefined });
   const wasEncrypted = current.encrypted === true;
   const changesText = input.content !== undefined && input.content !== '' || cleanText(input.title) !== undefined;
@@ -203,7 +203,7 @@ function tagList(tags: unknown): string[] {
 }
 
 function decryptPaste({ paste, password }: { paste: Record<string, unknown>; password?: string }): PasteOutput {
-  const secret = cleanText(password);
+  const secret = passwordOf(password);
   if (paste['encrypted'] !== true || !secret) {
     return { ...paste, decrypted: false };
   }
@@ -227,6 +227,10 @@ function decrypt({ text, password }: { text: unknown; password: string }): strin
   } catch {
     return null;
   }
+}
+
+function passwordOf(value: unknown): string | undefined {
+  return typeof value === 'string' && value !== '' ? value : undefined;
 }
 
 function cleanText(value: unknown): string | undefined {

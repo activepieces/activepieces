@@ -56,6 +56,10 @@ export default createTrigger({
     if (oldHash === newHash) {
       return [];
     }
+    if (oldHash === legacyHashOf({ paste, includeTitle: propsValue.include_title === true })) {
+      await store.put(STORE_KEY, newHash, StoreScope.FLOW);
+      return [];
+    }
     await store.put(STORE_KEY, newHash, StoreScope.FLOW);
     return [paste];
   },
@@ -68,6 +72,11 @@ export default createTrigger({
 function hashOf({ paste, includeTitle }: { paste: Record<string, unknown>; includeTitle: boolean }): string {
   const parts = includeTitle ? [paste['content'] ?? null, paste['title'] ?? null] : [paste['content'] ?? null];
   return createHash('md5').update(JSON.stringify(parts)).digest('hex');
+}
+
+function legacyHashOf({ paste, includeTitle }: { paste: Record<string, unknown>; includeTitle: boolean }): string {
+  const title = includeTitle ? String(paste['title']) : '';
+  return createHash('md5').update(`${String(paste['content'])}${title}`).digest('hex');
 }
 
 const STORE_KEY = 'paste_changed_trigger_hash';
