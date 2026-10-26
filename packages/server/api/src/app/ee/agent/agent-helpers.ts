@@ -308,7 +308,8 @@ async function failAbandonedFlowStep({ conversation, log }: { conversation: Swep
     }
     const { error } = await tryCatch(() => flowStepRpc(log).resumeFlowStep({ conversationId: id, flowRunId, waitpointId, output: ABANDONED_FLOW_STEP_RESULT }))
     if (!isNil(error)) {
-        log.error({ error, conversation: { id }, flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[agentHelpers] Could not release the flow step of an abandoned agent run')
+        log.error({ error, conversation: { id }, flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[agentHelpers] Could not release the flow step of an abandoned agent run, the next sweep retries it')
+        await conversationRepo().update(id, { status: AgentConversationStatus.STREAMING })
     }
 }
 

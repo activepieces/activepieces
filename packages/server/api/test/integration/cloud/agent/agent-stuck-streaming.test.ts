@@ -203,9 +203,20 @@ describe('CHAT_STALE_SWEEP proactive recovery', () => {
         expect(await db.findOneBy('waitpoint', { id: abandoned.waitpointId })).toBeNull()
         expect(await db.findOneBy('waitpoint', { id: running.waitpointId })).not.toBeNull()
     })
+
+    it('keeps a flow step whose release failed eligible for the next sweep, so one failed attempt does not strand the flow', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const unreleasable = await pausedFlowStepRun({ ctx, lastHeartbeat: new Date(Date.now() - 5 * 60 * 1_000), conversationProjectId: null })
+
+        await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
+
+        const row = await db.findOneByOrFail<{ status: string }>('agent_conversation', { id: unreleasable.conversationId })
+        expect(row.status).toBe(AgentConversationStatus.STREAMING)
+        expect(await db.findOneBy('waitpoint', { id: unreleasable.waitpointId })).not.toBeNull()
+    })
 })
 
-async function pausedFlowStepRun({ ctx, lastHeartbeat }: { ctx: TestContext, lastHeartbeat: Date }): Promise<{ waitpointId: string }> {
+async function pausedFlowStepRun({ ctx, lastHeartbeat, conversationProjectId = ctx.project.id }: { ctx: TestContext, lastHeartbeat: Date, conversationProjectId?: string | null }): Promise<{ conversationId: string, waitpointId: string }> {
     const flow = createMockFlow({ projectId: ctx.project.id })
     await db.save('flow', flow)
     const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.LOCKED })
@@ -218,7 +229,7 @@ async function pausedFlowStepRun({ ctx, lastHeartbeat }: { ctx: TestContext, las
     await db.save('agent_conversation', {
         id: conversationId,
         platformId: ctx.platform.id,
-        projectId: ctx.project.id,
+        projectId: conversationProjectId,
         userId: ctx.user.id,
         source: AgentRunSource.FLOW_STEP,
         flowRunId: flowRun.id,
@@ -228,5 +239,5 @@ async function pausedFlowStepRun({ ctx, lastHeartbeat }: { ctx: TestContext, las
         messages: [],
     })
     await db.update('agent_conversation', conversationId, { updated: lastHeartbeat.toISOString() })
-    return { waitpointId }
+    return { conversationId, waitpointId }
 }
