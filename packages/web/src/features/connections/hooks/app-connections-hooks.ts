@@ -12,6 +12,7 @@ import {
   AppConnectionScope,
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
+  FlowVersionState,
   ListAppConnectionsRequestQuery,
   PLACEHOLDER_CONNECTION_TYPE,
   ReplaceAppConnectionsRequestBody,
@@ -30,6 +31,9 @@ import {
 } from '@/components/custom/data-table';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { agentsApi } from '@/features/agents/api/agents';
+import { useAgentsAvailable } from '@/features/agents/hooks/agents-hooks';
+import { flowsApi } from '@/features/flows/api/flows-api';
 import { projectMembersApi } from '@/features/members/api/project-members-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -385,6 +389,61 @@ export const appConnectionsQueries = {
       },
       enabled,
       staleTime,
+    });
+  },
+
+  useFlowsAndAgentsUsingConnection: ({
+    projectId,
+    externalId,
+  }: {
+    projectId: string;
+    externalId: string;
+  }) => {
+    const agentsAvailable = useAgentsAvailable();
+    return useQuery({
+      queryKey: [
+        'app-connection-usage',
+        projectId,
+        externalId,
+        agentsAvailable,
+      ],
+      queryFn: async () => {
+        const flowsRequest = {
+          projectId,
+          connectionExternalIds: [externalId],
+          cursor: undefined,
+          limit: 1000,
+        };
+        const [draftFlowsPage, publishedFlowsPage, agentsPage] =
+          await Promise.all([
+            flowsApi.list(flowsRequest),
+            flowsApi.list({
+              ...flowsRequest,
+              versionState: FlowVersionState.LOCKED,
+            }),
+            agentsAvailable
+              ? agentsApi.list({
+                  projectId,
+                  connectionExternalIds: [externalId],
+                  limit: 100,
+                })
+              : null,
+          ]);
+        const draftFlowIds = new Set(
+          draftFlowsPage.data.map((flow) => flow.id),
+        );
+        return {
+          flows: [
+            ...draftFlowsPage.data,
+            ...publishedFlowsPage.data.filter(
+              (flow) => !draftFlowIds.has(flow.id),
+            ),
+          ],
+          agents: agentsPage?.data ?? [],
+        };
+      },
+      staleTime: 0,
+      gcTime: 0,
     });
   },
 

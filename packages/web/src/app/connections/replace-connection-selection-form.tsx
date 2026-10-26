@@ -188,11 +188,7 @@ function toOptions(connections: AppConnectionWithoutSensitiveData[]) {
   }));
 }
 
-function ReplaceConnectionVersionsField({
-  onValueChange,
-}: {
-  onValueChange?: (applyToPublishedVersions: boolean) => void;
-}) {
+function ReplaceConnectionVersionsField() {
   const form = useFormContext<{ applyToPublishedVersions: boolean }>();
   const publishNeedsApproval = usePublishNeedsApproval();
   return (
@@ -209,11 +205,7 @@ function ReplaceConnectionVersionsField({
           />
           <Select
             value={String(field.value)}
-            onValueChange={(value) => {
-              const applyToPublishedVersions = value === 'true';
-              field.onChange(applyToPublishedVersions);
-              onValueChange?.(applyToPublishedVersions);
-            }}
+            onValueChange={(value) => field.onChange(value === 'true')}
           >
             <SelectTrigger>
               <SelectValue />
@@ -272,11 +264,7 @@ function LabelWithTooltip({
 
 ReplaceConnectionSelectionFields.displayName =
   'ReplaceConnectionSelectionFields';
-export {
-  LabelWithTooltip,
-  ReplaceConnectionSelectionFields,
-  ReplaceConnectionVersionsField,
-};
+export { ReplaceConnectionSelectionFields, ReplaceConnectionVersionsField };
 
 export const replaceConnectionSelectionHooks = {
   usePublishNeedsApproval,
