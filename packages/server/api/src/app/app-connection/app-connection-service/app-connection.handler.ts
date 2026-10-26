@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, FlowId, isNil, PlatformId, ProjectId, tryCatch, unique, UserId } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, EngineResponse, EngineResponseStatus, ExecuteRefreshTokenAuthResponse, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, PopulatedFlow, WorkerJobType } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, EngineResponse, EngineResponseStatus, ExecuteRefreshTokenAuthResponse, Flow, FlowOperationType, flowStructureUtil, FlowVersion, PopulatedFlow, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { lru, LRU } from 'tiny-lru'
@@ -386,9 +386,9 @@ async function replaceConnectionInPublishedVersion(params: ReplaceConnectionInPu
         })
     })
 
-    const hadUnpublishedDraftEdits = latestVersion.state !== FlowVersionState.LOCKED
+    const hadUnpublishedChanges = latestVersion.id !== publishedVersionId
     const republishFailed = !isNil(error)
-    if (hadUnpublishedDraftEdits || republishFailed) {
+    if (hadUnpublishedChanges || republishFailed) {
         await replaceConnectionInDraft({ ...params, restoreDraft: true })
     }
     if (republishFailed) {
