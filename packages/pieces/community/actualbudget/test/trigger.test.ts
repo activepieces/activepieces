@@ -137,6 +137,28 @@ describe('seen ID storage', () => {
   });
 });
 
+describe('seen ID storage under failure', () => {
+  test('a save that fails part-way keeps the previous checkpoint intact', async () => {
+    const { store, data } = memoryStore();
+    const before = Array.from({ length: 6000 }, (_, i) => `t${i}`);
+    await saveSeenIds({ store, ids: before });
+    const failing: Store = {
+      ...store,
+      async put<T>(key: string, value: T): Promise<T> {
+        if (key.endsWith('_1')) throw new Error('store down');
+        return store.put(key, value);
+      },
+    };
+    await expect(
+      saveSeenIds({ store: failing, ids: ['backdated', ...before] })
+    ).rejects.toThrow('store down');
+    expect(await loadSeenIds({ store })).toEqual(before);
+    await saveSeenIds({ store, ids: ['backdated', ...before] });
+    expect(await loadSeenIds({ store })).toEqual(['backdated', ...before]);
+    expect(Object.keys(data)).toHaveLength(3);
+  });
+});
+
 function memoryStore(): { store: Store; data: Record<string, unknown> } {
   const data: Record<string, unknown> = {};
   const store: Store = {
