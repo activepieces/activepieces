@@ -1,8 +1,9 @@
-import { Property, DynamicPropsValue, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { Property, DynamicPropsValue, DropdownOption } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { smartSuiteApiCall, smartSuitePaginatedApiCall, TableStucture } from '.';
+import { smartSuiteApi, smartSuitePaginatedApiCall, TableStucture } from '.';
 import { smartsuiteAuth } from '../auth';
 import { isNil } from '@activepieces/pieces-framework';
+import { pagedList } from './paged-list';
 
 export const smartsuiteCommon = {
 	solutionId: Property.Dropdown({
@@ -15,40 +16,29 @@ export const smartsuiteCommon = {
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Please enter your API key first.',
+					placeholder: 'Please connect your SmartSuite account first.',
 				};
 			}
-
 			const { apiKey, accountId } = auth.props;
-
 			try {
-				const response = await smartSuitePaginatedApiCall<{
-					name: string;
-					id: string;
-					hidden: boolean;
-				}>({
+				const solutions = await smartSuitePaginatedApiCall<{ name: string; id: string; hidden?: boolean }>({
 					apiKey,
 					accountId,
 					method: HttpMethod.GET,
-					resourceUri: '/solutions',
+					resourceUri: '/solutions/',
+					operation: 'list solutions',
 				});
-
 				return {
 					disabled: false,
-					options: response
+					options: solutions
 						.filter((solution) => !solution.hidden)
-						.map((solution) => {
-							return {
-								label: solution.name,
-								value: solution.id,
-							};
-						}),
+						.map((solution) => ({ label: solution.name, value: solution.id })),
 				};
 			} catch (error) {
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Error fetching solutions. Please check your API key.',
+					placeholder: `Could not load solutions: ${errorText(error)}`,
 				};
 			}
 		},
@@ -60,50 +50,66 @@ export const smartsuiteCommon = {
 		required: true,
 		refreshers: ['solutionId'],
 		options: async ({ auth, solutionId }) => {
-			if (!auth || !solutionId) {
-				return {
-					disabled: true,
-					options: [],
-					placeholder: solutionId
-						? 'Please select a solution first.'
-						: 'Please enter your API key first.',
-				};
+			if (!auth) {
+				return { disabled: true, options: [], placeholder: 'Please connect your SmartSuite account first.' };
 			}
-
+			if (!solutionId) {
+				return { disabled: true, options: [], placeholder: 'Please select a solution first.' };
+			}
 			const { apiKey, accountId } = auth.props;
-
 			try {
-				const response = await smartSuitePaginatedApiCall<{
-					id: string;
-					name: string;
-				}>({
+				const tables = await smartSuitePaginatedApiCall<{ id: string; name: string }>({
 					apiKey,
 					accountId,
 					method: HttpMethod.GET,
-					resourceUri: '/applications',
-					query: {
-						solution: solutionId as string,
-					},
+					resourceUri: '/applications/',
+					query: { solution: String(solutionId) },
+					operation: 'list tables',
 				});
-
 				return {
 					disabled: false,
-					options: response.map((table) => {
-						return {
-							label: table.name,
-							value: table.id,
-						};
-					}),
+					options: tables.map((table) => ({ label: table.name, value: table.id })),
 				};
 			} catch (error) {
 				return {
 					disabled: true,
 					options: [],
-					placeholder: 'Error fetching tables. Please check your permissions.',
+					placeholder: `Could not load tables: ${errorText(error)}`,
 				};
 			}
 		},
 	}),
+
+	tableFieldDropdown: ({ displayName, description, required, onlyTypes }: { displayName: string; description?: string; required: boolean; onlyTypes?: string[] }) =>
+		Property.Dropdown({
+			auth: smartsuiteAuth,
+			displayName,
+			description,
+			required,
+			refreshers: ['solutionId', 'tableId'],
+			options: async ({ auth, tableId }) => {
+				if (!auth) {
+					return { disabled: true, options: [], placeholder: 'Please connect your SmartSuite account first.' };
+				}
+				if (!tableId) {
+					return { disabled: true, options: [], placeholder: 'Please select a table first.' };
+				}
+				try {
+					const table = await smartSuiteApi.getTable({ credentials: auth.props, tableId });
+					const options: DropdownOption<string>[] = table.structure
+						.filter((field) =>
+							onlyTypes
+								? onlyTypes.includes(field.field_type)
+								: !field.params.is_auto_generated && !field.params.system,
+						)
+						.map((field) => ({ label: field.label, value: field.slug }));
+					return { disabled: false, options };
+				} catch (error) {
+					return { disabled: true, options: [], placeholder: `Could not load fields: ${errorText(error)}` };
+				}
+			},
+		}),
+
 	tableFields: Property.DynamicProperties({
 		auth: smartsuiteAuth,
 		displayName: 'Fields',
@@ -116,14 +122,7 @@ export const smartsuiteCommon = {
 			const { apiKey, accountId } = auth.props;
 
 			try {
-				const response = await smartSuiteApiCall<{
-					structure: TableStucture[];
-				}>({
-					apiKey,
-					accountId,
-					method: HttpMethod.GET,
-					resourceUri: `/applications/${tableId}`,
-				});
+				const response = await smartSuiteApi.getTable({ credentials: { apiKey, accountId }, tableId });
 
 				const fieldProperties: DynamicPropsValue = {};
 
@@ -245,7 +244,11 @@ export const smartsuiteCommon = {
 
 				return fieldProperties;
 			} catch (error) {
-				return {};
+				return {
+					loadError: Property.MarkDown({
+						value: `Could not load the table fields: ${errorText(error)}`,
+					}),
+				};
 			}
 		},
 	}),
@@ -254,13 +257,122 @@ export const smartsuiteCommon = {
 		displayName: 'Record ID',
 		required: true,
 	}),
+
+	recordDropdown: ({ displayName, description }: { displayName: string; description?: string }) =>
+		Property.Dropdown({
+			auth: smartsuiteAuth,
+			displayName,
+			description,
+			required: true,
+			refreshers: ['solutionId', 'tableId'],
+			options: async ({ auth, tableId }) => {
+				if (!auth) {
+					return { disabled: true, options: [], placeholder: 'Please connect your SmartSuite account first.' };
+				}
+				if (!tableId) {
+					return { disabled: true, options: [], placeholder: 'Please select a table first.' };
+				}
+				try {
+					const page = await smartSuiteApi.listRecordsPage({
+						credentials: auth.props,
+						tableId,
+						sort: [{ field: 'last_updated', direction: 'desc' }],
+						limit: RECORD_OPTIONS_LIMIT,
+						offset: 0,
+					});
+					const options: DropdownOption<string>[] = page.items
+						.filter((record) => typeof record['id'] === 'string')
+						.map((record) => ({ label: optionLabel({ primary: record['title'], fallback: String(record['id']) }), value: String(record['id']) }));
+					return {
+						disabled: false,
+						options,
+						placeholder: page.hasMore ? `Showing the ${RECORD_OPTIONS_LIMIT} most recently updated records.` : undefined,
+					};
+				} catch (error) {
+					return { disabled: true, options: [], placeholder: `Could not load records: ${errorText(error)}` };
+				}
+			},
+		}),
+
+	deletedRecordDropdown: Property.Dropdown({
+		auth: smartsuiteAuth,
+		displayName: 'Deleted Record',
+		description: 'A record in the trash of the selected table.',
+		required: true,
+		refreshers: ['solutionId', 'tableId'],
+		options: async ({ auth, solutionId, tableId }) => {
+			if (!auth) {
+				return { disabled: true, options: [], placeholder: 'Please connect your SmartSuite account first.' };
+			}
+			if (!solutionId || !tableId) {
+				return { disabled: true, options: [], placeholder: 'Please select a solution and table first.' };
+			}
+			try {
+				const deleted = await smartSuiteApi.listDeletedRecords({ credentials: auth.props, solutionId: String(solutionId) });
+				const options: DropdownOption<string>[] = deleted
+					.filter((record) => record['application_id'] === tableId && typeof record['id'] === 'string')
+					.map((record) => ({ label: optionLabel({ primary: record['title'], fallback: String(record['id']) }), value: String(record['id']) }));
+				return { disabled: false, options, placeholder: options.length === 0 ? 'The trash of this table is empty.' : undefined };
+			} catch (error) {
+				return { disabled: true, options: [], placeholder: `Could not load deleted records: ${errorText(error)}` };
+			}
+		},
+	}),
+
+	memberDropdown: ({ displayName, description, required }: { displayName: string; description?: string; required: boolean }) =>
+		Property.Dropdown({
+			auth: smartsuiteAuth,
+			displayName,
+			description,
+			required,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!auth) {
+					return { disabled: true, options: [], placeholder: 'Please connect your SmartSuite account first.' };
+				}
+				try {
+					const page = await pagedList.fetch({
+						credentials: auth.props,
+						path: '/applications/members/records/list/',
+						limit: MEMBER_OPTIONS_LIMIT,
+						offset: 0,
+						operation: 'list members',
+					});
+					const options: DropdownOption<string>[] = page.items
+						.filter((member) => typeof member['id'] === 'string')
+						.map((member) => ({ label: memberLabel(member), value: String(member['id']) }));
+					return { disabled: false, options };
+				} catch (error) {
+					return { disabled: true, options: [], placeholder: `Could not load members: ${errorText(error)}` };
+				}
+			},
+		}),
 };
 
-export function formatRecordFields(
-	tableSchema: TableStucture[],
-	tableValues: Record<string, any>,
-): Record<string, any> {
-	const formattedFields: Record<string, any> = {};
+const RECORD_OPTIONS_LIMIT = 100;
+const MEMBER_OPTIONS_LIMIT = 1000;
+
+function optionLabel({ primary, fallback }: { primary: unknown; fallback: string }): string {
+	return typeof primary === 'string' && primary.trim().length > 0 ? primary : fallback;
+}
+
+function memberLabel(member: Record<string, unknown>): string {
+	const fullName = member['full_name'];
+	const name = fullName !== null && typeof fullName === 'object' ? Reflect.get(fullName, 'sys_root') : undefined;
+	const emails = member['email'];
+	const email = Array.isArray(emails) && typeof emails[0] === 'string' ? emails[0] : undefined;
+	const base = optionLabel({ primary: name, fallback: email ?? String(member['id']) });
+	return email && base !== email ? `${base} (${email})` : base;
+}
+
+function formatRecordFields({
+	tableSchema,
+	tableValues,
+}: {
+	tableSchema: TableStucture[];
+	tableValues: Record<string, unknown>;
+}): Record<string, unknown> {
+	const formattedFields: Record<string, unknown> = {};
 
 	const fieldMap: Record<string, string> = tableSchema.reduce((acc, field) => {
 		acc[field.slug] = field.field_type;
@@ -346,16 +458,19 @@ export function formatRecordFields(
 	return formattedFields;
 }
 
-export function transformRecordFields(
-	tableSchema: TableStucture[],
-	tableValues: Record<string, any>,
-) {
+function transformRecordFields({
+	tableSchema,
+	tableValues,
+}: {
+	tableSchema: TableStucture[];
+	tableValues: Record<string, unknown>;
+}) {
 	const fieldMap: Record<string, string> = tableSchema.reduce((acc, field) => {
 		acc[field.slug] = field.label;
 		return acc;
 	}, {} as Record<string, string>);
 
-	const transformedFields: Record<string, any> = {};
+	const transformedFields: Record<string, unknown> = {};
 
 	for (const [slug, value] of Object.entries(tableValues)) {
 		const label = fieldMap[slug] ?? slug;
@@ -364,3 +479,9 @@ export function transformRecordFields(
 
 	return transformedFields;
 }
+
+function errorText(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
+export { formatRecordFields, transformRecordFields };

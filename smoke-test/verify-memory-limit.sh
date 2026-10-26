@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Verifies that a flow that exhausts the sandbox memory reliably ends with flow run status
-# MEMORY_LIMIT_EXCEEDED. Expects a flow created by benchmark/setup.sh with
+# MEMORY_LIMIT_EXCEEDED. Expects a flow created by benchmark/setup.ts with
 # CODE_BODY_FILE=benchmark/oom-code.js on a stack running
 # AP_EXECUTION_MODE=SANDBOX_CODE_ONLY. The code step builds ~50MB inside the 128MB v8
 # isolate (an array of refs to one big string), and the engine's outRef.copy() then
@@ -23,7 +23,7 @@ echo "Base URL: $BASE_URL"
 echo "Runs:     $NUM_RUNS"
 echo ""
 
-# Sign in with the fixed benchmark credentials created by benchmark/setup.sh
+# Sign in with the fixed benchmark credentials created by benchmark/setup.ts
 SIGNIN_RESPONSE=$(curl -s "$API/authentication/sign-in" \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"${BENCH_EMAIL}\",\"password\":\"BenchmarkPass1\"}")

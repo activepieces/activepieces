@@ -271,7 +271,7 @@ export const SearchableSelect = <T,>({
                               <button
                                 type="button"
                                 className={cn(
-                                  'absolute inset-0 flex items-center justify-center text-muted-foreground hover:text-destructive',
+                                  'absolute inset-0 flex items-center justify-center text-gray-11 hover:text-danger-11',
                                   'opacity-0 group-hover/option:opacity-100',
                                 )}
                                 onClick={(e) => {
@@ -298,7 +298,7 @@ export const SearchableSelect = <T,>({
                           </div>
                         </div>
                         {option.description && (
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm text-gray-11">
                             {option.description}
                           </div>
                         )}

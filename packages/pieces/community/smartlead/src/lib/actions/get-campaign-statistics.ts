@@ -6,6 +6,7 @@ import { smartleadAuth } from '../auth';
 export const getCampaignStatisticsAction = createAction({
   auth: smartleadAuth,
   name: 'get_campaign_statistics',
+  classification: 'READ',
   displayName: 'Get Campaign Statistics',
   description:
     'Retrieve comprehensive analytics for a campaign including open rates, click rates, reply rates, and engagement statistics.',

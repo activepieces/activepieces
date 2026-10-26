@@ -9,6 +9,7 @@ import { legacyAttachmentListOutputSchema } from '../output-schemas';
 export const addAttachmentToIssueAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'add_issue_attachment',
+	classification: 'WRITE',
 	displayName: 'Add Attachment to Issue',
 	description: 'Adds an attachment to an issue.',
 	audience: 'human',
@@ -22,10 +23,26 @@ export const addAttachmentToIssueAction = createAction({
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
 		attachment: Property.File({
-			displayName: 'Attachment',
+			displayName: 'File',
 			required: true,
 		}),
 	},
+	propertyGroups: [
+		{
+			key: 'issue',
+			display: 'section',
+			label: 'Issue',
+			icon: 'inbox',
+			props: ['projectId', 'issueId'],
+		},
+		{
+			key: 'attachment',
+			display: 'section',
+			label: 'Attachment',
+			icon: 'paperclip',
+			props: ['attachment'],
+		},
+	],
 	async run(context) {
 		const { issueId, attachment } = context.propsValue;
 		const formData = new FormData();

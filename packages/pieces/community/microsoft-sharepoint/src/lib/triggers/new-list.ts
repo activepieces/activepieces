@@ -67,6 +67,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePo
 export const newListTrigger = createTrigger({
 	auth: microsoftSharePointAuth,
 	name: 'new_list',
+	classification: 'READ',
 	displayName: 'New List',
 	description: 'Triggers when a new list is created in a site.',
 	aiMetadata: {
@@ -79,18 +80,10 @@ export const newListTrigger = createTrigger({
 
 	sampleData: undefined,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

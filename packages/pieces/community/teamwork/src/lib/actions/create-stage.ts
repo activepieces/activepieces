@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createStage = createAction({
 	name: 'create_stage',
+	classification: 'WRITE',
 	displayName: 'Create Stage',
 	description: 'Add a new stage in a workflow or board.',
 	audience: 'both',

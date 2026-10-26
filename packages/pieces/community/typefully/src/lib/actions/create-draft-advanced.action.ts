@@ -8,6 +8,7 @@ import { TypefullyDraft } from '../common/types';
 export const createDraftAdvancedAction = createAction({
 	auth: typefullyAuth,
 	name: 'typefully_create_draft_advanced',
+	classification: 'WRITE',
 	displayName: 'Create Draft Advanced',
 	description:
 		'Create multi-post threads with full control. Supports threads (multiple posts), different content and media per post with pre-uploaded media IDs using JSON format. For single posts with simple text and media URLs, use "Create Draft Simple" instead.',

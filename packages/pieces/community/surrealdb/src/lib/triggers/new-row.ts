@@ -102,6 +102,7 @@ function constructQuery({
 
 export const newRow = createTrigger({
   name: 'new-row',
+  classification: 'READ',
   displayName: 'New Row',
   description: 'Triggers when a new row is added to the defined table.',
   aiMetadata: {
@@ -180,13 +181,11 @@ export const newRow = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, propsValue, auth });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, propsValue, auth });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

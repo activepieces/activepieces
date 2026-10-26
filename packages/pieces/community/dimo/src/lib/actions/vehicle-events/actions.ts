@@ -68,6 +68,7 @@ async function sendVehicleEventsRequest({ ctx, opKey }: { ctx: ActionContext<Cus
 const listWebhooksAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-list-webhooks-action",
+  classification: 'SEARCH',
   displayName: "Vehicle Events: List Webhooks",
   description: "List all webhooks.",
   audience: 'both',
@@ -81,6 +82,7 @@ const listWebhooksAction = createAction({
 const upsertWebhookNumericAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-upsert-webhook-numeric-action",
+  classification: 'WRITE',
   displayName: "Vehicle Events: Create/Update Webhook (Numeric)",
   description: "Create a new webhook or update existing one for numeric vehicle signals. If Webhook ID is provided, it will update; otherwise, it will create a new webhook.",
   audience: 'both',
@@ -161,6 +163,7 @@ const upsertWebhookNumericAction = createAction({
 const upsertWebhookBooleanAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-upsert-webhook-boolean-action",
+  classification: 'WRITE',
   displayName: "Vehicle Events: Create/Update Webhook (Boolean)",
   description: "Create a new webhook or update existing one for boolean vehicle signals. If Webhook ID is provided, it will update; otherwise, it will create a new webhook.",
   audience: 'both',
@@ -243,6 +246,7 @@ const upsertWebhookBooleanAction = createAction({
 const upsertWebhookEventAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-upsert-webhook-event-action",
+  classification: 'WRITE',
   displayName: "Vehicle Events: Create/Update Webhook (Events)",
   description: "Create a new webhook or update existing one for vehicle events like harsh braking, acceleration, etc. If Webhook ID is provided, it will update; otherwise, it will create a new webhook.",
   audience: 'both',
@@ -346,6 +350,7 @@ const upsertWebhookEventAction = createAction({
 const deleteWebhookAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-delete-webhook-action",
+  classification: 'DESTRUCTIVE',
   displayName: "Vehicle Events: Delete Webhook",
   description: "Delete a webhook.",
   audience: 'both',
@@ -365,6 +370,7 @@ const deleteWebhookAction = createAction({
 const listSignalsAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-list-signals-action",
+  classification: 'SEARCH',
   displayName: "Vehicle Events: List Signals",
   description: "List all signals.",
   audience: 'both',
@@ -378,6 +384,7 @@ const listSignalsAction = createAction({
 const listSubscribedVehiclesAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-list-subscribed-vehicles-action",
+  classification: 'SEARCH',
   displayName: "Vehicle Events: List Subscribed Vehicles",
   description: "List vehicles subscribed to a webhook.",
   audience: 'both',
@@ -397,6 +404,7 @@ const listSubscribedVehiclesAction = createAction({
 const listVehicleSubscriptionsAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-list-vehicle-subscriptions-action",
+  classification: 'SEARCH',
   displayName: "Vehicle Events: List Vehicle Subscriptions",
   description: "List all subscriptions for a vehicle.",
   audience: 'both',
@@ -416,6 +424,7 @@ const listVehicleSubscriptionsAction = createAction({
 const subscribeVehicleAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-subscribe-vehicle-action",
+  classification: 'WRITE',
   displayName: "Vehicle Events: Subscribe Vehicle",
   description: "Subscribe a vehicle to a webhook.",
   audience: 'both',
@@ -451,6 +460,7 @@ const subscribeVehicleAction = createAction({
 const subscribeAllVehiclesAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-subscribe-all-vehicles-action",
+  classification: 'WRITE',
   displayName: "Vehicle Events: Subscribe All Vehicles",
   description: "Subscribe all vehicles to a webhook.",
   audience: 'both',
@@ -470,6 +480,7 @@ const subscribeAllVehiclesAction = createAction({
 const unsubscribeVehicleAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-unsubscribe-vehicle-action",
+  classification: 'DESTRUCTIVE',
   displayName: "Vehicle Events: Unsubscribe Vehicle",
   description: "Unsubscribe a vehicle from a webhook.",
   audience: 'both',
@@ -505,6 +516,7 @@ const unsubscribeVehicleAction = createAction({
 const unsubscribeAllVehiclesAction = createAction({
   auth: dimoAuth,
   name: "vehicle-events-unsubscribe-all-vehicles-action",
+  classification: 'DESTRUCTIVE',
   displayName: "Vehicle Events: Unsubscribe All Vehicles",
   description: "Unsubscribe all vehicles from a webhook.",
   audience: 'both',

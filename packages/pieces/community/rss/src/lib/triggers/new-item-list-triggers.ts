@@ -27,7 +27,7 @@ export const rssNewItemListTrigger = createTrigger({
   name: 'new-item-list',
   classification: 'READ',
   displayName: 'New Items in Multiple Feeds',
-  description: 'Runs when a new item is added in one of the RSS feed',
+  description: 'Runs when a new item is published in any of the feeds you list.',
   aiMetadata: {
     description:
       'Fires when a new entry is published in any one of several monitored RSS/Atom feeds. Polls each configured feed URL and emits each newly detected item (deduplicated by item id and publish date), representing a freshly published article, post, or update from one of those feeds.',
@@ -39,43 +39,29 @@ export const rssNewItemListTrigger = createTrigger({
     rss_feed_urls: rssFeedUrls,
   },
   outputSchema: newItemListTriggerOutputSchema,
-  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
-    return await pollingHelper.test(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue as PollingProps,
-      files: files,
-    });
+  async test(context): Promise<unknown[]> {
+    const { propsValue } = context;
+    return await pollingHelper.test(polling, { ...context, propsValue: propsValue as PollingProps });
   },
-  async onEnable({ auth, propsValue, store }): Promise<void> {
-    await pollingHelper.onEnable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue as PollingProps,
-    });
+  async onEnable(context): Promise<void> {
+    const { propsValue } = context;
+    await pollingHelper.onEnable(polling, { ...context, propsValue: propsValue as PollingProps });
   },
 
-  async onDisable({ auth, propsValue, store }): Promise<void> {
+  async onDisable(context): Promise<void> {
+    const { propsValue, store } = context;
     const lastFetchDate = await store.get<number>('_lastRssPublishDate');
     if (!isNil(lastFetchDate)) {
       await store.delete('_lastRssPublishDate');
     }
-    await pollingHelper.onDisable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue as PollingProps,
-    });
+    await pollingHelper.onDisable(polling, { ...context, propsValue: propsValue as PollingProps });
   },
 
-  async run({ auth, propsValue, store, files }): Promise<unknown[]> {
+  async run(context): Promise<unknown[]> {
+    const { propsValue, store } = context;
     const lastFetchDate = await store.get<number>('_lastRssPublishDate');
     const newItems = (
-      await pollingHelper.poll(polling, {
-        auth,
-        store: store,
-        propsValue: propsValue as PollingProps, 
-        files: files,
-      })
+      await pollingHelper.poll(polling, { ...context, propsValue: propsValue as PollingProps })
     ).filter((f) => {
       if (isNil(lastFetchDate)) {
         return true;

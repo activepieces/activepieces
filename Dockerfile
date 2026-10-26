@@ -1,4 +1,4 @@
-FROM node:24.14.0-bullseye-slim AS base
+FROM node:24.22.1-bookworm-slim AS base
 
 # C.UTF-8 ships with Debian, so no locale generation is needed.
 # REDISMS_VERSION pins the Redis that redis-memory-server (AP_REDIS_TYPE=MEMORY)
@@ -10,17 +10,11 @@ ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     REDISMS_VERSION=7.4.2
 
-# bullseye LTS ended 2026-08-31: deb.debian.org's index and pool now drift (404s on fetch), and
-# archive.debian.org has not picked bullseye up yet. Pin apt to a dated snapshot.debian.org
-# mirror (frozen, so Release files expire — hence Check-Valid-Until off) until the base image
-# moves to bookworm.
-RUN printf 'deb http://snapshot.debian.org/archive/debian/20260825T000000Z bullseye main\ndeb http://snapshot.debian.org/archive/debian-security/20260825T000000Z bullseye-security main\n' > /etc/apt/sources.list && \
-    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99snapshot
-
 # Install all system dependencies in a single layer. No apt cache mounts: docker-clean in the
 # node base image wipes /var/cache/apt anyway, and a persisted /var/lib/apt/lists goes stale
-# against rotated bullseye-security packages, failing the build with hash/size fetch errors.
+# against rotated bookworm-security packages, failing the build with hash/size fetch errors.
 # libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
+# tini runs as PID 1 and reaps orphaned sandbox children; node as PID 1 never waits on them and they pile up as zombies.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         openssh-client \
@@ -31,6 +25,7 @@ RUN apt-get update && \
         poppler-utils \
         poppler-data \
         procps \
+        tini \
         unzip \
         curl \
         ca-certificates \
@@ -113,7 +108,8 @@ RUN node -e "\
 # Remove workspaces not needed at runtime: pieces except the 5 the api imports,
 # plus web/cli/tests-e2e/embed-sdk whose deps (react & friends) would otherwise land
 # in the runtime node_modules. dist/packages/web is already built and kept.
-# Then drop the removed entries from the root workspaces list and regenerate bun.lock.
+# Then drop the removed entries from the root workspaces list, drop the engine's test-only
+# core-piece devDependencies (their workspaces are gone), and regenerate bun.lock.
 RUN rm -rf packages/pieces/core packages/pieces/custom \
       packages/web packages/cli packages/tests-e2e packages/ee && \
     find packages/pieces/community -mindepth 1 -maxdepth 1 -type d \
@@ -124,6 +120,7 @@ RUN rm -rf packages/pieces/core packages/pieces/custom \
       ! -name microsoft-teams-bot \
       -exec rm -rf {} + && \
     node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.workspaces=p.workspaces.filter(w=>fs.existsSync(w.replace('/*','')));fs.writeFileSync('package.json',JSON.stringify(p,null,2))" && \
+    node -e "const fs=require('fs');const f='packages/server/engine/package.json';const p=JSON.parse(fs.readFileSync(f,'utf8'));p.devDependencies=Object.fromEntries(Object.entries(p.devDependencies).filter(([n])=>!n.startsWith('@activepieces/piece-')));fs.writeFileSync(f,JSON.stringify(p,null,2))" && \
     rm -f bun.lock && bun install
 
 ### STAGE 2: Run ###
@@ -163,5 +160,5 @@ LABEL service=activepieces
 HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=5 \
     CMD [ "$AP_CONTAINER_TYPE" = "WORKER" ] && exit 0 || curl -fsS "http://localhost:${AP_PORT:-80}/api/v1/health" || exit 1
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "./docker-entrypoint.sh"]
 EXPOSE 80

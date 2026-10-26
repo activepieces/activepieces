@@ -89,6 +89,7 @@ export const triggers = [
 ].map(trigger => {
     return createTrigger({
         name: trigger.name,
+        classification: 'READ',
         displayName: trigger.displayName,
         auth: krispcallAuth,
         description: trigger.description,

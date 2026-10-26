@@ -5,6 +5,7 @@ import { FireberryClient } from '../common/client';
 
 export const createRecordAction = createAction({
   name: 'create_record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Create a new record in Fireberry.',
   audience: 'both',

@@ -9,53 +9,37 @@ import { createTweet } from './lib/actions/create-tweet';
 import { createReply } from './lib/actions/create-reply';
 import { xGetAuthenticatedUser } from './lib/actions/x-get-authenticated-user';
 
-const markdownDescription = `
-If you don't have the credentials down below, please follow these steps to obtain the required credentials:
+const markdownDescription = `To connect, create keys for your app in the X Developer Portal:
 
-1. Go to [https://developer.twitter.com/en/portal/projects-and-apps](https://developer.twitter.com/en/portal/projects-and-apps) and click on your app settings.
+1. Open the [X Developer Portal](https://developer.x.com/en/portal/projects-and-apps) and select your app. It must belong to a Project.
+2. On the **Settings** tab, under **User authentication settings**, click **Set up**. Choose **Read and write** for App permissions and **Native App** for Type of App, enter your website URL, and set the Callback URI to that URL followed by \`/redirect\`.
+3. On the **Keys and tokens** tab, regenerate **API Key and Secret** and **Access Token and Secret**, and paste the four values below.
 
-2. Under the **Settings** tab then under **User authentication settings** section, click "Set up".
-
-3. **This step must be completed before generating the keys**, check on **Read and write** for "App permissions" and **Native App** for "Type of App", fill in your website url and let the **Callback URI / Redirect URL** be **(your_website_url)/redirect** .
-
-4. Go back to your app settings page and click the **Keys and tokens** tab.
-
-5. Next to **API key and secret**, click "Regenerate" and copy the following values to the inputs below:
-
-        **Api Key**
-
-        **Api Key Secret**
-
-6. Next to **Access token and secret**, click "Regenerate" and copy the following values to the inputs below:
-
-        **Access Token**
-
-        **Access Token Secret**
-
-
-`;
+Do step 2 before step 3: an Access Token generated earlier keeps the old permission level.`;
 
 export const twitterAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
   props: {
     consumerKey: Property.ShortText({
-      displayName: 'Api Key',
-      description: 'The api key',
+      displayName: 'API Key',
+      description: 'Found under Keys and tokens, next to API Key and Secret.',
       required: true,
     }),
     consumerSecret: Property.ShortText({
-      displayName: 'Api Key Secret',
-      description: 'The api key secret',
+      displayName: 'API Key Secret',
+      description: 'Found under Keys and tokens, next to API Key and Secret.',
       required: true,
     }),
     accessToken: Property.ShortText({
       displayName: 'Access Token',
-      description: 'The access token',
+      description:
+        'Found under Keys and tokens, next to Access Token and Secret.',
       required: true,
     }),
     accessTokenSecret: Property.ShortText({
       displayName: 'Access Token Secret',
-      description: 'The access token secret',
+      description:
+        'Found under Keys and tokens, next to Access Token and Secret.',
       required: true,
     }),
   },
@@ -84,7 +68,7 @@ export const twitterAuth = PieceAuth.CustomAuth({
 
 export const twitter = createPiece({
   displayName: 'Twitter',
-  description: 'Social media platform with over 500 million user',
+  description: 'Post tweets and replies on X, formerly Twitter.',
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/twitter.png',
   categories: [PieceCategory.COMMUNICATION],

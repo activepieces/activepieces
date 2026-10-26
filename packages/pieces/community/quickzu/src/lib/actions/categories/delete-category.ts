@@ -5,6 +5,7 @@ import { makeClient, quickzuCommon } from '../../common';
 export const deleteCategoryAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_delete_category',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Category',
   description: 'Deletes an existing category from store.',
   audience: 'both',

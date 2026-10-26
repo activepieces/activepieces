@@ -6,6 +6,7 @@ import { getProjectIdDropdown } from '../common/props';
 import { issueTypeTriggerOutputSchema } from '../output-schemas';
 export const newIssueType = createTrigger({
   name: 'new_issue_type',
+  classification: 'READ',
   displayName: 'New Issue Type',
   description: 'Triggers when a new issue type is created in a project',
   aiMetadata: {
@@ -18,7 +19,7 @@ export const newIssueType = createTrigger({
   props: {
     projectId: getProjectIdDropdown({
       displayName: 'Project',
-      description: 'Select the project to watch for new issue types',
+      description: 'The project to watch for new issue types.',
       required: true,
     }),
   },

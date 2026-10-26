@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const findPayments = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'find_payments',
+    classification: 'SEARCH',
     displayName: 'Find Payments',
     description: 'Search for payments with optional filters.',
     audience: 'both',

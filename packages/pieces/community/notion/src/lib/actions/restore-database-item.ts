@@ -9,14 +9,22 @@ export const restoreDatabaseItem = createAction({
   name: 'restore_database_item',
   classification: 'WRITE',
   displayName: 'Restore Database Item',
-  description:
-    'Restore an archived database item.',
+  description: 'Restore an archived database item.',
   audience: 'human',
   aiMetadata: {
     description:
       'Un-archives a previously archived Notion database item, returning it to active status. Use when an agent must recover a record that was archived; requires the database_id and the archived item id. Idempotent: restoring an already-active item leaves it active.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'item',
+      display: 'section',
+      label: 'Database item',
+      icon: 'inbox',
+      props: ['database_id', 'archived_item_id'],
+    },
+  ],
   props: {
     database_id: notionCommon.database_id,
     archived_item_id: notionCommon.archived_database_item_id,

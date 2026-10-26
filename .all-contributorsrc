@@ -2248,6 +2248,33 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "JuampiHernandez",
+      "name": "Juampi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/102912458?v=4",
+      "profile": "http://juampi.dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "james-novino",
+      "name": "James Novino",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10082447?v=4",
+      "profile": "https://github.com/james-novino",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "fabio-kozlowski",
+      "name": "Fabio",
+      "avatar_url": "https://avatars.githubusercontent.com/u/282631409?v=4",
+      "profile": "https://github.com/fabio-kozlowski",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

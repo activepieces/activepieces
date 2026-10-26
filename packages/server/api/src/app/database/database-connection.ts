@@ -5,13 +5,14 @@ import {
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
+import { PlatformModelTierEntity } from '../ai/platform-model-tier-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { OtpEntity } from '../authentication/otp/otp-entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AgentConversationEntity } from '../ee/agent/agent-conversation-entity'
 import { AgentEntity } from '../ee/agent/agent-entity'
-import { ChatRolloutUserEntity } from '../ee/agent/chat-rollout-user-entity'
+import { AgentTaskEntity } from '../ee/agent/agent-task-entity'
 import { ChatPersonalizationEntity } from '../ee/agent/personalization/chat-personalization-entity'
 import { UserMemoryEntity } from '../ee/agent/user-memory-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
@@ -48,6 +49,7 @@ import { McpOAuthClientEntity } from '../mcp/oauth/client/mcp-oauth-client.entit
 import { McpOAuthAuthorizationCodeEntity } from '../mcp/oauth/code/mcp-oauth-code.entity'
 import { McpOAuthTokenEntity } from '../mcp/oauth/token/mcp-oauth-token.entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
+import { PieceTranslationEntity } from '../pieces/metadata/piece-translation-entity'
 import { PlatformConfigurationEntity } from '../platform/platform-configuration.entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -69,7 +71,7 @@ import { WaitpointEntity } from '../waitpoints/waitpoint-entity'
 import { WaitpointSignalEntity } from '../waitpoints/waitpoint-signal-entity'
 import { DatabaseType } from './database-type'
 import { createPGliteDataSource } from './pglite-connection'
-import { createPostgresDataSource } from './postgres-connection'
+import { createPostgresDataSource, createPostgresMigrationDataSource } from './postgres-connection'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -89,6 +91,7 @@ function getEntities(): EntitySchema<unknown>[] {
         VariableEntity,
         FolderEntity,
         PieceMetadataEntity,
+        PieceTranslationEntity,
         PlatformEntity,
         PlatformConfigurationEntity,
         SecretManagerEntity,
@@ -96,6 +99,7 @@ function getEntities(): EntitySchema<unknown>[] {
         UserInvitationEntity,
         AIProviderEntity,
         AiToolConfigEntity,
+        PlatformModelTierEntity,
         ProjectRoleEntity,
         TableEntity,
         FieldEntity,
@@ -113,8 +117,8 @@ function getEntities(): EntitySchema<unknown>[] {
         ToolSearchIndexEntity,
         AgentEntity,
         AgentConversationEntity,
+        AgentTaskEntity,
         ChatPersonalizationEntity,
-        ChatRolloutUserEntity,
         UserMemoryEntity,
         TriggerSourceEntity,
         WaitpointEntity,
@@ -178,6 +182,32 @@ export const databaseConnection = (): DataSource => {
     return ds
 }
 
+export const migrationDatabaseConnection = async (): Promise<DataSource> => {
+    const persisted = getPersistedMigrationConnection()
+    if (!isNil(persisted)) {
+        return persisted
+    }
+    if (databaseType !== DatabaseType.POSTGRES) {
+        return databaseConnection()
+    }
+    const dedicated = createPostgresMigrationDataSource()
+    if (isNil(dedicated)) {
+        return databaseConnection()
+    }
+    await dedicated.initialize()
+    setPersistedMigrationConnection(dedicated)
+    return dedicated
+}
+
 export function resetDatabaseConnection(): void {
     setPersistedConnection(null)
+    setPersistedMigrationConnection(null)
+}
+
+const MIGRATION_DB_GLOBAL_KEY = '__AP_DB_MIGRATION_CONNECTION__'
+function getPersistedMigrationConnection(): DataSource | null {
+    return ((globalThis as Record<string, unknown>)[MIGRATION_DB_GLOBAL_KEY] as DataSource) ?? null
+}
+function setPersistedMigrationConnection(ds: DataSource | null): void {
+    (globalThis as Record<string, unknown>)[MIGRATION_DB_GLOBAL_KEY] = ds
 }

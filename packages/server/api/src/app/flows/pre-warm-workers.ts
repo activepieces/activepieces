@@ -4,14 +4,15 @@ import { ApEdition, FileCompression, FileType, FlowActionType, FlowStatus, flowS
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { distributedLock, distributedStore } from '../database/redis-connections'
-import { workerGroupService } from '../ee/platform/platform-plan/worker-group.service'
 import { fileService } from '../file/file.service'
 import Paginator from '../helper/pagination/paginator'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
-import { projectWorkerGroupService } from '../project/project-worker-group.service'
+import { platformWorkerGroupService } from '../workers/worker-groups/platform-worker-group.service'
+import { projectWorkerGroupService } from '../workers/worker-groups/project-worker-group.service'
 import { flowService } from './flow/flow.service'
 
 
@@ -53,7 +54,7 @@ export const preWarmWorkersService = (log: FastifyBaseLogger) => ({
 
 async function resolveCachedScope(input: PrewarmDataRequest, log: FastifyBaseLogger): Promise<PrewarmScope | null> {
     const scopeId = input.workerGroupId ?? SHARED_CACHE_KEY
-    const cacheKey = `prewarm:scope:v3:${scopeId}`
+    const cacheKey = `prewarm:scope:v3:${scopeId}:codes-${prewarmCodesSkipped() ? 'off' : 'on'}`
     const cached = await distributedStore.get<PrewarmScope>(cacheKey)
     if (!isNil(cached)) {
         return cached
@@ -113,7 +114,7 @@ async function computeScope(input: PrewarmDataRequest, log: FastifyBaseLogger): 
             platformId = await projectService(log).getPlatformId(projectIds[0])
         }
         else {
-            platformId = await workerGroupService(log).getWorkerGroupPlatformId({ workerGroupId: input.workerGroupId }) ?? undefined
+            platformId = await platformWorkerGroupService(log).getWorkerGroupPlatformId({ workerGroupId: input.workerGroupId }) ?? undefined
             if (isNil(platformId)) {
                 return null
             }
@@ -134,10 +135,14 @@ async function computeScope(input: PrewarmDataRequest, log: FastifyBaseLogger): 
     // are computed here in one pass — the worker warms from the distinct set instead of resolving each
     // flow over RPC, which made prewarm scale with flow count instead of distinct piece count.
     const versions = activeFlows.data.map((flow) => flow.version)
-    const codes = versions.flatMap(extractCodeSteps)
+    const codes = prewarmCodesSkipped() ? [] : versions.flatMap(extractCodeSteps)
     const pieces = await resolvePiecePackages({ versions, platformId, log })
     const tokenProjectId = projectIds?.[0] ?? (await projectService(log).getProjectIdsByPlatform(platformId))[0]
     return { pieces, codes, platformId, tokenProjectId }
+}
+
+function prewarmCodesSkipped(): boolean {
+    return system.getBoolean(AppSystemProp.SKIP_PREWARM_CODES) ?? false
 }
 
 function extractCodeSteps(flowVersion: FlowVersion): PrewarmCodeStep[] {
@@ -148,7 +153,7 @@ function extractCodeSteps(flowVersion: FlowVersion): PrewarmCodeStep[] {
             sourceCode: step.settings.sourceCode,
             flowVersionId: flowVersion.id,
             flowVersionState: flowVersion.state,
-            useDeno: step.settings.useDeno ?? false,
+            useDeno: step.settings.useDeno !== false,
         }))
 }
 

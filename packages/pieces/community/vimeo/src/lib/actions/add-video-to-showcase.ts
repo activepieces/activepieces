@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const addVideoToShowcase = createAction({
   name: 'add_video_to_showcase',
+  classification: 'WRITE',
   displayName: 'Add Video to Showcase',
   description: 'Adds an existing video to a user\'s showcase',
   audience: 'both',

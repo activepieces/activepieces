@@ -87,15 +87,8 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-mcp',
-    label: 'Platform Admin — MCP Server',
-    href: '/platform/mcp',
-    icon: ConnectIcon,
-    requiresPlatformAdmin: true,
-  },
-  {
-    id: 'page-platform-mcp-tools',
     label: 'Platform Admin — MCP Tools',
-    href: '/platform/mcp/tools',
+    href: '/platform/mcp',
     icon: ConnectIcon,
     requiresPlatformAdmin: true,
   },
@@ -164,14 +157,14 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-sso',
-    label: 'Platform Admin — Single Sign On',
+    label: 'Platform Admin — Authentication',
     href: '/platform/sso',
     icon: LogInIcon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-project-roles',
-    label: 'Platform Admin — Project Roles',
+    label: 'Platform Admin — Roles & Access',
     href: '/platform/users/roles',
     icon: Settings2Icon,
     requiresPlatformAdmin: true,

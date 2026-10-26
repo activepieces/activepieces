@@ -5,6 +5,7 @@ import { pandadocAuth, pandadocClient } from '../common';
 
 export const documentUpdated = createTrigger({
   name: 'documentUpdated',
+  classification: 'READ',
   displayName: 'Document Updated',
   description: 'Triggers when a document is updated.',
   aiMetadata: {

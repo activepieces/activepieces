@@ -6,6 +6,7 @@ import { raindropCommons } from '../common';
 export const deleteRaindropAction = createAction({
   auth: raindropAuth,
   name: 'delete_raindrop',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Bookmark',
   description:
     'Moves a bookmark to the trash. To permanently delete it, empty the trash in Raindrop.io.',

@@ -16,21 +16,16 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         title: 'ap_get_piece_props',
         description: 'Get the input schema for a piece action or trigger, plus AI guidance for using it: an AI-written description of what it does, an idempotency hint, and — when available — the output field paths it produces (for triggers, also derived from sample data). Use the AI description to pick the right action; when output fields are listed, reference them directly downstream as {{step[\'output\'].path}}. Pass auth to resolve dynamic dropdowns and dynamic property sub-fields (e.g. Custom API Call url/body fields).',
         inputSchema: getPiecePropsInput.shape,
-        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
         execute: async (args) => {
             try {
                 const { pieceName, actionOrTriggerName, type, auth, flowId, input: providedInput } = getPiecePropsInput.parse(args)
 
                 const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
                 const projectId = mcpUtils.isProjectScoped(mcp) ? mcp.projectId : undefined
-                const lookup = await mcpUtils.lookupPieceComponent({
-                    pieceName,
-                    componentName: actionOrTriggerName,
-                    componentType: type,
-                    projectId,
-                    platformId,
-                    log,
-                })
+                const lookupByName = (componentName: string) => mcpUtils.lookupPieceComponent({ pieceName, componentName, componentType: type, projectId, platformId, log })
+                const firstLookup = await lookupByName(actionOrTriggerName)
+                const lookup = isNil(firstLookup.closestName) ? firstLookup : await lookupByName(firstLookup.closestName)
                 if (lookup.error) {
                     return lookup.error
                 }
@@ -63,7 +58,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                         componentProps: component.props,
                         pieceName: normalized,
                         pieceVersion: piece.version,
-                        actionOrTriggerName,
+                        actionOrTriggerName: component.name,
                         auth,
                         flowId,
                         providedInput: providedInput ?? {},
@@ -136,7 +131,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     : '\nNo required inputs.'
                 const exampleSection = `\n\n🧪 Example input (fill the placeholders, then pass to ap_execute_action):\n${JSON.stringify(exampleInput, null, 2)}`
                 return {
-                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${actionOrTriggerName}":${descLine}${aiHintLine}${idempotentLine}${requiredLine}\n${JSON.stringify(textResult, null, 2)}${outputSection}${exampleSection}` }],
+                    content: [{ type: 'text', text: `✅ ${label} schema for "${normalized}/${component.name}":${descLine}${aiHintLine}${idempotentLine}${requiredLine}\n${JSON.stringify(textResult, null, 2)}${outputSection}${exampleSection}` }],
                     structuredContent: structured,
                 }
             }

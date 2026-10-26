@@ -1,15 +1,17 @@
 import {
   createTrigger,
-  Trigger,
+  OutputSchema,
   TriggerStrategy,
   Property,
+  MarkdownVariant,
 } from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpRequest,
   HttpMethod,
+  HttpError,
 } from '@activepieces/pieces-common';
-import { calcomAuth } from '../..';
+import { calcomAuth } from '../auth';
 
 export const registerWebhooks = ({
   name,
@@ -17,12 +19,14 @@ export const registerWebhooks = ({
   displayName,
   sampleData,
   aiMetadata,
+  outputSchema,
 }: {
   name: string;
   description: string;
   displayName: string;
   sampleData: Record<string, unknown>;
   aiMetadata?: { description: string };
+  outputSchema?: OutputSchema;
 }) =>
   createTrigger({
     auth: calcomAuth,
@@ -31,7 +35,14 @@ export const registerWebhooks = ({
     description,
     displayName,
     aiMetadata,
-    props: {},
+    outputSchema,
+    props: {
+      webhook_info: Property.MarkDown({
+        value:
+          'This webhook is added to your Cal.com account when you publish the flow and removed when you turn it off. It fires for bookings on the account that owns the API key.',
+        variant: MarkdownVariant.INFO,
+      }),
+    },
     sampleData: sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
@@ -76,11 +87,10 @@ export const registerWebhooks = ({
 
         try {
           await httpClient.sendRequest(request);
-        } catch (e: any) {
-          // 404 means the webhook was registered under the old v1 API and no
-          // longer exists in v2 — safe to ignore, re-enabling will create a
-          // fresh v2 webhook.
-          if (e?.response?.status !== 404) throw e;
+        } catch (e) {
+          if (!(e instanceof HttpError) || e.response.status !== 404) {
+            throw e;
+          }
         }
       }
     },

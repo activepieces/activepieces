@@ -1,13 +1,12 @@
-import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { ACTIVEPIECES_IMAGE_TIERS, PieceAuth, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { AIProviderModel, AIProviderName, ProjectAIProvider } from '@activepieces/pieces-framework';
 
 type AIModelType = 'text' | 'image';
 
-function managedModelLabel({ modelId, modelType }: { modelId: string; modelType: AIModelType }): string | undefined {
-  const tiers = modelType === 'image' ? ACTIVEPIECES_IMAGE_TIERS : ACTIVEPIECES_CHAT_TIERS;
-  return tiers.find((tier) => tier.modelId === modelId)?.label;
+function managedImageModelLabel({ modelId }: { modelId: string }): string | undefined {
+  return ACTIVEPIECES_IMAGE_TIERS.find((tier) => tier.modelId === modelId)?.label;
 }
 
 async function listProviders(ctx: {
@@ -101,7 +100,7 @@ export const aiProps = <T extends AIModelType>({
         return {
           disabled: true,
           options: [],
-          placeholder: 'Select AI Provider',
+          placeholder: 'Select a provider first',
         };
       }
 
@@ -121,9 +120,9 @@ export const aiProps = <T extends AIModelType>({
         disabled: false,
         options: allModels
           .filter(model => model.type === modelType)
-          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedModelLabel({ modelId: model.id, modelType }) !== undefined)
+          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedImageModelLabel({ modelId: model.id }) !== undefined)
           .map(model => ({
-            label: provider === AIProviderName.ACTIVEPIECES ? (managedModelLabel({ modelId: model.id, modelType }) ?? model.name) : model.name,
+            label: provider === AIProviderName.ACTIVEPIECES ? (managedImageModelLabel({ modelId: model.id }) ?? model.name) : model.name,
             value: model.id,
           })),
       };
@@ -138,6 +137,53 @@ function resolveSelectionOrThrow(value: unknown): AIProviderSelection {
   }
   return selection;
 }
+
+function aiModelProp() {
+  return Property.Object({
+    displayName: 'Model',
+    description: 'A tier your admin set up, or a specific model.',
+    required: true,
+  });
+}
+
+function resolveModelPick(value: unknown): AiModelRequestFields | undefined {
+  if (typeof value !== 'object' || isNil(value) || Array.isArray(value)) {
+    return undefined;
+  }
+  const pick: Record<string, unknown> = { ...value };
+  const modelTierId = stringOf(pick['modelTierId']);
+  if (!isNil(modelTierId)) {
+    return { modelTierId };
+  }
+  const provider = toProviderName(stringOf(pick['provider']) ?? '');
+  const modelId = stringOf(pick['model']);
+  if (isNil(provider) || isNil(modelId)) {
+    return undefined;
+  }
+  return {
+    provider,
+    modelId,
+    ...spreadIfDefined('providerConfigId', stringOf(pick['configId'])),
+  };
+}
+
+function resolveModelPickOrThrow(value: unknown): AiModelRequestFields {
+  const fields = resolveModelPick(value);
+  if (isNil(fields)) {
+    throw new Error('Pick a tier or a provider and model for this step');
+  }
+  return fields;
+}
+
+function stringOf(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+export const aiModel = {
+  prop: aiModelProp,
+  resolve: resolveModelPick,
+  resolveOrThrow: resolveModelPickOrThrow,
+};
 
 export const aiProviderSelection = {
   resolve: resolveSelection,
@@ -157,3 +203,7 @@ type AIPropsParams<T extends AIModelType> = {
 type ListedProvider = Omit<ProjectAIProvider, 'keys'> & {
   keys?: ProjectAIProvider['keys'];
 };
+
+export type AiModelRequestFields =
+  | { modelTierId: string }
+  | { provider: AIProviderName; modelId: string; providerConfigId?: string };

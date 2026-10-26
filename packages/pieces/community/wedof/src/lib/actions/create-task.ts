@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const createTask = createAction({
   auth: wedofAuth,
   name: 'createTask',
+  classification: 'WRITE',
   displayName: "Créer une tâche",
   description: "Permet de créer une tâche d'un dossier (Dossier de formation / Dossier de certification)",
   audience: 'both',

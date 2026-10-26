@@ -5,12 +5,13 @@ import { t } from 'i18next';
 import { Clock } from 'lucide-react';
 
 import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 import { billingUtils, CreditsResetLine } from '../../utils/billing-utils';
 
 const CARD_DATE_FORMAT = 'D MMM YYYY, h:mm A';
 
-export const CreditsCard = ({ info }: CreditsCardProps) => {
+export const CreditsCard = ({ info, className }: CreditsCardProps) => {
   const { plan, usage } = info;
   const remaining = usage.creditsRemaining;
   const isUnlimited = isNil(remaining);
@@ -26,39 +27,37 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
     (info.billingPortalAvailable ? info.autumnPlanName : t('Free'));
 
   return (
-    <div className="flex flex-col rounded-xl border">
+    <div className={cn('flex flex-col rounded-xl border bg-panel', className)}>
       <div className="flex flex-col gap-3 p-5">
-        <span className="text-muted-foreground text-sm">
+        <span className="text-sm text-gray-11">
           {isUnlimited ? t('Credits used') : t('Included in plan')}
         </span>
         <div className="flex items-start justify-between gap-4">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-3xl font-bold text-foreground">
-              {(isUnlimited ? used : total).toLocaleString()}
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-semibold text-gray-12">
+              {Math.floor(isUnlimited ? used : total).toLocaleString()}
             </span>
-            <span className="text-muted-foreground">{t('credits')}</span>
+            <span className="text-sm text-gray-11">{t('credits')}</span>
           </div>
         </div>
         {!isUnlimited && (
           <>
             <Progress value={percentUsed} usage />
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-gray-11">
               {t('{amount} remaining', {
-                amount: Math.round(remaining).toLocaleString(),
+                amount: Math.floor(remaining).toLocaleString(),
               })}
             </span>
           </>
         )}
       </div>
       {!isNil(footer) && (
-        <div className="flex flex-col gap-1 border-t p-4 text-sm text-muted-foreground">
+        <div className="flex flex-col gap-1 border-t px-5 py-4 text-sm text-gray-11">
           <div className="flex items-center gap-2">
             <Clock className="size-4 shrink-0" />
             <span>
               {footer.label}{' '}
-              <span className="font-semibold text-foreground">
-                {footer.value}
-              </span>
+              <span className="font-semibold text-gray-12">{footer.value}</span>
             </span>
           </div>
           {!isNil(info.trialEndsAt) && !isNil(switchesToPlanName) && (
@@ -93,4 +92,5 @@ function resolveFooter(
 
 type CreditsCardProps = {
   info: PlatformBillingInformation;
+  className?: string;
 };

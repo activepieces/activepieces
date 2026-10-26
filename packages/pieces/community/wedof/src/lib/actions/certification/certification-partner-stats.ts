@@ -13,6 +13,7 @@ import { wedofCommon } from '../../common/wedof';
 export const listPartnerStats = createAction({
   auth: wedofAuth,
   name: 'listPartnerStats',
+  classification: 'SEARCH',
   displayName: 'Lister les statistiques des partenaires',
   description: 'Récupère les statistiques des partenaires de certification',
   audience: 'both',

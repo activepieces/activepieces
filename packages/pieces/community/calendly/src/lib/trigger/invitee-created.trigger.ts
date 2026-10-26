@@ -16,7 +16,7 @@ export const calendlyInviteeCreated = createTrigger({
   name: 'invitee_created',
   classification: 'READ',
   displayName: 'Event Scheduled',
-  description: 'Triggers when a new Calendly event is scheduled',
+  description: 'Triggers when someone books a Calendly event.',
   aiMetadata: {
     description:
       'Fires when an invitee schedules a new Calendly event (a booking is created). Emits the new event including the invitee details (name, email), the event URI, scheduling timestamps, and the event status set to "active".',
@@ -82,7 +82,6 @@ export const calendlyInviteeCreated = createTrigger({
     const response = await context.store?.get<CalendlyWebhookInformation>(
       triggerNameInStore
     );
-    console.log(response || 'nothing');
     if (response !== null && response !== undefined) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
@@ -93,8 +92,6 @@ export const calendlyInviteeCreated = createTrigger({
         },
       };
       await httpClient.sendRequest(request);
-    } else {
-      throw Error('context store was null');
     }
   },
   async run(context) {

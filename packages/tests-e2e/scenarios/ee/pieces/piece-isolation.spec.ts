@@ -56,8 +56,8 @@ test.describe('Piece isolation — EE', () => {
       trigger: 'Catch Webhook'
     });
 
-    const webhookInput = page.locator('input.grow.bg-background');
-    const webhookUrl = await webhookInput.inputValue();
+    const webhookUrlBlock = page.getByTestId('markdown-code-block');
+    const webhookUrl = (await webhookUrlBlock.textContent())?.trim() ?? '';
 
     await builderPage.testTrigger();
 

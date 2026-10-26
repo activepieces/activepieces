@@ -6,13 +6,14 @@ import {
 import { zendeskAuth } from '../auth';
 import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
+import { findLatestCommentOutputSchema } from '../output-schemas';
 
 interface ZendeskComment {
   id: number;
   type: string;
   body: string;
   html_body: string;
-  plain_text_body: string;
+  plain_body: string;
   public: boolean;
   author_id: number;
   created_at: string;
@@ -32,10 +33,11 @@ interface ZendeskCommentsResponse {
 export const findLatestCommentAction = createAction({
   auth: zendeskAuth,
   name: 'find-latest-comment',
+  outputSchema: findLatestCommentOutputSchema,
   classification: 'READ',
   displayName: 'Find Latest Comment',
   description: 'Find the latest comment on a ticket.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieves the most recent comment on a specified ticket, including the comment body, author, timestamp, and any attachments. Useful for extracting the latest response in a ticket thread or analyzing recent customer communication.', idempotent: true },
   props: {
     ticket_id: ticketIdDropdown,

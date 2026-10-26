@@ -1,6 +1,6 @@
 import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel, messageTs } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, onlyBotChannels, messageTs } from '../common/props';
 
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
@@ -20,8 +20,32 @@ export const addRectionToMessageAction = createAction({
   audience: 'human',
   aiMetadata: { description: 'Add an emoji reaction to a specific message identified by its channel and timestamp, optionally reacting as the authenticated user instead of the bot. Adding the same reaction twice has no extra effect (Slack returns an already-reacted error), so the end state is stable. Provide the emoji name without colons, e.g. thumbsup.', idempotent: true },
 
+  propertyGroups: [
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channel'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['ts'],
+    },
+    {
+      key: 'reaction_emoji',
+      display: 'section',
+      label: 'Reaction',
+      icon: 'tag',
+      props: ['reaction', 'reactAsUser'],
+    },
+  ],
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     ts: messageTs,
     reaction: Property.ShortText({

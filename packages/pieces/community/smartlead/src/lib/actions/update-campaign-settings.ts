@@ -6,6 +6,7 @@ import { smartleadAuth } from '../auth';
 export const updateCampaignSettingsAction = createAction({
   auth: smartleadAuth,
   name: 'update_campaign_settings',
+  classification: 'WRITE',
   displayName: 'Update Campaign Settings',
   description:
     'Update campaign settings including tracking, stop conditions, and deliverability options.',

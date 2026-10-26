@@ -52,6 +52,7 @@ const assistantDropdownForConversationWebhook = () =>
 export const conversationEnded = createTrigger({
   auth: famulorAuth,
   name: 'conversationEnded',
+  classification: 'READ',
   displayName: 'Conversation Ended',
   description: 'Triggers when a chat conversation ends.',
   aiMetadata: {

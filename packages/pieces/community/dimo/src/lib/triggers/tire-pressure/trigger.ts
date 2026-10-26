@@ -16,6 +16,7 @@ const TRIGGER_KEY = 'dimo-tire-pressure-trigger';
 export const tirePressureTrigger = createTrigger({
 	auth: dimoAuth,
 	name: 'tire-pressure-trigger',
+	classification: 'READ',
 	displayName: 'Tire Pressure Trigger',
 	description: 'Triggers when vehicle tire pressure meets the specified condition.',
 	aiMetadata: {

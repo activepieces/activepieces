@@ -233,13 +233,24 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
     'google-vertex-ai': AIProviderName.GOOGLE,
 }
 
-const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
-const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
+const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
+const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5'] as const
+const DEPRECATED_ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
 const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
-const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const GOOGLE_CHAT_MODELS = ['gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const DEPRECATED_GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash'] as const
 const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20'] as const
 
-const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`)
+const DEPRECATED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
+    [AIProviderName.ANTHROPIC]: DEPRECATED_ANTHROPIC_CHAT_MODELS,
+    [AIProviderName.GOOGLE]: DEPRECATED_GOOGLE_CHAT_MODELS,
+    [AIProviderName.VERTEX]: DEPRECATED_GOOGLE_CHAT_MODELS,
+}
+
+const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = [
+    ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`),
+    'deepseek/deepseek-v4.1-flash',
+]
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
@@ -249,17 +260,23 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
     [AIProviderName.ACTIVEPIECES]: [
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
         ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
-        ...GOOGLE_CHAT_MODELS.map((m) => `${AIProviderName.GOOGLE}/${m}`),
+        ...[...GOOGLE_CHAT_MODELS, ...DEPRECATED_GOOGLE_CHAT_MODELS].map((m) => `${AIProviderName.GOOGLE}/${m}`),
         ...X_AI_OPENROUTER_CHAT_MODELS.map((m) => `x-ai/${m}`),
     ],
 }
 
 const CHAT_MODEL_LABELS: Record<string, string> = {
     'gpt-5.5': 'GPT-5.5',
+    'gpt-5.6-sol': 'GPT-5.6 Sol',
+    'gpt-5.6-terra': 'GPT-5.6 Terra',
+    'gpt-5.6-luna': 'GPT-5.6 Luna',
     'gpt-5.4-mini': 'GPT-5.4 mini',
     'gpt-5.4-nano': 'GPT-5.4 nano',
     'gpt-4.1': 'GPT-4.1',
     'gpt-4.1-mini': 'GPT-4.1 mini',
+    'claude-sonnet-5-5': 'Claude Sonnet 5.5',
+    'claude-opus-5-5': 'Claude Opus 5.5',
+    'claude-haiku-5-5': 'Claude Haiku 5.5',
     'claude-sonnet-4-6': 'Claude Sonnet 4.6',
     'claude-opus-4-7': 'Claude Opus 4.7',
     'claude-haiku-4-5': 'Claude Haiku 4.5',
@@ -276,6 +293,11 @@ function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id:
         return undefined
     }
     return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
+}
+
+function runnableChatModelIds({ provider }: { provider: AIProviderName }): string[] {
+    const offered = (getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
+    return unique([...offered, ...(DEPRECATED_CHAT_MODELS_BY_PROVIDER[provider] ?? [])])
 }
 
 function canDisableReasoning({ modelId }: { modelId: string }): boolean {
@@ -297,12 +319,74 @@ function curatedChatModelIds(): string[] {
     return unique([
         ...ACTIVEPIECES_CHAT_TIERS.flatMap((tier) => [tier.id, tier.modelId]),
         ...Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).flatMap((curatedIds) => curatedIds ?? []),
+        ...Object.values(DEPRECATED_CHAT_MODELS_BY_PROVIDER).flatMap((deprecatedIds) => deprecatedIds ?? []),
     ])
 }
 
 function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
     return curatedChatModelIds().includes(modelId)
 }
+
+function isChatModelId({ modelId }: { modelId: string }): boolean {
+    const baseModelId = fineTuneBaseModelId({ modelId: modelId.trim().toLowerCase() })
+    if (NON_CHAT_MODEL_IDS.includes(baseModelId)) {
+        return false
+    }
+    if (NON_CHAT_MODEL_ID_PREFIXES.some((prefix) => baseModelId.startsWith(prefix))) {
+        return false
+    }
+    if (NON_CHAT_MODEL_ID_FRAGMENTS.some((fragment) => baseModelId.includes(fragment))) {
+        return false
+    }
+    const idTokens = baseModelId.split(MODEL_ID_TOKEN_SEPARATOR)
+    return !NON_CHAT_MODEL_ID_TOKENS.some((token) => idTokens.includes(token))
+}
+
+function fineTuneBaseModelId({ modelId }: { modelId: string }): string {
+    if (modelId.startsWith(FINE_TUNE_PREFIX)) {
+        return modelId.split(FINE_TUNE_SEGMENT_SEPARATOR)[1] ?? modelId
+    }
+    const azureFineTuneStart = modelId.indexOf(AZURE_FINE_TUNE_INFIX)
+    return azureFineTuneStart > 0 ? modelId.slice(0, azureFineTuneStart) : modelId
+}
+
+const FINE_TUNE_PREFIX = 'ft:'
+
+const FINE_TUNE_SEGMENT_SEPARATOR = ':'
+
+const AZURE_FINE_TUNE_INFIX = '.ft-'
+
+const NON_CHAT_MODEL_IDS = ['babbage-002', 'davinci-002', 'sora']
+
+const NON_CHAT_MODEL_ID_PREFIXES = [
+    'text-embedding-',
+    'text-moderation-',
+    'omni-moderation-',
+    'tts-',
+    'whisper-',
+    'dall-e-',
+    'sora-',
+    'computer-use-',
+    'codex-',
+    'gpt-image-',
+    'chatgpt-image-',
+]
+
+const NON_CHAT_MODEL_ID_FRAGMENTS = [
+    'realtime',
+    'audio',
+    'transcribe',
+    'whisper',
+    'embed',
+    'rerank',
+    'moderation',
+    'speech',
+    'voice',
+]
+
+const NON_CHAT_MODEL_ID_TOKENS = ['tts', 'asr']
+
+const MODEL_ID_TOKEN_SEPARATOR = /[-_.:/]/
 
 const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
 
@@ -323,12 +407,12 @@ function getMaxContextTokens({ provider }: { provider: AIProviderName | undefine
     return PROVIDER_MAX_CONTEXT_TOKENS[provider] ?? DEFAULT_MAX_CONTEXT_TOKENS
 }
 
-const DEFAULT_EMBEDDING_MODELS: Partial<Record<AIProviderName, string>> = {
-    [AIProviderName.OPENAI]: 'text-embedding-3-small',
-    [AIProviderName.GOOGLE]: 'text-embedding-004',
-    [AIProviderName.AZURE]: 'text-embedding-3-small',
-    [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
-    [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
+const EMBEDDING_MODELS: Partial<Record<AIProviderName, readonly string[]>> = {
+    [AIProviderName.OPENAI]: ['text-embedding-3-small', 'text-embedding-3-large'],
+    [AIProviderName.GOOGLE]: ['text-embedding-004', 'gemini-embedding-001'],
+    [AIProviderName.AZURE]: ['text-embedding-3-small', 'text-embedding-3-large'],
+    [AIProviderName.ACTIVEPIECES]: ['text-embedding-3-small'],
+    [AIProviderName.OPENROUTER]: ['openai/text-embedding-3-small', 'openai/text-embedding-3-large'],
 }
 
 const WEB_SEARCH_MODE_BY_PROVIDER: Partial<Record<AIProviderName, AIWebSearchMode>> = {
@@ -362,9 +446,11 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
     return {
         chatModels: ALLOWED_CHAT_MODELS_BY_PROVIDER[provider],
         maxContextTokens: getMaxContextTokens({ provider }),
-        defaultEmbeddingModel: DEFAULT_EMBEDDING_MODELS[provider],
-        supportsEmbedding: DEFAULT_EMBEDDING_MODELS[provider] !== undefined,
+        embeddingModels: EMBEDDING_MODELS[provider] ?? [],
+        defaultEmbeddingModel: EMBEDDING_MODELS[provider]?.[0],
+        supportsEmbedding: (EMBEDDING_MODELS[provider] ?? []).length > 0,
         supportsImageGeneration: !NO_IMAGE_GENERATION_PROVIDERS.has(provider),
+        defaultImageModel: DEFAULT_IMAGE_MODELS[provider],
         webSearch: WEB_SEARCH_MODE_BY_PROVIDER[provider],
     }
 }
@@ -386,6 +472,13 @@ export const ACTIVEPIECES_IMAGE_TIERS = [
 ] as const
 
 export type ActivepiecesImageTier = typeof ACTIVEPIECES_IMAGE_TIERS[number]
+
+const DEFAULT_IMAGE_MODELS: Partial<Record<AIProviderName, string>> = {
+    [AIProviderName.ACTIVEPIECES]: ACTIVEPIECES_IMAGE_TIERS[0].modelId,
+    [AIProviderName.OPENROUTER]: 'google/gemini-3.1-flash-lite-image',
+    [AIProviderName.OPENAI]: 'gpt-image-1.5',
+    [AIProviderName.GOOGLE]: 'gemini-3.1-flash-image',
+}
 
 export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabilities> = {
     [AIProviderName.OPENAI]: buildProviderCapabilities(AIProviderName.OPENAI),
@@ -410,10 +503,12 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
 export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
+    runnableChatModelIds,
     isCuratedChatModelId,
     managedChatModelIds,
     isManagedChatModelId,
     canDisableReasoning,
+    isChatModelId,
 }
 
 export const AI_PROVIDER_ENTITY_TYPES = {
@@ -434,8 +529,10 @@ export type OpenAiCompatibleVendor =
 export type AIProviderCapabilities = {
     chatModels?: readonly string[] | undefined
     maxContextTokens: number
+    embeddingModels: readonly string[]
     defaultEmbeddingModel: string | undefined
     supportsEmbedding: boolean
     supportsImageGeneration: boolean
+    defaultImageModel: string | undefined
     webSearch: AIWebSearchMode | undefined
 }

@@ -1,4 +1,5 @@
-import { BatchProgressData } from '@activepieces/shared';
+import { isObject, parseToJsonIfPossible } from '@activepieces/core-utils';
+import { BatchProgressData, subagentProgressId } from '@activepieces/shared';
 
 import { ToolCallMeta } from '@/features/chat/lib/chat-store';
 import {
@@ -44,7 +45,11 @@ export function buildMessageBlocks({
 
   function ensureThinking() {
     if (!currentThinking) {
-      currentThinking = { kind: 'thinking', steps: [], reasoningText: '' };
+      currentThinking = {
+        kind: 'thinking',
+        steps: [],
+        trailingReasoningText: '',
+      };
       result.push(currentThinking);
     }
     return currentThinking;
@@ -71,6 +76,7 @@ export function buildMessageBlocks({
     const description = pendingDescription;
     pendingDescription = null;
     thinking.steps.push({ kind: 'tool', part: p, description });
+    thinking.trailingReasoningText = '';
     return description;
   }
 
@@ -159,7 +165,15 @@ export function buildMessageBlocks({
     } else if (p.type === 'reasoning') {
       flushPendingDescription();
       const thinking = ensureThinking();
-      thinking.reasoningText += p.text;
+      if (p.text.length > 0) {
+        const lastStep = thinking.steps[thinking.steps.length - 1];
+        if (lastStep?.kind === 'reasoning') {
+          lastStep.text += p.text;
+        } else {
+          thinking.steps.push({ kind: 'reasoning', text: p.text });
+        }
+        thinking.trailingReasoningText += p.text;
+      }
     } else if (chatPartUtils.isAnyToolPart(p)) {
       const toolName = chatPartUtils.getToolPartName(p);
       if (chatPartUtils.isThinkingStatusTool(toolName)) {
@@ -189,11 +203,26 @@ export function buildMessageBlocks({
         }
         continue;
       }
+      if (toolName === 'ap_run_task' || toolName === 'ap_deep_research') {
+        endSegment();
+        const tasks = taskRows({ part: p, toolName });
+        const previous = result[result.length - 1];
+        if (previous?.kind === 'tasks') {
+          previous.tasks.push(...tasks);
+        } else {
+          result.push({ kind: 'tasks', tasks });
+        }
+        continue;
+      }
       if (toolName === 'ap_remember') {
         const memory = (
           p.input as { memory?: string } | undefined
         )?.memory?.trim();
-        if (memory && p.state === 'output-available') {
+        if (
+          memory &&
+          p.state === 'output-available' &&
+          !memorySaveDeclined(p.output)
+        ) {
           result.push({ kind: 'memory-saved', memory });
         }
         continue;
@@ -202,6 +231,7 @@ export function buildMessageBlocks({
         continue;
       }
       if (chatPartUtils.isDisplayTool(toolName)) {
+        endSegment();
         result.push({ kind: 'display-tool', part: p });
         continue;
       }
@@ -221,7 +251,7 @@ export function buildMessageBlocks({
   if (isStreaming && !hasText) {
     const hasThinkingBlock = result.some((b) => b.kind === 'thinking');
     if (!hasThinkingBlock) {
-      result.push({ kind: 'thinking', steps: [], reasoningText: '' });
+      result.push({ kind: 'thinking', steps: [], trailingReasoningText: '' });
     }
   }
 
@@ -229,7 +259,7 @@ export function buildMessageBlocks({
   const cleaned = result.filter((block, idx) => {
     if (block.kind !== 'thinking') return true;
     if (idx === lastThinkingIdx && isStreaming) return true;
-    return block.steps.length > 0 || block.reasoningText.length > 0;
+    return block.steps.length > 0;
   });
 
   return {
@@ -239,11 +269,45 @@ export function buildMessageBlocks({
   };
 }
 
+function taskRows({
+  part,
+  toolName,
+}: {
+  part: AnyToolPart;
+  toolName: string;
+}): TaskRow[] {
+  const toolCallId = chatPartUtils.getToolCallId(part);
+  const parsed = chatPartUtils.parseToolOutput(part);
+  const output = parsed.state === 'success' ? parsed.data : undefined;
+  if (toolName !== 'ap_deep_research') {
+    return [{ toolCallId, part, output }];
+  }
+  const input = isObject(part.input) ? part.input : {};
+  const subjects = Array.isArray(input['subjects'])
+    ? input['subjects'].filter(
+        (subject): subject is string => typeof subject === 'string',
+      )
+    : [];
+  const outputs =
+    isObject(output) && Array.isArray(output['tasks']) ? output['tasks'] : [];
+  return subjects.map((subject, index) => ({
+    toolCallId: subagentProgressId.forSubject({ toolCallId, index }),
+    part,
+    output: outputs[index],
+    subject,
+  }));
+}
+
 // Several genuine outcomes in a row (e.g. a handful of individual writes) would
 // otherwise stack as N full-width cards. Coalesce an adjacent run of 2+ outcome
 // cards into one collapsed `card-group` so the timeline stays calm; a lone card
 // renders unchanged. Recurses into a build's children, which render through the
 // same block pipeline.
+function memorySaveDeclined(output: unknown): boolean {
+  const parsed = parseToJsonIfPossible(output);
+  return isObject(parsed) && parsed['saved'] === false;
+}
+
 function groupAdjacentCards(blocks: MessageBlock[]): MessageBlock[] {
   const out: MessageBlock[] = [];
   let run: OutcomeCardBlock[] = [];
@@ -343,6 +407,7 @@ export function getLastThinkingSegment(steps: ThinkingStep[]): {
   let thought: string | null = null;
   for (let i = steps.length - 1; i >= 0; i--) {
     const step = steps[i];
+    if (step.kind === 'reasoning') continue;
     if (step.kind === 'thinking-status') {
       thought = step.text;
       break;
@@ -360,12 +425,16 @@ export type MessageBlock =
   | {
       kind: 'thinking';
       steps: ThinkingStep[];
-      reasoningText: string;
+      trailingReasoningText: string;
     }
   | { kind: 'text'; text: string }
   | { kind: 'display-tool'; part: AnyToolPart }
   | { kind: 'memory-saved'; memory: string }
   | { kind: 'batch-progress'; data: BatchProgressData }
+  | {
+      kind: 'tasks';
+      tasks: TaskRow[];
+    }
   | OutcomeCardBlock
   | { kind: 'card-group'; cards: OutcomeCardBlock[] }
   | {
@@ -387,5 +456,12 @@ export type OutcomeCardBlock =
   | { kind: 'action-receipt'; toolCallId: string }
   | { kind: 'image'; toolCallId: string }
   | { kind: 'files'; toolCallId: string };
+
+export type TaskRow = {
+  toolCallId: string;
+  part: AnyToolPart;
+  output: unknown;
+  subject?: string;
+};
 
 export type SourceItem = { key: string; href?: string; title?: string };

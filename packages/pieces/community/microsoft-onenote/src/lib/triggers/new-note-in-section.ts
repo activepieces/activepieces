@@ -78,6 +78,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof oneNoteAuth>, { 
 
 export const newNoteInSectionTrigger = createTrigger({
 	name: 'new_note_in_section',
+	classification: 'READ',
 	displayName: 'New Note in Section',
 	description: 'Fires when a new note is created in a specified section.',
 	aiMetadata: {
@@ -129,18 +130,10 @@ export const newNoteInSectionTrigger = createTrigger({
 	},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

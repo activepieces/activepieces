@@ -1,4 +1,4 @@
-import { isObject, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, tryCatch } from '@activepieces/core-utils'
 import { ToolExecutionOptions } from 'ai'
 import { AgentEventEmitter, GateDecision, gateNoResponseMessage, toolHasExecute } from './tool-primitives'
 
@@ -22,14 +22,16 @@ export function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, s
             if (flowId && gateId) {
                 const { data: check, error } = await tryCatch(() => checkFlowWrites(flowId))
                 if (error) {
-                    log?.warn({ error, flow: { id: flowId } }, 'ap_test_flow write-check failed, running test without confirmation gate')
+                    log?.warn({ error, flow: { id: flowId } }, 'ap_test_flow write-check failed, asking for approval before the live test')
                 }
-                else if (isObject(check) && check['hasWrites'] === true) {
-                    const writeSteps = Array.isArray(check['writeSteps']) ? check['writeSteps'].filter((s): s is string => typeof s === 'string') : []
-                    const flowName = typeof check['flowName'] === 'string' ? check['flowName'] : 'this flow'
+                const writeCheck = isObject(check) ? check : {}
+                const mustConfirm = !isNil(error) || writeCheck['hasWrites'] === true
+                if (mustConfirm) {
+                    const writeSteps = Array.isArray(writeCheck['writeSteps']) ? writeCheck['writeSteps'].filter((s): s is string => typeof s === 'string') : []
+                    const flowName = typeof writeCheck['flowName'] === 'string' ? `"${writeCheck['flowName']}"` : 'this flow'
                     const gateLabel = writeSteps.length > 0
-                        ? `Run a live test of "${flowName}" — performs: ${writeSteps.join(', ')}`
-                        : `Run a live test of "${flowName}"`
+                        ? `Run a live test of ${flowName} — performs: ${writeSteps.join(', ')}`
+                        : `Run a live test of ${flowName}`
                     // Render the confirmation card in the live session (and persist it for refresh).
                     // Without the emit the gate would block silently until the approval timeout.
                     eventEmitter.emitActionPreview({
@@ -64,3 +66,57 @@ export function wrapTestFlowGate({ mcpTools, checkFlowWrites, waitForApproval, s
     return { ...mcpTools, ap_test_flow: wrapped }
 }
 
+export function wrapDeleteGate({ mcpTools, waitForApproval, storePendingGate, eventEmitter }: {
+    mcpTools: Record<string, unknown>
+    waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
+    storePendingGate: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    eventEmitter: AgentEventEmitter
+}): Record<string, unknown> {
+    const gated = Object.entries(DELETE_GATES).flatMap(([toolName, { labelOf, deletes }]) => {
+        const deleteTool = mcpTools[toolName]
+        if (!isObject(deleteTool) || !toolHasExecute(deleteTool)) {
+            return []
+        }
+        const originalExecute = deleteTool.execute.bind(deleteTool)
+        return [[toolName, Object.assign({}, deleteTool, {
+            execute: async (args: unknown, options?: ToolExecutionOptions<undefined>) => {
+                const gateId = options?.toolCallId
+                const toolInput = isObject(args) ? args : {}
+                if (!gateId || !deletes(toolInput)) {
+                    return originalExecute(args, options)
+                }
+                const label = labelOf(toolInput)
+                eventEmitter.emitActionPreview({ toolCallId: gateId, pieceName: '', actionName: toolName, actionDisplayName: label, input: toolInput, isBatch: false })
+                await tryCatch(() => storePendingGate({ gateId, toolName, displayName: label, toolInput }))
+                const decision = await waitForApproval({ gateId })
+                if (decision.outcome === 'approved') {
+                    return originalExecute(args, options)
+                }
+                const text = decision.outcome === 'timeout' ? gateNoResponseMessage('delete approval') : 'The user declined this delete. Do not retry it; ask what they want instead.'
+                return { content: [{ type: 'text', text }] }
+            },
+        })]]
+    })
+    return { ...mcpTools, ...Object.fromEntries(gated) }
+}
+
+function textField({ toolInput, key }: { toolInput: Record<string, unknown>, key: string }): string {
+    const value = toolInput[key]
+    return typeof value === 'string' ? value : 'unknown'
+}
+
+const DELETE_GATES: Record<string, { labelOf: (toolInput: Record<string, unknown>) => string, deletes: (toolInput: Record<string, unknown>) => boolean }> = {
+    ap_delete_records: {
+        labelOf: (toolInput) => {
+            const count = Array.isArray(toolInput['recordIds']) ? toolInput['recordIds'].length : 0
+            return `Delete ${count} ${count === 1 ? 'record' : 'records'} from table ${textField({ toolInput, key: 'tableId' })}`
+        },
+        deletes: () => true,
+    },
+    ap_delete_table: { labelOf: (toolInput) => `Delete table ${textField({ toolInput, key: 'tableId' })}`, deletes: () => true },
+    ap_delete_flow: { labelOf: (toolInput) => `Delete flow ${textField({ toolInput, key: 'flowId' })}`, deletes: () => true },
+    ap_manage_fields: {
+        labelOf: (toolInput) => `Delete field ${textField({ toolInput, key: 'fieldId' })} from table ${textField({ toolInput, key: 'tableId' })}`,
+        deletes: (toolInput) => toolInput['operation'] === 'DELETE',
+    },
+}

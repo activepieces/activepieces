@@ -10,6 +10,7 @@ const API_URL = 'https://api.mixpanel.com';
 
 export const trackEvent = createAction({
   name: 'track_event',
+  classification: 'WRITE',
   auth: mixpanelAuth,
   displayName: 'Track Event',
   description: 'Send an Event to Mixpanel.',

@@ -5,6 +5,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const createContract = createAction({
   auth: esignaturesAuth,
   name: 'createContract',
+  classification: 'WRITE',
   displayName: 'Create Contract',
   description: 'Create a new contract from a template in eSignatures',
   audience: 'both',

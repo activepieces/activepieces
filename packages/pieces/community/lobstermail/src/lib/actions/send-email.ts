@@ -10,6 +10,7 @@ import { lobstermailAuth } from '../..';
 export const sendEmail = createAction({
   auth: lobstermailAuth,
   name: 'send_email',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description:
     'Send an email from one of your LobsterMail inboxes. Requires a verified account (Tier 1+).',

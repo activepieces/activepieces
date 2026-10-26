@@ -7,6 +7,7 @@ const MAX_COMPANIES = 100;
 export const sortCompanies = createAction({
   auth: villageAuth,
   name: 'sort_companies',
+  classification: 'READ',
   displayName: 'Sort Companies',
   description:
     'Rank a list of companies (up to 100 LinkedIn URLs or domains) by how well-connected you are to people there. Each result includes a score, label, LinkedIn URL, and domain.',

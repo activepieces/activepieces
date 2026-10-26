@@ -4,6 +4,7 @@ import { simplybookAuth, makeJsonRpcCall, SimplybookAuth } from '../common';
 export const createClient = createAction({
   auth: simplybookAuth,
   name: 'create_client',
+  classification: 'WRITE',
   displayName: 'Add Client',
   description: 'Add a new client with specified data. Email, phone, or both may be required (check company settings).',
   audience: 'both',

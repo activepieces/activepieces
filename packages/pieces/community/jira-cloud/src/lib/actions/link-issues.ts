@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { issueIdOrKeyProp, issueLinkTypeIdProp } from '../common/props';
 import { isNil } from '@activepieces/pieces-framework';
@@ -9,6 +9,7 @@ import { legacyLinkIssuesOutputSchema } from '../output-schemas';
 export const linkIssuesAction = createAction({
   auth: jiraCloudAuth,
   name: 'link-issues',
+  classification: 'WRITE',
   displayName: 'Link Issues',
   description: 'Creates a link between two issues.',
   audience: 'human',
@@ -19,10 +20,23 @@ export const linkIssuesAction = createAction({
   },
   outputSchema: legacyLinkIssuesOutputSchema,
   props: {
+    linkInfo: Property.MarkDown({
+      value: 'Reads top to bottom: first issue, link type, second issue.',
+      variant: MarkdownVariant.INFO,
+    }),
     firstIssueId: issueIdOrKeyProp('First Issue', true),
     issueLinkTypeId: issueLinkTypeIdProp('Link Type', true),
     secondIssueId: issueIdOrKeyProp('Second Issue', true),
   },
+  propertyGroups: [
+    {
+      key: 'link',
+      display: 'section',
+      label: 'Issues to Link',
+      icon: 'tag',
+      props: ['linkInfo', 'firstIssueId', 'issueLinkTypeId', 'secondIssueId'],
+    },
+  ],
   async run(context) {
     const { firstIssueId, issueLinkTypeId, secondIssueId } = context.propsValue;
 

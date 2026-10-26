@@ -5,6 +5,7 @@ import { makeClient } from '../../common/client';
 export const deleteInvoice = createAction({
     auth: oracleFusionCloudErpAuth,
     name: 'delete_invoice',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Invoice',
     description: 'Deletes a payables invoice from Oracle Fusion Cloud ERP.',
     audience: 'both',

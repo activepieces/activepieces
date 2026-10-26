@@ -1,7 +1,8 @@
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { AIProviderModelMetadata, CHAT_ALLOWED_MIME_TYPES, FileCompression, FileType } from '@activepieces/shared'
 import { ModelMessage, UserContent } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { fileService } from '../../file/file.service'
+import { fileService, GetDataResponse } from '../../file/file.service'
 
 const TEXT_MIME_TYPES = new Set<string>(
     CHAT_ALLOWED_MIME_TYPES.filter((m) => m.startsWith('text/') || m === 'application/json'),
@@ -25,10 +26,11 @@ function sanitizeFileName(name: string): string {
     return name.replace(/[^a-zA-Z0-9 \-_.()]/g, '_').slice(0, 255)
 }
 
-async function persistAgentAttachments({ files, projectId, platformId, log }: {
+async function persistAgentAttachments({ files, projectId, platformId, conversationId, log }: {
     files: Array<{ name: string, mimeType: string, data: string }>
     projectId: string
     platformId: string
+    conversationId: string
     log: FastifyBaseLogger
 }): Promise<Array<{ fileId: string, name: string, mimeType: string }>> {
     return Promise.all(files.map(async (file) => {
@@ -41,7 +43,7 @@ async function persistAgentAttachments({ files, projectId, platformId, log }: {
             type: FileType.FLOW_STEP_FILE,
             fileName: sanitizeFileName(file.name),
             compression: FileCompression.NONE,
-            metadata: { mimetype: file.mimeType },
+            metadata: { mimetype: file.mimeType, conversationId },
         })
         return { fileId: saved.id, name: sanitizeFileName(file.name), mimeType: file.mimeType }
     }))
@@ -96,6 +98,18 @@ async function buildUserContentWithFiles({ text, files, attachmentNote }: {
     ]
 }
 
+async function readConversationFile({ platformId, conversationId, accessibleProjectIds, fileId, log }: { platformId: string, conversationId: string, accessibleProjectIds: string[], fileId: string, log: FastifyBaseLogger }): Promise<GetDataResponse> {
+    const file = await fileService(log).getFileOrThrow({ fileId, type: FileType.FLOW_STEP_FILE })
+    const readableHere = file.platformId === platformId
+        && file.metadata?.['conversationId'] === conversationId
+        && !isNil(file.projectId)
+        && accessibleProjectIds.includes(file.projectId)
+    if (!readableHere) {
+        throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityType: 'file', entityId: fileId } })
+    }
+    return fileService(log).getDataOrThrow({ projectId: file.projectId ?? undefined, fileId, type: FileType.FLOW_STEP_FILE })
+}
+
 function dropImagesForTextOnlyModels({ messages, models }: {
     messages: ModelMessage[]
     models: Array<AIProviderModelMetadata | undefined>
@@ -113,4 +127,4 @@ function isImagePart(part: Exclude<UserContent, string>[number]): boolean {
     return part.type === 'image' || (part.type === 'file' && part.mediaType.startsWith('image/'))
 }
 
-export { buildUserContentWithFiles, persistAgentAttachments, buildAttachmentNote, dropImagesForTextOnlyModels }
+export { buildUserContentWithFiles, persistAgentAttachments, buildAttachmentNote, readConversationFile, dropImagesForTextOnlyModels }

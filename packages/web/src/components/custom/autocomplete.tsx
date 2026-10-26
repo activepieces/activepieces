@@ -66,7 +66,7 @@ export function AutoComplete<T extends string>({
           className="w-(--radix-popover-trigger-width) p-0"
         >
           <Command className={className} ref={listRef}>
-            <CommandList className="bg-background">
+            <CommandList className="bg-panel">
               <ScrollArea
                 className={cn('', {
                   'h-50': items.length >= 5,

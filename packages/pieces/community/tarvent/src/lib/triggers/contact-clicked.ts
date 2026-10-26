@@ -6,6 +6,7 @@ import { CreateWebhookResponse } from '../common/types';
 export const contactClickedTrigger = createTrigger({
   auth: tarventAuth,
   name: 'tarvent_contact_clicked',
+  classification: 'READ',
   displayName: 'Campaign Or Transactional Link Clicked',
   description: 'Triggers when a link within a campaign or transactional email is clicked by a recipient.',
   aiMetadata: {

@@ -66,12 +66,14 @@ export const BuilderHeader = () => {
     moveToFolderClientSide,
     applyOperation,
     setRightSidebar,
+    savePendingEdits,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.moveToFolderClientSide,
     state.applyOperation,
     state.setRightSidebar,
+    state.savePendingEdits,
   ]);
 
   const { embedState } = useEmbedding();
@@ -149,6 +151,7 @@ export const BuilderHeader = () => {
                       setRightSidebar(RightSideBarType.VERSIONS);
                     }}
                     insideBuilder={true}
+                    savePendingEdits={savePendingEdits}
                     flow={flow}
                     flowVersion={flowVersion}
                     readonly={!isLatestVersion}
@@ -159,11 +162,8 @@ export const BuilderHeader = () => {
                     onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
                     onDuplicate={() => {}}
                   >
-                    <Button
-                      variant="ghost"
-                      className="size-6 flex items-center justify-center"
-                    >
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    <Button variant="ghost" size="icon-xs">
+                      <ChevronDown className="h-4 w-4 text-gray-11" />
                     </Button>
                   </FlowActionMenu>
                 </div>
@@ -178,11 +178,7 @@ export const BuilderHeader = () => {
   const rightContent = (
     <div className="flex items-center justify-center gap-4">
       {showSupport && (
-        <Button
-          variant="ghost"
-          className="gap-2 px-2"
-          onClick={() => openNewWindow(supportUrl)}
-        >
+        <Button variant="ghost" onClick={() => openNewWindow(supportUrl)}>
           <CircleHelp className="w-4 h-4"></CircleHelp>
           {t('Support')}
         </Button>
@@ -194,7 +190,6 @@ export const BuilderHeader = () => {
         <Button
           variant="ghost"
           onClick={() => setRightSidebar(RightSideBarType.RUNS)}
-          className="gap-2 px-2"
         >
           <HistoryIcon className="w-4 h-4" />
           {t('Runs')}

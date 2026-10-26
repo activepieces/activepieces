@@ -1,8 +1,9 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { agentAiUtils } from '../src/agent-ai-utils'
+import { modelCatalog } from '../src/model-catalog'
 
 const { sanitizeTruncatedAssistantTail } = agentAiUtils
 
@@ -129,24 +130,62 @@ describe('collectStepMessages', () => {
         content: [{ type: 'text', text: 'That table does not exist yet — want me to create it?' }],
     }
 
-    it('returns the last step (which on this provider is cumulative — holds every earlier step)', () => {
-        // The provider's `response.messages` is cumulative: each step already contains every prior
-        // step's assistant/tool messages, so the LAST step holds the full set. Flat-mapping would
-        // re-emit the earlier steps in a 4,3,2,1 staircase (the bug this guards against).
+    it('joins every step, since each step holds only its own messages', () => {
         const steps = [
             { response: { messages: [listCall, listResult] } },
-            { response: { messages: [listCall, listResult, finalText] } },
+            { response: { messages: [finalText] } },
         ]
-        const result = agentAiUtils.collectStepMessages(steps)
-        expect(result).toEqual([listCall, listResult, finalText])
-        // The regression this guards: the tool call + its result must survive (the last step carries them).
-        expect(result).toContainEqual(listResult)
-        // And no duplication from flat-mapping the staircase.
-        expect(result.filter((m) => m === listCall).length).toBe(1)
+
+        expect(agentAiUtils.collectStepMessages(steps)).toEqual([listCall, listResult, finalText])
     })
 
     it('returns an empty array when there are no steps', () => {
         expect(agentAiUtils.collectStepMessages([])).toEqual([])
+    })
+})
+
+describe('buildStepParts — tool call status', () => {
+    it('bills a call that ran, even one that then threw, and never one the SDK refused to run', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 'ran', toolName: 'ap_web_search', input: { query: 'a' } },
+            { type: 'tool-result', toolCallId: 'ran', toolName: 'ap_web_search', output: { type: 'json', value: { answer: 'ok' } } },
+            { type: 'tool-call', toolCallId: 'threw', toolName: 'mcp__crm__create_record', input: { name: 'b' } },
+            { type: 'tool-error', toolCallId: 'threw', toolName: 'mcp__crm__create_record' },
+            { type: 'tool-call', toolCallId: 'refused', toolName: 'ap_web_search', input: { query: 'c' }, invalid: true },
+            { type: 'tool-error', toolCallId: 'refused', toolName: 'ap_web_search' },
+            { type: 'tool-call', toolCallId: 'unanswered', toolName: 'ap_web_search', input: { query: 'd' } },
+        ]
+
+        const statuses = agentAiUtils.buildStepParts({ content }).flatMap((part) => part.type === PersistedAgentPartType.TOOL_CALL ? [[part.toolCallId, part.status]] : [])
+
+        expect(statuses).toEqual([
+            ['ran', PersistedToolCallStatus.COMPLETED],
+            ['threw', PersistedToolCallStatus.COMPLETED],
+            ['refused', PersistedToolCallStatus.ERROR],
+            ['unanswered', PersistedToolCallStatus.ERROR],
+        ])
+    })
+})
+
+describe('buildStepParts — ap_lazy_tool', () => {
+    it('persists a wrapped call under the inner tool name and input', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 'w1', toolName: 'ap_lazy_tool', input: { tool: 'ap_add_step', input: { stepName: 'step_1' } } },
+            { type: 'tool-result', toolCallId: 'w1', toolName: 'ap_lazy_tool', output: { type: 'json', value: { ok: true } } },
+        ]
+
+        const [part] = agentAiUtils.buildStepParts({ content })
+
+        expect(part).toMatchObject({ type: PersistedAgentPartType.TOOL_CALL, toolName: 'ap_add_step', input: { stepName: 'step_1' } })
+    })
+
+    it('turns a thinking-status call into a status part, not a tool card', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 's1', toolName: 'ap_update_thinking_status', input: { status: 'I will wire up Slack' } },
+            { type: 'tool-result', toolCallId: 's1', toolName: 'ap_update_thinking_status', output: { type: 'json', value: { success: true } } },
+        ]
+
+        expect(agentAiUtils.buildStepParts({ content })).toEqual([{ type: PersistedAgentPartType.THINKING_STATUS, text: 'I will wire up Slack' }])
     })
 })
 
@@ -313,6 +352,31 @@ describe('collapseStaleToolOutputs', () => {
         expect(outputAt(1)).toContain('omitted to save context') // ordinary stale result still collapses
     })
 
+    it('pins skill loads and wrapped ap_get_piece_props results like direct schema calls', () => {
+        const big = 'z'.repeat(2000)
+        const skillAndWrappedSchema: ModelMessage[] = [
+            {
+                role: 'assistant',
+                content: [
+                    { type: 'tool-call', toolCallId: 'skill', toolName: 'ap_load_skill', input: { skill: 'flow_building' } },
+                    { type: 'tool-call', toolCallId: 'wrapped', toolName: 'ap_lazy_tool', input: { tool: 'ap_get_piece_props', input: {} } },
+                ],
+            },
+            {
+                role: 'tool',
+                content: [
+                    { type: 'tool-result', toolCallId: 'skill', toolName: 'ap_load_skill', output: { type: 'text', value: big } },
+                    { type: 'tool-result', toolCallId: 'wrapped', toolName: 'ap_lazy_tool', output: { type: 'text', value: big } },
+                ],
+            },
+        ]
+        const messages: ModelMessage[] = [...skillAndWrappedSchema, ...Array.from({ length: 9 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: big }))]
+        const out = agentAiUtils.collapseStaleToolOutputs({ messages })
+
+        expect(JSON.stringify(out[1])).not.toContain('omitted to save context')
+        expect(JSON.stringify(out[2])).toContain('omitted to save context')
+    })
+
     it('pinned schema results do not consume a keep-recent slot', () => {
         const big = 'z'.repeat(2000)
         const schemaMessage: ModelMessage = {
@@ -422,6 +486,25 @@ describe('buildProviderOptions', () => {
         expect(options.anthropic?.thinking).toEqual({ type: 'disabled' })
     })
 
+    for (const provider of [AIProviderName.ANTHROPIC, AIProviderName.BEDROCK]) {
+        for (const modelId of ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-haiku-5-5', 'claude-mythos-5-1', 'anthropic.claude-opus-5-5', 'claude-fable-5-1']) {
+            it(`keeps ${modelId} on ${provider} thinking at low effort instead of sending disabled`, () => {
+                const options = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking: true })
+                expect(options.anthropic).toEqual({ thinking: { type: 'adaptive' }, effort: 'low' })
+            })
+
+            it(`never sends a thinking budget to ${modelId} on ${provider}`, () => {
+                const options = agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking: false })
+                expect(options.anthropic).toEqual({ thinking: { type: 'adaptive' } })
+            })
+        }
+    }
+
+    it('still spends the tier budget on an Anthropic model that takes one', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ANTHROPIC, tier: TIER, modelId: 'claude-sonnet-4-6', disableThinking: false })
+        expect(options.anthropic?.thinking).toEqual({ type: 'enabled', budgetTokens: TIER.thinkingBudget })
+    })
+
     it('leaves the ephemeral prompt cache in place beside the reasoning directive', () => {
         const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ACTIVEPIECES, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
         expect(options.openrouter?.cache_control).toEqual({ type: 'ephemeral' })
@@ -473,5 +556,77 @@ describe('a message transform never hands the provider an empty history', () => 
 
         expect(stripped).toHaveLength(1)
         expect(stripped[0].role).toBe('user')
+    })
+})
+
+const catalogOf = (byId: Record<string, number>) => ({
+    lookup: ({ modelId }: { modelId: string }) => {
+        const stripped = modelId.replace(/^(us|eu|apac|global)\./, '')
+        const maxOutputTokens = byId[stripped]
+        return maxOutputTokens === undefined ? undefined : { maxOutputTokens }
+    },
+})
+
+describe('agentAiUtils.affordableOutputTokens', () => {
+    const SMART_TIER_THINKING = 10_000
+
+    it('reads through a region-prefixed Bedrock id, which is how the picker spells them', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({ 'amazon.nova-pro-v1:0': 10_000 }))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.amazon.nova-pro-v1:0'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(10_000)
+    })
+
+    it('keeps the turn inside the smaller ceiling when the fast round runs a different model', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({ 'amazon.nova-pro-v1:0': 10_000, 'amazon.nova-micro-v1:0': 5_000 }))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.amazon.nova-pro-v1:0', 'eu.amazon.nova-micro-v1:0'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(5_000)
+    })
+
+    it('leaves the budget alone for a model the catalog has never heard of', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue(catalogOf({}))
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.some.brand-new-model-v9:0'],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(42_000)
+    })
+
+    it('does not shrink a turn because the catalog was unreachable', async () => {
+        vi.spyOn(modelCatalog, 'load').mockResolvedValue({ lookup: () => undefined })
+
+        await expect(agentAiUtils.affordableOutputTokens({
+            provider: AIProviderName.BEDROCK,
+            modelIds: ['eu.amazon.nova-pro-v1:0', undefined],
+            thinkingBudget: SMART_TIER_THINKING,
+        })).resolves.toBe(42_000)
+    })
+})
+
+describe('agentAiUtils.clampOutputTokens', () => {
+    const SMART_TIER_THINKING = 10_000
+
+    it('asks for the full budget when no model declares a ceiling', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [undefined, undefined] })).toBe(42_000)
+    })
+
+    it('never asks a model for more than it accepts', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [10_000] })).toBe(10_000)
+    })
+
+    it('respects the smaller ceiling when the turn spans two models', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [64_000, 8_192] })).toBe(8_192)
+    })
+
+    it('leaves a generous ceiling alone rather than raising the ask to meet it', () => {
+        expect(agentAiUtils.clampOutputTokens({ thinkingBudget: SMART_TIER_THINKING, ceilings: [200_000] })).toBe(42_000)
     })
 })

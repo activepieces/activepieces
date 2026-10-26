@@ -1,12 +1,13 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiRpcHandlers } from '../../ai/ai-rpc-handlers'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
+import { eventDestinationRpcHandlers } from '../../event-destinations/event-destinations-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
@@ -26,22 +27,14 @@ import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerRunStats } from '../../trigger/trigger-run/trigger-run-stats'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
+import { WorkerGroupAssignment } from '../worker-groups/worker-group-queues'
+import { workerGroupRouting } from '../worker-groups/worker-group-routing'
 
 const FLOW_BUNDLE_PUBLISH_CLAIM_TTL_SECONDS = 60
 
 const getFlowBundlePublishClaimKey = (flowVersionId: string): string => `flow_bundle_publish_claim:${flowVersionId}`
-
-const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
-    if (isNil(assignment)) {
-        return QueueName.WORKER_JOBS
-    }
-    return assignment.scope === WorkerGroupScope.PROJECT
-        ? getProjectGroupQueueName(assignment.id)
-        : getPlatformGroupQueueName(assignment.id)
-}
 
 let pagedForUnreadableAppVersion = false
 
@@ -86,7 +79,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             if (!workerVersionIsCompatible({ log, workerVersion: input.workerProps.version, workerId: input.workerId, rpcMethod: 'poll' })) {
                 return null
             }
-            const pollQueueName = getPollQueueName(assignment)
+            const pollQueueName = workerGroupRouting.resolveQueueForWorker(assignment)
             const job = await jobBroker(log).poll(pollQueueName, connectionId)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
@@ -355,9 +348,19 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async saveAgentMessages(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).saveAgentMessages(input)
         },
+        async beginAgentTask(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).beginAgentTask(input)
+        },
+        async finishAgentTask(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).finishAgentTask(input)
+        },
 
         async saveAgentFile(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).saveAgentFile(input)
+        },
+
+        async readAgentFile(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).readAgentFile(input)
         },
 
         async updateAgentProgress(input) {
@@ -366,6 +369,9 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
 
         async heartbeatAgentConversation(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).heartbeatAgentConversation(input)
+        },
+        async agentCreditsLeft(input) {
+            return agentRpcHandlers(agentRpcLog(log, input)).agentCreditsLeft(input)
         },
 
         async updateProjectContext(input) {
@@ -396,6 +402,15 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
 
         async resolveAiProvider(input) {
             return aiRpcHandlers(log).resolveAiProvider(input)
+        },
+        async resolveAiModelCandidates(input) {
+            return aiRpcHandlers(log).resolveAiModelCandidates(input)
+        },
+        async reportAiKeyOutcome(input) {
+            return aiRpcHandlers(log).reportAiKeyOutcome(input)
+        },
+        async resolveEventDestinationHeaders(input) {
+            return eventDestinationRpcHandlers(log).resolveEventDestinationHeaders(input)
         },
         async saveFlowStepFile(input) {
             return aiRpcHandlers(log).saveFlowStepFile(input)

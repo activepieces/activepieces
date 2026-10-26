@@ -23,8 +23,8 @@ import { newItemTriggerOutputSchema } from '../output-schemas';
 export const rssNewItemTrigger = createTrigger({
   name: 'new-item',
   classification: 'READ',
-  displayName: 'New Item In Feed',
-  description: 'Runs when a new item is added in the RSS feed',
+  displayName: 'New Item in Feed',
+  description: 'Runs when a new item is published in an RSS feed.',
   aiMetadata: {
     description:
       'Fires when a new entry is published in a single monitored RSS/Atom feed. Polls the configured feed URL and emits each newly detected item (deduplicated by item id and publish date), representing a freshly published article, post, or update from that feed.',
@@ -36,43 +36,27 @@ export const rssNewItemTrigger = createTrigger({
     rss_feed_url: rssFeedUrl,
   },
   outputSchema: newItemTriggerOutputSchema,
-  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
-    return await pollingHelper.test(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-      files: files,
-    });
+  async test(context): Promise<unknown[]> {
+    return await pollingHelper.test(polling, context);
   },
-  async onEnable({ auth, propsValue, store }): Promise<void> {
-    await pollingHelper.onEnable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
+  async onEnable(context): Promise<void> {
+    await pollingHelper.onEnable(polling, context);
   },
 
-  async onDisable({ auth, propsValue, store }): Promise<void> {
+  async onDisable(context): Promise<void> {
+    const { store } = context;
     const lastFetchDate = await store.get<number>('_lastRssPublishDate');
     if (!isNil(lastFetchDate)) {
       await store.delete('_lastRssPublishDate');
     }
-    await pollingHelper.onDisable(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
-  async run({ auth, propsValue, store, files }): Promise<unknown[]> {
+  async run(context): Promise<unknown[]> {
+    const { store } = context;
     const lastFetchDate = await store.get<number>('_lastRssPublishDate');
     const newItems = (
-      await pollingHelper.poll(polling, {
-        auth,
-        store: store,
-        propsValue: propsValue, 
-        files: files,
-      })
+      await pollingHelper.poll(polling, context)
     ).filter((f) => {
       if (isNil(lastFetchDate)) {
         return true;

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow, messageTs } from '../common/props';
+import { blocks, singleSelectChannelInfo, slackChannel, onlyBotChannels, mentionOriginFlow, messageTs } from '../common/props';
 import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
 import { Block,KnownBlock, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
@@ -19,8 +19,25 @@ export const updateMessage = createAction({
   },
   auth: slackAuth,
   outputSchema: chatUpdateOutputSchema,
+  propertyGroups: [
+    {
+      key: 'channel_picker',
+      display: 'section',
+      label: 'Channel',
+      icon: 'markdown',
+      props: ['info', 'onlyBotChannels', 'channel'],
+    },
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['ts', 'text', 'blocks'],
+    },
+  ],
   props: {
     info: singleSelectChannelInfo,
+    onlyBotChannels,
     channel: slackChannel(true),
     ts: messageTs,
     text: Property.LongText({

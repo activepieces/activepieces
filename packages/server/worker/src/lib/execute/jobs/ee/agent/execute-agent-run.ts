@@ -1,13 +1,19 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
-import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
+import { aiUtils } from '@activepieces/server-utils'
+import { AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
+import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
+import { toResolvedAiFile } from '../../ai/ai-files'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
+import { agentTitle } from './agent-title'
 import { agentToolPolicy } from './agent-tool-policy'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
-import { classifyAgentRunError, delayWithJitter, firstStepUsesFastModel, isTransientFailureText, runAgentTurn } from './run-agent-turn'
+import { creditLedger } from './credit-ledger'
+import { declinedActions } from './declined-actions'
+import { classifyAgentRunError, delayWithJitter, drainOf, firstStepUsesFastModel, isTransientFailureText, NO_STEP_CONTENT, runAgentTurn, StreamDrain, trackStepContent, TurnModel } from './run-agent-turn'
+import { taskContext } from './tools/task-context'
+import { createTaskSubagentTools, taskTokensOf } from './tools/task-subagent-tools'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -15,6 +21,7 @@ const APPROVAL_TIMEOUT_MS = 5 * 60 * 1_000
 const APPROVAL_BLOCK_MS = 50_000
 const DISPLAY_TOOL_TIMEOUT_MS = 5 * 60 * 1_000
 const HEARTBEAT_INTERVAL_MS = 15_000
+const MAIN_RUN_CREDIT_KEY = 'main'
 const RETRY_MAX_ATTEMPTS = 3
 const RETRY_BASE_DELAY_MS = 1_000
 // A turn quiet this long with NO tool call and NO reasoning block in flight is REPORTED as idle —
@@ -64,7 +71,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         let heartbeatInterval: NodeJS.Timeout | undefined
         let runProvider: string | undefined
         let runModelId: string | undefined
+        let tierFailureMessage: string | undefined
         let answer: AgentResult | undefined
+        let configLoaded = false
         const structured: { output?: Record<string, unknown> } = {}
 
         let progressSequence = 0
@@ -96,29 +105,26 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('flowRunId', flowRunId),
                 ...spreadIfDefined('provider', data.provider),
                 ...spreadIfDefined('providerConfigId', data.providerConfigId),
+                ...spreadIfDefined('modelTierId', data.modelTierId),
                 ...spreadIfDefined('projectId', projectId),
                 ...spreadIfDefined('promptOverride', promptOverride),
                 ...spreadIfDefined('dryRun', dryRun),
                 ...spreadIfDefined('discoveryOnly', discoveryOnly),
             })
 
+            configLoaded = true
             const { credentials } = config
             const { provider } = credentials
+            const searchCredentials = config.searchCredentials ?? credentials
+            const imageCredentials = config.imageCredentials ?? credentials
             runProvider = provider
             runModelId = config.modelId
             source = config.source
             const aiTools = config.aiTools
-            // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
             const tavilySearchActive = !dryRun && !isNil(aiTools.webSearch)
-            // A provider plugin folds search results into the reply with no tool call, so there is
-            // nowhere to mark the turn. A run that can rewrite a saved agent does without it and
-            // reads through ap_fetch_url or Tavily instead, both of which mark.
-            const untrackedSearchWouldBeat = config.agentsAvailable
-                && aiUtils.webSearchModeOf(provider) === 'plugin'
-            const webSearchActive = !dryRun
+            const providerSearchActive = !dryRun
                 && !tavilySearchActive
-                && !untrackedSearchWouldBeat
-                && aiUtils.supportsWebSearch(provider)
+                && aiUtils.supportsWebSearch(searchCredentials.provider)
             const billing: ActivepiecesAiBilling = {
                 source: ActivepiecesAiConsumerSource.CHAT,
                 platformId,
@@ -129,7 +135,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
-                webSearchEnabled: webSearchActive,
                 billing,
                 turnAlreadyCharged: true,
             })
@@ -138,8 +143,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 billing,
                 turnAlreadyCharged: true,
             })
+            const turnModels = turnModelsFor({ config, model, billing, metadata: { platformId, conversationId, runId } })
+            const fastTurnModel: TurnModel | undefined = isNil(config.platformTier)
+                ? { model: fastModel, provider, modelId: config.fastModelId, thinkingBudget: config.tier.thinkingBudget }
+                : isNil(config.fastCandidate) ? undefined : candidateTurnModel({ candidate: config.fastCandidate, billing })
+            let answering: TurnModel = turnModels[0]
+            const runKey = (): RunKey => ({ provider: answering.provider, providerConfigId: answering.key?.providerConfigId ?? config.providerConfigId, modelId: answering.modelId })
 
-            log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
+            log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, providerSearchActive }, '[executeAgentRun] Chat config loaded')
 
             const eventEmitter = agentWorkerTools.createEventEmitter({
                 sendEvent: (input) => ctx.apiClient.sendAgentEvent({ ...input, runId }),
@@ -195,26 +206,35 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
 
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
-            const taintState: TaintState = { tainted: source === AgentRunSource.FLOW_STEP }
+            const taintState = agentWorkerTools.createTaintState({ carried: source === AgentRunSource.FLOW_STEP || agentWorkerTools.previousReplyReadData(config.previousUiMessages) })
 
+            const readImage = async (fileId: string) => toResolvedAiFile({
+                stored: await ctx.apiClient.readAgentFile({ platformId, conversationId, fileId, ...spreadIfDefined('projectId', projectId ?? undefined) }),
+            })
+            const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials: imageCredentials, billing, readImage })
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
-                ...(webSearchActive ? agentWorkerTools.wrapToolsWithTaint({ tools: aiUtils.buildWebSearchTools({ provider }), taintState }) : {}),
+                ...(providerSearchActive ? agentWorkerTools.createProviderSearchTools({
+                    search: (request) => aiUtils.searchWeb({ ...request, credentials: searchCredentials, modelId: config.searchModelId ?? config.fastModelId, billing, turnAlreadyCharged: true }),
+                    billedAtCost: searchCredentials.provider === AIProviderName.ACTIVEPIECES,
+                    taintState,
+                }) : {}),
                 ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
-                ...(aiTools.imageGeneration && !discoveryOnly ? agentWorkerTools.createImageTools({
-                    imageGeneration: aiTools.imageGeneration,
+                ...(imageGenerator && !discoveryOnly ? agentWorkerTools.createImageTools({
+                    ...imageGenerator,
+                    conversationImages: imagesInConversation(config.previousUiMessages),
                     saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveAgentFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
                     emitImage: eventEmitter.emitImageGenerated,
                 }) : {}),
             }
 
             const allTools = buildToolSet({
-                provider,
-                providerConfigId: config.providerConfigId,
-                ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
+                runKey,
+                knowledgeBaseKey: isNil(config.platformTier) ? { provider, providerConfigId: config.providerConfigId } : {},
+                ctx, eventEmitter, log, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, ...spreadIfDefined('flowRunId', flowRunId), platformId, userId, userEmail: config.userEmail,
-                guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
+                dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 agentsAvailable: config.agentsAvailable,
                 abortSignal: abortController.signal,
@@ -228,10 +248,15 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 },
             })
 
+            const creditsLeftFor = creditLedger.create({
+                creditsLeft: (pendingCredits) => ctx.apiClient.agentCreditsLeft({ platformId, conversationId, pendingCredits }),
+                messageCredits: chatBilling.creditsForTurn({ provider, toolCalls: [] }).messageCredits,
+            })
+
             const thinkingStartTime = Date.now()
 
-            const autoTitlePromise = generateTitleIfFirstTurn({
-                model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId, abortSignal: abortController.signal,
+            const autoTitlePromise = agentTitle.generateIfFirstTurn({
+                model: fastTurnModel?.model ?? model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId, abortSignal: abortController.signal,
             })
 
             const turn = await agentMcpClient.withStepMcpTools({
@@ -239,29 +264,50 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 skip: (dryRun ?? false) || (discoveryOnly ?? false),
                 log,
                 run: (stepMcpToolSet) => {
-                    const mergedTools = { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) }
+                    const baseTools = agentWorkerTools.wrapToolsWithUserWaitBarrier({ tools: { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) } })
+                    const taskTools = createTaskSubagentTools({
+                        tools: baseTools, guides: config.guides, models: turnModels, researchModels: isNil(fastTurnModel) ? turnModels : [fastTurnModel], tier: config.tier,
+                        taskPrompt: config.taskSystemPrompt, creditsLeftFor, eventEmitter, abortSignal: abortController.signal, log,
+                        beginTask: (input) => ctx.apiClient.beginAgentTask({ platformId, conversationId, ...input }),
+                        finishTask: (input) => ctx.apiClient.finishAgentTask({ platformId, conversationId, ...input }),
+                    })
+                    const mergedTools = { ...baseTools, ...taskTools }
                     const allToolNames = Object.keys(mergedTools)
                     log.info({ toolCount: allToolNames.length, mcpToolCount: Object.keys(mcpToolSet).length, phase: phaseState.phase }, '[executeAgentRun] Tool set assembled')
                     log.debug({ toolNames: allToolNames }, '[executeAgentRun] Tool set details')
 
                     return runAgentTurn({
                         ...spreadIfDefined('stepCeiling', data.maxSteps),
-                        model,
-                        fastModel: firstStepUsesFastModel({ source, dryRun, runsASavedAgent: !isNil(data.promptOverride) }) ? fastModel : undefined,
-                        provider,
+                        creditsLeft: creditsLeftFor(MAIN_RUN_CREDIT_KEY),
+                        models: turnModels,
+                        fastModel: firstStepUsesFastModel({ source, dryRun, runsASavedAgent: !isNil(data.promptOverride) }) ? fastTurnModel : undefined,
+                        onStepModel: (stepModel) => {
+                            if (isNil(stepModel.key)) {
+                                return
+                            }
+                            answering = stepModel
+                            runProvider = stepModel.provider
+                            runModelId = stepModel.modelId
+                        },
+                        onModelOutcome: ({ turnModel, signal }) => {
+                            if (isNil(turnModel.key)) {
+                                return
+                            }
+                            ctx.apiClient.reportAiKeyOutcome({ platformId, providerConfigId: turnModel.key.providerConfigId, signal }).catch(() => undefined)
+                        },
                         systemPrompt: config.systemPrompt,
                         messages: config.messages as ModelMessage[],
                         tools: mergedTools,
                         allToolNames,
                         tier: config.tier,
-                        modelId: config.modelId,
-                        ...spreadIfDefined('fastModelId', dryRun ? undefined : config.fastModelId),
                         phaseState,
+                        ...spreadIfDefined('skills', skillsFor({ source, guides: config.guides })),
                         abortSignal: abortController.signal,
                         log,
                         sinks: {
                             drainStream: (result) => streamChunksToClient({
                                 result, ctx, userId, conversationId, runId, log,
+                                holdErrorChunks: !isNil(config.platformTier),
                                 abortSignal: abortController.signal,
                                 onStreamIdle: (reason) => {
                                     const fields = { conversation: { id: conversationId }, idleMs: STREAM_IDLE_REPORT_MS, reason }
@@ -280,7 +326,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                                         runId,
                                         uiMessages: [
                                             ...(config.previousUiMessages as PersistedAgentMessage[]),
-                                            { role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime },
+                                            { role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs: Date.now() - thinkingStartTime, tainted: taintState.readInThisReply() },
                                         ],
                                         messages: [...(config.allMessages as ModelMessage[]), ...responseMessages],
                                     }),
@@ -294,7 +340,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 },
             })
 
-            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, budgetExceeded, continuations, usage, totalInputTokens, totalOutputTokens } = turn
+            const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, budgetExceeded, creditsExhausted, continuations, usage, totalInputTokens, totalOutputTokens } = turn
 
             if (abortController.signal.aborted) {
                 if (streamError) {
@@ -308,8 +354,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                     uiMessages: [
                         ...(config.previousUiMessages as PersistedAgentMessage[]),
-                        ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs }] : []),
+                        ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
                     ],
+                    ...answeredByOf({ answeredBy: turn.answeredBy }),
                 }
                 const { error: cancelSaveError } = await tryCatch(() => ctx.apiClient.saveAgentMessages(cancelSavePayload))
                 if (cancelSaveError) {
@@ -330,10 +377,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
 
             if (streamError) {
+                tierFailureMessage = turn.allModelsFailed && !isNil(config.platformTier)
+                    ? `All ${turnModels.length} models in tier ${config.platformTier.name} failed (${turnModels.map((candidate) => candidate.modelId).join(', ')}). Last error: ${apErrorOf(streamError)?.message ?? formatPieceError(streamError).message}`
+                    : undefined
                 throw streamError
             }
 
             const autoTitle = await autoTitlePromise
+            const taskTokens = taskTokensOf({ parts: uiParts })
 
             log.info({
                 conversation: { id: conversationId },
@@ -342,9 +393,12 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 outputTokens: totalOutputTokens,
                 ...spreadIfDefined('cacheReadTokens', usage?.inputTokenDetails?.cacheReadTokens),
                 ...spreadIfDefined('cacheWriteTokens', usage?.inputTokenDetails?.cacheWriteTokens),
-                provider: config.credentials.provider,
+                provider: turn.answeredBy.provider,
+                model: { id: turn.answeredBy.modelId },
                 finishReason: turn.finishReason,
                 truncatedAfterRetries,
+                taskInputTokens: taskTokens.input,
+                taskOutputTokens: taskTokens.output,
             }, 'Chat message completed')
 
             const thinkingDurationMs = Date.now() - thinkingStartTime
@@ -354,14 +408,15 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                 uiMessages: [
                     ...(config.previousUiMessages as PersistedAgentMessage[]),
-                    ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs }] : []),
+                    ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
                 ],
                 ...spreadIfDefined('title', autoTitle),
-                ...spreadIfDefined('modelName', isNil(data.modelName) ? config.tier.id : undefined),
+                ...spreadIfDefined('modelName', isNil(data.modelName) && isNil(config.platformTier) ? config.tier.id : undefined),
+                ...answeredByOf({ answeredBy: turn.answeredBy }),
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
-            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded }) })
+            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted }) })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -381,21 +436,33 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 })
             }
 
+            if (creditsExhausted) {
+                await sendEventWithRetry({
+                    event: { type: AgentEventType.ERROR, data: { message: 'You ran out of credits, so this message stopped early. Your progress is saved. Add credits, then send a new message to continue.' } },
+                })
+            }
+
             await sendEventWithRetry({
                 event: { type: AgentEventType.FINISHED, data: { conversationId } },
             })
         }
         catch (err) {
+            if (apErrorOf(err)?.code === ErrorCode.AGENT_RUN_SUPERSEDED) {
+                log.info({ conversation: { id: conversationId }, run: { id: runId } }, '[executeAgentRun] Run superseded by a newer message, exiting quietly')
+                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+            }
             const errorClass = classifyAgentRunError({ error: err, provider: runProvider })
             log[errorClass === 'internal' ? 'error' : 'warn']({ error: err, conversation: { id: conversationId }, provider: runProvider, model: { id: runModelId }, agentRun: { errorClass, source } }, '[executeAgentRun] Agent job failed')
-            const errorMessage = formatPieceError(err).message
+            const errorMessage = apErrorOf(err)?.message ?? formatPieceError(err).message
             const isCreditError = errorClass === 'credit'
             // "User not found" is OpenRouter refusing a key, and reads like a missing account.
-            const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
-                ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
-                : isCreditError || isNil(runProvider)
-                    ? errorMessage
-                    : `${runProvider}${isNil(runModelId) ? '' : ` (${runModelId})`}: ${errorMessage}`
+            const clientMessage = !isNil(tierFailureMessage)
+                ? tierFailureMessage
+                : !isCreditError && isTransientFailureText(errorMessage)
+                    ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
+                    : isCreditError || isNil(runProvider)
+                        ? errorMessage
+                        : `${runProvider}${isNil(runModelId) ? '' : ` (${runModelId})`}: ${errorMessage}`
             const failedResult = { ...(answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: clientMessage })), failure: clientMessage }
             reportFinal(failedResult)
             const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: failedResult, source, log }))
@@ -405,6 +472,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             // its prior context instead of resetting the conversation.
             await ctx.apiClient.saveAgentMessages({
                 conversationId, runId, messages: [], uiMessages: [],
+                failure: { message: clientMessage, ...(configLoaded ? {} : { userMessage }) },
             }).catch(() => {})
             await sendEventWithRetry({
                 event: { type: AgentEventType.ERROR, data: { message: clientMessage, ...spreadIfDefined('code', isCreditError ? ErrorCode.QUOTA_EXCEEDED : undefined) } },
@@ -439,12 +507,41 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
     },
 }
 
-function incompleteReason({ truncatedAfterRetries, budgetExceeded }: { truncatedAfterRetries: boolean, budgetExceeded: boolean }): string | undefined {
+function answeredByOf({ answeredBy }: { answeredBy: TurnModel }): Pick<SaveAgentMessagesRequest, 'answeredBy'> {
+    return { answeredBy: { provider: answeredBy.provider, modelId: answeredBy.modelId } }
+}
+
+function turnModelsFor({ config, model, billing, metadata }: { config: AgentConfigResponse, model: LanguageModel, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): [TurnModel, ...TurnModel[]] {
+    const single: TurnModel = { model, provider: config.credentials.provider, modelId: config.modelId, thinkingBudget: config.tier.thinkingBudget }
+    if (isNil(config.candidates) || config.candidates.length === 0) {
+        return [single]
+    }
+    const [first, ...rest] = config.candidates
+    return [
+        { ...candidateTurnModel({ candidate: first, billing }), model },
+        ...rest.map((candidate) => candidateTurnModel({ candidate, billing, metadata })),
+    ]
+}
+
+function candidateTurnModel({ candidate, billing, metadata }: { candidate: AgentModelCandidate, billing: ActivepiecesAiBilling, metadata?: ModelMetadata }): TurnModel {
+    return {
+        model: aiUtils.createModel({ credentials: candidate, modelId: candidate.modelId, billing, turnAlreadyCharged: true, ...spreadIfDefined('metadata', metadata) }),
+        provider: candidate.provider,
+        modelId: candidate.modelId,
+        thinkingBudget: candidate.thinkingBudget,
+        key: { providerConfigId: candidate.providerConfigId, status: candidate.status },
+    }
+}
+
+function incompleteReason({ truncatedAfterRetries, budgetExceeded, creditsExhausted }: { truncatedAfterRetries: boolean, budgetExceeded: boolean, creditsExhausted: boolean }): string | undefined {
     if (truncatedAfterRetries) {
         return 'The response reached the output limit before the agent finished'
     }
     if (budgetExceeded) {
         return 'The run reached its usage limit and was stopped'
+    }
+    if (creditsExhausted) {
+        return 'The run ran out of credits and was stopped'
     }
     return undefined
 }
@@ -475,6 +572,11 @@ async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, ou
 }
 
 
+function skillsFor({ source, guides }: { source: AgentRunSource, guides: Record<string, string> }): { surface: SkillSurface, guides: Record<string, string> } | undefined {
+    const surface = agentToolSkills.surfaceFor({ source })
+    return isNil(surface) ? undefined : { surface, guides }
+}
+
 function isPieceTool(tool: AgentTool): tool is AgentPieceTool {
     return tool.type === AgentToolType.PIECE
 }
@@ -487,13 +589,37 @@ function isKnowledgeBaseTool(tool: AgentTool): tool is AgentKnowledgeBaseTool {
     return tool.type === AgentToolType.KNOWLEDGE_BASE
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, provider, providerConfigId, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
+function imagesInConversation(uiMessages: unknown[]): { fileId: string, description: string }[] {
+    return uiMessages.flatMap((message) => PersistedAgentMessageSchema.safeParse(message).data?.parts ?? [])
+        .flatMap((part) => part.type === PersistedAgentPartType.IMAGE ? [{ fileId: part.fileId, description: part.prompt ?? part.title ?? 'image' }] : [])
+}
+
+function pickImageGenerator({ falApiKey, imageModelId, credentials, billing, readImage }: {
+    falApiKey: string | undefined
+    imageModelId: string | undefined
+    credentials: AiProviderCredentials
+    billing: ActivepiecesAiBilling
+    readImage: ImageToolParams['readImage']
+}): Pick<ImageToolParams, 'generate' | 'billedAtCost' | 'readImage'> | undefined {
+    if (!isNil(falApiKey)) {
+        return { generate: agentWorkerTools.falImageGenerator({ apiKey: falApiKey }), billedAtCost: false }
+    }
+    if (isNil(imageModelId)) {
+        return undefined
+    }
+    return {
+        generate: agentWorkerTools.providerImageGenerator({ credentials, modelId: imageModelId, billing }),
+        billedAtCost: credentials.provider === AIProviderName.ACTIVEPIECES,
+        readImage,
+    }
+}
+
+function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, runKey, knowledgeBaseKey, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
-    provider: AIProviderName
-    providerConfigId: string
+    runKey: () => RunKey
+    knowledgeBaseKey: { provider?: AIProviderName, providerConfigId?: string }
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
-    phaseState: { phase: AgentPhase }
     taintState: TaintState
     mcpToolSet: Record<string, unknown>
     webTools: ToolSet
@@ -505,7 +631,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     platformId: string
     userId: string
     userEmail: string
-    guides: Record<string, string>
     dryRun: boolean
     discoveryOnly: boolean
     emailEnabled: boolean
@@ -518,6 +643,8 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     captureStructured: (output: Record<string, unknown>) => void
     source: AgentRunSource
 }): ToolSet {
+    const declines = declinedActions.create({ eventEmitter })
+    const toolEventEmitter = declines.eventEmitter
     const brokenConnectors = new Set<string>()
 
     const executeCrossProjectTool = async (toolName: string, toolInput: Record<string, unknown>) => {
@@ -541,6 +668,9 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         // approve, so a real wait would stall the entire turn for APPROVAL_TIMEOUT_MS.
         if (dryRun || discoveryOnly) {
             return { outcome: 'approved' }
+        }
+        if (declines.isDeclined(gateId)) {
+            return { outcome: 'declined' }
         }
         const deadline = Date.now() + (timeoutMs ?? APPROVAL_TIMEOUT_MS)
         while (Date.now() < deadline) {
@@ -569,6 +699,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             }
             if (response.result !== 'pending') {
                 const decision = response.result as { approved: boolean, payload?: Record<string, unknown> }
+                declines.recordDecision({ gateId, approved: decision.approved })
                 return { outcome: decision.approved ? 'approved' : 'declined', payload: decision.payload }
             }
         }
@@ -586,10 +717,10 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const selectedConnectionByPiece = new Map<string, string>()
     const localTools = agentWorkerTools.createLocalTools({
         onSetProjectContext: async (projectId) => {
-            const { error } = await tryCatch(() => ctx.apiClient.updateProjectContext({ conversationId, runId, projectId, provider, providerConfigId }))
+            const { error } = await tryCatch(() => ctx.apiClient.updateProjectContext({ conversationId, runId, projectId, provider: runKey().provider, providerConfigId: runKey().providerConfigId }))
             if (!isNil(error)) {
                 log.warn({ error, conversation: { id: conversationId }, project: projectId ? { id: projectId } : undefined }, '[executeAgentRun] Refused a project switch')
-                return { success: false, error: 'Could not switch to that project on this chat — the AI provider key this chat runs on is not available there. Start a new chat in that project instead.' }
+                return { success: false, error: 'Could not switch to that project on this chat — the model this chat runs on is not available there. Start a new chat in that project instead.' }
             }
             projectState.projectId = projectId
             return { success: true }
@@ -604,7 +735,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     }) => {
         await tryCatch(() => ctx.apiClient.executeAgentTool({
             toolName: '__store_pending_gate',
-            toolInput: { conversationId, runId, gateId, toolName: gateTool, displayName, toolInput: gateInput },
+            toolInput: { conversationId, runId, gateId, toolName: gateTool, displayName, toolInput: gateInput, ...spreadIfDefined('taskTitle', taskContext.currentTitle()) },
             platformId, userId, source, conversationId,
         }))
     }
@@ -646,45 +777,43 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
+    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
-        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState })
+        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate })
         : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
-    const phaseTools = agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
-        phaseState.phase = phase
-    } })
     const buildPlanTools = agentWorkerTools.createBuildPlanTools({
-        eventEmitter,
+        eventEmitter: toolEventEmitter,
         getProjectId: () => projectState.projectId,
     })
+    const timedMcpTools = agentMcpClient.withToolTimeouts({
+        mcpToolSet,
+        brokenConnectors,
+        taintState,
+        getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
+        saveLargeResult: async ({ json, fileName }) => {
+            const { data: saved } = await tryCatch(() => ctx.apiClient.saveAgentFile({
+                platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
+                ...spreadIfDefined('projectId', projectState.projectId ?? undefined), fileName,
+            }))
+            return saved?.fileId ?? null
+        },
+    })
     const mcpTools = agentWorkerTools.wrapTestFlowGate({
-        mcpTools: agentMcpClient.withToolTimeouts({
-            mcpToolSet,
-            brokenConnectors,
-            taintState,
-            getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
-            saveLargeResult: async ({ json, fileName }) => {
-                const { data: saved } = await tryCatch(() => ctx.apiClient.saveAgentFile({
-                    platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
-                    ...spreadIfDefined('projectId', projectState.projectId ?? undefined), fileName,
-                }))
-                return saved?.fileId ?? null
-            },
-        }),
+        mcpTools: agentWorkerTools.wrapDeleteGate({ mcpTools: timedMcpTools, waitForApproval, storePendingGate, eventEmitter: toolEventEmitter }),
         checkFlowWrites: async (flowId) => {
             const response = await ctx.apiClient.executeAgentTool({ toolName: '__flow_write_check', toolInput: { flowId }, platformId, userId, source, conversationId })
             return response.result
         },
         waitForApproval,
         storePendingGate,
-        eventEmitter,
+        eventEmitter: toolEventEmitter,
         log,
     })
     const emailTools = emailEnabled && !dryRun && !discoveryOnly
         ? agentWorkerTools.createEmailTools({
             sendEmail: ({ to, subject, body, gateId }) => ctx.apiClient.sendAgentEmail({ conversationId, runId, platformId, userId, to, subject, body, gateId }),
-            eventEmitter,
+            eventEmitter: toolEventEmitter,
             userEmail,
             waitForApproval,
             onGateOpened: storePendingGate,
@@ -695,9 +824,9 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
-        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, instruction, piece, provider, providerConfigId, ...spreadIfDefined('flowRunId', flowRunId) }),
+        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, instruction, piece, ...runKey(), ...spreadIfDefined('flowRunId', flowRunId) }),
         taintState,
-        eventEmitter,
+        eventEmitter: toolEventEmitter,
         log,
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({
@@ -709,7 +838,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
         taintState,
         tools: dryRun || discoveryOnly ? [] : configuredKnowledgeBaseTools,
-        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, knowledgeBaseFileId, query, provider, providerConfigId }),
+        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, knowledgeBaseFileId, query, ...spreadIfDefined('provider', knowledgeBaseKey.provider), ...spreadIfDefined('providerConfigId', knowledgeBaseKey.providerConfigId) }),
         log,
     })
     const completionTool = structuredOutput.length === 0
@@ -723,7 +852,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             crossProject: crossProjectTools,
             web: webTools,
             thinking: thinkingTools,
-            phase: phaseTools,
             buildPlan: buildPlanTools,
             email: emailTools,
             agentSurface: agentSurfaceTools,
@@ -736,7 +864,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     })
 }
 
-async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {
+async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle, holdErrorChunks }: {
     result: ReturnType<typeof streamText>
     ctx: JobContext
     userId: string
@@ -745,8 +873,10 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
     log: JobContext['log']
     abortSignal: AbortSignal
     onStreamIdle: (reason: 'idle' | 'tool' | 'reasoning') => void
-}): Promise<void> {
+    holdErrorChunks: boolean
+}): Promise<StreamDrain> {
     let chunkBuffer: unknown[] = []
+    let stepContent = NO_STEP_CONTENT
     let flushTimer: ReturnType<typeof setTimeout> | null = null
 
     const flushChunks = async () => {
@@ -788,6 +918,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
         }, STREAM_IDLE_REPORT_MS)
     }
 
+    const heldLazyToolStarts = new Map<string, Record<string, unknown>>()
     const reader = uiStream.getReader()
     const abortRace = waitForAbort(abortSignal).then(() => 'aborted' as const)
     armIdleReporter()
@@ -798,6 +929,13 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
             const { done, value: chunk } = next
             if (done) break
             armIdleReporter()
+            const unwrapped = agentWorkerTools.unwrapLazyToolChunk({ chunk, heldStarts: heldLazyToolStarts })
+            if (unwrapped.hold) {
+                heldLazyToolStarts.set(unwrapped.hold.callId, unwrapped.hold.chunk)
+            }
+            if (unwrapped.release) {
+                heldLazyToolStarts.delete(unwrapped.release)
+            }
             const chunkType = isObject(chunk) && typeof chunk['type'] === 'string' ? chunk['type'] : undefined
             if (chunkType === 'tool-input-available') {
                 pendingToolCalls++
@@ -811,7 +949,11 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
             else if (chunkType === 'reasoning-end') {
                 reasoningInFlight = false
             }
-            chunkBuffer.push(chunk)
+            stepContent = trackStepContent({ state: stepContent, chunkType })
+            if (holdErrorChunks && chunkType === 'error') {
+                continue
+            }
+            chunkBuffer.push(...unwrapped.emit)
             if (chunkBuffer.length >= BATCH_SIZE) {
                 if (flushTimer) {
                     clearTimeout(flushTimer)
@@ -838,42 +980,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
     }
     if (flushTimer) clearTimeout(flushTimer)
     await flushChunks()
-}
-
-async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages, log, conversationId, abortSignal }: {
-    model: ReturnType<typeof aiUtils.createModel>
-    userMessage: string
-    previousUiMessages: unknown[]
-    log: JobContext['log']
-    conversationId: string
-    abortSignal?: AbortSignal
-}): Promise<string | undefined> {
-    // getAgentConfig includes the just-saved user message, so length 1 = first turn
-    const isFirstTurn = previousUiMessages.length === 1
-    if (!isFirstTurn) return undefined
-
-    const { data: generatedTitle } = await tryCatch(async () => {
-        const { text } = await generateText({
-            model,
-            abortSignal,
-            telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-title' }),
-            prompt: `Generate a concise 3-6 word title for this conversation. Return ONLY the title, nothing else.\n\nUser: ${userMessage}`,
-        })
-        return sanitizeGeneratedTitle(text)
-    })
-
-    if (!generatedTitle) {
-        log.warn({ conversation: { id: conversationId } }, 'Failed to auto-generate title')
-    }
-    return generatedTitle ?? undefined
-}
-
-function sanitizeGeneratedTitle(rawTitle: string): string {
-    return rawTitle
-        .replace(/[*_`~#]/g, '')
-        .replace(/^["']+|["']+$/g, '')
-        .trim()
-        .slice(0, 100)
+    return drainOf({ state: stepContent })
 }
 
 function waitForAbort(signal: AbortSignal): Promise<void> {
@@ -906,3 +1013,12 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, descript
     }
 }
 
+type ImageToolParams = Parameters<typeof agentWorkerTools.createImageTools>[0]
+
+type ModelMetadata = Parameters<typeof aiUtils.createModel>[0]['metadata']
+
+type RunKey = {
+    provider: AIProviderName
+    providerConfigId: string
+    modelId: string
+}

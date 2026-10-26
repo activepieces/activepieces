@@ -3,15 +3,20 @@ import { createCrossProjectTools } from './tools/cross-project-tools'
 import { createDisplayTools } from './tools/display-tools'
 import { createEmailTools } from './tools/email-tools'
 import { createEventEmitter } from './tools/event-emitter'
-import { wrapTestFlowGate } from './tools/flow-gate-tools'
-import { createAgentSurfaceTools, createBuildPlanTools, createLocalTools, createPhaseTools, createStructuredOutputTool, createThinkingTools } from './tools/session-tools'
-import { extractResultText, extractUserFacingError, isSuccessResult, normalizePieceName, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout, wrapToolsWithTaint } from './tools/tool-primitives'
-import { createImageTools, createScrapeTools, createSearchTools, createWebTools } from './tools/web-media-tools'
+import { wrapDeleteGate, wrapTestFlowGate } from './tools/flow-gate-tools'
+import { createAgentSurfaceTools, createBuildPlanTools, createLocalTools, createStructuredOutputTool, createThinkingTools } from './tools/session-tools'
+import { unwrapLazyToolChunk } from './tools/skill-tools'
+import { createTaintState, extractResultText, extractUserFacingError, isSuccessResult, normalizePieceName, previousReplyReadData, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout, wrapToolsWithTaint } from './tools/tool-primitives'
+import { wrapToolsWithUserWaitBarrier } from './tools/user-wait-barrier'
+import { createImageTools, createProviderSearchTools, createScrapeTools, createSearchTools, createWebTools, falImageGenerator, providerImageGenerator } from './tools/web-media-tools'
 
 export { AgentEventEmitter, GateDecision, TaintState } from './tools/tool-primitives'
 
 export const agentWorkerTools = {
     wrapToolsWithTaint,
+    wrapToolsWithUserWaitBarrier,
+    previousReplyReadData,
+    createTaintState,
     createEventEmitter,
     createDisplayTools,
     createAgentSurfaceTools,
@@ -19,17 +24,21 @@ export const agentWorkerTools = {
     createCrossProjectTools,
     createWebTools,
     createSearchTools,
+    createProviderSearchTools,
     createScrapeTools,
     createImageTools,
+    falImageGenerator,
+    providerImageGenerator,
     createEmailTools,
     wrapTestFlowGate,
+    wrapDeleteGate,
     createThinkingTools,
-    createPhaseTools,
     createBuildPlanTools,
     createConfiguredPieceTools,
     createConfiguredFlowTools,
     createConfiguredKnowledgeBaseTools,
     createStructuredOutputTool,
+    unwrapLazyToolChunk,
     isSuccessResult,
     extractResultText,
     extractUserFacingError,

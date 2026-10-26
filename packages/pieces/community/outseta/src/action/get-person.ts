@@ -4,6 +4,7 @@ import { OutsetaClient } from '../common/client';
 
 export const getPersonAction = createAction({
   name: 'get_person',
+  classification: 'READ',
   auth: outsetaAuth,
   displayName: 'Retrieve Person',
   description:
