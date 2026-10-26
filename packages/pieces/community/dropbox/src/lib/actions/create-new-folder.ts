@@ -17,17 +17,21 @@ export const dropboxCreateNewFolder = createAction({
   aiMetadata: { description: 'Creates a new empty folder at the given Dropbox path; optionally autorenames on conflict. Use to set up a destination directory before placing files. Not idempotent: a repeat call for an existing path errors (or, with autorename, creates a differently named folder).', idempotent: false },
   displayName: 'Create New Folder',
   outputSchema: folderMetadataOutputSchema,
+  propertyGroups: [
+    { key: 'folder', display: 'section', label: 'Folder', icon: 'file', props: ['path'] },
+  ],
   props: {
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The path of the new folder e.g. /Homework/math',
+      description: 'Path of the folder to create, starting with /.',
+      placeholder: '/Reports/2026',
       required: true,
     }),
     autorename: Property.Checkbox({
       displayName: 'Auto Rename',
-      description:
-        "If there's a conflict, have the Dropbox server try to autorename the folder to avoid the conflict. The default for this field is False.",
+      description: 'If the name is taken, save under a new name instead of failing.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
@@ -48,10 +52,6 @@ export const dropboxCreateNewFolder = createAction({
 
     const result = await httpClient.sendRequest(request);
 
-    if (result.status == 200) {
-      return result.body;
-    } else {
-      return result;
-    }
+    return result.body;
   },
 });

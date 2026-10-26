@@ -238,6 +238,9 @@
       "@activepieces/piece-google-document-ai": [
         "packages/pieces/community/google-document-ai/src/index.ts"
       ],
+      "@activepieces/piece-google-workspace": [
+        "packages/pieces/community/google-workspace/src/index.ts"
+      ],
       "@activepieces/piece-rounded-studio": [
         "packages/pieces/community/rounded-studio/src/index.ts"
       ],
@@ -394,6 +397,9 @@
       ],
       "@activepieces/piece-data-summarizer": [
         "packages/pieces/core/data-summarizer/src/index.ts"
+      ],
+      "@activepieces/piece-databricks": [
+        "packages/pieces/community/databricks/src/index.ts"
       ],
       "@activepieces/piece-datadog": [
         "packages/pieces/community/datadog/src/index.ts"

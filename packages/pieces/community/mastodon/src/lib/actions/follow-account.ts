@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mastodonAuth } from '../..';
 import {
@@ -25,25 +25,38 @@ export const followAccount = createAction({
   props: {
     account_id: Property.ShortText({
       displayName: 'Account ID',
-      description:
-        'ID of the account to follow, for example 109302436954721982 (not the @handle). Map it from Lookup Account (Account ID), from the New Follower trigger (From Account > Account ID) to follow back, or from Search for a user@domain on another server.',
+      description: 'ID of the account, for example from Lookup Account or New Follower.',
+      placeholder: '109302436954721982',
       required: true,
+    }),
+    follow_info: Property.MarkDown({
+      value: 'Following an account you already follow only updates these options.',
+      variant: MarkdownVariant.INFO,
     }),
     reblogs: mastodonProps.optionalBoolean({
       displayName: 'Show Their Boosts',
-      description: 'Whether their boosts appear in your home timeline. Leave empty for the default (yes).',
+      description: 'Show their boosts in your home timeline. Empty means yes.',
     }),
     notify: mastodonProps.optionalBoolean({
       displayName: 'Notify When They Post',
-      description: 'Whether to get a notification for each of their posts. Leave empty for the default (no).',
+      description: 'Get a notification for each of their statuses. Empty means no.',
     }),
     languages: Property.Array({
       displayName: 'Languages',
-      description:
-        'Only show their posts in these ISO 639-1 languages, one code per item (for example en). Leave empty for all languages.',
+      description: 'Only show their statuses in these language codes. Empty shows all.',
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'target', display: 'section', label: 'Account to Follow', icon: 'user', props: ['account_id'] },
+    {
+      key: 'options',
+      display: 'section',
+      label: 'Options',
+      icon: 'sliders',
+      props: ['follow_info', 'reblogs', 'notify', 'languages'],
+    },
+  ],
   async run(context) {
     const { account_id, reblogs, notify, languages } = context.propsValue;
     const languageCodes = mastodonUtils.toStringArray(languages);

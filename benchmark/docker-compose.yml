@@ -23,7 +23,9 @@ services:
       redis:
         condition: service_started
     environment:
-      AP_CONTAINER_TYPE: APP
+      AP_CONTAINER_TYPE: ${AP_CONTAINER_TYPE:-APP}
+      AP_EDITION: ${AP_EDITION:-ce}
+      AP_LICENSE_KEY: ${AP_LICENSE_KEY:-}
       AP_POSTGRES_DATABASE: activepieces
       AP_POSTGRES_PASSWORD: password
       AP_POSTGRES_USERNAME: postgres
@@ -36,9 +38,10 @@ services:
       AP_REDIS_HOST: redis
       AP_REDIS_PORT: 6379
       AP_ENVIRONMENT: prod
-      AP_LOG_LEVEL: error
+      AP_LOG_LEVEL: ${AP_LOG_LEVEL:-error}
       AP_TELEMETRY_ENABLED: false
       AP_PROJECT_RATE_LIMITER_ENABLED: false
+      AP_PIECES_SYNC_MODE: ${AP_PIECES_SYNC_MODE:-OFFICIAL_AUTO}
       AP_SANDBOX_MEMORY_LIMIT: ${AP_SANDBOX_MEMORY_LIMIT:-}
       AP_DEFAULT_CONCURRENT_JOBS_LIMIT: 1000
       AP_FILE_STORAGE_LOCATION: ${AP_FILE_STORAGE_LOCATION:-DB}
