@@ -1,10 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 
 import { databricksAuth } from '../auth';
 import { databricksApi } from '../common/api';
 import { databricksProps } from '../common/props';
 import { databricksUtils } from '../common/utils';
-import { writeResultOutputSchema } from '../output-schemas';
+import { insertResultOutputSchema } from '../output-schemas';
 
 export const insertRowsAction = createAction({
   auth: databricksAuth,
@@ -15,7 +15,7 @@ export const insertRowsAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Insert a batch of rows into a Databricks Unity Catalog table in a single atomic INSERT. Pass a JSON array of objects keyed by column name; missing keys become NULL. For files (CSV/JSON) use Upload File to Volume with a target table instead. Each call adds new rows, so retries duplicate.',
+      'Insert a batch of rows into a Databricks Unity Catalog table in a single atomic INSERT. Pass rows as an array of objects keyed by column name; missing or empty fields become NULL. For files (CSV/JSON) use Upload File to Volume with a target table instead. Each call adds new rows, so retries duplicate.',
     idempotent: false,
   },
   props: {
@@ -23,19 +23,15 @@ export const insertRowsAction = createAction({
     catalogName: databricksProps.catalogName({ required: true }),
     schemaName: databricksProps.schemaName({ required: true }),
     tableName: databricksProps.tableName({ required: true }),
-    rows: Property.Json({
-      displayName: 'Rows',
-      description:
-        'A JSON array of objects, one per row, keyed by column name, e.g. [{"id": 1, "email": "jane@example.com"}, {"id": 2, "email": "joe@example.com"}]. Keys that are missing from a row are inserted as NULL.',
-      required: true,
-    }),
+    batch: databricksProps.rowList({ required: true }),
   },
-  outputSchema: writeResultOutputSchema,
+  outputSchema: insertResultOutputSchema,
   async run(context) {
-    const { warehouseId, catalogName, schemaName, tableName, rows } =
+    const { warehouseId, catalogName, schemaName, tableName, batch } =
       context.propsValue;
+    const rows = batch?.['rows'];
     const rowList = Array.isArray(rows) ? rows : [rows];
-    if (rowList.length === 0) {
+    if (rows === undefined || rows === null || rowList.length === 0) {
       throw new Error('Rows must contain at least one row.');
     }
     const table = await databricksApi.getTable({
@@ -52,7 +48,7 @@ export const insertRowsAction = createAction({
             'Each row must be a JSON object keyed by column name.'
           );
         }
-        return Object.fromEntries(Object.entries(row));
+        return databricksUtils.compactRow({ row: Object.fromEntries(Object.entries(row)) });
       }),
     });
     const columnList = source.columnNames

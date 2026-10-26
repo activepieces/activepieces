@@ -1,10 +1,12 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 
 import { databricksClient } from './client';
+import { databricksUtils } from './utils';
 
 import type {
   DatabricksAuthValue,
   DatabricksCredentials,
+  DatabricksFileColumn,
   DatabricksGenieAnswer,
   DatabricksGenieMessage,
   DatabricksGenieSpace,
@@ -151,21 +153,12 @@ async function executeStatement({
   statement: string;
   parameters?: DatabricksStatementParameter[];
 }): Promise<DatabricksQueryResult> {
-  const submitted = await databricksClient.request<DatabricksStatement>({
+  const finished = await runStatement({
     auth,
-    method: HttpMethod.POST,
-    path: '/api/2.0/sql/statements',
-    body: {
-      warehouse_id: warehouseId,
-      statement,
-      parameters,
-      wait_timeout: '50s',
-      on_wait_timeout: 'CONTINUE',
-      disposition: 'INLINE',
-      format: 'JSON_ARRAY',
-    },
+    warehouseId,
+    statement,
+    parameters,
   });
-  const finished = await waitForStatement({ auth, statement: submitted });
   const chunks = await fetchRemainingChunks({
     auth,
     statementId: finished.statement_id,
@@ -192,6 +185,37 @@ async function executeWriteStatement({
     parameters,
   });
   return { ...result.rows[0], statementId: result.statementId };
+}
+
+async function getFileColumns({
+  auth,
+  warehouseId,
+  path,
+  format,
+  options,
+}: {
+  auth: DatabricksAuthValue;
+  warehouseId: string;
+  path: string;
+  format: string;
+  options: Record<string, string>;
+}): Promise<DatabricksFileColumn[]> {
+  const optionList = Object.entries({ format, ...options })
+    .map(
+      ([key, value]) =>
+        `${key} => ${databricksUtils.stringLiteral({ value })}`
+    )
+    .join(', ');
+  const finished = await runStatement({
+    auth,
+    warehouseId,
+    statement: `SELECT * FROM read_files(${databricksUtils.stringLiteral({
+      value: path,
+    })}, ${optionList}) LIMIT 0`,
+  });
+  return (finished.manifest?.schema?.columns ?? []).filter(
+    (column) => column.name !== RESCUED_DATA_COLUMN
+  );
 }
 
 async function uploadFile({
@@ -279,6 +303,34 @@ async function askGenie({
     rowCount: result?.rowCount ?? 0,
     truncated: result?.truncated ?? false,
   };
+}
+
+async function runStatement({
+  auth,
+  warehouseId,
+  statement,
+  parameters,
+}: {
+  auth: DatabricksAuthValue;
+  warehouseId: string;
+  statement: string;
+  parameters?: DatabricksStatementParameter[];
+}): Promise<DatabricksStatement> {
+  const submitted = await databricksClient.request<DatabricksStatement>({
+    auth,
+    method: HttpMethod.POST,
+    path: '/api/2.0/sql/statements',
+    body: {
+      warehouse_id: warehouseId,
+      statement,
+      parameters,
+      wait_timeout: '50s',
+      on_wait_timeout: 'CONTINUE',
+      disposition: 'INLINE',
+      format: 'JSON_ARRAY',
+    },
+  });
+  return await waitForStatement({ auth, statement: submitted });
 }
 
 async function waitForStatement({
@@ -461,6 +513,7 @@ export const databricksApi = {
   getTable,
   executeStatement,
   executeWriteStatement,
+  getFileColumns,
   uploadFile,
   listGenieSpaces,
   askGenie,
@@ -470,6 +523,7 @@ const POLL_INTERVAL_MS = 2000;
 const MAX_WAIT_MS = 8 * 60 * 1000;
 const PENDING_STATEMENT_STATES = ['PENDING', 'RUNNING'];
 const FAILED_GENIE_STATES = ['FAILED', 'CANCELLED', 'QUERY_RESULT_EXPIRED'];
+const RESCUED_DATA_COLUMN = '_rescued_data';
 const NUMERIC_TYPES = ['BYTE', 'SHORT', 'INT', 'LONG', 'FLOAT', 'DOUBLE'];
 
 type GenieMessageIds = {

@@ -15,12 +15,17 @@ const statementIdField: OutputSchemaField = {
   label: 'Statement ID',
 };
 
-const affectedRowsFields: OutputSchemaField[] = [
-  { key: 'num_affected_rows', label: 'Rows Affected', format: 'number' },
-  { key: 'num_inserted_rows', label: 'Rows Inserted', format: 'number' },
-  { key: 'num_updated_rows', label: 'Rows Updated', format: 'number' },
-  { key: 'num_deleted_rows', label: 'Rows Deleted', format: 'number' },
-];
+const affectedRowsField: OutputSchemaField = {
+  key: 'num_affected_rows',
+  label: 'Rows Affected',
+  format: 'number',
+};
+
+const insertedRowsField: OutputSchemaField = {
+  key: 'num_inserted_rows',
+  label: 'Rows Inserted',
+  format: 'number',
+};
 
 export const queryResultOutputSchema: OutputSchema = {
   fields: [
@@ -37,15 +42,28 @@ export const queryResultOutputSchema: OutputSchema = {
   ],
 };
 
-export const writeResultOutputSchema: OutputSchema = {
-  fields: [...affectedRowsFields, statementIdField],
+export const insertResultOutputSchema: OutputSchema = {
+  fields: [affectedRowsField, insertedRowsField, statementIdField],
+};
+
+export const updateResultOutputSchema: OutputSchema = {
+  fields: [affectedRowsField, statementIdField],
+};
+
+export const upsertResultOutputSchema: OutputSchema = {
+  fields: [
+    affectedRowsField,
+    insertedRowsField,
+    { key: 'num_updated_rows', label: 'Rows Updated', format: 'number' },
+    statementIdField,
+  ],
 };
 
 export const loadFileOutputSchema: OutputSchema = {
   fields: [
     { key: 'filePath', label: 'Volume File Path' },
-    { key: 'num_affected_rows', label: 'Rows Affected', format: 'number' },
-    { key: 'num_inserted_rows', label: 'Rows Inserted', format: 'number' },
+    affectedRowsField,
+    insertedRowsField,
     {
       key: 'num_skipped_corrupt_files',
       label: 'Corrupt Files Skipped',

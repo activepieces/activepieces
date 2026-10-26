@@ -38,7 +38,9 @@ function convertToColumnType({
     return `parse_json(${expression})`;
   }
   if (COMPLEX_TYPES.includes(typeName)) {
-    return `from_json(${expression}, ${stringLiteral({ value: typeText })})`;
+    return `from_json(${expression}, ${stringLiteral({
+      value: typeText,
+    })}, map('mode', 'FAILFAST'))`;
   }
   return `CAST(${expression} AS ${typeText})`;
 }

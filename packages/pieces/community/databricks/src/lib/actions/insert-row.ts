@@ -4,7 +4,7 @@ import { databricksAuth } from '../auth';
 import { databricksApi } from '../common/api';
 import { databricksProps } from '../common/props';
 import { databricksUtils } from '../common/utils';
-import { writeResultOutputSchema } from '../output-schemas';
+import { insertResultOutputSchema } from '../output-schemas';
 
 export const insertRowAction = createAction({
   auth: databricksAuth,
@@ -25,7 +25,7 @@ export const insertRowAction = createAction({
     tableName: databricksProps.tableName({ required: true }),
     rowFields: databricksProps.rowFields({ required: true }),
   },
-  outputSchema: writeResultOutputSchema,
+  outputSchema: insertResultOutputSchema,
   async run(context) {
     const { warehouseId, catalogName, schemaName, tableName, rowFields } =
       context.propsValue;

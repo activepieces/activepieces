@@ -8,13 +8,31 @@ import { databricksProps } from '../common/props';
 import { databricksUtils } from '../common/utils';
 import { loadFileOutputSchema } from '../output-schemas';
 
+import type { DatabricksColumn, DatabricksFileColumn } from '../common/types';
+
 const FILE_FORMATS: Record<
   string,
-  { sqlFormat: string; options: Record<string, string> }
+  {
+    sqlFormat: string;
+    readOptions: Record<string, string>;
+    typeOptions: Record<string, string>;
+  }
 > = {
-  CSV: { sqlFormat: 'CSV', options: { header: 'true', inferSchema: 'true' } },
-  JSON_LINES: { sqlFormat: 'JSON', options: { multiLine: 'false' } },
-  JSON_ARRAY: { sqlFormat: 'JSON', options: { multiLine: 'true' } },
+  CSV: {
+    sqlFormat: 'CSV',
+    readOptions: { header: 'true', multiLine: 'true', escape: '"' },
+    typeOptions: { inferSchema: 'false' },
+  },
+  JSON_LINES: {
+    sqlFormat: 'JSON',
+    readOptions: { multiLine: 'false' },
+    typeOptions: {},
+  },
+  JSON_ARRAY: {
+    sqlFormat: 'JSON',
+    readOptions: { multiLine: 'true' },
+    typeOptions: {},
+  },
 };
 
 const FILE_FORMAT_OPTIONS = [
@@ -127,8 +145,40 @@ export const uploadFileToVolumeAction = createAction({
     if (!tableName || !warehouseId) {
       return { filePath };
     }
+    const [table, fileColumns] = await Promise.all([
+      databricksApi.getTable({
+        auth: context.auth,
+        catalogName,
+        schemaName,
+        tableName,
+      }),
+      databricksApi.getFileColumns({
+        auth: context.auth,
+        warehouseId,
+        path: filePath,
+        format: format.sqlFormat.toLowerCase(),
+        options: format.readOptions,
+      }),
+    ]);
+    if (fileColumns.length === 0) {
+      throw new Error('The file has no columns to load.');
+    }
+    const selectList = fileColumns
+      .map((source) => {
+        const target = (table.columns ?? []).find(
+          (column) => column.name.toLowerCase() === source.name.toLowerCase()
+        );
+        return target
+          ? `${castFileColumn({
+              source,
+              target,
+            })} AS ${databricksUtils.quoteIdentifier({ name: target.name })}`
+          : databricksUtils.quoteIdentifier({ name: source.name });
+      })
+      .join(', ');
     const formatOptions = {
-      ...format.options,
+      ...format.readOptions,
+      ...format.typeOptions,
       ...(shouldMergeSchema ? { mergeSchema: 'true' } : {}),
     };
     const statement = [
@@ -137,7 +187,9 @@ export const uploadFileToVolumeAction = createAction({
         schemaName,
         tableName,
       })}`,
-      `FROM ${databricksUtils.stringLiteral({ value: directory })}`,
+      `FROM (SELECT ${selectList} FROM ${databricksUtils.stringLiteral({
+        value: directory,
+      })})`,
       `FILEFORMAT = ${format.sqlFormat}`,
       `FILES = (${databricksUtils.stringLiteral({ value: fileName })})`,
       `FORMAT_OPTIONS (${toOptionList({ options: formatOptions })})`,
@@ -154,6 +206,34 @@ export const uploadFileToVolumeAction = createAction({
   },
 });
 
+function castFileColumn({
+  source,
+  target,
+}: {
+  source: DatabricksFileColumn;
+  target: DatabricksColumn;
+}): string {
+  const name = databricksUtils.quoteIdentifier({ name: source.name });
+  const sourceType = (source.type_name ?? 'STRING').toUpperCase();
+  const targetType = (target.type_name ?? 'STRING').toUpperCase();
+  if (COMPLEX_TYPES.includes(sourceType)) {
+    const json = `to_json(${name})`;
+    return targetType === 'STRING'
+      ? json
+      : databricksUtils.convertToColumnType({
+          column: target,
+          expression: json,
+        });
+  }
+  if (targetType === 'STRING') {
+    return `CAST(${name} AS STRING)`;
+  }
+  return databricksUtils.convertToColumnType({
+    column: target,
+    expression: name,
+  });
+}
+
 function toOptionList({
   options,
 }: {
@@ -168,3 +248,5 @@ function toOptionList({
     )
     .join(', ');
 }
+
+const COMPLEX_TYPES = ['ARRAY', 'MAP', 'STRUCT'];

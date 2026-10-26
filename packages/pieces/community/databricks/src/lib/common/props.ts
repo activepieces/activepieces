@@ -6,6 +6,7 @@ import {
 
 import { databricksAuth } from '../auth';
 import { databricksApi } from './api';
+import type { DatabricksColumn } from './types';
 
 function warehouseId<R extends boolean>({
   required,
@@ -249,27 +250,72 @@ function rowFields<R extends boolean>({
         schemaName: String(schemaName),
         tableName: String(tableName),
       });
-      return Object.fromEntries(
-        (table.columns ?? []).map((column) => [
-          column.name,
-          Property.ShortText({
-            displayName: column.name,
-            description: [
-              `Type: ${column.type_text ?? column.type_name ?? 'unknown'}.`,
-              column.type_name &&
-              ['ARRAY', 'MAP', 'STRUCT', 'VARIANT'].includes(column.type_name)
-                ? 'Enter JSON.'
-                : '',
-              column.comment ?? '',
-            ]
-              .filter((part) => part !== '')
-              .join(' '),
-            required: false,
-          }),
-        ])
-      );
+      return columnInputs({ columns: table.columns ?? [] });
     },
   });
+}
+
+function rowList<R extends boolean>({
+  required,
+  displayName = 'Rows',
+  description = 'One item per row. Leave a field empty to insert NULL.',
+}: PropParams<R>) {
+  return Property.DynamicProperties({
+    auth: databricksAuth,
+    displayName,
+    required,
+    refreshers: ['catalogName', 'schemaName', 'tableName'],
+    props: async ({
+      auth,
+      catalogName,
+      schemaName,
+      tableName,
+    }): Promise<DynamicPropsValue> => {
+      if (!auth || !catalogName || !schemaName || !tableName) {
+        return {};
+      }
+      const table = await databricksApi.getTable({
+        auth,
+        catalogName: String(catalogName),
+        schemaName: String(schemaName),
+        tableName: String(tableName),
+      });
+      return {
+        rows: Property.Array({
+          displayName,
+          description,
+          required: true,
+          properties: columnInputs({ columns: table.columns ?? [] }),
+        }),
+      };
+    },
+  });
+}
+
+function columnInputs({
+  columns,
+}: {
+  columns: DatabricksColumn[];
+}): DynamicPropsValue {
+  return Object.fromEntries(
+    columns.map((column) => [
+      column.name,
+      Property.ShortText({
+        displayName: column.name,
+        description: [
+          `Type: ${column.type_text ?? column.type_name ?? 'unknown'}.`,
+          column.type_name &&
+          ['ARRAY', 'MAP', 'STRUCT', 'VARIANT'].includes(column.type_name)
+            ? 'Enter JSON.'
+            : '',
+          column.comment ?? '',
+        ]
+          .filter((part) => part !== '')
+          .join(' '),
+        required: false,
+      }),
+    ])
+  );
 }
 
 function genieSpaceId<R extends boolean>({
@@ -318,6 +364,7 @@ export const databricksProps = {
   volumeName,
   columnName,
   rowFields,
+  rowList,
   genieSpaceId,
 };
 

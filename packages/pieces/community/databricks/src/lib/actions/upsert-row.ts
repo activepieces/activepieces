@@ -4,7 +4,7 @@ import { databricksAuth } from '../auth';
 import { databricksApi } from '../common/api';
 import { databricksProps } from '../common/props';
 import { databricksUtils } from '../common/utils';
-import { writeResultOutputSchema } from '../output-schemas';
+import { upsertResultOutputSchema } from '../output-schemas';
 
 export const upsertRowAction = createAction({
   auth: databricksAuth,
@@ -36,7 +36,7 @@ export const upsertRowAction = createAction({
         'One field per table column. The key column must be filled in. Empty fields are not changed on update and inserted as NULL.',
     }),
   },
-  outputSchema: writeResultOutputSchema,
+  outputSchema: upsertResultOutputSchema,
   async run(context) {
     const {
       warehouseId,

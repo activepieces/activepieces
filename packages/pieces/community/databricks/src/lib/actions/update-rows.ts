@@ -4,7 +4,7 @@ import { databricksAuth } from '../auth';
 import { databricksApi } from '../common/api';
 import { databricksProps } from '../common/props';
 import { databricksUtils } from '../common/utils';
-import { writeResultOutputSchema } from '../output-schemas';
+import { updateResultOutputSchema } from '../output-schemas';
 
 export const updateRowsAction = createAction({
   auth: databricksAuth,
@@ -43,7 +43,7 @@ export const updateRowsAction = createAction({
         'Fill in only the columns to change. Empty fields are left as they are.',
     }),
   },
-  outputSchema: writeResultOutputSchema,
+  outputSchema: updateResultOutputSchema,
   async run(context) {
     const {
       warehouseId,

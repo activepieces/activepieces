@@ -63,7 +63,7 @@
   "The schema inside the selected catalog.": "The schema inside the selected catalog.",
   "The table inside the selected schema.": "The table inside the selected schema.",
   "One field per table column. Leave a field empty to skip that column.": "One field per table column. Leave a field empty to skip that column.",
-  "A JSON array of objects, one per row, keyed by column name, e.g. [{\"id\": 1, \"email\": \"jane@example.com\"}, {\"id\": 2, \"email\": \"joe@example.com\"}]. Keys that are missing from a row are inserted as NULL.": "A JSON array of objects, one per row, keyed by column name, e.g. [{\"id\": 1, \"email\": \"jane@example.com\"}, {\"id\": 2, \"email\": \"joe@example.com\"}]. Keys that are missing from a row are inserted as NULL.",
+  "One item per row. Leave a field empty to insert NULL.": "One item per row. Leave a field empty to insert NULL.",
   "Rows whose value in this column equals Match Value are updated.": "Rows whose value in this column equals Match Value are updated.",
   "The value to look for in the match column, e.g. 1042 or jane@example.com.": "The value to look for in the match column, e.g. 1042 or jane@example.com.",
   "Fill in only the columns to change. Empty fields are left as they are.": "Fill in only the columns to change. Empty fields are left as they are.",

@@ -36,6 +36,8 @@ export type DatabricksGenieSpace = {
   description?: string;
 };
 
+export type DatabricksFileColumn = { name: string; type_name?: string };
+
 export type DatabricksStatementParameter = { name: string; value?: string };
 
 export type DatabricksStatement = {
