@@ -1,7 +1,6 @@
 import {
   AppConnectionReplaceScope,
   flowStructureUtil,
-  isNil,
   unique,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
@@ -36,7 +35,6 @@ import {
   appConnectionsMutations,
   appConnectionsQueries,
 } from '@/features/connections';
-import { flowHooks } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -72,19 +70,13 @@ function ReplaceConnectionForFlowForm({
 }: {
   setDialogOpen: (open: boolean) => void;
 }) {
-  const [
-    flow,
-    flowVersion,
-    savePendingEdits,
-    refreshDraft,
-    showsNewestVersion,
-  ] = useBuilderStateContext((state) => [
-    state.flow,
-    state.flowVersion,
-    state.savePendingEdits,
-    state.refreshDraft,
-    state.showsNewestVersion,
-  ]);
+  const [flow, savePendingEdits, refreshDraft, showsNewestVersion] =
+    useBuilderStateContext((state) => [
+      state.flow,
+      state.savePendingEdits,
+      state.refreshDraft,
+      state.showsNewestVersion,
+    ]);
   const { switchToDraft } = flowCanvasHooks.useSwitchToDraft();
   const projectId = authenticationSession.getProjectId()!;
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
@@ -94,14 +86,10 @@ function ReplaceConnectionForFlowForm({
       extraKeys: [projectId],
       staleTime: 0,
     });
-  const publishedVersionId = flow.publishedVersionId;
-  const { data: publishedFlow, isLoading: publishedFlowLoading } =
-    flowHooks.useGetFlow({
-      flowId: flow.id,
-      versionId: publishedVersionId ?? undefined,
-      enabled:
-        !isNil(publishedVersionId) && publishedVersionId !== flowVersion.id,
-    });
+  const {
+    data: draftAndPublishedVersions,
+    isLoading: draftAndPublishedVersionsLoading,
+  } = flowCanvasHooks.useDraftAndPublishedVersions();
   const { mutate: replaceConnections, isPending: isReplacing } =
     appConnectionsMutations.useReplaceConnections({
       setDialogOpen,
@@ -135,12 +123,11 @@ function ReplaceConnectionForFlowForm({
   });
 
   const projectConnections = connections?.data ?? [];
-  const flowConnectionExternalIds = unique([
-    ...flowStructureUtil.extractConnectionIds(flowVersion),
-    ...(publishedFlow
-      ? flowStructureUtil.extractConnectionIds(publishedFlow.version)
-      : []),
-  ]);
+  const flowConnectionExternalIds = unique(
+    (draftAndPublishedVersions ?? []).flatMap((flowVersion) =>
+      flowStructureUtil.extractConnectionIds(flowVersion),
+    ),
+  );
   const flowConnections = projectConnections.filter((connection) =>
     flowConnectionExternalIds.includes(connection.externalId),
   );
@@ -169,7 +156,11 @@ function ReplaceConnectionForFlowForm({
           pieces={flowPieces}
           sourceConnections={flowConnections}
           targetConnections={projectConnections}
-          loading={piecesLoading || connectionsLoading || publishedFlowLoading}
+          loading={
+            piecesLoading ||
+            connectionsLoading ||
+            draftAndPublishedVersionsLoading
+          }
         />
         <DialogFooter>
           <DialogClose asChild>

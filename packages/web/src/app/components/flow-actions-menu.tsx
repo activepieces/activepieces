@@ -91,6 +91,9 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   savePendingEdits,
 }) => {
   const isRunsPage = useLocation().pathname.includes('/runs');
+  const showsDraftOrPublishedVersion =
+    flowVersion.state === FlowVersionState.DRAFT ||
+    flowVersion.id === flow.publishedVersionId;
   const { platform } = platformHooks.useCurrentPlatform();
   const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
@@ -323,23 +326,26 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               </div>
             </DropdownMenuItem>
           )}
-          {!readonly && insideBuilder && !embedState.isEmbedded && (
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToWriteAppConnection}
-            >
-              <ReplaceConnectionForFlowDialog>
-                <DropdownMenuItem
-                  disabled={!userHasPermissionToWriteAppConnection}
-                  onSelect={(e) => e.preventDefault()}
-                >
-                  <div className="flex cursor-pointer flex-row gap-2 items-center">
-                    <Replace className="h-4 w-4" />
-                    <span>{t('Replace connection')}</span>
-                  </div>
-                </DropdownMenuItem>
-              </ReplaceConnectionForFlowDialog>
-            </PermissionNeededTooltip>
-          )}
+          {insideBuilder &&
+            !isRunsPage &&
+            showsDraftOrPublishedVersion &&
+            !embedState.isEmbedded && (
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteAppConnection}
+              >
+                <ReplaceConnectionForFlowDialog>
+                  <DropdownMenuItem
+                    disabled={!userHasPermissionToWriteAppConnection}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <div className="flex cursor-pointer flex-row gap-2 items-center">
+                      <Replace className="h-4 w-4" />
+                      <span>{t('Replace connection')}</span>
+                    </div>
+                  </DropdownMenuItem>
+                </ReplaceConnectionForFlowDialog>
+              </PermissionNeededTooltip>
+            )}
           {!readonly &&
             insideBuilder &&
             !embedState.hideExportAndImportFlow && (
