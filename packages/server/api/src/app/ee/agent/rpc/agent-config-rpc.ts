@@ -242,16 +242,14 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const onboardingNote = agentSurfaceNotes.onboardingNote({ source: conversation.source, ...spreadIfDefined('messageSource', input.messageSource) })
         const newUserMessage: ModelMessage = { role: 'user' as const, content: isNil(onboardingNote) ? userContent : withLeadingNote({ content: userContent, note: onboardingNote }) }
         const allMessages = [...previousMessages, newUserMessage]
-        const compactionModels = isNil(tierRun)
-            ? [{ config: providerConfig, modelId: resolvedModelId, thinkingBudget: tier.thinkingBudget }]
-            : tierRun.candidates
-        const everyModelOfTheTurn = isNil(tierRun) ? compactionModels : [...tierRun.candidates, ...(isNil(tierRun.fast) ? [] : [tierRun.fast])]
+        const fastModelSeesMessages = conversation.source !== AgentRunSource.CHAT
+        const modelsSeeingMessages = isNil(tierRun)
+            ? [resolvedModelId, ...(fastModelSeesMessages ? [fastModelId] : [])].map((modelId) => ({ provider: providerConfig.provider, modelId }))
+            : [...tierRun.candidates, ...(fastModelSeesMessages && !isNil(tierRun.fast) ? [tierRun.fast] : [])].map((candidate) => ({ provider: candidate.config.provider, modelId: candidate.modelId }))
         const catalog = await modelCatalog.load()
         const llmHistory = dropImagesForTextOnlyModels({
             messages: agentAiUtils.collapseStaleToolOutputs({ messages: allMessages }),
-            models: isNil(tierRun)
-                ? [resolvedModelId, fastModelId].map((modelId) => catalog.lookup({ provider: providerConfig.provider, modelId }))
-                : everyModelOfTheTurn.map((candidate) => catalog.lookup({ provider: candidate.config.provider, modelId: candidate.modelId })),
+            models: modelsSeeingMessages.map((model) => catalog.lookup(model)),
         })
 
         const previousUiMessages = (conversation.uiMessages ?? []) as PersistedAgentMessage[]
@@ -265,6 +263,10 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         })
         await agentApprovalGate.clearCancel({ conversationId })
 
+        const compactionModels = isNil(tierRun)
+            ? [{ config: providerConfig, modelId: resolvedModelId, thinkingBudget: tier.thinkingBudget }]
+            : tierRun.candidates
+        const everyModelOfTheTurn = isNil(tierRun) ? compactionModels : [...tierRun.candidates, ...(isNil(tierRun.fast) ? [] : [tierRun.fast])]
         const contextProvider = smallestContextProvider({ configs: everyModelOfTheTurn.map((candidate) => candidate.config) })
         const reservedOutputTokens = isNil(tierRun)
             ? await agentAiUtils.affordableOutputTokens({ provider: providerConfig.provider, modelIds: [resolvedModelId, fastModelId], thinkingBudget: tier.thinkingBudget })
