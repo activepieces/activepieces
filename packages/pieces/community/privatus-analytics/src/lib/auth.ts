@@ -6,7 +6,7 @@ export const privatusAnalyticsAuth = PieceAuth.SecretText({
   description: `To get your API token:
 1. Log in to [Privatus Analytics](https://privatusanalytics.com).
 2. Open **Workspace settings**, then **API tokens**.
-3. Click **Create token**. The pieces only read numbers, so read access to analytics is enough.
+3. Click **Create token**. The triggers and actions only read numbers, so read access to analytics is enough. (Custom API Call can do more if the token allows it.)
 4. Copy the token (it starts with \`pat_\`) and paste it here. It is shown only once.`,
   required: true,
   validate: async ({ auth }) => {

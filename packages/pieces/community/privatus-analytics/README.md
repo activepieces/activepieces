@@ -15,7 +15,8 @@ a Google Sheet, or get a message the moment a goal is completed or a big wave of
 ## Triggers
 
 - **New Goal Conversion:** starts when a goal is completed again, like a sign-up or a purchase.
-  Checked every few minutes. Pick one goal or watch them all.
+  Checked every few minutes. Pick one goal or watch them all. Completions just before midnight
+  (in your site's time zone) still start the flow after the day changes.
 - **Traffic Spike:** starts once when the number of people on the site right now reaches a number
   you pick, and again only after it drops below.
 
@@ -29,9 +30,10 @@ a Google Sheet, or get a message the moment a goal is completed or a big wave of
 - **Get Live Visitors:** how many people are on the site right now and what they look at.
 - **List Goal Conversions:** each goal with its conversions, conversion rate and change.
 - **List Sites:** your websites with their IDs and domains.
-- **Custom API Call:** any other request to the [Privatus Analytics API](https://privatusanalytics.com/docs/api).
+- **Custom API Call:** send your own request to the [Privatus Analytics API](https://privatusanalytics.com/docs/api).
 
-Every action only reads. None of them changes or deletes anything.
+Every action above, except Custom API Call, only reads. None of them changes or deletes anything.
+Custom API Call sends whatever request you build, so it can change data if your token is allowed to.
 
 ## Connect your account
 
@@ -39,4 +41,6 @@ Every action only reads. None of them changes or deletes anything.
 2. Open **Workspace settings**, then **API tokens**, and create a token. It starts with `pat_`.
 3. Paste it into the **API Token** field of the connection.
 
-The piece talks only to `https://privatusanalytics.com`.
+The triggers and the other actions talk only to `https://privatusanalytics.com`. Custom API Call adds
+the path you type to that address. If you type a full web address instead, it sends the request, with
+your token, to that address, so only use full addresses you trust.
