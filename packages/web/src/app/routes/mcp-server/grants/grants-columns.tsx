@@ -71,7 +71,9 @@ export function buildGrantsColumns({
       ),
       cell: ({ row }) => (
         <Badge variant="outline" className="font-normal">
-          {row.original.projectName ?? t('All projects')}
+          {row.original.projectId === null
+            ? t('All projects')
+            : row.original.projectName ?? t('Deleted project')}
         </Badge>
       ),
     },

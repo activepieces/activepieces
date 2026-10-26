@@ -3,9 +3,9 @@ import { AgentConversation, AgentConversationStatus, AgentRunSource, apId, Persi
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { trackBillingAndSendTelemetry, resolveChatProviderName } = vi.hoisted(() => ({
+const { trackBillingAndSendTelemetry, resolveConversationProviderName } = vi.hoisted(() => ({
     trackBillingAndSendTelemetry: vi.fn(),
-    resolveChatProviderName: vi.fn(),
+    resolveConversationProviderName: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/platform/billing-and-telemetry', () => ({
@@ -20,7 +20,7 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
-        resolveChatProviderName: (...args: unknown[]) => resolveChatProviderName(...args),
+        resolveConversationProviderName: (...args: unknown[]) => resolveConversationProviderName(...args),
         surfaceOf: () => 'chat',
         resolveModelIdForAnalytics: () => 'model',
         resolveTier: () => ({ id: 'smart' }),
@@ -38,11 +38,11 @@ import { chatToolBilling } from '../../../../../src/app/ee/agent/chat-tool-billi
 describe('chatToolBilling.chargeForLatestTurn with task agents', () => {
     beforeEach(() => {
         trackBillingAndSendTelemetry.mockReset()
-        resolveChatProviderName.mockReset()
+        resolveConversationProviderName.mockReset()
     })
 
     it('charges a managed-key turn no message credit, only the paid calls its tasks made', async () => {
-        resolveChatProviderName.mockResolvedValue(AIProviderName.ACTIVEPIECES)
+        resolveConversationProviderName.mockResolvedValue(AIProviderName.ACTIVEPIECES)
 
         await chatToolBilling.chargeForLatestTurn({ conversation: conversationWithTwoTasks(), log: LOG })
 
@@ -52,7 +52,7 @@ describe('chatToolBilling.chargeForLatestTurn with task agents', () => {
     })
 
     it('charges an own-key turn one message credit, once, plus the paid calls its tasks made', async () => {
-        resolveChatProviderName.mockResolvedValue(AIProviderName.OPENAI)
+        resolveConversationProviderName.mockResolvedValue(AIProviderName.OPENAI)
 
         await chatToolBilling.chargeForLatestTurn({ conversation: conversationWithTwoTasks(), log: LOG })
 

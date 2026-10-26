@@ -109,6 +109,9 @@ export function PlatformNav() {
               ? undefined
               : [
                   { to: '/platform/ai', label: t('Providers'), end: true },
+                  ...(edition === ApEdition.CLOUD
+                    ? [{ to: '/platform/ai/tiers', label: t('Tiers') }]
+                    : []),
                   {
                     to: '/platform/ai/capabilities',
                     label: t('Capabilities'),
@@ -122,7 +125,7 @@ export function PlatformNav() {
       items: [
         {
           to: '/platform/sso',
-          label: t('Single Sign On'),
+          label: t('Authentication'),
           icon: LogInIcon,
           locked: !platform.plan.ssoEnabled,
           tier: PLATFORM_FEATURES.sso.tier,

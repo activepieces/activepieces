@@ -1,7 +1,8 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { Socket } from 'socket.io'
 import { aiRpcHandlers } from '../../ai/ai-rpc-handlers'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
@@ -27,22 +28,14 @@ import { dedupeService } from '../../trigger/dedupe-service'
 import { triggerEventService } from '../../trigger/trigger-events/trigger-event.service'
 import { triggerRunStats } from '../../trigger/trigger-run/trigger-run-stats'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
-import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
+import { WorkerGroupAssignment } from '../worker-groups/worker-group-queues'
+import { workerGroupRouting } from '../worker-groups/worker-group-routing'
 
 const FLOW_BUNDLE_PUBLISH_CLAIM_TTL_SECONDS = 60
 
 const getFlowBundlePublishClaimKey = (flowVersionId: string): string => `flow_bundle_publish_claim:${flowVersionId}`
-
-const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
-    if (isNil(assignment)) {
-        return QueueName.WORKER_JOBS
-    }
-    return assignment.scope === WorkerGroupScope.PROJECT
-        ? getProjectGroupQueueName(assignment.id)
-        : getPlatformGroupQueueName(assignment.id)
-}
 
 let pagedForUnreadableAppVersion = false
 
@@ -79,7 +72,7 @@ function workerVersionIsCompatible({ log, workerVersion, workerId, rpcMethod }: 
     return false
 }
 
-export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, connectionId?: string): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, socket?: Pick<Socket, 'id' | 'connected'>): WorkerToApiContract {
     return {
         async poll(input) {
             log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
@@ -87,8 +80,8 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             if (!workerVersionIsCompatible({ log, workerVersion: input.workerProps.version, workerId: input.workerId, rpcMethod: 'poll' })) {
                 return null
             }
-            const pollQueueName = getPollQueueName(assignment)
-            const job = await jobBroker(log).poll(pollQueueName, connectionId)
+            const pollQueueName = workerGroupRouting.resolveQueueForWorker(assignment)
+            const job = await jobBroker(log).poll(pollQueueName, socket)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
             }

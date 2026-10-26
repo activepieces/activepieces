@@ -3,6 +3,7 @@ import { sheets as googleSheets } from '@googleapis/sheets';
 import { isNil } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, createGoogleClient, Dimension, googleSheetsAuth } from '../common/common';
 import { sheetsUpdateDimensionPropertiesActionOutputSchema } from '../output-schemas';
+import { hiddenStateProp, hiddenStateValue } from '../common/props';
 
 export const sheetsUpdateDimensionProperties = createAction({
 	auth: googleSheetsAuth,
@@ -60,15 +61,12 @@ export const sheetsUpdateDimensionProperties = createAction({
 			description: 'The fixed width (for columns) or height (for rows) in pixels. Leave empty to only change the hidden state.',
 			required: false,
 		}),
-		hidden: Property.Checkbox({
-			displayName: 'Hidden',
-			description: 'Whether the rows/columns are hidden. Leave empty to only change the pixel size.',
-			required: false,
-		}),
+		hidden: hiddenStateProp('Whether the rows/columns are hidden.'),
 	},
 	async run(context) {
-		const { spreadsheet_id, sheet_id, dimension, start_index, end_index, pixel_size, hidden } =
+		const { spreadsheet_id, sheet_id, dimension, start_index, end_index, pixel_size } =
 			context.propsValue;
+		const hidden = hiddenStateValue(context.propsValue.hidden);
 
 		if (!areSheetIdsValid(spreadsheet_id, sheet_id)) {
 			throw new Error('Please provide a spreadsheet id and worksheet id.');

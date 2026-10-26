@@ -1,0 +1,29 @@
+---
+title: 'Alerts'
+icon: 'bell'
+---
+
+Automated reports and alerts that tell us something is wrong before a customer does.
+
+## Enterprise OOM Report
+
+Runs that run out of memory end with status `MEMORY_LIMIT_EXCEEDED`. They are not failed queue jobs, so queue alerts never see them. This report surfaces them so we can reach out with a fix (bigger dedicated workers, flow optimization) before the customer escalates.
+
+- **Runs:** as a daily cron job on the DevOps machine, reading the read-only Postgres replica and storing one row per platform per day in ClickHouse.
+- **Who:** enterprise Cloud platforms only, every platform with at least one OOM run the previous day.
+- **Where:** one message in the internal Discord channel, one line per platform with OOM runs, flows affected and OOM rate. Nothing is sent on a quiet day.
+- **History:** the **Enterprise OOM Tracker** dashboard in HyperDX shows trends and every past day's report.
+- **If it stops:** a Betterstack heartbeat alerts when the daily job has not run.
+
+## Nightly Benchmark
+
+The `Benchmark` GitHub Actions workflow (`.github/workflows/benchmark.yml`) runs every night at 03:00 UTC, once per worker shape (`shared` and `dedicated`).
+
+- **Results:** each scheduled run stores one row per shape in ClickHouse. The **Nightly Benchmark** dashboard in HyperDX charts throughput, latency, queue wait and worker resources over time.
+- **Regression alert:** `benchmark/detect-regression.mjs` compares the run with the median of the last 14 runs and, when a metric is more than 5% worse on 2 runs in a row, sends a signal to Box's Errors API, which starts a Claude agent to find the culprit commit. The signal carries its own investigation prompt and the trailing runs with their SHAs. It stays silent until a shape has 3 runs of history.
+- **Pipeline alert:** on scheduled runs only, when anything in the job fails, its last step sends a `bench-pipeline-<shape>` signal to Box so an agent reads the failed logs.
+- **Dedup:** Box groups signals by fingerprint (`bench-regression-<shape>`, `bench-pipeline-<shape>`), so a regression that persists starts one agent, not one per night. Resolve the Box issue once the fix has shipped. An accepted regression stays open until the 14-run baseline absorbs it (about 7 nights), then gets resolved; resolving earlier reopens it and starts a new agent. Never ignore a bench issue: ignored issues never start an agent, so that shape would go silent for good.
+
+<Warning>
+Manual runs (`workflow_dispatch`) skip the ClickHouse writes and both Box signal steps. A green manual run does not prove these steps work. Check the next scheduled run after changing them or their secrets.
+</Warning>

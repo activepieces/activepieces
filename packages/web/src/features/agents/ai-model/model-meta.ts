@@ -3,7 +3,6 @@ import {
   AiProviderKeyStatus,
   AIProviderModel,
   AIProviderModelType,
-  aiProviderUtils,
   AIProviderWithoutSensitiveData,
   PlatformModelTier,
   PlatformModelTierEntry,
@@ -420,25 +419,13 @@ function keyScopeImpact({
 }
 
 function toolsVerdict({
-  config,
-  entry,
   model,
 }: {
   config: AIProviderWithoutSensitiveData | undefined;
   entry: PlatformModelTierEntry | undefined;
   model: AIProviderModel | undefined;
 }): ToolsVerdict {
-  if (model?.metadata?.supportsToolCalling === false) {
-    return 'noTools';
-  }
-  const curated =
-    config === undefined
-      ? undefined
-      : aiProviderUtils.getCuratedChatModels({ provider: config.provider });
-  return entry !== undefined &&
-    curated?.some((curatedModel) => curatedModel.id === entry.modelId) === true
-    ? 'recommended'
-    : null;
+  return model?.metadata?.supportsToolCalling === false ? 'noTools' : null;
 }
 
 export const modelMeta = {
@@ -510,4 +497,4 @@ export type KeyScopeImpact = {
   skippedProjects: number;
 };
 
-export type ToolsVerdict = 'noTools' | 'recommended' | null;
+export type ToolsVerdict = 'noTools' | null;
