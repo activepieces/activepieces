@@ -9,6 +9,7 @@ import {
   SetupPaymentParams,
   AdjustUnconsumableFeatureQuantityParams,
   CancelSubscriptionRequest,
+  SelfServeTrialStatus,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -59,6 +60,17 @@ export const platformBillingApi = {
     return api.post<{ url: string | null }>(
       '/v1/platform-billing/setup-payment',
       params,
+    );
+  },
+  getSelfServeTrial() {
+    return api.get<SelfServeTrialStatus>(
+      '/v1/platform-billing/self-serve-trial',
+    );
+  },
+  startSelfServeTrial() {
+    return api.post<SelfServeTrialStatus>(
+      '/v1/platform-billing/self-serve-trial/start',
+      {},
     );
   },
   getProjectsUsage(params: {
