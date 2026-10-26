@@ -1070,6 +1070,9 @@
       "@activepieces/piece-predict-leads": [
         "packages/pieces/community/predict-leads/src/index.ts"
       ],
+      "@activepieces/piece-privatus-analytics": [
+        "packages/pieces/community/privatus-analytics/src/index.ts"
+      ],
       "@activepieces/piece-productboard": [
         "packages/pieces/community/productboard/src/index.ts"
       ],
