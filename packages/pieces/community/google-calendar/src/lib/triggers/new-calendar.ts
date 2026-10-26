@@ -1,6 +1,7 @@
 import {
   createTrigger,
   AppConnectionValueForAuthProperty,
+  isNil,
   Property,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
@@ -140,6 +141,9 @@ export const newCalendar = createTrigger({
   },
 
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('calendars'))) {
+      return;
+    }
     const calendars = await getCalendars(context.auth);
 
     const { access_role_filter, calendar_name_filter, exclude_shared } =
