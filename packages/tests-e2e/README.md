@@ -38,10 +38,11 @@ Required environment variables:
 
 ## CI
 
-Triggered by:
+PRs do not run E2E unless they change the suite or carry the `ready-for-e2e` label. Staging and the release candidate run it.
 
-- `.github/workflows/tests-e2e-ce.yml` — CE Playwright suite
-- `.github/workflows/tests-e2e-ee.yml` — EE Playwright suite
+- `.github/workflows/e2e-matrix.yml` — the only E2E suite that gates a release: builds the image and runs the suite in four CE/EE configurations. Runs on PRs that touch `packages/tests-e2e/**`, and from the Cloud gate.
+- `.github/workflows/e2e.yml` — runs `e2e-matrix.yml` on a PR with the `ready-for-e2e` label, and again on each push while the label stays
+- `.github/workflows/continuous-delivery-stg.yml` — runs the CE specs against staging after each deploy
 - `.github/workflows/e2e-tests-checkly.yml` — scheduled Checkly run (optional)
 
 ## Related documentation
