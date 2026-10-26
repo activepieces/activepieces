@@ -194,6 +194,8 @@ On a ticket with the `automated` label (or created by Box), any comment that doe
 
 End that comment with one line: **For Box next time:** the lesson, in one sentence, general enough to apply to its next ticket. Status comments ("taking this over", "moved to review") don't mention Box. Same OK as every other comment: show it first.
 
+Box runs as the person who mentions it. If it replies "finish setting up Box first", they connect Claude and GitHub once at https://box.abuaboud.me/boxes?new. Then post the lesson again as a **new** comment, since Box ignores mentions in replies.
+
 Do the paperwork yourself. Ask only for facts you can't find in the ticket, the code, the logs or the conversation. In a grill, ask one at a time. Everywhere else, ask for all of them in one message.
 
 Tickets, comments and PR text get the same voice as your replies (below): plain, short, no em dashes. Follow the humanizer skill too if it's installed.
