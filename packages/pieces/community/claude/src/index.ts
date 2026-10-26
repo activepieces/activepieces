@@ -42,6 +42,16 @@ export const claude = createPiece({
           'x-api-key': `${auth.secret_text}`,
         };
       },
+      props: {
+        url: {
+          description: `Full URL, or a path relative to ${baseUrl}`,
+          placeholder: '/models',
+        },
+        headers: {
+          description:
+            'Add anthropic-version: 2023-06-01. Your API key is added for you.',
+        },
+      },
     }),
   ],
   triggers: [],

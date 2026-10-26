@@ -20,9 +20,10 @@ Runs that run out of memory end with status `MEMORY_LIMIT_EXCEEDED`. They are no
 The `Benchmark` GitHub Actions workflow (`.github/workflows/benchmark.yml`) runs every night at 03:00 UTC, once per worker shape (`shared` and `dedicated`).
 
 - **Results:** each scheduled run stores one row per shape in ClickHouse. The **Nightly Benchmark** dashboard in HyperDX charts throughput, latency, queue wait and worker resources over time.
-- **Regression alert:** `benchmark/detect-regression.mjs` compares the run with the median of the last 14 runs and alerts Betterstack when a metric is more than 5% worse on 2 runs in a row. It stays silent until a shape has 3 runs of history.
-- **Pipeline alert:** on scheduled runs only, the job's last step opens a `bench-pipeline-<shape>` alert in Betterstack when anything in the job failed, and resolves it on the next green scheduled run.
+- **Regression alert:** `benchmark/detect-regression.mjs` compares the run with the median of the last 14 runs and, when a metric is more than 5% worse on 2 runs in a row, sends a signal to Box's Errors API, which starts a Claude agent to find the culprit commit. The signal carries its own investigation prompt and the trailing runs with their SHAs. It stays silent until a shape has 3 runs of history.
+- **Pipeline alert:** on scheduled runs only, when anything in the job fails, its last step sends a `bench-pipeline-<shape>` signal to Box so an agent reads the failed logs.
+- **Dedup:** Box groups signals by fingerprint (`bench-regression-<shape>`, `bench-pipeline-<shape>`), so a regression that persists starts one agent, not one per night. Resolve the Box issue once the fix has shipped. An accepted regression stays open until the 14-run baseline absorbs it (about 7 nights), then gets resolved; resolving earlier reopens it and starts a new agent. Never ignore a bench issue: ignored issues never start an agent, so that shape would go silent for good.
 
 <Warning>
-Manual runs (`workflow_dispatch`) skip the ClickHouse writes and both Betterstack alert steps. A green manual run does not prove these steps work or resolve an existing pipeline alert. Check the next scheduled run after changing them or their secrets.
+Manual runs (`workflow_dispatch`) skip the ClickHouse writes and both Box signal steps. A green manual run does not prove these steps work. Check the next scheduled run after changing them or their secrets.
 </Warning>
