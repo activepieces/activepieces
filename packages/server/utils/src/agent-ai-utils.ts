@@ -14,6 +14,7 @@ const COLLAPSE_OUTPUT_OVER_CHARS = 600
 // so it doesn't re-discover or guess a schema it already fetched (A5 pin-discovered-schemas).
 const SCHEMA_TOOL_NAMES = new Set(['ap_get_piece_props', 'ap_prepare_action', 'ap_load_skill', 'ap_get_tool_schema'])
 const CHARS_PER_TOKEN_ESTIMATE = 4
+const SHRINK_KEEP_RECENT_MESSAGES = [12, 4, 2]
 
 
 /**
@@ -131,6 +132,51 @@ function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): M
         })
         return { ...message, content }
     })
+}
+
+function fitContextToBudget({ messages, systemPromptLength, maxTokens }: { messages: ModelMessage[], systemPromptLength: number, maxTokens: number }): ModelMessage[] {
+    return SHRINK_KEEP_RECENT_MESSAGES.reduce((current, keepRecentMessages) => {
+        if (estimateTokenCount({ messages: current, systemPromptLength }) <= maxTokens) return current
+        return shrinkStaleMessages({ messages: current, keepRecentMessages })
+    }, collapseStaleToolOutputs({ messages }))
+}
+
+function shrinkStaleMessages({ messages, keepRecentMessages }: { messages: ModelMessage[], keepRecentMessages: number }): ModelMessage[] {
+    const firstRecentIndex = messages.length - keepRecentMessages
+    return messages.map((message, index) => index < firstRecentIndex ? shrinkMessage(message) : message)
+}
+
+function shrinkMessage(message: ModelMessage): ModelMessage {
+    if (message.role === 'tool') {
+        return {
+            ...message,
+            content: message.content.map((part) => part.type === 'tool-result' && serializedLength(part.output) > COLLAPSE_OUTPUT_OVER_CHARS
+                ? { ...part, output: { type: 'text' as const, value: `[earlier ${part.toolName} result omitted to save context — it was used at the time]` } }
+                : part),
+        }
+    }
+    if (message.role !== 'assistant') return message
+    if (typeof message.content === 'string') {
+        return { ...message, content: truncateText(message.content) }
+    }
+    return {
+        ...message,
+        content: message.content.map((part) => {
+            if (part.type === 'text') return { ...part, text: truncateText(part.text) }
+            if (part.type === 'tool-call' && serializedLength(part.input) > COLLAPSE_OUTPUT_OVER_CHARS) {
+                return { ...part, input: { omitted: `earlier ${part.toolName} input omitted to save context — it was used at the time` } }
+            }
+            return part
+        }),
+    }
+}
+
+function truncateText(text: string): string {
+    return text.length > COLLAPSE_OUTPUT_OVER_CHARS ? `${text.slice(0, COLLAPSE_OUTPUT_OVER_CHARS)} [rest omitted to save context]` : text
+}
+
+function serializedLength(value: unknown): number {
+    return typeof value === 'string' ? value.length : (JSON.stringify(value) ?? '').length
 }
 
 function effectiveToolNamesByCallId(messages: ModelMessage[]): Map<string, string> {
@@ -411,6 +457,7 @@ export const agentAiUtils = {
     collectStepMessages,
     estimateTokenCount,
     collapseStaleToolOutputs,
+    fitContextToBudget,
     ...agentProviderOptions,
     buildTelemetry,
     buildStepParts,

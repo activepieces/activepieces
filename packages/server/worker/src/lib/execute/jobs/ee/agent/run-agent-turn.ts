@@ -17,6 +17,7 @@ const MIN_THINKING_BUDGET = 1_024
 const CONTENT_CHUNK_TYPES = new Set(['text-delta', 'reasoning-delta', 'tool-input-start', 'tool-input-available', 'source-url', 'source-document', 'file'])
 const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
 const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
+const CONTEXT_OVERFLOW_PATTERNS = [/maximum context length/i, /\bcontext_length_exceeded\b/i, /prompt is too long/i, /input token count .* exceeds the maximum/i]
 const USER_CONFIG_ENTITY_TYPES = new Set<string>(Object.values(AI_PROVIDER_ENTITY_TYPES))
 const USER_FACING_ERROR_CODES = new Set<string>([ErrorCode.VALIDATION, ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED])
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
@@ -181,7 +182,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             const visibleTools = skillSurface?.attachedToolNames() ?? agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames })
             const phaseTools = isNil(skillSurface) ? visibleTools.filter((name) => paidToolsAffordable || !chatBilling.isPaidTool(name)) : visibleTools
             const activeTools = forcesCompletion ? [TASK_COMPLETION_TOOL_NAME] : phaseTools
-            const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider: stepModel.provider })
+            const boundedContext = boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt: turnSystemPrompt, provider: stepModel.provider, log })
             const stepContext = isLastAllowedStep
                 ? { messages: [...(boundedContext.messages ?? currentMessages), FINAL_STEP_MESSAGE] }
                 : boundedContext
@@ -518,6 +519,10 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
         const rejectedWithReason = USER_FACING_ERROR_CODES.has(apError?.code ?? '')
         return missingUserConfig || rejectedWithReason ? 'user' : 'internal'
     }
+    const overflowsContextWindow = apiError.statusCode === 400 && CONTEXT_OVERFLOW_PATTERNS.some((pattern) => pattern.test(message))
+    if (overflowsContextWindow) {
+        return 'user'
+    }
     const rejectedByCustomGateway = apiError.statusCode === 400 && provider === AIProviderName.CUSTOM
     if (rejectedByCustomGateway) {
         return 'user'
@@ -567,20 +572,24 @@ function runawayTokenCeiling(provider: AIProviderName): number {
  * replaced by a marker, pairing preserved). Below threshold we emit no override so
  * the SDK keeps its own history and Anthropic prompt caching stays warm.
  */
-function boundContextForStep({ baseMessages, steps, systemPrompt, provider }: {
+export function boundContextForStep({ baseMessages, steps, systemPrompt, provider, log }: {
     baseMessages: ModelMessage[]
     steps: Array<{ response: { messages: ModelMessage[] } }>
     systemPrompt: string
     provider: AIProviderName
+    log: AgentTurnLogger
 }): { messages?: ModelMessage[] } {
     const candidate = [...baseMessages, ...agentAiUtils.collectStepMessages(steps)]
-    const estimatedTokens = agentAiUtils.estimateTokenCount({ messages: candidate, systemPromptLength: systemPrompt.length })
-    const maxContext = aiProviderUtils.getMaxContextTokens({ provider })
-    if (estimatedTokens <= maxContext * IN_LOOP_COMPACTION_THRESHOLD) {
+    const systemPromptLength = systemPrompt.length
+    const estimatedTokensBefore = agentAiUtils.estimateTokenCount({ messages: candidate, systemPromptLength })
+    const budgetTokens = aiProviderUtils.getMaxContextTokens({ provider }) * IN_LOOP_COMPACTION_THRESHOLD
+    if (estimatedTokensBefore <= budgetTokens) {
         return {}
     }
-    const collapsed = agentAiUtils.collapseStaleToolOutputs({ messages: candidate })
-    return { messages: agentAiUtils.stripThinkingBlocks(collapsed, provider) }
+    const fitted = agentAiUtils.fitContextToBudget({ messages: candidate, systemPromptLength, maxTokens: budgetTokens })
+    const estimatedTokensAfter = agentAiUtils.estimateTokenCount({ messages: fitted, systemPromptLength })
+    log.info({ context: { estimatedTokensBefore, estimatedTokensAfter, budgetTokens, messageCount: candidate.length } }, 'Shrank in-turn context to fit the budget')
+    return { messages: agentAiUtils.stripThinkingBlocks(fitted, provider) }
 }
 
 function extractResultText(result: unknown): string {

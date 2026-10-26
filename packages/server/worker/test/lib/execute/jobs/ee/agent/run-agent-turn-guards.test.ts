@@ -95,6 +95,16 @@ describe('classifyAgentRunError', () => {
         expect(classify(apiError({ statusCode: 400, message: 'Request is missing x-opencode-session and cannot be routed efficiently.' }), AIProviderName.CUSTOM)).toBe('user')
     })
 
+    it.each([
+        "This endpoint's maximum context length is 524300 tokens. However, you requested about 525476 tokens (475333 of text input, 8143 of tool input, 42000 in the output).",
+        "This model's maximum context length is 128000 tokens. However, your messages resulted in 140000 tokens.",
+        'prompt is too long: 230000 tokens > 200000 maximum',
+        'The input token count (1200000) exceeds the maximum number of tokens allowed (1048576).',
+    ])('blames the input, on any key, for a 400 that says it overflows the context window: %s', (message) => {
+        expect(classify(apiError({ statusCode: 400, message }), AIProviderName.ACTIVEPIECES)).toBe('user')
+        expect(classify(apiError({ statusCode: 400, message }), AIProviderName.OPENAI)).toBe('user')
+    })
+
     it('keeps a 400 we caused internal, so an illegal tool name is not laundered as user config', () => {
         expect(classify(apiError({ statusCode: 400, message: "tools.0.name: should match pattern '^[a-zA-Z0-9_.-]{1,64}$'" }))).toBe('internal')
     })
