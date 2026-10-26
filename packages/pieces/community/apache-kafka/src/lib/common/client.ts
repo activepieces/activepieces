@@ -135,11 +135,13 @@ async function sample({ auth, topic, consumerGroup, count, pollTimeoutSeconds }:
     return kafkaRecords.newestFirst({ records, count: limit })
   } catch (error) {
     if (kafkaConfig.isGroupAuthorizationError(error)) {
-      throw new Error(`Kafka refused the test consumer group "${groupId}". Testing reads with a temporary group whose name starts with "${liveGroup}-activepieces-test-". Grant this user a PREFIXED group ACL on "${liveGroup}" (Read), or test by publishing a message and letting the flow run.`)
+      throw new Error(`Kafka refused the test consumer group "${groupId}". Testing reads with a temporary group whose name starts with "${liveGroup}-activepieces-test-". Grant this user a PREFIXED group ACL on "${liveGroup}" (Read and Delete), or test by publishing a message and letting the flow run.`)
     }
     throw new Error(kafkaConfig.describeError({ error, brokers: auth.brokers, topic: topicName }))
   } finally {
-    await admin.deleteGroups([groupId]).catch(() => undefined)
+    await admin.deleteGroups([groupId]).catch((error: unknown) => {
+      console.warn(`Could not delete the temporary Kafka consumer group "${groupId}" after the test. Grant Delete on the PREFIXED group ACL "${liveGroup}" so test groups are removed; until then Kafka keeps it until its offsets expire.`, error instanceof Error ? error.message : String(error))
+    })
     await admin.disconnect().catch(() => undefined)
   }
 }

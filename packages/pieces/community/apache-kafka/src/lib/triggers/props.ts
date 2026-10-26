@@ -10,7 +10,7 @@ export const kafkaTriggerProps = {
       }),
       consumerGroup: Property.ShortText({
         displayName: 'Consumer group',
-        description: 'Kafka consumer group id, for example activepieces-orders. Use a different group for each flow that should receive every message. Flows that share a group split the topic between them. Testing the trigger uses a temporary group whose name starts with this id plus -activepieces-test-, so a group ACL must be PREFIXED.',
+        description: 'Kafka consumer group id, for example activepieces-orders. Use a different group for each flow that should receive every message. Flows that share a group split the topic between them. Testing the trigger uses a temporary group whose name starts with this id plus -activepieces-test-, so a group ACL must be PREFIXED and allow Read and Delete (Delete removes the temporary group after the test).',
         required: true,
       }),
       maxMessages: Property.Number({
