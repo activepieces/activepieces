@@ -26,7 +26,7 @@ export class AutomationsPage extends BasePage {
     await this.page.waitForURL('**/automations**');
     await this.page
       .locator('text="Get started with Activepieces"')
-      .or(this.page.locator('button:has(svg.lucide-ellipsis)'))
+      .or(this.page.getByRole('button', { name: 'Actions', exact: true }))
       .first()
       .waitFor();
   }
