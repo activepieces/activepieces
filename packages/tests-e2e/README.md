@@ -32,7 +32,7 @@ npx turbo run deploy-checkly --filter=tests-e2e
 
 Required environment variables:
 
-- `E2E_INSTANCE_URL` — target Activepieces URL (defaults to a local `localhost` value when unset)
+- `E2E_INSTANCE_URL` — target Activepieces URL (defaults to `http://localhost:4200` and starts the dev server when unset). When set, global setup deletes every flow of the signed-in account, so use an account that exists only for E2E.
 - `E2E_EMAIL` — test user email
 - `E2E_PASSWORD` — test user password
 
