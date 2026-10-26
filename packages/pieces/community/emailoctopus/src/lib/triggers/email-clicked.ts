@@ -1,19 +1,10 @@
 import { Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { emailOctopusProps } from '../common/props';
-import { emailOctopusAuth } from '../common/auth';
+import { emailEventTriggerOutputSchema } from '../output-schemas';
+import { emailOctopusAuth } from '../auth';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 
-interface EmailOctopusEvent {
-  type: string;
-  id: string;
-  contact_email_address: string;
-  campaign_id?: string;
-  list_id?: string;
-  contact_id?: string;
-  occurred_at?: string;
-}
-
-export const emailClicked = createTrigger({
+export const emailClickedTrigger = createTrigger({
   auth: emailOctopusAuth,
   name: 'emailClicked',
   classification: 'READ',
@@ -23,7 +14,7 @@ export const emailClicked = createTrigger({
     description: 'Fires when a recipient clicks a link inside an EmailOctopus campaign email (a contact.clicked webhook event), representing a click-through engagement. Can be scoped to a single campaign id, or left unfiltered to catch clicks across all campaigns.',
   },
   props: {
-    campaign_id: emailOctopusProps.campaignId(),
+    campaign_id: emailOctopusProps.campaignId({ required: false }),
      liveMarkdown: Property.MarkDown({
           value: `
           **Live URL:**
@@ -55,6 +46,7 @@ export const emailClicked = createTrigger({
     contact_email_address: 'user@example.com',
     campaign_id: '12345678-1234-1234-1234-123456789abc',
   },
+  outputSchema: emailEventTriggerOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable() {
     return;
@@ -63,24 +55,15 @@ export const emailClicked = createTrigger({
     return;
   },
   async run(context) {
-    const events = context.payload.body;
+    const body = context.payload.body as
+      | { type?: string; campaign_id?: string }
+      | { type?: string; campaign_id?: string }[];
+    const events = Array.isArray(body) ? body : [body];
     const campaignIdFilter = context.propsValue.campaign_id;
-
-    if (Array.isArray(events)) {
-      return events.filter(
-        (event: EmailOctopusEvent) =>
-          event.type === 'contact.clicked' &&
-          (!campaignIdFilter || event.campaign_id === campaignIdFilter)
-      );
-    }
-
-    if (
-      (events as EmailOctopusEvent)?.type === 'contact.clicked' &&
-      (!campaignIdFilter || (events as EmailOctopusEvent).campaign_id === campaignIdFilter)
-    ) {
-      return [events];
-    }
-
-    return [];
+    return events.filter(
+      (event) =>
+        event?.type === 'contact.clicked' &&
+        (!campaignIdFilter || event.campaign_id === campaignIdFilter)
+    );
   },
 });
