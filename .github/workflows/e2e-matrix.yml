@@ -177,10 +177,6 @@ jobs:
           echo "::error::App did not answer on $E2E_INSTANCE_URL within 5 minutes"
           exit 1
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -188,14 +184,17 @@ jobs:
       - name: Install dependencies
         run: bun install --filter tests-e2e --frozen-lockfile --ignore-scripts
 
-      - name: Install Playwright browsers
-        working-directory: packages/tests-e2e
-        run: npx playwright install --with-deps chromium
-
+      # The Playwright image ships Chromium and its system libraries, so no apt mirror is involved.
+      # It joins the stack network and mounts the workspace at the same path, so the env paths hold.
       # Piece isolation exercises the Cloud piece sync, which this stack turns off.
       - name: Run E2E tests
-        working-directory: packages/tests-e2e
-        run: npx playwright test --config=playwright.config.ts --reporter=github,json --grep-invert "Piece isolation"
+        run: |
+          PLAYWRIGHT_VERSION=$(jq -r '.devDependencies["@playwright/test"]' packages/tests-e2e/package.json)
+          docker run --rm --ipc=host --network benchmark_bench \
+            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE/packages/tests-e2e" \
+            -e CI -e AP_EDITION -e E2E_INSTANCE_URL -e E2E_PIECES_MANIFEST -e PLAYWRIGHT_JSON_OUTPUT_FILE \
+            "mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble" \
+            npx playwright test --config=playwright.config.ts --reporter=github,json --grep-invert "Piece isolation"
 
       - name: Summarize results
         if: always()
