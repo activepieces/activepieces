@@ -1,10 +1,11 @@
-import { AIProviderName, apId } from '@activepieces/core-utils'
+import { AIProviderName, apId, ErrorCode } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
+import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
+import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -82,5 +83,31 @@ describe('community edition: the worker picking up an agent step', () => {
         })
 
         expect(config.agentsAvailable).toBe(false)
+    })
+
+    it('drops a redelivered copy of a running step as superseded, so it is not failed as a concurrent run', async () => {
+        const ctx = await createTestContext(app)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI })
+        const conversationId = await startFlowStepRun(ctx, 'ce-handoff-redelivery')
+        const delivery = {
+            conversationId,
+            runId: apId(),
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            projectId: ctx.project.id,
+            userMessage: 'summarise the thread',
+            modelName: 'gpt-4o',
+            provider: AIProviderName.OPENAI,
+            source: AgentRunSource.FLOW_STEP,
+            waitpointId: apId(),
+        }
+
+        await agentRpcHandlers(app.log).getAgentConfig(delivery)
+        const conversation = await db.findOneByOrFail<{ activeRunId: string, waitpointId: string }>('agent_conversation', { id: conversationId })
+        expect(conversation).toMatchObject({ activeRunId: delivery.runId, waitpointId: delivery.waitpointId })
+
+        await expect(agentRpcHandlers(app.log).getAgentConfig(delivery)).rejects.toMatchObject({
+            error: { code: ErrorCode.AGENT_RUN_SUPERSEDED },
+        })
     })
 })

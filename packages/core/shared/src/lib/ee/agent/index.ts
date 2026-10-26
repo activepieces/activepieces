@@ -201,6 +201,7 @@ export const AgentConversation = z.object({
     userId: z.string(),
     agentId: Nullable(z.string()),
     flowRunId: Nullable(z.string()),
+    waitpointId: Nullable(z.string()),
     aiCredits: Nullable(z.number().int()),
     source: z.enum(AgentRunSource),
     title: Nullable(z.string()),

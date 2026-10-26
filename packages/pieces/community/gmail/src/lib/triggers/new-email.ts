@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   FilesService,
+  isNil,
 } from '@activepieces/pieces-framework';
 import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
@@ -35,6 +36,9 @@ export const gmailNewEmailTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('lastPoll'))) {
+      return;
+    }
     await context.store.put('lastPoll', Date.now());
   },
   async onDisable(context) {
