@@ -3,7 +3,6 @@ import {
   AppConnectionReplaceScope,
   AppConnectionScope,
   FlowVersionState,
-  Permission,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -45,14 +44,12 @@ import {
 } from '@/features/connections';
 import { flowsApi } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
-import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 import {
   LabelWithTooltip,
   ReplaceConnectionSelection,
   ReplaceConnectionSelectionFields,
+  replaceConnectionSelectionHooks,
   replaceConnectionSelectionUtils,
   ReplaceConnectionVersionsField,
 } from './replace-connection-selection-form';
@@ -84,13 +81,8 @@ function ReplaceConnectionForProjectForm({
   setDialogOpen,
 }: ReplaceConnectionForProjectFormProps) {
   const navigate = useNavigate();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { project } = projectCollectionUtils.useCurrentProject();
-  const { checkAccess } = useAuthorization();
   const publishNeedsApproval =
-    platform.plan.environmentsEnabled &&
-    !!project.sensitive &&
-    !checkAccess(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS);
+    replaceConnectionSelectionHooks.usePublishNeedsApproval();
   const [step, setStep] = useState<ProjectReplaceStep>(
     ProjectReplaceStep.CHOOSE_CONNECTIONS,
   );

@@ -2,12 +2,14 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
+  Permission,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { GlobeIcon, Info } from 'lucide-react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FormField, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import {
@@ -23,6 +25,9 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { PieceIconWithPieceName } from '@/features/pieces';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 const ReplaceConnectionSelectionFields = ({
   pieces,
@@ -189,6 +194,7 @@ function ReplaceConnectionVersionsField({
   onValueChange?: (applyToPublishedVersions: boolean) => void;
 }) {
   const form = useFormContext<{ applyToPublishedVersions: boolean }>();
+  const publishNeedsApproval = usePublishNeedsApproval();
   return (
     <FormField
       control={form.control}
@@ -217,9 +223,30 @@ function ReplaceConnectionVersionsField({
               <SelectItem value="true">{t('Draft and published')}</SelectItem>
             </SelectContent>
           </Select>
+          {field.value && publishNeedsApproval && (
+            <Alert>
+              <Info className="size-4" />
+              <AlertDescription>
+                {t(
+                  'This project needs approval to publish. Each affected flow gets a new publish request, which replaces any request that is already waiting for that flow.',
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       )}
     />
+  );
+}
+
+function usePublishNeedsApproval(): boolean {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { project } = projectCollectionUtils.useCurrentProject();
+  const { checkAccess } = useAuthorization();
+  return (
+    platform.plan.environmentsEnabled &&
+    !!project.sensitive &&
+    !checkAccess(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS)
   );
 }
 
@@ -249,6 +276,10 @@ export {
   LabelWithTooltip,
   ReplaceConnectionSelectionFields,
   ReplaceConnectionVersionsField,
+};
+
+export const replaceConnectionSelectionHooks = {
+  usePublishNeedsApproval,
 };
 
 export const replaceConnectionSelectionUtils = {
