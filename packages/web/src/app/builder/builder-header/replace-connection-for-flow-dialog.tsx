@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { flowCanvasHooks } from '@/app/builder/flow-canvas/hooks';
 import {
   ReplaceConnectionSelection,
   ReplaceConnectionSelectionFields,
@@ -71,13 +72,20 @@ function ReplaceConnectionForFlowForm({
 }: {
   setDialogOpen: (open: boolean) => void;
 }) {
-  const [flow, flowVersion, savePendingEdits, refreshDraft] =
-    useBuilderStateContext((state) => [
-      state.flow,
-      state.flowVersion,
-      state.savePendingEdits,
-      state.refreshDraft,
-    ]);
+  const [
+    flow,
+    flowVersion,
+    savePendingEdits,
+    refreshDraft,
+    showsNewestVersion,
+  ] = useBuilderStateContext((state) => [
+    state.flow,
+    state.flowVersion,
+    state.savePendingEdits,
+    state.refreshDraft,
+    state.showsNewestVersion,
+  ]);
+  const { switchToDraft } = flowCanvasHooks.useSwitchToDraft();
   const projectId = authenticationSession.getProjectId()!;
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
   const { data: connections, isLoading: connectionsLoading } =
@@ -99,7 +107,11 @@ function ReplaceConnectionForFlowForm({
       setDialogOpen,
       connections: connections?.data ?? [],
       refetch: () => {
-        refreshDraft().catch(() => internalErrorToast());
+        if (showsNewestVersion()) {
+          refreshDraft().catch(() => internalErrorToast());
+          return;
+        }
+        switchToDraft();
       },
     });
   const { mutate: saveEditsThenReplace, isPending: isSaving } = useMutation({
