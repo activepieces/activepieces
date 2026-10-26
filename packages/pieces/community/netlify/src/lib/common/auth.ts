@@ -1,6 +1,6 @@
 import { PieceAuth } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { NETLIFY_API_BASE } from "./client";
+import { HttpMethod } from "@activepieces/pieces-common";
+import { netlifyClient } from "./client";
 
 export const netlifyAuth = PieceAuth.OAuth2({
   description: `
@@ -21,10 +21,10 @@ To authenticate with Netlify:
   scope: [],
   getConnectionIdentifier: async ({ auth }) => {
     try {
-      const response = await httpClient.sendRequest<NetlifyUser>({
+      const response = await netlifyClient.request<NetlifyUser>({
+        auth,
         method: HttpMethod.GET,
-        url: `${NETLIFY_API_BASE}/user`,
-        headers: { Authorization: `Bearer ${auth.access_token}` },
+        path: '/user',
         timeout: 5000,
       });
       return response.body?.email || response.body?.full_name || undefined;
