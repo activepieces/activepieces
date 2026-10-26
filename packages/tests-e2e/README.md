@@ -38,10 +38,10 @@ Required environment variables:
 
 ## CI
 
-Triggered by:
+PRs do not run E2E unless they change the suite. Staging and the release candidate run it.
 
-- `.github/workflows/tests-e2e-ce.yml` — CE Playwright suite
-- `.github/workflows/tests-e2e-ee.yml` — EE Playwright suite
+- `.github/workflows/e2e-matrix.yml` — the only E2E signal that gates a release: builds the image and runs the suite in four CE/EE configurations. Runs on PRs that touch `packages/tests-e2e/**`, and from the Cloud gate. To run it on your branch: `gh workflow run e2e-matrix.yml --ref <branch>` (the run does not show up as a check on the PR).
+- `.github/workflows/continuous-delivery-stg.yml` — runs the CE specs against staging after each deploy
 - `.github/workflows/e2e-tests-checkly.yml` — scheduled Checkly run (optional)
 
 ## Related documentation
