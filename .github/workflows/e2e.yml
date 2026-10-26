@@ -1,0 +1,23 @@
+name: E2E Tests
+
+# Runs the E2E matrix on a PR that carries the ready-for-e2e label.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  e2e:
+    if: >
+      (github.event.action == 'labeled' && github.event.label.name == 'ready-for-e2e') ||
+      (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, 'ready-for-e2e'))
+    concurrency:
+      group: e2e-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    uses: ./.github/workflows/e2e-matrix.yml
+    secrets: inherit
