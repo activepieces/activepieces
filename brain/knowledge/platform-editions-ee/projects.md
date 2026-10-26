@@ -24,6 +24,7 @@ A **Project** is the workspace within a platform where flows, connections, table
 ### Gotchas
 - `projectHooks.postCreate` is where EE creates the associated `ProjectPlan`, sets piece filters, and auto-subscribes an alert receiver (owner email for personal, `context.alertReceiverEmail` for team).
 - Soft-deleted projects stay in DB; a background job hard-deletes them.
+- **Raw SQL on `project` must add `"deleted" IS NULL` itself.** TypeORM adds it only to repository queries, so a raw `databaseConnection().query` or a join through `project` returns soft-deleted projects, names included. Usage name lookups (`ai-usage-names.ts`) hit this.
 
 ### Key files
 Entry point: `projectService`, a log-taking factory in `project-service.ts` that every project read and write routes through.
