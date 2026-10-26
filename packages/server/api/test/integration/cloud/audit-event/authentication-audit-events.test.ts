@@ -135,7 +135,7 @@ async function savedEvents({ platformId, expectedCount }: { platformId: string, 
     return find()
 }
 
-function domainEvent({ action, domain, userId }: { action: ApplicationEventName, domain: string, userId?: string | null }) {
+function domainEvent({ action, domain, userId }: { action: ApplicationEventName, domain: string, userId?: string | null }): unknown {
     return expect.objectContaining({
         action,
         data: expect.objectContaining({ domain }),
