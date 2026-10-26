@@ -296,6 +296,28 @@ describe('kafkaClient', () => {
     expect(kafkaMock.setOffsets.mock.invocationCallOrder[0]).toBeLessThan(kafkaMock.consumerConnect.mock.invocationCallOrder[0])
   })
 
+  it('reads the group commit before the topic end so another member committing past an old end is not reset', async () => {
+    kafkaMock.fetchOffsets.mockResolvedValueOnce([{
+      topic: 'orders',
+      partitions: [
+        { partition: 0, offset: '25', metadata: null },
+        { partition: 1, offset: '9', metadata: null },
+      ],
+    }])
+    kafkaMock.fetchTopicOffsets.mockResolvedValueOnce([
+      { partition: 0, offset: '25', low: '3', high: '25' },
+      { partition: 1, offset: '9', low: '0', high: '9' },
+    ])
+    await kafkaClient.pinStartOffsets({
+      auth,
+      topic: 'orders',
+      consumerGroup: 'activepieces-orders',
+      fromBeginning: true,
+    })
+    expect(kafkaMock.fetchOffsets.mock.invocationCallOrder[0]).toBeLessThan(kafkaMock.fetchTopicOffsets.mock.invocationCallOrder[0])
+    expect(kafkaMock.setOffsets).not.toHaveBeenCalled()
+  })
+
   it('leaves the group untouched when every partition already has a commit', async () => {
     kafkaMock.fetchOffsets.mockResolvedValueOnce([{
       topic: 'orders',

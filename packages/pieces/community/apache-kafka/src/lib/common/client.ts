@@ -150,10 +150,8 @@ async function seedOffsets({ admin, topic, groupId, fromBeginning }: {
   groupId: string
   fromBeginning: boolean
 }): Promise<ReadTarget[]> {
-  const [topicOffsets, groupOffsets] = await Promise.all([
-    admin.fetchTopicOffsets(topic),
-    admin.fetchOffsets({ groupId, topics: [topic] }),
-  ])
+  const groupOffsets = await admin.fetchOffsets({ groupId, topics: [topic] })
+  const topicOffsets = await admin.fetchTopicOffsets(topic)
   const committed = (groupOffsets.find((entry) => entry.topic === topic)?.partitions ?? [])
     .filter((entry) => BigInt(entry.offset) >= BigInt(0))
   const seeded = kafkaRecords.startOffsetPlan({ topicOffsets, committed, fromBeginning })
