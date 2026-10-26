@@ -12,7 +12,7 @@ export const findInvoicesAction = createAction({
   classification: 'SEARCH',
   displayName: 'Find Invoices',
   description: 'List invoices, bills and credit notes, filtered by type, status, customer and dates.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Searches Odoo invoices, vendor bills and credit notes (account.move) by type, status, payment status, partner (including its contacts), number and invoice/due date ranges, newest first with offset paging. Needs Invoicing. Read-only and idempotent.',

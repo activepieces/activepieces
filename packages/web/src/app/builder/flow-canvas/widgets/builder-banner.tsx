@@ -1,6 +1,9 @@
 import { isNil } from '@activepieces/core-utils';
 
+import { RightSideBarType } from '@/app/builder/types';
 import { ResourceLockWidget } from '@/components/custom/resource-lock-widget';
+import { useEmbedding } from '@/components/providers/embed-provider';
+import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
@@ -12,14 +15,24 @@ import { ViewingOldVersionWidget } from './viewing-old-version-widget';
 
 const BuilderBanner = () => {
   const { lockedBy, takeOver } = useFlowLock();
-  const run = useBuilderStateContext((state) => state.run);
+  const [run, rightSidebar] = useBuilderStateContext((state) => [
+    state.run,
+    state.rightSidebar,
+  ]);
+  const { embedState } = useEmbedding();
 
   if (lockedBy) {
+    const sitsInRoundedCard = !embedState.isEmbedded;
     return (
       <ResourceLockWidget
         lockedBy={lockedBy}
         takeOver={takeOver}
-        resourceLabel="flow"
+        className={cn(
+          sitsInRoundedCard && 'rounded-bl-[calc(var(--radius-xl)-1px)]',
+          sitsInRoundedCard &&
+            rightSidebar === RightSideBarType.NONE &&
+            'rounded-br-[calc(var(--radius-xl)-1px)]',
+        )}
       />
     );
   }

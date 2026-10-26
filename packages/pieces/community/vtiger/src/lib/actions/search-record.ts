@@ -1,20 +1,31 @@
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { vtigerAuth } from '../auth';
+import { elementTypeProperty, generateElementFields, propText } from '../common';
+import { queryRecordsSchema } from '../output-schemas';
 import {
-  PiecePropValueSchema,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { vtigerAuth } from '../..';
-import {
-  VTigerAuthValue,
-  queryRecords,
-  countRecords,
-  elementTypeProperty,
-  generateElementFields,
-  instanceLogin,
-} from '../common';
+  assertModuleName,
+  buildWhere,
+  clampLimit,
+  filterValueToString,
+  pagedQuery,
+  VtqlFilter,
+} from '../vtql';
+import { vtwsLogin, vtwsQuery } from '../vtws';
 
-//Docs: https://code.vtiger.com/vtiger/vtigercrm-manual/-/wikis/Webservice-Docs
-//Extra: https://help.vtiger.com/article/147111249-Rest-API-Manual
+const SEARCH_MAX = 1000;
+
+export function searchFiltersFromFields(fields: Record<string, unknown>): VtqlFilter[] {
+  return Object.entries(fields).flatMap(([field, value]): VtqlFilter[] => {
+    if (value === false || value === '') {
+      return [];
+    }
+    const text = filterValueToString(value);
+    if (text === undefined) {
+      return [];
+    }
+    return [{ field, value: text, operator: typeof value === 'string' ? 'LIKE' : '=' }];
+  });
+}
 
 export const searchRecords = createAction({
   name: 'search_records',
@@ -22,76 +33,46 @@ export const searchRecords = createAction({
   auth: vtigerAuth,
   displayName: 'Search Records',
   description: 'Search for a record.',
-  audience: 'both',
-  aiMetadata: { description: 'Searches a Vtiger module (element type) by filtering its records against field-value criteria; string fields match case-insensitive substrings and other fields match exactly. Leaving the criteria empty returns all records (optionally capped by limit). Choose this for simple field-based lookups; use Query Records for custom SQL-style conditions. Read-only and idempotent.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Searches a Vtiger module (element type) by field-value criteria; text fields match case-insensitive substrings and other fields match exactly. Leaving the criteria empty returns all records up to the limit. Read-only and idempotent.',
+    idempotent: true,
+  },
+  outputSchema: queryRecordsSchema,
   props: {
     elementType: elementTypeProperty,
     fields: Property.DynamicProperties({
       auth: vtigerAuth,
       displayName: 'Search Fields',
-      description: 'Enter your filter criteria',
+      description: 'Enter your filter criteria. Unchecked checkboxes are ignored.',
       required: true,
       refreshers: ['elementType'],
       props: async ({ auth, elementType }) => {
-        if (!auth || !elementType) {
+        const module = propText(elementType);
+        if (!auth || module === '') {
           return {};
         }
-
-        const instance = await instanceLogin(
-          auth.props.instance_url,
-          auth.props.username,
-          auth.props.password
-        );
-
-        if (instance === null) {
-          return {};
-        }
-
-        return generateElementFields(
-          auth,
-          elementType as unknown as string,
-          {},
-          true
-        );
+        return generateElementFields({ auth, elementType: module, defaultValue: {}, skipMandatory: true });
       },
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Enter the maximum number of records to return.',
+      description: `Enter the maximum number of records to return (default and maximum ${SEARCH_MAX}).`,
       required: false,
     }),
   },
   async run({ propsValue, auth }) {
-    const vtigerInstance = await instanceLogin(
-      auth.props.instance_url,
-      auth.props.username,
-      auth.props.password
-    );
-    if (vtigerInstance === null) return;
-
-    const count = await countRecords(auth, propsValue.elementType as string);
-    if (count > 0) {
-      const records: Record<string, unknown>[] = await queryRecords(
-        auth,
-        propsValue.elementType as string,
-        0,
-        count
-      );
-
-      const filtered = records.filter((record) => {
-        return Object.entries(propsValue['fields']).every(([key, value]) => {
-          const recordValue = record[key];
-          if (typeof value === 'string') {
-            const rv = typeof recordValue === 'string' ? recordValue : String(recordValue ?? '');
-            return rv.toLowerCase().includes(value.toLowerCase());
-          }
-          return recordValue === value;
-        });
-      });
-
-      return propsValue.limit ? filtered.slice(0, propsValue.limit) : filtered;
-    } else {
-      return [];
-    }
+    const module = assertModuleName(propText(propsValue.elementType));
+    const limit = clampLimit({ value: propsValue.limit, fallback: SEARCH_MAX, max: SEARCH_MAX });
+    const where = buildWhere({ filters: searchFiltersFromFields(propsValue.fields ?? {}) });
+    const session = await vtwsLogin(auth.props);
+    const { records } = await pagedQuery<Record<string, unknown>>({
+      module,
+      where,
+      limit,
+      fetchPage: (query) => vtwsQuery<Record<string, unknown>>({ creds: auth.props, session, query }),
+    });
+    return records;
   },
 });

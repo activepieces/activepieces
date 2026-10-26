@@ -13,7 +13,7 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
         const timeoutInSeconds = workerSettings.getSettings().FLOW_TIMEOUT_SECONDS
 
         const { data: resolved, error: provisionError } = await tryCatch(() =>
-            ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } }),
+            ctx.resolver.resolve({ platformId: data.platformId, internalApiUrl: ctx.internalApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } }),
         )
         if (provisionError) {
             await reportFlowStatus({ ctx, data, status: FlowRunStatus.INTERNAL_ERROR, internalError: toInternalError(RunInternalErrorSource.WORKER, provisionError) })
@@ -161,6 +161,7 @@ function buildFlowOperation(
         executionType: ExecutionType.BEGIN,
         triggerPayload: data.payload,
         executeTrigger: data.executeTrigger ?? false,
+        entryStepName: data.entryStepName,
         sampleData: data.sampleData,
     }
 }

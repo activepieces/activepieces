@@ -140,6 +140,22 @@ export const newEventMatchingSearch = createTrigger({
   aiMetadata: {
     description: 'Fires when a newly created event in the selected calendar matches a required search term (matched across title, description, location, and attendees by default, or restricted to chosen fields). Each fired item is the matching new event; can also be filtered by event type.',
   },
+  propertyGroups: [
+    {
+      key: 'calendar',
+      display: 'section',
+      label: 'Calendar',
+      icon: 'calendar',
+      props: ['calendar_id'],
+    },
+    {
+      key: 'search',
+      display: 'section',
+      label: 'Search',
+      icon: 'filter',
+      props: ['search_term'],
+    },
+  ],
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     search_term: Property.ShortText({
@@ -193,36 +209,18 @@ export const newEventMatchingSearch = createTrigger({
   },
 
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
 
   async test(context) {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
 });

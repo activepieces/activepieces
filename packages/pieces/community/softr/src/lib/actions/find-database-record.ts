@@ -1,82 +1,58 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { SoftrAuth } from '../common/auth';
-import { makeRequest, transformRecordFields } from '../common/client';
+import { softrClient } from '../common/client';
+import { softrRecords } from '../common/records';
 import { databaseIdDropdown, tableFieldIdDropdown, tableIdDropdown } from '../common/props';
-import { TableField } from '../common/types';
+import { softrSearch } from '../common/search';
+import { softrOutputSchemas } from '../output-schemas';
 
 export const findDatabaseRecord = createAction({
 	auth: SoftrAuth,
 	name: 'findDatabaseRecord',
 	classification: 'SEARCH',
 	displayName: 'Find Database Record',
-	description: 'Finds a record in table.',
+	description: 'Finds the first record where a field equals a value.',
 	audience: 'both',
-	aiMetadata: { description: 'Searches a chosen table of a Softr database for the first record where the selected field exactly equals (IS) the given value, returning a found flag and the matched record. Use to look up a record by a field value before updating or deleting it. Read-only and idempotent; matches only a single record (limit 1).', idempotent: true },
+	aiMetadata: {
+		description:
+			'Finds the first record in a Softr table where one field equals a value. Returns found (true or false) and the record. For several conditions, other operators or many results, use Find Records. Read-only.',
+		idempotent: true,
+	},
 	props: {
 		databaseId: databaseIdDropdown,
 		tableId: tableIdDropdown,
 		fieldId: tableFieldIdDropdown,
 		fieldValue: Property.ShortText({
 			displayName: 'Field Value',
+			description: 'The value to match exactly. Use "true" or "false" for checkbox fields.',
 			required: true,
 		}),
 	},
+	outputSchema: softrOutputSchemas.findRecord,
 	async run({ auth, propsValue }) {
 		const { databaseId, tableId, fieldId, fieldValue } = propsValue;
+		const apiKey = auth.secret_text;
+		const table = await softrClient.getTable({ apiKey, databaseId, tableId });
+		const field = softrSearch.resolveField({ fields: table.fields, reference: fieldId });
+		const condition = softrSearch.buildCondition({ field, operator: 'IS', value: fieldValue });
 
-		const requestBody = {
-			paging: {
-				limit: 1,
+		const response = await softrRecords.searchRecords({
+			apiKey,
+			databaseId,
+			tableId,
+			body: {
+				paging: { offset: 0, limit: 1 },
+				filter: { condition: { operator: 'AND', conditions: [condition] } },
 			},
-			filter: {
-				condition: {
-					operator: 'AND',
-					conditions: [
-						{
-							leftSide: fieldId,
-							operator: 'IS',
-							rightSide: fieldValue,
-						},
-					],
-				},
-			},
-		};
+		});
 
-		const response = await makeRequest<{
-			data: {
-				fields: TableField[];
-			}[];
-		}>(
-			auth,
-			HttpMethod.POST,
-			`/databases/${databaseId}/tables/${tableId}/records/search`,
-			requestBody,
-		);
-
-		if (Array.isArray(response.data) && response.data.length === 0) {
-			return {
-				found: false,
-				data: {},
-			};
+		const foundRecord = response.data?.[0];
+		if (!foundRecord) {
+			return { found: false, data: {} };
 		}
-
-		const foundRecord = response.data[0];
-
-		const tableReponse = await makeRequest<{
-			data: {
-				fields: TableField[];
-			};
-		}>(auth, HttpMethod.GET, `/databases/${databaseId}/tables/${tableId}`);
-
-		const transformedFields = transformRecordFields(tableReponse.data.fields, foundRecord.fields);
-
 		return {
 			found: true,
-			data: {
-				...foundRecord,
-				fields: transformedFields,
-			},
+			data: softrClient.withFieldNames({ record: foundRecord, tableFields: table.fields }),
 		};
 	},
 });

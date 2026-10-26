@@ -38,6 +38,10 @@ Platform reporting: daily runs, active flows/users, time-saved estimates. `Platf
 
 All structured logging goes through **evlog** — one wide event per unit of work, one remote drain (Axiom / HyperDX / Loki / Better Stack / OTLP; first match wins). Metrics on ClickStack are **log-based**: dashboards and alerts query numeric fields (`durationMs`, `memRssMb`, `eventLoopDelayP99Ms`) on wide events. Both API and worker emit a 60s `system.snapshot` event with process RSS / heap / event-loop lag so those charts exist at all. BullMQ queue depth is the one signal exported as a **native OTLP gauge** (`bullmq.job.count`), because per-queue-per-state cardinality would bloat wide events. Worker CPU / RAM travels in-band on the poll healthcheck (not to ClickStack) and surfaces on `GET /v1/health/system`.
 
+Gotchas:
+- **The top-level `error` key belongs to the wide event, and a string you put there is silently thrown away.** `RequestLogger.error` ends with `context.error = errorObj`, built from whatever the call passed — so `log.error({ error: String(e) }, 'msg')` is overwritten by an object derived from `'msg'`, and the real error text is gone with no warning (GIT-1876; the same line shipped in `execute-polling.ts` for a year). Pass the **Error object** instead — `ap-logger` normalizes `obj.err ?? obj.error` through `toError` and hands it to the wide event, keeping name, message and stack — or, for an error that belongs to something else, name it after its owner (`engine: { status, error }`). The rule only bites the reserved top-level key; nested and descriptive error fields are safe.
+- **The job logger already binds the request and flow ids, so handler logs rarely need to repeat them.** `executeJob` seeds each job's wide event with `requestId`, `project`, `platform`, `flow`, `flowVersion` and `job` from the job data. One exception worth knowing: `flowVersion` is bound from a `flowVersionId` field, and `WebhookJobData` calls it `flowVersionIdToRun` — so webhook jobs are the one case where the handler has to add `flowVersion: { id }` itself.
+
 ### Product Telemetry
 
 Anonymous product analytics to PostHog, from both the browser and the app container. Gated per platform by `platform_configuration.isProductTelemetryEnabled`, edited at Platform Admin > Account > Configurations; `AP_TELEMETRY_ENABLED` survives only as the value a platform's row is *born* with. See [000033](../decisions/000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md).
@@ -92,6 +96,7 @@ Streams platform/project events to webhook URLs in real time — internal AP flo
 
 ## Pages
 
+- **Database** — the load-bearing page for all backend DB work: isolation, entity registration, migrations (blocking + background), constraint recipes, CIC helper
 - **Tables** — Field / Record / Cell and TableWebhooks
 - **File Storage** — blobs in S3 or DB, compression, expiry
 - **Key-Value Store** — project-scoped state pieces persist across runs
@@ -99,3 +104,4 @@ Streams platform/project events to webhook URLs in real time — internal AP flo
 - **Analytics** — usage reporting
 - **Audit Logs** — the persisted security-action record
 - **Logging & Metrics (evlog)** — wide events, drains, log-based metrics, `system.snapshot`, OTLP queue gauge
+- **Enterprise OOM Tracker** — daily `MEMORY_LIMIT_EXCEEDED` count per enterprise platform in ClickHouse, with a daily Discord report of every affected platform

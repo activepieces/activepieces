@@ -1,14 +1,14 @@
 import { setTimeout as delay } from 'node:timers/promises'
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
-import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiUtils, modelTierCatalog, ModelTierSurface } from '@activepieces/server-utils'
 import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
-import { SharedV3ProviderOptions } from '@ai-sdk/provider'
-import { EmbeddingModel, LanguageModel } from 'ai'
+import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
 import { z } from 'zod'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
+import { platformModelTierService, TierForRun } from '../../ai/platform-model-tier-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
@@ -20,6 +20,7 @@ import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
 import { agentModelResolution } from './agent-model-resolution'
+import { agentModelTier } from './agent-model-tier'
 import { UserMemoryEntity } from './user-memory-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
@@ -129,7 +130,53 @@ async function resolveChatProvider({ platformId, scope, log }: { platformId: str
     return chatProvider
 }
 
-async function assertRunProviderConfigured({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
+async function resolvePlatformWorkModel({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<PlatformWorkModel | null> {
+    const scope: ProviderScope = { type: 'platform' }
+    const defaultKey = await aiProviderService(log).getChatKey({ platformId, scope })
+    if (defaultKey?.enabledForChat === true) {
+        return { config: await aiProviderService(log).configForTierKey({ platformId, key: defaultKey }), modelId: null }
+    }
+    const mainEntry = allProjectsMainEntry({ forRun: await platformModelTierService.getDefaultForRun({ platformId, scope }) })
+    if (!isNil(mainEntry)) {
+        return { config: await aiProviderService(log).configForTierKey({ platformId, key: mainEntry.key }), modelId: mainEntry.modelId }
+    }
+    return isNil(defaultKey) ? null : { config: await aiProviderService(log).configForTierKey({ platformId, key: defaultKey }), modelId: null }
+}
+
+function allProjectsMainEntry({ forRun }: { forRun: TierForRun | null }): TierForRun['entries'][number] | undefined {
+    const main = forRun?.tier.entries[0]
+    return isNil(main) ? undefined : forRun?.entries.find((entry) => entry.key.id === main.configId && entry.modelId === main.modelId && entry.key.projectScope === 'all')
+}
+
+async function resolvePlatformWorkModelOrThrow({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<PlatformWorkModel> {
+    const work = await resolvePlatformWorkModel({ platformId, log })
+    if (isNil(work)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: platformId, entityType: AI_PROVIDER_ENTITY_TYPES.chatProvider },
+        }, 'no AI provider on this platform can run platform-wide work')
+    }
+    return work
+}
+
+async function resolvePlatformFastModel({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    const scope: ProviderScope = { type: 'platform' }
+    const defaultKey = await aiProviderService(log).getChatKey({ platformId, scope })
+    const fastEntry = defaultKey?.enabledForChat === true ? undefined : allProjectsMainEntry({ forRun: await platformModelTierService.getFastForRun({ platformId, scope }) })
+    const { config, modelId } = !isNil(fastEntry)
+        ? { config: await aiProviderService(log).configForTierKey({ platformId, key: fastEntry.key }), modelId: fastEntry.modelId }
+        : !isNil(defaultKey)
+            ? { config: await aiProviderService(log).configForTierKey({ platformId, key: defaultKey }), modelId: null }
+            : await resolvePlatformWorkModelOrThrow({ platformId, log })
+    const fastModelId = modelId ?? await resolveFastModelId({ platformId, providerConfig: config, surface: 'chat', scope, log })
+    return aiUtils.createModel({ credentials: config, modelId: fastModelId, platformId, providerConfigId: config.configId })
+}
+
+async function assertRunProviderConfigured({ platformId, provider, providerConfigId, modelTierId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, modelTierId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
+    if (!isNil(modelTierId)) {
+        await agentModelTier(log).assertUsable({ platformId, tierId: modelTierId, scope })
+        return
+    }
     if (isNil(provider)) {
         const chatProvider = await aiProviderService(log).getChatProviderName({ platformId, scope })
         if (isNil(chatProvider)) {
@@ -216,16 +263,6 @@ async function resolveFastModel({ platformId, provider, providerConfigId, surfac
 }
 
 
-async function resolveEmbeddingModel({ platformId, provider, providerConfigId, scope, billing, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, billing?: ActivepiecesAiBilling, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
-    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    return aiUtils.createEmbeddingModel({
-        credentials: providerConfig,
-        platformId,
-        providerConfigId: providerConfig.configId,
-        ...spreadIfDefined('billing', billing),
-    })
-}
-
 // Analytics and billing label a turn with the provider that served it. A conversation with no
 // project has no key to name, and guessing platform-wide would report a credential the run was
 // never allowed to use, so the provider stays unknown.
@@ -234,6 +271,11 @@ async function resolveChatProviderName({ platformId, projectId, log }: { platfor
         return null
     }
     return aiProviderService(log).getChatProviderName({ platformId, scope: runScopeOrThrow({ projectId }) })
+}
+
+async function resolveConversationProviderName({ platformId, projectId, providerConfigId, log }: { platformId: string, projectId: string | null, providerConfigId: string | null, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    const pinned = isNil(providerConfigId) ? null : await aiProviderService(log).findProviderName({ platformId, configId: providerConfigId })
+    return pinned ?? resolveChatProviderName({ platformId, projectId, log })
 }
 
 async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {
@@ -336,6 +378,7 @@ function jobFieldsFromConfig({ config }: { config: AgentConfig }): AgentJobConfi
         modelName: config.modelName ?? null,
         ...spreadIfDefined('provider', config.provider ?? undefined),
         ...spreadIfDefined('providerConfigId', config.providerConfigId ?? undefined),
+        ...spreadIfDefined('modelTierId', config.modelTierId ?? undefined),
         promptOverride: { system: config.instructions },
     }
 }
@@ -365,8 +408,11 @@ async function acquireStreamingLock({ conversationId, runId }: { conversationId:
         return 'acquired'
     }
     const current = await conversationRepo().findOneBy({ id: conversationId })
-    const supersededByNewerRun = !isNil(runId) && !isNil(current?.activeRunId) && current.activeRunId !== runId
-    return supersededByNewerRun ? 'superseded' : 'busy'
+    const ownedByARun = !isNil(runId) && !isNil(current?.activeRunId)
+    if (!ownedByARun) {
+        return 'busy'
+    }
+    return current.activeRunId === runId ? 'duplicate' : 'superseded'
 }
 
 async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
@@ -437,6 +483,9 @@ export const agentHelpers = {
     getConversationOrThrow,
     getUserProjects,
     resolveChatProvider,
+    resolvePlatformWorkModel,
+    resolvePlatformWorkModelOrThrow,
+    resolvePlatformFastModel,
     assertRunProviderConfigured,
     ...agentModelResolution,
     resolveFastModel,
@@ -444,8 +493,8 @@ export const agentHelpers = {
     resolveImageModelId,
     resolveModelId,
     resolveRunProvider,
-    resolveEmbeddingModel,
     resolveChatProviderName,
+    resolveConversationProviderName,
     runScopeOrThrow,
     selectRunProject,
     assertProjectSwitchKeepsKey,
@@ -458,6 +507,11 @@ export const agentHelpers = {
     saveUserMemory,
 }
 
-type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'promptOverride'>
+type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'modelTierId' | 'promptOverride'>
 
-export type StreamingLockResult = 'acquired' | 'busy' | 'superseded'
+export type StreamingLockResult = 'acquired' | 'busy' | 'superseded' | 'duplicate'
+
+export type PlatformWorkModel = {
+    config: GetProviderConfigResponse
+    modelId: string | null
+}

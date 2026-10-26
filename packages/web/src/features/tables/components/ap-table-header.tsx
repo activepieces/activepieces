@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { ActiveUsersWidget } from '@/components/custom/active-users-widget';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -42,6 +43,7 @@ import {
   projectCollectionUtils,
 } from '@/features/projects/stores/project-collection';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { downloadFile } from '@/lib/dom-utils';
 
 import { tablesApi } from '../api/tables-api';
@@ -134,10 +136,7 @@ export function ApTableHeader({
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="size-6 flex items-center justify-center"
-                  >
+                  <Button variant="ghost" size="icon-xs">
                     <ChevronDown className="h-4 w-4 text-gray-11" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -233,7 +232,9 @@ export function ApTableHeader({
         <div className="flex items-center gap-1.5 border border-warning-7 rounded-md px-2.5 py-1 text-sm text-warning-11">
           <Lock className="size-3.5 shrink-0" />
           <span>
-            {t('{name} is editing', { name: lockedBy.userDisplayName })}
+            {lockedBy.userId === authenticationSession.getCurrentUserId()
+              ? t('Open for editing in another tab or window')
+              : t('{name} is editing', { name: lockedBy.userDisplayName })}
           </span>
           <span className="text-warning-11/40">|</span>
           <button className="hover:underline font-medium" onClick={takeOver}>
@@ -294,8 +295,14 @@ export function ApTableHeader({
           open={isImportTableDialogOpen}
           setIsOpen={setIsImportTableDialogOpen}
           tableId={table.id}
-          allowedFileTypes={['json', 'csv']}
-          onImportSuccess={refreshTableState}
+          onImportSuccess={({ importedRecordsCount }) => {
+            refreshTableState();
+            if (importedRecordsCount > 0) {
+              toast.success(
+                t('recordsImported', { count: importedRecordsCount }),
+              );
+            }
+          }}
         />
       </div>
     </>

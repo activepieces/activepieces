@@ -35,7 +35,7 @@
   "Gets one customer review of a location.": "Gets one customer review of a location.",
   "Creates or replaces the owner reply to a review.": "Creates or replaces the owner reply to a review.",
   "Deletes the owner reply to a review.": "Deletes the owner reply to a review.",
-  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
+  "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタムAPI呼び出しを実行します。",
   "Account": "アカウント",
   "Location": "ロケーション",
   "Post Type": "Post Type",
@@ -130,5 +130,12 @@
   "DELETE": "削除",
   "HEAD": "頭",
   "New Review": "新しいレビュー",
-  "Triggers when a customer posts a new review on the location.": "顧客がビジネス拠点に新しいクチコミを投稿したときにトリガーされます。"
+  "Triggers when a customer posts a new review on the location.": "顧客がビジネス拠点に新しいクチコミを投稿したときにトリガーされます。",
+  "Post to Update": "更新する投稿",
+  "Review": "クチコミ",
+  "Reply": "返信",
+  "Results": "結果",
+  "Business": "ビジネス",
+  "Markdown": "Markdown",
+  "Fields left empty keep their current value.": "空欄のフィールドは現在の値が保持されます。"
 }

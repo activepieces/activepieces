@@ -18,72 +18,122 @@ export const createClickupTask = createAction({
   auth: clickupAuth,
   name: 'create_task',
   classification: 'WRITE',
-  description: 'Create a new task in a ClickUp workspace and list',
+  description: 'Create a task in a ClickUp list.',
   audience: 'human',
   aiMetadata: { description: 'Create a new top-level task in a ClickUp list, with optional status, priority, assignees, description, dates, time estimate, and custom fields. Pick this for a standalone task; use Create Subtask to nest under a parent or Create Task From Template to inherit a template. Each call creates a new task, so it is not idempotent.', idempotent: false },
   displayName: 'Create Task',
+  propertyGroups: [
+    {
+      key: 'location',
+      display: 'section',
+      label: 'Location',
+      icon: 'inbox',
+      props: ['workspace_id', 'space_id', 'list_id'],
+    },
+    {
+      key: 'details',
+      display: 'section',
+      label: 'Task Details',
+      icon: 'text',
+      props: [
+        'name',
+        'description',
+        'is_markdown',
+        'assignee_id',
+        'status_id',
+        'priority_id',
+      ],
+    },
+    {
+      key: 'dates',
+      display: 'section',
+      label: 'Dates',
+      icon: 'calendar',
+      props: [
+        'start_date',
+        'due_date',
+        'start_date_time',
+        'due_date_time',
+        'time_estimate',
+      ],
+    },
+    {
+      key: 'custom',
+      display: 'section',
+      label: 'List Fields',
+      icon: 'sliders',
+      props: [
+        'custom_fields_info',
+        'custom_fields',
+        'check_required_custom_fields',
+      ],
+    },
+  ],
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),
     list_id: clickupCommon.list_id(),
     name: Property.ShortText({
-      description: 'The name of task',
-      displayName: 'Name',
+      description: 'The title people see on the task.',
+      displayName: 'Task Name',
+      placeholder: 'e.g. Prepare the launch checklist',
       required: true,
     }),
     status_id: clickupCommon.status_id(),
     priority_id: clickupCommon.priority_id(),
     assignee_id: clickupCommon.assignee_id(
       false,
-      'Assignee Id',
-      'ID of assignee for Clickup Task'
+      'Assignees',
+      'People to assign the task to.'
     ),
     description: Property.LongText({
-      description: 'The description of task',
+      description: 'Details shown on the task.',
       displayName: 'Description',
       required: false,
     }),
     is_markdown: Property.Checkbox({
-      description: 'Is the description in markdown format',
-      displayName: 'Is Markdown',
+      description: 'Send the description as Markdown so ClickUp formats it.',
+      displayName: 'Use Markdown',
       required: false,
       defaultValue: false,
     }),
     due_date: Property.DateTime({
-      description: 'The due date of the task',
+      description: 'When the task is due.',
       displayName: 'Due Date',
       required: false,
+      width: 'half',
     }),
     due_date_time: Property.Checkbox({
-      description: 'Whether to include time in the due date',
-      displayName: 'Due Date Time',
+      description: 'Keep the time of day, not just the date.',
+      displayName: 'Include Due Time',
       required: false,
       defaultValue: false,
     }),
     start_date: Property.DateTime({
-      description: 'The start date of the task',
+      description: 'When work on the task starts.',
       displayName: 'Start Date',
       required: false,
+      width: 'half',
     }),
     start_date_time: Property.Checkbox({
-      description: 'Whether to include time in the start date',
-      displayName: 'Start Date Time',
+      description: 'Keep the time of day, not just the date.',
+      displayName: 'Include Start Time',
       required: false,
       defaultValue: false,
     }),
     time_estimate: Property.Number({
-      description: 'The time estimate for the task in milliseconds',
+      description: 'In milliseconds, e.g. 3600000 for one hour.',
       displayName: 'Time Estimate',
       required: false,
     }),
     check_required_custom_fields: Property.Checkbox({
-      description: 'Re-enable required custom fields validation for the task',
+      description: 'Reject the task if a required custom field is empty.',
       displayName: 'Check Required Custom Fields',
       required: false,
       defaultValue: false,
     }),
     custom_fields_info: Property.MarkDown({
-      value: `Select custom fields\n\nFor custom dropdown fields, choose a dropdown value based on the index (in the list, the first option is index 0, second is 1, third is 2, etc.)`,
+      value: "For dropdown custom fields, enter the option's position, starting at 0.",
       variant: MarkdownVariant.INFO,
     }),
     custom_fields: Property.DynamicProperties({
@@ -96,21 +146,18 @@ export const createClickupTask = createAction({
           return {};
         }
 
-        // Ensure `auth` is of the correct type
         const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
 
-        // Fetch custom fields using clickupCommon
         const { fields: customFields } = await listAccessibleCustomFields(
           accessToken,
           list_id.toString()
         );
 
-        // Map custom fields to InputPropertyMap
         const dynamicProps: Record<string, any> = {};
         customFields.forEach((field) => {
           dynamicProps[field.id] = Property.ShortText({
             displayName: field.name,
-            description: `Value for the custom field: ${field.name}`,
+            description: `Value for ${field.name}.`,
             required: false,
           });
         });
@@ -162,36 +209,30 @@ export const createClickupTask = createAction({
       assignees: assignee_id,
     };
 
-    // Add description or markdown content
     if (is_markdown && description) {
       data.markdown_content = description;
     } else if (description) {
       data.description = description;
     }
 
-    // Convert due_date to integer format and add it
     if (due_date) {
       data.due_date = new Date(due_date).getTime();
       data.due_date_time = due_date_time || false;
     }
 
-    // Convert start_date to integer format and add it
     if (start_date) {
       data.start_date = new Date(start_date).getTime();
       data.start_date_time = start_date_time || false;
     }
 
-    // Add time estimate
     if (time_estimate) {
       data.time_estimate = time_estimate;
     }
 
-    // Add check_required_custom_fields
     if (check_required_custom_fields) {
       data.check_required_custom_fields = check_required_custom_fields;
     }
 
-    // Map custom_fields into the required format
     if (custom_fields) {
       data.custom_fields = Object.entries(custom_fields).map(
         ([fieldId, value]) => ({
@@ -201,7 +242,6 @@ export const createClickupTask = createAction({
       );
     }
 
-    // Make the API request
     const response = await callClickUpApi(
       HttpMethod.POST,
       `list/${list_id}/task`,

@@ -173,7 +173,8 @@ jobs:
           CH_HOST: ${{ secrets.CLICKHOUSE_CI_HOST }}
           CH_USER: ${{ secrets.CLICKHOUSE_CI_USER }}
           CH_PASS: ${{ secrets.CLICKHOUSE_CI_PASSWORD }}
-          BETTERSTACK_WEBHOOK_URL: ${{ secrets.BETTERSTACK_WEBHOOK_URL }}
+          SIGNALS_URL: ${{ secrets.SIGNALS_URL }}
+          SIGNALS_TOKEN: ${{ secrets.SIGNALS_TOKEN }}
         run: |
           node benchmark/detect-regression.mjs \
             --current /tmp/result.json \
@@ -235,6 +236,20 @@ jobs:
       - name: Teardown
         if: always()
         run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml down -v
+
+      - name: Send pipeline failure to Box (scheduled runs only)
+        if: failure() && github.event_name == 'schedule'
+        env:
+          SIGNALS_URL: ${{ secrets.SIGNALS_URL }}
+          SIGNALS_TOKEN: ${{ secrets.SIGNALS_TOKEN }}
+          LABEL: ${{ matrix.label }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          jq -n --arg cell "$LABEL" --arg url "$RUN_URL" '{
+            service: "nightly-benchmark",
+            fingerprint: "bench-pipeline-\($cell)",
+            message: "Nightly benchmark job `\($cell)` failed before producing a trustworthy result: \($url)\n\nRead the failed step logs with `gh run view --log-failed`, find whether the cause is infrastructure (secrets, ClickHouse auth, runner, docker) or a code change on main that broke the bench flow in benchmark/setup.ts, and fix it if the fix is small. Linear: team SRE, project Stability."
+          }' | curl -sS --fail-with-body -H 'Content-Type: application/json; charset=utf-8' -H "Authorization: Bearer $SIGNALS_TOKEN" --data-binary @- "$SIGNALS_URL"
 
   summary:
     runs-on: ubuntu-latest

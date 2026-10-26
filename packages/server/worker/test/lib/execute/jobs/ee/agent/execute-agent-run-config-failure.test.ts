@@ -114,6 +114,20 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
         expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
     })
 
+    for (const code of [ErrorCode.VALIDATION, ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED]) {
+        it(`completes as a user failure when the server rejects the turn with ${code}, so on-call is not paged`, async () => {
+            const reason = 'No model in tier "Smart" can run'
+            const { ctx, resumed } = buildContext(Object.assign(new Error(`RPC [getAgentConfig] handler threw: ${code}`), {
+                apError: { code, message: reason },
+            }))
+
+            const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' }))
+
+            expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
+            expect(resumed[0].output).toMatchObject({ failure: reason })
+        })
+    }
+
     it('still fails the job on an unrecognised error, so our own bugs are not laundered', async () => {
         const { ctx, events } = buildContext(new Error('Cannot read properties of undefined'))
 

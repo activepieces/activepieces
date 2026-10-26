@@ -1,16 +1,21 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { lemlistAuth } from '../common/constants';
 import { campaignsDropdown } from '../common/props';
-import { lemlistApiService } from '../common/requests';
+import { lemlistLeads } from '../common/requests';
+import { lemlistSchemas } from '../common/schemas';
 
-export const unsubscribeALead	 = createAction({
+export const unsubscribeALead = createAction({
   auth: lemlistAuth,
   name: 'unsubscribeALead',
   classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe a Lead',
   description: 'Unsubscribe a lead from a campaign.',
-  audience: 'both',
-  aiMetadata: { description: 'Unsubscribes a lead, identified by email, from a specific Lemlist campaign, stopping further emails to them in it. Use to honor an opt-out or stop contacting a lead in one campaign; requires both the campaign and the lead email. Idempotent: re-running leaves the lead unsubscribed.', idempotent: true },
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Unsubscribes a lead, identified by email, from one Lemlist campaign so it gets no more messages from it. Cannot be undone from this piece.',
+    idempotent: true,
+  },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'] }),
     email: Property.ShortText({
@@ -19,10 +24,13 @@ export const unsubscribeALead	 = createAction({
       required: true,
     }),
   },
-  async run({ auth, propsValue: { campaignId, email } }) {
-    return await lemlistApiService.unsubscribeLeadFromACampaign(auth, {
-      campaignId: campaignId as string,
-      leadEmail: email as string,
+  outputSchema: lemlistSchemas.unsubscribedLead,
+  async run({ auth, propsValue }) {
+    return lemlistLeads.deleteLeadFromCampaign({
+      apiKey: auth.secret_text,
+      campaignId: propsValue.campaignId,
+      lead: propsValue.email,
+      remove: false,
     });
   },
 });

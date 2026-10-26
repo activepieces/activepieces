@@ -12,6 +12,7 @@ import {
   LogSliceRef,
   StepOutputType,
   RunInternalError,
+  PieceAudienceFilter,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download, Info, ShieldAlert } from 'lucide-react';
@@ -101,6 +102,7 @@ export const FlowStepInputOutput = () => {
     name: stepPieceName ?? '',
     version: stepPieceVersion,
     enabled: !isNil(stepPieceName),
+    audience: PieceAudienceFilter.ALL,
   });
   const parsedOutput = isSlicedOutput
     ? undefined
@@ -235,7 +237,7 @@ export const FlowStepInputOutput = () => {
           className="w-full"
         >
           <div className="flex items-center justify-between gap-2 shrink-0 mb-2">
-            <TabsList className="h-9">
+            <TabsList>
               {!isTrigger && (
                 <TabsTrigger value="input">{t('Input')}</TabsTrigger>
               )}

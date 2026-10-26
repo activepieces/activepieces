@@ -1,26 +1,25 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
-import {
-  configureConnection,
-  connect,
-  destroy,
-  execute,
-  snowflakeCommonProps,
-  SnowflakeAuthValue,
-} from '../common';
+import { snowflakeCommonProps, toAuthValue, withSnowflake } from '../common';
+import { dynamicTableOutputSchema } from '../common/output-schemas';
+import { identifier, qualifiedName } from '../common/sql';
+
+const TARGET_LAG = /^(DOWNSTREAM|\d{1,6}\s+(seconds?|minutes?|hours?|days?))$/i;
 
 export const createDynamicTableAction = createAction({
   name: 'create_dynamic_table',
+  classification: 'WRITE',
   displayName: 'Create / Refresh Dynamic Table',
   description:
     'Create or replace a Snowflake Dynamic Table that automatically refreshes based on a query. ' +
     'Dynamic Tables are a declarative way to define a table whose content is derived from a query, updated on a schedule.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
-      'Creates or replaces a Snowflake Dynamic Table whose contents are derived from a SELECT query and auto-refresh on a target-lag schedule, using a specified warehouse. Use to set up or redefine a declarative, self-refreshing derived table. Effectively idempotent in result via CREATE OR REPLACE (re-running with the same inputs yields the same table definition), though REPLACE drops and recreates the object.',
+      'CREATE OR REPLACE DYNAMIC TABLE from a SELECT query with a target lag and warehouse. Human-only DDL. Re-running with the same inputs recreates the same definition (REPLACE drops and rebuilds the table).',
     idempotent: true,
   },
+  outputSchema: dynamicTableOutputSchema,
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,
@@ -50,51 +49,45 @@ export const createDynamicTableAction = createAction({
   async run(context) {
     const { database, schema, table_name, target_lag, warehouse, query } =
       context.propsValue;
-
     const identifierRegex = /^[A-Za-z_][A-Za-z0-9_$]*$/;
     if (!identifierRegex.test(table_name)) {
       throw new Error(
         'Invalid table name: only letters, digits, underscores, and $ are allowed.'
       );
     }
-    if (target_lag.includes("'")) {
+    const lag = target_lag.trim();
+    if (!TARGET_LAG.test(lag)) {
       throw new Error(
-        'Invalid target_lag value: single quotes are not allowed.'
+        'Invalid Refresh Interval. Use a number and unit such as "5 minutes" or "1 hour", or DOWNSTREAM.'
       );
     }
-
     const effectiveWarehouse =
-      warehouse || (context.auth as SnowflakeAuthValue).props?.warehouse;
+      warehouse || toAuthValue(context.auth).props.warehouse;
     if (!effectiveWarehouse) {
       throw new Error(
         'A warehouse is required. Provide it in the action props or set a default in your connection.'
       );
     }
-    if (!identifierRegex.test(effectiveWarehouse)) {
-      throw new Error(
-        'Invalid warehouse name: only letters, digits, underscores, and $ are allowed.'
-      );
-    }
-
-    const sql = `
-CREATE OR REPLACE DYNAMIC TABLE ${database}.${schema}.${table_name}
-  TARGET_LAG = '${target_lag}'
-  WAREHOUSE = ${effectiveWarehouse}
-  AS ${query}
-    `.trim();
-
-    const connection = configureConnection(context.auth as SnowflakeAuthValue);
-    await connect(connection);
-    try {
-      await execute(connection, sql, []);
-      return {
-        success: true,
-        table: `${database}.${schema}.${table_name}`,
-        target_lag,
-        warehouse: effectiveWarehouse,
-      };
-    } finally {
-      await destroy(connection);
-    }
+    const target = `${qualifiedName({
+      value: `${database}.${schema}`,
+      maxParts: 2,
+      label: 'Schema',
+    })}.${table_name}`;
+    const lagSql =
+      lag.toUpperCase() === 'DOWNSTREAM' ? 'DOWNSTREAM' : `'${lag}'`;
+    const sql = `CREATE OR REPLACE DYNAMIC TABLE ${target}
+  TARGET_LAG = ${lagSql}
+  WAREHOUSE = ${identifier({ name: effectiveWarehouse, label: 'Warehouse' })}
+  AS ${query}`;
+    await withSnowflake({
+      auth: toAuthValue(context.auth),
+      fn: (session) => session.query({ sql }),
+    });
+    return {
+      success: true,
+      table: `${database}.${schema}.${table_name}`,
+      target_lag: lag,
+      warehouse: effectiveWarehouse,
+    };
   },
 });

@@ -8,7 +8,6 @@ import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecisio
 function createProgressGuard() {
     const failureCounts = new Map<string, number>()
     const succeededWrites = new Set<string>()
-    const loadedGuides = new Set<string>()
 
     const actionKey = ({ pieceName, actionName, input }: { pieceName: string, actionName: string, input: unknown }): string =>
         `${pieceName}::${actionName}::${stableStringify(input ?? {})}`
@@ -41,20 +40,14 @@ function createProgressGuard() {
             }
             failureCounts.set(key, (failureCounts.get(key) ?? 0) + 1)
         },
-        markGuideLoaded: (topic: string): boolean => {
-            if (loadedGuides.has(topic)) return true
-            loadedGuides.add(topic)
-            return false
-        },
     }
 }
 
-export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState }: {
+export function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
-    guides: Record<string, string>
     taintState: TaintState
 }): ToolSet {
     const progressGuard = createProgressGuard()
@@ -262,23 +255,6 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                     return { text, producedFiles }
                 }
                 return truncateLargeResult(rawResult)
-            },
-        }),
-
-        ap_load_guide: tool({
-            description: 'Load a detailed playbook into context before that kind of work (silent, internal). Topics: build_flow (constructing/validating/testing an automation), one_time_task (one-shot do-it-now action), error_handling (success/failure branches), http_fallback (calling an API directly when no connection exists), control_flow (routers/conditions & loops — exact operators and gotchas), state (remembering data across runs: Store vs Tables vs Sheets, dedup/idempotency), tables (the built-in Tables database), ai (native AI steps and their output shapes), about_activepieces (what Activepieces is — open source, self-hosting, editions/pricing, security, how integrations work, how you work).',
-            inputSchema: z.object({
-                topic: z.enum(['build_flow', 'one_time_task', 'error_handling', 'http_fallback', 'control_flow', 'state', 'tables', 'ai', 'about_activepieces']).describe('Which guide to load'),
-            }),
-            execute: async (toolInput) => {
-                const guide = guides[toolInput.topic]
-                if (!guide) {
-                    return `No guide found for "${toolInput.topic}".`
-                }
-                if (progressGuard.markGuideLoaded(toolInput.topic)) {
-                    return `You already loaded the "${toolInput.topic}" guide earlier in this turn — re-read it from the conversation above instead of reloading.`
-                }
-                return guide
             },
         }),
 

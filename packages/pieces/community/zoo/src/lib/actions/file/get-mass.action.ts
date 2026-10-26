@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { zooAuth } from '../../auth'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { cadFileAnalysis } from '../../common/cad-file-analysis';
 
 export const getMassAction = createAction({
   name: 'get_mass',
@@ -17,19 +17,34 @@ export const getMassAction = createAction({
       required: true,
       description: 'The CAD file to analyze',
     }),
+    sourceFormat: cadFileAnalysis.sourceFormat,
+    materialDensity: Property.Number({
+      displayName: 'Material Density',
+      description: 'Density of the material the part is made of, in the unit below',
+      required: true,
+    }),
+    materialDensityUnit: Property.StaticDropdown({
+      displayName: 'Material Density Unit',
+      required: true,
+      defaultValue: 'kg:m3',
+      options: {
+        options: [
+          { label: 'kg/m³', value: 'kg:m3' },
+          { label: 'lb/ft³', value: 'lb:ft3' },
+        ],
+      },
+    }),
   },
   async run({ auth, propsValue }) {
-    const formData = new FormData();
-    formData.append('file', new Blob([propsValue.file.data as any]), propsValue.file.filename);
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.zoo.dev/file/mass',
-      headers: {
-        Authorization: `Bearer ${auth.secret_text}`,
+    return cadFileAnalysis.analyze({
+      token: auth.secret_text,
+      endpoint: 'mass',
+      file: propsValue.file,
+      sourceFormat: propsValue.sourceFormat,
+      queryParams: {
+        material_density: String(propsValue.materialDensity),
+        material_density_unit: propsValue.materialDensityUnit,
       },
-      body: formData,
     });
-    return response.body;
   },
 });

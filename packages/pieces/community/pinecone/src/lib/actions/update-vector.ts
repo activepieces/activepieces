@@ -1,14 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { createPineconeClientFromAuth } from '../common/pinecone-client';
+import { pineconeClient } from '../common/client';
+import type { RecordMetadata, UpdateOptions } from '../common/types';
 import { pineconeAuth } from '../auth';
+import { updateVectorOutputSchema } from '../output-schemas';
 
-export const updateVector = createAction({
+export const updateVectorAction = createAction({
   auth: pineconeAuth,
   name: 'update_vector',
+  outputSchema: updateVectorOutputSchema,
   classification: 'WRITE',
   displayName: 'Update a Vector',
   description: 'Updates a vector in a namespace. Overwrites existing values and metadata.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Updates an existing vector identified by ID in a Pinecone namespace, overwriting any of its dense values, sparse values, or metadata that are provided. Use to modify a stored vector in place rather than to add new ones (use Upsert Vector for that). Requires the index name and a vector ID (1-512 chars). Idempotent: keyed on the vector ID, so repeating the same call leaves the record in the same state.', idempotent: true },
   props: {
     indexName: Property.ShortText({
@@ -91,15 +94,15 @@ export const updateVector = createAction({
       );
     }
 
-    const pc = createPineconeClientFromAuth(context.auth);
+    const pc = pineconeClient.create({ auth: context.auth });
 
     try {
 
       const index = indexHost
-        ? pc.index(indexName, indexHost)
-        : pc.index(indexName);
+        ? pc.index({ name: indexName, host: indexHost })
+        : pc.index({ name: indexName });
 
-      const updateRequest: any = {
+      const updateRequest: UpdateOptions = {
         id: id
       };
 
@@ -124,13 +127,13 @@ export const updateVector = createAction({
       }
 
       if (metadata && Array.isArray(metadata) && metadata.length > 0) {
-        const metadataObj: any = {};
+        const metadataObj: RecordMetadata = {};
         for (const item of metadata) {
-          const metaItem = item as any;
-          const key = String(metaItem.key);
-          const value = metaItem.value;
+          const metaItem = typeof item === 'object' && item !== null ? item : {};
+          const key = String('key' in metaItem ? metaItem.key : undefined);
+          const value = 'value' in metaItem ? metaItem.value : undefined;
           const numValue = Number(value);
-          metadataObj[key] = isNaN(numValue) ? value : numValue;
+          metadataObj[key] = isNaN(numValue) ? String(value) : numValue;
         }
         updateRequest.metadata = metadataObj;
       }
@@ -159,50 +162,6 @@ export const updateVector = createAction({
         message: `Successfully updated vector '${id}'`
       };
     } catch (caught) {
-      console.log('Failed to update vector.', caught);
-
-      if (caught instanceof Error) {
-        const error = caught as any;
-
-        if (error.status === 400 || error.code === 400) {
-          return {
-            success: false,
-            error: 'Bad Request',
-            code: 400,
-            message:
-              error.message ||
-              'The request body included invalid request parameters.',
-            details: error.details || [],
-            vectorId: id,
-            indexName: indexName
-          };
-        }
-
-        if (error.status >= 400 && error.status < 500) {
-          return {
-            success: false,
-            error: 'Client Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected client error occurred.',
-            details: error.details || [],
-            vectorId: id,
-            indexName: indexName
-          };
-        }
-
-        if (error.status >= 500 || error.code >= 500) {
-          return {
-            success: false,
-            error: 'Server Error',
-            code: error.status || error.code,
-            message: error.message || 'An unexpected server error occurred.',
-            details: error.details || [],
-            vectorId: id,
-            indexName: indexName
-          };
-        }
-      }
-
       return {
         success: false,
         error: 'Unknown Error',

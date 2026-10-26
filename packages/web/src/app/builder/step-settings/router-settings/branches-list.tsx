@@ -268,9 +268,8 @@ export const BranchListItem = ({
             <TooltipTrigger asChild>
               <SortableDragHandle
                 variant="ghost"
-                size="icon"
+                size="icon-xs"
                 disabled={readonly}
-                className={'shrink-0 size-7'}
               >
                 <GripVertical className="size-4" aria-hidden="true" />
               </SortableDragHandle>

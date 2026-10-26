@@ -9,25 +9,33 @@ export const boostStatus = createAction({
   name: 'boost_status',
   classification: 'WRITE',
   displayName: 'Boost Status',
-  description: 'Boost (reblog) a status to your followers.',
-  audience: 'ai',
+  description: 'Share a status with your followers by boosting it.',
+  audience: 'both',
   aiMetadata: {
     description:
       'Boosts (reblogs) a status so it appears to the connected account\'s followers and the author is notified. Visibility defaults to the account\'s default posting privacy, not public; set it explicitly to control reach. Boosting an already-boosted status returns the existing boost, so it is safe to retry. Use Unboost Status to undo.',
     idempotent: true,
   },
   outputSchema: statusOutputSchema,
+  propertyGroups: [
+    {
+      key: 'target',
+      display: 'section',
+      label: 'Status to Boost',
+      icon: 'send',
+      props: ['status_id', 'visibility'],
+    },
+  ],
   props: {
     status_id: Property.ShortText({
       displayName: 'Status ID',
-      description:
-        'Local ID of the status to boost. Obtain it from a timeline, Get Status or Search (use resolve for a status URL from another server).',
+      description: 'ID of the status, for example from a trigger, Get Status or Search.',
+      placeholder: '109372843234737004',
       required: true,
     }),
     visibility: Property.StaticDropdown({
       displayName: 'Visibility',
-      description:
-        'Who sees the boost. Leave empty to use the account default posting privacy.',
+      description: 'Who sees the boost. Empty uses your account default.',
       required: false,
       options: {
         disabled: false,

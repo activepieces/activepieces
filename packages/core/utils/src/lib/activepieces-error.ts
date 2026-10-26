@@ -25,6 +25,7 @@ export type ApErrorParams =
     | ExistingUserErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
+    | FlowRunNotRetryableErrorParams
     | FlowRunRetryOutsideRetentionErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
@@ -51,6 +52,7 @@ export type ApErrorParams =
     | TriggerFailedErrorParams
     | ValidationErrorParams
     | AgentRunSupersededErrorParams
+    | AgentRunBusyErrorParams
     | RequiredActionsMissingErrorParams
     | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
@@ -195,6 +197,14 @@ ErrorCode.SYSTEM_PROP_INVALID,
 }
 >
 
+export type FlowRunNotRetryableErrorParams = BaseErrorParams<
+ErrorCode.FLOW_RUN_NOT_RETRYABLE,
+{
+    flowRunId: FlowRunId
+    status: string
+}
+>
+
 export type FlowRunRetryOutsideRetentionErrorParams = BaseErrorParams<
 ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION,
 {
@@ -331,6 +341,13 @@ ErrorCode.VALIDATION,
 
 export type AgentRunSupersededErrorParams = BaseErrorParams<
 ErrorCode.AGENT_RUN_SUPERSEDED,
+{
+    message: string
+}
+>
+
+export type AgentRunBusyErrorParams = BaseErrorParams<
+ErrorCode.AGENT_RUN_BUSY,
 {
     message: string
 }
@@ -593,6 +610,7 @@ export enum ErrorCode {
     FLOW_EXTERNAL_ID_ALREADY_EXISTS = 'FLOW_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
+    FLOW_RUN_NOT_RETRYABLE = 'FLOW_RUN_NOT_RETRYABLE',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
@@ -623,6 +641,7 @@ export enum ErrorCode {
     USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
     AGENT_RUN_SUPERSEDED = 'AGENT_RUN_SUPERSEDED',
+    AGENT_RUN_BUSY = 'AGENT_RUN_BUSY',
     REQUIRED_ACTIONS_MISSING = 'REQUIRED_ACTIONS_MISSING',
     FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',

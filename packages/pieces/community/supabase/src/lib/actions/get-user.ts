@@ -17,6 +17,8 @@ export const getUser = createAction({
     props: {
         userId: Property.ShortText({
             displayName: 'User ID',
+            description: 'Find it under Authentication, Users in Supabase.',
+            placeholder: '00000000-0000-0000-0000-000000000000',
             required: true,
         }),
     },
