@@ -303,16 +303,6 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         }))
         return paginationHelper.createPage(populated, result.cursor)
     },
-
-    async countPendingUsingConnection({ projectId, externalId }: CountPendingUsingConnectionParams): Promise<number> {
-        return flowApprovalRequestRepo()
-            .createQueryBuilder('request')
-            .innerJoin('flow_version', 'flow_version', 'flow_version.id = request."flowVersionId"')
-            .where('request."projectId" = :projectId', { projectId })
-            .andWhere('request.state = :pendingState', { pendingState: FlowApprovalRequestState.PENDING })
-            .andWhere('flow_version."connectionIds" && :externalIds', { externalIds: [externalId] })
-            .getCount()
-    },
 })
 
 function assertStateIsPending(state: FlowApprovalRequestState): void {
@@ -358,11 +348,6 @@ type WithdrawParams = {
     projectId: ProjectId
     request: FastifyRequest
     editorSessionId: string | null
-}
-
-type CountPendingUsingConnectionParams = {
-    projectId: ProjectId
-    externalId: string
 }
 
 type ListParams = {
