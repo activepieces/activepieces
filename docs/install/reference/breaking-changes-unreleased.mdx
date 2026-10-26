@@ -8,6 +8,20 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Mindee 0.4.0: the piece moves to the Mindee v2 API, and Predict Document is builder-only
+
+Mindee 0.4.0 adds actions for the Mindee v2 API (app.mindee.com). The old action is renamed **Predict Document (Legacy v1)** and keeps calling the v1 API, but it is no longer offered as a tool to AI agents. Steps keep running on the version they were built with until you upgrade them.
+
+The legacy action no longer reads a local file path from the server's disk. Pass a file, a public URL or a Base64 string instead. A URL in **File URL or Base64** is now sent to Mindee, which downloads it itself, instead of Activepieces downloading it first. A URL Mindee cannot reach, such as a file URL from a self-hosted instance on a private network, stops working after the upgrade; map the file into the **File** field instead.
+
+New connections must use a v2 API key. A legacy v1 key from platform.mindee.com is rejected when you create or re-test a connection. Existing connections keep working with Predict Document (Legacy v1).
+
+**Custom API Call** now uses `https://api-v2.mindee.net/v2` as its base URL. A step that used a relative v1 path now calls the v2 API. It only calls `https://api-v2.mindee.net` and `https://api.mindee.net` and refuses any other host, and every Mindee request now verifies the TLS certificate.
+
+#### What you need to do
+
+Agents that used Predict Document switch to Extract Document (AI) with a v2 API key and a model ID from app.mindee.com. If a legacy step passed a local file path, or a URL Mindee cannot reach from the internet, pass the file itself in the **File** field. If a Custom API Call step used a v1 path, enter the full `https://api.mindee.net/v1/...` URL or move it to the matching v2 endpoint.
+
 #### Alai 0.3.0: three actions are no longer AI agent tools, and Custom API Call only calls the Alai API
 
 **Generate Presentation**, **Add Slide** and **Export Presentation** are no longer offered to AI agents as tools; flow steps that use them keep working unchanged. Agents get **Generate Presentation (Agent)**, **Add Slide (Agent)** and **Export Presentation (Agent)** instead: they take plain IDs and return a `generation_id` at once, which the agent polls with **Get Generation**. **Custom API Call** now sends the API key only to `https://slides-api.getalai.com/api` and refuses any other host or a path that escapes it.

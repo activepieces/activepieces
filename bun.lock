@@ -6166,16 +6166,17 @@
     },
     "packages/pieces/community/mindee": {
       "name": "@activepieces/piece-mindee",
-      "version": "0.3.1",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
-        "form-data": "4.0.6",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/missive": {
