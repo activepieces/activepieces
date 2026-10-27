@@ -201,5 +201,11 @@ describe('modelTierCatalog', () => {
             expect(catalog.fallbackTiers({ surface: 'chat', modelId: FAST.modelId })).toEqual([CHAT_SMART, DEEP])
             expect(catalog.fallbackTiers({ surface: 'flow', modelId: 'smart' })).toEqual([FAST])
         })
+
+        it('lists each fallback model once, even when two tiers share it', async () => {
+            const catalog = await warmedCatalog({ ...FLOW_ONLY, chatTiers: [FAST, { ...DEEP, modelId: FAST.modelId }, CHAT_SMART], chatDefaultTierId: 'smart' })
+
+            expect(catalog.fallbackTiers({ surface: 'chat', modelId: 'smart' })).toEqual([FAST])
+        })
     })
 })
