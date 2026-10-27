@@ -41,20 +41,4 @@ export class AutomationsPage extends BasePage {
       await this.page.getByRole('button', { name: 'Start from scratch' }).first().click();
     }
   }
-
-  async cleanupExistingAutomations() {
-    while (true) {
-      const moreButtons = this.page.locator('button:has(svg.lucide-more-horizontal)');
-      if (!(await moreButtons.count())) break;
-
-      await moreButtons.first().click();
-      await this.page.getByRole('menuitem', { name: 'Delete' }).click();
-
-      const confirmButton = this.page.getByRole('button', { name: 'Remove' });
-      await confirmButton.click();
-      await this.page.waitForSelector('button:has-text("Remove")', { state: 'hidden' });
-      await this.page.reload();
-      await this.waitFor();
-    }
-  }
 }
