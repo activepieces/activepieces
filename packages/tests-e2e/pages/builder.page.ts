@@ -1,8 +1,15 @@
-import { expect, Locator } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 import { BasePage } from './base';
 
 export class BuilderPage extends BasePage {
   url = `/flows`;
+
+  private readonly describeRun: (runId: string) => Promise<string>;
+
+  constructor({ page, describeRun }: { page: Page; describeRun: (runId: string) => Promise<string> }) {
+    super(page);
+    this.describeRun = describeRun;
+  }
 
   async nameNewFlow(name: string) {
     const breadcrumb = this.page.getByRole('navigation', { name: 'breadcrumb' });
@@ -86,10 +93,18 @@ export class BuilderPage extends BasePage {
   }
 
   async testStep() {
+    const started = this.page.waitForResponse(
+      (response) => response.request().method() === 'POST' && new URL(response.url()).pathname === STEP_TEST,
+    );
     await this.sidebar().getByTestId('test-step-button').click();
+    const response = await started;
+    expect(response.ok(), `Starting the step test failed with ${response.status()}: ${await response.text()}`).toBe(true);
+    const run: { id: string } = await response.json();
     const succeeded = this.sidebar().getByText('Tested Successfully');
-    await succeeded.or(this.sidebar().getByText('Test Failed')).first().waitFor({ timeout: 60000 });
-    await expect(succeeded, 'The step test failed').toBeVisible();
+    await succeeded.or(this.sidebar().getByText('Test Failed')).first().waitFor({ timeout: 60000 }).catch(() => undefined);
+    if (!(await succeeded.isVisible())) {
+      throw new Error(`The step test did not succeed: ${await this.describeRun(run.id)}`);
+    }
   }
 
   async expandStepOutput(key: string) {
@@ -110,7 +125,14 @@ export class BuilderPage extends BasePage {
 
   async publish() {
     const publishButton = this.page.getByRole('button', { name: 'Publish' });
+    const published = this.page.waitForResponse(
+      (response) => response.request().method() === 'POST'
+        && FLOW_SAVE.test(new URL(response.url()).pathname)
+        && response.request().postDataJSON()?.type === 'LOCK_AND_PUBLISH',
+    );
     await publishButton.click();
+    const response = await published;
+    expect(response.ok(), `Publishing failed with ${response.status()}: ${await response.text()}`).toBe(true);
     await expect(publishButton).toBeHidden({ timeout: 60000 });
   }
 
@@ -154,3 +176,4 @@ export class BuilderPage extends BasePage {
 }
 
 const FLOW_SAVE = /\/api\/v1\/flows\/[^/]+$/;
+const STEP_TEST = '/api/v1/sample-data/test-step';
