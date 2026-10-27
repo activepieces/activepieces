@@ -121,7 +121,9 @@ async function waitForJob<J extends { id: string; status: string }>({
   initial,
   fetchJob,
   timeoutSeconds,
+  jobLabel,
 }: {
+  jobLabel: string;
   initial: J;
   fetchJob: (jobId: string) => Promise<J>;
   timeoutSeconds: number;
@@ -141,9 +143,26 @@ async function waitForJob<J extends { id: string; status: string }>({
     await canvaClient.sleep(wait);
     slept += wait;
     delay = Math.min(Math.round(delay * POLL_BACKOFF), MAX_POLL_DELAY_MS);
-    job = await fetchJob(job.id);
+    job = await fetchStatus({ fetchJob, jobId: job.id, jobLabel });
   }
   return { job, timedOut: false };
+}
+
+async function fetchStatus<J>({ fetchJob, jobId, jobLabel }: { fetchJob: (jobId: string) => Promise<J>; jobId: string; jobLabel: string }): Promise<J> {
+  try {
+    return await fetchJob(jobId);
+  } catch (error) {
+    throw jobPollError({ jobLabel, jobId, error });
+  }
+}
+
+function jobPollError({ jobLabel, jobId, error }: { jobLabel: string; jobId: string; error: unknown }): CanvaApiError {
+  const reason = error instanceof Error ? error.message : String(error);
+  const message = `Checking the status of the Canva ${jobLabel} job ${jobId} failed: ${reason} The job may still be running in Canva. Use the Get Job Status action with job ID ${jobId} instead of starting the job again.`;
+  if (error instanceof CanvaApiError) {
+    return new CanvaApiError({ message, status: error.status, code: error.code, responseBody: error.responseBody });
+  }
+  return new CanvaApiError({ message, responseBody: undefined });
 }
 
 function jobFailureError({ jobLabel, jobId, error }: { jobLabel: string; jobId: string; error?: { code?: string; message?: string } }): CanvaApiError {

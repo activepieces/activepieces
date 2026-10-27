@@ -69,6 +69,30 @@ describe('piece metadata', () => {
     expect(canvaDeleteAssetAi.classification).toBe('DESTRUCTIVE');
   });
 
+  it('lists every top-level and nested key the human actions return in their outputSchema', () => {
+    const expected: Record<string, string[]> = {
+      export_design: ['success', 'job', 'job.urls', 'download_urls', 'export_info', 'export_info.format', 'export_info.dimensions', 'message'],
+      upload_asset: ['success', 'job', 'job.asset', 'asset', 'asset.import_status', 'file_info', 'file_info.size_mb', 'file_info.format', 'message'],
+      import_design: ['success', 'job', 'job.result', 'designs', 'designs.design_types', 'file_info', 'file_info.mime_type', 'message'],
+      get_design: ['success', 'design', 'design.design_types', 'message'],
+      create_design: ['success', 'design', 'message'],
+      find_design: ['designs', 'total_found', 'has_more', 'continuation_token', 'search_query', 'ownership_filter', 'sort_order', 'design_ids', 'design_titles'],
+      get_folder: ['folder', 'folder_id', 'folder_name', 'created_date', 'updated_date', 'has_thumbnail', 'thumbnail_url'],
+      get_asset: ['asset', 'asset_id', 'asset_name', 'asset_type', 'tags_count', 'tags_list', 'created_date', 'updated_date', 'has_thumbnail', 'thumbnail_url', 'thumbnail_dimensions', 'is_imported_successfully', 'import_status_state', 'import_error_message'],
+      move_folder_item: ['success', 'message', 'moved_item_id', 'destination_folder_id'],
+      create_folder: ['folder'],
+      list_folder_items: ['items', 'has_more', 'continuation'],
+    };
+    const actions = canva.actions();
+    for (const [name, keys] of Object.entries(expected)) {
+      const fields = actions[name]?.outputSchema?.fields ?? [];
+      const paths = fields.flatMap((field) => [field.key, ...[...(field.children ?? []), ...(field.listItems ?? [])].map((child) => `${field.key}.${child.key}`)]);
+      for (const key of keys) {
+        expect(paths, `${name} ${key}`).toContain(key);
+      }
+    }
+  });
+
   it('requires engine 0.86.4', () => {
     expect(canva.minimumSupportedRelease).toBe('0.86.4');
   });
@@ -127,6 +151,21 @@ describe('export design (human)', () => {
     noSleep();
     mockResponses([{ job: { id: 'E3', status: 'failed', error: { code: 'license_required', message: 'Buy it' } } }]);
     await expect(run({ action: exportDesign, propsValue: { designId: 'D1', exportFormat: 'pdf' } })).rejects.toThrow(/Buy it \(license_required\)/);
+  });
+
+  it('keeps the job id and http details when a status poll fails', async () => {
+    noSleep();
+    mockResponses([
+      { job: { id: 'E6', status: 'in_progress' } },
+      new HttpError({}, { status: 429, responseBody: { code: 'too_many_requests', message: 'Slow down' } }),
+    ]);
+    const error: unknown = await run({ action: exportDesign, propsValue: { designId: 'D1', exportFormat: 'pdf' } }).catch((e: unknown) => e);
+    const message = String(Reflect.get(Object(error), 'message'));
+    expect(message).toContain('job E6');
+    expect(message).toContain('Get Job Status');
+    expect(message).toContain('rate limit');
+    expect(Reflect.get(Object(error), 'status')).toBe(429);
+    expect(Reflect.get(Object(error), 'code')).toBe('too_many_requests');
   });
 
   it('returns the job immediately when waiting is off', async () => {
@@ -205,6 +244,15 @@ describe('ai atomics', () => {
     mockResponses(Array.from({ length: 200 }, () => ({ job: { id: 'E5', status: 'in_progress' } })));
     const out = await run({ action: canvaExportDesignAi, propsValue: { designId: 'D1', format: 'png' } });
     expect(out).toMatchObject({ job_id: 'E5', status: 'in_progress', urls: [] });
+  });
+
+  it('export names the job id when a status poll fails', async () => {
+    noSleep();
+    mockResponses([
+      { job: { id: 'E7', status: 'in_progress' } },
+      new HttpError({}, { status: 500, responseBody: { code: 'internal_error', message: 'Oops' } }),
+    ]);
+    await expect(run({ action: canvaExportDesignAi, propsValue: { designId: 'D1', format: 'png' } })).rejects.toThrow(/E7.*Get Job Status/);
   });
 
   it('update asset sends only provided fields and supports clearing tags', async () => {

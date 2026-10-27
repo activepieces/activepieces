@@ -280,6 +280,7 @@ async function settleJob<J extends { id: string; status: string; error?: JobErro
   const { job, timedOut } = await canvaClient.waitForJob<J>({
     initial,
     timeoutSeconds,
+    jobLabel: JOB_PATHS[kind].label,
     fetchJob: (jobId) => fetchJob<J>({ token, kind, jobId }),
   });
   if (job.status === 'failed') {

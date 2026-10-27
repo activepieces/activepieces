@@ -26,6 +26,7 @@ const designFields: OutputSchemaField[] = [
     ],
   },
   { key: 'page_count', label: 'Page Count', format: 'number' },
+  { key: 'design_types', label: 'Design Types' },
   { key: 'created_at', label: 'Created At (Unix seconds)', format: 'number' },
   { key: 'updated_at', label: 'Updated At (Unix seconds)', format: 'number' },
   { key: 'thumbnail', label: 'Thumbnail', children: thumbnailFields },
@@ -36,6 +37,14 @@ const assetFields: OutputSchemaField[] = [
   { key: 'name', label: 'Name' },
   { key: 'type', label: 'Type' },
   { key: 'tags', label: 'Tags' },
+  {
+    key: 'import_status',
+    label: 'Import Status',
+    children: [
+      { key: 'state', label: 'State' },
+      { key: 'error', label: 'Error', children: [{ key: 'code', label: 'Error Code' }, { key: 'message', label: 'Error Message' }] },
+    ],
+  },
   { key: 'created_at', label: 'Created At (Unix seconds)', format: 'number' },
   { key: 'updated_at', label: 'Updated At (Unix seconds)', format: 'number' },
   { key: 'thumbnail', label: 'Thumbnail', children: thumbnailFields },
@@ -74,6 +83,7 @@ const flatJobFields: OutputSchemaField[] = [
 
 const designResultSchema: OutputSchema = {
   fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
     { key: 'design', label: 'Design', children: designFields },
     { key: 'message', label: 'Message' },
   ],
@@ -85,30 +95,48 @@ const findDesignSchema: OutputSchema = {
     { key: 'total_found', label: 'Designs Returned', format: 'number' },
     { key: 'has_more', label: 'Has More', format: 'boolean' },
     { key: 'continuation_token', label: 'Continuation Token' },
+    { key: 'search_query', label: 'Search Query' },
+    { key: 'ownership_filter', label: 'Ownership Filter' },
+    { key: 'sort_order', label: 'Sort Order' },
     { key: 'design_ids', label: 'Design IDs' },
+    { key: 'design_titles', label: 'Design Titles' },
   ],
 };
 
 const getFolderSchema: OutputSchema = {
   fields: [
     { key: 'folder', label: 'Folder', children: folderFields },
+    { key: 'folder_id', label: 'Folder ID' },
+    { key: 'folder_name', label: 'Folder Name' },
     { key: 'created_date', label: 'Created', format: 'datetime' },
     { key: 'updated_date', label: 'Updated', format: 'datetime' },
+    { key: 'has_thumbnail', label: 'Has Thumbnail', format: 'boolean' },
+    { key: 'thumbnail_url', label: 'Thumbnail URL', format: 'image' },
   ],
 };
 
 const getAssetSchema: OutputSchema = {
   fields: [
     { key: 'asset', label: 'Asset', children: assetFields },
+    { key: 'asset_id', label: 'Asset ID' },
+    { key: 'asset_name', label: 'Asset Name' },
+    { key: 'asset_type', label: 'Asset Type' },
+    { key: 'tags_count', label: 'Tag Count', format: 'number' },
     { key: 'tags_list', label: 'Tags (comma separated)' },
     { key: 'created_date', label: 'Created', format: 'datetime' },
     { key: 'updated_date', label: 'Updated', format: 'datetime' },
+    { key: 'has_thumbnail', label: 'Has Thumbnail', format: 'boolean' },
     { key: 'thumbnail_url', label: 'Thumbnail URL', format: 'image' },
+    { key: 'thumbnail_dimensions', label: 'Thumbnail Dimensions' },
+    { key: 'is_imported_successfully', label: 'Imported Successfully', format: 'boolean' },
+    { key: 'import_status_state', label: 'Import Status' },
+    { key: 'import_error_message', label: 'Import Error Message' },
   ],
 };
 
 const moveFolderItemSchema: OutputSchema = {
   fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
     { key: 'moved_item_id', label: 'Moved Item ID' },
     { key: 'destination_folder_id', label: 'Destination Folder ID' },
     { key: 'message', label: 'Message' },
@@ -117,24 +145,75 @@ const moveFolderItemSchema: OutputSchema = {
 
 const uploadAssetSchema: OutputSchema = {
   fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
     { key: 'asset', label: 'Asset', children: assetFields },
-    { key: 'job', label: 'Job', children: [{ key: 'id', label: 'Job ID' }, { key: 'status', label: 'Status' }] },
+    {
+      key: 'job',
+      label: 'Job',
+      children: [{ key: 'id', label: 'Job ID' }, { key: 'status', label: 'Status' }, { key: 'asset', label: 'Asset', children: assetFields }],
+    },
+    {
+      key: 'file_info',
+      label: 'File Info',
+      children: [
+        { key: 'name', label: 'File Name' },
+        { key: 'size_mb', label: 'Size (MB)', format: 'number' },
+        { key: 'type', label: 'Asset Type' },
+        { key: 'format', label: 'Format' },
+      ],
+    },
     { key: 'message', label: 'Message' },
   ],
 };
 
 const importDesignSchema: OutputSchema = {
   fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
     { key: 'designs', label: 'Imported Designs', labelKey: 'title', listItems: designFields },
-    { key: 'job', label: 'Job', children: [{ key: 'id', label: 'Job ID' }, { key: 'status', label: 'Status' }] },
+    {
+      key: 'job',
+      label: 'Job',
+      children: [
+        { key: 'id', label: 'Job ID' },
+        { key: 'status', label: 'Status' },
+        { key: 'result', label: 'Result', children: [{ key: 'designs', label: 'Designs', labelKey: 'title', listItems: designFields }] },
+      ],
+    },
+    {
+      key: 'file_info',
+      label: 'File Info',
+      children: [
+        { key: 'title', label: 'Title' },
+        { key: 'size_mb', label: 'Size (MB)', format: 'number' },
+        { key: 'format', label: 'Format' },
+        { key: 'extension', label: 'Extension' },
+        { key: 'mime_type', label: 'MIME Type' },
+      ],
+    },
     { key: 'message', label: 'Message' },
   ],
 };
 
 const exportDesignSchema: OutputSchema = {
   fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
     { key: 'download_urls', label: 'Download URLs (valid 24 hours)' },
-    { key: 'job', label: 'Job', children: [{ key: 'id', label: 'Job ID' }, { key: 'status', label: 'Status' }] },
+    {
+      key: 'job',
+      label: 'Job',
+      children: [{ key: 'id', label: 'Job ID' }, { key: 'status', label: 'Status' }, { key: 'urls', label: 'Download URLs' }],
+    },
+    {
+      key: 'export_info',
+      label: 'Export Info',
+      children: [
+        { key: 'design_id', label: 'Design ID' },
+        { key: 'format', label: 'Format' },
+        { key: 'quality', label: 'Quality' },
+        { key: 'pages', label: 'Pages' },
+        { key: 'dimensions', label: 'Dimensions' },
+      ],
+    },
     { key: 'message', label: 'Message' },
   ],
 };
