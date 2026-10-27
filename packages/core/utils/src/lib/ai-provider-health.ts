@@ -3,11 +3,17 @@ import { formatPieceError } from './friendly-piece-error'
 
 export function toProviderOutcomeSignal(error: unknown): ProviderOutcomeSignal {
     const formatted = formatPieceError(error)
+    const statusCode = formatted.status ?? httpStatusInCode(error)
     return {
-        ...(formatted.status === undefined ? {} : { statusCode: formatted.status }),
+        ...(statusCode === undefined ? {} : { statusCode }),
         ...(formatted.responseBody === undefined ? {} : { body: stringifyBody(formatted.responseBody) }),
         message: formatted.apiMessage ?? formatted.message,
     }
+}
+
+function httpStatusInCode(error: unknown): number | undefined {
+    const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : undefined
+    return typeof code === 'number' && code >= 100 && code <= 599 ? code : undefined
 }
 
 function stringifyBody(body: unknown): string {

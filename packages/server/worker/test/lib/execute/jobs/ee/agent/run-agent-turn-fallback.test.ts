@@ -178,6 +178,29 @@ describe('a platform tier chat turn', () => {
     })
 })
 
+describe('a managed credits chat turn', () => {
+    it('answers on the next catalog model when OpenRouter sends a 502 before anything', async () => {
+        const onModelOutcome = vi.fn()
+
+        const turn = await runTurn({ models: [managedModel({ modelId: 'smart', model: midStreamErrorModel(OPENROUTER_502) }), managedModel({ modelId: 'fast', model: answeringModel('from fast') })], onModelOutcome })
+
+        expect(turn.streamError).toBeNull()
+        expect(turn.answeredBy.modelId).toBe('fast')
+        expect(textOf(turn)).toBe('from fast')
+        expect(onModelOutcome).not.toHaveBeenCalled()
+    })
+
+    it('drops a failing first-step fast model and answers on the main model', async () => {
+        const turn = await runTurn({
+            models: [managedModel({ modelId: 'smart', model: answeringModel('from smart') })],
+            fastModel: managedModel({ modelId: 'fast', model: midStreamErrorModel(OPENROUTER_502) }),
+        })
+
+        expect(turn.streamError).toBeNull()
+        expect(textOf(turn)).toBe('from smart')
+    })
+})
+
 describe('what counts as content sent in the step that failed', () => {
     it('ignores the start markers the stream sends before any content', () => {
         expect(sentContentAfter(['start', 'error'])).toBe(false)
@@ -234,6 +257,21 @@ function sentContentAfter(chunkTypes: string[]): boolean {
 
 function tierModel({ modelId, model, provider = AIProviderName.OPENAI }: { modelId: string, model: MockLanguageModelV3, provider?: AIProviderName }): TurnModel {
     return { model, provider, modelId, thinkingBudget: 0, key: { providerConfigId: `key-${modelId}`, status: 'active' } }
+}
+
+function managedModel({ modelId, model }: { modelId: string, model: MockLanguageModelV3 }): TurnModel {
+    return { model, provider: AIProviderName.ACTIVEPIECES, modelId, thinkingBudget: 0 }
+}
+
+function midStreamErrorModel(error: unknown): MockLanguageModelV3 {
+    return new MockLanguageModelV3({
+        doStream: async () => ({
+            stream: convertArrayToReadableStream([
+                { type: 'stream-start' as const, warnings: [] },
+                { type: 'error' as const, error },
+            ]),
+        }),
+    })
 }
 
 function failingModel({ statusCode }: { statusCode: number }): MockLanguageModelV3 {
@@ -301,6 +339,7 @@ function textOf(turn: Awaited<ReturnType<typeof runAgentTurn>>): string {
     return turn.uiParts.map((part) => isObject(part) && typeof part['text'] === 'string' ? part['text'] : '').join('')
 }
 
+const OPENROUTER_502 = { code: 502, message: 'Provider returned an empty response', metadata: { error_type: 'provider_unavailable' } }
 const TIER = { id: 'fast', thinkingBudget: 0, modelId: 'main' }
 const USAGE = { inputTokens: { total: 1, noCache: 1, cacheRead: 0, cacheWrite: 0 }, outputTokens: { total: 1, text: 1, reasoning: 0 } }
 const SILENT_LOG = { debug: () => undefined, info: () => undefined, warn: () => undefined, error: () => undefined }

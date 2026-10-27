@@ -57,6 +57,12 @@ describe('a provider failure that is not an Error', () => {
         expect(isFallbackWorthy(signal)).toBe(true)
     })
 
+    it('keeps the status of the error object OpenRouter sends mid-stream', () => {
+        const signal = aiProviderSignal.fromError(toError({ code: 502, message: 'Provider returned an empty response', metadata: { error_type: 'provider_unavailable' } }))
+        expect(signal.statusCode).toBe(502)
+        expect(isFallbackWorthy(signal)).toBe(true)
+    })
+
     it('never reports a provider failure as [object Object]', () => {
         const signal = aiProviderSignal.fromError(toError({ error: { message: 'upstream unavailable' } }))
         expect(signal.message).not.toContain('[object Object]')

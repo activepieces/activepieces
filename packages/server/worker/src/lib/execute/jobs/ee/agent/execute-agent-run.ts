@@ -1,5 +1,5 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AiCallContext, AIProviderName, AiUsageEnvironment, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { aiUtils } from '@activepieces/server-utils'
+import { aiUtils, modelTierCatalog } from '@activepieces/server-utils'
 import { AGENT_RUN_USAGE_ORIGIN, AgentConfigResponse, AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentModelCandidate, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, agentToolSkills, AgentToolType, AiProviderCredentials, apErrorOf, chatBilling, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentMessageSchema, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, SaveAgentMessagesRequest, SkillSurface, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, LanguageModel, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
@@ -313,7 +313,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         sinks: {
                             drainStream: (result) => streamChunksToClient({
                                 result, ctx, userId, conversationId, runId, log,
-                                holdErrorChunks: !isNil(config.platformTier),
+                                holdErrorChunks: turnModels.length > 1 || !isNil(fastTurnModel),
                                 abortSignal: abortController.signal,
                                 onStreamIdle: (reason) => {
                                     const fields = { conversation: { id: conversationId }, idleMs: STREAM_IDLE_REPORT_MS, reason }
@@ -526,13 +526,26 @@ function usageContextOf({ source, data, agentId }: { source: AgentRunSource, dat
 function turnModelsFor({ config, model, billing, metadata }: { config: AgentConfigResponse, model: LanguageModel, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): [TurnModel, ...TurnModel[]] {
     const single: TurnModel = { model, provider: config.credentials.provider, modelId: config.modelId, thinkingBudget: config.tier.thinkingBudget }
     if (isNil(config.candidates) || config.candidates.length === 0) {
-        return [single]
+        return [single, ...managedFallbacks({ config, billing, metadata })]
     }
     const [first, ...rest] = config.candidates
     return [
         { ...candidateTurnModel({ candidate: first, billing }), model },
         ...rest.map((candidate) => candidateTurnModel({ candidate, billing, metadata })),
     ]
+}
+
+function managedFallbacks({ config, billing, metadata }: { config: AgentConfigResponse, billing: ActivepiecesAiBilling, metadata: ModelMetadata }): TurnModel[] {
+    if (config.credentials.provider !== AIProviderName.ACTIVEPIECES) {
+        return []
+    }
+    const surface = modelTierCatalog.surfaceFor({ source: config.source })
+    return modelTierCatalog.fallbackModelIds({ surface, modelId: config.modelId }).map((modelId) => ({
+        model: aiUtils.createModel({ credentials: config.credentials, modelId, billing, turnAlreadyCharged: true, metadata, ...spreadIfDefined('providerConfigId', config.providerConfigId) }),
+        provider: config.credentials.provider,
+        modelId,
+        thinkingBudget: config.tier.thinkingBudget,
+    }))
 }
 
 function candidateTurnModel({ candidate, billing, metadata }: { candidate: AgentModelCandidate, billing: ActivepiecesAiBilling, metadata?: ModelMetadata }): TurnModel {

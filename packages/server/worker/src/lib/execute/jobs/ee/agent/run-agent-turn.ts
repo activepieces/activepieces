@@ -141,7 +141,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
 
     const runStreamAttempt = (attemptMessages: ModelMessage[]): ReturnType<typeof streamText> => streamText({
         model: current().model,
-        maxRetries: runsATier && hasNextModel() ? SDK_RETRIES_BEFORE_FALLBACK : SDK_RETRIES,
+        maxRetries: hasNextModel() ? SDK_RETRIES_BEFORE_FALLBACK : SDK_RETRIES,
         maxOutputTokens: current().budget.maxOutputTokens,
         abortSignal,
         instructions: agentAiUtils.buildSystemPromptWithCaching({ systemPrompt: turnSystemPrompt, provider: current().provider }),
@@ -285,7 +285,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             if (!failedFast) {
                 failedModelIds.add(failedModel.modelId)
             }
-            const sentNothing = runsATier && drained?.lastStepSentContent === false
+            const sentNothing = drained?.lastStepSentContent === false
             const dropsFast = failedFast && sentNothing
             const movesOn = !failedFast && sentNothing && isFallbackWorthy(signal) && hasNextModel()
             if (dropsFast || movesOn) {

@@ -12,6 +12,9 @@ vi.mock('@activepieces/server-utils', async (importOriginal) => ({
         createModel: (args: Record<string, unknown>) => ({ modelId: args['modelId'] }),
         buildWebSearchToolsOrThrow: () => ({}),
     },
+    modelTierCatalog: {
+        fallbackModelIds: () => ['catalog-fast', 'catalog-premium'],
+    },
 }))
 
 vi.mock('ai', async (importOriginal) => ({
@@ -60,7 +63,7 @@ function tierJob(overrides: Partial<ExecuteAiJobData> = {}): ExecuteAiJobData {
     } as ExecuteAiJobData
 }
 
-function contextWith(candidates: AiModelCandidate[]): { ctx: Parameters<typeof executeAiJob.execute>[0], reports: ReportAiKeyOutcomeRequest[] } {
+function contextWith(candidates: AiModelCandidate[], specific?: { provider: AIProviderName }): { ctx: Parameters<typeof executeAiJob.execute>[0], reports: ReportAiKeyOutcomeRequest[] } {
     const reports: ReportAiKeyOutcomeRequest[] = []
     const ctx = {
         apiClient: {
@@ -69,7 +72,10 @@ function contextWith(candidates: AiModelCandidate[]): { ctx: Parameters<typeof e
                 reports.push(input)
             },
             resolveAiProvider: async () => {
-                throw new Error('a tier step must not resolve a specific key')
+                if (specific === undefined) {
+                    throw new Error('a tier step must not resolve a specific key')
+                }
+                return { provider: specific.provider, providerConfigId: `key-${specific.provider}`, auth: { apiKey: 'k' }, config: {} }
             },
         },
         log: { info: () => undefined, warn: () => undefined, error: () => undefined },
@@ -151,3 +157,33 @@ describe('a tier step falls back on provider failures', () => {
         expect(generateCalls.map((call) => call.modelId)).toEqual(['main', 'backup'])
     })
 })
+
+describe('a managed credits step falls back across the catalog', () => {
+    beforeEach(() => {
+        generateCalls.length = 0
+        failuresByModel.clear()
+    })
+
+    it('answers from the next catalog model and never reports key health', async () => {
+        failuresByModel.set('smart', () => providerError(502))
+        const { response, reports } = await runSpecific({ provider: AIProviderName.ACTIVEPIECES, modelId: 'smart' })
+
+        expect(response).toEqual({ output: { answer: 'positive' } })
+        expect(generateCalls.map((call) => call.modelId)).toEqual(['smart', 'catalog-fast'])
+        expect(reports).toEqual([])
+    })
+
+    it('leaves a step on its own key with a single model and no fallback', async () => {
+        failuresByModel.set('gpt', () => providerError(502))
+        const { response } = await runSpecific({ provider: AIProviderName.OPENAI, modelId: 'gpt' })
+
+        expect(response).toEqual({ failure: 'HTTP 502' })
+        expect(generateCalls).toEqual([{ modelId: 'gpt', maxRetries: undefined }])
+    })
+})
+
+async function runSpecific({ provider, modelId }: { provider: AIProviderName, modelId: string }): Promise<{ response: unknown, reports: ReportAiKeyOutcomeRequest[] }> {
+    const { ctx, reports } = contextWith([], { provider })
+    const result = await executeAiJob.execute(ctx, tierJob({ provider, modelId, modelTierId: undefined }))
+    return { response: 'response' in result ? result.response : undefined, reports }
+}
