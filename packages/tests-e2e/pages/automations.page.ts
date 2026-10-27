@@ -25,7 +25,7 @@ export class AutomationsPage extends BasePage {
   async waitFor() {
     await this.page.waitForURL('**/automations**');
     await this.page
-      .locator('text="Get started with Activepieces"')
+      .getByRole('button', { name: 'Start from scratch' })
       .or(this.page.getByRole('button', { name: 'Actions', exact: true }))
       .first()
       .waitFor();
