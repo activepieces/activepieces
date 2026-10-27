@@ -237,7 +237,7 @@ jobs:
       - uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
         with:
           access_key: ${{ secrets.LINEAR_RELEASE_KEY_STAGING }}
-          include_paths: '!packages/pieces/**,!bun.lock,!tsconfig.base.json,!docs/**'
+          include_paths: '!packages/pieces/community/**,!packages/pieces/core/**,!packages/pieces/custom/**,!bun.lock,!tsconfig.base.json,!docs/**'
           no_branch_ref_detection: 'true'
           links: Run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 

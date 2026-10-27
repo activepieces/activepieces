@@ -30,6 +30,8 @@ jobs:
     needs: preflight
     if: ${{ always() && !cancelled() && !failure() }}
     runs-on: ubuntu-24.04
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     environment:
       name: release
     steps:
@@ -80,6 +82,7 @@ jobs:
       - uses: depot/setup-action@v1
 
       - name: Build and push
+        id: build
         uses: depot/build-push-action@v1
         with:
           project: du7O4b0e8P
@@ -133,18 +136,17 @@ jobs:
             -d "{\"content\": \"📦 **Self-hosted $TAG released**\\n\\n**Docker image:** \`activepieces/activepieces:$TAG\` (also on ghcr.io)\\n**Changelog:** ${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG\\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
             "$WEBHOOK"
 
-  # Records the release in the Linear "Self-hosted" release pipeline. Never fails the workflow.
+  # Records the release in the Linear "Self-hosted" release pipeline once the image is published,
+  # even when a later step of the release job fails.
   # Minor tags live on release branches, so the scan starts at the merge-base with the previous release tag.
   linear-release:
     needs: release
-    if: ${{ !cancelled() && needs.release.result == 'success' && !contains(inputs.tag, '-rc') }}
+    if: ${{ !cancelled() && needs.release.outputs.digest != '' && !contains(inputs.tag, '-rc') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.tag }}
           fetch-depth: 0
       - name: Find the scan base
         id: base
@@ -160,7 +162,7 @@ jobs:
           version: ${{ inputs.tag }}
           name: ${{ inputs.tag }}
           base_ref: ${{ steps.base.outputs.sha }}
-          include_paths: '!packages/pieces/**,!bun.lock,!tsconfig.base.json,!docs/**'
+          include_paths: '!packages/pieces/community/**,!packages/pieces/core/**,!packages/pieces/custom/**,!bun.lock,!tsconfig.base.json,!docs/**'
           no_branch_ref_detection: 'true'
           links: Run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
