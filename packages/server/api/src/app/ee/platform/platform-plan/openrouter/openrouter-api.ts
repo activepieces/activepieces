@@ -6,7 +6,8 @@ import { AppSystemProp } from '../../../../helper/system/system-props'
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
 const REQUEST_TIMEOUT_MS = 15000
-const KEY_LIVENESS_TIMEOUT_MS = 5000
+const KEY_LIVENESS_TIMEOUT_MS = 10000
+const KEY_LIVENESS_MODEL = 'openai/gpt-4o-mini'
 
 export const openRouterApi = {
     async createKey(request: CreateKeyRequest): Promise<CreateKeyResponse> {
@@ -26,7 +27,11 @@ export const openRouterApi = {
     },
 
     async isKeyLive({ key }: IsKeyLiveRequest): Promise<boolean> {
-        const { data: response } = await tryCatch(() => safeHttp.axios.get(`${OPENROUTER_BASE_URL}/key`, {
+        const { data: response } = await tryCatch(() => safeHttp.axios.post(`${OPENROUTER_BASE_URL}/chat/completions`, {
+            model: KEY_LIVENESS_MODEL,
+            max_tokens: 1,
+            messages: [{ role: 'user', content: 'hi' }],
+        }, {
             timeout: KEY_LIVENESS_TIMEOUT_MS,
             headers: { Authorization: `Bearer ${key}` },
             validateStatus: () => true,
