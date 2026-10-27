@@ -3,6 +3,7 @@ import { AppConnection, AppConnectionScope, Flow, FlowStatus, FlowTrigger, FlowT
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { In } from 'typeorm'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { db } from '../../../helpers/db'
 import {
@@ -351,6 +352,67 @@ describe('POST /v1/app-connections/replace', () => {
         expect(versions[0].state).toBe(FlowVersionState.DRAFT)
         expect(versions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
     })
+
+    it('replaces the connection in 1,000 flows in one request, republishing the published ones', async () => {
+        const ctx = await createTestContext(app!)
+        const { source, target } = await saveSourceAndTarget(ctx)
+
+        const flows = Array.from({ length: 1000 }, () => createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED }))
+        await db.save('flow', flows)
+        const publishedFlows = flows.filter((_, index) => index % 2 === 0)
+        const liveVersions = publishedFlows.map((flow) => createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+            created: '2020-01-01T00:00:00.000Z',
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'published' }),
+        }))
+        const draftVersions = flows.map((flow) => createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.DRAFT,
+            created: '2020-06-01T00:00:00.000Z',
+            connectionIds: [source.externalId],
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'draft-edit' }),
+        }))
+        await db.save('flow_version', [...liveVersions, ...draftVersions])
+        publishedFlows.forEach((flow, index) => {
+            flow.publishedVersionId = liveVersions[index].id
+        })
+        await db.save('flow', publishedFlows)
+
+        const response = await ctx.post('/v1/app-connections/replace', {
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            projectId: ctx.project.id,
+            flowIds: flows.map((flow) => flow.id),
+            applyToPublishedVersions: true,
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        const updatedFlows = await databaseConnection().getRepository<Flow>('flow').find({ where: { id: In(flows.map((flow) => flow.id)) } })
+        const versions = await databaseConnection().getRepository<FlowVersion>('flow_version').find({
+            where: { flowId: In(flows.map((flow) => flow.id)) },
+            order: { created: 'DESC' },
+        })
+        const newestVersionByFlowId = new Map<string, FlowVersion>()
+        versions.forEach((version) => {
+            if (!newestVersionByFlowId.has(version.flowId)) {
+                newestVersionByFlowId.set(version.flowId, version)
+            }
+        })
+        const versionById = new Map(versions.map((version) => [version.id, version]))
+        flows.forEach((flow) => {
+            const newestVersion = newestVersionByFlowId.get(flow.id)
+            expect(newestVersion?.state).toBe(FlowVersionState.DRAFT)
+            expect(newestVersion?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
+        })
+        const publishedFlowIds = new Set(publishedFlows.map((flow) => flow.id))
+        updatedFlows.filter((flow) => publishedFlowIds.has(flow.id)).forEach((flow) => {
+            const liveVersion = versionById.get(flow.publishedVersionId ?? '')
+            expect(liveVersion?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'published' })
+        })
+        expect(updatedFlows.filter((flow) => !publishedFlowIds.has(flow.id)).every((flow) => isNil(flow.publishedVersionId))).toBe(true)
+    }, 600_000)
 
     it('decides the republish per flow when one replace covers several flows', async () => {
         const ctx = await createTestContext(app!)
