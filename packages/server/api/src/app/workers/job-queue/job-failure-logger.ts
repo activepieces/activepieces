@@ -12,14 +12,8 @@ export const jobFailureLogger = {
     },
     signatureFromMessage(message: string, sourceLabel: string): string {
         const firstLine = message.split('\n', 1)[0].trim()
-        const jsonCode = readJsonCode(firstLine)
-        if (jsonCode) {
-            return `${sourceLabel}@${jsonCode}`
-        }
-        const colonIdx = firstLine.indexOf(':')
-        const head = colonIdx > 0 ? firstLine.slice(0, colonIdx) : firstLine
-        const clean = head.replace(/\s+/g, ' ').slice(0, 80)
-        return `${sourceLabel}@${clean || 'unknown'}`
+        const head = readJsonHead(firstLine) ?? readHead(firstLine)
+        return `${sourceLabel}@${head || 'unknown'}`
     },
     logJobFailed({ queueName, jobId, jobType, error, log, signatureOverride }: LogJobFailedParams): void {
         const errorSignature = signatureOverride ?? jobFailureLogger.signatureOf(error)
@@ -40,12 +34,23 @@ function readErrorName(error: unknown): string {
     return typeof error
 }
 
-function readJsonCode(line: string): string | null {
+function readHead(line: string): string {
+    const colonIdx = line.indexOf(':')
+    const head = colonIdx > 0 ? line.slice(0, colonIdx) : line
+    return head.replace(/\s+/g, ' ').slice(0, 80)
+}
+
+function readJsonHead(line: string): string | null {
     if (!line.startsWith('{')) return null
     const { data } = tryCatchSync((): unknown => JSON.parse(line))
-    if (typeof data !== 'object' || data === null || !('code' in data)) return null
-    const { code } = data
-    return typeof code === 'string' || typeof code === 'number' ? String(code).slice(0, 80) : null
+    if (typeof data !== 'object' || data === null) return null
+    const code = 'code' in data ? data.code : undefined
+    if (typeof code === 'string' || typeof code === 'number') {
+        return String(code).slice(0, 80) || null
+    }
+    const message = 'message' in data ? data.message : undefined
+    if (typeof message !== 'string') return null
+    return readHead(message.split('\n', 1)[0].trim()) || null
 }
 
 function readTopStackFrame(error: unknown): string | null {

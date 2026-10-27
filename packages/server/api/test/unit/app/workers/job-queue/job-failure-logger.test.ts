@@ -55,6 +55,11 @@ describe('jobFailureLogger.signatureFromMessage', () => {
         expect(jobFailureLogger.signatureFromMessage('{"code":"ENTITY_NOT_FOUND","message":"x"}', 'EngineError')).toBe('EngineError@ENTITY_NOT_FOUND')
     })
 
+    it('falls back to the head of the message when a JSON-shaped message has no code', () => {
+        const noCode = '{"message":"Upstream timeout: provider did not answer in 30s","metadata":{"error_type":"timeout"}}'
+        expect(jobFailureLogger.signatureFromMessage(noCode, 'EngineError')).toBe('EngineError@Upstream timeout')
+    })
+
     it('handles empty message with unknown fallback', () => {
         expect(jobFailureLogger.signatureFromMessage('', 'EngineError')).toBe('EngineError@unknown')
     })
