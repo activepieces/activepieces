@@ -186,6 +186,7 @@
   "The lifecycle stage of the contact": "The lifecycle stage of the contact",
   "Where the record came from": "Where the record came from",
   "ID of the primary account of the contact": "ID of the primary account of the contact",
+  "Account to make primary; other linked accounts are kept": "Account to make primary; other linked accounts are kept",
   "Medium that led the contact to you": "Medium that led the contact to you",
   "The campaign that brought the record": "The campaign that brought the record",
   "Keywords the contact used to find you": "Keywords the contact used to find you",

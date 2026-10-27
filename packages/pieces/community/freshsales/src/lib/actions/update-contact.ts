@@ -98,8 +98,7 @@ export const updateContact = createAction({
     lead_source_id: freshsalesProps.leadSource(),
     sales_account_id: Property.ShortText({
       displayName: 'Sales account id',
-      description:
-        'ID of the account to set as the primary account. Accounts already linked to the contact are kept as secondary accounts.',
+      description: 'Account to make primary; other linked accounts are kept',
       placeholder: '16000123456',
       required: false,
     }),
