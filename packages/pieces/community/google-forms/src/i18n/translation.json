@@ -50,5 +50,6 @@
   "Include Shared Drives": "Include Shared Drives",
   "Checks the form every few minutes. A response starts the flow when it is sent or edited after the flow is published.": "Checks the form every few minutes. A response starts the flow when it is sent or edited after the flow is published.",
   "The form to watch for new responses.": "The form to watch for new responses.",
-  "Also include forms stored in shared drives.": "Also include forms stored in shared drives."
+  "Also include forms stored in shared drives.": "Also include forms stored in shared drives.",
+  "Watch": "Watch"
 }
