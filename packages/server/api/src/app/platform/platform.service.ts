@@ -17,6 +17,7 @@ import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
+import { authenticationAuditEvents } from './authentication-audit-events'
 import { billingProvider } from './billing-provider'
 import { platformSideEffects } from './platform-side-effects'
 import { PlatformEntity } from './platform.entity'
@@ -213,14 +214,15 @@ export const platformService = (log: FastifyBaseLogger) => ({
             invalidateSamlClientCache(params.id)
         }
         log.info({ platform: { id: params.id } }, 'Platform updated')
-        const { saved, previousRetentionDays } = await transaction(async (entityManager) => {
-            const lockedRetentionDays = await lockAuditLogRetentionDays({ entityManager, platformId: params.id })
+        const { saved, locked } = await transaction(async (entityManager) => {
+            const lockedPlatform = await lockPlatformForUpdate({ entityManager, platformId: params.id, includeFederatedAuth: hasFederatedAuth(platform) })
             const savedPlatform = await platformRepo(entityManager).save({
                 ...updatedPlatform,
-                auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedRetentionDays : params.auditLogRetentionDays,
+                auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedPlatform.auditLogRetentionDays ?? null : params.auditLogRetentionDays,
             })
-            return { saved: savedPlatform, previousRetentionDays: lockedRetentionDays }
+            return { saved: savedPlatform, locked: lockedPlatform }
         })
+        const previousRetentionDays = locked.auditLogRetentionDays ?? null
         if (params.auditLogRetentionDays !== undefined && params.auditLogRetentionDays !== previousRetentionDays) {
             platformSideEffects(log).onAuditLogRetentionUpdated({
                 platformId: params.id,
@@ -229,6 +231,15 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 previousRetentionDays,
                 retentionDays: params.auditLogRetentionDays,
                 instanceLimitDays: auditLogRetentionCeiling.get(),
+            })
+        }
+        const authenticationEvents = authenticationAuditEvents.build({ before: locked, after: saved })
+        if (authenticationEvents.length > 0) {
+            platformSideEffects(log).onAuthenticationSettingsChanged({
+                platformId: params.id,
+                userId: params.userId,
+                ip: params.ip,
+                events: authenticationEvents,
             })
         }
         return stripFederatedAuth(saved)
@@ -301,13 +312,22 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function lockAuditLogRetentionDays({ entityManager, platformId }: { entityManager: EntityManager, platformId: PlatformId }): Promise<number | null> {
-    const locked = await platformRepo(entityManager).findOneOrFail({
+async function lockPlatformForUpdate({ entityManager, platformId, includeFederatedAuth }: LockPlatformForUpdateParams): Promise<Platform> {
+    return platformRepo(entityManager).findOneOrFail({
         where: { id: platformId },
-        select: { id: true, auditLogRetentionDays: true },
+        select: {
+            id: true,
+            auditLogRetentionDays: true,
+            emailAuthEnabled: true,
+            googleAuthEnabled: true,
+            allowedAuthDomains: true,
+            enforceAllowedAuthDomains: true,
+            ssoDomain: true,
+            ssoDomainVerification: true,
+            federatedAuthProviders: includeFederatedAuth,
+        },
         lock: { mode: 'pessimistic_write' },
     })
-    return locked.auditLogRetentionDays ?? null
 }
 
 function findProvisionedOwner(users: User[]): PlatformOwner | undefined {
@@ -478,6 +498,12 @@ type AssertAuditLogRetentionDaysAllowedParams = {
     log: FastifyBaseLogger
     platform: PlatformWithoutFederatedAuth
     auditLogRetentionDays: number | null | undefined
+}
+
+type LockPlatformForUpdateParams = {
+    entityManager: EntityManager
+    platformId: PlatformId
+    includeFederatedAuth: boolean
 }
 
 type UpdateParams = UpdatePlatformRequestBody & {
