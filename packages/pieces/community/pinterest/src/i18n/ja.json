@@ -80,5 +80,10 @@
   "Video Pins": "ビデオピン",
   "Shopping Pins": "ショッピングピン",
   "Carousel Pins": "Carousel Pins",
-  "Idea Pins": "アイディアピン"
+  "Idea Pins": "アイディアピン",
+  "Base64": "Base64",
+  "Visibility": "公開設定",
+  "Search": "検索",
+  "Changes": "変更内容",
+  "Empty fields keep their current value.": "空欄のフィールドは現在の値のままです。"
 }

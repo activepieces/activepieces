@@ -80,5 +80,10 @@
   "Video Pins": "Video Pins",
   "Shopping Pins": "Shopping Pins",
   "Carousel Pins": "Carousel Pins",
-  "Idea Pins": "Idea Pins"
+  "Idea Pins": "Idea Pins",
+  "Base64": "Base64",
+  "Visibility": "可见范围",
+  "Search": "搜索",
+  "Changes": "更改",
+  "Empty fields keep their current value.": "留空的字段保留当前值。"
 }

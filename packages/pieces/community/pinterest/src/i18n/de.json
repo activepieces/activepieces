@@ -80,5 +80,10 @@
   "Video Pins": "Video-Pins",
   "Shopping Pins": "Einkaufsstifte",
   "Carousel Pins": "Carousel Pins",
-  "Idea Pins": "Ideenstifte"
+  "Idea Pins": "Ideenstifte",
+  "Base64": "Base64",
+  "Visibility": "Sichtbarkeit",
+  "Search": "Suche",
+  "Changes": "Änderungen",
+  "Empty fields keep their current value.": "Leere Felder behalten ihren aktuellen Wert."
 }
