@@ -7710,7 +7710,7 @@
     },
     "packages/pieces/community/rabbitmq": {
       "name": "@activepieces/piece-rabbitmq",
-      "version": "0.1.8",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7718,10 +7718,12 @@
         "@activepieces/pieces-framework": "workspace:*",
         "amqplib": "0.10.7",
         "dayjs": "1.11.9",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "@types/amqplib": "0.10.7",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/raia-ai": {
