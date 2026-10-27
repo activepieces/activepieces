@@ -97,7 +97,9 @@ export class BuilderPage extends BasePage {
       (response) => response.request().method() === 'POST' && new URL(response.url()).pathname === STEP_TEST,
     );
     await this.sidebar().getByTestId('test-step-button').click();
-    const run: { id: string } = await (await started).json();
+    const response = await started;
+    expect(response.ok(), `Starting the step test failed with ${response.status()}: ${await response.text()}`).toBe(true);
+    const run: { id: string } = await response.json();
     const succeeded = this.sidebar().getByText('Tested Successfully');
     await succeeded.or(this.sidebar().getByText('Test Failed')).first().waitFor({ timeout: 60000 }).catch(() => undefined);
     if (!(await succeeded.isVisible())) {
