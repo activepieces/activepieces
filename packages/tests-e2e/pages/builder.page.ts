@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, Locator } from '@playwright/test';
 import { BasePage } from './base';
 
 export class BuilderPage extends BasePage {
@@ -56,8 +56,31 @@ export class BuilderPage extends BasePage {
     await this.replaceEditorText({ testId: 'code-editor', text: code });
   }
 
+  async setTextInput({ name, value }: { name: string; value: string }) {
+    await this.replaceText({ field: this.sidebar().getByRole('textbox', { name, exact: true }), text: value });
+  }
+
   async setJsonBody(json: string) {
     await this.replaceEditorText({ testId: 'json-editor', text: json });
+  }
+
+  async createConnection({ name, fields }: { name: string; fields: Record<string, string> }): Promise<string> {
+    await this.sidebar().getByRole('combobox').filter({ hasText: 'Select a connection' }).click();
+    await this.page.getByText('Create Connection', { exact: true }).click();
+    const dialog = this.page.getByRole('dialog', { name: /^Connect to / });
+    await dialog.getByLabel('Connection Name').fill(name);
+    for (const [label, value] of Object.entries(fields)) {
+      const field = dialog.locator('div').filter({ hasText: new RegExp(`^${label}\\s*\\*?$`) }).filter({ has: this.page.getByRole('textbox') });
+      await field.getByRole('textbox').fill(value);
+    }
+    const created = this.page.waitForResponse(
+      (response) => response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/v1/app-connections',
+    );
+    await dialog.getByRole('button', { name: 'Save' }).click();
+    const response = await created;
+    expect(response.ok(), `Creating the connection failed with ${response.status()}`).toBe(true);
+    const connection: { id: string } = await response.json();
+    return connection.id;
   }
 
   async testStep() {
@@ -69,7 +92,7 @@ export class BuilderPage extends BasePage {
 
   async expectStepOutput({ key, value }: { key: string; value: string }) {
     await expect(this.sidebar().getByRole('tabpanel', { name: 'Friendly View' })).toContainText(
-      new RegExp(`${key}\\s*${value}`),
+      new RegExp(`${key}:?\\s*${value}`),
     );
   }
 
@@ -104,7 +127,11 @@ export class BuilderPage extends BasePage {
   }
 
   private async replaceEditorText({ testId, text }: { testId: string; text: string }) {
-    await this.sidebar().getByTestId(testId).getByRole('textbox').click();
+    await this.replaceText({ field: this.sidebar().getByTestId(testId).getByRole('textbox'), text });
+  }
+
+  private async replaceText({ field, text }: { field: Locator; text: string }) {
+    await field.click();
     await this.page.keyboard.press('ControlOrMeta+a');
     await this.page.keyboard.insertText(text);
     await this.waitForSaveOfLastEdit();
