@@ -4,7 +4,7 @@ import { ACTIVEPIECES_CHAT_TIERS, AgentRunSource, AI_PROVIDER_ENTITY_TYPES, AiPr
 import { FastifyBaseLogger } from 'fastify'
 
 function surfaceOf({ source }: { source: AgentRunSource | undefined }): ModelTierSurface {
-    return source === AgentRunSource.FLOW_STEP || source === AgentRunSource.AGENT ? 'flow' : 'chat'
+    return modelTierCatalog.surfaceFor({ source })
 }
 
 function findTier({ tierId, surface }: { tierId: string | null, surface: ModelTierSurface }): ModelTier | undefined {

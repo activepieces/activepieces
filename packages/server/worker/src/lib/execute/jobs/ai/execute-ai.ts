@@ -1,5 +1,5 @@
-import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { aiUtils, FlowStepMetadata, modelTierCatalog } from '@activepieces/server-utils'
 import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
 import { JobContext, JobHandler, JobResult, JobResultKind } from '../../types'
@@ -74,7 +74,16 @@ async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJob
 async function withModel<T>({ ctx, data, attempt }: { ctx: JobContext, data: ExecuteAiJobData, attempt: (run: CandidateRun) => Promise<T> }): Promise<T> {
     if (isNil(data.modelTierId)) {
         const resolved = await resolveSpecificModel({ ctx, data })
-        return attempt({ candidate: { ...resolved, modelId: data.modelId, status: 'active' }, maxRetries: undefined, onStepFinish: () => undefined })
+        const modelIds = resolved.provider === AIProviderName.ACTIVEPIECES
+            ? [data.modelId, ...modelTierCatalog.fallbackModelIds({ surface: 'flow', modelId: data.modelId })]
+            : [data.modelId]
+        return runWithFallback({
+            candidates: modelIds.map((modelId) => ({ ...resolved, modelId, status: 'active' })),
+            tierName: data.modelId,
+            log: ctx.log,
+            attempt,
+            report: async () => undefined,
+        })
     }
     const { tierName, candidates } = await ctx.apiClient.resolveAiModelCandidates({
         projectId: data.projectId,

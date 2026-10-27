@@ -192,4 +192,14 @@ describe('modelTierCatalog', () => {
         catalog.current('flow')
         expect(get).toHaveBeenCalledTimes(4)
     })
+
+    describe('fallbackModelIds', () => {
+        it('falls back to the other tiers in published order, by tier id or model id', async () => {
+            const catalog = await warmedCatalog(BOTH_LISTS)
+
+            expect(catalog.fallbackModelIds({ surface: 'chat', modelId: 'smart' })).toEqual([FAST.modelId, DEEP.modelId])
+            expect(catalog.fallbackModelIds({ surface: 'chat', modelId: FAST.modelId })).toEqual([CHAT_SMART.modelId, DEEP.modelId])
+            expect(catalog.fallbackModelIds({ surface: 'flow', modelId: 'smart' })).toEqual([FAST.modelId])
+        })
+    })
 })
