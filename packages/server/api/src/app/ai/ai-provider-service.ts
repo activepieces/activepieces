@@ -718,6 +718,7 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
                 limit_reset: MANAGED_OPENROUTER_KEY_LIMIT_RESET,
             })
             const minted: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
+            await waitUntilKeyIsLive({ minted, platformId, log })
             const { data: stored, error } = await tryCatch(() => storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth: current.auth, auth: minted }))
             if (isNil(stored) || managedKeyHash(stored) !== minted.apiKeyHash) {
                 await revokeManagedKey({ hash: minted.apiKeyHash, platformId, log })
@@ -727,9 +728,6 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             }
             if (!hasManagedKey(stored)) {
                 throw new Error(`[aiProviderService#enrichWithKeysIfNeeded] Managed AI provider ${providerId} has no stored key`)
-            }
-            if (managedKeyHash(stored) === minted.apiKeyHash) {
-                await waitUntilKeyIsLive({ minted, platformId, log })
             }
             return stored
         },

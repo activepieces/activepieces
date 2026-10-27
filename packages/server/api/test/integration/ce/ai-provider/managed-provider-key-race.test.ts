@@ -179,17 +179,50 @@ describe('managed AI provider key provisioning', () => {
         expect(deleteKey).not.toHaveBeenCalled()
     })
 
-    it('hands out the minted key when it never goes live within the wait', async () => {
-        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
-        isKeyLive.mockResolvedValue(false)
+    it('keeps a concurrent read waiting until the new key is live', async () => {
+        const createKey = vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        const { promise: goesLive, resolve: markLive } = Promise.withResolvers<boolean>()
+        const { promise: probing, resolve: markProbing } = Promise.withResolvers<void>()
+        isKeyLive.mockImplementationOnce(async () => {
+            markProbing()
+            return goesLive
+        })
 
-        const provisioned = await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+        const first = aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+        await probing
+        const second = aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+        await new Promise((resolve) => setTimeout(resolve, 300))
 
-        expect(provisioned.apiKey).toBe('sk-or-1')
-        expect(isKeyLive.mock.calls.length).toBeGreaterThan(1)
+        expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+        markLive(true)
+        const [firstKey, secondKey] = await Promise.all([first, second])
+
+        expect(createKey).toHaveBeenCalledTimes(1)
+        expect(firstKey.apiKey).toBe('sk-or-1')
+        expect(secondKey.apiKey).toBe('sk-or-1')
         expect(deleteKey).not.toHaveBeenCalled()
-        expect(await readPersistedApiKey(ctx.platform.id)).toBe('sk-or-1')
-    }, 40_000)
+    })
+
+    it('keeps checking until the wait runs out, then hands out the minted key', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        vi.useFakeTimers({ toFake: ['Date'] })
+        isKeyLive.mockImplementation(async () => {
+            vi.setSystemTime(Date.now() + 5_000)
+            return false
+        })
+
+        try {
+            const provisioned = await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+
+            expect(provisioned.apiKey).toBe('sk-or-1')
+            expect(isKeyLive).toHaveBeenCalledTimes(4)
+            expect(deleteKey).not.toHaveBeenCalled()
+            expect(await readPersistedApiKey(ctx.platform.id)).toBe('sk-or-1')
+        }
+        finally {
+            vi.useRealTimers()
+        }
+    })
 })
 
 describe('managed AI provider deletion', () => {
