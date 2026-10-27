@@ -75,7 +75,7 @@ async function withModel<T>({ ctx, data, attempt }: { ctx: JobContext, data: Exe
     if (isNil(data.modelTierId)) {
         const resolved = await resolveSpecificModel({ ctx, data })
         const modelIds = resolved.provider === AIProviderName.ACTIVEPIECES
-            ? [data.modelId, ...modelTierCatalog.fallbackModelIds({ surface: 'flow', modelId: data.modelId })]
+            ? [data.modelId, ...modelTierCatalog.fallbackTiers({ surface: 'flow', modelId: data.modelId }).map((tier) => tier.modelId)]
             : [data.modelId]
         return runWithFallback({
             candidates: modelIds.map((modelId) => ({ ...resolved, modelId, status: 'active' })),

@@ -1,4 +1,5 @@
 import { ModelTier, ModelTierReader, ModelTierSurface } from '@activepieces/server-utils'
+import { AgentRunSource } from '@activepieces/shared'
 
 function buildReader({ tiers, defaultTierId, fastTierId }: { tiers: ModelTier[], defaultTierId: string, fastTierId: string }): ModelTierReader {
     const byId = new Map(tiers.map((tier) => [tier.id, tier]))
@@ -33,4 +34,5 @@ export const publishedTierReaders: Record<ModelTierSurface, ModelTierReader> = {
 export const publishedModelTierCatalog = {
     warmUp: async (): Promise<void> => undefined,
     current: (surface: ModelTierSurface): ModelTierReader => publishedTierReaders[surface],
+    surfaceFor: ({ source }: { source: AgentRunSource | undefined }): ModelTierSurface => source === AgentRunSource.FLOW_STEP || source === AgentRunSource.AGENT ? 'flow' : 'chat',
 }

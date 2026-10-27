@@ -13,7 +13,7 @@ vi.mock('@activepieces/server-utils', async (importOriginal) => ({
         buildWebSearchToolsOrThrow: () => ({}),
     },
     modelTierCatalog: {
-        fallbackModelIds: () => ['catalog-fast', 'catalog-premium'],
+        fallbackTiers: () => [{ modelId: 'catalog-fast' }, { modelId: 'catalog-premium' }],
     },
 }))
 
