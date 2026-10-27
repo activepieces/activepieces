@@ -27,6 +27,15 @@ export const newResponse = createTrigger({
       'Fires when a respondent submits a new response to the specified Google Form. Each event represents a single form submission, including the response ID, submission timestamps, and the respondent\'s answers keyed by question ID.',
   },
   outputSchema: newResponseTriggerOutputSchema,
+  propertyGroups: [
+    {
+      key: 'source',
+      display: 'section',
+      label: 'Watch',
+      icon: 'inbox',
+      props: ['form_id', 'info'],
+    },
+  ],
   props: {
     info: Property.MarkDown({
       value:
