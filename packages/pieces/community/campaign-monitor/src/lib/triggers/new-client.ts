@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { campaignMonitorAuth } from '../auth';
@@ -20,6 +20,9 @@ export const newClientTrigger = createTrigger({
     Name: 'New Client',
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('existing_clients'))) {
+      return;
+    }
     // Store the list of existing clients
     const response = await makeRequest(
       { apiKey: context.auth.secret_text },
@@ -34,6 +37,9 @@ export const newClientTrigger = createTrigger({
     });
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     // No cleanup needed for polling trigger
     await context.store.delete('existing_clients');
   },

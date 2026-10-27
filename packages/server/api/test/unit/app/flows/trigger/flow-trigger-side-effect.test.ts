@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { TriggerStrategy } from '@activepieces/pieces-framework'
-import { ApEnvironment, EngineResponseStatus, TriggerSourceScheduleType } from '@activepieces/shared'
+import { ApEnvironment, EngineResponseStatus, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockSubmitAndWaitForResponse = vi.fn()
@@ -430,7 +430,7 @@ describe('flowTriggerSideEffect', () => {
             expect(mockSubmitAndWaitForResponse).toHaveBeenCalledOnce()
         })
 
-        it('runs both hooks with isRepublish when only the inputs match, such as a piece upgrade', async () => {
+        it('skips the old onDisable but runs onEnable with isRepublish on a piece upgrade', async () => {
             mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
 
             await flowTriggerSideEffect(mockLog).disable({
@@ -448,9 +448,21 @@ describe('flowTriggerSideEffect', () => {
                 previousSchedule,
             })
 
-            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledTimes(2)
-            expect(mockSubmitAndWaitForResponse).toHaveBeenNthCalledWith(1, expect.objectContaining({ isRepublish: true }), mockLog)
-            expect(mockSubmitAndWaitForResponse).toHaveBeenNthCalledWith(2, expect.objectContaining({ isRepublish: true }), mockLog)
+            expect(mockRemoveRepeatingJob).toHaveBeenCalledWith({ flowVersionId: BASE_PARAMS.flowVersionId })
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledOnce()
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledWith(expect.objectContaining({ hookType: TriggerHookType.ON_ENABLE, isRepublish: true }), mockLog)
+        })
+
+        it('runs onDisable for a polling trigger when the flow is not republished', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue(okEngineResponse())
+
+            await flowTriggerSideEffect(mockLog).disable({
+                ...BASE_PARAMS,
+                pieceTrigger: makePollingTrigger(),
+                ignoreError: true,
+            })
+
+            expect(mockSubmitAndWaitForResponse).toHaveBeenCalledWith(expect.objectContaining({ hookType: TriggerHookType.ON_DISABLE }), mockLog)
         })
 
         it('still runs the hooks for a trigger that is not polling', async () => {
@@ -460,6 +472,7 @@ describe('flowTriggerSideEffect', () => {
                 ...BASE_PARAMS,
                 pieceTrigger: makeManualTrigger(),
                 ignoreError: true,
+                isRepublish: true,
                 isTriggerUnchanged: true,
             })
 
