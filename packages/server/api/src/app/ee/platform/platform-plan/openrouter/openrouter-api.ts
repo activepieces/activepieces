@@ -36,7 +36,7 @@ export const openRouterApi = {
             headers: { Authorization: `Bearer ${key}` },
             validateStatus: () => true,
         }))
-        return response?.status === 200
+        return !isNil(response) && response.status !== 401
     },
 
     async listKeys({ offset, include_disabled }: ListKeysRequest): Promise<ListKeysResponse> {

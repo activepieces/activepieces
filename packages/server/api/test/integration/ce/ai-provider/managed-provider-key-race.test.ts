@@ -1,4 +1,5 @@
 import { AIProviderName, apId, isNil } from '@activepieces/core-utils'
+import { safeHttp } from '@activepieces/server-utils'
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, MockInstance, vi } from 'vitest'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
@@ -318,5 +319,21 @@ describe('managed AI provider deletion', () => {
         await aiProviderService(app.log).deleteManagedProvider({ platformId: ctx.platform.id })
 
         expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+    })
+})
+
+describe('managed OpenRouter key liveness check', () => {
+    it('treats only a 401 or no answer as not live', async () => {
+        isKeyLive.mockRestore()
+        const post = vi.spyOn(safeHttp.axios, 'post')
+
+        post.mockResolvedValueOnce({ status: 401 })
+        expect(await openRouterApi.isKeyLive({ key: 'sk-or-1' })).toBe(false)
+        post.mockRejectedValueOnce(new Error('timeout'))
+        expect(await openRouterApi.isKeyLive({ key: 'sk-or-1' })).toBe(false)
+        post.mockResolvedValueOnce({ status: 200 })
+        expect(await openRouterApi.isKeyLive({ key: 'sk-or-1' })).toBe(true)
+        post.mockResolvedValueOnce({ status: 404 })
+        expect(await openRouterApi.isKeyLive({ key: 'sk-or-1' })).toBe(true)
     })
 })
