@@ -93,11 +93,11 @@ export class BuilderPage extends BasePage {
       .poll(
         async () => {
           const response = await this.page.request.get(url);
-          return response.json().catch(() => undefined);
+          return { status: response.status(), body: await response.json().catch(() => undefined) };
         },
         { timeout: 60000, intervals: [2000, 3000, 5000] },
       )
-      .toEqual(expected);
+      .toEqual({ status: 200, body: expected });
   }
 
   private sidebar() {
