@@ -8,6 +8,73 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Apache Kafka 0.1.0: Publish messages is no longer an AI agent tool
+
+**Publish messages** (several messages in one request) is no longer offered to AI agents as a tool; flow steps that use it keep working unchanged. Agents publish with **Publish message**, one message per call, so there is one agent tool for publishing.
+
+#### What you need to do
+
+If a Run Agent step or MCP server used Publish messages as a tool, switch it to Publish message.
+
+#### PandaDoc 0.3.0: seven actions are builder-only, and the triggers now fire
+
+Create Document from Template, Create Attachment, Create or Update Contact, Find Document(s), Get Document Attachment, Get Document and Download Document are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
+
+The PandaDoc triggers did not fire before this version; after you upgrade and re-enable a flow they start runs. The trigger output is now a flat document (`id`, `name`, `status`, `template_id`, `folder_uuid`, `recipients`, ...) instead of the old sample data's `data` / `template.id` shape. The filter on **Document Updated** is still shown but is ignored, so the trigger runs for every update. **Create Document from Template** now sends template fields by their merge-field key, so a step that used to fail with a 401 now fills the fields. Checkbox template fields are now a Checked / Unchecked dropdown; left empty, the template default is kept.
+
+#### What you need to do
+
+Agents that used these actions switch to their twins: Create Document from Template (AI), Add Document Attachment (AI), Create Contact (AI) or Update Contact (AI), Search Documents (AI), List Document Attachments (AI), Get Document (AI) and Download Document (AI). Flow steps keep running on the version they were built with until you upgrade them.
+
+After upgrading a PandaDoc trigger, turn the flow off and on again so PandaDoc signs its deliveries. If a flow mapped fields from the old trigger sample data, re-map them from the new output (for example `template_id` instead of `template.id`). If a flow used the Document Updated filter, add a Router or Branch step after the trigger to keep only the updates you need.
+
+#### Cognito Forms 0.3.0: Update Entry skips empty fields, and the entry actions move to new AI versions
+
+From Cognito Forms 0.3.0 the **Update Entry** action only sends the fields you fill in. Before, empty values (blank text, null, empty lists) were sent too, which cleared the value stored on the entry. Now an empty field keeps its current value, and the step fails with "Fill in at least one field to update." when every field is empty. Yes/No fields in Update Entry are now a **Yes** / **No** dropdown; left empty, the field keeps its current value. Before, an untouched Yes/No checkbox was sent as No and overwrote the entry. **Create Entry** also leaves out empty fields, so the form's own default values apply.
+
+The builder's **Delete Entry** now succeeds when the entry is already gone and returns `deleted` and `already_deleted` instead of Cognito's raw response. A wrong form ID or any other not-found error still fails the step.
+
+**Create Entry**, **Update Entry**, **Get Entry** and **Delete Entry** are no longer offered to AI agents. Agents get **Create Entry (by Form ID)**, **Update Entry (by IDs)**, **Get Entry (by IDs)** and **Delete Entry (by IDs)** instead, which take the form ID, entry ID and field values directly.
+
+#### What you need to do
+
+- Update Entry: to clear a field, use **Custom API Call** with a `PATCH` to `/forms/{formId}/entries/{entryId}` and set the field to `null`.
+- Update Entry steps with Yes/No fields: open the step after upgrading and set each Yes/No field you want to change; the rest are left unchanged.
+- Delete Entry: if a later step read Cognito's raw delete response, map `deleted` / `already_deleted` instead.
+- Agents that used the old entry actions as tools: add the new "(by IDs)" versions to the agent.
+
+Steps keep running on the version they were built with until you upgrade them.
+
+#### Mindee 0.4.0: the piece moves to the Mindee v2 API, and Predict Document is builder-only
+
+Mindee 0.4.0 adds actions for the Mindee v2 API (app.mindee.com). The old action is renamed **Predict Document (Legacy v1)** and keeps calling the v1 API, but it is no longer offered as a tool to AI agents. Steps keep running on the version they were built with until you upgrade them.
+
+The legacy action no longer reads a local file path from the server's disk. Pass a file, a public URL or a Base64 string instead. A URL in **File URL or Base64** is now sent to Mindee, which downloads it itself, instead of Activepieces downloading it first. A URL Mindee cannot reach, such as a file URL from a self-hosted instance on a private network, stops working after the upgrade; map the file into the **File** field instead.
+
+New connections must use a v2 API key. A legacy v1 key from platform.mindee.com is rejected when you create or re-test a connection. Existing connections keep working with Predict Document (Legacy v1).
+
+**Custom API Call** now uses `https://api-v2.mindee.net/v2` as its base URL. A step that used a relative v1 path now calls the v2 API. It only calls `https://api-v2.mindee.net` and `https://api.mindee.net` and refuses any other host, and every Mindee request now verifies the TLS certificate.
+
+#### What you need to do
+
+Agents that used Predict Document switch to Extract Document (AI) with a v2 API key and a model ID from app.mindee.com. If a legacy step passed a local file path, or a URL Mindee cannot reach from the internet, pass the file itself in the **File** field. If a Custom API Call step used a v1 path, enter the full `https://api.mindee.net/v1/...` URL or move it to the matching v2 endpoint.
+
+#### Alai 0.3.0: three actions are no longer AI agent tools, and Custom API Call only calls the Alai API
+
+**Generate Presentation**, **Add Slide** and **Export Presentation** are no longer offered to AI agents as tools; flow steps that use them keep working unchanged. Agents get **Generate Presentation (Agent)**, **Add Slide (Agent)** and **Export Presentation (Agent)** instead: they take plain IDs and return a `generation_id` at once, which the agent polls with **Get Generation**. **Custom API Call** now sends the API key only to `https://slides-api.getalai.com/api` and refuses any other host or a path that escapes it.
+
+#### What you need to do
+
+If a Run Agent step or MCP server used one of the three actions as a tool, switch it to the matching (Agent) tool. Custom API Call steps that point at another host have to use the HTTP piece instead.
+
+#### Tarvent 0.2.0: actions return the record itself, and Tarvent errors now fail the step
+
+Tarvent actions used to return the raw GraphQL envelope, so later steps read values like `data.createContact.id` or `data.audiences.nodes`. From Tarvent 0.2.0 actions return the record itself (for example `id`), and searches return `items`, `hasMore` and `nextCursor`. Tarvent reports errors with HTTP 200, and earlier versions treated those as success; upgraded steps now fail with Tarvent's message, and a connection with a wrong API key or account ID no longer saves. These 11 actions are no longer offered to AI agents as tools: **Create/Update Contact**, **Find Contact**, **Add/Remove Contact Tag**, **Add/Remove Contact From Audience Group**, **Add/Remove A Contact From A Journey**, **Start/Stop Journey**, **Create An Audience Group**, **Find Audience Group**, **Generate A Custom Event**, **Send A Transactional Email** and **Send Campaign**. Agents get new **(AI)** tools that take plain IDs instead; **Send A Transactional Email (AI)** always respects suppression filters, and **Create or Update Contact (AI)** never replaces existing groups or tags. Searches now return up to 50 results per call with paging: **Find Audience**, **Find Campaign** and **Find Audience Group** used to return up to 100, and **Find Journey** returned only 1. Step settings are unchanged. Existing connections keep working: the API key is now a masked secret under the same field.
+
+#### What you need to do
+
+When you upgrade a Tarvent step, re-map the fields later steps use from its output (drop the `data.<operation>` prefix; searches use `items`). If a Run Agent step or MCP server used one of the demoted actions as a tool, switch it to the matching (AI) tool. Steps keep running on the version they were built with until you upgrade them.
+
 #### Asana 0.8.0 Create Task sends a plain date as an all-day due date and fails on unknown tags
 
 Asana 0.8.0 changes what an existing **Create Task** step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.

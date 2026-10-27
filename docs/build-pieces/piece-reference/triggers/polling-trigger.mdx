@@ -105,8 +105,22 @@ export const newTicketInView = createTrigger({
 
 When an enabled flow is published again and its polling trigger is unchanged (same piece, same piece version, same trigger, same inputs), Activepieces leaves the trigger running exactly as it was: `onDisable` and `onEnable` are not called, the trigger's store is untouched, and polling continues on the same schedule. Events that arrive around the republish are picked up by the next poll as usual.
 
-Everything else runs the hooks as normal:
+In the other cases ([full table](/build-pieces/piece-reference/triggers/overview#when-the-hooks-run)):
 
-- **Upgrading the piece version** with the same inputs runs the old version's `onDisable` and the new version's `onEnable`, with `context.isRepublish` set to `true` in both. Use it to keep your checkpoint when your stored state is still valid.
+- **Upgrading the piece version** with the same inputs skips the old version's `onDisable` and runs the new version's `onEnable` with `context.isRepublish` set to `true`. Use it to keep your checkpoint when your stored state is still valid. Don't rely on `onDisable` to clean up anything outside the store, since it doesn't run on an upgrade.
 - **Changing the trigger or its inputs** runs both hooks without `isRepublish`, so the trigger starts fresh.
 - **Turning the flow off and on** also starts fresh. This is how to reset a polling trigger whose stored state has gone bad, such as an expired sync token.
+
+If your trigger keeps its own state, return early on a republish when that state already exists, so `onEnable` doesn't overwrite it:
+
+```typescript
+onEnable: async (context) => {
+  if (context.isRepublish && !isNil(await context.store.get('_seenIds'))) {
+    return;
+  }
+  const items = await fetchCurrentItems(context.auth);
+  await context.store.put('_seenIds', items.map((item) => item.id));
+},
+```
+
+If the trigger also calls `pollingHelper.onEnable` and saves a snapshot built from the polled items, put this check before the helper call. On a republish the helper still fetches the items, so a snapshot saved after it would replace the one you meant to keep.

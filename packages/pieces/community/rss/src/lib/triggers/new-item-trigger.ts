@@ -44,6 +44,9 @@ export const rssNewItemTrigger = createTrigger({
   },
 
   async onDisable(context): Promise<void> {
+    if (context.isRepublish) {
+      return;
+    }
     const { store } = context;
     const lastFetchDate = await store.get<number>('_lastRssPublishDate');
     if (!isNil(lastFetchDate)) {

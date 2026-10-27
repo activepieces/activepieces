@@ -1,4 +1,7 @@
-import { logLevel, type KafkaConfig, type SASLOptions } from 'kafkajs'
+import type { KafkaConfig, SASLOptions } from 'kafkajs'
+
+const KAFKAJS_LOG_NOTHING = 0
+const VALIDATION_TIMEOUT_MS = 5_000
 
 function parseBrokers(brokers: string): string[] {
   const parsed = brokers
@@ -57,7 +60,7 @@ function build(input: KafkaAuthInput): KafkaConfig {
       }
       : undefined,
     sasl: usesSasl(securityProtocol) ? readSasl(input) : undefined,
-    logLevel: logLevel.NOTHING,
+    logLevel: KAFKAJS_LOG_NOTHING,
     connectionTimeout: 10_000,
     authenticationTimeout: 10_000,
     requestTimeout: 15_000,
@@ -66,6 +69,16 @@ function build(input: KafkaAuthInput): KafkaConfig {
       initialRetryTime: 300,
       maxRetryTime: 3_000,
     },
+  }
+}
+
+function buildForValidation(input: KafkaAuthInput): KafkaConfig {
+  return {
+    ...build(input),
+    connectionTimeout: VALIDATION_TIMEOUT_MS,
+    authenticationTimeout: VALIDATION_TIMEOUT_MS,
+    requestTimeout: VALIDATION_TIMEOUT_MS,
+    retry: { retries: 0 },
   }
 }
 
@@ -170,10 +183,17 @@ function errorText(error: unknown): string {
   if (!(error instanceof Error)) {
     return 'Unknown Kafka error'
   }
-  if (error.cause instanceof Error && error.cause.message.length > 0) {
+  if (error.cause instanceof Error && error.cause.message.length > 0 && !error.message.includes(error.cause.message)) {
     return `${error.message} ${error.cause.message}`
   }
   return error.message
+}
+
+function isGroupAuthorizationError(error: unknown): boolean {
+  if (typeof error === 'object' && error !== null && Reflect.get(error, 'type') === 'GROUP_AUTHORIZATION_FAILED') {
+    return true
+  }
+  return /not authorized to access group/i.test(errorText(error))
 }
 
 function isPassthrough(message: string): boolean {
@@ -208,9 +228,11 @@ function isSaslMechanism(value: string): value is SaslMechanism {
 }
 
 export const kafkaConfig = {
+  isGroupAuthorizationError,
   parseBrokers,
   requirementError,
   build,
+  buildForValidation,
   describeError,
   readTopic,
   readConsumerGroup,

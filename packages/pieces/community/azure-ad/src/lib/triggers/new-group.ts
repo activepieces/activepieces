@@ -40,6 +40,9 @@ export const newGroupTrigger = createTrigger({
     await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await pollingHelper.onDisable(polling, context);
     await context.store.delete(STORE_KEY);
   },

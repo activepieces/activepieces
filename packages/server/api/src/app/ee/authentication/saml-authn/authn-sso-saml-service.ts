@@ -149,7 +149,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                     SELECT id, "ssoDomain" FROM "platform"
                     WHERE "ssoDomain" IS NOT NULL
                       AND "ssoDomainVerification"->>'status' = $1
-                      AND ("ssoDomainVerification"->>'createdAt')::timestamptz < NOW() - make_interval(hours => $2)
+                      AND ("ssoDomainVerification"->>'createdAt')::timestamptz < NOW() - make_interval(days => $2)
                     FOR UPDATE SKIP LOCKED
                 ), cleared AS (
                     UPDATE "platform" p
@@ -159,7 +159,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                     RETURNING p.id AS "platformId", expired."ssoDomain" AS "domain"
                 )
                 SELECT "platformId", "domain" FROM cleared
-            `, [SsoDomainVerificationStatus.PENDING_VERIFICATION, PENDING_DOMAIN_TTL_HOURS])
+            `, [SsoDomainVerificationStatus.PENDING_VERIFICATION, PENDING_DOMAIN_TTL_DAYS])
             const expired = ExpiredSsoDomainRows.parse(rows)
             for (const { platformId, domain } of expired) {
                 platformSideEffects(log).onSsoDomainExpired({ platformId, domain })
@@ -171,7 +171,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
     }
 }
 
-const PENDING_DOMAIN_TTL_HOURS = 3 // if sso domain was not verified in this number of hours it will be set to null
+const PENDING_DOMAIN_TTL_DAYS = 7
 
 const ExpiredSsoDomainRows = z.array(z.object({
     platformId: z.string(),
