@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Apache Kafka 0.1.0: Publish messages is no longer an AI agent tool
+
+**Publish messages** (several messages in one request) is no longer offered to AI agents as a tool; flow steps that use it keep working unchanged. Agents publish with **Publish message**, one message per call, so there is one agent tool for publishing.
+
+#### What you need to do
+
+If a Run Agent step or MCP server used Publish messages as a tool, switch it to Publish message.
+
 #### PandaDoc 0.3.0: seven actions are builder-only, and the triggers now fire
 
 Create Document from Template, Create Attachment, Create or Update Contact, Find Document(s), Get Document Attachment, Get Document and Download Document are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.

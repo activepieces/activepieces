@@ -655,6 +655,50 @@ describe('Authentication API', () => {
 
             expect(responseBody?.code).toBe('DOMAIN_NOT_ALLOWED')
         })
+
+        it('Signs in when the allowed domain differs only in case', async () => {
+            const mockPlatformId = faker.string.nanoid()
+            const mockPlatformDomain = faker.internet.domainName().toLowerCase()
+
+            await mockAndSaveBasicSetup({
+                platform: {
+                    id: mockPlatformId,
+                    allowedAuthDomains: [mockPlatformDomain.toUpperCase()],
+                    enforceAllowedAuthDomains: true,
+                    emailAuthEnabled: true,
+                },
+                plan: {
+                    ssoEnabled: true,
+                },
+            })
+            const rawPassword = faker.internet.password()
+            const { mockUserIdentity } = await mockBasicUser({
+                user: {
+                    status: UserStatus.ACTIVE,
+                    platformId: mockPlatformId,
+                    platformRole: PlatformRole.ADMIN,
+                },
+                userIdentity: {
+                    email: `${faker.internet.username().toLowerCase()}@${mockPlatformDomain}`,
+                    password: rawPassword,
+                    verified: true,
+                },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-in',
+                headers: {
+                    Host: mockPlatformDomain,
+                },
+                body: createMockSignInRequest({
+                    email: mockUserIdentity.email,
+                    password: rawPassword,
+                }),
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
     })
 
 

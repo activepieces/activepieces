@@ -151,7 +151,9 @@ const CodeEditor = ({
       {isFullscreen ? (
         <div className="h-[180px] border-t" />
       ) : (
-        <div className="border-t">{renderPane({ fullscreen: false })}</div>
+        <div className="border-t" data-testid="code-editor">
+          {renderPane({ fullscreen: false })}
+        </div>
       )}
       <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
         <DialogContent
