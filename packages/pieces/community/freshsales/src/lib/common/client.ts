@@ -19,7 +19,18 @@ export const freshsalesClient = {
   readArray,
   readMeta,
   isRecord,
+  isNotFound,
 };
+
+export class FreshsalesApiError extends Error {
+  readonly status: number;
+
+  constructor({ status, message }: { status: number; message: string }) {
+    super(message);
+    this.name = 'FreshsalesApiError';
+    this.status = status;
+  }
+}
 
 const HOST_SUFFIX = '.myfreshworks.com';
 const ALIAS_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
@@ -127,17 +138,25 @@ async function request<T>({
       followRedirects: false,
     });
     if (response.status >= 300) {
-      throw new Error(describeError({ status: response.status, body: response.body }));
+      throw new FreshsalesApiError({
+        status: response.status,
+        message: describeError({ status: response.status, body: response.body }),
+      });
     }
     return response.body;
   } catch (error) {
     if (error instanceof HttpError) {
-      throw new Error(
-        describeError({ status: error.response.status, body: error.response.body })
-      );
+      throw new FreshsalesApiError({
+        status: error.response.status,
+        message: describeError({ status: error.response.status, body: error.response.body }),
+      });
     }
     throw error;
   }
+}
+
+function isNotFound(error: unknown): boolean {
+  return error instanceof FreshsalesApiError && error.status === 404;
 }
 
 function pickDefined(

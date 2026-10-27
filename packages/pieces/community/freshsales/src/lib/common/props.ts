@@ -63,6 +63,12 @@ export const freshsalesProps = {
   findDefaultViewId,
 };
 
+const DEFAULT_VIEW_NAMES: Record<string, string> = {
+  contacts: 'All Contacts',
+  sales_accounts: 'All Accounts',
+  deals: 'All Deals',
+};
+
 async function fetchSelector({
   auth,
   path,
@@ -400,8 +406,12 @@ async function findDefaultViewId({
   entity: string;
 }): Promise<string> {
   const items = await fetchSelector({ auth, path: `/api/${entity}/filters` });
-  const allView =
-    items.find((item) => /^all\b/i.test(item.name)) ?? items[0];
+  const systemName = DEFAULT_VIEW_NAMES[entity];
+  const exact =
+    systemName === undefined
+      ? undefined
+      : items.find((item) => item.name.trim().toLowerCase() === systemName.toLowerCase());
+  const allView = exact ?? items.find((item) => /^all\b/i.test(item.name)) ?? items[0];
   if (!allView) {
     throw new Error(`No saved views found for ${entity}.`);
   }

@@ -3,7 +3,7 @@ import {
   HttpMethod,
   Polling,
 } from '@activepieces/pieces-common';
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, Store } from '@activepieces/pieces-framework';
 import { freshsalesAuth } from '../auth';
 import { freshsalesClient } from './client';
 import { freshsalesProps } from './props';
@@ -16,6 +16,7 @@ export const freshsalesPolling = {
 const PER_PAGE = 100;
 const MAX_PAGES = 10;
 const TEST_PER_PAGE = 5;
+const VIEW_ID_STORE_PREFIX = 'freshsales_default_view_';
 
 function buildPolling({
   entity,
@@ -26,12 +27,28 @@ function buildPolling({
 }): Polling<AppConnectionValueForAuthProperty<typeof freshsalesAuth>, Record<string, never>> {
   return {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, lastFetchEpochMS }) => {
-      const viewId = await freshsalesProps.findDefaultViewId({ auth, entity });
+    items: async ({ auth, store, lastFetchEpochMS }) => {
       const isTest = lastFetchEpochMS === 0;
       const perPage = isTest ? TEST_PER_PAGE : PER_PAGE;
-      const fetchPage = (page: number) =>
-        fetchViewPage({ auth, entity, viewId, timestampField, page, perPage });
+      const viewKey = `${VIEW_ID_STORE_PREFIX}${entity}`;
+      const cachedViewId = await store.get<string>(viewKey);
+      let viewId = cachedViewId ?? (await lookupViewId({ auth, store, entity, viewKey }));
+      let viewRefreshed = cachedViewId === null || cachedViewId === undefined;
+      const fetchPage = async (
+        page: number
+      ): Promise<{ records: Record<string, unknown>[]; totalPages: number | undefined }> => {
+        try {
+          return await fetchViewPage({ auth, entity, viewId, timestampField, page, perPage });
+        } catch (error) {
+          if (viewRefreshed || !freshsalesClient.isNotFound(error)) {
+            throw error;
+          }
+          viewRefreshed = true;
+          await store.delete(viewKey);
+          viewId = await lookupViewId({ auth, store, entity, viewKey });
+          return await fetchViewPage({ auth, entity, viewId, timestampField, page, perPage });
+        }
+      };
       const toItems = (records: Record<string, unknown>[]) =>
         records
           .map((record) => ({ record, epoch: readEpoch({ record, timestampField }) }))
@@ -95,7 +112,21 @@ function buildPolling({
   };
 }
 
-
+async function lookupViewId({
+  auth,
+  store,
+  entity,
+  viewKey,
+}: {
+  auth: AppConnectionValueForAuthProperty<typeof freshsalesAuth>;
+  store: Store;
+  entity: RecordEntity;
+  viewKey: string;
+}): Promise<string> {
+  const viewId = await freshsalesProps.findDefaultViewId({ auth, entity });
+  await store.put(viewKey, viewId);
+  return viewId;
+}
 
 async function fetchViewPage({
   auth,
