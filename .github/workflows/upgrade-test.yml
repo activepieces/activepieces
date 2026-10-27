@@ -123,9 +123,10 @@ jobs:
             curl -sf localhost:8080/api/v1/flags > /dev/null && break
             sleep 5
           done
+          curl -sf localhost:8080/api/v1/flags > /dev/null
           TOKEN=$(curl -s --fail-with-body localhost:8080/api/v1/authentication/sign-in \
             -H "Content-Type: application/json" \
-            -d '{"email":"bench@activepieces.com","password":"BenchmarkPass1"}' | jq -r .token)
+            -d '{"email":"bench@activepieces.com","password":"BenchmarkPass1"}' | jq -er .token)
           for i in $(seq 1 60); do
             MIGRATIONS=$(curl -s localhost:8080/api/v1/health/system -H "Authorization: Bearer $TOKEN" | jq -c '.backgroundMigrations')
             echo "$MIGRATIONS"
@@ -133,7 +134,7 @@ jobs:
               echo "::error::A background migration failed: $MIGRATIONS"
               exit 1
             fi
-            if [ "$(echo "$MIGRATIONS" | jq -r '.pendingCount')" = "0" ]; then
+            if echo "$MIGRATIONS" | jq -e '.error == null and .pendingCount == 0' > /dev/null; then
               exit 0
             fi
             sleep 5
