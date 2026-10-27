@@ -8,6 +8,8 @@ import { db } from '../../../helpers/db'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
+vi.mock('../../../../src/app/helper/sleep', () => ({ sleep: async () => undefined }))
+
 let app: FastifyInstance
 let ctx: TestContext
 let deleteKey: MockInstance<typeof openRouterApi.deleteKey>
@@ -160,21 +162,21 @@ describe('managed AI provider key provisioning', () => {
         ])
 
         expect(createKey).toHaveBeenCalledTimes(1)
-        expect(isKeyLive).toHaveBeenCalledTimes(1)
+        expect(isKeyLive).toHaveBeenCalledTimes(3)
         expect(deleteKey).not.toHaveBeenCalled()
         expect(third.apiKey).toBe(provisioned.apiKey)
         expect(fourth.apiKey).toBe(provisioned.apiKey)
         expect(await readPersistedApiKey(ctx.platform.id)).toBe(provisioned.apiKey)
     })
 
-    it('waits until a freshly minted key is live before handing it out', async () => {
+    it('waits until a freshly minted key passes three checks in a row before handing it out', async () => {
         vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
-        isKeyLive.mockResolvedValueOnce(false).mockResolvedValueOnce(false)
+        isKeyLive.mockResolvedValueOnce(false).mockResolvedValueOnce(true).mockResolvedValueOnce(false)
 
         const provisioned = await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
 
         expect(provisioned.apiKey).toBe('sk-or-1')
-        expect(isKeyLive).toHaveBeenCalledTimes(3)
+        expect(isKeyLive).toHaveBeenCalledTimes(6)
         expect(isKeyLive).toHaveBeenLastCalledWith({ key: 'sk-or-1' })
         expect(deleteKey).not.toHaveBeenCalled()
     })
@@ -215,7 +217,7 @@ describe('managed AI provider key provisioning', () => {
             const provisioned = await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
 
             expect(provisioned.apiKey).toBe('sk-or-1')
-            expect(isKeyLive).toHaveBeenCalledTimes(4)
+            expect(isKeyLive).toHaveBeenCalledTimes(6)
             expect(deleteKey).not.toHaveBeenCalled()
             expect(await readPersistedApiKey(ctx.platform.id)).toBe('sk-or-1')
         }

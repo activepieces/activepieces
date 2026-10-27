@@ -28,9 +28,10 @@ const modelsCache = new Map<string, AIProviderModel[]>()
 
 const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 500
 const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
-const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 45
-const MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS = 20_000
-const MANAGED_OPENROUTER_KEY_LIVE_POLL_MS = 500
+const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 60
+const MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS = 30_000
+const MANAGED_OPENROUTER_KEY_LIVE_POLL_MS = 1_000
+const MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW = 3
 
 // A passing check must not lock out the next real failure, so the claim is a floor between
 // checks rather than a window that swallows them. A confirmed failure needs no floor: the row
@@ -737,8 +738,10 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
 
 async function waitUntilKeyIsLive({ minted, platformId, log }: { minted: ActivePiecesProviderAuthConfig, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {
     const deadline = Date.now() + MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS
+    let passesInARow = 0
     while (Date.now() < deadline) {
-        if (await openRouterApi.isKeyLive({ key: minted.apiKey })) {
+        passesInARow = await openRouterApi.isKeyLive({ key: minted.apiKey }) ? passesInARow + 1 : 0
+        if (passesInARow === MANAGED_OPENROUTER_KEY_LIVE_PASSES_IN_A_ROW) {
             return
         }
         await sleep(MANAGED_OPENROUTER_KEY_LIVE_POLL_MS)
