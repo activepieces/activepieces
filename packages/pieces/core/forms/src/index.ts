@@ -8,7 +8,7 @@ export const forms = createPiece({
   displayName: 'Human Input',
   description: 'Trigger a flow through human input.',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.65.0',
+  minimumSupportedRelease: '0.88.2',
   categories: [PieceCategory.CORE],
   logoUrl: 'https://cdn.activepieces.com/pieces/new-core/human-input.svg',
   authors: ['anasbarg', 'MoShizzle', 'abuaboud'],
