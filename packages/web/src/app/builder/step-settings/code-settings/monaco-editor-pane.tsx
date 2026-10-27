@@ -149,7 +149,7 @@ function MonacoEditorPane({
   return (
     <div
       ref={containerRef}
-      className={cn('w-full overflow-hidden', { 'h-full': !isCompact })}
+      className={cn('nokey w-full overflow-hidden', { 'h-full': !isCompact })}
       style={isCompact ? { height: minHeight } : undefined}
     >
       <Editor

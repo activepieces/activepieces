@@ -86,6 +86,14 @@ describe('isEditableTarget', () => {
     expect(isEditableTarget(div)).toBe(true);
   });
 
+  it('is true for an element inside a nokey container, as the Code editor renders', () => {
+    const container = document.createElement('div');
+    container.className = 'nokey';
+    const editContext = document.createElement('div');
+    container.appendChild(editContext);
+    expect(isEditableTarget(editContext)).toBe(true);
+  });
+
   it('is false for non-editable elements and null', () => {
     expect(isEditableTarget(document.createElement('div'))).toBe(false);
     expect(isEditableTarget(document.createElement('button'))).toBe(false);
