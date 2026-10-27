@@ -1,4 +1,5 @@
 import { AIProviderName, apId, isNil } from '@activepieces/core-utils'
+import { safeHttp } from '@activepieces/server-utils'
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, MockInstance, vi } from 'vitest'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
@@ -8,9 +9,12 @@ import { db } from '../../../helpers/db'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
+vi.mock('../../../../src/app/helper/sleep', () => ({ sleep: async () => undefined }))
+
 let app: FastifyInstance
 let ctx: TestContext
 let deleteKey: MockInstance<typeof openRouterApi.deleteKey>
+let isKeyLive: MockInstance<typeof openRouterApi.isKeyLive>
 
 beforeAll(async () => {
     app = await setupTestEnvironment({ fresh: true })
@@ -23,6 +27,7 @@ afterAll(async () => {
 beforeEach(async () => {
     vi.restoreAllMocks()
     deleteKey = vi.spyOn(openRouterApi, 'deleteKey').mockResolvedValue(undefined)
+    isKeyLive = vi.spyOn(openRouterApi, 'isKeyLive').mockResolvedValue(true)
     ctx = await createTestContext(app)
 })
 
@@ -158,10 +163,68 @@ describe('managed AI provider key provisioning', () => {
         ])
 
         expect(createKey).toHaveBeenCalledTimes(1)
+        expect(isKeyLive).toHaveBeenCalledTimes(3)
         expect(deleteKey).not.toHaveBeenCalled()
         expect(third.apiKey).toBe(provisioned.apiKey)
         expect(fourth.apiKey).toBe(provisioned.apiKey)
         expect(await readPersistedApiKey(ctx.platform.id)).toBe(provisioned.apiKey)
+    })
+
+    it('waits until a freshly minted key passes three checks in a row before handing it out', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        isKeyLive.mockResolvedValueOnce(false).mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+
+        const provisioned = await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+
+        expect(provisioned.apiKey).toBe('sk-or-1')
+        expect(isKeyLive).toHaveBeenCalledTimes(6)
+        expect(isKeyLive).toHaveBeenLastCalledWith({ key: 'sk-or-1' })
+        expect(deleteKey).not.toHaveBeenCalled()
+    })
+
+    it('keeps a concurrent read waiting until the new key is live', async () => {
+        const createKey = vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        const { promise: goesLive, resolve: markLive } = Promise.withResolvers<boolean>()
+        const { promise: probing, resolve: markProbing } = Promise.withResolvers<void>()
+        isKeyLive.mockImplementationOnce(async () => {
+            markProbing()
+            return goesLive
+        })
+
+        const first = aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+        await probing
+        const second = aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+        await new Promise((resolve) => setTimeout(resolve, 300))
+
+        expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+        markLive(true)
+        const [firstKey, secondKey] = await Promise.all([first, second])
+
+        expect(createKey).toHaveBeenCalledTimes(1)
+        expect(firstKey.apiKey).toBe('sk-or-1')
+        expect(secondKey.apiKey).toBe('sk-or-1')
+        expect(deleteKey).not.toHaveBeenCalled()
+    })
+
+    it('keeps checking until the wait runs out, then hands out the minted key', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        vi.useFakeTimers({ toFake: ['Date'] })
+        isKeyLive.mockImplementation(async () => {
+            vi.setSystemTime(Date.now() + 5_000)
+            return false
+        })
+
+        try {
+            const provisioned = await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+
+            expect(provisioned.apiKey).toBe('sk-or-1')
+            expect(isKeyLive).toHaveBeenCalledTimes(6)
+            expect(deleteKey).not.toHaveBeenCalled()
+            expect(await readPersistedApiKey(ctx.platform.id)).toBe('sk-or-1')
+        }
+        finally {
+            vi.useRealTimers()
+        }
     })
 })
 
@@ -256,5 +319,21 @@ describe('managed AI provider deletion', () => {
         await aiProviderService(app.log).deleteManagedProvider({ platformId: ctx.platform.id })
 
         expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+    })
+})
+
+describe('managed OpenRouter key liveness check', () => {
+    it('treats only a 401 or no answer as not live', async () => {
+        isKeyLive.mockRestore()
+        const post = vi.spyOn(safeHttp.axios, 'post')
+
+        post.mockResolvedValueOnce({ status: 401 })
+        expect(await openRouterApi.isKeyLive({ key: 'sk-or-1' })).toBe(false)
+        post.mockRejectedValueOnce(new Error('timeout'))
+        expect(await openRouterApi.isKeyLive({ key: 'sk-or-1' })).toBe(false)
+        post.mockResolvedValueOnce({ status: 200 })
+        expect(await openRouterApi.isKeyLive({ key: 'sk-or-1' })).toBe(true)
+        post.mockResolvedValueOnce({ status: 404 })
+        expect(await openRouterApi.isKeyLive({ key: 'sk-or-1' })).toBe(true)
     })
 })
