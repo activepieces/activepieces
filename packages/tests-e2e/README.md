@@ -23,7 +23,7 @@ A spec must pass whatever the project already holds: nothing, many flows, or ano
 - Pass each flow id to `flowCleanup.track()` and each connection id to `connectionCleanup.track()`. The fixtures delete them after the test, also when the test fails.
 - Find your data by its id or unique name, never by its position in a list.
 - Wait for a visible result (a status text, a step output, a response), never for a fixed time.
-- Select by role or `data-testid`. Add a `data-testid` to the web app when an element has no stable name.
+- Select by role and accessible name (`getByRole(…, { name })`, `getByLabel`). When an element has no name, give it one in the web app (a linked label or an `aria-label`); use a `data-testid` only when no name fits. Never locate a field by the text around it or by its position.
 - The tests start signed in. Use `test.use({ storageState: { cookies: [], origins: [] } })` to start signed out.
 - Use only pieces that need no outside service. A spec that needs a server calls a flow of its own, as `connection-step.spec.ts` does.
 - A new piece must also go into the `PIECES` list of `e2e-matrix.yml`, because the matrix stack installs only those.

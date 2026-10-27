@@ -45,9 +45,8 @@ export class BuilderPage extends BasePage {
 
   async setCodeInput({ key, value }: { key: string; value: string }) {
     await this.sidebar().getByRole('button', { name: 'Add Item' }).click();
-    const fields = this.sidebar().getByRole('textbox');
-    await fields.nth(0).fill(key);
-    await fields.nth(1).click();
+    await this.sidebar().getByRole('textbox', { name: 'Key', exact: true }).last().fill(key);
+    await this.sidebar().getByRole('textbox', { name: 'Value', exact: true }).last().click();
     await this.page.keyboard.insertText(value);
     await this.waitForSaveOfLastEdit();
   }
@@ -65,13 +64,12 @@ export class BuilderPage extends BasePage {
   }
 
   async createConnection({ name, fields }: { name: string; fields: Record<string, string> }): Promise<string> {
-    await this.sidebar().getByRole('combobox').filter({ hasText: 'Select a connection' }).click();
-    await this.page.getByText('Create Connection', { exact: true }).click();
+    await this.sidebar().getByRole('combobox', { name: 'Connection' }).click();
+    await this.page.getByRole('button', { name: 'Create Connection' }).click();
     const dialog = this.page.getByRole('dialog', { name: /^Connect to / });
     await dialog.getByLabel('Connection Name').fill(name);
     for (const [label, value] of Object.entries(fields)) {
-      const field = dialog.locator('div').filter({ hasText: new RegExp(`^${label}\\s*\\*?$`) }).filter({ has: this.page.getByRole('textbox') });
-      await field.getByRole('textbox').fill(value);
+      await dialog.getByLabel(label).fill(value);
     }
     const created = this.page.waitForResponse(
       (response) => response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/v1/app-connections',
