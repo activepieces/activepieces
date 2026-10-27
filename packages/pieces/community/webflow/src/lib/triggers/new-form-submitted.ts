@@ -11,17 +11,21 @@ export const webflowNewSubmission = createTrigger({
 
 	name: 'new_submission',
 	classification: 'READ',
-	displayName: 'New Submission',
-	description: 'Triggers when Webflow Site receives a new submission',
+	displayName: 'New Form Submission',
+	description: 'Fires when someone submits a form on your Webflow site.',
 	aiMetadata: {
 		description: 'Fires when a form on the selected Webflow site receives a new submission, delivering the submitted form data. Optionally scoped to a single form by name; if no form name is given, it fires for submissions from any form on the site.',
 	},
+	propertyGroups: [
+		{ key: 'source', display: 'section', label: 'Submissions From', icon: 'inbox', props: ['site_id', 'formName'] },
+	],
 	props: {
 		site_id: webflowProps.site_id,
 		formName: Property.ShortText({
 			displayName: 'Form Name',
 			required: false,
-			description: 'Copy from the form settings, or from one of the responses',
+			description: 'Exact form name from its settings. Empty: every form on the site.',
+			placeholder: 'Contact Form',
 		}),
 	},
 	type: TriggerStrategy.WEBHOOK,

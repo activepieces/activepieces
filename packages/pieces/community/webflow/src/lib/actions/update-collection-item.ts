@@ -1,4 +1,4 @@
-import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 
 import { webflowAuth } from '../..';
 import { webflowProps } from '../common/props';
@@ -8,24 +8,37 @@ export const webflowUpdateCollectionItem = createAction({
 	auth: webflowAuth,
 	name: 'update_collection_item',
 	classification: 'WRITE',
-	description: 'Update collection item',
-	displayName: 'Update an item in a collection',
+	description: 'Changes the fields of an existing CMS collection item.',
+	displayName: 'Update Collection Item',
 	audience: 'both',
 	aiMetadata: { description: 'Updates an existing Webflow CMS collection item, identified by collection ID and item ID, overwriting the supplied field values (keyed by field slug) and the archived/draft flags. Use to edit existing CMS content. Idempotent: applying the same field values repeatedly yields the same item state.', idempotent: true },
+	propertyGroups: [
+		{ key: 'target', display: 'section', label: 'Item to Update', icon: 'inbox', props: ['site_id', 'collection_id', 'collection_item_id'] },
+		{ key: 'values', display: 'section', label: 'New Values', icon: 'text', props: ['collection_fields'] },
+		{ key: 'status', display: 'section', label: 'Status', icon: 'sliders', props: ['is_draft', 'is_archived', 'publish_note'] },
+	],
 	props: {
 		site_id: webflowProps.site_id,
 		collection_id: webflowProps.collection_id,
 		collection_item_id: webflowProps.collection_item_id,
 		collection_fields: webflowProps.collection_fields,
-		is_archived: Property.Checkbox({
-			displayName: 'Is Archived',
-			description: 'Whether the item is archived or not',
-			required: false,
-		}),
 		is_draft: Property.Checkbox({
-			displayName: 'Is Draft',
-			description: 'Whether the item is a draft or not',
+			displayName: 'Draft',
+			description: 'Drafts stay off the live site, even after a site publish.',
 			required: false,
+			defaultValue: false,
+			width: 'half',
+		}),
+		is_archived: Property.Checkbox({
+			displayName: 'Archived',
+			description: 'Archived items are hidden from the site and collection lists.',
+			required: false,
+			defaultValue: false,
+			width: 'half',
+		}),
+		publish_note: Property.MarkDown({
+			value: 'Changes reach the live site when it is next published, or with **Publish Collection Item**.',
+			variant: MarkdownVariant.INFO,
 		}),
 	},
 
