@@ -137,6 +137,7 @@ export type GetAgentConfigRequest = {
     messageSource?: 'onboarding'
     agentId?: string
     flowRunId?: string
+    waitpointId?: string
     projectId?: string | null
     userMessage: string
     modelName: string | null

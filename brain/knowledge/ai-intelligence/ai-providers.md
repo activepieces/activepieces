@@ -25,7 +25,7 @@ Lets platform admins configure one or more LLM backends for AI pieces in flows. 
 - Model lists are cached in memory, cleared daily at midnight via cron.
 
 ### AI usage (analytics)
-- Every reported model call is recorded by `aiUsageIngest` (`app/ai/usage/`) on the Redis stream `ai-usage:events:v1`. `AI_USAGE_FLUSH` folds it into `ai_usage_5m` + `ai_usage_daily` every minute, in all editions. Decisions 000052 and 000053.
+- Every reported model call is recorded by `aiUsageIngest` (`app/ai/usage/`) on the Redis stream `ai-usage:events:v1`. `AI_USAGE_FLUSH` folds it into `ai_usage_5m` + `ai_usage_daily` every minute, in all editions. Decisions 000053 and 000054.
 - `AiChargeBasis.USAGE_ONLY` = recorded, never billed. Own-key agent/chat calls and internal calls (memory, compaction, piece-tool filler, personalization) report with it.
 - `AiCallContext` (`origin`, `environment`, `flowId`, `agentId`, `flowRunId`) rides on the billing object. AI steps get it from `aiCallContext.forFlowRun`; agent runs from `AGENT_RUN_USAGE_ORIGIN` plus the run's ids.
 
@@ -75,7 +75,7 @@ decision 000041. The console publishes both lists and both fast pointers on ever
 after a file without chat keys it seeds the chat list from the live flow list.
 ### Platform tiers
 
-**Platform tier** — an admin-built, platform-owned list of up to 5 `{configId, modelId}` entries (main + ranked fallbacks, any keys), table `platform_model_tier`, API `/v1/platform-model-tiers`. A tier follows key scope: in a project it runs only the entries whose key serves that project, and it is listed there only when its main entry can run; see decision [000048](../decisions/000048-platform-tiers-follow-key-project-scope.md) (replaces 000044's grant). _Avoid_: "model tier" alone — that is the console **credits tier** (`ModelTier`, above).
+**Platform tier** — an admin-built, platform-owned list of up to 5 `{configId, modelId}` entries (main + ranked fallbacks, any keys), table `platform_model_tier`, API `/v1/platform-model-tiers`. A tier follows key scope: in a project it runs only the entries whose key serves that project, and it is listed there only when its main entry can run; see decision [000048](../decisions/000048-platform-tiers-follow-key-project-scope.md) (replaces 000044's grant). The admin Tiers page (`/platform/ai/tiers`) is listed in the AI Center sidebar and global search on **cloud only** (`edition === CLOUD`, search `requiresEdition`); self-hosted can still open it by URL. _Avoid_: "model tier" alone — that is the console **credits tier** (`ModelTier`, above).
 
 **Specific model** — a model a builder picks directly from one key (`{provider, configId, model}`), as opposed to a tier. The admin switch `platform_configuration.aiSpecificModelsVisible` (Tiers tab, "Visible to builders") hides them from builders. _Avoid_: "Advanced" (an early mockup word for the same section)
 
