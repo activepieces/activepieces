@@ -116,6 +116,8 @@ jobs:
       APP_REPLICAS: 1
       WORKER_REPLICAS: ${{ matrix.workerReplicas }}
       AP_EXECUTION_MODE: ${{ matrix.executionMode }}
+      # The compose file passes an unset value as "", which the worker reads as invalid and replaces with 1 slot.
+      AP_WORKER_CONCURRENCY: 5
       AP_PIECES_SYNC_MODE: NONE
       AP_LOG_LEVEL: info
       AP_FILE_STORAGE_LOCATION: ${{ matrix.fileStorage }}
