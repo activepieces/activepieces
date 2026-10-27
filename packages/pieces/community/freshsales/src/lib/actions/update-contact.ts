@@ -98,7 +98,8 @@ export const updateContact = createAction({
     lead_source_id: freshsalesProps.leadSource(),
     sales_account_id: Property.ShortText({
       displayName: 'Sales account id',
-      description: 'ID of the primary account of the contact',
+      description:
+        'ID of the account to set as the primary account. Accounts already linked to the contact are kept as secondary accounts.',
       placeholder: '16000123456',
       required: false,
     }),
@@ -129,6 +130,22 @@ export const updateContact = createAction({
     });
     if (Object.keys(contact).length === 0) {
       throw new Error('Provide at least one field to update.');
+    }
+    const primaryAccountId = freshsalesClient.toId({
+      value: context.propsValue.sales_account_id,
+      field: 'Account ID',
+    });
+    if (primaryAccountId !== undefined) {
+      const current = await freshsalesClient.request<unknown>({
+        auth: context.auth,
+        method: HttpMethod.GET,
+        path: `/api/contacts/${contactId}`,
+        query: { include: 'sales_accounts' },
+      });
+      contact['sales_accounts'] = freshsalesRecords.mergeSalesAccounts({
+        existingIds: freshsalesRecords.readSalesAccountIds(current),
+        primaryId: primaryAccountId,
+      });
     }
     const response = await freshsalesClient.request<unknown>({
       auth: context.auth,

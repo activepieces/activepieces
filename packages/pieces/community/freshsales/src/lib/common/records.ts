@@ -25,6 +25,8 @@ export const freshsalesRecords = {
   shapeRecord,
   shapeTargetable,
   toNumber,
+  readSalesAccountIds,
+  mergeSalesAccounts,
 };
 
 function toSubscriptionStatus(value: unknown): number | undefined {
@@ -157,6 +159,42 @@ function shapeContact(record: Record<string, unknown>): Record<string, unknown> 
   return Object.assign({}, record, {
     sales_account_id: freshsalesClient.isRecord(primary) ? primary['id'] ?? null : null,
   });
+}
+
+function readSalesAccountIds(body: unknown): number[] {
+  if (!freshsalesClient.isRecord(body)) {
+    return [];
+  }
+  const contact = body['contact'];
+  const nested = freshsalesClient.isRecord(contact) ? contact['sales_accounts'] : undefined;
+  const accounts = Array.isArray(nested) ? nested : body['sales_accounts'];
+  if (!Array.isArray(accounts)) {
+    return [];
+  }
+  const ids: number[] = [];
+  for (const account of accounts) {
+    if (freshsalesClient.isRecord(account)) {
+      const id = Number(account['id']);
+      if (account['id'] !== null && Number.isSafeInteger(id) && id > 0 && !ids.includes(id)) {
+        ids.push(id);
+      }
+    }
+  }
+  return ids;
+}
+
+function mergeSalesAccounts({
+  existingIds,
+  primaryId,
+}: {
+  existingIds: number[];
+  primaryId: number;
+}): { id: number; is_primary: boolean }[] {
+  const others = existingIds.filter((id) => id !== primaryId);
+  return [
+    { id: primaryId, is_primary: true },
+    ...others.map((id) => ({ id, is_primary: false })),
+  ];
 }
 
 function isRecordEntity(value: unknown): value is RecordEntity {
