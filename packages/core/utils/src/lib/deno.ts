@@ -8,9 +8,10 @@ export const deno = {
      * output to a `result` variable. Resolves with the result, or rejects with
      * an Error carrying the process stdout/stderr.
      */
-    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase, timeoutMs }: DenoProgramParams): Promise<unknown> {
+    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDir, timeoutMs }: DenoProgramParams): Promise<unknown> {
         const marker = newResultMarker()
-        const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase })
+        const keepDenoDir = denoDir !== undefined
+        const { child, denoPath, denoDir: resolvedDenoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDir })
         child.stdin.end(buildRunProgram({ body, marker }))
         const killTimer = timeoutMs === undefined ? undefined : setTimeout(() => child.kill('SIGKILL'), timeoutMs)
 
@@ -31,7 +32,9 @@ export const deno = {
 
             child.on('close', (code, signal) => {
                 clearTimeout(killTimer)
-                void removeDenoDir(denoDir)
+                if (!keepDenoDir) {
+                    removeDenoDir(resolvedDenoDir).catch(() => undefined)
+                }
                 if (settled) {
                     return
                 }
@@ -75,7 +78,9 @@ export const deno = {
 
             child.on('error', (error) => {
                 clearTimeout(killTimer)
-                void removeDenoDir(denoDir)
+                if (!keepDenoDir) {
+                    removeDenoDir(resolvedDenoDir).catch(() => undefined)
+                }
                 if (settled) {
                     return
                 }
@@ -112,10 +117,13 @@ function newResultMarker(): string {
     return `__AP_DENO_RESULT_${nanoid()}__` // Random so it's not guessable and potentially printed by user code
 }
 
-async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string }> {
+async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDir }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string }> {
     const { childProcess, os, fs } = await getNodeApis()
     const denoPath = resolveDenoPath()
-    const denoDir = await fs.mkdtemp(`${denoDirBase ?? os.tmpdir()}/ap-deno-`)
+    const resolvedDenoDir = denoDir ?? await fs.mkdtemp(`${os.tmpdir()}/ap-deno-`)
+    if (denoDir !== undefined) {
+        await fs.mkdir(denoDir, { recursive: true })
+    }
     const child = childProcess.spawn(denoPath, [
         'run',
         '--quiet',
@@ -133,11 +141,11 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
         env: {
             PATH: process.env['PATH'] ?? '',
             ...env,
-            DENO_DIR: denoDir,
+            DENO_DIR: resolvedDenoDir,
         },
         stdio: ['pipe', 'pipe', 'pipe'],
     })
-    return { child, denoPath, denoDir }
+    return { child, denoPath, denoDir: resolvedDenoDir }
 }
 
 function resolveDenoPath(): string {
@@ -230,7 +238,7 @@ type DenoProgramParams = {
     allowReadPaths?: string[]
     resolveNodeModules?: boolean
     env?: Record<string, string>
-    denoDirBase?: string
+    denoDir?: string
     timeoutMs?: number
 }
 
@@ -242,7 +250,7 @@ type SpawnDenoParams = {
     allowReadPaths: string[]
     resolveNodeModules: boolean
     env: Record<string, string>
-    denoDirBase?: string
+    denoDir?: string
 }
 
 type NodeApis = {
