@@ -1,4 +1,4 @@
-import { isNil, tryCatch, unique } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AgentRunSource, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
 import { z } from 'zod'
 import { apLogger } from './ap-logger'
@@ -25,10 +25,10 @@ export const modelTierCatalog = {
         return source === AgentRunSource.FLOW_STEP || source === AgentRunSource.AGENT ? 'flow' : 'chat'
     },
 
-    fallbackModelIds({ surface, modelId }: { surface: ModelTierSurface, modelId: string }): string[] {
+    fallbackTiers({ surface, modelId }: { surface: ModelTierSurface, modelId: string }): ModelTier[] {
         const { tiers, findTier } = modelTierCatalog.current(surface)
         const failing = findTier({ tierId: modelId })?.modelId ?? modelId
-        return unique(tiers.map((tier) => tier.modelId).filter((id) => id !== failing))
+        return tiers.filter((tier) => tier.modelId !== failing)
     },
 }
 

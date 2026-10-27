@@ -540,11 +540,11 @@ function managedFallbacks({ config, billing, metadata }: { config: AgentConfigRe
         return []
     }
     const surface = modelTierCatalog.surfaceFor({ source: config.source })
-    return modelTierCatalog.fallbackModelIds({ surface, modelId: config.modelId }).map((modelId) => ({
-        model: aiUtils.createModel({ credentials: config.credentials, modelId, billing, turnAlreadyCharged: true, metadata, ...spreadIfDefined('providerConfigId', config.providerConfigId) }),
+    return modelTierCatalog.fallbackTiers({ surface, modelId: config.modelId }).map((tier) => ({
+        model: aiUtils.createModel({ credentials: config.credentials, modelId: tier.modelId, billing, turnAlreadyCharged: true, metadata, ...spreadIfDefined('providerConfigId', config.providerConfigId) }),
         provider: config.credentials.provider,
-        modelId,
-        thinkingBudget: config.tier.thinkingBudget,
+        modelId: tier.modelId,
+        thinkingBudget: tier.thinkingBudget,
     }))
 }
 
