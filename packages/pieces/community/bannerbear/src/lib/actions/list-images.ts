@@ -13,7 +13,7 @@ export const listImagesAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'List Bannerbear images page by page (V2 keys allow 1-100 per page; V5 keys always return 25). Use Get Image when you already have an ID. Check has_more and raise page to read further. Read-only.',
+      'List Bannerbear images page by page (1-100 per page). Use Get Image when you already have an ID. Check has_more and raise page to read further. Read-only.',
     idempotent: true,
   },
   outputSchema: bannerbearOutputSchemas['listImages'],
@@ -26,7 +26,7 @@ export const listImagesAction = createAction({
     }),
     limit: Property.Number({
       displayName: 'Per Page',
-      description: 'Images per page, 1 to 100. V5 keys always get 25.',
+      description: 'Images per page, 1 to 100.',
       required: false,
       defaultValue: 25,
     }),
@@ -34,14 +34,8 @@ export const listImagesAction = createAction({
   async run({ auth, propsValue }) {
     const apiKey = auth.secret_text;
     const page = bannerbearClient.clampPage(propsValue.page);
-    const isV5 = bannerbearClient.getVersion(apiKey) === 'v5';
-    const limit = isV5
-      ? V5_PAGE_SIZE
-      : bannerbearClient.clampLimit(propsValue.limit);
-    const queryParams: QueryParams = { page: String(page) };
-    if (!isV5) {
-      queryParams['limit'] = String(limit);
-    }
+    const limit = bannerbearClient.clampLimit(propsValue.limit);
+    const queryParams: QueryParams = { page: String(page), limit: String(limit) };
     const raw = await bannerbearClient.request<RawImage[]>({
       apiKey,
       method: HttpMethod.GET,
@@ -55,5 +49,3 @@ export const listImagesAction = createAction({
     };
   },
 });
-
-const V5_PAGE_SIZE = 25;

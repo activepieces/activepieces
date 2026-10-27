@@ -19,10 +19,10 @@ export const bannerbear = createPiece({
   displayName: 'Bannerbear',
   description: 'Automate image generation',
 
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
   categories: [PieceCategory.MARKETING],
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","OdaiAhmed99"],
   auth: bannerbearAuth,
   actions: [
     bannerbearCreateImageAction,

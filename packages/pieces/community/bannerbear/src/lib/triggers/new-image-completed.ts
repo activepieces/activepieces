@@ -36,6 +36,7 @@ export const newImageCompletedTrigger = createTrigger({
     completed_at: null,
   },
   async onEnable(context) {
+    if (context.isRepublish && (await context.store.get(STORE_KEY))) return;
     const { images } = await scanPages({
       apiKey: context.auth.secret_text,
       startPage: 1,
@@ -50,8 +51,8 @@ export const newImageCompletedTrigger = createTrigger({
       recovery: null,
     });
   },
-  async onDisable(context) {
-    await context.store.delete(STORE_KEY);
+  async onDisable() {
+    return;
   },
   async test(context) {
     const { images } = await scanPages({
@@ -180,7 +181,7 @@ async function scanPages({
     const reachedCheckpoint =
       !Number.isNaN(stopTime) &&
       batch.some((i) => i.created_at !== null && Date.parse(i.created_at) < stopTime);
-    if (raw.length < bannerbearClient.MAX_LIMIT || reachedCheckpoint) {
+    if (raw.length < SERVER_DEFAULT_PAGE_SIZE || reachedCheckpoint) {
       return { images: dedupe(images), reachedStop: true, nextPage: page + 1 };
     }
   }
@@ -263,6 +264,7 @@ async function fetchImage({
 
 const STORE_KEY = 'bannerbear_new_image_completed_state';
 const MAX_PAGES_PER_SCAN = 10;
+const SERVER_DEFAULT_PAGE_SIZE = 25;
 const MAX_SEEN = 5000;
 const MAX_PENDING = 2000;
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
