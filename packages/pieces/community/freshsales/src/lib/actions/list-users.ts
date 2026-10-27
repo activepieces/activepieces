@@ -9,7 +9,7 @@ export const listUsers = createAction({
   displayName: 'List Users',
   description: 'List Freshsales users (owners) with their IDs',
   audience: 'ai',
-  classification: 'READ',
+  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists all Freshsales users who can own records, with id, name and email. Use it to resolve a person name or email to the Owner ID needed by create and update tools.',

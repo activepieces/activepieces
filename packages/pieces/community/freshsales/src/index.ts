@@ -49,10 +49,10 @@ import { updatedDeal } from './lib/triggers/updated-deal';
 export const freshsales = createPiece({
   displayName: 'Freshsales',
   description: 'Sales CRM software',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/freshsales.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
+  authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'OdaiAhmed99'],
   auth: freshsalesAuth,
   actions: [
     freshSalesCreateContact,

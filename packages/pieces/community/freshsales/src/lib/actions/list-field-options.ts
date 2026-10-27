@@ -9,7 +9,7 @@ export const listFieldOptions = createAction({
   displayName: 'List Field Options',
   description: 'List options such as territories or lead sources',
   audience: 'ai',
-  classification: 'READ',
+  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists the id and name of every option for one Freshsales picklist (territories, contact statuses, lifecycle stages, lead sources, campaigns, currencies, deal types, deal reasons, industry types, business types, sales activity types). Use it to resolve a name to the ID needed by create and update tools.',

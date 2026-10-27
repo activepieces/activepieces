@@ -9,7 +9,7 @@ export const listPipelines = createAction({
   displayName: 'List Pipelines and Stages',
   description: 'List deal pipelines with their stages',
   audience: 'ai',
-  classification: 'READ',
+  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists every Freshsales deal pipeline with its stages (id, name, position). Use it to resolve a pipeline or stage name to the IDs needed by Create Deal and Update Deal.',
