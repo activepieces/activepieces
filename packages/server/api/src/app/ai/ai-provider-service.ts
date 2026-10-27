@@ -11,6 +11,7 @@ import { distributedLock, distributedStore } from '../database/redis-connections
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
 import { EncryptedObject, encryptUtils } from '../helper/encryption'
+import { sleep } from '../helper/sleep'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
 import { aiKeyScope, ProviderScope } from './ai-key-scope'
@@ -740,7 +741,7 @@ async function waitUntilKeyIsLive({ minted, platformId, log }: { minted: ActiveP
         if (await openRouterApi.isKeyLive({ key: minted.apiKey })) {
             return
         }
-        await new Promise((resolve) => setTimeout(resolve, MANAGED_OPENROUTER_KEY_LIVE_POLL_MS))
+        await sleep(MANAGED_OPENROUTER_KEY_LIVE_POLL_MS)
     }
     log.warn({ platform: { id: platformId }, openRouterKey: { hash: minted.apiKeyHash } }, '[aiProviderService#waitUntilKeyIsLive] New managed OpenRouter key is still not live, using it anyway')
 }
