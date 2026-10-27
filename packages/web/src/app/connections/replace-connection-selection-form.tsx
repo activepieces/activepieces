@@ -2,7 +2,6 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
-  Permission,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { GlobeIcon, Info } from 'lucide-react';
@@ -11,7 +10,7 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FormField, FormMessage } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
+import { Label, LabelWithTooltip } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -19,15 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { PieceIconWithPieceName } from '@/features/pieces';
-import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 const ReplaceConnectionSelectionFields = ({
   pieces,
@@ -190,7 +182,7 @@ function toOptions(connections: AppConnectionWithoutSensitiveData[]) {
 
 function ReplaceConnectionVersionsField() {
   const form = useFormContext<{ applyToPublishedVersions: boolean }>();
-  const publishNeedsApproval = usePublishNeedsApproval();
+  const publishNeedsApproval = flowApprovalsHooks.usePublishNeedsApproval();
   return (
     <FormField
       control={form.control}
@@ -231,44 +223,9 @@ function ReplaceConnectionVersionsField() {
   );
 }
 
-function usePublishNeedsApproval(): boolean {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { project } = projectCollectionUtils.useCurrentProject();
-  const { checkAccess } = useAuthorization();
-  return (
-    platform.plan.environmentsEnabled &&
-    !!project.sensitive &&
-    !checkAccess(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS)
-  );
-}
-
-function LabelWithTooltip({
-  label,
-  tooltip,
-}: {
-  label: string;
-  tooltip: string;
-}) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <Label>{label}</Label>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Info className="w-3.5 h-3.5 text-gray-11 cursor-help" />
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs">{tooltip}</TooltipContent>
-      </Tooltip>
-    </div>
-  );
-}
-
 ReplaceConnectionSelectionFields.displayName =
   'ReplaceConnectionSelectionFields';
 export { ReplaceConnectionSelectionFields, ReplaceConnectionVersionsField };
-
-export const replaceConnectionSelectionHooks = {
-  usePublishNeedsApproval,
-};
 
 export const replaceConnectionSelectionUtils = {
   emptySelection: (): ReplaceConnectionSelection => ({

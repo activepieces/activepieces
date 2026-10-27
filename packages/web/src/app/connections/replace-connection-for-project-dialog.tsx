@@ -34,6 +34,7 @@ import {
   appConnectionsMutations,
   appConnectionsQueries,
 } from '@/features/connections';
+import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { flowsApi } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
 
@@ -41,7 +42,6 @@ import { DeleteReplacedConnectionDialog } from './delete-replaced-connection-dia
 import {
   ReplaceConnectionSelection,
   ReplaceConnectionSelectionFields,
-  replaceConnectionSelectionHooks,
   replaceConnectionSelectionUtils,
   ReplaceConnectionVersionsField,
 } from './replace-connection-selection-form';
@@ -89,8 +89,7 @@ function ReplaceConnectionForProjectForm({
   setDialogOpen,
 }: ReplaceConnectionForProjectFormProps) {
   const navigate = useNavigate();
-  const publishNeedsApproval =
-    replaceConnectionSelectionHooks.usePublishNeedsApproval();
+  const publishNeedsApproval = flowApprovalsHooks.usePublishNeedsApproval();
   const [step, setStep] = useState<ProjectReplaceStep>(
     ProjectReplaceStep.CHOOSE_CONNECTIONS,
   );
