@@ -1,28 +1,31 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { pandadocClient, pandadocAuth } from '../common';
+import { createAction } from '@activepieces/pieces-framework';
+import { pandadocAuth } from '../common/auth';
+import { pandadocApi } from '../common/api';
+import { pandadocInputs } from '../common/inputs';
+import { pandadocSchemas } from '../common/schemas';
 import { documentDropdown, documentAttachmentDropdown } from '../common/dynamic-dropdowns';
 
 export const getDocumentAttachments = createAction({
+  auth: pandadocAuth,
   name: 'getDocumentAttachments',
   classification: 'READ',
   displayName: 'Get Document Attachment',
   description: 'Retrieves details of a specific attachment from a document.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
-    description: 'Retrieve details of a single attachment on a PandaDoc document, identified by document ID and attachment ID. Use to inspect a known attachment. Read-only and idempotent.',
+    description: 'Get the details of one attachment on a PandaDoc document. Read-only.',
     idempotent: true,
   },
-  auth: pandadocAuth,
   props: {
     document_id: documentDropdown,
     attachment_id: documentAttachmentDropdown,
   },
+  outputSchema: pandadocSchemas['rawAttachment'],
   async run({ auth, propsValue }) {
-    return await pandadocClient.makeRequest(
-      auth.secret_text,
-      HttpMethod.GET,
-      `/documents/${propsValue.document_id}/attachments/${propsValue.attachment_id}`
-    );
+    return pandadocApi.getAttachmentRaw({
+      apiKey: auth.secret_text,
+      documentId: pandadocInputs.requiredString({ value: propsValue.document_id, label: 'Document' }),
+      attachmentId: pandadocInputs.requiredString({ value: propsValue.attachment_id, label: 'Attachment' }),
+    });
   },
 });

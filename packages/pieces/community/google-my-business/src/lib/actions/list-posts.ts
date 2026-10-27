@@ -19,6 +19,22 @@ export const listPosts = createAction({
     idempotent: true,
   },
   auth: googleAuth,
+  propertyGroups: [
+    {
+      key: 'business',
+      display: 'section',
+      label: 'Business',
+      icon: 'location',
+      props: ['account', 'location'],
+    },
+    {
+      key: 'results',
+      display: 'section',
+      label: 'Results',
+      icon: 'sliders',
+      props: ['maxResults'],
+    },
+  ],
   props: {
     account: googleBusinessCommon.account,
     location: googleBusinessCommon.location,

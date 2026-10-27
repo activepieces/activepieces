@@ -6,6 +6,7 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { folderIdProp } from '../common/props';
+import { driveQuery } from '../common/drive-query';
 import { newDocumentTriggerOutputSchema } from '../output-schemas';
 import dayjs from 'dayjs';
 import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
@@ -24,7 +25,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>,
 			q.push(`createdTime > '${dayjs(lastFetchEpochMS).toISOString()}'`);
 		}
 		if (folderId) {
-			q.push(`'${folderId}' in parents`);
+			q.push(`'${driveQuery.escapeLiteral(folderId)}' in parents`);
 		}
 
 		const authClient = await createGoogleClient(auth);
@@ -79,18 +80,10 @@ export const newDocumentTrigger = createTrigger({
 	},
 	outputSchema: newDocumentTriggerOutputSchema,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

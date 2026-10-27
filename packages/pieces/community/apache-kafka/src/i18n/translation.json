@@ -55,5 +55,6 @@
   "Used only when this consumer group has no committed offset yet. New messages only skips history. Beginning of the topic reads what is still retained.": "Used only when this consumer group has no committed offset yet. New messages only skips history. Beginning of the topic reads what is still retained.",
   "Maximum messages included in one batch. Whole number from 1 to 500.": "Maximum messages included in one batch. Whole number from 1 to 500.",
   "New messages only": "New messages only",
-  "Beginning of the topic": "Beginning of the topic"
+  "Beginning of the topic": "Beginning of the topic",
+  "Longest time one check spends reading. A check with no new messages ends at once. Whole number from 1 to 20.": "Longest time one check spends reading. A check with no new messages ends at once. Whole number from 1 to 20."
 }

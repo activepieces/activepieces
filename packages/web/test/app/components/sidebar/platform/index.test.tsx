@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { PlatformNav } from '@/app/components/sidebar/platform';
 
 const plan = vi.hoisted(() => ({ aiProvidersEnabled: false }));
+const flags = vi.hoisted(() => ({ edition: 'cloud' }));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 
@@ -20,7 +21,7 @@ vi.mock('@/hooks/platform-hooks', () => ({
 
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
-    useFlag: () => ({ data: 'cloud' }),
+    useFlag: () => ({ data: flags.edition }),
   },
 }));
 
@@ -97,5 +98,28 @@ describe('platform sidebar AI Center', () => {
     expect(
       screen.queryAllByRole('listitem', { name: 'Providers locked' }),
     ).toEqual([]);
+  });
+
+  it('shows Tiers between Providers and Capabilities on cloud', () => {
+    plan.aiProvidersEnabled = true;
+    flags.edition = 'cloud';
+
+    renderSidebar();
+
+    const aiCenter = screen.getByRole('list', { name: 'AI Center' });
+    expect(
+      Array.from(aiCenter.children).map((item) =>
+        item.getAttribute('aria-label'),
+      ),
+    ).toEqual(['Providers', 'Tiers', 'Capabilities']);
+  });
+
+  it('hides Tiers on self-hosted enterprise', () => {
+    plan.aiProvidersEnabled = true;
+    flags.edition = 'ee';
+
+    renderSidebar();
+
+    expect(screen.queryAllByRole('listitem', { name: 'Tiers' })).toEqual([]);
   });
 });

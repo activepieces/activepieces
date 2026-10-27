@@ -85,5 +85,8 @@
   "DELETE": "删除",
   "HEAD": "黑色",
   "New Record": "New Record",
-  "Triggers when a new record is added to a datasheet.": "Triggers when a new record is added to a datasheet."
+  "Triggers when a new record is added to a datasheet.": "Triggers when a new record is added to a datasheet.",
+  "Markdown": "Markdown",
+  "Blank fields are left empty. Some column types, such as attachments and formulas, are not listed.": "留空的字段保持为空。附件和公式等部分列类型不会列出。",
+  "Blank fields keep their current value; unticked checkboxes are cleared. Some column types, such as attachments and formulas, are not listed.": "留空的字段保留当前值;未勾选的复选框会被清除。附件和公式等部分列类型不会列出。"
 }
