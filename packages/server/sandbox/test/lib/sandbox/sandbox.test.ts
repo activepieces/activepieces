@@ -12,10 +12,11 @@ import { createSandbox } from '../../../src/lib/sandbox/sandbox'
 import { Sandbox, SandboxMount, SandboxProcessMaker } from '../../../src/lib/sandbox/types'
 import { SandboxSettings } from '../../../src/lib/types'
 
-const { treeKillMock, isolateProcessMock, mkdirMock } = vi.hoisted(() => ({
+const { treeKillMock, isolateProcessMock, mkdirMock, chmodMock } = vi.hoisted(() => ({
     treeKillMock: vi.fn((_pid: number, _signal: string, cb: (err?: Error) => void) => cb()),
     isolateProcessMock: vi.fn(),
     mkdirMock: vi.fn(async () => undefined),
+    chmodMock: vi.fn(async () => undefined),
 }))
 
 vi.mock('tree-kill', () => ({
@@ -24,6 +25,7 @@ vi.mock('tree-kill', () => ({
 
 vi.mock('fs/promises', () => ({
     mkdir: mkdirMock,
+    chmod: chmodMock,
 }))
 
 vi.mock('../../../src/lib/sandbox/isolate', () => ({
@@ -352,7 +354,7 @@ describe('createSandbox', () => {
             ])
         })
 
-        it('mounts a writable deno-cache dir next to the code mount when non-reusable, and pre-creates it', async () => {
+        it('mounts a writable deno-cache dir next to the code mount when non-reusable, pre-creates it, and opens its permissions for the sandbox\'s unprivileged per-box UID', async () => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
             sandbox = createSandbox(log, 'sb-deno-cache', { ...defaultOptions, reusable: false }, testPM.maker)
@@ -367,6 +369,7 @@ describe('createSandbox', () => {
                 rw: true,
             })
             expect(mkdirMock).toHaveBeenCalledWith('/tmp/test-cache/codes/fv-1/.deno-cache', { recursive: true })
+            expect(chmodMock).toHaveBeenCalledWith('/tmp/test-cache/codes/fv-1/.deno-cache', 0o777)
             expect(createCall.env.AP_DENO_CACHE_MOUNTED).toBe('true')
         })
 

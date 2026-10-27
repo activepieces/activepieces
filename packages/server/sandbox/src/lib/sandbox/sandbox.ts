@@ -1,6 +1,6 @@
 import { ChildProcess } from 'child_process'
 import { randomBytes, timingSafeEqual } from 'crypto'
-import { mkdir } from 'fs/promises'
+import { chmod, mkdir } from 'fs/promises'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
@@ -163,6 +163,7 @@ export function createSandbox(
             const denoCacheMount = buildDenoCacheMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
             if (denoCacheMount) {
                 await mkdir(denoCacheMount.hostPath, { recursive: true })
+                await chmod(denoCacheMount.hostPath, 0o777)
             }
             const customPieceMounts: SandboxMount[] = []
             if (platformId) {
