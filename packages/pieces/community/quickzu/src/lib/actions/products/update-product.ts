@@ -72,6 +72,11 @@ export const updateProductAction = createAction({
       displayName: 'Status',
       required: false,
     }),
+    nonveg: Property.Checkbox({
+      displayName: 'Non-Veg',
+      description: 'Leave empty to keep the current dietary label.',
+      required: false,
+    }),
   },
   async run(context) {
     const {
@@ -87,6 +92,7 @@ export const updateProductAction = createAction({
       exclude_tax,
       enable_variants,
       status,
+      nonveg,
     } = context.propsValue;
 
     const client = makeClient(context.auth);
@@ -104,16 +110,14 @@ export const updateProductAction = createAction({
       enable_variants,
       status,
     };
-    const required = await fillRequiredProductFields({ client, productId: id, changes });
+    const { meta, ...required } = await fillRequiredProductFields({ client, productId: id, changes, nonveg });
 
     return await client.updateProduct({
       productId: id,
       productInput: {
         ...changes,
         ...required,
-        meta: {
-          nonveg: false,
-        },
+        meta,
       },
     });
   },
@@ -123,12 +127,14 @@ async function fillRequiredProductFields({
   client,
   productId,
   changes,
+  nonveg,
 }: {
   client: QuickzuAPIClient;
   productId: string;
   changes: Partial<ProductInput>;
-}): Promise<Pick<ProductInput, 'name' | 'category' | 'mrp' | 'price' | 'unit' | 'value_per_unit'>> {
-  const missing = REQUIRED_PRODUCT_FIELDS.some((field) => isBlank(changes[field]));
+  nonveg: boolean | undefined;
+}): Promise<Pick<ProductInput, 'name' | 'category' | 'mrp' | 'price' | 'unit' | 'value_per_unit' | 'meta'>> {
+  const missing = isBlank(nonveg) || REQUIRED_PRODUCT_FIELDS.some((field) => isBlank(changes[field]));
   const current = missing ? await client.getProduct(productId) : undefined;
   if (missing && !current) {
     throw new Error(`Product ${productId} was not found in the store.`);
@@ -141,6 +147,7 @@ async function fillRequiredProductFields({
     price: pick({ value: changes.price, fallback: current?.price }),
     unit: pick({ value: changes.unit, fallback: current?.unit }) ?? '',
     value_per_unit: pick({ value: changes.value_per_unit, fallback: current?.value_per_unit }) ?? 0,
+    meta: { nonveg: pick({ value: nonveg, fallback: current?.meta?.nonveg }) ?? false },
   };
 }
 

@@ -226,10 +226,31 @@ describe('update product', () => {
   it('skips the lookup when every required field is given', async () => {
     const send = mockSend({ _id: 'p1' });
     await updateProductAction.run(
-      actionContext({ productId: 'p1', name: 'N', categoryId: 'c2', mrp: 5, price: 4, unit: 'piece', value_per_unit: 1 })
+      actionContext({ productId: 'p1', name: 'N', categoryId: 'c2', mrp: 5, price: 4, unit: 'piece', value_per_unit: 1, nonveg: true })
     );
     expect(send).toHaveBeenCalledTimes(1);
     expect(send.mock.calls[0][0].method).toBe('PUT');
+    expect(send.mock.calls[0][0].body).toMatchObject({ meta: { nonveg: true } });
+  });
+
+  it('keeps the current non-veg label on a price-only update', async () => {
+    const send = vi.spyOn(httpClient, 'sendRequest').mockImplementation(async (request) => {
+      if (request.method === 'GET') {
+        return {
+          status: 200,
+          headers: {},
+          body: {
+            data: [
+              { _id: 'p1', name: 'Kebab', category: { _id: 'c1', name: 'Grill' }, mrp: 20, price: 18, unit: 'piece', value_per_unit: 1, meta: { nonveg: true } },
+            ],
+          },
+        };
+      }
+      return { status: 200, headers: {}, body: { _id: 'p1' } };
+    });
+    await updateProductAction.run(actionContext({ productId: 'p1', price: 15 }));
+    const put = send.mock.calls.find(([request]) => request.method === 'PUT');
+    expect(put?.[0].body).toMatchObject({ price: 15, meta: { nonveg: true } });
   });
 
   it('fails clearly when the product does not exist', async () => {
