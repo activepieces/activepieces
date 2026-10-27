@@ -71,17 +71,23 @@ function isIsolatedExecutionMode(executionMode: string): boolean {
     return executionMode === ExecutionMode.SANDBOX_PROCESS || executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
 
-// UNSANDBOXED / SANDBOX_CODE_ONLY run via simpleProcess (plain child_process.fork, no chroot), so
-// the engine sees the real host path as-is with no remapping — it must not collide with the Deno
-// child's own WRITE_TMP/READ_TMP grant, which covers that same process's os.tmpdir(). An operator
-// can point AP_CACHE_BASE_PATH under the OS tmpdir (one shipped image does exactly that), so this
-// is checked at the resolved path rather than assumed from config. On collision, fail safe: omit
-// the var entirely so deno.ts falls back to its default per-run mkdtemp — slower, never vulnerable.
+// SANDBOX_CODE_ONLY deliberately stays out of this: deno-code-sandbox.ts's own resolveDenoDirBase
+// scopes its DENO_DIR to the step's own cache dir and ignores this var entirely, so there's nothing
+// to compute here — leave that mode's cache exactly as it already is.
 function resolveDenoCacheDirForEngine({ executionMode, hostPath }: { executionMode: string, hostPath: string }): string | undefined {
     if (isIsolatedExecutionMode(executionMode)) {
         return DENO_CACHE_SANDBOX_PATH
     }
-    return hostPath.startsWith(tmpdir()) ? undefined : hostPath
+    if (executionMode === ExecutionMode.UNSANDBOXED) {
+        // simpleProcess (plain child_process.fork, no chroot): the engine sees the real host path
+        // as-is with no remapping, so it must not collide with the Deno child's own WRITE_TMP/
+        // READ_TMP grant, which covers that same process's os.tmpdir(). An operator can point
+        // AP_CACHE_BASE_PATH under the OS tmpdir (one shipped image does exactly that), so this is
+        // checked at the resolved path rather than assumed from config. On collision, fail safe:
+        // omit the var so deno.ts falls back to its default per-run mkdtemp — slower, never vulnerable.
+        return hostPath.startsWith(tmpdir()) ? undefined : hostPath
+    }
+    return undefined
 }
 
 function parseMemoryLimit(memoryLimitKb: string): number {
