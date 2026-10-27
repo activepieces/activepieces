@@ -476,6 +476,18 @@ function parseOnOff({ value, label }: { value: unknown; label: string }): boolea
   throw new Error(`${label} must be "on", "off" or omitted.`);
 }
 
+function parseTriStateBoolean({ value, label }: { value: unknown; label: string }): boolean | undefined {
+  if (isNil(value)) return undefined;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === '') return undefined;
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+  }
+  throw new Error(`${label} must be true, false or left empty.`);
+}
+
 async function deleteCampaignWebhook({
   apiKey,
   campaignId,
@@ -563,6 +575,7 @@ export const smartleadOperations = {
   addLeadsToCampaign,
   getCampaignStatistics,
   updateCampaignSettings,
+  parseTriStateBoolean,
   listCampaigns,
   getCampaign,
   updateCampaignStatus,

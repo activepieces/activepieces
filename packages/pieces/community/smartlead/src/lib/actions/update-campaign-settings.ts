@@ -58,12 +58,12 @@ export const updateCampaignSettingsAction = createAction({
       apiKey: context.auth.secret_text,
       campaignId: p.campaign_id,
       settings: {
-        trackOpens: p.track_open,
-        trackClicks: p.track_click,
+        trackOpens: smartleadOperations.parseTriStateBoolean({ value: p.track_open, label: 'Track Opens' }),
+        trackClicks: smartleadOperations.parseTriStateBoolean({ value: p.track_click, label: 'Track Clicks' }),
         stopLeadSettings: p.stop_lead_settings,
         unsubscribeText: p.unsubscribe_text,
-        enableAiEspMatching: p.enable_ai_esp_matching,
-        sendAsPlainText: p.send_as_plain_text,
+        enableAiEspMatching: smartleadOperations.parseTriStateBoolean({ value: p.enable_ai_esp_matching, label: 'Enable AI ESP Matching' }),
+        sendAsPlainText: smartleadOperations.parseTriStateBoolean({ value: p.send_as_plain_text, label: 'Send as Plain Text' }),
         followUpPercentage: p.follow_up_percentage,
       },
     });

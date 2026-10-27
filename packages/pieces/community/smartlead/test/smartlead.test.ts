@@ -168,6 +168,26 @@ describe('update campaign settings', () => {
   });
 });
 
+describe('mapped tri-state settings', () => {
+  it('mapped "false" disables tracking', async () => {
+    const spy = mockSeq({ id: 1, track_settings: [] }, { ok: true });
+    await run({ name: 'update_campaign_settings', propsValue: { campaign_id: 1, track_open: 'false', track_click: ' FALSE ' } });
+    expect(Reflect.get(call({ spy, index: 1 }).body, 'track_settings')).toEqual(['DONT_TRACK_EMAIL_OPEN', 'DONT_TRACK_LINK_CLICK']);
+  });
+  it('mapped "true" strings become booleans in the request', async () => {
+    const spy = mockSeq({ ok: true });
+    await run({ name: 'update_campaign_settings', propsValue: { campaign_id: 1, enable_ai_esp_matching: 'true', send_as_plain_text: 'True' } });
+    expect(call({ spy }).body).toEqual({ enable_ai_esp_matching: true, send_as_plain_text: true });
+  });
+  it('empty mapped values leave the field out; invalid values throw', async () => {
+    const spy = mockSeq({ ok: true });
+    await run({ name: 'update_campaign_settings', propsValue: { campaign_id: 1, track_open: '', enable_ai_esp_matching: '  ', send_as_plain_text: 'false' } });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(call({ spy }).body).toEqual({ send_as_plain_text: false });
+    await expect(run({ name: 'update_campaign_settings', propsValue: { campaign_id: 1, track_click: 'yes' } })).rejects.toThrow('Track Clicks must be true, false');
+  });
+});
+
 describe('settings fixes', () => {
   it('throws instead of clearing tracking when GET has no track_settings', async () => {
     const spy = mockSeq({ id: 1 });
