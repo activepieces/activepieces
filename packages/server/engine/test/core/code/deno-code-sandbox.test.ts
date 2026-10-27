@@ -42,6 +42,34 @@ async function expectRejection(run: Promise<unknown>, pattern: RegExp): Promise<
     expect(String(thrown)).toMatch(pattern)
 }
 
+async function withEnv(overrides: Record<string, string | undefined>, fn: () => Promise<void>): Promise<void> {
+    const originals: Record<string, string | undefined> = {}
+    for (const key of Object.keys(overrides)) {
+        originals[key] = process.env[key]
+    }
+    try {
+        for (const [key, value] of Object.entries(overrides)) {
+            if (value === undefined) {
+                delete process.env[key]
+            }
+            else {
+                process.env[key] = value
+            }
+        }
+        await fn()
+    }
+    finally {
+        for (const [key, value] of Object.entries(originals)) {
+            if (value === undefined) {
+                delete process.env[key]
+            }
+            else {
+                process.env[key] = value
+            }
+        }
+    }
+}
+
 describe('denoCodeSandbox permission boundary', () => {
     describe('blocks unpermitted operations', () => {
         it('rejects outbound network access', async () => {
@@ -56,17 +84,56 @@ describe('denoCodeSandbox permission boundary', () => {
             await expectRejection(runModule(`export const code = async () => Deno.env.toObject()`), PERMISSION_DENIED)
         })
 
-        it('reuses one warm DENO_DIR under the step dir across runs and keeps it afterwards', async () => {
-            const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
-            const codeFilePath = path.join(stepDir, 'index.ts')
-            await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
+        it('reuses one warm DENO_DIR next to the step dir across runs and keeps it afterwards, in SANDBOX_CODE_ONLY and UNSANDBOXED modes', async () => {
+            for (const mode of ['SANDBOX_CODE_ONLY', 'UNSANDBOXED']) {
+                await withEnv({ AP_EXECUTION_MODE: mode, AP_DENO_CACHE_MOUNTED: undefined }, async () => {
+                    const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+                    const codeFilePath = path.join(stepDir, 'index.ts')
+                    await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
 
-            const firstDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
-            const secondDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+                    const firstDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+                    const secondDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
 
-            expect(firstDir).toBe(secondDir)
-            expect(path.dirname(firstDir)).toBe(await realpath(stepDir))
-            expect(existsSync(firstDir)).toBe(true)
+                    expect(firstDir).toBe(secondDir)
+                    expect(firstDir).toBe(path.join(path.dirname(await realpath(stepDir)), '.deno-cache'))
+                    expect(existsSync(firstDir)).toBe(true)
+                })
+            }
+        })
+
+        it('reuses the same warm DENO_DIR in SANDBOX_PROCESS and SANDBOX_CODE_AND_PROCESS only once the sandbox layer confirms the cache mount is writable (AP_DENO_CACHE_MOUNTED)', async () => {
+            for (const mode of ['SANDBOX_PROCESS', 'SANDBOX_CODE_AND_PROCESS']) {
+                await withEnv({ AP_EXECUTION_MODE: mode, AP_DENO_CACHE_MOUNTED: 'true' }, async () => {
+                    const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+                    const codeFilePath = path.join(stepDir, 'index.ts')
+                    await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
+
+                    const firstDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+                    const secondDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+
+                    expect(firstDir).toBe(secondDir)
+                    expect(firstDir).toBe(path.join(path.dirname(await realpath(stepDir)), '.deno-cache'))
+                    expect(existsSync(firstDir)).toBe(true)
+                })
+            }
+        })
+
+        it('falls back to a fresh, removed-after-run DENO_DIR in SANDBOX_PROCESS, SANDBOX_CODE_AND_PROCESS and no mode set, when the sandbox layer has not mounted a writable cache (reusable sandbox)', async () => {
+            for (const mode of ['SANDBOX_PROCESS', 'SANDBOX_CODE_AND_PROCESS', undefined]) {
+                await withEnv({ AP_EXECUTION_MODE: mode, AP_DENO_CACHE_MOUNTED: undefined }, async () => {
+                    const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+                    const codeFilePath = path.join(stepDir, 'index.ts')
+                    await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
+
+                    const firstDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+                    const secondDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+
+                    expect(firstDir).not.toBe(secondDir)
+                    expect(path.dirname(firstDir)).toBe(tmpdir())
+                    await expect.poll(() => existsSync(firstDir), { timeout: 5000 }).toBe(false)
+                    await expect.poll(() => existsSync(secondDir), { timeout: 5000 }).toBe(false)
+                })
+            }
         })
 
         it('with the ENV permission exposes only PATH, never the engine env', async () => {

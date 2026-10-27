@@ -1,5 +1,6 @@
 import { ChildProcess } from 'child_process'
 import { randomBytes, timingSafeEqual } from 'crypto'
+import { mkdir } from 'fs/promises'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
@@ -38,6 +39,19 @@ function buildCodeMount({ flowVersionId, reusable, basePath }: { flowVersionId: 
         }
     }
     return null
+}
+
+function buildDenoCacheMount({ flowVersionId, reusable, basePath }: { flowVersionId: string | undefined, reusable: boolean, basePath: string }): SandboxMount | null {
+    if (reusable || isNil(flowVersionId)) {
+        return null
+    }
+    assertSafeCodeNamespace(flowVersionId)
+    const codeCachePath = cacheUtils(basePath).getGlobalCodeCachePath()
+    return {
+        hostPath: path.join(codeCachePath, flowVersionId, DENO_CACHE_DIR_NAME),
+        sandboxPath: `/root/codes/${flowVersionId}/${DENO_CACHE_DIR_NAME}`,
+        rw: true,
+    }
 }
 
 export function createSandbox(
@@ -146,6 +160,10 @@ export function createSandbox(
             const port = await createSocketServer()
 
             const codeMount = buildCodeMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
+            const denoCacheMount = buildDenoCacheMount({ flowVersionId, reusable: options.reusable, basePath: options.basePath })
+            if (denoCacheMount) {
+                await mkdir(denoCacheMount.hostPath, { recursive: true })
+            }
             const customPieceMounts: SandboxMount[] = []
             if (platformId) {
                 assertSafePathSegment(platformId, 'platformId')
@@ -160,6 +178,7 @@ export function createSandbox(
             const allMounts: SandboxMount[] = [
                 ...(options.baseMounts ?? []),
                 ...(codeMount ? [codeMount] : []),
+                ...(denoCacheMount ? [denoCacheMount] : []),
                 ...mounts,
                 ...customPieceMounts,
             ]
@@ -175,6 +194,7 @@ export function createSandbox(
                     ...options.env,
                     AP_SANDBOX_WS_PORT: String(port),
                     AP_SANDBOX_WS_TOKEN: wsRpcToken,
+                    ...(denoCacheMount ? { AP_DENO_CACHE_MOUNTED: 'true' } : {}),
                     ...(customPieceMounts.length > 0
                         ? { AP_CUSTOM_PIECES_PATHS: '/root/custom_pieces' }
                         : {}),
@@ -448,6 +468,8 @@ function authenticateHandshake({ getExpectedToken, log, sandboxId }: {
         next()
     }
 }
+
+const DENO_CACHE_DIR_NAME = '.deno-cache'
 
 type ProcessExitParams = {
     sandboxId: string
