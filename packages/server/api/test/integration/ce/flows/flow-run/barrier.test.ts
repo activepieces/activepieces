@@ -9,8 +9,8 @@ import { transaction } from '../../../../../src/app/core/db/transaction'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { distributedStore, redisConnections } from '../../../../../src/app/database/redis-connections'
 import { childRunDispatchService } from '../../../../../src/app/flows/flow-run/child-run-dispatch-service'
-import { systemJobIds } from '../../../../../src/app/helper/system-jobs/common'
-import { systemJobsSchedule } from '../../../../../src/app/helper/system-jobs/system-job'
+import { systemJobIds, SystemJobName } from '../../../../../src/app/helper/system-jobs/common'
+import { systemJobsQueue, systemJobsSchedule } from '../../../../../src/app/helper/system-jobs/system-job'
 import * as billingProviderModule from '../../../../../src/app/platform/billing-provider'
 import { platformConfigurationService } from '../../../../../src/app/platform/platform-configuration.service'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
@@ -776,6 +776,10 @@ describe('signal count limit', () => {
 })
 
 describe('barrier deadline', () => {
+    beforeAll(async () => {
+        await systemJobsQueue.removeJobScheduler(SystemJobName.WAITPOINT_DEADLINE_SWEEP)
+    })
+
     beforeEach(async () => {
         await distributedStore.delete([DEADLINE_SWEEP_CURSOR_KEY, BARRIER_RECOVERY_CURSOR_KEY])
         await databaseConnection().query('DELETE FROM "waitpoint"')

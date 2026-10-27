@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   StoreScope,
   Property,
+  isNil,
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { plausibleAuth } from '../..';
@@ -27,10 +28,19 @@ export const trafficSpike = createTrigger({
       defaultValue: 100,
     }),
   },
-  async onEnable({ store }) {
+  async onEnable({ store, isRepublish }) {
+    if (
+      isRepublish &&
+      !isNil(await store.get('wasAboveThreshold', StoreScope.FLOW))
+    ) {
+      return;
+    }
     await store.put('wasAboveThreshold', false, StoreScope.FLOW);
   },
-  async onDisable({ store }) {
+  async onDisable({ store, isRepublish }) {
+    if (isRepublish) {
+      return;
+    }
     await store.delete('wasAboveThreshold', StoreScope.FLOW);
   },
   async run({ auth, propsValue, store }) {

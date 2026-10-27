@@ -16,7 +16,10 @@ services:
     volumes:
       - minio_data:/data
     networks:
-      - bench
+      bench:
+        # Static IP so the SANDBOX_PROCESS engine, which resolves names through public DNS,
+        # can reach the S3 signed URLs when AP_S3_ENDPOINT uses this address.
+        ipv4_address: 172.30.0.11
 
   minio-ready:
     image: cgr.dev/chainguard/minio-client@sha256:b8b144ab34694ecea25aa352c4be9de4c26ee2a02701521dce02ee5593c57338

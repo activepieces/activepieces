@@ -22,6 +22,7 @@ How a ticket in the Engineering (ENG) Linear team is written, so people and agen
 ## Gotchas
 
 - The AI team keeps its own form templates (Goal / Done when / How) and the `ai-task` skill. The two vocabularies differ on purpose for now.
+- Box files production bugs with the `automated` label and opens fix PRs, and it learns only from comments that mention `@box`. When you reject its PR, change its fix or decide something, mention it and end with **For Box next time:** the lesson. `/ai-task` does this. Box runs as you: connect Claude and GitHub once at https://box.abuaboud.me/boxes?new, or it only replies "finish setting up Box first". It ignores mentions in replies, so a retry is a new comment.
 - The template text lives in Linear, not in the repo. Renaming a heading means changing the template, this page and the agent rule `.claude/rules/linear-tickets.md` together.
 - Placeholder text in a template disappears when the writer types, so no rule may live only in a placeholder. Rules live here and in the agent rule.
 - A ticket created through the MCP, the API, Slack or a support integration gets no template, so it can miss headings. The team default applies only in the Linear UI: an agent creating a ticket passes `template: "Feature"` or `"Bug"` to `save_issue`, and adds a missing heading rather than assume the section is empty.

@@ -287,6 +287,7 @@ export const AutomationsTableRow = ({
             <Button
               variant="ghost"
               size="icon-sm"
+              aria-label={t('Actions')}
               disabled={isAgentItem(item) && !userHasPermissionToWriteAgent}
             >
               <MoreHorizontal className="h-4 w-4" />

@@ -22,7 +22,7 @@ import { userService } from '../../../user/user-service'
 import { agentHelpers } from '../agent-helpers'
 import { normalizeRoleTitle, normalizeWebsite } from './personalization-normalize'
 import { apolloApiKey, claimForResearch, enqueueResearchJob, guardsAllowResearch, PERSONALIZATION_PROVIDER_SCOPE, PREFILL_TTL_SECONDS, prefillKey, readPrefill, recoverIfStale, RESEARCH_STALENESS_TIMEOUT_MS, startPrefillLookup, validateResult } from './personalization-research'
-import { callerMayEditCompany, findRow, IN_FLIGHT_STATUSES, personalizationRepo, upsertFoundingUserRow, UpsertParams, writeCompanyRow, writeUserRow } from './personalization-rows'
+import { callerMayEditCompany, findRow, hasOptedOut, IN_FLIGHT_STATUSES, personalizationRepo, upsertFoundingUserRow, UpsertParams, writeCompanyRow, writeUserRow } from './personalization-rows'
 import { emitProgress, PersonalizationIdentity, toScopeEnum, toView } from './personalization-view'
 
 
@@ -159,13 +159,14 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             const fresh = Date.now() - new Date(userRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
             const terminal = [ChatPersonalizationStatus.READY, ChatPersonalizationStatus.SKIPPED].includes(userRow.status)
             const roleChanged = !isNil(role) && role !== userRow.role
-            if (terminal || (fresh && !roleChanged)) {
+            const keepCurrentRow = !hasOptedOut(userRow) && (terminal || (fresh && !roleChanged))
+            if (keepCurrentRow) {
                 if (roleChanged) {
                     await personalizationRepo().update({ platformId, userId }, { role })
                 }
                 return this.getEffectiveView({ platformId, userId })
             }
-            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, ...spreadIfDefined('role', role) })
+            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, domain: companyRow.domain, companyText: companyRow.companyText, ...spreadIfDefined('role', role) })
         }
         else {
             const { error } = await tryCatch(() => personalizationRepo().insert({
@@ -213,7 +214,8 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             recoverIfStale({ row: foundCompanyRow, platformId, userId, scope: ChatPersonalizationScope.COMPANY, log }),
         ])
         const personalStatus = userRow?.status ?? ChatPersonalizationStatus.UNSET
-        if (userRow?.status === ChatPersonalizationStatus.READY) {
+        const userRowWins = !isNil(userRow) && (userRow.status === ChatPersonalizationStatus.READY || hasOptedOut(userRow))
+        if (userRowWins) {
             return toView({ row: userRow, scope: ChatPersonalizationScope.USER, inputsRow: companyRow ?? userRow, role: userRow.role ?? null, personalStatus, prefill: null })
         }
         if (!isNil(companyRow)) {

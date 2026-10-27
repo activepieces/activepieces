@@ -31,7 +31,7 @@ export const workerMachineController: FastifyPluginAsyncZod = async (app) => {
             })
             const response = await machineService(app.log).onConnection(request, assignment)
             callback?.(response)
-            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, assignment, socket.id), app.log)
+            createRpcServer<WorkerToApiContract>(socket, createHandlers(app.log, assignment, socket), app.log)
         }
     })
 
