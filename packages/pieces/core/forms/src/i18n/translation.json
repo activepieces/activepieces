@@ -21,5 +21,7 @@
   "**Published Chat URL:**\n```text\n{{chatUrl}}\n```\nProduction link. Serves the published version of the chat.\n\n**Draft Chat URL:**\n```text\n{{chatUrl}}?useDraft=true\n```\nTesting link. Serves the draft you are editing now.\nOr press **Open Chat** in the builder to try it in a side panel.\n": "**Published Chat URL:**\n```text\n{{chatUrl}}\n```\nProduction link. Serves the published version of the chat.\n\n**Draft Chat URL:**\n```text\n{{chatUrl}}?useDraft=true\n```\nTesting link. Serves the draft you are editing now.\nOr press **Open Chat** in the builder to try it in a side panel.\n",
   "The sender waits for a **Respond on UI** step in this flow.\nWithout one, they see an error after {{webhookTimeoutSeconds}} seconds.": "The sender waits for a **Respond on UI** step in this flow.\nWithout one, they see an error after {{webhookTimeoutSeconds}} seconds.",
   "Shown in the greeting above the chat box.": "Shown in the greeting above the chat box.",
-  "Human Input": "Human Input"
+  "Human Input": "Human Input",
+  "Form": "Form",
+  "Response": "Response"
 }
