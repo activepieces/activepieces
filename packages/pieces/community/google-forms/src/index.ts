@@ -30,6 +30,12 @@ export const googleForms = createPiece({
       authMapping: async (auth) => ({
         Authorization: `Bearer ${await getAccessToken(auth as any)}`,
       }),
+      props: {
+        url: {
+          description: 'Full URL, or a path relative to https://forms.googleapis.com/v1',
+          placeholder: '/forms/{formId}/responses',
+        },
+      },
     }),
   ],
   triggers: [newResponse],
