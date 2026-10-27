@@ -6,14 +6,25 @@ This package holds the monorepo's full-stack end-to-end tests. Under the canonic
 
 ```
 packages/tests-e2e/
-├── scenarios/
-│   ├── ce/         # Community Edition specs (*.spec.ts)
-│   └── ee/         # Enterprise Edition specs (*.spec.ts)
-├── pages/          # Page Object Models (base.ts, flows.page.ts, builder.page.ts, ...)
-├── helper/         # Config and env utilities
-├── playwright.config.ts
-└── project.json    # Nx project config
+├── scenarios/      # Specs (*.spec.ts) for every edition
+│   ├── ce/         # Community Edition only
+│   └── ee/         # Enterprise Edition only (skipped when AP_EDITION=ce)
+├── pages/          # Page objects (automations, builder, runs, authentication)
+├── fixtures/       # Test fixtures, the session file and API cleanup helpers
+├── global-setup.ts # Signs in once and saves the session to .auth/user.json
+└── playwright.config.ts
 ```
+
+## Writing a spec
+
+A spec must pass whatever the project already holds: nothing, many flows, or another run's flows.
+
+- Create what the spec needs, and name each flow with `e2eFlows.uniqueFlowName()` (prefix `E2E `).
+- Pass each flow id to `flowCleanup.track()`. The fixture deletes it after the test, also when the test fails.
+- Find your data by its id or unique name, never by its position in a list.
+- Wait for a visible result (a status text, a step output, a response), never for a fixed time.
+- Select by role or `data-testid`. Add a `data-testid` to the web app when an element has no stable name.
+- The tests start signed in. Use `test.use({ storageState: { cookies: [], origins: [] } })` to start signed out.
 
 ## Running the tests
 
@@ -32,7 +43,7 @@ npx turbo run deploy-checkly --filter=tests-e2e
 
 Required environment variables:
 
-- `E2E_INSTANCE_URL` — target Activepieces URL (defaults to `http://localhost:4200` and starts the dev server when unset). When set, global setup deletes every flow of the signed-in account, so use an account that exists only for E2E.
+- `E2E_INSTANCE_URL` — target Activepieces URL (defaults to `http://localhost:4200` and starts the dev server when unset). Global setup deletes `E2E `-prefixed flows older than one hour, which crashed runs leave behind. It does not touch other flows.
 - `E2E_EMAIL` — test user email
 - `E2E_PASSWORD` — test user password
 

@@ -215,7 +215,7 @@ jobs:
 
       - name: Show app and worker logs on failure
         if: failure()
-        run: docker compose logs --tail=200 app worker
+        run: docker compose logs --tail=2000 app worker
 
       # The stack lives only for this job, so traces hold no real credentials.
       - name: Upload test results
