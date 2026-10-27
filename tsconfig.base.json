@@ -814,6 +814,9 @@
       "@activepieces/piece-mailchimp": [
         "packages/pieces/community/mailchimp/src/index.ts"
       ],
+      "@activepieces/piece-mailfloss": [
+        "packages/pieces/community/mailfloss/src/index.ts"
+      ],
       "@activepieces/piece-mailgun": [
         "packages/pieces/community/mailgun/src/index.ts"
       ],
