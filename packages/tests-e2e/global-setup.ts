@@ -1,11 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { chromium, FullConfig, Page } from '@playwright/test';
 import { AuthenticationPage } from './pages/authentication.page';
-import { AutomationsPage } from './pages/automations.page';
-
-export const DEFAULT_EMAIL = 'test@activepieces.com';
-export const DEFAULT_PASSWORD = 'TestPassword123!@#';
+import { e2eApi, STORAGE_STATE } from './fixtures/api';
 
 async function globalSetup(config: FullConfig) {
   console.log('🔧 Running global setup...');
@@ -35,14 +32,18 @@ async function globalSetup(config: FullConfig) {
       });
     }
 
-    await new AutomationsPage(page).open();
+    await authPage.waitForSignedIn();
+    mkdirSync(path.dirname(STORAGE_STATE), { recursive: true });
+    await context.storageState({ path: STORAGE_STATE });
+    const session = e2eApi.readSession();
 
     if (process.env.E2E_PIECES_MANIFEST) {
-      await installPieceArchives(page, process.env.E2E_PIECES_MANIFEST);
+      await installPieceArchives({ page, token: session.token, manifestPath: process.env.E2E_PIECES_MANIFEST });
     }
 
-    if (process.env.E2E_INSTANCE_URL) {
-      await deleteAllFlows(page);
+    const deleted = await e2eApi.deleteStaleFlows({ request: page.request, session });
+    if (deleted > 0) {
+      console.log(`✓ Deleted ${deleted} flows that crashed runs left behind`);
     }
 
     console.log('✓ Global setup completed successfully');
@@ -57,37 +58,7 @@ async function globalSetup(config: FullConfig) {
 
 export default globalSetup;
 
-async function deleteAllFlows(page: Page) {
-  const { token, projectId } = await page.evaluate(() => ({
-    token: localStorage.getItem('token'),
-    projectId: localStorage.getItem('projectId'),
-  }));
-  const headers = { Authorization: `Bearer ${token}` };
-
-  while (true) {
-    const listResponse = await page.request.get('/api/v1/flows', {
-      headers,
-      params: { projectId: projectId ?? '', limit: 100 },
-    });
-    if (!listResponse.ok()) {
-      throw new Error(`Listing flows to clean up failed with ${listResponse.status()}`);
-    }
-    const { data }: { data: { id: string }[] } = await listResponse.json();
-    if (data.length === 0) {
-      return;
-    }
-    console.log(`✓ Deleting ${data.length} flows left by earlier runs`);
-    for (const flow of data) {
-      const deleteResponse = await page.request.delete(`/api/v1/flows/${flow.id}`, { headers });
-      if (!deleteResponse.ok()) {
-        throw new Error(`Deleting flow ${flow.id} failed with ${deleteResponse.status()}`);
-      }
-    }
-  }
-}
-
-async function installPieceArchives(page: Page, manifestPath: string) {
-  const token = await page.evaluate(() => localStorage.getItem('token'));
+async function installPieceArchives({ page, token, manifestPath }: { page: Page; token: string; manifestPath: string }) {
   const pieces: { name: string; version: string; filename: string }[] = JSON.parse(readFileSync(manifestPath, 'utf-8'));
   for (const piece of pieces) {
     const response = await page.request.post('/api/v1/pieces', {
@@ -110,3 +81,6 @@ async function installPieceArchives(page: Page, manifestPath: string) {
     console.log(`✓ Installed ${piece.name}@${piece.version} from its archive`);
   }
 }
+
+export const DEFAULT_EMAIL = 'test@activepieces.com';
+export const DEFAULT_PASSWORD = 'TestPassword123!@#';

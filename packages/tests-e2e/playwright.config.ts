@@ -1,6 +1,7 @@
 import { defineConfig, devices, PlaywrightTestConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
+import { STORAGE_STATE } from './fixtures/api';
 
 // Load environment variables from the .env.e2e file (local dev)
 // In CI, use inherited environment variables instead
@@ -14,18 +15,19 @@ const E2E_INSTANCE_URL = process.env.E2E_INSTANCE_URL || undefined;
 
 const editionConfigs = {
   ce: {
-    testDir: './scenarios/ce',
+    testIgnore: ['**/ee/**'],
   },
   ee: {
-    testDir: './scenarios',
+    testIgnore: [],
   },
 };
 
 const editionConfig = editionConfigs[AP_EDITION as keyof typeof editionConfigs];
 
 const config: PlaywrightTestConfig = {
-  testDir: editionConfig.testDir,
+  testDir: './scenarios',
   testMatch: '**/*.spec.ts',
+  testIgnore: editionConfig.testIgnore,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -43,6 +45,8 @@ const config: PlaywrightTestConfig = {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: E2E_INSTANCE_URL ?? LOCAL_URL,
 
+    storageState: STORAGE_STATE,
+
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
 
@@ -58,7 +62,6 @@ const config: PlaywrightTestConfig = {
         ...devices['Desktop Chrome'],
         headless: true,
       },
-      testDir: editionConfig.testDir,
     },
   ],
 

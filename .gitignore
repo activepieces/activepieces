@@ -98,6 +98,7 @@ scratch.md
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/packages/tests-e2e/.auth/
 /redis-binaries/
 
 # Terraform
