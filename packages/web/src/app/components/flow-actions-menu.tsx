@@ -68,11 +68,13 @@ type FlowActionMenuProps = {
       insideBuilder: true;
       onVersionsListClick: () => void;
       savePendingEdits: () => Promise<void>;
+      isFlowLocked: boolean;
     }
   | {
       insideBuilder: false;
       onVersionsListClick: null;
       savePendingEdits: null;
+      isFlowLocked?: undefined;
     }
 );
 
@@ -89,6 +91,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onVersionsListClick,
   insideBuilder,
   savePendingEdits,
+  isFlowLocked,
 }) => {
   const isRunsPage = useLocation().pathname.includes('/runs');
   const showsDraftOrPublishedVersion =
@@ -335,7 +338,9 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               >
                 <ReplaceConnectionForFlowDialog>
                   <DropdownMenuItem
-                    disabled={!userHasPermissionToWriteAppConnection}
+                    disabled={
+                      !userHasPermissionToWriteAppConnection || isFlowLocked
+                    }
                     onSelect={(e) => e.preventDefault()}
                   >
                     <div className="flex cursor-pointer flex-row gap-2 items-center">
