@@ -1,6 +1,6 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { rabbitmqAuth } from '../auth';
-import { messageFieldsSchema, ParsedMessage, RabbitmqAuthProps, rabbitmqCommon } from '../common';
+import { RabbitmqAuthProps, rabbitmqCommon } from '../common';
 
 async function readMessages({
   auth,
@@ -12,18 +12,18 @@ async function readMessages({
   queue: string;
   max: number;
   consume: boolean;
-}): Promise<ParsedMessage[]> {
+}): Promise<unknown[]> {
   return rabbitmqCommon.withChannel({
     auth,
     fn: async (channel) => {
-      const messages: ParsedMessage[] = [];
+      const messages: unknown[] = [];
       const limit = Math.max(1, Math.floor(max));
       for (let i = 0; i < limit; i++) {
         const message = await channel.get(queue, { noAck: false });
         if (!message) {
           break;
         }
-        messages.push(rabbitmqCommon.parseContent(message));
+        messages.push(rabbitmqCommon.parseContent(message).content);
         if (consume) {
           channel.ack(message);
         }
@@ -44,7 +44,7 @@ export const messageReceived = createTrigger({
   description: 'Triggers when a message is received on a RabbitMQ queue',
   aiMetadata: {
     description:
-      'Fires for each message on a configured RabbitMQ queue. Each poll pulls up to the configured maximum and acknowledges (removes) the messages it emits. JSON bodies are parsed into content; other bodies are passed as text. Testing the trigger only peeks: messages are put back on the queue.',
+      'Fires for each message on a configured RabbitMQ queue. Each poll pulls up to the configured maximum and acknowledges (removes) the messages it emits. Each output is the message body itself: JSON bodies are emitted as the parsed object, other bodies as a text string. Testing the trigger only peeks: messages are put back on the queue.',
   },
   props: {
     queue: Property.ShortText({
@@ -59,33 +59,13 @@ export const messageReceived = createTrigger({
       defaultValue: 50,
     }),
   },
-  outputSchema: { fields: messageFieldsSchema },
-  sampleData: {
-    content: { orderId: 'A-1001', status: 'created' },
-    rawContent: '{"orderId":"A-1001","status":"created"}',
-    properties: {
-      contentType: 'application/json',
-      contentEncoding: null,
-      headers: {},
-      deliveryMode: 2,
-      priority: null,
-      correlationId: null,
-      replyTo: null,
-      expiration: null,
-      messageId: null,
-      timestamp: null,
-      type: null,
-      userId: null,
-      appId: null,
-    },
-    fields: {
-      deliveryTag: 1,
-      redelivered: false,
-      exchange: '',
-      routingKey: 'orders',
-      messageCount: 0,
-    },
+  outputSchema: {
+    fields: [
+      { key: 'orderId', label: 'Order ID', description: 'Example field: the trigger output is the parsed JSON message body, so its keys are the keys of your message' },
+      { key: 'status', label: 'Status', description: 'Example field from the parsed JSON message body' },
+    ],
   },
+  sampleData: { orderId: 'A-1001', status: 'created' },
   type: TriggerStrategy.POLLING,
   async test(context) {
     return readMessages({

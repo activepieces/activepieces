@@ -135,10 +135,13 @@ describe('message received trigger', () => {
     const items = await messageReceived.run(fakeContext());
     expect(state.acked).toBe(2);
     expect(state.nackAllRequeue).toEqual([]);
-    expect(items).toMatchObject([
-      { content: { a: 1 }, rawContent: '{"a":1}' },
-      { content: 'plain text', rawContent: 'plain text' },
-    ]);
+    expect(items).toEqual([{ a: 1 }, 'plain text']);
+  });
+
+  it('run() emits a JSON message as the parsed object without a content wrapper', async () => {
+    state.queue = [message('{"orderId":"A-1001","status":"created"}')];
+    const items = await messageReceived.run(fakeContext());
+    expect(items).toEqual([{ orderId: 'A-1001', status: 'created' }]);
   });
 });
 
