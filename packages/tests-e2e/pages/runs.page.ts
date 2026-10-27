@@ -11,4 +11,10 @@ export class RunsPage extends BasePage {
       await expect(latestRun).toContainText(status, { timeout: 5000 });
     }).toPass({ timeout });
   }
+
+  async openLatestRun({ flowId, flowName, status }: { flowId: string; flowName: string; status: string }) {
+    await this.expectLatestRun({ flowId, flowName, status });
+    await this.page.getByRole('row').filter({ hasText: flowName }).first().click();
+    await this.page.waitForURL(/\/runs\/[^/?#]+/);
+  }
 }

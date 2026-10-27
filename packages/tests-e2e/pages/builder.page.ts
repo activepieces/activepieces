@@ -19,6 +19,10 @@ export class BuilderPage extends BasePage {
     await this.page.getByTestId(`action-or-trigger-${trigger}`).click();
   }
 
+  async openStep(stepName: string) {
+    await this.page.getByTestId(`rf__node-${stepName}`).click();
+  }
+
   async addStep({ after, piece, action }: { after: string; piece: string; action: string }) {
     await this.page.locator(`[data-testid="add-action-button"][data-parent-step="${after}"]`).click();
     await this.page.getByTestId('pieces-search-input').fill(piece);
@@ -88,10 +92,12 @@ export class BuilderPage extends BasePage {
     await expect(succeeded, 'The step test failed').toBeVisible();
   }
 
+  async expandStepOutput(key: string) {
+    await this.stepOutput().getByRole('button', { name: new RegExp(`^${key}\\b`) }).click();
+  }
+
   async expectStepOutput({ key, value }: { key: string; value: string }) {
-    await expect(this.sidebar().getByRole('tabpanel', { name: 'Friendly View' })).toContainText(
-      new RegExp(`${key}:?\\s*${value}`),
-    );
+    await expect(this.stepOutput()).toContainText(new RegExp(`${key}:?\\s*${value}`));
   }
 
   async testFlow() {
@@ -118,6 +124,10 @@ export class BuilderPage extends BasePage {
         { timeout: 60000, intervals: [2000, 3000, 5000] },
       )
       .toEqual({ status: 200, body: expected });
+  }
+
+  private stepOutput() {
+    return this.sidebar().getByRole('tabpanel', { name: 'Friendly View' });
   }
 
   private sidebar() {
