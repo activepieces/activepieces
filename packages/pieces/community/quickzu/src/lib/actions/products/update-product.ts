@@ -1,11 +1,15 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickzuAuth } from '../../auth';
-import { makeClient, quickzuCommon } from '../../common';
+import { quickzuOutputSchemas } from '../../common/output-schemas';
+import { makeClient, quickzuCommon, requireValue } from '../../common';
 import { ProductUnit } from '../../common/constants';
+import { QuickzuAPIClient } from '../../common/client';
+import { ProductInput } from '../../common/types';
 
 export const updateProductAction = createAction({
   auth: quickzuAuth,
   name: 'quickzu_update_product',
+  outputSchema: quickzuOutputSchemas.product,
   classification: 'WRITE',
   displayName: 'Update Product',
   description: 'Updates an existing product in store.',
@@ -86,11 +90,11 @@ export const updateProductAction = createAction({
     } = context.propsValue;
 
     const client = makeClient(context.auth);
-
-    return await client.updateProduct(productId!, {
+    const id = requireValue({ value: productId, label: 'Product' });
+    const changes = {
       name,
       desc,
-      category: categoryId!,
+      category: categoryId,
       mrp,
       price,
       unit,
@@ -99,9 +103,62 @@ export const updateProductAction = createAction({
       exclude_tax,
       enable_variants,
       status,
-      meta: {
-        nonveg: false,
+    };
+    const required = await fillRequiredProductFields({ client, productId: id, changes });
+
+    return await client.updateProduct({
+      productId: id,
+      productInput: {
+        ...changes,
+        ...required,
+        meta: {
+          nonveg: false,
+        },
       },
     });
   },
 });
+
+async function fillRequiredProductFields({
+  client,
+  productId,
+  changes,
+}: {
+  client: QuickzuAPIClient;
+  productId: string;
+  changes: Partial<ProductInput>;
+}): Promise<Pick<ProductInput, 'name' | 'category' | 'mrp' | 'price' | 'unit' | 'value_per_unit'>> {
+  const missing = REQUIRED_PRODUCT_FIELDS.some((field) => isBlank(changes[field]));
+  const current = missing ? await client.getProduct(productId) : undefined;
+  if (missing && !current) {
+    throw new Error(`Product ${productId} was not found in the store.`);
+  }
+  return {
+    name: pick({ value: changes.name, fallback: current?.name }) ?? '',
+    category:
+      pick({ value: changes.category, fallback: categoryIdOf(current?.category) }) ?? '',
+    mrp: pick({ value: changes.mrp, fallback: current?.mrp }) ?? 0,
+    price: pick({ value: changes.price, fallback: current?.price }),
+    unit: pick({ value: changes.unit, fallback: current?.unit }) ?? '',
+    value_per_unit: pick({ value: changes.value_per_unit, fallback: current?.value_per_unit }) ?? 0,
+  };
+}
+
+function categoryIdOf(category: unknown): string | undefined {
+  if (typeof category === 'string') return category;
+  if (typeof category === 'object' && category !== null) {
+    const id: unknown = Reflect.get(category, '_id');
+    return typeof id === 'string' ? id : undefined;
+  }
+  return undefined;
+}
+
+function pick<T>({ value, fallback }: { value: T | undefined; fallback: T | undefined }): T | undefined {
+  return isBlank(value) ? fallback : value;
+}
+
+function isBlank(value: unknown): boolean {
+  return value === undefined || value === null || (typeof value === 'string' && value.trim().length === 0);
+}
+
+const REQUIRED_PRODUCT_FIELDS: (keyof ProductInput)[] = ['name', 'category', 'mrp', 'price', 'unit', 'value_per_unit'];

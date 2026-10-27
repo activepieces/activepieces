@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Quickzu 0.2.0: Order Created outputs the order, and the discount actions move to AI versions
+
+The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. **Create Product Discount** and **Create Promo Code** are no longer offered to AI agents; they keep working in flows.
+
+#### What you need to do
+
+If a flow maps fields from Order Created, re-map them without the `body` prefix (for example `payload.id` instead of `body.payload.id`). Agents that used the discount actions switch to **Create Product Discount (AI)** and **Create Promo Code (AI)**.
+
 #### Apache Kafka 0.1.0: Publish messages is no longer an AI agent tool
 
 **Publish messages** (several messages in one request) is no longer offered to AI agents as a tool; flow steps that use it keep working unchanged. Agents publish with **Publish message**, one message per call, so there is one agent tool for publishing.
