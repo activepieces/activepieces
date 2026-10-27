@@ -28,16 +28,11 @@ mistake closes the gate:
   (`!isNil(balance) && !balance.unlimited && remaining <= 0`), so `null` → `blocked: false`.
 - A failed fetch returns `null` rather than throwing: the inline fetch is wrapped in `tryCatch` and
   logs `'Failed to fetch credits gate snapshot; failing open'`.
-- A cache **read** that times out or throws first reuses this API process's last good answer for the
-  platform (`lastGoodGateStates`, an in-memory LRU), if it is younger than `CREDITS_REFETCH_PERIOD_MS`
-  (180s). Only with no recent answer does it fail open, with `enforced: false` on both features, so a
-  degraded Redis still cannot block a platform the process never saw blocked. Before this (ENG-1054) every
-  slow read failed open: about 12k a day across ~1,100 platforms, steady on every host, so ordinary
-  latency against the 25ms cap was waving over-limit platforms through. The cause is event-loop lag rather
-  than Redis: the API's event-loop delay p99 runs 145-200ms, so the 25ms timer often fires before an answer
-  that is already in the socket gets read. A read that answers after the timeout goes through the same path
-  as a fast one (remember it, schedule maintenance), so an exhausted balance can still be refreshed when every
-  read is slow. A reuse logs at info with its age.
+- A cache **read** that times out or throws also fails open, with `enforced: false` on both features —
+  so a degraded Redis cannot block, only under-enforce. The cap must sit above event-loop lag, not Redis
+  latency: a stalled loop runs the timer before it reads a reply already in the socket. At 25 ms it failed
+  open ~12k times a day on healthy Redis (prod per-host loop-delay p99: median 142 ms, p99 295 ms), letting
+  over-limit platforms through (ENG-1054). At 500 ms it trips only on a real outage.
 
 Credit *tracking* is likewise non-fatal — `trackCredits` rethrows non-duplicate errors, but no caller
 lets that surface: `flow-run-hooks#onFinish` wraps both the per-run credit and the AI-usage tracker in
@@ -45,7 +40,7 @@ lets that surface: `flow-run-hooks#onFinish` wraps both the per-run credit and t
 cannot fail a run or a chat turn.
 
 **The gate itself never fetches.** `computeCreditsAndAppSumoState` reads `billingEnforced` and the two
-balance keys concurrently, races that against `CREDITS_CACHE_READ_TIMEOUT_MS` (25 ms), and returns.
+balance keys concurrently, races that against `CREDITS_CACHE_READ_TIMEOUT_MS` (500 ms), and returns.
 Everything else — a cold cache, a stale one, a cached zero that may have been topped up since — is
 handed to `scheduleCreditsCacheMaintenance`, which fires `refreshCredits` through
 `rejectedPromiseHandler` under a single `runOnceWithin` debounce
@@ -100,7 +95,7 @@ Cloud is unaffected; CE already resolved to the no-op default provider.
 The reason is **latency, not policy**, and the original cost is largely gone: when this branch was added,
 a cold cache took a distributed lock and waited on an Autumn `getCustomer` (5s timeout) on the admission
 path, repeated every 60s for exactly the platforms that never enrolled. The cache-only rewrite removed
-that entirely — the gate is now two Redis round-trips bounded at 25 ms with no lock and no Autumn call.
+that entirely — the gate is now two Redis round-trips bounded at 500 ms with no lock and no Autumn call.
 What is left is those two round-trips per admission, on a box where Redis sits next to a single API
 process and the answer is always "allow".
 

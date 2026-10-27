@@ -68,8 +68,8 @@ function fresh(overrides: Partial<CreditsBalanceCache>): CreditsBalanceCache {
 
 const log = { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() } as unknown as FastifyBaseLogger
 
-function gateState({ platformId = 'platform-1' }: { platformId?: string } = {}) {
-    return autumnBillingProvider(log).getCreditsAndAppSumoState(platformId)
+function gateState() {
+    return autumnBillingProvider(log).getCreditsAndAppSumoState('platform-1')
 }
 
 function settleBackgroundWork(): Promise<void> {
@@ -237,61 +237,11 @@ describe('credits gate decides from the cache and refreshes in the background', 
         storedCredits = fresh({ remaining: 0 })
         mockBillingEnforced.mockRejectedValue(new Error('redis unreachable'))
 
-        const { credits } = await gateState({ platformId: 'never-gated' })
+        const { credits } = await gateState()
         await settleBackgroundWork()
 
         expect(credits.blocked).toBe(false)
         expect(mockResolveClientForPlatform).not.toHaveBeenCalled()
         expect(log.warn).toHaveBeenCalled()
-    })
-
-    it.each([
-        { failure: 'fails', read: (): Promise<never> => Promise.reject(new Error('redis slow')) },
-        { failure: 'hangs past the timeout', read: (): Promise<never> => new Promise(() => undefined) },
-    ])('keeps blocking on the last good answer when a later cache read $failure', async ({ failure, read }) => {
-        const platformId = `blocked-then-${failure}`
-        storedCredits = fresh({ remaining: 0 })
-        await gateState({ platformId })
-        mockBillingEnforced.mockImplementation(read)
-
-        const { credits } = await gateState({ platformId })
-
-        expect(credits.blocked).toBe(true)
-    })
-
-    it('remembers a read that answers after the timeout, so the next slow read still blocks', async () => {
-        storedCredits = fresh({ remaining: 0 })
-        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 40)))
-        const { credits: first } = await gateState({ platformId: 'late-answer' })
-        await new Promise((resolve) => setTimeout(resolve, 50))
-        mockBillingEnforced.mockRejectedValue(new Error('redis slow'))
-
-        const { credits: second } = await gateState({ platformId: 'late-answer' })
-
-        expect(first.blocked).toBe(false)
-        expect(second.blocked).toBe(true)
-    })
-
-    it('refreshes a blocked balance from a read that answers after the timeout, so a reset can unblock it', async () => {
-        storedCredits = balance({ remaining: 0 })
-        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 40)))
-
-        await gateState({ platformId: 'late-and-exhausted' })
-        await new Promise((resolve) => setTimeout(resolve, 50))
-
-        expect(mockResolveClientForPlatform).toHaveBeenCalled()
-    })
-
-    it('fails open when the last good answer is older than the refetch period', async () => {
-        storedCredits = fresh({ remaining: 0 })
-        await gateState({ platformId: 'blocked-long-ago' })
-        mockBillingEnforced.mockRejectedValue(new Error('redis slow'))
-        const now = Date.now()
-        const clock = vi.spyOn(Date, 'now').mockReturnValue(now + 181_000)
-
-        const { credits } = await gateState({ platformId: 'blocked-long-ago' })
-        clock.mockRestore()
-
-        expect(credits.blocked).toBe(false)
     })
 })
