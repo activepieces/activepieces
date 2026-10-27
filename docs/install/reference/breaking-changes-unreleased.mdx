@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Campaign Monitor 0.2.0: Add Subscriber and Update Subscriber are builder-only
+
+Add Subscriber and Update Subscriber are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
+
+Find Subscriber now fails with an error when Campaign Monitor returns a real error, such as an invalid API key or an outage. It used to return `found: false` in those cases; it still returns `found: false` when the subscriber does not exist.
+
+#### What you need to do
+
+Agents that used these actions switch to their twins: Add Subscriber (JSON fields) and Update Subscriber (JSON fields). Flows that read `found: false` from Find Subscriber to mean "not found" keep working; a run that hits a bad key or an outage now fails instead of taking the not-found branch. Flow steps keep running on the version they were built with until you upgrade them.
+
 #### Worker group ids can no longer contain a colon
 
 Worker group ids with `:` in them are no longer routable. The assignment endpoints reject them, and a project or flow already assigned to such a group is treated as unassigned: its runs fall back to the project, platform or shared queue instead of the group's dedicated queue, and the group disappears from the worker groups page.

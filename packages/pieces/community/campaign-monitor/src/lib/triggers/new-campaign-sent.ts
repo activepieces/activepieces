@@ -34,6 +34,9 @@ export const newCampaignSentTrigger = createTrigger({
     Tags: [],
   },
   async onEnable(context) {
+    if (context.isRepublish && (await context.store.get(STORE_KEY))) {
+      return;
+    }
     const campaigns = await fetchRecentCampaigns({
       apiKey: context.auth.secret_text,
       clientId: context.propsValue.clientId,
@@ -45,8 +48,8 @@ export const newCampaignSentTrigger = createTrigger({
       campaigns.map((campaign) => campaign.CampaignID)
     );
   },
-  async onDisable(context) {
-    await context.store.delete(STORE_KEY);
+  async onDisable() {
+    return;
   },
   async test(context) {
     const campaigns = await fetchRecentCampaigns({

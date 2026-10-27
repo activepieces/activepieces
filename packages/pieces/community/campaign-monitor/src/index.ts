@@ -34,7 +34,8 @@ export const campaignMonitor = createPiece({
   description:
     'Email marketing platform for delivering exceptional email campaigns.',
   logoUrl: 'https://cdn.activepieces.com/pieces/campaign-monitor.png',
-  authors: ['AnkitSharmaOnGithub', 'kishanprmr'],
+  authors: ['AnkitSharmaOnGithub', 'kishanprmr', 'OdaiAhmed99'],
+  minimumSupportedRelease: '0.88.2',
   auth: campaignMonitorAuth,
   actions: [
     addSubscriberToListAction,
