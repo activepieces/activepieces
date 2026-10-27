@@ -24,10 +24,13 @@ const editionConfigs = {
 
 const editionConfig = editionConfigs[AP_EDITION as keyof typeof editionConfigs];
 
+const QUARANTINE = /@quarantine/;
+
 const config: PlaywrightTestConfig = {
   testDir: './scenarios',
   testMatch: '**/*.spec.ts',
   testIgnore: editionConfig.testIgnore,
+  grepInvert: process.env.CI ? QUARANTINE : undefined,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
