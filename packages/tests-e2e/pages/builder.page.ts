@@ -47,10 +47,9 @@ export class BuilderPage extends BasePage {
     await this.sidebar().getByRole('button', { name: 'Add Item' }).click();
     const fields = this.sidebar().getByRole('textbox');
     await fields.nth(0).fill(key);
-    const saved = this.nextDraftSave();
     await fields.nth(1).click();
     await this.page.keyboard.insertText(value);
-    await saved;
+    await this.waitForSaveOfLastEdit();
   }
 
   async setCode(code: string) {
@@ -107,15 +106,15 @@ export class BuilderPage extends BasePage {
   private async replaceEditorText({ testId, text }: { testId: string; text: string }) {
     await this.sidebar().getByTestId(testId).getByRole('textbox').click();
     await this.page.keyboard.press('ControlOrMeta+a');
-    const saved = this.nextDraftSave();
     await this.page.keyboard.insertText(text);
-    await saved;
+    await this.waitForSaveOfLastEdit();
   }
 
-  private nextDraftSave() {
-    return this.page.waitForResponse(
-      (response) => response.request().method() === 'POST' && FLOW_SAVE.test(new URL(response.url()).pathname),
+  private async waitForSaveOfLastEdit() {
+    const save = await this.page.waitForRequest(
+      (request) => request.method() === 'POST' && FLOW_SAVE.test(new URL(request.url()).pathname),
     );
+    await save.response();
   }
 }
 
