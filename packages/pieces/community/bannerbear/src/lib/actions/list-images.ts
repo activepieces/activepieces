@@ -45,7 +45,7 @@ export const listImagesAction = createAction({
     return {
       items: raw.map((i) => bannerbearClient.normalizeImage(i)),
       page,
-      has_more: raw.length >= limit,
+      has_more: raw.length >= (bannerbearClient.getVersion(apiKey) === 'v5' ? 25 : limit),
     };
   },
 });
