@@ -1,6 +1,7 @@
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
+  Permission,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, WorkflowIcon } from 'lucide-react';
@@ -34,6 +35,7 @@ import {
 import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { flowHooks } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 
 import { DeleteReplacedConnectionDialog } from './delete-replaced-connection-dialog';
 import {
@@ -87,6 +89,9 @@ function ReplaceConnectionForProjectForm({
 }: ReplaceConnectionForProjectFormProps) {
   const navigate = useNavigate();
   const publishNeedsApproval = flowApprovalsHooks.usePublishNeedsApproval();
+  const userHasPermissionToDeleteConnection = useAuthorization().checkAccess(
+    Permission.WRITE_APP_CONNECTION,
+  );
   const [step, setStep] = useState<ProjectReplaceStep>(
     ProjectReplaceStep.CHOOSE_CONNECTIONS,
   );
@@ -157,6 +162,7 @@ function ReplaceConnectionForProjectForm({
       : draftFlows
   ).slice(0, MAX_FLOWS_PER_REPLACE);
   const canDeleteSource =
+    userHasPermissionToDeleteConnection &&
     !publishNeedsApproval &&
     sourceConnection?.scope === AppConnectionScope.PROJECT;
 
