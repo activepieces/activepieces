@@ -134,6 +134,7 @@ export const selectGenericFormComponentForProperty = ({
                       initialValue={value}
                       disabled={disabled}
                       onChange={onChange}
+                      ariaLabel={t('Value')}
                     />
                   )
                 : undefined
@@ -340,13 +341,15 @@ export const selectGenericFormComponentForProperty = ({
               ariaLabel={property.displayName}
             ></FormFieldMentionInput>
           ) : (
-            <SecretInput
-              ref={field.ref}
-              value={field.value}
-              onChange={field.onChange}
-              disabled={disabled}
-              type="text"
-            ></SecretInput>
+            <FormControl>
+              <SecretInput
+                ref={field.ref}
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disabled}
+                type="text"
+              ></SecretInput>
+            </FormControl>
           )}
         </AutoFormFieldWrapper>
       );
@@ -405,18 +408,22 @@ export const selectGenericFormComponentForProperty = ({
               }
             ></FormFieldMentionInput>
           ) : (
-            <SecretInput
-              ref={field.ref}
-              value={field.value}
-              onChange={field.onChange}
-              disabled={disabled}
-              placeholder={
-                'placeholder' in property ? property.placeholder : undefined
-              }
-              type={
-                property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
-              }
-            ></SecretInput>
+            <FormControl>
+              <SecretInput
+                ref={field.ref}
+                value={field.value}
+                onChange={field.onChange}
+                disabled={disabled}
+                placeholder={
+                  'placeholder' in property ? property.placeholder : undefined
+                }
+                type={
+                  property.type === PropertyType.SECRET_TEXT
+                    ? 'password'
+                    : 'text'
+                }
+              ></SecretInput>
+            </FormControl>
           )}
         </AutoFormFieldWrapper>
       );

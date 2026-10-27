@@ -19,12 +19,23 @@ packages/tests-e2e/
 
 A spec must pass whatever the project already holds: nothing, many flows, or another run's flows.
 
-- Create what the spec needs, and name each flow with `e2eFlows.uniqueFlowName()` (prefix `E2E `).
-- Pass each flow id to `flowCleanup.track()`. The fixture deletes it after the test, also when the test fails.
+- Create what the spec needs, and name each flow and connection with `e2eFlows.uniqueName()` (prefix `E2E `).
+- Pass each flow id to `flowCleanup.track()` and each connection id to `connectionCleanup.track()`. The fixtures delete them after the test, also when the test fails.
 - Find your data by its id or unique name, never by its position in a list.
 - Wait for a visible result (a status text, a step output, a response), never for a fixed time.
-- Select by role or `data-testid`. Add a `data-testid` to the web app when an element has no stable name.
+- Select by role and accessible name (`getByRole(…, { name })`, `getByLabel`). When an element has no name, give it one in the web app (a linked label or an `aria-label`); use a `data-testid` only when no name fits. Never locate a field by the text around it or by its position.
 - The tests start signed in. Use `test.use({ storageState: { cookies: [], origins: [] } })` to start signed out.
+- Use only pieces that need no outside service. A spec that needs a server calls a flow of its own, as `connection-step.spec.ts` does.
+- A new piece must also go into the `PIECES` list of `e2e-matrix.yml`, because the matrix stack installs only those.
+
+## Flaky specs
+
+A spec is flaky when it fails and then passes on a retry, or fails with no product bug. The run summary counts flaky specs.
+
+1. Open a Linear ticket for the spec.
+2. Add the `@quarantine` tag and the ticket to the spec: `test('…', { tag: '@quarantine', annotation: { type: 'issue', description: '<ticket URL>' } }, …)`.
+3. CI skips `@quarantine` specs, so the release gate does not wait for the fix. Local runs still run them.
+4. The fix removes the tag in the same PR.
 
 ## Running the tests
 
@@ -43,7 +54,7 @@ npx turbo run deploy-checkly --filter=tests-e2e
 
 Required environment variables:
 
-- `E2E_INSTANCE_URL` — target Activepieces URL (defaults to `http://localhost:4200` and starts the dev server when unset). Global setup deletes `E2E `-prefixed flows older than one hour, which crashed runs leave behind. It does not touch other flows.
+- `E2E_INSTANCE_URL` — target Activepieces URL (defaults to `http://localhost:4200` and starts the dev server when unset). Global setup deletes `E2E `-prefixed flows and connections older than one hour, which crashed runs leave behind. It does not touch other flows or connections.
 - `E2E_EMAIL` — test user email
 - `E2E_PASSWORD` — test user password
 
