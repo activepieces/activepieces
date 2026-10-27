@@ -3522,6 +3522,5 @@
   "{count} hours ago": "{count} hours ago",
   "Delete the old connection?": "Delete the old connection?",
   "The replace is done. Delete {name} now, or keep it to use later.": "The replace is done. Delete {name} now, or keep it to use later.",
-  "These still use the connection and stop working if you delete it:": "These still use the connection and stop working if you delete it:",
   "A replace changes up to {max} flows.": "A replace changes up to {max} flows."
 }

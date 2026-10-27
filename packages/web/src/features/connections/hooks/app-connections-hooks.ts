@@ -303,6 +303,46 @@ export const appConnectionsMutations = {
     });
   },
 
+  useIsConnectionUsed: () => {
+    const agentsAvailable = useAgentsAvailable();
+    return useMutation({
+      mutationFn: async ({
+        projectId,
+        externalId,
+      }: {
+        projectId: string;
+        externalId: string;
+      }) => {
+        const flowsRequest = {
+          projectId,
+          connectionExternalIds: [externalId],
+          cursor: undefined,
+          limit: 1,
+        };
+        const [draftFlowsPage, publishedFlowsPage, agentsPage] =
+          await Promise.all([
+            flowsApi.list(flowsRequest),
+            flowsApi.list({
+              ...flowsRequest,
+              versionState: FlowVersionState.LOCKED,
+            }),
+            agentsAvailable
+              ? agentsApi.list({
+                  projectId,
+                  connectionExternalIds: [externalId],
+                  limit: 1,
+                })
+              : null,
+          ]);
+        return (
+          draftFlowsPage.data.length > 0 ||
+          publishedFlowsPage.data.length > 0 ||
+          (agentsPage?.data.length ?? 0) > 0
+        );
+      },
+    });
+  },
+
   useReplaceConnections: ({
     setDialogOpen,
     refetch,
@@ -389,61 +429,6 @@ export const appConnectionsQueries = {
       },
       enabled,
       staleTime,
-    });
-  },
-
-  useFlowsAndAgentsUsingConnection: ({
-    projectId,
-    externalId,
-  }: {
-    projectId: string;
-    externalId: string;
-  }) => {
-    const agentsAvailable = useAgentsAvailable();
-    return useQuery({
-      queryKey: [
-        'app-connection-usage',
-        projectId,
-        externalId,
-        agentsAvailable,
-      ],
-      queryFn: async () => {
-        const flowsRequest = {
-          projectId,
-          connectionExternalIds: [externalId],
-          cursor: undefined,
-          limit: 1000,
-        };
-        const [draftFlowsPage, publishedFlowsPage, agentsPage] =
-          await Promise.all([
-            flowsApi.list(flowsRequest),
-            flowsApi.list({
-              ...flowsRequest,
-              versionState: FlowVersionState.LOCKED,
-            }),
-            agentsAvailable
-              ? agentsApi.list({
-                  projectId,
-                  connectionExternalIds: [externalId],
-                  limit: 100,
-                })
-              : null,
-          ]);
-        const draftFlowIds = new Set(
-          draftFlowsPage.data.map((flow) => flow.id),
-        );
-        return {
-          flows: [
-            ...draftFlowsPage.data,
-            ...publishedFlowsPage.data.filter(
-              (flow) => !draftFlowIds.has(flow.id),
-            ),
-          ],
-          agents: agentsPage?.data ?? [],
-        };
-      },
-      staleTime: 0,
-      gcTime: 0,
     });
   },
 
