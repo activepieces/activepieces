@@ -135,6 +135,10 @@ function ReplaceConnectionForProjectForm({
         publishedOnlyFlows: publishedFlowsPage.data.filter(
           (flow) => !draftFlowIds.has(flow.id),
         ),
+        draftFlowIds,
+        publishedFlowIds: new Set(
+          publishedFlowsPage.data.map((flow) => flow.id),
+        ),
       };
     },
     onSuccess: () => setStep(ProjectReplaceStep.REVIEW_AFFECTED_FLOWS),
@@ -267,7 +271,7 @@ function ReplaceConnectionForProjectForm({
                           <Badge
                             key={flow.id}
                             variant="secondary"
-                            className="max-w-[200px] cursor-pointer hover:bg-gray-3/70"
+                            className="max-w-[280px] cursor-pointer hover:bg-gray-3/70"
                             onClick={() =>
                               navigate(
                                 `/projects/${flow.projectId}/flows/${flow.id}`,
@@ -277,6 +281,18 @@ function ReplaceConnectionForProjectForm({
                             <WorkflowIcon className="w-3 h-3 shrink-0" />
                             <span className="truncate">
                               {flow.version.displayName}
+                            </span>
+                            <span className="shrink-0 text-gray-11">
+                              {versionsUsingConnectionLabel({
+                                usedInDraft:
+                                  flowsUsingConnection?.draftFlowIds.has(
+                                    flow.id,
+                                  ) ?? false,
+                                usedInPublished:
+                                  flowsUsingConnection?.publishedFlowIds.has(
+                                    flow.id,
+                                  ) ?? false,
+                              })}
                             </span>
                           </Badge>
                         ))}
@@ -319,6 +335,19 @@ function ReplaceConnectionForProjectForm({
       </Form>
     </>
   );
+}
+
+function versionsUsingConnectionLabel({
+  usedInDraft,
+  usedInPublished,
+}: {
+  usedInDraft: boolean;
+  usedInPublished: boolean;
+}): string {
+  if (usedInDraft && usedInPublished) {
+    return t('Draft and published');
+  }
+  return usedInPublished ? t('Published') : t('Draft');
 }
 
 ReplaceConnectionForProjectDialog.displayName =
