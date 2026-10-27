@@ -25,7 +25,7 @@ import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 const selectMock = vi.hoisted(() => ({
   onValueChange: undefined as undefined | ((value: string) => void),
@@ -160,7 +160,7 @@ const gatewayConfig: AIProviderWithoutSensitiveData = {
 describe('ConfigDetail save (manual models)', () => {
   let container: HTMLDivElement;
   let root: Root;
-  let onSave: ReturnType<typeof vi.fn>;
+  let onSave: Mock<React.ComponentProps<typeof ConfigDetail>['onSave']>;
 
   const render = () => {
     onSave = vi.fn().mockResolvedValue({ error: null });

@@ -10,7 +10,7 @@ const { ftpClient } = vi.hoisted(() => ({
 vi.mock('ssh2-sftp-client', () => ({ default: vi.fn() }));
 vi.mock('basic-ftp', async (importOriginal) => ({
   ...(await importOriginal<typeof import('basic-ftp')>()),
-  Client: vi.fn(() => ftpClient),
+  Client: vi.fn(function () { return ftpClient }),
 }));
 
 const MODIFIED_AT = new Date('2026-10-20T14:40:13.000Z');
