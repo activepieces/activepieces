@@ -27,7 +27,9 @@ const modelsCache = new Map<string, AIProviderModel[]>()
 
 const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 500
 const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
-const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 30
+const MANAGED_OPENROUTER_KEY_LOCK_TIMEOUT_SECONDS = 45
+const MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS = 20_000
+const MANAGED_OPENROUTER_KEY_LIVE_POLL_MS = 500
 
 // A passing check must not lock out the next real failure, so the claim is a floor between
 // checks rather than a window that swallows them. A confirmed failure needs no floor: the row
@@ -726,9 +728,23 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             if (!hasManagedKey(stored)) {
                 throw new Error(`[aiProviderService#enrichWithKeysIfNeeded] Managed AI provider ${providerId} has no stored key`)
             }
+            if (managedKeyHash(stored) === minted.apiKeyHash) {
+                await waitUntilKeyIsLive({ minted, platformId, log })
+            }
             return stored
         },
     })
+}
+
+async function waitUntilKeyIsLive({ minted, platformId, log }: { minted: ActivePiecesProviderAuthConfig, platformId: PlatformId, log: FastifyBaseLogger }): Promise<void> {
+    const deadline = Date.now() + MANAGED_OPENROUTER_KEY_LIVE_WAIT_MS
+    while (Date.now() < deadline) {
+        if (await openRouterApi.isKeyLive({ key: minted.apiKey })) {
+            return
+        }
+        await new Promise((resolve) => setTimeout(resolve, MANAGED_OPENROUTER_KEY_LIVE_POLL_MS))
+    }
+    log.warn({ platform: { id: platformId }, openRouterKey: { hash: minted.apiKeyHash } }, '[aiProviderService#waitUntilKeyIsLive] New managed OpenRouter key is still not live, using it anyway')
 }
 
 async function storeKeyIfAuthUnchanged({ providerId, platformId, observedAuth, auth }: { providerId: string, platformId: PlatformId, observedAuth: EncryptedObject, auth: ActivePiecesProviderAuthConfig }): Promise<AIProviderAuthConfig> {

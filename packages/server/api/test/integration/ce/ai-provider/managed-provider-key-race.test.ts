@@ -11,6 +11,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 let app: FastifyInstance
 let ctx: TestContext
 let deleteKey: MockInstance<typeof openRouterApi.deleteKey>
+let isKeyLive: MockInstance<typeof openRouterApi.isKeyLive>
 
 beforeAll(async () => {
     app = await setupTestEnvironment({ fresh: true })
@@ -23,6 +24,7 @@ afterAll(async () => {
 beforeEach(async () => {
     vi.restoreAllMocks()
     deleteKey = vi.spyOn(openRouterApi, 'deleteKey').mockResolvedValue(undefined)
+    isKeyLive = vi.spyOn(openRouterApi, 'isKeyLive').mockResolvedValue(true)
     ctx = await createTestContext(app)
 })
 
@@ -158,11 +160,36 @@ describe('managed AI provider key provisioning', () => {
         ])
 
         expect(createKey).toHaveBeenCalledTimes(1)
+        expect(isKeyLive).toHaveBeenCalledTimes(1)
         expect(deleteKey).not.toHaveBeenCalled()
         expect(third.apiKey).toBe(provisioned.apiKey)
         expect(fourth.apiKey).toBe(provisioned.apiKey)
         expect(await readPersistedApiKey(ctx.platform.id)).toBe(provisioned.apiKey)
     })
+
+    it('waits until a freshly minted key is live before handing it out', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        isKeyLive.mockResolvedValueOnce(false).mockResolvedValueOnce(false)
+
+        const provisioned = await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+
+        expect(provisioned.apiKey).toBe('sk-or-1')
+        expect(isKeyLive).toHaveBeenCalledTimes(3)
+        expect(isKeyLive).toHaveBeenLastCalledWith({ key: 'sk-or-1' })
+        expect(deleteKey).not.toHaveBeenCalled()
+    })
+
+    it('hands out the minted key when it never goes live within the wait', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
+        isKeyLive.mockResolvedValue(false)
+
+        const provisioned = await aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)
+
+        expect(provisioned.apiKey).toBe('sk-or-1')
+        expect(isKeyLive.mock.calls.length).toBeGreaterThan(1)
+        expect(deleteKey).not.toHaveBeenCalled()
+        expect(await readPersistedApiKey(ctx.platform.id)).toBe('sk-or-1')
+    }, 40_000)
 })
 
 describe('managed AI provider deletion', () => {
