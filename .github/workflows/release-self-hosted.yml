@@ -133,6 +133,37 @@ jobs:
             -d "{\"content\": \"📦 **Self-hosted $TAG released**\\n\\n**Docker image:** \`activepieces/activepieces:$TAG\` (also on ghcr.io)\\n**Changelog:** ${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG\\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
             "$WEBHOOK"
 
+  # Records the release in the Linear "Self-hosted" release pipeline. Never fails the workflow.
+  # Minor tags live on release branches, so the scan starts at the merge-base with the previous release tag.
+  linear-release:
+    needs: release
+    if: ${{ !cancelled() && needs.release.result == 'success' && !contains(inputs.tag, '-rc') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+      - name: Find the scan base
+        id: base
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          PREVIOUS=$(git tag | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-hotfix\.[0-9]+)?$' | grep -vx "$TAG" | { cat; echo "$TAG"; } | sort -V | grep -B1 -x "$TAG" | head -1)
+          echo "Previous release: $PREVIOUS"
+          echo "sha=$(git merge-base "$PREVIOUS" HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
+        with:
+          access_key: ${{ secrets.LINEAR_RELEASE_KEY_SELF_HOSTED }}
+          version: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
+          base_ref: ${{ steps.base.outputs.sha }}
+          include_paths: '!packages/pieces/**,!bun.lock,!tsconfig.base.json,!docs/**'
+          no_branch_ref_detection: 'true'
+          links: Run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
   sync-version-to-main:
     needs: release
     if: ${{ !cancelled() && needs.release.result == 'success' }}
