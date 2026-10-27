@@ -123,7 +123,7 @@ function ReplaceConnectionForProjectForm({
         projectId,
         connectionExternalIds: [externalId],
         cursor: undefined,
-        limit: 1000,
+        limit: MAX_FLOWS_PER_REPLACE,
       };
       const [draftFlowsPage, publishedFlowsPage] = await Promise.all([
         flowsApi.list(request),
@@ -177,9 +177,11 @@ function ReplaceConnectionForProjectForm({
   );
   const draftFlows = flowsUsingConnection?.draftFlows ?? [];
   const publishedOnlyFlows = flowsUsingConnection?.publishedOnlyFlows ?? [];
-  const affectedFlows = applyToPublishedVersions
-    ? [...draftFlows, ...publishedOnlyFlows]
-    : draftFlows;
+  const affectedFlows = (
+    applyToPublishedVersions
+      ? [...draftFlows, ...publishedOnlyFlows]
+      : draftFlows
+  ).slice(0, MAX_FLOWS_PER_REPLACE);
   const canDeleteSource =
     !publishNeedsApproval &&
     sourceConnection?.scope === AppConnectionScope.PROJECT;
@@ -286,6 +288,12 @@ function ReplaceConnectionForProjectForm({
 
               <ReplaceConnectionVersionsField />
 
+              <span className="text-xs text-gray-11">
+                {t('A replace changes up to {max} flows.', {
+                  max: MAX_FLOWS_PER_REPLACE,
+                })}
+              </span>
+
               <DialogFooter>
                 <Button
                   type="button"
@@ -316,6 +324,8 @@ function ReplaceConnectionForProjectForm({
 ReplaceConnectionForProjectDialog.displayName =
   'ReplaceConnectionForProjectDialog';
 export { ReplaceConnectionForProjectDialog };
+
+const MAX_FLOWS_PER_REPLACE = 1000;
 
 const PIECES_WITHOUT_REPLACE = [
   '@activepieces/piece-mcp',
