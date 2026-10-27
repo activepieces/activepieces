@@ -117,6 +117,9 @@
       "@activepieces/piece-approval": [
         "packages/pieces/core/approval/src/index.ts"
       ],
+      "@activepieces/piece-arteemis": [
+        "packages/pieces/community/arteemis/src/index.ts"
+      ],
       "@activepieces/piece-asana": [
         "packages/pieces/community/asana/src/index.ts"
       ],
