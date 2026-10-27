@@ -55,12 +55,14 @@ export const pieceTranslation = {
     "actions.*.props.*.description",
     "actions.*.props.*.options.options.*.label",
     "actions.*.propertyGroups.*.label",
+    "actions.*.propertyGroups.*.description",
     "triggers.*.displayName",
     "triggers.*.description",
     "triggers.*.props.*.displayName",
     "triggers.*.props.*.description",
     "triggers.*.props.*.options.options.*.label",
-    "triggers.*.propertyGroups.*.label"
+    "triggers.*.propertyGroups.*.label",
+    "triggers.*.propertyGroups.*.description"
   ]
 }
 

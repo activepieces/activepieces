@@ -46,7 +46,7 @@ export function PieceSelect({
     >
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant="field"
           role="combobox"
           aria-expanded={open}
           disabled={loading}

@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { campaignMonitorAuth } from '../auth';
@@ -22,6 +22,12 @@ export const newClientTrigger = createTrigger({
     Name: 'New Client',
   },
   async onEnable(context) {
+    if (
+      context.isRepublish &&
+      !isNil(await context.store.get('existing_clients'))
+    ) {
+      return;
+    }
     const response = await makeRequest<
       Array<{ ClientID: string; Name: string }>
     >({
@@ -37,6 +43,9 @@ export const newClientTrigger = createTrigger({
     });
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('existing_clients');
   },
   async test(context) {
