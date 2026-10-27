@@ -103,7 +103,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         return guardResult
                     }
                 }
-                const executedInputs = isBatch ? toolInput.items! : [toolInput.input]
+                const executedInputs = isBatch ? toolInput.items! : [toolInput.input ?? {}]
                 const gatedInputs = executedInputs.filter((input) => agentToolClassification.requiresActionPreview({
                     actionName: toolInput.actionName,
                     input,
