@@ -1,149 +1,109 @@
-import { tarventAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { makeClient, tarventCommon } from '../common';
-import { propsValidation } from '@activepieces/pieces-common';
-import * as z from 'zod/mini'
+import { tarventAuth } from '../auth';
+import { tarventCommon } from '../common';
+import { tarventClient } from '../common/client';
+import { tarventOutputSchemas } from '../output-schemas';
 
 export const createContact = createAction({
   auth: tarventAuth,
   name: 'tarvent_create_contact',
   classification: 'WRITE',
   displayName: 'Create/Update Contact',
-  description: 'This action is used to create or update a contact in an audience.',
-  audience: 'both',
-  aiMetadata: { description: 'Creates a contact in a Tarvent audience, or updates the existing one matched by email/custom identifier; choose whether a duplicate is updated or returns an error, and whether group/tag assignments replace or add to current ones. Use to onboard or maintain a subscriber profile. Not idempotent: it creates on the first call and, in add-only mode, appends to groups/tags.', idempotent: false },
+  description: 'Creates a contact in an audience, or updates it if the email already exists.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Upserts a contact into a Tarvent audience by email: creates it, or (when Update existing contact is "Update") updates the existing contact with that email; with "Return duplicate error" an existing email fails the step. Group and tag assignments either replace or add to the current ones. Use this to add a subscriber or to set profile fields by email; to change a known contact by ID (for example its email address) use Update Contact. Empty text fields are not sent, so they never blank existing values. Returns the full contact record including its ID. Not idempotent: in add-only mode repeated calls keep adding groups and tags.',
+    idempotent: false,
+  },
+  outputSchema: tarventOutputSchemas.contact,
   props: {
-    audienceId: tarventCommon.audienceId(true, ''),
+    audienceId: tarventCommon.audienceId(true, 'Audience to add the contact to.'),
     email: Property.ShortText({
       displayName: 'Email',
-      description: 'Enter the contacts email. NOTE: If the audience uses a custom contact identifier and overwrite is enabled, then this will update the FIRST contact that matches the email.',
+      description: 'The contact\'s email. NOTE: If the audience uses a custom contact identifier and overwrite is enabled, then this will update the FIRST contact that matches the email.',
       required: true,
-      defaultValue: ''
     }),
     updateAction: Property.StaticDropdown({
       displayName: 'Update existing contact',
       description: 'Update the contact\'s profile if it already exists. Otherwise, return the "Duplicate" error.',
       required: true,
+      defaultValue: 'Update',
       options: {
         options: [
-          {
-            label: 'Update',
-
-            value: 'Update',
-          },
-          {
-            label: 'Return duplicate error',
-            value: 'ReturnError',
-          },
+          { label: 'Update', value: 'Update' },
+          { label: 'Return duplicate error', value: 'ReturnError' },
         ],
       },
     }),
     groupAction: Property.StaticDropdown({
       displayName: 'Replace existing groups',
-      description: 'Select whether to replace or only add to contact groups. NOTE: Add only will only add the contact to the groups they are not already in. Replace will remove the contact from all existing groups and add them to the selected groups.',
+      description: 'Add only adds the contact to the selected groups they are not already in. Replace removes the contact from all existing groups and adds them to the selected groups.',
       required: false,
       options: {
         options: [
-          {
-            label: 'Replace',
-
-            value: 'Replace',
-          },
-          {
-            label: 'Add only',
-            value: 'Add',
-          },
+          { label: 'Replace', value: 'Replace' },
+          { label: 'Add only', value: 'Add' },
         ],
       },
     }),
-    groupIds: tarventCommon.audienceGroupIds(false, ''),
+    groupIds: tarventCommon.audienceGroupIds(false, 'Groups to put the contact in.'),
     tagAction: Property.StaticDropdown({
       displayName: 'Replace existing tags',
-      description: 'Select whether to replace or only add to contact tags of an existing contact. NOTE: Add only will only add the tags the contact does not already have. Replace will replace all contact tags with the entered tags.',
+      description: 'Add only adds the tags the contact does not already have. Replace replaces all contact tags with the entered tags.',
       required: false,
       options: {
         options: [
-          {
-            label: 'Replace',
-
-            value: 'Replace',
-          },
-          {
-            label: 'Add only',
-            value: 'Add',
-          },
+          { label: 'Replace', value: 'Replace' },
+          { label: 'Add only', value: 'Add' },
         ],
       },
     }),
-    tagIds: tarventCommon.tagIds(false, `Select which tags you would like to add to the contact.`),
-    firstName: Property.ShortText({
-      displayName: 'First name',
-      description: 'The contacts first name.',
-      required: false,
-      defaultValue: ''
-    }),
-    lastName: Property.ShortText({
-      displayName: 'Last name',
-      description: 'The contacts last name.',
-      required: false,
-      defaultValue: ''
-    }),
-    streetAddress: Property.ShortText({
-      displayName: 'Street address',
-      description: '',
-      required: false,
-      defaultValue: ''
-    }),
-    streetAddress2: Property.ShortText({
-      displayName: 'Street address 2',
-      description: '',
-      required: false,
-      defaultValue: ''
-    }),
-    addressLocality: Property.ShortText({
-      displayName: 'City (Locality)',
-      description: '',
-      required: false,
-      defaultValue: ''
-    }),
-    addressRegion: Property.ShortText({
-      displayName: 'State (Region)',
-      description: '',
-      required: false,
-      defaultValue: ''
-    }),
-    postalCode: Property.ShortText({
-      displayName: 'Zip code (Postal code)',
-      description: '',
-      required: false,
-      defaultValue: ''
-    }),
-    addressCountry: Property.ShortText({
-      displayName: 'Country',
-      description: '',
-      required: false,
-      defaultValue: ''
-    }),
-    audienceDataFields: tarventCommon.audienceDataFields
+    tagIds: tarventCommon.tagIds(false, 'Tags to add to the contact.'),
+    firstName: Property.ShortText({ displayName: 'First name', required: false }),
+    lastName: Property.ShortText({ displayName: 'Last name', required: false }),
+    streetAddress: Property.ShortText({ displayName: 'Street address', required: false }),
+    streetAddress2: Property.ShortText({ displayName: 'Street address 2', required: false }),
+    addressLocality: Property.ShortText({ displayName: 'City (Locality)', required: false }),
+    addressRegion: Property.ShortText({ displayName: 'State (Region)', required: false }),
+    postalCode: Property.ShortText({ displayName: 'Zip code (Postal code)', required: false }),
+    addressCountry: Property.ShortText({ displayName: 'Country', required: false }),
+    audienceDataFields: tarventCommon.audienceDataFields,
   },
   async run(context) {
-    const { audienceId, email, updateAction, groupAction, groupIds, tagAction, tagIds, firstName, lastName,
-      streetAddress, streetAddress2, addressLocality, addressRegion, postalCode, addressCountry, audienceDataFields } = context.propsValue;
-
-    await propsValidation.validateZod(context.propsValue, {
-      email: z.string().check(z.maxLength(100, 'Email has to be equal to or less than 100 characters.')),
-      firstName: z.optional(z.string().check(z.maxLength(100, 'First name has to be equal to or less than 100 characters.'))),
-      lastName: z.optional(z.string().check(z.maxLength(100, 'Last name has to be equal to or less than 100 characters.'))),
-      streetAddress: z.optional(z.string().check(z.maxLength(100, 'Street address has to be equal to or less than 100 characters.'))),
-      streetAddress2: z.optional(z.string().check(z.maxLength(100, 'Street address 2 has to be equal to or less than 100 characters.'))),
-      addressLocality: z.optional(z.string().check(z.maxLength(100, 'City (Locality) has to be equal to or less than 100 characters.'))),
-      addressRegion: z.optional(z.string().check(z.maxLength(100, 'State (Region) has to be equal to or less than 100 characters.'))),
-      postalCode: z.optional(z.string().check(z.maxLength(15, 'Zip code (Postal code) has to be equal to or less than 15 characters.'))),
-      addressCountry: z.optional(z.string().check(z.maxLength(100, 'Country has to be equal to or less than 100 characters.'))),
+    const p = context.propsValue;
+    const audienceId = tarventCommon.requireText({ value: p.audienceId, label: 'Audience' });
+    const email = tarventCommon.requireText({ value: p.email, label: 'Email' });
+    const text = contactTextFields(p);
+    tarventCommon.checkLength({ value: email, label: 'Email', max: 320 });
+    for (const [key, value] of Object.entries(text)) {
+      tarventCommon.checkLength({ value, label: key, max: key === 'postalCode' ? 15 : 100 });
+    }
+    const tags = Array.isArray(p.tagIds) ? p.tagIds.map(String) : undefined;
+    const groupIds = Array.isArray(p.groupIds) ? p.groupIds.map(String) : undefined;
+    const profile = tarventCommon.profileFromDataFields(p.audienceDataFields);
+    return tarventClient.createContact({
+      auth: context.auth.props,
+      input: {
+        ...text,
+        email,
+        audienceId,
+        updateExisting: p.updateAction !== 'ReturnError',
+        audienceGroupManagementType: p.groupAction === 'Replace' ? 'REPLACE_EXISTING' : 'ADD_NEW_GROUPS_ONLY',
+        tagManagementType: p.tagAction === 'Replace' ? 'REPLACE_EXISTING' : 'ADD_NEW_TAGS_ONLY',
+        ...(profile.length > 0 ? { profile } : {}),
+        ...(tags && (tags.length > 0 || p.tagAction === 'Replace') ? { tags } : {}),
+        ...(groupIds && (groupIds.length > 0 || p.groupAction === 'Replace') ? { groupIds } : {}),
+        sendFormat: 'MULTIPART',
+      },
     });
-
-    const client = makeClient(context.auth);
-    return await client.createContact(audienceId, email, updateAction, groupAction, tagAction, tagIds, groupIds, firstName, lastName, streetAddress, streetAddress2, addressLocality, addressRegion, postalCode, addressCountry,
-      audienceDataFields);
   },
 });
+
+function contactTextFields(p: Record<string, unknown>): Record<string, string> {
+  const keys = ['firstName', 'lastName', 'streetAddress', 'streetAddress2', 'addressLocality', 'addressRegion', 'postalCode', 'addressCountry'];
+  return Object.fromEntries(keys.flatMap((key) => {
+    const value = tarventCommon.trimmed(p[key]);
+    return value === undefined ? [] : [[key, value]];
+  }));
+}

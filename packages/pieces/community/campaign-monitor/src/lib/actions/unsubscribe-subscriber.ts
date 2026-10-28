@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
+import { subscriptionResultOutputSchema } from '../output-schemas';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, listId } from '../common/props';
 
@@ -10,11 +11,12 @@ export const unsubscribeSubscriberAction = createAction({
   classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Subscriber',
   description: 'Remove a subscriber from a list.',
+  outputSchema: subscriptionResultOutputSchema,
   audience: 'both',
   aiMetadata: {
     description:
-      'Unsubscribes a subscriber, identified by email, from a specific Campaign Monitor list under a client, marking them as opted out. Choose this to suppress a contact from further sends on that list. Idempotent: repeating the call leaves the subscriber in the same unsubscribed state.',
-    idempotent: true,
+      'Unsubscribes a subscriber, identified by email, from a specific Campaign Monitor list under a client, marking them as opted out. Choose this to record an opt-out and suppress further sends on that list; use Delete Subscriber instead to remove the contact without recording an opt-out. Not idempotent: calling it again for an email that is already unsubscribed, or not on the list, fails with Campaign Monitor error 203.',
+    idempotent: false,
   },
   props: {
     clientId: clientId,
@@ -32,21 +34,17 @@ export const unsubscribeSubscriberAction = createAction({
       EmailAddress: email,
     };
 
-    const response = await makeRequest(
-        { apiKey: auth.secret_text },
-      HttpMethod.POST,
-      `/subscribers/${listId}/unsubscribe.json`,
-      payload
-    );
+    await makeRequest({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.POST,
+      path: `/subscribers/${listId}/unsubscribe.json`,
+      body: payload,
+    });
 
-    if (response.status === 200) {
-      return {
-        success: true,
-      };
-    }
     return {
-      success: false,
-      error: response.body,
+      success: true,
+      emailAddress: email,
+      listId,
     };
   },
 });

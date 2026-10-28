@@ -113,7 +113,7 @@ export const newPostsByAuthor = createTrigger({
     });
   },
   async onDisable(context) {
-    await blueskyPolling.onDisable({ store: context.store, storeKey: STORE_KEY });
+    await blueskyPolling.onDisable({ store: context.store, storeKey: STORE_KEY, isRepublish: context.isRepublish });
   },
   async run(context) {
     const config = authorConfig(context.propsValue);

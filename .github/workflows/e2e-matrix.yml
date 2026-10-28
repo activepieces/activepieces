@@ -1,0 +1,234 @@
+name: E2E Matrix
+
+# Runs the Playwright suite against a fresh stack in each supported configuration.
+# The Cloud gate passes the candidate's image; without one, the checked-out commit is built.
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: 'Image to test, e.g. ghcr.io/activepieces/activepieces-cloud:<tag>. Empty builds the checked-out commit.'
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Image to test, e.g. ghcr.io/activepieces/activepieces-cloud:<tag>. Empty builds the checked-out commit.'
+        type: string
+        default: ''
+  pull_request:
+    paths:
+      - .github/workflows/e2e-matrix.yml
+      - benchmark/docker-compose.yml
+      - benchmark/docker-compose.minio.yml
+      - packages/tests-e2e/**
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the image from this commit
+        if: ${{ !inputs.image }}
+        run: |
+          docker build -t activepieces-benchmark:local .
+          docker save activepieces-benchmark:local | gzip -1 > image.tar.gz
+
+      - uses: actions/upload-artifact@v6
+        if: ${{ !inputs.image }}
+        with:
+          name: e2e-image
+          path: image.tar.gz
+          compression-level: 0
+          retention-days: 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      # The stack runs with the piece sync off, so the suite installs the pieces it uses
+      # from archives of this commit's source instead of from the Cloud registry.
+      - name: Pack the pieces the suite uses
+        run: |
+          PIECES="packages/pieces/core/webhook packages/pieces/core/schedule packages/pieces/community/activepieces"
+          npx turbo run build --filter=@activepieces/piece-webhook --filter=@activepieces/piece-schedule --filter=@activepieces/piece-activepieces
+          CHANGED_PIECES="$(printf '%s\n' $PIECES)" npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/prepare-pieces-for-publish.ts
+          mkdir e2e-pieces
+          npm pack --json --pack-destination "$GITHUB_WORKSPACE/e2e-pieces" $(printf '%s/dist ' $PIECES) > "$GITHUB_WORKSPACE/e2e-pieces/pieces.json"
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: e2e-pieces
+          path: e2e-pieces/
+          retention-days: 1
+
+  e2e:
+    name: e2e (${{ matrix.name }})
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # EE refuses to boot without a sandbox, so the unsandboxed runs are CE.
+          - name: ee, shared, db, code sandbox
+            edition: ee
+            containerType: WORKER_AND_APP
+            workerReplicas: 0
+            fileStorage: DB
+            executionMode: SANDBOX_CODE_ONLY
+          - name: ee, split, s3 signed urls, process sandbox
+            edition: ee
+            containerType: APP
+            workerReplicas: 1
+            fileStorage: S3
+            executionMode: SANDBOX_PROCESS
+          - name: ce, shared, s3 signed urls, unsandboxed
+            edition: ce
+            containerType: WORKER_AND_APP
+            workerReplicas: 0
+            fileStorage: S3
+            executionMode: UNSANDBOXED
+          - name: ce, split, db, unsandboxed
+            edition: ce
+            containerType: APP
+            workerReplicas: 1
+            fileStorage: DB
+            executionMode: UNSANDBOXED
+    env:
+      COMPOSE_FILE: ${{ matrix.fileStorage == 'S3' && 'benchmark/docker-compose.yml:benchmark/docker-compose.minio.yml' || 'benchmark/docker-compose.yml' }}
+      AP_EDITION: ${{ matrix.edition }}
+      AP_LICENSE_KEY: ${{ matrix.edition == 'ee' && secrets.EE_LICENSE_KEY || '' }}
+      AP_CONTAINER_TYPE: ${{ matrix.containerType }}
+      APP_REPLICAS: 1
+      WORKER_REPLICAS: ${{ matrix.workerReplicas }}
+      AP_EXECUTION_MODE: ${{ matrix.executionMode }}
+      # The compose file passes an unset value as "", which the worker reads as invalid and replaces with 1 slot.
+      AP_WORKER_CONCURRENCY: 5
+      AP_PIECES_SYNC_MODE: NONE
+      AP_LOG_LEVEL: info
+      AP_FILE_STORAGE_LOCATION: ${{ matrix.fileStorage }}
+      AP_S3_BUCKET: ${{ matrix.fileStorage == 'S3' && 'activepieces' || '' }}
+      AP_S3_ACCESS_KEY_ID: ${{ matrix.fileStorage == 'S3' && 'minioadmin' || '' }}
+      AP_S3_SECRET_ACCESS_KEY: ${{ matrix.fileStorage == 'S3' && 'minioadmin' || '' }}
+      # MinIO's static IP: signed URLs carry this host, and the process sandbox cannot resolve docker names.
+      AP_S3_ENDPOINT: ${{ matrix.fileStorage == 'S3' && 'http://172.30.0.11:9000' || '' }}
+      AP_S3_REGION: ${{ matrix.fileStorage == 'S3' && 'us-east-1' || '' }}
+      AP_S3_USE_SIGNED_URLS: ${{ matrix.fileStorage == 'S3' }}
+      CI: true
+      # The stack's nginx static IP, which is also AP_FRONTEND_URL, so webhook URLs shown in the UI work from the runner.
+      E2E_INSTANCE_URL: http://172.30.0.10
+      E2E_PIECES_MANIFEST: ${{ github.workspace }}/e2e-pieces/pieces.json
+      PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/packages/tests-e2e/test-results/results.json
+    steps:
+      - uses: actions/checkout@v5
+
+      # The Playwright image ships Chromium and its system libraries, so no apt mirror is involved.
+      # Its pull runs in the background while the app image loads and the stack boots.
+      - name: Start the Playwright image pull
+        run: |
+          PLAYWRIGHT_IMAGE="mcr.microsoft.com/playwright:v$(jq -r '.devDependencies["@playwright/test"]' packages/tests-e2e/package.json)-noble"
+          echo "PLAYWRIGHT_IMAGE=$PLAYWRIGHT_IMAGE" >> "$GITHUB_ENV"
+          nohup docker pull -q "$PLAYWRIGHT_IMAGE" > "$RUNNER_TEMP/playwright-pull.log" 2>&1 &
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: e2e-pieces
+          path: e2e-pieces
+
+      - uses: docker/login-action@v4
+        if: inputs.image
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull the image under test
+        if: inputs.image
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          docker pull "$IMAGE"
+          docker tag "$IMAGE" activepieces-benchmark:local
+
+      - uses: actions/download-artifact@v7
+        if: ${{ !inputs.image }}
+        with:
+          name: e2e-image
+
+      - name: Load the image built from this commit
+        if: ${{ !inputs.image }}
+        run: gunzip -c image.tar.gz | docker load
+
+      - name: Start stack
+        run: docker compose up -d
+
+      - name: Wait for the app
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf "$E2E_INSTANCE_URL/api/v1/flags" > /dev/null; then
+              echo "App is up after $((i * 5)) s"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::App did not answer on $E2E_INSTANCE_URL within 5 minutes"
+          exit 1
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --filter tests-e2e --frozen-lockfile --ignore-scripts
+
+      # The container joins the stack network and mounts the workspace at the same path, so the env paths hold.
+      # If the background pull is still running, this pull joins it.
+      # Piece isolation exercises the Cloud piece sync, which this stack turns off.
+      # The CLI --grep-invert replaces the config's, so it repeats @quarantine.
+      - name: Run E2E tests
+        run: |
+          docker pull -q "$PLAYWRIGHT_IMAGE"
+          docker run --rm --ipc=host --network benchmark_bench \
+            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE/packages/tests-e2e" \
+            -e CI -e AP_EDITION -e E2E_INSTANCE_URL -e E2E_PIECES_MANIFEST -e PLAYWRIGHT_JSON_OUTPUT_FILE \
+            "$PLAYWRIGHT_IMAGE" \
+            npx playwright test --config=playwright.config.ts --reporter=github,json --grep-invert "Piece isolation|@quarantine"
+
+      - name: Summarize results
+        if: always()
+        run: |
+          if [ -f "$PLAYWRIGHT_JSON_OUTPUT_FILE" ]; then
+            echo "### ${{ matrix.name }}" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.stats | "| passed | failed | flaky | skipped |\n|---|---|---|---|\n| \(.expected) | \(.unexpected) | \(.flaky) | \(.skipped) |"' "$PLAYWRIGHT_JSON_OUTPUT_FILE" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Show app and worker logs on failure
+        if: failure()
+        run: docker compose logs --tail=2000 app worker
+
+      # The stack lives only for this job, so traces hold no real credentials.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: e2e-matrix-${{ strategy.job-index }}
+          path: packages/tests-e2e/test-results/
+          retention-days: 14
+
+      - name: Teardown
+        if: always()
+        run: docker compose down -v

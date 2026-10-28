@@ -15,6 +15,12 @@ on:
           - deploy-staging              # Re-deploy to staging (e.g., after infra change)
           - deploy-staging-skip-freeze  # Deploy to staging, ignoring the freeze window
 
+# One deploy run at a time, so e2e always tests the SHA it reports on. A newer
+# pending run replaces an older pending one: the latest merge still wins.
+concurrency:
+  group: staging-${{ github.event_name == 'schedule' && 'release-candidate' || 'deploy' }}
+  cancel-in-progress: false
+
 jobs:
   detect-hotfix-merge:
     if: github.event_name == 'push'
@@ -64,9 +70,6 @@ jobs:
       ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
        (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
     runs-on: ubuntu-24.04
-    concurrency:
-      group: deploy-staging
-      cancel-in-progress: true  # Latest merge wins
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
     steps:
@@ -150,6 +153,93 @@ jobs:
       - name: Deploy to staging
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/stg && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
+
+  # Runs the Playwright suite against staging once both deploys finish. The job's
+  # check run on the commit SHA is the result the candidate cut reads.
+  # Report-only for now (continue-on-error): it never fails the workflow.
+  # Each spec deletes the flows and connections it creates; global setup deletes only `E2E `-prefixed ones older than an hour.
+  e2e-staging:
+    needs: [deploy-staging-app, deploy-staging-workers]
+    if: always() && needs.deploy-staging-app.result == 'success' && needs.deploy-staging-workers.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    env:
+      CI: true
+      E2E_INSTANCE_URL: https://stg.activepieces.com
+      E2E_EMAIL: ${{ secrets.STAGING_E2E_EMAIL }}
+      E2E_PASSWORD: ${{ secrets.STAGING_E2E_PASSWORD }}
+      PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/packages/tests-e2e/test-results/results.json
+    steps:
+      - name: Check test account secrets
+        run: |
+          if [ -z "$E2E_EMAIL" ] || [ -z "$E2E_PASSWORD" ]; then
+            echo "::error::STAGING_E2E_EMAIL and STAGING_E2E_PASSWORD must be set. Without them the suite tries to sign up on staging."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - name: Cache dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-e2e-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-e2e-
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --filter tests-e2e --frozen-lockfile --ignore-scripts
+
+      - name: Install Playwright browsers
+        working-directory: packages/tests-e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests against staging
+        working-directory: packages/tests-e2e
+        run: npx playwright test --config=playwright.config.ts --reporter=github,json
+
+      - name: Summarize results
+        if: always()
+        run: |
+          if [ -f "$PLAYWRIGHT_JSON_OUTPUT_FILE" ]; then
+            jq -r '.stats | "| passed | failed | flaky | skipped |\n|---|---|---|---|\n| \(.expected) | \(.unexpected) | \(.flaky) | \(.skipped) |"' "$PLAYWRIGHT_JSON_OUTPUT_FILE" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Only the JSON report: traces hold the test account's password and token, and artifacts are public.
+      - name: Upload test results
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: e2e-staging-results
+          path: packages/tests-e2e/test-results/results.json
+          retention-days: 30
+
+  # Records the deploy in the Linear "Staging" release pipeline. Never fails the workflow.
+  # Piece commits are left out: pieces ship through npm, not the image.
+  linear-release:
+    needs: [deploy-staging-app, deploy-staging-workers]
+    if: always() && needs.deploy-staging-app.result == 'success' && needs.deploy-staging-workers.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
+        with:
+          access_key: ${{ secrets.LINEAR_RELEASE_KEY_STAGING }}
+          include_paths: '!packages/pieces/community/**,!packages/pieces/core/**,!packages/pieces/custom/**,!bun.lock,!tsconfig.base.json,!docs/**'
+          no_branch_ref_detection: 'true'
+          links: Run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   # Thursday 5 PM UTC: tag current staging image + commit as release-candidate.
   # Also runs when a hotfix branch is merged to main — staging still holds the
