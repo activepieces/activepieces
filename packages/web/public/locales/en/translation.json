@@ -816,6 +816,8 @@
   "Choose connection to replace with": "Choose connection to replace with",
   "No flows use this connection yet": "No flows use this connection yet",
   "flowsUsingConnection": "{count, plural, =1 {1 flow uses this connection} other {# flows use this connection}}",
+  "Switch the steps of this flow from one connection to another. Other flows are not changed.": "Switch the steps of this flow from one connection to another. Other flows are not changed.",
+  "Steps that use the replaced connection keep their settings. Test your flow to make sure nothing breaks.": "Steps that use the replaced connection keep their settings. Test your flow to make sure nothing breaks.",
   "Which versions to update": "Which versions to update",
   "Draft only updates your working copy. Live flows keep using the old connection until you publish them again. Draft and published republishes affected flows now, which can interrupt running automations.": "Draft only updates your working copy. Live flows keep using the old connection until you publish them again. Draft and published republishes affected flows now, which can interrupt running automations.",
   "Draft only": "Draft only",
