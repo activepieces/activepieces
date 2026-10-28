@@ -2,6 +2,7 @@ import { isNil, tryCatch } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { transaction } from '../../../core/db/transaction'
 import { McpOAuthAuthorizationCodeEntity } from '../code/mcp-oauth-code.entity'
 import { mcpOAuthRevocationList } from './mcp-oauth-revocation-list'
 import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
@@ -19,9 +20,18 @@ export const mcpGrantRevocation = {
     },
     async revokeActiveGrants({ scope, log }: RevokeActiveGrantsParams): Promise<void> {
         const { error } = await tryCatch(async () => {
-            await codeRepo().update({ ...scope, used: false }, { used: true })
-            const grants = await repo().find({ where: { ...scope, revoked: false }, select: { id: true } })
-            await mcpGrantRevocation.revokeGrantIds({ grantIds: grants.map((grant) => grant.id) })
+            const grantIds = await transaction(async (entityManager) => {
+                await codeRepo(entityManager).update({ ...scope, used: false }, { used: true })
+                const grants = await repo(entityManager).find({ where: { ...scope, revoked: false }, select: { id: true } })
+                const ids = grants.map((grant) => grant.id)
+                if (ids.length > 0) {
+                    await repo(entityManager).update({ id: In(ids) }, { revoked: true })
+                }
+                return ids
+            })
+            if (grantIds.length > 0) {
+                await mcpOAuthRevocationList.revoke({ grantIds })
+            }
         })
         if (!isNil(error)) {
             log.error({ error, platform: { id: scope.platformId } }, 'Could not revoke MCP grants')
