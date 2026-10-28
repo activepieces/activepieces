@@ -1,15 +1,22 @@
-import { isNil, Permission, tryCatch } from '@activepieces/core-utils'
-import { FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
+import { isNil, isObject, Permission, tryCatch } from '@activepieces/core-utils'
+import { BranchExecutionType, FlowActionType, FlowCreatorType, FlowOperationType, flowStructureUtil, FlowTriggerType, McpToolContext, McpToolDefinition, PieceAudienceFilter, PieceTrigger, RouterExecutionType, Step, StepLocationRelativeToParent, SuggestionType, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionValidationUtil } from '../../flows/flow-version/flow-version-validator-util'
 import { domainHelper } from '../../helper/domain-helper'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { buildFlowReview, FlowProblem } from './build-flow-review'
 import { mcpUtils } from './mcp-utils'
 
+const routerBranchSpec = z.object({
+    branchName: z.string().describe('Display name of the branch, e.g. "Urgent"'),
+    conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional().describe('Conditions for this branch (outer array = OR groups, inner array = AND conditions)'),
+})
+
 const stepSpec = z.object({
-    type: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS]),
+    type: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]),
     displayName: z.string(),
     pieceName: z.string().optional(),
     actionName: z.string().optional(),
@@ -20,12 +27,15 @@ const stepSpec = z.object({
     loopItems: z.string().optional(),
     continueOnFailure: z.boolean().optional(),
     retryOnFailure: z.boolean().optional(),
-    parentStepName: z.string().optional().describe('Name of the parent step to nest this step inside (e.g. the loop step name). If omitted, step is added after the previous step.'),
+    branches: z.array(routerBranchSpec).optional().describe('For ROUTER steps: the condition branches, in the order they are checked. An "Otherwise" fallback branch is always added after them.'),
+    fallbackBranchName: z.string().optional().describe('For ROUTER steps: name of the extra fallback branch that runs when no condition matches (added after your branches). Defaults to "Otherwise"; do not reuse one of your branch names.'),
+    parentStepName: z.string().optional().describe('The step to place this one after or inside: an earlier step\'s name (e.g. "step_2") or its displayName from this same call (e.g. "Route by urgency"). If omitted, the step goes after the previous top-level step.'),
     stepLocationRelativeToParent: z.enum([
         StepLocationRelativeToParent.AFTER,
         StepLocationRelativeToParent.INSIDE_LOOP,
         StepLocationRelativeToParent.INSIDE_BRANCH,
-    ]).optional().default(StepLocationRelativeToParent.AFTER).describe('Where to place the step relative to parentStepName. Use INSIDE_LOOP for steps inside a loop.'),
+    ]).optional().default(StepLocationRelativeToParent.AFTER).describe('Where to place the step relative to parentStepName: AFTER, INSIDE_LOOP (first step inside a loop), or INSIDE_BRANCH (first step inside a router branch, with branchIndex). Further steps in the same branch or loop go AFTER the previous step there.'),
+    branchIndex: z.number().int().min(0).optional().describe('For INSIDE_BRANCH: the branch to place the step in, 0-based in the order of the router\'s branches; the fallback branch comes last. Omitted: the first branch that has no step yet.'),
 })
 
 const buildFlowInput = z.object({
@@ -44,7 +54,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
     return {
         title: 'ap_build_flow',
         permission: Permission.WRITE_FLOW,
-        description: 'Create a NEW flow from scratch in one call: trigger + steps. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step name and stepLocationRelativeToParent to INSIDE_LOOP. ROUTER steps are NOT supported here (branches and conditions cannot be configured in one call) — build the rest of the flow first, then add the router with ap_add_step and configure branches with ap_add_branch / ap_update_branch. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead. Prefer PIECE actions and inline formula expressions (in a free-text/value input — never a dropdown/option field — wrapped `ap-formula-v1::{…}::ap-formula-v1`) over CODE steps — only emit a CODE step when no piece fits AND the logic exceeds the inline formula functions (see the build_flow guide expression ladder).',
+        description: 'Create a NEW flow from scratch in one call: trigger + steps, including loops and conditions. Steps are added sequentially by default (trigger → step_1 → step_2 → ...). To nest steps inside a loop, set parentStepName to the loop step and stepLocationRelativeToParent to INSIDE_LOOP. For a condition, add a ROUTER step with its branches (each with conditions; an "Otherwise" fallback is added last), then put each branch\'s first step INSIDE_BRANCH with parentStepName = the router and branchIndex, and the rest of that branch AFTER the previous step in it. parentStepName may be an earlier step\'s displayName from the same call. Build the whole flow in this one call rather than adding steps one by one. Dropdown inputs may be given an option label (e.g. "#general"): a clear match is replaced by its value, otherwise the candidates are reported. The reply already validates the flow: it lists every step and every remaining problem as `step.field: message` — fix them all in ONE ap_apply_flow_operations call; no ap_validate_step_config / ap_validate_flow call is needed after it. For EDITING an existing flow, do NOT rebuild it — use the granular ap_add_step / ap_update_step / ap_update_trigger instead. Prefer PIECE actions and inline formula expressions (in a free-text/value input — never a dropdown/option field — wrapped `ap-formula-v1::{…}::ap-formula-v1`) over CODE steps — only emit a CODE step when no piece fits AND the logic exceeds the inline formula functions (see the build_flow guide expression ladder).',
         inputSchema: {
             flowName: z.string().describe('Name for the new flow'),
             trigger: z.object({
@@ -54,7 +64,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 auth: z.string().optional().describe('Connection externalId for trigger auth'),
             }).describe('Trigger configuration'),
             folderName: mcpUtils.FOLDER_NAME_SCHEMA,
-            steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent to nest steps inside loops. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems). Prefer PIECE and inline formula expressions (in free-text/value inputs, not dropdowns) over CODE — reach for a CODE step only when no piece fits and the transform exceeds the inline formula functions. ROUTER is not supported here — add it afterwards with ap_add_step + ap_add_branch.'),
+            steps: z.array(stepSpec).describe('Array of steps. By default added sequentially after trigger. Use parentStepName + stepLocationRelativeToParent (+ branchIndex) to nest steps inside loops and router branches. Each step supports: PIECE (pieceName+actionName+input), CODE (sourceCode+input), LOOP_ON_ITEMS (loopItems), ROUTER (branches). Prefer PIECE and inline formula expressions (in free-text/value inputs, not dropdowns) over CODE — reach for a CODE step only when no piece fits and the transform exceeds the inline formula functions.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
@@ -64,7 +74,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 const parsed = buildFlowInput.parse(args)
                 const { flowName, folderName } = parsed
                 const trigger = { ...parsed.trigger, auth: mcpUtils.normalizeAuth(parsed.trigger.auth) }
-                const steps = parsed.steps.map((step) => ({ ...step, auth: mcpUtils.normalizeAuth(step.auth) }))
+                const steps = parentsFirst(parsed.steps).map((step) => ({ ...step, auth: mcpUtils.normalizeAuth(step.auth) }))
                 const triggerAuthError = mcpUtils.validateAuth(trigger.auth)
                 if (triggerAuthError) {
                     return triggerAuthError
@@ -102,10 +112,16 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 }
 
                 const triggerUnknown = await mcpUtils.dropUnknownInputProps({ pieceName: triggerVersionResult.normalizedPieceName, pieceVersion: triggerVersionResult.pieceVersion, componentName: trigger.triggerName, componentType: 'trigger', input: trigger.input, platformId, log })
-                const triggerInput = {
-                    ...triggerUnknown.input,
-                    ...(trigger.auth ? { auth: `{{connections['${trigger.auth}']}}` } : {}),
-                }
+                const triggerLabels = await buildFlowReview.resolveDropdownLabels({
+                    pieceName: triggerVersionResult.normalizedPieceName,
+                    pieceVersion: triggerVersionResult.pieceVersion,
+                    componentName: trigger.triggerName,
+                    componentType: 'trigger',
+                    stepName: 'trigger',
+                    input: { ...triggerUnknown.input, ...(trigger.auth ? { auth: `{{connections['${trigger.auth}']}}` } : {}) },
+                    projectId, platformId, log,
+                })
+                const triggerInput = triggerLabels.input
                 const triggerPayload = PieceTrigger.parse({
                     name: 'trigger',
                     displayName: trigger.triggerName,
@@ -130,7 +146,18 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 }
 
                 const skippedSteps: string[] = []
+                const resolvedLabels: string[] = [...triggerLabels.resolved]
+                const labelProblems: FlowProblem[] = [...triggerLabels.problems]
+                const placements = new Map<string, string>()
                 let lastTopLevelStepName: string | null = null
+                const topLevelStepNames = new Set<string>(['trigger'])
+                const stepNameByDisplayName = new Map<string, string>()
+                const skippedDisplayNames = new Set<string>()
+                const actionCatalog = lazyActionCatalog({ projectId, platformId, log })
+                const skip = ({ displayName, reason }: { displayName: string, reason: string }): void => {
+                    skippedSteps.push(`${displayName} (${reason})`)
+                    skippedDisplayNames.add(displayName)
+                }
 
                 for (const step of steps) {
                     const latestTrigger = currentFlow!.version.trigger
@@ -140,13 +167,14 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     let resolvedPieceVersion: string | undefined
                     let resolvedPieceName: string | undefined
                     if (step.type === FlowActionType.PIECE) {
-                        if (!step.pieceName) {
-                            skippedSteps.push(step.displayName)
+                        const pieceName = step.pieceName ?? await pieceOwningAction({ actionName: step.actionName, catalog: actionCatalog })
+                        if (isNil(pieceName)) {
+                            skip({ displayName: step.displayName, reason: `pieceName is missing and no single app has the action "${step.actionName ?? ''}"` })
                             continue
                         }
-                        const versionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName: step.pieceName, projectId, platformId, log })
+                        const versionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName, projectId, platformId, log })
                         if (versionResult.error) {
-                            skippedSteps.push(step.displayName)
+                            skip({ displayName: step.displayName, reason: firstText(versionResult.error) })
                             continue
                         }
                         resolvedPieceVersion = versionResult.pieceVersion
@@ -154,24 +182,31 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
 
                     const stepUnknown = await knownStepInput({ step, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, platformId, log })
-                    const rewritten = mcpUtils.rewriteAllReferences({ input: stepUnknown.input, loopItems: step.loopItems, trigger: latestTrigger })
-                    const rewrittenStep = { ...step, input: rewritten.input, loopItems: rewritten.loopItems }
-                    const propertySettings = await stepPropertySettings({ actionName: step.actionName, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, input: { ...(rewritten.input ?? {}), ...(step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}) }, projectId, platformId, log })
+                    const rewritten = mcpUtils.rewriteAllReferences({ input: stepUnknown.input, loopItems: step.loopItems, conditions: step.branches, trigger: latestTrigger })
+                    const labels = await stepLabels({ step, stepName, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, input: rewritten.input, projectId, platformId, log })
+                    const stepInput = await inputWithOptionalDefaults({ step, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, input: labels.input, platformId, log })
+                    const rewrittenStep = { ...step, input: stepInput, loopItems: rewritten.loopItems, branches: rewritten.conditions }
+                    const propertySettings = await stepPropertySettings({ actionName: step.actionName, pieceName: resolvedPieceName, pieceVersion: resolvedPieceVersion, input: { ...(stepInput ?? {}), ...(step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}) }, projectId, platformId, log })
                     const skeleton = buildSkeleton({ step: rewrittenStep, name: stepName, resolvedPieceVersion, resolvedPieceName, propertySettings })
                     const parseResult = UpdateActionRequest.safeParse(skeleton)
                     if (!parseResult.success) {
-                        skippedSteps.push(step.displayName)
+                        skip({ displayName: step.displayName, reason: parseResult.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ') })
                         continue
                     }
 
                     const location = step.stepLocationRelativeToParent ?? StepLocationRelativeToParent.AFTER
-                    let parentStepName: string
-                    if (step.parentStepName) {
-                        const found = allSteps.find((s) => s.name === step.parentStepName)
-                        parentStepName = found ? found.name : (lastTopLevelStepName ?? allSteps[allSteps.length - 1].name)
+                    const defaultParent = lastTopLevelStepName ?? allSteps[allSteps.length - 1].name
+                    const requestedParent = resolveParentStepName({ requested: step.parentStepName, stepNameByDisplayName, existingStepNames: allSteps.map((s) => s.name) })
+                    if (!isNil(step.parentStepName) && isNil(requestedParent)) {
+                        const why = skippedDisplayNames.has(step.parentStepName) ? 'was skipped' : 'is not in this flow'
+                        skip({ displayName: step.displayName, reason: `its parent "${step.parentStepName}" ${why}; add it after fixing the parent` })
+                        continue
                     }
-                    else {
-                        parentStepName = lastTopLevelStepName ?? allSteps[allSteps.length - 1].name
+                    const parentStepName = requestedParent ?? defaultParent
+                    const branchPlacement = branchPlacementFor({ location, branchIndex: step.branchIndex, parent: allSteps.find((s) => s.name === parentStepName) })
+                    if (branchPlacement.error) {
+                        skip({ displayName: step.displayName, reason: branchPlacement.error })
+                        continue
                     }
 
                     currentFlow = await flowService(log).update({
@@ -181,6 +216,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                             request: {
                                 parentStep: parentStepName,
                                 stepLocationRelativeToParent: location,
+                                ...(isNil(branchPlacement.branchIndex) ? {} : { branchIndex: branchPlacement.branchIndex }),
                                 action: parseResult.data,
                             },
                         },
@@ -190,7 +226,12 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         unknownPropFindings.push(`${stepName} (${step.displayName}): ${stepUnknown.message}`)
                     }
 
-                    if (location === StepLocationRelativeToParent.AFTER) {
+                    resolvedLabels.push(...labels.resolved)
+                    labelProblems.push(...labels.problems)
+                    placements.set(stepName, placementText({ location, parentStepName, parent: allSteps.find((s) => s.name === parentStepName), branchIndex: branchPlacement.branchIndex }))
+                    stepNameByDisplayName.set(step.displayName, stepName)
+                    if (location === StepLocationRelativeToParent.AFTER && topLevelStepNames.has(parentStepName)) {
+                        topLevelStepNames.add(stepName)
                         lastTopLevelStepName = stepName
                     }
                 }
@@ -199,10 +240,14 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                 const validCount = allSteps.filter(s => s.valid).length
                 const invalidStepList = allSteps.filter(s => !s.valid)
                 const invalidSteps = invalidStepList.map(s => s.name)
-                const describedInvalidSteps = await Promise.all(invalidStepList.map(async (step) => {
+                const invalidReasons = new Map(await Promise.all(invalidStepList.map(async (step) => {
                     const { data: reasons } = await tryCatch(() => flowVersionValidationUtil(log).invalidPieceInputs({ platformId, step }))
-                    return describeInvalidStep({ name: step.name, reasons: reasons ?? [] })
-                }))
+                    return [step.name, reasons ?? []] as const
+                })))
+                const describedInvalidSteps = invalidStepList.map((step) => describeInvalidStep({ name: step.name, reasons: invalidReasons.get(step.name) ?? [] }))
+                const problems = await buildFlowReview.findProblems({ trigger: currentFlow.version.trigger, invalidReasons, labelProblems, platformId, log })
+                const stepSummaries = allSteps.map((step) => buildFlowReview.summarizeStep({ name: step.name, step, placement: placements.get(step.name) ?? '' }))
+                const details = reviewDetails({ stepSummaries, resolvedLabels, problems })
                 const stepWord = allSteps.length === 1 ? 'step' : 'steps'
 
                 const skippedHint = skippedSteps.length > 0 ? ` Skipped: ${skippedSteps.join(', ')}.` : ''
@@ -215,17 +260,22 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     displayName: flowName,
                     stepCount: allSteps.length,
                     validCount,
+                    flowSteps: buildFlowReview.flowStepStates({ trigger: currentFlow.version.trigger, problemStepNames: new Set(problems.map((problem) => problem.step)), skippedDisplayNames: [...skippedDisplayNames] }),
                     invalidSteps,
                     skippedSteps,
                     unknownProps: unknownPropFindings,
+                    steps: stepSummaries,
+                    resolvedLabels,
+                    problems: problems.map((problem) => ({ ...problem, text: buildFlowReview.formatProblem(problem) })),
                 }
                 if (unknownPropFindings.length > 0) {
-                    return { content: [{ type: 'text', text: `❌ Flow "${flowName}" created (id: ${flowId})${createdIn}, but some settings used property names that do NOT exist on the piece and were dropped — the flow does NOT behave as configured. Do NOT tell the user these settings were applied. Fix each with ap_update_step / ap_update_trigger using the correct property names:\n${unknownPropFindings.join('\n')}\nOpen: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
+                    return { content: [{ type: 'text', text: `❌ Flow "${flowName}" created (id: ${flowId})${createdIn}, but some settings used property names that do NOT exist on the piece and were dropped — the flow does NOT behave as configured. Do NOT tell the user these settings were applied. Fix each with ap_update_step / ap_update_trigger using the correct property names:\n${unknownPropFindings.join('\n')}\n${details}\nOpen: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
                 }
-                if (invalidSteps.length === 0 && skippedSteps.length === 0) {
-                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord}, all valid. Open: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
+                if (invalidSteps.length === 0 && skippedSteps.length === 0 && problems.length === 0) {
+                    return { content: [{ type: 'text', text: `✅ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord}, all valid and checked (no need to run ap_validate_flow).\n${details}\nOpen: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
                 }
-                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord} (${validCount} valid, ${invalidSteps.length} invalid: ${describedInvalidSteps.join(', ')}).${skippedHint} Use ap_update_step or ap_update_trigger to fix. Open: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
+                const invalidHint = invalidSteps.length > 0 ? `, ${invalidSteps.length} invalid: ${describedInvalidSteps.join(', ')}` : ''
+                return { content: [{ type: 'text', text: `⚠️ Flow "${flowName}" created (id: ${flowId})${createdIn} with ${allSteps.length} ${stepWord} (${validCount} valid${invalidHint}).${skippedHint}\n${details}\nOpen: ${flowUrl}${solutionCheckHint}` }], structuredContent: structured }
             }
             catch (err) {
                 if (flowId) {
@@ -235,6 +285,156 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
             }
         },
     }
+}
+
+function lazyActionCatalog({ projectId, platformId, log }: {
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): () => Promise<ActionCatalog> {
+    let loaded: Promise<ActionCatalog> | undefined
+    return () => {
+        loaded ??= tryCatch(() => pieceMetadataService(log).list({ projectId, platformId, includeHidden: false, suggestionType: SuggestionType.ACTION, audience: PieceAudienceFilter.ALL })).then(({ data }) => data ?? [])
+        return loaded
+    }
+}
+
+async function pieceOwningAction({ actionName, catalog }: {
+    actionName: string | undefined
+    catalog: () => Promise<ActionCatalog>
+}): Promise<string | undefined> {
+    if (isNil(actionName) || actionName.length === 0) {
+        return undefined
+    }
+    const owners = (await catalog()).filter((piece) => (piece.suggestedActions ?? []).some((action) => action.name === actionName))
+    return owners.length === 1 ? owners[0].name : undefined
+}
+
+function firstText(result: { content: Array<{ text: string }> }): string {
+    return result.content[0]?.text.replace(/^❌\s*/, '') ?? 'unknown error'
+}
+
+function parentsFirst<T extends { displayName: string, parentStepName?: string }>(steps: T[]): T[] {
+    const batchNames = new Set(steps.map((step) => step.displayName))
+    const placed = new Set<string>()
+    const ordered: T[] = []
+    let remaining = steps
+    while (remaining.length > 0) {
+        const ready = remaining.filter((step) => isNil(step.parentStepName) || step.parentStepName === step.displayName || !batchNames.has(step.parentStepName) || placed.has(step.parentStepName))
+        if (ready.length === 0) {
+            return [...ordered, ...remaining]
+        }
+        ready.forEach((step) => placed.add(step.displayName))
+        ordered.push(...ready)
+        remaining = remaining.filter((step) => !ready.includes(step))
+    }
+    return ordered
+}
+
+function resolveParentStepName({ requested, stepNameByDisplayName, existingStepNames }: {
+    requested: string | undefined
+    stepNameByDisplayName: Map<string, string>
+    existingStepNames: string[]
+}): string | undefined {
+    if (isNil(requested)) {
+        return undefined
+    }
+    if (existingStepNames.includes(requested)) {
+        return requested
+    }
+    return stepNameByDisplayName.get(requested)
+}
+
+function branchPlacementFor({ location, branchIndex, parent }: {
+    location: StepLocationRelativeToParent
+    branchIndex: number | undefined
+    parent: Step | undefined
+}): { branchIndex?: number, error?: string } {
+    if (location !== StepLocationRelativeToParent.INSIDE_BRANCH) {
+        return {}
+    }
+    if (parent?.type !== FlowActionType.ROUTER) {
+        return { error: 'INSIDE_BRANCH needs parentStepName to be a ROUTER step from this flow' }
+    }
+    const branchCount = parent.settings.branches.length
+    if (isNil(branchIndex)) {
+        const firstEmptyBranch = parent.children.findIndex((child) => isNil(child))
+        return firstEmptyBranch === -1
+            ? { error: `INSIDE_BRANCH needs a branchIndex from 0 to ${branchCount - 1}; every branch already has a first step` }
+            : { branchIndex: firstEmptyBranch }
+    }
+    if (branchIndex >= branchCount) {
+        return { error: `INSIDE_BRANCH needs a branchIndex from 0 to ${branchCount - 1}` }
+    }
+    return { branchIndex }
+}
+
+function placementText({ location, parentStepName, parent, branchIndex }: {
+    location: StepLocationRelativeToParent
+    parentStepName: string
+    parent: Step | undefined
+    branchIndex: number | undefined
+}): string {
+    if (location === StepLocationRelativeToParent.INSIDE_LOOP) {
+        return `first inside loop ${parentStepName}`
+    }
+    if (location === StepLocationRelativeToParent.INSIDE_BRANCH && parent?.type === FlowActionType.ROUTER && !isNil(branchIndex)) {
+        return `first in ${parentStepName} branch "${parent.settings.branches[branchIndex]?.branchName ?? branchIndex}"`
+    }
+    return `after ${parentStepName}`
+}
+
+function reviewDetails({ stepSummaries, resolvedLabels, problems }: {
+    stepSummaries: string[]
+    resolvedLabels: string[]
+    problems: FlowProblem[]
+}): string {
+    const sections = [
+        `Steps:\n${stepSummaries.join('\n')}`,
+        resolvedLabels.length > 0 ? `Dropdown labels replaced by their values:\n${resolvedLabels.join('\n')}` : '',
+        problems.length > 0 ? `Problems (already validated). Fix them ALL in ONE ap_apply_flow_operations call, not one call per field; don't call ap_validate_flow or ap_validate_step_config, the result lists what is left:\n${problems.map(buildFlowReview.formatProblem).join('\n')}` : '',
+    ]
+    return sections.filter((section) => section.length > 0).join('\n')
+}
+
+async function stepLabels({ step, stepName, pieceName, pieceVersion, input, projectId, platformId, log }: {
+    step: z.infer<typeof stepSpec>
+    stepName: string
+    pieceName: string | undefined
+    pieceVersion: string | undefined
+    input: Record<string, unknown> | undefined
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<{ input: Record<string, unknown> | undefined, resolved: string[], problems: FlowProblem[] }> {
+    const actionName = step.actionName
+    if (step.type !== FlowActionType.PIECE || isNil(pieceName) || isNil(pieceVersion) || isNil(actionName) || isNil(input)) {
+        return { input, resolved: [], problems: [] }
+    }
+    const auth = step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}
+    const resolution = await buildFlowReview.resolveDropdownLabels({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', stepName, input: { ...input, ...auth }, projectId, platformId, log })
+    return resolution
+}
+
+function fallbackBranchName({ requested, conditionBranchNames }: { requested: string | undefined, conditionBranchNames: string[] }): string {
+    const clashes = !isNil(requested) && conditionBranchNames.some((name) => name.trim().toLowerCase() === requested.trim().toLowerCase())
+    return isNil(requested) || clashes ? DEFAULT_FALLBACK_BRANCH_NAME : requested
+}
+
+async function inputWithOptionalDefaults({ step, pieceName, pieceVersion, input, platformId, log }: {
+    step: z.infer<typeof stepSpec>
+    pieceName: string | undefined
+    pieceVersion: string | undefined
+    input: Record<string, unknown> | undefined
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<Record<string, unknown> | undefined> {
+    if (step.type !== FlowActionType.PIECE || isNil(pieceName) || isNil(pieceVersion) || isNil(step.actionName)) {
+        return input
+    }
+    const settings: Record<string, unknown> = { pieceName, pieceVersion, actionName: step.actionName, input: input ?? {} }
+    await mcpUtils.fillDefaultsForMissingOptionalProps({ settings, platformId, log })
+    return isObject(settings.input) ? settings.input : input
 }
 
 function describeInvalidStep({ name, reasons }: { name: string, reasons: string[] }): string {
@@ -324,7 +524,30 @@ function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName, pr
                 valid: false,
                 settings: { items: step.loopItems ?? '' },
             }
+        case FlowActionType.ROUTER:
+            return {
+                type: FlowActionType.ROUTER,
+                name,
+                displayName: step.displayName,
+                valid: false,
+                settings: {
+                    executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+                    branches: [
+                        ...(step.branches ?? DEFAULT_CONDITION_BRANCHES).map((branch) => ({
+                            branchName: branch.branchName,
+                            branchType: BranchExecutionType.CONDITION,
+                            conditions: branch.conditions ?? [[]],
+                        })),
+                        { branchName: fallbackBranchName({ requested: step.fallbackBranchName, conditionBranchNames: (step.branches ?? DEFAULT_CONDITION_BRANCHES).map((branch) => branch.branchName) }), branchType: BranchExecutionType.FALLBACK },
+                    ],
+                },
+            }
         default:
             return { type: step.type, name, displayName: step.displayName, valid: false, settings: {} }
     }
 }
+
+const DEFAULT_FALLBACK_BRANCH_NAME = 'Otherwise'
+const DEFAULT_CONDITION_BRANCHES = [{ branchName: 'Branch 1', conditions: undefined }]
+
+type ActionCatalog = Awaited<ReturnType<ReturnType<typeof pieceMetadataService>['list']>>

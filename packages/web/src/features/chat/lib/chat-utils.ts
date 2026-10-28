@@ -67,6 +67,7 @@ const TOOL_LABELS: Record<string, { active: string; done: string }> = {
   ap_test_flow: { active: 'Testing automation', done: 'Tested automation' },
   ap_add_step: { active: 'Adding step', done: 'Added step' },
   ap_update_step: { active: 'Updating step', done: 'Updated step' },
+  ap_apply_flow_operations: { active: 'Editing flow', done: 'Edited flow' },
   ap_update_trigger: {
     active: 'Updating starting event',
     done: 'Updated starting event',

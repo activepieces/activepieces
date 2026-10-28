@@ -89,7 +89,8 @@ function collectStepMessages(steps: Array<{ response: { messages: ModelMessage[]
 }
 
 function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelMessage[], systemPromptLength: number }): number {
-    return Math.ceil((JSON.stringify(messages).length + systemPromptLength) / CHARS_PER_TOKEN_ESTIMATE)
+    const { text, attachmentTokens } = agentTokenEstimate.textForEstimate(messages)
+    return Math.ceil((text.length + systemPromptLength) / CHARS_PER_TOKEN_ESTIMATE) + attachmentTokens
 }
 
 /**
@@ -324,6 +325,16 @@ function buildStepParts({ content }: {
 const DATA_ARRAY_KEYS = ['data', 'results', 'records', 'items', 'value', 'rows', 'entries']
 const PREVIEW_RECORD_COUNT = 5
 
+const IMAGE_TOKEN_ESTIMATE = 1_600
+
+const MAX_FILE_TOKEN_ESTIMATE = 60_000
+
+const BYTES_PER_FILE_TOKEN = 16
+
+const BASE64_DECODED_RATIO = 0.75
+
+const ATTACHMENT_PLACEHOLDER = '[attachment]'
+
 function findDataArray(payload: unknown): { array: unknown[], path: string } | null {
     if (Array.isArray(payload)) {
         return { array: payload, path: 'root' }
@@ -379,6 +390,36 @@ function clampOutputTokens({ thinkingBudget, ceilings }: { thinkingBudget: numbe
     return Math.min(thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS, ...known)
 }
 
+function textForEstimate(value: unknown): { text: string, attachmentTokens: number } {
+    let attachmentTokens = 0
+    const text = JSON.stringify(value, (_key, entry: unknown) => {
+        if (!isAttachmentPart(entry)) {
+            return entry
+        }
+        attachmentTokens += attachmentTokenCost(entry)
+        return { ...entry, data: ATTACHMENT_PLACEHOLDER, image: undefined }
+    }) ?? ''
+    return { text, attachmentTokens }
+}
+
+function attachmentTokenCost(part: AttachmentPart): number {
+    const mediaType = typeof part.mediaType === 'string' ? part.mediaType : typeof part.mimeType === 'string' ? part.mimeType : ''
+    if (part.type === 'image' || mediaType.startsWith('image/')) {
+        return IMAGE_TOKEN_ESTIMATE
+    }
+    const payload = part.data ?? part.image
+    const encodedLength = typeof payload === 'string' ? payload.length : 0
+    const decodedBytes = Math.ceil(encodedLength * BASE64_DECODED_RATIO)
+    return Math.min(MAX_FILE_TOKEN_ESTIMATE, Math.max(IMAGE_TOKEN_ESTIMATE, Math.ceil(decodedBytes / BYTES_PER_FILE_TOKEN)))
+}
+
+function isAttachmentPart(value: unknown): value is AttachmentPart {
+    if (!isObject(value)) {
+        return false
+    }
+    return (value['type'] === 'file' && 'data' in value) || (value['type'] === 'image' && 'image' in value)
+}
+
 export const agentAiUtils = {
     affordableOutputTokens,
     clampOutputTokens,
@@ -394,4 +435,16 @@ export const agentAiUtils = {
     buildLargeResultPreview,
 }
 
+export const agentTokenEstimate = {
+    textForEstimate,
+}
+
 export type { ContentPartLike }
+
+type AttachmentPart = {
+    type: string
+    data?: unknown
+    image?: unknown
+    mediaType?: unknown
+    mimeType?: unknown
+}

@@ -4,7 +4,7 @@ Load this for an immediate one-shot request (send a message, check email, look s
 
 **Read the OUTCOME behind the verb, then carry it through — don't shrink to the narrowest literal action (see `<interpreting_intent>`).** "Close my open deals" is *work the pipeline toward won* (list the deals, find the stalled ones, draft follow-ups, line up next steps), not "set stage = Closed." "Clean my inbox" is *triage and handle*, not "archive all." Pursue the ambitious reading end-to-end and surface what you assumed as editable at the end — the steps below are how you execute that, not a license to do the trivial thing.
 
-**Never call `ap_set_build_plan` here.** The celebratory build card is only for constructing a brand-new recurring automation via the `flow_building` skill — a one-time task gets no card. (If the user later accepts "turn this into a recurring automation," you switch to the `flow_building` skill, and the card applies then.)
+**Never call `ap_set_build_plan` here.** The celebratory build card is only for constructing a brand-new automation via the `flow_building` skill — a one-time task gets no card. (If the user later accepts "turn this into a recurring automation," you switch to the `flow_building` skill, and the card applies then.)
 
 1. `ap_list_across_projects` with resource "connections" to find accounts.
 2. `ap_discover_action_auth` with the pieceName.
@@ -16,7 +16,7 @@ Load this for an immediate one-shot request (send a message, check email, look s
 
 **Prefer a native piece over HTTP.** If a native action does the job (e.g. Discord `send_message_webhook`, Slack `send_channel_message`), use it — its fields are simple and validated. Only load `http_fallback` when no native action fits or the user can't connect.
 
-**Reading to understand vs doing**: to look at the user's real data during discovery (peek at a sheet, list channels) use `ap_explore_data`, not `ap_execute_action` — it's read-only and calm. Pass `fields` with the keys you need and leave `limit` at its default. Use `ap_execute_action` only to actually perform the task.
+**Reading to understand vs doing**: to look at the user's real data during discovery (peek at a sheet, list channels) use `ap_explore_data` (it comes with the `discovery` skill), not `ap_execute_action` — it's read-only and calm. Pass `fields` with the keys you need and leave `limit` at its default. Use `ap_execute_action` only to actually perform the task.
 
 **Batch**: same action over many items → pass an `items` array (max 100) instead of repeated calls, plus a `description` for the progress card. All items share one pieceName/actionName and the selected connection.
 - Example: `ap_execute_action({ pieceName: "slack", actionName: "send_channel_message", items: [{ channel: "C01", text: "Hi Alice" }, { channel: "C02", text: "Hi Bob" }], description: "Sending Slack messages" })`

@@ -80,7 +80,7 @@ function createSkillTools({ registry, surface, guides, loadedSkills, onSkillLoad
                 skills: z.array(z.enum([firstSkill, ...otherSkills])).min(1).describe('The skills the work in front of you needs now, loaded together'),
             }),
             execute: async ({ skills: skillNames }) => {
-                const playbooks = await Promise.all([...new Set(skillNames)].map(async (skillName) => {
+                const playbooks = await Promise.all(withCompanionSkills({ skillNames, loadedSkills, guides }).map(async (skillName) => {
                     const skill = agentToolSkills.findSkill({ name: skillName })
                     if (skill === undefined) {
                         return `No skill named "${skillName}".`
@@ -131,6 +131,17 @@ function createSkillTools({ registry, surface, guides, loadedSkills, onSkillLoad
             }),
         }),
     }
+}
+
+function withCompanionSkills({ skillNames, loadedSkills, guides }: {
+    skillNames: string[]
+    loadedSkills: Set<string>
+    guides: Record<string, string>
+}): string[] {
+    const companions = skillNames.includes(FLOW_BUILDING_SKILL) && !loadedSkills.has(DISCOVERY_SKILL) && DISCOVERY_SKILL in guides
+        ? [DISCOVERY_SKILL]
+        : []
+    return unique([...companions, ...skillNames])
 }
 
 function asModelOutput(output: JSONValue | undefined): ToolResultPart['output'] {
@@ -308,6 +319,10 @@ function capitalize(text: string): string {
 }
 
 const OTHER_TOOLS_HEADING = '## Other tools you have'
+
+const FLOW_BUILDING_SKILL = 'flow_building'
+
+const DISCOVERY_SKILL = 'discovery'
 
 const LAZY_TOOL_OUTER_SCHEMA = z.object({
     tool: z.string().describe('The tool name, e.g. "ap_add_step"'),

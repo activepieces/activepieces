@@ -120,7 +120,7 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
         loadWhen: 'at the start of any task beyond a quick answer, before asking the user anything or building',
         guideTopic: 'discovery',
         entersBuildPhase: false,
-        toolNames: [],
+        toolNames: ['ap_explore_data'],
     },
     {
         name: 'flow_building',
@@ -131,7 +131,7 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
             'ap_build_flow', 'ap_create_folder', 'ap_add_step', 'ap_update_step', 'ap_delete_step', 'ap_update_trigger',
             'ap_validate_flow', 'ap_validate_step_config', 'ap_test_flow', 'ap_test_step',
             'ap_search_actions', 'ap_search_triggers', 'ap_set_build_plan', 'ap_lock_and_publish',
-            'ap_resolve_property_options',
+            'ap_apply_flow_operations', 'ap_resolve_property_options',
         ],
     },
     {
@@ -146,10 +146,10 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
     },
     {
         name: 'one_time_task',
-        loadWhen: 'before doing something once, right now, in a connected app (send, read, update) or running code',
+        loadWhen: 'before doing something once, right now, in a connected app (send, read, update), sending an email or running code',
         guideTopic: 'one_time_task',
         entersBuildPhase: true,
-        toolNames: ['ap_execute_action', 'ap_run_code', 'ap_explore_data'],
+        toolNames: ['ap_execute_action', 'ap_run_code', 'ap_send_email'],
     },
     {
         name: 'connections',
@@ -162,7 +162,7 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
         name: 'tables',
         loadWhen: 'before reading or changing the built-in Tables database',
         guideTopic: 'tables',
-        entersBuildPhase: true,
+        entersBuildPhase: false,
         toolNames: ['ap_list_tables', 'ap_create_table', 'ap_delete_table', 'ap_manage_fields', 'ap_find_records', 'ap_insert_records', 'ap_update_record', 'ap_delete_records'],
     },
     {
@@ -185,10 +185,10 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
     },
     {
         name: 'web_and_media',
-        loadWhen: 'before searching the web, reading a web page, scraping a site, generating an image or sending an email',
+        loadWhen: 'before searching the web, reading a web page, scraping a site or generating an image',
         guideTopic: 'web_research',
         entersBuildPhase: false,
-        toolNames: ['ap_web_search', 'ap_fetch_url', 'ap_scrape_url', 'ap_deep_research', 'ap_generate_image', 'ap_send_email'],
+        toolNames: ['ap_web_search', 'ap_fetch_url', 'ap_scrape_url', 'ap_deep_research', 'ap_generate_image'],
     },
     {
         name: 'interaction',
@@ -197,7 +197,7 @@ const AGENT_SKILLS: readonly AgentSkill[] = [
         toolNames: ['ap_show_showcase'],
     },
     { name: 'error_handling', loadWhen: 'when a flow needs success/failure branches', guideTopic: 'error_handling', entersBuildPhase: false, toolNames: [] },
-    { name: 'control_flow', loadWhen: 'when a flow needs routers, conditions or loops', guideTopic: 'control_flow', entersBuildPhase: false, toolNames: ['ap_add_branch', 'ap_update_branch', 'ap_delete_branch'] },
+    { name: 'control_flow', loadWhen: 'before adding, changing or removing routers, branches or loops in an EXISTING flow (a new flow defines its routers inside ap_build_flow)', guideTopic: 'control_flow', entersBuildPhase: false, toolNames: ['ap_add_branch', 'ap_update_branch', 'ap_delete_branch'] },
     { name: 'state', loadWhen: 'when a flow must remember data across runs', guideTopic: 'state', entersBuildPhase: false, toolNames: [] },
     { name: 'http_fallback', loadWhen: 'when calling an API directly because no connection exists', guideTopic: 'http_fallback', entersBuildPhase: false, toolNames: [] },
     { name: 'ai', loadWhen: 'when a flow uses native AI steps or needs to pick an AI model', guideTopic: 'ai', entersBuildPhase: false, toolNames: ['ap_list_ai_models'] },

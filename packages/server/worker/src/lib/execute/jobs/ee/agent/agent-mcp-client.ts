@@ -6,9 +6,10 @@ import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { agentWorkerTools } from './agent-worker-tools'
-import { cardTitleFields, plainJsonSchema, TaintState } from './tools/tool-primitives'
+import { cardTitleFields, plainJsonSchema, stableStringify, TaintState } from './tools/tool-primitives'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
+const CACHED_READ_TOOLS = new Set(['ap_flow_structure'])
 const CARD_TITLE_SCHEMA = asSchema(z.object(cardTitleFields))
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
@@ -245,6 +246,10 @@ function buildReconnectGuidance({ connectorUuid, alreadyFlagged }: { connectorUu
 // empty options and pushes the agent off the native path onto raw custom_api_call).
 const AUTH_INJECTABLE_TOOLS = new Set(['ap_get_piece_props', 'ap_resolve_property_options', 'ap_resolve_property_chain'])
 
+function withoutCardTitles(args: unknown): unknown {
+    return isObject(args) ? Object.fromEntries(Object.entries(args).filter(([key]) => !(key in cardTitleFields))) : args
+}
+
 function injectSelectedAuth({ name, args, getSelectedAuth }: {
     name: string
     args: unknown
@@ -309,6 +314,7 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
     saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
 }): Record<string, unknown> {
     const result: Record<string, unknown> = {}
+    const readCache = new Map<string, unknown>()
 
     for (const [name, tool] of Object.entries(mcpToolSet)) {
         if (typeof tool !== 'object' || tool === null || !hasExecute(tool)) {
@@ -325,14 +331,25 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
                 }
+                const cacheKey = CACHED_READ_TOOLS.has(name) ? `${name}:${stableStringify(withoutCardTitles(args))}` : undefined
+                if (cacheKey !== undefined && readCache.has(cacheKey)) {
+                    return readCache.get(cacheKey)
+                }
                 if (agentToolPhases.taintsTurn(name)) {
                     taintState.tainted = true
+                }
+                const mutates = agentToolPhases.isBuildOnlyTool(name)
+                if (mutates) {
+                    readCache.clear()
                 }
                 const { data: toolResult, error } = await tryCatch(() => agentWorkerTools.withToolTimeout({
                     fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
                     timeoutMs: agentWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,
                     toolName: name,
                 }))
+                if (mutates) {
+                    readCache.clear()
+                }
                 if (error) {
                     const { isAuthError, connectorUuid } = classifyMcpAuthError({ error, toolName: name })
                     if (isAuthError) {
@@ -351,10 +368,11 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                     return buildReconnectGuidance({ connectorUuid })
                 }
                 const offloaded = await maybeOffloadMcpResult({ result: toolResult, toolName: name, saveLargeResult })
-                if (offloaded !== null) {
-                    return offloaded
+                const finalResult = offloaded ?? agentWorkerTools.truncateLargeResult(toolResult)
+                if (cacheKey !== undefined && !(isObject(toolResult) && toolResult['isError'] === true)) {
+                    readCache.set(cacheKey, finalResult)
                 }
-                return agentWorkerTools.truncateLargeResult(toolResult)
+                return finalResult
             },
         })
     }

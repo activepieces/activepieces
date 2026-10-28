@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { buildFlowReview } from './build-flow-review'
 import { mcpUtils } from './mcp-utils'
 
 const updateStepInput = z.object({
@@ -149,6 +150,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                 })
             }
 
+            const labelNotes: string[] = []
             if (step.type === FlowActionType.PIECE && (input !== undefined || pieceVersionChanged)) {
                 await mcpUtils.fillDefaultsForMissingOptionalProps({
                     settings: updatedSettings,
@@ -166,9 +168,11 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                     if (unknownPropsError) {
                         return unknownPropsError
                     }
-                    updatedSettings.input = knownInput
+                    const labels = await buildFlowReview.resolveDropdownLabels({ pieceName, pieceVersion, componentName: resolvedActionName, componentType: 'action', stepName, input: knownInput, fields: Object.keys(callerInput), projectId: mcp.projectId, platformId: project.platformId, log })
+                    labelNotes.push(...buildFlowReview.labelNotes(labels))
+                    updatedSettings.input = labels.input
                     const changedKeys = Object.keys(pieceVersionChanged ? knownInput : callerInput)
-                    updatedSettings.propertySettings = await mcpUtils.resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName: resolvedActionName, componentType: 'action', input: knownInput, propertySettings: currentSettings.propertySettings, changedKeys, projectId: mcp.projectId, platformId: project.platformId, log })
+                    updatedSettings.propertySettings = await mcpUtils.resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName: resolvedActionName, componentType: 'action', input: labels.input, propertySettings: currentSettings.propertySettings, changedKeys, projectId: mcp.projectId, platformId: project.platformId, log })
                 }
             }
 
@@ -204,7 +208,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                     operation,
                 })
                 const updatedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
-                const draftWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
+                const draftWarning = `${mcpUtils.publishedFlowWarning(flow.publishedVersionId)}${labelNotes.length > 0 ? `\n${labelNotes.join('\n')}` : ''}`
                 if (updatedStep && !updatedStep.valid) {
                     const diagnosis = updatedStep.type === FlowActionType.PIECE
                         ? await diagnoseMissingInputs({ settings: updatedStep.settings, platformId: project.platformId, log })
