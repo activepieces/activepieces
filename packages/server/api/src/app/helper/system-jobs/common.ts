@@ -15,6 +15,8 @@ export enum SystemJobName {
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
     TOOL_SEARCH_REINDEX = 'tool-search-reindex',
     CHAT_STALE_SWEEP = 'chat-stale-sweep',
+    AI_USAGE_COPY = 'ai-usage-copy',
+    AI_USAGE_RETENTION = 'ai-usage-retention',
     WAITPOINT_DEADLINE_SWEEP = 'waitpoint-deadline-sweep',
     RUN_BACKGROUND_MIGRATIONS = 'run-background-migrations',
     AUDIT_LOG_RETENTION = 'audit-log-retention',
@@ -59,6 +61,8 @@ type SystemJobDataMap = {
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
     [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
     [SystemJobName.CHAT_STALE_SWEEP]: Record<string, never>
+    [SystemJobName.AI_USAGE_COPY]: Record<string, never>
+    [SystemJobName.AI_USAGE_RETENTION]: Record<string, never>
     [SystemJobName.WAITPOINT_DEADLINE_SWEEP]: Record<string, never>
     [SystemJobName.RUN_BACKGROUND_MIGRATIONS]: Record<string, never>
     [SystemJobName.AUDIT_LOG_RETENTION]: Record<string, never>
