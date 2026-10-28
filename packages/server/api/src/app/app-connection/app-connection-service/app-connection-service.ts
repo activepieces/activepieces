@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync, unique, UserId } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { ApEdition, ApEnvironment, AppConnection, AppConnectionId, AppConnectionOwners, AppConnectionScope, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, ConnectionState, EngineResponse, EngineResponseStatus, ExecuteResolveConnectionIdentifierResponse, ExecuteValidateAuthResponse, MAX_PLATFORM_APP_CONNECTION_OWNERS, OAuth2GrantType, PlatformAppConnectionOwner, PlatformAppConnectionOwnersResponse, PlatformAppConnectionProjectInfo, PlatformAppConnectionsListItem, PlatformRole, UpsertAppConnectionRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -264,7 +264,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async replace(params: ReplaceParams): Promise<void> {
-        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, deleteSourceConnection, applyToPublishedVersions } = params
+        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, applyToPublishedVersions, flowIds } = params
         if (sourceAppConnectionId === targetAppConnectionId) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -294,109 +294,32 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        // Mirrors the project-route DELETE guard: platform connections are managed
-        // from the platform admin page and must not be deletable through a
-        // project-scoped replace, no matter which projects still use them.
-        if (deleteSourceConnection && sourceAppConnection.scope === AppConnectionScope.PLATFORM) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'Platform connections must be deleted from the platform admin connections page',
-                },
-            })
-        }
-
-        // Reject up-front (before mutating any flow) when published versions this
-        // replace won't touch still use the source connection. When
-        // applyToPublishedVersions is set, that is only the published versions
-        // invisible to the replace (their flow's latest version no longer
-        // references the connection); updating those in place would overwrite
-        // the newer draft, so the user has to publish or repoint them first.
-        // Without it, a delete would orphan every published reference.
-        const publishedFlowsUsingConnection = deleteSourceConnection || applyToPublishedVersions
-            ? await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions })
-            : 0
-        if (publishedFlowsUsingConnection > 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: deleteSourceConnection
-                        ? 'Cannot delete the old connection because it is still used by published flows that were not updated'
-                        : 'Some published flows still use the old connection but have unpublished draft changes — publish those flows first',
-                },
-            })
-        }
-
-        // Repoint page by page: each repointed flow drops out of the connection
-        // filter, so re-fetching the first page walks the whole set without the
-        // cursor skew of paginating rows that are being mutated. The seen-set
-        // stops the loop if a flow fails to leave the filter (e.g. an auth
-        // string the rewrite does not understand) instead of spinning forever.
-        const repointedFlowIds = new Set<string>()
-        for (;;) {
-            const flowsPage = await flowService(log).list({
-                projectIds: [projectId],
-                cursorRequest: null,
-                limit: 1000,
-                folderId: undefined,
-                name: undefined,
-                status: undefined,
-                connectionExternalIds: [sourceAppConnection.externalId],
-            })
-            const flowsToRepoint = flowsPage.data.filter((flow) => !repointedFlowIds.has(flow.id))
-            if (flowsToRepoint.length === 0) {
-                if (flowsPage.data.length > 0) {
-                    log.warn({ oldConnectionId: sourceAppConnectionId, stuckFlowIds: flowsPage.data.map((flow) => flow.id) }, 'Replace could not rewrite some flow references; they keep the old connection')
-                }
-                break
-            }
-            await appConnectionHandler(log).updateFlowsWithAppConnection(flowsToRepoint, {
-                appConnection: sourceAppConnection,
-                newAppConnection: targetAppConnection,
-                userId,
-                applyToPublishedVersions,
-            })
-            flowsToRepoint.forEach((flow) => repointedFlowIds.add(flow.id))
-        }
-
-        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: repointedFlowIds.size, deleteSourceConnection, applyToPublishedVersions }, 'App connection replaced')
-
-        if (!deleteSourceConnection) {
-            return
-        }
-
-        // Final integrity gate before the irreversible delete: a flow whose
-        // reference could not be rewritten or that was edited or published
-        // concurrently may still use the connection, and deleting it would
-        // orphan that flow. The list covers latest-version references; the
-        // count covers published versions the list cannot see.
-        const remainingFlows = await flowService(log).list({
+        const flows = await flowService(log).list({
             projectIds: [projectId],
             cursorRequest: null,
-            limit: 1,
+            limit: flowIds.length,
             folderId: undefined,
             name: undefined,
             status: undefined,
-            connectionExternalIds: [sourceAppConnection.externalId],
+            flowIds,
         })
-        const remainingPublishedFlows = remainingFlows.data.length > 0
-            ? 0
-            : await appConnectionHandler(log).countPublishedFlowsReferencingConnection({ projectId, externalId: sourceAppConnection.externalId, applyToPublishedVersions: false })
-        if (remainingFlows.data.length > 0 || remainingPublishedFlows > 0) {
+        const foundFlowIds = new Set(flows.data.map((flow) => flow.id))
+        const missingFlowIds = unique(flowIds).filter((flowId) => !foundFlowIds.has(flowId))
+        if (missingFlowIds.length > 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'Cannot delete the old connection because some flows still use it',
+                    message: `Flows not found in this project: ${missingFlowIds.join(', ')}`,
                 },
             })
         }
-
-        await this.delete({
-            id: sourceAppConnection.id,
-            platformId,
-            scope: sourceAppConnection.scope,
-            projectId,
+        await appConnectionHandler(log).replaceConnectionInFlows(flows.data, {
+            appConnection: sourceAppConnection,
+            newAppConnection: targetAppConnection,
+            userId,
+            applyToPublishedVersions,
         })
+        log.info({ oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, affectedFlows: flows.data.length, applyToPublishedVersions }, 'App connection replaced')
     },
 
     async delete(params: DeleteParams): Promise<void> {
@@ -1059,7 +982,7 @@ type ReplaceParams = {
     projectId: ProjectId
     platformId: string
     userId: UserId
-    deleteSourceConnection: boolean
     applyToPublishedVersions: boolean
+    flowIds: FlowId[]
 }
 
