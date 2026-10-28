@@ -211,7 +211,8 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
                 return null
             }
-            const normalized = await normalizedToolCallInput({ toolCall, schema: await inputSchema({ toolName: toolCall.toolName }), tools: guardedTools })
+            const schema = await inputSchema({ toolName: toolCall.toolName })
+            const normalized = await normalizedToolCallInput({ toolCall, schema, tools: guardedTools })
             if (!isNil(normalized)) {
                 log.info({ tool: { name: toolCall.toolName } }, 'Fixed the shape of a malformed tool call without a repair round trip')
                 return { ...toolCall, input: normalized }
@@ -220,7 +221,6 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
                 return null
             }
             log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
-            const schema = await inputSchema({ toolName: toolCall.toolName })
             const { data: repaired } = await tryCatch(async () => {
                 const { text } = await generateText({
                     model: current().model,
