@@ -63,6 +63,7 @@ const ACTION_BUTTON_CLASS =
   'flex h-6 w-6 items-center justify-center rounded-md text-gray-11 transition-colors hover:bg-gray-3 hover:text-gray-12 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-8';
 
 const EMPTY_BUILD_IDS: ReadonlySet<string> = new Set();
+const MIN_SHOWN_TOOL_MS = 1000;
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
@@ -214,6 +215,14 @@ export const AssistantMessage = memo(function AssistantMessage({
                     initialRating={feedbackRating}
                   />
                 )}
+                {message.thinkingDurationMs !== undefined && (
+                  <span className="ml-1 text-xs tabular-nums text-gray-11">
+                    {formatTurnDuration({
+                      totalMs: message.thinkingDurationMs,
+                      toolMs: message.toolDurationMs,
+                    })}
+                  </span>
+                )}
               </>
             )}
           </MessageActions>
@@ -222,6 +231,40 @@ export const AssistantMessage = memo(function AssistantMessage({
     </motion.div>
   );
 });
+
+function formatTurnDuration({
+  totalMs,
+  toolMs,
+}: {
+  totalMs: number;
+  toolMs: number | undefined;
+}): string {
+  const duration = formatDuration(totalMs);
+  if (toolMs === undefined || toolMs < MIN_SHOWN_TOOL_MS) {
+    return t('Took {duration}', { duration });
+  }
+  return t('Took {duration} ({tools} in tools)', {
+    duration,
+    tools: formatDuration(toolMs),
+  });
+}
+
+function formatDuration(ms: number): string {
+  const totalSeconds = ms / 1000;
+  if (totalSeconds < 60) {
+    return t('{seconds} sec', {
+      seconds:
+        totalSeconds < 10
+          ? (Math.round(totalSeconds * 10) / 10).toString()
+          : Math.round(totalSeconds).toString(),
+    });
+  }
+  const rounded = Math.round(totalSeconds);
+  return t('{minutes} min {seconds} sec', {
+    minutes: Math.floor(rounded / 60),
+    seconds: rounded % 60,
+  });
+}
 
 function MessageBlocks({
   blocks,
@@ -315,11 +358,7 @@ function MessageBlocks({
                   isStreaming={isMessageStreaming}
                   thinkingDurationMs={
                     i === lastThinkingIdx
-                      ? (
-                          message as ChatUIMessage & {
-                            thinkingDurationMs?: number;
-                          }
-                        ).thinkingDurationMs
+                      ? message.thinkingDurationMs
                       : undefined
                   }
                   onOpenChange={setIsAccordionOpen}

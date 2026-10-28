@@ -1,4 +1,4 @@
-import { isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { toolResultView } from '@activepieces/server-utils'
 import { AgentOutputField, AgentOutputFieldType, apId, BuildPlanEvent, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
@@ -187,9 +187,25 @@ export function createThinkingTools(): ToolSet {
 export function createBuildPlanTools({ eventEmitter, getProjectId }: {
     eventEmitter: AgentEventEmitter
     getProjectId: () => string | null
-}): ToolSet {
+}): { tools: ToolSet, onFlowToolResult: (params: { toolName: string, result: unknown }) => string | undefined } {
     const buildId = apId()
-    return {
+    let currentPlan: BuildPlanEvent | null = null
+    const builtFlows = new Map<string, BuiltFlow>()
+    const emit = (event: BuildPlanEvent): void => {
+        currentPlan = event
+        eventEmitter.emitBuildPlan(event)
+    }
+    const onFlowToolResult = ({ toolName, result }: { toolName: string, result: unknown }): string | undefined => {
+        const built = buildPlanSync.builtFlowOf({ result })
+        if (!isNil(built)) {
+            builtFlows.set(built.flowId, built)
+            if (!isNil(currentPlan)) {
+                emit(buildPlanSync.withBuiltRows({ plan: currentPlan, builtFlows: [...builtFlows.values()] }))
+            }
+        }
+        return isNil(currentPlan) && BUILD_TOOLS_NEEDING_CARD.has(toolName) ? MISSING_CARD_NOTE : undefined
+    }
+    const tools: ToolSet = {
         ap_set_build_plan: tool({
             description: 'The live build card for a brand-new recurring automation (silent, internal — no thinking status). Use it only while following the build_flow guide; never for a one-time task, a lookup, an answer or a small edit to an existing automation. Call it once with phase "detecting" and every step "pending" before building, then update it as you work, reusing the same tagline, iconName and step ids so the card updates in place. Send each update alongside the next step\'s real tool calls instead of as a step on its own, but only with states you already know: mark a step done or failed, or set phase done or failed, only after the result that decides it has come back, never in the same step as the call that produces it.',
             inputSchema: z.object({
@@ -200,7 +216,7 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
                 flowId: z.string().optional().describe('The flow id; set it as soon as ap_create_flow / ap_build_flow returns it. Required when phase is "done" so the Open / Test / Run actions work.'),
                 steps: z.array(z.object({
                     id: z.string().describe('Stable id you reuse across updates, e.g. "trigger", "classify", "route"'),
-                    label: z.string().describe('Short human label, e.g. "Gmail trigger", "Classify with AI"'),
+                    label: z.string().describe('Short human label for a planned step. Once flows are built, the card shows their real steps and their state by itself.'),
                     status: z.enum(['pending', 'in_progress', 'done', 'failed']),
                 })).min(1),
             }),
@@ -216,11 +232,12 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
                     ...spreadIfDefined('flowId', input.flowId),
                     ...spreadIfDefined('projectId', getProjectId() ?? undefined),
                 }
-                eventEmitter.emitBuildPlan(event)
+                emit(builtFlows.size === 0 ? event : buildPlanSync.withBuiltRows({ plan: event, builtFlows: [...builtFlows.values()] }))
                 return { ok: true, buildId }
             },
         }),
     }
+    return { tools, onFlowToolResult }
 }
 
 export function createStructuredOutputTool({ fields, capture }: {
@@ -250,12 +267,62 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
     }
 }
 
+function builtFlowOf({ result }: { result: unknown }): BuiltFlow | null {
+    const structured = isObject(result) && isObject(result['structuredContent']) ? result['structuredContent'] : null
+    if (isNil(structured) || !Array.isArray(structured['flowSteps']) || typeof structured['flowId'] !== 'string') {
+        return null
+    }
+    const name = typeof structured['displayName'] === 'string' ? structured['displayName'] : structured['flowName']
+    return {
+        flowId: structured['flowId'],
+        name: typeof name === 'string' ? name : 'Automation',
+        steps: structured['flowSteps'].flatMap((step) => isObject(step) && typeof step['displayName'] === 'string'
+            ? [{ label: readableLabel(step['displayName']), done: step['state'] === 'ok' }]
+            : []),
+    }
+}
+
+function withBuiltRows({ plan, builtFlows }: { plan: BuildPlanEvent, builtFlows: BuiltFlow[] }): BuildPlanEvent {
+    const finished = plan.phase === 'done'
+    const status = (done: boolean): 'done' | 'in_progress' => done || finished ? 'done' : 'in_progress'
+    const steps = builtFlows.length === 1
+        ? builtFlows[0].steps.map((step, index) => ({ id: `${builtFlows[0].flowId}:${index}`, label: step.label, status: status(step.done) }))
+        : builtFlows.map((flow) => ({ id: flow.flowId, label: flow.name, status: status(flow.steps.every((step) => step.done)) }))
+    return {
+        ...plan,
+        steps,
+        phase: plan.phase === 'detecting' ? 'building' : plan.phase,
+        updatedAt: new Date().toISOString(),
+        flowId: plan.flowId ?? builtFlows[0].flowId,
+    }
+}
+
+function readableLabel(name: string): string {
+    if (name.includes(' ') || !name.includes('_')) {
+        return name
+    }
+    const words = name.replace(/_/g, ' ').trim()
+    return `${words.charAt(0).toUpperCase()}${words.slice(1)}`
+}
 
 const MAX_CACHED_RESULT_FILES = 5
+const BUILD_TOOLS_NEEDING_CARD = new Set(['ap_build_flow', 'ap_apply_flow_operations', 'ap_create_table'])
+const MISSING_CARD_NOTE = 'No build card is showing. Call ap_set_build_plan now with phase "building", a short flowName, tagline and iconName; its rows fill in from what you build.'
 
 const AGENT_CHANGE_LABELS: Record<string, string> = {
     ap_add_agent_tool: 'Add tools to a saved agent',
     ap_remove_agent_tool: 'Remove tools from a saved agent',
     ap_update_agent: 'Change a saved agent',
     ap_create_agent: 'Create a saved agent',
+}
+
+export const buildPlanSync = {
+    builtFlowOf,
+    withBuiltRows,
+}
+
+type BuiltFlow = {
+    flowId: string
+    name: string
+    steps: { label: string, done: boolean }[]
 }

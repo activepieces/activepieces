@@ -94,6 +94,8 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
     const maxTurnTokens = runawayTokenCeiling(models[0].provider)
     let totalInputTokens = 0
     let totalOutputTokens = 0
+    let stepToolMs = 0
+    let toolDurationMs = 0
     const tokenBudgetSpent = (): boolean => totalInputTokens + totalOutputTokens >= maxTurnTokens
     const loopStopCondition = [
         ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
@@ -237,6 +239,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
             return { ...toolCall, input: repaired }
         },
         onToolExecutionEnd: ({ toolCall, toolOutput, toolExecutionMs }) => {
+            stepToolMs = Math.max(stepToolMs, toolExecutionMs)
             const effectiveCall = agentToolSkills.effectiveToolCall({ toolName: toolCall.toolName, input: toolCall.input })
             toolCalls.push({
                 toolName: effectiveCall.toolName,
@@ -260,6 +263,8 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         onStepEnd: ({ content, response, usage: stepUsage }) => {
             totalInputTokens += stepUsage.inputTokens ?? 0
             totalOutputTokens += stepUsage.outputTokens ?? 0
+            toolDurationMs += stepToolMs
+            stepToolMs = 0
             uiParts.push(...agentAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
             currentAttemptMessages = [...currentAttemptMessages, ...agentAiUtils.collectStepMessages([{ response }])]
             const responseMessages = [...accumulatedResponseMessages, ...currentAttemptMessages]
@@ -394,6 +399,7 @@ export async function runAgentTurn({ models, fastModel, systemPrompt, messages, 
         continuations,
         totalInputTokens,
         totalOutputTokens,
+        toolDurationMs,
         toolCalls,
         answeredBy: lastStepUsedFast && !isNil(fast) ? fast : current(),
         allModelsFailed: !isNil(streamError) && runsATier && failedModelIds.size === unique(ranked.map((candidate) => candidate.modelId)).length,
@@ -750,6 +756,7 @@ export type AgentTurnResult = {
     continuations: number
     totalInputTokens: number
     totalOutputTokens: number
+    toolDurationMs: number
     toolCalls: AgentTurnToolCall[]
     answeredBy: TurnModel
     allModelsFailed: boolean

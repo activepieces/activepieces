@@ -367,7 +367,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                     uiMessages: [
                         ...(config.previousUiMessages as PersistedAgentMessage[]),
-                        ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
+                        ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, toolDurationMs: turn.toolDurationMs, tainted: taintState.readInThisReply() }] : []),
                     ],
                     ...answeredByOf({ answeredBy: turn.answeredBy }),
                 }
@@ -421,7 +421,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 messages: [...(config.allMessages as ModelMessage[]), ...accumulatedResponseMessages],
                 uiMessages: [
                     ...(config.previousUiMessages as PersistedAgentMessage[]),
-                    ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, tainted: taintState.readInThisReply() }] : []),
+                    ...(uiParts.length > 0 ? [{ role: PersistedAgentRole.ASSISTANT, parts: uiParts, thinkingDurationMs, toolDurationMs: turn.toolDurationMs, tainted: taintState.readInThisReply() }] : []),
                 ],
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) && isNil(config.platformTier) ? config.tier.id : undefined),
@@ -816,6 +816,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         brokenConnectors,
         taintState,
         getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
+        onToolResult: buildPlanTools.onFlowToolResult,
         saveLargeResult: async ({ json, fileName }) => {
             const { data: saved } = await tryCatch(() => ctx.apiClient.saveAgentFile({
                 platformId, conversationId, data: Buffer.from(json, 'utf8'), mediaType: 'application/json',
@@ -877,7 +878,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
             crossProject: crossProjectTools,
             web: webTools,
             thinking: thinkingTools,
-            buildPlan: buildPlanTools,
+            buildPlan: buildPlanTools.tools,
             email: emailTools,
             agentSurface: agentSurfaceTools,
             mcp: mcpTools as ToolSet,

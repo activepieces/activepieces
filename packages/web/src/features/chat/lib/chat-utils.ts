@@ -318,6 +318,9 @@ function mapPersistedToUIMessages(
     ...(msg.thinkingDurationMs !== undefined && {
       thinkingDurationMs: msg.thinkingDurationMs,
     }),
+    ...(msg.toolDurationMs !== undefined && {
+      toolDurationMs: msg.toolDurationMs,
+    }),
     ...(msg.feedback !== undefined && { feedback: msg.feedback }),
   }));
 }
