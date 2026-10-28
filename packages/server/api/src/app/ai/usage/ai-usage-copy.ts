@@ -29,21 +29,30 @@ async function copyPlatform({ platform, log, deadlineMs }: { platform: PlatformC
         )
         return { ...EMPTY_OUTCOME, started: true }
     }
-    return copyWindows({ platformId: platform.platformId, fromMs: platform.copiedUntilMs, untilMs: Date.now() - VISIBILITY_DELAY_MS, log, deadlineMs, outcome: EMPTY_OUTCOME })
+    return copyWindows({ platformId: platform.platformId, fromMs: platform.copiedUntilMs, untilMs: Date.now() - VISIBILITY_DELAY_MS, windowMs: WINDOW_MS, log, deadlineMs, outcome: EMPTY_OUTCOME })
 }
 
-async function copyWindows({ platformId, fromMs, untilMs, log, deadlineMs, outcome }: CopyWindowsParams): Promise<PlatformOutcome> {
-    const endMs = Math.min(untilMs, fromMs + WINDOW_MS)
+async function copyWindows({ platformId, fromMs, untilMs, windowMs, log, deadlineMs, outcome }: CopyWindowsParams): Promise<PlatformOutcome> {
+    const endMs = Math.min(untilMs, fromMs + windowMs)
     if (endMs <= fromMs || Date.now() > deadlineMs) {
         return { ...outcome, lagMs: Date.now() - fromMs }
     }
-    const { data: raw, error } = await tryCatch(() => readWindow({ platformId, startMs: fromMs, endMs, log, deadlineMs }))
+    const maxPages = endMs - fromMs <= MIN_WINDOW_MS ? Infinity : MAX_PAGES_PER_WINDOW
+    const { data: raw, error } = await tryCatch(() => readWindow({ platformId, startMs: fromMs, endMs, log, maxPages }))
     if (!isNil(error)) {
         log.warn({ error, platform: { id: platformId } }, '[aiUsageCopy] Could not read usage events from Autumn, will retry this window next run')
         return { ...outcome, attempted: true, failed: true, lagMs: Date.now() - fromMs }
     }
     if (isNil(raw)) {
-        return { ...outcome, attempted: true, lagMs: Date.now() - fromMs }
+        return copyWindows({
+            platformId,
+            fromMs,
+            untilMs,
+            windowMs: Math.max(MIN_WINDOW_MS, Math.floor((endMs - fromMs) / 2)),
+            log,
+            deadlineMs,
+            outcome: { ...outcome, attempted: true },
+        })
     }
     const { events, skipped } = usageEventsOf({ platformId, raw, startMs: fromMs, endMs })
     const moved = await writeWindow({ platformId, fromMs, endMs, events })
@@ -54,24 +63,25 @@ async function copyWindows({ platformId, fromMs, untilMs, log, deadlineMs, outco
         platformId,
         fromMs: endMs,
         untilMs,
+        windowMs,
         log,
         deadlineMs,
         outcome: { ...outcome, attempted: true, windows: outcome.windows + 1, copied: outcome.copied + events.length, skipped: outcome.skipped + skipped },
     })
 }
 
-async function readWindow({ platformId, startMs, endMs, log, deadlineMs }: ReadWindowParams): Promise<UsageEvent[] | null> {
-    const events: UsageEvent[] = []
+async function readWindow({ platformId, startMs, endMs, log, maxPages }: ReadWindowParams): Promise<UsageEvent[] | null> {
+    const pages: UsageEvent[][] = []
     let cursor: string | null = null
     do {
-        if (Date.now() > deadlineMs) {
+        if (pages.length >= maxPages) {
             return null
         }
         const page = await billingProvider.get(log).listUsageEvents({ platformId, startMs, endMs, cursor })
-        events.push(...page.events)
+        pages.push(page.events)
         cursor = page.nextCursor
     } while (!isNil(cursor))
-    return events
+    return pages.flat()
 }
 
 function usageEventsOf({ platformId, raw, startMs, endMs }: { platformId: string, raw: UsageEvent[], startMs: number, endMs: number }): { events: UsageEventWithRun[], skipped: number } {
@@ -132,6 +142,8 @@ async function trackAllFailedRuns({ allFailed, log }: { allFailed: boolean, log:
 
 const VISIBILITY_DELAY_MS = 2 * 60 * 1000
 const WINDOW_MS = 10 * 60 * 1000
+const MIN_WINDOW_MS = 1000
+const MAX_PAGES_PER_WINDOW = 3
 const RUN_BUDGET_MS = 40_000
 const PLATFORM_CONCURRENCY = 5
 const ALL_FAILED_COUNT_KEY = 'ai-usage:copy:all-failed-runs'
@@ -197,13 +209,14 @@ type ReadWindowParams = {
     startMs: number
     endMs: number
     log: FastifyBaseLogger
-    deadlineMs: number
+    maxPages: number
 }
 
 type CopyWindowsParams = {
     platformId: string
     fromMs: number
     untilMs: number
+    windowMs: number
     log: FastifyBaseLogger
     deadlineMs: number
     outcome: PlatformOutcome
