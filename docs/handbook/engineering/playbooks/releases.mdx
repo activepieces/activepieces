@@ -71,9 +71,8 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 | Trigger | What happens |
 |---|---|
 | **`workflow_call`** | Called by `continuous-delivery-cloud.yml` before production. Deploys the image Cloud is about to ship to the canary app and workers. Breaking migrations block the deployment unless the Cloud run sets `skip_migration_check`. |
-| **Manual dispatch** | Builds a `version.sha.canary` image from the current branch, checks migrations, and deploys the canary. |
 
-There is no daily schedule since ENG-1062: a daily build of `main` ran its migrations on the shared production database ahead of the fleet.
+There is no daily schedule and no manual dispatch since ENG-1062: the canary app runs its migrations on the shared production database at boot, so only an image that Cloud is about to deploy may reach it.
 
 See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for full details.
 

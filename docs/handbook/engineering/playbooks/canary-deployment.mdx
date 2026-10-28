@@ -85,7 +85,7 @@ Jobs for canary platforms are enqueued to `canaryWorkerJobs`, which only canary 
 
 ## Deploying a New Canary Build
 
-The **Continuous Delivery — Canary** workflow (`continuous-delivery-canary.yml`) runs as a reusable workflow from `continuous-delivery-cloud.yml`, with the image that Cloud is about to deploy, a few minutes before the rest of production. It has no daily schedule: the canary shares the production database, so a daily build of `main` ran newer migrations under the older fleet.
+The **Continuous Delivery — Canary** workflow (`continuous-delivery-canary.yml`) runs as a reusable workflow from `continuous-delivery-cloud.yml`, with the image that Cloud is about to deploy, a few minutes before the rest of production. It has no daily schedule and no manual dispatch: the canary shares the production database and runs migrations at boot, so a daily build of `main` ran newer migrations under the older fleet.
 
 The workflow:
 1. Builds and pushes a new image tagged `<version>.<sha>.canary`

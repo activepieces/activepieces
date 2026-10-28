@@ -1,7 +1,6 @@
 name: Continuous Delivery — Canary
 
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       image_tag:
