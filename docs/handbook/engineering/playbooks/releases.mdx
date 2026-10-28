@@ -9,19 +9,18 @@ All changes flow through a staging environment before reaching production. There
 
 Five separate workflows cover the full delivery lifecycle:
 
-1. **Merge to `main`** (Mon–Thu, 9 AM–5 PM UTC) — `continuous-delivery-stg.yml` automatically builds a Docker image and deploys to **staging** (`stg.activepieces.com`).
-2. **Staging freeze (5 PM UTC)** — merges to `main` after 5 PM UTC are accepted but **not deployed** to staging. The content team uses the frozen staging environment overnight.
-3. **Daily 9 AM UTC** — `continuous-delivery-canary.yml` builds a `version.sha.canary` image from the latest `main` and deploys it to the **canary** environment. Breaking migrations block the deployment. See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for details.
-4. **Thursday 5 PM UTC** — `tag-release-candidate` job tags the current staging image and commit as `release-candidate`.
-5. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` runs a fresh canary build from `main` (by calling `continuous-delivery-canary.yml` as a reusable workflow), then promotes `release-candidate` to production and creates a `deploy/cloud/YYYY-MM-DD` branch.
-6. **Monday 9 AM UTC** — `continuous-delivery-release.yml` re-tags the `release-candidate` image and publishes the self-hosted release.
+1. **Merge to `main`** — `continuous-delivery-stg.yml` automatically builds a Docker image and deploys to **staging** (`stg.activepieces.com`).
+2. **Daily 9 AM UTC** — `continuous-delivery-canary.yml` builds a `version.sha.canary` image from the latest `main` and deploys it to the **canary** environment. Breaking migrations block the deployment. See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for details.
+3. **Thursday 5 PM UTC** — `tag-release-candidate` job tags the current staging image and commit as `release-candidate`.
+4. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` runs a fresh canary build from `main` (by calling `continuous-delivery-canary.yml` as a reusable workflow), then promotes `release-candidate` to production and creates a `deploy/cloud/YYYY-MM-DD` branch.
+5. **Monday 9 AM UTC** — `continuous-delivery-release.yml` re-tags the `release-candidate` image and publishes the self-hosted release.
 
 ## Environments
 
 | Environment | URL | Purpose |
 |---|---|---|
 | Preview | `branch-name.activepieces.com` | Per-PR ephemeral environment for review. *Requires the `preview` label on the PR.* |
-| Staging | `stg.activepieces.com` | Internal testing, content team daily use |
+| Staging | `stg.activepieces.com` | Internal testing |
 | Canary | `canary.activepieces.com` | Daily cut from `main`; catches issues before they reach production |
 | Production | `cloud.activepieces.com` | Live customers |
 
@@ -46,13 +45,12 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Push to `main`** | Builds a `version.sha.beta` image and deploys to staging. Skipped automatically during the freeze window (5 PM – 9 AM UTC). |
-| **Manual dispatch** | Presents a dropdown with two choices (see below). |
+| **Push to `main`** | Builds a `version.sha.beta` image and deploys to staging. |
+| **Manual dispatch** | Presents a dropdown with one choice (see below). |
 
 #### Manual dispatch choices
 
-- **`deploy-staging`** — Re-deploy the latest `main` to staging. Use this after an infra change, or to force a deploy that was skipped due to the freeze window.
-- **`deploy-staging-skip-freeze`** — Same as above but explicitly bypasses the freeze window check.
+- **`deploy-staging`** — Re-deploy the latest `main` to staging. Use this after an infra change.
 
 ### `continuous-delivery-cloud.yml` — Production Promotion
 
