@@ -4,7 +4,7 @@ import { z } from 'zod'
 const ID_MAX = 21
 const MODEL_ID_MAX = 255
 
-const nullableId = z.string().max(ID_MAX).nullable()
+const nullableId = z.string().max(ID_MAX).nullish().transform((value) => value ?? null)
 const counter = z.number().finite().nonnegative()
 
 export const AiUsageBlock = z.object({

@@ -133,6 +133,16 @@ describe('AI usage copy from Autumn', () => {
         expect(await fiveMinuteCalls()).toBe(2)
     })
 
+    it('copies events whose null ids Autumn dropped', async () => {
+        await startCursorAt({ platformId: ctx.platform.id, minutesAgo: 10 })
+        const stored = Object.fromEntries(Object.entries(block()).filter(([, value]) => value !== null))
+        addEvent({ minutesAgo: 5, properties: { source: 'ai', usage: stored } })
+
+        await aiUsageCopy(app.log).run()
+
+        expect((await dailyTotals()).calls).toBe(1)
+    })
+
     it('counts a run once, credited to its earliest call, even across windows', async () => {
         await startCursorAt({ platformId: ctx.platform.id, minutesAgo: 30 })
         const runId = apId()
