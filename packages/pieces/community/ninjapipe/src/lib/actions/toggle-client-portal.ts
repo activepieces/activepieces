@@ -1,45 +1,47 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, flattenCustomFields, getAuth, ninjapipeCommon } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeFields } from '../common/fields';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const toggleClientPortal = createAction({
   auth: ninjapipeAuth,
   name: 'toggle_client_portal',
   classification: 'DESTRUCTIVE',
   displayName: 'Toggle Client Portal',
-  description: 'Enable or disable client portal access for a contact. When enabling, NinjaPipe auto-generates a secure password and returns it in the response.',
+  description:
+    'Enables or disables client portal access for a contact. Enabling generates a new portal password and returns it in the step output, where anyone who can see the run can read it.',
   audience: 'both',
-  aiMetadata: { description: 'Turns client portal access on or off for a given contact via the Enable toggle; the Enable mode optionally sets a portal email and provisions a fresh auto-generated password. Pick this to grant or revoke a customer-facing login. Re-running with the same toggle leaves access in the same on/off state, though enabling again may rotate the password.', idempotent: true },
+  aiMetadata: {
+    description:
+      'Turn client portal access on (enable: true) or off (enable: false) for a NinjaPipe contact by contact ID. Disabling revokes the login. Enabling sets a fresh auto-generated password every time and returns it as generated_password, so a repeated enable rotates the password. Not idempotent.',
+    idempotent: false,
+  },
+  outputSchema: ninjapipeSchemas.clientPortal,
   props: {
-    contactId: ninjapipeCommon.contactDropdownRequired,
-    enable: Property.Checkbox({
-      displayName: 'Enable Client Portal',
-      description: 'Turn ON to enable, OFF to disable.',
-      required: true,
-      defaultValue: true,
-    }),
-    email: Property.ShortText({
-      displayName: 'Portal Email',
-      description: 'Optional. Used only when enabling. Defaults to the contact\'s email.',
-      required: false,
-    }),
+    contactId: ninjapipeProps.contactRequired(),
+    enable: Property.Checkbox({ displayName: 'Enable Client Portal', description: 'On to enable, off to disable.', required: true, defaultValue: true }),
+    email: Property.ShortText({ displayName: 'Portal Email', description: "Used only when enabling. Defaults to the contact's email.", required: false }),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const { contactId, enable, email } = context.propsValue;
-    const action = enable ? 'enable' : 'disable';
-    const body: Record<string, unknown> = {};
-    if (enable) {
-      if (email) body['email'] = email;
-      body['auto_generate_password'] = true;
-    }
-    const response = await ninjapipeApiCall<Record<string, unknown>>({
-      auth,
+    const p = context.propsValue;
+    const enable = p.enable === true;
+    const body = await ninjapipeClient.ninjapipeRequest({
+      auth: ninjapipeClient.readAuth(context.auth),
       method: HttpMethod.PUT,
-      path: `/client-portal-accounts/${encodeURIComponent(String(contactId))}/${encodeURIComponent(String(action))}`,
-      body: enable ? body : undefined,
+      path: `/client-portal-accounts/${ninjapipeClient.pathId({ value: p.contactId, field: 'Contact' })}/${enable ? 'enable' : 'disable'}`,
+      body: enable ? ninjapipeFields.compact({ email: p.email, auto_generate_password: true }) : {},
+      operation: enable ? 'enable client portal' : 'disable client portal',
     });
-    return flattenCustomFields(response.body);
+    const record = ninjapipeClient.unwrapRecord(body);
+    const envelope = ninjapipeClient.isRecord(body) ? body : {};
+    return {
+      enabled: enable,
+      ...record,
+      generated_password: typeof envelope['generated_password'] === 'string' ? envelope['generated_password'] : null,
+      message: typeof envelope['message'] === 'string' ? envelope['message'] : null,
+    };
   },
 });

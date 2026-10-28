@@ -162,6 +162,25 @@ jobs:
             -d "{\"content\": \"🚀 **Cloud production deployed** ($DEPLOY_KIND)\\n\\n**Version:** \`$IMAGE_TAG\`\\n**Changelog:** ${{ github.server_url }}/${{ github.repository }}/releases/latest\\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
             "$WEBHOOK"
 
+  # Records the deploy in the Linear "Cloud" release pipeline. Never fails the workflow.
+  # Only a dispatch deploys an image built from github.sha; a rollback or emergency deploy does not sync.
+  linear-release:
+    needs: promote-to-production
+    if: always() && needs.promote-to-production.result == 'success' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
+        with:
+          access_key: ${{ secrets.LINEAR_RELEASE_KEY_CLOUD }}
+          include_paths: '!packages/pieces/community/**,!packages/pieces/core/**,!packages/pieces/custom/**,!bun.lock,!tsconfig.base.json,!docs/**'
+          no_branch_ref_detection: 'true'
+          links: Run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
   # Run smoke test after scheduled promotion
   smoke-test:
     needs: promote-to-production

@@ -25,6 +25,7 @@ import {
   FileText,
   User,
   Clock,
+  ShieldCheck,
 } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -36,6 +37,7 @@ import {
   adminPageResources,
   adminLayout,
 } from '@/app/components/admin';
+import { buildEventLabels } from '@/app/routes/platform/infra/event-destinations/lib/event-labels';
 import { DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
@@ -70,6 +72,7 @@ export default function AuditLogsPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { data: projects } = projectCollectionUtils.useAll();
   const { data: users } = platformUserHooks.useUsers();
+  const eventLabels = buildEventLabels();
 
   const filters: DataTableFilters<keyof ApplicationEvent>[] = [
     {
@@ -78,7 +81,7 @@ export default function AuditLogsPage() {
       accessorKey: 'action',
       options: Object.values(ApplicationEventName).map((action) => {
         return {
-          label: formatUtils.convertEnumToHumanReadable(action),
+          label: eventLabels[action],
           value: action,
         };
       }),
@@ -161,7 +164,7 @@ export default function AuditLogsPage() {
                   {!isNil(icon?.icon) && (
                     <span className="text-gray-11 shrink-0">{icon.icon}</span>
                   )}
-                  {formatUtils.convertEnumToHumanReadable(row.original.action)}
+                  {eventLabels[row.original.action]}
                 </div>
               );
             },
@@ -267,9 +270,7 @@ export default function AuditLogsPage() {
         <SheetContent className={cn(adminLayout.sheet.md, 'flex flex-col p-0')}>
           <SheetHeader className="px-6 py-4 border-b shrink-0">
             <SheetTitle className="text-base">
-              {formatUtils.convertEnumToHumanReadable(
-                selectedEvent?.action ?? '',
-              )}
+              {selectedEvent && eventLabels[selectedEvent.action]}
             </SheetTitle>
             <p className="text-sm text-gray-11 mt-1">
               {selectedEvent && convertToDetails(selectedEvent)}
@@ -417,6 +418,26 @@ function convertToIcon(event: ApplicationEvent) {
       return {
         icon: <Clock className="size-4" />,
         tooltip: t('Audit log retention'),
+      };
+    case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+    case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+    case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+    case ApplicationEventName.SSO_DOMAIN_ADDED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+    case ApplicationEventName.SSO_DOMAIN_REMOVED:
+    case ApplicationEventName.SSO_DOMAIN_EXPIRED:
+    case ApplicationEventName.SAML_CONNECTED:
+    case ApplicationEventName.SAML_CONNECTION_REPLACED:
+    case ApplicationEventName.SSO_DISABLED:
+      return {
+        icon: <ShieldCheck className="size-4" />,
+        tooltip: t('Authentication'),
       };
     default:
       return undefined;
@@ -623,6 +644,24 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         },
       ];
     }
+    case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+    case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+    case ApplicationEventName.SSO_DOMAIN_ADDED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+    case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+    case ApplicationEventName.SSO_DOMAIN_REMOVED:
+    case ApplicationEventName.SSO_DOMAIN_EXPIRED:
+      return [{ label: t('Domain'), value: event.data.domain }];
+    case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+    case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+    case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+    case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+    case ApplicationEventName.SAML_CONNECTED:
+    case ApplicationEventName.SAML_CONNECTION_REPLACED:
+    case ApplicationEventName.SSO_DISABLED:
+      return [];
     case ApplicationEventName.PROJECT_ROLE_CREATED:
     case ApplicationEventName.PROJECT_ROLE_UPDATED:
     case ApplicationEventName.PROJECT_ROLE_DELETED: {

@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   FilesService,
   tryCatch,
+  isNil,
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient } from '../auth';
@@ -84,6 +85,12 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
+    if (
+      context.isRepublish &&
+      !isNil(await context.store.get('lastHistoryId'))
+    ) {
+      return;
+    }
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
 
@@ -94,6 +101,9 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
     await context.store.put('lastHistoryId', profile.data.historyId);
   },
   onDisable: async (context) => {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete('lastHistoryId');
   },
   run: async (context) => {

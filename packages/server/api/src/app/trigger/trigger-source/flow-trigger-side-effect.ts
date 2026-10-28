@@ -80,8 +80,8 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             if (environment === ApEnvironment.TESTING) {
                 return
             }
-            const { flowId, flowVersionId, projectId, pieceTrigger, isTriggerUnchanged } = params
-            if (pieceTrigger.type !== TriggerStrategy.POLLING || isTriggerUnchanged !== true) {
+            const { flowId, flowVersionId, projectId, pieceTrigger, isRepublish } = params
+            if (pieceTrigger.type !== TriggerStrategy.POLLING || isRepublish !== true) {
                 await runDisableHook({ params, log })
             }
             switch (pieceTrigger.type) {

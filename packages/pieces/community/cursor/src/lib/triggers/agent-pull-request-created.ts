@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import { cursorAuth } from '../common/auth';
 import { makeCursorRequest } from '../common/client';
@@ -114,10 +114,16 @@ export const agentPullRequestCreatedTrigger = createTrigger({
   },
   async onEnable(context) {
     const { store } = context;
-    await store.put('agents_with_prs', JSON.stringify([]));
     await pollingHelper.onEnable(polling, context);
+    if (context.isRepublish && !isNil(await store.get('agents_with_prs'))) {
+      return;
+    }
+    await store.put('agents_with_prs', JSON.stringify([]));
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     const { store } = context;
     await store.delete('agents_with_prs');
     await pollingHelper.onDisable(polling, context);
