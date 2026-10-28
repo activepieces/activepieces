@@ -6,7 +6,7 @@ import { smartleadOutputSchemas } from '../../common/output-schemas';
 export const aiListEmailAccountsAction = createAction({
   auth: smartleadAuth,
   name: 'ai_list_email_accounts',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Email Accounts',
   description: 'List the sending email accounts connected to SmartLead.',
   audience: 'ai',

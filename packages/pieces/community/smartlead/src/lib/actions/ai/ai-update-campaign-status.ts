@@ -6,7 +6,7 @@ import { smartleadOutputSchemas } from '../../common/output-schemas';
 export const aiUpdateCampaignStatusAction = createAction({
   auth: smartleadAuth,
   name: 'ai_update_campaign_status',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Update Campaign Status',
   description: 'Start, pause or stop a SmartLead campaign.',
   audience: 'ai',

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { smartleadAuth } from '../auth';
-import { LEGACY_STOP_LEAD_OPTIONS, smartleadOperations, STOP_LEAD_OPTIONS } from '../common/operations';
+import { smartleadOperations, STOP_LEAD_OPTIONS } from '../common/operations';
 import { smartleadOutputSchemas } from '../common/output-schemas';
 import { smartleadProps } from '../common/props';
 
@@ -31,7 +31,7 @@ export const updateCampaignSettingsAction = createAction({
       displayName: 'Stop Lead Condition',
       description: 'When to stop emailing a lead',
       required: false,
-      options: { options: [...STOP_LEAD_OPTIONS, ...LEGACY_STOP_LEAD_OPTIONS] },
+      options: { options: STOP_LEAD_OPTIONS },
     }),
     unsubscribe_text: Property.LongText({
       displayName: 'Unsubscribe Text',

@@ -199,10 +199,19 @@ describe('settings fixes', () => {
     await run({ name: 'ai_update_campaign_settings', propsValue: { campaign_id: 1, track_opens: 'on' } });
     expect(Reflect.get(call({ spy, index: 1 }).body, 'track_settings')).toEqual(['DONT_TRACK_LINK_CLICK', 'DONT_TRACK_REPLY_TO_AN_EMAIL']);
   });
-  it('legacy stop options stay selectable', () => {
+  it('stop options list only the current values; legacy ones are only mapped in run()', () => {
     const prop = Reflect.get(smartlead.actions()['update_campaign_settings'].props, 'stop_lead_settings');
     const values = prop.options.options.map((o: { value: string }) => o.value);
-    expect(values).toEqual(expect.arrayContaining(['OPENED_EMAIL', 'CLICKED_LINK', 'OPEN_AN_EMAIL']));
+    expect(values).toEqual(['REPLY_TO_AN_EMAIL', 'OPEN_AN_EMAIL', 'CLICK_ON_A_LINK']);
+  });
+  it('classifies by worst reachable path', () => {
+    const actions = smartlead.actions();
+    for (const name of ['update_campaign_status', 'ai_update_campaign_status', 'update_lead_status_in_campaign', 'ai_update_lead_status_in_campaign']) {
+      expect(Reflect.get(actions[name], 'classification')).toBe('DESTRUCTIVE');
+    }
+    for (const name of ['ai_list_campaigns', 'ai_list_campaign_leads', 'ai_list_email_accounts']) {
+      expect(Reflect.get(actions[name], 'classification')).toBe('SEARCH');
+    }
   });
   it('ai settings booleans are tri-state', async () => {
     const spy = mockSeq({ ok: true });

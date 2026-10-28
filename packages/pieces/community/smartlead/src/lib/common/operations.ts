@@ -561,10 +561,6 @@ const STOP_LEAD_OPTIONS = [
   { label: 'Opened an email', value: 'OPEN_AN_EMAIL' },
   { label: 'Clicked a link', value: 'CLICK_ON_A_LINK' },
 ];
-const LEGACY_STOP_LEAD_OPTIONS = [
-  { label: 'Opened email (legacy)', value: 'OPENED_EMAIL' },
-  { label: 'Clicked link (legacy)', value: 'CLICKED_LINK' },
-];
 const LEGACY_STOP_LEAD_VALUES: Record<string, string> = {
   OPENED_EMAIL: 'OPEN_AN_EMAIL',
   CLICKED_LINK: 'CLICK_ON_A_LINK',
@@ -599,6 +595,5 @@ export {
   CAMPAIGN_STATUSES,
   LEAD_STATUS_ACTIONS,
   STOP_LEAD_OPTIONS,
-  LEGACY_STOP_LEAD_OPTIONS,
   SMARTLEAD_WEBHOOK_EVENTS,
 };

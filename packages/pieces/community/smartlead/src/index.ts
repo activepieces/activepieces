@@ -30,10 +30,10 @@ export const smartlead = createPiece({
   description:
     'Powerful cold email outreach platform with multi-account rotation, email warmup, unified inbox, and advanced analytics.',
   auth: smartleadAuth,
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/smartlead.png',
   categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
-  authors: ['Harmatta'],
+  authors: ['Harmatta', 'OdaiAhmed99'],
   actions: [
     createCampaignAction,
     addLeadsToCampaignAction,

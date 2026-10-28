@@ -7,7 +7,7 @@ import { smartleadProps } from '../common/props';
 export const updateCampaignStatusAction = createAction({
   auth: smartleadAuth,
   name: 'update_campaign_status',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Update Campaign Status',
   description: 'Start, pause or stop a campaign. Starting sends real emails to its leads; a stopped campaign cannot be restarted.',
   audience: 'human',

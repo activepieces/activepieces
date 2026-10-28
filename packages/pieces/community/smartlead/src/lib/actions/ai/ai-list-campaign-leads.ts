@@ -6,7 +6,7 @@ import { smartleadOutputSchemas } from '../../common/output-schemas';
 export const aiListCampaignLeadsAction = createAction({
   auth: smartleadAuth,
   name: 'ai_list_campaign_leads',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Campaign Leads',
   description: 'List leads in a SmartLead campaign, one page at a time.',
   audience: 'ai',
