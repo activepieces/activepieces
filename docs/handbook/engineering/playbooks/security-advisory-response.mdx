@@ -81,16 +81,16 @@ Always a patch bump (e.g. `0.71.0` → `0.71.1`). Never bundle with feature comm
 </Warning>
 
 <Steps>
-  <Step title="Cut a hotfix branch">
-    Follow the cloud-hotfix flow in [Releases](/handbook/engineering/playbooks/releases): `deploy/cloud/YYYY-MM-DD` branch, then trigger `continuous-delivery-cloud.yml` with `cloud-hotfix`.
+  <Step title="Ship it as a hotfix">
+    Follow the hotfix flow in [Releases](/handbook/engineering/playbooks/releases): merge the fix into `main`, then run `continuous-delivery-cloud.yml` by hand.
   </Step>
 
   <Step title="Bump versions">
     Patch-bump root [package.json](https://github.com/activepieces/activepieces/blob/main/package.json). Bump `packages/core/shared` if touched. If the fix has a migration, set `release = '<patched-version>'` per [Database Migrations](/handbook/engineering/playbooks/database-migration).
   </Step>
 
-  <Step title="Verify on canary">
-    Wait for canary to confirm before promoting to production.
+  <Step title="Verify on staging">
+    Wait for `e2e-staging` to pass on the fix commit, and check the fix on staging, before you approve the Cloud deploy.
   </Step>
 
   <Step title="Draft the changelog entry">

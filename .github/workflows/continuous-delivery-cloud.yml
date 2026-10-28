@@ -1,107 +1,232 @@
 name: Continuous Delivery — Cloud
 
+# The Cloud gate. Picks the newest main commit that passed E2E on staging, tests the image staging built
+# from it, waits for one approval, then deploys that image to the canary and to the fleet.
 on:
-  # schedule:
-    # - cron: '0 9 * * 0' # Sunday 9 AM UTC — promote release candidate to prod
-  workflow_call:
+  schedule:
+    - cron: '0 8 * * 0-4' # Sunday to Thursday 08:00 UTC
   workflow_dispatch:
     inputs:
-      action:
-        description: 'Action to perform'
-        required: true
-        type: choice
-        options:
-          - cloud-hotfix # Build from current branch and deploy directly to production, bypassing staging
+      sha:
+        description: 'Commit on main to deploy. Empty takes the newest one that passed E2E on staging.'
+        type: string
+        default: ''
       skip_migration_check:
         description: 'Deploy even when a pending migration is marked breaking'
         type: boolean
         default: false
 
-jobs:
-  guard:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check proximity to scheduled promotion
-        run: |
-          NOW=$(date -u +%s)
-          DOW=$(date -u +%u)  # ISO: 1=Mon … 7=Sun
-          if [ "$DOW" -eq 7 ]; then
-            TODAY_9AM=$(date -u -d "today 09:00" +%s)
-            if [ "$NOW" -lt "$TODAY_9AM" ]; then
-              NEXT_RUN=$TODAY_9AM
-            else
-              NEXT_RUN=$(date -u -d "next sunday 09:00" +%s)
-            fi
-          else
-            NEXT_RUN=$(date -u -d "next sunday 09:00" +%s)
-          fi
-          SECONDS_UNTIL=$(( NEXT_RUN - NOW ))
-          MINS=$(( SECONDS_UNTIL / 60 ))
-          if [ "$SECONDS_UNTIL" -le 3600 ]; then
-            echo "Scheduled promotion is in ${MINS}m — no hotfix needed, wait for the scheduled run."
-            exit 1
-          fi
-          echo "Next scheduled promotion in ${MINS}m — proceeding with hotfix."
+permissions:
+  contents: read
+  packages: read
 
-  build-image:
-    needs: [guard]
-    if: github.event_name != 'schedule' && needs.guard.result == 'success'
-    runs-on: ubuntu-24.04
+jobs:
+  cut:
+    runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.set-tag.outputs.image_tag }}
+      sha: ${{ steps.pick.outputs.sha }}
+      image_tag: ${{ steps.pick.outputs.image_tag }}
+      from_tag: ${{ steps.pick.outputs.from_tag }}
+      cloud_sha: ${{ steps.cloud.outputs.sha }}
+      skip: ${{ steps.cloud.outputs.skip }}
     steps:
       - uses: actions/checkout@v5
-      - name: Set image tag
-        id: set-tag
-        run: |
-          RELEASE=$(node --print "require('./package.json').version")
-          echo "image_tag=${RELEASE}.${{ github.sha }}.beta" >> $GITHUB_OUTPUT
-      - uses: docker/login-action@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: depot/setup-action@v1
-      - uses: depot/build-push-action@v1
-        with:
-          project: du7O4b0e8P
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          context: .
-          file: ./Dockerfile
-          platforms: |
-            linux/amd64
-            linux/arm64
-          push: true
-          no-cache: true
-          tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+          fetch-depth: 0
 
-  deploy-canary:
-    needs: [guard, build-image]
-    if: |
-      always() &&
-      needs.guard.result != 'failure' &&
-      (needs.build-image.result == 'success' || needs.build-image.result == 'skipped')
-    uses: ./.github/workflows/continuous-delivery-canary.yml
+      - name: Pick the candidate
+        id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_SHA: ${{ inputs.sha }}
+        run: |
+          e2e_passed() {
+            [ -n "$(gh api "repos/$GITHUB_REPOSITORY/commits/$1/check-runs?check_name=e2e-staging" \
+              --jq '.check_runs[] | select(.conclusion == "success") | .id')" ]
+          }
+          if [ -n "$INPUT_SHA" ]; then
+            SHA=$(git rev-parse --verify "$INPUT_SHA^{commit}")
+            if ! git merge-base --is-ancestor "$SHA" origin/main; then
+              echo "::error::$SHA is not on main"
+              exit 1
+            fi
+            if ! e2e_passed "$SHA"; then
+              echo "::error::e2e-staging did not pass on $SHA"
+              exit 1
+            fi
+          else
+            SHA=""
+            for COMMIT in $(git rev-list --first-parent -n 30 origin/main); do
+              if e2e_passed "$COMMIT"; then
+                SHA=$COMMIT
+                break
+              fi
+            done
+            if [ -z "$SHA" ]; then
+              echo "::error::e2e-staging did not pass on any of the last 30 commits on main"
+              exit 1
+            fi
+          fi
+          IMAGE_TAG="$(git show "$SHA:package.json" | jq -r .version).$SHA.beta"
+          FROM_TAG=$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases -L 50 --json tagName --jq '.[].tagName' \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-hotfix\.[0-9]+)?$' | sort -V | tail -1)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          echo "from_tag=$FROM_TAG" >> "$GITHUB_OUTPUT"
+          echo "Candidate \`$SHA\`, image \`$IMAGE_TAG\`, upgrade test from \`$FROM_TAG\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      # A scheduled run stops when the fleet already runs the candidate, so a quiet day asks for no approval.
+      - name: Read the commit Cloud runs
+        id: cloud
+        env:
+          SHA: ${{ steps.pick.outputs.sha }}
+        run: |
+          CLOUD_SHA=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1; exit"' \
+            | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.beta$' || true; } | head -1 | cut -d. -f4)
+          echo "sha=$CLOUD_SHA" >> "$GITHUB_OUTPUT"
+          echo "Cloud runs \`${CLOUD_SHA:-unknown}\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$CLOUD_SHA" = "$SHA" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Cloud already runs the candidate. Nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  e2e-matrix:
+    needs: cut
+    if: needs.cut.outputs.skip != 'true'
+    uses: ./.github/workflows/e2e-matrix.yml
     with:
-      image_tag: ${{ needs.build-image.outputs.image_tag }}
-      skip_migration_check: ${{ inputs.skip_migration_check == true }}
+      image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
+      ref: ${{ needs.cut.outputs.sha }}
     secrets: inherit
 
-  promote-to-production:
-    needs: [build-image, deploy-canary]
-    if: |
-      always() &&
-      needs.deploy-canary.result == 'success' &&
-      (needs.build-image.result == 'success' || needs.build-image.result == 'skipped')
+  upgrade-test:
+    needs: cut
+    if: needs.cut.outputs.skip != 'true'
+    uses: ./.github/workflows/upgrade-test.yml
+    with:
+      image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
+      ref: ${{ needs.cut.outputs.sha }}
+      from_tag: ${{ needs.cut.outputs.from_tag }}
+    secrets: inherit
+
+  # Posts each check's result on the candidate SHA, and names the check that failed.
+  report:
+    needs: [cut, e2e-matrix, upgrade-test]
+    if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      statuses: write
+    steps:
+      - name: Post the check results on the candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ needs.cut.outputs.sha }}
+          FROM_TAG: ${{ needs.cut.outputs.from_tag }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          E2E_RESULT: ${{ needs.e2e-matrix.result }}
+          UPGRADE_RESULT: ${{ needs.upgrade-test.result }}
+          SWAPPED: ${{ needs.upgrade-test.outputs.swapped }}
+        run: |
+          post() {
+            STATE=failure
+            if [ "$2" = success ]; then STATE=success; fi
+            gh api "repos/$GITHUB_REPOSITORY/statuses/$SHA" -f state="$STATE" -f context="$1" -f target_url="$RUN_URL" -f description="$3" > /dev/null
+            echo "- \`$1\`: $3" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$STATE" != success ]; then echo "::error::$1 failed on $SHA: $3"; fi
+          }
+          post e2e-matrix "$E2E_RESULT" "E2E matrix $E2E_RESULT"
+          if [ "$UPGRADE_RESULT" = success ]; then
+            post upgrade-test "$UPGRADE_RESULT" "Upgrade from $FROM_TAG passed"
+          elif [ "$SWAPPED" = true ]; then
+            post upgrade-test "$UPGRADE_RESULT" "The candidate broke after the upgrade from $FROM_TAG"
+          else
+            post upgrade-test "$UPGRADE_RESULT" "Setup failed before the upgrade from $FROM_TAG, not the candidate"
+          fi
+
+  # Lists the tickets between the commit Cloud runs and the candidate, so the approver sees them.
+  # Uses the path filter of the Linear release below. Never blocks the gate.
+  tickets:
+    needs: cut
+    if: needs.cut.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: List the tickets in the candidate
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          SHA: ${{ needs.cut.outputs.sha }}
+          CLOUD_SHA: ${{ needs.cut.outputs.cloud_sha }}
+        run: |
+          echo "## Tickets in \`${SHA:0:10}\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ -z "$CLOUD_SHA" ]; then
+            echo "Cloud version unknown, so there is no ticket list." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          PRS=$(git log --first-parent --format=%s "$CLOUD_SHA..$SHA" -- . \
+            ':!packages/pieces/community' ':!packages/pieces/core' ':!packages/pieces/custom' ':!bun.lock' ':!tsconfig.base.json' ':!docs' \
+            | { grep -oE '\(#[0-9]+\)$' || true; } | tr -d '(#)')
+          echo "| Ticket | PR |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          for PR in $PRS; do
+            URL="https://github.com/$GITHUB_REPOSITORY/pull/$PR"
+            TICKETS=$(jq -n --arg url "$URL" '{query: "query($url: String!) { attachmentsForURL(url: $url) { nodes { issue { identifier title url } } } }", variables: {url: $url}}' \
+              | curl -sf https://api.linear.app/graphql -H "Authorization: $LINEAR_API_KEY" -H 'Content-Type: application/json' -d @- \
+              | jq -r '[.data.attachmentsForURL.nodes[].issue | "[\(.identifier)](\(.url)) \(.title | gsub("\\|"; "/"))"] | unique | join("<br>")')
+            echo "| ${TICKETS:-no ticket} | [#$PR]($URL) |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+  # The one approval. A newer candidate cancels an older one that still waits here.
+  approve:
+    needs: [cut, e2e-matrix, upgrade-test, tickets]
+    if: needs.cut.outputs.skip != 'true'
+    runs-on: ubuntu-latest
     environment:
       name: production
       url: https://cloud.activepieces.com
     concurrency:
-      group: promote-production
+      group: cloud-approval
+      cancel-in-progress: true
+    steps:
+      - run: echo "Approved ${{ needs.cut.outputs.image_tag }}"
+
+  deploy-canary:
+    needs: [cut, approve]
+    concurrency:
+      group: cloud-deploy
+      cancel-in-progress: false
+    uses: ./.github/workflows/continuous-delivery-canary.yml
+    with:
+      image_tag: ${{ needs.cut.outputs.image_tag }}
+      ref: ${{ needs.cut.outputs.sha }}
+      skip_migration_check: ${{ inputs.skip_migration_check == true }}
+    secrets: inherit
+
+  promote-to-production:
+    needs: [cut, deploy-canary]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cloud-deploy
       cancel-in-progress: false
     steps:
       - name: Configure SSH
@@ -121,45 +246,19 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
-      - name: Set image tag
-        id: image
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "image_tag=${{ needs.build-image.outputs.image_tag }}" >> $GITHUB_OUTPUT
-          else
-            echo "image_tag=release-candidate" >> $GITHUB_OUTPUT
-          fi
-
       - name: Deploy App to production
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.cut.outputs.image_tag }} --config-file=config/app.yml --skip-push; exit"'
 
       - name: Deploy Workers to production
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
-
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create deploy branch
-        if: github.event_name == 'schedule'
-        run: |
-          SHA=$(git rev-parse refs/tags/release-candidate 2>/dev/null || git rev-parse release-candidate)
-          DATE=$(date -u +%Y-%m-%d)
-          BRANCH="deploy/cloud/$DATE"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git checkout -b "$BRANCH" "$SHA"
-          git push origin "$BRANCH" --force
-          echo "Created $BRANCH at $SHA"
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.cut.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
 
       - name: Notify on-call channel
         env:
           WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
-          IMAGE_TAG: ${{ steps.image.outputs.image_tag }}
-          DEPLOY_KIND: ${{ github.event_name == 'workflow_dispatch' && 'hotfix' || 'scheduled promotion' }}
+          IMAGE_TAG: ${{ needs.cut.outputs.image_tag }}
+          DEPLOY_KIND: ${{ github.event_name == 'schedule' && 'daily candidate' || 'manual run' }}
         run: |
           curl -H "Content-Type: application/json" \
             -X POST \
@@ -167,16 +266,16 @@ jobs:
             "$WEBHOOK"
 
   # Records the deploy in the Linear "Cloud" release pipeline. Never fails the workflow.
-  # Only a dispatch deploys an image built from github.sha; a rollback or emergency deploy does not sync.
+  # A rollback or emergency deploy does not sync.
   linear-release:
-    needs: promote-to-production
-    if: always() && needs.promote-to-production.result == 'success' && github.event_name == 'workflow_dispatch'
+    needs: [cut, promote-to-production]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     continue-on-error: true
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ needs.cut.outputs.sha }}
           fetch-depth: 0
       - uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
         with:
@@ -184,10 +283,3 @@ jobs:
           include_paths: '!packages/pieces/community/**,!packages/pieces/core/**,!packages/pieces/custom/**,!bun.lock,!tsconfig.base.json,!docs/**'
           no_branch_ref_detection: 'true'
           links: Run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-  # Run smoke test after scheduled promotion
-  smoke-test:
-    needs: promote-to-production
-    if: github.event_name == 'schedule'
-    uses: ./.github/workflows/smoke-test.yml
-    secrets: inherit

@@ -4,10 +4,13 @@ on:
   workflow_call:
     inputs:
       image_tag:
-        description: 'Deploy this already-built tag instead of building a new image'
+        description: 'The already-built tag to deploy'
         type: string
-        required: false
-        default: ''
+        required: true
+      ref:
+        description: 'The commit the image was built from, for the migration check'
+        type: string
+        required: true
       skip_migration_check:
         description: 'Deploy even when a pending migration is marked breaking'
         type: boolean
@@ -15,64 +18,16 @@ on:
         default: false
 
 jobs:
-  build-image:
-    if: ${{ !inputs.image_tag }}
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      packages: write
-    concurrency:
-      group: canary-deploy
-      cancel-in-progress: true
-    outputs:
-      image_tag: ${{ steps.set-tag.outputs.image_tag }}
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Set image tag
-        id: set-tag
-        run: |
-          RELEASE=$(node --print "require('./package.json').version")
-          echo "image_tag=${RELEASE}.${{ github.sha }}.canary" >> $GITHUB_OUTPUT
-
-      - uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: depot/setup-action@v1
-
-      - uses: depot/build-push-action@v1
-        with:
-          project: du7O4b0e8P
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          context: .
-          file: ./Dockerfile
-          platforms: |
-            linux/amd64
-            linux/arm64
-          push: true
-          no-cache: true
-          tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
-
-      - uses: ./.github/actions/sbom
-        with:
-          image: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
-          version: ${{ steps.set-tag.outputs.image_tag }}
-
   check-migrations:
-    needs: build-image
-    if: |
-      always() &&
-      needs.build-image.result != 'failure' &&
-      inputs.skip_migration_check != true
+    if: inputs.skip_migration_check != true
     runs-on: ubuntu-latest
     outputs:
       has_breaking: ${{ steps.check.outputs.has_breaking }}
       breaking_names: ${{ steps.check.outputs.breaking_names }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
 
       - uses: actions/setup-node@v6
         with:
@@ -126,19 +81,12 @@ jobs:
           exit 1
 
   deploy-canary:
-    needs: [build-image, check-migrations]
-    if: |
-      always() &&
-      needs.build-image.result != 'failure' &&
-      needs.check-migrations.result != 'failure'
+    needs: check-migrations
+    if: always() && (needs.check-migrations.result == 'success' || needs.check-migrations.result == 'skipped')
     runs-on: ubuntu-latest
     environment:
       name: canary
     steps:
-      - name: Resolve image tag
-        id: image
-        run: echo "image_tag=${{ inputs.image_tag || needs.build-image.outputs.image_tag }}" >> $GITHUB_OUTPUT
-
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -158,9 +106,9 @@ jobs:
 
       - name: Deploy canary app
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app-canary.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ inputs.image_tag }} --config-file=config/app-canary.yml --skip-push; exit"'
 
       - name: Deploy canary workers
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ inputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
 

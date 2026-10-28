@@ -100,7 +100,7 @@ The next Cloud deploy sets the canary image. The Cloud rollback workflow does no
 
 ## Promoting canary build to production
 
-Canary is a validation environment, not a promotion path. Full promotion happens via the Sunday scheduled cloud workflow, which deploys `release-candidate` to production. If a canary build has been validated and the corresponding commit has been tagged as `release-candidate`, it will automatically reach production on the next Sunday.
+Canary is not a promotion path. The Cloud gate (`continuous-delivery-cloud.yml`) deploys each approved candidate to the canary and then to the fleet in the same run.
 
 ## Managing Platform Routing
 

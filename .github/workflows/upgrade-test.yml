@@ -13,6 +13,14 @@ on:
         description: 'Self-hosted release to upgrade from. Empty uses the latest GitHub release.'
         type: string
         default: ''
+      ref:
+        description: 'Commit to take the check scripts from. Empty uses the commit that triggered the run.'
+        type: string
+        default: ''
+    outputs:
+      swapped:
+        description: 'true once the image under test runs, so a later failure is the image and not the setup'
+        value: ${{ jobs.upgrade.outputs.swapped }}
   workflow_dispatch:
     inputs:
       image:
@@ -37,11 +45,15 @@ jobs:
   upgrade:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    outputs:
+      swapped: ${{ steps.swap.outputs.swapped }}
     env:
       COMPOSE_FILE: from/benchmark/docker-compose.yml
       WORKER_REPLICAS: 1
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Resolve the release to upgrade from
         id: from
@@ -113,9 +125,17 @@ jobs:
         run: smoke-test/verify-delay.sh
 
       - name: Upgrade to the image under test
+        id: swap
         run: |
           docker tag activepieces-candidate:local activepieces-benchmark:local
           docker compose up -d --no-deps --no-build app worker
+          EXPECTED=$(docker image inspect -f '{{.Id}}' activepieces-candidate:local)
+          RUNNING=$(docker compose ps -q app worker | xargs docker inspect -f '{{.Image}}' | sort -u)
+          if [ "$RUNNING" != "$EXPECTED" ]; then
+            echo "::error::The app and worker run $RUNNING, not the image under test $EXPECTED"
+            exit 1
+          fi
+          echo "swapped=true" >> "$GITHUB_OUTPUT"
 
       - name: Wait for the background migrations
         run: |
