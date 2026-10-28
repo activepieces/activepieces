@@ -18,6 +18,17 @@ Find Subscriber now fails with an error when Campaign Monitor returns a real err
 
 Agents that used these actions switch to their twins: Add Subscriber (JSON fields) and Update Subscriber (JSON fields). Flows that read `found: false` from Find Subscriber to mean "not found" keep working; a run that hits a bad key or an outage now fails instead of taking the not-found branch. Flow steps keep running on the version they were built with until you upgrade them.
 
+#### Republishing no longer restarts polling triggers
+
+Republishing a running flow without changing its polling trigger (same piece, version, trigger and inputs) now leaves the trigger running: `onDisable` and `onEnable` don't run and its stored state is kept, so events created around the republish are no longer lost. When a piece is upgraded to a newer version with the same inputs, only the new version's `onEnable` runs, with `context.isRepublish` set to `true`. The old version's `onDisable` doesn't run.
+
+#### What you need to do
+
+Nothing for flows built on official pieces. If you maintain custom polling pieces:
+- To reset a polling trigger whose state has gone bad, turn the flow off and on. Republishing no longer resets it.
+- A polling trigger's `onDisable` still runs when the flow is turned off or deleted, but not on an upgrade, because the trigger keeps running. If `onEnable` creates something outside the store, save its id in the store and, when `context.isRepublish` is `true` and the id exists, reuse it instead of creating another. If the trigger needs to register and unregister with every version, make it a webhook trigger: those run both hooks on every republish.
+- Pass the whole `context` to `pollingHelper` (`pollingHelper.onEnable(polling, context)`), and in `onEnable` keep any state you store yourself when `context.isRepublish` is `true`. Otherwise the trigger starts from scratch on an upgrade. See [When the hooks run](/build-pieces/piece-reference/triggers/overview#when-the-hooks-run).
+
 #### Apache Kafka 0.1.0: Publish messages is no longer an AI agent tool
 
 **Publish messages** (several messages in one request) is no longer offered to AI agents as a tool; flow steps that use it keep working unchanged. Agents publish with **Publish message**, one message per call, so there is one agent tool for publishing.

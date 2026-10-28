@@ -157,7 +157,7 @@ jobs:
   # Runs the Playwright suite against staging once both deploys finish. The job's
   # check run on the commit SHA is the result the candidate cut reads.
   # Report-only for now (continue-on-error): it never fails the workflow.
-  # Global setup deletes every flow of the E2E account, so the account must hold nothing else.
+  # Each spec deletes the flows and connections it creates; global setup deletes only `E2E `-prefixed ones older than an hour.
   e2e-staging:
     needs: [deploy-staging-app, deploy-staging-workers]
     if: always() && needs.deploy-staging-app.result == 'success' && needs.deploy-staging-workers.result == 'success'

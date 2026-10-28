@@ -137,5 +137,5 @@
   "New Message in Queue": "New Message in Queue",
   "Triggers for each new message in a queue. Messages are deleted from the queue once received by this trigger.": "Triggers for each new message in a queue. Messages are deleted from the queue once received by this trigger.",
   "Markdown": "Markdown",
-  "Messages are **deleted from the queue** after this trigger receives them. Use a queue dedicated to this flow. Testing only peeks at messages and does not delete them.": "Messages are **deleted from the queue** after this trigger receives them. Use a queue dedicated to this flow. Testing only peeks at messages and does not delete them."
+  "Messages are **deleted from the queue** after this trigger receives them. Use a queue dedicated to this flow. Testing does not delete messages, but it does receive them, which increases their receive count. Repeated tests can move messages to a dead-letter queue if the queue has a receive limit.": "Messages are **deleted from the queue** after this trigger receives them. Use a queue dedicated to this flow. Testing does not delete messages, but it does receive them, which increases their receive count. Repeated tests can move messages to a dead-letter queue if the queue has a receive limit."
 }

@@ -143,7 +143,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         const emailDomain = email.split('@')[1]
         const isAllowedDomaiin =
             !platform.enforceAllowedAuthDomains ||
-            platform.allowedAuthDomains.includes(emailDomain)
+            platform.allowedAuthDomains.some((domain) => domain.toLowerCase() === emailDomain?.toLowerCase())
 
         if (!isAllowedDomaiin) {
             throw new ActivepiecesError({
