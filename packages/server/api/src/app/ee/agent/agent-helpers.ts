@@ -371,20 +371,17 @@ function mergeMemories({ base, incoming, current }: { base: string[], incoming: 
     ])
 }
 
-async function saveUserMemory({ platformId, userId, instructions, memories, baseMemories }: {
+async function saveUserMemory({ platformId, userId, instructions, memories }: {
     platformId: string
     userId: string
     instructions?: string | null
-    memories?: string[]
-    baseMemories?: string[]
+    memories?: { next: string[], base: string[] }
 }): Promise<GetAgentMemoryResponse> {
     return withLockedMemoryRow({ platformId, userId }, async ({ repo, row }) => {
         const lockedMemories = row?.memories ?? []
-        const nextMemories = memories === undefined
+        const nextMemories = isNil(memories)
             ? lockedMemories
-            : isNil(baseMemories)
-                ? memories
-                : mergeMemories({ base: baseMemories, incoming: memories, current: lockedMemories })
+            : mergeMemories({ base: memories.base, incoming: memories.next, current: lockedMemories })
         const capped = capMemories({
             instructions: instructions === undefined ? row?.instructions ?? null : instructions,
             memories: nextMemories,

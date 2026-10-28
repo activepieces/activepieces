@@ -92,7 +92,7 @@ async function applyInstruction({ platformId, userId, instruction, log }: {
         : '(none yet)'
     const parsed = await runMemoryLlm({ platformId, instructions: INSTRUCTION_SYSTEM_PROMPT, prompt: `Current memories:\n${currentList}\n\nInput: ${trimmed}`, schema: MemoriesSchema, log })
     const nextMemories = isNil(parsed) ? [...current.memories, trimmed] : parsed.memories
-    return agentHelpers.saveUserMemory({ platformId, userId, memories: nextMemories, baseMemories: current.memories })
+    return agentHelpers.saveUserMemory({ platformId, userId, memories: { next: nextMemories, base: current.memories } })
 }
 
 export const agentMemoryAi = {
