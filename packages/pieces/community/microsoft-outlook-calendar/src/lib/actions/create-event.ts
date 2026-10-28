@@ -1,12 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { outlookCalendarAuth } from '../..';
-import { outlookCalendarCommon } from '../common/common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { outlookCalendarAuth } from '../auth';
+import { outlookCalendarClient } from '../common/client';
+import { outlookCalendarProps } from '../common/props';
 import dayjs from 'dayjs';
 
 export const createEventAction = createAction({
@@ -18,7 +14,7 @@ export const createEventAction = createAction({
   aiMetadata: { description: 'Creates a new calendar event in a specified Microsoft Outlook calendar with a title, start time, and optional end time (defaults to 30 minutes after start), timezone, and location. Use to schedule a meeting or appointment. Not idempotent: each call adds a new event, so repeated calls create duplicates.', idempotent: false },
   displayName: 'Create a new event in a calendar',
   props: {
-    calendarId: outlookCalendarCommon.calendarDropdown,
+    calendarId: outlookCalendarProps.calendarId({ required: true }),
     title: Property.ShortText({
       displayName: 'Title of the event',
       required: true,
@@ -32,7 +28,7 @@ export const createEventAction = createAction({
       description: "By default it'll be 30 min post start time",
       required: false,
     }),
-    timezone: outlookCalendarCommon.timezoneDropdown,
+    timezone: outlookCalendarProps.timezone({ required: true }),
     location: Property.ShortText({
       displayName: 'Location',
       required: false,
@@ -44,11 +40,11 @@ export const createEventAction = createAction({
       ? propsValue.end
       : dayjs(startDateTime).add(30, 'm');
     const endDateTime = dayjs(endTime).format('YYYY-MM-DDTHH:mm:ss');
-    const cloud = (auth as unknown as { props?: Record<string, unknown> }).props?.['cloud'] as string | undefined;
 
-    const request: HttpRequest = {
+    return await outlookCalendarClient.request({
+      auth,
       method: HttpMethod.POST,
-      url: `${outlookCalendarCommon.getBaseUrl(cloud)}/calendars/${propsValue.calendarId}/events`,
+      path: `/calendars/${propsValue.calendarId}/events`,
       body: {
         subject: propsValue.title,
         body: {},
@@ -64,14 +60,6 @@ export const createEventAction = createAction({
           displayName: propsValue.location,
         },
       },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    };
-
-    const response = await httpClient.sendRequest(request);
-
-    return response.body;
+    });
   },
 });

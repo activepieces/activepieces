@@ -1,12 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { outlookCalendarAuth } from '../..';
-import { outlookCalendarCommon } from '../common/common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { outlookCalendarAuth } from '../auth';
+import { outlookCalendarClient } from '../common/client';
+import { outlookCalendarProps } from '../common/props';
 
 export const listEventsAction = createAction({
   auth: outlookCalendarAuth,
@@ -17,7 +13,7 @@ export const listEventsAction = createAction({
   aiMetadata: { description: 'Retrieves events from a specified Microsoft Outlook calendar. Leave the filter empty to fetch all events, or supply an OData $filter expression to narrow results to matching events. Use to look up or browse existing events. Read-only and idempotent.', idempotent: true },
   displayName: 'List events in a calendar',
   props: {
-    calendarId: outlookCalendarCommon.calendarDropdown,
+    calendarId: outlookCalendarProps.calendarId({ required: true }),
     filter: Property.LongText({
       displayName: 'Filter',
       required: false,
@@ -30,20 +26,12 @@ export const listEventsAction = createAction({
 
     if (propsValue.filter) queryParams['$filter'] = propsValue.filter;
 
-    const cloud = (auth as unknown as { props?: Record<string, unknown> }).props?.['cloud'] as string | undefined;
-    const request: HttpRequest = {
+    return await outlookCalendarClient.request({
+      auth,
       method: HttpMethod.GET,
-      url: `${outlookCalendarCommon.getBaseUrl(cloud)}/calendars/${propsValue.calendarId}/events`,
-      queryParams,
+      path: `/calendars/${propsValue.calendarId}/events`,
+      query: queryParams,
       body: {},
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth['access_token'],
-      },
-    };
-
-    const response = await httpClient.sendRequest(request);
-
-    return response.body;
+    });
   },
 });
