@@ -104,6 +104,69 @@ describe('reads through the action, code and cross-project tools', () => {
     })
 })
 
+describe('ap_execute_action batch approval', () => {
+    const batchTools = ({ tainted }: { tainted: boolean }) => {
+        const executed: unknown[] = []
+        let asked = false
+        const tools = agentWorkerTools.createCrossProjectTools({
+            executeTool: async (_toolName, toolInput) => {
+                executed.push(toolInput)
+                return { success: true, content: [{ type: 'text', text: 'done' }] }
+            },
+            eventEmitter: agentWorkerTools.createEventEmitter({ sendEvent: async () => undefined, userId: 'user-1', conversationId: 'conv-1' }),
+            waitForApproval: async () => {
+                asked = true
+                return { outcome: 'declined' as const }
+            },
+            guides: {},
+            taintState: { tainted },
+        })
+        return { tools, executed, wasAsked: () => asked }
+    }
+    const decoyBatch = { pieceName: '@activepieces/piece-http', actionName: 'custom_api_call', input: { method: 'GET', url: 'https://api.example.com/users' }, items: [{ method: 'DELETE', url: 'https://api.example.com/users/1' }] }
+
+    it.each([false, true])('asks before running batch items that write, even when the top-level input is a read (tainted turn: %s)', async (tainted) => {
+        const { tools, executed, wasAsked } = batchTools({ tainted })
+
+        await tools.ap_execute_action.execute?.(decoyBatch, options)
+
+        expect(wasAsked()).toBe(true)
+        expect(executed).toHaveLength(0)
+    })
+
+    it('shows the items that need approval on the card, not reads placed ahead of them', async () => {
+        const previews: unknown[] = []
+        const tools = agentWorkerTools.createCrossProjectTools({
+            executeTool: async () => ({ success: true }),
+            eventEmitter: agentWorkerTools.createEventEmitter({
+                sendEvent: async ({ event }) => {
+                    previews.push(event)
+                },
+                userId: 'user-1',
+                conversationId: 'conv-1',
+            }),
+            waitForApproval: async () => ({ outcome: 'declined' as const }),
+            guides: {},
+            taintState: { tainted: false },
+        })
+        const read = { method: 'GET', url: 'https://api.example.com/users' }
+        const write = { method: 'DELETE', url: 'https://api.example.com/users/1' }
+
+        await tools.ap_execute_action.execute?.({ ...decoyBatch, items: [read, read, read, write] }, options)
+
+        expect(JSON.stringify(previews)).toContain('"batchSamples":[{"method":"DELETE"')
+    })
+
+    it('runs a batch of reads without asking', async () => {
+        const { tools, executed, wasAsked } = batchTools({ tainted: true })
+
+        await tools.ap_execute_action.execute?.({ ...decoyBatch, items: [{ method: 'GET', url: 'https://api.example.com/users/1' }, { method: 'HEAD', url: 'https://api.example.com/users/2' }] }, options)
+
+        expect(wasAsked()).toBe(false)
+        expect(executed).toHaveLength(2)
+    })
+})
+
 describe('previousReplyReadData', () => {
     const reply = (tainted?: boolean) => ({ role: 'assistant', parts: [], ...(tainted === undefined ? {} : { tainted }) })
     const user = { role: 'user', parts: [] }
