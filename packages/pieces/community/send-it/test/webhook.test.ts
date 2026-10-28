@@ -83,6 +83,17 @@ describe('webhook signature', () => {
     expect(store.data.has('seenDelivery:dlv_9')).toBe(true);
   });
 
+  test('markers inside the replay window are never deleted, and cleanup is bounded per event', async () => {
+    const recent = Array.from({ length: 1500 }, (_, i) => ({ id: `r${i}`, at: NOW - 60 * 1000 }));
+    const old = Array.from({ length: 100 }, (_, i) => ({ id: `o${i}`, at: NOW - 60 * 60 * 1000 }));
+    const initial: Record<string, unknown> = { webhookId: 'wh_1', webhookSecret: SECRET, seenDeliveryIndex: [...old, ...recent] };
+    for (const entry of [...old, ...recent]) initial[`seenDelivery:${entry.id}`] = entry.at;
+    const store = memoryStore(initial);
+    expect(await handle({ store, signature: sign() })).toHaveLength(1);
+    expect(recent.every((entry) => store.data.has(`seenDelivery:${entry.id}`))).toBe(true);
+    expect(old.filter((entry) => !store.data.has(`seenDelivery:${entry.id}`))).toHaveLength(25);
+  });
+
   test('legacy store without a secret still fires; no webhook at all drops', async () => {
     expect(await handle({ store: memoryStore({ webhookId: 'wh_old' }) })).toHaveLength(1);
     expect(await handle({ store: memoryStore() })).toEqual([]);
