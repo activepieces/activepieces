@@ -7,7 +7,6 @@ import { t } from 'i18next';
 import { ChevronDown, WorkflowIcon } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +35,7 @@ import { flowApprovalsHooks } from '@/features/flow-approvals';
 import { flowHooks } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { useNewWindow } from '@/lib/navigation-utils';
 
 import { DeleteReplacedConnectionDialog } from './delete-replaced-connection-dialog';
 import {
@@ -53,6 +53,19 @@ const ReplaceConnectionForProjectDialog = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [connectionToDelete, setConnectionToDelete] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
+  const { mutate: checkConnectionUsed } =
+    appConnectionsMutations.useIsConnectionUsed();
+  const offerToDeleteSource = (connection: AppConnectionWithoutSensitiveData) =>
+    checkConnectionUsed(
+      { projectId, externalId: connection.externalId },
+      {
+        onSuccess: (isUsed) => {
+          if (!isUsed) {
+            setConnectionToDelete(connection);
+          }
+        },
+      },
+    );
   return (
     <>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -62,7 +75,7 @@ const ReplaceConnectionForProjectDialog = ({
             key={dialogOpen ? 'open' : 'closed'}
             projectId={projectId}
             onConnectionMerged={onConnectionMerged}
-            onOfferToDeleteSource={setConnectionToDelete}
+            onOfferToDeleteSource={offerToDeleteSource}
             setDialogOpen={setDialogOpen}
           />
         </DialogContent>
@@ -70,7 +83,6 @@ const ReplaceConnectionForProjectDialog = ({
       {connectionToDelete && (
         <DeleteReplacedConnectionDialog
           connection={connectionToDelete}
-          projectId={projectId}
           onClose={() => {
             setConnectionToDelete(null);
             onConnectionMerged();
@@ -87,7 +99,7 @@ function ReplaceConnectionForProjectForm({
   onOfferToDeleteSource,
   setDialogOpen,
 }: ReplaceConnectionForProjectFormProps) {
-  const navigate = useNavigate();
+  const openNewWindow = useNewWindow();
   const publishNeedsApproval = flowApprovalsHooks.usePublishNeedsApproval();
   const userHasPermissionToDeleteConnection = useAuthorization().checkAccess(
     Permission.WRITE_APP_CONNECTION,
@@ -252,7 +264,7 @@ function ReplaceConnectionForProjectForm({
                             variant="secondary"
                             className="max-w-[280px] cursor-pointer hover:bg-gray-3/70"
                             onClick={() =>
-                              navigate(
+                              openNewWindow(
                                 `/projects/${flow.projectId}/flows/${flow.id}`,
                               )
                             }
