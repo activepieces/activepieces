@@ -7,6 +7,25 @@ import {
 import { discordAuth } from '../auth';
 import { discordRoleActionOutputSchema } from '../output-schemas';
 
+function resolveTriState(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (value === 'yes') {
+    return true;
+  }
+  if (value === 'no') {
+    return false;
+  }
+  return undefined;
+}
+
+const triStateOptions = [
+  { label: 'Yes', value: 'yes' },
+  { label: 'No', value: 'no' },
+  { label: 'Leave unchanged', value: 'unchanged' },
+];
+
 export const discordUpdateRole = createAction({
   auth: discordAuth,
   name: 'discord_update_role',
@@ -16,7 +35,7 @@ export const discordUpdateRole = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates a role by guild ID and role ID (PATCH /guilds/{guild_id}/roles/{role_id}) — name, color, hoist, and mentionable only; it deliberately does NOT touch the permissions bitfield. Resolve role IDs with List Roles. Idempotent: setting the same values yields the same state. Requires Manage Roles permission.',
+      'Updates a role by guild ID and role ID (PATCH /guilds/{guild_id}/roles/{role_id}) — name, color, hoist, and mentionable only; it deliberately does NOT touch the permissions bitfield. Resolve role IDs with List Roles. Idempotent: setting the same values yields the same state. Only the fields you provide are changed; omitted fields (or Leave unchanged) stay as they are. Requires Manage Roles permission.',
     idempotent: true,
   },
   outputSchema: discordRoleActionOutputSchema,
@@ -42,15 +61,19 @@ export const discordUpdateRole = createAction({
         'New role color as an integer RGB value (e.g. 3447003). Leave empty to keep the current color.',
       required: false,
     }),
-    hoist: Property.Checkbox({
+    hoist: Property.StaticDropdown({
       displayName: 'Display Separately',
-      description: 'Whether members with this role show separately in the sidebar.',
+      description:
+        'Show members separately in the sidebar. Leave unchanged to keep it.',
       required: false,
+      options: { options: triStateOptions },
     }),
-    mentionable: Property.Checkbox({
+    mentionable: Property.StaticDropdown({
       displayName: 'Mentionable',
-      description: 'Whether the role can be mentioned by other members.',
+      description:
+        'Let members mention this role. Leave unchanged to keep it.',
       required: false,
+      options: { options: triStateOptions },
     }),
     reason: Property.ShortText({
       displayName: 'Reason',
@@ -66,11 +89,13 @@ export const discordUpdateRole = createAction({
     if (configValue.propsValue.color !== undefined && configValue.propsValue.color !== null) {
       body['color'] = configValue.propsValue.color;
     }
-    if (configValue.propsValue.hoist !== undefined) {
-      body['hoist'] = configValue.propsValue.hoist;
+    const hoist = resolveTriState(configValue.propsValue.hoist);
+    if (hoist !== undefined) {
+      body['hoist'] = hoist;
     }
-    if (configValue.propsValue.mentionable !== undefined) {
-      body['mentionable'] = configValue.propsValue.mentionable;
+    const mentionable = resolveTriState(configValue.propsValue.mentionable);
+    if (mentionable !== undefined) {
+      body['mentionable'] = mentionable;
     }
 
     const request: HttpRequest<any> = {
