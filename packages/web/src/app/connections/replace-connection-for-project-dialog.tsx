@@ -327,7 +327,7 @@ ReplaceConnectionForProjectDialog.displayName =
   'ReplaceConnectionForProjectDialog';
 export { ReplaceConnectionForProjectDialog };
 
-const MAX_FLOWS_PER_REPLACE = 1000;
+const MAX_FLOWS_PER_REPLACE = 200;
 
 const PIECES_WITHOUT_REPLACE = [
   '@activepieces/piece-mcp',
