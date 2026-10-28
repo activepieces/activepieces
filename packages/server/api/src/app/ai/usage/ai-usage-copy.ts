@@ -41,15 +41,14 @@ async function copyWindows({ platformId, fromMs, untilMs, windowMs, log, deadlin
         return { ...outcome, lagMs: Date.now() - fromMs }
     }
     const maxPages = endMs - fromMs <= MIN_WINDOW_MS ? Infinity : MAX_PAGES_PER_WINDOW
-    const { data: raw, error } = await tryCatch(() => readWindow({ platformId, startMs: fromMs, endMs, log, maxPages }))
+    const { data: read, error } = await tryCatch(() => readWindow({ platformId, startMs: fromMs, endMs, log, maxPages }))
     if (!isNil(error)) {
         log.warn({ error, platform: { id: platformId } }, '[aiUsageCopy] Could not read usage events from Autumn, will retry this window next run')
         return { ...outcome, attempted: true, failed: true, lagMs: Date.now() - fromMs }
     }
-    if (isNil(raw)) {
+    if (isNil(read)) {
         const smallerWindowMs = Math.max(MIN_WINDOW_MS, Math.floor((endMs - fromMs) / 2))
-        const redis = await redisConnections.useExisting()
-        await redis.set(windowKeyOf(platformId), smallerWindowMs, 'EX', SMALLER_WINDOW_TTL_SECONDS)
+        await saveWindow({ platformId, windowMs: smallerWindowMs })
         return copyWindows({
             platformId,
             fromMs,
@@ -60,23 +59,27 @@ async function copyWindows({ platformId, fromMs, untilMs, windowMs, log, deadlin
             outcome: { ...outcome, attempted: true },
         })
     }
-    const { events, skipped } = usageEventsOf({ platformId, raw, startMs: fromMs, endMs })
+    const { events, skipped } = usageEventsOf({ platformId, raw: read.events, startMs: fromMs, endMs })
     const moved = await writeWindow({ platformId, fromMs, endMs, events })
     if (!moved) {
         return { ...outcome, lagMs: Date.now() - fromMs }
+    }
+    const nextWindowMs = read.pages <= 1 ? Math.min(WINDOW_MS, windowMs * 2) : windowMs
+    if (nextWindowMs !== windowMs) {
+        await saveWindow({ platformId, windowMs: nextWindowMs })
     }
     return copyWindows({
         platformId,
         fromMs: endMs,
         untilMs,
-        windowMs,
+        windowMs: nextWindowMs,
         log,
         deadlineMs,
         outcome: { ...outcome, attempted: true, windows: outcome.windows + 1, copied: outcome.copied + events.length, skipped: outcome.skipped + skipped },
     })
 }
 
-async function readWindow({ platformId, startMs, endMs, log, maxPages }: ReadWindowParams): Promise<UsageEvent[] | null> {
+async function readWindow({ platformId, startMs, endMs, log, maxPages }: ReadWindowParams): Promise<{ events: UsageEvent[], pages: number } | null> {
     const pages: UsageEvent[][] = []
     let cursor: string | null = null
     do {
@@ -87,7 +90,16 @@ async function readWindow({ platformId, startMs, endMs, log, maxPages }: ReadWin
         pages.push(page.events)
         cursor = page.nextCursor
     } while (!isNil(cursor))
-    return pages.flat()
+    return { events: pages.flat(), pages: pages.length }
+}
+
+async function saveWindow({ platformId, windowMs }: { platformId: string, windowMs: number }): Promise<void> {
+    const redis = await redisConnections.useExisting()
+    if (windowMs >= WINDOW_MS) {
+        await redis.del(windowKeyOf(platformId))
+        return
+    }
+    await redis.set(windowKeyOf(platformId), windowMs, 'EX', SMALLER_WINDOW_TTL_SECONDS)
 }
 
 function usageEventsOf({ platformId, raw, startMs, endMs }: { platformId: string, raw: UsageEvent[], startMs: number, endMs: number }): { events: UsageEventWithRun[], skipped: number } {
