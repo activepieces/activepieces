@@ -101,7 +101,9 @@ noticeable when a flow receives a large burst of triggers at once, in which
 case the burst is worked through a few runs at a time.
 
 Platform admins can give a specific project a different limit in its settings;
-see [Manage Concurrency](/admin-guide/guides/manage-concurrency).
+see [Manage Concurrency](/admin-guide/guides/manage-concurrency). On Cloud a
+per-project value can lower the limit but never raise it above what the plan
+allows.
 
 On self-hosted installations plans don't apply. Enforcement is off by default
 and uses a single limit for every project when enabled:

@@ -462,6 +462,52 @@ describe('rateLimiterInterceptor', () => {
             expect(result.verdict).toBe(InterceptorVerdict.REJECT)
         })
 
+        it('should clamp a pool override above the plan limit on cloud edition', async () => {
+            vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.CLOUD)
+            vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
+                if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
+                return 0
+            })
+            const projectId = `proj-${crypto.randomUUID()}`
+            const platformId = `plat-${crypto.randomUUID()}`
+            const poolId = `pool-${crypto.randomUUID()}`
+            const jobData = createFlowJobData({ projectId, platformId })
+
+            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.FREE)
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId)
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 50)
+
+            for (let i = 0; i < 5; i++) {
+                const r = await rateLimiterInterceptor.preDispatch({ jobId: `job-${i}`, jobData, job: createMockJob(), log: mockLog })
+                expect(r.verdict).toBe(InterceptorVerdict.ALLOW)
+            }
+
+            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-overflow', jobData, job: createMockJob(), log: mockLog })
+            expect(result.verdict).toBe(InterceptorVerdict.REJECT)
+        })
+
+        it('should keep a pool override below the plan limit on cloud edition', async () => {
+            vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.CLOUD)
+            vi.spyOn(system, 'getNumberOrThrow').mockImplementation((prop) => {
+                if (prop === AppSystemProp.FLOW_TIMEOUT_SECONDS) return 600
+                if (prop === AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT) return 100
+                return 0
+            })
+            const projectId = `proj-${crypto.randomUUID()}`
+            const platformId = `plat-${crypto.randomUUID()}`
+            const poolId = `pool-${crypto.randomUUID()}`
+            const jobData = createFlowJobData({ projectId, platformId })
+
+            await distributedStore.put(getPlatformPlanNameKey(platformId), PlanName.FREE)
+            await distributedStore.put(getProjectConcurrencyPoolKey(projectId), poolId)
+            await distributedStore.put(getConcurrencyPoolLimitKey(poolId), 1)
+
+            await rateLimiterInterceptor.preDispatch({ jobId: 'job-1', jobData, job: createMockJob(), log: mockLog })
+            const result = await rateLimiterInterceptor.preDispatch({ jobId: 'job-2', jobData, job: createMockJob(), log: mockLog })
+            expect(result.verdict).toBe(InterceptorVerdict.REJECT)
+        })
+
         it.each([
             [PlanName.PLUS, 10],
             [PlanName.PLUS_ANNUAL, 10],

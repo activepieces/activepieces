@@ -1,6 +1,6 @@
 import { isNil, PlatformId, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
-import { ApEdition, ExecuteFlowJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PlanName, RATE_LIMIT_PRIORITY, RunEnvironment, WorkerJobType } from '@activepieces/shared'
+import { ApEdition, ExecuteFlowJobData, getConcurrentJobsLimitForCloudPlan, getDefaultJobPriority, JOB_PRIORITY, JobData, RATE_LIMIT_PRIORITY, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { Job } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -19,11 +19,6 @@ import { jobQueue } from '../job-queue'
 
 const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 const ParkedMember = z.tuple([z.string(), z.string(), z.number()])
-
-const FREE_CONCURRENT_JOBS_LIMIT = 5
-const PLUS_CONCURRENT_JOBS_LIMIT = 10
-const TEAM_CONCURRENT_JOBS_LIMIT = 20
-const ENTERPRISE_CONCURRENT_JOBS_LIMIT = 30
 
 async function resolveFlowGroupId(jobData: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<string | null> {
     const { data: workerGroupsEnabled } = await tryCatch(() => platformWorkerGroupService(log).isWorkerGroupsEnabled({ platformId: jobData.platformId }))
@@ -55,40 +50,27 @@ async function getMaxConcurrentJobsForPlatformPlan({ platformId, log }: { platfo
     }
     const cachedPlanName = await distributedStore.get<string>(getPlatformPlanNameKey(platformId))
     if (!isNil(cachedPlanName)) {
-        return concurrencyLimitForCloudPlan(cachedPlanName)
+        return getConcurrentJobsLimitForCloudPlan(cachedPlanName)
     }
     const { data: platform } = await tryCatch(() => platformService(log).getOneWithPlan(platformId))
     const planName = platform?.plan.plan ?? null
     if (!isNil(planName)) {
         await distributedStore.put(getPlatformPlanNameKey(platformId), planName, PLATFORM_PLAN_NAME_TTL_SECONDS)
     }
-    return concurrencyLimitForCloudPlan(planName)
-}
-
-function concurrencyLimitForCloudPlan(planName: string | null): number {
-    switch (planName ?? PlanName.FREE) {
-        case PlanName.FREE:
-            return FREE_CONCURRENT_JOBS_LIMIT
-        case PlanName.APPSUMO:
-        case PlanName.FREE_LEGACY:
-        case PlanName.PLUS:
-        case PlanName.PLUS_ANNUAL:
-        case PlanName.PLUS_CHAT:
-            return PLUS_CONCURRENT_JOBS_LIMIT
-        case PlanName.TEAM:
-        case PlanName.TEAM_ANNUAL:
-            return TEAM_CONCURRENT_JOBS_LIMIT
-        default:
-            return ENTERPRISE_CONCURRENT_JOBS_LIMIT
-    }
+    return getConcurrentJobsLimitForCloudPlan(planName)
 }
 
 async function getMaxConcurrentJobs({ poolId, platformId, projectId, log }: { poolId: string | null, platformId: PlatformId, projectId: string, log: FastifyBaseLogger }): Promise<number> {
-    // Explicit per-project limit (set via the By-project table / concurrency pool) overrides everything.
+    // Explicit per-project limit (set via the By-project table / concurrency pool) overrides the
+    // self-hosted default, but on cloud it is clamped to the platform plan's limit.
     if (!isNil(poolId)) {
         const { data: value, error } = await tryCatch(() => concurrencyPoolService(log).getPoolLimit(poolId))
         if (error === null && !isNil(value)) {
-            return value
+            if (system.getEdition() !== ApEdition.CLOUD) {
+                return value
+            }
+            const cloudPlanLimit = await getMaxConcurrentJobsForPlatformPlan({ platformId, log })
+            return Math.min(value, cloudPlanLimit)
         }
     }
     const planLimit = await getMaxConcurrentJobsForPlatformPlan({ platformId, log })
