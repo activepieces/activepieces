@@ -16,6 +16,9 @@ when the variable is unset.
   <Card title="Execution" icon="bolt" href="#execution">
     Run timeout, worker memory, retention.
   </Card>
+  <Card title="Concurrent runs" icon="layer-group" href="#concurrent-runs">
+    How many flow runs a project can execute at once.
+  </Card>
   <Card title="Files & flow run logs" icon="file" href="#files-&-flow-run-logs">
     File sizes, log size, slicing thresholds.
   </Card>
@@ -70,6 +73,43 @@ warm process with pieces loaded). To handle larger or longer processes, split
 them into multiple flows — e.g. one flow calls another via webhook, or each flow
 processes a smaller batch of items.
 </Tip>
+
+---
+
+### Concurrent runs
+
+A project can only execute a certain number of flow runs at the same time. On
+Cloud, that number depends on your plan:
+
+| Plan | Concurrent runs per project |
+|---|---|
+| Free | 5 |
+| Plus | 10 |
+| Team | 20 |
+| Enterprise | 30 |
+
+These limits exist because Cloud runs everyone's flows on shared machines. If
+one project could start thousands of runs at once, it would take over the
+capacity that other customers' runs need, and their flows would slow down or
+stall. Capping how many runs each project executes at a time keeps start times
+predictable for everyone.
+
+A run that arrives while the project is at its limit is not lost or failed. It
+waits in a queue and starts automatically as soon as one of the running flows
+finishes. For most workloads this queuing is invisible; it only becomes
+noticeable when a flow receives a large burst of triggers at once, in which
+case the burst is worked through a few runs at a time.
+
+Platform admins can give a specific project a different limit in its settings;
+see [Manage Concurrency](/admin-guide/guides/manage-concurrency).
+
+On self-hosted installations plans don't apply. Enforcement is off by default
+and uses a single limit for every project when enabled:
+
+| Limit | Env var | Self-hosted default |
+|---|---|---|
+| Per-project concurrency enforcement | `AP_PROJECT_RATE_LIMITER_ENABLED` | `false` |
+| Concurrent runs per project | `AP_DEFAULT_CONCURRENT_JOBS_LIMIT` | `5` |
 
 ---
 
