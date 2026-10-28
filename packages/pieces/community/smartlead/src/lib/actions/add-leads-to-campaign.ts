@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { smartleadRequest } from '../common/client';
 import { smartleadAuth } from '../auth';
+import { smartleadOperations } from '../common/operations';
+import { smartleadOutputSchemas } from '../common/output-schemas';
 
 export const addLeadsToCampaignAction = createAction({
   auth: smartleadAuth,
@@ -10,12 +10,8 @@ export const addLeadsToCampaignAction = createAction({
   displayName: 'Add Leads to Campaign',
   description:
     'Add one or more leads to a campaign with validation and deduplication. Maximum 400 leads per request.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Adds leads to an existing SmartLead campaign by campaign ID, passing a JSON array where each lead requires an email field. Optional flags let you bypass the global block list, unsubscribe list, cross-campaign duplicate check, and community bounce list. Use to populate or grow a campaign recipient list; capped at 400 leads per call. Not idempotent: it appends leads on each call (though SmartLead deduplicates by email within the campaign).',
-    idempotent: false,
-  },
+  audience: 'human',
+  outputSchema: smartleadOutputSchemas.addLeads,
   props: {
     campaign_id: Property.Number({
       displayName: 'Campaign ID',
@@ -66,67 +62,17 @@ Example:
     }),
   },
   async run(context) {
-    const {
-      campaign_id,
-      lead_list,
-      ignore_global_block_list,
-      ignore_unsubscribe_list,
-      ignore_duplicate_leads_in_other_campaign,
-      ignore_community_bounce_list,
-    } = context.propsValue;
-    const apiKey = context.auth.secret_text;
-
-    const leads = typeof lead_list === 'string'
-      ? JSON.parse(lead_list)
-      : lead_list;
-
-    if (!Array.isArray(leads)) {
-      throw new Error(
-        'lead_list must be a JSON array of lead objects with at least an "email" field'
-      );
-    }
-
-    if (leads.length === 0) {
-      throw new Error(
-        'lead_list must contain at least one lead.'
-      );
-    }
-
-    if (leads.length > 400) {
-      throw new Error(
-        `Maximum 400 leads per request. Got ${leads.length}. Split into multiple requests.`
-      );
-    }
-
-    for (let i = 0; i < leads.length; i++) {
-      if (!leads[i].email || typeof leads[i].email !== 'string') {
-        throw new Error(
-          `Lead at index ${i} is missing a required "email" field.`
-        );
-      }
-    }
-
-    const body: Record<string, unknown> = {
-      lead_list: leads,
-    };
-
-    const settings: Record<string, boolean> = {};
-    if (ignore_global_block_list) settings['ignore_global_block_list'] = true;
-    if (ignore_unsubscribe_list) settings['ignore_unsubscribe_list'] = true;
-    if (ignore_duplicate_leads_in_other_campaign)
-      settings['ignore_duplicate_leads_in_other_campaign'] = true;
-    if (ignore_community_bounce_list)
-      settings['ignore_community_bounce_list'] = true;
-
-    if (Object.keys(settings).length > 0) {
-      body['settings'] = settings;
-    }
-
-    return await smartleadRequest({
-      endpoint: `campaigns/${campaign_id}/leads`,
-      method: HttpMethod.POST,
-      apiKey,
-      body,
+    const p = context.propsValue;
+    return smartleadOperations.addLeadsToCampaign({
+      apiKey: context.auth.secret_text,
+      campaignId: p.campaign_id,
+      leadList: p.lead_list,
+      flags: {
+        ignore_global_block_list: p.ignore_global_block_list,
+        ignore_unsubscribe_list: p.ignore_unsubscribe_list,
+        ignore_duplicate_leads_in_other_campaign: p.ignore_duplicate_leads_in_other_campaign,
+        ignore_community_bounce_list: p.ignore_community_bounce_list,
+      },
     });
   },
 });

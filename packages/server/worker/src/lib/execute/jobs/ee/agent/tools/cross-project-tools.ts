@@ -103,12 +103,14 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         return guardResult
                     }
                 }
-                const needsPreview = agentToolClassification.requiresActionPreview({
+                const executedInputs = isBatch ? toolInput.items! : [toolInput.input ?? {}]
+                const gatedInputs = executedInputs.filter((input) => agentToolClassification.requiresActionPreview({
                     actionName: toolInput.actionName,
-                    input: toolInput.input,
+                    input,
                     needsConfirmation: toolInput.needsConfirmation,
                     tainted: taintState.tainted,
-                })
+                }))
+                const needsPreview = gatedInputs.length > 0
                 taintState.tainted = true
 
                 if (needsPreview) {
@@ -120,7 +122,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                         input: toolInput.input ?? {},
                         isBatch: !!isBatch,
                         batchCount: isBatch ? toolInput.items!.length : undefined,
-                        batchSamples: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                        batchSamples: isBatch ? gatedInputs.slice(0, 3) : undefined,
                     }
                     eventEmitter.emitActionPreview(previewData)
                     if (onGateOpened) {
@@ -132,7 +134,7 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                                 pieceName: toolInput.pieceName,
                                 actionName: toolInput.actionName,
                                 input: toolInput.input ?? {},
-                                items: isBatch ? toolInput.items!.slice(0, 3) : undefined,
+                                items: isBatch ? gatedInputs.slice(0, 3) : undefined,
                                 batchCount: isBatch ? toolInput.items!.length : undefined,
                             },
                         }))

@@ -83,7 +83,7 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
     })
 
     it('exits quietly without releasing the flow when it is a redelivered copy of a run still in progress', async () => {
-        const { ctx, resumed, events } = buildContext(new ActivepiecesError({ code: ErrorCode.AGENT_RUN_SUPERSEDED, params: { message: 'This run is already in progress' } }))
+        const { ctx, resumed, events } = buildContext(new ActivepiecesError({ code: ErrorCode.AGENT_RUN_SUPERSEDED, params: { message: 'This run was already delivered' } }))
 
         const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' }))
 
