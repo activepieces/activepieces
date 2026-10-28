@@ -13,13 +13,16 @@ test.describe('Replace connection at scale', () => {
       api.getPieceVersion(WEBHOOK_PIECE),
       api.getPieceVersion(HUGGING_FACE_PIECE),
     ]);
-    const sourceConnection = await api.createHuggingFaceConnection(`HF source ${runId}`);
-    const targetConnection = await api.createHuggingFaceConnection(`HF target ${runId}`);
-
-    const seedStartedAt = Date.now();
     const flowIds: string[] = [];
+    const connectionIds: string[] = [];
     try {
-      const createdFlowIds = await runWithConcurrency({
+      const sourceConnection = await api.createHuggingFaceConnection(`HF source ${runId}`);
+      connectionIds.push(sourceConnection.id);
+      const targetConnection = await api.createHuggingFaceConnection(`HF target ${runId}`);
+      connectionIds.push(targetConnection.id);
+
+      const seedStartedAt = Date.now();
+      await runWithConcurrency({
         count: FLOW_COUNT,
         concurrency: SEED_CONCURRENCY,
         task: (index) => api.createPublishedFlow({
@@ -29,9 +32,9 @@ test.describe('Replace connection at scale', () => {
             huggingFaceVersion,
             connectionExternalId: sourceConnection.externalId,
           }),
+          onCreated: (flowId) => flowIds.push(flowId),
         }),
       });
-      flowIds.push(...createdFlowIds);
       logTiming(`Created and published ${flowIds.length} flows`, seedStartedAt);
 
       expect(await api.countFlowsUsingConnection({ externalId: sourceConnection.externalId, published: false })).toBe(FLOW_COUNT);
@@ -73,7 +76,10 @@ test.describe('Replace connection at scale', () => {
         concurrency: SEED_CONCURRENCY,
         task: (index) => api.deleteFlow(flowIds[index]),
       });
-      logTiming(`Deleted ${flowIds.length} flows`, cleanupStartedAt);
+      for (const connectionId of connectionIds) {
+        await api.deleteConnection(connectionId);
+      }
+      logTiming(`Deleted ${flowIds.length} flows and ${connectionIds.length} connections`, cleanupStartedAt);
     }
   });
 });
@@ -118,12 +124,13 @@ async function createApiClient(page: Page) {
         },
       });
     },
-    async createPublishedFlow({ displayName, trigger }: { displayName: string; trigger: unknown }): Promise<string> {
+    async createPublishedFlow({ displayName, trigger, onCreated }: CreatePublishedFlowParams): Promise<string> {
       const flow = await call<{ id: string; version: { schemaVersion: string | null } }>({
         method: 'POST',
         path: '/v1/flows',
         data: { displayName, projectId },
       });
+      onCreated(flow.id);
       await call({
         method: 'POST',
         path: `/v1/flows/${flow.id}`,
@@ -161,6 +168,9 @@ async function createApiClient(page: Page) {
     },
     async deleteFlow(flowId: string): Promise<void> {
       await call({ method: 'DELETE', path: `/v1/flows/${flowId}` });
+    },
+    async deleteConnection(connectionId: string): Promise<void> {
+      await call({ method: 'DELETE', path: `/v1/app-connections/${connectionId}` });
     },
   };
 }
@@ -217,14 +227,22 @@ async function pickOption({ page, trigger, search }: PickOptionParams): Promise<
 
 async function runWithConcurrency<T>({ count, concurrency, task }: RunWithConcurrencyParams<T>): Promise<T[]> {
   const results: T[] = new Array(count);
+  const failures: unknown[] = [];
   let nextIndex = 0;
   async function worker(): Promise<void> {
-    while (nextIndex < count) {
+    while (nextIndex < count && failures.length === 0) {
       const index = nextIndex++;
-      results[index] = await task(index);
+      try {
+        results[index] = await task(index);
+      } catch (error) {
+        failures.push(error);
+      }
     }
   }
   await Promise.all(Array.from({ length: Math.min(concurrency, count) }, () => worker()));
+  if (failures.length > 0) {
+    throw failures[0];
+  }
   return results;
 }
 
@@ -248,6 +266,12 @@ type Connection = {
   id: string;
   externalId: string;
   displayName: string;
+};
+
+type CreatePublishedFlowParams = {
+  displayName: string;
+  trigger: unknown;
+  onCreated: (flowId: string) => void;
 };
 
 type CallParams = {
