@@ -8,6 +8,18 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### iLoveAPI 0.1.0: Create Signature Request is no longer an agent tool, and triggers need a Webhook Secret
+
+iLoveAPI 0.1.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+**Create Signature Request** is no longer offered as a tool to AI agents. It still works as a normal flow step. Agents should use **Send PDF for Signature** instead, which takes the PDFs as URLs. Create Signature Request also checks its input more strictly: a signature element with a missing field, or with an email that matches no signer, used to be skipped and now fails the step.
+
+Every iLoveAPI trigger now has a required **Webhook Secret**, and a delivery whose URL does not carry that secret is ignored without an error.
+
+#### What you need to do
+
+Point any agent that used Create Signature Request at Send PDF for Signature. When you upgrade an iLoveAPI trigger, fill in a Webhook Secret of at least 16 characters, then change the endpoint URL in the iLoveAPI developer dashboard to `<trigger URL>?ap_secret=<secret>`. Until you do, deliveries are dropped and the flow stops running. Check that Create Signature Request steps give every signature element all its fields and use signer emails that match a signer.
+
 #### SendIt 0.3.0: two scheduled-post actions leave AI agents, and publishing checks inputs before sending
 
 From SendIt 0.3.0, **Cancel Scheduled Post** and **Trigger Scheduled Post Now** are no longer offered to AI agents and MCP clients. They stay available as flow steps. An agent or MCP client that called them by name no longer finds them.
