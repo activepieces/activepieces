@@ -190,7 +190,7 @@ function UsageListBody({
         <p className="px-4 pb-3 text-xs text-gray-11">
           {t(
             'Only the top {count} by spend are listed, so search and pages cover these only.',
-            { count: usageFormat.whole(items.length) },
+            { count: items.length },
           )}
         </p>
       )}
