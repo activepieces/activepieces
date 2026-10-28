@@ -190,11 +190,11 @@ describe('AI usage copy from Autumn', () => {
 
     it('splits a window with too many pages instead of getting stuck on it', async () => {
         await startCursorAt({ platformId: ctx.platform.id, minutesAgo: 12 })
-        Array.from({ length: PAGE_SIZE * 7 }, (_, index) => addEvent({ minutesAgo: 11.5 - index * 0.4, properties: { usage: block() } }))
+        Array.from({ length: 99 }, (_, index) => addEvent({ minutesAgo: 11.9 - index * 0.1, properties: { usage: block() } }))
 
         await aiUsageCopy(app.log).run()
 
-        expect((await dailyTotals()).calls).toBe(PAGE_SIZE * 7)
+        expect((await dailyTotals()).calls).toBe(99)
         const savedWindowMs = Number(await (await redisConnections.useExisting()).get(`ai-usage:copy:window:${ctx.platform.id}`))
         expect(savedWindowMs).toBeGreaterThan(0)
         expect(savedWindowMs).toBeLessThan(10 * MINUTE_MS)
