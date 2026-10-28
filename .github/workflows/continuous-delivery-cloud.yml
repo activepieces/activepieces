@@ -157,14 +157,14 @@ jobs:
               echo "::error::#$PR is already on Cloud"
               exit 1
             fi
-            MIGRATIONS=$(git diff --name-only "$MERGE^" "$MERGE" -- packages/server/api/src/app/database/migration/)
+            MIGRATIONS=$(git diff --name-only "$MERGE^" "$MERGE" -- packages/server/api/src/app/database/migration/ packages/server/api/src/app/ee/database/migrations/)
             if [ -n "$MIGRATIONS" ] && [ "$ALLOW_MIGRATIONS" != true ]; then
               echo "::error::#$PR changes a migration ($MIGRATIONS). It may need schema changes Cloud does not have yet. Set allow_migrations to pick it anyway."
               exit 1
             fi
             COMMITS="$COMMITS$MERGE"$'\n'
           done
-          BRANCH="hotfix/cloud/$GITHUB_RUN_ID"
+          BRANCH="hotfix/cloud/$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -q -b "$BRANCH" "$CLOUD_SHA"
