@@ -6981,17 +6981,19 @@
     },
     "packages/pieces/community/pastefy": {
       "name": "@activepieces/piece-pastefy",
-      "version": "0.3.2",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "crypto-js": "4.2.0",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "@types/crypto-js": "4.2.2",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/paywhirl": {
