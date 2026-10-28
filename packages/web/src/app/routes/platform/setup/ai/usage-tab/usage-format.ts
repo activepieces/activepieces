@@ -33,8 +33,11 @@ function change({
 }: {
   current: number;
   previous: number;
-}): number {
-  return previous === 0 ? 0 : (current - previous) / previous;
+}): number | null {
+  if (previous === 0) {
+    return current === 0 ? 0 : null;
+  }
+  return (current - previous) / previous;
 }
 
 function signedPercent(value: number): string {
@@ -200,7 +203,20 @@ function itemCountLabel({
   dimension: AiUsageDimension;
   count: number;
 }): string {
-  return t(ITEM_COUNT_PATTERNS[dimension], { count });
+  switch (dimension) {
+    case 'project':
+      return t('{count, plural, =1 {1 project} other {# projects}}', { count });
+    case 'flow':
+      return t('{count, plural, =1 {1 flow} other {# flows}}', { count });
+    case 'agent':
+      return t('{count, plural, =1 {1 agent} other {# agents}}', { count });
+    case 'user':
+      return t('{count, plural, =1 {1 user} other {# users}}', { count });
+    case 'key':
+      return t('{count, plural, =1 {1 key} other {# keys}}', { count });
+    case 'model':
+      return t('{count, plural, =1 {1 model} other {# models}}', { count });
+  }
 }
 
 const USD = new Intl.NumberFormat('en-US', {
@@ -214,15 +230,6 @@ const COMPACT = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
 });
 const WHOLE = new Intl.NumberFormat('en-US');
-
-const ITEM_COUNT_PATTERNS: Record<AiUsageDimension, string> = {
-  project: '{count, plural, =1 {1 project} other {# projects}}',
-  flow: '{count, plural, =1 {1 flow} other {# flows}}',
-  agent: '{count, plural, =1 {1 agent} other {# agents}}',
-  user: '{count, plural, =1 {1 user} other {# users}}',
-  key: '{count, plural, =1 {1 key} other {# keys}}',
-  model: '{count, plural, =1 {1 model} other {# models}}',
-};
 
 export const usageFormat = {
   usd,

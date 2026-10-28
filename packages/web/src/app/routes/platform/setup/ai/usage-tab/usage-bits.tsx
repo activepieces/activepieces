@@ -38,9 +38,21 @@ export function DeltaChip({
   value,
   size = 'sm',
 }: {
-  value: number;
+  value: number | null;
   size?: 'sm' | 'xs';
 }) {
+  if (isNil(value)) {
+    return (
+      <span
+        className={cn(
+          'inline-flex shrink-0 items-center rounded-md text-xs font-medium text-warning-11',
+          size === 'sm' && 'bg-warning-3 px-1.5 py-0.5',
+        )}
+      >
+        {t('New')}
+      </span>
+    );
+  }
   const flat = Math.abs(value) < FLAT_CHANGE;
   const Icon = value > 0 ? ArrowUpRight : ArrowDownRight;
   return (

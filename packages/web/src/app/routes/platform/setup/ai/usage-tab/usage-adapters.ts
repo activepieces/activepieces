@@ -75,10 +75,12 @@ function elapsedDaysOf({
   ranges: AiUsageRanges;
   history: AiUsageHistory;
 }): number {
-  const spanMs =
-    new Date(ranges.current.end).getTime() -
-    new Date(ranges.current.start).getTime();
-  const elapsedMs = spanMs * history.currentCoverage;
+  const start = new Date(ranges.current.start).getTime();
+  const observedEnd = Math.min(
+    new Date(ranges.current.end).getTime(),
+    Date.now(),
+  );
+  const elapsedMs = Math.max(0, observedEnd - start) * history.currentCoverage;
   return Math.max(elapsedMs / DAY_MS, MIN_ELAPSED_DAYS);
 }
 
@@ -191,7 +193,24 @@ function itemDisplayName({ item }: { item: AiUsageItem }): string {
       provider: providerDisplayName({ provider: item.provider }),
     });
   }
-  return t(DELETED_LABELS[item.dimension]);
+  return deletedLabel({ dimension: item.dimension });
+}
+
+function deletedLabel({ dimension }: { dimension: AiUsageDimension }): string {
+  switch (dimension) {
+    case 'project':
+      return t('Deleted project');
+    case 'flow':
+      return t('Deleted flow');
+    case 'agent':
+      return t('Deleted agent');
+    case 'user':
+      return t('Deleted user');
+    case 'key':
+      return t('Deleted key');
+    case 'model':
+      return t('Deleted model');
+  }
 }
 
 function itemSubtitle({ item }: { item: AiUsageItem }): string {
@@ -250,15 +269,6 @@ function isDetailEmpty({ item }: { item: AiUsageItem }): boolean {
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MIN_ELAPSED_DAYS = 1 / (24 * 60);
 const SUB_DAY_PERIODS: AiUsagePeriod[] = ['1h', '6h', '12h', '24h'];
-
-const DELETED_LABELS: Record<AiUsageDimension, string> = {
-  project: 'Deleted project',
-  flow: 'Deleted flow',
-  agent: 'Deleted agent',
-  user: 'Deleted user',
-  key: 'Deleted key',
-  model: 'Deleted model',
-};
 
 export const usageAdapters = {
   seriesToPoints,

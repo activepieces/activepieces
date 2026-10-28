@@ -32,7 +32,6 @@ export function UsageTopList({
   search,
   title,
   subtitle,
-  showShared = false,
   shareOf,
   className,
 }: UsageTopListProps) {
@@ -71,7 +70,6 @@ export function UsageTopList({
               item={item}
               totalUsd={totalUsd}
               search={search}
-              showShared={showShared}
               shareOf={shareOf}
             />
           ))}
@@ -85,13 +83,11 @@ export function UsageTopRow({
   item,
   totalUsd,
   search,
-  showShared = false,
   shareOf,
 }: {
   item: AiUsageItem;
   totalUsd: number;
   search: string;
-  showShared?: boolean;
   shareOf?: string;
 }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -117,7 +113,7 @@ export function UsageTopRow({
               <p className="truncate text-xs text-gray-11">
                 {usageAdapters.itemSubtitle({ item })}
               </p>
-              {showShared && usageAdapters.hasSharedSpend({ item }) && (
+              {usageAdapters.hasSharedSpend({ item }) && (
                 <SharedBadge item={item} />
               )}
             </div>
@@ -203,7 +199,6 @@ type UsageTopListProps = {
   search: string;
   title?: string;
   subtitle?: string;
-  showShared?: boolean;
   shareOf?: string;
   className?: string;
 };

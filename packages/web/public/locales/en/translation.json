@@ -3634,5 +3634,6 @@
   "{share} of all AI spend in this period": "{share} of all AI spend in this period",
   "{share} of input served from cache": "{share} of input served from cache",
   "{share} of {whole}": "{share} of {whole}",
-  "{shown} of {total}": "{shown} of {total}"
+  "{shown} of {total}": "{shown} of {total}",
+  "Only the top {count} by spend are listed, so search and pages cover these only.": "Only the top {count} by spend are listed, so search and pages cover these only."
 }

@@ -47,7 +47,7 @@ export function UsageListPage() {
   if (isNil(dimension)) {
     return <Navigate to={`/platform/ai/usage${view.search}`} replace />;
   }
-  const totalUsd = data?.itemsSpendUsd ?? 0;
+  const itemsUsd = data?.itemsSpendUsd ?? 0;
 
   return (
     <>
@@ -63,7 +63,7 @@ export function UsageListPage() {
         description={
           data && data.count > 0
             ? t('{amount} across {items}', {
-                amount: usageFormat.usd(totalUsd),
+                amount: usageFormat.usd(itemsUsd),
                 items: usageFormat
                   .itemCountLabel({ dimension, count: data.count })
                   .toLowerCase(),
@@ -79,7 +79,8 @@ export function UsageListPage() {
         dimension={dimension}
         items={data?.items ?? []}
         history={data?.history}
-        totalUsd={totalUsd}
+        totalUsd={data?.totalSpendUsd ?? 0}
+        truncated={data?.truncated ?? false}
         isLoading={isLoading}
         isError={isError}
         onRetry={refetch}
@@ -94,6 +95,7 @@ function UsageListBody({
   items,
   history,
   totalUsd,
+  truncated,
   isLoading,
   isError,
   onRetry,
@@ -103,6 +105,7 @@ function UsageListBody({
   items: AiUsageItem[];
   history: AiUsageHistory | undefined;
   totalUsd: number;
+  truncated: boolean;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => unknown;
@@ -183,6 +186,14 @@ function UsageListBody({
               })}
         </span>
       </div>
+      {truncated && (
+        <p className="px-4 pb-3 text-xs text-gray-11">
+          {t(
+            'Only the top {count} by spend are listed, so search and pages cover these only.',
+            { count: usageFormat.whole(items.length) },
+          )}
+        </p>
+      )}
       <div
         className={cn(
           USAGE_LIST_GRID,
@@ -450,7 +461,7 @@ function sortValue({
         ? usageFormat.change({
             current: item.spendUsd,
             previous: item.previousSpendUsd,
-          })
+          }) ?? Number.POSITIVE_INFINITY
         : Number.NEGATIVE_INFINITY;
     case 'calls':
       return item.calls;
