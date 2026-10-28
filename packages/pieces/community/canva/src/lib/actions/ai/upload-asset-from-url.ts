@@ -37,7 +37,7 @@ export const canvaUploadAssetFromUrlAi = createAction({
       path: '/url-asset-uploads',
       body: { name, url },
     });
-    const job = await canvaCommon.settleJob<AssetUploadJob>({ token, kind: 'url_asset_upload', initial: started.job, timeoutSeconds: AI_WAIT_SECONDS, failOnTimeout: false });
+    const job = await canvaCommon.settleJob<AssetUploadJob>({ token, kind: 'url_asset_upload', initial: started.job, timeoutSeconds: AI_WAIT_SECONDS, failOnTimeout: false, statusAction: 'the canva_get_asset_upload_job tool' });
     return canvaCommon.flattenJob({ kind: 'url_asset_upload', job });
   },
 });

@@ -38,7 +38,7 @@ export const canvaImportDesignFromUrlAi = createAction({
     }
     const token = context.auth.access_token;
     const started = await canvaClient.request<{ job: DesignImportJob }>({ token, method: HttpMethod.POST, path: '/url-imports', body });
-    const job = await canvaCommon.settleJob<DesignImportJob>({ token, kind: 'url_import', initial: started.job, timeoutSeconds: AI_WAIT_SECONDS, failOnTimeout: false });
+    const job = await canvaCommon.settleJob<DesignImportJob>({ token, kind: 'url_import', initial: started.job, timeoutSeconds: AI_WAIT_SECONDS, failOnTimeout: false, statusAction: 'the canva_get_import_job tool' });
     return canvaCommon.flattenJob({ kind: 'url_import', job });
   },
 });

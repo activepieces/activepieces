@@ -8,6 +8,19 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Canva 0.3.0: nine actions are builder-only, and Export, Upload and Import wait for the job
+
+Create Design, Export Design, Find Design, Get Asset, Get Design, Get Folder, Import Design, Move Folder Item and Upload Asset are no longer offered to AI agents. They keep working in flows, but an agent or MCP client that used them as tools loses them after the upgrade.
+
+**Export Design**, **Upload Asset** and **Import Design** now wait for Canva's job to finish (up to 120 seconds by default) and return the finished result. The step fails when Canva reports the job failed or the wait runs out. Before, they returned the running job right away. The `next_steps` field is no longer in their output.
+
+#### What you need to do
+
+- Agents that used these actions as tools switch to the new agent tools: **Create Design**, **Export Design**, **Get Design**, **Get Asset** and **Move Folder Item** (same names), **List Designs** for Find Design, **List Folder Items** for Get Folder, and **Upload Asset From URL** and **Import Design From URL** for the two file actions (they take a public URL, not a file).
+- To keep the old behaviour of Export Design, Upload Asset or Import Design, turn off **Wait for Completion** and check the job later with **Get Job Status**. If a later step read `next_steps`, remove that mapping.
+
+Flow steps keep running on the version they were built with until you upgrade them.
+
 #### Republishing no longer restarts polling triggers
 
 Republishing a running flow without changing its polling trigger (same piece, version, trigger and inputs) now leaves the trigger running: `onDisable` and `onEnable` don't run and its stored state is kept, so events created around the republish are no longer lost. When a piece is upgraded to a newer version with the same inputs, only the new version's `onEnable` runs, with `context.isRepublish` set to `true`. The old version's `onDisable` doesn't run.

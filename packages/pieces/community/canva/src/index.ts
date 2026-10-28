@@ -38,7 +38,7 @@ export const canva = createPiece({
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/canva.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ['onyedikachi-david'],
+  authors: ['onyedikachi-david', 'OdaiAhmed99'],
   actions: [
     createDesign,
     getDesign,

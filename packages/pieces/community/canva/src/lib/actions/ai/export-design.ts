@@ -11,7 +11,7 @@ export const canvaExportDesignAi = createAction({
   displayName: 'Export Design',
   description: 'Starts a Canva export job and waits briefly for the download links.',
   audience: 'ai',
-  classification: 'WRITE',
+  classification: 'READ',
   outputSchema: canvaOutputSchemas.job,
   aiMetadata: {
     description:
@@ -72,7 +72,7 @@ export const canvaExportDesignAi = createAction({
       path: '/exports',
       body: { design_id: designId, format },
     });
-    const job = await canvaCommon.settleJob<ExportJob>({ token, kind: 'export', initial: started.job, timeoutSeconds: AI_WAIT_SECONDS, failOnTimeout: false });
+    const job = await canvaCommon.settleJob<ExportJob>({ token, kind: 'export', initial: started.job, timeoutSeconds: AI_WAIT_SECONDS, failOnTimeout: false, statusAction: 'the canva_get_export_job tool' });
     return canvaCommon.flattenJob({ kind: 'export', job });
   },
 });

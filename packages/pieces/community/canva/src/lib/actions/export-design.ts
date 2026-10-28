@@ -18,7 +18,7 @@ import { canvaOutputSchemas } from '../common/output-schemas';
 export const exportDesign = createAction({
   auth: canvaAuth,
   name: 'export_design',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Export Design',
   description: 'Export a design as PDF, JPG, PNG, GIF, PPTX or MP4 and wait for the download links (valid for 24 hours).',
   audience: 'human',

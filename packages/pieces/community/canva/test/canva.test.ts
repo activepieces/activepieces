@@ -64,8 +64,9 @@ describe('piece metadata', () => {
     }
   });
 
-  it('classifies export as WRITE and delete asset as DESTRUCTIVE', () => {
-    expect(exportDesign.classification).toBe('WRITE');
+  it('classifies export as READ and delete asset as DESTRUCTIVE', () => {
+    expect(exportDesign.classification).toBe('READ');
+    expect(canvaExportDesignAi.classification).toBe('READ');
     expect(canvaDeleteAssetAi.classification).toBe('DESTRUCTIVE');
   });
 
@@ -252,7 +253,7 @@ describe('ai atomics', () => {
       { job: { id: 'E7', status: 'in_progress' } },
       new HttpError({}, { status: 500, responseBody: { code: 'internal_error', message: 'Oops' } }),
     ]);
-    await expect(run({ action: canvaExportDesignAi, propsValue: { designId: 'D1', format: 'png' } })).rejects.toThrow(/E7.*Get Job Status/);
+    await expect(run({ action: canvaExportDesignAi, propsValue: { designId: 'D1', format: 'png' } })).rejects.toThrow(/E7.*the canva_get_export_job tool/);
   });
 
   it('update asset sends only provided fields and supports clearing tags', async () => {

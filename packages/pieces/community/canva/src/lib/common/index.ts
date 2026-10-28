@@ -270,7 +270,9 @@ async function settleJob<J extends { id: string; status: string; error?: JobErro
   initial,
   timeoutSeconds,
   failOnTimeout,
+  statusAction,
 }: {
+  statusAction?: string;
   token: string;
   kind: JobKind;
   initial: J;
@@ -281,6 +283,7 @@ async function settleJob<J extends { id: string; status: string; error?: JobErro
     initial,
     timeoutSeconds,
     jobLabel: JOB_PATHS[kind].label,
+    statusAction,
     fetchJob: (jobId) => fetchJob<J>({ token, kind, jobId }),
   });
   if (job.status === 'failed') {
