@@ -1,8 +1,8 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
-import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, MAX_DEFAULT_PROJECTS, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformResponse, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
+import { ApEdition, AUDIT_LOG_RETENTION_MAX_DAYS, AUDIT_LOG_RETENTION_MIN_DAYS, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformResponse, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import { EntityManager } from 'typeorm'
+import { EntityManager, IsNull } from 'typeorm'
 import { authenticationUtils } from '../authentication/authentication-utils'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -11,10 +11,13 @@ import { distributedLock } from '../database/redis-connections'
 import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
+import { buildPaginator } from '../helper/pagination/build-paginator'
+import { Order } from '../helper/pagination/paginator'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { auditLogRetentionCeiling } from '../helper/retention/audit-log-retention-ceiling'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
+import { ProjectEntity } from '../project/project-entity'
 import { projectRepo } from '../project/project-repo'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
@@ -24,6 +27,8 @@ import { platformSideEffects } from './platform-side-effects'
 import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
+
+const DEFAULT_PROJECT_IDS_PAGE_SIZE = 100
 
 export const platformService = (log: FastifyBaseLogger) => ({
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
@@ -246,13 +251,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         return stripFederatedAuth(saved)
     },
     async listDefaultProjectIds({ platformId, entityManager }: ListDefaultProjectIdsParams): Promise<string[]> {
-        const projects = await projectRepo(entityManager).find({
-            where: { platformId, type: ProjectType.TEAM, isDefault: true },
-            select: { id: true },
-            order: { created: 'ASC' },
-            take: MAX_DEFAULT_PROJECTS,
-        })
-        return projects.map((project) => project.id)
+        return readDefaultProjectIdPages({ platformId, entityManager, afterCursor: null })
     },
     async getOneOrThrow(id: PlatformId): Promise<PlatformWithoutFederatedAuth> {
         return platformRepo().findOneByOrFail({ id })
@@ -323,6 +322,33 @@ export const platformService = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+async function readDefaultProjectIdPages({ platformId, entityManager, afterCursor }: ReadDefaultProjectIdPagesParams): Promise<string[]> {
+    const paginator = buildPaginator({
+        entity: ProjectEntity,
+        query: {
+            limit: DEFAULT_PROJECT_IDS_PAGE_SIZE,
+            afterCursor: afterCursor ?? undefined,
+            orderBy: [
+                { field: 'created', order: Order.ASC },
+                { field: 'id', order: Order.ASC },
+            ],
+        },
+    })
+    const { data, cursor } = await paginator.paginate(
+        projectRepo(entityManager).createQueryBuilder('project').where({
+            platformId,
+            type: ProjectType.TEAM,
+            isDefault: true,
+            deleted: IsNull(),
+        }),
+    )
+    const pageIds = data.map((project) => project.id)
+    if (isNil(cursor.afterCursor)) {
+        return pageIds
+    }
+    return [...pageIds, ...await readDefaultProjectIdPages({ platformId, entityManager, afterCursor: cursor.afterCursor })]
+}
 
 async function lockPlatformForUpdate({ entityManager, platformId, includeFederatedAuth }: LockPlatformForUpdateParams): Promise<Platform> {
     return platformRepo(entityManager).findOneOrFail({
@@ -521,6 +547,12 @@ type LockPlatformForUpdateParams = {
 type ListDefaultProjectIdsParams = {
     platformId: PlatformId
     entityManager?: EntityManager
+}
+
+type ReadDefaultProjectIdPagesParams = {
+    platformId: PlatformId
+    entityManager?: EntityManager
+    afterCursor: string | null
 }
 
 type UpdateParams = UpdatePlatformRequestBody & {

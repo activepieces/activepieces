@@ -143,6 +143,3 @@ export const PROJECT_COLOR_PALETTE: Record<ColorName, ProjectColor> = {
     [ColorName.BLUE]: projectColorFor(ColorName.BLUE),
     [ColorName.LAVENDER]: projectColorFor(ColorName.LAVENDER),
 }
-
-
-export const MAX_DEFAULT_PROJECTS = 10

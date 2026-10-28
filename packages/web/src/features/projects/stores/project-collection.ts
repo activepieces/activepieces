@@ -135,17 +135,14 @@ export const projectCollectionUtils = {
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async ({ add, remove }: SetDefaultProjectsRequest) => {
-        const removals = await Promise.allSettled(
-          remove.map((projectId) =>
-            api.post(`/v1/projects/${projectId}`, { isDefault: false }),
-          ),
-        );
-        const additions = await Promise.allSettled(
-          add.map((projectId) =>
+        const results = await Promise.allSettled([
+          ...add.map((projectId) =>
             api.post(`/v1/projects/${projectId}`, { isDefault: true }),
           ),
-        );
-        const results = [...removals, ...additions];
+          ...remove.map((projectId) =>
+            api.post(`/v1/projects/${projectId}`, { isDefault: false }),
+          ),
+        ]);
         await queryClient.invalidateQueries({ queryKey: ['platform'] });
         const failure = results.find((result) => result.status === 'rejected');
         if (failure?.status === 'rejected') {

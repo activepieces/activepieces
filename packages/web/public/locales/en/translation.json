@@ -41,7 +41,6 @@
   "No projects match \"{search}\"": "No projects match \"{search}\"",
   "projectMemberCount": "{count, plural, =1 {1 member} other {# members}}",
   "addDefaultProjectsCount": "{count, plural, =0 {Add projects} =1 {Add 1 project} other {Add # projects}}",
-  "You can pick up to {count} default projects.": "You can pick up to {count} default projects.",
   "Default projects": "Default projects",
   "Remove {project}": "Remove {project}",
   "Manage roles and where new members land": "Manage roles and where new members land",

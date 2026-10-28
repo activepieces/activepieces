@@ -9,6 +9,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { platformProjectService } from './platform-project-service'
 
 const DEFAULT_LIMIT_SIZE = 50
@@ -68,6 +69,15 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
                 params: {},
             })
         }
+        const isDefault = ownThePlatform ? request.body.isDefault : undefined
+        if (isDefault === true && !await isProjectRolesEnabled({ platformId: project.platformId, log: request.log })) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: {
+                    message: 'Default projects are not enabled for this platform',
+                },
+            })
+        }
         return platformProjectService(request.log).update({
             platformId: request.principal.platform.id,
             projectId: request.params.id,
@@ -75,7 +85,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
                 ...request.body,
                 externalId: ownThePlatform ? request.body.externalId : undefined,
                 executionDataRetentionDays: ownThePlatform ? request.body.executionDataRetentionDays : undefined,
-                isDefault: ownThePlatform ? request.body.isDefault : undefined,
+                isDefault,
             },
         })
     })
@@ -85,7 +95,7 @@ export const platformProjectController: FastifyPluginAsyncZod = async (app) => {
         await platformProjectService(req.log).markForDeletion({
             id: req.params.id,
             platformId: req.principal.platform.id,
-            enforceDefaultGuard: req.principal.type === PrincipalType.USER,
+            enforceDefaultGuard: req.principal.type === PrincipalType.USER && await isProjectRolesEnabled({ platformId: req.principal.platform.id, log: req.log }),
         })
 
         return res.status(StatusCodes.NO_CONTENT).send()
@@ -131,6 +141,11 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
             },
         })
     }
+}
+
+async function isProjectRolesEnabled({ platformId, log }: IsProjectRolesEnabledParams): Promise<boolean> {
+    const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    return platformPlan.projectRolesEnabled
 }
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string, log: FastifyBaseLogger): Promise<void> {
@@ -229,4 +244,9 @@ const DeleteProjectRequest = {
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
+}
+
+type IsProjectRolesEnabledParams = {
+    platformId: string
+    log: FastifyBaseLogger
 }
