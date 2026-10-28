@@ -29,7 +29,10 @@ async function copyPlatform({ platform, log, deadlineMs }: { platform: PlatformC
         )
         return { ...EMPTY_OUTCOME, started: true }
     }
-    return copyWindows({ platformId: platform.platformId, fromMs: platform.copiedUntilMs, untilMs: Date.now() - VISIBILITY_DELAY_MS, windowMs: WINDOW_MS, log, deadlineMs, outcome: EMPTY_OUTCOME })
+    const redis = await redisConnections.useExisting()
+    const savedWindowMs = Number(await redis.get(windowKeyOf(platform.platformId)))
+    const windowMs = savedWindowMs > 0 ? savedWindowMs : WINDOW_MS
+    return copyWindows({ platformId: platform.platformId, fromMs: platform.copiedUntilMs, untilMs: Date.now() - VISIBILITY_DELAY_MS, windowMs, log, deadlineMs, outcome: EMPTY_OUTCOME })
 }
 
 async function copyWindows({ platformId, fromMs, untilMs, windowMs, log, deadlineMs, outcome }: CopyWindowsParams): Promise<PlatformOutcome> {
@@ -44,11 +47,14 @@ async function copyWindows({ platformId, fromMs, untilMs, windowMs, log, deadlin
         return { ...outcome, attempted: true, failed: true, lagMs: Date.now() - fromMs }
     }
     if (isNil(raw)) {
+        const smallerWindowMs = Math.max(MIN_WINDOW_MS, Math.floor((endMs - fromMs) / 2))
+        const redis = await redisConnections.useExisting()
+        await redis.set(windowKeyOf(platformId), smallerWindowMs, 'EX', SMALLER_WINDOW_TTL_SECONDS)
         return copyWindows({
             platformId,
             fromMs,
             untilMs,
-            windowMs: Math.max(MIN_WINDOW_MS, Math.floor((endMs - fromMs) / 2)),
+            windowMs: smallerWindowMs,
             log,
             deadlineMs,
             outcome: { ...outcome, attempted: true },
@@ -120,6 +126,10 @@ function markFirstOfRun({ events, newRunIds }: { events: UsageEventWithRun[], ne
     })
 }
 
+function windowKeyOf(platformId: string): string {
+    return `ai-usage:copy:window:${platformId}`
+}
+
 async function trackAllFailedRuns({ allFailed, log }: { allFailed: boolean, log: FastifyBaseLogger }): Promise<void> {
     const redis = await redisConnections.useExisting()
     if (!allFailed) {
@@ -144,6 +154,7 @@ const VISIBILITY_DELAY_MS = 2 * 60 * 1000
 const WINDOW_MS = 10 * 60 * 1000
 const MIN_WINDOW_MS = 1000
 const MAX_PAGES_PER_WINDOW = 3
+const SMALLER_WINDOW_TTL_SECONDS = 60 * 60
 const RUN_BUDGET_MS = 40_000
 const PLATFORM_CONCURRENCY = 5
 const ALL_FAILED_COUNT_KEY = 'ai-usage:copy:all-failed-runs'

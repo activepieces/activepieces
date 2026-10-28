@@ -5,6 +5,7 @@ import { AiUsageBlock } from '../../../../src/app/ai/usage/ai-usage-block'
 import { aiUsageCopy } from '../../../../src/app/ai/usage/ai-usage-copy'
 import { aiUsageRetention } from '../../../../src/app/ai/usage/ai-usage-retention'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { redisConnections } from '../../../../src/app/database/redis-connections'
 import { autumnBillingProvider } from '../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
 import { billingProvider, ListUsageEventsParams, UsageEvent } from '../../../../src/app/platform/billing-provider'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
@@ -194,6 +195,9 @@ describe('AI usage copy from Autumn', () => {
         await aiUsageCopy(app.log).run()
 
         expect((await dailyTotals()).calls).toBe(PAGE_SIZE * 7)
+        const savedWindowMs = Number(await (await redisConnections.useExisting()).get(`ai-usage:copy:window:${ctx.platform.id}`))
+        expect(savedWindowMs).toBeGreaterThan(0)
+        expect(savedWindowMs).toBeLessThan(10 * MINUTE_MS)
     })
 
     it('leaves platforms without AI providers alone', async () => {
