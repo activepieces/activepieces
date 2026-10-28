@@ -1,6 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
+import {
+  buildCustomFieldsPayload,
+  fetchDateFieldKeys,
+  makeRequest,
+} from '../common/client';
+import { subscriptionResultOutputSchema } from '../output-schemas';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, customFields, listId } from '../common/props';
 
@@ -10,10 +15,11 @@ export const updateSubscriberDetailsAction = createAction({
   classification: 'WRITE',
   displayName: 'Update Subscriber',
   description: 'Update an existing subscriber in a list.',
-  audience: 'both',
+  outputSchema: subscriptionResultOutputSchema,
+  audience: 'human',
   aiMetadata: {
     description:
-      'Updates an existing subscriber, identified by their current email address, in a specific Campaign Monitor list under a client — changing name, phone, custom fields, and tracking/SMS consent. Choose this to modify a contact already on a list rather than to add one. Idempotent: it keys on the email and overwrites the same record, so repeating with identical input leaves the subscriber in the same state.',
+      'Builder form with a custom field per list field; agents use the JSON fields variant. Updates an existing subscriber, identified by their current email address, in a specific Campaign Monitor list under a client — changing email address (via New Email Address), name, phone, custom fields, and tracking/SMS consent. The output emailAddress is the address the subscriber has after the update. Choose this to modify a contact already on a list rather than to add one. Idempotent when the email is not changed: it keys on the email and overwrites the same record, so repeating with identical input leaves the subscriber in the same state. Custom fields left blank are not sent, so their stored values are kept.',
     idempotent: true,
   },
   props: {
@@ -21,7 +27,14 @@ export const updateSubscriberDetailsAction = createAction({
     listId: listId,
     email: Property.ShortText({
       displayName: 'Email Address',
+      description: 'The current email address of the subscriber.',
       required: true,
+    }),
+    newEmail: Property.ShortText({
+      displayName: 'New Email Address',
+      description:
+        'New email for the subscriber. Leave empty to keep the current one.',
+      required: false,
     }),
     name: Property.ShortText({
       displayName: 'Name',
@@ -35,7 +48,7 @@ export const updateSubscriberDetailsAction = createAction({
       displayName: 'Consent to Track',
       description: 'Whether the subscriber has consented to tracking.',
       required: false,
-      defaultValue: 'Yes',
+      defaultValue: 'Unchanged',
       options: {
         options: [
           { label: 'Yes', value: 'Yes' },
@@ -64,48 +77,48 @@ export const updateSubscriberDetailsAction = createAction({
       required: false,
       defaultValue: false,
     }),
-    fields:customFields,
+    fields: customFields,
   },
   async run({ propsValue, auth }) {
     const {
       listId,
       email,
+      newEmail,
       name,
       consentToSendSms,
       phone,
       resubscribe,
       consentToTrack,
-      fields
+      fields,
     } = propsValue;
 
+    const dateKeys = await fetchDateFieldKeys({
+      auth: { apiKey: auth.secret_text },
+      listId,
+    });
+
+    const targetEmail = newEmail?.trim() || email;
     const payload = {
+      EmailAddress: targetEmail,
       MobileNumber: phone,
       Name: name,
-      ConsentToTrack: consentToTrack,
-      ConsentToSendSms: consentToSendSms,
-      Resubscribe: resubscribe ?? true,
-        CustomFields: Object.entries(fields).flatMap(([key, value]) =>
-    Array.isArray(value)
-      ? value.map((v) => ({ Key: key, Value: v }))
-      : [{ Key: key, Value: value }]
-  ),
+      ConsentToTrack: consentToTrack ?? 'Unchanged',
+      ConsentToSendSms: consentToSendSms ?? 'Unchanged',
+      Resubscribe: resubscribe ?? false,
+      CustomFields: buildCustomFieldsPayload({ fields, dateKeys }),
     };
 
-    const response = await makeRequest(
-      { apiKey: auth.secret_text },
-      HttpMethod.PUT,
-      `/subscribers/${listId}.json?email=${encodeURIComponent(email)}`,
-      payload
-    );
+    await makeRequest({
+      auth: { apiKey: auth.secret_text },
+      method: HttpMethod.PUT,
+      path: `/subscribers/${listId}.json?email=${encodeURIComponent(email)}`,
+      body: payload,
+    });
 
-    if (response.status === 200) {
-      return {
-        success: true,
-      };
-    }
     return {
-      success: false,
-      error: response.body,
+      success: true,
+      emailAddress: targetEmail,
+      listId,
     };
   },
 });
