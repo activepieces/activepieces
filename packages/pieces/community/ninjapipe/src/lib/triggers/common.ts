@@ -51,6 +51,9 @@ async function fetchSince({
   const isTest = lastFetchEpochMS === 0;
   const records: NinjaPipeRecord[] = [];
   for (let page = 1; ; page++) {
+    if (page > MAX_POLL_PAGES) {
+      throw new Error(`NinjaPipe polling stopped after ${MAX_POLL_PAGES} pages without reaching the last checkpoint. The API may be ignoring the page or sort parameters.`);
+    }
     const result = await ninjapipeClient.listPage({
       auth: client,
       path,
@@ -97,6 +100,7 @@ function buildProjectTasksPolling({ field }: { field: TimestampField }): Polling
 }
 
 const TEST_PAGE_SIZE = 5;
+const MAX_POLL_PAGES = 100;
 const UNTIMED_STORE_KEY = 'ninjapipe_untimed_seen_ids';
 const UNTIMED_MAX_IDS = 500;
 

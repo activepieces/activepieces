@@ -219,6 +219,12 @@ describe('send to databin', () => {
     expect(output).toEqual({ status: 200, response: { success: true } });
   });
 
+  it('accepts a subdomain of the connected host, like 0.1.1 did', async () => {
+    const fetchMock = stubFetch({ responses: [{ status: 200, body: {} }] });
+    await run('https://acme.ninjapipe.app/api/webhooks/abc');
+    expect(request({ fetchMock }).url.toString()).toBe('https://acme.ninjapipe.app/api/webhooks/abc');
+  });
+
   it('reports invalid JSON payloads clearly', async () => {
     stubFetch({ responses: [{ status: 200, body: {} }] });
     await expect(runAction({ name: 'send_to_databin', propsValue: { webhookUrl: 'https://www.ninjapipe.app/api/webhooks/a', payload: '{bad' } })).rejects.toThrow('Payload must be valid JSON.');

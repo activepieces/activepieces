@@ -11,7 +11,7 @@ export const createOrder = createAction({
   name: 'create_order',
   classification: 'WRITE',
   displayName: 'Create Order',
-  description: 'Creates a order.',
+  description: 'Creates an order.',
   audience: 'both',
   aiMetadata: {
     description: 'Create a NinjaPipe order. Required: customer_name. Not idempotent: each call creates another order.',

@@ -93,7 +93,7 @@ export const ninjapipe = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/ninjapipe.png',
   categories: [PieceCategory.SALES_AND_CRM],
   auth: ninjapipeAuth,
-  authors: ['hemmilicious'],
+  authors: ['hemmilicious', 'OdaiAhmed99'],
   actions: [
     addContactNote,
     addToList,

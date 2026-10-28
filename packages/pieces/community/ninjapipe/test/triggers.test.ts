@@ -57,6 +57,13 @@ describe('record polling triggers', () => {
     expect(fetchMock).toHaveBeenCalledTimes(pages + 1);
   });
 
+  it('stops with an error when paging never reaches the checkpoint', async () => {
+    const fetchMock = stubFetch({ responses: [{ status: 200, body: page({ data: [rec({ id: 'loop', minutes: 1000 })], page: 1, pages: 9999 }) }] });
+    const { store } = memoryStore({ initial: { lastPoll: T0 + 10 * 60000 } });
+    await expect(runHook({ name: 'new_or_updated_deal', hook: 'run', context: { store, propsValue: {} } })).rejects.toThrow(/stopped after 100 pages/);
+    expect(fetchMock).toHaveBeenCalledTimes(100);
+  });
+
   it('a second poll with no changes emits nothing', async () => {
     const trigger = 'new_or_updated_deal';
     stubFetch({ responses: [{ status: 200, body: page({ data: [rec({ id: 'c', minutes: 30 })] }) }] });

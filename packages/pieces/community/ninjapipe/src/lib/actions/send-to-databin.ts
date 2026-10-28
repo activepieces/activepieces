@@ -57,7 +57,7 @@ function checkWebhookUrl({ rawUrl, baseUrl }: { rawUrl: string; baseUrl: string 
   if (!parsed.pathname.includes('/api/webhooks/')) throw new Error('Invalid webhook URL: path must contain /api/webhooks/.');
   const expected = stripWww(new URL(baseUrl).host.toLowerCase());
   const actual = stripWww(parsed.host.toLowerCase());
-  if (expected !== actual) {
+  if (expected !== actual && !actual.endsWith(`.${expected}`)) {
     throw new Error(`Webhook host "${parsed.host}" does not match your connected NinjaPipe host "${new URL(baseUrl).host}". Use a Databin URL from your workspace.`);
   }
   return parsed.toString();

@@ -22,7 +22,7 @@ function taskProps({ titleRequired }: { titleRequired: boolean }) {
 function parentFilter({ parentId, rootOnly }: { parentId: string | undefined; rootOnly: boolean | undefined }): string | undefined {
   const id = parentId?.trim();
   if (id) return id;
-  if (rootOnly === true || parentId !== undefined) return '';
+  if (rootOnly === true) return '';
   return undefined;
 }
 
