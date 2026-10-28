@@ -27,12 +27,26 @@ async function toPollItems({
   });
   const untimed = records.filter((record) => readTimestamp({ record, field }) === undefined && record['id'] !== undefined);
   if (untimed.length === 0) return timed;
-  const seen = (await store.get<string[]>(UNTIMED_STORE_KEY)) ?? [];
-  const fresh = untimed.filter((record) => !seen.includes(String(record['id'])));
-  if (fresh.length === 0) return timed;
-  const updatedSeen = [...seen, ...fresh.map((record) => String(record['id']))].slice(-UNTIMED_MAX_IDS);
-  await store.put(UNTIMED_STORE_KEY, updatedSeen);
   const emitAt = Math.max(lastFetchEpochMS + 1, 1);
+  // Test mode (lastFetchEpochMS 0) only samples: never read or write the remembered IDs.
+  if (lastFetchEpochMS === 0) {
+    return [...timed, ...untimed.map((record) => ({ epochMilliSeconds: emitAt, data: record }))];
+  }
+  const seen = new Set((await store.get<string[]>(UNTIMED_STORE_KEY)) ?? []);
+  const fetchedIds = untimed.map((record) => String(record['id']));
+  const fresh = untimed.filter((record) => !seen.has(String(record['id'])));
+  if (fresh.length === 0) return timed;
+  // Remember every untimed ID instead of a sliding window, so records still returned by
+  // the API are never forgotten and emitted again. Only when the list is full are IDs the
+  // API no longer returns dropped; if the returned ones alone exceed the bound, stop with
+  // an error instead of forgetting records.
+  if (fetchedIds.length > UNTIMED_MAX_IDS) {
+    throw new Error(`NinjaPipe returned more than ${UNTIMED_MAX_IDS} records without a timestamp, so new ones cannot be told apart from old ones safely.`);
+  }
+  const fetched = new Set(fetchedIds);
+  const kept = [...seen].filter((id) => !fetched.has(id));
+  const room = UNTIMED_MAX_IDS - fetchedIds.length;
+  await store.put(UNTIMED_STORE_KEY, [...kept.slice(Math.max(kept.length - room, 0)), ...fetchedIds]);
   return [...timed, ...fresh.map((record) => ({ epochMilliSeconds: emitAt, data: record }))];
 }
 
@@ -102,7 +116,7 @@ function buildProjectTasksPolling({ field }: { field: TimestampField }): Polling
 const TEST_PAGE_SIZE = 5;
 const MAX_POLL_PAGES = 100;
 const UNTIMED_STORE_KEY = 'ninjapipe_untimed_seen_ids';
-const UNTIMED_MAX_IDS = 500;
+const UNTIMED_MAX_IDS = 5000;
 
 export const ninjapipePolling = { buildPolling, buildProjectTasksPolling, toPollItems };
 

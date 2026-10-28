@@ -81,8 +81,31 @@ describe('record polling triggers', () => {
     expect(first).toEqual([untimed]);
     expect(second).toEqual([]);
     const seen = ids(data.get('ninjapipe_untimed_seen_ids'));
-    expect(seen).toHaveLength(500);
+    expect(seen).toHaveLength(501);
     expect(seen.at(-1)).toBe('no-ts');
+  });
+
+  it('more than 500 untimed items never fire twice', async () => {
+    const trigger = 'new_or_updated_contact';
+    const records = Array.from({ length: 501 }, (_, index) => ({ id: `t-${index}`, name: 'x' }));
+    stubFetch({ responses: [{ status: 200, body: page({ data: records }) }] });
+    const { store } = memoryStore({ initial: { lastPoll: T0 } });
+    const first = await runHook({ name: trigger, hook: 'run', context: { store, propsValue: {} } });
+    const second = await runHook({ name: trigger, hook: 'run', context: { store, propsValue: {} } });
+    const third = await runHook({ name: trigger, hook: 'run', context: { store, propsValue: {} } });
+    expect(first).toHaveLength(501);
+    expect(second).toEqual([]);
+    expect(third).toEqual([]);
+  });
+
+  it('test() returns untimed samples every time and leaves the remembered IDs alone', async () => {
+    const trigger = 'new_or_updated_contact';
+    const untimed = { id: 'no-ts', name: 'x' };
+    stubFetch({ responses: [{ status: 200, body: page({ data: [untimed] }) }] });
+    const { store, data } = memoryStore();
+    expect(await runHook({ name: trigger, hook: 'test', context: { store, propsValue: {} } })).toEqual([untimed]);
+    expect(await runHook({ name: trigger, hook: 'test', context: { store, propsValue: {} } })).toEqual([untimed]);
+    expect(data.get('ninjapipe_untimed_seen_ids')).toBeUndefined();
   });
 
   it('test() reads one small page', async () => {
