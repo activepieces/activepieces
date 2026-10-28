@@ -8,6 +8,21 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
+
+**Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
+
+Once a step is upgraded to Workable 0.3.0, these outputs change:
+
+- **Get Candidate** returns the candidate itself, without the `candidate` wrapper.
+- **Move Candidate** and **Rate Candidate** return `{success, candidate_id, ...}` instead of `{status, headers, body}`.
+- **Get Members** returns `nextCursor` and `hasMore` instead of `paging`, and refuses a Limit above 100.
+- **New Candidate** ignores webhook deliveries that are unsigned or that arrive more than 6 hours after Workable fired them.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Move Candidate as a tool, switch it to Move Candidate (by IDs). Flow steps that use Move Candidate keep working. Steps keep running on the version they were built with until you upgrade them; when you upgrade, update any later step that reads `candidate.*` from Get Candidate, `body` from Move Candidate or Rate Candidate, or `paging` from Get Members.
+
 #### iLoveAPI 0.1.0: Create Signature Request is no longer an agent tool, and triggers need a Webhook Secret
 
 iLoveAPI 0.1.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.

@@ -10183,7 +10183,7 @@
     },
     "packages/pieces/community/workable": {
       "name": "@activepieces/piece-workable",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10191,7 +10191,8 @@
         "@activepieces/pieces-framework": "workspace:*",
       },
       "devDependencies": {
-        "tslib": "^2.3.0",
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/workday": {
