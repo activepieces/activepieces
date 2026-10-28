@@ -14,8 +14,6 @@ on:
         type: boolean
         required: false
         default: false
-  schedule:
-    - cron: '0 9 * * *'  # Daily 9 AM UTC — scheduled runs always use the default branch
 
 jobs:
   build-image:

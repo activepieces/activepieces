@@ -12,7 +12,7 @@ Merge to main ────────────→ Deploy to staging
                                     │
                           5 PM UTC Thu: RC tagged
                                     │
-                          Fri–Sat: canary runs daily from main
+                          Fri–Sat: cloud is quiet
                                     │
                           Sun 9 AM UTC: canary rebuilt from main
                                     │                → release-candidate promoted to production
@@ -48,7 +48,7 @@ On Monday at 9 AM UTC, the self-hosted release is published: git tag, GitHub rel
 |---|---|
 | Any time | Merge to `main` → auto-deployed to staging |
 | **Thu 5 PM UTC** | Staging image + commit tagged as `release-candidate` |
-| Fri–Sat | Canary deploys daily from `main`; cloud is quiet |
+| Fri–Sat | Cloud is quiet |
 | **Sun 9 AM UTC** | Canary rebuilt from latest `main`; `release-candidate` promoted to cloud production; `deploy/cloud/YYYY-MM-DD` branch created |
 | **Mon 9 AM UTC** | Self-hosted release published (re-tags cloud RC image) |
 
