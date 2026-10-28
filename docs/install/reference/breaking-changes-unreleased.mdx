@@ -8,6 +8,19 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### SendIt 0.3.0: two scheduled-post actions leave AI agents, and publishing checks inputs before sending
+
+From SendIt 0.3.0, **Cancel Scheduled Post** and **Trigger Scheduled Post Now** are no longer offered to AI agents and MCP clients. They stay available as flow steps. An agent or MCP client that called them by name no longer finds them.
+
+SendIt 0.3.0 also changes what an existing **Publish Post** or **Schedule Post** step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+- A media URL that starts with `http://` now stops the step. Media URLs must be public `https://` URLs.
+- A post that targets Instagram, Pinterest, TikTok or YouTube without a media URL now stops the whole step before anything is sent, including to the other selected platforms. Before, a text-only post to LinkedIn and Instagram still reached SendIt.
+
+#### What you need to do
+
+For agents and MCP clients, use **Cancel Scheduled Post by ID** instead of Cancel Scheduled Post, and **Publish Scheduled Post Now** instead of Trigger Scheduled Post Now. Before you upgrade a Publish Post or Schedule Post step to 0.3.0, make sure its media URLs use `https://`, and add a media URL or remove Instagram, Pinterest, TikTok and YouTube from posts that have none.
+
 #### Pastefy 0.4.0: six actions leave the agent tool list, and existing steps change behavior
 
 Pastefy 0.4.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
