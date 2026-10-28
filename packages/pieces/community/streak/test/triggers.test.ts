@@ -22,4 +22,15 @@ describe('triggers', () => {
     expect(ok).toEqual([{ boxKey: 'b1' }]);
     expect(bad).toEqual([]);
   });
+  it('run parses a JSON string object body into one item', async () => {
+    const result = await Reflect.apply(newBoxTrigger.run, newBoxTrigger, [{ payload: { body: '{"boxKey":"b1"}' } }]);
+    expect(result).toEqual([{ boxKey: 'b1' }]);
+  });
+
+  it('run parses a JSON string array body into one item per record', async () => {
+    const result = await Reflect.apply(newBoxTrigger.run, newBoxTrigger, [
+      { payload: { body: '[{"boxKey":"b1"},{"boxKey":"b2"}]' } },
+    ]);
+    expect(result).toEqual([{ boxKey: 'b1' }, { boxKey: 'b2' }]);
+  });
 });
