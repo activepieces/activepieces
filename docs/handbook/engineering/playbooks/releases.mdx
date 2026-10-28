@@ -8,7 +8,7 @@ All changes flow through a staging environment before reaching production. There
 ## How It Works
 
 1. **Merge to `main`** — `continuous-delivery-stg.yml` builds a `version.sha.beta` image, deploys it to **staging** (`stg.activepieces.com`), and runs the E2E suite against staging (`e2e-staging`).
-2. **Sunday to Thursday, 8 AM UTC** — `continuous-delivery-cloud.yml` (the Cloud gate) picks the newest `main` commit whose `e2e-staging` passed, runs the E2E matrix and the upgrade test on the image staging built from it, and waits for one approval.
+2. **By hand** — `continuous-delivery-cloud.yml` (the Cloud gate) picks the newest `main` commit whose `e2e-staging` passed, runs the E2E matrix and the upgrade test on the image staging built from it, and waits for one approval.
 3. **On approval** — the gate deploys that same image to the canary, then to the whole production fleet.
 4. **Self-hosted** — `release-self-hosted.yml`, by hand. The weekly `continuous-delivery-release.yml` is disabled.
 
@@ -24,10 +24,10 @@ All changes flow through a staging environment before reaching production. There
 ## Hotfix Workflow
 
   1. Merge the fix into `main`.
-  2. Run `continuous-delivery-cloud.yml` by hand with `hotfix_prs` set to the PR numbers, for example `17001,17005`. The gate cherry-picks only those PRs, oldest first, onto the commit Cloud runs (branch `hotfix/cloud/<run id>-<attempt>`), builds a `version.sha.pick` image, and runs the E2E matrix and the upgrade test on it. The rest of `main` waits for the next daily run.
-  3. The run summary names what Cloud runs and what this run adds. The approval and the deploy are the same as the daily run.
+  2. Run `continuous-delivery-cloud.yml` by hand with `hotfix_prs` set to the PR numbers, for example `17001,17005`. The gate cherry-picks only those PRs, oldest first, onto the commit Cloud runs (branch `hotfix/cloud/<run id>-<attempt>`), builds a `version.sha.pick` image, and runs the E2E matrix and the upgrade test on it. The rest of `main` waits for the next full gate run.
+  3. The run summary names what Cloud runs and what this run adds. The approval and the deploy are the same as any other Cloud deploy.
 
-  The run stops when a PR is not merged into `main`, is already on Cloud, does not apply cleanly, or changes a migration (set `allow_migrations` only when the migration needs nothing Cloud lacks). A hotfix deploy records no Linear release; the next daily run does. That next run deploys `main` only if `main` contains every picked PR.
+  The run stops when a PR is not merged into `main`, is already on Cloud, does not apply cleanly, or changes a migration (set `allow_migrations` only when the migration needs nothing Cloud lacks). A hotfix deploy records no Linear release; the next full gate run does. That run deploys `main` only if `main` contains every picked PR.
 
   To ship all of `main` at once instead, leave `hotfix_prs` empty: the gate takes the newest commit that passed `e2e-staging`, or the commit named in `sha`.
 
@@ -56,8 +56,9 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Scheduled (Sunday to Thursday, 8 AM UTC)** | Picks the newest `main` commit with a passed `e2e-staging` check. Stops if the fleet already runs it. |
-| **Manual dispatch** | Same, or deploys the `main` commit named in `sha`, which must also have a passed `e2e-staging`. `skip_migration_check` lets a breaking migration through. |
+| **Manual dispatch** | Picks the newest `main` commit with a passed `e2e-staging` check, or the `main` commit named in `sha`, which must also have a passed `e2e-staging`. `skip_migration_check` lets a breaking migration through. |
+
+The gate has no schedule yet. A daily run (Sunday to Thursday, 8 AM UTC) comes back when the E2E suite covers more of the product; the `cut` job already stops a scheduled run when every Cloud host runs the candidate.
 
 Then, for the candidate:
 

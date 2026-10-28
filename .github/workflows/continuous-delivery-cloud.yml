@@ -5,8 +5,6 @@ name: Continuous Delivery — Cloud
 # With hotfix_prs, it instead cherry-picks only those merged PRs onto the commit Cloud runs, builds that,
 # and sends it through the same checks, approval and deploy.
 on:
-  schedule:
-    - cron: '0 8 * * 0-4' # Sunday to Thursday 08:00 UTC
   workflow_dispatch:
     inputs:
       sha:
