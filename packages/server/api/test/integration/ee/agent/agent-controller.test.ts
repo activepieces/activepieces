@@ -1,5 +1,5 @@
 import { AIProviderName, apId, Permission, RoleType } from '@activepieces/core-utils'
-import { AgentIcon, AgentPieceProps, AgentRunSource, AgentToolType, AgentVisibility, AI_PIECE_NAME, ColorName, DefaultProjectRole, FlowActionType, FlowStatus, FlowTriggerType, FlowVersionState, KnowledgeBaseSourceType } from '@activepieces/shared'
+import { Agent, AgentIcon, AgentPieceProps, AgentRunSource, AgentToolType, AgentVisibility, AI_PIECE_NAME, ColorName, DefaultProjectRole, FlowActionType, FlowStatus, FlowTriggerType, FlowVersionState, KnowledgeBaseSourceType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { SelectQueryBuilder } from 'typeorm'
@@ -1138,3 +1138,33 @@ function triggerRunningAgent(agentExternalId: string) {
         },
     } as const
 }
+
+describe('updating an agent while someone else changes it', () => {
+    it.each([
+        ['unpublishes it', { published: null }, (agent: Agent) => expect(agent.published).toBeNull()],
+        ['edits its draft', { draft: { ...agentBody('').draft, instructions: 'Newer draft.' } }, (agent: Agent) => expect(agent.draft.instructions).toBe('Newer draft.')],
+        ['revokes a share', { sharedWithUserIds: [] }, (agent: Agent) => expect(agent.sharedWithUserIds).toStrictEqual([])],
+    ])('keeps the change when another writer %s just before a rename takes the row lock', async (_label, change, expectKept) => {
+        const ctx = await context()
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(ctx, { visibility: AgentVisibility.RESTRICTED, sharedWithUserIds: [member.user.id] })
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        expect(agent.sharedWithUserIds).toStrictEqual([member.user.id])
+        const getOne = SelectQueryBuilder.prototype.getOne
+        const concurrentWrite = vi.spyOn(SelectQueryBuilder.prototype, 'getOne').mockImplementation(async function (this: SelectQueryBuilder<Agent>) {
+            if (this.expressionMap.lockMode === 'pessimistic_write') {
+                concurrentWrite.mockRestore()
+                await db.update('agent', agent.id, change)
+            }
+            return getOne.call(this)
+        })
+
+        const rename = await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Renamed', goLive: false })
+        concurrentWrite.mockRestore()
+
+        expect(rename.statusCode).toBe(StatusCodes.OK)
+        const stored = await db.findOneByOrFail<Agent>('agent', { id: agent.id })
+        expect(stored.displayName).toBe('Renamed')
+        expectKept(stored)
+    })
+})
