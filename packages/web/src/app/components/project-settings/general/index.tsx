@@ -238,11 +238,18 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
                         : t('Default')
                     }
                     value={field.value ?? ''}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      if (!e.target.value) {
+                        field.onChange(null);
+                        return;
+                      }
+                      const value = Number(e.target.value);
                       field.onChange(
-                        e.target.value ? Number(e.target.value) : null,
-                      )
-                    }
+                        isCloud
+                          ? Math.min(value, planConcurrentJobsLimit)
+                          : value,
+                      );
+                    }}
                     onClear={() => field.onChange(null)}
                     disabled={form.formState.disabled || !isRateLimiterEnabled}
                   />
