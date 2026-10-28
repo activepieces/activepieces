@@ -820,11 +820,11 @@
   "Draft only updates your working copy. Live flows keep using the old connection until you publish them again. Draft and published republishes affected flows now, which can interrupt running automations.": "Draft only updates your working copy. Live flows keep using the old connection until you publish them again. Draft and published republishes affected flows now, which can interrupt running automations.",
   "Draft only": "Draft only",
   "Draft and published": "Draft and published",
+  "This project needs approval to publish. Each affected flow gets a new publish request, which replaces any request that is already waiting for that flow.": "This project needs approval to publish. Each affected flow gets a new publish request, which replaces any request that is already waiting for that flow.",
   "After replacing": "After replacing",
-  "Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first. Global connections can only be deleted from the platform admin page.": "Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first. Global connections can only be deleted from the platform admin page.",
+  "Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first. In a project that needs approval to publish, delete it after the flows are approved. Global connections can only be deleted from the platform admin page.": "Keep the old connection to reuse it later, or delete it for good. Deleting is unavailable while published flows still use it — switch the option above to Draft and published first. In a project that needs approval to publish, delete it after the flows are approved. Global connections can only be deleted from the platform admin page.",
   "Keep the old connection": "Keep the old connection",
   "Delete the old connection": "Delete the old connection",
-  "MCP servers are not updated automatically — reconnect them manually.": "MCP servers are not updated automatically — reconnect them manually.",
   "Disable Secret Manager": "Disable Secret Manager",
   "Use Secret Manager": "Use Secret Manager",
   "Select connection": "Select connection",
@@ -3163,7 +3163,7 @@
   "Connection is working.": "Connection is working.",
   "Connection failed": "Connection failed",
   "This connection is no longer working. Reconnect it.": "This connection is no longer working. Reconnect it.",
-  "Connections replaced successfully": "Connections replaced successfully",
+  "Replaced connection {sourceName} with connection {targetName}": "Replaced connection {sourceName} with connection {targetName}",
   "Failed to replace connections": "Failed to replace connections",
   "Connection has been updated.": "Connection has been updated.",
   "OAuth2 Credentials Deleted": "OAuth2 Credentials Deleted",
@@ -3516,5 +3516,9 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "Delete the old connection?": "Delete the old connection?",
+  "The replace is done. Delete {name} now, or keep it to use later.": "The replace is done. Delete {name} now, or keep it to use later.",
+  "These still use the connection and stop working if you delete it:": "These still use the connection and stop working if you delete it:",
+  "A replace changes up to {max} flows.": "A replace changes up to {max} flows."
 }
