@@ -1,5 +1,6 @@
 import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { PiecePropertyMap } from '@activepieces/pieces-framework'
+import { toolResultView } from '@activepieces/server-utils'
 import { AppConnectionStatus, EngineResponse, EngineResponseStatus, FlowVersion, McpToolDefinition, ProjectScopedMcpServer, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, In } from 'typeorm'
@@ -171,8 +172,8 @@ function propForText(prop: PropSummary): PropSummary & { optionsTotal?: number }
     }
 }
 
-function textOf(result: ComponentDescription): string {
-    return result.content.map((part) => part.text).join('\n')
+function resultText(result: ComponentDescription): string {
+    return toolResultView.textOf(result) ?? ''
 }
 
 export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -189,9 +190,9 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     const results = await Promise.all(parsed.items.map((item) => describeComponent({ mcp, request: item, platformId, log })))
                     const connections = await describeConnections({ mcp, platformId, results, log })
                     return {
-                        content: [{ type: 'text', text: [...results.map(textOf), connections.text].filter((part) => part.length > 0).join('\n\n---\n\n') }],
+                        content: [{ type: 'text', text: [...results.map(resultText), connections.text].filter((part) => part.length > 0).join('\n\n---\n\n') }],
                         structuredContent: {
-                            results: results.map((result) => result.structuredContent ?? { error: textOf(result) }),
+                            results: results.map((result) => result.structuredContent ?? { error: resultText(result) }),
                             ...spreadIfDefined('connections', connections.byPiece),
                         },
                     }
@@ -206,7 +207,7 @@ export const apGetPiecePropsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 }
                 const connections = await describeConnections({ mcp, platformId, results: [{ ...result, authPiece }], log })
                 return {
-                    content: [{ type: 'text', text: [textOf(result), connections.text].filter((part) => part.length > 0).join('\n\n') }],
+                    content: [{ type: 'text', text: [resultText(result), connections.text].filter((part) => part.length > 0).join('\n\n') }],
                     structuredContent: { ...result.structuredContent, ...spreadIfDefined('connections', connections.byPiece) },
                 }
             }

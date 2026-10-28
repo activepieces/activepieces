@@ -97,12 +97,10 @@ const createTableFieldsSchema = z.array(z.object({
 }))
 
 export const tableToolInput = {
-    normalizeFieldType,
     normalizeCreateFields,
     resolveFieldKeys,
     stringifyCellValue,
     truncateValue,
-    describeFields,
     cellInputValueSchema,
     createTableFieldsSchema,
 }
