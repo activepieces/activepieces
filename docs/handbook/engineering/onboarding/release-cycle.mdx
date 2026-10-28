@@ -10,7 +10,7 @@ This page explains how code moves from merge to production and why each step exi
 ```
 Merge to main ──→ Deploy to staging ──→ e2e-staging on that commit
                                                  │
-                          Sun–Thu 8 AM UTC: the Cloud gate picks the newest passed commit
+                          Started by hand: the Cloud gate picks the newest passed commit
                                                  │
                           E2E matrix + upgrade test on the staging image
                                                  │
@@ -50,4 +50,4 @@ Self-hosted releases use `release-self-hosted.yml`. See [Releases](/handbook/eng
 ## FAQ
 
 **Q: I merged at 10 AM UTC on a Wednesday. When does my code reach production?**
-It deploys to staging immediately. If `e2e-staging` passes, the Thursday 8 AM UTC gate picks it up, and it reaches Cloud when the deploy is approved.
+It deploys to staging immediately. If `e2e-staging` passes, the next Cloud gate run picks it up, and it reaches Cloud when the deploy is approved. Until the gate runs on a schedule, that is when the release captain starts it.
