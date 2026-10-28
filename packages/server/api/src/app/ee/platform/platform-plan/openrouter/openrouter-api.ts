@@ -6,6 +6,8 @@ import { AppSystemProp } from '../../../../helper/system/system-props'
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
 const REQUEST_TIMEOUT_MS = 15000
+const KEY_LIVENESS_TIMEOUT_MS = 10000
+const KEY_LIVENESS_MODEL = 'openai/gpt-4o-mini'
 
 export const openRouterApi = {
     async createKey(request: CreateKeyRequest): Promise<CreateKeyResponse> {
@@ -22,6 +24,19 @@ export const openRouterApi = {
 
     async deleteKey({ hash }: DeleteKeyRequest): Promise<void> {
         await openRouterRequest<unknown>({ method: 'DELETE', path: `/keys/${hash}` })
+    },
+
+    async isKeyLive({ key }: IsKeyLiveRequest): Promise<boolean> {
+        const { data: response } = await tryCatch(() => safeHttp.axios.post(`${OPENROUTER_BASE_URL}/chat/completions`, {
+            model: KEY_LIVENESS_MODEL,
+            max_tokens: 1,
+            messages: [{ role: 'user', content: 'hi' }],
+        }, {
+            timeout: KEY_LIVENESS_TIMEOUT_MS,
+            headers: { Authorization: `Bearer ${key}` },
+            validateStatus: () => true,
+        }))
+        return !isNil(response) && response.status !== 401
     },
 
     async listKeys({ offset, include_disabled }: ListKeysRequest): Promise<ListKeysResponse> {
@@ -98,6 +113,10 @@ type GetKeyRequest = {
 }
 type GetKeyResponse = {
     data: OpenRouterApikey
+}
+
+type IsKeyLiveRequest = {
+    key: string
 }
 
 type DeleteKeyRequest = {

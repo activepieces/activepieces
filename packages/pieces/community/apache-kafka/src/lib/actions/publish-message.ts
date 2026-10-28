@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework'
 import { kafkaAuth } from '../auth'
 import { kafkaClient } from '../common/client'
+import { kafkaOutputSchemas } from '../output-schemas'
 
 export const publishMessage = createAction({
   auth: kafkaAuth,
@@ -10,9 +11,10 @@ export const publishMessage = createAction({
   audience: 'both',
   classification: 'WRITE',
   aiMetadata: {
-    description: 'Publish one message to an Apache Kafka topic. Use this for a single record; use Publish messages when several records should go out in the same step. The call waits for all in-sync replicas and returns the partition and offset. A retry publishes another message.',
+    description: 'Publish one message to an Apache Kafka topic. Call it once per record. The call waits for all in-sync replicas and returns the partition and offset. A retry publishes another message.',
     idempotent: false,
   },
+  outputSchema: kafkaOutputSchemas.publishMessage,
   props: {
     topic: Property.ShortText({
       displayName: 'Topic',

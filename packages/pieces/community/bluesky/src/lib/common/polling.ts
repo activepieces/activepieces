@@ -101,7 +101,10 @@ async function onEnable<T>({ store, storeKey, fetchPage, isRepublish, seenCap, s
   await seed({ store, storeKey, fetchPage, seenCap, seedPages });
 }
 
-async function onDisable({ store, storeKey }: { store: PollStore; storeKey: string }): Promise<void> {
+async function onDisable({ store, storeKey, isRepublish }: { store: PollStore; storeKey: string; isRepublish?: boolean }): Promise<void> {
+  if (isRepublish) {
+    return;
+  }
   await store.delete(storeKey);
 }
 
