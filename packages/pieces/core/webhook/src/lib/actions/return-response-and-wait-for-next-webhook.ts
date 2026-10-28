@@ -3,9 +3,9 @@ import {
     PieceAuth,
     Property,
     createAction,
+    sanitizeHttpHeaders,
   } from '@activepieces/pieces-framework';
   import { ExecutionType, StopResponse } from '@activepieces/pieces-framework';
-  import { webhookHeaderUtils } from '../common/header-utils';
 
   const HTTP_STATUS_OK = 200;
   const HTTP_STATUS_MOVED_PERMANENTLY = 301;
@@ -105,7 +105,7 @@ import {
     async run(context) {
       const { fields, responseType } = context.propsValue;
       const bodyInput = fields ['body'];
-      const headers = webhookHeaderUtils.sanitizeHeaders(fields['headers']);
+      const headers = sanitizeHttpHeaders(fields['headers']);
       const status = fields['status'];
       const response: StopResponse = {
         status: status ?? HTTP_STATUS_OK,
