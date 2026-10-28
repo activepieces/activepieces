@@ -1,3 +1,4 @@
+import { taskCompletedWebhookOutputSchema } from '../common/output-schemas';
 import { createPipelineWebhookTrigger } from '../common/trigger-factory';
 
 export const taskCompletedTrigger = createPipelineWebhookTrigger({
@@ -9,6 +10,7 @@ export const taskCompletedTrigger = createPipelineWebhookTrigger({
       'Fires when a task on a box in the selected pipeline is marked complete, representing a to-do item being finished on a CRM record.',
   },
   event: 'TASK_COMPLETE',
+  outputSchema: taskCompletedWebhookOutputSchema,
   sampleData: {
     key: 'agxzfm1haWxmb29nYWVyMQsSBFRhc2sYgICAwI_oogow',
     boxKey: 'agxzfm1haWxmb29nYWVyMQsSA0JveBiAgIDAj-iiCgw',

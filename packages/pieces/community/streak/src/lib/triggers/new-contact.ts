@@ -1,3 +1,4 @@
+import { contactWebhookOutputSchema } from '../common/output-schemas';
 import { createTeamWebhookTrigger } from '../common/trigger-factory';
 
 export const newContactTrigger = createTeamWebhookTrigger({
@@ -9,6 +10,7 @@ export const newContactTrigger = createTeamWebhookTrigger({
       'Fires when a new person contact is created in the selected team, representing a freshly added individual in the team\'s shared CRM.',
   },
   event: 'CONTACT_CREATE',
+  outputSchema: contactWebhookOutputSchema,
   sampleData: {
     key: 'agxzfm1haWxmb29nYWVyMQsSB0NvbnRhY3QYgICAwI_oogow',
     emailAddresses: ['jane@acme.com'],

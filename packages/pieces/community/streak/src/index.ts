@@ -12,6 +12,13 @@ import { findBoxAction } from './lib/actions/find-box';
 import { getBoxAction } from './lib/actions/get-box';
 import { getCurrentUserAction } from './lib/actions/get-current-user';
 import { updateBoxAction } from './lib/actions/update-box';
+import { aiUpdateBoxAction } from './lib/actions/ai-update-box';
+import { listPipelinesAction } from './lib/actions/list-pipelines';
+import { listStagesAction } from './lib/actions/list-stages';
+import { listBoxesAction } from './lib/actions/list-boxes';
+import { listTeamsAction } from './lib/actions/list-teams';
+import { listPipelineFieldsAction } from './lib/actions/list-pipeline-fields';
+import { listBoxTasksAction } from './lib/actions/list-box-tasks';
 import { STREAK_BASE_URL } from './lib/common/client';
 import { boxPipelineChangedTrigger } from './lib/triggers/box-pipeline-changed';
 import { boxStageChangedTrigger } from './lib/triggers/box-stage-changed';
@@ -30,7 +37,7 @@ export const streak = createPiece({
   description:
     'CRM built into Gmail. Manage pipelines, boxes, tasks, comments, contacts and organizations from your flows.',
   auth: streakAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/streak.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ['sanket-a11y'],
@@ -45,6 +52,13 @@ export const streak = createPiece({
     createContactAction,
     createOrganizationAction,
     getCurrentUserAction,
+    aiUpdateBoxAction,
+    listPipelinesAction,
+    listStagesAction,
+    listBoxesAction,
+    listTeamsAction,
+    listPipelineFieldsAction,
+    listBoxTasksAction,
     createCustomApiCallAction({
       baseUrl: () => STREAK_BASE_URL,
       auth: streakAuth,

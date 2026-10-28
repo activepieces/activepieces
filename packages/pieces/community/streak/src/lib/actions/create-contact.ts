@@ -1,7 +1,9 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { streakAuth } from '../common/auth';
+import { contactOutputSchema } from '../common/output-schemas';
 import { streakApiCall } from '../common/client';
+import { toEmailList } from '../common/flatten';
 import { teamDropdown } from '../common/props';
 
 type StreakContact = {
@@ -34,6 +36,7 @@ export const createContactAction = createAction({
       'Create a person contact in a team, or return the existing one if a contact with the same email already exists (get-if-existing upsert keyed on email). Use when an agent needs to ensure a contact exists for a given email before linking it elsewhere; requires the team and at least one email address. Idempotent: repeating with the same email returns the same contact rather than duplicating.',
     idempotent: true,
   },
+  outputSchema: contactOutputSchema,
   props: {
     teamKey: teamDropdown,
     emailAddresses: Property.Array({
@@ -91,7 +94,7 @@ export const createContactAction = createAction({
     } = context.propsValue;
 
     const body: Record<string, unknown> = {
-      emailAddresses: emailAddresses as string[],
+      emailAddresses: toEmailList(emailAddresses),
     };
     if (givenName) body['givenName'] = givenName;
     if (familyName) body['familyName'] = familyName;

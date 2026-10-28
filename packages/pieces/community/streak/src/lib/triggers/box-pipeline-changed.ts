@@ -1,3 +1,4 @@
+import { boxPipelineChangedWebhookOutputSchema } from '../common/output-schemas';
 import { createPipelineWebhookTrigger } from '../common/trigger-factory';
 
 export const boxPipelineChangedTrigger = createPipelineWebhookTrigger({
@@ -10,6 +11,7 @@ export const boxPipelineChangedTrigger = createPipelineWebhookTrigger({
       'Fires when a box is moved between pipelines relative to the selected pipeline (moved into or out of it), representing a record being reassigned to a different pipeline; the event includes the previous pipeline key.',
   },
   event: 'BOX_CHANGE_PIPELINE',
+  outputSchema: boxPipelineChangedWebhookOutputSchema,
   sampleData: {
     boxKey: 'agxzfm1haWxmb29nYWVyMQsSA0JveBiAgIDAj-iiCgw',
     name: 'Acme Inc',

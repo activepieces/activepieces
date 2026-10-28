@@ -1,4 +1,4 @@
-import { StreakBox } from './types';
+import { StreakBox, StreakTask } from './types';
 
 export function flattenStreakBox(box: StreakBox) {
   return {
@@ -21,4 +21,35 @@ export function flattenStreakBox(box: StreakBox) {
         ? JSON.stringify(box.fields)
         : null,
   };
+}
+
+export function flattenStreakTask({
+  task,
+  fallbackBoxKey,
+}: {
+  task: StreakTask;
+  fallbackBoxKey: string;
+}) {
+  return {
+    task_key: task.key,
+    box_key: task.boxKey ?? fallbackBoxKey,
+    text: task.text,
+    status: task.status ?? null,
+    due_date_epoch_ms: task.dueDate ?? null,
+    creator_key: task.creatorKey ?? null,
+    creation_date_epoch_ms: task.creationDate ?? null,
+    last_updated_date_epoch_ms: task.lastUpdatedDate ?? null,
+    assigned_to_emails: Array.isArray(task.assignedToSharingEntries)
+      ? task.assignedToSharingEntries
+          .map((a) => a.email)
+          .filter((e): e is string => Boolean(e))
+          .join(', ')
+      : null,
+  };
+}
+
+export function toEmailList(values: unknown[] | undefined): string[] {
+  return (values ?? []).filter(
+    (v): v is string => typeof v === 'string' && v.trim().length > 0,
+  );
 }

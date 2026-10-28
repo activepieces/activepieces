@@ -1,6 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { streakAuth } from '../common/auth';
+import { boxOutputSchema } from '../common/output-schemas';
 import { streakApiCall } from '../common/client';
 import { flattenStreakBox } from '../common/flatten';
 import { boxDropdown, pipelineDropdown } from '../common/props';
@@ -18,6 +19,7 @@ export const getBoxAction = createAction({
       'Retrieve a single box by its box key, including its current stage, custom field values, and counts. Use when an agent already has a specific box key (e.g. from a trigger or a Find Boxes result) and needs its full current details. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: boxOutputSchema,
   props: {
     pipelineKey: pipelineDropdown,
     boxKey: boxDropdown,
