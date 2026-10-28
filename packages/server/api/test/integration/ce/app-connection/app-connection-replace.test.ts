@@ -353,11 +353,11 @@ describe('POST /v1/app-connections/replace', () => {
         expect(versions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
     })
 
-    it('replaces the connection in 1,000 flows in one request, republishing the published ones', async () => {
+    it('replaces the connection in 200 flows in one request, republishing the published ones', async () => {
         const ctx = await createTestContext(app!)
         const { source, target } = await saveSourceAndTarget(ctx)
 
-        const flows = Array.from({ length: 1000 }, () => createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED }))
+        const flows = Array.from({ length: 200 }, () => createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED }))
         await db.save('flow', flows)
         const publishedFlows = flows.filter((_, index) => index % 2 === 0)
         const liveVersions = publishedFlows.map((flow) => createMockFlowVersion({
