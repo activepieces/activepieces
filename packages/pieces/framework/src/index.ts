@@ -17,6 +17,7 @@ export {
   camelCase,
   startCase,
   tryCatch,
+  sanitizeHttpHeaders,
   AIProviderName,
   AiStepAction,
 } from '@activepieces/core-utils';

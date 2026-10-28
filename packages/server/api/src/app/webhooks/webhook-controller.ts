@@ -4,6 +4,7 @@ import {
     EngineHttpResponse,
     isNil,
     RAW_PAYLOAD_HEADER,
+    sanitizeHttpHeaders,
     tryCatch,
     WebhookUrlParams,
     WebsocketClientEvent,
@@ -128,7 +129,7 @@ async function sendWebhookResponse({ reply, response }: { reply: FastifyReply, r
     const { error } = await tryCatch(async () => {
         await reply
             .status(response.status)
-            .headers(sanitizeResponseHeaders(response.headers))
+            .headers(sanitizeHttpHeaders(response.headers))
             .send(response.body)
     })
     if (!isNil(error) && !reply.raw.headersSent) {
@@ -136,21 +137,6 @@ async function sendWebhookResponse({ reply, response }: { reply: FastifyReply, r
         await reply.status(500).send({ message: 'Failed to send webhook response' })
     }
 }
-
-function sanitizeResponseHeaders(headers: Record<string, string>): Record<string, string> {
-    return Object.fromEntries(
-        Object.entries(headers)
-            .map(([key, value]) => [sanitizeHeaderKey(key), value])
-            .filter(([key]) => key !== ''),
-    )
-}
-
-function sanitizeHeaderKey(key: string): string {
-    return key.trim().replace(INVALID_HEADER_TOKEN_CHARS, '')
-}
-
-
-const INVALID_HEADER_TOKEN_CHARS = /[^!#$%&'*+\-.^_`|~0-9A-Za-z]/g
 
 const WEBHOOK_PARAMS = {
     config: {
