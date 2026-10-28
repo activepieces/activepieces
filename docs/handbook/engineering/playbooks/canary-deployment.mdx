@@ -107,7 +107,7 @@ Canary is a validation environment, not a promotion path. Full promotion happens
 ### Enable canary routing for a platform
 
 ```bash
-curl -X POST https://cloud.activepieces.com/v1/admin/platforms/canary \
+curl -X POST https://cloud.activepieces.com/api/v1/admin/platforms/canary \
   -H "api-key: <AP_API_KEY>" \
   -H "Content-Type: application/json" \
   -d '{"platformId": "<platformId>", "canary": true}'
@@ -116,7 +116,7 @@ curl -X POST https://cloud.activepieces.com/v1/admin/platforms/canary \
 ### Disable canary routing for a platform
 
 ```bash
-curl -X POST https://cloud.activepieces.com/v1/admin/platforms/canary \
+curl -X POST https://cloud.activepieces.com/api/v1/admin/platforms/canary \
   -H "api-key: <AP_API_KEY>" \
   -H "Content-Type: application/json" \
   -d '{"platformId": "<platformId>", "canary": false}'
