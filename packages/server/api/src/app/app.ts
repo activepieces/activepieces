@@ -26,6 +26,7 @@ import { platformAppConnectionModule } from './app-connection/platform-app-conne
 import { authenticationModule } from './authentication/authentication.module'
 import { otpModule } from './authentication/otp/otp-module'
 import { passwordlessAuthModule } from './authentication/passwordless-auth.module'
+import { verifiedDomainHooks } from './authentication/verified-domain-hooks'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { oidcModule } from './core/security/oidc/oidc.module'
@@ -48,6 +49,7 @@ import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
+import { authnSsoSamlService } from './ee/authentication/saml-authn/authn-sso-saml-service'
 import { embedSubdomainModule } from './ee/embed-subdomain/embed-subdomain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { flowApprovalModule } from './ee/flows/flow-approval/flow-approval.module'
@@ -393,6 +395,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await aiUsageJobs.register(app.log)
             await app.register(aiUsageModule)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            verifiedDomainHooks.set(authnSsoSamlService)
             flowPublishHooks.set((log) => ({ assertReferencesResolve: assertAgentsResolveInProject, findMissingRequiredActions: (params) => pieceSetRequiredActions(log).findMissing(params) }))
             aiUsageHooks.set(agentConversationCreditsHooks)
             eventDestinationHooks.set(eventDestinationEntitlementHooks)
