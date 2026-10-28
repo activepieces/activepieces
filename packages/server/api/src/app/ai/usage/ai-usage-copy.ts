@@ -64,7 +64,8 @@ async function copyWindows({ platformId, fromMs, untilMs, windowMs, log, deadlin
     if (!moved) {
         return { ...outcome, lagMs: Date.now() - fromMs }
     }
-    const nextWindowMs = read.pages <= 1 ? Math.min(WINDOW_MS, windowMs * 2) : windowMs
+    const quietFullWindow = read.pages <= 1 && endMs - fromMs === windowMs
+    const nextWindowMs = quietFullWindow ? Math.min(WINDOW_MS, windowMs * 2) : windowMs
     if (nextWindowMs !== windowMs) {
         await saveWindow({ platformId, windowMs: nextWindowMs })
     }
