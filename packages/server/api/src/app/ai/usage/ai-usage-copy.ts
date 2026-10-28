@@ -37,10 +37,13 @@ async function copyWindows({ platformId, fromMs, untilMs, log, deadlineMs, outco
     if (endMs <= fromMs || Date.now() > deadlineMs) {
         return { ...outcome, lagMs: Date.now() - fromMs }
     }
-    const { data: raw, error } = await tryCatch(() => readWindow({ platformId, startMs: fromMs, endMs, log }))
-    if (!isNil(error) || isNil(raw)) {
+    const { data: raw, error } = await tryCatch(() => readWindow({ platformId, startMs: fromMs, endMs, log, deadlineMs }))
+    if (!isNil(error)) {
         log.warn({ error, platform: { id: platformId } }, '[aiUsageCopy] Could not read usage events from Autumn, will retry this window next run')
-        return { ...outcome, failed: true, lagMs: Date.now() - fromMs }
+        return { ...outcome, attempted: true, failed: true, lagMs: Date.now() - fromMs }
+    }
+    if (isNil(raw)) {
+        return { ...outcome, attempted: true, lagMs: Date.now() - fromMs }
     }
     const { events, skipped } = usageEventsOf({ platformId, raw, startMs: fromMs, endMs })
     const moved = await writeWindow({ platformId, fromMs, endMs, events })
@@ -53,16 +56,22 @@ async function copyWindows({ platformId, fromMs, untilMs, log, deadlineMs, outco
         untilMs,
         log,
         deadlineMs,
-        outcome: { ...outcome, windows: outcome.windows + 1, copied: outcome.copied + events.length, skipped: outcome.skipped + skipped },
+        outcome: { ...outcome, attempted: true, windows: outcome.windows + 1, copied: outcome.copied + events.length, skipped: outcome.skipped + skipped },
     })
 }
 
-async function readWindow({ platformId, startMs, endMs, log, cursor = null }: ReadWindowParams): Promise<UsageEvent[]> {
-    const page = await billingProvider.get(log).listUsageEvents({ platformId, startMs, endMs, cursor })
-    if (isNil(page.nextCursor)) {
-        return page.events
-    }
-    return [...page.events, ...await readWindow({ platformId, startMs, endMs, log, cursor: page.nextCursor })]
+async function readWindow({ platformId, startMs, endMs, log, deadlineMs }: ReadWindowParams): Promise<UsageEvent[] | null> {
+    const events: UsageEvent[] = []
+    let cursor: string | null = null
+    do {
+        if (Date.now() > deadlineMs) {
+            return null
+        }
+        const page = await billingProvider.get(log).listUsageEvents({ platformId, startMs, endMs, cursor })
+        events.push(...page.events)
+        cursor = page.nextCursor
+    } while (!isNil(cursor))
+    return events
 }
 
 function usageEventsOf({ platformId, raw, startMs, endMs }: { platformId: string, raw: UsageEvent[], startMs: number, endMs: number }): { events: UsageEventWithRun[], skipped: number } {
@@ -130,7 +139,7 @@ const ALL_FAILED_COUNT_TTL_SECONDS = 60 * 60
 const FAILURES_BEFORE_PAGE = 5
 const PAGE_KEY = 'ai-usage:page:AI_USAGE_COPY_FAILING'
 const PAGE_EVERY_SECONDS = 30 * 60
-const EMPTY_OUTCOME: PlatformOutcome = { started: false, failed: false, windows: 0, copied: 0, skipped: 0, lagMs: 0 }
+const EMPTY_OUTCOME: PlatformOutcome = { started: false, attempted: false, failed: false, windows: 0, copied: 0, skipped: 0, lagMs: 0 }
 const CURSOR_CAS_SQL = `WITH moved AS (
     UPDATE "ai_usage_copy_cursor" SET "copiedUntil" = to_timestamp($1::float8 / 1000)
     WHERE "platformId" = $2 AND (extract(epoch FROM "copiedUntil") * 1000)::bigint = $3::bigint
@@ -147,7 +156,8 @@ export const aiUsageCopy = (log: FastifyBaseLogger) => ({
         const platforms = await platformsToCopy()
         const limit = pLimit(PLATFORM_CONCURRENCY)
         const outcomes = await Promise.all(platforms.map((platform) => limit(() => copyPlatform({ platform, log, deadlineMs: startedAt + RUN_BUDGET_MS }))))
-        const failed = outcomes.filter((outcome) => outcome.failed).length
+        const attempted = outcomes.filter((outcome) => outcome.attempted)
+        const failed = attempted.filter((outcome) => outcome.failed).length
         wideEvent.set({
             aiUsageCopy: {
                 platforms: platforms.length,
@@ -155,12 +165,13 @@ export const aiUsageCopy = (log: FastifyBaseLogger) => ({
                 windows: outcomes.reduce((sum, outcome) => sum + outcome.windows, 0),
                 copied: outcomes.reduce((sum, outcome) => sum + outcome.copied, 0),
                 skipped: outcomes.reduce((sum, outcome) => sum + outcome.skipped, 0),
+                attempted: attempted.length,
                 failed,
                 maxLagMs: outcomes.reduce((max, outcome) => Math.max(max, outcome.lagMs), 0),
                 durationMs: Date.now() - startedAt,
             },
         })
-        await trackAllFailedRuns({ allFailed: platforms.length > 0 && failed === platforms.length, log })
+        await trackAllFailedRuns({ allFailed: attempted.length > 0 && failed === attempted.length, log })
     },
 })
 
@@ -171,6 +182,7 @@ type PlatformCursor = {
 
 type PlatformOutcome = {
     started: boolean
+    attempted: boolean
     failed: boolean
     windows: number
     copied: number
@@ -185,7 +197,7 @@ type ReadWindowParams = {
     startMs: number
     endMs: number
     log: FastifyBaseLogger
-    cursor?: string | null
+    deadlineMs: number
 }
 
 type CopyWindowsParams = {
