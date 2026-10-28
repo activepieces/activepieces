@@ -97,7 +97,7 @@ function AddDefaultProjectsContent({
 
   return (
     <Form {...form}>
-      <form onSubmit={submit} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <DialogHeader>
           <DialogTitle>{t('Add default projects')}</DialogTitle>
           <DialogDescription>
@@ -189,9 +189,10 @@ function AddDefaultProjectsContent({
               {t('Cancel')}
             </Button>
             <Button
-              type="submit"
+              type="button"
               loading={isSaving}
               disabled={selectedIds.length === 0 && !hasExistingDefaults}
+              onClick={submit}
             >
               {hasExistingDefaults
                 ? t('Save')
@@ -216,7 +217,7 @@ function AddDefaultProjectsContent({
           mutationFn={() => onSave(selectedIds)}
           onError={showServerError}
         />
-      </form>
+      </div>
     </Form>
   );
 }
