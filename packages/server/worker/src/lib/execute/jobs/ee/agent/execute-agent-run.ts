@@ -452,7 +452,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 log.info({ conversation: { id: conversationId }, run: { id: runId } }, '[executeAgentRun] Run superseded by a newer message, exiting quietly')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
-            if (source === AgentRunSource.FLOW_STEP && !configLoaded && err instanceof RpcTimeoutError) {
+            const configLostToDisconnect = source === AgentRunSource.FLOW_STEP && !configLoaded && err instanceof RpcTimeoutError && err.disconnected
+            if (configLostToDisconnect) {
                 log.warn({ error: err, conversation: { id: conversationId }, run: { id: runId } }, '[executeAgentRun] Config response lost in transit, leaving the step to the redelivered copy or the stale sweep')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }

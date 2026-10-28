@@ -102,6 +102,15 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
         expect(events).toHaveLength(0)
     })
 
+    it('fails a flow step whose config request timed out on a live socket, since nothing redelivers it', async () => {
+        const { ctx, resumed } = buildContext(new RpcTimeoutError({ method: 'getAgentConfig', timeoutMs: 60_000, cause: new Error('operation has timed out') }))
+
+        await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'flow-run-1', waitpointId: 'waitpoint-1' })).catch(() => undefined)
+
+        expect(resumed).toHaveLength(1)
+        expect(resumed[0].waitpointId).toBe('waitpoint-1')
+    })
+
     it('still tells the chat client the turn failed when its config response is lost, so it is not left streaming', async () => {
         const { ctx, events } = buildContext(new RpcTimeoutError({ method: 'getAgentConfig', timeoutMs: 60_000, cause: new Error('socket has been disconnected') }))
 
