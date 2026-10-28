@@ -356,7 +356,7 @@ class ActivepiecesEmbedded {
                 hidePageHeader: this._embeddingState?.dashboard?.hidePageHeader ?? false,
                 hideActiveUsers: this._embeddingState?.hideActiveUsers ?? false,
                 hideGlobalSearch: this._embeddingState?.hideGlobalSearch ?? false,
-                hideReplaceConnection: this._embeddingState?.hideReplaceConnection ?? true,
+                hideReplaceConnection: this._embeddingState?.hideReplaceConnection ?? false,
                 formulasDocsUrl: this._embeddingState?.formulasDocsUrl,
                 gtmContainerId: this._embeddingState?.analytics?.gtmContainerId,
                 clarityProjectId: this._embeddingState?.analytics?.clarityProjectId,
