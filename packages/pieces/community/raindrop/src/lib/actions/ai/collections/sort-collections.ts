@@ -15,7 +15,7 @@ export const raindropSortCollectionsAction = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      "Reorders all of the user's collections at once: alphabetically ascending or descending, or by bookmark count descending. To place a single collection use Update Collection with a sort position.",
+      "Reorders all of the user's collections at once: alphabetically ascending or descending, or by bookmark count descending.",
     idempotent: true,
   },
   props: {

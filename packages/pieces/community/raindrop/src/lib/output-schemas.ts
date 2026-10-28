@@ -35,7 +35,7 @@ const highlightFields: OutputSchema['fields'] = [
 const bookmarkHighlightFields: OutputSchema['fields'] = [
   ...highlightFields,
   { key: 'lastUpdate', label: 'Last Updated', format: 'datetime' },
-  { key: 'creatorRef', label: 'Created By', children: bookmarkCreatorFields },
+  { key: 'creatorRef', label: 'Created By (User ID)', format: 'number' },
 ];
 
 const bookmarkFields: OutputSchema['fields'] = [

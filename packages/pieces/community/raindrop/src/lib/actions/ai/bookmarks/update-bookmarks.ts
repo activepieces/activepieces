@@ -17,7 +17,7 @@ export const raindropUpdateBookmarksAction = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Updates every bookmark in a collection that matches the given IDs and/or search, or the whole collection when neither is set: favourite flag, cover, move to another collection, or tags (appended; Clear Tags removes all). Collection 0 covers every collection except Trash. Use Update Bookmark for a single bookmark or to replace its tags.',
+      'Updates every bookmark in a collection that matches the given IDs and/or search, or the whole collection when All Bookmarks is true (an empty ID list never means all): favourite flag, cover, move to another collection, or tags (appended; Clear Tags removes all). Collection 0 covers every collection except Trash. Use Update Bookmark for a single bookmark or to replace its tags.',
     idempotent: true,
   },
   props: {
@@ -30,6 +30,12 @@ export const raindropUpdateBookmarksAction = createAction({
       displayName: 'Bookmark IDs',
       description: 'Only update these bookmark IDs, from List Bookmarks.',
       required: false,
+    }),
+    allBookmarks: raindropAiProps.booleanChoice({
+      required: false,
+      displayName: 'All Bookmarks',
+      description:
+        'Set to true to update every bookmark in the collection. Required when neither Bookmark IDs nor Search is set.',
     }),
     search: Property.ShortText({
       displayName: 'Search',
@@ -63,6 +69,16 @@ export const raindropUpdateBookmarksAction = createAction({
   },
   async run({ auth, propsValue }) {
     const ids = raindropUtils.toStringList({ value: propsValue.ids });
+    const allBookmarks = raindropUtils.toBoolean({ value: propsValue.allBookmarks }) === true;
+    const filtered = ids.length > 0 || (propsValue.search ?? '') !== '';
+    if (allBookmarks && filtered) {
+      throw new Error('Set either All Bookmarks or Bookmark IDs / Search, not both.');
+    }
+    if (!allBookmarks && !filtered) {
+      throw new Error(
+        'Set Bookmark IDs or Search, or set All Bookmarks to true to update the whole collection.',
+      );
+    }
     const tags = raindropUtils.toStringList({ value: propsValue.tags });
     const clearTags = raindropUtils.toBoolean({ value: propsValue.clearTags }) === true;
     if (clearTags && tags.length > 0) {

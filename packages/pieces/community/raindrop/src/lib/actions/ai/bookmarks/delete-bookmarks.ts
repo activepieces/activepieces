@@ -17,7 +17,7 @@ export const raindropDeleteBookmarksAction = createAction({
   classification: 'DESTRUCTIVE',
   aiMetadata: {
     description:
-      'Moves every bookmark in a collection that matches the given IDs and/or search to Trash, or the whole collection when neither is set. With collection -99 (Trash) they are deleted permanently. Collection 0 covers every collection except Trash; use Delete Bookmark for a single bookmark.',
+      'Moves every bookmark in a collection that matches the given IDs and/or search to Trash, or the whole collection when All Bookmarks is true (an empty ID list never means all). With collection -99 (Trash) they are deleted permanently. Collection 0 covers every collection except Trash; use Delete Bookmark for a single bookmark.',
     idempotent: false,
   },
   props: {
@@ -31,6 +31,12 @@ export const raindropDeleteBookmarksAction = createAction({
       description: 'Only delete these bookmark IDs, from List Bookmarks.',
       required: false,
     }),
+    allBookmarks: raindropAiProps.booleanChoice({
+      required: false,
+      displayName: 'All Bookmarks',
+      description:
+        'Set to true to delete every bookmark in the collection. Required when neither Bookmark IDs nor Search is set.',
+    }),
     search: Property.ShortText({
       displayName: 'Search',
       description: 'Only delete bookmarks matching this Raindrop search query, e.g. "#old".',
@@ -39,6 +45,16 @@ export const raindropDeleteBookmarksAction = createAction({
   },
   async run({ auth, propsValue }) {
     const ids = raindropUtils.toStringList({ value: propsValue.ids });
+    const allBookmarks = raindropUtils.toBoolean({ value: propsValue.allBookmarks }) === true;
+    const filtered = ids.length > 0 || (propsValue.search ?? '') !== '';
+    if (allBookmarks && filtered) {
+      throw new Error('Set either All Bookmarks or Bookmark IDs / Search, not both.');
+    }
+    if (!allBookmarks && !filtered) {
+      throw new Error(
+        'Set Bookmark IDs or Search, or set All Bookmarks to true to delete the whole collection.',
+      );
+    }
     return await raindropClient.request<RaindropDeleteBookmarksResponse>({
       auth,
       method: HttpMethod.DELETE,
