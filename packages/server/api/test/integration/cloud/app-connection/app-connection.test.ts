@@ -118,6 +118,7 @@ describe('AppConnection API', () => {
                     sourceAppConnectionId: apId(),
                     targetAppConnectionId: apId(),
                     projectId: ownerCtx.project.id,
+                    flowIds: [apId()],
                 })
             },
             allowedRoles: [DefaultProjectRole.ADMIN, DefaultProjectRole.EDITOR],
@@ -139,6 +140,7 @@ describe('AppConnection API', () => {
                 sourceAppConnectionId: apId(),
                 targetAppConnectionId: apId(),
                 projectId: ctx.project.id,
+                flowIds: [apId()],
             })
 
             expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
