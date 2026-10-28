@@ -9,10 +9,11 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
-import { AuthenticationResult, authenticationUtils } from './authentication-utils'
+import { AuthenticationResult, authenticationUtils, SignInMethods } from './authentication-utils'
 import { zerobounce } from './lib/zerobounce'
 import { otpService } from './otp/otp-service'
 import { userIdentityService } from './user-identity/user-identity-service'
+import { verifiedDomainHooks } from './verified-domain-hooks'
 
 const PLATFORM_CONTROLLED_PROVIDERS = new Set([UserIdentityProvider.JWT, UserIdentityProvider.SAML])
 
@@ -207,6 +208,14 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
+    async discoverSignInMethods({ domain }: DiscoverSignInMethodsParams): Promise<SignInDiscovery> {
+        const domainOwnerPlatformId = await verifiedDomainHooks.get(log).findPlatformIdByDomain({ domain })
+        if (isNil(domainOwnerPlatformId)) {
+            return { domainOwned: false }
+        }
+        const domainOwnerPlatform = await platformService(log).getOneWithPlanOrThrow(domainOwnerPlatformId)
+        return { domainOwned: true, methods: authenticationUtils(log).getSignInMethods({ platform: domainOwnerPlatform }) }
+    },
 })
 
 async function assertUserCanSwitchToPlatform(platform: PlatformWithoutSensitiveData | undefined): Promise<void> {
@@ -330,3 +339,11 @@ type SwitchPlatformParams = {
     identityId: string
     platformId: string
 }
+
+type DiscoverSignInMethodsParams = {
+    domain: string
+}
+
+export type SignInDiscovery =
+    | { domainOwned: true, methods: SignInMethods }
+    | { domainOwned: false }

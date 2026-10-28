@@ -4595,16 +4595,18 @@
     },
     "packages/pieces/community/iloveapi": {
       "name": "@activepieces/piece-iloveapi",
-      "version": "0.0.6",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "form-data": "4.0.6",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/image-router": {
@@ -6981,17 +6983,19 @@
     },
     "packages/pieces/community/pastefy": {
       "name": "@activepieces/piece-pastefy",
-      "version": "0.3.2",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "crypto-js": "4.2.0",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "@types/crypto-js": "4.2.2",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/paywhirl": {
@@ -7746,7 +7750,7 @@
     },
     "packages/pieces/community/raindrop": {
       "name": "@activepieces/piece-raindrop",
-      "version": "0.1.3",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8261,15 +8265,17 @@
     },
     "packages/pieces/community/send-it": {
       "name": "@activepieces/piece-send-it",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/sender": {
@@ -10177,7 +10183,7 @@
     },
     "packages/pieces/community/workable": {
       "name": "@activepieces/piece-workable",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10185,7 +10191,8 @@
         "@activepieces/pieces-framework": "workspace:*",
       },
       "devDependencies": {
-        "tslib": "^2.3.0",
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/workday": {
