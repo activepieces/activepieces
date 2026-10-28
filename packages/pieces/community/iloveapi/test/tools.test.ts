@@ -172,6 +172,16 @@ describe('tool actions', () => {
     expect(out['detailed']).toEqual([{ PageNo: 1, XPos: 56.8, YPos: 1, XWidth: 2, YWidth: 3, FontName: 'Arial', FontSize: 12, Length: 12, Text: 'Hello, world' }]);
   });
 
+  it('extract text flags detailed rows past the row limit', async () => {
+    const lines = Array.from({ length: 5002 }, (_, i) => `1,${i},1,2,3,"Arial",12,1,w${i}`);
+    const csv = Buffer.from(['PageNo,XPos,YPos,XWidth,YWidth,FontName,FontSize,Length,Text', ...lines].join('\n'));
+    mockHttp(defaultRoutes([{ method: 'GET', match: (u) => u.includes('/v1/download/'), reply: () => ({ body: Readable.from([csv]) }) }]));
+    const out = await run(extractTextPdfAction)(fakeContext({ file: pdf, detailed: true }).context);
+    expect(out['detailed']).toHaveLength(5000);
+    expect(out['detailed_total_rows']).toBe(5002);
+    expect(out['detailed_truncated']).toBe(true);
+  });
+
   it('extract text surfaces an unparseable detailed result', async () => {
     mockHttp(defaultRoutes([{ method: 'GET', match: (u) => u.includes('/v1/download/'), reply: () => ({ body: Readable.from([Buffer.from('garbage line')]) }) }]));
     const out = await run(extractTextPdfAction)(fakeContext({ file: pdf, detailed: true }).context);
@@ -203,6 +213,13 @@ describe('tool actions', () => {
     expect(processBody(calls)['text']).toBe('x');
     expect(processBody(calls)['image']).toBeUndefined();
     expect(calls.filter((x) => x.url.includes('/upload'))).toHaveLength(1);
+  });
+
+  it('split ignores leftover inputs from other modes', async () => {
+    const calls = mockHttp(defaultRoutes());
+    await run(loose(splitPdfAction))(fakeContext({ file: pdf, split_mode: 'ranges', ranges: '1-2', fixed_range: 0, filesize: 0, remove_pages: 'x' }).context);
+    expect(processBody(calls)['ranges']).toBe('1-2');
+    expect(processBody(calls)['fixed_range']).toBeUndefined();
   });
 
   it('split by file size sends bytes', async () => {

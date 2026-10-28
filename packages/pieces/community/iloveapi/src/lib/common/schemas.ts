@@ -51,6 +51,8 @@ const extractText: OutputSchema = {
     { key: 'text', label: 'Text' },
     { key: 'text_length', label: 'Text Length', format: 'number' },
     { key: 'text_truncated', label: 'Text Truncated', format: 'boolean' },
+    { key: 'detailed_total_rows', label: 'Detailed Total Rows', format: 'number' },
+    { key: 'detailed_truncated', label: 'Detailed Truncated', format: 'boolean' },
     {
       key: 'detailed',
       label: 'Detailed Words',

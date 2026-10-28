@@ -87,22 +87,12 @@ export const splitPdfAction = createAction({
       merge_after: merge_after ?? false,
     };
 
-    if (fixed_range !== undefined && fixed_range !== null && (!Number.isInteger(fixed_range) || fixed_range < 1)) {
-      throw new Error('"Fixed Range Size" must be a whole number of pages, 1 or more.');
-    }
-    if (filesize !== undefined && filesize !== null && !(filesize > 0)) {
-      throw new Error('"File Size (MB)" must be greater than 0.');
-    }
-    if (ranges && !PAGE_LIST.test(ranges.replace(/\s/g, ''))) {
-      throw new Error('"Ranges" must look like "1-5,7,10-13".');
-    }
-    if (remove_pages && !PAGE_LIST.test(remove_pages.replace(/\s/g, ''))) {
-      throw new Error('"Remove Pages" must look like "2,4-6".');
-    }
-
     if (split_mode === 'ranges') {
       if (!ranges) {
         throw new Error('"Ranges" is required when split mode is "Page Ranges".');
+      }
+      if (!PAGE_LIST.test(ranges.replace(/\s/g, ''))) {
+        throw new Error('"Ranges" must look like "1-5,7,10-13".');
       }
       options['ranges'] = ranges.replace(/\s/g, '');
     } else if (split_mode === 'fixed_range') {
@@ -111,6 +101,9 @@ export const splitPdfAction = createAction({
           '"Fixed Range Size" is required when split mode is "Fixed Range".'
         );
       }
+      if (!Number.isInteger(fixed_range) || fixed_range < 1) {
+        throw new Error('"Fixed Range Size" must be a whole number of pages, 1 or more.');
+      }
       options['fixed_range'] = fixed_range;
     } else if (split_mode === 'remove_pages') {
       if (!remove_pages) {
@@ -118,12 +111,18 @@ export const splitPdfAction = createAction({
           '"Remove Pages" is required when split mode is "Remove Pages".'
         );
       }
+      if (!PAGE_LIST.test(remove_pages.replace(/\s/g, ''))) {
+        throw new Error('"Remove Pages" must look like "2,4-6".');
+      }
       options['remove_pages'] = remove_pages.replace(/\s/g, '');
     } else if (split_mode === 'filesize') {
       if (filesize === undefined || filesize === null) {
         throw new Error(
           '"File Size (MB)" is required when split mode is "By File Size".'
         );
+      }
+      if (!(filesize > 0)) {
+        throw new Error('"File Size (MB)" must be greater than 0.');
       }
       options['filesize'] = Math.round(filesize * 1024 * 1024);
     }

@@ -77,7 +77,7 @@ function decodeText(buffer: Buffer): string {
   return buffer.toString('utf-8');
 }
 
-function parseDetailed(text: string): { detailed: Array<Record<string, string | number>> } | { detailed: null; detailed_parse_error: string } {
+function parseDetailed(text: string): { detailed: Array<Record<string, string | number>>; detailed_total_rows?: number; detailed_truncated?: boolean } | { detailed: null; detailed_parse_error: string } {
   const trimmed = text.trim();
   if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
     try {
@@ -114,7 +114,8 @@ function parseDetailed(text: string): { detailed: Array<Record<string, string | 
     row[header[wordIndex]] = word;
     return row;
   });
-  return { detailed: rows };
+  const totalRows = lines.length - 1;
+  return { detailed: rows, detailed_total_rows: totalRows, detailed_truncated: totalRows > rows.length };
 }
 
 const MAX_INLINE_TEXT = 200_000;
