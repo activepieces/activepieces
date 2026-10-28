@@ -1,4 +1,4 @@
-# Chat Engineering Gaps — Priority Order
+ś# Chat Engineering Gaps — Priority Order
 
 ## ~~Priority 1: Batch Execution for One-Time Tasks~~
 **Status:** Done
