@@ -84,7 +84,8 @@ jobs:
           echo "sha=$CLOUD_SHA" >> "$GITHUB_OUTPUT"
           echo "Cloud runs \`$CLOUD_SHA\`" >> "$GITHUB_STEP_SUMMARY"
 
-      # A scheduled run stops when the fleet already runs the candidate, so a quiet day asks for no approval.
+      # A scheduled run stops when every app and worker host, canary included, already runs the candidate,
+      # so a quiet day asks for no approval and a deploy that stopped half way is retried.
       - name: Pick the candidate
         id: pick
         if: ${{ !inputs.hotfix_prs }}
@@ -125,8 +126,19 @@ jobs:
           echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
           echo "Candidate \`$SHA\`, image \`$IMAGE_TAG\`" >> "$GITHUB_STEP_SUMMARY"
           if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$CLOUD_SHA" = "$SHA" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Cloud already runs the candidate. Nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
+            SKIP=true
+            for CONFIG in app worker app-canary worker-canary; do
+              CONFIG_SHA=$(ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app version --config-file=config/$CONFIG.yml 2>&1; exit\"" \
+                | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)$' || true; } | sort -u | cut -d. -f4)
+              if [ "$CONFIG_SHA" != "$SHA" ]; then
+                SKIP=false
+                echo "\`config/$CONFIG.yml\` does not run the candidate on every host" >> "$GITHUB_STEP_SUMMARY"
+              fi
+            done
+            if [ "$SKIP" = true ]; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "Cloud already runs the candidate. Nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
+            fi
           fi
 
       # Each named PR's squash commit is cherry-picked from main, oldest first, onto the commit Cloud runs.
