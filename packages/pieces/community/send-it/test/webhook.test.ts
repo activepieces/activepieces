@@ -51,6 +51,25 @@ describe('webhook signature', () => {
     expect(await handle({ store, signature: sign() })).toEqual([]);
   });
 
+  test('concurrent deliveries keep each other deduplicated', async () => {
+    const store = memoryStore({ webhookId: 'wh_1', webhookSecret: SECRET });
+    const second = { ...body, deliveryId: 'dlv_2' };
+    const rawSecond = JSON.stringify(second);
+    const [a, b] = await Promise.all([
+      handle({ store, signature: sign() }),
+      handle({ store, signature: sign({ payload: rawSecond }), rawBody: rawSecond, parsed: second }),
+    ]);
+    expect(a).toHaveLength(1);
+    expect(b).toHaveLength(1);
+    expect(await handle({ store, signature: sign() })).toEqual([]);
+    expect(await handle({ store, signature: sign({ payload: rawSecond }), rawBody: rawSecond, parsed: second })).toEqual([]);
+  });
+
+  test('deliveries recorded in the old shared list stay deduplicated', async () => {
+    const store = memoryStore({ webhookId: 'wh_1', webhookSecret: SECRET, seenDeliveryIds: ['dlv_1'] });
+    expect(await handle({ store, signature: sign() })).toEqual([]);
+  });
+
   test('legacy store without a secret still fires; no webhook at all drops', async () => {
     expect(await handle({ store: memoryStore({ webhookId: 'wh_old' }) })).toHaveLength(1);
     expect(await handle({ store: memoryStore() })).toEqual([]);

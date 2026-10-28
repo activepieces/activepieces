@@ -91,12 +91,12 @@ async function handle({
   }
   const deliveryId = optionalText(body['deliveryId']);
   if (deliveryId !== undefined) {
-    const seen = await store.get<string[]>(SEEN_KEY);
-    const seenList = Array.isArray(seen) ? seen : [];
-    if (seenList.includes(deliveryId)) {
+    const markerKey = `${SEEN_KEY_PREFIX}${deliveryId}`;
+    const legacy = await store.get<string[]>(SEEN_KEY);
+    if ((await store.get<number>(markerKey)) !== null || (Array.isArray(legacy) && legacy.includes(deliveryId))) {
       return [];
     }
-    await store.put(SEEN_KEY, [...seenList, deliveryId].slice(-SEEN_LIMIT));
+    await store.put(markerKey, now);
   }
   const mapped = mapEvent(body);
   return [deliveryId === undefined ? mapped : { ...mapped, [DEDUPE_KEY_PROPERTY]: `sendit:${deliveryId}` }];
@@ -147,7 +147,6 @@ function rawBodyText(rawBody: unknown): string | undefined {
   return undefined;
 }
 
-const SEEN_LIMIT = 200;
 
 const SIGNATURE_TOLERANCE_SECONDS = 900;
 
@@ -156,6 +155,7 @@ const WEBHOOK_ID_KEY = 'webhookId';
 const SECRET_KEY = 'webhookSecret';
 
 const SEEN_KEY = 'seenDeliveryIds';
+const SEEN_KEY_PREFIX = 'seenDelivery:';
 
 export type WebhookPayload = { body: unknown; headers?: unknown; rawBody?: unknown };
 
