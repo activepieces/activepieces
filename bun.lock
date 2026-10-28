@@ -1542,6 +1542,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/callsync": {
+      "name": "@activepieces/piece-callsync",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "^2.3.0",
+      },
+    },
     "packages/pieces/community/camb-ai": {
       "name": "@activepieces/piece-camb-ai",
       "version": "0.2.0",
@@ -11666,6 +11679,8 @@
 
     "@activepieces/piece-calendly": ["@activepieces/piece-calendly@workspace:packages/pieces/community/calendly"],
 
+    "@activepieces/piece-callsync": ["@activepieces/piece-callsync@workspace:packages/pieces/community/callsync"],
+
     "@activepieces/piece-camb-ai": ["@activepieces/piece-camb-ai@workspace:packages/pieces/community/camb-ai"],
 
     "@activepieces/piece-campaign-monitor": ["@activepieces/piece-campaign-monitor@workspace:packages/pieces/community/campaign-monitor"],
@@ -18545,6 +18560,8 @@
     "@activepieces/piece-assemblyai/dotenv": ["dotenv@16.6.1", "", {}, "sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow=="],
 
     "@activepieces/piece-assemblyai/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@activepieces/piece-callsync/tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
     "@activepieces/piece-fragment/dayjs": ["dayjs@1.11.21", "", {}, "sha512-98IT+HOahAisibz/yjKbzuOBwYcjJ7BCLPzARyHiyEBmRz4fatF+KPJszEHXsGYjUG234aH/cOjW1wwTbKUZlA=="],
 
