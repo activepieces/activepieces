@@ -64,8 +64,9 @@ export const upsertRowAction = createAction({
       databricksUtils.quoteIdentifier({ name })
     );
     const key = databricksUtils.quoteIdentifier({ name: columnName });
-    const updates = quoted
-      .filter((name) => name !== key)
+    const updateColumns = Object.keys(row).filter((name) => name !== columnName);
+    const updates = updateColumns
+      .map((name) => databricksUtils.quoteIdentifier({ name }))
       .map((name) => `target.${name} = source.${name}`);
     const statement = [
       `MERGE INTO ${databricksUtils.tableRef({
