@@ -21,7 +21,8 @@ const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 const ParkedMember = z.tuple([z.string(), z.string(), z.number()])
 
 const FREE_CONCURRENT_JOBS_LIMIT = 5
-const SELF_SERVE_CONCURRENT_JOBS_LIMIT = 15
+const PLUS_CONCURRENT_JOBS_LIMIT = 10
+const TEAM_CONCURRENT_JOBS_LIMIT = 20
 const ENTERPRISE_CONCURRENT_JOBS_LIMIT = 30
 
 async function resolveFlowGroupId(jobData: ExecuteFlowJobData, log: FastifyBaseLogger): Promise<string | null> {
@@ -73,9 +74,10 @@ function concurrencyLimitForCloudPlan(planName: string | null): number {
         case PlanName.PLUS:
         case PlanName.PLUS_ANNUAL:
         case PlanName.PLUS_CHAT:
+            return PLUS_CONCURRENT_JOBS_LIMIT
         case PlanName.TEAM:
         case PlanName.TEAM_ANNUAL:
-            return SELF_SERVE_CONCURRENT_JOBS_LIMIT
+            return TEAM_CONCURRENT_JOBS_LIMIT
         default:
             return ENTERPRISE_CONCURRENT_JOBS_LIMIT
     }
