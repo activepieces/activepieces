@@ -9,36 +9,51 @@ export const createContact = createAction({
     name: 'create_contact',
     classification: 'WRITE',
     displayName: 'Create Contact',
-    description: 'Creates a new contact record.',
+    description: 'Creates a contact.',
     audience: 'human',
     aiMetadata: { description: 'Create a new Contact in Salesforce; Last Name is required and the contact can be linked to an existing Account. Not idempotent — calling it twice creates duplicate contacts, so check for an existing match (e.g. via Find Record) first if dedup matters.', idempotent: false },
     outputSchema: sobjectCreateResponseOutputSchema,
+    propertyGroups: [
+        { key: 'name', display: 'section', label: 'Name', icon: 'user', props: ['FirstName', 'LastName'] },
+        { key: 'contact_details', display: 'section', label: 'Contact Details', icon: 'inbox', props: ['Email', 'Phone'] },
+        { key: 'company', display: 'section', label: 'Company', icon: 'users', props: ['AccountId', 'Title'] },
+    ],
     props: {
         LastName: Property.ShortText({
             displayName: 'Last Name',
             required: true,
+            placeholder: 'Doe',
+            width: 'half',
         }),
         FirstName: Property.ShortText({
             displayName: 'First Name',
             required: false,
+            placeholder: 'Jane',
+            width: 'half',
         }),
         AccountId: salesforcesCommon.account,
         Email: Property.ShortText({
             displayName: 'Email',
             required: false,
+            placeholder: 'jane@example.com',
+            width: 'half',
         }),
         Phone: Property.ShortText({
             displayName: 'Phone',
             required: false,
+            placeholder: '+1 415 555 0100',
+            width: 'half',
         }),
         Title: Property.ShortText({
             displayName: 'Title',
             required: false,
+            placeholder: 'Head of Sales',
         }),
         other_fields: Property.Json({
             displayName: 'Other Fields',
-            description: 'Enter additional fields as a JSON object.',
-            required: false
+            description: 'More fields as JSON, with Salesforce field API names as keys.',
+            required: false,
+            advanced: true,
         })
     },
     async run(context) {

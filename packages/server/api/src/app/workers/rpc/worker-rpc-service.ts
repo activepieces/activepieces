@@ -2,6 +2,7 @@ import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
 import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { Socket } from 'socket.io'
 import { aiRpcHandlers } from '../../ai/ai-rpc-handlers'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
@@ -71,7 +72,7 @@ function workerVersionIsCompatible({ log, workerVersion, workerId, rpcMethod }: 
     return false
 }
 
-export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, connectionId?: string): WorkerToApiContract {
+export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, socket?: Pick<Socket, 'id' | 'connected'>): WorkerToApiContract {
     return {
         async poll(input) {
             log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
@@ -80,7 +81,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                 return null
             }
             const pollQueueName = workerGroupRouting.resolveQueueForWorker(assignment)
-            const job = await jobBroker(log).poll(pollQueueName, connectionId)
+            const job = await jobBroker(log).poll(pollQueueName, socket)
             if (job) {
                 log.info({ worker: { id: input.workerId }, job: { id: job.jobId, type: job.jobData.jobType } }, '[workerRpc#poll] Returning job to worker')
             }

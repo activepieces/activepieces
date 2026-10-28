@@ -6,5 +6,12 @@
   "Booking Rescheduled": "Boeking gerepareerd",
   "Create a webhook to monitor when Booking Cancelled": "Maak een webhook om te monitoren wanneer je een reservering annuleert",
   "Create a webhook to monitor when Booking Created": "Maak een webhook om te monitoren wanneer een reservering wordt gemaakt",
-  "Create a webhook to monitor when Booking Rescheduled": "Maak een webhook om te monitoren bij Rescheduled"
+  "Create a webhook to monitor when Booking Rescheduled": "Maak een webhook om te monitoren bij Rescheduled",
+  "To get your API key:\n1. Open [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) in Cal.com.\n2. Create a new key and choose when it expires.\n3. Copy the key (it starts with `cal_`) and paste it here.": "Zo krijg je je API-sleutel:\n1. Open [Settings → Developer → API Keys](https://app.cal.com/settings/developer/api-keys) in Cal.com.\n2. Maak een nieuwe sleutel aan en kies wanneer die verloopt.\n3. Kopieer de sleutel (begint met `cal_`) en plak hem hier.",
+  "Add cal-api-version (2026-05-01 for /bookings). Auth is added for you.": "Voeg cal-api-version toe (2026-05-01 voor /bookings). Authenticatie wordt automatisch toegevoegd.",
+  "New Booking": "Nieuwe boeking",
+  "Triggers when a Cal.com booking is cancelled.": "Wordt geactiveerd wanneer een Cal.com-boeking wordt geannuleerd.",
+  "Triggers when someone books a meeting with you on Cal.com.": "Wordt geactiveerd wanneer iemand via Cal.com een afspraak met je boekt.",
+  "Triggers when a Cal.com booking is moved to a new time.": "Wordt geactiveerd wanneer een Cal.com-boeking naar een ander tijdstip wordt verplaatst.",
+  "This webhook is added to your Cal.com account when you publish the flow and removed when you turn it off. It fires for bookings on the account that owns the API key.": "Deze webhook wordt aan je Cal.com-account toegevoegd wanneer je de flow publiceert en verwijderd wanneer je hem uitschakelt. Hij wordt geactiveerd voor boekingen van het account dat eigenaar is van de API-sleutel."
 }

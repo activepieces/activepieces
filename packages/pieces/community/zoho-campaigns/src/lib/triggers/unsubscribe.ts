@@ -6,31 +6,33 @@ import {
 import {
   AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
-  StaticPropsValue,
+  Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
-import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
+import { zohoCampaignsAuth } from '../auth';
+import { zohoCampaignsApi } from '../common/api';
+import { zohoCampaignsProps } from '../common/props';
+import type { ZohoCampaignsContactStatus } from '../common/types';
+import { zohoCampaignsContactOutputSchema } from '../output-schemas';
 
-// replace auth with piece auth variable
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
-  StaticPropsValue<any>
+  {
+    listkey: string | undefined;
+    status: ZohoCampaignsContactStatus | undefined;
+  }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
     const { listkey, status = 'unsub' } = propsValue;
-    const location = auth.props?.['location'] as string || 'zoho.com';
-    const accessToken = auth.access_token;
 
     if (!listkey) {
       throw new Error('Mailing list is required');
     }
 
-    const items = await zohoCampaignsCommon.listContacts({
-      accessToken,
-      location,
+    const items = await zohoCampaignsApi.listContacts({
+      auth,
       listkey,
       sort: 'desc',
       status,
@@ -42,9 +44,10 @@ const polling: Polling<
   },
 };
 
-export const unsubscribe = createTrigger({
+export const unsubscribeTrigger = createTrigger({
   auth: zohoCampaignsAuth,
   name: 'unsubscribe',
+  outputSchema: zohoCampaignsContactOutputSchema,
   classification: 'READ',
   displayName: 'Unsubscribe',
   description:
@@ -53,7 +56,21 @@ export const unsubscribe = createTrigger({
     description:
       'Fires when a contact in the selected mailing list reaches the unsubscribed status, representing a subscriber who has opted out or been removed. Polls the list for contacts with that status.',
   },
-  props: zohoCampaignsCommon.unsubscribeProperties(),
+  props: {
+    listkey: zohoCampaignsProps.listKey({ required: true }),
+    status: Property.StaticDropdown<ZohoCampaignsContactStatus, false>({
+      displayName: 'Unsubscribe Type',
+      description:
+        'Type of contact removal to monitor (default: unsubscribed)',
+      required: false,
+      options: {
+        options: [
+          { label: 'Unsubscribed', value: 'unsub' },
+          { label: 'Bounced', value: 'bounce' },
+        ],
+      },
+    }),
+  },
   sampleData: {
     contact_email: 'unsubscribed@example.com',
     firstname: 'John',
@@ -68,13 +85,11 @@ export const unsubscribe = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

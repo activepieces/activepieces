@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, isNil, TriggerStrategy } from '@activepieces/pieces-framework';
 
 import { googleAdsAuth } from '../auth';
 import { googleAdsApi } from '../common/api';
@@ -43,9 +43,16 @@ export const newRecord = createTrigger({
   },
   async onEnable(context) {
     const { customerId, resourceType } = context.propsValue;
-    await saveBaseline({ auth: context.auth, customerId, def: googleAdsUtils.resourceDefinition(resourceType), store: context.store });
+    const def = googleAdsUtils.resourceDefinition(resourceType);
+    if (context.isRepublish && !isNil(await context.store.get(def.changeEventType ? EVENTS_KEY : LAST_ID_KEY))) {
+      return;
+    }
+    await saveBaseline({ auth: context.auth, customerId, def, store: context.store });
   },
   async onDisable(context) {
+    if (context.isRepublish) {
+      return;
+    }
     await context.store.delete(LAST_ID_KEY);
     await context.store.delete(EVENTS_KEY);
   },
