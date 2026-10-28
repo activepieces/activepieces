@@ -44,7 +44,7 @@ export const publishPost = createAction({
     return sendItRequests.publish({
       apiKey: apiKeyOf(context.auth),
       input,
-      key: sendItRequests.idempotencyKey({ override: idempotencyKey, runId: context.run.id, stepName: context.step.name, operation: 'publish' }),
+      key: sendItRequests.idempotencyKey({ override: idempotencyKey, runId: context.run.id, stepName: context.step.name, input, operation: 'publish' }),
     });
   },
 });

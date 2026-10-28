@@ -8,7 +8,7 @@ import { sendItRequests, validateLimit } from '../common/requests';
 export const getPostAnalytics = createAction({
   auth: sendItAuth,
   name: 'get_post_analytics',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'Get Post Analytics',
   description: 'Get engagement metrics for posts published on one platform',
   audience: 'both',

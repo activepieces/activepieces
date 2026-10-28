@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { SendItRecord, isRecord, optionalText, pathId, readList, requireText, sendItApi } from './client';
 
@@ -117,9 +118,27 @@ function buildPost({ input, requireMedia = true }: { input: PostInput; requireMe
   return { platforms, content };
 }
 
-function idempotencyKey({ override, runId, stepName, operation }: { override: unknown; runId: string; stepName: string; operation: string }): string {
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(canonical).join(',')}]`;
+  }
+  if (value !== null && typeof value === 'object') {
+    const entries = Object.entries(value)
+      .filter((entry) => entry[1] !== undefined)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(',')}}`;
+  }
+  return JSON.stringify(value ?? null);
+}
+
+// The default key hashes the step input so each Loop iteration (same run + step, different post) gets its own key.
+function idempotencyKey({ override, runId, stepName, operation, input }: { override: unknown; runId: string; stepName: string; operation: string; input: unknown }): string {
   const custom = optionalText(override);
-  return (custom ?? `activepieces:${operation}:${runId}:${stepName}`).slice(0, MAX_IDEMPOTENCY_KEY);
+  if (custom !== undefined) {
+    return custom.slice(0, MAX_IDEMPOTENCY_KEY);
+  }
+  const digest = crypto.createHash('sha256').update(`${runId}|${stepName}|${operation}|${canonical(input)}`).digest('hex').slice(0, 40);
+  return `activepieces:${operation}:${digest}`.slice(0, MAX_IDEMPOTENCY_KEY);
 }
 
 function futureIso({ value, now = Date.now() }: { value: unknown; now?: number }): string {

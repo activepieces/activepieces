@@ -38,8 +38,13 @@ describe('post building', () => {
   });
 
   test('idempotency key defaults to run + step and honours an override', () => {
-    expect(sendItRequests.idempotencyKey({ override: undefined, runId: 'run1', stepName: 'step_2', operation: 'publish' })).toBe('activepieces:publish:run1:step_2');
-    expect(sendItRequests.idempotencyKey({ override: ' mine ', runId: 'run1', stepName: 'step_2', operation: 'publish' })).toBe('mine');
+    const a = sendItRequests.idempotencyKey({ override: undefined, runId: 'run1', stepName: 'step_2', operation: 'publish', input: { text: 'a', platforms: ['x'] } });
+    const aAgain = sendItRequests.idempotencyKey({ override: undefined, runId: 'run1', stepName: 'step_2', operation: 'publish', input: { platforms: ['x'], text: 'a' } });
+    const b = sendItRequests.idempotencyKey({ override: undefined, runId: 'run1', stepName: 'step_2', operation: 'publish', input: { text: 'b', platforms: ['x'] } });
+    expect(a).toMatch(/^activepieces:publish:[0-9a-f]{40}$/);
+    expect(aAgain).toBe(a);
+    expect(b).not.toBe(a);
+    expect(sendItRequests.idempotencyKey({ override: ' mine ', runId: 'run1', stepName: 'step_2', operation: 'publish', input: {} })).toBe('mine');
   });
 });
 

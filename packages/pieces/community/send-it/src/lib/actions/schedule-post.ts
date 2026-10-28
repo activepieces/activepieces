@@ -47,7 +47,7 @@ export const schedulePost = createAction({
       apiKey: apiKeyOf(context.auth),
       input,
       scheduledTime,
-      key: sendItRequests.idempotencyKey({ override: idempotencyKey, runId: context.run.id, stepName: context.step.name, operation: 'schedule' }),
+      key: sendItRequests.idempotencyKey({ override: idempotencyKey, runId: context.run.id, stepName: context.step.name, input: { ...input, scheduledTime }, operation: 'schedule' }),
     });
   },
 });
