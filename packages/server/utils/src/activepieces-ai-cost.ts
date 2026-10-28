@@ -4,8 +4,8 @@ import { EmbeddingModel, LanguageModel, wrapEmbeddingModel, wrapLanguageModel } 
 import { z } from 'zod'
 import { lookupGeneration } from './openrouter-generation'
 
-export function billedLanguageModel({ model, provider, modelId, billing, charge }: BilledLanguageModelParams): LanguageModel {
-    const context = billingContextOf({ provider, modelId, billing, charge })
+export function billedLanguageModel({ model, provider, providerConfigId, modelId, billing, charge }: BilledLanguageModelParams): LanguageModel {
+    const context = billingContextOf({ provider, providerConfigId, modelId, billing, charge })
     if (isNil(context) || typeof model === 'string') {
         return model
     }
@@ -18,11 +18,12 @@ export function billedLanguageModel({ model, provider, modelId, billing, charge 
     })
 }
 
-export function billedEmbeddingModel({ model, provider, modelId, billing }: BilledEmbeddingModelParams): EmbeddingModel {
-    if (isNil(billing) || provider !== AIProviderName.ACTIVEPIECES || typeof model === 'string' || model.specificationVersion !== 'v4') {
+export function billedEmbeddingModel({ model, provider, providerConfigId, modelId, billing }: BilledEmbeddingModelParams): EmbeddingModel {
+    if (isNil(billing) || typeof model === 'string' || model.specificationVersion !== 'v4') {
         return model
     }
-    const context: BillingContext = { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId }
+    const basis = provider === AIProviderName.ACTIVEPIECES ? AiChargeBasis.PROVIDER_REPORTED_COST : AiChargeBasis.USAGE_ONLY
+    const context: BillingContext = { basis, billing, provider, providerConfigId, modelId }
     return wrapEmbeddingModel({
         model,
         middleware: {
@@ -31,57 +32,64 @@ export function billedEmbeddingModel({ model, provider, modelId, billing }: Bill
     })
 }
 
-export function reportFixedCredits({ billing, provider, modelId, generationId }: ReportFixedCreditsParams): void {
+export function reportFixedCredits({ billing, provider, providerConfigId, modelId, generationId, ...tokens }: ReportFixedCreditsParams): void {
     report({
-        context: { basis: AiChargeBasis.FIXED_CREDITS, billing, provider, modelId },
-        call: createFixedCreditChargeInfo({ generationId }),
+        context: { basis: AiChargeBasis.FIXED_CREDITS, billing, provider, providerConfigId, modelId },
+        call: { ...createFixedCreditChargeInfo({ generationId }), ...tokens },
     })
 }
 
-export function reportProviderCost({ billing, provider, modelId, costUsd, inputTokens, outputTokens, generationId }: ReportProviderCostParams): void {
-    const context: BillingContext = { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId }
+export function reportUsageOnly({ billing, provider, providerConfigId, modelId, generationId, ...tokens }: ReportFixedCreditsParams): void {
+    report({
+        context: { basis: AiChargeBasis.USAGE_ONLY, billing, provider, providerConfigId, modelId },
+        call: { charge: AiChargeBasis.USAGE_ONLY, generationId, ...tokens },
+    })
+}
+
+export function reportProviderCost({ billing, provider, providerConfigId, modelId, costUsd, inputTokens, outputTokens, generationId }: ReportProviderCostParams): void {
+    const context: BillingContext = { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, providerConfigId, modelId }
     if (isNil(costUsd)) {
-        report({ context, generationId, call: undefined })
+        report({ context, generationId, call: undefined, tokens: { inputTokens, outputTokens } })
         return
     }
     report({
         context,
         generationId,
-        call: { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, inputTokens, outputTokens },
+        call: { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, inputTokens, outputTokens, observedCostUsd: costUsd },
     })
 }
 
-function billingContextOf({ provider, modelId, billing, charge }: BillingContextParams): BillingContext | undefined {
+function billingContextOf({ provider, providerConfigId, modelId, billing, charge }: BillingContextParams): BillingContext | undefined {
     if (isNil(billing) || isNil(charge)) {
         return undefined
     }
-    if (charge.basis === AiChargeBasis.FIXED_CREDITS) {
-        return { basis: AiChargeBasis.FIXED_CREDITS, billing, provider, modelId }
+    if (charge.basis !== AiChargeBasis.PROVIDER_REPORTED_COST) {
+        return { basis: charge.basis, billing, provider, providerConfigId, modelId }
     }
-    return { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId, apiKey: charge.managedApiKey }
+    return { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, providerConfigId, modelId, apiKey: charge.managedApiKey }
 }
 
 async function billGenerate({ doGenerate, context }: BillGenerateParams): Promise<LanguageModelV4GenerateResult> {
     const result = await doGenerate()
     const generationId = result.response?.id
-    report({ context, generationId, call: createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage }) })
+    report({ context, generationId, call: createBillingInfo({ context, generationId, providerMetadata: result.providerMetadata, usage: result.usage, headers: result.response?.headers }), tokens: tokensOf(result.usage) })
     return result
 }
 
 async function billStream({ doStream, context }: BillStreamParams): Promise<LanguageModelV4StreamResult> {
     const { stream, ...rest } = await doStream()
-    return { ...rest, stream: stream.pipeThrough(billedStream(context)) }
+    return { ...rest, stream: stream.pipeThrough(billedStream({ context, headers: rest.response?.headers })) }
 }
 
 async function billEmbed({ doEmbed, context }: BillEmbedParams): Promise<EmbeddingModelV4Result> {
     const result = await doEmbed()
     const generationId = parseOrUndefined(EmbeddingResponseBody, result.response?.body)?.id
-    report({ context, generationId, call: createEmbeddingBillingInfo({ result, generationId }) })
+    report({ context, generationId, call: createEmbeddingBillingInfo({ context, result, generationId }), tokens: { inputTokens: result.usage?.tokens } })
     return result
 }
 
-function billedStream(context: BillingContext): TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart> {
-    const state: StreamState = { reported: false }
+function billedStream({ context, headers }: { context: BillingContext, headers: ResponseHeaders }): TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart> {
+    const state: StreamState = { reported: false, headers }
     return new TransformStream({
         transform: (chunk, controller) => trackChunk({ chunk, controller, state, context }),
         flush: () => settleStream({ state, context }),
@@ -94,7 +102,8 @@ function trackChunk({ chunk, controller, state, context }: TrackChunkParams): vo
         state.generationId = chunk.id ?? state.generationId
     }
     if (chunk.type === 'finish' && !state.reported) {
-        const call = createBillingInfo({ context, generationId: state.generationId, providerMetadata: chunk.providerMetadata, usage: chunk.usage })
+        state.tokens = tokensOf(chunk.usage)
+        const call = createBillingInfo({ context, generationId: state.generationId, providerMetadata: chunk.providerMetadata, usage: chunk.usage, headers: state.headers })
         if (!isNil(call)) {
             state.reported = true
             report({ context, generationId: state.generationId, call })
@@ -112,19 +121,23 @@ function settleStream({ state, context }: SettleStreamParams): void {
         report({ context, generationId: state.generationId, call: createFixedCreditChargeInfo({ generationId: state.generationId }) })
         return
     }
-    recoverCostAndReport({ state, context }).catch(() => report({ context, generationId: state.generationId, call: undefined }))
+    if (context.basis === AiChargeBasis.USAGE_ONLY) {
+        report({ context, generationId: state.generationId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId: state.generationId } })
+        return
+    }
+    recoverCostAndReport({ state, context }).catch(() => report({ context, generationId: state.generationId, call: undefined, tokens: state.tokens }))
 }
 
 async function recoverCostAndReport({ state, context }: SettleStreamParams): Promise<void> {
     const { generationId } = state
     const { apiKey } = context
     if (isNil(generationId) || isNil(apiKey)) {
-        report({ context, generationId, call: undefined })
+        report({ context, generationId, call: undefined, tokens: state.tokens })
         return
     }
     const generation = await lookupGeneration({ apiKey, generationId })
     if (isNil(generation)) {
-        report({ context, generationId, call: undefined })
+        report({ context, generationId, call: undefined, tokens: state.tokens })
         return
     }
     report({
@@ -136,28 +149,36 @@ async function recoverCostAndReport({ state, context }: SettleStreamParams): Pro
             costUsd: generation.costUsd,
             inputTokens: generation.inputTokens,
             outputTokens: generation.outputTokens,
+            observedCostUsd: generation.costUsd,
         },
     })
 }
 
-function createBillingInfo({ context, generationId, providerMetadata, usage }: CreateBillingInfoParams): ActivepiecesAiCall | undefined {
-    const tokens = tokensOf(usage)
+function createBillingInfo({ context, generationId, providerMetadata, usage, headers }: CreateBillingInfoParams): ActivepiecesAiCall | undefined {
+    const costUsd = openRouterCostOf(providerMetadata) ?? gatewayHeaderCostOf({ provider: context.provider, headers })
+    const tokens = { ...tokensOf(usage), observedCostUsd: costUsd }
     if (context.basis === AiChargeBasis.FIXED_CREDITS) {
         return { ...createFixedCreditChargeInfo({ generationId }), ...tokens }
     }
-    const costUsd = openRouterCostOf(providerMetadata)
+    if (context.basis === AiChargeBasis.USAGE_ONLY) {
+        return { charge: AiChargeBasis.USAGE_ONLY, generationId, ...tokens }
+    }
     if (isNil(costUsd)) {
         return undefined
     }
     return { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, ...tokens }
 }
 
-function createEmbeddingBillingInfo({ result, generationId }: CreateEmbeddingBillingInfoParams): ActivepiecesAiCall | undefined {
+function createEmbeddingBillingInfo({ context, result, generationId }: CreateEmbeddingBillingInfoParams): ActivepiecesAiCall | undefined {
     const costUsd = openRouterCostOf(result.providerMetadata)
+    const tokens = { inputTokens: result.usage?.tokens, observedCostUsd: costUsd }
+    if (context.basis === AiChargeBasis.USAGE_ONLY) {
+        return { charge: AiChargeBasis.USAGE_ONLY, generationId, ...tokens }
+    }
     if (isNil(costUsd)) {
         return undefined
     }
-    return { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, inputTokens: result.usage?.tokens }
+    return { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, ...tokens }
 }
 
 function createFixedCreditChargeInfo({ generationId }: { generationId?: string }): ActivepiecesAiCall {
@@ -168,6 +189,9 @@ function tokensOf(usage: LanguageModelV4Usage | undefined): AiCallTokens {
     return {
         inputTokens: usage?.inputTokens?.total,
         outputTokens: usage?.outputTokens?.total,
+        cacheReadTokens: usage?.inputTokens?.cacheRead,
+        cacheWriteTokens: usage?.inputTokens?.cacheWrite,
+        reasoningTokens: usage?.outputTokens?.reasoning,
     }
 }
 
@@ -183,21 +207,30 @@ function openRouterCostOf(providerMetadata: SharedV4ProviderMetadata | undefined
     return parseOrUndefined(OpenRouterUsage, usage)?.cost
 }
 
+function gatewayHeaderCostOf({ provider, headers }: { provider: AIProviderName, headers: ResponseHeaders }): number | undefined {
+    if (provider !== AIProviderName.CUSTOM || isNil(headers)) {
+        return undefined
+    }
+    const cost = Number(headers[LITELLM_COST_HEADER])
+    return Number.isFinite(cost) && cost >= 0 ? cost : undefined
+}
+
 function parseOrUndefined<T extends z.ZodType>(schema: T, value: unknown): z.infer<T> | undefined {
     const parsed = schema.safeParse(value)
     return parsed.success ? parsed.data : undefined
 }
 
-function report({ context, call, generationId }: ReportParams): void {
+function report({ context, call, generationId, tokens }: ReportParams): void {
     if (isNil(call)) {
         recordUnbilledCall({ context, generationId, reason: isNil(generationId) ? UnbilledCallReason.NO_GENERATION_ID : UnbilledCallReason.PROVIDER_REPORTED_NO_COST })
+        reporter?.({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call: { charge: AiChargeBasis.USAGE_ONLY, generationId, ...tokens } })
         return
     }
     if (isNil(reporter)) {
         recordUnbilledCall({ context, generationId: call.generationId ?? generationId, reason: UnbilledCallReason.NO_REPORTER_INSTALLED })
         return
     }
-    reporter({ billing: context.billing, provider: context.provider, modelId: context.modelId, call })
+    reporter({ billing: context.billing, provider: context.provider, ...spreadIfDefined('providerConfigId', context.providerConfigId), modelId: context.modelId, call })
 }
 
 function recordUnbilledCall({ context, generationId, reason }: RecordUnbilledCallParams): void {
@@ -237,6 +270,7 @@ const OpenRouterUsage = z.object({
 })
 
 let reporter: ActivepiecesAiCostReporter | undefined
+const LITELLM_COST_HEADER = 'x-litellm-response-cost'
 let unbilledCalls: UnbilledCall[] = []
 
 const FIXED_CREDITS_PER_MODEL_CALL = 1
@@ -249,6 +283,7 @@ export const activepiecesAiCost = {
     billedLanguageModel,
     billedEmbeddingModel,
     reportFixedCredits,
+    reportUsageOnly,
     reportProviderCost,
     openRouterCostOf,
 }
@@ -257,35 +292,40 @@ type BillingContext = {
     basis: AiChargeBasis
     billing: ActivepiecesAiBilling
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
     apiKey?: string
 }
 
 type BillingContextParams = {
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
-    billing: ActivepiecesAiBilling | undefined
+    billing: ActivepiecesAiBilling | null | undefined
     charge: AiCharge | undefined
 }
 
 type BilledLanguageModelParams = {
     model: LanguageModel
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
-    billing: ActivepiecesAiBilling | undefined
+    billing: ActivepiecesAiBilling | null | undefined
     charge: AiCharge | undefined
 }
 
 type BilledEmbeddingModelParams = {
     model: EmbeddingModel
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
-    billing: ActivepiecesAiBilling | undefined
+    billing: ActivepiecesAiBilling | null | undefined
 }
 
-type ReportFixedCreditsParams = {
+type ReportFixedCreditsParams = AiCallTokens & {
     billing: ActivepiecesAiBilling
     provider: AIProviderName
+    providerConfigId?: string
     modelId: string
     generationId?: string
 }
@@ -297,6 +337,8 @@ type ReportProviderCostParams = ReportFixedCreditsParams & AiCallTokens & {
 type StreamState = {
     reported: boolean
     generationId?: string
+    headers: ResponseHeaders
+    tokens?: AiCallTokens
 }
 
 type BillGenerateParams = {
@@ -331,15 +373,20 @@ type CreateBillingInfoParams = {
     generationId: string | undefined
     providerMetadata: SharedV4ProviderMetadata | undefined
     usage: LanguageModelV4Usage | undefined
+    headers?: ResponseHeaders
 }
+
+type ResponseHeaders = Record<string, string | undefined> | undefined
 
 type ReportParams = {
     context: BillingContext
     call: ActivepiecesAiCall | undefined
     generationId?: string
+    tokens?: AiCallTokens
 }
 
 type CreateEmbeddingBillingInfoParams = {
+    context: BillingContext
     result: EmbeddingModelV4Result
     generationId: string | undefined
 }

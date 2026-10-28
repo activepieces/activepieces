@@ -19,6 +19,21 @@ vi.mock('../../../../src/app/platform/billing-and-telemetry', () => ({
     trackBillingAndSendTelemetry: (...args: unknown[]) => trackBillingAndSendTelemetry(...args as []),
 }))
 
+const claimedKeys = new Set<string>()
+
+vi.mock('../../../../src/app/database/redis-connections', () => ({
+    distributedStore: {
+        runOnceWithin: async (key: string, _ttl: number, fn: () => Promise<unknown>) => {
+            if (claimedKeys.has(key)) {
+                return false
+            }
+            claimedKeys.add(key)
+            await fn()
+            return true
+        },
+    },
+}))
+
 vi.mock('../../../../src/app/ai/ai-usage-hooks', () => ({
     aiUsageHooks: { get: () => ({ addConversationCredits }) },
 }))
@@ -55,6 +70,33 @@ describe('aiUsageService.report — the conversation credit total', () => {
         }))
 
         expect(addConversationCredits).toHaveBeenCalledWith({ conversationId: 'conversation-1', credits: 10 })
+    })
+
+    it('never bills a usage-only call', async () => {
+        const usageOnly: ReportAiUsageRequest = {
+            ...reportOf({ source: ActivepiecesAiConsumerSource.CHAT, platformId: 'platform-1', projectId: 'project-1', conversationId: 'conversation-1' }),
+            provider: AIProviderName.OPENAI,
+            usage: { type: AiChargeBasis.USAGE_ONLY },
+        }
+
+        await aiUsageService(noopLogger as never).report(usageOnly)
+
+        expect(trackBillingAndSendTelemetry).not.toHaveBeenCalled()
+        expect(addConversationCredits).not.toHaveBeenCalled()
+    })
+
+    it('adds a retried report to the conversation once, since the retry carries the same key', async () => {
+        const report = reportOf({
+            source: ActivepiecesAiConsumerSource.CHAT,
+            platformId: 'platform-1',
+            projectId: 'project-1',
+            conversationId: 'conversation-1',
+        })
+
+        await aiUsageService(noopLogger as never).report(report)
+        await aiUsageService(noopLogger as never).report(report)
+
+        expect(addConversationCredits).toHaveBeenCalledTimes(1)
     })
 
     it('accumulates rather than replaces, so several calls in one turn all count', async () => {

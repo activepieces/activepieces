@@ -190,7 +190,7 @@ describe('what the managed provider is asked to send back', () => {
         })
     })
 
-    it('does not ask for cost accounting on a customer own OpenRouter key, which we never pay for', () => {
-        expect(settingsFor({ provider: AIProviderName.OPENROUTER })).toEqual({})
+    it('asks a customer own OpenRouter key for its cost too, so AI usage shows what the provider charged', () => {
+        expect(settingsFor({ provider: AIProviderName.OPENROUTER })).toMatchObject({ usage: { include: true } })
     })
 })
