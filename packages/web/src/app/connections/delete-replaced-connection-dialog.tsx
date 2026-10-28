@@ -49,7 +49,7 @@ function DeleteReplacedConnectionDialog({
             {t(
               'These still use the connection and stop working if you delete it:',
             )}
-            <ScrollArea className="max-h-[140px]">
+            <ScrollArea viewPortClassName="max-h-[250px]">
               <div className="flex flex-wrap gap-1.5">
                 {flows.map((flow) => (
                   <Badge
