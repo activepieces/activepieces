@@ -40,6 +40,7 @@ NinjaPipe 0.2.0 changes what existing steps take and return once they are upgrad
 #### What you need to do
 
 After upgrading a NinjaPipe step, remap later steps that used the List output (map `items` instead of the array), a `data_*` field (map the plain field name), the Delete or Send to Databin output, or a trigger's `fields_*` key (map the nested field). Re-select the company in contact steps that used the old Company text field, and re-select Owner and Assignee from the dropdown. Custom API Call steps that called another host should use an HTTP step instead. Agents that used the old actions as tools: add the AI versions listed above to the agent.
+
 #### Campaign Monitor 0.2.0: Add Subscriber and Update Subscriber are builder-only
 
 Add Subscriber and Update Subscriber are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
