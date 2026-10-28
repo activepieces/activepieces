@@ -118,6 +118,28 @@ describe('bannerbear new-image-completed', () => {
     expect(emitted).toHaveLength(fresh.length);
   });
 
+  test('fires images from before enable that were still rendering and finish later', async () => {
+    const old = addImages({ count: 26, status: 'pending' });
+    vi.spyOn(bannerbearClient, 'request').mockImplementation(async ({ path, queryParams }) =>
+      fakeRequest({ feed, path, queryParams: { ...queryParams, limit: '25' } })
+    );
+    await call({ hook: 'onEnable' });
+    const fresh = addImages({ count: 24, status: 'completed' });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const first = await runUntilQuiet();
+    for (const image of feed) {
+      if (image.status === 'pending') {
+        image.status = 'completed';
+        image.completed_at = new Date().toISOString();
+      }
+    }
+
+    const emitted = [...first, ...(await runUntilQuiet())];
+
+    expect(new Set(emitted)).toEqual(new Set([...fresh, ...old].map((image) => image.uid)));
+    expect(emitted).toHaveLength(fresh.length + old.length);
+  });
+
   test('rotates the pending queue so slow renders do not block later images', async () => {
     await call({ hook: 'onEnable' });
     const later = addImages({ count: 30, status: 'pending' });

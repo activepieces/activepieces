@@ -48,6 +48,7 @@ export const newImageCompletedTrigger = createTrigger({
       pending: images.filter((i) => i.status === 'pending').map((i) => toPendingEntry(i)).slice(0, MAX_PENDING),
       head: newestCreatedAt(images) ?? new Date().toISOString(),
       floor: oldestCreatedAt(images.map((i) => toPendingEntry(i))) ?? new Date().toISOString(),
+      enabledAt: new Date().toISOString(),
       backfill: null,
       recovery: null,
     });
@@ -75,6 +76,7 @@ export const newImageCompletedTrigger = createTrigger({
       ),
       head: stored?.head ?? null,
       floor: stored?.floor ?? null,
+      enabledAt: stored?.enabledAt ?? null,
       backfill: stored?.backfill ?? null,
       recovery: stored?.recovery ?? null,
     };
@@ -126,13 +128,19 @@ export const newImageCompletedTrigger = createTrigger({
         : { page: scanned.nextPage, until: recovery.until, since: recovery.since };
     }
     // Images created at or before the enable-time floor existed before the trigger was
-    // enabled: page 1 of those is already in seen/pending, older pages must never fire.
+    // enabled. Only the ones that had already completed by then are dropped; unfinished
+    // ones stay eligible so their later completion still fires.
     const floorTime = state.floor === null ? NaN : Date.parse(state.floor);
+    const enabledTime = state.enabledAt === null ? NaN : Date.parse(state.enabledAt);
     const recent = dedupe([...fresh.images, ...backfillImages, ...recoveredImages]).filter(
       (i) =>
         Number.isNaN(floorTime) ||
         i.created_at === null ||
-        Date.parse(i.created_at) > floorTime
+        Date.parse(i.created_at) > floorTime ||
+        i.status !== 'completed' ||
+        (!Number.isNaN(enabledTime) &&
+          i.completed_at !== null &&
+          Date.parse(i.completed_at) > enabledTime)
     );
     const recentByUid = new Map(recent.map((i) => [i.uid, i]));
     const pendingToCheck = state.pending.filter((entry) => !recentByUid.has(entry.uid));
@@ -165,6 +173,7 @@ export const newImageCompletedTrigger = createTrigger({
       pending: stillPending.slice(0, MAX_PENDING),
       head: newestCreatedAt(fresh.images) ?? state.head,
       floor: state.floor,
+      enabledAt: state.enabledAt,
       backfill,
       recovery,
     });
@@ -291,6 +300,7 @@ type PollState = {
   pending: PendingEntry[];
   head: string | null;
   floor: string | null;
+  enabledAt: string | null;
   backfill: { page: number; until: string | null } | null;
   recovery: { page: number; until: string | null; since: string } | null;
 };
