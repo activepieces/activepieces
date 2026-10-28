@@ -1,3 +1,4 @@
+import { wideEvent } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { autumnBillingProvider, computeCreditState } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
@@ -243,5 +244,49 @@ describe('credits gate decides from the cache and refreshes in the background', 
         expect(credits.blocked).toBe(false)
         expect(mockResolveClientForPlatform).not.toHaveBeenCalled()
         expect(log.warn).toHaveBeenCalled()
+    })
+
+    it('waits longer than a sync webhook for a slow cache read before failing open', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 100)))
+        const provider = autumnBillingProvider(log)
+
+        await expect(provider.shouldBlockOnCredits({ platformId: 'platform-1', syncWebhook: true })).resolves.toBe(false)
+        await expect(provider.shouldBlockOnCredits({ platformId: 'platform-1', syncWebhook: false })).resolves.toBe(true)
+    })
+
+    it('records the read time on the request and logs a slow read made outside a request', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 40)))
+        const setSpy = vi.spyOn(wideEvent, 'set')
+
+        await gateState()
+
+        expect(setSpy).toHaveBeenCalledWith({ creditsGate: { readMs: expect.any(Number), readTimeoutMs: 400, timedOut: false } })
+        expect(log.info).toHaveBeenCalledWith(
+            { platform: { id: 'platform-1' }, creditsGate: { readMs: expect.any(Number), readTimeoutMs: 400 } },
+            'Credits gate cache read was slow',
+        )
+        setSpy.mockRestore()
+    })
+
+    it('does not log a fast read', async () => {
+        storedCredits = fresh({ remaining: 0 })
+
+        await gateState()
+
+        expect(log.info).not.toHaveBeenCalledWith(expect.anything(), 'Credits gate cache read was slow')
+    })
+
+    it('logs how long a timed-out read really took once it finishes', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 100)))
+
+        await autumnBillingProvider(log).shouldBlockOnCredits({ platformId: 'platform-1', syncWebhook: true })
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        const lateRead = vi.mocked(log.info).mock.calls.find(([, msg]) => msg === 'Credits gate cache read finished after the timeout')
+        expect(lateRead?.[0]).toMatchObject({ platform: { id: 'platform-1' }, creditsGate: { readTimeoutMs: 25 } })
+        expect(lateRead?.[0]).toHaveProperty('creditsGate.readMs', expect.any(Number))
     })
 })

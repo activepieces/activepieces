@@ -112,14 +112,14 @@ export async function hasCreditsLeft({ platformId, log }: { platformId: string, 
     return isNil(left) || left > 0
 }
 
-export async function shouldBlockRunOnCredits({ platformId, environment, log }: RunCreditsGateParams): Promise<boolean> {
+export async function shouldBlockRunOnCredits({ platformId, environment, syncWebhook = false, log }: RunCreditsGateParams): Promise<boolean> {
     if (system.getEdition() === ApEdition.ENTERPRISE) {
         return false
     }
     if (environment !== RunEnvironment.PRODUCTION) {
         return false
     }
-    return billingProvider.get(log).shouldBlockOnCredits(platformId)
+    return billingProvider.get(log).shouldBlockOnCredits({ platformId, syncWebhook })
 }
 
 export async function assertRunCreditsNotExceeded({ platformId, environment, log }: RunCreditsGateParams): Promise<void> {
@@ -186,7 +186,13 @@ type EmptyBillingOverviewParams = {
 type RunCreditsGateParams = {
     platformId: string
     environment: RunEnvironment
+    syncWebhook?: boolean
     log: FastifyBaseLogger
+}
+
+export type ShouldBlockOnCreditsParams = {
+    platformId: string
+    syncWebhook: boolean
 }
 
 export type CreditEventBreakdownEntry = {
@@ -415,7 +421,7 @@ export type BillingProvider = {
     applyAppSumoPlan(params: ApplyAppSumoPlanParams): Promise<void>
     activateLicense(params: ActivateLicenseParams): Promise<void>
     isBillingEnforced(platformId: string): Promise<boolean>
-    shouldBlockOnCredits(platformId: string): Promise<boolean>
+    shouldBlockOnCredits(params: ShouldBlockOnCreditsParams): Promise<boolean>
     getCreditsAndAppSumoState(platformId: string): Promise<CreditsAndAppSumoState>
     getConsumablesUsage(platformId: string): Promise<ConsumablesUsage>
     getCreditUsage(params: CreditUsageByProjectParams): Promise<CreditUsage>

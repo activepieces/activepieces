@@ -16,8 +16,8 @@ import { billingProvider, shouldBlockRunOnCredits } from '../../../../src/app/pl
 const log = { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() } as unknown as FastifyBaseLogger
 const noopProvider = billingProvider.get(log)
 
-function gate(environment: RunEnvironment) {
-    return shouldBlockRunOnCredits({ platformId: 'platform-1', environment, log })
+function gate(environment: RunEnvironment, syncWebhook?: boolean) {
+    return shouldBlockRunOnCredits({ platformId: 'platform-1', environment, syncWebhook, log })
 }
 
 describe('shouldBlockRunOnCredits', () => {
@@ -38,7 +38,14 @@ describe('shouldBlockRunOnCredits', () => {
         mockGetEdition.mockReturnValue(ApEdition.CLOUD)
 
         await expect(gate(RunEnvironment.PRODUCTION)).resolves.toBe(true)
-        expect(mockShouldBlockOnCredits).toHaveBeenCalledWith('platform-1')
+        expect(mockShouldBlockOnCredits).toHaveBeenCalledWith({ platformId: 'platform-1', syncWebhook: false })
+    })
+
+    it('tells the provider when the check is for a sync webhook', async () => {
+        mockGetEdition.mockReturnValue(ApEdition.CLOUD)
+
+        await gate(RunEnvironment.PRODUCTION, true)
+        expect(mockShouldBlockOnCredits).toHaveBeenCalledWith({ platformId: 'platform-1', syncWebhook: true })
     })
 
     it('never gates a testing run', async () => {
