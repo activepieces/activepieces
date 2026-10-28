@@ -1,10 +1,10 @@
-import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
-import { oneNoteAuth } from '../auth';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Property, createAction } from '@activepieces/pieces-framework';
+import { microsoftOneNoteAuth } from '../auth';
+import { microsoftOneNoteClient } from '../common/client';
+import type { Notebook } from '../common/types';
 
-export const createNotebook = createAction({
-	auth: oneNoteAuth,
+export const createNotebookAction = createAction({
+	auth: microsoftOneNoteAuth,
 	name: 'create_notebook',
 	classification: 'WRITE',
 	displayName: 'Create Notebook',
@@ -22,21 +22,14 @@ export const createNotebook = createAction({
 		const { auth, propsValue } = context;
 		const { displayName } = propsValue;
 
-		const authValue = auth as OAuth2PropertyValue;
-		const cloud = authValue.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(authValue.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
+		const client = microsoftOneNoteClient.create({ auth });
 
 		const notebookBody = {
 			displayName,
 		};
 
 		try {
-			const response = await client.api('/me/onenote/notebooks').post(notebookBody);
+			const response: Notebook = await client.api('/me/onenote/notebooks').post(notebookBody);
 
 			return {
 				id: response.id,
@@ -53,8 +46,8 @@ export const createNotebook = createAction({
 				links: response.links,
 				self: response.self,
 			};
-		} catch (error: any) {
-			throw new Error(`Failed to create notebook: ${error.message || 'Unknown error'}`);
+		} catch (error) {
+			throw new Error(`Failed to create notebook: ${(error instanceof Error && error.message) || 'Unknown error'}`);
 		}
 	},
 });
