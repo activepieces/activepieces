@@ -61,7 +61,9 @@ Then, for the candidate:
 2. The `report` job posts the `e2e-matrix` and `upgrade-test` commit statuses on the candidate SHA. A red upgrade test says whether the candidate broke or the setup failed before the upgrade.
 3. The run summary lists the tickets between the commit Cloud runs and the candidate.
 4. The `approve` job waits for approval in the `production` GitHub Environment. It starts only when every check passed. A newer candidate cancels an older one that still waits.
-5. The canary deploys the image (after the breaking-migration check), then the fleet, then the Linear "Cloud" release records the candidate SHA.
+5. Under the `promote-production` lock, the `deploy` job reads the Cloud version again and refuses to deploy when the canary and the fleet run different images, when Cloud changed after the cut, or when the candidate lacks a PR that Cloud runs (a downgrade, or a fix shipped through another path). Then the breaking-migration check, the canary, the fleet, and the Linear "Cloud" release.
+
+If the gate refuses because the canary and the fleet differ (for example after `emergency-cloud-deploy.yml`, which deploys only the fleet), deploy the fleet's tag to the canary from `mrsk/prod`: `kamal deploy --version <tag> --config-file=config/app-canary.yml --skip-push`, then the same with `config/worker-canary.yml`.
 
 The canary has no workflow of its own since ENG-1021: the gate's `deploy` job runs the breaking-migration check, deploys the canary, then the fleet, under the `promote-production` lock that `continuous-delivery-rollback.yml` also uses. See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment).
 

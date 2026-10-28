@@ -19,6 +19,7 @@ on:
 permissions:
   contents: read
   packages: read
+  checks: read
 
 jobs:
   cut:
@@ -100,8 +101,12 @@ jobs:
         run: |
           CLOUD_SHA=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1; exit"' \
             | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.beta$' || true; } | head -1 | cut -d. -f4)
+          if [ -z "$CLOUD_SHA" ]; then
+            echo "::error::Could not read the version the Cloud fleet runs"
+            exit 1
+          fi
           echo "sha=$CLOUD_SHA" >> "$GITHUB_OUTPUT"
-          echo "Cloud runs \`${CLOUD_SHA:-unknown}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Cloud runs \`$CLOUD_SHA\`" >> "$GITHUB_STEP_SUMMARY"
           if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$CLOUD_SHA" = "$SHA" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "Cloud already runs the candidate. Nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
@@ -179,10 +184,6 @@ jobs:
           CLOUD_SHA: ${{ needs.cut.outputs.cloud_sha }}
         run: |
           echo "## Tickets in \`${SHA:0:10}\`" >> "$GITHUB_STEP_SUMMARY"
-          if [ -z "$CLOUD_SHA" ]; then
-            echo "Cloud version unknown, so there is no ticket list." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
           PRS=$(git log --first-parent --format=%s "$CLOUD_SHA..$SHA" -- . \
             ':!packages/pieces/community' ':!packages/pieces/core' ':!packages/pieces/custom' ':!bun.lock' ':!tsconfig.base.json' ':!docs' \
             | { grep -oE '\(#[0-9]+\)$' || true; } | tr -d '(#)')
@@ -221,9 +222,9 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v5
-        if: inputs.skip_migration_check != true
         with:
           ref: ${{ needs.cut.outputs.sha }}
+          fetch-depth: 0
 
       - uses: actions/setup-node@v6
         if: inputs.skip_migration_check != true
@@ -260,8 +261,52 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
 
+      # Read again under the lock: an approval can wait for days, and Cloud can change in that time.
+      # The candidate must keep every PR that Cloud runs, so no deploy drops a fix that went out
+      # through another path or replaces newer code with older code.
+      - name: Check that the candidate keeps everything Cloud runs
+        env:
+          SHA: ${{ needs.cut.outputs.sha }}
+          CUT_CLOUD_SHA: ${{ needs.cut.outputs.cloud_sha }}
+        run: |
+          read_version() {
+            ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app version --config-file=$1 2>&1; exit\"" \
+              | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.beta$' || true; } | sort -u
+          }
+          FLEET=$(read_version config/app.yml)
+          CANARY=$(read_version config/app-canary.yml)
+          if [ -z "$FLEET" ] || [ "$(echo "$FLEET" | wc -l)" -ne 1 ]; then
+            echo "::error::The fleet does not run one readable version: ${FLEET:-none}"
+            exit 1
+          fi
+          if [ "$CANARY" != "$FLEET" ]; then
+            echo "::error::The canary runs ${CANARY:-nothing readable}, the fleet runs $FLEET. Deploy the fleet's image to the canary first."
+            exit 1
+          fi
+          CLOUD_SHA=$(echo "$FLEET" | cut -d. -f4)
+          if [ "$CLOUD_SHA" != "$CUT_CLOUD_SHA" ]; then
+            echo "::error::Cloud moved from $CUT_CLOUD_SHA to $CLOUD_SHA after this run picked $SHA. Start a new run."
+            exit 1
+          fi
+          if ! git cat-file -e "$CLOUD_SHA^{commit}"; then
+            echo "::error::Cloud runs $CLOUD_SHA, which is not in this repository"
+            exit 1
+          fi
+          MISSING=""
+          for COMMIT in $(git rev-list "$(git merge-base "$CLOUD_SHA" "$SHA")..$CLOUD_SHA"); do
+            PR=$(git log -1 --format=%s "$COMMIT" | grep -oE '#[0-9]+\)$' | tr -d '#)' || true)
+            if [ -z "$PR" ] || ! git log --format=%s "$SHA" | grep -qE "\(#$PR\)$"; then
+              MISSING="$MISSING$(git log -1 --format='%h %s' "$COMMIT")"$'\n'
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::$SHA does not contain these commits that Cloud runs. Deploying it would remove them."
+            printf '%s' "$MISSING"
+            exit 1
+          fi
+
       # The canary app runs migrations on the shared database at boot, so a pending migration marked
-      # breaking stops the deploy here, before any host changes.
+      # breaking stops the deploy here, before any host changes. An unreadable manifest fails the job.
       - name: Get current canary manifest
         id: current-manifest
         if: inputs.skip_migration_check != true
@@ -270,7 +315,11 @@ jobs:
             --reuse \
             --config-file=config/app-canary.yml -- \
             cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json; exit"' \
-            2>/dev/null | grep '^\[' || echo '[]')
+            2>/dev/null | tr -d '\r' | { grep '^\[' || true; } | head -1)
+          if ! echo "$MANIFEST" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
+            echo "::error::Could not read the migration manifest of the running canary"
+            exit 1
+          fi
           echo "json=$MANIFEST" >> $GITHUB_OUTPUT
 
       - name: Check for breaking migrations
@@ -309,6 +358,18 @@ jobs:
           curl -H "Content-Type: application/json" \
             -X POST \
             -d "{\"content\": \"🚀 **Cloud production deployed** ($DEPLOY_KIND)\\n\\n**Version:** \`$IMAGE_TAG\`\\n**Changelog:** ${{ github.server_url }}/${{ github.repository }}/releases/latest\\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "$WEBHOOK"
+
+      # A failure after the canary step can leave the canary and the fleet on different images.
+      - name: Notify on-call channel of a failed deploy
+        if: failure()
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
+          IMAGE_TAG: ${{ needs.cut.outputs.image_tag }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🔥 **Cloud production deploy failed**\\n\\n**Version:** \`$IMAGE_TAG\`\\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
             "$WEBHOOK"
 
   # Records the deploy in the Linear "Cloud" release pipeline. Never fails the workflow.
