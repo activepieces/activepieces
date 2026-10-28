@@ -1,4 +1,4 @@
-import { wideEvent } from '@activepieces/server-utils'
+import { createLogger, wideEvent } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { autumnBillingProvider, computeCreditState } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
@@ -255,19 +255,40 @@ describe('credits gate decides from the cache and refreshes in the background', 
         await expect(provider.shouldBlockOnCredits({ platformId: 'platform-1', syncWebhook: false })).resolves.toBe(true)
     })
 
-    it('records the read time on the request and logs a slow read made outside a request', async () => {
+    it('records the read time on the request row instead of a separate log line', async () => {
         storedCredits = fresh({ remaining: 0 })
         mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 40)))
-        const setSpy = vi.spyOn(wideEvent, 'set')
+        const requestLogger = createLogger()
+
+        await wideEvent.run({ logger: requestLogger, fn: () => gateState() })
+
+        expect(requestLogger.getContext()).toMatchObject({ creditsGate: { readMs: expect.any(Number), readTimeoutMs: 400, timedOut: false } })
+        expect(log.info).not.toHaveBeenCalledWith(expect.anything(), 'Credits gate cache read was slow')
+    })
+
+    it('logs a slow read made outside a request', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 40)))
 
         await gateState()
 
-        expect(setSpy).toHaveBeenCalledWith({ creditsGate: { readMs: expect.any(Number), readTimeoutMs: 400, timedOut: false } })
         expect(log.info).toHaveBeenCalledWith(
             { platform: { id: 'platform-1' }, creditsGate: { readMs: expect.any(Number), readTimeoutMs: 400 } },
             'Credits gate cache read was slow',
         )
-        setSpy.mockRestore()
+    })
+
+    it('marks only a read that ran out of time as timed out, not a read that failed', async () => {
+        mockBillingEnforced.mockRejectedValueOnce(new Error('redis unreachable'))
+        const failedRead = createLogger()
+        await wideEvent.run({ logger: failedRead, fn: () => gateState() })
+
+        mockBillingEnforced.mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(true), 100)))
+        const slowRead = createLogger()
+        await wideEvent.run({ logger: slowRead, fn: () => autumnBillingProvider(log).shouldBlockOnCredits({ platformId: 'platform-1', syncWebhook: true }) })
+
+        expect(failedRead.getContext()).toMatchObject({ creditsGate: { timedOut: false } })
+        expect(slowRead.getContext()).toMatchObject({ creditsGate: { timedOut: true, readTimeoutMs: 25 } })
     })
 
     it('does not log a fast read', async () => {

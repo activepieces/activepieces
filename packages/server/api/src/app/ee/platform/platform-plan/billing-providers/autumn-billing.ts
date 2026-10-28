@@ -310,7 +310,7 @@ async function computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs }:
     const read = readCreditsCaches(platformId)
     const { data: snapshot, error } = await tryCatch(() => withTimeout(read, readTimeoutMs))
     const readMs = elapsedMs(startedAt)
-    wideEvent.set({ creditsGate: { readMs, readTimeoutMs, timedOut: isNil(snapshot) } })
+    wideEvent.set({ creditsGate: { readMs, readTimeoutMs, timedOut: error instanceof CreditsReadTimeoutError } })
     if (isNil(snapshot)) {
         log.warn({ error, platform: { id: platformId }, creditsGate: { readMs, readTimeoutMs } }, 'Credits gate cache read timed out or failed; failing open without gating this request')
         read.then(() => log.info({ platform: { id: platformId }, creditsGate: { readMs: elapsedMs(startedAt), readTimeoutMs } }, 'Credits gate cache read finished after the timeout')).catch(() => undefined)
@@ -350,9 +350,11 @@ async function readCreditsCaches(platformId: string): Promise<CreditsCacheSnapsh
     return { billingEnforced: billingEnforced ?? false, credits, appSumo }
 }
 
+class CreditsReadTimeoutError extends Error {}
+
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error(`Timed out after ${timeoutMs}ms`)), timeoutMs)
+        const timer = setTimeout(() => reject(new CreditsReadTimeoutError(`Timed out after ${timeoutMs}ms`)), timeoutMs)
         promise.then(
             (value) => {
                 clearTimeout(timer)
