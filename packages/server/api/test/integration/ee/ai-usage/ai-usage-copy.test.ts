@@ -200,6 +200,18 @@ describe('AI usage copy from Autumn', () => {
         expect(savedWindowMs).toBeLessThan(10 * MINUTE_MS)
     })
 
+    it('grows a small saved window back once reads are quiet', async () => {
+        const redis = await redisConnections.useExisting()
+        await redis.set(`ai-usage:copy:window:${ctx.platform.id}`, 1000, 'EX', 3600)
+        await startCursorAt({ platformId: ctx.platform.id, minutesAgo: 3 })
+        addEvent({ minutesAgo: 2.5, properties: { usage: block() } })
+
+        await aiUsageCopy(app.log).run()
+
+        expect((await dailyTotals()).calls).toBe(1)
+        expect(Number(await redis.get(`ai-usage:copy:window:${ctx.platform.id}`))).toBeGreaterThan(1000)
+    })
+
     it('leaves platforms without AI providers alone', async () => {
         const other = await createCopiedPlatform({ aiProvidersEnabled: false })
 
