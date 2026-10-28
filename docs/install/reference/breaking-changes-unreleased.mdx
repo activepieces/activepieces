@@ -35,14 +35,6 @@ Every iLoveAPI trigger now has a required **Webhook Secret**, and a delivery who
 
 Point any agent that used Create Signature Request at Send PDF for Signature. When you upgrade an iLoveAPI trigger, fill in a Webhook Secret of at least 16 characters, then change the endpoint URL in the iLoveAPI developer dashboard to `<trigger URL>?ap_secret=<secret>`. Until you do, deliveries are dropped and the flow stops running. Check that Create Signature Request steps give every signature element all its fields and use signer emails that match a signer.
 
-#### The Replace button on the Connections page is hidden in embedded apps
-
-In an app that embeds Activepieces with the embed SDK, the Replace button on the Connections page is now hidden by default. The new `embedding.hideReplaceConnection` option controls it, together with the new Replace connection option in the builder's flow menu. The option is `true` when you do not set it, also for SDK versions older than 0.17.0. Activepieces itself, outside an embed, is not affected.
-
-#### What you need to do
-
-If your embedded users should keep replacing connections, update the embed SDK to 0.17.0 and pass `embedding: { hideReplaceConnection: false }` to `configure`.
-
 #### SendIt 0.3.0: two scheduled-post actions leave AI agents, and publishing checks inputs before sending
 
 From SendIt 0.3.0, **Cancel Scheduled Post** and **Trigger Scheduled Post Now** are no longer offered to AI agents and MCP clients. They stay available as flow steps. An agent or MCP client that called them by name no longer finds them.
