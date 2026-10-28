@@ -463,12 +463,12 @@ describe('rateLimiterInterceptor', () => {
         })
 
         it.each([
-            [PlanName.PLUS, 15],
-            [PlanName.PLUS_ANNUAL, 15],
-            [PlanName.PLUS_CHAT, 15],
-            [PlanName.TEAM, 15],
-            [PlanName.TEAM_ANNUAL, 15],
-            [PlanName.APPSUMO, 15],
+            [PlanName.PLUS, 10],
+            [PlanName.PLUS_ANNUAL, 10],
+            [PlanName.PLUS_CHAT, 10],
+            [PlanName.TEAM, 20],
+            [PlanName.TEAM_ANNUAL, 20],
+            [PlanName.APPSUMO, 10],
             [PlanName.ENTERPRISE, 30],
         ])('should allow %s up to %i concurrent jobs and reject beyond it', async (planName, limit) => {
             vi.spyOn(system, 'getEdition').mockReturnValue(ApEdition.CLOUD)
