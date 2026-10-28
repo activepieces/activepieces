@@ -70,6 +70,19 @@ describe('webhook signature', () => {
     expect(await handle({ store, signature: sign() })).toEqual([]);
   });
 
+  test('old delivery markers are cleaned up after the replay window', async () => {
+    const store = memoryStore({ webhookId: 'wh_1', webhookSecret: SECRET });
+    await handle({ store, signature: sign() });
+    expect(store.data.has('seenDelivery:dlv_1')).toBe(true);
+    const later = { ...body, deliveryId: 'dlv_9' };
+    const rawLater = JSON.stringify(later);
+    const laterNow = NOW + 31 * 60 * 1000;
+    const out = await sendItWebhook.handle({ store, event: 'post.published', payload: { body: later, rawBody: rawLater, headers: { 'X-SendIt-Signature': sign({ t: Math.floor(laterNow / 1000), payload: rawLater }) } }, mapEvent: triggerMappers.published, now: laterNow });
+    expect(out).toHaveLength(1);
+    expect(store.data.has('seenDelivery:dlv_1')).toBe(false);
+    expect(store.data.has('seenDelivery:dlv_9')).toBe(true);
+  });
+
   test('legacy store without a secret still fires; no webhook at all drops', async () => {
     expect(await handle({ store: memoryStore({ webhookId: 'wh_old' }) })).toHaveLength(1);
     expect(await handle({ store: memoryStore() })).toEqual([]);
@@ -104,6 +117,7 @@ describe('webhook lifecycle', () => {
   test('disable treats 404 as done and clears the store', async () => {
     stubFetch(replies([{ status: 404, body: { success: false, error: 'not found' } }]));
     const store = memoryStore({ webhookId: 'wh_1', webhookSecret: SECRET, seenDeliveryIds: ['a'] });
+    await handle({ store, signature: sign() });
     await sendItWebhook.disable({ apiKey: API_KEY, store });
     expect(store.data.size).toBe(0);
   });

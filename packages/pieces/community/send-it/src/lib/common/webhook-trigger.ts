@@ -51,6 +51,11 @@ async function disable({ apiKey, store }: { apiKey: string; store: Store }): Pro
   await store.delete(WEBHOOK_ID_KEY);
   await store.delete(SECRET_KEY);
   await store.delete(SEEN_KEY);
+  const index = await readSeenIndex({ store });
+  for (const entry of index) {
+    await store.delete(`${SEEN_KEY_PREFIX}${entry.id}`);
+  }
+  await store.delete(SEEN_INDEX_KEY);
 }
 
 async function deleteWebhook({ apiKey, webhookId }: { apiKey: string; webhookId: string }): Promise<void> {
@@ -97,9 +102,32 @@ async function handle({
       return [];
     }
     await store.put(markerKey, now);
+    await pruneSeenMarkers({ store, added: { id: deliveryId, at: now }, now });
   }
   const mapped = mapEvent(body);
   return [deliveryId === undefined ? mapped : { ...mapped, [DEDUPE_KEY_PROPERTY]: `sendit:${deliveryId}` }];
+}
+
+async function readSeenIndex({ store }: { store: Store }): Promise<SeenIndexEntry[]> {
+  const stored = await store.get<unknown>(SEEN_INDEX_KEY);
+  if (!Array.isArray(stored)) {
+    return [];
+  }
+  return stored.filter((entry): entry is SeenIndexEntry => isRecord(entry) && typeof entry['id'] === 'string' && typeof entry['at'] === 'number');
+}
+
+async function pruneSeenMarkers({ store, added, now }: { store: Store; added: SeenIndexEntry; now: number }): Promise<void> {
+  const cutoff = now - SEEN_RETENTION_MS;
+  const index = [...(await readSeenIndex({ store })).filter((entry) => entry.id !== added.id), added];
+  const fresh = index.filter((entry) => entry.at >= cutoff);
+  const kept = fresh.slice(-SEEN_INDEX_LIMIT);
+  const keptIds = new Set(kept.map((entry) => entry.id));
+  for (const entry of index) {
+    if (!keptIds.has(entry.id)) {
+      await store.delete(`${SEEN_KEY_PREFIX}${entry.id}`);
+    }
+  }
+  await store.put(SEEN_INDEX_KEY, kept);
 }
 
 function verifySignature({ secret, header, rawBody, now }: { secret: string; header: string | undefined; rawBody: string | undefined; now: number }): boolean {
@@ -156,6 +184,9 @@ const SECRET_KEY = 'webhookSecret';
 
 const SEEN_KEY = 'seenDeliveryIds';
 const SEEN_KEY_PREFIX = 'seenDelivery:';
+const SEEN_INDEX_KEY = 'seenDeliveryIndex';
+const SEEN_INDEX_LIMIT = 1000;
+const SEEN_RETENTION_MS = 2 * SIGNATURE_TOLERANCE_SECONDS * 1000;
 
 export type WebhookPayload = { body: unknown; headers?: unknown; rawBody?: unknown };
 
@@ -164,3 +195,5 @@ export type SendItWebhookHooksParams = {
   sampleData: SendItRecord;
   mapEvent: (body: SendItRecord) => SendItRecord;
 };
+
+type SeenIndexEntry = { id: string; at: number };
