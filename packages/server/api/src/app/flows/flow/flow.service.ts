@@ -465,19 +465,19 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const { appliedOperations, error } = await replaceConnectionForDraftAndPublishedVersions({ id, projectId, platformId, userId, sourceExternalId, targetExternalId, applyToPublishedVersion, log })
         if (appliedOperations.length > 0) {
             await flowSideEffects(log).onDraftWritten({ flowId: id, projectId, editorSessionId: null })
-            const flowAfterReplace = await this.getOnePopulatedOrThrow({ id, projectId })
-            for (const operation of appliedOperations) {
+            appliedOperations.forEach(({ operation, flowAfterOperation }, index) => {
+                const flowBeforeOperation = index === 0 ? flowBeforeReplace : appliedOperations[index - 1].flowAfterOperation
                 flowSideEffects(log).onOperationApplied({
                     platformId,
                     projectId,
                     userId,
-                    flow: flowAfterReplace,
-                    previousVersion: flowBeforeReplace.version,
-                    previousStatus: flowBeforeReplace.status,
+                    flow: flowAfterOperation,
+                    previousVersion: flowBeforeOperation.version,
+                    previousStatus: flowBeforeOperation.status,
                     operation,
                     auditExplanation,
                 })
-            }
+            })
         }
         if (!isNil(error)) {
             throw error
@@ -909,17 +909,17 @@ async function replaceConnectionForDraftAndPublishedVersions({ id, projectId, pl
                     const publishedVersion = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: publishedVersionId })
                     const replaceInDraftOperation = createImportOperationToReplaceConnection({ flowVersion: latestVersion, sourceExternalId, targetExternalId })
                     const replaceInPublishedVersionOperation = createImportOperationToReplaceConnection({ flowVersion: publishedVersion, sourceExternalId, targetExternalId })
-                    const appliedOperations: FlowOperationRequest[] = []
+                    const appliedOperations: AppliedOperation[] = []
                     const { error } = await tryCatch(async () => {
                         await writeDraft({ id, projectId, platformId, userId, operation: replaceInPublishedVersionOperation, log })
-                        appliedOperations.push(replaceInPublishedVersionOperation)
+                        appliedOperations.push(await recordAppliedOperation({ id, projectId, operation: replaceInPublishedVersionOperation, log }))
                         await publish({ id, projectId, platformId, userId, requestedStatus: flow.status, skipRequiredActionsCheck: true, log })
-                        appliedOperations.push({ type: FlowOperationType.LOCK_AND_PUBLISH, request: { status: flow.status } })
+                        appliedOperations.push(await recordAppliedOperation({ id, projectId, operation: { type: FlowOperationType.LOCK_AND_PUBLISH, request: { status: flow.status } }, log }))
                     })
                     const hadUnpublishedChanges = latestVersion.id !== publishedVersionId
                     if (hadUnpublishedChanges || !isNil(error)) {
                         await writeDraft({ id, projectId, platformId, userId, operation: replaceInDraftOperation, log })
-                        appliedOperations.push(replaceInDraftOperation)
+                        appliedOperations.push(await recordAppliedOperation({ id, projectId, operation: replaceInDraftOperation, log }))
                     }
                     return { appliedOperations, error }
                 },
@@ -935,7 +935,12 @@ async function replaceConnectionInDraft({ id, projectId, platformId, userId, sou
     }
     const replaceInDraftOperation = createImportOperationToReplaceConnection({ flowVersion: latestVersion, sourceExternalId, targetExternalId })
     await writeDraft({ id, projectId, platformId, userId, operation: replaceInDraftOperation, log })
-    return { appliedOperations: [replaceInDraftOperation], error: null }
+    return { appliedOperations: [await recordAppliedOperation({ id, projectId, operation: replaceInDraftOperation, log })], error: null }
+}
+
+async function recordAppliedOperation({ id, projectId, operation, log }: RecordAppliedOperationParams): Promise<AppliedOperation> {
+    const flowAfterOperation = await flowService(log).getOnePopulatedOrThrow({ id, projectId })
+    return { operation, flowAfterOperation }
 }
 
 function createImportOperationToReplaceConnection({ flowVersion, sourceExternalId, targetExternalId }: CreateImportOperationToReplaceConnectionParams): FlowOperationRequest {
@@ -1137,8 +1142,20 @@ type ReplaceConnectionForDraftAndPublishedVersionsParams = Omit<ReplaceConnectio
 type ReplaceConnectionInDraftParams = Omit<ReplaceConnectionForDraftAndPublishedVersionsParams, 'applyToPublishedVersion'>
 
 type ReplaceConnectionResult = {
-    appliedOperations: FlowOperationRequest[]
+    appliedOperations: AppliedOperation[]
     error: Error | null
+}
+
+type AppliedOperation = {
+    operation: FlowOperationRequest
+    flowAfterOperation: PopulatedFlow
+}
+
+type RecordAppliedOperationParams = {
+    id: FlowId
+    projectId: ProjectId
+    operation: FlowOperationRequest
+    log: FastifyBaseLogger
 }
 
 type CreateImportOperationToReplaceConnectionParams = {
