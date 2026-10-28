@@ -12,6 +12,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 let app: FastifyInstance
 
 const PLATFORM_RESOURCE = 'https://cloud.activepieces.com/mcp/platform'
+const PROJECT_RESOURCE = 'https://cloud.activepieces.com/mcp'
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -21,7 +22,7 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-async function createAuthRequestId(): Promise<string> {
+async function createAuthRequestId({ resource }: { resource: string }): Promise<string> {
     const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
     const { challenge } = mcpOAuthTestHelpers.generatePkce()
     const consent = await app.inject({
@@ -33,7 +34,7 @@ async function createAuthRequestId(): Promise<string> {
             code_challenge: challenge,
             code_challenge_method: 'S256',
             scope: 'mcp',
-            resource: PLATFORM_RESOURCE,
+            resource,
         }).toString(),
     })
     return new URL(String(consent.headers.location), MCP_OAUTH_REDIRECT_URI).searchParams.get('authRequestId') ?? ''
@@ -45,7 +46,7 @@ async function approveAs({ token, projectId }: { token: string, projectId?: stri
         url: '/api/v1/mcp-oauth/approve',
         headers: { authorization: `Bearer ${token}` },
         payload: {
-            authRequestId: await createAuthRequestId(),
+            authRequestId: await createAuthRequestId({ resource: projectId ? PROJECT_RESOURCE : PLATFORM_RESOURCE }),
             ...(projectId ? { projectId } : {}),
         },
     })
