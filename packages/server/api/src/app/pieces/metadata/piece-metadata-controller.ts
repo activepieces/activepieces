@@ -15,7 +15,6 @@ import { system } from '../../helper/system/system'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
-import { pieceTranslationService } from './piece-translation-service'
 import { filterActionsByAudience } from './utils'
 
 export const pieceModule: FastifyPluginAsyncZod = async (app) => {
@@ -81,8 +80,8 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
-                locale: req.query.locale as LocalesEnum | undefined,
-            }).then((found) => attachAllTranslationsWhenLocaleMissing({ piece: found, locale: req.query.locale }))
+                locale: (req.query.locale as LocalesEnum | undefined) ?? 'all',
+            })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
             const visiblePiece = applyVisibilityPolicy({ policy, piece })
             return filterModelActionsByAudience(visiblePiece, req.query.audience)
@@ -102,8 +101,8 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 platformId,
                 name: decodedName,
                 version,
-                locale: req.query.locale as LocalesEnum | undefined,
-            }).then((found) => attachAllTranslationsWhenLocaleMissing({ piece: found, locale: req.query.locale }))
+                locale: (req.query.locale as LocalesEnum | undefined) ?? 'all',
+            })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
             const visiblePiece = applyVisibilityPolicy({ policy, piece })
             return filterModelActionsByAudience(visiblePiece, req.query.audience)
@@ -194,14 +193,6 @@ async function assertProjectAccess({ principal, projectId, log }: AssertProjectA
         permission: undefined,
         projectId,
     })
-}
-
-async function attachAllTranslationsWhenLocaleMissing({ piece, locale }: { piece: PieceMetadataModel, locale: string | undefined }): Promise<PieceMetadataModel> {
-    if (!isNil(locale) || isNil(piece.id)) {
-        return piece
-    }
-    const i18n = await pieceTranslationService.getAllLocales({ pieceMetadataId: piece.id })
-    return { ...piece, i18n }
 }
 
 function getPlatformId(principal: Principal): string | undefined {
