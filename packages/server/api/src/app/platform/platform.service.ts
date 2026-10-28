@@ -215,7 +215,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
         }
         log.info({ platform: { id: params.id } }, 'Platform updated')
         const { saved, locked } = await transaction(async (entityManager) => {
-            const lockedPlatform = await lockPlatformForUpdate({ entityManager, platformId: params.id, includeFederatedAuth: hasFederatedAuth(platform) })
+            const lockedPlatform = await lockPlatformForUpdate({ entityManager, platformId: params.id, includeFederatedAuth: true })
+            assertLeavesAWorkingSignInMethod({ log, platform: lockedPlatform, params })
             const savedPlatform = await platformRepo(entityManager).save({
                 ...updatedPlatform,
                 auditLogRetentionDays: params.auditLogRetentionDays === undefined ? lockedPlatform.auditLogRetentionDays ?? null : params.auditLogRetentionDays,
@@ -464,6 +465,28 @@ async function assertAuditLogRetentionDaysAllowed({ log, platform, auditLogReten
     }
 }
 
+function assertLeavesAWorkingSignInMethod({ log, platform, params }: AssertLeavesAWorkingSignInMethodParams): void {
+    const methodsBefore = authenticationUtils(log).getSignInMethods({ platform })
+    const methodsAfter = authenticationUtils(log).getSignInMethods({
+        platform: {
+            emailAuthEnabled: params.emailAuthEnabled ?? platform.emailAuthEnabled,
+            googleAuthEnabled: params.googleAuthEnabled ?? platform.googleAuthEnabled,
+            ssoDomainVerification: params.ssoDomainVerification === undefined ? platform.ssoDomainVerification : params.ssoDomainVerification,
+            federatedAuthProviders: { ...platform.federatedAuthProviders, ...params.federatedAuthProviders },
+        },
+    })
+    const hadWorkingMethod = methodsBefore.email || methodsBefore.google || methodsBefore.sso
+    const hasWorkingMethod = methodsAfter.email || methodsAfter.google || methodsAfter.sso
+    if (hadWorkingMethod && !hasWorkingMethod) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'This is the only way left to sign in. Turn on another sign-in method first.',
+            },
+        })
+    }
+}
+
 async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
@@ -498,6 +521,12 @@ type AssertAuditLogRetentionDaysAllowedParams = {
     log: FastifyBaseLogger
     platform: PlatformWithoutFederatedAuth
     auditLogRetentionDays: number | null | undefined
+}
+
+type AssertLeavesAWorkingSignInMethodParams = {
+    log: FastifyBaseLogger
+    platform: Platform
+    params: UpdateParams
 }
 
 type LockPlatformForUpdateParams = {
