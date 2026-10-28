@@ -125,6 +125,7 @@ export async function executePieceActionRun({
     input,
     connectionExternalId,
     offload,
+    shapeOutput,
     log,
 }: {
     projectId: string
@@ -134,6 +135,7 @@ export async function executePieceActionRun({
     input?: Record<string, unknown>
     connectionExternalId?: string
     offload?: ActionRunOffload
+    shapeOutput?: (output: unknown) => unknown
     log: FastifyBaseLogger
 }): Promise<McpToolResult> {
     const inputWithoutAuth = omit(input ?? {}, ['auth'])
@@ -223,7 +225,7 @@ export async function executePieceActionRun({
     }
     const step: PieceAction = { ...parsedAction.data, lastUpdatedDate: dayjs().toISOString() }
 
-    const { data: actionRun, error: runError } = await tryCatch(() => actionRunService(log).run({
+    const { data: rawActionRun, error: runError } = await tryCatch(() => actionRunService(log).run({
         projectId,
         platformId: project.platformId,
         step,
@@ -232,6 +234,9 @@ export async function executePieceActionRun({
         log.error({ error: runError, project: { id: projectId } }, 'executePieceActionRun failed')
         return mcpUtils.mcpToolError('Failed to run action', runError)
     }
+    const actionRun = isNil(shapeOutput) || rawActionRun.status !== FlowRunStatus.SUCCEEDED
+        ? rawActionRun
+        : { ...rawActionRun, output: shapeOutput(rawActionRun.output) }
 
     if (actionRun.status === FlowRunStatus.TIMEOUT && actionRun.neverStarted) {
         return {

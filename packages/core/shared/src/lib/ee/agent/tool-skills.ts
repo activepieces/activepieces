@@ -101,6 +101,7 @@ const CORE_TOOL_NAMES: Record<SkillSurface, readonly string[]> = {
         'ap_resolve_property_options',
         'ap_resolve_property_chain',
         'ap_run_task',
+        'ap_read_result',
     ],
     AGENT: [
         LOAD_SKILL_NAME,

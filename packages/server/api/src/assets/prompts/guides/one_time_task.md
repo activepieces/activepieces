@@ -16,7 +16,7 @@ Load this for an immediate one-shot request (send a message, check email, look s
 
 **Prefer a native piece over HTTP.** If a native action does the job (e.g. Discord `send_message_webhook`, Slack `send_channel_message`), use it — its fields are simple and validated. Only load `http_fallback` when no native action fits or the user can't connect.
 
-**Reading to understand vs doing**: to look at the user's real data during discovery (peek at a sheet, list channels) use `ap_explore_data`, not `ap_execute_action` — it's read-only and calm. Use `ap_execute_action` only to actually perform the task.
+**Reading to understand vs doing**: to look at the user's real data during discovery (peek at a sheet, list channels) use `ap_explore_data`, not `ap_execute_action` — it's read-only and calm. Pass `fields` with the keys you need and leave `limit` at its default. Use `ap_execute_action` only to actually perform the task.
 
 **Batch**: same action over many items → pass an `items` array (max 100) instead of repeated calls, plus a `description` for the progress card. All items share one pieceName/actionName and the selected connection.
 - Example: `ap_execute_action({ pieceName: "slack", actionName: "send_channel_message", items: [{ channel: "C01", text: "Hi Alice" }, { channel: "C02", text: "Hi Bob" }], description: "Sending Slack messages" })`

@@ -1,5 +1,5 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils, mcpTransport } from '@activepieces/server-utils'
+import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { agentAiUtils, mcpTransport, MODEL_RESULT_OFFLOAD_BYTES, toolResultView } from '@activepieces/server-utils'
 import { AgentMcpTool, agentToolPhases, McpAuthConfig, McpAuthType, mcpToolNameUtils } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
 import { asSchema, jsonSchema, Tool, ToolExecutionOptions, ToolSet } from 'ai'
@@ -9,7 +9,6 @@ import { agentWorkerTools } from './agent-worker-tools'
 import { cardTitleFields, plainJsonSchema, TaintState } from './tools/tool-primitives'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
-const MCP_OFFLOAD_BYTES = 64 * 1024
 const CARD_TITLE_SCHEMA = asSchema(z.object(cardTitleFields))
 
 const MCP_CONNECTOR_NAME_PATTERN = /^mcp__([^_]+)__/
@@ -276,22 +275,23 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     if (saveLargeResult === undefined) {
         return null
     }
-    let serialized: string
-    try {
-        serialized = JSON.stringify(result)
-    }
-    catch {
+    const visibleText = toolResultView.textOf(result)
+    const byteSize = isNil(visibleText) ? toolResultView.modelVisibleBytes(result) : Buffer.byteLength(visibleText, 'utf8')
+    if (byteSize === null || byteSize <= MODEL_RESULT_OFFLOAD_BYTES) {
         return null
     }
-    const byteSize = Buffer.byteLength(serialized, 'utf8')
-    if (byteSize <= MCP_OFFLOAD_BYTES) {
+    const { data: serialized } = tryCatchSync(() => JSON.stringify(result))
+    if (isNil(serialized)) {
         return null
     }
     const fileId = await saveLargeResult({ json: serialized, fileName: `${toolName}-result.json` })
     if (fileId === null) {
         return null
     }
-    return { content: [{ type: 'text', text: agentAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
+    const text = visibleText === null
+        ? agentAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName })
+        : toolResultView.textPreview({ text: visibleText, fileId, byteSize, label: toolName })
+    return { content: [{ type: 'text', text }] }
 }
 
 function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelectedAuth, saveLargeResult }: {

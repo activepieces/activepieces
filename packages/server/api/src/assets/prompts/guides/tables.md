@@ -25,11 +25,11 @@ Tables belong to a project, so a project must be selected before you create or w
 
 | Tool | Use |
 |------|-----|
-| `ap_list_tables` | List all tables with their fields and row counts. **Call this first.** |
-| `ap_create_table` | Create a table with an initial set of fields. Types: `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN`. |
+| `ap_list_tables` | List tables, compact (name, ids, `Field:TYPE`). Pass `name` to filter, `detailed: true` for field ids/externalIds. **Call this first.** |
+| `ap_create_table` | Create a table from `fields: [{name, type}]`. Types: `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN` (any case). Returns `fieldIds` / `fieldExternalIds` keyed by field name. |
 | `ap_manage_fields` | Add, rename, or delete fields (max 100 fields per table). |
-| `ap_find_records` | Query records with optional filters. |
-| `ap_insert_records` | Insert one or more records (max 50 per call). |
+| `ap_find_records` | Query records (default 10, long values cut, says when more match). `fields` picks columns; raise `limit` or set `fullValues` for more. |
+| `ap_insert_records` | Insert one or more records (max 50 per call), values keyed by field name. |
 | `ap_update_record` | Update specific cells of a single record. |
 | `ap_delete_records` | Delete records by id. |
 | `ap_delete_table` | Permanently delete a table and all its data. |
@@ -51,6 +51,7 @@ The agent tools above are for setup and inspection. To read/write a Table from i
 ## Gotchas
 
 - **Field _names_ for the ap_* tools; field _externalIds_ as the values keys in the Tables piece step.** Never field display labels.
+- A Tables piece step needs field externalIds: take them from `ap_create_table`'s `fieldExternalIds` or `ap_list_tables` with `detailed: true`.
 - **Resolve the table and its fields with `ap_list_tables` first** — don't assume a table or field exists.
 - Only call `ap_create_table` after confirming the table isn't already there.
 - `STATIC_DROPDOWN` values must match one of the field's configured options.

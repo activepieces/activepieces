@@ -1,5 +1,5 @@
 import { isNil, LocalesEnum } from '@activepieces/core-utils'
-import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
+import { MODEL_RESULT_OFFLOAD_BYTES, toolResultView } from '@activepieces/server-utils'
 import { McpToolDefinition, PieceAudienceFilter, PieceCategory, ProjectScopedMcpServer, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -278,7 +278,7 @@ function pieceSearchResult({ pieces, overflowHint, totalCount, trimmed }: {
 }
 
 function fitsBudget(result: PieceSearchResult): boolean {
-    return (largeResultUtils.byteSizeOf(result) ?? 0) <= MAX_TOOL_RESULT_BYTES
+    return (toolResultView.modelVisibleBytes(result) ?? 0) <= MODEL_RESULT_OFFLOAD_BYTES
 }
 
 function emptySearchResult(searchQuery: string | undefined): { content: [{ type: 'text', text: string }], structuredContent: Record<string, unknown> } {

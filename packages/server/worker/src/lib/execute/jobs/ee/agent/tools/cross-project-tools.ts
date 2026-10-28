@@ -1,9 +1,15 @@
-import { isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { existsSync } from 'node:fs'
+import { isNil, isObject, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { ActionPreviewEvent, agentToolClassification } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { executeBatchAction, MAX_BATCH_SIZE, MAX_IDENTICAL_ACTION_FAILURES } from './configured-tools'
 import { AgentEventEmitter, cardTitleFields, extractUserFacingError, GateDecision, gateNoResponseMessage, isSuccessResult, stableStringify, TaintState, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout } from './tool-primitives'
+
+function codeSandboxConfigured(): boolean {
+    const denoPath = process.env['AP_DENO_PATH']
+    return !isNil(denoPath) && denoPath.length > 0 && existsSync(denoPath)
+}
 
 function createProgressGuard() {
     const failureCounts = new Map<string, number>()
@@ -210,6 +216,8 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 pieceName: z.string().describe('Piece name, e.g. "@activepieces/piece-google-sheets"'),
                 actionName: z.string().describe('A read action, e.g. "get_rows", "list_channels"'),
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
+                fields: z.array(z.string()).optional().describe('Only return these keys of each record (e.g. ["id","name","email"]). Omit to return every key.'),
+                limit: z.number().int().min(1).max(MAX_EXPLORE_LIMIT).optional().describe(`How many records to return from each list in the result (default ${DEFAULT_EXPLORE_LIMIT}, max ${MAX_EXPLORE_LIMIT}).`),
             }),
             execute: async (toolInput) => {
                 if (!agentToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
@@ -232,6 +240,9 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Optional extra values merged into `inputs`'),
             }),
             execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => {
+                if (!codeSandboxConfigured()) {
+                    return { text: CODE_SANDBOX_MISSING_TEXT, producedFiles: [] }
+                }
                 taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_run_code', toolInput)
                 const resultObj = isObject(rawResult) ? rawResult as Record<string, unknown> : {}
@@ -279,3 +290,6 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
     }
 }
 
+const DEFAULT_EXPLORE_LIMIT = 20
+const MAX_EXPLORE_LIMIT = 100
+const CODE_SANDBOX_MISSING_TEXT = '❌ ap_run_code is not available on this server: its code sandbox (Deno, set with AP_DENO_PATH) is not installed. Do not retry it — do the work with piece actions instead, or tell the user their admin must install the code sandbox to run code.'
