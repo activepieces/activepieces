@@ -8,6 +8,14 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Pushbullet 0.3.0: Send a Note and Send a Link are no longer agent tools
+
+**Send a Note** and **Send a Link** are now shown only in the flow builder. AI agents and MCP clients get **Send Note** and **Send Link** instead, plus new tools to list pushes, devices and chats, dismiss or delete a push, and read the current user. Both builder actions also gain an optional target (a device or an email) and now return the created push.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Send a Note or Send a Link as a tool, switch it to Send Note or Send Link. Flow steps keep working and stay on the version they were built with until you upgrade them.
+
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
 **Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
