@@ -89,8 +89,6 @@ export function fileToUploadInput({ file, label = 'File' }: { file: unknown; lab
   };
 }
 
-// Prefer the file's own Buffer (ApFile.data) so a large upload is not held again as
-// base64 and then decoded back; fall back to base64 for file-like values without data.
 function readFileData(file: object): Buffer | null {
   const data: unknown = Reflect.get(file, 'data');
   if (Buffer.isBuffer(data)) return data;

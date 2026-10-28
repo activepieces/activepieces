@@ -36,7 +36,6 @@ export const taskFailedTrigger = createTrigger({
     return;
   },
   async onDisable() {
-    // Keep the dedupe list: a vendor retry right after a republish must still be dropped; the 24 h TTL prunes it.
     return;
   },
   async run(context) {
