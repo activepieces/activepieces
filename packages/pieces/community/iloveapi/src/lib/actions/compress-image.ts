@@ -7,7 +7,7 @@ import { iloveSchemas } from '../common/schemas';
 export const compressImageAction = createAction({
   auth: iloveapiAuth,
   name: 'compress_image',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Compress Image',
   description: 'Reduce the file size of a JPG, PNG, SVG or GIF image.',
   audience: 'both',

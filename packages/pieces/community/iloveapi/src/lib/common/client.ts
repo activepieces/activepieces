@@ -604,7 +604,7 @@ async function uploadOne({
       token,
       server,
       task,
-      buffer: Buffer.from(upload.file.base64, 'base64'),
+      buffer: upload.file.data,
       filename: upload.file.filename,
       deadline,
     });
@@ -795,7 +795,7 @@ export const iLoveApi = {
 };
 
 export type UploadInput =
-  | { kind: 'file'; file: { base64: string; filename: string } }
+  | { kind: 'file'; file: { data: Buffer; filename: string } }
   | { kind: 'url'; url: string; filename?: string };
 
 export type RunTaskInput = {

@@ -7,7 +7,7 @@ import { runAndStoreResult } from '../common/runner';
 export const unlockPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'unlock_pdf',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Unlock PDF',
   description: 'Remove the password from a PDF (you must know the current password).',
   audience: 'both',

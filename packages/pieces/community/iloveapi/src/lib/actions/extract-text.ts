@@ -7,7 +7,7 @@ import { runAndStoreWithBuffer } from '../common/runner';
 export const extractTextPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'extract_text_pdf',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Extract Text from PDF',
   description:
     'Extract plain or detailed text (with positions and font metadata) from a PDF.',

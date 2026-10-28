@@ -60,7 +60,7 @@ export const iloveapi = createPiece({
   auth: iloveapiAuth,
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/iloveapi.png',
-  authors: ['sanket-a11y'],
+  authors: ['sanket-a11y', 'OdaiAhmed99'],
   categories: [PieceCategory.CONTENT_AND_FILES],
   actions: [
     compressPdfAction,

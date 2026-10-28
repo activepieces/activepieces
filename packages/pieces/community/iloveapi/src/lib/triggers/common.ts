@@ -105,10 +105,6 @@ export async function claimDelivery({ store, key }: { store: Store; key: string 
   return stored.some((entry) => entry.key === key && entry.claim === claim);
 }
 
-export async function forgetDeliveries(store: Store): Promise<void> {
-  await store.delete(SEEN_STORE_KEY);
-}
-
 export async function acceptDelivery({
   envelope,
   store,

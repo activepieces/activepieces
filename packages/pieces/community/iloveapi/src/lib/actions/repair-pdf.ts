@@ -7,7 +7,7 @@ import { runAndStoreResult } from '../common/runner';
 export const repairPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'repair_pdf',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Repair PDF',
   description: 'Attempt to fix a damaged or corrupted PDF file.',
   audience: 'both',

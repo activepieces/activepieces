@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fileToUploadInput } from '../src/lib/common/props';
 import { compressPdfAction } from '../src/lib/actions/compress-pdf';
 import { mergePdfAction } from '../src/lib/actions/merge-pdf';
 import { splitPdfAction } from '../src/lib/actions/split-pdf';
@@ -65,7 +66,7 @@ describe('tool actions', () => {
     const calls = mockHttp(defaultRoutes());
     const { context, written } = fakeContext({ ...c.props, region: 'eu', webhook_url: ' https://hooks.example.com/api/v1/webhooks/F1?ap_secret=abc ' });
     const out = await run(c.action)(context);
-    expect(c.action.classification).toBe('WRITE');
+    expect(c.action.classification).toBe('READ');
     expect(c.action.outputSchema).toBeDefined();
     const start = calls.find((x) => x.url.includes('/v1/start/'));
     expect(start?.url).toBe(`https://${c.host ?? 'api.ilovepdf.com'}/v1/start/${c.tool}/eu`);
@@ -273,5 +274,21 @@ describe('step time budget', () => {
       vi.useRealTimers();
       vi.restoreAllMocks();
     }
+  });
+});
+
+describe('fileToUploadInput', () => {
+  it('passes the file Buffer through without a base64 round trip', () => {
+    const data = Buffer.from('%PDF-1.7');
+    const out = fileToUploadInput({ file: { data, base64: 'ignored', filename: 'a.pdf' } });
+    expect(out).toEqual({ kind: 'file', file: { data, filename: 'a.pdf' } });
+    expect(out.kind === 'file' && out.file.data).toBe(data);
+  });
+  it('falls back to base64 when the file has no data', () => {
+    const out = fileToUploadInput({ file: { base64: Buffer.from('x').toString('base64') } });
+    expect(out).toEqual({ kind: 'file', file: { data: Buffer.from('x'), filename: 'file' } });
+  });
+  it('rejects an empty Buffer', () => {
+    expect(() => fileToUploadInput({ file: { data: Buffer.alloc(0), filename: 'a.pdf' }, label: 'PDF' })).toThrow(/PDF is empty/);
   });
 });

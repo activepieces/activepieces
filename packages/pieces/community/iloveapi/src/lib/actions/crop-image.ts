@@ -7,7 +7,7 @@ import { iloveSchemas } from '../common/schemas';
 export const cropImageAction = createAction({
   auth: iloveapiAuth,
   name: 'crop_image',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Crop Image',
   description: 'Crop an image to a rectangle given in pixels.',
   audience: 'both',

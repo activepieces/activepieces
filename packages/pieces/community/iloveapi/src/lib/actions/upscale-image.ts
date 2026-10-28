@@ -7,7 +7,7 @@ import { iloveSchemas } from '../common/schemas';
 export const upscaleImageAction = createAction({
   auth: iloveapiAuth,
   name: 'upscale_image',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Upscale Image',
   description: 'Enlarge an image 2x or 4x with AI upscaling.',
   audience: 'both',

@@ -7,7 +7,7 @@ import { iloveSchemas } from '../common/schemas';
 export const convertImageAction = createAction({
   auth: iloveapiAuth,
   name: 'convert_image',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Convert Image',
   description: 'Convert an image to JPG, PNG, GIF, animated GIF or HEIC.',
   audience: 'both',

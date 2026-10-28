@@ -21,7 +21,7 @@ const GRAVITIES = [
 export const watermarkImageAction = createAction({
   auth: iloveapiAuth,
   name: 'watermark_image',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Watermark Image',
   description: 'Stamp a logo or picture as a watermark on an image.',
   audience: 'both',

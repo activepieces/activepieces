@@ -75,18 +75,29 @@ export function fileToUploadInput({ file, label = 'File' }: { file: unknown; lab
   if (file === null || typeof file !== 'object') {
     throw new Error(`${label} is required.`);
   }
-  const base64: unknown = Reflect.get(file, 'base64');
+  const data = readFileData(file);
   const filename: unknown = Reflect.get(file, 'filename');
-  if (typeof base64 !== 'string' || base64 === '') {
+  if (data === null || data.length === 0) {
     throw new Error(`${label} is empty or could not be read.`);
   }
   return {
     kind: 'file',
     file: {
-      base64,
+      data,
       filename: typeof filename === 'string' && filename !== '' ? filename : 'file',
     },
   };
+}
+
+// Prefer the file's own Buffer (ApFile.data) so a large upload is not held again as
+// base64 and then decoded back; fall back to base64 for file-like values without data.
+function readFileData(file: object): Buffer | null {
+  const data: unknown = Reflect.get(file, 'data');
+  if (Buffer.isBuffer(data)) return data;
+  if (data instanceof Uint8Array) return Buffer.from(data.buffer, data.byteOffset, data.byteLength);
+  const base64: unknown = Reflect.get(file, 'base64');
+  if (typeof base64 === 'string' && base64 !== '') return Buffer.from(base64, 'base64');
+  return null;
 }
 
 export function rowFiles({ rows, label }: { rows: unknown; label: string }): UploadInput[] {

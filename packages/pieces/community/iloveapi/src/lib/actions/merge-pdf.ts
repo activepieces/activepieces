@@ -7,7 +7,7 @@ import { runAndStoreResult } from '../common/runner';
 export const mergePdfAction = createAction({
   auth: iloveapiAuth,
   name: 'merge_pdf',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Merge PDF',
   description:
     'Combine multiple PDF files into a single document, in the order provided.',

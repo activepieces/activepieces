@@ -7,7 +7,7 @@ import { runAndStoreResult } from '../common/runner';
 export const jpgToPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'jpg_to_pdf',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'JPG to PDF',
   description: 'Convert one or more images (JPG/PNG) into a PDF document.',
   audience: 'both',

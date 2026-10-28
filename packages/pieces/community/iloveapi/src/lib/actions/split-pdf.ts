@@ -7,7 +7,7 @@ import { runAndStoreResult } from '../common/runner';
 export const splitPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'split_pdf',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Split PDF',
   description:
     'Split a PDF by page ranges, fixed page batches, removed pages, or target file size.',

@@ -7,7 +7,7 @@ import { iloveSchemas } from '../common/schemas';
 export const removeBackgroundImageAction = createAction({
   auth: iloveapiAuth,
   name: 'remove_background_image',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Remove Image Background',
   description: 'Remove the background from a photo and return a PNG with transparency.',
   audience: 'both',

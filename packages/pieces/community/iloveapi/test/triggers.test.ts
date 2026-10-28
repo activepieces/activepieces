@@ -56,12 +56,13 @@ describe('task triggers', () => {
   it('refuse a short secret', async () => {
     await expect(taskCompletedTrigger.run(loose(ctx({ body: samples.taskCompletedSample, secret: 'short' }).context))).rejects.toThrow(/at least 16/);
   });
-  it('clear dedupe state on disable', async () => {
+  it('keep dedupe state on disable so a retry after republish is still dropped', async () => {
     const { context, store } = ctx({ body: samples.taskCompletedSample });
     await taskCompletedTrigger.run(loose(context));
     expect(store.size).toBe(1);
     await taskCompletedTrigger.onDisable(loose(context));
-    expect(store.size).toBe(0);
+    expect(store.size).toBe(1);
+    expect(await taskCompletedTrigger.run(loose(context))).toHaveLength(0);
   });
 });
 

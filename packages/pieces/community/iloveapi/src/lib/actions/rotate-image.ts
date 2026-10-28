@@ -7,7 +7,7 @@ import { iloveSchemas } from '../common/schemas';
 export const rotateImageAction = createAction({
   auth: iloveapiAuth,
   name: 'rotate_image',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Rotate Image',
   description: 'Rotate an image by 90, 180 or 270 degrees.',
   audience: 'both',

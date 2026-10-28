@@ -7,7 +7,7 @@ import { iloveSchemas } from '../common/schemas';
 export const convertPdfaAction = createAction({
   auth: iloveapiAuth,
   name: 'convert_pdf_to_pdfa',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Convert PDF to PDF/A',
   description: 'Convert a PDF into an archival PDF/A document.',
   audience: 'both',

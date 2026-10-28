@@ -3,7 +3,6 @@ import { iloveapiAuth } from '../common/auth';
 import { iloveSchemas } from '../common/schemas';
 import {
   acceptDelivery,
-  forgetDeliveries,
   matchesEvent,
   webhookInstructions,
   webhookSecretProperty,
@@ -29,8 +28,9 @@ export function buildSignatureTrigger(spec: SignatureTriggerSpec) {
     async onEnable() {
       return;
     },
-    async onDisable(context) {
-      await forgetDeliveries(context.store);
+    async onDisable() {
+      // Keep the dedupe list: a vendor retry right after a republish must still be dropped; the 24 h TTL prunes it.
+      return;
     },
     async run(context) {
       const envelope = matchesEvent({

@@ -7,7 +7,7 @@ import { iloveSchemas } from '../common/schemas';
 export const resizeImageAction = createAction({
   auth: iloveapiAuth,
   name: 'resize_image',
-  classification: 'WRITE',
+  classification: 'READ',
   displayName: 'Resize Image',
   description: 'Resize an image by exact pixels or by percentage.',
   audience: 'both',
