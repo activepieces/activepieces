@@ -3,42 +3,11 @@ import {
   AuthenticationPage,
   AutomationsPage,
   BuilderPage,
+  RunsPage,
 } from '../pages';
-import { signUp, AuthenticationResponse } from './users';
-import { DEFAULT_EMAIL, DEFAULT_PASSWORD } from '../global-setup';
-
-type CustomFixtures = {
-  authenticationPage: AuthenticationPage;
-  automationsPage: AutomationsPage;
-  builderPage: BuilderPage;
-  authenticatedPage: AuthenticationPage;
-  users: {
-    apiSignUp: () => Promise<AuthenticationResponse>;
-  }
-};
+import { e2eApi, E2eSession } from './api';
 
 export const test = base.extend<CustomFixtures>({
-  // Authenticate before each test, then land on the automations dashboard.
-  page: async ({ page }, use) => {
-    const authPage = new AuthenticationPage(page);
-
-    if (process.env.E2E_EMAIL && process.env.E2E_PASSWORD) {
-      await authPage.signIn({
-        email: process.env.E2E_EMAIL,
-        password: process.env.E2E_PASSWORD,
-      });
-    } else {
-      await authPage.signIn({
-        email: DEFAULT_EMAIL,
-        password: DEFAULT_PASSWORD,
-      });
-    }
-
-    await new AutomationsPage(page).open();
-
-    await use(page);
-  },
-
   authenticationPage: async ({ page }, use) => {
     await use(new AuthenticationPage(page));
   },
@@ -47,19 +16,43 @@ export const test = base.extend<CustomFixtures>({
     await use(new AutomationsPage(page));
   },
 
-  builderPage: async ({ page }, use) => {
-    await use(new BuilderPage(page));
+  builderPage: async ({ page, request, session }, use) => {
+    await use(new BuilderPage({ page, describeRun: (runId) => e2eApi.describeRun({ request, session, runId }) }));
   },
 
-  authenticatedPage: async ({ page }, use) => {
-    await use(new AuthenticationPage(page));
+  runsPage: async ({ page }, use) => {
+    await use(new RunsPage(page));
   },
 
-  users: async ({ request, page }, use) => {
-    await use({
-      apiSignUp: async () => await signUp(request, page),
-    });
+  session: async ({}, use) => {
+    await use(e2eApi.readSession());
+  },
+
+  flowCleanup: async ({ request, session }, use) => {
+    const flowIds: string[] = [];
+    await use({ track: (flowId) => flowIds.push(flowId) });
+    for (const flowId of flowIds) {
+      await e2eApi.deleteFlow({ request, session, flowId });
+    }
+  },
+
+  connectionCleanup: async ({ request, session }, use) => {
+    const connectionIds: string[] = [];
+    await use({ track: (connectionId) => connectionIds.push(connectionId) });
+    for (const connectionId of connectionIds) {
+      await e2eApi.deleteConnection({ request, session, connectionId });
+    }
   },
 });
 
 export { expect } from '@playwright/test';
+
+type CustomFixtures = {
+  authenticationPage: AuthenticationPage;
+  automationsPage: AutomationsPage;
+  builderPage: BuilderPage;
+  runsPage: RunsPage;
+  session: E2eSession;
+  flowCleanup: { track: (flowId: string) => void };
+  connectionCleanup: { track: (connectionId: string) => void };
+};

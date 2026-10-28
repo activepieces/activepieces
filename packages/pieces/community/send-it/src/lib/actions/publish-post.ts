@@ -1,14 +1,19 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sendItAuth } from '../auth';
+import { sendItAuth } from '../common/auth';
+import { apiKeyOf } from '../common/client';
+import { sendItOutputSchemas } from '../common/output-schemas';
 import {
-  platformProperty,
-  textProperty,
+  firstCommentProperty,
+  idempotencyKeyProperty,
+  mediaTypeProperty,
   mediaUrlProperty,
   mediaUrlsProperty,
-  mediaTypeProperty,
-  sendItRequest,
-} from '../common';
+  platformProperty,
+  platformSettingsProperty,
+  textProperty,
+  titleProperty,
+} from '../common/props';
+import { sendItRequests } from '../common/requests';
 
 export const publishPost = createAction({
   auth: sendItAuth,
@@ -19,7 +24,7 @@ export const publishPost = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Immediately publishes a post (text plus optional image/video URL or a multi-image carousel) to one or more connected social platforms (X, LinkedIn, Instagram, Threads, TikTok, and others). Choose this to post right now rather than at a future time (use Schedule Post for that). Requires at least one selected platform whose account is connected in SendIt; note Instagram and TikTok require a media URL. Not idempotent: each call publishes a new post.',
+      'Immediately publishes a post (text plus optional image/video URL or a multi-image carousel) to one or more connected social platforms (X, LinkedIn, Instagram, Threads, Bluesky, TikTok and others). Use Schedule Post to publish later. Each selected platform must be connected in SendIt (check with List Connected Accounts); Instagram, Pinterest, TikTok and YouTube require a public https media URL. Each publish counts against the SendIt plan post quota (Free: 30 per month). Returns per-platform results with post IDs and URLs. Not idempotent: every call publishes a new post. An Idempotency-Key header is sent, but SendIt was not seen to deduplicate on it, so do not retry blindly after a timeout; check the account first.',
     idempotent: false,
   },
   props: {
@@ -28,24 +33,18 @@ export const publishPost = createAction({
     mediaUrl: mediaUrlProperty,
     mediaUrls: mediaUrlsProperty,
     mediaType: mediaTypeProperty,
+    title: titleProperty,
+    firstComment: firstCommentProperty,
+    platformSettings: platformSettingsProperty,
+    idempotencyKey: idempotencyKeyProperty,
   },
+  outputSchema: sendItOutputSchemas.publishResult,
   async run(context) {
-    const { platforms, text, mediaUrl, mediaUrls, mediaType } =
-      context.propsValue;
-
-    return await sendItRequest(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      '/publish',
-      {
-        platforms,
-        content: {
-          text,
-          mediaUrl,
-          mediaUrls,
-          mediaType,
-        },
-      }
-    );
+    const { idempotencyKey, ...input } = context.propsValue;
+    return sendItRequests.publish({
+      apiKey: apiKeyOf(context.auth),
+      input,
+      key: sendItRequests.idempotencyKey({ override: idempotencyKey, runId: context.run.id, stepName: context.step.name, input, operation: 'publish' }),
+    });
   },
 });

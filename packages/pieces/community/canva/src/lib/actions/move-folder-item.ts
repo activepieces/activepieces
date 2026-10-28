@@ -1,58 +1,26 @@
-import {
-  Property,
-  createAction,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
-import { canvaAuth } from '../../index';
-import { canvaCommon, fetchUserFolders, fetchUserDesigns, fetchUserAssets } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { canvaAuth, canvaCommon, canvaProps } from '../common';
+import { canvaClient } from '../common/client';
+import { canvaOutputSchemas } from '../common/output-schemas';
 
 export const moveFolderItem = createAction({
   auth: canvaAuth,
   name: 'move_folder_item',
   classification: 'WRITE',
   displayName: 'Move Folder Item',
-  description: 'Move an item from one folder to another in Canva',
-  audience: 'both',
+  description: 'Move a design or image into another folder.',
+  audience: 'human',
   aiMetadata: {
-    description:
-      'Moves a design or image asset into a specified destination folder in Canva, identified by item ID and folder ID. Pick this to reorganize library content; it fails for items that currently live in multiple folders (those must be moved in the Canva UI). Effectively idempotent: repeating the same move leaves the item in the same destination folder.',
+    description: 'Moves a Canva design or image into a folder. Human step; agents use canva_move_folder_item. Repeating the same move leaves the item in the same folder.',
     idempotent: true,
   },
+  outputSchema: canvaOutputSchemas.moveFolderItem,
   props: {
-    to_folder_id: Property.Dropdown({
-      displayName: 'Destination Folder',
-      description: 'Select the folder to move the item to',
-      required: true,
-      refreshers: [],
-      auth:canvaAuth,
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate with Canva first',
-            options: [],
-          };
-        }
-        
-        try {
-          const folders = await fetchUserFolders(auth);
-          return {
-            disabled: false,
-            options: folders,
-          };
-        } catch (error) {
-          console.error('Error fetching folders:', error);
-          return {
-            disabled: true,
-            placeholder: 'Error loading folders',
-            options: [],
-          };
-        }
-      },
-    }),
+    to_folder_id: canvaProps.folderDropdown({ displayName: 'Destination Folder', description: 'The folder to move the item to.' }),
     item_type: Property.StaticDropdown({
       displayName: 'Item Type',
-      description: 'Select the type of item you want to move',
+      description: 'The kind of item to move.',
       required: true,
       defaultValue: 'design',
       options: {
@@ -63,111 +31,50 @@ export const moveFolderItem = createAction({
       },
     }),
     item_id: Property.Dropdown({
+      auth: canvaAuth,
       displayName: 'Item to Move',
-      description: 'Select the item you want to move',
+      description: 'The design or image to move.',
       required: true,
-      auth:canvaAuth,
       refreshers: ['item_type'],
       options: async ({ auth, item_type }) => {
         if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate with Canva first',
-            options: [],
-          };
+          return { disabled: true, placeholder: 'Connect your Canva account first', options: [] };
         }
-        
         if (!item_type) {
-          return {
-            disabled: true,
-            placeholder: 'Please select an item type first',
-            options: [],
-          };
+          return { disabled: true, placeholder: 'Select an item type first', options: [] };
         }
-        
         try {
-          let items: Array<{ label: string; value: string }> = [];
-          
-          if (item_type === 'design') {
-            items = await fetchUserDesigns(auth);
-          } else if (item_type === 'image') {
-            items = await fetchUserAssets(auth, 'image');
-          }
-          
-          return {
-            disabled: false,
-            options: items,
-          };
+          const result = item_type === 'image' ? await canvaCommon.fetchUserAssets({ auth }) : await canvaCommon.fetchUserDesigns({ auth });
+          return canvaCommon.dropdownState({ result });
         } catch (error) {
-          console.error('Error fetching items:', error);
-          return {
-            disabled: true,
-            placeholder: 'Error loading items',
-            options: [],
-          };
+          return canvaCommon.dropdownError({ error, what: 'items' });
         }
       },
     }),
   },
   async run(context) {
-    const { to_folder_id, item_id } = context.propsValue;
-    const authValue = context.auth as OAuth2PropertyValue;
-
-    try {
-      const response = await fetch(`${canvaCommon.baseUrl}/folders/move`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authValue.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to_folder_id,
-          item_id,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        
-        if (response.status === 400) {
-          if (errorData.type === 'item_in_multiple_folders') {
-            throw new Error(
-              'This item exists in multiple folders. Please use the Canva UI to move the item to another folder.'
-            );
-          }
-          throw new Error(`Bad Request: ${errorData.message || 'Invalid request parameters'}`);
-        }
-        
-        if (response.status === 401) {
-          throw new Error('Unauthorized: Please check your authentication credentials');
-        }
-        
-        if (response.status === 403) {
-          throw new Error('Forbidden: Insufficient permissions or invalid folder/item access');
-        }
-        
-        if (response.status === 404) {
-          throw new Error('Not Found: The specified folder or item does not exist');
-        }
-        
-        if (response.status === 429) {
-          throw new Error('Rate limit exceeded: Too many requests (limit: 100 per minute)');
-        }
-        
-        throw new Error(`HTTP ${response.status}: ${errorData.message || 'Request failed'}`);
-      }
-
-      return {
-        success: true,
-        message: `Item ${item_id} successfully moved to folder ${to_folder_id}`,
-        moved_item_id: item_id,
-        destination_folder_id: to_folder_id,
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error(`Failed to move folder item: ${String(error)}`);
+    const toFolderId = context.propsValue.to_folder_id.trim();
+    const itemId = String(context.propsValue.item_id ?? '').trim();
+    if (!toFolderId || !itemId) {
+      throw new Error('Destination folder and item are required.');
     }
+    await moveItem({ token: context.auth.access_token, toFolderId, itemId });
+    return {
+      success: true,
+      message: `Item ${itemId} moved to folder ${toFolderId}`,
+      moved_item_id: itemId,
+      destination_folder_id: toFolderId,
+    };
   },
-}); 
+});
+
+async function moveItem({ token, toFolderId, itemId }: { token: string; toFolderId: string; itemId: string }): Promise<void> {
+  await canvaClient.request<unknown>({
+    token,
+    method: HttpMethod.POST,
+    path: '/folders/move',
+    body: { to_folder_id: toFolderId, item_id: itemId },
+  });
+}
+
+export const moveFolderItemRequest = moveItem;
