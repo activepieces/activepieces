@@ -167,7 +167,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.208.1",
+      "version": "0.209.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -1067,7 +1067,7 @@
     },
     "packages/pieces/community/bannerbear": {
       "name": "@activepieces/piece-bannerbear",
-      "version": "0.5.1",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1076,6 +1076,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/barcode-lookup": {
@@ -1558,7 +1559,7 @@
     },
     "packages/pieces/community/campaign-monitor": {
       "name": "@activepieces/piece-campaign-monitor",
-      "version": "0.1.9",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1567,6 +1568,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/canny": {
@@ -1584,15 +1586,17 @@
     },
     "packages/pieces/community/canva": {
       "name": "@activepieces/piece-canva",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/capsule-crm": {
@@ -6516,7 +6520,7 @@
     },
     "packages/pieces/community/ninjapipe": {
       "name": "@activepieces/piece-ninjapipe",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6525,6 +6529,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/ninox": {
@@ -6977,17 +6982,19 @@
     },
     "packages/pieces/community/pastefy": {
       "name": "@activepieces/piece-pastefy",
-      "version": "0.3.2",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "crypto-js": "4.2.0",
+        "undici": "7.29.1",
       },
       "devDependencies": {
         "@types/crypto-js": "4.2.2",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/paywhirl": {
@@ -8684,7 +8691,7 @@
     },
     "packages/pieces/community/smartlead": {
       "name": "@activepieces/piece-smartlead",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8693,6 +8700,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/smartsheet": {

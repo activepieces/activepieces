@@ -1,152 +1,127 @@
-import {
-  Property,
-  createAction,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
-import { canvaAuth } from '../../index';
-import { canvaCommon, Design } from '../common';
-
-interface ListDesignsResponse {
-  items: Design[];
-  continuation?: string;
-}
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { canvaAuth, ListDesignsResponse } from '../common';
+import { canvaClient } from '../common/client';
+import { canvaOutputSchemas } from '../common/output-schemas';
 
 export const findDesign = createAction({
   auth: canvaAuth,
   name: 'find_design',
   classification: 'SEARCH',
   displayName: 'Find Design',
-  description: 'Search and list designs from your Canva library. Use this to find existing designs before creating new ones.',
-  audience: 'both',
+  description: 'Search your Canva designs by keyword, or list them all. Returns one page; use the continuation token for the next page.',
+  audience: 'human',
   aiMetadata: {
-    description:
-      "Searches the user's Canva design library by keyword, with ownership (owned/shared) and sort filters plus continuation-token pagination; an empty query lists all designs. Pick this to discover or look up design IDs before getting, exporting, or moving a design, rather than creating a duplicate. Read-only and idempotent.",
+    description: 'Searches Canva designs. Human step; agents use canva_list_designs. Read-only.',
     idempotent: true,
   },
+  outputSchema: canvaOutputSchemas.findDesign,
   props: {
     query: Property.ShortText({
-      displayName: '🔍 Search Query',
-      description: 'Enter keywords to search designs by title or content (leave empty to get all designs)',
+      displayName: 'Search Query',
+      description: 'Keywords to search designs by. Leave empty to list all designs.',
       required: false,
     }),
     ownership: Property.StaticDropdown({
-      displayName: '👥 Ownership Filter',
-      description: 'Filter designs by who owns them',
+      displayName: 'Ownership',
+      description: 'Which designs to include.',
       required: false,
       defaultValue: 'any',
       options: {
         options: [
-          { label: 'Any (owned + shared)', value: 'any' },
+          { label: 'Any (owned and shared)', value: 'any' },
           { label: 'Owned by me', value: 'owned' },
           { label: 'Shared with me', value: 'shared' },
         ],
       },
     }),
     sort_by: Property.StaticDropdown({
-      displayName: '📊 Sort By',
-      description: 'How to order the search results',
+      displayName: 'Sort By',
+      description: 'How to order the results.',
       required: false,
       defaultValue: 'modified_descending',
       options: {
         options: [
-          { label: '📅 Recently Modified (Recommended)', value: 'modified_descending' },
-          { label: '🔍 Relevance', value: 'relevance' },
-          { label: '📅 Oldest Modified', value: 'modified_ascending' },
-          { label: '🔤 Title A-Z', value: 'title_ascending' },
-          { label: '🔤 Title Z-A', value: 'title_descending' },
+          { label: 'Recently modified', value: 'modified_descending' },
+          { label: 'Relevance', value: 'relevance' },
+          { label: 'Oldest modified', value: 'modified_ascending' },
+          { label: 'Title A-Z', value: 'title_ascending' },
+          { label: 'Title Z-A', value: 'title_descending' },
         ],
       },
     }),
     limit: Property.Number({
-      displayName: '⚙️ Result Limit (Advanced)',
-      description: 'Max designs to return (default: 20, max: 100). Higher numbers may be slower.',
+      displayName: 'Result Limit',
+      description: 'How many designs to return (1-100, default 20).',
       required: false,
       defaultValue: 20,
     }),
     continuation: Property.ShortText({
-      displayName: '⚙️ Continuation Token (Advanced)',
-      description: 'For pagination: token from previous search to get next page of results',
+      displayName: 'Continuation Token',
+      description: 'Token from a previous run to get the next page.',
       required: false,
     }),
   },
   async run(context) {
     const { query, ownership, sort_by, limit, continuation } = context.propsValue;
-    const authValue = context.auth as OAuth2PropertyValue;
-
-    try {
-      const params = new URLSearchParams();
-      
-      if (query && query.trim()) {
-        params.append('query', query.trim());
-      }
-      
-      if (ownership && ownership !== 'any') {
-        params.append('ownership', ownership);
-      }
-      
-      if (sort_by && sort_by !== 'relevance') {
-        params.append('sort_by', sort_by);
-      }
-      
-      if (continuation && continuation.trim()) {
-        params.append('continuation', continuation.trim());
-      }
-
-      const queryString = params.toString();
-      const url = `${canvaCommon.baseUrl}/designs${queryString ? `?${queryString}` : ''}`;
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${authValue.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        
-        if (response.status === 400) {
-          throw new Error(`Bad Request: ${errorData.message || 'Invalid search parameters'}`);
-        }
-        
-        if (response.status === 401) {
-          throw new Error('Unauthorized: Please check your authentication credentials');
-        }
-        
-        if (response.status === 403) {
-          throw new Error('Forbidden: Insufficient permissions to access designs');
-        }
-        
-        if (response.status === 429) {
-          throw new Error('Rate limit exceeded: Too many requests (limit: 100 per minute)');
-        }
-        
-        throw new Error(`HTTP ${response.status}: ${errorData.message || 'Request failed'}`);
-      }
-
-      const data: ListDesignsResponse = await response.json();
-
-      let designs = data.items || [];
-      if (limit && limit > 0) {
-        designs = designs.slice(0, Math.min(limit, 100));
-      }
-
-      return {
-        designs,
-        total_found: designs.length,
-        has_more: !!data.continuation,
-        continuation_token: data.continuation,
-        search_query: query || null,
-        ownership_filter: ownership || 'any',
-        sort_order: sort_by || 'relevance',
-        design_ids: designs.map(d => d.id),
-        design_titles: designs.map(d => d.title).filter(Boolean),
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error(`Failed to find designs: ${String(error)}`);
-    }
+    const page = await listDesigns({
+      token: context.auth.access_token,
+      query: query ?? undefined,
+      ownership: ownership ?? undefined,
+      sortBy: sort_by ?? undefined,
+      limit: limit ?? 20,
+      continuation: continuation ?? undefined,
+    });
+    const designs = page.items;
+    return {
+      designs,
+      total_found: designs.length,
+      has_more: Boolean(page.continuation),
+      continuation_token: page.continuation ?? null,
+      search_query: query || null,
+      ownership_filter: ownership || 'any',
+      sort_order: sort_by || 'relevance',
+      design_ids: designs.map((d) => d.id),
+      design_titles: designs.map((d) => d.title).filter(Boolean),
+    };
   },
-}); 
+});
+
+async function listDesigns({
+  token,
+  query,
+  ownership,
+  sortBy,
+  limit,
+  continuation,
+}: {
+  token: string;
+  query?: string;
+  ownership?: string;
+  sortBy?: string;
+  limit?: number;
+  continuation?: string;
+}): Promise<{ items: ListDesignsResponse['items']; continuation?: string }> {
+  const queryParams: Record<string, string> = {};
+  const term = query?.trim();
+  if (term) {
+    if (term.length > 255) {
+      throw new Error('Search query must be 255 characters or fewer.');
+    }
+    queryParams['query'] = term;
+  }
+  if (ownership && ownership !== 'any') queryParams['ownership'] = ownership;
+  if (sortBy) queryParams['sort_by'] = sortBy;
+  if (limit !== undefined) {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+      throw new Error('Result limit must be a whole number between 1 and 100.');
+    }
+    queryParams['limit'] = String(limit);
+  }
+  const cursor = continuation?.trim();
+  if (cursor) queryParams['continuation'] = cursor;
+  const body = await canvaClient.request<ListDesignsResponse>({ token, method: HttpMethod.GET, path: '/designs', queryParams });
+  return { items: body?.items ?? [], continuation: body?.continuation };
+}
+
+export const listDesignsRequest = listDesigns;
