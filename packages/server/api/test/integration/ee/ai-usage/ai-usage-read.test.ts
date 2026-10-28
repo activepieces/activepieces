@@ -77,6 +77,13 @@ function sum(values: (number | null)[]): number {
     return values.reduce<number>((total, value) => total + (value ?? 0), 0)
 }
 
+async function awayFromFiveMinuteEdge(): Promise<void> {
+    const untilEdgeMs = FIVE_MINUTES_MS - (Date.now() % FIVE_MINUTES_MS)
+    if (untilEdgeMs < EDGE_MARGIN_MS) {
+        await new Promise((resolve) => setTimeout(resolve, untilEdgeMs + 100))
+    }
+}
+
 describe('AI usage read API', () => {
     async function seedPlatform(): Promise<{ invoiceFlowId: string, quietFlowId: string, agentId: string }> {
         const { current, previous } = daysOf('30d')
@@ -210,6 +217,27 @@ describe('AI usage read API', () => {
         expect(sum(overview.series.map((point) => point.previousSpendUsd))).toBe(3)
     })
 
+    it.each(['1h', '6h', '12h', '24h'] as const)('reads five-minute rows into the %s chart slots and detail', async (period) => {
+        const flowId = await saveFlow({ projectId: ctx.project.id, displayName: 'Hourly flow' })
+        await awayFromFiveMinuteEdge()
+        const resolved = aiUsagePeriod.resolve({ period, now: new Date() })
+        await seed({ bucket: new Date(resolved.current.start.getTime() + resolved.stepMs).toISOString(), flowId, spendUsd: 6, calls: 2 })
+        await seed({ bucket: resolved.current.start.toISOString(), flowId, spendUsd: 1 })
+        await seed({ bucket: resolved.previous.start.toISOString(), flowId, spendUsd: 4 })
+        await seed({ bucket: new Date(resolved.previous.start.getTime() - resolved.stepMs).toISOString(), flowId, spendUsd: 50 })
+
+        const overview = await getJson<AiUsageOverview>({ url: '/v1/ai-usage/overview', query: { period, scope: 'production' } })
+        expect(overview.totals).toMatchObject({ spendUsd: 7, previousSpendUsd: 4, calls: 3 })
+        expect(overview.series).toHaveLength(resolved.slotCount)
+        expect(overview.series.slice(0, 2).map((point) => point.spendUsd)).toEqual([1, 6])
+        expect(overview.series[0].previousSpendUsd).toBe(4)
+        expect(sum(overview.series.map((point) => point.spendUsd))).toBe(7)
+
+        const detail = await getJson<AiUsageDetail>({ url: `/v1/ai-usage/items/flow/${flowId}`, query: { period, scope: 'production' } })
+        expect(detail.item).toMatchObject({ id: flowId, name: 'Hourly flow', spendUsd: 7, previousSpendUsd: 4 })
+        expect(sum(detail.series.map((point) => point.spendUsd))).toBe(7)
+    })
+
     it('shows the page at zero for a platform that never used AI', async () => {
         const overview = await getJson<AiUsageOverview>({ url: '/v1/ai-usage/overview', query: { period: 'this-month', scope: 'production' } })
         expect(overview.history.hasAnyUsage).toBe(false)
@@ -248,6 +276,9 @@ describe('AI usage read API', () => {
         expect(detail.item).toMatchObject({ name: 'claude-sonnet-5', provider: AIProviderName.ANTHROPIC, spendUsd: 3 })
     })
 })
+
+const FIVE_MINUTES_MS = 5 * 60 * 1000
+const EDGE_MARGIN_MS = 5000
 
 type SeedRow = ({ day: string } | { bucket: string }) & {
     platformId?: string

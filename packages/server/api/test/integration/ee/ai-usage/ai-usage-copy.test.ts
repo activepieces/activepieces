@@ -187,6 +187,15 @@ describe('AI usage copy from Autumn', () => {
         expect((await dailyTotals()).calls).toBe(PAGE_SIZE * 2 + 3)
     })
 
+    it('splits a window with too many pages instead of getting stuck on it', async () => {
+        await startCursorAt({ platformId: ctx.platform.id, minutesAgo: 12 })
+        Array.from({ length: PAGE_SIZE * 7 }, (_, index) => addEvent({ minutesAgo: 11.5 - index * 0.4, properties: { usage: block() } }))
+
+        await aiUsageCopy(app.log).run()
+
+        expect((await dailyTotals()).calls).toBe(PAGE_SIZE * 7)
+    })
+
     it('leaves platforms without AI providers alone', async () => {
         const other = await createCopiedPlatform({ aiProvidersEnabled: false })
 
