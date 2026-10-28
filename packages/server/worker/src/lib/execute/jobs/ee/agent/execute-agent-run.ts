@@ -753,6 +753,11 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         }))
     }
 
+    const isDeclaredReadOnly = async ({ pieceName, actionName }: { pieceName: string, actionName: string }): Promise<boolean | undefined> => {
+        const { result } = await ctx.apiClient.executeAgentTool({ toolName: '__action_read_only', toolInput: { pieceName, actionName }, platformId, userId, source, conversationId })
+        return typeof result === 'boolean' ? result : undefined
+    }
+
     const piecesTheAuthorGaveAnAccount = new Set(source !== AgentRunSource.AGENT ? [] : configuredPieceTools
         .filter((tool) => !isNil(tool.pieceMetadata.predefinedInput?.auth))
         .map((tool) => tool.pieceMetadata.pieceName))
@@ -790,7 +795,7 @@ function buildToolSet({ ctx, eventEmitter, log, taintState, mcpToolSet, webTools
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, taintState })
+    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate, isDeclaredReadOnly, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
         ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState, eventEmitter: toolEventEmitter, waitForApproval, onGateOpened: storePendingGate })
         : {}

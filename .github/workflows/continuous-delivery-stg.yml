@@ -13,7 +13,6 @@ on:
         type: choice
         options:
           - deploy-staging              # Re-deploy to staging (e.g., after infra change)
-          - deploy-staging-skip-freeze  # Deploy to staging, ignoring the freeze window
 
 # One deploy run at a time, so e2e always tests the SHA it reports on. A newer
 # pending run replaces an older pending one: the latest merge still wins.
@@ -46,29 +45,8 @@ jobs:
             echo "is_hotfix_merge=false" >> $GITHUB_OUTPUT
           fi
 
-  check-freeze:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    outputs:
-      frozen: ${{ steps.check.outputs.frozen }}
-    steps:
-      - name: Check staging freeze window (5 PM - 9 AM UTC)
-        id: check
-        run: |
-          HOUR=$(date -u +%H)
-          if [ "$HOUR" -ge 17 ] || [ "$HOUR" -lt 9 ]; then
-            echo "Staging is frozen (current UTC hour: $HOUR). Skipping deploy."
-            echo "frozen=true" >> $GITHUB_OUTPUT
-          else
-            echo "frozen=false" >> $GITHUB_OUTPUT
-          fi
-
   build-image:
-    needs: [check-freeze]
-    if: |
-      always() &&
-      ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
-       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
