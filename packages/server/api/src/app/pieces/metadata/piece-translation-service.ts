@@ -33,8 +33,10 @@ export const pieceTranslationService = {
     async getAllLocales({ pieceMetadataId }: GetAllLocalesParams): Promise<I18nForPiece | undefined> {
         const row = await pieceTranslationRepos().manager
             .createQueryBuilder(PieceMetadataEntity, 'pm')
+            .leftJoin(TABLE, 'pt', 'pt."pieceMetadataId" = pm."id"')
             .select(ALL_TRANSLATIONS_WITH_LEGACY_FALLBACK, 'i18n')
             .where('pm."id" = :pieceMetadataId', { pieceMetadataId })
+            .groupBy('pm."id"')
             .getRawOne<{ i18n: I18nForPiece | null }>()
         return row?.i18n ?? undefined
     },
@@ -53,8 +55,8 @@ const TRANSLATIONS_WITH_LEGACY_FALLBACK = `COALESCE(
 )`
 
 const ALL_TRANSLATIONS_WITH_LEGACY_FALLBACK = `COALESCE(
-    (SELECT json_object_agg(stored."locale", stored."translations") FROM "${TABLE}" stored WHERE stored."pieceMetadataId" = pm."id"),
-    pm."i18n"::json
+    json_object_agg(pt."locale", pt."translations") FILTER (WHERE pt."locale" IS NOT NULL),
+    CASE WHEN NOT EXISTS (SELECT 1 FROM "${TABLE}" stored WHERE stored."pieceMetadataId" = pm."id") THEN pm."i18n" END
 )`
 
 type SaveParams = {
