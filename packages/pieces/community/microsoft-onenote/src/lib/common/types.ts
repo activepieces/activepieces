@@ -1,6 +1,15 @@
 import type { AppConnectionType } from '@activepieces/pieces-framework';
 
-export type { Notebook, OnenotePage, OnenoteSection } from '@microsoft/microsoft-graph-types';
+export type {
+  CopyNotebookModel,
+  Notebook,
+  OnenoteOperation,
+  OnenotePage,
+  OnenotePagePreview,
+  OnenoteSection,
+  RecentNotebook,
+  SectionGroup,
+} from '@microsoft/microsoft-graph-types';
 
 export type MicrosoftOneNoteAuthValue = {
   type:

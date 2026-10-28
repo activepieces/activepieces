@@ -3,14 +3,16 @@ import { microsoftOneNoteAuth } from '../auth';
 import { microsoftOneNoteClient } from '../common/client';
 import { microsoftOneNoteProps } from '../common/props';
 import type { OnenotePage } from '../common/types';
+import { createImageNoteOutputSchema } from '../output-schemas';
 
 export const createImageNoteAction = createAction({
 	auth: microsoftOneNoteAuth,
 	name: 'create_image_note',
+	outputSchema: createImageNoteOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Image Note',
 	description: 'Create a note containing an embedded image via a public image URL.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new OneNote page in a section with an embedded image referenced by a publicly accessible image URL, plus an optional title and description. Choose this over Create Page when the note is primarily an image; the image URL must be reachable by Microsoft Graph. Not idempotent: each call creates a new page.', idempotent: false },
 	props: {
 		notebook_id: microsoftOneNoteProps.notebookId({

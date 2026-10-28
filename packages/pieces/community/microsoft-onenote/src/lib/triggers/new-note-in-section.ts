@@ -7,6 +7,7 @@ import { microsoftOneNoteAuth } from '../auth';
 import { microsoftOneNoteClient } from '../common/client';
 import { microsoftOneNoteProps } from '../common/props';
 import type { MicrosoftOneNoteList, OnenotePage } from '../common/types';
+import { newNoteInSectionOutputSchema } from '../output-schemas';
 
 async function fetchPageContent({ client, pageId }: { client: Client; pageId: string | undefined }): Promise<string | null> {
 	try {
@@ -71,6 +72,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOneNote
 
 export const newNoteInSectionTrigger = createTrigger({
 	name: 'new_note_in_section',
+	outputSchema: newNoteInSectionOutputSchema,
 	classification: 'READ',
 	displayName: 'New Note in Section',
 	description: 'Fires when a new note is created in a specified section.',

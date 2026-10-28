@@ -7,6 +7,7 @@ import { createNoteInSectionAction } from './lib/actions/create-note-in-section'
 import { createNotebookAction } from './lib/actions/create-notebook';
 import { createPageAction } from './lib/actions/create-page';
 import { createSectionAction } from './lib/actions/create-section';
+import { microsoftOneNoteAiActions } from './lib/actions/ai';
 import { microsoftOneNoteAuth } from './lib/auth';
 import { microsoftOneNoteClient } from './lib/common/client';
 import { newNoteInSectionTrigger } from './lib/triggers/new-note-in-section';
@@ -17,7 +18,7 @@ export const microsoftOnenote = createPiece({
     'Microsoft OneNote is a note-taking app that allows you to create, edit, and share notes with others.',
   categories: [PieceCategory.PRODUCTIVITY],
   auth: microsoftOneNoteAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-onenote.png',
   authors: ['fortunamide', 'onyedikachi-david'],
   actions: [
@@ -27,6 +28,7 @@ export const microsoftOnenote = createPiece({
     createPageAction,
     createImageNoteAction,
     appendNoteAction,
+    ...microsoftOneNoteAiActions,
     createCustomApiCallAction({
       auth: microsoftOneNoteAuth,
       baseUrl: (auth) =>

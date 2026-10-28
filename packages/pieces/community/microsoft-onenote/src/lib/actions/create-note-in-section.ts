@@ -3,14 +3,16 @@ import { microsoftOneNoteAuth } from '../auth';
 import { microsoftOneNoteClient } from '../common/client';
 import { microsoftOneNoteProps } from '../common/props';
 import type { OnenotePage } from '../common/types';
+import { createNoteInSectionOutputSchema } from '../output-schemas';
 
 export const createNoteInSectionAction = createAction({
 	auth: microsoftOneNoteAuth,
 	name: 'create_note_in_section',
+	outputSchema: createNoteInSectionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Note in Section',
 	description: 'Create a new note in a specific section with title and content.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new OneNote page (note) in a chosen notebook section with a title and optional HTML body content. Use when adding a fresh note; content accepts basic HTML tags. Not idempotent: each call creates a new page even with identical input.', idempotent: false },
 	props: {
 		notebook_id: microsoftOneNoteProps.notebookId({

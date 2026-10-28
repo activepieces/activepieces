@@ -3,14 +3,16 @@ import { microsoftOneNoteAuth } from '../auth';
 import { microsoftOneNoteClient } from '../common/client';
 import { microsoftOneNoteProps } from '../common/props';
 import type { OnenoteSection } from '../common/types';
+import { createSectionOutputSchema } from '../output-schemas';
 
 export const createSectionAction = createAction({
 	auth: microsoftOneNoteAuth,
 	name: 'create_section',
+	outputSchema: createSectionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Section',
 	description: 'Creates a new section in notebook.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Creates a new section inside a chosen OneNote notebook, given a display name. Use to organize a notebook before adding pages; the name must be unique within the notebook, under 50 characters, and avoid characters such as ?*/:<>|&#\'%~. Not idempotent: each call attempts to create another section.', idempotent: false },
 	props: {
 		notebook_id: microsoftOneNoteProps.notebookId({
