@@ -2,10 +2,12 @@ import { isNil, tryCatch } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { McpOAuthAuthorizationCodeEntity } from '../code/mcp-oauth-code.entity'
 import { mcpOAuthRevocationList } from './mcp-oauth-revocation-list'
 import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
 
 const repo = repoFactory(McpOAuthTokenEntity)
+const codeRepo = repoFactory(McpOAuthAuthorizationCodeEntity)
 
 export const mcpGrantRevocation = {
     async revokeGrantIds({ grantIds }: RevokeGrantIdsParams): Promise<void> {
@@ -17,6 +19,7 @@ export const mcpGrantRevocation = {
     },
     async revokeActiveGrants({ scope, log }: RevokeActiveGrantsParams): Promise<void> {
         const { error } = await tryCatch(async () => {
+            await codeRepo().update({ ...scope, used: false }, { used: true })
             const grants = await repo().find({ where: { ...scope, revoked: false }, select: { id: true } })
             await mcpGrantRevocation.revokeGrantIds({ grantIds: grants.map((grant) => grant.id) })
         })

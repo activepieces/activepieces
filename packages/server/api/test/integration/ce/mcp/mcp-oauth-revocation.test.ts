@@ -3,6 +3,7 @@ import { DefaultProjectRole, McpOAuthToken, User, UserStatus } from '@activepiec
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mcpOAuthClientService } from '../../../../src/app/mcp/oauth/client/mcp-oauth-client.service'
+import { mcpOAuthCodeService } from '../../../../src/app/mcp/oauth/code/mcp-oauth-code.service'
 import { mcpOAuthRevocationList } from '../../../../src/app/mcp/oauth/token/mcp-oauth-revocation-list'
 import { mcpOAuthTokenService, OAuthTokenError } from '../../../../src/app/mcp/oauth/token/mcp-oauth-token.service'
 import { userService } from '../../../../src/app/user/user-service'
@@ -180,6 +181,24 @@ describe('MCP OAuth revocation list', () => {
         await userService(app.log).update({ id: member.user.id, platformId: ctx.platform.id, status: UserStatus.ACTIVE })
 
         expect((await callMcp(accessToken)).statusCode).toBe(401)
+    })
+
+    it('refuses an unused authorization code after its user is deactivated and reactivated', async () => {
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.ADMIN })
+        const code = await mcpOAuthCodeService.create({
+            clientId: 'revocation-test-client',
+            userId: member.user.id,
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+            redirectUri: CLAUDE_REDIRECT,
+            codeChallenge: 'challenge',
+            codeChallengeMethod: 'S256',
+        })
+
+        await userService(app.log).update({ id: member.user.id, platformId: ctx.platform.id, status: UserStatus.INACTIVE })
+        await userService(app.log).update({ id: member.user.id, platformId: ctx.platform.id, status: UserStatus.ACTIVE })
+
+        expect(await mcpOAuthCodeService.consume({ code, clientId: 'revocation-test-client', redirectUri: CLAUDE_REDIRECT })).toBeNull()
     })
 
     it('answers 503 rather than 401 when the revocation list cannot be read', async () => {
