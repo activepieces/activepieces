@@ -17,4 +17,12 @@ function flattenRaindrop({ raindrop }: { raindrop: RaindropItem }): RaindropFlat
   };
 }
 
-export const raindropUtils = { flattenRaindrop };
+function toBoolean({ value }: { value: string | undefined }): boolean | undefined {
+  return value === undefined ? undefined : value === 'true';
+}
+
+function toStringList({ value }: { value: unknown[] | undefined }): string[] {
+  return (value ?? []).map((item) => String(item));
+}
+
+export const raindropUtils = { flattenRaindrop, toBoolean, toStringList };

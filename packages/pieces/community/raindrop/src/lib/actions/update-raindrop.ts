@@ -5,14 +5,16 @@ import { raindropClient } from '../common/client';
 import { raindropProps } from '../common/props';
 import type { RaindropItem } from '../common/types';
 import { raindropUtils } from '../common/utils';
+import { updateRaindropOutputSchema } from '../output-schemas';
 
 export const updateRaindropAction = createAction({
   auth: raindropAuth,
   name: 'update_raindrop',
+  outputSchema: updateRaindropOutputSchema,
   classification: 'WRITE',
   displayName: 'Update Bookmark',
   description: 'Updates the details of an existing bookmark',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Updates an existing Raindrop.io bookmark identified by its numeric ID, changing any of title, excerpt, note, tags, collection, or favourite flag. Only supplied fields are changed; supplying tags replaces the existing tag list. Idempotent: repeating the same update yields the same final state.',

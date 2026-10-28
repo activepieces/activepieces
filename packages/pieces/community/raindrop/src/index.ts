@@ -8,13 +8,14 @@ import { getRaindropAction } from './lib/actions/get-raindrop';
 import { updateRaindropAction } from './lib/actions/update-raindrop';
 import { deleteRaindropAction } from './lib/actions/delete-raindrop';
 import { findRaindropsAction } from './lib/actions/find-raindrops';
+import { raindropAiActions } from './lib/actions/ai';
 export { raindropAuth };
 
 export const raindrop = createPiece({
   displayName: 'Raindrop',
   description:
     'Bookmark manager to save, search, and organize content from the web',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/raindrop.png',
   categories: [PieceCategory.PRODUCTIVITY, PieceCategory.CONTENT_AND_FILES],
   auth: raindropAuth,
@@ -25,6 +26,7 @@ export const raindrop = createPiece({
     updateRaindropAction,
     deleteRaindropAction,
     findRaindropsAction,
+    ...raindropAiActions,
     createCustomApiCallAction({
       baseUrl: () => raindropClient.baseUrl(),
       auth: raindropAuth,

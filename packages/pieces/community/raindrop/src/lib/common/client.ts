@@ -14,6 +14,7 @@ async function request<T>({
   body,
   headers,
   timeout,
+  responseType,
 }: RequestParams & { auth: RaindropAuthValue }): Promise<T> {
   const response = await httpClient.sendRequest<T>({
     method,
@@ -22,6 +23,7 @@ async function request<T>({
     queryParams: query,
     body,
     timeout,
+    responseType,
   });
   return response.body;
 }
@@ -35,4 +37,5 @@ type RequestParams = {
   body?: unknown;
   headers?: HttpHeaders;
   timeout?: number;
+  responseType?: 'arraybuffer' | 'json';
 };

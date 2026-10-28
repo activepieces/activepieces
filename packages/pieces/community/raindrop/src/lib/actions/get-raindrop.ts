@@ -4,14 +4,16 @@ import { raindropAuth } from '../auth';
 import { raindropClient } from '../common/client';
 import type { RaindropItem } from '../common/types';
 import { raindropUtils } from '../common/utils';
+import { getRaindropOutputSchema } from '../output-schemas';
 
 export const getRaindropAction = createAction({
   auth: raindropAuth,
   name: 'get_raindrop',
+  outputSchema: getRaindropOutputSchema,
   classification: 'READ',
   displayName: 'Get Bookmark',
   description: 'Retrieves the details of a bookmark by its ID',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches a single Raindrop.io bookmark by its numeric ID. Use when you already have a bookmark ID and need its full details (title, link, tags, collection, etc.); to locate bookmarks by keyword or collection instead, use Find Bookmarks. Read-only and idempotent.',

@@ -1,10 +1,7 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { DropdownState, Property } from '@activepieces/pieces-framework';
 
 import { raindropAuth } from '../auth';
-import { raindropClient } from './client';
-
-import type { RaindropCollection } from './types';
+import { raindropApi } from './api';
 
 function collectionId<R extends boolean>({
   required,
@@ -24,19 +21,11 @@ function collectionId<R extends boolean>({
         });
       }
       try {
-        const [rootResp, childResp] = await Promise.all([
-          raindropClient.request<{ items: RaindropCollection[] }>({
-            auth,
-            method: HttpMethod.GET,
-            path: '/collections',
-          }),
-          raindropClient.request<{ items: RaindropCollection[] }>({
-            auth,
-            method: HttpMethod.GET,
-            path: '/collections/childrens',
-          }),
+        const [rootCollections, childCollections] = await Promise.all([
+          raindropApi.listCollections({ auth }),
+          raindropApi.listChildCollections({ auth }),
         ]);
-        const allCollections = [...rootResp.items, ...childResp.items];
+        const allCollections = [...rootCollections, ...childCollections];
         return {
           disabled: false,
           options: [
