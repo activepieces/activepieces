@@ -116,7 +116,7 @@ function createSkillTools({ registry, surface, guides, loadedSkills, onSkillLoad
             },
         }),
         [LAZY_TOOL_NAME]: tool({
-            description: 'Run any tool by name. Pass the tool name as `tool` and its arguments as `input`, shaped exactly by that tool\'s input schema. Put the pill labels (title, activeTitle, doneTitle) on this call.',
+            description: 'Run any tool by name. `tool` is the tool name and `input` is that tool\'s arguments, shaped exactly by its input schema, both at the top level: {"tool": "ap_validate_flow", "input": {"flowId": "..."}}. Never wrap them in another object. Numbers, booleans and lists keep their JSON types. Always set title, activeTitle and doneTitle on this call: they are the step label the user sees, so name their thing in plain words, never the tool.',
             inputSchema: lazyToolInputSchema({ registry, canAffordPaidTool }),
             execute: async ({ tool: toolName, input }, options: ToolExecutionOptions<undefined>) => {
                 const target = registry[toolName]
@@ -153,8 +153,8 @@ function lazyToolModelOutput({ output, reroutedTool }: { output: ToolResultPart[
 }
 
 function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSet, canAffordPaidTool: () => boolean }): Schema<LazyToolInput> {
-    const outer = asSchema(LAZY_TOOL_OUTER_SCHEMA)
-    return jsonSchema<LazyToolInput>(async () => plainJsonSchema(await outer.jsonSchema), {
+    const advertised = asSchema(LAZY_TOOL_ADVERTISED_SCHEMA)
+    return jsonSchema<LazyToolInput>(async () => plainJsonSchema(await advertised.jsonSchema), {
         validate: async (value) => {
             const parsed = LAZY_TOOL_OUTER_SCHEMA.safeParse(value)
             if (!parsed.success) {
@@ -172,7 +172,7 @@ function lazyToolInputSchema({ registry, canAffordPaidTool }: { registry: ToolSe
             if (!inner.success) {
                 return { success: false, error: new Error(`Invalid input for "${toolName}": ${inner.error.message}\nInput schema: ${JSON.stringify(await jsonSchemaOf(target))}`) }
             }
-            return { success: true, value: { ...parsed.data, input: inner.value } }
+            return { success: true, value: { ...toolCallLabels.withFallbackLabels({ input: parsed.data, toolName }), tool: toolName, input: inner.value } }
         },
     })
 }
@@ -273,15 +273,91 @@ function paidToolRefusal(toolName: string): string {
     return `"${toolName}" needs credits and the balance cannot cover it. Tell the user instead of retrying.`
 }
 
+function withFallbackLabels<T extends Record<string, unknown>>({ input, toolName }: { input: T, toolName: string }): T & ToolCallLabelSet {
+    const fallback = fallbackLabelsFor(toolName)
+    return {
+        ...input,
+        title: labelOr({ value: input['title'], fallback: fallback.title }),
+        activeTitle: labelOr({ value: input['activeTitle'], fallback: fallback.activeTitle }),
+        doneTitle: labelOr({ value: input['doneTitle'], fallback: fallback.doneTitle }),
+    }
+}
+
+function labelOr({ value, fallback }: { value: unknown, fallback: string }): string {
+    return typeof value === 'string' && value.trim().length > 0 ? value : fallback
+}
+
+function fallbackLabelsFor(toolName: string): ToolCallLabelSet {
+    const words = toolName.replace(/^mcp__[^_]+__/, '').replace(/^ap_/, '').split(/[_\s-]+/).filter((word) => word.length > 0)
+    const [verb = '', ...rest] = words
+    const subject = rest.join(' ')
+    const forms = VERB_FORMS[verb.toLowerCase()]
+    const title = capitalize([verb, subject].filter((word) => word.length > 0).join(' '))
+    if (isNil(forms)) {
+        return { title, activeTitle: title, doneTitle: title }
+    }
+    return {
+        title,
+        activeTitle: capitalize([forms.active, subject].filter((word) => word.length > 0).join(' ')),
+        doneTitle: capitalize([forms.done, subject].filter((word) => word.length > 0).join(' ')),
+    }
+}
+
+function capitalize(text: string): string {
+    return text.length === 0 ? 'Working on it' : `${text[0].toUpperCase()}${text.slice(1)}`
+}
+
 const OTHER_TOOLS_HEADING = '## Other tools you have'
+
 const LAZY_TOOL_OUTER_SCHEMA = z.object({
     tool: z.string().describe('The tool name, e.g. "ap_add_step"'),
     input: z.record(z.string(), z.unknown()).describe('The tool\'s arguments, matching its input schema'),
     ...cardTitleFields,
 })
+
+const LAZY_TOOL_ADVERTISED_SCHEMA = LAZY_TOOL_OUTER_SCHEMA.extend({
+    title: z.string().min(1).describe('The 2-4 word label the user sees for this step, about their thing, e.g. "Your Gmail inbox".'),
+    activeTitle: z.string().min(1).describe('The label while it runs, -ing form, e.g. "Reading your Gmail inbox".'),
+    doneTitle: z.string().min(1).describe('The same label in past tense, e.g. "Read your Gmail inbox".'),
+})
+
 const LABEL_FIELDS = new Set(Object.keys(cardTitleFields))
 const LABEL_SCHEMA = asSchema(z.object(cardTitleFields))
 const SCHEMA_NOISE_KEYS = new Set(['$schema', 'additionalProperties'])
+
+const VERB_FORMS: Record<string, { active: string, done: string }> = {
+    add: { active: 'adding', done: 'added' },
+    build: { active: 'building', done: 'built' },
+    change: { active: 'changing', done: 'changed' },
+    create: { active: 'creating', done: 'created' },
+    delete: { active: 'deleting', done: 'deleted' },
+    execute: { active: 'running', done: 'ran' },
+    explore: { active: 'exploring', done: 'explored' },
+    fetch: { active: 'fetching', done: 'fetched' },
+    find: { active: 'finding', done: 'found' },
+    generate: { active: 'generating', done: 'generated' },
+    get: { active: 'getting', done: 'got' },
+    insert: { active: 'adding', done: 'added' },
+    list: { active: 'listing', done: 'listed' },
+    manage: { active: 'updating', done: 'updated' },
+    move: { active: 'moving', done: 'moved' },
+    read: { active: 'reading', done: 'read' },
+    remove: { active: 'removing', done: 'removed' },
+    rename: { active: 'renaming', done: 'renamed' },
+    research: { active: 'researching', done: 'researched' },
+    resolve: { active: 'resolving', done: 'resolved' },
+    retry: { active: 'retrying', done: 'retried' },
+    run: { active: 'running', done: 'ran' },
+    search: { active: 'searching', done: 'searched' },
+    send: { active: 'sending', done: 'sent' },
+    test: { active: 'testing', done: 'tested' },
+    update: { active: 'updating', done: 'updated' },
+    validate: { active: 'checking', done: 'checked' },
+}
+
+export const toolCallLabels = {
+    withFallbackLabels,
+}
 
 export type LazyToolChunkResult = {
     emit: unknown[]
@@ -298,4 +374,10 @@ export type SkillSurfaceResult = {
     coreToolNames: string[]
     attachedToolNames: () => string[]
     catalogNote: string
+}
+
+type ToolCallLabelSet = {
+    title: string
+    activeTitle: string
+    doneTitle: string
 }

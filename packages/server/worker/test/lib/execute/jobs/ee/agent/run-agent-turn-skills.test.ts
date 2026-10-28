@@ -41,7 +41,7 @@ describe('a turn in skills mode', () => {
 describe('a wrapped call with the wrong input', () => {
     it('is rejected by the schema before the real tool runs, without a repair call, and the turn carries on', async () => {
         const search = vi.fn(async () => SEARCH_RESULT)
-        const model = scriptedModel({ toolCalls: [{ id: 'bad-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":42}}' }] })
+        const model = scriptedModel({ toolCalls: [{ id: 'bad-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":{"text":"42"}}}' }] })
 
         await runSkillsTurn({ model, search })
 
@@ -54,7 +54,7 @@ describe('a wrapped call with the wrong input', () => {
     it('shows the model the real schema, so its next call runs the tool', async () => {
         const search = vi.fn(async () => SEARCH_RESULT)
         const model = scriptedModel({ toolCalls: [
-            { id: 'bad-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":42}}' },
+            { id: 'bad-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":{"text":"42"}}}' },
             { id: 'good-1', toolName: 'ap_lazy_tool', input: '{"tool":"ap_web_search","input":{"query":"42"}}' },
         ] })
 
@@ -97,7 +97,7 @@ describe('repairing a call in skills mode', () => {
     it('still repairs a core tool called directly with input that fails its schema', async () => {
         const search = vi.fn(async () => SEARCH_RESULT)
         const model = scriptedModel({
-            toolCalls: [{ id: 'direct-1', toolName: 'ap_research_pieces', input: '{"query":42}' }],
+            toolCalls: [{ id: 'direct-1', toolName: 'ap_research_pieces', input: '{"query":{"text":"42"}}' }],
             repairText: '{"query":"42"}',
         })
 

@@ -11,6 +11,7 @@ import { EmbeddingModel, generateText, ImageModel, LanguageModel, ToolSet } from
 import { billedEmbeddingModel, billedLanguageModel } from './activepieces-ai-cost'
 import { keyHealthReporterFor } from './ai-provider-key-health'
 import { modelTierCatalog } from './model-tier-catalog'
+import { streamedToolInput } from './streamed-tool-input'
 
 const DEFAULT_WEB_SEARCH_RESULTS = 5
 const MIN_OPENROUTER_WEB_SEARCH_RESULTS = 1
@@ -173,7 +174,7 @@ function createModel({ credentials, modelId, metadata, flowStep, billing, turnAl
     assertManagedModelAllowed({ provider: credentials.provider, modelId, image: imageGeneration, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
     const model = buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
     return billedLanguageModel({
-        model,
+        model: streamedToolInput.preserveStreamedToolInput(model),
         provider: credentials.provider,
         modelId,
         billing,

@@ -1,6 +1,8 @@
+import { AIProviderName, ErrorCode } from '@activepieces/core-utils'
 import { describe, expect, it } from 'vitest'
-import { UNATTENDED_WEB_TOOLS } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { stepResultFrom } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-step-result'
+import { UNATTENDED_WEB_TOOLS } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
+import { agentFailureMessage } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
 import { decideLoopAction, shouldRetryStream, stepEndsWithReply } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 describe('decideLoopAction', () => {
@@ -196,5 +198,52 @@ describe('UNATTENDED_WEB_TOOLS — the unattended set is listed, not subtracted'
         for (const chatTool of ['ap_show_connection_picker', 'ap_show_quick_replies', 'ap_discover_action_auth', 'ap_execute_action', 'ap_run_code', 'ap_explore_data', 'ap_list_across_projects']) {
             expect(UNATTENDED_WEB_TOOLS).not.toContain(chatTool)
         }
+    })
+})
+
+function messageFor(overrides: Partial<Parameters<typeof agentFailureMessage.forClient>[0]>): string {
+    return agentFailureMessage.forClient({
+        error: new Error('boom'),
+        errorMessage: 'boom',
+        isCreditError: false,
+        isTransient: false,
+        provider: AIProviderName.OPENAI,
+        modelId: 'gpt-x',
+        tierFailureMessage: undefined,
+        ...overrides,
+    })
+}
+
+describe('agentFailureMessage.forClient', () => {
+    it('never shows [object Object] from the platform-managed provider', () => {
+        expect(messageFor({ errorMessage: '[object Object]', provider: AIProviderName.ACTIVEPIECES, modelId: 'minimax/minimax-m3' })).toBe(agentFailureMessage.GENERIC_FAILURE_MESSAGE)
+    })
+
+    it('hides raw provider text like "User not found" behind a plain message on the managed provider', () => {
+        expect(messageFor({ errorMessage: 'User not found.', provider: AIProviderName.ACTIVEPIECES })).toBe(agentFailureMessage.GENERIC_FAILURE_MESSAGE)
+    })
+
+    it('explains a context-limit failure that came back through RPC', () => {
+        const error = Object.assign(new Error('RPC [getAgentConfig] handler threw: CHAT_CONTEXT_LIMIT_EXCEEDED'), {
+            apError: { code: ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED },
+        })
+
+        expect(messageFor({ error, errorMessage: error.message, provider: AIProviderName.ACTIVEPIECES })).toBe(agentFailureMessage.CONTEXT_LIMIT_MESSAGE)
+    })
+
+    it('keeps the provider and model for a bring-your-own provider so an admin can act on it', () => {
+        expect(messageFor({ errorMessage: 'The model "gpt-x" is not available' })).toBe('openai (gpt-x): The model "gpt-x" is not available')
+    })
+
+    it('says the provider gave no details instead of [object Object] for a bring-your-own provider', () => {
+        expect(messageFor({ errorMessage: '[object Object]' })).toBe('openai (gpt-x): the provider returned an error without details')
+    })
+
+    it('uses the transient message for retryable failures', () => {
+        expect(messageFor({ isTransient: true })).toBe(agentFailureMessage.TRANSIENT_FAILURE_MESSAGE)
+    })
+
+    it('passes a readable credit message through', () => {
+        expect(messageFor({ isCreditError: true, errorMessage: 'You ran out of credits.' })).toBe('You ran out of credits.')
     })
 })

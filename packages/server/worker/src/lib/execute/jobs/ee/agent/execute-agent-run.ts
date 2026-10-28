@@ -44,6 +44,16 @@ const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_c
 // The only chat tools an unattended run keeps: reading the public web needs no one present.
 const DELIVERY_MAX_ATTEMPTS = 5
 
+const UNREADABLE_PATTERNS = [/\[object Object\]/, /^unknown error$/i, /handler threw/i, /^RPC \[/]
+
+const NO_DETAILS = 'the provider returned an error without details'
+
+const CONTEXT_LIMIT_MESSAGE = 'This conversation got too long for me to keep going, or an attachment was too large to read. Start a new chat and tell me where we left off, and I will pick it up from there.'
+
+const TRANSIENT_FAILURE_MESSAGE = 'The AI provider is temporarily unavailable. Please try again in a moment.'
+
+const GENERIC_FAILURE_MESSAGE = 'Something went wrong on our side while I was answering, and your last message was not finished. Please send it again.'
+
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
     async execute(ctx: JobContext, data: ExecuteAgentRunJobData): Promise<FireAndForgetJobResult> {
@@ -456,14 +466,15 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             log[errorClass === 'internal' ? 'error' : 'warn']({ error: err, conversation: { id: conversationId }, provider: runProvider, model: { id: runModelId }, agentRun: { errorClass, source } }, '[executeAgentRun] Agent job failed')
             const errorMessage = apErrorOf(err)?.message ?? formatPieceError(err).message
             const isCreditError = errorClass === 'credit'
-            // "User not found" is OpenRouter refusing a key, and reads like a missing account.
-            const clientMessage = !isNil(tierFailureMessage)
-                ? tierFailureMessage
-                : !isCreditError && isTransientFailureText(errorMessage)
-                    ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
-                    : isCreditError || isNil(runProvider)
-                        ? errorMessage
-                        : `${runProvider}${isNil(runModelId) ? '' : ` (${runModelId})`}: ${errorMessage}`
+            const clientMessage = agentFailureMessage.forClient({
+                error: err,
+                errorMessage,
+                isCreditError,
+                isTransient: isTransientFailureText(errorMessage),
+                provider: runProvider,
+                modelId: runModelId,
+                tierFailureMessage,
+            })
             const failedResult = { ...(answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: clientMessage })), failure: clientMessage }
             reportFinal(failedResult)
             const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: failedResult, source, log }))
@@ -506,6 +517,13 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer, source, log })
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
+}
+
+export const agentFailureMessage = {
+    forClient,
+    CONTEXT_LIMIT_MESSAGE,
+    TRANSIENT_FAILURE_MESSAGE,
+    GENERIC_FAILURE_MESSAGE,
 }
 
 function answeredByOf({ answeredBy }: { answeredBy: TurnModel }): Pick<SaveAgentMessagesRequest, 'answeredBy'> {
@@ -1012,6 +1030,46 @@ async function retryWithBackoff({ fn, maxAttempts = RETRY_MAX_ATTEMPTS, descript
         }
         await delayWithJitter(RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1))
     }
+}
+
+function forClient({ error, errorMessage, isCreditError, isTransient, provider, modelId, tierFailureMessage }: {
+    error: unknown
+    errorMessage: string
+    isCreditError: boolean
+    isTransient: boolean
+    provider: string | undefined
+    modelId: string | undefined
+    tierFailureMessage: string | undefined
+}): string {
+    const apError = apErrorOf(error)
+    if (apError?.code === ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED) {
+        return !isNil(apError.message) && isReadable(apError.message) ? apError.message : CONTEXT_LIMIT_MESSAGE
+    }
+    const readable = isReadable(errorMessage)
+    if (isCreditError) {
+        return readable ? errorMessage : GENERIC_FAILURE_MESSAGE
+    }
+    if (isTransient) {
+        return TRANSIENT_FAILURE_MESSAGE
+    }
+    if (!isNil(apError?.message) && isReadable(apError.message)) {
+        return apError.message
+    }
+    if (isNil(provider)) {
+        return readable ? errorMessage : GENERIC_FAILURE_MESSAGE
+    }
+    if (provider === AIProviderName.ACTIVEPIECES) {
+        return GENERIC_FAILURE_MESSAGE
+    }
+    if (!isNil(tierFailureMessage)) {
+        return readable ? tierFailureMessage : tierFailureMessage.replace(errorMessage, NO_DETAILS)
+    }
+    return `${provider}${isNil(modelId) ? '' : ` (${modelId})`}: ${readable ? errorMessage : NO_DETAILS}`
+}
+
+function isReadable(message: string): boolean {
+    const trimmed = message.trim()
+    return trimmed.length > 0 && !UNREADABLE_PATTERNS.some((pattern) => pattern.test(trimmed))
 }
 
 type ImageToolParams = Parameters<typeof agentWorkerTools.createImageTools>[0]

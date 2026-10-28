@@ -103,15 +103,22 @@ describe('repairing a tool call the model got wrong', () => {
         expect(ranWith).toEqual([])
     })
 
-    it('repairs valid JSON whose field has the wrong type for the tool schema', async () => {
-        const { ranWith, repairPrompts } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":123}', repairText: '{"query":"123"}' })
+    it('fixes a field with a scalar of the wrong type itself, without a repair call', async () => {
+        const { ranWith, repairPrompts } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":123}', repairText: '{"query":"wrong"}' })
 
         expect(ranWith).toEqual([{ query: '123' }])
+        expect(repairPrompts).toEqual([])
+    })
+
+    it('asks the model to repair valid JSON it cannot fix by shape alone', async () => {
+        const { ranWith, repairPrompts } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":{"text":"activepieces"}}', repairText: '{"query":"activepieces"}' })
+
+        expect(ranWith).toEqual([{ query: 'activepieces' }])
         expect(repairPrompts).toEqual([expect.stringContaining('\\"query\\":{\\"type\\":\\"string\\"')])
     })
 
     it('does not run the tool when the repaired input still does not match the schema', async () => {
-        const { ranWith } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":123}', repairText: '{"query":456}' })
+        const { ranWith } = await turnWhereTheModelRepairsWith({ toolInput: '{"query":{"text":"activepieces"}}', repairText: '{"query":456}' })
 
         expect(ranWith).toEqual([])
     })

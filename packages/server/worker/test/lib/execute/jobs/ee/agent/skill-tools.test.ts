@@ -2,7 +2,7 @@ import { LAZY_TOOL_NAME, MAX_CORE_TOOLS } from '@activepieces/shared'
 import { asSchema, jsonSchema, Schema, tool, ToolSet } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
-import { buildSkillSurface, unwrapLazyToolChunk } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/skill-tools'
+import { buildSkillSurface, toolCallLabels, unwrapLazyToolChunk } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/skill-tools'
 import { cardTitleFields } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/tool-primitives'
 
 function stubTools(names: string[]): ToolSet {
@@ -348,5 +348,36 @@ describe('ap_get_tool_schema', () => {
     it('keeps a real title input', async () => {
         const result = await schemaOf(z.object({ title: z.string().describe('Task title') }))
         expect(result).toMatchObject({ inputSchema: { properties: { title: { type: 'string', description: 'Task title' } }, required: ['title'] } })
+    })
+})
+
+describe('toolCallLabels.withFallbackLabels', () => {
+    it('keeps the labels the model wrote', () => {
+        const input = { tool: 'ap_read_step_code', title: 'Your signup flow', activeTitle: 'Reading your signup flow', doneTitle: 'Read your signup flow' }
+
+        expect(toolCallLabels.withFallbackLabels({ input, toolName: 'ap_read_step_code' })).toEqual(input)
+    })
+
+    it('names the step after the tool when the model left the labels out, never as the raw tool name', () => {
+        expect(toolCallLabels.withFallbackLabels({ input: { tool: 'ap_read_step_code' }, toolName: 'ap_read_step_code' })).toEqual({
+            tool: 'ap_read_step_code',
+            title: 'Read step code',
+            activeTitle: 'Reading step code',
+            doneTitle: 'Read step code',
+        })
+    })
+
+    it('fills only the labels that are missing or blank', () => {
+        const labelled = toolCallLabels.withFallbackLabels({ input: { title: 'Your leads table', activeTitle: ' ' }, toolName: 'ap_find_records' })
+
+        expect(labelled).toEqual({ title: 'Your leads table', activeTitle: 'Finding records', doneTitle: 'Found records' })
+    })
+
+    it('uses the same plain label for every state when the verb is unknown', () => {
+        expect(toolCallLabels.withFallbackLabels({ input: {}, toolName: 'mcp__hubspot__crm_sync' })).toEqual({
+            title: 'Crm sync',
+            activeTitle: 'Crm sync',
+            doneTitle: 'Crm sync',
+        })
     })
 })
