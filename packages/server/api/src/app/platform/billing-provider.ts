@@ -2,6 +2,7 @@ import { ActivepiecesError, ErrorCode, isNil, PlatformUsageMetric, tryCatch } fr
 import { apDayjs } from '@activepieces/server-utils'
 import { ApEdition, AppSumoCreditsBillableFeature, CancellationReason, ConsumableFeatureId, ConsumableProductAutoTopupParams, CreditsBillableFeature, FlowRun, PurchasablePlan, RunEnvironment, SeatsBillableFeature, UnconsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { AiUsageBlock } from '../ai/usage/ai-usage-block'
 import { hooksFactory } from '../helper/hooks-factory'
 import { system } from '../helper/system/system'
 
@@ -170,6 +171,7 @@ export enum CreditUsageSource {
     CHAT = 'chat',
     AGENT_DRAFT = 'agent_draft',
     MCP = 'mcp',
+    AI_USAGE = 'ai_usage',
 }
 
 type ToFlowRunCreditPropertiesParams = {
@@ -219,6 +221,7 @@ export type AiCreditConsumptionProperties = FlowRunCreditConsumptionProperties &
     creditUsdValue?: number
     inputTokens?: number
     outputTokens?: number
+    usage?: AiUsageBlock
 }
 
 export type McpCallCreditConsumptionProperties = {
@@ -241,6 +244,11 @@ export type ChatCreditConsumptionProperties = CreditConsumptionPropertiesBase & 
     creditUsdValue?: number
     inputTokens?: number
     outputTokens?: number
+    usage?: AiUsageBlock
+}
+
+export type AiUsageOnlyProperties = {
+    usage: AiUsageBlock
 }
 
 export type ChatAppSumoConsumptionProperties = CreditConsumptionPropertiesBase & {
@@ -261,6 +269,7 @@ export type TrackCreditsParams =
     | (TrackUsageParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.MCP, properties: McpCallCreditConsumptionProperties })
+    | (TrackUsageParamsBase & { source: CreditUsageSource.AI_USAGE, properties: AiUsageOnlyProperties })
 
 export type TrackAppSumoAiUsageParams = TrackUsageParamsBase & (
     { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties } |

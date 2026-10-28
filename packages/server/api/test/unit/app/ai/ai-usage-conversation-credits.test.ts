@@ -34,6 +34,10 @@ vi.mock('../../../../src/app/database/redis-connections', () => ({
     },
 }))
 
+vi.mock('../../../../src/app/ai/usage/ai-usage-event', () => ({
+    aiUsageEvent: { blockOf: async () => ({ v: 1 }) },
+}))
+
 vi.mock('../../../../src/app/ai/ai-usage-hooks', () => ({
     aiUsageHooks: { get: () => ({ addConversationCredits }) },
 }))

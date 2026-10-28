@@ -1,16 +1,20 @@
 import { ActivepiecesAiConsumerSource, AiCallTokens, AiChargeBasis, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { isAppSumoCreditedPlan, ReportAiUsageRequest } from '@activepieces/shared'
+import { ConsumableFeatureId, isAppSumoCreditedPlan, ReportAiUsageRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../database/redis-connections'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
-import { AiCreditConsumptionProperties, ChatAppSumoConsumptionProperties, ChatCreditConsumptionProperties, CreditUsageSource } from '../platform/billing-provider'
+import { AiCreditConsumptionProperties, billingProvider, ChatAppSumoConsumptionProperties, ChatCreditConsumptionProperties, CreditUsageSource } from '../platform/billing-provider'
 import { chargeFor, CostBasis, costBasisOf } from './ai-credits'
 import { aiUsageHooks } from './ai-usage-hooks'
+import { AiUsageBlock } from './usage/ai-usage-block'
+import { aiUsageEvent } from './usage/ai-usage-event'
 
 export const aiUsageService = (log: FastifyBaseLogger) => ({
     async report(input: ReportAiUsageRequest): Promise<void> {
+        const usage = await usageBlockOf({ input, log })
         if (input.usage.type === AiChargeBasis.USAGE_ONLY) {
+            await trackUsageOnly({ input, usage, log })
             return
         }
         const toolCalls = input.toolCalls ?? 0
@@ -19,7 +23,7 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
         const platformId = input.billing.platformId
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const appSumo = isAppSumoCreditedPlan(platformPlan.plan)
-        const chat = chatEventOf({ input, toolCalls, costBasis })
+        const chat = chatEventOf({ input, toolCalls, costBasis, usage })
         if (!isNil(chat)) {
             await trackBillingAndSendTelemetry({
                 log,
@@ -29,7 +33,7 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
             })
         }
         else {
-            const properties = billingProperties({ input, toolCalls, costBasis })
+            const properties = billingProperties({ input, toolCalls, costBasis, usage })
             await trackBillingAndSendTelemetry({
                 log,
                 licenseKey: platformPlan.licenseKey,
@@ -40,6 +44,29 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
         await addConversationCredits({ input, credits, log })
     },
 })
+
+async function usageBlockOf({ input, log }: { input: ReportAiUsageRequest, log: FastifyBaseLogger }): Promise<AiUsageBlock | undefined> {
+    const { data, error } = await tryCatch(() => aiUsageEvent.blockOf(input))
+    if (!isNil(error)) {
+        log.warn({ error, provider: input.provider, model: { id: input.modelId } }, '[aiUsageService] Could not build the usage block, so this call is billed without analytics')
+        return undefined
+    }
+    return data ?? undefined
+}
+
+async function trackUsageOnly({ input, usage, log }: { input: ReportAiUsageRequest, usage: AiUsageBlock | undefined, log: FastifyBaseLogger }): Promise<void> {
+    if (isNil(usage)) {
+        return
+    }
+    await billingProvider.get(log).trackFeature({
+        featureId: ConsumableFeatureId.AP_CREDITS,
+        platformId: input.billing.platformId,
+        value: USAGE_ONLY_VALUE,
+        idempotencyKey: input.idempotencyKey,
+        source: CreditUsageSource.AI_USAGE,
+        properties: { usage },
+    })
+}
 
 async function addConversationCredits({ input, credits, log }: { input: ReportAiUsageRequest, credits: number, log: FastifyBaseLogger }): Promise<void> {
     if (input.billing.source !== ActivepiecesAiConsumerSource.CHAT) {
@@ -56,7 +83,7 @@ async function addConversationCredits({ input, credits, log }: { input: ReportAi
     }
 }
 
-function chatEventOf({ input, toolCalls, costBasis }: PropertiesParams): { credits: ChatCreditConsumptionProperties, appSumo: ChatAppSumoConsumptionProperties } | undefined {
+function chatEventOf({ input, toolCalls, costBasis, usage }: PropertiesParams): { credits: ChatCreditConsumptionProperties, appSumo: ChatAppSumoConsumptionProperties } | undefined {
     if (input.billing.source !== ActivepiecesAiConsumerSource.CHAT || isNil(input.chat)) {
         return undefined
     }
@@ -77,12 +104,13 @@ function chatEventOf({ input, toolCalls, costBasis }: PropertiesParams): { credi
             tier,
             ...costBasis,
             ...tokensOf(input),
+            ...spreadIfDefined('usage', usage),
         },
         appSumo: { platformId: input.billing.platformId, projectId, conversationId, turnIndex, tier },
     }
 }
 
-function billingProperties({ input, toolCalls, costBasis }: PropertiesParams): AiCreditConsumptionProperties {
+function billingProperties({ input, toolCalls, costBasis, usage }: PropertiesParams): AiCreditConsumptionProperties {
     return {
         platformId: input.billing.platformId,
         projectId: projectIdOf(input),
@@ -99,6 +127,7 @@ function billingProperties({ input, toolCalls, costBasis }: PropertiesParams): A
         }],
         ...costBasis,
         ...tokensOf(input),
+        ...spreadIfDefined('usage', usage),
     }
 }
 
@@ -117,6 +146,7 @@ type PropertiesParams = {
     input: ReportAiUsageRequest
     toolCalls: number
     costBasis: CostBasis | undefined
+    usage: AiUsageBlock | undefined
 }
 
 const MESSAGES_PER_MODEL_CALL = 1
@@ -124,3 +154,4 @@ const PROJECTLESS_CHAT = 'chat'
 const OUTSIDE_A_FLOW = 'none'
 const UNKNOWN_ENVIRONMENT = 'unknown'
 const RETRY_WINDOW_SECONDS = 600
+const USAGE_ONLY_VALUE = 0
