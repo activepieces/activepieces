@@ -1,3 +1,4 @@
+import { formulaEvaluator } from '@activepieces/core-formula'
 import { isNil, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, RouterActionSettingsWithValidation, Step } from '@activepieces/shared'
@@ -226,7 +227,7 @@ function labelsToResolve(value: unknown): string[] {
 }
 
 function isReference(value: unknown): boolean {
-    return typeof value === 'string' && (value.includes('{{') || value.includes('ap-formula-v'))
+    return typeof value === 'string' && (value.includes('{{') || formulaEvaluator.containsWrapper(value))
 }
 
 function staticOptionsOf(prop: PieceProperty): DropdownOption[] | undefined {

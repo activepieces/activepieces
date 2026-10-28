@@ -1,5 +1,6 @@
 import { isNil, Permission, PlatformId, tryCatch } from '@activepieces/core-utils'
-import { FlowActionType, FlowOperationType, flowStructureUtil, FlowTrigger, FlowTriggerType, McpToolContext, McpToolDefinition, McpToolResult, PopulatedFlow } from '@activepieces/shared'
+import { toolResultView } from '@activepieces/server-utils'
+import { agentToolClassification, FlowActionType, FlowOperationType, flowStructureUtil, FlowTrigger, FlowTriggerType, McpToolContext, McpToolDefinition, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -76,7 +77,7 @@ export const apApplyFlowOperationsTool = ({ mcp, userId }: McpToolContext, log: 
             ]
             return {
                 content: [{ type: 'text', text: `${lines.join('\n')}${mcpUtils.publishedFlowWarning(flow.publishedVersionId)}` }],
-                structuredContent: { applied, problems, flowId, flowName: updatedFlow.version.displayName, flowSteps: buildFlowReview.flowStepStates({ trigger: updatedFlow.version.trigger, problemStepNames: new Set(Object.keys(problems)) }) },
+                structuredContent: { applied, problems, flowId, displayName: updatedFlow.version.displayName, flowSteps: buildFlowReview.flowStepStates({ trigger: updatedFlow.version.trigger, problemStepNames: new Set(Object.keys(problems)) }) },
             }
         },
     }
@@ -98,8 +99,8 @@ async function applyInOrder({ flowId, operations, toolsByType, disabledTools, lo
         const targeted = type === 'delete_branch' || type === 'update_branch' ? await withBranchTarget({ type, fields, loadTrigger }) : fields
         const { data, error } = await tryCatch(() => toolsByType[type].execute({ ...targeted, flowId }))
         const result = isNil(error) && !isNil(data) ? data : mcpUtils.mcpToolError('Invalid operation', error)
-        const text = resultText(result)
-        if (result.isError === true || text.startsWith('❌')) {
+        const text = toolResultView.textOf(result) ?? ''
+        if (result.isError === true || agentToolClassification.hasFailureTextPrefix(text)) {
             return { applied, failure: { index, type, reason: text.replace(/^❌\s*/, '') } }
         }
         applied.push({ index, type, result: text.split('\n')[0] })
@@ -186,10 +187,6 @@ async function withBranchTarget({ type, fields, loadTrigger }: {
     }
     const branchIndex = isNil(branchName) ? -1 : router.settings.branches.findIndex((branch) => branch.branchName.trim().toLowerCase() === branchName)
     return { ...fields, routerStepName: router.name, ...(branchIndex === -1 ? {} : { branchIndex }) }
-}
-
-function resultText(result: McpToolResult): string {
-    return result.content.map(c => c.text).join('\n')
 }
 
 const OPERATION_TYPES = ['add_step', 'update_step', 'delete_step', 'update_trigger', 'add_branch', 'update_branch', 'delete_branch'] as const
