@@ -160,6 +160,15 @@ describe('push management', () => {
     expect(firstCall(spy)).toMatchObject({ method: HttpMethod.DELETE, url: `${BASE}/pushes/p9`, body: undefined });
   });
 
+  it.each([
+    ['ai_delete_push', aiDeletePush],
+    ['ai_dismiss_push', aiDismissPush],
+  ])('%s rejects a blank push ID before any request', async (_name, action) => {
+    const spy = mockOk({});
+    await expect(run({ action, propsValue: { iden: '   ' } })).rejects.toThrow('Push ID must not be blank.');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
   it('ai_delete_push surfaces a 404 with the vendor message', async () => {
     mockFail({ status: 404, body: { error: { message: 'The resource could not be found.', type: 'invalid_request' } } });
     await expect(run({ action: aiDeletePush, propsValue: { iden: 'gone' } })).rejects.toThrow(

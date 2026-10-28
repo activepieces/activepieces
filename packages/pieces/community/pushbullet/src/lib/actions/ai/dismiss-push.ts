@@ -25,10 +25,14 @@ export const aiDismissPush = createAction({
     }),
   },
   async run(context) {
+    const iden = context.propsValue.iden.trim();
+    if (!iden) {
+      throw new Error('Push ID must not be blank.');
+    }
     return await pushbulletApi.request<PushbulletPush>({
       token: context.auth.secret_text,
       method: HttpMethod.POST,
-      path: `/pushes/${encodeURIComponent(context.propsValue.iden.trim())}`,
+      path: `/pushes/${encodeURIComponent(iden)}`,
       body: { dismissed: true },
     });
   },

@@ -106,14 +106,15 @@ describe('new_push trigger', () => {
     expect(spy.mock.calls[1][0].queryParams?.['cursor']).toBe('c2');
   });
 
-  it('stops after 10 pages even if the cursor never ends', async () => {
+  it('fails without advancing lastPoll when the cursor outlasts 50 pages', async () => {
     const store = makeStore();
     store.data.set('lastPoll', 1_000);
     const spy = vi
       .spyOn(httpClient, 'sendRequest')
-      .mockResolvedValue({ status: 200, headers: {}, body: { pushes: [], cursor: 'again' } });
-    await call({ fn: newPushTrigger.run, c: ctx({ store }) });
-    expect(spy).toHaveBeenCalledTimes(10);
+      .mockResolvedValue({ status: 200, headers: {}, body: { pushes: [push({ iden: 'n', createdSec: 9_999 })], cursor: 'again' } });
+    await expect(call({ fn: newPushTrigger.run, c: ctx({ store }) })).rejects.toThrow('since the last check');
+    expect(spy).toHaveBeenCalledTimes(50);
+    expect(store.data.get('lastPoll')).toBe(1_000);
   });
 
   it('test returns up to 5 recent pushes without modified_after or paging', async () => {

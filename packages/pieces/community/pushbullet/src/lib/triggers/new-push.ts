@@ -10,7 +10,7 @@ import { PushbulletPush, pushbulletApi } from '../common/client';
 import { pushbulletOutputSchemas } from '../common/output-schemas';
 
 const PAGE_SIZE = 100;
-const MAX_PAGES = 10;
+const MAX_PAGES = 50;
 const TEST_SAMPLE_SIZE = 5;
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof bushbulletAuth>, { includeDismissed?: boolean }> = {
@@ -41,6 +41,11 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof bushbulletAuth>,
       cursor = isTest ? undefined : response.cursor;
       page++;
     } while (cursor && page < MAX_PAGES);
+    if (cursor) {
+      throw new Error(
+        `More than ${MAX_PAGES * PAGE_SIZE} pushes arrived since the last check. The trigger stopped without saving progress so none are skipped; it will retry from the same point.`,
+      );
+    }
 
     return pushes
       .filter((push) => push.active && (propsValue.includeDismissed === true || !push.dismissed))

@@ -26,6 +26,9 @@ export const aiDeletePush = createAction({
   },
   async run(context) {
     const iden = context.propsValue.iden.trim();
+    if (!iden) {
+      throw new Error('Push ID must not be blank.');
+    }
     await pushbulletApi.request<unknown>({
       token: context.auth.secret_text,
       method: HttpMethod.DELETE,
