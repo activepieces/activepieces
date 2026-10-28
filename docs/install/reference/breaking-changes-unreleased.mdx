@@ -18,6 +18,14 @@ Find Subscriber now fails with an error when Campaign Monitor returns a real err
 
 Agents that used these actions switch to their twins: Add Subscriber (JSON fields) and Update Subscriber (JSON fields). Flows that read `found: false` from Find Subscriber to mean "not found" keep working; a run that hits a bad key or an outage now fails instead of taking the not-found branch. Flow steps keep running on the version they were built with until you upgrade them.
 
+#### Bannerbear 0.6.0: Create Image is builder-only, returns the normalized image, and Custom API Call is asynchronous
+
+From Bannerbear 0.6.0, **Create Image** is no longer offered as a tool to AI agents; it still works as a normal flow step. Agents use the new **Create Image from JSON** action instead. Create Image now returns the same normalized image as the other Bannerbear actions: the template ID is in `template_uid` instead of `template`, and `modifications`, `width` and `height` are no longer returned. **Custom API Call** no longer goes through `sync.api.bannerbear.com`; it now uses `api.bannerbear.com`, so a `POST /images` call returns the image while it is still `pending` instead of waiting for it to finish rendering.
+
+#### What you need to do
+
+Steps keep running on the version they were built with until you upgrade them. After upgrading, change any later step that reads `template` from Create Image to read `template_uid`, and stop reading `modifications`, `width` or `height`. Point Run Agent steps that used Create Image at **Create Image from JSON**. If a Custom API Call creates images, poll **Get Image** (or use the **New Image Completed** trigger) until the image is completed before using its URL.
+
 #### Republishing no longer restarts polling triggers
 
 Republishing a running flow without changing its polling trigger (same piece, version, trigger and inputs) now leaves the trigger running: `onDisable` and `onEnable` don't run and its stored state is kept, so events created around the republish are no longer lost. When a piece is upgraded to a newer version with the same inputs, only the new version's `onEnable` runs, with `context.isRepublish` set to `true`. The old version's `onDisable` doesn't run.
