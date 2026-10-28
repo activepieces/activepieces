@@ -1,7 +1,9 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { raindropAuth } from '../auth';
-import { raindropCommons } from '../common';
+import { raindropClient } from '../common/client';
+import type { RaindropItem } from '../common/types';
+import { raindropUtils } from '../common/utils';
 
 export const getRaindropAction = createAction({
   auth: raindropAuth,
@@ -25,46 +27,13 @@ export const getRaindropAction = createAction({
   },
   async run(context) {
     const { raindrop_id } = context.propsValue;
-    const accessToken = context.auth.access_token;
 
-    const response = await httpClient.sendRequest<{ item: RaindropApiResponse }>({
+    const response = await raindropClient.request<{ item: RaindropItem }>({
+      auth: context.auth,
       method: HttpMethod.GET,
-      url: `${raindropCommons.BASE_URL}/raindrop/${raindrop_id}`,
-      headers: { Authorization: `Bearer ${accessToken}` },
+      path: `/raindrop/${raindrop_id}`,
     });
 
-    return flattenResponse(response.body.item);
+    return raindropUtils.flattenRaindrop({ raindrop: response.item });
   },
 });
-
-function flattenResponse(item: RaindropApiResponse) {
-  return {
-    id: item._id,
-    title: item.title ?? null,
-    excerpt: item.excerpt ?? null,
-    note: item.note ?? null,
-    link: item.link ?? null,
-    type: item.type ?? null,
-    tags: Array.isArray(item.tags) ? item.tags.join(', ') : null,
-    important: item.important ?? false,
-    collection_id: item.collection?.$id ?? null,
-    cover: item.cover ?? null,
-    created_at: item.created ?? null,
-    updated_at: item.lastUpdate ?? null,
-  };
-}
-
-type RaindropApiResponse = {
-  _id: number;
-  title?: string;
-  excerpt?: string;
-  note?: string;
-  link?: string;
-  type?: string;
-  tags?: string[];
-  important?: boolean;
-  collection?: { $id: number };
-  cover?: string;
-  created?: string;
-  lastUpdate?: string;
-};

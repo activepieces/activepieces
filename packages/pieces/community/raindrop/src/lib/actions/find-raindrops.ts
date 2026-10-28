@@ -1,7 +1,10 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { raindropAuth } from '../auth';
-import { raindropCommons } from '../common';
+import { raindropClient } from '../common/client';
+import { raindropProps } from '../common/props';
+import type { RaindropItem } from '../common/types';
+import { raindropUtils } from '../common/utils';
 
 export const findRaindropsAction = createAction({
   auth: raindropAuth,
@@ -16,7 +19,7 @@ export const findRaindropsAction = createAction({
     idempotent: true,
   },
   props: {
-    collection_id: raindropCommons.collectionDropdown,
+    collection_id: raindropProps.collectionId({ required: false }),
     search: Property.ShortText({
       displayName: 'Search Query',
       description:
@@ -32,7 +35,6 @@ export const findRaindropsAction = createAction({
   },
   async run(context) {
     const { collection_id, search, limit } = context.propsValue;
-    const accessToken = context.auth.access_token;
 
     const collectionIdToUse = collection_id ?? 0;
     const perpage = Math.min(limit ?? 25, 50);
@@ -44,41 +46,15 @@ export const findRaindropsAction = createAction({
     };
     if (search) queryParams['search'] = search;
 
-    const response = await httpClient.sendRequest<{ items: RaindropApiItem[] }>({
+    const response = await raindropClient.request<{ items: RaindropItem[] }>({
+      auth: context.auth,
       method: HttpMethod.GET,
-      url: `${raindropCommons.BASE_URL}/raindrops/${collectionIdToUse}`,
-      headers: { Authorization: `Bearer ${accessToken}` },
-      queryParams,
+      path: `/raindrops/${collectionIdToUse}`,
+      query: queryParams,
     });
 
-    return response.body.items.map((item) => ({
-      id: item._id,
-      title: item.title ?? null,
-      excerpt: item.excerpt ?? null,
-      note: item.note ?? null,
-      link: item.link ?? null,
-      type: item.type ?? null,
-      tags: Array.isArray(item.tags) ? item.tags.join(', ') : null,
-      important: item.important ?? false,
-      collection_id: item.collection?.$id ?? null,
-      cover: item.cover ?? null,
-      created_at: item.created ?? null,
-      updated_at: item.lastUpdate ?? null,
-    }));
+    return response.items.map((item) =>
+      raindropUtils.flattenRaindrop({ raindrop: item })
+    );
   },
 });
-
-type RaindropApiItem = {
-  _id: number;
-  title?: string;
-  excerpt?: string;
-  note?: string;
-  link?: string;
-  type?: string;
-  tags?: string[];
-  important?: boolean;
-  collection?: { $id: number };
-  cover?: string;
-  created?: string;
-  lastUpdate?: string;
-};

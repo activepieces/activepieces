@@ -2,6 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { raindropAuth } from './lib/auth';
+import { raindropClient } from './lib/common/client';
 import { createRaindropAction } from './lib/actions/create-raindrop';
 import { getRaindropAction } from './lib/actions/get-raindrop';
 import { updateRaindropAction } from './lib/actions/update-raindrop';
@@ -25,7 +26,7 @@ export const raindrop = createPiece({
     deleteRaindropAction,
     findRaindropsAction,
     createCustomApiCallAction({
-      baseUrl: () => 'https://api.raindrop.io/rest/v1',
+      baseUrl: () => raindropClient.baseUrl(),
       auth: raindropAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.access_token}`,

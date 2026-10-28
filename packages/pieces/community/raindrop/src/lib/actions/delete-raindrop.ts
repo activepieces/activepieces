@@ -1,7 +1,7 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { raindropAuth } from '../auth';
-import { raindropCommons } from '../common';
+import { raindropClient } from '../common/client';
 
 export const deleteRaindropAction = createAction({
   auth: raindropAuth,
@@ -26,12 +26,11 @@ export const deleteRaindropAction = createAction({
   },
   async run(context) {
     const { raindrop_id } = context.propsValue;
-    const accessToken = context.auth.access_token;
 
-    await httpClient.sendRequest({
+    await raindropClient.request<unknown>({
+      auth: context.auth,
       method: HttpMethod.DELETE,
-      url: `${raindropCommons.BASE_URL}/raindrop/${raindrop_id}`,
-      headers: { Authorization: `Bearer ${accessToken}` },
+      path: `/raindrop/${raindrop_id}`,
     });
 
     return { success: true, deleted_id: raindrop_id };
