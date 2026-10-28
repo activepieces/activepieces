@@ -1,99 +1,78 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, test } from '../../../fixtures';
+import { E2eSession } from '../../../fixtures/api';
+import { e2eFlows } from '../../../fixtures/flows';
 
 test.describe('Replace connection at scale', () => {
   test.skip(!process.env.E2E_REPLACE_CONNECTION_LOAD, 'Set E2E_REPLACE_CONNECTION_LOAD=true to run this load test');
 
-  test('replaces one Hugging Face connection in 200 published flows from the Connections page', async ({ page }) => {
+  test('replaces one Hugging Face connection in 200 published flows from the Connections page', async ({ page, request, session, flowCleanup, connectionCleanup }) => {
     test.setTimeout(LOAD_TEST_TIMEOUT_MS);
-    const api = await createApiClient(page);
-    const runId = Date.now().toString();
+    const api = createApiClient({ request, session });
 
     const [webhookVersion, huggingFaceVersion] = await Promise.all([
       api.getPieceVersion(WEBHOOK_PIECE),
       api.getPieceVersion(HUGGING_FACE_PIECE),
     ]);
-    const flowIds: string[] = [];
-    const connectionIds: string[] = [];
-    try {
-      const sourceConnection = await api.createHuggingFaceConnection(`HF source ${runId}`);
-      connectionIds.push(sourceConnection.id);
-      const targetConnection = await api.createHuggingFaceConnection(`HF target ${runId}`);
-      connectionIds.push(targetConnection.id);
+    const sourceConnection = await api.createHuggingFaceConnection(e2eFlows.uniqueName('HF source'));
+    connectionCleanup.track(sourceConnection.id);
+    const targetConnection = await api.createHuggingFaceConnection(e2eFlows.uniqueName('HF target'));
+    connectionCleanup.track(targetConnection.id);
 
-      const seedStartedAt = Date.now();
-      await runWithConcurrency({
-        count: FLOW_COUNT,
-        concurrency: SEED_CONCURRENCY,
-        task: (index) => api.createPublishedFlow({
-          displayName: `Replace load ${runId} #${index + 1}`,
-          trigger: buildWebhookTrigger({
-            webhookVersion,
-            huggingFaceVersion,
-            connectionExternalId: sourceConnection.externalId,
-          }),
-          onCreated: (flowId) => flowIds.push(flowId),
+    const seedStartedAt = Date.now();
+    await runWithConcurrency({
+      count: FLOW_COUNT,
+      concurrency: SEED_CONCURRENCY,
+      task: (index) => api.createPublishedFlow({
+        displayName: e2eFlows.uniqueName(`replace load #${index + 1}`),
+        trigger: buildWebhookTrigger({
+          webhookVersion,
+          huggingFaceVersion,
+          connectionExternalId: sourceConnection.externalId,
         }),
-      });
-      logTiming(`Created and published ${flowIds.length} flows`, seedStartedAt);
+        onCreated: (flowId) => flowCleanup.track(flowId),
+      }),
+    });
+    logTiming(`Created and published ${FLOW_COUNT} flows`, seedStartedAt);
 
-      expect(await api.countFlowsUsingConnection({ externalId: sourceConnection.externalId, published: false })).toBe(FLOW_COUNT);
-      expect(await api.countFlowsUsingConnection({ externalId: sourceConnection.externalId, published: true })).toBe(FLOW_COUNT);
+    expect(await api.countFlowsUsingConnection({ externalId: sourceConnection.externalId, published: false })).toBe(FLOW_COUNT);
+    expect(await api.countFlowsUsingConnection({ externalId: sourceConnection.externalId, published: true })).toBe(FLOW_COUNT);
 
-      page.setDefaultTimeout(ACTION_TIMEOUT_MS);
-      await page.goto(`/projects/${api.projectId}/connections`);
-      await page.getByRole('button', { name: 'Replace', exact: true }).click();
-      const dialog = page.getByRole('dialog');
-      await pickOption({ page, trigger: dialog.getByRole('combobox').filter({ hasText: 'Select a piece' }), search: 'Hugging Face' });
-      await pickOption({ page, trigger: dialog.getByRole('combobox').filter({ hasText: 'Choose connection to replace' }).first(), search: sourceConnection.displayName });
-      await pickOption({ page, trigger: dialog.getByRole('combobox').filter({ hasText: 'Choose connection to replace with' }), search: targetConnection.displayName });
-      const reviewStartedAt = Date.now();
-      await dialog.getByRole('button', { name: 'Next' }).click();
-      await expect(dialog.getByText(/A replace changes up to 200 flows\./)).toBeVisible({ timeout: REVIEW_STEP_TIMEOUT_MS });
-      logTiming('Loaded the review step', reviewStartedAt);
+    page.setDefaultTimeout(ACTION_TIMEOUT_MS);
+    await page.goto(`/projects/${session.projectId}/connections`);
+    await page.getByRole('button', { name: 'Replace', exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    await pickOption({ page, trigger: dialog.getByRole('combobox').filter({ hasText: 'Select a piece' }), search: 'Hugging Face' });
+    await pickOption({ page, trigger: dialog.getByRole('combobox').filter({ hasText: 'Choose connection to replace' }).first(), search: sourceConnection.displayName });
+    await pickOption({ page, trigger: dialog.getByRole('combobox').filter({ hasText: 'Choose connection to replace with' }), search: targetConnection.displayName });
+    const reviewStartedAt = Date.now();
+    await dialog.getByRole('button', { name: 'Next' }).click();
+    await expect(dialog.getByText(/A replace changes up to 200 flows\./)).toBeVisible({ timeout: REVIEW_STEP_TIMEOUT_MS });
+    logTiming('Loaded the review step', reviewStartedAt);
 
-      await dialog.getByRole('combobox').filter({ hasText: 'Draft only' }).click();
-      await page.getByRole('option', { name: 'Draft and published' }).click();
+    await dialog.getByRole('combobox').filter({ hasText: 'Draft only' }).click();
+    await page.getByRole('option', { name: 'Draft and published' }).click();
 
-      const replaceStartedAt = Date.now();
-      const replaceResponse = page.waitForResponse(
-        (response) => response.url().includes('/v1/app-connections/replace'),
-        { timeout: REPLACE_TIMEOUT_MS },
-      );
-      await dialog.getByRole('button', { name: 'Replace', exact: true }).click();
-      const response = await replaceResponse;
-      logTiming(`Replace request finished with HTTP ${response.status()}`, replaceStartedAt);
-      expect(response.status(), await response.text()).toBe(204);
+    const replaceStartedAt = Date.now();
+    const replaceResponse = page.waitForResponse(
+      (response) => response.url().includes('/v1/app-connections/replace'),
+      { timeout: REPLACE_TIMEOUT_MS },
+    );
+    await dialog.getByRole('button', { name: 'Replace', exact: true }).click();
+    const response = await replaceResponse;
+    logTiming(`Replace request finished with HTTP ${response.status()}`, replaceStartedAt);
+    expect(response.status(), await response.text()).toBe(204);
 
-      expect(await api.countFlowsUsingConnection({ externalId: sourceConnection.externalId, published: false })).toBe(0);
-      expect(await api.countFlowsUsingConnection({ externalId: sourceConnection.externalId, published: true })).toBe(0);
-      expect(await api.countFlowsUsingConnection({ externalId: targetConnection.externalId, published: false })).toBe(FLOW_COUNT);
-      expect(await api.countFlowsUsingConnection({ externalId: targetConnection.externalId, published: true })).toBe(FLOW_COUNT);
-    } finally {
-      const cleanupStartedAt = Date.now();
-      await runWithConcurrency({
-        count: flowIds.length,
-        concurrency: SEED_CONCURRENCY,
-        task: (index) => api.deleteFlow(flowIds[index]),
-      });
-      for (const connectionId of connectionIds) {
-        await api.deleteConnection(connectionId);
-      }
-      logTiming(`Deleted ${flowIds.length} flows and ${connectionIds.length} connections`, cleanupStartedAt);
-    }
+    expect(await api.countFlowsUsingConnection({ externalId: sourceConnection.externalId, published: false })).toBe(0);
+    expect(await api.countFlowsUsingConnection({ externalId: sourceConnection.externalId, published: true })).toBe(0);
+    expect(await api.countFlowsUsingConnection({ externalId: targetConnection.externalId, published: false })).toBe(FLOW_COUNT);
+    expect(await api.countFlowsUsingConnection({ externalId: targetConnection.externalId, published: true })).toBe(FLOW_COUNT);
   });
 });
 
-async function createApiClient(page: Page) {
-  const { token, projectId } = await page.evaluate(() => ({
-    token: localStorage.getItem('token'),
-    projectId: localStorage.getItem('projectId'),
-  }));
-  if (!token || !projectId) {
-    throw new Error('The signed-in page has no token or project id in local storage');
-  }
-  const request: APIRequestContext = page.request;
-  const headers = { Authorization: `Bearer ${token}` };
+function createApiClient({ request, session }: { request: APIRequestContext; session: E2eSession }) {
+  const { projectId } = session;
+  const headers = { Authorization: `Bearer ${session.token}` };
 
   async function call<T>({ method, path, data, params }: CallParams): Promise<T> {
     const response = await request.fetch(`/api${path}`, { method, headers, data, params, timeout: REPLACE_TIMEOUT_MS });
@@ -105,7 +84,6 @@ async function createApiClient(page: Page) {
   }
 
   return {
-    projectId,
     async getPieceVersion(pieceName: string): Promise<string> {
       const piece = await call<{ version: string }>({ method: 'GET', path: `/v1/pieces/${encodeURIComponent(pieceName)}`, params: { projectId } });
       return piece.version;
@@ -165,12 +143,6 @@ async function createApiClient(page: Page) {
         cursor = page.next ?? undefined;
       } while (cursor);
       return count;
-    },
-    async deleteFlow(flowId: string): Promise<void> {
-      await call({ method: 'DELETE', path: `/v1/flows/${flowId}` });
-    },
-    async deleteConnection(connectionId: string): Promise<void> {
-      await call({ method: 'DELETE', path: `/v1/app-connections/${connectionId}` });
     },
   };
 }
