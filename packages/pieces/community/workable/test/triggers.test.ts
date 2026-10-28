@@ -120,12 +120,12 @@ describe('webhook deliveries', () => {
     expect(seen[seen.length - 1]).toBe('evt-1');
   });
 
-  it('drops events outside the 15 minute window and other event types', async () => {
+  it('drops events outside the 6 hour window and other event types', async () => {
     mockHttp([]);
     const store = memoryStore();
-    const old = signed({ body: envelope({ fired_at: new Date(Date.now() - 16 * 60 * 1000).toISOString() }) });
+    const old = signed({ body: envelope({ fired_at: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString() }) });
     expect(await on(newCandidate).run({ store, payload: old })).toEqual([]);
-    const lagged = signed({ body: envelope({ id: 'evt-lag', fired_at: new Date(Date.now() - 10 * 60 * 1000).toISOString() }) });
+    const lagged = signed({ body: envelope({ id: 'evt-lag', fired_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() }) });
     expect(await on(newCandidate).run({ store, payload: lagged })).toHaveLength(1);
     const moved = signed({ body: envelope({ id: 'evt-3', event_type: 'candidate_moved' }) });
     expect(await on(newCandidate).run({ store, payload: moved })).toEqual([]);

@@ -76,7 +76,7 @@ export const workable = createPiece({
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/workable.png',
   categories: [PieceCategory.HUMAN_RESOURCES],
-  authors: ['Cloudieunnie'],
+  authors: ['Cloudieunnie', 'OdaiAhmed99'],
   actions: [
     getCandidate,
     getMembers,

@@ -206,7 +206,8 @@ type SampleParams = { auth: unknown; subdomain?: unknown; config: WebhookConfig;
 
 const SIGNATURE_HEADER = 'x-workable-signature';
 const MAX_REMEMBERED_DELIVERIES = 500;
-const REPLAY_WINDOW_MS = 15 * 60 * 1000;
+// run() executes after the worker queue, so allow for Workable retries and queue backlog; signature + delivery-ID dedupe stop replays.
+const REPLAY_WINDOW_MS = 6 * 60 * 60 * 1000;
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
 const SAMPLE_LOOKBACK_MS = 90 * 24 * 60 * 60 * 1000;
 const SAMPLE_SIZE = 3;
