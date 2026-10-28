@@ -54,6 +54,16 @@ describe('notion_update_block', () => {
     expect(req.to_do.checked).toBe(false);
   });
 
+  it('sends true for the legacy string true', async () => {
+    const req = await runWith({ block_type: 'to_do', checked: 'true' });
+    expect(req.to_do.checked).toBe(true);
+  });
+
+  it('sends false for the legacy string false', async () => {
+    const req = await runWith({ block_type: 'to_do', checked: 'False' });
+    expect(req.to_do.checked).toBe(false);
+  });
+
   it('keeps legacy true', async () => {
     const req = await runWith({ block_type: 'to_do', checked: true });
     expect(req.to_do.checked).toBe(true);

@@ -31,6 +31,9 @@ describe('discord_update_role tri-state fields', () => {
   it.each([
     ['yes', true],
     ['no', false],
+    ['true', true],
+    ['false', false],
+    [' TRUE ', true],
     [true, true],
     [false, false],
   ])('sends %s as %s', async (input, expected) => {

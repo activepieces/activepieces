@@ -11,10 +11,14 @@ function resolveTriState(value: unknown): boolean | undefined {
   if (typeof value === 'boolean') {
     return value;
   }
-  if (value === 'yes') {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'yes' || normalized === 'true') {
     return true;
   }
-  if (value === 'no') {
+  if (normalized === 'no' || normalized === 'false') {
     return false;
   }
   return undefined;

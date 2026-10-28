@@ -146,8 +146,10 @@ function triStateSetting({ displayName, description }: { displayName: string; de
 
 function toSettingValue(value: TriStateValue): boolean | undefined {
   if (typeof value === 'boolean') return value;
-  if (value === 'yes') return true;
-  if (value === 'no') return false;
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'yes' || normalized === 'true') return true;
+  if (normalized === 'no' || normalized === 'false') return false;
   return undefined;
 }
 

@@ -58,6 +58,13 @@ describe('Update Meeting (by ID)', () => {
     expect(requestOf({ fetchMock, call: 0 }).body).toEqual({ settings: { mute_upon_entry: false, waiting_room: true } });
   });
 
+  it('converts saved true and false strings from older steps', async () => {
+    const fetchMock = installFetch();
+    fetchMock.mockResolvedValueOnce(emptyResponse({ status: 204 }));
+    await runAction({ action: zoomUpdateMeetingById, propsValue: { meeting_id: '1', waiting_room: 'true', host_video: 'FALSE' } });
+    expect(requestOf({ fetchMock, call: 0 }).body).toEqual({ settings: { host_video: false, waiting_room: true } });
+  });
+
   it('keeps saved boolean true and false values from older steps', async () => {
     const fetchMock = installFetch();
     fetchMock.mockResolvedValueOnce(emptyResponse({ status: 204 }));
