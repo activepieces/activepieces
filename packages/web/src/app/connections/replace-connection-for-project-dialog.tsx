@@ -1,15 +1,12 @@
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
-  FlowVersionState,
 } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronDown, WorkflowIcon } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,7 +32,7 @@ import {
   appConnectionsQueries,
 } from '@/features/connections';
 import { flowApprovalsHooks } from '@/features/flow-approvals';
-import { flowsApi } from '@/features/flows';
+import { flowHooks } from '@/features/flows';
 import { piecesHooks } from '@/features/pieces';
 
 import { DeleteReplacedConnectionDialog } from './delete-replaced-connection-dialog';
@@ -117,36 +114,9 @@ function ReplaceConnectionForProjectForm({
     mutate: fetchAffectedFlows,
     data: flowsUsingConnection,
     isPending: isFetchingAffectedFlows,
-  } = useMutation({
-    mutationFn: async (externalId: string) => {
-      const request = {
-        projectId,
-        connectionExternalIds: [externalId],
-        cursor: undefined,
-        limit: MAX_FLOWS_PER_REPLACE,
-      };
-      const [draftFlowsPage, publishedFlowsPage] = await Promise.all([
-        flowsApi.list(request),
-        flowsApi.list({ ...request, versionState: FlowVersionState.LOCKED }),
-      ]);
-      const draftFlowIds = new Set(draftFlowsPage.data.map((flow) => flow.id));
-      return {
-        draftFlows: draftFlowsPage.data,
-        publishedOnlyFlows: publishedFlowsPage.data.filter(
-          (flow) => !draftFlowIds.has(flow.id),
-        ),
-        draftFlowIds,
-        publishedFlowIds: new Set(
-          publishedFlowsPage.data.map((flow) => flow.id),
-        ),
-      };
-    },
+  } = flowHooks.useListFlowsUsingConnection({
+    projectId,
     onSuccess: () => setStep(ProjectReplaceStep.REVIEW_AFFECTED_FLOWS),
-    onError: () => {
-      toast.error(t('Error'), {
-        description: t('Failed to get affected flows'),
-      });
-    },
   });
 
   const form = useForm<ProjectReplaceFormValues>({
@@ -265,7 +235,10 @@ function ReplaceConnectionForProjectForm({
                     <ChevronDown className="w-4 h-4 shrink-0 text-gray-11 transition-transform group-data-[state=closed]:-rotate-90" />
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <ScrollArea className="max-h-[140px] px-3 pb-3">
+                    <ScrollArea
+                      className="px-3 pb-3"
+                      viewPortClassName="max-h-[250px]"
+                    >
                       <div className="flex flex-wrap gap-1.5">
                         {affectedFlows.map((flow) => (
                           <Badge
