@@ -629,6 +629,11 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         case 'ap_run_code': {
             return runAgentCode({ toolInput, projects, platformId, userId, conversationId, log })
         }
+        case '__action_read_only': {
+            const { pieceName, actionName } = runActionInput.pick({ pieceName: true, actionName: true }).parse(toolInput)
+            const target = await resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log })
+            return 'error' in target ? null : target.declared.readOnly ?? null
+        }
         case 'ap_explore_data': {
             return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, readOnlyOnly: true, log })
         }
@@ -712,28 +717,11 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const { pieceName, actionName, input: parsedInput } = runActionInput.parse(toolInput)
-
-    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
-    let connectionExternalId: string | undefined
-    let connectionLabel: string | undefined
-    let connectionProjectId: string | undefined
-    if (conversationId) {
-        const selected = await agentApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
-        if (selected) {
-            connectionExternalId = selected.externalId
-            connectionLabel = selected.label
-            connectionProjectId = selected.projectId
-        }
+    const target = await resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log })
+    if ('error' in target) {
+        return { success: false, error: target.error }
     }
-
-    const resolvedProjectId = connectionProjectId ?? projects[0]?.id
-    if (!resolvedProjectId) {
-        return { success: false, error: 'No projects available. Create a project first.' }
-    }
-    if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
-        return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
-    }
-    const declared = await declaredActionOf({ pieceName: normalizedPiece, actionName, projectId: resolvedProjectId, platformId, log })
+    const { normalizedPiece, projectId: resolvedProjectId, connectionExternalId, connectionLabel, declared } = target
     if (readOnlyOnly && !agentToolClassification.isReadOnlyActionCall({ actionName, input: parsedInput, declaredReadOnly: declared.readOnly })) {
         return agentToolClassification.readOnlyRejection(actionName)
     }
@@ -973,7 +961,7 @@ type RunCodeToolResult = {
     producedFiles: ProducedFile[]
 }
 
-export { declaredActionOf, executeCrossProjectTool, findConnectionsForPiece }
+export { executeCrossProjectTool, findConnectionsForPiece }
 
 function recordChatAction({ piece, declared, input, projectId, platformId, userId, conversationId, connection, outcome, log }: {
     piece: { pieceName: string, actionName: string }
@@ -1003,6 +991,35 @@ function recordChatAction({ piece, declared, input, projectId, platformId, userI
     })
 }
 
+async function resolveActionTarget({ pieceName, actionName, projects, availableProjectIds, conversationId, platformId, log }: {
+    pieceName: string
+    actionName: string
+    projects: Project[]
+    availableProjectIds: string[]
+    conversationId?: string
+    platformId?: string
+    log: FastifyBaseLogger
+}): Promise<ActionTarget | { error: string }> {
+    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+    const selected = isNil(conversationId) ? null : await agentApprovalGate.getSelectedConnection({ conversationId, pieceName: normalizedPiece })
+    const connectionProjectId = selected?.projectId
+    const projectId = connectionProjectId ?? projects[0]?.id
+    if (!projectId) {
+        return { error: 'No projects available. Create a project first.' }
+    }
+    if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
+        return { error: `Project ${connectionProjectId} is not accessible.` }
+    }
+    const declared = await declaredActionOf({ pieceName: normalizedPiece, actionName, projectId, platformId, log })
+    return {
+        normalizedPiece,
+        projectId,
+        ...spreadIfDefined('connectionExternalId', selected?.externalId),
+        ...spreadIfDefined('connectionLabel', selected?.label),
+        declared,
+    }
+}
+
 async function declaredActionOf({ pieceName, actionName, projectId, platformId, log }: {
     pieceName: string
     actionName: string
@@ -1021,6 +1038,14 @@ async function declaredActionOf({ pieceName, actionName, projectId, platformId, 
         ...spreadIfDefined('classification', action?.classification),
         ...spreadIfDefined('readOnly', isNil(action?.classification) ? undefined : isReadOnlyClassification(action.classification)),
     }
+}
+
+type ActionTarget = {
+    normalizedPiece: string
+    projectId: string
+    connectionExternalId?: string
+    connectionLabel?: string
+    declared: DeclaredAction
 }
 
 type DeclaredAction = {

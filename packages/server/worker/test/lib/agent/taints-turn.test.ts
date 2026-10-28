@@ -202,6 +202,26 @@ describe('ap_execute_action with a declared classification', () => {
     })
 })
 
+describe('ap_explore_data leaves the read-or-write call to the API', () => {
+    it('sends an action whose name proves nothing to the API, which knows what the piece declares', async () => {
+        const sent: string[] = []
+        const tools = agentWorkerTools.createCrossProjectTools({
+            executeTool: async (toolName) => {
+                sent.push(toolName)
+                return { success: true, content: [{ type: 'text', text: 'rows' }] }
+            },
+            eventEmitter: agentWorkerTools.createEventEmitter({ sendEvent: async () => undefined, userId: 'user-1', conversationId: 'conv-1' }),
+            waitForApproval: async () => ({ outcome: 'approved' as const }),
+            guides: {},
+            taintState: { tainted: false },
+        })
+
+        await tools.ap_explore_data.execute?.({ pieceName: '@activepieces/piece-text-helper', actionName: 'split', input: {} }, options)
+
+        expect(sent).toEqual(['ap_explore_data'])
+    })
+})
+
 describe('previousReplyReadData', () => {
     const reply = (tainted?: boolean) => ({ role: 'assistant', parts: [], ...(tainted === undefined ? {} : { tainted }) })
     const user = { role: 'user', parts: [] }

@@ -6,14 +6,13 @@ import { embed, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentHelpers } from '.././agent-helpers'
-import { declaredActionOf, executeCrossProjectTool } from '.././tools/agent-tools'
+import { executeCrossProjectTool } from '.././tools/agent-tools'
 import { pieceToolRunner } from '.././tools/piece-tool-runner'
 import { aiModelCandidates } from '../../../ai/ai-model-candidates'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { knowledgeBaseService } from '../../../knowledge-base/knowledge-base.service'
 import { extractMcpTriggerInput, resolveRunnableFlow, runFlowAsTool } from '../../../mcp/mcp-server-builder'
-import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 
 import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, ConfiguredToolRun, confinedRunFor, connectionForConfiguredTool, markTurnAsHavingRead, outcomeOfToolResult, pinConnectionToAgent, recordAgentAction, recordAgentFlowToolUse, turnHasRead } from './rpc-shared'
 
@@ -257,17 +256,6 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
                 return { result: selected }
             }
             return { result: null }
-        }
-        if (input.toolName === '__action_read_only') {
-            const { pieceName, actionName } = input.toolInput
-            if (typeof pieceName !== 'string' || typeof actionName !== 'string') {
-                return { result: null }
-            }
-            const conversation = typeof input.conversationId === 'string'
-                ? await agentHelpers.getConversationOrThrow({ id: input.conversationId, platformId: input.platformId, userId: input.userId })
-                : null
-            const declared = await declaredActionOf({ pieceName: mcpUtils.normalizePieceName(pieceName) ?? pieceName, actionName, platformId: input.platformId, log, ...spreadIfDefined('projectId', conversation?.projectId ?? undefined) })
-            return { result: declared.readOnly ?? null }
         }
         if (input.toolName === '__get_available_connections') {
             const { pieceName } = input.toolInput

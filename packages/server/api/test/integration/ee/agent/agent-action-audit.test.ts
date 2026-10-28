@@ -2,6 +2,7 @@ import { tryCatch } from '@activepieces/core-utils'
 import { AgentActionKind, AgentActionOutcome, AgentIcon, AgentRunSource, AIProviderName, apId, ApplicationEvent, ApplicationEventName, ColorName, summarizeApplicationEvent } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { agentApprovalGate } from '../../../../src/app/ee/agent/agent-approval-gate'
 import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
 import { executeCrossProjectTool } from '../../../../src/app/ee/agent/tools/agent-tools'
 import { pieceToolRunner } from '../../../../src/app/ee/agent/tools/piece-tool-runner'
@@ -9,8 +10,7 @@ import * as mcpServerBuilder from '../../../../src/app/mcp/mcp-server-builder'
 import * as flowRunUtils from '../../../../src/app/mcp/tools/flow-run-utils'
 import * as pieceMetadataModule from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { db } from '../../../helpers/db'
-import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../helpers/mocks'
-import { mockAndSaveAIProvider } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion, createMockProject, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -414,6 +414,28 @@ describe('a chat action the piece declares as a write', () => {
         })
 
         expect(run).toHaveBeenCalledTimes(1)
+    })
+
+    it('looks the action up in the project it will run in, the selected connection\'s', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.CHAT, withAgent: false })
+        const connectionProject = createMockProject({ ownerId: ctx.user.id, platformId: ctx.platform.id })
+        await db.save('project', connectionProject)
+        await agentApprovalGate.storeSelectedConnection({ conversationId, pieceName: '@activepieces/piece-gmail', externalId: 'gmail-work', label: 'Work Gmail', projectId: connectionProject.id })
+        const lookedUpIn: (string | undefined)[] = []
+        const metadata = { displayName: 'Gmail', actions: { mark_as_read: { displayName: 'Mark as read', classification: 'WRITE' } } }
+        vi.spyOn(pieceMetadataModule, 'pieceMetadataService').mockReturnValue({ get: async ({ projectId }: { projectId?: string }) => {
+            lookedUpIn.push(projectId)
+            return metadata
+        } } as never)
+        vi.spyOn(flowRunUtils, 'executePieceActionRun').mockResolvedValue({ content: [] } as never)
+        const request = { platformId: ctx.platform.id, userId: ctx.user.id, conversationId, log: app.log }
+
+        const { result: lookup } = await agentRpcHandlers(app.log).executeAgentTool({ platformId: ctx.platform.id, userId: ctx.user.id, conversationId, source: AgentRunSource.CHAT, toolName: '__action_read_only', toolInput: { pieceName: '@activepieces/piece-gmail', actionName: 'mark_as_read' } })
+        await executeCrossProjectTool({ ...request, toolName: 'ap_execute_action', toolInput: { pieceName: '@activepieces/piece-gmail', actionName: 'mark_as_read', input: {} } })
+
+        expect(lookup).toBe(false)
+        expect(new Set(lookedUpIn)).toEqual(new Set([connectionProject.id]))
     })
 
     it('tells the worker what the piece declares, so the approval card follows it', async () => {

@@ -218,9 +218,6 @@ export function createCrossProjectTools({ executeTool, eventEmitter, waitForAppr
                 input: z.record(z.string(), z.unknown()).optional().describe('Input for the read action (keep limits small)'),
             }),
             execute: async (toolInput) => {
-                if (!agentToolClassification.isReadOnlyActionCall({ actionName: toolInput.actionName, input: toolInput.input })) {
-                    return agentToolClassification.readOnlyRejection(toolInput.actionName)
-                }
                 taintState.tainted = true
                 const rawResult = await executeWithTimeout('ap_explore_data', toolInput)
                 return truncateLargeResult(rawResult)
