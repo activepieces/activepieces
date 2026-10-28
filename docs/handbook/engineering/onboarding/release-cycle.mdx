@@ -45,7 +45,7 @@ Self-hosted releases use `release-self-hosted.yml`. See [Releases](/handbook/eng
 
 ## Overrides
 
-- **Hotfix**: Merge the fix into `main`. When `e2e-staging` passes, run `continuous-delivery-cloud.yml` by hand. It runs the same checks and the same approval, with no wait for the daily run.
+- **Hotfix**: Merge the fix into `main`, then run `continuous-delivery-cloud.yml` by hand with `hotfix_prs`. Cloud gets only those PRs on top of what it runs, after the same checks and approval. The rest of `main` waits for the daily run.
 - **Emergency**: Use `emergency-cloud-deploy.yml` to deploy directly to production, bypassing staging entirely. Use sparingly.
 
 ## FAQ

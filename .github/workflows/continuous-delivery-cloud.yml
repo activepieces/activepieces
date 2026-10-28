@@ -2,6 +2,8 @@ name: Continuous Delivery — Cloud
 
 # The Cloud gate. Picks the newest main commit that passed E2E on staging, tests the image staging built
 # from it, waits for one approval, then deploys that image to the canary and to the fleet.
+# With hotfix_prs, it instead cherry-picks only those merged PRs onto the commit Cloud runs, builds that,
+# and sends it through the same checks, approval and deploy.
 on:
   schedule:
     - cron: '0 8 * * 0-4' # Sunday to Thursday 08:00 UTC
@@ -11,6 +13,14 @@ on:
         description: 'Commit on main to deploy. Empty takes the newest one that passed E2E on staging.'
         type: string
         default: ''
+      hotfix_prs:
+        description: 'Comma-separated PR numbers already merged into main. Deploys only these on top of what Cloud runs.'
+        type: string
+        default: ''
+      allow_migrations:
+        description: 'Let a hotfix PR that changes a migration through'
+        type: boolean
+        default: false
       skip_migration_check:
         description: 'Deploy even when a pending migration is marked breaking'
         type: boolean
@@ -25,21 +35,63 @@ jobs:
   cut:
     runs-on: ubuntu-latest
     outputs:
-      sha: ${{ steps.pick.outputs.sha }}
-      image_tag: ${{ steps.pick.outputs.image_tag }}
-      from_tag: ${{ steps.pick.outputs.from_tag }}
+      sha: ${{ steps.pick.outputs.sha || steps.hotfix.outputs.sha }}
+      image_tag: ${{ steps.pick.outputs.image_tag || steps.hotfix.outputs.image_tag }}
+      from_tag: ${{ steps.from.outputs.tag }}
       cloud_sha: ${{ steps.cloud.outputs.sha }}
-      skip: ${{ steps.cloud.outputs.skip }}
+      skip: ${{ steps.pick.outputs.skip }}
     steps:
+      # The App token can push a pick branch whose commits change workflow files; GITHUB_TOKEN cannot.
+      - name: Create GitHub App token
+        id: app-token
+        if: inputs.hotfix_prs
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || github.token }}
 
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ops.key
+          chmod 600 ~/.ssh/ops.key
+          cat >>~/.ssh/config <<END
+          Host ops
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ops.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      - name: Read the commit Cloud runs
+        id: cloud
+        run: |
+          CLOUD_SHA=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1; exit"' \
+            | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)$' || true; } | head -1 | cut -d. -f4)
+          if [ -z "$CLOUD_SHA" ]; then
+            echo "::error::Could not read the version the Cloud fleet runs"
+            exit 1
+          fi
+          echo "sha=$CLOUD_SHA" >> "$GITHUB_OUTPUT"
+          echo "Cloud runs \`$CLOUD_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
+      # A scheduled run stops when the fleet already runs the candidate, so a quiet day asks for no approval.
       - name: Pick the candidate
         id: pick
+        if: ${{ !inputs.hotfix_prs }}
         env:
           GH_TOKEN: ${{ github.token }}
           INPUT_SHA: ${{ inputs.sha }}
+          CLOUD_SHA: ${{ steps.cloud.outputs.sha }}
         run: |
           e2e_passed() {
             [ -n "$(gh api "repos/$GITHUB_REPOSITORY/commits/$1/check-runs?check_name=e2e-staging" \
@@ -69,52 +121,118 @@ jobs:
             fi
           fi
           IMAGE_TAG="$(git show "$SHA:package.json" | jq -r .version).$SHA.beta"
-          FROM_TAG=$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases -L 50 --json tagName --jq '.[].tagName' \
-            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-hotfix\.[0-9]+)?$' | sort -V | tail -1)
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
-          echo "from_tag=$FROM_TAG" >> "$GITHUB_OUTPUT"
-          echo "Candidate \`$SHA\`, image \`$IMAGE_TAG\`, upgrade test from \`$FROM_TAG\`" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/ops.key
-          chmod 600 ~/.ssh/ops.key
-          cat >>~/.ssh/config <<END
-          Host ops
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/ops.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
-
-      # A scheduled run stops when the fleet already runs the candidate, so a quiet day asks for no approval.
-      - name: Read the commit Cloud runs
-        id: cloud
-        env:
-          SHA: ${{ steps.pick.outputs.sha }}
-        run: |
-          CLOUD_SHA=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app version --config-file=config/app.yml 2>&1; exit"' \
-            | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.beta$' || true; } | head -1 | cut -d. -f4)
-          if [ -z "$CLOUD_SHA" ]; then
-            echo "::error::Could not read the version the Cloud fleet runs"
-            exit 1
-          fi
-          echo "sha=$CLOUD_SHA" >> "$GITHUB_OUTPUT"
-          echo "Cloud runs \`$CLOUD_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Candidate \`$SHA\`, image \`$IMAGE_TAG\`" >> "$GITHUB_STEP_SUMMARY"
           if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$CLOUD_SHA" = "$SHA" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "Cloud already runs the candidate. Nothing to deploy." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-  e2e-matrix:
+      # Each named PR's squash commit is cherry-picked from main, oldest first, onto the commit Cloud runs.
+      # The branch is pushed so the commit Cloud will run stays in the repository.
+      - name: Cherry-pick the hotfix PRs onto what Cloud runs
+        id: hotfix
+        if: inputs.hotfix_prs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HOTFIX_PRS: ${{ inputs.hotfix_prs }}
+          INPUT_SHA: ${{ inputs.sha }}
+          ALLOW_MIGRATIONS: ${{ inputs.allow_migrations }}
+          CLOUD_SHA: ${{ steps.cloud.outputs.sha }}
+        run: |
+          if [ -n "$INPUT_SHA" ]; then
+            echo "::error::Set either sha or hotfix_prs, not both"
+            exit 1
+          fi
+          COMMITS=""
+          for PR in $(echo "$HOTFIX_PRS" | tr ',#' '  '); do
+            read -r STATE BASE MERGE <<< "$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json state,baseRefName,mergeCommit \
+              --jq '"\(.state) \(.baseRefName) \(.mergeCommit.oid // "")"')"
+            if [ "$STATE" != MERGED ] || [ "$BASE" != main ] || [ -z "$MERGE" ] || ! git merge-base --is-ancestor "$MERGE" origin/main; then
+              echo "::error::#$PR is not merged into main"
+              exit 1
+            fi
+            if git log --format=%s "$CLOUD_SHA" | grep -qE "\(#$PR\)$"; then
+              echo "::error::#$PR is already on Cloud"
+              exit 1
+            fi
+            MIGRATIONS=$(git diff --name-only "$MERGE^" "$MERGE" -- packages/server/api/src/app/database/migration/)
+            if [ -n "$MIGRATIONS" ] && [ "$ALLOW_MIGRATIONS" != true ]; then
+              echo "::error::#$PR changes a migration ($MIGRATIONS). It may need schema changes Cloud does not have yet. Set allow_migrations to pick it anyway."
+              exit 1
+            fi
+            COMMITS="$COMMITS$MERGE"$'\n'
+          done
+          BRANCH="hotfix/cloud/$GITHUB_RUN_ID"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b "$BRANCH" "$CLOUD_SHA"
+          for COMMIT in $(git rev-list --first-parent --reverse origin/main | grep -Fx -f <(printf '%s' "$COMMITS")); do
+            if ! git cherry-pick -x "$COMMIT"; then
+              git cherry-pick --abort
+              echo "::error::$(git log -1 --format=%s "$COMMIT") does not apply cleanly on what Cloud runs"
+              exit 1
+            fi
+          done
+          git push origin "$BRANCH"
+          SHA=$(git rev-parse HEAD)
+          IMAGE_TAG="$(git show "$SHA:package.json" | jq -r .version).$SHA.pick"
+          EARLIER=$(git log --first-parent --format=%s "$(git merge-base "$CLOUD_SHA" origin/main)..$CLOUD_SHA" | grep -oE '#[0-9]+\)$' | tr -d ')' | paste -sd ' ' || true)
+          ADDED=$(git log --first-parent --reverse --format=%s "$CLOUD_SHA..$SHA" | grep -oE '#[0-9]+\)$' | tr -d ')' | paste -sd ' ')
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          {
+            echo "**Hotfix:** Cloud runs \`${CLOUD_SHA:0:10}\`${EARLIER:+ (main plus $EARLIER)}. This run adds $ADDED."
+            echo
+            echo "Branch \`$BRANCH\`, image \`$IMAGE_TAG\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Pick the release the upgrade test starts from
+        id: from
+        if: steps.pick.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FROM_TAG=$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases -L 50 --json tagName --jq '.[].tagName' \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-hotfix\.[0-9]+)?$' | sort -V | tail -1)
+          echo "tag=$FROM_TAG" >> "$GITHUB_OUTPUT"
+          echo "Upgrade test from \`$FROM_TAG\`" >> "$GITHUB_STEP_SUMMARY"
+
+  # Staging never built a hotfix combination, so the gate builds it. The .pick tag never replaces a .beta image.
+  build-pick:
     needs: cut
-    if: needs.cut.outputs.skip != 'true'
+    if: inputs.hotfix_prs
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.cut.outputs.sha }}
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: depot/setup-action@v1
+      - uses: depot/build-push-action@v1
+        with:
+          project: du7O4b0e8P
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          context: .
+          file: ./Dockerfile
+          platforms: |
+            linux/amd64
+            linux/arm64
+          push: true
+          no-cache: true
+          tags: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
+
+  e2e-matrix:
+    needs: [cut, build-pick]
+    if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
     uses: ./.github/workflows/e2e-matrix.yml
     with:
       image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
@@ -122,8 +240,8 @@ jobs:
     secrets: inherit
 
   upgrade-test:
-    needs: cut
-    if: needs.cut.outputs.skip != 'true'
+    needs: [cut, build-pick]
+    if: always() && needs.cut.result == 'success' && needs.cut.outputs.skip != 'true' && (needs.build-pick.result == 'success' || needs.build-pick.result == 'skipped')
     uses: ./.github/workflows/upgrade-test.yml
     with:
       image: ghcr.io/activepieces/activepieces-cloud:${{ needs.cut.outputs.image_tag }}
@@ -206,7 +324,7 @@ jobs:
       name: production
       url: https://cloud.activepieces.com
     concurrency:
-      group: cloud-approval
+      group: ${{ inputs.hotfix_prs && format('cloud-approval-hotfix-{0}', github.run_id) || 'cloud-approval' }}
       cancel-in-progress: true
     steps:
       - run: echo "Approved ${{ needs.cut.outputs.image_tag }}"
@@ -271,7 +389,7 @@ jobs:
         run: |
           read_version() {
             ssh ops -t -t "bash -ic \"cd mrsk/prod && kamal app version --config-file=$1 2>&1; exit\"" \
-              | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.beta$' || true; } | sort -u
+              | tr -d '\r' | { grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.(beta|pick)$' || true; } | sort -u
           }
           FLEET=$(read_version config/app.yml)
           CANARY=$(read_version config/app-canary.yml)
@@ -353,7 +471,7 @@ jobs:
         env:
           WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
           IMAGE_TAG: ${{ needs.cut.outputs.image_tag }}
-          DEPLOY_KIND: ${{ github.event_name == 'schedule' && 'daily candidate' || 'manual run' }}
+          DEPLOY_KIND: ${{ inputs.hotfix_prs && format('hotfix {0}', inputs.hotfix_prs) || github.event_name == 'schedule' && 'daily candidate' || 'manual run' }}
         run: |
           curl -H "Content-Type: application/json" \
             -X POST \
@@ -373,9 +491,10 @@ jobs:
             "$WEBHOOK"
 
   # Records the deploy in the Linear "Cloud" release pipeline. Never fails the workflow.
-  # A rollback or emergency deploy does not sync.
+  # A rollback, an emergency deploy or a hotfix deploy does not sync; the next normal deploy records it.
   linear-release:
     needs: [cut, deploy]
+    if: ${{ !inputs.hotfix_prs }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     continue-on-error: true
