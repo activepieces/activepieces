@@ -141,6 +141,7 @@ Show the ticket card before creating or updating it.
 1. Rewrite the text as a short decision in the team's words: what was decided, and why in one line. Keep names only if they matter.
 2. Show it, then add it as a comment on the ticket after one OK.
 3. If it changes the ticket's "Done when", scope or acceptance criteria, offer to update the description too.
+4. On an `automated` ticket, mention Box (see **Box tickets**).
 
 > **Here's the note for AI-123:**
 > Decided: old flows keep running, and the builder shows "replace this step". New saves are blocked.
@@ -180,6 +181,20 @@ For support, admins and anyone outside the team, and for members reporting on so
 Whenever a ticket names a customer (Report, a plain request in Start, or a Triage that finds one), attach a Linear **customer request** to it with `save_customer_need`, in the same OK as creating or updating the ticket. Find the customer first with `list_customers` (by name or email domain); create it with `save_customer` only if none matches. Put one plain line in the request body (what they asked for), never their message, emails or credentials.
 
 This is what tells the team a customer is waiting: when the ticket is Done, support is pinged to tell them. A customer written only in the description is invisible to that.
+
+## Box tickets: teach it in the comment
+
+Box files production bugs with the `automated` label and opens a fix PR for each. It learns only from comments that mention it, so a lesson we keep to ourselves comes back in its next PR.
+
+On a ticket with the `automated` label (or created by Box), any comment that does one of these mentions `@box`:
+- rejects, closes or replaces Box's PR;
+- changes its fix or its scope;
+- records a decision;
+- names something the next automated PR must do differently.
+
+End that comment with one line: **For Box next time:** the lesson, in one sentence, general enough to apply to its next ticket. Status comments ("taking this over", "moved to review") don't mention Box. Same OK as every other comment: show it first.
+
+Box runs as the person who mentions it. If it replies "finish setting up Box first", they connect Claude and GitHub once at https://box.abuaboud.me/boxes?new. Then post the lesson again as a **new** comment, since Box ignores mentions in replies.
 
 Do the paperwork yourself. Ask only for facts you can't find in the ticket, the code, the logs or the conversation. In a grill, ask one at a time. Everywhere else, ask for all of them in one message.
 
@@ -313,6 +328,7 @@ The cards below are examples of that voice, not forms to fill in word for word.
    - **Duplicate:** link the original. Set the duplicate relation first, then the status.
    - **Not a bug / won't do:** say why in one line, then Canceled.
    - **Real:** root cause and a fix hint (the one shared place to fix it). Set a priority using the Bug report form's scale, and move it to team AI, the right project and milestone, and a cycle. Leave the owner empty unless the user takes it.
+   - **`automated` ticket:** if the decision rejects Box's PR or changes its fix, the comment mentions Box (see **Box tickets**).
 4. **Security:** if it touches auth, secrets, permissions or data exposure, say so. It gets fixed through a private advisory, never a public PR or a public ticket comment with details.
 5. **Support reply:** if a customer is waiting, draft a reply to them, plain and with no internal file names, for the user to send.
 
@@ -320,7 +336,7 @@ The cards below are examples of that voice, not forms to fill in word for word.
 
 Run these checks and fix what you can, then show one short summary of what changed:
 
-1. **Linked ticket.** The PR description starts with `Fixes AI-<n>` when merging finishes the ticket, or `Part of AI-<n>` when it doesn't. No ticket? Make one with Start first.
+1. **Linked ticket.** The PR description starts with `Fixes AI-<n>` when merging finishes the ticket, or `Refs AI-<n>` when it doesn't. No ticket? Make one with Start first.
 2. **Title:** written for users, not engineers, because it feeds the changelog. Keep the repo's prefix style, e.g. `fix(chat): long chats no longer fail`.
 3. **Description:**
    - what changed;
@@ -333,7 +349,7 @@ Run these checks and fix what you can, then show one short summary of what chang
 5. **Size:** if a reviewer can't read it in about 20 minutes, suggest how to split it before opening.
 6. **Lint:** run `npm run lint-dev` and report the result. Don't hide failures.
 7. **AI behavior check.** If the diff touches chat or agent prompts (`packages/server/api/src/assets/prompts/`), tool descriptions or the agent loop (`packages/server/worker/src/lib/execute/jobs/ee/agent/`), run `npm run agent-evals:ci`. It calls a model, so say so first. Report pass, or which fixtures regressed. Without a key in `.env.dev`, say it under **Heads up** and continue.
-8. **Ticket:** set it to In Review when the PR is open. If the work taught something the next engineer needs, add it as a bullet under `Gotchas` on that area's brain page, in this PR. Then ask once, in the same message as the other questions: "Anything decided in Discord or a DM for this ticket? Paste it and I'll save it to the ticket." If they paste something, save it the way Note does.
+8. **Ticket:** set it to In Review when the PR is open. If the work taught something the next engineer needs, add it as a bullet under `Gotchas` on that area's brain page, in this PR. Then ask once, in the same message as the other questions: "Anything decided in Discord or a DM for this ticket? Paste it and I'll save it to the ticket." If they paste something, save it the way Note does. If this PR replaces or reshapes a Box PR, the ticket comment mentions Box (see **Box tickets**).
 9. **Project update:** if the PR finishes a milestone, offer a 3-line project update draft.
 10. **Ready-for-review gate.** A PR asks for review only when **both** are true. Until then, keep it a draft.
     - **Greptile 5/5.** Read Greptile's latest summary comment (`gh pr view <n> --comments`). Below 5/5: fix its findings, push, and wait for the new score. Reply to each comment you fix in one short line, and resolve it.
@@ -341,7 +357,7 @@ Run these checks and fix what you can, then show one short summary of what chang
     - **When both pass:** mark it ready (`gh pr ready <n>`) and ask a reviewer from CODEOWNERS.
 
     Ship card line: `✓ Greptile 5/5 · ✓ CI green`, or the blocker, for example `✗ Greptile 3/5: 2 findings`.
-11. **Approved?** If `gh pr view <n> --json reviewDecision` says `APPROVED`, don't merge yet. Run **Queue** below: it puts the ticket in Ready to merge and tells the user their place. Ship card line: `✓ Approved · #2 in queue, after AI-41`.
+11. **Approved?** If at least one person approved the PR and nobody requested changes (see **Approved** under Queue), don't merge yet. Run **Queue** below: it puts the ticket in Ready to merge and tells the user their place. Ship card line: `✓ Approved · #2 in queue, after AI-41`.
 
 Ask before pushing, opening the PR, or posting to Linear or GitHub. Everything goes out under the user's name.
 
@@ -351,10 +367,12 @@ Approved PRs wait in **Ready to merge** (between In Review and Done), and the **
 
 Runs on `/ai-task queue`, when Ship finds an approval, and inside Check.
 
-1. **Fill the column.** Linear moves a ticket here on its own when its PR is approved and green. Move in any AI ticket in In Review whose PR is approved and green but got missed. One that drops back to In Review on a new push re-enters when it's approved again.
+**Approved** means at least one person approved the PR and nobody has requested changes since. Read `gh pr view <n> --json latestReviews` and ignore bots like Greptile. Don't use `reviewDecision`: it stays `REVIEW_REQUIRED` until a CODEOWNERS team approves, so a PR an AI teammate approved would never count.
+
+1. **Fill the column.** Move every AI ticket in In Review whose PR is approved and green into Ready to merge. Linear only does this on its own when GitHub's `reviewDecision` is `APPROVED`, so don't wait for it. One that drops back to In Review on a new push re-enters when it's approved again.
 2. **Gather** for every ticket in Ready to merge:
    - Linear: priority, labels, customer requests (`list_customer_needs`), `blocks` relations, when it entered the column (`stateHistory`);
-   - its PR: `gh pr view <n> --json number,author,files,additions,deletions,mergeable,reviewDecision,statusCheckRollup`.
+   - its PR: `gh pr view <n> --json number,author,files,additions,deletions,mergeable,mergeStateStatus,latestReviews,reviewRequests,statusCheckRollup`.
 3. **Kick back first.** A card leaves the queue if its PR has conflicts, red CI, changes requested, or it's sat 5 working days without merging. Move it back to In Review with a one-line comment that says why and what unblocks it (mention the owner). A stale card at the bottom is worse than no card.
 4. **Rank the rest, top first.** One hard rule first: a PR always sits above every queued PR that needs it (`blocks`, or "merge after #n" in the PR), so the top card can always land. Then go down the list, and only use the next rule to break a tie:
    1. **Something's on fire:** the "Start here" urgent list (live automations broken with no workaround, data loss or wrong data, security, billing, many customers at once).
@@ -367,7 +385,7 @@ Runs on `/ai-task queue`, when Ship finds an approval, and inside Check.
    - state changes and kick-back comments through the Linear MCP;
    - the order with `node .agents/skills/ai-task/linear.mjs order AI-41 AI-57 AI-60` (top first);
    - no key: say where to drag each card in **Merge queue** ("drag AI-57 under AI-41").
-7. **Merging.** Only the owner of the top card merges, and only their own PR. Not on top? Wait, or ask in the channel. The one exception is an urgent fix (rule 4.1), which jumps the line and says so in the channel. After a merge, Linear moves it to Done; re-rank and tell the next owner if they need to rebase.
+7. **Merging.** Only the owner of the top card merges, and only their own PR. If GitHub still blocks it (`mergeStateStatus` is `BLOCKED`) on a code-owner review, put the team still requested on the card ("needs @activepieces/platform"); the owner asks them, and the card keeps its place. Not on top? Wait, or ask in the channel. The one exception is an urgent fix (rule 4.1), which jumps the line and says so in the channel. After a merge, Linear moves it to Done; re-rank and tell the next owner if they need to rebase.
 
 Think the order is wrong? Say why in the ticket and re-run `/ai-task queue`, don't drag cards around it.
 
@@ -392,7 +410,7 @@ Think the order is wrong? Say why in the ticket and re-run `/ai-task queue`, don
    - **Waiting:** AI PRs with no review after 1 working day, decisions past their decide-by date, and triage items older than 2 days.
    - **Merge queue:** run Queue. Report its size, what's on top, any collision pairs, and cards to kick back.
    - **Rituals:** repeating tickets skipped last time.
-   - **Habits:** AI PRs from the last 7 days without `Fixes AI-` or `Part of AI-` (use `gh pr list --state all --search "updated:>=<date>" --json number,author,body,files`), and new tickets missing their template's required parts. A nudge, not blame.
+   - **Habits:** AI PRs from the last 7 days without `Fixes AI-` or `Refs AI-` (use `gh pr list --state all --search "updated:>=<date>" --json number,author,body,files`), and new tickets missing their template's required parts. A nudge, not blame.
 4. **Report** with the check card. Then offer the writes, and do only what the user picks:
    - a row at the top of "Weekly checks" in "How we measure" (monthly runs also update the main table);
    - a funnel comment on the open activation ticket;

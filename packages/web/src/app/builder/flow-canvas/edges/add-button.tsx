@@ -114,6 +114,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   },
                 )}
                 data-testid="add-action-button"
+                data-parent-step={props.parentStepName}
               >
                 {!isPieceSelectorOpen && (
                   <Plus className="w-3 h-3 stroke-[3px] text-gray-12" />

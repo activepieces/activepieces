@@ -42,13 +42,13 @@ export const salesforcesCommon = {
 		auth: salesforceAuth,
 		displayName: 'Object',
 		required: true,
-		description: 'Select the Object',
+		description: 'The type of Salesforce record, such as Account or Contact.',
 		refreshers: [],
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
 					disabled: true,
-					placeholder: 'connect your account first',
+					placeholder: 'Connect your account first',
 					options: [],
 				};
 			}
@@ -72,7 +72,7 @@ export const salesforcesCommon = {
 	record: Property.Dropdown({
 		auth: salesforceAuth,
 		displayName: 'Record',
-		description: 'The record to select. The list shows the 20 most recently created records.',
+		description: 'Lists the 20 newest records. Enter an older ID as a custom value.',
 		required: true,
 		refreshers: ['object'],
 		options: async ({ auth, object }) => {
@@ -185,14 +185,21 @@ export const salesforcesCommon = {
 	field: Property.Dropdown<string, true, typeof salesforceAuth>({
 		auth: salesforceAuth,
 		displayName: 'Field',
-		description: 'Select the Field',
+		description: 'The field to match on.',
 		required: true,
 		refreshers: ['object'],
 		options: async ({ auth, object }) => {
-			if (auth === undefined || !object) {
+			if (auth === undefined) {
 				return {
 					disabled: true,
-					placeholder: 'connect your account first',
+					placeholder: 'Connect your account first',
+					options: [],
+				};
+			}
+			if (!object) {
+				return {
+					disabled: true,
+					placeholder: 'Select an object first',
 					options: [],
 				};
 			}
@@ -300,8 +307,8 @@ export const salesforcesCommon = {
 	}),
 	status: Property.Dropdown({
 		auth: salesforceAuth,
-		displayName: 'Status',
-		description: "The campaign member status (e.g., 'Sent', 'Responded').",
+		displayName: 'Member Status',
+		description: 'Such as Sent or Responded.',
 		required: true,
 		refreshers: ['campaign_id'],
 		options: async ({ auth, campaign_id }) => {
@@ -389,7 +396,7 @@ export const salesforcesCommon = {
 	owner: Property.Dropdown({
 		auth: salesforceAuth,
 		displayName: 'Owner',
-		description: 'The owner of the task.',
+		description: 'The user who owns the task.',
 		required: true,
 		refreshers: [],
 		options: async ({ auth }) => {
@@ -484,8 +491,7 @@ export const salesforcesCommon = {
 	parentRecord: Property.Dropdown({
 		auth: salesforceAuth,
 		displayName: 'Parent Record',
-		description:
-			'The parent record to find child records for. The list shows the 20 most recently created records.',
+		description: 'Lists the 20 newest records. Enter an older ID as a custom value.',
 		required: true,
 		refreshers: ['parent_object'],
 		options: async ({ auth, parent_object }) => {
@@ -516,7 +522,7 @@ export const salesforcesCommon = {
 	childRelationship: Property.Dropdown({
 		auth: salesforceAuth,
 		displayName: 'Child Relationship',
-		description: 'The child relationship to retrieve records from.',
+		description: 'The related list to read, such as Contacts on an account.',
 		required: true,
 		refreshers: ['parent_object'],
 		options: async ({ auth, parent_object }) => {

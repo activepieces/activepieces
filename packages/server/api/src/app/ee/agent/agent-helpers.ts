@@ -1,8 +1,9 @@
 import { setTimeout as delay } from 'node:timers/promises'
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
+import { AGENT_STEP_TIMEOUT_MS, AgentResult, AgentTaskStatus } from '@activepieces/core-piece-types'
 import { ActivepiecesError, AIProviderName, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiUtils, modelTierCatalog, ModelTierSurface } from '@activepieces/server-utils'
-import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
+import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
@@ -11,7 +12,7 @@ import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { platformModelTierService, TierForRun } from '../../ai/platform-model-tier-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { redisConnections } from '../../database/redis-connections'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
 import { extractMcpTriggerInput } from '../../mcp/mcp-server-builder'
 import { mcpToolInput } from '../../mcp/mcp-tool-input'
@@ -21,9 +22,11 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
 import { agentModelResolution } from './agent-model-resolution'
 import { agentModelTier } from './agent-model-tier'
+import { flowStepRpc } from './rpc/flow-step-rpc'
 import { UserMemoryEntity } from './user-memory-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
+const STARTED_RUN_MARKER_TTL_SECONDS = 24 * 60 * 60
 
 // Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
 // eval endpoints and the regular chat path can tell them apart from real user conversations.
@@ -288,12 +291,33 @@ async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBase
         .where('status = :streaming', { streaming: AgentConversationStatus.STREAMING })
         .andWhere('updated < NOW() - make_interval(secs => :staleSecs)', { staleSecs: STREAMING_STALENESS_TIMEOUT_MS / 1_000 })
         .andWhere('id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
+        .returning(['id', 'source', 'flowRunId', 'waitpointId'])
         .execute()
-    const recovered = result.affected ?? 0
-    if (recovered > 0) {
-        log.warn({ recovered }, '[agentHelpers] Swept stale STREAMING conversations to IDLE')
+    const swept = SweptConversation.array().parse(result.raw)
+    if (swept.length > 0) {
+        log.warn({ recovered: swept.length }, '[agentHelpers] Swept stale STREAMING conversations to IDLE')
     }
-    return { recovered }
+    await Promise.all(swept.map((conversation) => failAbandonedFlowStep({ conversation, log })))
+    return { recovered: swept.length }
+}
+
+async function failAbandonedFlowStep({ conversation, log }: { conversation: SweptConversation, log: FastifyBaseLogger }): Promise<void> {
+    const { id, source, flowRunId, waitpointId } = conversation
+    const holdsAPausedFlow = source === AgentRunSource.FLOW_STEP && !isNil(flowRunId) && !isNil(waitpointId)
+    if (!holdsAPausedFlow) {
+        return
+    }
+    const { error } = await tryCatch(() => flowStepRpc(log).resumeFlowStep({ conversationId: id, flowRunId, waitpointId, output: ABANDONED_FLOW_STEP_RESULT }))
+    if (!isNil(error)) {
+        log.error({ error, conversation: { id }, flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[agentHelpers] Could not release the flow step of an abandoned agent run, the next sweep retries it until the step times out')
+        await conversationRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ status: AgentConversationStatus.STREAMING })
+            .where('id = :id', { id })
+            .andWhere('created > NOW() - make_interval(secs => :stepTimeoutSecs)', { stepTimeoutSecs: AGENT_STEP_TIMEOUT_MS / 1_000 })
+            .execute()
+    }
 }
 
 async function incrementAndCheckLimit({ key, limit, ttlSeconds }: { key: string, limit: number, ttlSeconds: number }): Promise<{ allowed: boolean, count: number }> {
@@ -394,6 +418,12 @@ async function claimConversationForRun({ conversationId, runId }: { conversation
 }
 
 async function acquireStreamingLock({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<StreamingLockResult> {
+    if (!isNil(runId)) {
+        const firstDelivery = await distributedStore.putIfAbsent(`agent-run-started:${conversationId}:${runId}`, true, STARTED_RUN_MARKER_TTL_SECONDS)
+        if (!firstDelivery) {
+            return 'duplicate'
+        }
+    }
     const builder = conversationRepo()
         .createQueryBuilder()
         .update()
@@ -506,6 +536,11 @@ export const agentHelpers = {
     mergeMemories,
     saveUserMemory,
 }
+
+const ABANDONED_FLOW_STEP_RESULT: AgentResult = { prompt: '', steps: [], status: AgentTaskStatus.FAILED, failure: 'The agent stopped responding before it finished. Run the flow again to retry this step.' }
+
+const SweptConversation = AgentConversation.pick({ id: true, source: true, flowRunId: true, waitpointId: true })
+type SweptConversation = z.infer<typeof SweptConversation>
 
 type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'modelTierId' | 'promptOverride'>
 

@@ -1,7 +1,7 @@
 import { brandColors } from '../../src/lib/core/common/brand-colors'
 
 const LIGHT_GROUNDS = [100, 99.3, 98.2, 97, 95.5, 93.8]
-const DARK_GROUNDS = [11, 16.2, 19.5, 23.5, 27.5]
+const DARK_GROUNDS = [17.8, 21.3, 25.2, 28.5, 31.3]
 
 describe('brandColors.cssVariables', () => {
     it('writes a light and a dark value for every accent step, plus the label', () => {
@@ -124,7 +124,7 @@ describe('brandColors.ramp contrast', () => {
             [...seeds, '#fde2e2', '#fffbe6', '#ffffff'].flatMap((hex) => {
                 const ramp = brandColors.ramp({ hex, scale })
                 const light = [100, 99.3, 98.2].map(neutral).filter((ground) => contrast({ first: ramp.light[10], second: ground }) < 3)
-                const dark = [11, 16.2].map(neutral).filter((ground) => contrast({ first: ramp.dark[10], second: ground }) < 3)
+                const dark = [17.8, 21.3].map(neutral).filter((ground) => contrast({ first: ramp.dark[10], second: ground }) < 3)
                 return [...light, ...dark].map((ground) => `${scale} ${hex} on ${ground}`)
             }),
         )
