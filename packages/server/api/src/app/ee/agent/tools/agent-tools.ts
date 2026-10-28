@@ -1,4 +1,5 @@
 import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActionClassification, isReadOnlyClassification } from '@activepieces/pieces-framework'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -629,11 +630,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             return runAgentCode({ toolInput, projects, platformId, userId, conversationId, log })
         }
         case 'ap_explore_data': {
-            const { actionName, input: exploreInput } = runActionInput.parse(toolInput)
-            if (!agentToolClassification.isReadOnlyActionCall({ actionName, input: exploreInput })) {
-                return agentToolClassification.readOnlyRejection(actionName)
-            }
-            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, log })
+            return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, readOnlyOnly: true, log })
         }
         case 'ap_list_across_projects': {
             const resource = toolInput.resource as string
@@ -703,7 +700,7 @@ function buildActionRunOffload({ projectId, platformId, conversationId, pieceNam
     }
 }
 
-async function runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, log }: {
+async function runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission, readOnlyOnly, log }: {
     toolInput: Record<string, unknown>
     projects: Project[]
     availableProjectIds: string[]
@@ -711,6 +708,7 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
     platformId?: string
     userId: string
     requireWritePermission?: boolean
+    readOnlyOnly?: boolean
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const { pieceName, actionName, input: parsedInput } = runActionInput.parse(toolInput)
@@ -735,6 +733,10 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
     if (connectionProjectId && !availableProjectIds.includes(connectionProjectId)) {
         return { success: false, error: `Project ${connectionProjectId} is not accessible.` }
     }
+    const declared = await declaredActionOf({ pieceName: normalizedPiece, actionName, projectId: resolvedProjectId, platformId, log })
+    if (readOnlyOnly && !agentToolClassification.isReadOnlyActionCall({ actionName, input: parsedInput, declaredReadOnly: declared.readOnly })) {
+        return agentToolClassification.readOnlyRejection(actionName)
+    }
     if (requireWritePermission) {
         const denial = await checkWriteRunPermission({ userId, projectId: resolvedProjectId, toolName: 'ap_execute_action', log })
         if (denial) {
@@ -756,8 +758,9 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
     const structured = !isNil(resultObj) && isObject(resultObj.structuredContent) ? resultObj.structuredContent : undefined
     const errorSummary = typeof structured?.errorSummary === 'string' ? structured.errorSummary : undefined
 
-    await recordChatAction({
+    recordChatAction({
         piece: { pieceName: normalizedPiece, actionName },
+        declared,
         input: parsedInput ?? {},
         projectId: resolvedProjectId,
         userId,
@@ -970,10 +973,11 @@ type RunCodeToolResult = {
     producedFiles: ProducedFile[]
 }
 
-export { executeCrossProjectTool, findConnectionsForPiece }
+export { declaredActionOf, executeCrossProjectTool, findConnectionsForPiece }
 
-async function recordChatAction({ piece, input, projectId, platformId, userId, conversationId, connection, outcome, log }: {
+function recordChatAction({ piece, declared, input, projectId, platformId, userId, conversationId, connection, outcome, log }: {
     piece: { pieceName: string, actionName: string }
+    declared: DeclaredAction
     input: Record<string, unknown>
     projectId: string
     platformId?: string
@@ -982,21 +986,46 @@ async function recordChatAction({ piece, input, projectId, platformId, userId, c
     connection: { externalId?: string, label?: string }
     outcome: AgentActionOutcome
     log: FastifyBaseLogger
-}): Promise<void> {
+}): void {
     if (isNil(platformId)) {
         return
     }
-    const { data: metadata } = await tryCatch(() => pieceMetadataService(log).get({ name: piece.pieceName, projectId, platformId }))
-    const action = metadata?.actions?.[piece.actionName]
     recordAgentAction({
         run: { projectId, platformId, userId, source: AgentRunSource.CHAT },
         piece,
         resolvedInput: input,
-        names: { action: action?.displayName ?? piece.actionName, piece: metadata?.displayName ?? piece.pieceName },
+        names: { action: declared.actionDisplayName ?? piece.actionName, piece: declared.pieceDisplayName ?? piece.pieceName },
         outcome,
         connection,
         log,
         ...spreadIfDefined('conversationId', conversationId),
-        ...spreadIfDefined('classification', action?.classification),
+        ...spreadIfDefined('classification', declared.classification),
     })
+}
+
+async function declaredActionOf({ pieceName, actionName, projectId, platformId, log }: {
+    pieceName: string
+    actionName: string
+    projectId?: string
+    platformId?: string
+    log: FastifyBaseLogger
+}): Promise<DeclaredAction> {
+    if (isNil(platformId)) {
+        return {}
+    }
+    const { data: metadata } = await tryCatch(() => pieceMetadataService(log).get({ name: pieceName, projectId, platformId }))
+    const action = metadata?.actions?.[actionName]
+    return {
+        ...spreadIfDefined('pieceDisplayName', metadata?.displayName),
+        ...spreadIfDefined('actionDisplayName', action?.displayName),
+        ...spreadIfDefined('classification', action?.classification),
+        ...spreadIfDefined('readOnly', isNil(action?.classification) ? undefined : isReadOnlyClassification(action.classification)),
+    }
+}
+
+type DeclaredAction = {
+    pieceDisplayName?: string
+    actionDisplayName?: string
+    classification?: ActionClassification
+    readOnly?: boolean
 }

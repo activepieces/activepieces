@@ -7,6 +7,7 @@ import { executeCrossProjectTool } from '../../../../src/app/ee/agent/tools/agen
 import { pieceToolRunner } from '../../../../src/app/ee/agent/tools/piece-tool-runner'
 import * as mcpServerBuilder from '../../../../src/app/mcp/mcp-server-builder'
 import * as flowRunUtils from '../../../../src/app/mcp/tools/flow-run-utils'
+import * as pieceMetadataModule from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../helpers/mocks'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -369,5 +370,66 @@ describe('an action an agent ran reaches the audit log', () => {
         expect(row).toBeDefined()
         expect(row.data).toMatchObject({ source: AgentRunSource.CHAT })
         expect(JSON.stringify(row.data)).not.toContain(RECIPIENT)
+    })
+})
+
+describe('a chat action the piece declares as a write', () => {
+    function declareAction(classification: string): void {
+        const metadata = { displayName: 'Gmail', actions: { mark_as_read: { displayName: 'Mark as read', classification } } }
+        vi.spyOn(pieceMetadataModule, 'pieceMetadataService').mockReturnValue({ get: async () => metadata } as never)
+    }
+
+    it('is refused by ap_explore_data and never runs, whatever its name says', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.CHAT, withAgent: false })
+        declareAction('WRITE')
+        const run = vi.spyOn(flowRunUtils, 'executePieceActionRun').mockResolvedValue({ content: [] } as never)
+
+        const result = await executeCrossProjectTool({
+            toolName: 'ap_explore_data',
+            toolInput: { pieceName: '@activepieces/piece-gmail', actionName: 'mark_as_read', input: {} },
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            conversationId,
+            log: app.log,
+        })
+
+        expect(result).toMatchObject({ success: false })
+        expect(run).not.toHaveBeenCalled()
+    })
+
+    it('still runs through ap_explore_data when the piece declares it a read', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.CHAT, withAgent: false })
+        declareAction('READ')
+        const run = vi.spyOn(flowRunUtils, 'executePieceActionRun').mockResolvedValue({ content: [] } as never)
+
+        await executeCrossProjectTool({
+            toolName: 'ap_explore_data',
+            toolInput: { pieceName: '@activepieces/piece-gmail', actionName: 'mark_as_read', input: {} },
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            conversationId,
+            log: app.log,
+        })
+
+        expect(run).toHaveBeenCalledTimes(1)
+    })
+
+    it('tells the worker what the piece declares, so the approval card follows it', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.CHAT, withAgent: false })
+        declareAction('WRITE')
+
+        const { result } = await agentRpcHandlers(app.log).executeAgentTool({
+            toolName: '__action_read_only',
+            toolInput: { pieceName: '@activepieces/piece-gmail', actionName: 'mark_as_read' },
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            source: AgentRunSource.CHAT,
+            conversationId,
+        })
+
+        expect(result).toBe(false)
     })
 })
