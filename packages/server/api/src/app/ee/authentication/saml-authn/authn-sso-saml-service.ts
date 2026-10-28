@@ -57,26 +57,24 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
             return response
         },
         async discoverByDomain(domain: string): Promise<DiscoverResult> {
+            const platformId = await this.findPlatformIdByDomain({ domain })
+            if (isNil(platformId)) {
+                return { platformId: null }
+            }
+            const samlConfigured = await platformService(log).hasSamlConfigured(platformId)
+            return { platformId: samlConfigured ? platformId : null }
+        },
+        async findPlatformIdByDomain({ domain }: FindPlatformIdByDomainParams): Promise<PlatformId | null> {
             const ssoDomain = domain.trim().toLowerCase()
             if (ssoDomain.length === 0) {
-                return { platformId: null }
+                return null
             }
             const platform = await platformRepo().findOneBy({ ssoDomain })
-            if (isNil(platform)) {
-                return { platformId: null }
-            }
-            if (platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
-                return { platformId: null }
+            if (isNil(platform) || platform.ssoDomainVerification?.status !== SsoDomainVerificationStatus.VERIFIED) {
+                return null
             }
             const plan = await platformPlanService(log).getOrCreateForPlatform(platform.id)
-            if (!plan.ssoEnabled) {
-                return { platformId: null }
-            }
-            const samlConfigured = await platformService(log).hasSamlConfigured(platform.id)
-            if (!samlConfigured) {
-                return { platformId: null }
-            }
-            return { platformId: platform.id }
+            return plan.ssoEnabled ? platform.id : null
         },
         async updateSsoDomain({ platformId, ssoDomain }: UpdateSsoDomainParams): Promise<SsoDomainState> {
             const normalized = ssoDomain?.trim().toLowerCase() ?? null
@@ -200,6 +198,10 @@ type SamlConfigResult = {
 
 type DiscoverResult = {
     platformId: string | null
+}
+
+type FindPlatformIdByDomainParams = {
+    domain: string
 }
 
 type UpdateSsoDomainParams = {
