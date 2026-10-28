@@ -3,6 +3,8 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { bannerbearAuth } from '../auth';
 import { bannerbearClient } from './client';
 
+const TEMPLATE_SET_MAX_PAGES = 40;
+
 export const bannerbearProps = {
   template: ({ required }: { required: boolean }) =>
     Property.Dropdown({
@@ -64,7 +66,8 @@ export const bannerbearProps = {
       }
       try {
         const options: { label: string; value: string }[] = [];
-        for (let page = 1; page <= 40; page++) {
+        let truncated = true;
+        for (let page = 1; page <= TEMPLATE_SET_MAX_PAGES; page++) {
           const batch = await bannerbearClient.request<
             { uid: string; name?: string }[]
           >({
@@ -77,8 +80,16 @@ export const bannerbearProps = {
             ...batch.map((s) => ({ label: s.name ?? s.uid, value: s.uid }))
           );
           if (batch.length < 25) {
+            truncated = false;
             break;
           }
+        }
+        if (truncated) {
+          return {
+            disabled: false,
+            options,
+            placeholder: `Showing the first ${options.length} template sets only; use the Bannerbear dashboard to find others.`,
+          };
         }
         return { disabled: false, options };
       } catch (error) {

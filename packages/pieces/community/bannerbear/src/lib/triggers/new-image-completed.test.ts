@@ -104,6 +104,45 @@ describe('bannerbear new-image-completed', () => {
     expect(new Set(emitted)).toEqual(new Set(pending.map((image) => image.uid)));
   });
 
+  test('does not fire completed images from before enable that sit beyond page 1', async () => {
+    addImages({ count: 60, status: 'completed' });
+    vi.spyOn(bannerbearClient, 'request').mockImplementation(async ({ path, queryParams }) =>
+      fakeRequest({ feed, path, queryParams: { ...queryParams, limit: '25' } })
+    );
+    await call({ hook: 'onEnable' });
+    const fresh = addImages({ count: 24, status: 'completed' });
+
+    const emitted = await runUntilQuiet();
+
+    expect(new Set(emitted)).toEqual(new Set(fresh.map((image) => image.uid)));
+    expect(emitted).toHaveLength(fresh.length);
+  });
+
+  test('rotates the pending queue so slow renders do not block later images', async () => {
+    await call({ hook: 'onEnable' });
+    const later = addImages({ count: 30, status: 'pending' });
+    const slow = addImages({ count: 25, status: 'pending' });
+    await call({ hook: 'run' });
+    addImages({ count: 150, status: 'completed' });
+    await runUntilQuiet();
+    const laterUids = new Set(later.map((image) => image.uid));
+    for (const image of feed) {
+      if (laterUids.has(image.uid)) {
+        image.status = 'completed';
+        image.completed_at = new Date().toISOString();
+      }
+    }
+    expect(slow).toHaveLength(25);
+
+    const emitted: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const batch: { uid: string }[] = await call({ hook: 'run' });
+      emitted.push(...batch.map((image) => image.uid));
+    }
+
+    expect(new Set(emitted)).toEqual(laterUids);
+  });
+
   test('republish keeps the stored state and disable leaves it in place', async () => {
     addImages({ count: 3, status: 'completed' });
     await call({ hook: 'onEnable' });

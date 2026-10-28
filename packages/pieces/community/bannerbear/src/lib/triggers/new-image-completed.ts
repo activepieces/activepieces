@@ -47,6 +47,7 @@ export const newImageCompletedTrigger = createTrigger({
       seen: images.filter((i) => i.status === 'completed').map((i) => i.uid).slice(0, MAX_SEEN),
       pending: images.filter((i) => i.status === 'pending').map((i) => toPendingEntry(i)).slice(0, MAX_PENDING),
       head: newestCreatedAt(images) ?? new Date().toISOString(),
+      floor: oldestCreatedAt(images.map((i) => toPendingEntry(i))) ?? new Date().toISOString(),
       backfill: null,
       recovery: null,
     });
@@ -73,6 +74,7 @@ export const newImageCompletedTrigger = createTrigger({
         typeof entry === 'string' ? { uid: entry, created_at: null } : entry
       ),
       head: stored?.head ?? null,
+      floor: stored?.floor ?? null,
       backfill: stored?.backfill ?? null,
       recovery: stored?.recovery ?? null,
     };
@@ -123,19 +125,32 @@ export const newImageCompletedTrigger = createTrigger({
         ? null
         : { page: scanned.nextPage, until: recovery.until, since: recovery.since };
     }
-    const recent = dedupe([...fresh.images, ...backfillImages, ...recoveredImages]);
+    // Images created at or before the enable-time floor existed before the trigger was
+    // enabled: page 1 of those is already in seen/pending, older pages must never fire.
+    const floorTime = state.floor === null ? NaN : Date.parse(state.floor);
+    const recent = dedupe([...fresh.images, ...backfillImages, ...recoveredImages]).filter(
+      (i) =>
+        Number.isNaN(floorTime) ||
+        i.created_at === null ||
+        Date.parse(i.created_at) > floorTime
+    );
     const recentByUid = new Map(recent.map((i) => [i.uid, i]));
     const pendingToCheck = state.pending.filter((entry) => !recentByUid.has(entry.uid));
-    const pendingChecks = await Promise.all(
-      pendingToCheck
-        .slice(0, MAX_PENDING_CHECKS)
-        .map((entry) => fetchImage({ apiKey, uid: entry.uid }))
-    );
-    const candidates = [...recent, ...pendingChecks.filter((i): i is NormalizedImage => i !== null)];
+    const pendingChecks = (
+      await Promise.all(
+        pendingToCheck
+          .slice(0, MAX_PENDING_CHECKS)
+          .map((entry) => fetchImage({ apiKey, uid: entry.uid }))
+      )
+    ).filter((i): i is NormalizedImage => i !== null);
+    const candidates = [...recent, ...pendingChecks];
     const emitted = candidates.filter((i) => i.status === 'completed' && !seen.has(i.uid));
+    // Rotate: entries checked this poll and still pending go behind the unchecked ones,
+    // so a slow render never blocks the rest of the queue from being checked.
     const stillPending = dedupePending([
-      ...candidates.filter((i) => i.status === 'pending').map((i) => toPendingEntry(i)),
+      ...recent.filter((i) => i.status === 'pending').map((i) => toPendingEntry(i)),
       ...pendingToCheck.slice(MAX_PENDING_CHECKS),
+      ...pendingChecks.filter((i) => i.status === 'pending').map((i) => toPendingEntry(i)),
     ]);
     const overflowFloor = oldestCreatedAt(stillPending.slice(MAX_PENDING));
     if (overflowFloor !== null) {
@@ -149,6 +164,7 @@ export const newImageCompletedTrigger = createTrigger({
       seen: [...emitted.map((i) => i.uid), ...state.seen].slice(0, MAX_SEEN),
       pending: stillPending.slice(0, MAX_PENDING),
       head: newestCreatedAt(fresh.images) ?? state.head,
+      floor: state.floor,
       backfill,
       recovery,
     });
@@ -274,6 +290,7 @@ type PollState = {
   seen: string[];
   pending: PendingEntry[];
   head: string | null;
+  floor: string | null;
   backfill: { page: number; until: string | null } | null;
   recovery: { page: number; until: string | null; since: string } | null;
 };
