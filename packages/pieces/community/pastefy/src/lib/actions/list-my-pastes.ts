@@ -16,7 +16,7 @@ export default createAction({
   },
   props: {
     search: Property.ShortText({ displayName: 'Search', description: 'Text to search for in title and content.', required: false }),
-    folder_id: Property.ShortText({ displayName: 'Folder ID', description: 'Only pastes in this folder (ID from List Folders).', required: false }),
+    folder_id: Property.ShortText({ displayName: 'Folder ID', description: 'Only pastes in this folder (ID from Get Folder Hierarchy or List Folders).', required: false }),
     tags: Property.Array({ displayName: 'Tags', description: 'Only pastes with these tags.', required: false }),
     page: Property.Number({ displayName: 'Page', description: 'Page number, starting at 1.', required: false, defaultValue: 1 }),
     page_limit: Property.Number({ displayName: 'Page Size', description: 'Pastes per page, 1 to 50.', required: false, defaultValue: 20 }),

@@ -7,6 +7,11 @@ const base = createCustomApiCallAction({
   auth: pastefyAuth,
   baseUrl: (auth) => (auth ? pastefyClient.apiBase({ auth }) : ''),
   authMapping: async (auth) => authHeadersOf({ auth }),
+  props: {
+    followRedirects: {
+      description: 'Has no effect here: redirects are never followed, so the API key is not sent to another host.',
+    },
+  },
 });
 
 export const pastefyCustomApiCallAction = createAction({
@@ -75,13 +80,13 @@ export function apiUrlOf({ baseUrl, url }: { baseUrl: string; url: string }): st
     throw new Error('The URL is not valid.');
   }
   const allowed = new URL(baseUrl);
-  const onHunter =
+  const onInstance =
     parsed.protocol === allowed.protocol &&
     parsed.host === allowed.host &&
     parsed.username === '' &&
     parsed.password === '' &&
     (parsed.pathname === allowed.pathname || parsed.pathname.startsWith(`${allowed.pathname}/`));
-  if (!onHunter) {
+  if (!onInstance) {
     throw new Error(`The URL must start with ${baseUrl}/ or be a path relative to it.`);
   }
   return parsed.toString();

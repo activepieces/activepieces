@@ -8,6 +8,28 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Pastefy 0.4.0: six actions leave the agent tool list, and existing steps change behavior
+
+Pastefy 0.4.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+These actions are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps. Agents use the replacement instead:
+- **Create Paste** → **Create Paste (by Folder ID)**
+- **Edit Paste** → **Update Paste (by IDs)**
+- **Create Folder** → **Create Folder (by Parent ID)**
+- **Get Folder** → **Get Folder (by ID)**
+- **Get Folder Hierarchy** → **List Folders**
+- **Delete Folder** → **Delete Folder (by ID)**
+
+**Edit Paste** now returns the updated paste, and **Delete Paste** and **Delete Folder** return `{ deleted, id }`. All three used to return `{ success }`, so a later step that reads `{{step.success}}` gets nothing after the upgrade.
+
+Every action and the **Paste Changed** trigger now call the connection's **Instance URL**. Before, they always called pastefy.app. An Instance URL that is not a plain http(s) URL now fails the step. TLS certificates are now checked, so a self-hosted Pastefy with a self-signed certificate fails (Custom API Call and the folder dropdowns already reached that server before). **Custom API Call** only accepts URLs under `<instance>/api/v2`.
+
+**Get Paste** with a wrong password now fails, and so does **Edit Paste** when it changes an encrypted paste's text without the password. **Delete Paste** on a paste that does not exist now returns `deleted: false` instead of failing.
+
+#### What you need to do
+
+Give agents the replacement actions listed above. Change later steps that read `success` from Edit Paste, Delete Paste or Delete Folder to read the paste fields or `deleted`. Check that the connection's Instance URL is the server you want, and give a self-hosted server a certificate from a trusted authority. Point Custom API Call steps at paths under `/api/v2`.
+
 #### Asana 0.8.0 Create Task sends a plain date as an all-day due date and fails on unknown tags
 
 Asana 0.8.0 changes what an existing **Create Task** step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
