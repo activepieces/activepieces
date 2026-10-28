@@ -3,8 +3,6 @@ name: Continuous Delivery — Cloud
 # The Cloud gate. Picks the newest main commit that passed E2E on staging, tests the image staging built
 # from it, waits for one approval, then deploys that image to the canary and to the fleet.
 on:
-  schedule:
-    - cron: '0 8 * * 0-4' # Sunday to Thursday 08:00 UTC
   workflow_dispatch:
     inputs:
       sha:

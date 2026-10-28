@@ -8,7 +8,7 @@ All changes flow through a staging environment before reaching production. There
 ## How It Works
 
 1. **Merge to `main`** — `continuous-delivery-stg.yml` builds a `version.sha.beta` image, deploys it to **staging** (`stg.activepieces.com`), and runs the E2E suite against staging (`e2e-staging`).
-2. **Sunday to Thursday, 8 AM UTC** — `continuous-delivery-cloud.yml` (the Cloud gate) picks the newest `main` commit whose `e2e-staging` passed, runs the E2E matrix and the upgrade test on the image staging built from it, and waits for one approval.
+2. **By hand** — `continuous-delivery-cloud.yml` (the Cloud gate) picks the newest `main` commit whose `e2e-staging` passed, runs the E2E matrix and the upgrade test on the image staging built from it, and waits for one approval.
 3. **On approval** — the gate deploys that same image to the canary, then to the whole production fleet.
 4. **Self-hosted** — `release-self-hosted.yml`, by hand. The weekly `continuous-delivery-release.yml` is disabled.
 
@@ -25,7 +25,7 @@ All changes flow through a staging environment before reaching production. There
 
   1. Merge the fix into `main`. Staging deploys it and runs `e2e-staging`.
   2. When `e2e-staging` passes, run `continuous-delivery-cloud.yml` by hand. Leave `sha` empty to take the newest passed commit, or name the fix commit.
-  3. The gate runs the same checks and asks for the same approval as the daily run. There is no path that builds from a branch.
+  3. The gate runs the same checks and asks for the same approval as any other Cloud deploy. There is no path that builds from a branch.
 
 If Cloud is down and the gate is too slow, use `emergency-cloud-deploy.yml`. To go back to an earlier image, use `continuous-delivery-rollback.yml`.
 
@@ -52,8 +52,9 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Scheduled (Sunday to Thursday, 8 AM UTC)** | Picks the newest `main` commit with a passed `e2e-staging` check. Stops if the fleet already runs it. |
-| **Manual dispatch** | Same, or deploys the `main` commit named in `sha`, which must also have a passed `e2e-staging`. `skip_migration_check` lets a breaking migration through. |
+| **Manual dispatch** | Picks the newest `main` commit with a passed `e2e-staging` check, or the `main` commit named in `sha`, which must also have a passed `e2e-staging`. `skip_migration_check` lets a breaking migration through. |
+
+The gate has no schedule yet. A daily run (Sunday to Thursday, 8 AM UTC) comes back when the E2E suite covers more of the product; the `cut` job already stops a scheduled run when every Cloud host runs the candidate.
 
 Then, for the candidate:
 
