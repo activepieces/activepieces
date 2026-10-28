@@ -27,7 +27,7 @@ ClickStack (HyperDX) alerts on the production logs, all sending to the **Box Inb
 | Queue job failure | a `workerJobs` job logs `job.failed` | 15 min | error signature |
 | Worker RSS high | a worker's memory passes 950 MB (the container is killed at about 1 GB) | 15 min | worker host |
 | App RSS high | an app server's memory passes 3,500 MB | 15 min | app host |
-| Worker event-loop wedged | a worker's event-loop delay (p99) passes 90 s, half its 180 s liveness watchdog | 5 min | worker host |
+| Worker event-loop wedged | a worker's event-loop delay (p99) passes 90 s | 5 min | worker host |
 | App event-loop wedged | an app server's event-loop delay (p99) passes 5 s | 5 min | app host |
 
 - **Where:** the [HyperDX alerts page](https://hyperdx.clickhouse.cloud/alerts). Each alert's message links to the matching log search.
