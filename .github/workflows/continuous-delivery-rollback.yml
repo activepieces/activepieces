@@ -47,9 +47,11 @@ jobs:
       - name: Get current tag
         id: current
         run: |
-          CURRENT=$(ssh ops -t -t 'bash -ic "cd mrsk/${{ inputs.target }} && kamal app version 2>&1 | grep -oE \"[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta\" | head -1 | tr -d \"[:space:]\"; exit"' | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]+\.beta' | head -1)
-          SHA=$(echo "$CURRENT" | grep -oE '\.[a-f0-9]{7,40}\.' | head -1 | tr -d '.')
+          OUTPUT=$(ssh ops -t -t 'bash -ic "cd mrsk/${{ inputs.target }} && kamal app version --primary --config-file=config/app.yml 2>&1; exit"' | tr -d '\r')
+          CURRENT=$(echo "$OUTPUT" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[a-f0-9]{40}\.beta' | head -1)
+          SHA=$(echo "$CURRENT" | cut -d. -f4)
           if [ -z "$SHA" ]; then
+            echo "$OUTPUT"
             echo "Could not read the current tag of ${{ inputs.target }}"
             exit 1
           fi
