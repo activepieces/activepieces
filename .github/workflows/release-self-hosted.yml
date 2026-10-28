@@ -81,6 +81,16 @@ jobs:
           git tag "$TAG"
           git -c http.https://github.com/.extraheader= push "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/$TAG"
 
+      - name: Check if this release is the newest
+        id: latest
+        env:
+          TAG: ${{ inputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CURRENT="$(gh release view --json tagName --jq .tagName)"
+          HIGHEST="$(printf '%s\n%s\n' "$CURRENT" "$TAG" | sort -V | tail -1)"
+          echo "latest=$([ "$HIGHEST" = "$TAG" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
@@ -111,16 +121,6 @@ jobs:
           tags: |
             activepieces/activepieces:${{ inputs.tag }}
             ghcr.io/activepieces/activepieces:${{ inputs.tag }}
-
-      - name: Check if this release is the newest
-        id: latest
-        env:
-          TAG: ${{ inputs.tag }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          CURRENT="$(gh release view --json tagName --jq .tagName || true)"
-          HIGHEST="$(printf '%s\n%s\n' "$CURRENT" "$TAG" | sort -V | tail -1)"
-          echo "latest=$([ "$HIGHEST" = "$TAG" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Create or update changelog via release-drafter
         if: ${{ !contains(inputs.tag, '-rc') || inputs.publish_rc_release }}
