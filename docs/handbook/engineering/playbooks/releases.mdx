@@ -10,10 +10,9 @@ All changes flow through a staging environment before reaching production. There
 Five separate workflows cover the full delivery lifecycle:
 
 1. **Merge to `main`** — `continuous-delivery-stg.yml` automatically builds a Docker image and deploys to **staging** (`stg.activepieces.com`).
-2. **Daily 9 AM UTC** — `continuous-delivery-canary.yml` builds a `version.sha.canary` image from the latest `main` and deploys it to the **canary** environment. Breaking migrations block the deployment. See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for details.
-3. **Thursday 5 PM UTC** — `tag-release-candidate` job tags the current staging image and commit as `release-candidate`.
-4. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` runs a fresh canary build from `main` (by calling `continuous-delivery-canary.yml` as a reusable workflow), then promotes `release-candidate` to production and creates a `deploy/cloud/YYYY-MM-DD` branch.
-5. **Monday 9 AM UTC** — `continuous-delivery-release.yml` re-tags the `release-candidate` image and publishes the self-hosted release.
+2. **Thursday 5 PM UTC** — `tag-release-candidate` job tags the current staging image and commit as `release-candidate`.
+3. **Sunday 9 AM UTC** — `continuous-delivery-cloud.yml` runs a fresh canary build from `main` (by calling `continuous-delivery-canary.yml` as a reusable workflow), then promotes `release-candidate` to production and creates a `deploy/cloud/YYYY-MM-DD` branch.
+4. **Monday 9 AM UTC** — `continuous-delivery-release.yml` re-tags the `release-candidate` image and publishes the self-hosted release.
 
 ## Environments
 
@@ -21,7 +20,7 @@ Five separate workflows cover the full delivery lifecycle:
 |---|---|---|
 | Preview | `branch-name.activepieces.com` | Per-PR ephemeral environment for review. *Requires the `preview` label on the PR.* |
 | Staging | `stg.activepieces.com` | Internal testing |
-| Canary | `canary.activepieces.com` | Daily cut from `main`; catches issues before they reach production |
+| Canary | `canary.activepieces.com` | Gets each Cloud deploy a few minutes before the rest of production |
 | Production | `cloud.activepieces.com` | Live customers |
 
 ## Hotfix Workflow
@@ -71,20 +70,11 @@ To run any workflow manually, go to the repo's **Actions** tab, select the workf
 
 | Trigger | What happens |
 |---|---|
-| **Scheduled (daily 9 AM UTC)** | Builds a `version.sha.canary` image from the latest `main`, checks migrations, deploys the canary app and workers. Breaking migrations always block the deployment. |
-| **`workflow_call`** | Same as scheduled, triggered by `continuous-delivery-cloud.yml` on the Sunday promotion so the canary always receives a fresh build just before production is updated. |
-| **Manual dispatch** | Same as scheduled, on demand. |
+| **`workflow_call`** | Called by `continuous-delivery-cloud.yml` before production. Deploys the image Cloud is about to ship to the canary app and workers. Breaking migrations block the deployment unless the Cloud run sets `skip_migration_check`. |
+
+There is no daily schedule and no manual dispatch since ENG-1062: the canary app runs its migrations on the shared production database at boot, so only an image that Cloud is about to deploy may reach it.
 
 See the [Canary Deployment playbook](/handbook/engineering/playbooks/canary-deployment) for full details.
-
-### `continuous-delivery-rollback-canary.yml` — Canary Rollback
-
-Manual dispatch only. Rolls back the canary environment to a previous image tag. Reverses DB migrations not present in the target image's manifest, then redeploys the canary app and workers to that tag.
-
-| Input | Description |
-|---|---|
-| `rollback_to_image_tag` | Target image tag to roll back to (e.g. `0.51.0.abc1234.canary`). Leave blank to roll back to the current cloud production image. |
-| `force` | Force rollback even if breaking migrations exist. Default: `false`. |
 
 ### `release-self-hosted.yml`
 

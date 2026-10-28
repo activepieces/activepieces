@@ -12,6 +12,10 @@ on:
         type: choice
         options:
           - cloud-hotfix # Build from current branch and deploy directly to production, bypassing staging
+      skip_migration_check:
+        description: 'Deploy even when a pending migration is marked breaking'
+        type: boolean
+        default: false
 
 jobs:
   guard:
@@ -81,7 +85,7 @@ jobs:
     uses: ./.github/workflows/continuous-delivery-canary.yml
     with:
       image_tag: ${{ needs.build-image.outputs.image_tag }}
-      skip_migration_check: ${{ github.event_name == 'workflow_dispatch' }}
+      skip_migration_check: ${{ inputs.skip_migration_check == true }}
     secrets: inherit
 
   promote-to-production:
