@@ -210,25 +210,39 @@ jobs:
     steps:
       - run: echo "Approved ${{ needs.cut.outputs.image_tag }}"
 
-  deploy-canary:
+  # One job holds the production lock from the migration check through the fleet deploy, because
+  # GitHub keeps only one pending job per group: a lock per job lets a later run slip between the
+  # canary and the fleet. The group matches continuous-delivery-rollback.yml.
+  deploy:
     needs: [cut, approve]
-    concurrency:
-      group: cloud-deploy
-      cancel-in-progress: false
-    uses: ./.github/workflows/continuous-delivery-canary.yml
-    with:
-      image_tag: ${{ needs.cut.outputs.image_tag }}
-      ref: ${{ needs.cut.outputs.sha }}
-      skip_migration_check: ${{ inputs.skip_migration_check == true }}
-    secrets: inherit
-
-  promote-to-production:
-    needs: [cut, deploy-canary]
     runs-on: ubuntu-latest
     concurrency:
-      group: cloud-deploy
+      group: promote-production
       cancel-in-progress: false
     steps:
+      - uses: actions/checkout@v5
+        if: inputs.skip_migration_check != true
+        with:
+          ref: ${{ needs.cut.outputs.sha }}
+
+      - uses: actions/setup-node@v6
+        if: inputs.skip_migration_check != true
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        if: inputs.skip_migration_check != true
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        if: inputs.skip_migration_check != true
+        run: bun install --frozen-lockfile
+
+      - name: Build shared and server-utils packages
+        if: inputs.skip_migration_check != true
+        run: bunx turbo run build --filter=@activepieces/shared --filter=@activepieces/server-utils
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -245,6 +259,38 @@ jobs:
           SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
+
+      # The canary app runs migrations on the shared database at boot, so a pending migration marked
+      # breaking stops the deploy here, before any host changes.
+      - name: Get current canary manifest
+        id: current-manifest
+        if: inputs.skip_migration_check != true
+        run: |
+          MANIFEST=$(ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal app exec \
+            --reuse \
+            --config-file=config/app-canary.yml -- \
+            cat /usr/src/app/packages/server/api/dist/src/migration-manifest.json; exit"' \
+            2>/dev/null | grep '^\[' || echo '[]')
+          echo "json=$MANIFEST" >> $GITHUB_OUTPUT
+
+      - name: Check for breaking migrations
+        id: check
+        if: inputs.skip_migration_check != true
+        run: bunx tsx tools/scripts/check-manifest-migrations.ts '${{ steps.current-manifest.outputs.json }}'
+
+      - name: Fail on breaking migrations
+        if: steps.check.outputs.has_breaking == 'true'
+        run: |
+          echo "::error::Breaking migrations pending on ${{ needs.cut.outputs.sha }}: ${{ steps.check.outputs.breaking_names }}"
+          exit 1
+
+      - name: Deploy canary app
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.cut.outputs.image_tag }} --config-file=config/app-canary.yml --skip-push; exit"'
+
+      - name: Deploy canary workers
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.cut.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
 
       - name: Deploy App to production
         run: |
@@ -268,7 +314,7 @@ jobs:
   # Records the deploy in the Linear "Cloud" release pipeline. Never fails the workflow.
   # A rollback or emergency deploy does not sync.
   linear-release:
-    needs: [cut, promote-to-production]
+    needs: [cut, deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     continue-on-error: true

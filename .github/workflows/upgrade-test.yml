@@ -19,7 +19,7 @@ on:
         default: ''
     outputs:
       swapped:
-        description: 'true once the image under test runs, so a later failure is the image and not the setup'
+        description: 'true once the upgrade starts, so a later failure is the image under test and not the setup'
         value: ${{ jobs.upgrade.outputs.swapped }}
   workflow_dispatch:
     inputs:
@@ -128,14 +128,14 @@ jobs:
         id: swap
         run: |
           docker tag activepieces-candidate:local activepieces-benchmark:local
+          echo "swapped=true" >> "$GITHUB_OUTPUT"
           docker compose up -d --no-deps --no-build app worker
           EXPECTED=$(docker image inspect -f '{{.Id}}' activepieces-candidate:local)
-          RUNNING=$(docker compose ps -q app worker | xargs docker inspect -f '{{.Image}}' | sort -u)
-          if [ "$RUNNING" != "$EXPECTED" ]; then
-            echo "::error::The app and worker run $RUNNING, not the image under test $EXPECTED"
+          CREATED=$(docker compose ps -a -q app worker | xargs -r docker inspect -f '{{.Image}}' | sort -u)
+          if [ "$CREATED" != "$EXPECTED" ]; then
+            echo "::error::The app and worker containers use $CREATED, not the image under test $EXPECTED"
             exit 1
           fi
-          echo "swapped=true" >> "$GITHUB_OUTPUT"
 
       - name: Wait for the background migrations
         run: |
