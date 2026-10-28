@@ -45,7 +45,23 @@ export const listImagesAction = createAction({
     return {
       items: raw.map((i) => bannerbearClient.normalizeImage(i)),
       page,
-      has_more: raw.length >= limit,
+      has_more: raw.length >= fullPageSize({ apiKey, limit }),
     };
   },
 });
+
+// V5 honours `limit`, but if the server ever caps pages at 25 a short page
+// must still count as full, otherwise has_more would stop agents early.
+export function fullPageSize({
+  apiKey,
+  limit,
+}: {
+  apiKey: string;
+  limit: number;
+}): number {
+  return bannerbearClient.getVersion(apiKey) === 'v5'
+    ? Math.min(limit, V5_MAX_SERVER_PAGE)
+    : limit;
+}
+
+const V5_MAX_SERVER_PAGE = 25;
