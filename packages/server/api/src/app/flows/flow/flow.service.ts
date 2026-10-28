@@ -202,7 +202,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         if (connectionExternalIds !== undefined) {
-            queryBuilder.andWhere('latest_version."connectionIds" && :connectionExternalIds', { connectionExternalIds })
+            const filteredVersion = versionState === FlowVersionState.DRAFT ? 'latest_version' : 'published_version'
+            queryBuilder.andWhere(`${filteredVersion}."connectionIds" && :connectionExternalIds`, { connectionExternalIds })
         }
 
         if (agentExternalIds !== undefined) {
