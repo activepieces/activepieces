@@ -8,6 +8,7 @@ import { getGames } from '../src/lib/actions/get-games';
 import { getPolls } from '../src/lib/actions/get-polls';
 import { sendShoutout } from '../src/lib/actions/send-shoutout';
 import { getStreamMarkers } from '../src/lib/actions/get-stream-markers';
+import { streamStarted } from '../src/lib/triggers/stream-started';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { twitchCommon } from '../src/lib/common';
 describe('twitchCommon.normalizeLogin', () => {
@@ -255,5 +256,74 @@ describe('social: send_shoutout', () => {
     expect(post?.method).toBe(HttpMethod.POST);
     expect(post?.url).toBe('https://api.twitch.tv/helix/chat/shoutouts?from_broadcaster_id=111&to_broadcaster_id=5&moderator_id=111');
     expect(result).toEqual({ success: true, from_broadcaster_id: '111', to_broadcaster_id: '5' });
+  });
+});
+
+function memoryStore() {
+  const data: Record<string, unknown> = {};
+  return {
+    data,
+    get: async <T>(key: string) => (key in data ? (data[key] as T) : null),
+    put: async <T>(key: string, value: T) => {
+      data[key] = value;
+      return value;
+    },
+    delete: async (key: string) => {
+      delete data[key];
+    },
+  };
+}
+
+function liveStream(i: number, startedAt: string) {
+  return { id: `s${i}`, user_login: `user${i}`, started_at: startedAt, tag_ids: [], tags: ['English'] };
+}
+
+function triggerCtx(streamers: unknown[], store = memoryStore()) {
+  return { auth: { access_token: 'tok', client_id: 'cid' }, propsValue: { streamers }, store, files: {} } as never;
+}
+
+describe('trigger: stream_started', () => {
+  it('makes no request and throws when every entry is blank or invalid', async () => {
+    const calls = mockTwitch(() => ({ status: 200, body: { data: [] } }));
+    await expect(streamStarted.test(triggerCtx(['', '  ', 'https://twitch.tv/']))).rejects.toThrow('at least one valid Twitch username');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('splits more than 100 logins into requests of at most 100 with first=100', async () => {
+    const calls = mockTwitch(() => ({ status: 200, body: { data: [] } }));
+    const logins = Array.from({ length: 250 }, (_, i) => `user${i}`);
+    await streamStarted.test(triggerCtx(logins));
+    const streams = calls.filter((c) => c.url.startsWith('https://api.twitch.tv/helix/streams'));
+    expect(streams).toHaveLength(3);
+    const perRequest = streams.map((c) => new URL(c.url).searchParams);
+    expect(perRequest.map((q) => q.getAll('user_login').length)).toEqual([100, 100, 50]);
+    expect(perRequest.every((q) => q.get('first') === '100')).toBe(true);
+    expect(perRequest.flatMap((q) => q.getAll('user_login'))).toEqual(logins);
+  });
+
+  it('returns every live stream when more than 20 are live', async () => {
+    const live = Array.from({ length: 30 }, (_, i) => liveStream(i, new Date(Date.UTC(2030, 0, 1, 0, i)).toISOString()));
+    mockTwitch(() => ({ status: 200, body: { data: live } }));
+    const store = memoryStore();
+    const logins = live.map((s) => s.user_login);
+    await store.put('lastPoll', Date.UTC(2029, 0, 1));
+    const result = (await streamStarted.run(triggerCtx(logins, store))) as Array<Record<string, unknown>>;
+    expect(result).toHaveLength(30);
+    expect(result[0]).not.toHaveProperty('tag_ids');
+  });
+
+  it('does not fire the same streams again on the next poll', async () => {
+    const now = Date.now();
+    const live = [liveStream(1, new Date(now + 60_000).toISOString()), liveStream(2, new Date(now + 120_000).toISOString())];
+    mockTwitch(() => ({ status: 200, body: { data: live } }));
+    const store = memoryStore();
+    const context = triggerCtx(['user1', 'user2'], store);
+    await streamStarted.onEnable(context);
+    expect(typeof store.data['lastPoll']).toBe('number');
+    const first = (await streamStarted.run(context)) as Array<{ id: string }>;
+    expect(first.map((s) => s.id)).toEqual(['s1', 's2']);
+    expect(store.data['lastPoll']).toBe(now + 120_000);
+    const second = await streamStarted.run(context);
+    expect(second).toEqual([]);
   });
 });
