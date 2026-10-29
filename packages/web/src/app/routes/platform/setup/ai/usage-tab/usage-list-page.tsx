@@ -141,7 +141,8 @@ function UsageListBody({
       return (
         needle.length === 0 ||
         name.includes(needle) ||
-        (item.parent ?? '').toLowerCase().includes(needle)
+        (item.parent ?? '').toLowerCase().includes(needle) ||
+        usageAdapters.itemSubtitle({ item }).toLowerCase().includes(needle)
       );
     }),
     sort,

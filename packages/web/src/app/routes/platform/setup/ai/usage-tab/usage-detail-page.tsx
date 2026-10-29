@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  AI_USAGE_CREDITS_KEY_ID,
   AI_USAGE_DIMENSIONS,
   AiUsageDetail,
   AiUsageDimension,
@@ -250,13 +251,23 @@ function DetailTiles({
       />,
     ],
     key: [
-      <StatCard
-        key="reported"
-        label={t('Reported by provider')}
-        icon={<Receipt />}
-        value={usageFormat.usd(detail.reportedUsd ?? 0)}
-        hint={t('Cost the provider sent back with each call')}
-      />,
+      item.id === AI_USAGE_CREDITS_KEY_ID ? (
+        <StatCard
+          key="reported"
+          label={t('Billed on your plan')}
+          icon={<Receipt />}
+          value={usageFormat.usd(detail.reportedUsd ?? 0)}
+          hint={t('What these calls used of your Activepieces credits')}
+        />
+      ) : (
+        <StatCard
+          key="reported"
+          label={t('Reported by provider')}
+          icon={<Receipt />}
+          value={usageFormat.usd(detail.reportedUsd ?? 0)}
+          hint={t('Cost the provider sent back with each call')}
+        />
+      ),
       <StatCard
         key="estimated"
         label={t('Estimated')}
