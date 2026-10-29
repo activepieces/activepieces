@@ -157,7 +157,7 @@ function assertManagedModelAllowed({ provider, modelId, image, adminChosenModelI
     }, message)
 }
 
-function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false, adminChosenImageModelId }: {
+function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId, imageGeneration = false, adminChosenImageModelId, agentToolCalls = false }: {
     credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
@@ -170,11 +170,12 @@ function createModel({ credentials, modelId, metadata, flowStep, billing, turnAl
     providerConfigId?: string
     imageGeneration?: boolean
     adminChosenImageModelId?: string
+    agentToolCalls?: boolean
 }): LanguageModel {
     assertManagedModelAllowed({ provider: credentials.provider, modelId, image: imageGeneration, ...spreadIfDefined('adminChosenModelId', adminChosenImageModelId) })
     const model = buildModel({ credentials, modelId, metadata, flowStep, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
     return billedLanguageModel({
-        model: streamedToolInput.preserveStreamedToolInput(model),
+        model: agentToolCalls ? streamedToolInput.preserveStreamedToolInput(model) : model,
         provider: credentials.provider,
         modelId,
         billing,

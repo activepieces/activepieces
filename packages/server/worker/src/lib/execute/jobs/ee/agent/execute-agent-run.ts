@@ -148,11 +148,13 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 metadata: { platformId, conversationId, runId },
                 billing,
                 turnAlreadyCharged: true,
+                agentToolCalls: true,
             })
             const fastModel = aiUtils.createModel({
                 credentials, modelId: config.fastModelId,
                 billing,
                 turnAlreadyCharged: true,
+                agentToolCalls: true,
             })
             const turnModels = turnModelsFor({ config, model, billing, metadata: { platformId, conversationId, runId } })
             const fastTurnModel: TurnModel | undefined = isNil(config.platformTier)
@@ -544,7 +546,7 @@ function turnModelsFor({ config, model, billing, metadata }: { config: AgentConf
 
 function candidateTurnModel({ candidate, billing, metadata }: { candidate: AgentModelCandidate, billing: ActivepiecesAiBilling, metadata?: ModelMetadata }): TurnModel {
     return {
-        model: aiUtils.createModel({ credentials: candidate, modelId: candidate.modelId, billing, turnAlreadyCharged: true, ...spreadIfDefined('metadata', metadata) }),
+        model: aiUtils.createModel({ credentials: candidate, modelId: candidate.modelId, billing, turnAlreadyCharged: true, agentToolCalls: true, ...spreadIfDefined('metadata', metadata) }),
         provider: candidate.provider,
         modelId: candidate.modelId,
         thinkingBudget: candidate.thinkingBudget,
