@@ -85,6 +85,61 @@ const buildFor = (provider: AIProviderName, options?: Record<string, unknown>) =
 
 const supportedProviders = Object.values(AIProviderName).filter((p) => p !== AIProviderName.CLOUDFLARE_GATEWAY)
 
+const forcedCall = {
+    tools: [{ type: 'function' as const, name: 'extractData', inputSchema: { type: 'object' as const, properties: {} } }],
+    toolChoice: { type: 'tool' as const, toolName: 'extractData' },
+    prompt: [{ role: 'user' as const, content: [{ type: 'text' as const, text: 'hi' }] }],
+}
+
+async function replyingWith<T>({ replies, send }: {
+    replies: Record<string, unknown>[]
+    send: (model: ReturnType<typeof createLanguageModel>) => Promise<T>
+}): Promise<{ bodies: Record<string, unknown>[], result: T }> {
+    const original = globalThis.fetch
+    const bodies: Record<string, unknown>[] = []
+    globalThis.fetch = (_input, init) => {
+        bodies.push(typeof init?.body === 'string' ? JSON.parse(init.body) : {})
+        const reply = replies[Math.min(bodies.length - 1, replies.length - 1)]
+        return Promise.resolve(new Response(JSON.stringify(reply), { headers: { 'content-type': 'application/json' } }))
+    }
+    try {
+        const result = await send(buildFor(AIProviderName.META))
+        return { bodies, result }
+    }
+    finally {
+        globalThis.fetch = original
+    }
+}
+
+async function readStream(stream: ReadableStream<{ type: string }>): Promise<{ type: string }[]> {
+    const parts: { type: string }[] = []
+    const reader = stream.getReader()
+    for (let next = await reader.read(); !next.done; next = await reader.read()) {
+        parts.push(next.value)
+    }
+    return parts
+}
+
+const RESPONSE_BASE = {
+    id: 'resp_1',
+    object: 'response',
+    created_at: 1,
+    model: 'muse-spark-1.3',
+    status: 'completed',
+    incomplete_details: null,
+    usage: { input_tokens: 1, output_tokens: 1, input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } },
+}
+
+const TEXT_REPLY = {
+    ...RESPONSE_BASE,
+    output: [{ type: 'message', id: 'msg_1', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: 'Here is the data.', annotations: [] }] }],
+}
+
+const TOOL_REPLY = {
+    ...RESPONSE_BASE,
+    output: [{ type: 'function_call', id: 'fc_1', call_id: 'call_1', name: 'extractData', arguments: '{}', status: 'completed' }],
+}
+
 describe('AIProviderConfig union', () => {
     it('keeps every Vertex field instead of losing them to a looser member', () => {
         const config = {
@@ -187,6 +242,41 @@ describe('createLanguageModel', () => {
 
             expect(body.tool_choice).toBe('auto')
             expect(toolNames(body)).toEqual(['extractData', 'search'])
+        })
+
+        it('tells the model to call the forced tool', async () => {
+            const { body } = await sendToMeta({ type: 'tool', toolName: 'extractData' })
+
+            expect(JSON.stringify(body.input)).toContain('Reply only by calling the extractData tool')
+        })
+
+        it('asks once more when the model answers a forced call in text, then stops', async () => {
+            const { bodies, result } = await replyingWith({ replies: [TEXT_REPLY, TEXT_REPLY], send: (model) => model.doGenerate(forcedCall) })
+
+            expect(bodies).toHaveLength(2)
+            expect(JSON.stringify(bodies[1].input)).toContain('Your previous reply did not call a tool')
+            expect(result.content.some((part) => part.type === 'tool-call')).toBe(false)
+        })
+
+        it('does not ask again once the model calls the tool', async () => {
+            const { bodies, result } = await replyingWith({ replies: [TOOL_REPLY], send: (model) => model.doGenerate(forcedCall) })
+
+            expect(bodies).toHaveLength(1)
+            expect(result.content).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
+        })
+
+        it('serves a forced streamed call from the retried generate call', async () => {
+            const { bodies, result } = await replyingWith({
+                replies: [TEXT_REPLY, TOOL_REPLY],
+                send: async (model) => {
+                    const { stream } = await model.doStream(forcedCall)
+                    return readStream(stream)
+                },
+            })
+
+            expect(bodies).toHaveLength(2)
+            expect(bodies.every((body) => body.stream !== true)).toBe(true)
+            expect(result).toContainEqual(expect.objectContaining({ type: 'tool-call', toolName: 'extractData' }))
         })
     })
 
