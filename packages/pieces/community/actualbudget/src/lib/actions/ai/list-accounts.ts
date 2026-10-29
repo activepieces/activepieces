@@ -7,7 +7,7 @@ import { actualOutputSchemas } from '../../common/output-schemas';
 export const listAccounts = createAction({
   auth: actualBudgetAuth,
   name: 'list_accounts',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Accounts',
   description: 'Lists accounts with their current balance.',
   audience: 'ai',

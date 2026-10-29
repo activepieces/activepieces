@@ -6,7 +6,7 @@ import { actualOutputSchemas } from '../common/output-schemas';
 export const getAccounts = createAction({
   auth: actualBudgetAuth,
   name: 'get_accounts',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'Get Accounts',
   description: 'Gets every account in the budget (open and closed).',
   audience: 'human',

@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { actualBudgetAuth } from '../common/auth';
 import { ActualBudgetError, withBudget } from '../common/client';
-import { optionalId, queryRows } from '../common/helpers';
+import { flushWrites, optionalId, queryRows } from '../common/helpers';
 import { actualOutputSchemas } from '../common/output-schemas';
 
 export const runBankSync = createAction({
@@ -74,6 +74,7 @@ export const runBankSync = createAction({
         for (const account of targets) {
           await api.runBankSync({ accountId: account.id });
         }
+        await flushWrites(api);
         return {
           success: true,
           synced_accounts: targets.map((a) => ({
