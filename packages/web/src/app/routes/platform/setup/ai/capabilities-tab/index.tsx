@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
+  ArrowRight,
   Database,
   Globe,
   Image,
@@ -26,7 +27,6 @@ import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state'
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   aiProviderQueries,
@@ -41,6 +41,7 @@ import {
   AI_TOOL_CATALOG,
   aiCapabilitySources,
   AiToolCapabilityInfo,
+  AiToolProviderInfo,
 } from '../../ai-capabilities/catalog';
 
 export function CapabilitiesTab() {
@@ -165,8 +166,8 @@ function CapabilityCard({
     capabilityInfo.capability !== AiToolCapability.WEB_SCRAPING;
 
   return (
-    <div className={cn(adminSurface.card, 'group flex flex-col gap-3 p-5')}>
-      <div className="flex items-start gap-3">
+    <div className={cn(adminSurface.card, 'group flex flex-col')}>
+      <div className="flex items-start gap-3 p-5">
         <div
           className={cn(
             'flex size-9 shrink-0 items-center justify-center rounded-lg',
@@ -175,15 +176,11 @@ function CapabilityCard({
         >
           <look.icon className="size-4" />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <p className="truncate text-sm font-semibold text-gray-12">
             {capabilityInfo.name}
           </p>
-          <CapabilityStatus
-            inUse={inUse}
-            sourceName={sourceName}
-            modelId={chosenModelId}
-          />
+          <p className="text-sm text-gray-11">{capabilityInfo.description}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {config && (
@@ -218,7 +215,10 @@ function CapabilityCard({
           )}
           {needsProviderKey ? (
             <Button asChild variant="outline" size="sm">
-              <Link to="/platform/ai">{t('Add a key')}</Link>
+              <Link to="/platform/ai">
+                {t('Connect a provider')}
+                <ArrowRight className="size-4" />
+              </Link>
             </Button>
           ) : (
             <AiCapabilityDialog
@@ -238,60 +238,80 @@ function CapabilityCard({
           )}
         </div>
       </div>
-      <p className="text-sm text-gray-11">{capabilityInfo.description}</p>
-      <div className="mt-auto flex items-center gap-2 pt-1 text-xs text-gray-11">
-        <span>{t('Works with')}</span>
-        {capabilityInfo.providers.map((provider) => (
-          <span key={provider.id} className="inline-flex items-center gap-1.5">
-            <LogoPlate
-              src={provider.logoUrl}
-              alt={provider.name}
-              border
-              className="size-5 rounded-md"
-              innerClassName="p-0.5"
-            />
-            <span className="text-gray-12">{provider.name}</span>
-          </span>
-        ))}
-        {servedByAiKeys && (
-          <span className="text-gray-12">
-            {capabilityInfo.providers.length > 0
-              ? t('or your AI key')
-              : t('your AI keys')}
-          </span>
+      <div className="mt-auto flex min-h-11 min-w-0 items-center gap-2 border-t px-5 py-2.5 text-xs text-gray-11">
+        {inUse ? (
+          <CapabilityInUse sourceName={sourceName} modelId={chosenModelId} />
+        ) : (
+          <CapabilityOptions
+            providers={capabilityInfo.providers}
+            servedByAiKeys={servedByAiKeys}
+          />
         )}
       </div>
     </div>
   );
 }
 
-function CapabilityStatus({
-  inUse,
+function CapabilityInUse({
   sourceName,
   modelId,
 }: {
-  inUse: boolean;
   sourceName: string | undefined;
   modelId: string | undefined;
 }) {
-  const label = inUse
-    ? t('On · {provider}', { provider: sourceName })
-    : t('Off');
+  const label = t('Using {provider}', { provider: sourceName });
   return (
-    <span className="flex min-w-0 items-center gap-2">
-      <Badge
-        variant={inUse ? 'success' : 'secondary'}
-        className="gap-1.5 rounded-full border-transparent px-2"
-      >
-        <span aria-hidden className="size-1.5 rounded-full bg-current" />
-        <TextWithTooltip tooltipMessage={label}>
-          <span className="truncate">{label}</span>
-        </TextWithTooltip>
-      </Badge>
+    <>
+      <span
+        aria-hidden
+        className="size-1.5 shrink-0 rounded-full bg-success-10"
+      />
+      <TextWithTooltip tooltipMessage={label}>
+        <span className="truncate font-medium text-gray-12">{label}</span>
+      </TextWithTooltip>
       {modelId && (
-        <TextWithTooltip tooltipMessage={modelId}>
-          <span className="truncate text-xs text-gray-11">{modelId}</span>
-        </TextWithTooltip>
+        <>
+          <span aria-hidden>·</span>
+          <TextWithTooltip tooltipMessage={modelId}>
+            <span className="truncate">{modelId}</span>
+          </TextWithTooltip>
+        </>
+      )}
+    </>
+  );
+}
+
+function CapabilityOptions({
+  providers,
+  servedByAiKeys,
+}: {
+  providers: AiToolProviderInfo[];
+  servedByAiKeys: boolean;
+}) {
+  return (
+    <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+      <span>{t('Works with')}</span>
+      {providers.map((provider, index) => (
+        <span key={provider.id} className="inline-flex items-center gap-1.5">
+          {index > 0 && <span>{t('or')}</span>}
+          <LogoPlate
+            src={provider.logoUrl}
+            alt={provider.name}
+            border
+            className="size-5 rounded-md"
+            innerClassName="p-0.5"
+          />
+          <span className="text-gray-12">
+            {t('{service} API key', { service: provider.name })}
+          </span>
+        </span>
+      ))}
+      {servedByAiKeys && (
+        <span className="text-gray-12">
+          {providers.length > 0
+            ? t('or an AI provider key')
+            : t('an AI provider key')}
+        </span>
       )}
     </span>
   );
