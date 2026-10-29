@@ -95,6 +95,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function buildPollingQuery({ object, dateField, startDate, conditions }: BuildPollingQueryParams): string {
+	const filter = conditions ? ` AND (${conditions})` : '';
+	return `SELECT FIELDS(ALL) FROM ${object} WHERE ${dateField} > ${startDate}${filter} ORDER BY ${dateField} ASC LIMIT 200 OFFSET 0`;
+}
+
+function getHistoryObjectName(object: string): string {
+	if (object.endsWith('__c')) {
+		return object.replace('__c', '__History');
+	}
+	if (object === 'Opportunity') {
+		return 'OpportunityFieldHistory';
+	}
+	return `${object}History`;
+}
+
 export const salesforceUtils = {
 	escapeSoqlValue,
 	escapeSoqlLike,
@@ -108,6 +123,8 @@ export const salesforceUtils = {
 	cleanRecord,
 	formatQueryResult,
 	isRecord,
+	buildPollingQuery,
+	getHistoryObjectName,
 };
 
 function parseJson({ value, fieldName }: { value: string; fieldName: string }): unknown {
@@ -128,4 +145,11 @@ export type QueryResult<T> = {
 	done: boolean;
 	nextRecordsUrl?: string;
 	records: T[];
+};
+
+type BuildPollingQueryParams = {
+	object: string;
+	dateField: 'CreatedDate' | 'LastModifiedDate';
+	startDate: string;
+	conditions: string | undefined;
 };

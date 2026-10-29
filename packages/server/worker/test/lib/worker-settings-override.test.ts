@@ -209,6 +209,15 @@ describe('worker settings override', () => {
         expect(stored.SANDBOX_MEMORY_LIMIT).toBe('524288')
     }, 10_000)
 
+    it('empty local AP_SANDBOX_MEMORY_LIMIT keeps server-provided limit', async () => {
+        process.env.AP_SANDBOX_MEMORY_LIMIT = ''
+        const serverSettings = buildWorkerSettingsResponse({ SANDBOX_MEMORY_LIMIT: '524288' })
+        await connectAndWaitForSettings(serverSettings)
+
+        const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
+        expect(stored.SANDBOX_MEMORY_LIMIT).toBe('524288')
+    }, 10_000)
+
     it.each(['invalid', '2097152KB', '0', '-1'])('invalid local AP_SANDBOX_MEMORY_LIMIT %s throws', async (value) => {
         process.env.AP_SANDBOX_MEMORY_LIMIT = value
         const serverSettings = buildWorkerSettingsResponse()

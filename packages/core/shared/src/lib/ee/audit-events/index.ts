@@ -52,6 +52,22 @@ export enum ApplicationEventName {
     USER_EMAIL_VERIFIED = 'user.email.verified',
     SIGNING_KEY_CREATED = 'signing.key.created',
     AUDIT_LOG_RETENTION_UPDATED = 'audit.log.retention.updated',
+    EMAIL_SIGN_IN_ENABLED = 'authentication.email.enabled',
+    EMAIL_SIGN_IN_DISABLED = 'authentication.email.disabled',
+    GOOGLE_SIGN_IN_ENABLED = 'authentication.google.enabled',
+    GOOGLE_SIGN_IN_DISABLED = 'authentication.google.disabled',
+    ALLOWED_DOMAIN_ADDED = 'authentication.allowed.domain.added',
+    ALLOWED_DOMAIN_REMOVED = 'authentication.allowed.domain.removed',
+    ALLOWED_DOMAIN_ENFORCEMENT_ENABLED = 'authentication.allowed.domain.enforcement.enabled',
+    ALLOWED_DOMAIN_ENFORCEMENT_DISABLED = 'authentication.allowed.domain.enforcement.disabled',
+    SSO_DOMAIN_ADDED = 'sso.domain.added',
+    SSO_DOMAIN_VERIFIED = 'sso.domain.verified',
+    SSO_DOMAIN_VERIFICATION_CANCELLED = 'sso.domain.verification.cancelled',
+    SSO_DOMAIN_REMOVED = 'sso.domain.removed',
+    SSO_DOMAIN_EXPIRED = 'sso.domain.expired',
+    SAML_CONNECTED = 'sso.saml.connected',
+    SAML_CONNECTION_REPLACED = 'sso.saml.replaced',
+    SSO_DISABLED = 'sso.saml.disabled',
     PROJECT_ROLE_CREATED = 'project.role.created',
     PROJECT_ROLE_DELETED = 'project.role.deleted',
     PROJECT_ROLE_UPDATED = 'project.role.updated',
@@ -532,6 +548,42 @@ export const AuditLogRetentionUpdatedEvent = z.object({
 
 export type AuditLogRetentionUpdatedEvent = z.infer<typeof AuditLogRetentionUpdatedEvent>
 
+export const AuthenticationSettingEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.EMAIL_SIGN_IN_ENABLED),
+        z.literal(ApplicationEventName.EMAIL_SIGN_IN_DISABLED),
+        z.literal(ApplicationEventName.GOOGLE_SIGN_IN_ENABLED),
+        z.literal(ApplicationEventName.GOOGLE_SIGN_IN_DISABLED),
+        z.literal(ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED),
+        z.literal(ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED),
+        z.literal(ApplicationEventName.SAML_CONNECTED),
+        z.literal(ApplicationEventName.SAML_CONNECTION_REPLACED),
+        z.literal(ApplicationEventName.SSO_DISABLED),
+    ]),
+    data: z.object({}),
+})
+
+export type AuthenticationSettingEvent = z.infer<typeof AuthenticationSettingEvent>
+
+export const AuthenticationDomainEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.ALLOWED_DOMAIN_ADDED),
+        z.literal(ApplicationEventName.ALLOWED_DOMAIN_REMOVED),
+        z.literal(ApplicationEventName.SSO_DOMAIN_ADDED),
+        z.literal(ApplicationEventName.SSO_DOMAIN_VERIFIED),
+        z.literal(ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED),
+        z.literal(ApplicationEventName.SSO_DOMAIN_REMOVED),
+        z.literal(ApplicationEventName.SSO_DOMAIN_EXPIRED),
+    ]),
+    data: z.object({
+        domain: z.string(),
+    }),
+})
+
+export type AuthenticationDomainEvent = z.infer<typeof AuthenticationDomainEvent>
+
 export const ProjectRoleEvent = z.object({
     ...BaseAuditEventProps,
     action: z.union([
@@ -649,6 +701,8 @@ export const ApplicationEvent = z.union([
     SignUpEvent,
     SigningKeyEvent,
     AuditLogRetentionUpdatedEvent,
+    AuthenticationSettingEvent,
+    AuthenticationDomainEvent,
     ProjectRoleEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
@@ -740,6 +794,38 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             const next = describeAuditLogRetention({ days: retentionDays, instanceLimitDays })
             return `Audit log retention changed from ${previous} to ${next}`
         }
+        case ApplicationEventName.EMAIL_SIGN_IN_ENABLED:
+            return 'Email and password sign-in turned on'
+        case ApplicationEventName.EMAIL_SIGN_IN_DISABLED:
+            return 'Email and password sign-in turned off'
+        case ApplicationEventName.GOOGLE_SIGN_IN_ENABLED:
+            return 'Google sign-in turned on'
+        case ApplicationEventName.GOOGLE_SIGN_IN_DISABLED:
+            return 'Google sign-in turned off'
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_ENABLED:
+            return 'Only allowed email domains can join or sign in with email and password'
+        case ApplicationEventName.ALLOWED_DOMAIN_ENFORCEMENT_DISABLED:
+            return 'Any email domain can join or sign in with email and password'
+        case ApplicationEventName.ALLOWED_DOMAIN_ADDED:
+            return `${event.data.domain} added to allowed email domains`
+        case ApplicationEventName.ALLOWED_DOMAIN_REMOVED:
+            return `${event.data.domain} removed from allowed email domains`
+        case ApplicationEventName.SSO_DOMAIN_ADDED:
+            return `${event.data.domain} added, waiting for DNS verification`
+        case ApplicationEventName.SSO_DOMAIN_VERIFIED:
+            return `${event.data.domain} verified`
+        case ApplicationEventName.SSO_DOMAIN_VERIFICATION_CANCELLED:
+            return `Verification of ${event.data.domain} cancelled`
+        case ApplicationEventName.SSO_DOMAIN_REMOVED:
+            return `${event.data.domain} removed`
+        case ApplicationEventName.SSO_DOMAIN_EXPIRED:
+            return `${event.data.domain} removed because it was not verified in time`
+        case ApplicationEventName.SAML_CONNECTED:
+            return 'SAML identity provider connected'
+        case ApplicationEventName.SAML_CONNECTION_REPLACED:
+            return 'SAML identity provider connection replaced'
+        case ApplicationEventName.SSO_DISABLED:
+            return 'Single sign-on disabled'
         case ApplicationEventName.PROJECT_ROLE_CREATED:
             return `${event.data.projectRole.name} is created`
         case ApplicationEventName.PROJECT_ROLE_UPDATED:

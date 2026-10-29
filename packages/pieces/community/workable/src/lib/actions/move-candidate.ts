@@ -1,57 +1,36 @@
-import { workableAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccountSubdomain } from '../common/get-subdomain';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { workableAuth } from '../auth';
+import { workableOps } from '../common/operations';
+import { accountSubdomainProp, jobDropdown, memberDropdown, stageDropdown } from '../common/props';
+import { workableSchemas } from '../common/schemas';
 
 export const moveCandidate = createAction({
   auth: workableAuth,
   name: 'moveCandidate',
   classification: 'WRITE',
   displayName: 'Move Candidate',
-  description: 'Moves candidate to the specified stage.',
-  audience: 'both',
-  aiMetadata: { description: 'Moves a Workable candidate into a target pipeline stage, recording the move on behalf of a given hiring-team member. Use to advance or change a candidate stage in the recruitment pipeline. Requires the candidate ID, the acting member ID, and the target stage slug (resolve valid slugs via Get Stages). Not idempotent — each call posts a stage transition.', idempotent: false },
+  description: 'Moves a candidate to another stage of their job pipeline.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Move a Workable candidate to a pipeline stage picked from dropdowns, recorded as the chosen hiring-team member. Running it again with the same stage leaves the candidate in that stage.',
+    idempotent: false,
+  },
+  outputSchema: workableSchemas.moved,
   props: {
+    account_subdomain: accountSubdomainProp,
     id: Property.ShortText({
-      displayName: "Candidate's Id",
-      description: "Id of candidate",
-      required: true
+      displayName: 'Candidate ID',
+      description: 'The Workable candidate ID, for example "ce4da98".',
+      required: true,
     }),
-    member_id: Property.ShortText({
-      displayName: "Member's Id",
-      description: "This person's Id is used to move the candidate to the next stage",
-      required: true
-    }),
-    target_stage: Property.ShortText({
-      displayName: "Target stage name",
-      description: "Slug of stage target should be moved to",
-      required: true
-    })
+    job: jobDropdown({ displayName: 'Job', description: "The candidate's job, used only to list its stages.", required: false }),
+    target_stage: stageDropdown({ required: true, description: 'Stage to move the candidate to.' }),
+    member_id: memberDropdown({ description: 'The hiring-team member the move is recorded for.' }),
   },
   async run(context) {
-    // Action logic here
-    const id = context.propsValue.id;
-    const member_id = context.propsValue.member_id;
-    const target_stage = context.propsValue.target_stage;
-
-    const accessToken = context.auth.secret_text;
-    const subdomain = await getAccountSubdomain(accessToken);
-
-    const payload: Record<string, any> = {
-      member_id: member_id,
-      target_stage: target_stage
-    }
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://${subdomain}.workable.com/spi/v3/candidates/${id}/move`,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json"
-      },
-      body: payload
-    })
-    
-    return response;
+    const p = context.propsValue;
+    const client = workableOps.client({ auth: context.auth, subdomain: p.account_subdomain });
+    return workableOps.moveCandidate({ client, candidateId: p.id, memberId: p.member_id, targetStage: p.target_stage });
   },
 });

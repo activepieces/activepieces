@@ -119,3 +119,27 @@ describe('agentToolClassification.requiresActionPreview: an action whose name pr
         expect(agentToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method: 'GET' } })).toBe(false)
     })
 })
+
+describe('agentToolClassification: a piece that declares its classification', () => {
+    it.each([
+        ['mark_as_read', false],
+        ['add_member_to_list', false],
+    ])('treats "%s" declared WRITE as a write, whatever its name says', (actionName, declaredReadOnly) => {
+        expect(agentToolClassification.isReadOnlyActionCall({ actionName, declaredReadOnly })).toBe(false)
+        expect(agentToolClassification.requiresActionPreview({ actionName, declaredReadOnly, needsConfirmation: false })).toBe(true)
+        expect(agentToolClassification.requiresActionPreview({ actionName, declaredReadOnly, tainted: true })).toBe(true)
+    })
+
+    it('treats an action declared READ as read-only, even when its name looks like a write', () => {
+        expect(agentToolClassification.isReadOnlyActionCall({ actionName: 'send_digest_preview', declaredReadOnly: true })).toBe(true)
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'send_digest_preview', declaredReadOnly: true, tainted: true })).toBe(false)
+    })
+
+    it('falls back to the name when the piece declares nothing', () => {
+        expect(agentToolClassification.isReadOnlyActionCall({ actionName: 'mark_as_read' })).toBe(true)
+    })
+
+    it('keeps reading a custom API call from its HTTP method', () => {
+        expect(agentToolClassification.isReadOnlyActionCall({ actionName: 'custom_api_call', input: { method: 'DELETE' }, declaredReadOnly: true })).toBe(false)
+    })
+})

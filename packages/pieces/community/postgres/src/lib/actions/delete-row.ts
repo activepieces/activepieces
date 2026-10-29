@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { postgresAuth } from '../..';
 import { pgClient, postgresCommon, postgresUtils } from '../common';
 import { deleteRowOutputSchema } from '../output-schemas';
@@ -15,7 +15,20 @@ export const deleteRow = createAction({
     description: 'Deletes every row in a PostgreSQL table whose search column equals a given value, and returns how many rows were removed. Use to remove records matched by a single column. Enable Return Deleted Rows to also get the deleted rows back, but leave it off when the delete can match many rows. Idempotent: once the matching rows are gone, re-running with the same input deletes nothing further.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'match',
+      display: 'section',
+      label: 'Rows to delete',
+      icon: 'trash',
+      props: ['delete_warning', 'table', 'search_column', 'search_value'],
+    },
+  ],
   props: {
+    delete_warning: Property.MarkDown({
+      value: 'Every matching row is deleted, and this cannot be undone.',
+      variant: MarkdownVariant.WARNING,
+    }),
     table: postgresCommon.table,
     search_column: postgresCommon.column({
       displayName: 'Search Column',
@@ -28,9 +41,10 @@ export const deleteRow = createAction({
     }),
     return_rows: Property.Checkbox({
       displayName: 'Return Deleted Rows',
-      description: 'Return every deleted row in the output. Leave off when the delete can match a large number of rows — the row count is always returned.',
+      description: 'Return every deleted row. The row count is always returned.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   async run(context) {

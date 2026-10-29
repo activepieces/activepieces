@@ -32,6 +32,14 @@ import { flowRepo } from './flow.repo'
 
 const notDeleting = { operationStatus: Not(FlowOperationStatus.DELETING) }
 
+const nonDraftOperationTypes: FlowOperationType[] = [
+    FlowOperationType.CHANGE_STATUS,
+    FlowOperationType.CHANGE_FOLDER,
+    FlowOperationType.UPDATE_METADATA,
+    FlowOperationType.UPDATE_MINUTES_SAVED,
+    FlowOperationType.UPDATE_OWNER,
+]
+
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
         await assertExternalIdIsUnique({ projectId, externalId })
@@ -333,21 +341,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
         ip,
         emitEvents = true,
         skipRequiredActionsCheck = false,
+        editorSessionId = null,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowBeforeOperation = emitEvents
             ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
             : undefined
-
-        let previouslyPublishedVersion: FlowVersion | undefined
-        if (operation.type === FlowOperationType.LOCK_AND_PUBLISH || operation.type === FlowOperationType.CHANGE_STATUS) {
-            const flow = await this.getOneOrThrow({
-                id,
-                projectId,
-            })
-            if (operation.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
-                previouslyPublishedVersion = await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: flow.publishedVersionId })
-            }
-        }
 
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
@@ -378,18 +376,21 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     })
                     break
                 }
-                const publishedFlow = await this.updatedPublishedVersionId({
+                await withStatusLock({
                     id,
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersionToPublish,
+                    log,
+                    fn: async () => {
+                        const { isRepublish, isTriggerUnchanged } = await this.updatedPublishedVersionId({
+                            id,
+                            userId,
+                            projectId,
+                            platformId,
+                            flowVersionToPublish,
+                            requestedStatus,
+                        })
+                        await changeStatus({ id, projectId, newStatus: requestedStatus, isRepublish, isTriggerUnchanged }, log)
+                    },
                 })
-                const isRepublish = !isNil(previouslyPublishedVersion) && flowPublishUtils.isSameTrigger({
-                    published: previouslyPublishedVersion.trigger,
-                    toPublish: publishedFlow.version.trigger,
-                })
-                await applyStatusChange({ id, projectId, newStatus: requestedStatus, isRepublish }, log)
                 break
             }
 
@@ -478,6 +479,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
             }
         }
 
+        if (isDraftWrite(operation.type)) {
+            await flowSideEffects(log).onDraftWritten({ flowId: id, projectId, editorSessionId })
+        }
+
         const updatedFlow = await this.getOnePopulatedOrThrow({
             id,
             projectId,
@@ -502,8 +507,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
         projectId,
         platformId,
         flowVersionToPublish,
-    }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
+        requestedStatus,
+    }: UpdatePublishedVersionIdParams): Promise<UpdatePublishedVersionIdResult> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
+        const liveVersion = flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)
+            ? await flowVersionService(log).getFlowVersionOrThrow({ flowId: id, versionId: flowToUpdate.publishedVersionId })
+            : undefined
+        const republishParams = { previouslyPublished: liveVersion, toPublish: flowVersionToPublish, requestedStatus }
+        const isRepublish = flowPublishUtils.isRepublish(republishParams)
+        const isTriggerUnchanged = flowPublishUtils.isTriggerUnchanged(republishParams)
 
         if (flowToUpdate.status === FlowStatus.ENABLED && !isNil(flowToUpdate.publishedVersionId)) {
             await triggerSourceService(log).disable({
@@ -511,6 +523,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 projectId: flowToUpdate.projectId,
                 simulate: false,
                 ignoreError: true,
+                isRepublish,
+                isTriggerUnchanged,
             })
         }
 
@@ -550,7 +564,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 payload: { flowId: id },
             },
         }), log)
-        return publishedFlow
+        return { publishedFlow, isRepublish, isTriggerUnchanged }
     },
 
     async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<void> {
@@ -565,8 +579,12 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus }): Promise<void> {
-        await applyStatusChange({ id, projectId, newStatus }, log)
+    async withStatusLock<T>({ id, fn }: { id: FlowId, fn: () => Promise<T> }): Promise<T> {
+        return withStatusLock({ id, log, fn })
+    },
+
+    async changeStatusHoldingLock(params: ChangeStatusParams): Promise<void> {
+        await changeStatus(params, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
@@ -757,6 +775,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
 })
 
 
+function isDraftWrite(type: FlowOperationType): boolean {
+    return !nonDraftOperationTypes.includes(type)
+}
+
 async function assertRequiredActionsPresent({ projectId, platformId, flowVersion, log }: AssertRequiredActionsParams): Promise<void> {
     const result = await flowPublishHooks.get(log).findMissingRequiredActions({ projectId, platformId, flowVersion })
     if (isNil(result)) {
@@ -822,56 +844,58 @@ async function withDraftLock({ flowId, log, fn }: {
     })
 }
 
-async function applyStatusChange(params: {
-    id: FlowId
-    projectId: ProjectId
-    newStatus: FlowStatus
-    isRepublish?: boolean
-}, log: FastifyBaseLogger): Promise<void> {
+async function applyStatusChange(params: ChangeStatusParams, log: FastifyBaseLogger): Promise<void> {
+    await withStatusLock({ id: params.id, log, fn: () => changeStatus(params, log) })
+}
+
+async function withStatusLock<T>({ id, log, fn }: WithStatusLockParams<T>): Promise<T> {
     const triggerTimeout = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
-    await distributedLock(log).runExclusive({
-        key: `flow-status-change-${params.id}`,
-        timeoutInSeconds: triggerTimeout + 30,
-        fn: async () => {
-            const flowToUpdate = await flowService(log).getOneOrThrow({
-                id: params.id,
-                projectId: params.projectId,
-            })
-            if (flowToUpdate.status === params.newStatus) {
-                return
-            }
-
-            const publishedFlowVersionId = flowToUpdate.publishedVersionId
-            if (isNil(publishedFlowVersionId)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.FLOW_OPERATION_INVALID,
-                    params: { message: 'Publish the flow before turning it on' },
-                })
-            }
-            const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
-                flowId: flowToUpdate.id,
-                versionId: publishedFlowVersionId,
-            })
-            if (params.newStatus === FlowStatus.ENABLED) {
-                assertTriggerIsSelected({ trigger: publishedFlowVersion.trigger })
-            }
-
-            await flowSideEffects(log).preUpdateStatus({
-                flowToUpdate,
-                publishedFlowVersion,
-                newStatus: params.newStatus,
-                templateId: flowToUpdate.templateId ?? undefined,
-                isRepublish: params.isRepublish,
-            })
-
-            await flowRepo().save({
-                ...flowToUpdate,
-                status: params.newStatus,
-                publishedVersionId: publishedFlowVersion.id,
-            })
-            await flowExecutionCache(log).invalidate(params.id)
-        },
+    return distributedLock(log).runExclusive({
+        key: `flow-status-change-${id}`,
+        timeoutInSeconds: triggerTimeout * 2 + 30,
+        fn,
     })
+}
+
+async function changeStatus(params: ChangeStatusParams, log: FastifyBaseLogger): Promise<void> {
+    const flowToUpdate = await flowService(log).getOneOrThrow({
+        id: params.id,
+        projectId: params.projectId,
+    })
+    if (flowToUpdate.status === params.newStatus) {
+        return
+    }
+
+    const publishedFlowVersionId = flowToUpdate.publishedVersionId
+    if (isNil(publishedFlowVersionId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_OPERATION_INVALID,
+            params: { message: 'Publish the flow before turning it on' },
+        })
+    }
+    const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
+        flowId: flowToUpdate.id,
+        versionId: publishedFlowVersionId,
+    })
+    if (params.newStatus === FlowStatus.ENABLED) {
+        assertTriggerIsSelected({ trigger: publishedFlowVersion.trigger })
+    }
+
+    await flowSideEffects(log).preUpdateStatus({
+        flowToUpdate,
+        publishedFlowVersion,
+        newStatus: params.newStatus,
+        templateId: flowToUpdate.templateId ?? undefined,
+        isRepublish: params.isRepublish,
+        isTriggerUnchanged: params.isTriggerUnchanged,
+    })
+
+    await flowRepo().save({
+        ...flowToUpdate,
+        status: params.newStatus,
+        publishedVersionId: publishedFlowVersion.id,
+    })
+    await flowExecutionCache(log).invalidate(params.id)
 }
 
 export const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
@@ -989,6 +1013,7 @@ type UpdateParams = EventEmissionParams & {
     platformId: PlatformId
     previousFlow?: PopulatedFlow
     skipRequiredActionsCheck?: boolean
+    editorSessionId?: string | null
 }
 
 type UpdatePublishedVersionIdParams = {
@@ -997,6 +1022,27 @@ type UpdatePublishedVersionIdParams = {
     platformId: PlatformId
     projectId: ProjectId
     flowVersionToPublish: FlowVersion
+    requestedStatus: FlowStatus
+}
+
+type ChangeStatusParams = {
+    id: FlowId
+    projectId: ProjectId
+    newStatus: FlowStatus
+    isRepublish?: boolean
+    isTriggerUnchanged?: boolean
+}
+
+type WithStatusLockParams<T> = {
+    id: FlowId
+    log: FastifyBaseLogger
+    fn: () => Promise<T>
+}
+
+type UpdatePublishedVersionIdResult = {
+    publishedFlow: PopulatedFlow
+    isRepublish: boolean
+    isTriggerUnchanged: boolean
 }
 
 type SetPublishedVersionParams = {

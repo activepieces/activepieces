@@ -20,13 +20,11 @@ import { cn } from '@/lib/utils';
 
 export function ThinkingBlock({
   thinkingSteps,
-  reasoningText,
   isStreaming,
   thinkingDurationMs,
   onOpenChange,
 }: {
   thinkingSteps: ThinkingStep[];
-  reasoningText: string;
   isStreaming: boolean;
   thinkingDurationMs?: number;
   onOpenChange?: (open: boolean) => void;
@@ -41,10 +39,9 @@ export function ThinkingBlock({
     [onOpenChange],
   );
 
-  const hasReasoning = reasoningText.length > 0;
   const hasSteps = thinkingSteps.length > 0;
 
-  if (!hasSteps && !hasReasoning && !isStreaming) return null;
+  if (!hasSteps && !isStreaming) return null;
 
   const isExpandable = hasSteps;
 
@@ -104,6 +101,12 @@ export function ThinkingBlock({
 
 function StepRenderer({ step }: { step: ThinkingStep }) {
   switch (step.kind) {
+    case 'reasoning':
+      return (
+        <p className="max-h-64 overflow-y-auto py-0.5 text-sm text-gray-11 whitespace-pre-wrap break-words">
+          {step.text}
+        </p>
+      );
     case 'thinking-status':
       return (
         <div className="py-0.5">
