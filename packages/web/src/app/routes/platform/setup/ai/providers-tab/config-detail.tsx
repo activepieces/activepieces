@@ -76,7 +76,7 @@ export function ConfigDetail({
   onSave,
   onDelete,
   onReplaceCredentials,
-  initialTab,
+  initialTab = 'models',
   isRechecking,
   onRecheck,
   onBack,
@@ -88,7 +88,7 @@ export function ConfigDetail({
   onSave: (request: UpdateAIProviderRequest) => Promise<{ error: unknown }>;
   onDelete: () => Promise<unknown>;
   onReplaceCredentials: () => void;
-  initialTab: ConfigDetailTab;
+  initialTab?: ConfigDetailTab;
   isRechecking: boolean;
   onRecheck: () => void;
   onBack: () => void;
