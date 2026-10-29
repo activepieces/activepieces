@@ -167,7 +167,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.209.1",
+      "version": "0.210.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -6044,12 +6044,14 @@
     },
     "packages/pieces/community/microsoft-outlook-calendar": {
       "name": "@activepieces/piece-microsoft-outlook-calendar",
-      "version": "0.3.1",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "@microsoft/microsoft-graph-client": "3.0.7",
+        "@microsoft/microsoft-graph-types": "2.40.0",
         "dayjs": "1.11.9",
       },
       "devDependencies": {
@@ -10957,7 +10959,7 @@
     },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
-      "version": "0.1.42",
+      "version": "0.1.43",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -11005,7 +11007,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.41.1",
+      "version": "0.42.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
