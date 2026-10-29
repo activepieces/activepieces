@@ -71,7 +71,7 @@ function fresh(overrides: Partial<CreditsBalanceCache>): CreditsBalanceCache {
 const log = { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() } as unknown as FastifyBaseLogger
 
 function gateState() {
-    return autumnBillingProvider(log).getCreditsAndAppSumoState('platform-1')
+    return autumnBillingProvider(log).getCreditsAndAppSumoState({ platformId: 'platform-1', creditCheckSpeed: CreditCheckSpeed.NORMAL })
 }
 
 function settleBackgroundWork(): Promise<void> {
