@@ -45,6 +45,7 @@ export type ApErrorParams =
     | QuotaExceededParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
+    | LastProjectParams
     | SystemInvalidErrorParams
     | SystemPropNotDefinedErrorParams
     | TestTriggerFailedErrorParams
@@ -453,6 +454,11 @@ ErrorCode.SIGN_UP_DISABLED,
 Record<string, never>
 >
 
+export type LastProjectParams = BaseErrorParams<
+ErrorCode.LAST_PROJECT,
+Record<string, never>
+>
+
 export type AuthenticationParams = BaseErrorParams<
 ErrorCode.AUTHENTICATION,
 {
@@ -632,6 +638,7 @@ export enum ErrorCode {
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
+    LAST_PROJECT = 'LAST_PROJECT',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',
     TEST_TRIGGER_FAILED = 'TEST_TRIGGER_FAILED',
