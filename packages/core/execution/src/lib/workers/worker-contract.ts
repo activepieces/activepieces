@@ -172,6 +172,7 @@ export type AgentConfigResponse = {
     imageCredentials?: AiProviderCredentials
     imageProviderConfigId?: string
     agentId?: string
+    projectId?: string
     systemPrompt: string
     messages: unknown[]
     allMessages: unknown[]
