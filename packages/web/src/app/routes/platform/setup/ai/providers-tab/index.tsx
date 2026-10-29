@@ -16,7 +16,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import { ReactNode, useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -442,54 +442,54 @@ function ConfigRow({
         }
       }}
       className={cn(
-        'group flex items-center gap-6 py-3 pl-16 pr-4 transition-colors',
+        'group flex items-center gap-4 py-3 pl-16 pr-4 transition-colors',
         !locked &&
           'cursor-pointer hover:bg-gray-4 active:bg-gray-5 focus-visible:bg-gray-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
       )}
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <p className="truncate text-sm font-semibold text-gray-12">
             {config.name}
           </p>
-          <span className="md:hidden">
-            <KeyStatusBadge status={config.status} />
-          </span>
+          <KeyStatusBadge status={config.status} />
         </div>
-        {tierCount > 0 && (
-          <span className="inline-flex items-center gap-1 text-xs text-gray-11 [&_svg]:text-gray-9">
-            <Layers className="size-3.5" />
-            {t('usedByTiersCount', { count: tierCount })}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-11 [&_svg]:text-gray-9">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex items-center gap-1">
+                <Cpu className="size-3.5" />
+                {modelsLabel}
+              </span>
+            </TooltipTrigger>
+            {config.modelIds.length > 0 && (
+              <TooltipContent className="max-w-64">
+                {config.modelIds.join(', ')}
+              </TooltipContent>
+            )}
+          </Tooltip>
+          <span className="inline-flex items-center gap-1">
+            <LayoutGrid className="size-3.5" />
+            {projectsLabel}
           </span>
-        )}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 md:hidden">
-          <KeyScope
-            modelsLabel={modelsLabel}
-            modelIds={config.modelIds}
-            projectsLabel={projectsLabel}
-          />
+          {tierCount > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Layers className="size-3.5" />
+              {t('usedByTiersCount', { count: tierCount })}
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="hidden shrink-0 items-center gap-6 md:flex">
-        <span className="flex w-24">
-          <KeyStatusBadge status={config.status} />
-        </span>
-        <KeyScope
-          modelsLabel={modelsLabel}
-          modelIds={config.modelIds}
-          projectsLabel={projectsLabel}
-          projectChips={
-            config.projectScope === 'all' ? undefined : (
-              <ProjectChips
-                projects={namedProjects}
-                excluded={config.projectScope === 'except'}
-                allowedCount={allowedProjectCount}
-              />
-            )
-          }
-        />
-      </div>
+      {config.projectScope !== 'all' && (
+        <div className="flex min-w-0 items-center gap-2">
+          <ProjectChips
+            projects={namedProjects}
+            excluded={config.projectScope === 'except'}
+            allowedCount={allowedProjectCount}
+          />
+        </div>
+      )}
 
       <div
         className="flex shrink-0 items-center gap-1"
@@ -530,40 +530,6 @@ function ConfigRow({
         />
       </div>
     </div>
-  );
-}
-
-function KeyScope({
-  modelsLabel,
-  modelIds,
-  projectsLabel,
-  projectChips,
-}: {
-  modelsLabel: string;
-  modelIds: string[];
-  projectsLabel: string;
-  projectChips?: ReactNode;
-}) {
-  return (
-    <>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex items-center gap-1.5 text-xs text-gray-11 md:w-28 [&_svg]:text-gray-9">
-            <Cpu className="size-3.5 shrink-0" />
-            <span className="truncate">{modelsLabel}</span>
-          </span>
-        </TooltipTrigger>
-        {modelIds.length > 0 && (
-          <TooltipContent className="max-w-64">
-            {modelIds.join(', ')}
-          </TooltipContent>
-        )}
-      </Tooltip>
-      <span className="inline-flex items-center gap-1.5 text-xs text-gray-11 md:w-36 [&_svg]:text-gray-9">
-        <LayoutGrid className="size-3.5 shrink-0" />
-        {projectChips ?? <span className="truncate">{projectsLabel}</span>}
-      </span>
-    </>
   );
 }
 
