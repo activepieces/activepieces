@@ -154,7 +154,8 @@ export const mcpOAuthTokenService = {
                 return { status: 'invalid' }
             }
         }
-        if (!await mcpAccess.isUserActive({ platformId: payload.platformId, userId: payload.sub })) {
+        if (!await mcpAccess.isUserActive({ platformId: payload.platformId, userId: payload.sub })
+            || !await mcpAccess.hasProjectRole({ userId: payload.sub, projectId: payload.projectId, log })) {
             return { status: 'invalid' }
         }
         return { status: 'ok', payload }

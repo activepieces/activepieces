@@ -92,16 +92,16 @@ async function setup() {
 }
 
 describe('MCP OAuth grant of a person who lost access', () => {
-    it('removed from the project: neither the old nor a refreshed token can read the project', async () => {
-        const { owner, member, grant, flowName } = await setup()
+    it('removed from the project: the project MCP server refuses the old and a refreshed token', async () => {
+        const { owner, member, grant } = await setup()
         const membership = await db.findOneByOrFail<{ id: string }>('project_member', { userId: member.user.id, projectId: owner.project.id })
         expect((await owner.delete(`/v1/project-members/${membership.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
 
         const refreshed = await refresh(grant)
         const tokens = [grant.accessToken, refreshed.json().access_token]
-        const listed = await Promise.all(tokens.map((accessToken) => mcpClientHelpers.callTool({ app, mcpClient: { accessToken, endpoint: '/mcp' }, name: 'ap_list_flows' })))
+        const responses = await Promise.all(tokens.map((accessToken) => listTools(accessToken)))
 
-        expect(listed.join()).not.toContain(flowName)
+        expect(responses.map((response) => response.statusCode)).toEqual([StatusCodes.UNAUTHORIZED, StatusCodes.UNAUTHORIZED])
     })
 
     it('deactivated by the platform admin: the grant can no longer read the project', async () => {

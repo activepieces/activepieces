@@ -1,4 +1,4 @@
-import { isNil, Permission } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, Permission, tryCatch } from '@activepieces/core-utils'
 import { McpReachResponse, McpToolResult, Project, ProjectType, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { editionRequiresRbac } from '../ee/authentication/project-role/rbac-middleware'
@@ -13,11 +13,26 @@ export const mcpAccess = {
     hasMcpReach,
     hasMcpAccessToProject,
     isUserActive,
+    hasProjectRole,
     noMcpReachResult,
 }
 
 async function isUserActive({ platformId, userId }: Omit<UserScope, 'log'>): Promise<boolean> {
     return userRepo().existsBy({ id: userId, platformId, status: UserStatus.ACTIVE })
+}
+
+async function hasProjectRole({ userId, projectId, log }: Omit<UserScope, 'platformId'> & { projectId: string | null }): Promise<boolean> {
+    if (isNil(projectId) || !editionRequiresRbac()) {
+        return true
+    }
+    const { data: role, error } = await tryCatch(() => projectMemberService(log).getRole({ userId, projectId }))
+    if (error instanceof ActivepiecesError && error.error.code === ErrorCode.ENTITY_NOT_FOUND) {
+        return false
+    }
+    if (error) {
+        throw error
+    }
+    return !isNil(role)
 }
 
 async function listAccessibleProjects({ platformId, userId, log }: UserScope): Promise<Project[]> {
