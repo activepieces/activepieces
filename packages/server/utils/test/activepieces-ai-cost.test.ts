@@ -556,6 +556,42 @@ describe('a stream that never reaches its finish chunk', () => {
         expect(reported[0].call).toEqual({ charge: AiChargeBasis.FIXED_CREDITS, credits: 1, generationId: 'gen-stream' })
     })
 
+    it('keeps the cache and reasoning tokens of a finished stream whose cost had to be looked up', async () => {
+        generationLookup.answer = async () => ({ costUsd: 0.004, inputTokens: 50, outputTokens: 9 })
+        const model = streamingModel({
+            provider: AIProviderName.ACTIVEPIECES,
+            apiKey: MANAGED_KEY,
+            chunks: [
+                { type: 'response-metadata', id: 'gen-stream' },
+                { type: 'finish', finishReason: 'stop', usage: { inputTokens: { total: 50, cacheRead: 30, cacheWrite: 5 }, outputTokens: { total: 9, reasoning: 4 } } },
+            ],
+        })
+
+        await streamThen(model, async ({ reader, writer }) => {
+            await writer.close()
+            for (;;) {
+                const { done } = await reader.read()
+                if (done) {
+                    return
+                }
+            }
+        })
+        await settled()
+
+        expect(reported).toHaveLength(1)
+        expect(reported[0].call).toEqual({
+            charge: AiChargeBasis.PROVIDER_REPORTED_COST,
+            generationId: 'gen-stream',
+            costUsd: 0.004,
+            inputTokens: 50,
+            outputTokens: 9,
+            cacheReadTokens: 30,
+            cacheWriteTokens: 5,
+            reasoningTokens: 4,
+            observedCostUsd: 0.004,
+        })
+    })
+
     it('bills a finished stream once, and does not ask the provider again as it closes', async () => {
         let asked = 0
         generationLookup.answer = async () => {
