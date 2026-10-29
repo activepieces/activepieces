@@ -18,13 +18,15 @@ import { Link } from 'react-router-dom';
 
 import {
   AdminPageHeader,
-  StatusDot,
+  AdminSection,
   adminPageResources,
   adminSurface,
 } from '@/app/components/admin';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   aiProviderQueries,
@@ -67,39 +69,40 @@ export function CapabilitiesTab() {
   return (
     <>
       <AdminPageHeader
-        title={t('Assistant capabilities')}
-        description={t(
-          'Search and images use your AI provider. Scraping needs a service of its own. Connect a service to use it in place of your provider.',
-        )}
+        title={t('Capabilities')}
+        description={t('Extra skills for chat, agents and knowledge bases.')}
         resources={adminPageResources.aiCapabilities}
       />
       {isError ? (
         <DataFetchErrorState entity={t('AI tools')} onRetry={refetch} />
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {AI_TOOL_CATALOG.map((capabilityInfo) => {
-            const config = configs?.find(
-              (c) => c.capability === capabilityInfo.capability,
-            );
-            return (
-              <CapabilityCard
-                key={capabilityInfo.capability}
-                capabilityInfo={capabilityInfo}
-                config={config}
-                providers={providers ?? []}
-                chatProviderFallback={fallbackFor({
-                  capability: capabilityInfo.capability,
-                  candidates:
-                    capabilityInfo.capability === AiToolCapability.EMBEDDINGS
-                      ? [chatProvider, creditsProvider]
-                      : [chatProvider],
-                })}
-                onDelete={() => config && remove(config.id)}
-                onSaved={() => refetchConfigs()}
-              />
-            );
-          })}
-        </div>
+        capabilityGroups().map((group) => (
+          <AdminSection key={group.title} title={group.title}>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {AI_TOOL_CATALOG.filter((info) =>
+                group.capabilities.includes(info.capability),
+              ).map((capabilityInfo) => (
+                <CapabilityCard
+                  key={capabilityInfo.capability}
+                  capabilityInfo={capabilityInfo}
+                  config={configs?.find(
+                    (c) => c.capability === capabilityInfo.capability,
+                  )}
+                  providers={providers ?? []}
+                  chatProviderFallback={fallbackFor({
+                    capability: capabilityInfo.capability,
+                    candidates:
+                      capabilityInfo.capability === AiToolCapability.EMBEDDINGS
+                        ? [chatProvider, creditsProvider]
+                        : [chatProvider],
+                  })}
+                  onDelete={(id) => remove(id)}
+                  onSaved={() => refetchConfigs()}
+                />
+              ))}
+            </div>
+          </AdminSection>
+        ))
       )}
     </>
   );
@@ -131,10 +134,10 @@ function CapabilityCard({
   config?: AiToolConfigWithoutSensitiveData;
   providers: AIProviderWithoutSensitiveData[];
   chatProviderFallback?: AIProviderWithoutSensitiveData;
-  onDelete: () => void;
+  onDelete: (id: string) => void;
   onSaved: () => void;
 }) {
-  const Icon = CAPABILITY_ICON[capabilityInfo.capability];
+  const look = CAPABILITY_LOOK[capabilityInfo.capability];
   const isEmbeddings =
     capabilityInfo.capability === AiToolCapability.EMBEDDINGS;
   const needsProviderKey =
@@ -158,104 +161,180 @@ function CapabilityCard({
       ? providerChoice.data.modelId
       : undefined;
   const inUse = !isNil(sourceName);
-  const status = inUse
-    ? t('Using {provider}', { provider: sourceName })
-    : t('Not connected');
-  const statusText = isNil(chosenModelId)
-    ? status
-    : `${status} · ${chosenModelId}`;
+  const servedByAiKeys =
+    capabilityInfo.capability !== AiToolCapability.WEB_SCRAPING;
 
   return (
-    <div className={cn(adminSurface.card, 'group flex flex-col')}>
-      <div className="flex items-start gap-4 px-5 pt-5 pb-2">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-gray-1">
-          <Icon className="size-4 text-gray-11" />
+    <div className={cn(adminSurface.card, 'group flex flex-col gap-3 p-5')}>
+      <div className="flex items-start gap-3">
+        <div
+          className={cn(
+            'flex size-9 shrink-0 items-center justify-center rounded-lg',
+            look.tile,
+          )}
+        >
+          <look.icon className="size-4" />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <p className="truncate text-sm font-semibold text-gray-12">
             {capabilityInfo.name}
           </p>
-          <StatusDot
-            tone={inUse ? 'success' : 'neutral'}
-            className="text-xs text-gray-11"
-          >
-            <TextWithTooltip tooltipMessage={statusText}>
-              <span className="truncate">{statusText}</span>
-            </TextWithTooltip>
-          </StatusDot>
+          <CapabilityStatus
+            inUse={inUse}
+            sourceName={sourceName}
+            modelId={chosenModelId}
+          />
         </div>
-        {config && (
-          <ConfirmationDeleteDialog
-            title={t('Reset {name}', { name: capabilityInfo.name })}
-            message={
-              chatProviderFallback
-                ? isEmbeddings
-                  ? t('Knowledge bases go back to using {provider}.', {
-                      provider: chatProviderFallback.name,
-                    })
-                  : t('Chat goes back to using {provider}.', {
-                      provider: chatProviderFallback.name,
-                    })
-                : t(
-                    'This removes the saved API key and disables this capability.',
-                  )
-            }
-            entityName={capabilityInfo.name}
-            controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
-            mutationFn={async () => onDelete()}
-          >
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-gray-11 opacity-0 transition-opacity hover:text-danger-11 group-focus-within:opacity-100 group-hover:opacity-100"
-              {...adminControl(AdminControl.AI_CAPABILITY_RESET_OPEN)}
+        <div className="flex shrink-0 items-center gap-1">
+          {config && (
+            <ConfirmationDeleteDialog
+              title={t('Reset {name}', { name: capabilityInfo.name })}
+              message={
+                chatProviderFallback
+                  ? isEmbeddings
+                    ? t('Knowledge bases go back to using {provider}.', {
+                        provider: chatProviderFallback.name,
+                      })
+                    : t('Chat goes back to using {provider}.', {
+                        provider: chatProviderFallback.name,
+                      })
+                  : t(
+                      'This removes the saved API key and disables this capability.',
+                    )
+              }
+              entityName={capabilityInfo.name}
+              controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
+              mutationFn={async () => onDelete(config.id)}
             >
-              <Trash2 className="size-4" />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-gray-11 opacity-0 transition-opacity hover:text-danger-11 group-focus-within:opacity-100 group-hover:opacity-100"
+                {...adminControl(AdminControl.AI_CAPABILITY_RESET_OPEN)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </ConfirmationDeleteDialog>
+          )}
+          {needsProviderKey ? (
+            <Button asChild variant="outline" size="sm">
+              <Link to="/platform/ai">{t('Add a key')}</Link>
             </Button>
-          </ConfirmationDeleteDialog>
-        )}
+          ) : (
+            <AiCapabilityDialog
+              capabilityInfo={capabilityInfo}
+              existingConfig={config}
+              defaultProviderId={chatProviderFallback?.id}
+              onSaved={onSaved}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
+              >
+                {inUse ? t('Change') : t('Set up')}
+              </Button>
+            </AiCapabilityDialog>
+          )}
+        </div>
       </div>
-      <p className="px-5 pb-5 text-sm text-gray-11">
-        {capabilityInfo.description}
-      </p>
-      <div className="mt-auto flex items-center justify-between gap-4 border-t px-5 py-3">
-        <span className="text-xs text-gray-11">
-          {isEmbeddings
-            ? inUse
-              ? t('Knowledge bases can index files')
-              : t("Knowledge bases can't index files yet")
-            : inUse
-            ? t('Available to the assistant')
-            : t("The assistant can't do this yet")}
-        </span>
-        {needsProviderKey ? (
-          <Button asChild variant="outline" size="sm">
-            <Link to="/platform/ai">{t('Add a provider key')}</Link>
-          </Button>
-        ) : (
-          <AiCapabilityDialog
-            capabilityInfo={capabilityInfo}
-            existingConfig={config}
-            defaultProviderId={chatProviderFallback?.id}
-            onSaved={onSaved}
-          >
-            <Button
-              variant="outline"
-              size="sm"
-              {...adminControl(AdminControl.AI_CAPABILITY_OPEN)}
-            >
-              {inUse ? t('Change') : t('Connect')}
-            </Button>
-          </AiCapabilityDialog>
+      <p className="text-sm text-gray-11">{capabilityInfo.description}</p>
+      <div className="mt-auto flex items-center gap-2 pt-1 text-xs text-gray-11">
+        <span>{t('Works with')}</span>
+        {capabilityInfo.providers.map((provider) => (
+          <span key={provider.id} className="inline-flex items-center gap-1.5">
+            <LogoPlate
+              src={provider.logoUrl}
+              alt={provider.name}
+              border
+              className="size-5 rounded-md"
+              innerClassName="p-0.5"
+            />
+            <span className="text-gray-12">{provider.name}</span>
+          </span>
+        ))}
+        {servedByAiKeys && (
+          <span className="text-gray-12">
+            {capabilityInfo.providers.length > 0
+              ? t('or your AI key')
+              : t('your AI keys')}
+          </span>
         )}
       </div>
     </div>
   );
 }
 
-const CAPABILITY_ICON: Record<AiToolCapability, LucideIcon> = {
-  [AiToolCapability.WEB_SEARCH]: Search,
-  [AiToolCapability.WEB_SCRAPING]: Globe,
-  [AiToolCapability.IMAGE_GENERATION]: Image,
-  [AiToolCapability.EMBEDDINGS]: Database,
+function CapabilityStatus({
+  inUse,
+  sourceName,
+  modelId,
+}: {
+  inUse: boolean;
+  sourceName: string | undefined;
+  modelId: string | undefined;
+}) {
+  const label = inUse
+    ? t('On · {provider}', { provider: sourceName })
+    : t('Off');
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <Badge
+        variant={inUse ? 'success' : 'secondary'}
+        className="gap-1.5 rounded-full border-transparent px-2"
+      >
+        <span aria-hidden className="size-1.5 rounded-full bg-current" />
+        <TextWithTooltip tooltipMessage={label}>
+          <span className="truncate">{label}</span>
+        </TextWithTooltip>
+      </Badge>
+      {modelId && (
+        <TextWithTooltip tooltipMessage={modelId}>
+          <span className="truncate text-xs text-gray-11">{modelId}</span>
+        </TextWithTooltip>
+      )}
+    </span>
+  );
+}
+
+function capabilityGroups(): {
+  title: string;
+  capabilities: AiToolCapability[];
+}[] {
+  return [
+    {
+      title: t('Chat and agents'),
+      capabilities: [
+        AiToolCapability.WEB_SEARCH,
+        AiToolCapability.WEB_SCRAPING,
+        AiToolCapability.IMAGE_GENERATION,
+      ],
+    },
+    {
+      title: t('Knowledge bases'),
+      capabilities: [AiToolCapability.EMBEDDINGS],
+    },
+  ];
+}
+
+const CAPABILITY_LOOK: Record<
+  AiToolCapability,
+  { icon: LucideIcon; tile: string }
+> = {
+  [AiToolCapability.WEB_SEARCH]: {
+    icon: Search,
+    tile: 'bg-swatch-11-surface text-swatch-11-ink',
+  },
+  [AiToolCapability.WEB_SCRAPING]: {
+    icon: Globe,
+    tile: 'bg-swatch-8-surface text-swatch-8-ink',
+  },
+  [AiToolCapability.IMAGE_GENERATION]: {
+    icon: Image,
+    tile: 'bg-swatch-4-surface text-swatch-4-ink',
+  },
+  [AiToolCapability.EMBEDDINGS]: {
+    icon: Database,
+    tile: 'bg-swatch-5-surface text-swatch-5-ink',
+  },
 };
