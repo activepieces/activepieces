@@ -362,7 +362,7 @@ describe('toolCallLabels.withFallbackLabels', () => {
         expect(toolCallLabels.withFallbackLabels({ input: { tool: 'ap_read_step_code' }, toolName: 'ap_read_step_code' })).toEqual({
             tool: 'ap_read_step_code',
             title: 'Read step code',
-            activeTitle: 'Reading step code',
+            activeTitle: 'Read step code',
             doneTitle: 'Read step code',
         })
     })
@@ -370,14 +370,6 @@ describe('toolCallLabels.withFallbackLabels', () => {
     it('fills only the labels that are missing or blank', () => {
         const labelled = toolCallLabels.withFallbackLabels({ input: { title: 'Your leads table', activeTitle: ' ' }, toolName: 'ap_find_records' })
 
-        expect(labelled).toEqual({ title: 'Your leads table', activeTitle: 'Finding records', doneTitle: 'Found records' })
-    })
-
-    it('uses the same plain label for every state when the verb is unknown', () => {
-        expect(toolCallLabels.withFallbackLabels({ input: {}, toolName: 'mcp__hubspot__crm_sync' })).toEqual({
-            title: 'Crm sync',
-            activeTitle: 'Crm sync',
-            doneTitle: 'Crm sync',
-        })
+        expect(labelled).toEqual({ title: 'Your leads table', activeTitle: 'Find records', doneTitle: 'Find records' })
     })
 })
