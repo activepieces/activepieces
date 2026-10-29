@@ -1,14 +1,9 @@
-import { HttpMethod } from '@activepieces/pieces-common';
 import { DropdownState, Property } from '@activepieces/pieces-framework';
 
 import { outlookCalendarAuth } from '../auth';
 import { outlookCalendarClient } from './client';
 
-import type {
-  OutlookCalendarCalendar,
-  OutlookCalendarList,
-  OutlookCalendarTimeZone,
-} from './types';
+import type { Calendar, OutlookCalendarPage, TimeZoneInformation } from './types';
 
 function calendarId<R extends boolean>({
   required,
@@ -25,14 +20,15 @@ function calendarId<R extends boolean>({
       if (!auth) {
         return disabledOptions({ placeholder: 'Please authenticate first' });
       }
-      const response = await outlookCalendarClient.request<
-        OutlookCalendarList<OutlookCalendarCalendar>
-      >({ auth, method: HttpMethod.GET, path: '/calendars' });
+      const response: OutlookCalendarPage<Calendar> = await outlookCalendarClient
+        .create({ auth })
+        .api('/me/calendars')
+        .get();
       return {
         disabled: false,
         options: response.value.map((calendar) => ({
-          label: calendar.name,
-          value: calendar.id,
+          label: calendar.name ?? '',
+          value: calendar.id ?? '',
         })),
       };
     },
@@ -54,18 +50,15 @@ function timezone<R extends boolean>({
       if (!auth) {
         return disabledOptions({ placeholder: 'Please authenticate first' });
       }
-      const response = await outlookCalendarClient.request<
-        OutlookCalendarList<OutlookCalendarTimeZone>
-      >({
-        auth,
-        method: HttpMethod.GET,
-        path: '/outlook/supportedTimeZones',
-      });
+      const response: OutlookCalendarPage<TimeZoneInformation> = await outlookCalendarClient
+        .create({ auth })
+        .api('/me/outlook/supportedTimeZones')
+        .get();
       return {
         disabled: false,
         options: response.value.map((tz) => ({
-          label: tz.displayName,
-          value: tz.alias,
+          label: tz.displayName ?? '',
+          value: tz.alias ?? '',
         })),
       };
     },

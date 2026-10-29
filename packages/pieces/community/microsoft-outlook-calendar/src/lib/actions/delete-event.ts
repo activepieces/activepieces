@@ -1,5 +1,4 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { outlookCalendarAuth } from '../auth';
 import { outlookCalendarClient } from '../common/client';
 import { outlookCalendarProps } from '../common/props';
@@ -9,7 +8,7 @@ export const deleteEventAction = createAction({
   name: 'delete_event',
   classification: 'DESTRUCTIVE',
   description: 'Delete an event in a calendar',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Permanently deletes a specific event from a Microsoft Outlook calendar, identified by its calendar and event ID. Use to remove a known meeting or appointment. Requires the exact event ID. Not strictly idempotent: a repeat call for an already-deleted event will error, though no new side effect occurs.', idempotent: false },
   displayName: 'Delete an event in a calendar',
   props: {
@@ -20,11 +19,10 @@ export const deleteEventAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    return await outlookCalendarClient.request({
-      auth,
-      method: HttpMethod.DELETE,
-      path: `/calendars/${propsValue.calendarId}/events/${propsValue.eventId}`,
-      body: {},
-    });
+    const response: unknown = await outlookCalendarClient
+      .create({ auth })
+      .api(`/me/calendars/${propsValue.calendarId}/events/${propsValue.eventId}`)
+      .delete();
+    return response;
   },
 });

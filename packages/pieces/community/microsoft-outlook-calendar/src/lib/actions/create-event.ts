@@ -1,16 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { outlookCalendarAuth } from '../auth';
 import { outlookCalendarClient } from '../common/client';
 import { outlookCalendarProps } from '../common/props';
 import dayjs from 'dayjs';
 
+import type { Event } from '../common/types';
+import { outlookCalendarCreatedEventOutputSchema } from '../output-schemas';
+
 export const createEventAction = createAction({
   auth: outlookCalendarAuth,
   name: 'create_event',
+  outputSchema: outlookCalendarCreatedEventOutputSchema,
   classification: 'WRITE',
   description: 'Create a new event in a calendar',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Creates a new calendar event in a specified Microsoft Outlook calendar with a title, start time, and optional end time (defaults to 30 minutes after start), timezone, and location. Use to schedule a meeting or appointment. Not idempotent: each call adds a new event, so repeated calls create duplicates.', idempotent: false },
   displayName: 'Create a new event in a calendar',
   props: {
@@ -41,11 +44,10 @@ export const createEventAction = createAction({
       : dayjs(startDateTime).add(30, 'm');
     const endDateTime = dayjs(endTime).format('YYYY-MM-DDTHH:mm:ss');
 
-    return await outlookCalendarClient.request({
-      auth,
-      method: HttpMethod.POST,
-      path: `/calendars/${propsValue.calendarId}/events`,
-      body: {
+    const response: Event = await outlookCalendarClient
+      .create({ auth })
+      .api(`/me/calendars/${propsValue.calendarId}/events`)
+      .post({
         subject: propsValue.title,
         body: {},
         start: {
@@ -59,7 +61,7 @@ export const createEventAction = createAction({
         location: {
           displayName: propsValue.location,
         },
-      },
-    });
+      });
+    return response;
   },
 });
