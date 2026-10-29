@@ -203,7 +203,7 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
                 emit(buildPlanSync.withBuiltRows({ plan: currentPlan, builtFlows: [...builtFlows.values()] }))
             }
         }
-        return isNil(currentPlan) && BUILD_TOOLS_NEEDING_CARD.has(toolName) ? MISSING_CARD_NOTE : undefined
+        return isNil(currentPlan) && toolName === 'ap_build_flow' ? MISSING_CARD_NOTE : undefined
     }
     const tools: ToolSet = {
         ap_set_build_plan: tool({
@@ -232,8 +232,9 @@ export function createBuildPlanTools({ eventEmitter, getProjectId }: {
                     ...spreadIfDefined('flowId', input.flowId),
                     ...spreadIfDefined('projectId', getProjectId() ?? undefined),
                 }
-                emit(builtFlows.size === 0 ? event : buildPlanSync.withBuiltRows({ plan: event, builtFlows: [...builtFlows.values()] }))
-                return { ok: true, buildId }
+                const plan = builtFlows.size === 0 ? event : buildPlanSync.withBuiltRows({ plan: event, builtFlows: [...builtFlows.values()] })
+                emit(plan)
+                return { ok: true, buildId, plan }
             },
         }),
     }
@@ -305,7 +306,6 @@ function readableLabel(name: string): string {
 }
 
 const MAX_CACHED_RESULT_FILES = 5
-const BUILD_TOOLS_NEEDING_CARD = new Set(['ap_build_flow', 'ap_apply_flow_operations', 'ap_create_table'])
 const MISSING_CARD_NOTE = 'No build card is showing. Call ap_set_build_plan now with phase "building", a short flowName, tagline and iconName; its rows fill in from what you build.'
 
 const AGENT_CHANGE_LABELS: Record<string, string> = {

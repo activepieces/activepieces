@@ -222,10 +222,12 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                             type: 'text',
                             text: `⚠️ Step "${stepName}" updated but still invalid. ${hint}${draftWarning}`,
                         }],
+                        structuredContent: buildFlowReview.flowState(updatedFlow),
                     }
                 }
                 return {
                     content: [{ type: 'text', text: `✅ Successfully updated step "${stepName}".${draftWarning}` }],
+                    structuredContent: buildFlowReview.flowState(updatedFlow),
                 }
             }
             catch (err) {

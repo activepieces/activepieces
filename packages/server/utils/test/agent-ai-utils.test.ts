@@ -223,6 +223,15 @@ describe('buildStepParts — ap_set_build_plan', () => {
         })
     })
 
+    it('saves the plan the tool computed from the built flow over the model input', () => {
+        const content = [
+            { type: 'tool-call', toolCallId: 'call_plan', toolName: 'ap_set_build_plan', input: { phase: 'done', flowName: 'Lead triage', steps: [{ id: 'trigger', label: 'Planned', status: 'pending' }] } },
+            { type: 'tool-result', toolCallId: 'call_plan', toolName: 'ap_set_build_plan', output: { type: 'json', value: { ok: true, buildId: 'build_1', plan: { phase: 'done', flowName: 'Lead triage', flowId: 'flow_1', steps: [{ id: 'flow_1:0', label: 'New email', status: 'done' }] } } } },
+        ]
+        const buildPlanPart = agentAiUtils.buildStepParts({ content }).find((p) => p.type === 'build-plan')
+        expect(buildPlanPart).toMatchObject({ data: { flowId: 'flow_1', steps: [{ id: 'flow_1:0', label: 'New email', status: 'done' }] } })
+    })
+
     it('does not emit a build-plan part when the output has no buildId', () => {
         const content = [
             {

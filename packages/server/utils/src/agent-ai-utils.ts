@@ -242,11 +242,12 @@ function buildStepParts({ content }: {
                 }
                 if (toolName === 'ap_set_build_plan') {
                     const buildId = typeof toRecord(rawOutput)['buildId'] === 'string' ? toRecord(rawOutput)['buildId'] : undefined
+                    const plan = toRecord(rawOutput)['plan']
                     if (typeof buildId === 'string') {
                         parts.push({
                             type: PersistedAgentPartType.BUILD_PLAN,
                             buildId,
-                            data: { ...input, updatedAt: new Date().toISOString() },
+                            data: { ...(isObject(plan) ? plan : input), updatedAt: new Date().toISOString() },
                         })
                     }
                 }
