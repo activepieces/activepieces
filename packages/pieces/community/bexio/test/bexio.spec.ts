@@ -123,6 +123,27 @@ describe('updates', () => {
     expect(post.body).toEqual({ contact_type_id: 1, name_1: 'Acme', user_id: 1, owner_id: 2, mail: 'a@b.ch' });
   });
 
+  it('clear-only update sends null for the cleared field, fills required fields and omits the rest', async () => {
+    const spy = mockBodies([{ id: 7, contact_type_id: 1, name_1: 'Acme', user_id: 1, owner_id: 2, mail: 'old@b.ch', nr: '42' }, { id: 7 }]);
+    await run({ action: bexioUpdateContact, propsValue: { contact_id: '7', clear_fields: 'nr, fax' } });
+    const post = requestAt({ spy, index: 1 });
+    expect(post.body).toEqual({ contact_type_id: 1, name_1: 'Acme', user_id: 1, owner_id: 2, nr: null, fax: null });
+  });
+
+  it('clear_fields accepts a list and combines with new values', async () => {
+    const spy = mockBodies([{ id: 7, contact_type_id: 1, name_1: 'Acme', user_id: 1, owner_id: 2 }, { id: 7 }]);
+    await run({ action: bexioUpdateContact, propsValue: { contact_id: '7', mail: 'a@b.ch', clear_fields: ['mail_second'] } });
+    expect(requestAt({ spy, index: 1 }).body).toEqual({ contact_type_id: 1, name_1: 'Acme', user_id: 1, owner_id: 2, mail: 'a@b.ch', mail_second: null });
+  });
+
+  it('clear_fields rejects required, unknown or also-set fields before any request', async () => {
+    const spy = mockBodies([]);
+    await expect(run({ action: bexioUpdateContact, propsValue: { contact_id: '7', clear_fields: 'name_1' } })).rejects.toThrow('cannot be cleared');
+    await expect(run({ action: bexioUpdateContact, propsValue: { contact_id: '7', clear_fields: 'foo' } })).rejects.toThrow('cannot be cleared');
+    await expect(run({ action: bexioUpdateContact, propsValue: { contact_id: '7', mail: 'a@b.ch', clear_fields: 'mail' } })).rejects.toThrow('not both');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
   it('rejects a non-numeric id before any request', async () => {
     const spy = mockBodies([]);
     await expect(run({ action: bexioUpdateContact, propsValue: { contact_id: 'abc', mail: 'a@b.ch' } })).rejects.toThrow('Contact ID');

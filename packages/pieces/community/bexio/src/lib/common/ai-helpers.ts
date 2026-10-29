@@ -332,6 +332,38 @@ function requireAny(body: Record<string, unknown>): Record<string, unknown> {
   return body;
 }
 
+function clearFields({
+  body,
+  value,
+  allowed,
+}: {
+  body: Record<string, unknown>;
+  value: unknown;
+  allowed: string[];
+}): Record<string, unknown> {
+  const names = readNameList(value);
+  const cleared: Record<string, unknown> = { ...body };
+  for (const name of names) {
+    if (!allowed.includes(name)) {
+      throw new Error(`Fields to Clear: "${name}" cannot be cleared. Allowed: ${allowed.join(', ')}.`);
+    }
+    if (body[name] !== undefined) {
+      throw new Error(`Fields to Clear: "${name}" also has a new value; set it or clear it, not both.`);
+    }
+    cleared[name] = null;
+  }
+  return cleared;
+}
+
+function readNameList(value: unknown): string[] {
+  if (value === undefined || value === null || value === '') {
+    return [];
+  }
+  const parts = Array.isArray(value) ? value.map((entry) => String(entry)) : String(value).split(',');
+  const names = parts.map((part) => part.trim()).filter((part) => part !== '');
+  return [...new Set(names)];
+}
+
 async function fillRequired({
   auth,
   getPath,
@@ -494,6 +526,14 @@ function idProp({ displayName, description, required }: { displayName: string; d
   return Property.ShortText({ displayName, description, required });
 }
 
+function clearProp({ allowed }: { allowed: string[] }) {
+  return Property.ShortText({
+    displayName: 'Fields to Clear',
+    description: `Comma-separated field names to empty on the record, e.g. mail_second,fax. They are sent as null. Fields not listed and left blank keep their current value. Allowed: ${allowed.join(', ')}.`,
+    required: false,
+  });
+}
+
 function flagProp({ displayName, description }: { displayName: string; description: string }) {
   return Property.StaticDropdown<string>({
     displayName,
@@ -577,6 +617,7 @@ export const bexioAi = {
   search,
   searchCriteria,
   buildBody,
+  clearFields,
   toFlag,
   requireArray,
   fillRequired,
@@ -588,6 +629,7 @@ export const bexioAi = {
   downloadFile,
   timesheetTracking,
   idProp,
+  clearProp,
   flagProp,
   listProps,
   searchProps,
