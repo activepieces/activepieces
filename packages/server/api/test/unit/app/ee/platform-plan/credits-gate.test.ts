@@ -1,3 +1,4 @@
+import { createLogger, wideEvent } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { autumnBillingProvider, computeCreditState } from '../../../../../src/app/ee/platform/platform-plan/billing-providers/autumn-billing'
@@ -243,5 +244,70 @@ describe('credits gate decides from the cache and refreshes in the background', 
         expect(credits.blocked).toBe(false)
         expect(mockResolveClientForPlatform).not.toHaveBeenCalled()
         expect(log.warn).toHaveBeenCalled()
+    })
+
+    it('waits longer than a fast credit check for a slow cache read before failing open', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 100)))
+        const provider = autumnBillingProvider(log)
+
+        await expect(provider.shouldBlockOnCredits({ platformId: 'platform-1', fastCreditCheck: true })).resolves.toBe(false)
+        await expect(provider.shouldBlockOnCredits({ platformId: 'platform-1', fastCreditCheck: false })).resolves.toBe(true)
+    })
+
+    it('records the read time on the request row instead of a separate log line', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 40)))
+        const requestLogger = createLogger()
+
+        await wideEvent.run({ logger: requestLogger, fn: () => gateState() })
+
+        expect(requestLogger.getContext()).toMatchObject({ creditsGate: { readMs: expect.any(Number), readTimeoutMs: 400, timedOut: false } })
+        expect(log.info).not.toHaveBeenCalledWith(expect.anything(), 'Credits gate cache read was slow')
+    })
+
+    it('logs a slow read made outside a request', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 40)))
+
+        await gateState()
+
+        expect(log.info).toHaveBeenCalledWith(
+            { platform: { id: 'platform-1' }, creditsGate: { readMs: expect.any(Number), readTimeoutMs: 400 } },
+            'Credits gate cache read was slow',
+        )
+    })
+
+    it('marks only a read that ran out of time as timed out, not a read that failed', async () => {
+        mockBillingEnforced.mockRejectedValueOnce(new Error('redis unreachable'))
+        const failedRead = createLogger()
+        await wideEvent.run({ logger: failedRead, fn: () => gateState() })
+
+        mockBillingEnforced.mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(true), 100)))
+        const slowRead = createLogger()
+        await wideEvent.run({ logger: slowRead, fn: () => autumnBillingProvider(log).shouldBlockOnCredits({ platformId: 'platform-1', fastCreditCheck: true }) })
+
+        expect(failedRead.getContext()).toMatchObject({ creditsGate: { timedOut: false } })
+        expect(slowRead.getContext()).toMatchObject({ creditsGate: { timedOut: true, readTimeoutMs: 25 } })
+    })
+
+    it('does not log a fast read', async () => {
+        storedCredits = fresh({ remaining: 0 })
+
+        await gateState()
+
+        expect(log.info).not.toHaveBeenCalledWith(expect.anything(), 'Credits gate cache read was slow')
+    })
+
+    it('logs how long a timed-out read really took once it finishes', async () => {
+        storedCredits = fresh({ remaining: 0 })
+        mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 100)))
+
+        await autumnBillingProvider(log).shouldBlockOnCredits({ platformId: 'platform-1', fastCreditCheck: true })
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        const lateRead = vi.mocked(log.info).mock.calls.find(([, msg]) => msg === 'Credits gate cache read finished after the timeout')
+        expect(lateRead?.[0]).toMatchObject({ platform: { id: 'platform-1' }, creditsGate: { readTimeoutMs: 25 } })
+        expect(lateRead?.[0]).toHaveProperty('creditsGate.readMs', expect.any(Number))
     })
 })
