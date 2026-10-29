@@ -1,0 +1,1489 @@
+{
+  "person": {
+    "label": "Customer",
+    "plural": "Customers",
+    "path": "/people",
+    "create": [
+      {
+        "key": "display_name",
+        "label": "Name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "first_name",
+        "label": "First name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "last_name",
+        "label": "Last name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "email",
+        "label": "Email",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "phone",
+        "label": "Phone",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "whatsapp",
+        "label": "WhatsApp",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "title",
+        "label": "Job title",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "department",
+        "label": "Department",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "company",
+        "label": "Company",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lifecycle_stage",
+        "label": "Lifecycle stage",
+        "required": false,
+        "type": "string",
+        "choices": ["lead", "prospect", "customer", "churned"]
+      },
+      {
+        "key": "lead_source",
+        "label": "Lead source",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "owner",
+        "label": "Owner",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "linkedin_url",
+        "label": "LinkedIn",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "city",
+        "label": "City",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "region",
+        "label": "Region",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "country",
+        "label": "Country",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "time_zone",
+        "label": "Time zone",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "About",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "do_not_contact",
+        "label": "Do not contact",
+        "required": false,
+        "type": "boolean"
+      }
+    ],
+    "update": [
+      {
+        "key": "display_name",
+        "label": "Name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "first_name",
+        "label": "First name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "last_name",
+        "label": "Last name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "email",
+        "label": "Email",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "phone",
+        "label": "Phone",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "whatsapp",
+        "label": "WhatsApp",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "title",
+        "label": "Job title",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "department",
+        "label": "Department",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "company",
+        "label": "Company",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lifecycle_stage",
+        "label": "Lifecycle stage",
+        "required": false,
+        "type": "string",
+        "choices": ["lead", "prospect", "customer", "churned"]
+      },
+      {
+        "key": "lead_source",
+        "label": "Lead source",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "owner",
+        "label": "Owner",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "linkedin_url",
+        "label": "LinkedIn",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "city",
+        "label": "City",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "region",
+        "label": "Region",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "country",
+        "label": "Country",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "time_zone",
+        "label": "Time zone",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "About",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "do_not_contact",
+        "label": "Do not contact",
+        "required": false,
+        "type": "boolean"
+      }
+    ],
+    "filters": [
+      {
+        "key": "email",
+        "label": "email",
+        "type": "string",
+        "helpText": "Only records whose email equals this."
+      },
+      {
+        "key": "lifecycle_stage",
+        "label": "lifecycle stage",
+        "type": "string",
+        "helpText": "Only records whose lifecycle_stage equals this."
+      },
+      {
+        "key": "owner",
+        "label": "owner",
+        "type": "string",
+        "helpText": "Only records whose owner equals this."
+      },
+      {
+        "key": "company",
+        "label": "company",
+        "type": "string",
+        "helpText": "Only records linked to this company (public id)."
+      },
+      {
+        "key": "lead_source",
+        "label": "lead source",
+        "type": "string",
+        "helpText": "Only records whose lead_source equals this."
+      },
+      {
+        "key": "country",
+        "label": "country",
+        "type": "string",
+        "helpText": "Only records whose country equals this."
+      },
+      {
+        "key": "city",
+        "label": "city",
+        "type": "string",
+        "helpText": "Only records whose city equals this."
+      },
+      {
+        "key": "title",
+        "label": "title",
+        "type": "string",
+        "helpText": "Only records whose title equals this."
+      }
+    ]
+  },
+  "company": {
+    "label": "Company",
+    "plural": "Companies",
+    "path": "/companies",
+    "create": [
+      {
+        "key": "name",
+        "label": "Name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "domain",
+        "label": "Domain",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "website",
+        "label": "Website",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "industry",
+        "label": "Industry",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "employee_count",
+        "label": "Employees",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "key": "annual_revenue_cents",
+        "label": "Annual revenue",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "key": "phone",
+        "label": "Phone",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lifecycle_stage",
+        "label": "Lifecycle stage",
+        "required": false,
+        "type": "string",
+        "choices": ["lead", "prospect", "customer", "churned"]
+      },
+      {
+        "key": "tier",
+        "label": "Tier",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "source",
+        "label": "Source",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "owner",
+        "label": "Owner",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "address_line",
+        "label": "Address",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "city",
+        "label": "City",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "region",
+        "label": "Region",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "country",
+        "label": "Country",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "time_zone",
+        "label": "Time zone",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "About",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "update": [
+      {
+        "key": "name",
+        "label": "Name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "domain",
+        "label": "Domain",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "website",
+        "label": "Website",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "industry",
+        "label": "Industry",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "employee_count",
+        "label": "Employees",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "key": "annual_revenue_cents",
+        "label": "Annual revenue",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "key": "phone",
+        "label": "Phone",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lifecycle_stage",
+        "label": "Lifecycle stage",
+        "required": false,
+        "type": "string",
+        "choices": ["lead", "prospect", "customer", "churned"]
+      },
+      {
+        "key": "tier",
+        "label": "Tier",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "source",
+        "label": "Source",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "owner",
+        "label": "Owner",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "address_line",
+        "label": "Address",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "city",
+        "label": "City",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "region",
+        "label": "Region",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "country",
+        "label": "Country",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "time_zone",
+        "label": "Time zone",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "About",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "filters": [
+      {
+        "key": "domain",
+        "label": "domain",
+        "type": "string",
+        "helpText": "Only records whose domain equals this."
+      },
+      {
+        "key": "industry",
+        "label": "industry",
+        "type": "string",
+        "helpText": "Only records whose industry equals this."
+      },
+      {
+        "key": "lifecycle_stage",
+        "label": "lifecycle stage",
+        "type": "string",
+        "helpText": "Only records whose lifecycle_stage equals this."
+      },
+      {
+        "key": "owner",
+        "label": "owner",
+        "type": "string",
+        "helpText": "Only records whose owner equals this."
+      },
+      {
+        "key": "country",
+        "label": "country",
+        "type": "string",
+        "helpText": "Only records whose country equals this."
+      },
+      {
+        "key": "tier",
+        "label": "tier",
+        "type": "string",
+        "helpText": "Only records whose tier equals this."
+      }
+    ]
+  },
+  "lead": {
+    "label": "Lead",
+    "plural": "Leads",
+    "path": "/leads",
+    "create": [
+      {
+        "key": "person",
+        "label": "Customer",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "company",
+        "label": "Company",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "status",
+        "label": "Status",
+        "required": false,
+        "type": "string",
+        "choices": ["new", "working", "qualified", "meeting", "converted", "disqualified"]
+      },
+      {
+        "key": "source",
+        "label": "Source",
+        "required": false,
+        "type": "string",
+        "choices": ["website", "manual", "import", "conversation"]
+      },
+      {
+        "key": "owner",
+        "label": "Owner",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "estimated_value_cents",
+        "label": "Estimated value",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "key": "requirements",
+        "label": "What they need",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "campaign",
+        "label": "Campaign",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "Notes",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "next_action_at",
+        "label": "Next action",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lost_reason",
+        "label": "Reason",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "update": [
+      {
+        "key": "company",
+        "label": "Company",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "status",
+        "label": "Status",
+        "required": false,
+        "type": "string",
+        "choices": ["new", "working", "qualified", "meeting", "converted", "disqualified"]
+      },
+      {
+        "key": "source",
+        "label": "Source",
+        "required": false,
+        "type": "string",
+        "choices": ["website", "manual", "import", "conversation"]
+      },
+      {
+        "key": "owner",
+        "label": "Owner",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "estimated_value_cents",
+        "label": "Estimated value",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "key": "requirements",
+        "label": "What they need",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "campaign",
+        "label": "Campaign",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "Notes",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "next_action_at",
+        "label": "Next action",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lost_reason",
+        "label": "Reason",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "filters": [
+      {
+        "key": "status",
+        "label": "status",
+        "type": "string",
+        "helpText": "Only records whose status equals this."
+      },
+      {
+        "key": "source",
+        "label": "source",
+        "type": "string",
+        "helpText": "Only records whose source equals this."
+      },
+      {
+        "key": "owner",
+        "label": "owner",
+        "type": "string",
+        "helpText": "Only records whose owner equals this."
+      },
+      {
+        "key": "person",
+        "label": "person",
+        "type": "string",
+        "helpText": "Only records linked to this person (public id)."
+      },
+      {
+        "key": "company",
+        "label": "company",
+        "type": "string",
+        "helpText": "Only records linked to this company (public id)."
+      }
+    ]
+  },
+  "opportunity": {
+    "label": "Deal",
+    "plural": "Deals",
+    "path": "/opportunities",
+    "create": [
+      {
+        "key": "name",
+        "label": "Name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "company",
+        "label": "Company",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "person",
+        "label": "Primary contact",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "stage",
+        "label": "Stage",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "amount",
+        "label": "Amount",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "key": "currency",
+        "label": "Currency",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "probability",
+        "label": "Probability",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "key": "close_date",
+        "label": "Expected close",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "owner",
+        "label": "Owner",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "next_step",
+        "label": "Next step",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "next_step_due_at",
+        "label": "Next step due",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "competitor",
+        "label": "Competitor",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "source",
+        "label": "Source",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "Notes",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "win_reason",
+        "label": "Why we won",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lost_reason",
+        "label": "Why we lost",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "update": [
+      {
+        "key": "name",
+        "label": "Name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "company",
+        "label": "Company",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "stage",
+        "label": "Stage",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "amount",
+        "label": "Amount",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "key": "currency",
+        "label": "Currency",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "probability",
+        "label": "Probability",
+        "required": false,
+        "type": "number"
+      },
+      {
+        "key": "close_date",
+        "label": "Expected close",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "owner",
+        "label": "Owner",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "next_step",
+        "label": "Next step",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "next_step_due_at",
+        "label": "Next step due",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "competitor",
+        "label": "Competitor",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "source",
+        "label": "Source",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "Notes",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "win_reason",
+        "label": "Why we won",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lost_reason",
+        "label": "Why we lost",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "filters": [
+      {
+        "key": "owner",
+        "label": "owner",
+        "type": "string",
+        "helpText": "Only records whose owner equals this."
+      },
+      {
+        "key": "pipeline",
+        "label": "pipeline",
+        "type": "string",
+        "helpText": "Only records whose pipeline id equals this."
+      },
+      {
+        "key": "stage",
+        "label": "stage",
+        "type": "string",
+        "helpText": "Only records whose stage id equals this."
+      },
+      {
+        "key": "stage_kind",
+        "label": "stage kind",
+        "type": "string",
+        "helpText": "Only records whose stage_kind equals this."
+      },
+      {
+        "key": "currency",
+        "label": "currency",
+        "type": "string",
+        "helpText": "Only records whose currency equals this."
+      },
+      {
+        "key": "source",
+        "label": "source",
+        "type": "string",
+        "helpText": "Only records whose source equals this."
+      },
+      {
+        "key": "person",
+        "label": "person",
+        "type": "string",
+        "helpText": "Only records linked to this person (public id)."
+      },
+      {
+        "key": "company",
+        "label": "company",
+        "type": "string",
+        "helpText": "Only records linked to this company (public id)."
+      }
+    ]
+  },
+  "task": {
+    "create": [
+      {
+        "key": "title",
+        "label": "title",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "description",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "kind",
+        "label": "kind",
+        "required": false,
+        "type": "string",
+        "choices": ["task", "call", "meeting", "email", "follow_up"]
+      },
+      {
+        "key": "priority",
+        "label": "priority",
+        "required": false,
+        "type": "string",
+        "choices": ["low", "normal", "high", "urgent"]
+      },
+      {
+        "key": "due_at",
+        "label": "due_at",
+        "required": false,
+        "type": "datetime"
+      },
+      {
+        "key": "all_day",
+        "label": "all_day",
+        "required": false,
+        "type": "boolean"
+      },
+      {
+        "key": "owner",
+        "label": "Member user id. Defaults to the key's creator.",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "person",
+        "label": "person",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "company",
+        "label": "company",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lead",
+        "label": "lead",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "opportunity",
+        "label": "opportunity",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "update": [
+      {
+        "key": "title",
+        "label": "title",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "description",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "kind",
+        "label": "kind",
+        "required": false,
+        "type": "string",
+        "choices": ["task", "call", "meeting", "email", "follow_up"]
+      },
+      {
+        "key": "priority",
+        "label": "priority",
+        "required": false,
+        "type": "string",
+        "choices": ["low", "normal", "high", "urgent"]
+      },
+      {
+        "key": "due_at",
+        "label": "due_at",
+        "required": false,
+        "type": "datetime"
+      },
+      {
+        "key": "owner",
+        "label": "owner",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "status",
+        "label": "status",
+        "required": false,
+        "type": "string",
+        "choices": ["open", "completed", "cancelled"]
+      }
+    ],
+    "filters": [
+      {
+        "key": "window",
+        "label": "window",
+        "type": "string",
+        "choices": ["today", "overdue", "upcoming", "completed", "all"]
+      },
+      {
+        "key": "owner",
+        "label": "owner",
+        "type": "string"
+      },
+      {
+        "key": "person",
+        "label": "person",
+        "type": "string"
+      },
+      {
+        "key": "company",
+        "label": "company",
+        "type": "string"
+      },
+      {
+        "key": "lead",
+        "label": "lead",
+        "type": "string"
+      },
+      {
+        "key": "opportunity",
+        "label": "opportunity",
+        "type": "string"
+      }
+    ]
+  },
+  "note": {
+    "create": [
+      {
+        "key": "record_type",
+        "label": "record_type",
+        "required": true,
+        "type": "string",
+        "choices": ["person", "company", "lead", "opportunity"]
+      },
+      {
+        "key": "record_id",
+        "label": "record_id",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "key": "body",
+        "label": "body",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "key": "pinned",
+        "label": "pinned",
+        "required": false,
+        "type": "boolean"
+      }
+    ],
+    "filters": [
+      {
+        "key": "record_type",
+        "label": "record type",
+        "type": "string",
+        "choices": ["person", "company", "lead", "opportunity"]
+      },
+      {
+        "key": "record_id",
+        "label": "record id",
+        "type": "string"
+      }
+    ],
+    "update": [
+      {
+        "key": "body",
+        "label": "body",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "pinned",
+        "label": "pinned",
+        "required": false,
+        "type": "boolean"
+      }
+    ]
+  },
+  "ticket": {
+    "create": [
+      {
+        "key": "subject",
+        "label": "subject",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "key": "summary",
+        "label": "summary",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "priority",
+        "label": "Defaults to medium. SLA targets follow it.",
+        "required": false,
+        "type": "string",
+        "choices": ["low", "medium", "high", "urgent"]
+      },
+      {
+        "key": "assignee",
+        "label": "Member user id.",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "person",
+        "label": "person",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "company",
+        "label": "company",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lead",
+        "label": "lead",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "opportunity",
+        "label": "opportunity",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "update": [
+      {
+        "key": "status",
+        "label": "status",
+        "required": false,
+        "type": "string",
+        "choices": ["new", "open", "waiting_customer", "waiting_internal", "resolved", "closed"]
+      },
+      {
+        "key": "priority",
+        "label": "priority",
+        "required": false,
+        "type": "string",
+        "choices": ["low", "medium", "high", "urgent"]
+      },
+      {
+        "key": "assignee",
+        "label": "Member user id; null unassigns.",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "filters": [
+      {
+        "key": "status",
+        "label": "status",
+        "type": "string",
+        "choices": ["new", "open", "waiting_customer", "waiting_internal", "resolved", "closed"]
+      },
+      {
+        "key": "priority",
+        "label": "priority",
+        "type": "string",
+        "choices": ["low", "medium", "high", "urgent"]
+      },
+      {
+        "key": "assignee",
+        "label": "assignee",
+        "type": "string",
+        "helpText": "Member user id."
+      },
+      {
+        "key": "q",
+        "label": "q",
+        "type": "string",
+        "helpText": "Search the subject and summary."
+      }
+    ]
+  },
+  "meeting": {
+    "create": [
+      {
+        "key": "title",
+        "label": "title",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "key": "starts_at",
+        "label": "starts_at",
+        "required": true,
+        "type": "datetime"
+      },
+      {
+        "key": "ends_at",
+        "label": "Defaults to starts_at plus duration_minutes.",
+        "required": false,
+        "type": "datetime"
+      },
+      {
+        "key": "duration_minutes",
+        "label": "duration_minutes",
+        "required": false,
+        "type": "integer"
+      },
+      {
+        "key": "time_zone",
+        "label": "time_zone",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "meeting_url",
+        "label": "meeting_url",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "location",
+        "label": "location",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "description",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "owner",
+        "label": "Member user id. Defaults to the key's creator.",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "person",
+        "label": "person",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "company",
+        "label": "company",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "lead",
+        "label": "lead",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "opportunity",
+        "label": "opportunity",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "notify",
+        "label": "Put it on the owner's calendar and invite the attendees. False saves it quietly.",
+        "required": false,
+        "type": "boolean"
+      }
+    ],
+    "update": [
+      {
+        "key": "title",
+        "label": "title",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "starts_at",
+        "label": "starts_at",
+        "required": false,
+        "type": "datetime"
+      },
+      {
+        "key": "ends_at",
+        "label": "ends_at",
+        "required": false,
+        "type": "datetime"
+      },
+      {
+        "key": "time_zone",
+        "label": "time_zone",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "meeting_url",
+        "label": "meeting_url",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "location",
+        "label": "location",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "description",
+        "label": "description",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "owner",
+        "label": "owner",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "notify",
+        "label": "notify",
+        "required": false,
+        "type": "boolean"
+      }
+    ],
+    "filters": [
+      {
+        "key": "window",
+        "label": "window",
+        "type": "string",
+        "choices": ["upcoming", "past", "all"]
+      }
+    ]
+  },
+  "record": {
+    "create": [
+      {
+        "key": "name",
+        "label": "Name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "owner",
+        "label": "Owner",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "update": [
+      {
+        "key": "name",
+        "label": "Name",
+        "required": false,
+        "type": "string"
+      },
+      {
+        "key": "owner",
+        "label": "Owner",
+        "required": false,
+        "type": "string"
+      }
+    ],
+    "filters": [
+      {
+        "key": "q",
+        "label": "q",
+        "type": "string",
+        "helpText": "Free-text search over the object's main columns."
+      },
+      {
+        "key": "owner",
+        "label": "owner",
+        "type": "string",
+        "helpText": "Only records whose owner equals this."
+      }
+    ]
+  }
+}
