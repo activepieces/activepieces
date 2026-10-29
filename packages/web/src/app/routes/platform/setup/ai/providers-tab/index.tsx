@@ -620,16 +620,16 @@ function ProviderFaces() {
         <Avatar
           key={info.provider}
           size="lg"
-          className="size-11 border border-gray-6 bg-gray-1"
+          className="size-9 border border-gray-6 bg-gray-1 dark:brightness-75"
         >
           <LogoPlate
             src={info.logoUrl}
             alt={info.name}
-            className="size-full rounded-full p-2"
+            className="size-full rounded-full p-1.5"
           />
         </Avatar>
       ))}
-      <AvatarGroupCount className="size-11 border border-gray-6 text-xs font-medium tabular-nums">
+      <AvatarGroupCount className="size-9 border border-gray-6 text-xs font-medium tabular-nums">
         {t('+{count}', { count: ranked.length - shown.length })}
       </AvatarGroupCount>
     </AvatarGroup>
