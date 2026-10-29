@@ -1,5 +1,5 @@
 import { ProjectRole } from '@activepieces/core-utils'
-import { ApiKeyResponseWithValue, DefaultProjectRole, InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectType, SendUserInvitationRequest, User } from '@activepieces/shared'
+import { ApiKeyResponseWithValue, DefaultProjectRole, InvitationStatus, InvitationType, Platform, PlatformPlan, PlatformRole, PrincipalType, Project, ProjectType, SendUserInvitationRequest, User, UserInvitation } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -383,10 +383,64 @@ describe('User Invitation API', () => {
             })
             expect(deleteResponse?.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
+
+        it('lets a platform admin delete a project invitation when the plan has no project roles', async () => {
+            const { mockOwnerToken, mockPlatform, mockProject } = await createBasicEnvironment({ plan: { projectRolesEnabled: false } })
+            const invitation = await saveProjectInvitation({ platformId: mockPlatform.id, projectId: mockProject.id })
+
+            const deleteResponse = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/user-invitations/${invitation.id}`,
+                headers: { authorization: `Bearer ${mockOwnerToken}` },
+            })
+
+            expect(deleteResponse?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(await db.findOneBy<UserInvitation>('user_invitation', { id: invitation.id })).toBeNull()
+        })
+
+        it('refuses a project admin deleting a project invitation when the plan has no project roles', async () => {
+            const { mockMember, mockPlatform, mockProject } = await createBasicEnvironment({ plan: { projectRolesEnabled: false } })
+            const adminRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
+            await db.save('project_member', createMockProjectMember({
+                userId: mockMember.id,
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                projectRoleId: adminRole.id,
+            }))
+            const invitation = await saveProjectInvitation({ platformId: mockPlatform.id, projectId: mockProject.id })
+            const memberToken = await generateMockToken({
+                id: mockMember.id,
+                type: PrincipalType.USER,
+                platform: { id: mockPlatform.id },
+            })
+
+            const deleteResponse = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/user-invitations/${invitation.id}`,
+                headers: { authorization: `Bearer ${memberToken}` },
+            })
+
+            expect(deleteResponse?.statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+            expect(await db.findOneBy<UserInvitation>('user_invitation', { id: invitation.id })).not.toBeNull()
+        })
     })
 })
 
-async function createBasicEnvironment({ platform, project }: { platform?: Partial<Platform>, project?: Partial<Project> }): Promise<{
+async function saveProjectInvitation({ platformId, projectId }: { platformId: string, projectId: string }): Promise<UserInvitation> {
+    const adminRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
+    const invitation = createMockUserInvitation({
+        email: faker.internet.email(),
+        platformId,
+        projectId,
+        type: InvitationType.PROJECT,
+        status: InvitationStatus.PENDING,
+        projectRole: adminRole,
+    })
+    await db.save('user_invitation', invitation)
+    return invitation
+}
+
+async function createBasicEnvironment({ platform, project, plan }: { platform?: Partial<Platform>, project?: Partial<Project>, plan?: Partial<PlatformPlan> }): Promise<{
     mockOwner: User
     mockPlatform: Platform
     mockProject: Project
@@ -397,7 +451,7 @@ async function createBasicEnvironment({ platform, project }: { platform?: Partia
     const { mockOwner, mockPlatform, mockProject, mockApiKey } = await mockAndSaveBasicSetupWithApiKey({
         platform: { ...platform },
         project: { ...project },
-        plan: { projectRolesEnabled: true, auditLogEnabled: false },
+        plan: { projectRolesEnabled: true, auditLogEnabled: false, ...plan },
     })
 
     const mockOwnerToken = await generateMockToken({

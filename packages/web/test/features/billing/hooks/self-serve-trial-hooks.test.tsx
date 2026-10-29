@@ -37,6 +37,7 @@ const plansDialogOpen = () =>
 let isPlatformAdmin = true;
 let isEmbedded = false;
 let planTrialEndsAt: string | null = null;
+let seatGraceEndsAt: string | null = null;
 let usersLimit: number | null = 5;
 let status: SelfServeTrialStatus;
 const startSelfServeTrial = vi.fn();
@@ -59,11 +60,12 @@ vi.mock('@/hooks/platform-hooks', () => ({
           usersLimit,
         },
         selfServeTrial:
-          planTrialEndsAt === null
+          planTrialEndsAt === null && seatGraceEndsAt === null
             ? undefined
             : {
                 startedAt: '2026-10-07T09:00:00.000Z',
-                endsAt: planTrialEndsAt,
+                endsAt: planTrialEndsAt ?? '2026-10-14T09:00:00.000Z',
+                seatGraceEndsAt,
               },
       },
     }),
@@ -97,6 +99,7 @@ beforeEach(() => {
   isPlatformAdmin = true;
   isEmbedded = false;
   planTrialEndsAt = null;
+  seatGraceEndsAt = null;
   usersLimit = 5;
   status = activeStatus(dayjs().add(3, 'day').toDate());
 });

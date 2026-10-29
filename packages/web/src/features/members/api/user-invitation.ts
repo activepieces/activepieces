@@ -15,6 +15,12 @@ export const userInvitationApi = {
   list: (request: ListUserInvitationsRequest) => {
     return api.get<SeekPage<UserInvitation>>('/v1/user-invitations', request);
   },
+  listReservingSeats: (request: ListReservingSeatsRequest) => {
+    return api.get<SeekPage<UserInvitation>>(
+      '/v1/user-invitations/reserving-seats',
+      request,
+    );
+  },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/user-invitations/${id}`);
   },
@@ -23,4 +29,9 @@ export const userInvitationApi = {
       invitationToken: token,
     });
   },
+};
+
+type ListReservingSeatsRequest = {
+  cursor?: string;
+  limit: number;
 };

@@ -240,12 +240,17 @@ export const SelfServeTrialStatus = z.object({
 })
 export type SelfServeTrialStatus = z.infer<typeof SelfServeTrialStatus>
 
+export const PlatformSelfServeTrial = SelfServeTrialDates.extend({
+    seatGraceEndsAt: Nullable(z.string()),
+})
+export type PlatformSelfServeTrial = z.infer<typeof PlatformSelfServeTrial>
+
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
     billingEnforced: z.boolean().optional(),
-    selfServeTrial: SelfServeTrialDates.optional(),
+    selfServeTrial: PlatformSelfServeTrial.optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
@@ -309,6 +314,13 @@ export const SeatsBillableFeature = z.object({
 })
 export type SeatsBillableFeature = z.infer<typeof SeatsBillableFeature>
 
+export const TrialSeatGrace = z.object({
+    usedSeats: z.number(),
+    seatLimit: z.number(),
+    userIds: z.array(z.string()),
+})
+export type TrialSeatGrace = z.infer<typeof TrialSeatGrace>
+
 export type ConsumableBillableFeature = CreditsBillableFeature | AppSumoCreditsBillableFeature
 
 export const ProjectCreditUsage = z.object({
@@ -339,5 +351,6 @@ export const PlatformBillingInformation = z.object({
     includedSeats: Nullable(z.number()),
     additionalSeats: Nullable(z.number()),
     selfServeTrial: SelfServeTrialStatus,
+    seatGrace: Nullable(TrialSeatGrace),
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>

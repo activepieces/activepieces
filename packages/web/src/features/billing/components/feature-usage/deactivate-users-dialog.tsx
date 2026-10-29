@@ -1,10 +1,11 @@
-import { isNil } from '@activepieces/core-utils';
-import { PlatformRole, UserStatus } from '@activepieces/shared';
+import { isNil, unique } from '@activepieces/core-utils';
+import { PlatformRole, UserInvitation, UserStatus } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { platformUserApi } from '@/api/platform-user-api';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { userInvitationApi } from '@/features/members/api/user-invitation';
 import {
   platformUserHooks,
@@ -26,13 +28,20 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
+import { refreshBillingCaches } from '../../hooks/billing-hooks';
+
 export const DeactivateUsersDialog = ({
   open,
   onOpenChange,
   targetSeats,
   currentUsers,
   planName,
+  description,
   warning,
+  actions,
+  preselectedUserIds,
+  preselectedLabel,
+  hideEmbeddedUsers,
   onConfirmed,
 }: DeactivateUsersDialogProps) => {
   return (
@@ -43,7 +52,12 @@ export const DeactivateUsersDialog = ({
           targetSeats={targetSeats}
           currentUsers={currentUsers}
           planName={planName}
+          description={description}
           warning={warning}
+          actions={actions}
+          preselectedUserIds={preselectedUserIds}
+          preselectedLabel={preselectedLabel}
+          hideEmbeddedUsers={hideEmbeddedUsers}
           onConfirmed={onConfirmed}
           onOpenChange={onOpenChange}
         />
@@ -56,96 +70,193 @@ function DeactivateUsersForm({
   targetSeats,
   currentUsers,
   planName,
+  description,
   warning,
+  actions,
+  preselectedUserIds = [],
+  preselectedLabel,
+  hideEmbeddedUsers = false,
   onConfirmed,
   onOpenChange,
 }: DeactivateUsersFormProps) {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: usersPage } = platformUserHooks.useUsers();
-  const { data: invitations } = platformUserHooks.usePlatformInvitations();
+  const usersQuery = platformUserHooks.useAllUsers({
+    excludeEmbedded: hideEmbeddedUsers,
+  });
+  const invitationsQuery = platformUserHooks.useInvitesReservingSeats();
+  const users = usersQuery.data;
+  const invitations = invitationsQuery.data;
+  const listsFailed = usersQuery.isError || invitationsQuery.isError;
   const queryClient = useQueryClient();
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(
-    new Set(),
+    () => new Set(preselectedUserIds),
   );
-  const [selectedInvitationIds, setSelectedInvitationIds] = useState<
-    Set<string>
-  >(new Set());
+  const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
 
-  const deactivatableUsers = (usersPage?.data ?? []).filter(
+  const deactivatableUsers = (users ?? []).filter(
     (user) => user.status === UserStatus.ACTIVE && user.id !== platform.ownerId,
   );
-  const pendingInvitations = invitations ?? [];
+  const invitedEmails = groupByEmail(invitations ?? []);
 
+  const usersToDeactivate = deactivatableUsers.filter((user) =>
+    selectedUserIds.has(user.id),
+  );
+  const emailsToRevoke = invitedEmails.filter((invited) =>
+    selectedEmails.has(invited.email),
+  );
   const seatsAfter =
-    currentUsers - selectedUserIds.size - selectedInvitationIds.size;
+    currentUsers - usersToDeactivate.length - emailsToRevoke.length;
   const withinLimit = seatsAfter <= targetSeats;
+
+  const refreshLists = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
+      queryClient.invalidateQueries({
+        queryKey: platformUserKeys.invitations,
+      }),
+    ]);
 
   const { mutate: deactivateAndContinue, isPending } = useMutation({
     mutationFn: async () => {
-      await Promise.all([
-        ...Array.from(selectedUserIds).map((userId) =>
-          platformUserApi.update(userId, { status: UserStatus.INACTIVE }),
+      const results = await Promise.allSettled([
+        ...usersToDeactivate.map((user) =>
+          platformUserApi.update(user.id, { status: UserStatus.INACTIVE }),
         ),
-        ...Array.from(selectedInvitationIds).map((invitationId) =>
-          userInvitationApi.delete(invitationId),
+        ...emailsToRevoke.flatMap(({ invitationIds }) =>
+          invitationIds.map((invitationId) =>
+            userInvitationApi.delete(invitationId),
+          ),
         ),
       ]);
+      const failure = results.find((result) => result.status === 'rejected');
+      if (!isNil(failure)) {
+        throw failure.reason;
+      }
     },
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: platformUserKeys.users }),
-        queryClient.invalidateQueries({
-          queryKey: platformUserKeys.invitations,
-        }),
-      ]);
+      await refreshLists();
       onOpenChange(false);
       onConfirmed();
+    },
+    onError: async () => {
+      internalErrorToast();
+      await refreshLists();
+      refreshBillingCaches(queryClient);
     },
   });
 
   const toggleUser = (userId: string) =>
     setSelectedUserIds((previous) => toggled(previous, userId));
 
-  const toggleInvitation = (invitationId: string) =>
-    setSelectedInvitationIds((previous) => toggled(previous, invitationId));
+  const toggleEmail = (email: string) =>
+    setSelectedEmails((previous) => toggled(previous, email));
 
   return (
     <>
       <DialogHeader>
         <DialogTitle>{t('Deactivate users')}</DialogTitle>
         <DialogDescription>
-          {isNil(planName)
-            ? t(
-                "You're reducing to {target, plural, =1 {1 seat} other {# seats}}. Deactivate users to get within the limit.",
-                { target: targetSeats },
-              )
-            : t(
-                'The {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. Deactivate users to get within the limit before switching.',
-                { plan: planName, target: targetSeats },
-              )}
+          {description ??
+            (isNil(planName)
+              ? t(
+                  "You're reducing to {target, plural, =1 {1 seat} other {# seats}}. Deactivate users to get within the limit.",
+                  { target: targetSeats },
+                )
+              : t(
+                  'The {plan} plan includes {target, plural, =1 {1 seat} other {# seats}}. Deactivate users to get within the limit before switching.',
+                  { plan: planName, target: targetSeats },
+                ))}
         </DialogDescription>
       </DialogHeader>
 
+      {listsFailed ? (
+        <DataFetchErrorState
+          entity={t('users')}
+          onRetry={async () => {
+            await Promise.all([
+              usersQuery.refetch(),
+              invitationsQuery.refetch(),
+            ]);
+          }}
+        />
+      ) : (
+        <SeatChoices
+          users={deactivatableUsers.map((user) => ({
+            id: user.id,
+            email: user.email,
+            trailingLabel:
+              preselectedUserIds.includes(user.id) && !isNil(preselectedLabel)
+                ? preselectedLabel
+                : roleLabel(user.platformRole),
+          }))}
+          invitations={invitedEmails.map(({ email }) => ({
+            id: email,
+            email,
+            trailingLabel: t('Invited'),
+          }))}
+          selectedUserIds={selectedUserIds}
+          selectedEmails={selectedEmails}
+          onToggleUser={toggleUser}
+          onToggleEmail={toggleEmail}
+          seatsAfter={seatsAfter}
+          targetSeats={targetSeats}
+          withinLimit={withinLimit}
+          warning={warning}
+        />
+      )}
+
+      <DialogFooter>
+        {actions}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={isPending}
+        >
+          {t('Cancel')}
+        </Button>
+        <Button
+          {...adminControl(AdminControl.BILLING_DEACTIVATE_USERS_SUBMIT)}
+          type="button"
+          loading={isPending}
+          disabled={!withinLimit || listsFailed}
+          onClick={() => deactivateAndContinue()}
+        >
+          {emailsToRevoke.length > 0 && usersToDeactivate.length === 0
+            ? t('Revoke & continue')
+            : t('Deactivate & continue')}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+function SeatChoices({
+  users,
+  invitations,
+  selectedUserIds,
+  selectedEmails,
+  onToggleUser,
+  onToggleEmail,
+  seatsAfter,
+  targetSeats,
+  withinLimit,
+  warning,
+}: SeatChoicesProps) {
+  return (
+    <>
       <SelectableEmailList
-        items={deactivatableUsers.map((user) => ({
-          id: user.id,
-          email: user.email,
-          trailingLabel: roleLabel(user.platformRole),
-        }))}
+        items={users}
         selectedIds={selectedUserIds}
-        onToggle={toggleUser}
+        onToggle={onToggleUser}
         maxHeightClass="max-h-[220px]"
       />
 
       <SelectableEmailList
         heading={t('Pending invitations')}
-        items={pendingInvitations.map((invitation) => ({
-          id: invitation.id,
-          email: invitation.email,
-          trailingLabel: t('Invited'),
-        }))}
-        selectedIds={selectedInvitationIds}
-        onToggle={toggleInvitation}
+        items={invitations}
+        selectedIds={selectedEmails}
+        onToggle={onToggleEmail}
         maxHeightClass="max-h-[160px]"
       />
 
@@ -164,28 +275,6 @@ function DeactivateUsersForm({
       {!isNil(warning) && (
         <span className="text-xs text-danger-11">{warning}</span>
       )}
-
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => onOpenChange(false)}
-          disabled={isPending}
-        >
-          {t('Cancel')}
-        </Button>
-        <Button
-          {...adminControl(AdminControl.BILLING_DEACTIVATE_USERS_SUBMIT)}
-          type="button"
-          loading={isPending}
-          disabled={!withinLimit}
-          onClick={() => deactivateAndContinue()}
-        >
-          {selectedInvitationIds.size > 0 && selectedUserIds.size === 0
-            ? t('Revoke & continue')
-            : t('Deactivate & continue')}
-        </Button>
-      </DialogFooter>
     </>
   );
 }
@@ -249,6 +338,18 @@ function toggled(selectedIds: Set<string>, id: string): Set<string> {
   return next;
 }
 
+function groupByEmail(invitations: UserInvitation[]): InvitedEmail[] {
+  const emails = unique(
+    invitations.map((invitation) => invitation.email.toLowerCase()),
+  );
+  return emails.map((email) => ({
+    email,
+    invitationIds: invitations
+      .filter((invitation) => invitation.email.toLowerCase() === email)
+      .map((invitation) => invitation.id),
+  }));
+}
+
 function roleLabel(role: PlatformRole): string {
   switch (role) {
     case PlatformRole.ADMIN:
@@ -266,11 +367,34 @@ type DeactivateUsersDialogProps = {
   targetSeats: number;
   currentUsers: number;
   planName?: string;
+  description?: string;
   warning?: string;
+  actions?: ReactNode;
+  preselectedUserIds?: string[];
+  preselectedLabel?: string;
+  hideEmbeddedUsers?: boolean;
   onConfirmed: () => void;
 };
 
 type DeactivateUsersFormProps = Omit<DeactivateUsersDialogProps, 'open'>;
+
+type SeatChoicesProps = {
+  users: SelectableEmailItem[];
+  invitations: SelectableEmailItem[];
+  selectedUserIds: Set<string>;
+  selectedEmails: Set<string>;
+  onToggleUser: (id: string) => void;
+  onToggleEmail: (email: string) => void;
+  seatsAfter: number;
+  targetSeats: number;
+  withinLimit: boolean;
+  warning?: string;
+};
+
+type InvitedEmail = {
+  email: string;
+  invitationIds: string[];
+};
 
 type SelectableEmailItem = {
   id: string;

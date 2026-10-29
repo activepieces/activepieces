@@ -1,9 +1,9 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
-import { ApEdition, PlatformRole, ProjectType, User, UserIdentity, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, PlatformRole, ProjectType, User, UserIdentity, UserIdentityProvider, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import { EntityManager, In, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -117,7 +117,7 @@ export const userService = (log: FastifyBaseLogger) => ({
     async countActiveByPlatformId({ platformId, entityManager }: CountActiveByPlatformIdParams): Promise<number> {
         return userRepo(entityManager).countBy({ platformId, status: UserStatus.ACTIVE })
     },
-    async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
+    async list({ platformId, externalId, excludeEmbedded, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: UserEntity,
@@ -127,10 +127,11 @@ export const userService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const { data, cursor } = await paginator.paginate(userRepo().createQueryBuilder('user').where({
+        const query = userRepo().createQueryBuilder('user').where({
             platformId,
             ...spreadIfDefined('externalId', externalId),
-        }))
+        })
+        const { data, cursor } = await paginator.paginate(excludeEmbedded === true ? excludeEmbeddedUsers(query) : query)
 
         const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
         return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
@@ -285,6 +286,17 @@ export function mapToUserWithMetaInformation(user: (User & { identity?: UserIden
     }
 }
 
+export function excludeEmbeddedUsers<T extends ObjectLiteral>(query: SelectQueryBuilder<T>): SelectQueryBuilder<T> {
+    return query.andWhere(USER_IS_NOT_EMBEDDED, { embedded: UserIdentityProvider.JWT })
+}
+
+const USER_IS_NOT_EMBEDDED = `NOT EXISTS (
+    SELECT 1
+    FROM user_identity identity
+    WHERE identity.id = "user"."identityId"
+    AND identity.provider = :embedded
+)`
+
 async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { log: FastifyBaseLogger }): Promise<void> {
     const platform = await platformService(log).getOneOrThrow(platformId)
     if (platform.ownerId === id) {
@@ -336,6 +348,7 @@ type DeleteParams = {
 type ListParams = {
     platformId: PlatformId
     externalId?: string
+    excludeEmbedded?: boolean
     cursorRequest: Cursor
     limit?: number
 }
