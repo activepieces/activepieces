@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, PlatformRole, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, PlatformRole, PlatformWithoutSensitiveData, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -143,7 +143,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         const emailDomain = email.split('@')[1]
         const isAllowedDomaiin =
             !platform.enforceAllowedAuthDomains ||
-            platform.allowedAuthDomains.includes(emailDomain)
+            platform.allowedAuthDomains.some((domain) => domain.toLowerCase() === emailDomain?.toLowerCase())
 
         if (!isAllowedDomaiin) {
             throw new ActivepiecesError({
@@ -267,10 +267,24 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         const project = await projectService(log).getOneOrThrow(projectId)
         return project.ownerId
     },
+    getSignInMethods({ platform }: GetSignInMethodsParams): SignInMethods {
+        if (system.getEdition() === ApEdition.COMMUNITY) {
+            return { email: true, google: false, sso: false }
+        }
+        return {
+            email: platform.emailAuthEnabled,
+            google: isGoogleConfigured() && platform.googleAuthEnabled,
+            sso: !isNil(platform.federatedAuthProviders?.saml),
+        }
+    },
 })
 
 function findPersonalProject(projects: Project[], userId: string): Project | undefined {
     return projects.find((project) => project.ownerId === userId && project.type === ProjectType.PERSONAL)
+}
+
+function isGoogleConfigured(): boolean {
+    return !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_ID)) && !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_SECRET))
 }
 
 type SendTelemetryParams = {
@@ -306,6 +320,16 @@ type ProvisionOrOnboardParams = {
 export type AuthenticationResult = {
     response: AuthenticationResponse
     signedUp: boolean
+}
+
+export type SignInMethods = {
+    email: boolean
+    google: boolean
+    sso: boolean
+}
+
+type GetSignInMethodsParams = {
+    platform: Pick<PlatformWithoutSensitiveData, 'emailAuthEnabled' | 'googleAuthEnabled' | 'federatedAuthProviders'>
 }
 
 type GetOnboardingResponseParams = {

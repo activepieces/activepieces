@@ -2,6 +2,7 @@ import { SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerifi
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { authnSsoSamlService } from '../../../../src/app/ee/authentication/saml-authn/authn-sso-saml-service'
 import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -139,6 +140,39 @@ describe('SSO domain API', () => {
             expect(platform.ssoDomain).toBeNull()
         })
     })
+
+    describe('expirePendingSsoDomains', () => {
+        it('keeps a pending domain for 7 days, then drops it', async () => {
+            const sixDays = await createTestContext(app!, {
+                plan: { ssoEnabled: true },
+                platform: {
+                    ssoDomain: 'six-days.example.com',
+                    ssoDomainVerification: { ...pending('six-days.example.com'), createdAt: daysAgo(6) },
+                },
+            })
+            const eightDays = await createTestContext(app!, {
+                plan: { ssoEnabled: true },
+                platform: {
+                    ssoDomain: 'eight-days.example.com',
+                    ssoDomainVerification: { ...pending('eight-days.example.com'), createdAt: daysAgo(8) },
+                },
+            })
+            const verifiedLongAgo = await createTestContext(app!, {
+                plan: { ssoEnabled: true },
+                platform: {
+                    ssoDomain: 'verified-long-ago.example.com',
+                    ssoDomainVerification: { ...verified('verified-long-ago.example.com'), createdAt: daysAgo(30) },
+                },
+            })
+
+            await authnSsoSamlService(app!.log).expirePendingSsoDomains()
+
+            expect((await findPlatform(sixDays.platform.id)).ssoDomain).toBe('six-days.example.com')
+            expect((await findPlatform(eightDays.platform.id)).ssoDomain).toBeNull()
+            expect((await findPlatform(eightDays.platform.id)).ssoDomainVerification).toBeNull()
+            expect((await findPlatform(verifiedLongAgo.platform.id)).ssoDomain).toBe('verified-long-ago.example.com')
+        })
+    })
 })
 
 async function findPlatform(id: string): Promise<PlatformSsoRow> {
@@ -165,6 +199,10 @@ function pending(domain: string): SsoDomainVerification {
         ...verified(domain),
         status: SsoDomainVerificationStatus.PENDING_VERIFICATION,
     }
+}
+
+function daysAgo(days: number): string {
+    return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 }
 
 const SSO_DOMAIN = '/v1/authn/saml/sso-domain'

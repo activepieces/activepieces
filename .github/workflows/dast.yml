@@ -10,8 +10,7 @@ name: DAST (ZAP) — Staging
 
 on:
   schedule:
-    # 03:00 UTC — inside the staging deploy freeze window (17:00–09:00 UTC), so no deploy
-    # races the scan and the target is stable. See continuous-delivery-stg.yml.
+    # 03:00 UTC, when merges are rare: a merge during the scan redeploys staging under it.
     - cron: '0 3 * * *'
   workflow_dispatch:
 

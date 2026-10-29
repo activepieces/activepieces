@@ -62,11 +62,11 @@ jobs:
       # from archives of this commit's source instead of from the Cloud registry.
       - name: Pack the pieces the suite uses
         run: |
-          npx turbo run build --filter=@activepieces/piece-webhook
-          CHANGED_PIECES=packages/pieces/core/webhook npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/prepare-pieces-for-publish.ts
+          PIECES="packages/pieces/core/webhook packages/pieces/core/schedule packages/pieces/community/activepieces"
+          npx turbo run build --filter=@activepieces/piece-webhook --filter=@activepieces/piece-schedule --filter=@activepieces/piece-activepieces
+          CHANGED_PIECES="$(printf '%s\n' $PIECES)" npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/prepare-pieces-for-publish.ts
           mkdir e2e-pieces
-          cd packages/pieces/core/webhook/dist
-          npm pack --json --pack-destination "$GITHUB_WORKSPACE/e2e-pieces" > "$GITHUB_WORKSPACE/e2e-pieces/pieces.json"
+          npm pack --json --pack-destination "$GITHUB_WORKSPACE/e2e-pieces" $(printf '%s/dist ' $PIECES) > "$GITHUB_WORKSPACE/e2e-pieces/pieces.json"
 
       - uses: actions/upload-artifact@v6
         with:
@@ -116,6 +116,8 @@ jobs:
       APP_REPLICAS: 1
       WORKER_REPLICAS: ${{ matrix.workerReplicas }}
       AP_EXECUTION_MODE: ${{ matrix.executionMode }}
+      # The compose file passes an unset value as "", which the worker reads as invalid and replaces with 1 slot.
+      AP_WORKER_CONCURRENCY: 5
       AP_PIECES_SYNC_MODE: NONE
       AP_LOG_LEVEL: info
       AP_FILE_STORAGE_LOCATION: ${{ matrix.fileStorage }}
@@ -196,6 +198,7 @@ jobs:
       # The container joins the stack network and mounts the workspace at the same path, so the env paths hold.
       # If the background pull is still running, this pull joins it.
       # Piece isolation exercises the Cloud piece sync, which this stack turns off.
+      # The CLI --grep-invert replaces the config's, so it repeats @quarantine.
       - name: Run E2E tests
         run: |
           docker pull -q "$PLAYWRIGHT_IMAGE"
@@ -203,7 +206,7 @@ jobs:
             -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE/packages/tests-e2e" \
             -e CI -e AP_EDITION -e E2E_INSTANCE_URL -e E2E_PIECES_MANIFEST -e PLAYWRIGHT_JSON_OUTPUT_FILE \
             "$PLAYWRIGHT_IMAGE" \
-            npx playwright test --config=playwright.config.ts --reporter=github,json --grep-invert "Piece isolation"
+            npx playwright test --config=playwright.config.ts --reporter=github,json --grep-invert "Piece isolation|@quarantine"
 
       - name: Summarize results
         if: always()
@@ -215,7 +218,7 @@ jobs:
 
       - name: Show app and worker logs on failure
         if: failure()
-        run: docker compose logs --tail=200 app worker
+        run: docker compose logs --tail=2000 app worker
 
       # The stack lives only for this job, so traces hold no real credentials.
       - name: Upload test results

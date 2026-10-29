@@ -1,38 +1,39 @@
-import { workableAuth } from '../auth';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccountSubdomain } from '../common/get-subdomain';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { workableAuth } from '../auth';
+import { encodeId } from '../common/client';
+import { workableOps } from '../common/operations';
+import { accountSubdomainProp } from '../common/props';
+import { workableSchemas } from '../common/schemas';
+import { workableValues } from '../common/values';
 
 export const getStages = createAction({
   auth: workableAuth,
   name: 'getStages',
   classification: 'SEARCH',
   displayName: 'Get Stages',
-  description: 'Gets stages in your recruitment pipeline stages.',
+  description: 'Lists the pipeline stages of a job, or of the account when no job is given.',
   audience: 'both',
-  aiMetadata: { description: 'Lists the recruitment pipeline stages for a specific Workable job, identified by its shortcode. Use to discover valid stage slugs before moving a candidate. Requires the exact job shortcode; read-only and idempotent.', idempotent: true },
+  aiMetadata: {
+    description:
+      'List Workable recruitment pipeline stages with slug, name and kind. Give a job shortcode for that job\'s pipeline, or leave it empty for the account-wide stages. Use to find valid stage slugs before moving or creating a candidate. Read-only.',
+    idempotent: true,
+  },
+  outputSchema: workableSchemas.stages,
   props: {
+    account_subdomain: accountSubdomainProp,
     shortcode: Property.ShortText({
-      displayName: "Shortcode",
-      description: "Shortcode of specific job",
-      required: true
-    })
+      displayName: 'Job Shortcode',
+      description: 'Shortcode of the job. Empty lists the account-wide stages.',
+      required: false,
+    }),
   },
   async run(context) {
-    // Action logic here
-    const shortcode = context.propsValue.shortcode;
-
-    const accessToken = context.auth.secret_text;
-    const account = await getAccountSubdomain(accessToken);
-
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://${account}.workable.com/spi/v3/jobs/${shortcode}/stages`,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: "application/json"
-      }
-    });
-    return response.body;
+    const client = workableOps.client({ auth: context.auth, subdomain: context.propsValue.account_subdomain });
+    const shortcode = workableValues.optionalText(context.propsValue.shortcode);
+    const path = shortcode === undefined ? '/stages' : `/jobs/${encodeId({ value: shortcode, label: 'Job Shortcode' })}/stages`;
+    const body = await client.request({ method: HttpMethod.GET, path });
+    const stages = workableValues.records(workableValues.rec(body)['stages']);
+    return { stages, count: stages.length };
   },
 });
