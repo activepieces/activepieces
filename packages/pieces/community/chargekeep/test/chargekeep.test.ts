@@ -5,6 +5,7 @@ import { chargekeepAuth } from '../src/lib/auth';
 import { ChargekeepApiError, chargekeepClient } from '../src/lib/common/client';
 import { newLead } from '../src/lib/triggers/new-lead';
 import { newPayment } from '../src/lib/triggers/new-payment';
+import { newSubscription } from '../src/lib/triggers/new-subscription';
 import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework';
 
 type Loose = { [key: string]: Loose };
@@ -219,6 +220,17 @@ describe('contacts', () => {
     await expect(run({ name: 'upsert_contact', propsValue: { email: 'a@example.com', customFields: { foo: 1 } } })).rejects.toThrow('Unknown custom field keys');
     await expect(run({ name: 'upsert_contact', propsValue: { email: 'a@example.com', contactType: 'Vendor' } })).rejects.toThrow('Contact Type');
   });
+  it('ai upsert keeps matchExisting on when an agent leaves it out (optional checkboxes are filled with defaultValue ?? false)', async () => {
+    const props = chargekeep.actions()['upsert_contact'].props as Record<string, { type: string; required: boolean; defaultValue?: unknown }>;
+    expect(props['matchExisting'].defaultValue).toBe(true);
+    const propsValue: Record<string, unknown> = { email: 'jane@example.com', mobilePhone: '+15550100' };
+    for (const [key, prop] of Object.entries(props)) {
+      if (prop.type === 'CHECKBOX' && !prop.required && !(key in propsValue)) propsValue[key] = prop.defaultValue ?? false;
+    }
+    const spy = mockSeq({ contactId: 9, leadId: 10 });
+    await run({ name: 'upsert_contact', propsValue });
+    expect(sent({ spy }).body.matchExisting).toBe(true);
+  });
   it('get contact: needs an identifier, sends only set ones, maps output', async () => {
     await expect(run({ name: 'getContactDetails', propsValue: {} })).rejects.toThrow('at least one of');
     const spy = mockSeq({ id: 3, typeId: 'P', fullName: 'A B', emails: [{ id: 1, emailAddress: 'a@x.com' }], primaryEmailId: 1, person: { firstName: 'A', lastName: 'B' } });
@@ -361,6 +373,16 @@ describe('webhook triggers', () => {
       { ...b, [DEDUPE_KEY_PROPERTY]: 'chargekeep:LeadCreated:146912:2026-10-21T15:37:58' },
     ]);
     expect(await Reflect.apply(newLead.run, undefined, [{ store, payload: { body: [a, b] } }])).toEqual([]);
+  });
+  it('new subscription keeps two status changes of one subscription in the same second', async () => {
+    const store = memoryStore();
+    const u = { eventType: 'Subscription.CreatedOrUpdated', id: 146911, statusId: 'A', eventTime: '2026-10-21T15:37:58' };
+    const c = { ...u, statusId: 'C' };
+    const out = await Reflect.apply(newSubscription.run, undefined, [{ store, payload: { body: [u, c, u] } }]);
+    expect(out.map((e: Record<string, unknown>) => e[DEDUPE_KEY_PROPERTY])).toEqual([
+      'chargekeep:Subscription.CreatedOrUpdated:146911:2026-10-21T15:37:58:A',
+      'chargekeep:Subscription.CreatedOrUpdated:146911:2026-10-21T15:37:58:C',
+    ]);
   });
   it('keeps per-event markers so overlapping deliveries never overwrite each other, and bounds them', async () => {
     const store = memoryStore();

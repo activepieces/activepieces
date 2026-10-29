@@ -32,7 +32,7 @@ export const upsertContact = createAction({
     contactType: Property.ShortText({ displayName: 'Contact Type', description: 'Lead, Client or Partner. Defaults to Lead.', required: false }),
     contactId: Property.ShortText({ displayName: 'Contact ID', description: 'ID of an existing contact to update.', required: false }),
     contactXref: Property.ShortText({ displayName: 'Contact XREF', description: 'Your external ID for the contact; sending it again updates the same contact.', required: false }),
-    matchExisting: Property.Checkbox({ displayName: 'Match Existing', description: 'Match an existing contact by email and name. Defaults to true.', required: false }),
+    matchExisting: Property.Checkbox({ displayName: 'Match Existing', description: 'Match an existing contact by email and name. Defaults to true.', required: false, defaultValue: true }),
     firstName: Property.ShortText({ displayName: 'First Name', required: false }),
     lastName: Property.ShortText({ displayName: 'Last Name', required: false }),
     email: Property.ShortText({ displayName: 'Email', description: 'Personal email.', required: false }),

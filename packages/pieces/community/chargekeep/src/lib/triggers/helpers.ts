@@ -41,6 +41,10 @@ export const deliveryKeys = {
     const id = idOf(body['id']);
     return id === undefined ? undefined : `${id}:${typeof body['eventTime'] === 'string' ? body['eventTime'] : ''}`;
   },
+  bySubscriptionChange(body: Record<string, unknown>): string | undefined {
+    const key = deliveryKeys.byId(body);
+    return key === undefined ? undefined : `${key}:${typeof body['statusId'] === 'string' ? body['statusId'] : ''}`;
+  },
   byTransactionId(body: Record<string, unknown>): string | undefined {
     const transaction = body['transaction'];
     return chargekeepClient.isRecord(transaction) ? idOf(transaction['id']) : undefined;

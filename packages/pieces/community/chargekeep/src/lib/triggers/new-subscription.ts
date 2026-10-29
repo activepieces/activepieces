@@ -3,7 +3,7 @@ import { chargekeepAuth } from '../auth';
 import { chargekeepOutputSchemas } from '../common/output-schemas';
 import { createChargekeepWebhookHooks, deliveryKeys } from './helpers';
 
-const hooks = createChargekeepWebhookHooks({ eventName: 'Subscription.CreatedOrUpdated', storeKey: '_new_subscription_trigger', deliveryKey: deliveryKeys.byId });
+const hooks = createChargekeepWebhookHooks({ eventName: 'Subscription.CreatedOrUpdated', storeKey: '_new_subscription_trigger', deliveryKey: deliveryKeys.bySubscriptionChange });
 
 export const newSubscription = createTrigger({
   auth: chargekeepAuth,
