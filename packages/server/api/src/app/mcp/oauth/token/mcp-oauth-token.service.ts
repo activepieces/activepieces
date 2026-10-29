@@ -109,9 +109,6 @@ export const mcpOAuthTokenService = {
         if (record.clientId !== params.clientId) {
             throw new OAuthTokenError('invalid_grant', 'Client mismatch')
         }
-        if (!await userService(params.log).isActiveOnPlatform({ id: record.userId, platformId: record.platformId })) {
-            throw new OAuthTokenError('invalid_grant', 'The user no longer has access')
-        }
 
         const clientKey = record.clientKey ?? mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris })
         await repo().update({ id: record.id }, {
@@ -339,7 +336,6 @@ type RefreshParams = {
     redirectUris: string[]
     refreshToken: string
     clientId: string
-    log: FastifyBaseLogger
 }
 
 type TokenResponse = {

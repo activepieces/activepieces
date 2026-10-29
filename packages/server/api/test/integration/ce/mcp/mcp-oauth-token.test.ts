@@ -4,7 +4,6 @@ import { FastifyInstance } from 'fastify'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { mcpOAuthClientService } from '../../../../src/app/mcp/oauth/client/mcp-oauth-client.service'
 import { mcpOAuthTokenService } from '../../../../src/app/mcp/oauth/token/mcp-oauth-token.service'
-import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -19,16 +18,15 @@ function requireRefreshToken(response: { refresh_token?: string }): string {
 async function exchangeFreshCode(clientId: string): Promise<string> {
     const codeVerifier = randomBytes(32).toString('base64url')
     const codeChallenge = createHash('sha256').update(codeVerifier).digest().toString('base64url')
-    const { mockOwner, mockProject, mockPlatform } = await mockAndSaveBasicSetup()
     const tokens = await mcpOAuthTokenService.exchangeCode({
         redirectUris: [],
         codeVerifier,
         codeChallenge,
         codeChallengeMethod: 'S256',
         clientId,
-        userId: mockOwner.id,
-        projectId: mockProject.id,
-        platformId: mockPlatform.id,
+        userId: apId(),
+        projectId: apId(),
+        platformId: apId(),
         scopes: ['mcp'],
     })
     return requireRefreshToken(tokens)
@@ -43,7 +41,7 @@ describe('MCP OAuth token refresh', () => {
         const clientId = apId()
         const refreshToken = await exchangeFreshCode(clientId)
 
-        const refreshed = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken, clientId, log: app.log })
+        const refreshed = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken, clientId })
 
         expect(refreshed.access_token).toBeTypeOf('string')
         expect(refreshed.refresh_token).toBe(refreshToken)
@@ -53,8 +51,8 @@ describe('MCP OAuth token refresh', () => {
         const clientId = apId()
         const first = await exchangeFreshCode(clientId)
 
-        const second = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: first, clientId, log: app.log })
-        const third = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: requireRefreshToken(second), clientId, log: app.log })
+        const second = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: first, clientId })
+        const third = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: requireRefreshToken(second), clientId })
 
         expect(third.refresh_token).toBe(first)
     })

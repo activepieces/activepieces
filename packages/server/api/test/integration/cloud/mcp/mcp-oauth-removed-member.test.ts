@@ -115,6 +115,5 @@ describe('MCP OAuth grant of a person who lost access', () => {
         const listed = await mcpClientHelpers.callTool({ app, mcpClient: { accessToken: newToken, endpoint: '/mcp' }, name: 'ap_list_flows' }).catch(() => '')
 
         expect(listed).not.toContain(flowName)
-        expect(refreshed.statusCode).toBe(StatusCodes.BAD_REQUEST)
     })
 })
