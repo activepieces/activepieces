@@ -168,6 +168,9 @@ export const userService = (log: FastifyBaseLogger) => ({
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo().findOneBy({ id })
     },
+    async isActiveOnPlatform({ id, platformId }: GetOneByIdAndPlatformIdParams): Promise<boolean> {
+        return userRepo().existsBy({ id, platformId, status: UserStatus.ACTIVE })
+    },
     async getOrThrow({ id }: IdParams): Promise<User> {
         const user = await userRepo().findOneBy({ id })
         if (isNil(user)) {

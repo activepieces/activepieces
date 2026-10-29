@@ -1,10 +1,10 @@
 import { ActivepiecesError, ErrorCode, isNil, Permission, tryCatch } from '@activepieces/core-utils'
-import { McpReachResponse, McpToolResult, Project, ProjectType, UserStatus } from '@activepieces/shared'
+import { McpReachResponse, McpToolResult, Project, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { editionRequiresRbac } from '../ee/authentication/project-role/rbac-middleware'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { projectService } from '../project/project-service'
-import { userRepo, userService } from '../user/user-service'
+import { userService } from '../user/user-service'
 import { deny } from './mcp-permissions'
 
 export const mcpAccess = {
@@ -12,13 +12,8 @@ export const mcpAccess = {
     resolveReach,
     hasMcpReach,
     hasMcpAccessToProject,
-    isUserActive,
     hasProjectRole,
     noMcpReachResult,
-}
-
-async function isUserActive({ platformId, userId }: Omit<UserScope, 'log'>): Promise<boolean> {
-    return userRepo().existsBy({ id: userId, platformId, status: UserStatus.ACTIVE })
 }
 
 async function hasProjectRole({ userId, projectId, log }: Omit<UserScope, 'platformId'> & { projectId: string | null }): Promise<boolean> {

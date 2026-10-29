@@ -8,6 +8,7 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
+import { userService } from '../../../user/user-service'
 import { mcpAccess } from '../../mcp-access'
 import { mcpListingUtils } from '../../mcp-listing-utils'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
@@ -108,7 +109,7 @@ export const mcpOAuthTokenService = {
         if (record.clientId !== params.clientId) {
             throw new OAuthTokenError('invalid_grant', 'Client mismatch')
         }
-        if (!await mcpAccess.isUserActive({ platformId: record.platformId, userId: record.userId })) {
+        if (!await userService(params.log).isActiveOnPlatform({ id: record.userId, platformId: record.platformId })) {
             throw new OAuthTokenError('invalid_grant', 'The user no longer has access')
         }
 
@@ -154,7 +155,7 @@ export const mcpOAuthTokenService = {
                 return { status: 'invalid' }
             }
         }
-        if (!await mcpAccess.isUserActive({ platformId: payload.platformId, userId: payload.sub })
+        if (!await userService(log).isActiveOnPlatform({ id: payload.sub, platformId: payload.platformId })
             || !await mcpAccess.hasProjectRole({ userId: payload.sub, projectId: payload.projectId, log })) {
             return { status: 'invalid' }
         }
@@ -338,6 +339,7 @@ type RefreshParams = {
     redirectUris: string[]
     refreshToken: string
     clientId: string
+    log: FastifyBaseLogger
 }
 
 type TokenResponse = {
