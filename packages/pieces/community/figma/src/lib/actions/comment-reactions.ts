@@ -82,7 +82,7 @@ export const addCommentReactionAction = createAction({
 export const removeCommentReactionAction = createAction({
   auth: figmaAuth,
   name: 'remove_comment_reaction',
-  classification: 'DESTRUCTIVE',
+  classification: 'WRITE',
   displayName: 'Remove Comment Reaction',
   description: 'Removes your emoji reaction from a comment.',
   audience: 'both',

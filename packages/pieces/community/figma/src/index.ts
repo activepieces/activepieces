@@ -22,7 +22,7 @@ export const figma = createPiece({
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/figma.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
+  authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'OdaiAhmed99'],
   auth: figmaAuth,
   actions: [
     getFileAction,

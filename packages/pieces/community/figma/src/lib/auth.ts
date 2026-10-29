@@ -13,7 +13,6 @@ export const figmaAuth = PieceAuth.OAuth2({
     'file_versions:read',
     'library_content:read',
     'current_user:read',
-    'webhooks:read',
     'webhooks:write',
   ],
   authorizationMethod: OAuth2AuthorizationMethod.HEADER,

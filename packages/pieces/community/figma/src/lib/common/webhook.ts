@@ -168,8 +168,29 @@ function eventIdOf({ body, eventType }: { body: Record<string, unknown>; eventTy
   if (eventType === 'FILE_COMMENT') return `${webhook}:${eventType}:${text(body['comment_id'])}`;
   if (eventType === 'FILE_VERSION_UPDATE') return `${webhook}:${eventType}:${file}:${text(body['version_id'])}`;
   if (eventType === 'FILE_DELETE') return `${webhook}:${eventType}:${file}:${text(body['timestamp'])}`;
+  if (eventType === 'LIBRARY_PUBLISH') return `${webhook}:${eventType}:${file}:${text(body['timestamp'])}:${libraryChangesHash(body)}`;
   return `${webhook}:${eventType}:${file}:${text(body['timestamp'])}`;
 }
+
+// Figma splits one publish into several LIBRARY_PUBLISH events (per asset type, and again when large)
+// that share a whole-second timestamp. Hashing the change lists keeps each part distinct, while a
+// retry resends the same body and still collapses.
+function libraryChangesHash(body: Record<string, unknown>): string {
+  const changes = LIBRARY_CHANGE_FIELDS.map((field) => [field, body[field] ?? null]);
+  return hash(JSON.stringify(changes));
+}
+
+const LIBRARY_CHANGE_FIELDS = [
+  'created_components',
+  'modified_components',
+  'deleted_components',
+  'created_styles',
+  'modified_styles',
+  'deleted_styles',
+  'created_variables',
+  'modified_variables',
+  'deleted_variables',
+];
 
 async function claimEvent({ store, eventId, now }: { store: WebhookStore; eventId: string; now: number }): Promise<boolean> {
   const key = slotKey(eventId);

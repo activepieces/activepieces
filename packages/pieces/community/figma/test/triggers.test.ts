@@ -56,6 +56,20 @@ describe('webhook helper', () => {
     expect(await run(body)).toEqual([]);
     expect(await run({ ...body, timestamp: 't2' })).toHaveLength(1);
   });
+  it('runs every part of a split library publish that shares a timestamp, but not a retry', async () => {
+    const { store, passcode } = await enableWith({ trigger: libraryPublishedTrigger, props: { context: 'file', context_id: 'https://www.figma.com/design/HMvFQs5gIn9vdRYGCwgF9O/x' } });
+    const run = (b: unknown) => invoke({ fn: libraryPublishedTrigger.run, ctx: hookContext({ store, body: b }) });
+    const base = { event_type: 'LIBRARY_PUBLISH', webhook_id: '555', file_key: 'K', passcode, timestamp: '2026-10-28T10:00:00Z' };
+    const components = { ...base, created_components: [{ key: 'c1', name: 'Button / Primary' }], modified_styles: [] };
+    const styles = { ...base, created_components: [], modified_styles: [{ key: 's1', name: 'Brand / Blue' }] };
+    const [first] = await run(components);
+    const [second] = await run(styles);
+    expect(first).toBeDefined();
+    expect(second).toBeDefined();
+    expect(first._dedupe_key).not.toEqual(second._dedupe_key);
+    expect(await run(components)).toEqual([]);
+    expect(await run(styles)).toEqual([]);
+  });
   it('file context uses the main file key', () => {
     expect(figmaWebhook.resolveContext({ context: 'file', contextId: 'https://www.figma.com/design/HMvFQs5gIn9vdRYGCwgF9O/x?node-id=3-2' })).toEqual({ context: 'file', contextId: 'HMvFQs5gIn9vdRYGCwgF9O' });
     expect(() => figmaWebhook.resolveContext({ context: 'project', contextId: 'abc' })).toThrow('Project ID');
