@@ -43,6 +43,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { AiProviderInfo } from '@/features/agents';
 import {
   KeyScopeImpact,
@@ -71,6 +76,7 @@ export function ConfigDetail({
   onSave,
   onDelete,
   onReplaceCredentials,
+  initialTab,
   isRechecking,
   onRecheck,
   onBack,
@@ -82,6 +88,7 @@ export function ConfigDetail({
   onSave: (request: UpdateAIProviderRequest) => Promise<{ error: unknown }>;
   onDelete: () => Promise<unknown>;
   onReplaceCredentials: () => void;
+  initialTab: ConfigDetailTab;
   isRechecking: boolean;
   onRecheck: () => void;
   onBack: () => void;
@@ -250,7 +257,7 @@ export function ConfigDetail({
         </Button>
       </AdminPageHeader>
 
-      <Tabs defaultValue="models" className="flex flex-col gap-6">
+      <Tabs defaultValue={initialTab} className="flex flex-col gap-6">
         <TabsList
           variant="outline"
           className="w-full justify-start border-b border-gray-6"
@@ -408,16 +415,28 @@ export function ConfigDetail({
                 title={t('Credentials')}
                 description={t('Stored securely')}
               >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onReplaceCredentials}
-                  {...adminControl(
-                    AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN,
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span tabIndex={dirty ? 0 : undefined}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={dirty}
+                        onClick={onReplaceCredentials}
+                        {...adminControl(
+                          AdminControl.AI_PROVIDER_KEY_CREDENTIALS_OPEN,
+                        )}
+                      >
+                        {t('Replace')}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {dirty && (
+                    <TooltipContent>
+                      {t('Save or discard your changes first')}
+                    </TooltipContent>
                   )}
-                >
-                  {t('Replace')}
-                </Button>
+                </Tooltip>
               </SettingsRow>
             </SettingsPanel>
           </AdminSection>
@@ -616,3 +635,5 @@ type ConfigDraft = {
   projectScope: AiProviderProjectScope;
   projectIds: string[];
 };
+
+export type ConfigDetailTab = 'models' | 'access' | 'settings';

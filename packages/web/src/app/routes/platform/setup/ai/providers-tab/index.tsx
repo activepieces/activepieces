@@ -73,6 +73,7 @@ export function ProvidersTab() {
     AIProviderWithoutSensitiveData | undefined
   >(undefined);
   const [credentialsVersion, setCredentialsVersion] = useState(0);
+  const [replacedConfigId, setReplacedConfigId] = useState<string | null>(null);
   const [dialogProvider, setDialogProvider] = useState<
     AIProviderName | undefined
   >(undefined);
@@ -120,6 +121,16 @@ export function ProvidersTab() {
         }
         toast.error(label ?? t('Could not reach this provider'));
       },
+      onError: (error) => {
+        const data = error.response?.data;
+        toast.error(
+          t(
+            data?.params?.message ??
+              data?.message ??
+              'Could not check this key',
+          ),
+        );
+      },
     });
   const { mutateAsync: updateProvider, isPending: isSaving } =
     aiProviderMutations.useUpdateAiProvider({
@@ -143,6 +154,7 @@ export function ProvidersTab() {
     setSearchParams(next);
   };
   const closeConfig = () => {
+    setReplacedConfigId(null);
     const next = new URLSearchParams(searchParams);
     next.delete('config');
     setSearchParams(next);
@@ -169,6 +181,7 @@ export function ProvidersTab() {
       openConfig(createdId);
       return;
     }
+    setReplacedConfigId(editing?.id ?? null);
     setCredentialsVersion((version) => version + 1);
   };
 
@@ -203,6 +216,9 @@ export function ProvidersTab() {
           }
           onDelete={() => deleteProvider(activeConfig.id)}
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
+          initialTab={
+            replacedConfigId === activeConfig.id ? 'settings' : 'models'
+          }
           isRechecking={isRechecking}
           onRecheck={() => recheckProvider(activeConfig.id)}
           onBack={closeConfig}

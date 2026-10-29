@@ -16,6 +16,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import {
   AdminPageHeader,
@@ -63,8 +64,18 @@ export function CapabilitiesTab() {
   const chatProvider =
     providers?.find((provider) => provider.enabledForChat) ?? creditsProvider;
 
-  const { mutate: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
+  const { mutateAsync: remove } = aiToolConfigMutations.useDeleteAiToolConfig({
     onSuccess: () => refetchConfigs(),
+    onError: (error) => {
+      const data = error.response?.data;
+      toast.error(
+        t(
+          data?.params?.message ??
+            data?.message ??
+            'Could not reset this capability',
+        ),
+      );
+    },
   });
 
   return (
@@ -135,7 +146,7 @@ function CapabilityCard({
   config?: AiToolConfigWithoutSensitiveData;
   providers: AIProviderWithoutSensitiveData[];
   chatProviderFallback?: AIProviderWithoutSensitiveData;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<unknown>;
   onSaved: () => void;
 }) {
   const look = CAPABILITY_LOOK[capabilityInfo.capability];
@@ -200,8 +211,12 @@ function CapabilityCard({
                     )
               }
               entityName={capabilityInfo.name}
+              showToast
+              onError={() => undefined}
               controlId={AdminControl.AI_CAPABILITY_RESET_CONFIRM}
-              mutationFn={async () => onDelete(config.id)}
+              mutationFn={async () => {
+                await onDelete(config.id);
+              }}
             >
               <Button
                 variant="ghost"
