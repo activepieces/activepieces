@@ -148,7 +148,7 @@ describe('starting the trial fails', () => {
     startSelfServeTrial.mockRejectedValueOnce(new Error('network lost'));
     const client = new QueryClient();
     const invalidate = vi.spyOn(client, 'invalidateQueries');
-    const { result } = renderHook(() => selfServeTrialHooks.useStart(), {
+    const { result } = renderHook(() => selfServeTrialHooks.useStartSelfServeTrial(), {
       wrapper: queryWrapper(client),
     });
 

@@ -2,13 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { PlanName, PlatformAdminSurface } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import {
-  ArrowRight,
-  Check,
-  CircleAlert,
-  ChevronDown,
-  LoaderCircle,
-} from 'lucide-react';
+import { ArrowRight, Check, ChevronDown } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -22,13 +16,12 @@ import {
   ActionWhenLocked,
   useActionWhenLocked,
 } from '../hooks/self-serve-trial-hooks';
-import { enterpriseMotion } from '../utils/billing-utils';
 import { platformFeatures, FeatureKey } from '../utils/platform-features';
 import { selfServeTrialFeatures } from '../utils/self-serve-trial-utils';
 
 import { SelfServeTrialSalesLink } from './current-subscription-card';
 import { PlanBadge, SelfServeTrialLockedActions } from './locked-feature';
-import { ResumeState, TrialTimeline } from './self-serve-trial-dialog';
+import { TrialTimeline } from './self-serve-trial-dialog';
 
 export function IncludedFeatures({
   featureKey,
@@ -237,20 +230,13 @@ function howToGetIt({
 export function TrialStarted({
   endsAt,
   startedAt,
-  featureKey,
-  resumeState,
-  onRetry,
   onClose,
 }: {
   endsAt: string | null;
   startedAt: string | null;
-  featureKey: FeatureKey | undefined;
-  resumeState: ResumeState;
-  onRetry: () => void;
   onClose: () => void;
 }) {
   const trial = selfServeTrialHooks.useTrial();
-  const featureName = selfServeTrialFeatures.nameInSentence(featureKey);
   const shortcuts = [
     { label: t('Set up single sign-on'), to: '/platform/sso' },
     { label: t('Review audit logs'), to: '/platform/audit-log' },
@@ -265,15 +251,6 @@ export function TrialStarted({
           : t('Every Enterprise plan feature is unlocked until {date}.', {
               date: dayjs(endsAt).format('MMM D'),
             })
-      }
-      note={
-        resumeState !== 'idle' && (
-          <ResumeStatus
-            state={resumeState}
-            featureName={featureName}
-            onRetry={onRetry}
-          />
-        )
       }
       mainTitle={t('Your trial')}
       main={
@@ -306,55 +283,6 @@ export function TrialStarted({
         </Button>
       }
     />
-  );
-}
-
-function ResumeStatus({
-  state,
-  featureName,
-  onRetry,
-}: {
-  state: ResumeState;
-  featureName: string | null;
-  onRetry: () => void;
-}) {
-  const feature = featureName ?? t('this feature');
-  const failed = state === 'failed';
-  const saving = state === 'saving';
-  return (
-    <p
-      role="status"
-      key={state}
-      className={cn(
-        failed
-          ? 'flex flex-wrap items-center gap-2 text-sm text-danger-11'
-          : 'flex items-center gap-2 text-sm text-gray-12',
-        enterpriseMotion.swap,
-      )}
-    >
-      {failed ? (
-        <CircleAlert className="size-4 shrink-0" />
-      ) : saving ? (
-        <LoaderCircle className="size-4 shrink-0 animate-spin text-gray-11 motion-reduce:animate-none" />
-      ) : (
-        <Check className="size-4 shrink-0 text-success-11" />
-      )}
-      {failed
-        ? t('We could not save your changes to {feature}.', { feature })
-        : saving
-        ? t('Saving your changes to {feature}…', { feature })
-        : t('Your changes to {feature} are saved.', { feature })}
-      {failed && (
-        <Button
-          variant="link"
-          size="sm"
-          className="h-auto p-0"
-          onClick={onRetry}
-        >
-          {t('Try again')}
-        </Button>
-      )}
-    </p>
   );
 }
 

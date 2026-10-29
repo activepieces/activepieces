@@ -62,7 +62,7 @@ vi.mock('@/features/billing/hooks/self-serve-trial-hooks', () => ({
   selfServeTrialHooks: {
     useStatus: () => ({ data: liveStatus }),
     useShouldOfferTrial: () => offer,
-    useStart: (callback?: (status: { state: string }) => void) => {
+    useStartSelfServeTrial: (callback?: (status: { state: string }) => void) => {
       onStarted = callback;
       return {
         data: undefined,
@@ -162,27 +162,5 @@ describe('starting the trial from a blocked change', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
     });
     expect(postTrialActivationCallback).toHaveBeenCalledTimes(1);
-  });
-
-  it('finishes the blocked change once when the start errors but the trial is on', async () => {
-    const postTrialActivationCallback = vi.fn().mockResolvedValue(undefined);
-    payload = { featureKey: 'PROJECTS', postTrialActivationCallback };
-    const { rerender } = render(dialog());
-    startTrialAndSave();
-    startFailed = true;
-    liveStatus = trialIsOn();
-    rerender(dialog());
-    await settle();
-    rerender(dialog());
-    await settle();
-    expect(postTrialActivationCallback).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows the trial as on when the start errors but the re-read status says it started', () => {
-    offer = false;
-    startFailed = true;
-    liveStatus = trialIsOn();
-    render(dialog());
-    expect(screen.getByText('Your Enterprise plan trial is on')).toBeDefined();
   });
 });

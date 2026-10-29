@@ -1,11 +1,9 @@
-import { isNil, tryCatch } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId, SelfServeTrialState } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import confetti from 'canvas-confetti';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Check, Gem, Sparkles } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -13,10 +11,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { AdminControl, adminControl } from '@/lib/admin-control';
 import { cn } from '@/lib/utils';
 
-import {
-  billingDialogHooks,
-  SelfServeTrialDialogPayload,
-} from '../hooks/billing-dialog-hooks';
+import { billingDialogHooks } from '../hooks/billing-dialog-hooks';
 import {
   SELF_SERVE_TRIAL_DAYS,
   selfServeTrialHooks,
@@ -39,83 +34,75 @@ import { SelfServeTrialEndedDialog } from './self-serve-trial-notices';
 export function SelfServeTrialDialog() {
   const { payload, returnFocus, closeDialog } =
     billingDialogHooks.useSelfServeTrialDialogStore();
-  const queryClient = useQueryClient();
-  const { data: liveStatus } = selfServeTrialHooks.useStatus();
   const shouldOfferTrial = selfServeTrialHooks.useShouldOfferTrial();
-  const [resumeState, setResumeState] = useState<ResumeState>('idle');
-  const postTrialActivationCallbackOnStart =
-    useRef<SelfServeTrialDialogPayload['postTrialActivationCallback']>(
-      undefined,
-    );
-  const postTrialActivationCallbackRan = useRef(false);
-  const start = selfServeTrialHooks.useStart((status) => {
+  const {
+    mutate: startSelfServeTrial,
+    data: startedTrial,
+    isPending: isStartingTrial,
+    isError: trialStartFailed,
+    reset: resetTrialStart,
+  } = selfServeTrialHooks.useStartSelfServeTrial((status) => {
     if (status.state !== SelfServeTrialState.ACTIVE) {
       return;
     }
     celebrate();
-    runPostTrialActivationCallbackOnce();
+    runPostTrialActivationCallback();
   });
   const open = !isNil(payload);
-  const startedAnyway =
-    start.isError && liveStatus?.state === SelfServeTrialState.ACTIVE
-      ? liveStatus
-      : undefined;
-  const outcome = start.data ?? startedAnyway;
-  const result = outcome?.state;
   const view = dialogViewForStartResult({
-    result,
-    shouldOfferTrial: shouldOfferTrial || start.isError,
+    result: startedTrial?.state,
+    shouldOfferTrial: shouldOfferTrial || trialStartFailed,
   });
-  const busy = start.isPending || resumeState === 'saving';
+  const busy = isStartingTrial;
   const close = () => {
     if (busy) {
       return;
     }
     confetti.reset();
     closeDialog();
-    start.reset();
-    setResumeState('idle');
-    postTrialActivationCallbackRan.current = false;
+    resetTrialStart();
   };
   const postTrialActivationCallback = payload?.postTrialActivationCallback;
 
-  const runPostTrialActivationCallback = useCallback(
-    async (
-      work: SelfServeTrialDialogPayload['postTrialActivationCallback'],
-    ) => {
-      if (isNil(work)) {
-        return;
-      }
-      setResumeState('saving');
-      for (const delayMs of RESUME_ATTEMPT_DELAYS_MS) {
-        await wait(delayMs);
-        await queryClient.refetchQueries({ queryKey: ['platform'] });
-        const { error } = await tryCatch(async () => work());
-        if (isNil(error)) {
-          setResumeState('saved');
-          return;
-        }
-      }
-      setResumeState('failed');
-    },
-    [queryClient],
-  );
+  const renderView = () => {
+    switch (view) {
+      case DialogView.START:
+        return (
+          <StartTrial
+            featureKey={payload?.featureKey}
+            hasPostTrialActivationCallback={!isNil(postTrialActivationCallback)}
+            isPending={isStartingTrial}
+            isError={trialStartFailed}
+            onStart={() => {
+              startSelfServeTrial();
+            }}
+          />
+        );
+      case DialogView.STARTED:
+        return (
+          <TrialStarted
+            endsAt={startedTrial?.endsAt ?? null}
+            startedAt={startedTrial?.startedAt ?? null}
+            onClose={close}
+          />
+        );
+      case DialogView.ALREADY_USED:
+        return <TrialAlreadyUsed />;
+      case DialogView.NOT_STARTED:
+        return <TrialNotStarted onClose={close} />;
+      case DialogView.LOCKED:
+        return (
+          <LockedFeature featureKey={payload?.featureKey} onAction={close} />
+        );
+    }
+  };
 
-  const runPostTrialActivationCallbackOnce = useCallback(() => {
-    if (postTrialActivationCallbackRan.current) {
+  function runPostTrialActivationCallback() {
+    if (isNil(postTrialActivationCallback)) {
       return;
     }
-    postTrialActivationCallbackRan.current = true;
-    runPostTrialActivationCallback(
-      postTrialActivationCallbackOnStart.current,
-    ).catch(() => undefined);
-  }, [runPostTrialActivationCallback]);
-
-  useEffect(() => {
-    if (startedAnyway) {
-      runPostTrialActivationCallbackOnce();
-    }
-  }, [startedAnyway, runPostTrialActivationCallbackOnce]);
+    Promise.resolve(postTrialActivationCallback()).catch(() => undefined);
+  }
 
   return (
     <>
@@ -150,44 +137,7 @@ export function SelfServeTrialDialog() {
                 enterpriseMotion.swap,
               )}
             >
-              {view === 'start' && (
-                <StartTrial
-                  featureKey={payload?.featureKey}
-                  hasPostTrialActivationCallback={
-                    !isNil(postTrialActivationCallback)
-                  }
-                  isPending={start.isPending}
-                  isError={start.isError}
-                  onStart={() => {
-                    postTrialActivationCallbackOnStart.current =
-                      postTrialActivationCallback;
-                    postTrialActivationCallbackRan.current = false;
-                    start.mutate();
-                  }}
-                />
-              )}
-              {view === 'started' && (
-                <TrialStarted
-                  endsAt={outcome?.endsAt ?? null}
-                  startedAt={outcome?.startedAt ?? null}
-                  featureKey={payload?.featureKey}
-                  resumeState={resumeState}
-                  onRetry={() =>
-                    runPostTrialActivationCallback(
-                      postTrialActivationCallback,
-                    ).catch(() => undefined)
-                  }
-                  onClose={close}
-                />
-              )}
-              {view === 'used' && <TrialAlreadyUsed />}
-              {view === 'unavailable' && <TrialNotStarted onClose={close} />}
-              {view === 'locked' && (
-                <LockedFeature
-                  featureKey={payload?.featureKey}
-                  onAction={close}
-                />
-              )}
+              {renderView()}
             </div>
           )}
         </DialogContent>
@@ -373,21 +323,17 @@ function dialogViewForStartResult({
 }): DialogView {
   switch (result) {
     case SelfServeTrialState.ACTIVE:
-      return 'started';
+      return DialogView.STARTED;
     case SelfServeTrialState.USED:
     case SelfServeTrialState.ENDED:
-      return 'used';
+      return DialogView.ALREADY_USED;
     case SelfServeTrialState.UNAVAILABLE:
     case SelfServeTrialState.ELIGIBLE:
-      return 'unavailable';
+      return DialogView.NOT_STARTED;
     case SelfServeTrialState.INELIGIBLE:
     case undefined:
-      return shouldOfferTrial ? 'start' : 'locked';
+      return shouldOfferTrial ? DialogView.START : DialogView.LOCKED;
   }
-}
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function celebrate(): void {
@@ -399,8 +345,10 @@ function celebrate(): void {
   })?.catch(() => undefined);
 }
 
-const RESUME_ATTEMPT_DELAYS_MS = [0, 2000];
-
-type DialogView = 'start' | 'started' | 'used' | 'unavailable' | 'locked';
-
-export type ResumeState = 'idle' | 'saving' | 'saved' | 'failed';
+enum DialogView {
+  START = 'start',
+  STARTED = 'started',
+  ALREADY_USED = 'already_used',
+  NOT_STARTED = 'not_started',
+  LOCKED = 'locked',
+}

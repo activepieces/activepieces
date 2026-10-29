@@ -274,7 +274,9 @@ export const selfServeTrialHooks = {
     const { data } = selfServeTrialHooks.useStatus();
     return data?.state === SelfServeTrialState.ELIGIBLE;
   },
-  useStart: (onStarted?: (status: SelfServeTrialStatus) => void) => {
+  useStartSelfServeTrial: (
+    onStarted?: (status: SelfServeTrialStatus) => void,
+  ) => {
     const queryClient = useQueryClient();
     const { platform } = platformHooks.useCurrentPlatform();
     return useMutation({
