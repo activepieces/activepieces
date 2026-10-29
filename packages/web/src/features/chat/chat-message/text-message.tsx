@@ -6,6 +6,7 @@ import ReactCodeMirror, {
 } from '@uiw/react-codemirror';
 import { CodeIcon, Copy } from 'lucide-react';
 import React from 'react';
+import { useCopyToClipboard } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 

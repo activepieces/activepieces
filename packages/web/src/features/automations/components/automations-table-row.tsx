@@ -296,11 +296,15 @@ export const AutomationsTableRow = ({
           <DropdownMenuContent align="end">
             {item.type === 'folder' && (
               <DropdownMenuItem
-                onClick={() => {
+                onClick={async () => {
                   const url = new URL(window.location.href);
                   url.searchParams.set('folder', item.id);
-                  navigator.clipboard.writeText(url.toString());
-                  toast.success(t('URL copied to clipboard'));
+                  try {
+                    await navigator.clipboard.writeText(url.toString());
+                    toast.success(t('URL copied to clipboard'));
+                  } catch {
+                    toast.error(t('Failed to copy to clipboard'), { duration: 3000 });
+                  }
                 }}
               >
                 <Link className="h-4 w-4 mr-2" />

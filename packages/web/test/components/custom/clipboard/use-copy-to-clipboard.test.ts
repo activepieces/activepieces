@@ -4,10 +4,13 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { toastError } = vi.hoisted(() => ({ toastError: vi.fn() }));
+const { toastError, toastSuccess } = vi.hoisted(() => ({
+  toastError: vi.fn(),
+  toastSuccess: vi.fn(),
+}));
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
-vi.mock('sonner', () => ({ toast: { error: toastError } }));
+vi.mock('sonner', () => ({ toast: { error: toastError, success: toastSuccess } }));
 
 import { useCopyToClipboard } from '@/components/custom/clipboard/use-copy-to-clipboard';
 
@@ -21,6 +24,7 @@ function setClipboard(clipboard: Partial<Clipboard> | undefined) {
 describe('useCopyToClipboard', () => {
   beforeEach(() => {
     toastError.mockReset();
+    toastSuccess.mockReset();
   });
 
   afterEach(() => {
@@ -34,7 +38,7 @@ describe('useCopyToClipboard', () => {
     const { result } = renderHook(() => useCopyToClipboard());
 
     await act(async () => {
-      result.current.copy('hello');
+      await result.current.copy('hello');
     });
 
     expect(writeText).toHaveBeenCalledWith('hello');
@@ -42,6 +46,43 @@ describe('useCopyToClipboard', () => {
     act(() => {
       vi.advanceTimersByTime(3000);
     });
+    expect(result.current.isCopied).toBe(false);
+  });
+
+  it('shows success toast when successMessage option is provided', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    setClipboard({ writeText });
+    const { result } = renderHook(() => useCopyToClipboard());
+
+    await act(async () => {
+      await result.current.copy('hello', {
+        successMessage: 'Copied to clipboard',
+      });
+    });
+
+    expect(writeText).toHaveBeenCalledWith('hello');
+    expect(toastSuccess).toHaveBeenCalledWith('Copied to clipboard', {
+      duration: 1000,
+    });
+    expect(toastError).not.toHaveBeenCalled();
+    expect(result.current.isCopied).toBe(true);
+  });
+
+  it('shows the failure toast and skips success toast when writing is rejected', async () => {
+    setClipboard({ writeText: vi.fn().mockRejectedValue(new Error('denied')) });
+    const { result } = renderHook(() => useCopyToClipboard());
+
+    await act(async () => {
+      await result.current.copy('hello', {
+        successMessage: 'Copied to clipboard',
+      });
+    });
+
+    expect(toastError).toHaveBeenCalledTimes(1);
+    expect(toastError).toHaveBeenCalledWith('Failed to copy to clipboard', {
+      duration: 3000,
+    });
+    expect(toastSuccess).not.toHaveBeenCalled();
     expect(result.current.isCopied).toBe(false);
   });
 
@@ -56,18 +97,6 @@ describe('useCopyToClipboard', () => {
     expect(toastError).toHaveBeenCalledWith('Failed to copy to clipboard', {
       duration: 3000,
     });
-    expect(result.current.isCopied).toBe(false);
-  });
-
-  it('shows the failure toast when writing is rejected', async () => {
-    setClipboard({ writeText: vi.fn().mockRejectedValue(new Error('denied')) });
-    const { result } = renderHook(() => useCopyToClipboard());
-
-    await act(async () => {
-      result.current.copy('hello');
-    });
-
-    expect(toastError).toHaveBeenCalledTimes(1);
     expect(result.current.isCopied).toBe(false);
   });
 });

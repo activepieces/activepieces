@@ -1,9 +1,9 @@
 import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { Copy, Download } from 'lucide-react';
+import { Check, Copy, Download } from 'lucide-react';
 import React, { useMemo } from 'react';
 import ReactJson from 'react-json-view';
-import { toast } from 'sonner';
+import { useCopyToClipboard } from '@/components/custom/clipboard/use-copy-to-clipboard';
 
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
@@ -50,12 +50,10 @@ const JsonViewer = React.memo(
       return removeUndefined(unclearJson);
     }, [unclearJson]);
 
+    const { isCopied, copy } = useCopyToClipboard();
     const viewerTheme = syntaxTheme.jsonView(resolvedTheme);
     const handleCopy = () => {
-      navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-      toast.success(t('Copied to clipboard'), {
-        duration: 1000,
-      });
+      copy(JSON.stringify(json, null, 2));
     };
 
     const handleDownload = () => {
@@ -104,7 +102,11 @@ const JsonViewer = React.memo(
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
-                      <Copy className="w-4 h-4" />
+                      {isCopied ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">

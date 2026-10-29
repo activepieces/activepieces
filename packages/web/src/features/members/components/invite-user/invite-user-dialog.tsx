@@ -342,14 +342,18 @@ const InviteUserDialogInternal = ({
     mutate({ ...data, emails: emailsToInvite });
   };
 
-  const copyAllLinks = () => {
+  const copyAllLinks = async () => {
     const text = resultsWithLinks
       .map((r) => `${r.email}: ${r.link}`)
       .join('\n');
-    navigator.clipboard.writeText(text);
-    toast.success(t('All invitation links copied successfully'), {
-      duration: 3000,
-    });
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(t('All invitation links copied successfully'), {
+        duration: 3000,
+      });
+    } catch {
+      toast.error(t('Failed to copy to clipboard'), { duration: 3000 });
+    }
   };
 
   const downloadCsv = () => {

@@ -1,8 +1,9 @@
 import { t } from 'i18next';
 import { Copy, Check } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
+
+import { useCopyToClipboard } from '@/components/custom/clipboard/use-copy-to-clipboard';
 import ReactJson from 'react-json-view';
-import { toast } from 'sonner';
 
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
@@ -23,22 +24,14 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
   maxHeight = 400,
   fontSize = '14px',
 }) => {
-  const [copied, setCopied] = useState(false);
+  const { isCopied, copy } = useCopyToClipboard();
   const { resolvedTheme } = useTheme();
 
   const formattedJson =
     typeof data === 'string' ? data : JSON.stringify(data, null, 2);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(formattedJson);
-    setCopied(true);
-    toast.success(t('Copied to clipboard'), {
-      duration: 1000,
-    });
-
-    setTimeout(() => {
-      setCopied(false);
-    }, 3000);
+    copy(formattedJson);
   };
 
   const viewerTheme = syntaxTheme.jsonView(resolvedTheme);
@@ -58,7 +51,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
             onClick={handleCopy}
             className="p-0 text-accent-11 hover:bg-transparent"
           >
-            {copied ? (
+            {isCopied ? (
               <Check className="w-4 h-4 text-success-11" />
             ) : (
               <Copy className="w-4 h-4 text-gray-12" />

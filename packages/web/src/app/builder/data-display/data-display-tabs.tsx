@@ -1,6 +1,7 @@
 import { t } from 'i18next';
-import { Copy, Download } from 'lucide-react';
-import { toast } from 'sonner';
+import { Check, Copy, Download } from 'lucide-react';
+
+import { useCopyToClipboard } from '@/components/custom/clipboard/use-copy-to-clipboard';
 
 import { JsonViewer } from '@/components/custom/json-viewer';
 import { Button } from '@/components/ui/button';
@@ -27,16 +28,16 @@ const DataDisplayTabs = ({
   copyableData,
   downloadFileName = 'data',
 }: DataDisplayTabsProps) => {
+  const { isCopied, copy } = useCopyToClipboard();
   const canActOnData = copyableData !== undefined && copyableData !== null;
 
   const handleCopy = () => {
     if (!canActOnData) return;
-    navigator.clipboard.writeText(
+    copy(
       typeof copyableData === 'string'
         ? copyableData
         : JSON.stringify(copyableData, null, 2),
     );
-    toast.success(t('Copied to clipboard'), { duration: 1000 });
   };
 
   const handleDownload = () => {
@@ -70,7 +71,11 @@ const DataDisplayTabs = ({
                     onClick={handleCopy}
                     aria-label={t('Copy to clipboard')}
                   >
-                    <Copy className="size-3.5" />
+                    {isCopied ? (
+                      <Check className="size-3.5" />
+                    ) : (
+                      <Copy className="size-3.5" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">

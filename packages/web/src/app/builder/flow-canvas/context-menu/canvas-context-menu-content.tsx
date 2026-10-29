@@ -225,11 +225,15 @@ export const CanvasContextMenuContent = ({
 
         {showCopyReference && (
           <ContextMenuItem
-            onClick={() => {
-              navigator.clipboard.writeText(
-                `{{${selectedNodes[0]}['output']}}`,
-              );
-              toast.success(t('Reference copied to clipboard'));
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(
+                  `{{${selectedNodes[0]}['output']}}`,
+                );
+                toast.success(t('Reference copied to clipboard'));
+              } catch {
+                toast.error(t('Failed to copy to clipboard'), { duration: 3000 });
+              }
             }}
             className="flex items-center gap-2"
           >
