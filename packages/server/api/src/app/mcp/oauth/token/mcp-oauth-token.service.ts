@@ -154,7 +154,7 @@ export const mcpOAuthTokenService = {
                 return { status: 'invalid' }
             }
         }
-        if (!await mcpAccess.isGrantLive({ platformId: payload.platformId, userId: payload.sub, projectId: payload.projectId, log })) {
+        if (!await mcpAccess.isUserActive({ platformId: payload.platformId, userId: payload.sub })) {
             return { status: 'invalid' }
         }
         return { status: 'ok', payload }

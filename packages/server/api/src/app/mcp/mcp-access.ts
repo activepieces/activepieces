@@ -12,16 +12,8 @@ export const mcpAccess = {
     resolveReach,
     hasMcpReach,
     hasMcpAccessToProject,
-    isGrantLive,
     isUserActive,
     noMcpReachResult,
-}
-
-async function isGrantLive({ platformId, userId, projectId, log }: UserScope & { projectId: string | null }): Promise<boolean> {
-    if (!await isUserActive({ platformId, userId })) {
-        return false
-    }
-    return isNil(projectId) || !editionRequiresRbac() || !isNil(await projectMemberService(log).getRole({ userId, projectId }))
 }
 
 async function isUserActive({ platformId, userId }: Omit<UserScope, 'log'>): Promise<boolean> {
