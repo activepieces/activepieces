@@ -1,10 +1,11 @@
 import { SeekPage, tryCatch } from '@activepieces/core-utils'
-import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
+import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SelfServeTrialStatus, SetupPaymentParams } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { authnRateLimit } from '../../../core/security/rate-limit'
 import { getEntitlementsForceRefreshKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -117,6 +118,14 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
         })
         await provider.refreshEntitlements(platformId)
         return {}
+    })
+
+    app.get('/self-serve-trial', GetSelfServeTrialRequest, async (request) => {
+        return billingProvider.get(request.log).getSelfServeTrialInfo(request.principal.platform.id)
+    })
+
+    app.post('/self-serve-trial/start', StartSelfServeTrialRequest, async (request) => {
+        return billingProvider.get(request.log).startSelfServeTrial(request.principal.platform.id)
     })
 
     app.post('/setup-payment', SetupPaymentRequest, async (request) => {
@@ -298,6 +307,27 @@ const SetupPaymentRequest = {
         },
     },
     config: PLATFORM_ADMIN_ONLY,
+}
+
+const GetSelfServeTrialRequest = {
+    schema: {
+        response: {
+            [StatusCodes.OK]: SelfServeTrialStatus,
+        },
+    },
+    config: PLATFORM_ADMIN_ONLY,
+}
+
+const StartSelfServeTrialRequest = {
+    schema: {
+        response: {
+            [StatusCodes.OK]: SelfServeTrialStatus,
+        },
+    },
+    config: {
+        ...PLATFORM_ADMIN_ONLY,
+        rateLimit: authnRateLimit,
+    },
 }
 
 type RefreshWhenAppliedImmediatelyParams = {

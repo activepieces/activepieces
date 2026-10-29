@@ -13,6 +13,9 @@ export const getCustomerStateRefreshKey = (platformId: PlatformId): string => `p
 export const getCustomerStateMissKey = (platformId: PlatformId): string => `platform_plan:customer-state-miss:${platformId}`
 export const getEnrollAttemptKey = (platformId: PlatformId): string => `platform_plan:autumn-enroll-attempt:${platformId}`
 export const getAutumnEnrollLockKey = (platformId: PlatformId): string => `autumn_enroll_${platformId}`
+export const getSelfServeTrialStartLockKey = (platformId: PlatformId): string => `self_serve_trial_start_${platformId}`
+export const getSelfServeTrialDatesCacheKey = (platformId: PlatformId): string => `platform_plan:self-serve-trial:v2:${platformId}`
+export const getSelfServeTrialFetchLockKey = (platformId: PlatformId): string => `self_serve_trial_fetch_${platformId}`
 export const getFreeLegacyCompAttemptKey = (platformId: PlatformId): string => `platform_plan:free-legacy-comp-attempt:${platformId}`
 export const getBillingOverviewFetchLockKey = (platformId: PlatformId): string => `billing_overview_fetch_${platformId}`
 export const getCustomerStateFetchLockKey = (platformId: PlatformId): string => `customer_state_fetch_${platformId}`
@@ -25,3 +28,4 @@ export const getMcpOAuthRevokedGrantKey = (grantId: string): string => `mcp_oaut
 export const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 export const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60
 export const AUTUMN_ENROLL_LOCK_TIMEOUT_SECONDS = 60
+export const SELF_SERVE_TRIAL_DATES_CACHE_TTL_SECONDS = 24 * 60 * 60

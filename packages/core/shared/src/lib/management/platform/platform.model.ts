@@ -28,6 +28,7 @@ export enum PlanName {
     ENTERPRISE = 'enterprise',
     APPSUMO = 'appsumo',
     FREE_LEGACY = 'free_legacy',
+    ENTERPRISE_TRIAL = 'enterprise_trial',
 }
 
 export enum AiCreditsAutoTopUpState {
@@ -217,11 +218,18 @@ export const Platform = z.object({
 export type Platform = z.infer<typeof Platform>
 export type PlatformWithoutFederatedAuth = Omit<Platform, 'federatedAuthProviders'>
 
+export const SelfServeTrialDates = z.object({
+    startedAt: z.string(),
+    endsAt: z.string(),
+})
+export type SelfServeTrialDates = z.infer<typeof SelfServeTrialDates>
+
 export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
     billingEnforced: z.boolean().optional(),
+    selfServeTrial: SelfServeTrialDates.optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
