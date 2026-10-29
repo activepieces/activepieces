@@ -24,9 +24,10 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         userId,
         projectId,
         projectRoleName,
+        entityManager,
     }: UpsertParams): Promise<ProjectMember> {
         const { platformId } = await projectService(log).getOneOrThrow(projectId)
-        const existingProjectMember = await repo().findOneBy({
+        const existingProjectMember = await repo(entityManager).findOneBy({
             projectId,
             userId,
             platformId,
@@ -47,13 +48,13 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             projectRoleId: projectRole.id,
         }
 
-        await repo().upsert(projectMember, [
+        await repo(entityManager).upsert(projectMember, [
             'projectId',
             'userId',
             'platformId',
         ])
 
-        return repo().findOneOrFail({
+        return repo(entityManager).findOneOrFail({
             where: {
                 id: projectMemberId,
             },
@@ -292,6 +293,7 @@ type UpsertParams = {
     userId: string
     projectId: ProjectId
     projectRoleName: string
+    entityManager?: EntityManager
 }
 
 type AddToTeamProjectsParams = {

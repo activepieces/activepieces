@@ -43,6 +43,8 @@ export const SendUserInvitationRequest = z.union([
         type: z.literal(InvitationType.PLATFORM),
         email: z.string(),
         platformRole: z.nativeEnum(PlatformRole),
+        projectId: z.string().optional(),
+        projectRole: z.string().optional(),
     }),
 ])
 
