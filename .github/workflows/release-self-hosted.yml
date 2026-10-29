@@ -131,8 +131,7 @@ jobs:
           version: ${{ inputs.tag }}
           latest: ${{ !contains(inputs.tag, '-rc') && steps.latest.outputs.latest == 'true' }}
           publish: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
       # Internal-only for now.
       # To expose them on the GitHub Release for supply-chain audits,
