@@ -359,7 +359,6 @@ function ProviderGroup({
           {info.name}
         </span>
       }
-      description={t('configurationsCount', { count: configs.length })}
       action={
         locked ? undefined : (
           <Button
@@ -374,7 +373,10 @@ function ProviderGroup({
         )
       }
     >
-      <p className="px-5 py-2 text-xs font-medium text-gray-11">{t('Keys')}</p>
+      <p className="flex items-center gap-1.5 px-5 py-2 text-xs font-medium text-gray-11">
+        {t('Keys')}
+        <span className="tabular-nums">{configs.length}</span>
+      </p>
       {configs.map((config) => (
         <ConfigRow
           key={config.id}
