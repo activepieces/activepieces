@@ -78,7 +78,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                 ...(auth !== undefined && { auth: `{{connections['${auth}']}}` }),
             }
 
-            const labelNotes: string[] = []
+            let labelNote = ''
             let skeletonAction: Record<string, unknown>
             switch (stepType) {
                 case FlowActionType.CODE:
@@ -127,7 +127,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                                 return unknownPropsError
                             }
                             const labels = await buildFlowReview.resolveDropdownLabels({ pieceName: versionResult.normalizedPieceName, pieceVersion: versionResult.pieceVersion, componentName: actionName, componentType: 'action', stepName, input: isObject(pieceSettings.input) ? pieceSettings.input : resolvedInput, fields: Object.keys(resolvedInput), projectId: mcp.projectId, platformId: project.platformId, log })
-                            labelNotes.push(...buildFlowReview.labelNotes(labels))
+                            labelNote = buildFlowReview.labelNote(labels)
                             pieceSettings.input = labels.input
                             pieceSettings.propertySettings = await mcpUtils.resolveDynamicPropertySettings({ pieceName: versionResult.normalizedPieceName, pieceVersion: versionResult.pieceVersion, componentName: actionName, componentType: 'action', input: labels.input, projectId: mcp.projectId, platformId: project.platformId, log })
                         }
@@ -207,7 +207,7 @@ export const apAddStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseL
                     operation,
                 })
 
-                const draftWarning = `${mcpUtils.publishedFlowWarning(flow.publishedVersionId)}${labelNotes.length > 0 ? `\n${labelNotes.join('\n')}` : ''}`
+                const draftWarning = `${mcpUtils.publishedFlowWarning(flow.publishedVersionId)}${labelNote}`
                 const hasConfig = input !== undefined || auth !== undefined || sourceCode !== undefined || loopItems !== undefined
                 const addedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
                 const stepValid = hasConfig && addedStep ? addedStep.valid : false

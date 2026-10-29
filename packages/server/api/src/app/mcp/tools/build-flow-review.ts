@@ -90,8 +90,9 @@ function flowState(flow: PopulatedFlow): { flowId: string, displayName: string, 
     return { flowId: flow.id, displayName: flow.version.displayName, flowSteps: flowStepStates({ trigger, problemStepNames }) }
 }
 
-function labelNotes(resolution: LabelResolution): string[] {
-    return [...resolution.resolved.map((line) => `Replaced ${line}`), ...resolution.problems.map(formatProblem)]
+function labelNote(resolution: LabelResolution): string {
+    const notes = [...resolution.resolved.map((line) => `Replaced ${line}`), ...resolution.problems.map(formatProblem)]
+    return notes.length > 0 ? `\n${notes.join('\n')}` : ''
 }
 
 function formatProblem(problem: FlowProblem): string {
@@ -281,7 +282,7 @@ export const buildFlowReview = {
     resolveDropdownLabels,
     flowStepStates,
     flowState,
-    labelNotes,
+    labelNote,
     findProblems,
     formatProblem,
     summarizeStep,

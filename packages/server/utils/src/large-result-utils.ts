@@ -62,6 +62,7 @@ const SHRINK_LADDER: ShrinkLimits[] = [
     { maxStringLength: 400, maxArrayItems: 100 },
     { maxStringLength: 200, maxArrayItems: 50 },
     { maxStringLength: 80, maxArrayItems: 25 },
+    { maxStringLength: 40, maxArrayItems: 10 },
 ]
 
 // What one tool result may occupy of the model's context.

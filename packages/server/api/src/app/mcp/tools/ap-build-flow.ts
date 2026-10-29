@@ -412,8 +412,7 @@ async function stepLabels({ step, stepName, pieceName, pieceVersion, input, proj
         return { input, resolved: [], problems: [] }
     }
     const auth = step.auth ? { auth: `{{connections['${step.auth}']}}` } : {}
-    const resolution = await buildFlowReview.resolveDropdownLabels({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', stepName, input: { ...input, ...auth }, projectId, platformId, log })
-    return resolution
+    return buildFlowReview.resolveDropdownLabels({ pieceName, pieceVersion, componentName: actionName, componentType: 'action', stepName, input: { ...input, ...auth }, projectId, platformId, log })
 }
 
 function fallbackBranchName({ requested, conditionBranchNames }: { requested: string | undefined, conditionBranchNames: string[] }): string {
@@ -524,7 +523,8 @@ function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName, pr
                 valid: false,
                 settings: { items: step.loopItems ?? '' },
             }
-        case FlowActionType.ROUTER:
+        case FlowActionType.ROUTER: {
+            const branches = step.branches ?? DEFAULT_CONDITION_BRANCHES
             return {
                 type: FlowActionType.ROUTER,
                 name,
@@ -533,15 +533,16 @@ function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName, pr
                 settings: {
                     executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
                     branches: [
-                        ...(step.branches ?? DEFAULT_CONDITION_BRANCHES).map((branch) => ({
+                        ...branches.map((branch) => ({
                             branchName: branch.branchName,
                             branchType: BranchExecutionType.CONDITION,
                             conditions: branch.conditions ?? [[]],
                         })),
-                        { branchName: fallbackBranchName({ requested: step.fallbackBranchName, conditionBranchNames: (step.branches ?? DEFAULT_CONDITION_BRANCHES).map((branch) => branch.branchName) }), branchType: BranchExecutionType.FALLBACK },
+                        { branchName: fallbackBranchName({ requested: step.fallbackBranchName, conditionBranchNames: branches.map((branch) => branch.branchName) }), branchType: BranchExecutionType.FALLBACK },
                     ],
                 },
             }
+        }
         default:
             return { type: step.type, name, displayName: step.displayName, valid: false, settings: {} }
     }

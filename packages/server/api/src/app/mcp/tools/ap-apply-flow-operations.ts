@@ -48,8 +48,9 @@ export const apApplyFlowOperationsTool = ({ mcp, userId }: McpToolContext, log: 
                 return { content: [{ type: 'text', text: '❌ Flow not found' }], isError: true }
             }
 
+            const publishedWarning = mcpUtils.publishedFlowWarning(flow.publishedVersionId)
             const loadTrigger = async (): Promise<FlowTrigger> => (await flowService(log).getOnePopulatedOrThrow({ id: flowId, projectId: mcp.projectId })).version.trigger
-            const { applied, failure } = await applyInOrder({ flowId, operations, toolsByType, disabledTools: mcp.disabledTools ?? [], loadTrigger, publishedWarning: mcpUtils.publishedFlowWarning(flow.publishedVersionId) })
+            const { applied, failure } = await applyInOrder({ flowId, operations, toolsByType, disabledTools: mcp.disabledTools ?? [], loadTrigger, publishedWarning })
 
             if (!isNil(failure)) {
                 const failedLine = `❌ Operation ${failure.index + 1} (${failure.type}) failed: ${failure.reason}`
@@ -79,7 +80,7 @@ export const apApplyFlowOperationsTool = ({ mcp, userId }: McpToolContext, log: 
                 ...problemLines,
             ]
             return {
-                content: [{ type: 'text', text: `${lines.join('\n')}${mcpUtils.publishedFlowWarning(flow.publishedVersionId)}` }],
+                content: [{ type: 'text', text: `${lines.join('\n')}${publishedWarning}` }],
                 structuredContent: { applied, problems, flowId, displayName: updatedFlow.version.displayName, flowSteps: buildFlowReview.flowStepStates({ trigger: updatedFlow.version.trigger, problemStepNames: new Set(Object.keys(problems)) }) },
             }
         },

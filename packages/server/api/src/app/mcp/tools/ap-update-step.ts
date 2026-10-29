@@ -150,7 +150,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                 })
             }
 
-            const labelNotes: string[] = []
+            let labelNote = ''
             if (step.type === FlowActionType.PIECE && (input !== undefined || pieceVersionChanged)) {
                 await mcpUtils.fillDefaultsForMissingOptionalProps({
                     settings: updatedSettings,
@@ -169,7 +169,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                         return unknownPropsError
                     }
                     const labels = await buildFlowReview.resolveDropdownLabels({ pieceName, pieceVersion, componentName: resolvedActionName, componentType: 'action', stepName, input: knownInput, fields: Object.keys(callerInput), projectId: mcp.projectId, platformId: project.platformId, log })
-                    labelNotes.push(...buildFlowReview.labelNotes(labels))
+                    labelNote = buildFlowReview.labelNote(labels)
                     updatedSettings.input = labels.input
                     const changedKeys = Object.keys(pieceVersionChanged ? knownInput : callerInput)
                     updatedSettings.propertySettings = await mcpUtils.resolveDynamicPropertySettings({ pieceName, pieceVersion, componentName: resolvedActionName, componentType: 'action', input: labels.input, propertySettings: currentSettings.propertySettings, changedKeys, projectId: mcp.projectId, platformId: project.platformId, log })
@@ -208,7 +208,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                     operation,
                 })
                 const updatedStep = flowStructureUtil.getStep(stepName, updatedFlow.version.trigger)
-                const draftWarning = `${mcpUtils.publishedFlowWarning(flow.publishedVersionId)}${labelNotes.length > 0 ? `\n${labelNotes.join('\n')}` : ''}`
+                const draftWarning = `${mcpUtils.publishedFlowWarning(flow.publishedVersionId)}${labelNote}`
                 if (updatedStep && !updatedStep.valid) {
                     const diagnosis = updatedStep.type === FlowActionType.PIECE
                         ? await diagnoseMissingInputs({ settings: updatedStep.settings, platformId: project.platformId, log })

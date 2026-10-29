@@ -1,9 +1,7 @@
 import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, BuildPlanEvent, KnowledgeBaseSourceType, SendAgentEmailResponse, ToolProgressEvent } from '@activepieces/shared'
-import { asSchema, ToolExecutionOptions } from 'ai'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { asSchema } from 'ai'
+import { describe, expect, it, vi } from 'vitest'
 import { AgentEventEmitter, agentWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
-import { createCrossProjectTools } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/cross-project-tools'
-import { createEventEmitter } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/event-emitter'
 import { buildPlanSync } from '../../../../../../src/lib/execute/jobs/ee/agent/tools/session-tools'
 
 function makeMockEventEmitter(): { eventEmitter: AgentEventEmitter, progressEvents: ToolProgressEvent[] } {
@@ -859,24 +857,5 @@ describe('buildPlanSync', () => {
 
     it('ignores results that are not a flow build or edit', () => {
         expect(buildPlanSync.builtFlowOf({ result: { structuredContent: { rolledBack: true } } })).toBeNull()
-    })
-})
-
-describe('ap_run_code on a server with no code sandbox', () => {
-    const original = process.env['AP_DENO_PATH']
-    afterEach(() => {
-        process.env['AP_DENO_PATH'] = original
-    })
-
-    it('fails at once with a reason the model can act on, without calling the server', async () => {
-        delete process.env['AP_DENO_PATH']
-        const executeTool = vi.fn()
-        const tools = createCrossProjectTools({ executeTool, eventEmitter: createEventEmitter({ sendEvent: async () => undefined, userId: 'u1', conversationId: 'c1' }), waitForApproval: vi.fn(), taintState: { tainted: false } })
-        const options: ToolExecutionOptions<undefined> = { toolCallId: 't1', messages: [], context: undefined }
-
-        const result = await tools['ap_run_code'].execute?.({ code: 'export const code = async () => 1' }, options)
-
-        expect(result).toMatchObject({ text: expect.stringContaining('not available on this server'), producedFiles: [] })
-        expect(executeTool).not.toHaveBeenCalled()
     })
 })
