@@ -1,71 +1,42 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { ninjapipeAuth } from '../../';
-import { ninjapipeApiCall, extractItems, flattenArray, getAuth, ninjapipeCommon } from '../common';
+import { ninjapipeAuth } from '../auth';
+import { ninjapipeClient } from '../common/client';
+import { ninjapipeProps } from '../common/props';
+import { ninjapipeSchemas } from '../output-schemas';
 
 export const listContacts = createAction({
   auth: ninjapipeAuth,
   name: 'list_contacts',
   classification: 'SEARCH',
   displayName: 'List Contacts',
-  description: 'Retrieves a list of contacts.',
-  audience: 'both',
-  aiMetadata: { description: 'List contacts with optional search text and status/owner filters. Read-only; supports single-page paging or "Return All" to follow pagination across every page. Use to discover contact IDs or find a contact by name/email before acting on it.', idempotent: true },
+  description: 'Lists contacts, with optional search, status, owner and assignee filters.',
+  audience: 'human',
+  aiMetadata: {
+    description: 'List NinjaPipe contacts one page at a time, or every page with Return All (capped at 5,000), filtered by search text, status, owner or assignee. Read-only.',
+    idempotent: true,
+  },
+  outputSchema: ninjapipeSchemas.contactList,
   props: {
-    limit: ninjapipeCommon.limitProperty,
-    search: ninjapipeCommon.searchProperty,
-    statusFilter: ninjapipeCommon.statusFilterProperty,
-    ownerFilter: ninjapipeCommon.ownerFilterProperty,
-    returnAll: Property.Checkbox({
-      displayName: 'Return All',
-      description: 'Retrieve all contacts using pagination.',
-      required: false,
-      defaultValue: false,
-    }),
-    page: Property.Number({
-      displayName: 'Page',
-      description: 'Page number when not using Return All.',
-      required: false,
-      defaultValue: 1,
-    }),
+    search: ninjapipeProps.search(),
+    statusFilter: Property.ShortText({ displayName: 'Status', description: 'Only contacts with this status.', required: false }),
+    ownerFilter: ninjapipeProps.member({ displayName: 'Owner', description: 'Only contacts owned by this member (owner_id).' }),
+    assignedTo: ninjapipeProps.member({ displayName: 'Assigned To', description: 'Only contacts assigned to this member (assigned_to).' }),
+    sortBy: ninjapipeProps.staticDropdown({ displayName: 'Sort By', description: 'Field to sort by. Default: created_at.', values: ['created_at', 'updated_at', 'first_name', 'last_name', 'email', 'status'] }),
+    sortOrder: ninjapipeProps.staticDropdown({ displayName: 'Sort Order', description: 'Default: desc.', values: ['desc', 'asc'] }),
+    limit: ninjapipeProps.limit(),
+    page: ninjapipeProps.page(),
+    returnAll: ninjapipeProps.returnAll(),
   },
   async run(context) {
-    const auth = getAuth(context);
-    const qs: Record<string, string> = {
-      limit: String(context.propsValue.limit ?? 20),
-      page: String(context.propsValue.page ?? 1),
-    };
-    if (context.propsValue.search) qs['search'] = context.propsValue.search;
-    if (context.propsValue.statusFilter) qs['status'] = context.propsValue.statusFilter;
-    if (context.propsValue.ownerFilter) qs['owner'] = context.propsValue.ownerFilter;
-
-    if (context.propsValue.returnAll) {
-      const results: unknown[] = [];
-      let page = 1;
-      const limit = 100;
-      let hasMore = true;
-      while (hasMore) {
-        const response = await ninjapipeApiCall<{ data?: unknown[] }>({
-          auth,
-          method: HttpMethod.GET,
-          path: '/contacts',
-          queryParams: { ...qs, limit: String(limit), page: String(page) },
-        });
-        const items = extractItems(response.body);
-        results.push(...items);
-        hasMore = items.length === limit && page < 1000;
-        page++;
-      }
-      return flattenArray(results);
-    }
-
-    const response = await ninjapipeApiCall<{ data?: unknown[] }>({
-      auth,
-      method: HttpMethod.GET,
+    const p = context.propsValue;
+    return ninjapipeClient.runList({
+      auth: ninjapipeClient.readAuth(context.auth),
       path: '/contacts',
-      queryParams: qs,
+      query: { search: p.search, status: p.statusFilter, owner_id: p.ownerFilter, assigned_to: p.assignedTo, sort_by: p.sortBy, sort_order: p.sortOrder },
+      operation: 'list contacts',
+      returnAll: p.returnAll,
+      page: p.page,
+      limit: p.limit,
     });
-    const items = extractItems(response.body);
-    return flattenArray(items);
   },
 });

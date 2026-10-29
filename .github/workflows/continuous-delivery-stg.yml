@@ -13,7 +13,6 @@ on:
         type: choice
         options:
           - deploy-staging              # Re-deploy to staging (e.g., after infra change)
-          - deploy-staging-skip-freeze  # Deploy to staging, ignoring the freeze window
 
 # One deploy run at a time, so e2e always tests the SHA it reports on. A newer
 # pending run replaces an older pending one: the latest merge still wins.
@@ -46,29 +45,8 @@ jobs:
             echo "is_hotfix_merge=false" >> $GITHUB_OUTPUT
           fi
 
-  check-freeze:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    outputs:
-      frozen: ${{ steps.check.outputs.frozen }}
-    steps:
-      - name: Check staging freeze window (5 PM - 9 AM UTC)
-        id: check
-        run: |
-          HOUR=$(date -u +%H)
-          if [ "$HOUR" -ge 17 ] || [ "$HOUR" -lt 9 ]; then
-            echo "Staging is frozen (current UTC hour: $HOUR). Skipping deploy."
-            echo "frozen=true" >> $GITHUB_OUTPUT
-          else
-            echo "frozen=false" >> $GITHUB_OUTPUT
-          fi
-
   build-image:
-    needs: [check-freeze]
-    if: |
-      always() &&
-      ((github.event_name == 'push' && needs.check-freeze.outputs.frozen == 'false') ||
-       (github.event_name == 'workflow_dispatch' && (github.event.inputs.action == 'deploy-staging' || github.event.inputs.action == 'deploy-staging-skip-freeze')))
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
@@ -157,7 +135,7 @@ jobs:
   # Runs the Playwright suite against staging once both deploys finish. The job's
   # check run on the commit SHA is the result the candidate cut reads.
   # Report-only for now (continue-on-error): it never fails the workflow.
-  # Global setup deletes every flow of the E2E account, so the account must hold nothing else.
+  # Each spec deletes the flows and connections it creates; global setup deletes only `E2E `-prefixed ones older than an hour.
   e2e-staging:
     needs: [deploy-staging-app, deploy-staging-workers]
     if: always() && needs.deploy-staging-app.result == 'success' && needs.deploy-staging-workers.result == 'success'
@@ -221,6 +199,25 @@ jobs:
           name: e2e-staging-results
           path: packages/tests-e2e/test-results/results.json
           retention-days: 30
+
+  # Records the deploy in the Linear "Staging" release pipeline. Never fails the workflow.
+  # Piece commits are left out: pieces ship through npm, not the image.
+  linear-release:
+    needs: [deploy-staging-app, deploy-staging-workers]
+    if: always() && needs.deploy-staging-app.result == 'success' && needs.deploy-staging-workers.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
+        with:
+          access_key: ${{ secrets.LINEAR_RELEASE_KEY_STAGING }}
+          include_paths: '!packages/pieces/community/**,!packages/pieces/core/**,!packages/pieces/custom/**,!bun.lock,!tsconfig.base.json,!docs/**'
+          no_branch_ref_detection: 'true'
+          links: Run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   # Thursday 5 PM UTC: tag current staging image + commit as release-candidate.
   # Also runs when a hotfix branch is merged to main — staging still holds the

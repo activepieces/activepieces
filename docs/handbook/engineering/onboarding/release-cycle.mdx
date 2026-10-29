@@ -8,11 +8,11 @@ This page explains how code moves from merge to production and why each step exi
 ## The Cycle
 
 ```
-Merge to main (Mon–Thu) ──→ Deploy to staging
+Merge to main ────────────→ Deploy to staging
                                     │
-                          5 PM UTC Thu: staging freezes + RC tagged
+                          5 PM UTC Thu: RC tagged
                                     │
-                          Fri–Sat: canary runs daily from main
+                          Fri–Sat: cloud is quiet
                                     │
                           Sun 9 AM UTC: canary rebuilt from main
                                     │                → release-candidate promoted to production
@@ -22,9 +22,9 @@ Merge to main (Mon–Thu) ──→ Deploy to staging
 
 ## Cutoffs & Why
 
-### Staging Freeze / RC Tag — Thursday 5 PM UTC
+### RC Tag — Thursday 5 PM UTC
 
-Merges to `main` after 5 PM UTC on Thursday are **not deployed to staging**. At Thursday 5 PM UTC, the current staging image and commit are tagged as `release-candidate` — this is the stability gate for the week.
+At Thursday 5 PM UTC, the current staging image and commit are tagged as `release-candidate` — this is the stability gate for the week.
 
 **Why**: Anything merged after the Thursday cut doesn't go to cloud production until the following week. This gives the team a predictable, stable window to validate changes before they reach customers.
 
@@ -46,10 +46,9 @@ On Monday at 9 AM UTC, the self-hosted release is published: git tag, GitHub rel
 
 | Time | What Happens |
 |---|---|
-| Mon–Thu, 9 AM–5 PM UTC | Merge to `main` → auto-deployed to staging |
-| Mon–Thu, 5 PM–9 AM UTC | Merge to `main` → code in `main` only, staging frozen |
+| Any time | Merge to `main` → auto-deployed to staging |
 | **Thu 5 PM UTC** | Staging image + commit tagged as `release-candidate` |
-| Fri–Sat | Canary deploys daily from `main`; cloud is quiet |
+| Fri–Sat | Cloud is quiet |
 | **Sun 9 AM UTC** | Canary rebuilt from latest `main`; `release-candidate` promoted to cloud production; `deploy/cloud/YYYY-MM-DD` branch created |
 | **Mon 9 AM UTC** | Self-hosted release published (re-tags cloud RC image) |
 
@@ -62,11 +61,5 @@ Sometimes the cycle needs to be bypassed:
 
 ## FAQ
 
-**Q: I merged at 6 PM UTC on a Wednesday. When does my code reach production?**
-Your code is in `main` but staging is frozen. It won't be included in the Thursday RC tag unless it lands before 5 PM UTC Thursday. If it misses that cut, it won't reach cloud production until the following Sunday.
-
 **Q: I merged at 10 AM UTC on a Wednesday. When does my code reach production?**
 It deploys to staging immediately. As long as nothing breaks before Thursday 5 PM UTC, it will be included in the RC tag and will reach cloud production the following Sunday.
-
-**Q: Can I deploy to staging during the freeze window?**
-Yes, manually dispatch `continuous-delivery.yml` with `deploy-staging`. But consider that the content team may be relying on the frozen version.

@@ -10,11 +10,158 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 #### Quickzu 0.2.0: Order Created outputs the order, and the discount actions move to AI versions
 
-The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. **Create Product Discount** and **Create Promo Code** are no longer offered to AI agents; they keep working in flows.
+The **Order Created** trigger now outputs the order itself. Before, it output the whole webhook wrapper (`body`, `headers`, `queryParams`), so order fields sat under `body`. The existing **Create Product Discount** and **Create Promo/Coupon Code** actions are no longer offered to AI agents; they keep working in flows.
 
 #### What you need to do
 
-If a flow maps fields from Order Created, re-map them without the `body` prefix (for example `payload.id` instead of `body.payload.id`). Agents that used the discount actions switch to **Create Product Discount (AI)** and **Create Promo Code (AI)**.
+If a flow maps fields from Order Created, re-map them without the `body` prefix (for example `payload.id` instead of `body.payload.id`). Agents that used the discount actions get new agent versions named **Create Product Discount** and **Create Promo Code**, which take plain IDs and values.
+
+#### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
+
+**Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
+
+Once a step is upgraded to Workable 0.3.0, these outputs change:
+
+- **Get Candidate** returns the candidate itself, without the `candidate` wrapper.
+- **Move Candidate** and **Rate Candidate** return `{success, candidate_id, ...}` instead of `{status, headers, body}`.
+- **Get Members** returns `nextCursor` and `hasMore` instead of `paging`, and refuses a Limit above 100.
+- **New Candidate** ignores webhook deliveries that are unsigned or that arrive more than 6 hours after Workable fired them.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Move Candidate as a tool, switch it to Move Candidate (by IDs). Flow steps that use Move Candidate keep working. Steps keep running on the version they were built with until you upgrade them; when you upgrade, update any later step that reads `candidate.*` from Get Candidate, `body` from Move Candidate or Rate Candidate, or `paging` from Get Members.
+
+#### iLoveAPI 0.1.0: Create Signature Request is no longer an agent tool, and triggers need a Webhook Secret
+
+iLoveAPI 0.1.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+**Create Signature Request** is no longer offered as a tool to AI agents. It still works as a normal flow step. Agents should use **Send PDF for Signature** instead, which takes the PDFs as URLs. Create Signature Request also checks its input more strictly: a signature element with a missing field, or with an email that matches no signer, used to be skipped and now fails the step.
+
+Every iLoveAPI trigger now has a required **Webhook Secret**, and a delivery whose URL does not carry that secret is ignored without an error.
+
+#### What you need to do
+
+Point any agent that used Create Signature Request at Send PDF for Signature. When you upgrade an iLoveAPI trigger, fill in a Webhook Secret of at least 16 characters, then change the endpoint URL in the iLoveAPI developer dashboard to `<trigger URL>?ap_secret=<secret>`. Until you do, deliveries are dropped and the flow stops running. Check that Create Signature Request steps give every signature element all its fields and use signer emails that match a signer.
+
+#### SendIt 0.3.0: two scheduled-post actions leave AI agents, and publishing checks inputs before sending
+
+From SendIt 0.3.0, **Cancel Scheduled Post** and **Trigger Scheduled Post Now** are no longer offered to AI agents and MCP clients. They stay available as flow steps. An agent or MCP client that called them by name no longer finds them.
+
+SendIt 0.3.0 also changes what an existing **Publish Post** or **Schedule Post** step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+- A media URL that starts with `http://` now stops the step. Media URLs must be public `https://` URLs.
+- A post that targets Instagram, Pinterest, TikTok or YouTube without a media URL now stops the whole step before anything is sent, including to the other selected platforms. Before, a text-only post to LinkedIn and Instagram still reached SendIt.
+
+#### What you need to do
+
+For agents and MCP clients, use **Cancel Scheduled Post by ID** instead of Cancel Scheduled Post, and **Publish Scheduled Post Now** instead of Trigger Scheduled Post Now. Before you upgrade a Publish Post or Schedule Post step to 0.3.0, make sure its media URLs use `https://`, and add a media URL or remove Instagram, Pinterest, TikTok and YouTube from posts that have none.
+
+#### Pastefy 0.4.0: six actions leave the agent tool list, and existing steps change behavior
+
+Pastefy 0.4.0 changes what an existing step does once it is upgraded to that version. Steps keep running on the version they were built with until you upgrade them.
+
+These actions are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps. Agents use the replacement instead:
+- **Create Paste** → **Create Paste (by Folder ID)**
+- **Edit Paste** → **Update Paste (by IDs)**
+- **Create Folder** → **Create Folder (by Parent ID)**
+- **Get Folder** → **Get Folder (by ID)**
+- **Get Folder Hierarchy** → **List Folders**
+- **Delete Folder** → **Delete Folder (by ID)**
+
+**Edit Paste** now returns the updated paste, and **Delete Paste** and **Delete Folder** return `{ deleted, id }`. All three used to return `{ success }`, so a later step that reads `{{step.success}}` gets nothing after the upgrade.
+
+Every action and the **Paste Changed** trigger now call the connection's **Instance URL**. Before, they always called pastefy.app. An Instance URL that is not a plain http(s) URL now fails the step. TLS certificates are now checked, so a self-hosted Pastefy with a self-signed certificate fails (Custom API Call and the folder dropdowns already reached that server before). **Custom API Call** only accepts URLs under `<instance>/api/v2`.
+
+**Get Paste** with a wrong password now fails, and so does **Edit Paste** when it changes an encrypted paste's text without the password. **Delete Paste** on a paste that does not exist now returns `deleted: false` instead of failing.
+
+#### What you need to do
+
+Give agents the replacement actions listed above. Change later steps that read `success` from Edit Paste, Delete Paste or Delete Folder to read the paste fields or `deleted`. Check that the connection's Instance URL is the server you want, and give a self-hosted server a certificate from a trusted authority. Point Custom API Call steps at paths under `/api/v2`.
+
+#### SmartLead 0.2.0: four actions are builder-only, and Update Campaign Settings skips empty settings
+
+**Create Campaign**, **Add Leads to Campaign**, **Get Campaign Statistics** and **Update Campaign Settings** are no longer offered to AI agents. They keep working in flows with the same names and inputs, but an agent or MCP server that used them as tools loses them after the upgrade.
+
+From SmartLead 0.2.0 the builder's **Update Campaign Settings** skips empty settings. Track Opens, Track Clicks, Enable AI ESP Matching and Send as Plain Text are now an **On** / **Off** dropdown; left empty, the setting keeps its current value. Before, an untouched checkbox was sent as off and overwrote the campaign. The legacy Stop Lead Condition values are no longer listed, but a step that already uses one keeps working.
+
+#### What you need to do
+
+Agents that used these actions as tools switch to their agent versions, which have the same names: Create Campaign, Add Leads to Campaign, Get Campaign Statistics and Update Campaign Settings. Add them to the Run Agent step or MCP server again after the upgrade. If a flow step had a Yes/No setting ticked on, open it after upgrading and set that setting to On. Flow steps keep running on the version they were built with until you upgrade them.
+
+#### Canva 0.3.0: nine actions are builder-only, and Export, Upload and Import wait for the job
+
+Create Design, Export Design, Find Design, Get Asset, Get Design, Get Folder, Import Design, Move Folder Item and Upload Asset are no longer offered to AI agents. They keep working in flows, but an agent or MCP client that used them as tools loses them after the upgrade.
+
+**Export Design**, **Upload Asset** and **Import Design** now wait for Canva's job to finish (up to 120 seconds by default) and return the finished result. The step fails when Canva reports the job failed or the wait runs out. Before, they returned the running job right away. The `next_steps` field is no longer in their output.
+
+#### What you need to do
+
+- Agents that used these actions as tools switch to the new agent tools: **Create Design**, **Export Design**, **Get Design**, **Get Asset** and **Move Folder Item** (same names), **List Designs** for Find Design, **List Folder Items** for Get Folder, and **Upload Asset From URL** and **Import Design From URL** for the two file actions (they take a public URL, not a file).
+- To keep the old behaviour of Export Design, Upload Asset or Import Design, turn off **Wait for Completion** and check the job later with **Get Job Status**. If a later step read `next_steps`, remove that mapping.
+
+Flow steps keep running on the version they were built with until you upgrade them.
+
+#### NinjaPipe 0.2.0: 17 actions are builder-only, outputs change shape, and fields the API rejected or ignored are removed
+
+NinjaPipe 0.2.0 changes what existing steps take and return once they are upgraded to that version. Steps keep running on the version they were built with until you upgrade them, but AI agents lose the old tools as soon as 0.2.0 is published.
+
+**Actions no longer offered to AI agents.** Create Contact, Get Contact, List Contacts, Update Contact, Create Company, Get Company, List Companies, Update Company, Create Deal, Get Deal, List Deals, Update Deal, Create Task, List Tasks, Update Task, List Projects and List Pipelines keep working in flows but are no longer agent tools. Agents get new AI versions instead: Create Contact (`ai_create_contact`), Get Contact (`ai_get_contact`), Search Contacts (`ai_search_contacts`), Update Contact (`ai_update_contact`), Create Company (`ai_create_company`), Get Company (`ai_get_company`), Search Companies (`ai_search_companies`), Update Company (`ai_update_company`), Create Deal (`ai_create_deal`), Get Deal (`ai_get_deal`), Search Deals (`ai_search_deals`), Update Deal (`ai_update_deal`), Create Task (`ai_create_task`), List Tasks (`ai_list_tasks`), Update Task (`ai_update_task`), List Projects (`ai_list_projects`) and List Pipelines (`ai_list_pipelines`).
+
+**Removed fields** (the API rejected or silently ignored them):
+- Create Contact, Update Contact and Upsert Contact: Address, City, ZIP, Country, State, Notes and the Company text field. A Company dropdown replaces the text field.
+- Create and Update Company: Address, City, ZIP, Country, State and Notes.
+- Create and Update Deal: Title, Currency, Pipeline and Notes.
+- Create and Update Project: Contact and Settings JSON.
+- Create and Update Order, Create and Update Task: Settings JSON.
+- Create and Update Product: Custom Fields.
+- List Pipelines: Search. List Projects: Owner filter.
+
+**Changed inputs.** Owner and Assignee are now a dropdown of workspace members instead of a text field.
+
+**Changed outputs.**
+- The List steps (Contacts, Companies, Deals, Products, Orders, Budgets, Projects, Pipelines) return `{ items, count, total, hasMore, nextPage }` instead of a plain array. List Tasks returns `{ items, count }`.
+- Get, Create and Update steps return the record's own fields (`id`, `name`, …) instead of `data_id`, `data_name`, …. Create Contact in Skip mode (the email already exists) returns `{ action: "skipped", ...existing contact fields }` instead of `{ skipped, reason, email, existing_id }`.
+- Delete steps return `{ deleted, id, name, message }` instead of `{ success, deleted_id }`.
+- Send to Databin returns `{ status, response }` instead of the raw response body.
+- The triggers emit the nested record as NinjaPipe returns it instead of flattened `fields_*` keys.
+
+**Changed behaviour.**
+- Custom API Call only calls the connected NinjaPipe host and refuses any other host.
+- Update steps with nothing to change fail with "Nothing to update" instead of sending an empty update.
+- Return All stops at 5,000 items.
+
+#### What you need to do
+
+After upgrading a NinjaPipe step, remap later steps that used the List output (map `items` instead of the array), a `data_*` field (map the plain field name), the Delete or Send to Databin output, or a trigger's `fields_*` key (map the nested field). Re-select the company in contact steps that used the old Company text field, and re-select Owner and Assignee from the dropdown. Custom API Call steps that called another host should use an HTTP step instead. Agents that used the old actions as tools: add the AI versions listed above to the agent.
+
+#### Campaign Monitor 0.2.0: Add Subscriber and Update Subscriber are builder-only
+
+Add Subscriber and Update Subscriber are no longer offered to AI agents. They keep working in flows, but an agent that used them as tools loses them after the upgrade.
+
+Find Subscriber now fails with an error when Campaign Monitor returns a real error, such as an invalid API key or an outage. It used to return `found: false` in those cases; it still returns `found: false` when the subscriber does not exist.
+
+#### What you need to do
+
+Agents that used these actions switch to their twins: Add Subscriber (JSON fields) and Update Subscriber (JSON fields). Flows that read `found: false` from Find Subscriber to mean "not found" keep working; a run that hits a bad key or an outage now fails instead of taking the not-found branch. Flow steps keep running on the version they were built with until you upgrade them.
+
+#### Bannerbear 0.6.0: Create Image is builder-only, returns the normalized image, and Custom API Call is asynchronous
+
+From Bannerbear 0.6.0, **Create Image** is no longer offered as a tool to AI agents; it still works as a normal flow step. Agents use the new **Create Image from JSON** action instead. Create Image now returns the same normalized image as the other Bannerbear actions: the template ID is in `template_uid` instead of `template`, and `modifications`, `width` and `height` are no longer returned. **Custom API Call** no longer goes through `sync.api.bannerbear.com`; it now uses `api.bannerbear.com`, so a `POST /images` call returns the image while it is still `pending` instead of waiting for it to finish rendering.
+
+#### What you need to do
+
+Steps keep running on the version they were built with until you upgrade them. After upgrading, change any later step that reads `template` from Create Image to read `template_uid`, and stop reading `modifications`, `width` or `height`. Point Run Agent steps that used Create Image at **Create Image from JSON**. If a Custom API Call creates images, poll **Get Image** (or use the **New Image Completed** trigger) until the image is completed before using its URL.
+
+#### Republishing no longer restarts polling triggers
+
+Republishing a running flow without changing its polling trigger (same piece, version, trigger and inputs) now leaves the trigger running: `onDisable` and `onEnable` don't run and its stored state is kept, so events created around the republish are no longer lost. When a piece is upgraded to a newer version with the same inputs, only the new version's `onEnable` runs, with `context.isRepublish` set to `true`. The old version's `onDisable` doesn't run.
+
+#### What you need to do
+
+Nothing for flows built on official pieces. If you maintain custom polling pieces:
+- To reset a polling trigger whose state has gone bad, turn the flow off and on. Republishing no longer resets it.
+- A polling trigger's `onDisable` still runs when the flow is turned off or deleted, but not on an upgrade, because the trigger keeps running. If `onEnable` creates something outside the store, save its id in the store and, when `context.isRepublish` is `true` and the id exists, reuse it instead of creating another. If the trigger needs to register and unregister with every version, make it a webhook trigger: those run both hooks on every republish.
+- Pass the whole `context` to `pollingHelper` (`pollingHelper.onEnable(polling, context)`), and in `onEnable` keep any state you store yourself when `context.isRepublish` is `true`. Otherwise the trigger starts from scratch on an upgrade. See [When the hooks run](/build-pieces/piece-reference/triggers/overview#when-the-hooks-run).
 
 #### Apache Kafka 0.1.0: Publish messages is no longer an AI agent tool
 
