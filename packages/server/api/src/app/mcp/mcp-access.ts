@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { McpReachResponse, McpToolResult, Project, ProjectType } from '@activepieces/shared'
+import { McpReachResponse, McpToolResult, Project, ProjectType, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { editionRequiresRbac } from '../ee/authentication/project-role/rbac-middleware'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
@@ -12,7 +12,16 @@ export const mcpAccess = {
     resolveReach,
     hasMcpReach,
     hasMcpAccessToProject,
+    isGrantLive,
     noMcpReachResult,
+}
+
+async function isGrantLive({ platformId, userId, projectId, log }: UserScope & { projectId: string | null }): Promise<boolean> {
+    const user = await userService(log).get({ id: userId })
+    if (isNil(user) || user.status !== UserStatus.ACTIVE || user.platformId !== platformId) {
+        return false
+    }
+    return isNil(projectId) || !editionRequiresRbac() || !isNil(await projectMemberService(log).getRole({ userId, projectId }))
 }
 
 async function listAccessibleProjects({ platformId, userId, log }: UserScope): Promise<Project[]> {
