@@ -49,7 +49,7 @@ async function listSurveysPage({
 }
 
 async function listAllSurveys({ auth, workspaceId }: { auth: FormbricksAuthValue; workspaceId?: string }): Promise<SurveySummary[]> {
-  const pages = await collectPages({
+  const { items: pages } = await collectPages({
     fetchPage: (offset) => listSurveysPage({ auth, limit: SURVEY_PAGE_SIZE, offset }),
     pageSize: SURVEY_PAGE_SIZE,
     maxItems: MAX_DROPDOWN_SURVEYS,
@@ -67,8 +67,8 @@ async function listSurveys({
   workspaceId?: string;
   status?: string;
   limit: number;
-}): Promise<{ surveys: SurveySummary[]; count: number; truncated: boolean }> {
-  const all = await collectPages({
+}): Promise<{ surveys: SurveySummary[]; count: number; truncated: boolean; scan_limit_reached: boolean }> {
+  const { items: all, hitCap } = await collectPages({
     fetchPage: (offset) => listSurveysPage({ auth, limit: SURVEY_PAGE_SIZE, offset }),
     pageSize: SURVEY_PAGE_SIZE,
     maxItems: MAX_SCANNED_SURVEYS,
@@ -79,7 +79,65 @@ async function listSurveys({
       (status === undefined || survey.status === status),
   );
   const surveys = filtered.slice(0, limit);
-  return { surveys, count: surveys.length, truncated: filtered.length > limit };
+  return {
+    surveys,
+    count: surveys.length,
+    truncated: filtered.length > limit || hitCap,
+    scan_limit_reached: hitCap,
+  };
+}
+
+async function listWorkspaceSampleResponses({
+  auth,
+  workspaceId,
+  surveyIds,
+  finishedOnly,
+  sampleSize,
+}: {
+  auth: FormbricksAuthValue;
+  workspaceId: string;
+  surveyIds: string[];
+  finishedOnly: boolean;
+  sampleSize: number;
+}): Promise<FormbricksResponse[]> {
+  const scopedSurveyIds =
+    surveyIds.length > 0 ? surveyIds : (await listAllSurveys({ auth, workspaceId })).map((survey) => survey.id).filter((id) => id.length > 0);
+  return collectSampleResponses({
+    surveyIds: scopedSurveyIds.slice(0, MAX_TEST_SURVEYS),
+    finishedOnly,
+    sampleSize,
+    fetchSurveyResponses: async (surveyId) =>
+      (await listResponses({ auth, surveyId, limit: TEST_RESPONSES_PER_SURVEY, skip: 0 })).responses,
+  });
+}
+
+export async function collectSampleResponses({
+  surveyIds,
+  finishedOnly,
+  sampleSize,
+  fetchSurveyResponses,
+}: {
+  surveyIds: string[];
+  finishedOnly: boolean;
+  sampleSize: number;
+  fetchSurveyResponses: (surveyId: string) => Promise<FormbricksResponse[]>;
+}): Promise<FormbricksResponse[]> {
+  const wanted = new Set(surveyIds);
+  const merged: FormbricksResponse[] = [];
+  for (let start = 0; start < surveyIds.length; start += TEST_FETCH_CONCURRENCY) {
+    const batch = surveyIds.slice(start, start + TEST_FETCH_CONCURRENCY);
+    const pages = await Promise.all(batch.map((surveyId) => fetchSurveyResponses(surveyId)));
+    for (const page of pages) {
+      merged.push(...page);
+    }
+  }
+  const seen = new Set<string>();
+  return merged
+    .filter((response) => response.surveyId !== null && wanted.has(response.surveyId))
+    .filter((response) => !finishedOnly || response.finished)
+    .filter((response) => (seen.has(response.id) ? false : (seen.add(response.id), true)))
+    .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
+    .slice(0, sampleSize);
 }
 
 async function getSurvey({ auth, surveyId }: { auth: FormbricksAuthValue; surveyId: string }): Promise<SurveyDetail> {
@@ -460,7 +518,7 @@ function buildContact({
   };
 }
 
-async function collectPages<T>({
+export async function collectPages<T>({
   fetchPage,
   pageSize,
   maxItems,
@@ -468,16 +526,16 @@ async function collectPages<T>({
   fetchPage: (offset: number) => Promise<T[]>;
   pageSize: number;
   maxItems: number;
-}): Promise<T[]> {
+}): Promise<{ items: T[]; hitCap: boolean }> {
   const collected: T[] = [];
   for (let offset = 0; offset < maxItems; offset += pageSize) {
     const page = await fetchPage(offset);
     collected.push(...page);
     if (page.length < pageSize) {
-      break;
+      return { items: collected.slice(0, maxItems), hitCap: collected.length > maxItems };
     }
   }
-  return collected.slice(0, maxItems);
+  return { items: collected.slice(0, maxItems), hitCap: true };
 }
 
 function mapSurveySummary(raw: Record<string, unknown>): SurveySummary {
@@ -590,6 +648,12 @@ function uniqueById(items: WorkspaceOption[]): WorkspaceOption[] {
 
 const SURVEY_PAGE_SIZE = 100;
 const MAX_DROPDOWN_SURVEYS = 500;
+
+const MAX_TEST_SURVEYS = 25;
+
+const TEST_RESPONSES_PER_SURVEY = 10;
+
+const TEST_FETCH_CONCURRENCY = 5;
 const MAX_SCANNED_SURVEYS = 1000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DEFAULT_ATTRIBUTE_NAMES: Record<string, string> = {
@@ -605,6 +669,7 @@ export const formbricksApi = {
   listWorkspaces,
   listAllSurveys,
   listSurveys,
+  listWorkspaceSampleResponses,
   getSurvey,
   updateSurveyStatus,
   listResponses,

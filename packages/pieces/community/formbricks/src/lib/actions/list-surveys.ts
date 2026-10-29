@@ -10,7 +10,7 @@ export const listSurveysAction = createAction({
   name: 'list_surveys',
   classification: 'SEARCH',
   displayName: 'List Surveys',
-  description: 'Lists the surveys in a workspace, optionally only those with a given status.',
+  description: 'Lists the surveys in a workspace, optionally only those with a given status. Scans up to 1,000 surveys; "More Available" is true when the list may be incomplete.',
   audience: 'human',
   aiMetadata: {
     description: 'List Formbricks surveys in a workspace, optionally filtered by status. Read-only, safe to retry.',
