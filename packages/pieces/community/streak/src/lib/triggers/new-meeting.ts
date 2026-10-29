@@ -1,3 +1,4 @@
+import { meetingWebhookOutputSchema } from '../common/output-schemas';
 import { createPipelineWebhookTrigger } from '../common/trigger-factory';
 
 export const newMeetingTrigger = createPipelineWebhookTrigger({
@@ -10,6 +11,7 @@ export const newMeetingTrigger = createPipelineWebhookTrigger({
       'Fires when a new meeting note or call log is created on a box in the selected pipeline, representing a logged interaction (such as a discovery call) on a CRM record.',
   },
   event: 'MEETING_CREATE',
+  outputSchema: meetingWebhookOutputSchema,
   sampleData: {
     key: 'agxzfm1haWxmb29nYWVyMQsSB01lZXRpbmcYgICAwI_oogow',
     boxKey: 'agxzfm1haWxmb29nYWVyMQsSA0JveBiAgIDAj-iiCgw',

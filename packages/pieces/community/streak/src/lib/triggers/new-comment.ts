@@ -1,3 +1,4 @@
+import { commentWebhookOutputSchema } from '../common/output-schemas';
 import { createPipelineWebhookTrigger } from '../common/trigger-factory';
 
 export const newCommentTrigger = createPipelineWebhookTrigger({
@@ -9,6 +10,7 @@ export const newCommentTrigger = createPipelineWebhookTrigger({
       'Fires when a new comment is posted on a box in the selected pipeline, representing a note or update added to a CRM record\'s activity feed.',
   },
   event: 'COMMENT_CREATE',
+  outputSchema: commentWebhookOutputSchema,
   sampleData: {
     key: 'agxzfm1haWxmb29nYWVyMQsSB0NvbW1lbnQYgICAwI_oogow',
     boxKey: 'agxzfm1haWxmb29nYWVyMQsSA0JveBiAgIDAj-iiCgw',
