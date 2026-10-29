@@ -5,6 +5,7 @@ const state = vi.hoisted(() => {
     uris: [],
     queue: [],
     acked: 0,
+    ackAllUpTo: [],
     nackAllRequeue: [],
     checkQueueError: undefined,
   };
@@ -30,8 +31,9 @@ vi.mock('amqplib', async () => {
     async get() {
       return state.queue.shift() ?? false;
     }
-    ack() {
+    ack(_message: unknown, allUpTo?: boolean) {
       state.acked++;
+      state.ackAllUpTo.push(allUpTo === true);
     }
     nackAll(requeue: boolean) {
       state.nackAllRequeue.push(requeue);
@@ -90,6 +92,7 @@ beforeEach(() => {
   state.uris = [];
   state.queue = [];
   state.acked = 0;
+  state.ackAllUpTo = [];
   state.nackAllRequeue = [];
   state.checkQueueError = undefined;
   vi.unstubAllGlobals();
@@ -130,10 +133,11 @@ describe('message received trigger', () => {
     expect(state.nackAllRequeue).toEqual([true]);
   });
 
-  it('run() acks messages and keeps non-JSON bodies as text', async () => {
+  it('run() acks the batch once and keeps non-JSON bodies as text', async () => {
     state.queue = [message('{"a":1}'), message('plain text')];
     const items = await messageReceived.run(fakeContext());
-    expect(state.acked).toBe(2);
+    expect(state.acked).toBe(1);
+    expect(state.ackAllUpTo).toEqual([true]);
     expect(state.nackAllRequeue).toEqual([]);
     expect(items).toEqual([{ a: 1 }, 'plain text']);
   });
@@ -181,6 +185,7 @@ type FakeState = {
   uris: string[];
   queue: FakeMessage[];
   acked: number;
+  ackAllUpTo: boolean[];
   nackAllRequeue: boolean[];
   checkQueueError: string | undefined;
 };

@@ -15,7 +15,7 @@ export const rabbitmq = createPiece({
   auth: rabbitmqAuth,
   minimumSupportedRelease: '0.86.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/rabbitmq.png',
-  authors: ['alinperghel'],
+  authors: ['alinperghel', 'OdaiAhmed99'],
   actions: [
     sendMessageToExchange,
     sendMessageToQueue,

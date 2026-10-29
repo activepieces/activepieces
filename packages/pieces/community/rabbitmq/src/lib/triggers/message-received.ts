@@ -17,6 +17,7 @@ async function readMessages({
     auth,
     fn: async (channel) => {
       const messages: unknown[] = [];
+      let last: Awaited<ReturnType<typeof channel.get>> = false;
       const limit = Math.max(1, Math.floor(max));
       for (let i = 0; i < limit; i++) {
         const message = await channel.get(queue, { noAck: false });
@@ -24,9 +25,11 @@ async function readMessages({
           break;
         }
         messages.push(rabbitmqCommon.parseContent(message).content);
-        if (consume) {
-          channel.ack(message);
-        }
+        last = message;
+      }
+      // Ack once after the loop so a dropped connection redelivers the batch instead of losing it.
+      if (consume && last) {
+        channel.ack(last, true);
       }
       if (!consume) {
         channel.nackAll(true);
@@ -58,12 +61,6 @@ export const messageReceived = createTrigger({
       required: true,
       defaultValue: 50,
     }),
-  },
-  outputSchema: {
-    fields: [
-      { key: 'orderId', label: 'Order ID', description: 'Example field: the trigger output is the parsed JSON message body, so its keys are the keys of your message' },
-      { key: 'status', label: 'Status', description: 'Example field from the parsed JSON message body' },
-    ],
   },
   sampleData: { orderId: 'A-1001', status: 'created' },
   type: TriggerStrategy.POLLING,

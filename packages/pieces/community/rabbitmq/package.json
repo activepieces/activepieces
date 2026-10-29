@@ -7,7 +7,6 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "amqplib": "0.10.7",
-    "dayjs": "1.11.9",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*",
     "undici": "7.29.1"
