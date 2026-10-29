@@ -8,6 +8,20 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Hunter 0.2.0: four lead and campaign actions leave the agent tool list, and Verify Email waits for a result
+
+From Hunter 0.2.0, these actions are no longer offered as tools to AI agents and MCP clients. They still work as normal flow steps, with the same inputs and outputs. Agents use the replacement instead:
+- **Get Lead** → **Get Lead by ID**
+- **Update Lead** → **Update Lead by ID**
+- **Delete Lead** → **Delete Lead by ID**
+- **Add Recipients** → **Add Campaign Recipients by ID**
+
+Once a **Verify Email** step is upgraded to 0.2.0, it no longer returns right away when Hunter answers that the check is still running (HTTP 202). It waits up to 60 seconds for the result, and then fails asking you to run it again.
+
+#### What you need to do
+
+If a Run Agent step or MCP client uses Get Lead, Update Lead, Delete Lead or Add Recipients as a tool, switch it to the "by ID" action listed above. Flow steps that use them keep working. If a flow relied on Verify Email returning a pending result, expect the step to take up to 60 seconds, and handle a failed step for emails Hunter cannot finish checking in time.
+
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
 **Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
