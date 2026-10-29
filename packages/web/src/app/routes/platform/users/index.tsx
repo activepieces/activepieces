@@ -41,12 +41,8 @@ export type UserRowData =
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
-  const {
-    isOutOfSeats,
-    ensureSeatsAvailable,
-    handleSeatLimitError,
-    seatLimitDialog,
-  } = useSeatLimitGuard();
+  const { isOutOfSeats, handleSeatLimitError, seatLimitDialog } =
+    useSeatLimitGuard();
 
   const {
     data: usersData,
@@ -136,11 +132,7 @@ export default function UsersPage() {
       >
         <Button
           {...adminControl(AdminControl.USERS_INVITE_OPEN)}
-          onClick={() => {
-            if (ensureSeatsAvailable(1)) {
-              setInviteOpen(true);
-            }
-          }}
+          onClick={() => setInviteOpen(true)}
         >
           {isOutOfSeats ? (
             <Gem className="text-on-accent/90" />
