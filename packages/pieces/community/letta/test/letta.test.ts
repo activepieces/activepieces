@@ -187,6 +187,68 @@ describe('new message trigger', () => {
   });
 });
 
+describe('polling triggers page back to the last seen record', () => {
+  const lastPoll = Date.parse('2026-10-29T09:00:00Z');
+  const pollStore = { get: async () => lastPoll, put: async () => undefined, delete: async () => undefined } as never;
+
+  function reply(index: number) {
+    return {
+      id: `m${index}`,
+      message_type: 'assistant_message',
+      content: `reply ${index}`,
+      date: new Date(lastPoll + (index + 1) * 1000).toISOString(),
+    };
+  }
+
+  function getTrigger(name: string) {
+    const trigger = letta.getTrigger(name);
+    if (!trigger) {
+      throw new Error(`missing trigger ${name}`);
+    }
+    return trigger;
+  }
+
+  it('returns more than 100 new messages spread over two pages and stops at the last seen one', async () => {
+    const newest = Array.from({ length: 150 }, (_, i) => reply(149 - i));
+    const old = { id: 'old', message_type: 'assistant_message', content: 'seen', date: '2026-10-29T08:59:00Z' };
+    calls.messagesList
+      .mockResolvedValueOnce(newest.slice(0, 100))
+      .mockResolvedValueOnce([...newest.slice(100), old, ...Array.from({ length: 49 }, () => old)]);
+    const result = await getTrigger('newMessage').run({
+      auth,
+      propsValue: { agentId: 'agent-1' },
+      store: pollStore,
+      files: { write: async () => '' },
+    } as never);
+    expect(calls.messagesList).toHaveBeenCalledTimes(2);
+    expect(calls.messagesList).toHaveBeenNthCalledWith(1, 'agent-1', { limit: 100, order: 'desc' });
+    expect(calls.messagesList).toHaveBeenNthCalledWith(2, 'agent-1', { limit: 100, order: 'desc', after: 'm50' });
+    expect((result as { id: string }[]).length).toBe(150);
+    expect((result as { id: string }[]).some((message) => message.id === 'old')).toBe(false);
+  });
+
+  it('stops after 10 pages of new agents', async () => {
+    let created = 0;
+    calls.agentsList.mockImplementation(async () =>
+      Array.from({ length: 100 }, () => {
+        created += 1;
+        return { id: `agent-${created}`, name: 'a', created_at: new Date(lastPoll + 10_000_000 - created * 1000).toISOString() };
+      }),
+    );
+    const result = await getTrigger('newAgent').run({
+      auth,
+      propsValue: {},
+      store: pollStore,
+      files: { write: async () => '' },
+    } as never);
+    expect(calls.agentsList).toHaveBeenCalledTimes(10);
+    expect(calls.agentsList).toHaveBeenLastCalledWith(
+      expect.objectContaining({ limit: 100, order: 'desc', order_by: 'created_at', after: 'agent-900' }),
+    );
+    expect((result as unknown[]).length).toBe(1000);
+  });
+});
+
 describe('validation messages', () => {
   it('names Max Steps when it is out of range', async () => {
     await expect(

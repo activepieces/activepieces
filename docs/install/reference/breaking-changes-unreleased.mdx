@@ -8,17 +8,19 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
-#### Letta 0.2.0: three actions are no longer agent tools
+#### Letta 0.2.0: three actions are no longer agent tools, and New Agent returns less
 
-**Send Message to Agent**, **Create Identity** and **Get Identities** are now shown only in the flow builder. AI agents and MCP clients get new Letta tools instead, which take IDs as text: **Send Message**, **Create Identity** and **List Identities** under the `letta_` tools.
+**Send Message to Agent** is now shown only in the flow builder. AI agents and MCP clients get the new **Send Message** tool (`letta_send_message`) instead, which takes the agent ID as text.
+
+**Create Identity** and **Get Identities** are no longer offered as agent tools, and there is no agent-tool replacement. Letta Cloud removed the `/v1/identities` API, so these actions no longer work on Letta Cloud.
 
 The **New Message** trigger also fires on replies from current Letta agents (`assistant_message`), not only on `send_message` tool calls, so upgraded flows may run more often.
 
-The **New Agent** trigger now returns a short agent summary (ID, name, description, model, tags, dates and similar fields) instead of the full agent record. Fields such as `secrets`, `tool_exec_environment_variables`, `llm_config` and `message_ids` are no longer included.
+The **New Agent** trigger now returns a short agent summary (ID, name, description, model, tags, dates and similar fields) instead of the full agent record. The fields `secrets`, `tool_exec_environment_variables`, `llm_config` and `message_ids` are no longer available from the trigger, and **Get Agent** does not return them either. They were removed on purpose so that secrets do not leak into flow data.
 
 #### What you need to do
 
-If a Run Agent step or MCP client uses one of the three actions as a tool, switch it to the matching new Letta tool. If a later step reads a removed field from New Agent, use **Get Agent** with the agent ID instead. Flow steps that use these actions keep working. Steps keep running on the version they were built with until you upgrade them.
+If a Run Agent step or MCP client uses Send Message to Agent as a tool, switch it to Send Message (`letta_send_message`). Remove Create Identity and Get Identities from agents and MCP clients, and from flows that run against Letta Cloud. If a later step reads one of the removed New Agent fields, change that step, since no Letta action returns them any more. Steps keep running on the version they were built with until you upgrade them.
 
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 

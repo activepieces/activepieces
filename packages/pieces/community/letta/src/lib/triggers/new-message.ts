@@ -12,6 +12,7 @@ import { lettaAuth } from '../common/auth';
 import { lettaApi } from '../common/client';
 import { lettaSchemas } from '../common/schemas';
 import { watchedAgentDropdown } from '../common/props';
+import { lettaPolling } from '../common/polling';
 import type {
   Message,
   MessageListParams,
@@ -19,23 +20,24 @@ import type {
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof lettaAuth>,
-  { agentId: string } 
+  { agentId: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const { agentId } = propsValue;
     const client = await lettaApi.getLettaClient({ auth: auth.props });
 
-    const query: MessageListParams = {
-      limit: 100,
-      order: 'desc',
-    };
+    const messages = await lettaPolling.collectSince<Message>({
+      lastFetchEpochMS,
+      timestampOf: (message) => Date.parse(message.date),
+      fetchPage: async (page) => {
+        const query: MessageListParams = { ...page, order: 'desc' };
+        const messagesPage = await lettaApi.callLetta(() => client.agents.messages.list(agentId, query));
+        return messagesPage.getPaginatedItems();
+      },
+    });
 
-    const messagesPage = await lettaApi.callLetta(() => client.agents.messages.list(agentId, query));
-
-    const replies: Message[] = messagesPage
-      .getPaginatedItems()
-      .filter((message) => isAgentReply(message) && Date.parse(message.date) > lastFetchEpochMS);
+    const replies: Message[] = messages.filter(isAgentReply);
 
     return replies
       .sort((a, b) => {
@@ -57,7 +59,7 @@ export const newMessage = createTrigger({
   displayName: 'New Message',
   description: 'Triggers when an agent replies (assistant message, or send_message on legacy agents)',
   aiMetadata: {
-    description: 'Fires when a specific Letta agent (by agent ID) replies to the user: an assistant_message from current agents, or a send_message tool call from legacy memgpt agents. Polls the newest 100 messages and emits replies newer than the last poll.',
+    description: 'Fires when a specific Letta agent (by agent ID) replies to the user: an assistant_message from current agents, or a send_message tool call from legacy memgpt agents. Polls messages newest first, paging back to the last poll (up to 1000 messages), and emits replies newer than the last poll.',
   },
   type: TriggerStrategy.POLLING,
   props: {

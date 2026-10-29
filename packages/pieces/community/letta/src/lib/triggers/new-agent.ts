@@ -11,6 +11,7 @@ import {
 import { lettaAuth } from '../common/auth';
 import { lettaApi } from '../common/client';
 import { lettaSchemas } from '../common/schemas';
+import { lettaPolling } from '../common/polling';
 import type {
   AgentState,
   AgentListParams,
@@ -24,18 +25,20 @@ const polling: Polling<
   items: async ({ auth, lastFetchEpochMS }) => {
     const client = await lettaApi.getLettaClient({ auth: auth.props });
 
-    const query: AgentListParams = {
-      limit: 100,
-      order: 'desc',
-      order_by: 'created_at',
-      include: ['agent.tags'],
-    };
-
-    const agentsPage = await lettaApi.callLetta(() => client.agents.list(query));
-
-    const agents: AgentState[] = agentsPage
-      .getPaginatedItems()
-      .filter((agent) => agent.created_at && Date.parse(agent.created_at) > lastFetchEpochMS);
+    const agents = await lettaPolling.collectSince<AgentState>({
+      lastFetchEpochMS,
+      timestampOf: (agent) => (agent.created_at ? Date.parse(agent.created_at) : 0),
+      fetchPage: async (page) => {
+        const query: AgentListParams = {
+          ...page,
+          order: 'desc',
+          order_by: 'created_at',
+          include: ['agent.tags'],
+        };
+        const agentsPage = await lettaApi.callLetta(() => client.agents.list(query));
+        return agentsPage.getPaginatedItems();
+      },
+    });
 
     return agents
       .sort((a, b) => Date.parse(b.created_at ?? '') - Date.parse(a.created_at ?? ''))
