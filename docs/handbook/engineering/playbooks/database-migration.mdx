@@ -135,19 +135,19 @@ A background migration often leaves temporary code behind: a fallback read from 
 
 <Steps>
   <Step title="Open a Linear ticket when the migration merges">
-    Create a ticket assigned to the migration's owner (the author of the PR that adds it). Name the migration and the target release in the title, for example "Remove the `piece_metadata.i18n` fallback after `BackfillPieceTranslation` (0.98.0 or later)".
+    Create a ticket assigned to the migration's owner (the author of the PR that adds it). Name the migration and the target releases in the title, for example "Remove the `piece_metadata.i18n` fallback after `BackfillPieceTranslation` (code 0.97.0, column 0.98.0)".
 
     In the body, list every piece of code and schema that becomes removable (symbol and file), link the migration PR, and copy in the two steps below. Link the ticket from the migration PR's description.
   </Step>
 
-  <Step title="Remove the code in release N+5 or later">
-    N is the minor version in the migration's `release` field, so `release = '0.93.0'` means the code goes in `0.98.0` or later. Five is the number of recent releases we support: anyone running one of them has already run the backfill.
+  <Step title="Remove the code in release N+4 or later">
+    N is the minor version in the migration's `release` field, so `release = '0.93.0'` means the code goes in `0.97.0` or later. We support the latest five releases, so once N+4 is the newest, every supported release (N to N+4) already ships the backfill. N+3 is too early, because N-1 is still supported then.
 
     Ship code only. Remove the fallbacks and dual writes, take the field off the entity, and add a blocking migration whose `up()` only calls `migrationHelpers.assertBackgroundMigrationComplete(...)`. That guard makes an older install that skips releases run the backfill at boot before it serves traffic.
   </Step>
 
-  <Step title="Drop the schema in a later release">
-    At least one release after the code removal, drop the column, table or index in a blocking migration guarded the same way, with `breaking = true`. A dropped column is a technical breaking change: it needs the `⛓️‍💥 breaking-change` label and an entry in `docs/install/reference/breaking-changes-unreleased.mdx`.
+  <Step title="Drop the schema in release N+5 or later">
+    Drop the column, table or index in release N+5 or later, and always at least one release after the code removal, in a blocking migration guarded the same way, with `breaking = true`. For `release = '0.93.0'` that is `0.98.0` or later. A dropped column is a technical breaking change: it needs the `⛓️‍💥 breaking-change` label and an entry in `docs/install/reference/breaking-changes-unreleased.mdx`.
   </Step>
 </Steps>
 
