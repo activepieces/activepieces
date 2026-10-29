@@ -160,7 +160,7 @@ describe('sync webhook credit gate', () => {
         expect(mockShouldBlockRunOnCredits.mock.calls[0][0]).toMatchObject({
             platformId: 'plat-1',
             environment: RunEnvironment.PRODUCTION,
-            syncWebhook: true,
+            fastCreditCheck: true,
         })
     })
 })

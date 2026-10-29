@@ -15,7 +15,7 @@ const CUSTOMER_STATE_REFRESH_DEBOUNCE_SECONDS = 15
 const CUSTOMER_STATE_MISS_DEBOUNCE_SECONDS = 60
 const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
 const CREDITS_CACHE_READ_TIMEOUT_MS = 400
-const SYNC_WEBHOOK_CREDITS_CACHE_READ_TIMEOUT_MS = 25
+const FAST_CREDIT_CHECK_READ_TIMEOUT_MS = 25
 const SLOW_CREDITS_CACHE_READ_LOG_MS = 25
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
 const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
@@ -156,8 +156,8 @@ export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider =
     isBillingEnforced: async (platformId: string) => {
         return (await distributedStore.get<boolean>(getBillingEnforcedKey(platformId))) ?? false
     },
-    shouldBlockOnCredits: async ({ platformId, syncWebhook }: ShouldBlockOnCreditsParams) => {
-        const readTimeoutMs = syncWebhook ? SYNC_WEBHOOK_CREDITS_CACHE_READ_TIMEOUT_MS : CREDITS_CACHE_READ_TIMEOUT_MS
+    shouldBlockOnCredits: async ({ platformId, fastCreditCheck }: ShouldBlockOnCreditsParams) => {
+        const readTimeoutMs = fastCreditCheck ? FAST_CREDIT_CHECK_READ_TIMEOUT_MS : CREDITS_CACHE_READ_TIMEOUT_MS
         return (await computeCreditsAndAppSumoState({ log, platformId, readTimeoutMs })).credits.blocked
     },
     getCreditsAndAppSumoState: async (platformId: string) => {

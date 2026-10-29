@@ -112,14 +112,14 @@ export async function hasCreditsLeft({ platformId, log }: { platformId: string, 
     return isNil(left) || left > 0
 }
 
-export async function shouldBlockRunOnCredits({ platformId, environment, syncWebhook = false, log }: RunCreditsGateParams): Promise<boolean> {
+export async function shouldBlockRunOnCredits({ platformId, environment, fastCreditCheck = false, log }: RunCreditsGateParams): Promise<boolean> {
     if (system.getEdition() === ApEdition.ENTERPRISE) {
         return false
     }
     if (environment !== RunEnvironment.PRODUCTION) {
         return false
     }
-    return billingProvider.get(log).shouldBlockOnCredits({ platformId, syncWebhook })
+    return billingProvider.get(log).shouldBlockOnCredits({ platformId, fastCreditCheck })
 }
 
 export async function assertRunCreditsNotExceeded({ platformId, environment, log }: RunCreditsGateParams): Promise<void> {
@@ -186,13 +186,13 @@ type EmptyBillingOverviewParams = {
 type RunCreditsGateParams = {
     platformId: string
     environment: RunEnvironment
-    syncWebhook?: boolean
+    fastCreditCheck?: boolean
     log: FastifyBaseLogger
 }
 
 export type ShouldBlockOnCreditsParams = {
     platformId: string
-    syncWebhook: boolean
+    fastCreditCheck: boolean
 }
 
 export type CreditEventBreakdownEntry = {

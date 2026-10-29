@@ -246,13 +246,13 @@ describe('credits gate decides from the cache and refreshes in the background', 
         expect(log.warn).toHaveBeenCalled()
     })
 
-    it('waits longer than a sync webhook for a slow cache read before failing open', async () => {
+    it('waits longer than a fast credit check for a slow cache read before failing open', async () => {
         storedCredits = fresh({ remaining: 0 })
         mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 100)))
         const provider = autumnBillingProvider(log)
 
-        await expect(provider.shouldBlockOnCredits({ platformId: 'platform-1', syncWebhook: true })).resolves.toBe(false)
-        await expect(provider.shouldBlockOnCredits({ platformId: 'platform-1', syncWebhook: false })).resolves.toBe(true)
+        await expect(provider.shouldBlockOnCredits({ platformId: 'platform-1', fastCreditCheck: true })).resolves.toBe(false)
+        await expect(provider.shouldBlockOnCredits({ platformId: 'platform-1', fastCreditCheck: false })).resolves.toBe(true)
     })
 
     it('records the read time on the request row instead of a separate log line', async () => {
@@ -285,7 +285,7 @@ describe('credits gate decides from the cache and refreshes in the background', 
 
         mockBillingEnforced.mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(true), 100)))
         const slowRead = createLogger()
-        await wideEvent.run({ logger: slowRead, fn: () => autumnBillingProvider(log).shouldBlockOnCredits({ platformId: 'platform-1', syncWebhook: true }) })
+        await wideEvent.run({ logger: slowRead, fn: () => autumnBillingProvider(log).shouldBlockOnCredits({ platformId: 'platform-1', fastCreditCheck: true }) })
 
         expect(failedRead.getContext()).toMatchObject({ creditsGate: { timedOut: false } })
         expect(slowRead.getContext()).toMatchObject({ creditsGate: { timedOut: true, readTimeoutMs: 25 } })
@@ -303,7 +303,7 @@ describe('credits gate decides from the cache and refreshes in the background', 
         storedCredits = fresh({ remaining: 0 })
         mockBillingEnforced.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 100)))
 
-        await autumnBillingProvider(log).shouldBlockOnCredits({ platformId: 'platform-1', syncWebhook: true })
+        await autumnBillingProvider(log).shouldBlockOnCredits({ platformId: 'platform-1', fastCreditCheck: true })
         await new Promise((resolve) => setTimeout(resolve, 150))
 
         const lateRead = vi.mocked(log.info).mock.calls.find(([, msg]) => msg === 'Credits gate cache read finished after the timeout')

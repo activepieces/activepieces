@@ -274,7 +274,7 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
     const creditsExhausted = await shouldBlockRunOnCredits({
         platformId,
         environment: runEnvironment,
-        syncWebhook: true,
+        fastCreditCheck: true,
         log: logger,
     })
 
