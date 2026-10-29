@@ -272,9 +272,6 @@ function injectSelectedAuth({ name, args, getSelectedAuth }: {
     return { ...args, auth: externalId }
 }
 
-// A large mcp__ tool result is persisted to a file and replaced with a compact preview + fileId,
-// so the agent processes it in ap_run_code (inputs.data) instead of the blob flooding context —
-// the same contract as the native-action offload. Returns null to fall through to truncation.
 function withAppendedText({ result, text }: { result: unknown, text: string }): unknown {
     if (!isObject(result) || !Array.isArray(result['content'])) {
         return result
@@ -282,6 +279,9 @@ function withAppendedText({ result, text }: { result: unknown, text: string }): 
     return { ...result, content: [...result['content'], { type: 'text', text }] }
 }
 
+// A large mcp__ tool result is persisted to a file and replaced with a compact preview + fileId,
+// so the agent processes it in ap_run_code (inputs.data) instead of the blob flooding context —
+// the same contract as the native-action offload. Returns null to fall through to truncation.
 async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     result: unknown
     toolName: string
