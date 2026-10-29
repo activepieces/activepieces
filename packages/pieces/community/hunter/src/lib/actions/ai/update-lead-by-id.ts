@@ -22,7 +22,7 @@ export const updateLeadByIdAction = createAction({
   props: {
     lead_id: aiProps.leadId(),
     ...leadProps.fields({ emailRequired: false }),
-    leads_list_ids: leadProps.leadsListIds(),
+    leads_list_ids: leadProps.leadsListIds({ mode: 'update' }),
     custom_attributes: leadProps.customAttributes(),
     clear_fields: clearFieldsProp,
   },

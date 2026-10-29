@@ -43,11 +43,14 @@ export const newLeadTrigger = createTrigger({
     created_at: '2026-10-26 10:00:00 UTC',
   },
   async onEnable(context) {
+    if (context.isRepublish && typeof (await context.store.get(LAST_LEAD_ID_KEY)) === 'number') {
+      return;
+    }
     const newest = await hunterRequests.listLeadsPage({ apiKey: apiKeyOf(context.auth), limit: 1, offset: 0 });
     await context.store.put(LAST_LEAD_ID_KEY, leadIdOf(newest[0]) ?? 0);
   },
-  async onDisable(context) {
-    await context.store.delete(LAST_LEAD_ID_KEY);
+  async onDisable() {
+    // Keep the cursor: a republish runs onDisable then onEnable, and leads created since the last poll must still fire.
   },
   async test(context) {
     return hunterRequests.listLeadsPage({ apiKey: apiKeyOf(context.auth), limit: 5, offset: 0 });

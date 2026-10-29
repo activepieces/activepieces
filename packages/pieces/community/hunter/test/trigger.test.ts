@@ -69,8 +69,36 @@ describe('new lead trigger', () => {
     await newLeadTrigger.onEnable(fakeContext({ store }));
     expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(42);
   });
+
+  test('a republish keeps the stored cursor so leads created since the last poll still fire', async () => {
+    const all = [{ id: 501 }, { id: 500 }];
+    stubFetch((request: SeenRequest) => {
+      const offset = Number(request.query.get('offset'));
+      const limit = Number(request.query.get('limit'));
+      return { body: { data: { leads: all.slice(offset, offset + limit) } } };
+    });
+    const store = memoryStore({ [LAST_LEAD_ID_KEY]: 500 });
+    await newLeadTrigger.onDisable(fakeContext({ store }));
+    await newLeadTrigger.onEnable(fakeContext({ store, isRepublish: true }));
+    expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(500);
+    const output = await newLeadTrigger.run(fakeContext({ store }));
+    expect(output).toEqual([{ id: 501 }]);
+  });
+
+  test('a republish without a stored cursor sets the baseline', async () => {
+    stubFetch(() => ({ body: { data: { leads: [{ id: 42 }] } } }));
+    const store = memoryStore();
+    await newLeadTrigger.onEnable(fakeContext({ store, isRepublish: true }));
+    expect(store.data.get(LAST_LEAD_ID_KEY)).toBe(42);
+  });
 });
 
-function fakeContext({ store }: { store: ReturnType<typeof memoryStore> }): Parameters<typeof newLeadTrigger.run>[0] {
-  return Object.assign(Object.create(null), { auth: { type: 'SECRET_TEXT', secret_text: API_KEY }, store, propsValue: {} });
+function fakeContext({
+  store,
+  isRepublish = false,
+}: {
+  store: ReturnType<typeof memoryStore>;
+  isRepublish?: boolean;
+}): Parameters<typeof newLeadTrigger.run>[0] {
+  return Object.assign(Object.create(null), { auth: { type: 'SECRET_TEXT', secret_text: API_KEY }, store, propsValue: {}, isRepublish });
 }

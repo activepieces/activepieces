@@ -35,7 +35,7 @@ export const createLeadAction = createAction({
     notes: leadProps.requiredEmailFields.notes,
     source: leadProps.requiredEmailFields.source,
     leads_list_id: leadsListDropdownProp,
-    leads_list_ids: leadProps.leadsListIds(),
+    leads_list_ids: leadProps.leadsListIds({ mode: 'create' }),
     custom_attributes: leadProps.customAttributes(),
   },
   outputSchema: hunterOutputSchemas.leadWrapped,

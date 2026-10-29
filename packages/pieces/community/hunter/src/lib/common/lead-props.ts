@@ -36,11 +36,17 @@ function fields({ emailRequired }: { emailRequired: boolean }) {
   };
 }
 
-function leadsListIds() {
+const EMPTY_LEADS_LISTS_NOTE = {
+  create: 'Leave empty for the default list.',
+  update: 'Leave empty to keep the current lists.',
+  upsert: 'Leave empty to use the default list for a new lead and keep the current lists of an existing one.',
+};
+
+function leadsListIds({ mode }: { mode: keyof typeof EMPTY_LEADS_LISTS_NOTE }) {
   return Property.Array({
     displayName: 'Leads List IDs',
     required: false,
-    description: 'Numeric leads list IDs to add the lead to (from List Leads Lists). Leave empty for the default list.',
+    description: `Numeric leads list IDs to add the lead to (from List Leads Lists). ${EMPTY_LEADS_LISTS_NOTE[mode]}`,
     defaultValue: [],
   });
 }

@@ -19,7 +19,7 @@ export const upsertLeadAction = createAction({
   },
   props: {
     ...leadProps.fields({ emailRequired: true }),
-    leads_list_ids: leadProps.leadsListIds(),
+    leads_list_ids: leadProps.leadsListIds({ mode: 'upsert' }),
     custom_attributes: leadProps.customAttributes(),
   },
   outputSchema: {

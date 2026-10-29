@@ -36,7 +36,7 @@ export const updateLeadAction = createAction({
     notes: leadProps.optionalEmailFields.notes,
     source: leadProps.optionalEmailFields.source,
     leads_list_id: leadsListDropdownProp,
-    leads_list_ids: leadProps.leadsListIds(),
+    leads_list_ids: leadProps.leadsListIds({ mode: 'update' }),
     custom_attributes: leadProps.customAttributes(),
     clear_fields: clearFieldsProp,
   },
