@@ -128,3 +128,29 @@ export class AddMyIndex1234567890 implements Migration {
 <Tip>
 Always test your migrations by running them both up and down to ensure they work as expected.
 </Tip>
+
+## Cleaning Up After a Background Migration
+
+A background migration often leaves temporary code behind: a fallback read from the old shape, a dual write, a legacy column or index, special handling until the backfill finishes. Plan its removal when the migration ships, not later.
+
+<Steps>
+  <Step title="Open a Linear ticket when the migration merges">
+    Create a ticket assigned to the migration's owner (the author of the PR that adds it). Name the migration and the target release in the title, for example "Remove the `piece_metadata.i18n` fallback after `BackfillPieceTranslation` (0.98.0 or later)".
+
+    In the body, list every piece of code and schema that becomes removable (symbol and file), link the migration PR, and copy in the two steps below. Link the ticket from the migration PR's description.
+  </Step>
+
+  <Step title="Remove the code in release N+5 or later">
+    N is the minor version in the migration's `release` field, so `release = '0.93.0'` means the code goes in `0.98.0` or later. Five is the number of recent releases we support: anyone running one of them has already run the backfill.
+
+    Ship code only. Remove the fallbacks and dual writes, take the field off the entity, and add a blocking migration whose `up()` only calls `migrationHelpers.assertBackgroundMigrationComplete(...)`. That guard makes an older install that skips releases run the backfill at boot before it serves traffic.
+  </Step>
+
+  <Step title="Drop the schema in a later release">
+    At least one release after the code removal, drop the column, table or index in a blocking migration guarded the same way, with `breaking = true`. A dropped column is a technical breaking change: it needs the `⛓️‍💥 breaking-change` label and an entry in `docs/install/reference/breaking-changes-unreleased.mdx`.
+  </Step>
+</Steps>
+
+<Warning>
+Never remove the code and drop the schema in the same release. A Cloud rollback runs the previous image on the new schema and does not run `down()`, so the previous release must already work without the dropped object. If it still reads the old column, every request that touches it fails after the rollback.
+</Warning>

@@ -73,6 +73,8 @@ The guard also prevents the silently dangerous cases (`DROP COLUMN`, `DELETE FRO
 
 Contract DDL and its backfill ship in **different releases**. Same-release attempts fail boot, catchup runs the backfill, retries — this is the intended path.
 
+**Temporary code a backfill leaves behind (fallback reads, dual writes, legacy columns) gets a Linear ticket for its owner when the migration merges.** The code goes in release N+5 or later (N is the migration's `release` minor), and the schema drop comes in a later release still. Steps in the [migrations playbook](../../../docs/handbook/engineering/playbooks/database-migration.mdx).
+
 **Release-notes convention:** when a release ships a background migration whose dependent contract DDL lands in a later release, that earlier release's notes must say something like "self-hosters should let backfill X complete before upgrading further; the app catches up at boot but it may take ~N minutes." Boot catchup handles skip-release correctly, but operators deserve the heads-up so they can plan the upgrade window.
 
 ### Interfaces
