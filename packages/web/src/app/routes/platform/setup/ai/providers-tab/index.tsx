@@ -7,13 +7,12 @@ import {
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Bot, ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, Lock, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import {
-  AdminEmpty,
   AdminPageHeader,
   AdminSection,
   SettingsPanel,
@@ -23,6 +22,7 @@ import {
 import { PlanFeatureSample } from '@/app/routes/platform/plan-feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -263,26 +263,11 @@ export function ProvidersTab() {
             ))}
           </div>
           {!locked && available.length > 0 && (
-            <AdminSection
-              title={
-                <span className="flex items-baseline gap-2">
-                  {t('Also available')}
-                  <span className="text-sm font-normal tabular-nums text-gray-11">
-                    {available.length}
-                  </span>
-                </span>
-              }
-              description={t('Bring your own API key to connect any of these.')}
-            >
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {available.map((info) => (
-                  <AvailableProviderCard
-                    key={info.provider}
-                    info={info}
-                    onConnect={() => openConnect(info.provider)}
-                  />
-                ))}
-              </div>
+            <AdminSection title={t('Also available')}>
+              <ProviderTileGrid
+                providers={available}
+                onConnect={(provider) => openConnect(provider)}
+              />
             </AdminSection>
           )}
         </>
@@ -598,76 +583,90 @@ function EmptyProviders({
 
   return (
     <>
-      <AdminEmpty
-        icon={<Bot />}
-        title={t('Connect your first provider')}
-        description={t(
-          'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
-        )}
-        action={
-          <Button
-            onClick={() => onConnect()}
-            {...adminControl(AdminControl.AI_PROVIDER_KEY_OPEN)}
-          >
-            <Plus className="size-4" />
-            {t('Connect a provider')}
-          </Button>
-        }
-      />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {recommended.map((info) => (
-          <AvailableProviderCard
-            key={info.provider}
-            info={info}
-            tagline={recommendedTagline({ provider: info.provider })}
-            recommended
-            onConnect={() => onConnect(info.provider)}
-          />
-        ))}
-      </div>
-      <AdminSection title={t('Or choose another provider')}>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {others.map((info) => (
-            <AvailableProviderCard
+      <AdminSection title={t('Recommended')}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {recommended.map((info) => (
+            <ProviderTile
               key={info.provider}
               info={info}
+              tagline={recommendedTagline({ provider: info.provider })}
               onConnect={() => onConnect(info.provider)}
             />
           ))}
         </div>
       </AdminSection>
+      <AdminSection title={t('Other providers')}>
+        <ProviderTileGrid providers={others} onConnect={onConnect} />
+      </AdminSection>
     </>
   );
 }
 
-function AvailableProviderCard({
+function ProviderTileGrid({
+  providers,
+  onConnect,
+}: {
+  providers: AiProviderInfo[];
+  onConnect: (provider: AIProviderName) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {byName(providers).map((info) => (
+        <ProviderTile
+          key={info.provider}
+          info={info}
+          onConnect={() => onConnect(info.provider)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ProviderTile({
   info,
   tagline,
-  recommended,
   onConnect,
 }: {
   info: AiProviderInfo;
   tagline?: string;
-  recommended?: boolean;
   onConnect: () => void;
 }) {
   return (
-    <div className={cn(adminSurface.card, 'flex items-center gap-4 p-5')}>
+    <button
+      type="button"
+      onClick={onConnect}
+      className={cn(
+        adminSurface.card,
+        'flex min-w-0 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-8',
+      )}
+      {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
+    >
       <ProviderLogo info={info} />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate text-sm font-medium text-gray-12">{info.name}</p>
-        {tagline && <p className="truncate text-xs text-gray-11">{tagline}</p>}
-      </div>
-      <Button
-        size="sm"
-        variant={recommended ? 'default' : 'outline'}
-        onClick={onConnect}
-        {...adminControl(AdminControl.AI_PROVIDER_OPEN)}
-      >
-        {t('Connect')}
-      </Button>
-    </div>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <TextWithTooltip tooltipMessage={info.name}>
+          <span className="truncate text-sm font-medium text-gray-12">
+            {info.name}
+          </span>
+        </TextWithTooltip>
+        {tagline && (
+          <span className="truncate text-xs text-gray-11">{tagline}</span>
+        )}
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-gray-9" />
+    </button>
   );
+}
+
+function byName(providers: AiProviderInfo[]): AiProviderInfo[] {
+  return [...providers].sort((a, b) => {
+    if (a.provider === AIProviderName.CUSTOM) {
+      return 1;
+    }
+    if (b.provider === AIProviderName.CUSTOM) {
+      return -1;
+    }
+    return a.name.localeCompare(b.name);
+  });
 }
 
 function ProvidersSkeleton() {
@@ -736,9 +735,9 @@ function recommendedTagline({
 }): string | undefined {
   switch (provider) {
     case AIProviderName.ANTHROPIC:
-      return t('Claude models — strong for chat and agents');
+      return t('Claude models');
     case AIProviderName.OPENAI:
-      return t('GPT models — broad ecosystem and tooling');
+      return t('GPT models');
     default:
       return undefined;
   }
