@@ -8,6 +8,16 @@ Entries here move to [Breaking Changes](/install/reference/breaking-changes) aut
 
 ## What has changed?
 
+#### Actual Budget 0.2.0: four actions are no longer agent tools, and imports fail when nothing is imported
+
+From Actual Budget 0.2.0, **Get Accounts**, **Get Budget**, **Get Categories** and **Import Transaction** are shown only in the flow builder. AI agents and MCP clients no longer find them by name. They get **List Accounts**, **Get Budget Month**, **List Categories** and **Add Transaction** instead.
+
+Once a step is upgraded to Actual Budget 0.2.0, **Import Transaction** and **Import Transactions** fail the step when Actual imports nothing (they used to report success), and bulk import amounts must be integer cents, as a number or an integer string such as `"-1250"`.
+
+#### What you need to do
+
+Point any Run Agent step or MCP client that used the four actions at their agent versions. Flow steps keep working. Steps keep running on the version they were built with until you upgrade them; when you upgrade, check that Import Transactions sends amounts in cents (for example `-1250` for -12.50), not decimals.
+
 #### Workable 0.3.0: Move Candidate is no longer an agent tool, and some step outputs change
 
 **Move Candidate** is now shown only in the flow builder. AI agents and MCP clients get **Move Candidate (by IDs)** instead, which takes the candidate ID and the target stage as text.
