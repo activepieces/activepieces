@@ -250,19 +250,23 @@ export function ProvidersTab() {
       ) : (
         <>
           {locked && <LockedProvidersAlert />}
-          {connectedProviders.map((provider) => (
-            <ProviderGroup
-              key={provider}
-              provider={provider}
-              configs={configs.filter((config) => config.provider === provider)}
-              projects={projects}
-              tiers={tiers ?? []}
-              locked={locked}
-              onAdd={() => openConnect(provider)}
-              onOpen={openConfig}
-              onDelete={(id) => deleteProvider(id)}
-            />
-          ))}
+          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+            {connectedProviders.map((provider) => (
+              <ProviderGroup
+                key={provider}
+                provider={provider}
+                configs={configs.filter(
+                  (config) => config.provider === provider,
+                )}
+                projects={projects}
+                tiers={tiers ?? []}
+                locked={locked}
+                onAdd={() => openConnect(provider)}
+                onOpen={openConfig}
+                onDelete={(id) => deleteProvider(id)}
+              />
+            ))}
+          </div>
           {!locked && available.length > 0 && (
             <AdminSection
               title={
